@@ -1,0 +1,51 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2697227922
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    78.99%          2250  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    14.69%           417  dense-arm             [.] dense_arm::run::{{closure}}
+     5.98%           170  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.07%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6c91366
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e584
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97486
+     0.04%             1  [unknown]             [k] 0xffffffffa6d96274
+     0.04%             1  [unknown]             [k] 0xffffffffa6c904da
+     0.04%             1  [unknown]             [k] 0xffffffffa6b3d478
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97042
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.01%             1  libc.so.6             [.] 0x0000000000053b8a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bb00
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000fd13
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ba85
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78673
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001650e
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5f24d
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78931
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede792
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0594
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6feb556
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6152
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6801284
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff2144
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c84
+
+
+#
+# (Tip: To browse sample contexts use perf report --sample 10 and select in context menu)
+#

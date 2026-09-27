@@ -1,0 +1,42 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2635192056
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    58.92%          1655  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    27.66%           777  dense-arm             [.] dense_arm::run::{{closure}}
+    13.39%           375  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.01%             1  [unknown]             [k] 0xffffffffa6e78644
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa7d92a2e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000fd27
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baee
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61e7a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af91
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede792
+     0.00%             1  [unknown]             [k] 0xffffffffa6b48575
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0447
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6febf7a
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6eddd57
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61e3e
+     0.00%             1  [unknown]             [k] 0xffffffffa7d805b8
+
+
+#
+# (Tip: To analyze particular parallelism levels, try: perf report --latency --parallelism=32-64)
+#

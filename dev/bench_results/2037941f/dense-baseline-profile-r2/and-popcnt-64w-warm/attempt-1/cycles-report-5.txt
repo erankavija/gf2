@@ -1,0 +1,41 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2659224502
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    79.19%          2229  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    14.81%           418  dense-arm             [.] dense_arm::run::{{closure}}
+     5.97%           168  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad65
+     0.00%             1  dense-arm             [.] <u32 as itoa::Unsigned>::fmt
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000017309
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b3a2
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029527
+     0.00%             1  [unknown]             [k] 0xffffffffa6801280
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000d1d0
+     0.00%             1  [unknown]             [k] 0xffffffffa6fec189
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a51c
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7783a
+     0.00%             1  [unknown]             [k] 0xffffffffa6f331e1
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede6b5
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7871b
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99162
+
+
+#
+# (Tip: To record every process run by a user: perf record -u <user>)
+#

@@ -1,0 +1,47 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2698283920
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    78.42%          2240  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    15.28%           435  dense-arm             [.] dense_arm::run::{{closure}}
+     5.89%           168  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.11%             3  [unknown]             [k] 0xffffffffa68015f0
+     0.07%             2  [unknown]             [k] 0xffffffffa7da460b
+     0.07%             2  [unknown]             [k] 0xffffffffa6c9523b
+     0.04%             1  [unknown]             [k] 0xffffffffa6b29b1c
+     0.04%             1  [unknown]             [k] 0xffffffffa6c91380
+     0.04%             1  [unknown]             [k] 0xffffffffa6c95200
+     0.04%             1  [unknown]             [k] 0xffffffffa6d08131
+     0.01%             1  [unknown]             [k] 0xffffffffa6ed6247
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000044fb
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a909
+     0.00%             1  [unknown]             [k] 0xffffffffa7d65960
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  ld-linux-x86-64.so.2  [.] __tunable_get_val
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778a5
+     0.00%             1  [unknown]             [k] 0xffffffffa6fdc5dd
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78827
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6fee9fd
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa7595ee5
+     0.00%             1  libc.so.6             [.] 0x00000000001763b0
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80454
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7789d
+     0.00%             1  [unknown]             [k] 0xffffffffa6f334ad
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

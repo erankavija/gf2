@@ -1,0 +1,54 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2619984313
+#
+# Overhead       Samples  Shared Object         Symbol                                                              
+# ........  ............  ....................  ....................................................................
+#
+    79.00%          2211  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    18.38%           514  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.75%            49  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             4  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.08%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92060
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6bfa256
+     0.04%             1  [unknown]             [k] 0xffffffffa6c8fa8a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef957a
+     0.04%             1  dense-arm             [.] dense_arm::run::{{closure}}
+     0.04%             1  libc.so.6             [.] 0x00000000000a75f8
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f152
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f24d
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a114
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee437f
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.04%             1  [unknown]             [k] 0xffffffffa7d612d0
+     0.03%             1  [unknown]             [k] 0xffffffffa6801d30
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee5d97
+     0.00%             1  dense-arm             [.] core::ptr::drop_in_place<serde_json::value::de::MapDeserializer>
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010523
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019fab
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bae3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee612f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016524
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee3c40
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8054b
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b343
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef9510
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc61b
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b39b
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+
+
+#
+# (Tip: To show time in nanoseconds in record/report add --ns)
+#

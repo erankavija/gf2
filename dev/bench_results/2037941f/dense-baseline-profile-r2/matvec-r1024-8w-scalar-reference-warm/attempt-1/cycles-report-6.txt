@@ -1,0 +1,68 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2566221561
+#
+# Overhead       Samples  Shared Object         Symbol                                               
+# ........  ............  ....................  .....................................................
+#
+    98.05%          2738  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.57%            16  dense-arm             [.] dense_arm::run::{{closure}}
+     0.18%             7  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  [unknown]             [k] 0xffffffffa6f93085
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             2  libc.so.6             [.] 0x00000000000a4f3b
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             2  [unknown]             [k] 0xffffffffa6801280
+     0.04%             2  [unknown]             [k] 0xffffffffa690410b
+     0.04%             1  libc.so.6             [.] 0x00000000000a7669
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93cd6
+     0.04%             1  libc.so.6             [.] 0x00000000000a5005
+     0.04%             1  libc.so.6             [.] 0x00000000000a700b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed6710
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef97e1
+     0.04%             1  libc.so.6             [.] 0x00000000000a6301
+     0.04%             1  [unknown]             [k] 0xffffffffa6b48557
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e713
+     0.04%             1  [unknown]             [k] 0xffffffffa6cd3d38
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b13e
+     0.04%             1  libc.so.6             [.] 0x00000000000a5d12
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb58
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c29b
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb40
+     0.04%             1  [unknown]             [k] 0xffffffffa6e42fd4
+     0.04%             1  libc.so.6             [.] 0x00000000000a6223
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f63
+     0.01%             1  [unknown]             [k] 0xffffffffa777b335
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.01%             1  [unknown]             [k] 0xffffffffa6efce5d
+     0.00%             1  libc.so.6             [.] 0x00000000001789f3
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef977e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000019e6a
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788a3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0594
+     0.00%             1  [unknown]             [k] 0xffffffffa7da460b
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78640
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f990bf
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c84
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

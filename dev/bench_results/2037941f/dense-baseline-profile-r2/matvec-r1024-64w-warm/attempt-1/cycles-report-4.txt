@@ -1,0 +1,50 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2725798004
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    78.24%          2286  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    18.90%           552  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.30%            67  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.17%             5  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.03%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.03%             2  libc.so.6             [.] cfree
+     0.03%             1  libc.so.6             [.] malloc
+     0.03%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.03%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.03%             1  libc.so.6             [.] 0x00000000000a5d12
+     0.01%             1  [unknown]             [k] 0xffffffffa6c5cb40
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010bcd
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9a11a
+     0.01%             1  libc.so.6             [.] read
+     0.00%             2  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788be
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b189
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baf4
+     0.00%             1  [unknown]             [k] 0xffffffffa6eebb6f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000cad4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a924
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f1
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6120
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33371
+     0.00%             1  libc.so.6             [.] 0x000000000017ade4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5cb64
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78692
+     0.00%             1  [unknown]             [k] 0xffffffffa6f94a4e
+
+
+#
+# (Tip: Create an archive with symtabs to analyse on other machine: perf archive)
+#

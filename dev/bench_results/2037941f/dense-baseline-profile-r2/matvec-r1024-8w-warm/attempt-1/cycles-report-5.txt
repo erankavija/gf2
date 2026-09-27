@@ -1,0 +1,68 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2581724150
+#
+# Overhead       Samples  Shared Object         Symbol                                               
+# ........  ............  ....................  .....................................................
+#
+    60.63%          1693  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    29.93%           835  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     8.06%           225  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             5  [unknown]             [k] 0xffffffffa6801280
+     0.11%             6  [unknown]             [k] 0xffffffffa6f12633
+     0.09%             3  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98755
+     0.04%             1  libc.so.6             [.] 0x00000000000a5eed
+     0.04%             1  [unknown]             [k] 0xffffffffa6ba9520
+     0.04%             1  libc.so.6             [.] 0x00000000000a61fe
+     0.04%             1  libc.so.6             [.] 0x00000000000a503a
+     0.04%             1  [unknown]             [k] 0xffffffffa6f942af
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb58
+     0.04%             1  libc.so.6             [.] 0x00000000000a763c
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97042
+     0.04%             1  libc.so.6             [.] 0x00000000000a61fc
+     0.04%             1  [unknown]             [k] 0xffffffffa7412697
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f291
+     0.04%             1  [unknown]             [k] 0xffffffffa7d74581
+     0.04%             1  [unknown]             [k] 0xffffffffa6f0b38f
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3f1a
+     0.04%             1  libc.so.6             [.] cfree
+     0.04%             1  [unknown]             [k] 0xffffffffa6edc5d4
+     0.04%             1  [unknown]             [k] 0xffffffffa7d929fd
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  [unknown]             [k] 0xffffffffa6c9523b
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93080
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a142
+     0.04%             1  [unknown]             [k] 0xffffffffa6f47534
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a132
+     0.04%             1  [unknown]             [k] 0xffffffffa68018d9
+     0.01%             1  [unknown]             [k] 0xffffffffa6fd50e5
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bc53
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bd84
+     0.00%             1  env                   [.] 0x0000000000003062
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6437b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7880c
+     0.00%             2  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6e787a7
+     0.00%             1  [unknown]             [k] 0xffffffffa73140c1
+     0.00%             1  [unknown]             [k] 0xffffffffa70041bd
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  libc.so.6             [.] 0x0000000000179184
+     0.00%             1  [unknown]             [k] 0xffffffffa6f330e2
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99338
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80cc3
+
+
+#
+# (Tip: Compare performance results with: perf diff [<old file> <new file>])
+#

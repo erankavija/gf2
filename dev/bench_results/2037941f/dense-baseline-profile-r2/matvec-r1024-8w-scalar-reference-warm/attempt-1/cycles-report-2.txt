@@ -1,0 +1,72 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2548754510
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    98.48%          2734  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.29%             8  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  [unknown]             [k] 0xffffffffa7da460b
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f13e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93cdc
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef969f
+     0.04%             1  libc.so.6             [.] 0x00000000000a61e4
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98780
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5e3f
+     0.04%             1  [unknown]             [k] 0xffffffffa6b493f8
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f36
+     0.04%             1  [unknown]             [k] 0xffffffffa74a1956
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.04%             1  libc.so.6             [.] 0x00000000000a6198
+     0.04%             1  [unknown]             [k] 0xffffffffa6efc623
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94104
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb32aa
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f52
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed541a
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f0c
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f2d
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e2e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a11a
+     0.04%             1  libc.so.6             [.] 0x00000000000a7a92
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa7d89a79
+     0.01%             1  [unknown]             [k] 0xffffffffa6e788be
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef9770
+     0.00%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b280
+     0.00%             1  [unknown]             [k] 0xffffffffa6e787d9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  [unknown]             [k] 0xffffffffa6eebc63
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029504
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000aa9b
+     0.00%             1  [unknown]             [k] 0xffffffffa6c65701
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000265e4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f47549
+     0.00%             1  [unknown]             [k] 0xffffffffa7d929f4
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804df
+     0.00%             2  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b33a
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5d9a
+     0.00%             1  libc.so.6             [.] 0x00000000001791a7
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78686
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee65e8
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3316d
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+
+
+#
+# (Tip: To show IPC for sampling periods use perf record -e '{cycles,instructions}:S' and then browse context)
+#

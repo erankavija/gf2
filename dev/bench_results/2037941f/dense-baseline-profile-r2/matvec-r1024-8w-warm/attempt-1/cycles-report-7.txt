@@ -1,0 +1,76 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2582155416
+#
+# Overhead       Samples  Shared Object         Symbol                                                       
+# ........  ............  ....................  .............................................................
+#
+    59.07%          1649  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    30.67%           857  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     8.86%           247  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.11%             3  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b13e
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f10
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e57d
+     0.04%             1  [unknown]             [k] 0xffffffffa7307a84
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             1  [unknown]             [k] 0xffffffffa6f0d465
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93db5
+     0.04%             1  libc.so.6             [.] 0x00000000000a630e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94257
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98789
+     0.04%             1  dense-arm             [.] <std::io::stdio::StdoutLock as std::io::Write>::write_all
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94f9
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b483
+     0.04%             1  libc.so.6             [.] 0x00000000000a6233
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5e02
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f15
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b35d
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a173
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  [unknown]             [k] 0xffffffffa6aaae42
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93cd6
+     0.04%             1  libc.so.6             [.] 0x00000000000a624e
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3d70
+     0.04%             1  [unknown]             [k] 0xffffffffa6f106cc
+     0.04%             1  libc.so.6             [.] 0x00000000000a61b4
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3f8f
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d4a
+     0.04%             1  libc.so.6             [.] 0x00000000000a7669
+     0.04%             1  [unknown]             [k] 0xffffffffa6efc679
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.01%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.01%             1  [unknown]             [k] 0xffffffffa6ff0282
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af5a
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0aea0
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018aa1
+     0.00%             1  [unknown]             [k] 0xffffffffa6c2773d
+     0.00%             1  [unknown]             [k] 0xffffffffa6b493f4
+     0.00%             1  [unknown]             [k] 0xffffffffa700c2fb
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788be
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0fbd0
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9411c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8054b
+
+
+#
+# (Tip: To compare hot regions in two workloads use perf record -b -o file ... ; perf diff --stream file1 file2)
+#

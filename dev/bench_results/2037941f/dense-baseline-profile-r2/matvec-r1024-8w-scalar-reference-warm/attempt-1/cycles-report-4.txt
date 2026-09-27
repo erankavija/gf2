@@ -1,0 +1,77 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2554913251
+#
+# Overhead       Samples  Shared Object         Symbol                                               
+# ........  ............  ....................  .....................................................
+#
+    98.19%          2724  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.22%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.14%             6  [unknown]             [k] 0xffffffffa6f12633
+     0.11%             3  [unknown]             [k] 0xffffffffa68015f0
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.11%             4  libc.so.6             [.] cfree
+     0.11%             3  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6b491f3
+     0.04%             1  [unknown]             [k] 0xffffffffa6edda13
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a132
+     0.04%             1  [unknown]             [k] 0xffffffffa6c656f0
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.04%             1  [unknown]             [k] 0xffffffffa6f8fb34
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.04%             1  [unknown]             [k] 0xffffffffa6f0bb05
+     0.04%             1  libc.so.6             [.] 0x00000000000a5019
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98780
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b35d
+     0.04%             1  [unknown]             [k] 0xffffffffa6edd914
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c416
+     0.04%             1  [unknown]             [k] 0xffffffffa6cd3443
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3d70
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef976d
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5cdf
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  libc.so.6             [.] 0x00000000000a6208
+     0.04%             1  [unknown]             [k] 0xffffffffa6edda1b
+     0.04%             1  [unknown]             [k] 0xffffffffa7412644
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f88
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f31
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d7f
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e6c0
+     0.01%             1  [unknown]             [k] 0xffffffffa7d61c26
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.01%             2  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bb00
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b264
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016e5f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001f099
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61dc3
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad8d
+     0.00%             1  [unknown]             [k] 0xffffffffa6eddd7a
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0570
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad99
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3315d
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef2a58
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000100bb
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80537
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5e3f
+     0.00%             1  [unknown]             [k] 0xffffffffa6f990bf
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61c29
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80454
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#
