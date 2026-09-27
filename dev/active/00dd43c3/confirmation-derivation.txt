@@ -1,0 +1,30 @@
+pilot receipt  dev/bench_results/00dd43c3/v4-r1-pilot/receipt.json
+receipt sha256 28c94a7c1cd4584e7fbc7b69d91cf9e1b044a42f23e66b14e739abfa91638905
+campaign       00dd43c3-residual-bmi2-pilot-v4-r1
+verdict        accepted (label pilot)
+family         bitvec-residual-bmi2-route: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+left-lane-crossing-r7-w64                6       1.122      1.0933      1.1255    0.0255
+left-byte-residual-r8-w64                6      1.6485       1.637      1.6536    0.0070
+left-resident-r63-w64                    6      1.9533      1.9462      1.9559    0.0036
+left-streaming-r65-w64                   6      1.7652      1.7347      1.7939    0.0173
+right-byte-residual-r8-w64               6      1.6118      1.6081      1.6166    0.0030
+right-resident-r63-w64                   6      1.9402      1.8749      1.9429    0.0337
+right-streaming-r65-w64                  6      1.9077      1.8737      1.9143    0.0178
+
+widest relative half-width   0.033660
+frozen measurement resolution 0.04
+restated the family description for the confirmatory stage
+
+selection      6 of 7 pilot cells become confirmatory
+rationale      P-20: 10000 resamples * corrected_alpha / 2 >= 20; trial_ledger.rs attempt 1 alpha = 0.05 / (1 * 2) = 0.025; prior comparisons = 0; capacity = floor(10000 * 0.025 / (2 * 20)) - 0 = 6. The pilot addendum's frozen priority keeps paired resident, streaming and byte-residual cells before the lane-crossing boundary. Retained: left-resident-r63-w64, right-resident-r63-w64, left-streaming-r65-w64, right-streaming-r65-w64, left-byte-residual-r8-w64, right-byte-residual-r8-w64. Dropped: left-lane-crossing-r7-w64.
+retained       left-byte-residual-r8-w64
+retained       left-resident-r63-w64
+retained       left-streaming-r65-w64
+retained       right-byte-residual-r8-w64
+retained       right-resident-r63-w64
+retained       right-streaming-r65-w64
+dropped        left-lane-crossing-r7-w64
+margins: equivalence 1.1, material gap None
+confirmation addendum dev/active/00dd43c3/confirmation-addendum.json
