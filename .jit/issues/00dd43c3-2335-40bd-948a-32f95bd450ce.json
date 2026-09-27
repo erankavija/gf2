@@ -350,6 +350,11 @@
       "status": "passed",
       "updated_at": "2026-09-27T23:13:09.895899102Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-27T23:17:18.812555582Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "00dd43c3-2335-40bd-948a-32f95bd450ce",
@@ -366,5 +371,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Confirm the BMI2 residual shift route against the scalar funnel",
-  "updated_at": "2026-09-27T23:13:47.438389203Z"
+  "updated_at": "2026-09-27T23:17:18.812555582Z"
 }
