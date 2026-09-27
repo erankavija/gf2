@@ -80,7 +80,7 @@
     {
       "commit": null,
       "doc_type": "evidence",
-      "label": "Empty append-only family ledger genesis",
+      "label": "Residual-shift family spent reservation ledger",
       "path": "dev/bench_results/00dd43c3/residual-shift-family-ledger.jsonl"
     },
     {
@@ -110,21 +110,233 @@
     },
     {
       "commit": null,
-      "doc_type": "design",
-      "label": "Frozen residual shift confirmation",
+      "doc_type": "evidence",
+      "label": "Frozen residual-shift confirmation addendum",
       "path": "dev/active/00dd43c3/confirmation-addendum.json"
     },
     {
       "commit": null,
       "doc_type": "evidence",
-      "label": "Confirmation cell and resolution derivation",
+      "label": "Pilot resolution and P-20 confirmatory-cell derivation",
       "path": "dev/active/00dd43c3/confirmation-derivation.txt"
     },
     {
       "commit": null,
-      "doc_type": "validation",
-      "label": "Untimed confirmation smoke",
+      "doc_type": "evidence",
+      "label": "Untimed confirmation arm smoke",
       "path": "dev/active/00dd43c3/confirmation-smoke.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9c2aa8e1cffcd7f90fe483290b886c687e1ac50ba041d56cdb0a5d6b514f0e3b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f8dd4dde/retention-rule.md",
+          "resolved_path": "dev/active/f8dd4dde/retention-rule.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e71ffbbf696d768639b315856d632903e694aa5da6e76fc49eef66a211012d89",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "confirmation-addendum.json",
+          "resolved_path": "dev/active/00dd43c3/confirmation-addendum.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "36ee11f4502b047d43c11ad65aff4ab7a11b42033e2e92703430b9abecc0e4a2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation.txt",
+          "resolved_path": "dev/active/00dd43c3/confirmation-derivation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e46c5affd871e082bae2b0dd01436cb3c00b58c6e1ebd87df488b10bfd342c20",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/00dd43c3/v4-r1-confirmation/execution.log",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-confirmation/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "faf36d9a3b7972ca514e79e0a2127e9f598d71ee52407391b9ef4aac99b008f6",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt",
+          "resolved_path": "crates/gf2-kernels-simd/src/x86/asm/shift_funnel.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d0ea6e2f81851515cd9272ab40b15216fa868446b0a83abe6ccaf308bebee870",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/00dd43c3/residual-shift-family-ledger.jsonl",
+          "resolved_path": "dev/bench_results/00dd43c3/residual-shift-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9c90a601b211721db256e2e0cf87dfd70a7c73969c1501cfd4f8e5241e2e45ef",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/00dd43c3/v4-r1-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fb6276e1312e4f822f6c25f31ae5a41ca2d017c086942a6676d686c2350aa819",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/00dd43c3/v4-r1-pilot/execution.log",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-pilot/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d7c4a108117632eac079a34d0f7860d0c0d8af37fe0f81a9aceecd7f0241a46c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bb70db8ce001425b1cbd8d4b3d144beb04cba5331fb53a9a7dc27e2f60d45616",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c04dd4ac/residual-shift-profile/receipt.json",
+          "resolved_path": "dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73d408e8b050aa3cc0695a9942e9ba8c52243ca60a908160c87ea6c746f98031",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/00dd43c3/v4-r1-confirmation/receipt.json",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8712cd79a9d511d9bbc9b8701aa3241c85279959c3272f15c0c56f08a3df0d2f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-addendum.json",
+          "resolved_path": "dev/active/00dd43c3/pilot-addendum.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bc95dd29da0ec4cafe8b5f40500a9c6f1b283c5d465314a3c8eb53b2cbff6fac",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/00dd43c3/v4-r1-confirmation/plan.json",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-confirmation/plan.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "59d04902c212dd46ca67596dc4ec0156f2faefab6f69bfe5b090cf0e8296942c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "confirmation-smoke.json",
+          "resolved_path": "dev/active/00dd43c3/confirmation-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "540890a66e20f83a5365c71606f4dd85f3b843493fa565b5e165977c949e483a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pilot-smoke.json",
+          "resolved_path": "dev/active/00dd43c3/pilot-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6caf376671b5063b3d027a16a69da81606b2cf0a7d92ce0ab81899e859223076",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../1a379447-zen3-cpu-performance/bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9afdec8e2ce4a7f80361f314606f49c392399889a13e867212e5655c615b3d38",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "profile-context.json",
+          "resolved_path": "dev/active/00dd43c3/profile-context.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Residual-shift BMI2 confirmation and frozen retention verdict",
+      "path": "dev/active/00dd43c3/confirmation-outcome.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Residual-shift confirmation raw receipt",
+      "path": "dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Residual-shift confirmation recomputed acceptance",
+      "path": "dev/bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Residual-shift confirmation append-only execution log",
+      "path": "dev/bench_results/00dd43c3/v4-r1-confirmation/execution.log"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../00dd43c3/confirmation-outcome.md",
+          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dbdefcf4a30c4344911bec8c5e6d53b6af62e33dfa4b7d78a74e5708df51ae20",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c04dd4ac-zen3-shifts-and-permutations/shift-profile.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1738ab405e6da15b3b102dfc550050e88a70866aebde767ed623f7736ed02cc8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Frozen residual-shift retention rule with current disposition link",
+      "path": "dev/active/f8dd4dde/retention-rule.md"
     }
   ],
   "first_ready_at": "2026-09-19T15:37:57.876881427Z",
@@ -136,7 +348,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-26T07:49:42.026000386Z",
+      "updated_at": "2026-09-27T23:13:09.895899102Z",
       "updated_by": "auto:executor"
     }
   },
@@ -154,5 +366,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Confirm the BMI2 residual shift route against the scalar funnel",
-  "updated_at": "2026-09-27T19:20:12.761064724Z"
+  "updated_at": "2026-09-27T23:13:47.438389203Z"
 }
