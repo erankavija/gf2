@@ -1,0 +1,13 @@
+identity arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643 scalar=2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e tool=f034cb2e34c9709700363d2977a459bf636b3c126cee8e1884ae9e7078921721 script=04e8cb0e5fc84a3704f90e8693eb4de5cfac6825eaa3e87c95434e6b33b048a9 summary=9c11fc367a3273e568d552d0e21427003fc94cdc24b12beb18e98a13611cc852 closure=a173cda64eaaa69ca9bf23cf0e54f848a7e15b36d37eb7b62901c83cce67e5e1 isolated-addendum=28685a0913aed107090c0c489de6a68fe47c534314854551b2d015e2a8ac31fb allocated-addendum=19950912eb0ba79797f4041e1daa6ad288b7bb14834459cc7b04dee08db3ad35
+session start 2026-09-26T23:16:28Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh window 
+cpu=0 affinity=pid 758704's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile 2037941f-dense-isolated-fused-parity and-popcnt-8w-warm and-popcnt-a simd 
+session start 2026-09-26T23:16:28Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile 2037941f-dense-isolated-fused-parity and-popcnt-8w-warm and-popcnt-a simd 
+cpu=0 affinity=pid 758821's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell and-popcnt-8w-warm start 2026-09-26T23:16:28Z attempt=1 request=5059d6056c63d6f270fe246457f11cc6a5f54b0e8f5a7dc4f566abb7b987647a arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+failed 2026-09-26T23:16:28Z exit=2
+failed 2026-09-26T23:16:28Z exit=2
