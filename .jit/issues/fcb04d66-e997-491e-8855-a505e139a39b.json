@@ -8,7 +8,120 @@
     "bc091474-8c85-4758-aef6-fffb012fad36"
   ],
   "description": "Implement the selected logical-buffer outcome and confirm it in production under the frozen confirmation addendum.\n\n## Background\n\n**23a08297 — Implement the selected logical-buffer outcome.** Apply the logical-buffer adoption decision through the existing core dispatcher and isolated SIMD kernel boundary. When no candidate qualifies, this issue verifies that production remains unchanged and records that disposition. When one candidate qualifies, the change is limited to its declared dispatch domain, keeps Rust 1.95 compatibility, preserves scalar fallback, and does not create a second buffer or dispatch abstraction.\n\n**b8ef6f13 — Confirm the logical-buffer production outcome.** Run holdout confirmation for the selected logical-buffer outcome against the pinned current baseline, or publish the final no-change verdict. A production change requires dispatch-inclusive before/after evidence on the exact declared domain plus neighboring non-regression cells. A no-adoption decision still preserves the complete candidate record and explains why the current route remains selected.\n\n## Success Criteria\n\n- [hard] REQ-01: (23a08297 REQ-01) The selected outcome is reflected exactly in production code, or the no-adoption decision leaves production behavior and selection unchanged.\n- [hard] REQ-02: (23a08297 REQ-02) Shared scalar/SIMD semantic suites cover empty, aligned, offset, and 0/1/63/64/65 boundary cases with canonical indexing and zero tails.\n- [hard] REQ-03: (23a08297 REQ-03) Any unsafe intrinsic code stays in `gf2-kernels-simd` with an explicit safety contract, annotated release assembly is committed for modified SIMD symbols, and Rust 1.95 builds the affected path.\n\n- [hard] REQ-04: (b8ef6f13 REQ-01) Any production change has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results for primary and neighboring cells.\n- [hard] REQ-05: (b8ef6f13 REQ-02) Whole-consumer cells demonstrate the predeclared worthwhile benefit without regression outside the selected domain; otherwise the change is not accepted and the contradictory evidence remains committed.\n- [hard] REQ-06: (b8ef6f13 REQ-03) The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, assembly, profiles, and exact commands by content identity.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 23a08297, b8ef6f13; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n23a08297: Before/after performance confirmation is intentionally separate from this code change.\n\nb8ef6f13: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\nThe merge keeps the code change and its confirmation as separate stages and separate commits: the confirmation measures the merged code against the pinned pre-change baseline, so the source note that they are separate still holds inside this one task.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "837f46074442b44a368cc89c56cfe3e34294701dbc048090d19703f2ac969b7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/pilot-outcome.md",
+          "resolved_path": "dev/active/bc091474/pilot-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/candidate-tables.md",
+          "resolved_path": "dev/active/bc091474/candidate-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a21bd78422559ed708c9824eb3281351a2012fcdd92109a6a0951b4eab3465df",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "verification.md",
+          "resolved_path": "dev/active/fcb04d66/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "15959197a280dcbb81f1aa1a644c929a95de97db9eb0baab6e49106542ba9efe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Logical-buffer production no-adoption verdict and criterion map",
+      "path": "dev/active/fcb04d66/no-change-outcome.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2cbb67820673a4451d815e05fe034b3e36114824eed4982851084a08c0e18632",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../bc091474/asm/unroll4-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40a52fc9233bf9b5111794cd13220c91ab4f94292ed4f7f06ae72fdbc97eaf22",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../bc091474/asm/baseline-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/baseline-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "15959197a280dcbb81f1aa1a644c929a95de97db9eb0baab6e49106542ba9efe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../bc091474/readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa61d7da1809a672b48d21c74066f8071cc3cc7909eddc3dd9b45476f7293631",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../bc091474/asm/unroll2-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Rust 1.95 semantic checks and unchanged production diff",
+      "path": "dev/active/fcb04d66/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Pinned source claims for dispatch, kernel safety, and bit invariants",
+      "path": "dev/active/fcb04d66/survey/source-evidence.json"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:38:18.352726539Z",
   "gates_required": [
     "cargo-ci",
@@ -17,7 +130,18 @@
     "doc-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-27T20:45:14.439900693Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-27T20:44:42.509122959Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "fcb04d66-e997-491e-8855-a505e139a39b",
   "labels": [
     "component:benchmarks",
@@ -34,5 +158,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Implement and confirm the logical-buffer outcome",
-  "updated_at": "2026-09-27T20:26:51.814831721Z"
+  "updated_at": "2026-09-27T20:45:14.439900693Z"
 }
