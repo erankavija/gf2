@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4874125810
+#
+# Overhead  Command          Shared Object         Symbol                                        
+# ........  ...............  ....................  ..............................................
+#
+    37.13%  logical-profile  logical-profile       [.] logical_profile::drive
+    26.52%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+    26.22%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::row_xor
+    10.12%  logical-profile  logical-profile       [.] logical_profile::measure::{{closure}}
+
+
+#
+# (Tip: To see callchains in a more compact form: perf report -g folded)
+#

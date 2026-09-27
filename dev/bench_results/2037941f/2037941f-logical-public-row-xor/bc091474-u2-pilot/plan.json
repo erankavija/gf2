@@ -1,0 +1,243 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "bc091474-u2-2037941f-logical-public-row-xor",
+  "issue": "18a87159",
+  "label": "pilot",
+  "campaign_seed": 20260916,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-public-row-xor.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "row-xor-a": {
+      "build": "conservative-portable",
+      "description": "Public gf2_core::BitMatrix::row_xor, one public row operation per call, cycling the frozen eight directed row pairs",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-arms/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "row-xor-a"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "row-xor-b": {
+      "build": "conservative-portable",
+      "description": "Byte-identical executable and public row-XOR route, independently launched as the pre-candidate identity comparison",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bc091474-unroll2/release/logical-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LOGICAL_ROUTE": "row-xor-b"
+      },
+      "rustflags": "--cfg gf2_xor_unroll2",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "row-xor-8w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 10637976208002417451,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-9w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 5596662723952358580,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-63w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 13851521462054251822,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-64w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 4265233559098224425,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-65w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 17861201523389454755,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-7w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 9501125342282259427,
+        "shape": "full",
+        "words": 7
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-66w-full-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 3993862359629108941,
+        "shape": "full",
+        "words": 66
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-8w-tail63-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 11974641698572657322,
+        "shape": "tail63",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-9w-tail63-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 6358701391811018324,
+        "shape": "tail63",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-63w-tail63-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 6354540523025967910,
+        "shape": "tail63",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-64w-tail63-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 12571587495467555539,
+        "shape": "tail63",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-65w-tail63-warm",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 3511871076983929844,
+        "shape": "tail63",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-8w-full-streaming",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 11243669717611447222,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-9w-full-streaming",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 17510925502460370164,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-63w-full-streaming",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 11305692240721409966,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-64w-full-streaming",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 12789668651892666633,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "row-xor-65w-full-streaming",
+      "baseline_arm": "row-xor-a",
+      "candidate_arm": "row-xor-b",
+      "case": {
+        "question": "public-row-xor",
+        "seed": 11726407157741273227,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}

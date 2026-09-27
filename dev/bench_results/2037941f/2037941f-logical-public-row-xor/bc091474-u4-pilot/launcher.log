@@ -1,0 +1,39 @@
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh window --family 2037941f-logical-public-row-xor --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-public-row-xor.json --run-id bc091474-u4 --candidate-gf2-executable /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bc091474-unroll4/release/logical-arm --candidate-gf2-rustflags --cfg\ gf2_xor_unroll4 --pilot-pairs 24
+# started_utc: 2026-09-26T23:43:17Z
+# gf2 revision (informational): 312ab27c0e11256b397241a93a3e00d0595ac39c
+# addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md
+# addendum_sha256=290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074
+# addendum_identity=2037941f-logical-buffer-v1
+# addendum_frozen_utc=2026-09-15T03:56:39Z
+# comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md
+# family=2037941f-logical-isolated-xor ledger=dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl cells=17
+# family=2037941f-logical-public-row-xor ledger=dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl cells=17
+# family=2037941f-logical-nr-construction ledger=dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl cells=6
+# family=2037941f-logical-isal-base-gap ledger=dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl cells=12
+# campaign addendum: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-public-row-xor.json sha256=27d4bc4d7c65fbc34eba37a39a22defc1691a3665a9c1f3c0e14afb2205c99b2
+# producing manifest: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json sha256=ca6b8c80fff000e41d43c953d9cc7211ec4553040c972891b05dae254e0a7426
+# gf2 arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-arms/release/logical-arm sha256=8e93fa5c1de198661ce35910896765fe94c9d713934421bffa3b302553d2244b
+# candidate gf2 arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bc091474-unroll4/release/logical-arm sha256=4e822594804299d65fa9a425bd5e2cd617d9b7abf9916c5c0cce08d75e0a494a rustflags=--cfg gf2_xor_unroll4
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor.plan.json sha256=567848d8a38ea5cff090741da2328c903a2b7bcee96cd30f40b1e6e6f6e23635
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14);binary: rustc;commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860;commit-date: 2026-04-14;host: x86_64-unknown-linux-gnu;release: 1.95.0;LLVM version: 22.1.2;
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 3 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 4 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 5 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 6 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 7 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 8 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/target/bb769456-campaigns/bc091474-u4-2037941f-logical-public-row-xor/execution.log
+# session 9 exit: 0
+GF2_BENCHMARK_RECEIPT=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bc091474/dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0

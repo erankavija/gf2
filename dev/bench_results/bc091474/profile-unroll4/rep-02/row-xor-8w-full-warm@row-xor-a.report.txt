@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4824842280
+#
+# Overhead  Command          Shared Object         Symbol                                                    
+# ........  ...............  ....................  ..........................................................
+#
+    32.04%  logical-profile  logical-profile       [.] logical_profile::drive
+    30.13%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+    26.65%  logical-profile  logical-profile       [.] gf2_core::matrix::BitMatrix::row_xor
+    11.15%  logical-profile  logical-profile       [.] logical_profile::measure::{{closure}}
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

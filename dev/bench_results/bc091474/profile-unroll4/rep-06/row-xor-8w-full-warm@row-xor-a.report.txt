@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4826091290
+#
+# Overhead  Command          Shared Object     Symbol                                        
+# ........  ...............  ................  ..............................................
+#
+    37.45%  logical-profile  logical-profile   [.] logical_profile::drive
+    25.77%  logical-profile  logical-profile   [.] gf2_core::matrix::BitMatrix::row_xor
+    25.44%  logical-profile  logical-profile   [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+    11.31%  logical-profile  logical-profile   [.] logical_profile::measure::{{closure}}
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#

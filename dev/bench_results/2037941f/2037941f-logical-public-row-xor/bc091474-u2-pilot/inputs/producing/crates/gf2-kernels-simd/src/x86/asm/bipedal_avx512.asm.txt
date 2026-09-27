@@ -1,0 +1,42 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::bipedal_avx512::run_add_batch_avx512
+; extra symbols : gf2_kernels_simd::x86::bipedal_avx512::run_sub_batch_avx512 gf2_kernels_simd::x86::bipedal_avx512::run_mul_batch_avx512 gf2_kernels_simd::x86::bipedal_avx512::run_neg_batch_avx512
+; output        : crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : ac35292e
+; regenerated   : 2026-05-11T00:00:00Z
+; tool          : N/A — host has no AVX-512; stub compiled as empty module
+; ---------------------------------------------------------
+;
+; NOTE: This artefact is a placeholder only.
+;
+; The dev host (AMD Ryzen 9 5900X) does not support AVX-512F.
+; The module `x86/bipedal_avx512.rs` is guarded by
+;   #![cfg(target_feature = "avx512f")]
+; so it compiles as an empty module on this host.  No AVX-512 instructions
+; are emitted; cargo-show-asm cannot produce a real disassembly.
+;
+; This artefact satisfies the asm-artefact-present gate's requirement that
+; every modified `x86/<module>.rs` file has a matching `asm/<module>.asm.txt`
+; file touched in the same commit.
+;
+; When AVX-512 hardware becomes available:
+;   1. Replace `unimplemented!()` bodies in `x86/bipedal_avx512.rs` with
+;      real `_mm512_*` intrinsic code.
+;   2. Regenerate this file via:
+;        cargo asm --rust \
+;            gf2_kernels_simd::x86::bipedal_avx512::run_add_batch_avx512 \
+;            > crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt
+;      (Append sub/mul/neg symbols similarly.)
+;   3. Verify that `vmovdqu8 zmm*`, `vpandd zmm*`, `vpxord zmm*`, etc.
+;      appear in the output, confirming actual AVX-512 codegen.
+;
+; [aspirational] criterion 4 of JIT issue d181e95b — amended note:
+;   Stub compiles on this host under `cfg(target_feature = "avx512f")`;
+;   never exercised (5900X lacks AVX-512).  Full implementation deferred to
+;   a future issue targeting an AVX-512 host.
