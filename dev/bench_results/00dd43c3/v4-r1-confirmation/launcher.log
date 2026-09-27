@@ -1,0 +1,16 @@
+# launcher argv: dev/active/00dd43c3/survey/run-campaign.sh window confirmation
+# runner argv: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/release/benchmark-ab-runner run target/00dd43c3/confirmation-stage target/00dd43c3/confirmation-plan.json
+# wrapper argv: GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/release/benchmark-ab-runner run target/00dd43c3/confirmation-stage target/00dd43c3/confirmation-plan.json
+# campaign: 00dd43c3-residual-bmi2-confirmation-v4-r1
+# plan: target/00dd43c3/confirmation-plan.json
+# stage: target/00dd43c3/confirmation-stage
+# source revision (informational): 7ffdb953d58a6871987624598d913513d5b3620e
+# started_utc: 2026-09-27T23:01:38Z
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/confirmation-stage/execution.log
+# session exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/confirmation-stage/execution.log
+# session exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/confirmation-stage/execution.log
+# session exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
