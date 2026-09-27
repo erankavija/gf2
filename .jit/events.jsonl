@@ -13768,3 +13768,4 @@
 {"from":"ready","id":"ff962b21-63a1-44eb-90fa-f72f431e1470","issue_id":"a0812b83-3d03-4317-aad4-f0d702444f14","timestamp":"2026-09-27T23:25:10.691091497Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:jit-execution-lead","id":"b4a4e815-b4a1-4e98-9b36-96b16d7c0397","issue_id":"a0812b83-3d03-4317-aad4-f0d702444f14","timestamp":"2026-09-27T23:25:10.691091497Z","type":"issue_claimed"}
 {"gate_key":"code-review","id":"cce7b2fc-dcf2-4e52-8a5b-8a3745cb57b5","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:29:56.988509256Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"5a031f47-ee04-4ed0-84cd-b34d1081b1f1","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:33:57.335464312Z","type":"gate_passed","updated_by":"auto:executor"}

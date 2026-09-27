@@ -614,6 +614,11 @@
       "status": "passed",
       "updated_at": "2026-09-27T23:29:56.988509256Z",
       "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-27T23:33:57.335464312Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "c73ffa25-2ac2-4660-9f7e-330d0f818f1d",
@@ -633,5 +638,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
-  "updated_at": "2026-09-27T23:29:56.988509256Z"
+  "updated_at": "2026-09-27T23:33:57.335464312Z"
 }
