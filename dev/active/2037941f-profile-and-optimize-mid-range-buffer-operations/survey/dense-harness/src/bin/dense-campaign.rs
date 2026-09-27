@@ -372,6 +372,6 @@ fn profile_request(arguments: &Arguments) -> Result<(), String> {
         vec![cpu],
         &SHARED_SETTINGS,
     )?;
-    println!("{}", transport::encode_case(&request)?);
+    print!("{}", transport::encode_case(&request)?);
     Ok(())
 }

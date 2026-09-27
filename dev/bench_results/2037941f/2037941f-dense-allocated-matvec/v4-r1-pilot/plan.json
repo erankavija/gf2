@@ -1,0 +1,338 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "v4-r1-2037941f-dense-allocated-matvec",
+  "issue": "e1f9a78f",
+  "label": "pilot",
+  "campaign_seed": 20260917,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-allocated-matvec.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "matvec-a": {
+      "build": "conservative-portable",
+      "description": "One public BitMatrix::matvec returning a fresh BitVec, with route selection, the per-row bundle call, the parity fold, the output allocation and every output append inside the measured call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "matvec-a"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "matvec-b": {
+      "build": "conservative-portable",
+      "description": "The same public route, independently launched as the pre-candidate identity comparison or carrying the candidate kernel in the detected bundle",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "matvec-b"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    },
+    "matvec-scalar-reference": {
+      "build": "conservative-portable",
+      "description": "The same public route from an executable built without the simd feature, which reaches the four-accumulator scalar row-parity route",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-scalar-arm/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "matvec-scalar-reference"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "matvec-r1024-8w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 8049191449235058548,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-9w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 7190720007137168217,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-63w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 3117358692666444870,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-64w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 15652021052963172887,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-65w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 10007588411803260362,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-7w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 1588375660268498462,
+        "shape": "full",
+        "words": 7
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-66w-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 10724164548331238982,
+        "shape": "full",
+        "words": 66
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-8w-tail1-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 4237608217738781917,
+        "shape": "tail1",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-9w-tail1-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 8735601851605880606,
+        "shape": "tail1",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-63w-tail1-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 14649510900526505649,
+        "shape": "tail1",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-64w-tail1-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 18272834139000336465,
+        "shape": "tail1",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-65w-tail1-warm",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 13781133191863846747,
+        "shape": "tail1",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-8w-cold",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 388461069177716305,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-64w-cold",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 13590593586377551235,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-8w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 11852988628343451800,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-9w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 7254516891968433991,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-63w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 17933182833253764645,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-64w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 1668634441295471306,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-65w-streaming",
+      "baseline_arm": "matvec-a",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 6999881079626253303,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-8w-scalar-reference-warm",
+      "baseline_arm": "matvec-scalar-reference",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 2277592533046809067,
+        "shape": "full",
+        "words": 8
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-9w-scalar-reference-warm",
+      "baseline_arm": "matvec-scalar-reference",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 12328378119869908462,
+        "shape": "full",
+        "words": 9
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-63w-scalar-reference-warm",
+      "baseline_arm": "matvec-scalar-reference",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 6103978880523314708,
+        "shape": "full",
+        "words": 63
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-64w-scalar-reference-warm",
+      "baseline_arm": "matvec-scalar-reference",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 14372969380209728846,
+        "shape": "full",
+        "words": 64
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "matvec-r1024-65w-scalar-reference-warm",
+      "baseline_arm": "matvec-scalar-reference",
+      "candidate_arm": "matvec-b",
+      "case": {
+        "question": "allocated-matvec",
+        "seed": 1254844494614584826,
+        "shape": "full",
+        "words": 65
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}
