@@ -2,7 +2,7 @@
 
 Source: 9 repetitions under `logical-profile/rep-*`, 14 frozen profile cases, driver and host identities in `logical-profile/host.txt`.
 
-Each figure is the median over the repetitions, with the order-statistic interval in brackets. A per-call figure divides a whole-process counter by the call count the driver observed in that same pass, so it carries the pass's own start-up and fixture construction as well as its measured operations.
+Per-call and memory figures are medians over the repetitions with order-statistic intervals in brackets. A per-call figure divides a whole-process counter by the call count the driver observed in that same pass, so it carries the pass's own start-up and fixture construction as well as its measured operations. Symbol-share availability and bounds follow the rules below.
 
 ## Per-call cost and instruction mix
 
@@ -63,27 +63,29 @@ Each figure is the median over the repetitions, with the order-statistic interva
 
 ## Sampled symbol shares
 
-Symbols the flat sample report attributes at or above its own percent limit, as the median of their per-repetition shares.
+Symbols the flat sample report attributes at or above its own percent limit. A share is summarized only when every repetition reports that symbol, using the same order-statistic interval as the other tables. Missing rows are censored by report display and are not zero measurements; their all-repetition aggregate is unavailable. The linked raw reports below show which repetitions contain each symbol.
 
-| Case | symbol | median share | repetitions |
-|---|---|---|---|
-| `xor-8w-a64-warm@public-xor-a` | `logical_profile::drive` | 39.82% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 20.98% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `logical_buffer_harness::fixture::XorBanks::pair` | 20.51% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `logical_profile::measure::{{closure}}` | 16.04% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::fns::xor_fn` | 2.53% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::drive` | 39.20% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 26.85% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `gf2_core::matrix::BitMatrix::row_xor` | 25.88% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::measure::{{closure}}` | 8.43% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched` | 85.81% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::sparse::SpBitMatrix::from_coo` | 1.96% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `hashbrown::map::HashMap<K,V,S,A>::insert` | 1.84% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_coding::ldpc::core::QuasiCyclicLdpc::to_edges` | 1.01% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::sparse::SpBitMatrix::transpose` | 0.96% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::matrix::BitMatrix::row_xor` | 0.85% | 9 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 0.67% | 7 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `cfree` | 0.60% | 7 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::matrix::BitMatrix::swap_rows` | 0.54% | 4 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g` | 0.53% | 1 |
-| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `malloc` | 0.53% | 5 |
+| Case | symbol | share, median [interval] | reports present |
+|---|---|---|---:|
+| `xor-8w-a64-warm@public-xor-a` | `logical_profile::drive` | 39.82% [39.34%, 40.71%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 20.98% [20.28%, 21.47%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `logical_buffer_harness::fixture::XorBanks::pair` | 20.51% [20.36%, 20.91%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `logical_profile::measure::{{closure}}` | 16.04% [15.37%, 16.56%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::fns::xor_fn` | 2.53% [2.28%, 2.67%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::drive` | 39.20% [36.38%, 39.47%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 26.85% [25.72%, 28.14%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `gf2_core::matrix::BitMatrix::row_xor` | 25.88% [25.17%, 26.47%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::measure::{{closure}}` | 8.43% [8.11%, 9.14%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched` | 85.81% [85.57%, 86.10%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::sparse::SpBitMatrix::from_coo` | 1.96% [1.74%, 2.09%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `hashbrown::map::HashMap<K,V,S,A>::insert` | 1.84% [1.60%, 2.02%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_coding::ldpc::core::QuasiCyclicLdpc::to_edges` | 1.01% [0.95%, 1.11%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::sparse::SpBitMatrix::transpose` | 0.96% [0.81%, 1.06%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::matrix::BitMatrix::row_xor` | 0.85% [0.70%, 1.02%] | 9/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `cfree` | unavailable (report-censored) | 7/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g` | unavailable (report-censored) | 1/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_core::matrix::BitMatrix::swap_rows` | unavailable (report-censored) | 4/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | unavailable (report-censored) | 7/9 |
+| `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` | `malloc` | unavailable (report-censored) | 5/9 |
+
+Raw reports for censored `nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a` rows: [rep-01](rep-01/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-02](rep-02/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-03](rep-03/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-04](rep-04/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-05](rep-05/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-06](rep-06/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-07](rep-07/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-08](rep-08/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt), [rep-09](rep-09/nr-construct-bg2-256-49-z9-8w-warm@nr-construct-a.report.txt).

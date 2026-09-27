@@ -115,7 +115,7 @@ def cell(values, digits):
 
 
 def symbol_shares(recorded, reps):
-    """Median share of each symbol above the sample report's percent limit."""
+    """Complete-report share summaries; omitted rows remain censored."""
     shares = {}
     for case in recorded:
         per_symbol = collections.defaultdict(list)
@@ -129,10 +129,19 @@ def symbol_shares(recorded, reps):
             for symbol, percent in seen.items():
                 per_symbol[symbol].append(percent)
         shares[case] = sorted(
-            ((symbol, median(values), len(values)) for symbol, values in per_symbol.items()),
-            key=lambda row: (-row[1], row[0]),
+            ((symbol, summarize(values) if len(values) == len(reps) else None,
+              len(values)) for symbol, values in per_symbol.items()),
+            key=lambda row: (row[1] is None, -row[1][0] if row[1] else 0, row[0]),
         )
     return shares
+
+
+def report_links(case, reps):
+    """Raw reports for checking each symbol's presence across repetitions."""
+    return ", ".join(
+        "[" + rep.name + "](" + (pathlib.Path(rep.name) / f"{case}.report.txt").as_posix() + ")"
+        for rep in reps
+    )
 
 
 def main():
@@ -156,11 +165,12 @@ def main():
     )
     print()
     print(
-        "Each figure is the median over the repetitions, with the "
-        "order-statistic interval in brackets. A per-call figure divides a "
+        "Per-call and memory figures are medians over the repetitions with "
+        "order-statistic intervals in brackets. A per-call figure divides a "
         "whole-process counter by the call count the driver observed in that "
         "same pass, so it carries the pass's own start-up and fixture "
-        "construction as well as its measured operations."
+        "construction as well as its measured operations. Symbol-share "
+        "availability and bounds follow the rules below."
     )
     print()
     print("## Per-call cost and instruction mix")
@@ -203,14 +213,28 @@ def main():
     print()
     print(
         "Symbols the flat sample report attributes at or above its own "
-        "percent limit, as the median of their per-repetition shares."
+        "percent limit. A share is summarized only when every repetition "
+        "reports that symbol, using the same order-statistic interval as the "
+        "other tables. Missing rows are censored by report display and are "
+        "not zero measurements; their all-repetition aggregate is unavailable. "
+        "The linked raw reports below show which repetitions contain each symbol."
     )
     print()
-    print("| Case | symbol | median share | repetitions |")
-    print("|---|---|---|---|")
-    for case, rows in symbol_shares(recorded, reps).items():
-        for symbol, share, count in rows:
-            print(f"| `{case}` | `{symbol}` | {share:.2f}% | {count} |")
+    print("| Case | symbol | share, median [interval] | reports present |")
+    print("|---|---|---|---:|")
+    share_rows = symbol_shares(recorded, reps)
+    for case, rows in share_rows.items():
+        for symbol, summary, count in rows:
+            share = (
+                f"{summary[0]:.2f}% [{summary[1]:.2f}%, {summary[2]:.2f}%]"
+                if summary else "unavailable (report-censored)"
+            )
+            print(f"| `{case}` | `{symbol}` | {share} | {count}/{len(reps)} |")
+    censored = [case for case, rows in share_rows.items()
+                if any(summary is None for _, summary, _ in rows)]
+    for case in censored:
+        print()
+        print(f"Raw reports for censored `{case}` rows: {report_links(case, reps)}.")
 
 
 if __name__ == "__main__":
