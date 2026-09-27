@@ -1,0 +1,18 @@
+# launcher argv: dev/active/00dd43c3/survey/run-campaign.sh window pilot
+# runner argv: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/release/benchmark-ab-runner run target/00dd43c3/pilot-stage target/00dd43c3/pilot-plan.json
+# wrapper argv: GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh --full-host /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/release/benchmark-ab-runner run target/00dd43c3/pilot-stage target/00dd43c3/pilot-plan.json
+# campaign: 00dd43c3-residual-bmi2-pilot-v4-r1
+# plan: target/00dd43c3/pilot-plan.json
+# stage: target/00dd43c3/pilot-stage
+# source revision (informational): 3c08c3494637e268b254bd9b6439ac2866c09ac8
+# started_utc: 2026-09-26T23:16:28Z
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/pilot-stage/execution.log
+# session exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/pilot-stage/execution.log
+# session exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/pilot-stage/execution.log
+# session exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/00dd43c3/pilot-stage/execution.log
+# session exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/00dd43c3/v4-r1-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
