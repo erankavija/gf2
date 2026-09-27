@@ -12,13 +12,27 @@
       "format": "markdown",
       "label": "Coverage target and rule effect",
       "path": "dev/active/9f0e385e/coverage-addressability.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9f0e385e-r1.md"
     }
   ],
+  "done_at": "2026-09-27T19:15:00.384550356Z",
   "first_ready_at": "2026-09-26T14:36:09.142296459Z",
   "gates_required": [
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-09-27T19:14:19.593073809Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "9f0e385e-cf48-4478-aa4f-f92f2e46630d",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -26,7 +40,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Resolve breakdown requirement coverage addressability",
-  "updated_at": "2026-09-27T19:12:07.773665544Z"
+  "updated_at": "2026-09-27T19:15:00.384550356Z"
 }
