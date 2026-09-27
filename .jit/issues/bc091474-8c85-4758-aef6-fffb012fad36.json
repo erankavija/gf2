@@ -404,8 +404,50 @@
       "format": "markdown",
       "label": "Factor 4 profile",
       "path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/candidate-tables.md",
+          "resolved_path": "dev/active/bc091474/candidate-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "837f46074442b44a368cc89c56cfe3e34294701dbc048090d19703f2ac969b7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/pilot-outcome.md",
+          "resolved_path": "dev/active/bc091474/pilot-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33e1a3f3a4f22faa2a4c9eb74b5e4189515bb950c729a9ff9d3b6227573ddf82",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/portfolio.md",
+          "resolved_path": "dev/active/bc091474/portfolio.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review of logical no-adoption selection",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/bc091474-r1.md"
     }
   ],
+  "done_at": "2026-09-27T20:26:15.846180135Z",
   "first_ready_at": "2026-09-16T22:36:38.239101559Z",
   "gates_required": [
     "cargo-ci",
@@ -443,7 +485,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Freeze, measure and select the logical-buffer candidates",
-  "updated_at": "2026-09-27T20:24:17.199245226Z"
+  "updated_at": "2026-09-27T20:26:15.846180135Z"
 }
