@@ -32,7 +32,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-09-16T23:20:00.579550833Z"
+  "updated_at": "2026-09-27T23:35:42.241523926Z"
 }

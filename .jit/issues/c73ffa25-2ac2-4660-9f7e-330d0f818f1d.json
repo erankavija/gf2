@@ -596,8 +596,26 @@
       "doc_type": "evidence",
       "label": "Dense profile exact child commands example",
       "path": "dev/bench_results/2037941f/dense-baseline-profile-r2/matvec-r1024-8w-warm/attempt-1/commands.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "08391af0a472ce45557f8189e4df8b84204445209c7a8fa58595d81e9e86d212",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/c73ffa25/outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Final dense baseline and portfolio lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/c73ffa25-r1.md"
     }
   ],
+  "done_at": "2026-09-27T23:35:42.060496007Z",
   "first_ready_at": "2026-09-16T22:37:03.248580933Z",
   "gates_required": [
     "cargo-ci",
@@ -636,7 +654,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
-  "updated_at": "2026-09-27T23:33:57.335464312Z"
+  "updated_at": "2026-09-27T23:35:42.060496007Z"
 }

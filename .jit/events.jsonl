@@ -13769,3 +13769,7 @@
 {"assignee":"agent:jit-execution-lead","id":"b4a4e815-b4a1-4e98-9b36-96b16d7c0397","issue_id":"a0812b83-3d03-4317-aad4-f0d702444f14","timestamp":"2026-09-27T23:25:10.691091497Z","type":"issue_claimed"}
 {"gate_key":"code-review","id":"cce7b2fc-dcf2-4e52-8a5b-8a3745cb57b5","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:29:56.988509256Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"5a031f47-ee04-4ed0-84cd-b34d1081b1f1","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:33:57.335464312Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"989509b3-c613-45bb-b65b-b2063bef1f96","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:35:41.894651549Z","type":"issue_updated","updated_by":"doc-add"}
+{"from":"in_progress","id":"e7c99b4c-f4ba-41a9-bdcb-e24d7e6518dd","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:35:42.060496007Z","to":"done","type":"issue_state_changed"}
+{"id":"9389acee-180a-4984-997d-118ed9ac1786","issue_id":"c73ffa25-2ac2-4660-9f7e-330d0f818f1d","timestamp":"2026-09-27T23:35:42.060496007Z","type":"issue_completed"}
+{"from":"backlog","id":"21c407f9-f1c5-4022-a404-948e6a68c9e4","issue_id":"50f0bd42-56d8-4905-a0d5-409b7aa32ba7","timestamp":"2026-09-27T23:35:42.241523926Z","to":"ready","type":"issue_state_changed"}
