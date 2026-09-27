@@ -358,28 +358,9 @@
       "path": "dev/active/bc091474/candidate-tables.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "missing",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/execution.log",
-          "resolved_path": "dev/bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/execution.log"
-        },
-        {
-          "asset_type": "missing",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/acceptance-summary.md"
-        }
-      ],
       "commit": null,
-      "doc_type": "implementation",
-      "format": "markdown",
-      "label": "Logical candidate table generator",
+      "doc_type": "tool",
+      "label": "Candidate outcome table generator",
       "path": "dev/active/bc091474/make-candidate-tables.py"
     },
     {
@@ -454,5 +435,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze, measure and select the logical-buffer candidates",
-  "updated_at": "2026-09-27T19:33:25.600286794Z"
+  "updated_at": "2026-09-27T19:34:14.356326202Z"
 }
