@@ -2,6 +2,10 @@
 
 > **Diátaxis Type:** Explanation
 
+**Current disposition:** The [confirmation outcome](../00dd43c3/confirmation-outcome.md)
+retains the BMI2-gated route under the frozen rule below. This document remains
+the premeasurement rule record.
+
 Report for `f8dd4dde` (epic `1a379447`). This document is the record REQ-08
 asks for, in place before the route is measured. It states why the route is in
 the tree, what decides whether it stays, and what removing it consists of.
