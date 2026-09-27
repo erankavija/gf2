@@ -2,7 +2,7 @@
 
 Source: 9 repetitions under `profile-unroll4/rep-*`, 10 frozen profile cases, driver and host identities in `profile-unroll4/host.txt`.
 
-Each figure is the median over the repetitions, with the order-statistic interval in brackets. A per-call figure divides a whole-process counter by the call count the driver observed in that same pass, so it carries the pass's own start-up and fixture construction as well as its measured operations.
+Per-call and memory figures are medians over the repetitions with order-statistic intervals in brackets. A per-call figure divides a whole-process counter by the call count the driver observed in that same pass, so it carries the pass's own start-up and fixture construction as well as its measured operations. Symbol-share availability and bounds follow the rules below.
 
 ## Per-call cost and instruction mix
 
@@ -51,16 +51,16 @@ Each figure is the median over the repetitions, with the order-statistic interva
 
 ## Sampled symbol shares
 
-Symbols the flat sample report attributes at or above its own percent limit, as the median of their per-repetition shares.
+Symbols the flat sample report attributes at or above its own percent limit. A share is summarized only when every repetition reports that symbol, using the same order-statistic interval as the other tables. Missing rows are censored by report display and are not zero measurements; their all-repetition aggregate is unavailable. The linked raw reports below show which repetitions contain each symbol.
 
-| Case | symbol | median share | repetitions |
-|---|---|---|---|
-| `xor-8w-a64-warm@public-xor-a` | `logical_profile::drive` | 41.61% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `logical_buffer_harness::fixture::XorBanks::pair` | 20.75% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `logical_profile::measure::{{closure}}` | 17.86% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 17.10% | 9 |
-| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::fns::xor_fn` | 2.59% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::drive` | 36.88% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 26.78% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `gf2_core::matrix::BitMatrix::row_xor` | 26.22% | 9 |
-| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::measure::{{closure}}` | 10.91% | 9 |
+| Case | symbol | share, median [interval] | reports present |
+|---|---|---|---:|
+| `xor-8w-a64-warm@public-xor-a` | `logical_profile::drive` | 41.61% [41.14%, 42.66%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `logical_buffer_harness::fixture::XorBanks::pair` | 20.75% [20.05%, 20.95%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `logical_profile::measure::{{closure}}` | 17.86% [17.34%, 18.25%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 17.10% [16.68%, 17.46%] | 9/9 |
+| `xor-8w-a64-warm@public-xor-a` | `gf2_kernels_simd::x86::avx2::fns::xor_fn` | 2.59% [2.49%, 2.87%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::drive` | 36.88% [35.11%, 37.45%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `gf2_kernels_simd::x86::avx2::avx2_xor_into` | 26.78% [25.97%, 28.09%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `gf2_core::matrix::BitMatrix::row_xor` | 26.22% [25.57%, 26.43%] | 9/9 |
+| `row-xor-8w-full-warm@row-xor-a` | `logical_profile::measure::{{closure}}` | 10.91% [10.14%, 11.15%] | 9/9 |
