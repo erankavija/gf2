@@ -1363,6 +1363,23 @@
       "raised_at": "2026-09-26T14:35Z",
       "question": "Approve round7 clarification of historical/current annotation wording and related wording check.",
       "resolution": "Invoker explicitly approved in chat."
+    },
+    {
+      "category": "rework limit",
+      "issue": "9fb40c83",
+      "status": "resolved",
+      "raised_at": "2026-09-27",
+      "gate_run": "85ac1fcc-acf6-4c83-bda7-dfba7150d9f6",
+      "question": "Approve round8 deriving setup and scatter-share intervals from retained records and regenerating both profile summaries.",
+      "resolution": "Invoker approved; Sol high dvb_results dispatched. No new measurement."
+    },
+    {
+      "category": "issue scope clarification",
+      "issue": "65c0e13d",
+      "status": "resolved",
+      "raised_at": "2026-09-27",
+      "question": "Clarify qualified aligned/boundary equivalence, inapplicable offsets, and companion unavailable rows.",
+      "resolution": "Invoker approved both clarifications. REQ02 and ruling recorded at91cb9b7fc; worker aligns versioned addendum and generated availability table. Numeric rules and raw receipts unchanged."
     }
   ],
   "rework_counts": {
@@ -1387,7 +1404,7 @@
     "77c21ecd": 0,
     "7cdc28e9": 0,
     "e1f9a78f": 7,
-    "9fb40c83": 7,
+    "9fb40c83": 8,
     "f8dd4dde": 1,
     "d45aff82": 2,
     "18a87159": 1
@@ -1815,6 +1832,11 @@
       "origin": "lead (session 22): the checker reported main stale after the ad2a6a58 merge; a worker commit on the pinned tree had bumped it to 62 and conflicted",
       "disposition": "regenerated on main at 2bf651eee (65); the pinned-tree bump is dropped at replay",
       "criterion_named_by": "none"
+    },
+    {
+      "issue": "65c0e13d",
+      "status": "resolved",
+      "finding": "Worker initially proposed widening generic freezer margins. Family frozen addendum instead fixes margins and stops when primary resolution exceeds .030. Lead stopped preparation; uncommitted confirmation edits discarded; raw pilot preserved as resolution-insufficient. Generic helper capability never overrides stricter frozen family rules."
     }
   ],
   "notes": [
@@ -1940,7 +1962,8 @@
     "Session24: e1f9a78f DONE at8a9d49c79; lead review r7; code/doc review zero findings, clean merged-tree cargo-ci passes. DVB round4 preparation merged with cargo-ci pass; old attribution and provenance reproduce byte-for-byte; fresh profile queued (12-minute estimate), F3 stays open pending evidence. c73ffa25 now dependency-ready.",
     "Session 24: c73ffa25 preparation merged at efaea4eaf; merged CI passes. Code gate76ce431c reports absent receipts, profile and portfolio (REQ-01,03-06); these require the queued window. No completion claim. Invoker approves DVB round5 after interview.",
     "Session25: approved DVB rounds6/7 complete; code gate547264f9 passes with coverage advisory tracked as9f0e385e. Queue restored, lease released, handoff requested by user. Research criteria still await scheduled evidence.",
-    "Session26: resume current wave3 only. Three Sol workers finalize dense, DVB and logical candidate evidence from September27 window; no Astra. Dense profile launch failed before sampling. Lead audits coverage addressability and remaining pilot paths. Existing pinned measurement trees preserved."
+    "Session26: resume current wave3 only. Three Sol workers finalize dense, DVB and logical candidate evidence from September27 window; no Astra. Dense profile launch failed before sampling. Lead audits coverage addressability and remaining pilot paths. Existing pinned measurement trees preserved.",
+    "Session26 continuation: 9f0e385e DONE at a8b294998. Residual confirmation six cells frozen/smoked/queued, merged4d1beee1d CI PASS. Dense baseline evidence and newline fix merged09555e7ee CI PASS; new profile awaits September28. DVB fresh9rep evidence mergede759188c9 CI PASS; research review closes counter finding but flags bare setup/share statistics, round8 approved. ISA pilot merged919ea1c9b CI PASS; family resolution exceeds fixed cap, no confirmation; approved contract clarification91cb9b7fc. Logical portfolio no candidate; final report about to merge. No Astra or active-session timing."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1969,12 +1992,12 @@
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
   },
   "benchmark_window": {
-    "unit": "gf2-bench-window-20260927",
-    "armed_for": "2026-09-27T02:00:00+03:00",
+    "unit": "gf2-bench-window-20260928",
+    "armed_for": "2026-09-28T02:00:00+03:00",
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "September27 window ran 12 jobs and ended2026-09-27T00:03:49Z. Eleven rc0; dense profile rc2 before sampling (noncanonical tuning JSON). Workers verify authoritative logs and receipts. No next timer armed yet."
+    "current_observation": "September27 logs verified: eleven successful jobs; dense profile rejected noncanonical JSON before sampling. Fixed print newline in pinned worker05c7c1707; retries to fresh r2 profile directory. September28 timer armed for dense profile key479f388792038140 and residual confirmation keyd01d0731883044f8. Completed jobs skipped by done markers; other waves held."
   },
   "session_scope": {
     "session": 26,
@@ -1995,18 +2018,19 @@
       "2ad3a3e0",
       "00dd43c3",
       "9fb40c83",
-      "a0812b83",
-      "9f0e385e"
+      "a0812b83"
     ],
     "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
-    "completed_this_session": [],
+    "completed_this_session": [
+      "9f0e385e"
+    ],
     "active_workers": {
-      "c73ffa25": "Sol xhigh dense_results, preserved agent-c73ffa25",
-      "9fb40c83": "Sol high dvb_results, preserved agent-9fb40c83-r4",
-      "bc091474": "Sol xhigh logical_results, preserved agent-bc091474"
+      "9fb40c83": "Sol high dvb_results round8 approved",
+      "65c0e13d": "Sol high isal_results approved clarification",
+      "bc091474": "Sol xhigh logical_results final combined outcome"
     },
-    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at 815010276"
+    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
   }
 }
