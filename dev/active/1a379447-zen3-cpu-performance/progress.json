@@ -718,7 +718,7 @@
           "short_id": "a1ad6d4e",
           "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
           "classification": "research",
-          "status": "in_progress: session26 dispatched after dependencies closed; see session_scope active_workers.",
+          "status": "done",
           "tracker_state": "in_progress",
           "dispatch": {
             "model": "gpt-6-sol",
@@ -1433,7 +1433,8 @@
     "d45aff82": 2,
     "18a87159": 1,
     "bc091474": 1,
-    "65c0e13d": 1
+    "65c0e13d": 1,
+    "fcb04d66": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1870,6 +1871,12 @@
       "origin": "research bd066df1 advisory",
       "disposition": "Resolved by explicit invoker-approved ISA-PILOT-6 terminal exception, scoped to exact receipt; original discrepancy preserved. Always compare each executed pair count against family prose, not only runner acceptance.",
       "criterion_named_by": "2037941f REQ06 and65c0e13d measurement contract"
+    },
+    {
+      "issue": "fcb04d66",
+      "subject": "Research gate 45bac0a3 advisory F1: unroll profile tables need exact invocation and RNG/version provenance links.",
+      "disposition": "Docs-only follow-up in progress using retained invocation logs and pinned fixture source; no new timing or raw-data edits.",
+      "criterion_named_by": "2037941f REQ05/REQ06"
     }
   ],
   "notes": [
@@ -2046,7 +2053,6 @@
     ],
     "remaining_descendants": [
       "fcb04d66",
-      "a1ad6d4e",
       "c73ffa25",
       "50f0bd42",
       "6e87c436",
@@ -2061,11 +2067,11 @@
       "9f0e385e",
       "9fb40c83",
       "65c0e13d",
-      "bc091474"
+      "bc091474",
+      "a1ad6d4e"
     ],
     "active_workers": {
-      "fcb04d66": "Sol high isal_results, agent-fcb04d66 at cd353653a; focused semantic verification, heavy slot",
-      "a1ad6d4e": "Sol xhigh logical_results, agent-a1ad6d4e at cd353653a; private BitSlice assessment, no build slot yet"
+      "fcb04d66": "Sol high isal_results; all five gates pass, closing research advisory on existing unroll-profile provenance"
     },
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
   }
