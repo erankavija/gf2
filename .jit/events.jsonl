@@ -13709,3 +13709,4 @@
 {"fields":["documents"],"id":"3f82ff0d-0df2-4062-ae56-c50a9465cc38","issue_id":"65c0e13d-74af-4f66-8b08-d2eba04e2a5b","timestamp":"2026-09-27T20:17:55.514183097Z","type":"issue_updated","updated_by":"doc-add"}
 {"from":"in_progress","id":"e0320b72-d965-4ecf-a74f-c2efc30ea43b","issue_id":"65c0e13d-74af-4f66-8b08-d2eba04e2a5b","timestamp":"2026-09-27T20:17:55.666189826Z","to":"done","type":"issue_state_changed"}
 {"id":"b5466991-7795-4439-946a-24de8c7c825a","issue_id":"65c0e13d-74af-4f66-8b08-d2eba04e2a5b","timestamp":"2026-09-27T20:17:55.666189826Z","type":"issue_completed"}
+{"gate_key":"research-review","id":"905ba884-637a-4650-9965-430d60af01af","issue_id":"bc091474-8c85-4758-aef6-fffb012fad36","timestamp":"2026-09-27T20:24:17.199245226Z","type":"gate_passed","updated_by":"auto:executor"}

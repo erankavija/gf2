@@ -422,6 +422,11 @@
       "status": "passed",
       "updated_at": "2026-09-27T20:14:56.715614658Z",
       "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-27T20:24:17.199245226Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "bc091474-8c85-4758-aef6-fffb012fad36",
@@ -440,5 +445,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze, measure and select the logical-buffer candidates",
-  "updated_at": "2026-09-27T20:14:56.715614658Z"
+  "updated_at": "2026-09-27T20:24:17.199245226Z"
 }
