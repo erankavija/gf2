@@ -13733,3 +13733,4 @@
 {"fields":["documents"],"id":"b3ce7f8c-7618-4cc1-b578-00279a504cba","issue_id":"fcb04d66-e997-491e-8855-a505e139a39b","timestamp":"2026-09-27T20:45:14.021169784Z","type":"issue_updated","updated_by":"doc-add"}
 {"gate_key":"asm-artefact-present","id":"b8f45ada-73a1-499b-8c0b-6ade5031f956","issue_id":"fcb04d66-e997-491e-8855-a505e139a39b","timestamp":"2026-09-27T20:45:14.439900693Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"025fe475-2c29-4481-8aff-005c9928c5cb","issue_id":"fcb04d66-e997-491e-8855-a505e139a39b","timestamp":"2026-09-27T20:47:45.365321488Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"5febf1e2-aef5-4903-89b9-c4ba453c8f65","issue_id":"fcb04d66-e997-491e-8855-a505e139a39b","timestamp":"2026-09-27T20:53:28.471354444Z","type":"gate_passed","updated_by":"auto:executor"}
