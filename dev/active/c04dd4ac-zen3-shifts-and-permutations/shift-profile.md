@@ -195,24 +195,21 @@ the control does strictly less work per word than any correct residual shift
 can; whether either form is implementable at the repository's Rust 1.95 floor
 is settled by the record named below, and settling it is not a win.
 
-Under REQ-05 the nomination keeps this profile open, and what it owes is
-planning-time evidence rather than more measurement. The Rust 1.95 compile and
-assembly record for both nominated forms, with the runtime-gated scalar
-fallback each capability-gated form needs, is the
-[feasibility record](shift-feasibility-record.md): both forms are feasible at
-the MSRV, and that record carries the toolchain and assembly artefacts, the
-correctness evidence and a scope proposal for the leaves. Feasibility is not a
-win, and the record makes no speed claim.
+REQ-05's planning-time obligation is satisfied by the
+[feasibility record](shift-feasibility-record.md): both nominated forms compile
+at Rust 1.95, have assembly and independent correctness evidence, and retain
+the scalar fallback behind runtime capability detection. This profile remains
+exploratory; feasibility makes no speed claim.
 
-The amended [plan](plan.md) carries the bracket step. It creates the candidate
-implementation leaf for the BMI2-gated scalar funnel (`f8dd4dde`) and its A/B
-confirmation leaf (`00dd43c3`), makes them depend on this profile, and re-homes
-publication (`a0812b83`) behind the confirmation in the instantiated dependency
-graph. The AVX2 lane-crossing funnel is nominated, feasible and unselected in
-this epic; the plan's decision table records the ruling and its reason. A
-family whose downstream consumer set is empty leaves open whether the primitive
-is worth its maintenance: the confirmation's frozen retention rule decides
-that, and this profile supplies the cost side of the argument only.
+The amended [plan](plan.md) and its
+[re-review](../1a379447-zen3-cpu-performance/progress.json) place the BMI2-gated
+scalar funnel implementation (`f8dd4dde`) and its A/B confirmation (`00dd43c3`)
+behind this profile, with publication (`a0812b83`) behind the confirmation.
+Both leaves are complete. The [accepted confirmation](../00dd43c3/confirmation-outcome.md)
+qualifies, and its [frozen rule](../00dd43c3/pilot-addendum.json) retains the
+BMI2 route. The AVX2 lane-crossing funnel remains nominated and feasible at the
+MSRV but unselected in this epic; the plan records the selection reason. This
+profile remains the exploratory workload-cost evidence for the retained route.
 
 ## Evidence map
 
@@ -223,7 +220,8 @@ that, and this profile supplies the cost side of the argument only.
 | [`shift-profile-validation.json`](shift-profile-validation.json) | Passing independent-oracle corpus; tables § *Semantic oracle corpus* |
 | [`shift-profile-consumer-audit.json`](shift-profile-consumer-audit.json) | Passing; no downstream production caller; tables § *Production-consumer audit* |
 | [`shift-profile-smoke.json`](shift-profile-smoke.json) | Passing: both arms answer the runner's request framing on every frozen cell, with zero timing windows |
-| [`shift-feasibility-record.md`](shift-feasibility-record.md) | The REQ-05 planning-time record: both nominated forms feasible at Rust 1.95, with the toolchain, assembly and correctness artefacts |
+| [`shift-feasibility-record.md`](shift-feasibility-record.md) | The completed REQ-05 planning-time record: both nominated forms feasible at Rust 1.95, with the toolchain, assembly and correctness artefacts |
+| [`confirmation-outcome.md`](../00dd43c3/confirmation-outcome.md) | Accepted A/B verdict and frozen-rule decision to retain the selected BMI2 route |
 | [`survey/shift-source-evidence.json`](survey/shift-source-evidence.json) | The pinned code claims behind every mechanism statement above |
 | [`dev/bench_results/85fc5ff4/v4-voided-launch-attempt.json`](../../bench_results/85fc5ff4/v4-voided-launch-attempt.json) | The voided launch attempt, its preserved stage and its unmeasured cells |
 | [`dev/bench_results/c04dd4ac/residual-shift-profile/`](../../bench_results/c04dd4ac/residual-shift-profile/) | The accepted exploratory receipt, its acceptance summary, execution log, checkpoints and input snapshots |
