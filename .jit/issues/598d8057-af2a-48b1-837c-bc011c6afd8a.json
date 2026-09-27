@@ -19,7 +19,7 @@
     "component:gf2-core"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Remove or gate the dead choose_k_block helper in m4rm",
-  "updated_at": "2026-09-16T10:55:02.077633189Z"
+  "updated_at": "2026-09-27T19:51:31.318645525Z"
 }

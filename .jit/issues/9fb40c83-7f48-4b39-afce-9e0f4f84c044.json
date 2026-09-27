@@ -522,8 +522,26 @@
       "format": "markdown",
       "label": "Completed coverage-addressability advisory resolution",
       "path": "dev/active/9f0e385e/coverage-addressability.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7a29558048008ea9d1d608acf0ff6b0f3e5a1a05f4f45b697ab5f6d9de832ce5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Final lead review and cumulative findings",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r8.md"
     }
   ],
+  "done_at": "2026-09-27T19:51:31.151336009Z",
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
   "gates_required": [
     "cargo-ci",
@@ -564,7 +582,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-27T19:49:32.894157745Z"
+  "updated_at": "2026-09-27T19:51:31.151336009Z"
 }
