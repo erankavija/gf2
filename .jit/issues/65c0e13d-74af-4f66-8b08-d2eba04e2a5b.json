@@ -385,6 +385,47 @@
       "format": "markdown",
       "label": "Authoritative mid-range breakdown manifest",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/breakdown.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b479513125bf558cfe4bb70d31697e089a60d86ba1f8b17dd5bcdfbbfc05d009",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8b4e4b3d16f693a2d445570f0a6e5f5022588cd620673bb4ff54ed582eb96a22",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "82138aad788eee189015a4e41ccc7161d144aedb2ec917cfc7e225c5b6535309",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/plan.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/plan.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Six-pair pilot versus frozen sampling requirement",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-sampling-discrepancy.md"
     }
   ],
   "first_ready_at": "2026-09-16T22:42:51.432965529Z",
@@ -425,5 +466,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-27T20:05:23.530922213Z"
+  "updated_at": "2026-09-27T20:08:30.244508101Z"
 }
