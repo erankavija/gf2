@@ -1447,7 +1447,8 @@
     "65c0e13d": 1,
     "fcb04d66": 1,
     "00dd43c3": 1,
-    "c73ffa25": 1
+    "c73ffa25": 1,
+    "a0812b83": 1
   },
   "surfaced_pitfalls": [
     {
@@ -2020,7 +2021,8 @@
     "Session26: approved DVB round8 merged dde907e5b, ISA clarification merged9d1955123, logical sampled-symbol uncertainty merged08ec2888a; each clean merged-tree CI PASS. ISA and DVB document checks have zero errors. Logical checker treats Python f-string templates as literal Markdown links; generated outputs resolve. Final code/research gate chain starts after links. No worker active; pinned dense/residual timers unchanged.",
     "Session26: DVB9fb40c83 DONE eb7d94e0a. Code b753b580 passes with existing coverage advisory resolved by9f0e385e; research36a97137 passes zero findings. Story publication still waits residual-shift confirmation00dd43c3. ISA-L code review next.",
     "Session26: ISA-L65c0e13d DONE ec5ad6fe1. Code0c538d09 PASS zero findings; researchbd066df1 PASS sampling advisory. Citation-only repair uses standing handoff15 authorization. User approved terminal six-pair exception ISA-PILOT-6; review65c0e13d-r1.md. Logical codea316789a PASS zero findings; research next. All raw receipt bytes preserved.",
-    "Session26: bc091474 DONE01482e86d; fcb04d66 and a1ad6d4e newly ready. Next dispatch Sol high for no-change production verification and Sol xhigh for private BitSlice candidate assessment. Wave3 remains current; dense/residual measurements still scheduled02:00 Helsinki."
+    "Session26: bc091474 DONE01482e86d; fcb04d66 and a1ad6d4e newly ready. Next dispatch Sol high for no-change production verification and Sol xhigh for private BitSlice candidate assessment. Wave3 remains current; dense/residual measurements still scheduled02:00 Helsinki.",
+    "Session 26: a0812b83 pre-gate review found per-arm shift and NR adapter medians reported with observed ranges. Rework 1 reuses canonical order-statistic intervals and derives coverage. No prior failed code-review runs; linked design deferred-item scan found no punted scope. M4RI preparation found strict receipt JSON cannot encode predeclared unqualified shapes; worker prepares a concrete companion-table amendment for invoker approval before adoption. No timing is queued."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2084,11 +2086,14 @@
       "c73ffa25"
     ],
     "active_workers": {
-      "a0812b83": "Sol high dvb_results; fresh worktree agent-a0812b83 at949550c25; generated shift/permutation publication",
+      "a0812b83": "Sol high dvb_results; publication rework 1: canonical intervals and derived coverage for all published measured medians; remove narrative-string assertion.",
       "50f0bd42": "Sol xhigh logical_results; fresh agent-50f0bd42 atbbdf0c1f5; M4RI preparation, heavy build/test slot"
     },
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
-    "pending_reviews": []
+    "pending_reviews": [
+      "a0812b83 publication rework 1",
+      "50f0bd42 M4RI preparation and unavailable-row amendment proposal"
+    ]
   }
 }
