@@ -1,0 +1,249 @@
+ Percent |	Source code & Disassembly of dense-arm for cycles:u (2705 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     000000000005ae20 <gf2_core::matrix::BitMatrix::matvec>:
+    0.00 :   5ae20:  push   %rbp
+    0.00 :   5ae21:  push   %r15
+    0.00 :   5ae23:  push   %r14
+    0.00 :   5ae25:  push   %r13
+    0.00 :   5ae27:  push   %r12
+    0.00 :   5ae29:  push   %rbx
+    0.00 :   5ae2a:  sub    $0xa8,%rsp
+    0.00 :   5ae31:  mov    %rsi,%rbx
+    0.00 :   5ae34:  mov    0x18(%rdx),%rax
+    0.00 :   5ae38:  mov    %rax,0xa0(%rsp)
+    0.00 :   5ae40:  cmp    0x20(%rsi),%rax
+    0.00 :   5ae44:  jne    5b1dc <gf2_core::matrix::BitMatrix::matvec+0x3bc>
+    0.00 :   5ae4a:  mov    %rdi,0x60(%rsp)
+    0.00 :   5ae4f:  mov    0x18(%rbx),%rcx
+    0.00 :   5ae53:  mov    %rcx,%r14
+    0.00 :   5ae56:  shr    $0x6,%r14
+    0.00 :   5ae5a:  mov    %ecx,%eax
+    0.04 :   5ae5c:  and    $0x3f,%eax
+    0.00 :   5ae5f:  cmp    $0x1,%rax
+    0.00 :   5ae63:  sbb    $0xffffffffffffffff,%r14
+    0.00 :   5ae67:  mov    %rcx,0x90(%rsp)
+    0.00 :   5ae6f:  test   %rcx,%rcx
+    0.00 :   5ae72:  je     5b12f <gf2_core::matrix::BitMatrix::matvec+0x30f>
+    0.00 :   5ae78:  mov    %rdx,%r13
+    0.00 :   5ae7b:  lea    0x0(,%r14,8),%r12
+    0.00 :   5ae83:  mov    %r12,%rdi
+    0.00 :   5ae86:  call   *0x4d51c(%rip)        # a83a8 <malloc@GLIBC_2.2.5>
+    0.00 :   5ae8c:  test   %rax,%rax
+    0.00 :   5ae8f:  je     5b207 <gf2_core::matrix::BitMatrix::matvec+0x3e7>
+    0.00 :   5ae95:  movabs $0x8000000000000000,%rcx
+    0.00 :   5ae9f:  movabs $0xffffffffffffffc,%rdx
+    0.00 :   5aea9:  mov    %r14,(%rsp)
+    0.00 :   5aead:  mov    %rax,0x8(%rsp)
+    0.00 :   5aeb2:  pxor   %xmm0,%xmm0
+    0.00 :   5aeb6:  movdqu %xmm0,0x10(%rsp)
+    0.00 :   5aebc:  movq   $0x0,0x1d(%rsp)
+    0.00 :   5aec5:  mov    %rcx,0x28(%rsp)
+    0.00 :   5aeca:  mov    0x28(%rbx),%rcx
+    0.00 :   5aece:  mov    0x8(%rbx),%r14
+    0.00 :   5aed2:  mov    0x10(%rbx),%rax
+    0.00 :   5aed6:  mov    %rax,0x58(%rsp)
+    0.00 :   5aedb:  mov    %rcx,%rbx
+    0.00 :   5aede:  and    %rdx,%rbx
+    0.00 :   5aee1:  mov    %ecx,%eax
+    0.00 :   5aee3:  and    $0x3,%eax
+    0.00 :   5aee6:  mov    %rax,0x80(%rsp)
+    0.00 :   5aeee:  mov    %rcx,0x88(%rsp)
+    0.00 :   5aef6:  lea    0x0(,%rcx,8),%rax
+    0.00 :   5aefe:  mov    %rax,0x78(%rsp)
+    0.00 :   5af03:  xor    %r12d,%r12d
+    0.00 :   5af06:  mov    %r14,0x70(%rsp)
+    0.00 :   5af0b:  xor    %ecx,%ecx
+    0.00 :   5af0d:  mov    %r13,0x68(%rsp)
+    0.00 :   5af12:  jmp    5af5e <gf2_core::matrix::BitMatrix::matvec+0x13e>
+    0.00 :   5af14:  data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   5af20:  mov    $0x1,%eax
+    0.00 :   5af25:  mov    %ebp,%ecx
+    0.00 :   5af27:  shl    %cl,%rax
+    0.00 :   5af2a:  mov    0x8(%rsp),%rcx
+    0.00 :   5af2f:  or     %rax,(%rcx,%r12,8)
+    3.14 :   5af33:  mov    0x98(%rsp),%rcx
+    0.07 :   5af3b:  inc    %rcx
+    0.07 :   5af3e:  mov    0x18(%rsp),%r12
+    0.07 :   5af43:  inc    %r12
+    0.00 :   5af46:  mov    %r12,0x18(%rsp)
+    0.00 :   5af4b:  add    0x78(%rsp),%r14
+    0.00 :   5af50:  cmp    0x90(%rsp),%rcx
+    0.00 :   5af58:  je     5b162 <gf2_core::matrix::BitMatrix::matvec+0x342>
+    0.00 :   5af5e:  mov    %rcx,%rdi
+    7.05 :   5af61:  mov    0x88(%rsp),%rax
+    0.00 :   5af69:  imul   %rax,%rdi
+    0.15 :   5af6d:  mov    %rdi,%rsi
+    0.00 :   5af70:  add    %rax,%rsi
+    0.07 :   5af73:  jb     5b1c8 <gf2_core::matrix::BitMatrix::matvec+0x3a8>
+    0.00 :   5af79:  cmp    0x58(%rsp),%rsi
+    0.00 :   5af7e:  ja     5b1c8 <gf2_core::matrix::BitMatrix::matvec+0x3a8>
+    0.00 :   5af84:  mov    %rcx,0x98(%rsp)
+    0.00 :   5af8c:  mov    0x8(%r13),%rax
+    0.00 :   5af90:  mov    0x10(%r13),%rdx
+    6.94 :   5af94:  mov    %rdx,%rcx
+    0.00 :   5af97:  movabs $0xffffffffffffffc,%rsi
+    0.04 :   5afa1:  and    %rsi,%rcx
+    0.04 :   5afa4:  test   %rbx,%rbx
+    0.04 :   5afa7:  je     5b010 <gf2_core::matrix::BitMatrix::matvec+0x1f0>
+    0.00 :   5afa9:  pxor   %xmm0,%xmm0
+    0.19 :   5afad:  xor    %esi,%esi
+    0.00 :   5afaf:  pxor   %xmm1,%xmm1
+    0.00 :   5afb3:  data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    6.34 :   5afc0:  cmp    %rsi,%rcx
+    0.04 :   5afc3:  je     5aff6 <gf2_core::matrix::BitMatrix::matvec+0x1d6>
+    0.00 :   5afc5:  movdqu (%r14,%rsi,8),%xmm2
+    0.07 :   5afcb:  movdqu 0x10(%r14,%rsi,8),%xmm3
+    0.11 :   5afd2:  movdqu (%rax,%rsi,8),%xmm4
+    0.00 :   5afd7:  pand   %xmm2,%xmm4
+    5.85 :   5afdb:  movdqu 0x10(%rax,%rsi,8),%xmm2
+    0.00 :   5afe1:  pand   %xmm3,%xmm2
+    0.07 :   5afe5:  pxor   %xmm2,%xmm1
+    6.74 :   5afe9:  pxor   %xmm4,%xmm0
+    0.00 :   5afed:  add    $0x4,%rsi
+    0.15 :   5aff1:  cmp    %rsi,%rbx
+    0.00 :   5aff4:  jne    5afc0 <gf2_core::matrix::BitMatrix::matvec+0x1a0>
+    0.00 :   5aff6:  pxor   %xmm1,%xmm0
+    0.00 :   5affa:  pshufd $0xee,%xmm0,%xmm1
+    6.32 :   5afff:  pxor   %xmm0,%xmm1
+    0.07 :   5b003:  movq   %xmm1,%r15
+    0.04 :   5b008:  jmp    5b013 <gf2_core::matrix::BitMatrix::matvec+0x1f3>
+    0.00 :   5b00a:  nopw   0x0(%rax,%rax,1)
+    0.00 :   5b010:  xor    %r15d,%r15d
+    0.00 :   5b013:  and    $0x3,%edx
+    0.00 :   5b016:  mov    0x80(%rsp),%rsi
+    0.04 :   5b01e:  cmp    %rsi,%rdx
+    0.00 :   5b021:  cmovae %rsi,%rdx
+    0.00 :   5b025:  test   %rdx,%rdx
+    5.96 :   5b028:  je     5b070 <gf2_core::matrix::BitMatrix::matvec+0x250>
+    0.00 :   5b02a:  mov    0x70(%rsp),%rsi
+    0.00 :   5b02f:  lea    (%rsi,%rdi,8),%rsi
+    0.00 :   5b033:  mov    (%rax,%rcx,8),%rdi
+    0.00 :   5b037:  and    (%rsi,%rbx,8),%rdi
+    0.00 :   5b03b:  xor    %rdi,%r15
+    0.00 :   5b03e:  cmp    $0x1,%edx
+    0.00 :   5b041:  je     5b070 <gf2_core::matrix::BitMatrix::matvec+0x250>
+    0.00 :   5b043:  mov    0x8(%rax,%rcx,8),%rdi
+    0.00 :   5b048:  and    0x8(%rsi,%rbx,8),%rdi
+    0.00 :   5b04d:  xor    %rdi,%r15
+    0.00 :   5b050:  cmp    $0x2,%edx
+    0.00 :   5b053:  je     5b070 <gf2_core::matrix::BitMatrix::matvec+0x250>
+    0.00 :   5b055:  mov    0x10(%rax,%rcx,8),%rax
+    0.00 :   5b05a:  and    0x10(%rsi,%rbx,8),%rax
+    0.00 :   5b05f:  xor    %rax,%r15
+    0.00 :   5b062:  data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   5b070:  mov    %r12,%rbp
+    0.00 :   5b073:  and    $0x3f,%rbp
+    0.07 :   5b077:  jne    5b0a7 <gf2_core::matrix::BitMatrix::matvec+0x287>
+    0.00 :   5b079:  mov    0x10(%rsp),%r13
+    0.00 :   5b07e:  cmp    (%rsp),%r13
+    0.07 :   5b082:  jne    5b08d <gf2_core::matrix::BitMatrix::matvec+0x26d>
+    0.00 :   5b084:  mov    %rsp,%rdi
+    0.00 :   5b087:  call   *0x4d733(%rip)        # a87c0 <_DYNAMIC+0x600>
+    0.00 :   5b08d:  mov    0x8(%rsp),%rax
+    0.00 :   5b092:  movq   $0x0,(%rax,%r13,8)
+    0.00 :   5b09a:  inc    %r13
+    0.00 :   5b09d:  mov    %r13,0x10(%rsp)
+    0.11 :   5b0a2:  mov    0x68(%rsp),%r13
+    0.00 :   5b0a7:  mov    %r15,%rax
+    0.00 :   5b0aa:  shr    $1,%rax
+    0.19 :   5b0ad:  movabs $0x5555555555555555,%rcx
+    0.00 :   5b0b7:  and    %rcx,%rax
+    0.04 :   5b0ba:  sub    %rax,%r15
+    0.15 :   5b0bd:  mov    %r15,%rax
+    5.86 :   5b0c0:  movabs $0x3333333333333333,%rcx
+    0.04 :   5b0ca:  and    %rcx,%rax
+    0.26 :   5b0cd:  shr    $0x2,%r15
+    0.00 :   5b0d1:  and    %rcx,%r15
+    0.45 :   5b0d4:  add    %rax,%r15
+    0.45 :   5b0d7:  mov    %r15,%rax
+    0.00 :   5b0da:  shr    $0x4,%rax
+    2.22 :   5b0de:  add    %r15,%rax
+    6.08 :   5b0e1:  movabs $0xf0f0f0f0f0f0f0f,%rcx
+    0.00 :   5b0eb:  and    %rcx,%rax
+    3.00 :   5b0ee:  movabs $0x101010101010101,%rcx
+    0.00 :   5b0f8:  imul   %rcx,%rax
+    5.11 :   5b0fc:  shr    $0x38,%rax
+   19.09 :   5b100:  test   $0x1,%al
+    6.85 :   5b102:  je     5af33 <gf2_core::matrix::BitMatrix::matvec+0x113>
+    0.00 :   5b108:  shr    $0x6,%r12
+    0.22 :   5b10c:  mov    0x10(%rsp),%rsi
+    0.04 :   5b111:  cmp    %rsi,%r12
+    0.00 :   5b114:  jb     5af20 <gf2_core::matrix::BitMatrix::matvec+0x100>
+    0.00 :   5b11a:  lea    0x4ae97(%rip),%rdx        # a5fb8 <anon.0394329cd652034822c68ee3b583e6f3.429.llvm.933060972426697327+0x2c0>
+    0.00 :   5b121:  mov    %r12,%rdi
+    0.00 :   5b124:  call   *0x4d2d6(%rip)        # a8400 <_DYNAMIC+0x240>
+    0.00 :   5b12a:  jmp    5b1da <gf2_core::matrix::BitMatrix::matvec+0x3ba>
+    0.00 :   5b12f:  movq   $0x0,(%rsp)
+    0.00 :   5b137:  movq   $0x8,0x8(%rsp)
+    0.00 :   5b140:  pxor   %xmm0,%xmm0
+    0.00 :   5b144:  movdqu %xmm0,0x10(%rsp)
+    0.00 :   5b14a:  movq   $0x0,0x1d(%rsp)
+    0.00 :   5b153:  movabs $0x8000000000000000,%rax
+    0.00 :   5b15d:  mov    %rax,0x28(%rsp)
+    0.00 :   5b162:  mov    0x50(%rsp),%rcx
+    0.00 :   5b167:  mov    0x60(%rsp),%rax
+    0.00 :   5b16c:  mov    %rcx,0x50(%rax)
+    0.00 :   5b170:  movups 0x40(%rsp),%xmm0
+    0.00 :   5b175:  movups %xmm0,0x40(%rax)
+    0.00 :   5b179:  mov    (%rsp),%r9
+    0.00 :   5b17d:  mov    0x8(%rsp),%rcx
+    0.00 :   5b182:  mov    0x10(%rsp),%rdx
+    0.00 :   5b187:  mov    0x18(%rsp),%rsi
+    0.00 :   5b18c:  mov    0x20(%rsp),%rdi
+    0.00 :   5b191:  mov    0x28(%rsp),%r8
+    0.00 :   5b196:  movups 0x30(%rsp),%xmm0
+    0.00 :   5b19b:  movups %xmm0,0x30(%rax)
+    0.00 :   5b19f:  mov    %rdi,0x20(%rax)
+    0.00 :   5b1a3:  mov    %r8,0x28(%rax)
+    0.00 :   5b1a7:  mov    %rdx,0x10(%rax)
+    0.00 :   5b1ab:  mov    %rsi,0x18(%rax)
+    0.00 :   5b1af:  mov    %r9,(%rax)
+    0.00 :   5b1b2:  mov    %rcx,0x8(%rax)
+    0.00 :   5b1b6:  add    $0xa8,%rsp
+    0.00 :   5b1bd:  pop    %rbx
+    0.00 :   5b1be:  pop    %r12
+    0.00 :   5b1c0:  pop    %r13
+    0.00 :   5b1c2:  pop    %r14
+    0.00 :   5b1c4:  pop    %r15
+    0.00 :   5b1c6:  pop    %rbp
+    0.00 :   5b1c7:  ret
+    0.00 :   5b1c8:  lea    0x4ae01(%rip),%rcx        # a5fd0 <anon.0394329cd652034822c68ee3b583e6f3.429.llvm.933060972426697327+0x2d8>
+    0.00 :   5b1cf:  mov    0x58(%rsp),%rdx
+    0.00 :   5b1d4:  call   *0x4d326(%rip)        # a8500 <_DYNAMIC+0x340>
+    0.00 :   5b1da:  ud2
+    0.00 :   5b1dc:  add    $0x20,%rbx
+    0.00 :   5b1e0:  lea    -0x4df07(%rip),%rcx        # d2e0 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x4a0>
+    0.00 :   5b1e7:  lea    0x4adfa(%rip),%r9        # a5fe8 <anon.0394329cd652034822c68ee3b583e6f3.429.llvm.933060972426697327+0x2f0>
+    0.00 :   5b1ee:  lea    0xa0(%rsp),%rsi
+    0.00 :   5b1f6:  mov    $0x47,%r8d
+    0.00 :   5b1fc:  xor    %edi,%edi
+    0.00 :   5b1fe:  mov    %rbx,%rdx
+    0.00 :   5b201:  call   *0x4d289(%rip)        # a8490 <_DYNAMIC+0x2d0>
+    0.00 :   5b207:  mov    $0x8,%edi
+    0.00 :   5b20c:  mov    %r12,%rsi
+    0.00 :   5b20f:  call   *0x4d1db(%rip)        # a83f0 <_DYNAMIC+0x230>
+    0.00 :   5b215:  jmp    5b217 <gf2_core::matrix::BitMatrix::matvec+0x3f7>
+    0.00 :   5b217:  mov    %rax,%rbx
+    0.00 :   5b21a:  cmpq   $0x0,(%rsp)
+    0.00 :   5b21f:  je     5b22c <gf2_core::matrix::BitMatrix::matvec+0x40c>
+    0.00 :   5b221:  mov    0x8(%rsp),%rdi
+    0.00 :   5b226:  call   *0x4d18c(%rip)        # a83b8 <free@GLIBC_2.2.5>
+    0.00 :   5b22c:  mov    0x28(%rsp),%rax
+    0.00 :   5b231:  movabs $0x8000000000000000,%rcx
+    0.00 :   5b23b:  cmp    %rcx,%rax
+    0.00 :   5b23e:  je     5b263 <gf2_core::matrix::BitMatrix::matvec+0x443>
+    0.00 :   5b240:  test   %rax,%rax
+    0.00 :   5b243:  je     5b250 <gf2_core::matrix::BitMatrix::matvec+0x430>
+    0.00 :   5b245:  mov    0x30(%rsp),%rdi
+    0.00 :   5b24a:  call   *0x4d168(%rip)        # a83b8 <free@GLIBC_2.2.5>
+    0.00 :   5b250:  cmpq   $0x0,0x40(%rsp)
+    0.00 :   5b256:  je     5b263 <gf2_core::matrix::BitMatrix::matvec+0x443>
+    0.00 :   5b258:  mov    0x48(%rsp),%rdi
+    0.00 :   5b25d:  call   *0x4d155(%rip)        # a83b8 <free@GLIBC_2.2.5>
+    0.00 :   5b263:  mov    %rbx,%rdi
+    0.00 :   5b266:  call   a3590 <_Unwind_Resume@plt>

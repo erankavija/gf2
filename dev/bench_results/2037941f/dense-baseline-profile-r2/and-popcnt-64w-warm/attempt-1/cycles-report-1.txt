@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2703413555
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    79.45%          2269  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    14.88%           425  dense-arm             [.] dense_arm::run::{{closure}}
+     5.61%           160  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.03%             1  [unknown]             [k] 0xffffffffa6c92baa
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000adbd
+     0.01%             1  [unknown]             [k] 0xffffffffa6edca54
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016521
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee3d70
+     0.00%             2  [unknown]             [k] 0xffffffffa6ef96a2
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc600
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33136
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c88
+
+
+#
+# (Tip: To set sample time separation other than 100ms with --sort time use --time-quantum)
+#

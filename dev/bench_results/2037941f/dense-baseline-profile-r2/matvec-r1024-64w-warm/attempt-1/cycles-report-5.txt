@@ -1,0 +1,57 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2633749705
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    78.96%          2225  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    17.99%           508  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.59%            73  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.21%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61e78
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  libc.so.6             [.] 0x00000000000a7669
+     0.01%             1  [unknown]             [k] 0xffffffffa690410b
+     0.01%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016df1
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000c812
+     0.00%             1  libc.so.6             [.] 0x000000000017a2b4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef2aac
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000174d0
+     0.00%             1  [unknown]             [k] 0xffffffffa6f93dca
+     0.00%             1  [unknown]             [k] 0xffffffffa6af1584
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016e55
+     0.00%             1  [unknown]             [k] 0xffffffffa6fec3d1
+     0.00%             1  [unknown]             [k] 0xffffffffa6eddded
+     0.00%             1  [unknown]             [k] 0xffffffffa6f991a2
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3316d
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff3d81
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7888c
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5f8f
+     0.00%             1  [unknown]             [k] 0xffffffffa731407d
+     0.00%             1  [unknown]             [k] 0xffffffffa70041bd
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6f6ab
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af9a
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b280
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000028973
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff2144
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61d76
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+
+
+#
+# (Tip: To set sample time separation other than 100ms with --sort time use --time-quantum)
+#

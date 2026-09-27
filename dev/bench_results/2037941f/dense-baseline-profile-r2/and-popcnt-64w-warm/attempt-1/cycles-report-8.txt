@@ -1,0 +1,43 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2737150725
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                 
+# ........  ............  ....................  .......................................................................................................................
+#
+    80.63%          2344  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    13.38%           389  dense-arm             [.] dense_arm::run::{{closure}}
+     5.97%           173  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a044
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010472
+     0.00%             1  dense-arm             [.] dense_parity_harness::wire::_::<impl serde_core::de::Deserialize for dense_parity_harness::wire::Case>::deserialize
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.00%             1  [unknown]             [k] 0xffffffffa6c65701
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afd4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000021e34
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa7d6f2d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc5e3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed5c51
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788be
+     0.00%             1  [unknown]             [k] 0xffffffffa6b4cb43
+     0.00%             1  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788b8
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.00%             1  [unknown]             [k] 0xffffffffa7d64274
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8054b
+
+
+#
+# (Tip: Use parent filter to see specific call path: perf report -p <regex>)
+#

@@ -1,0 +1,43 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2655223478
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    56.97%          1610  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    29.46%           833  dense-arm             [.] dense_arm::run::{{closure}}
+    13.53%           383  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000baee
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  libc.so.6             [.] 0x0000000000176404
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000104e5
+     0.00%             1  [unknown]             [k] 0xffffffffa6fca745
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bf
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016ded
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029315
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016484
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78794
+     0.00%             1  [unknown]             [k] 0xffffffffa6801ca6
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0558
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff03e6
+     0.00%             1  [unknown]             [k] 0xffffffffa701568a
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78644
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab359
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc5f3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0260
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+
+
+#
+# (Tip: To show inline functions in call traces add --inline to perf report)
+#

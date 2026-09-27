@@ -1,0 +1,41 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2725797162
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    75.42%          2170  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    18.08%           521  dense-arm             [.] dense_arm::run::{{closure}}
+     6.48%           187  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000adb1
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.00%             1  [unknown]             [k] 0xffffffffa6aaae30
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ba8c
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff029a
+     0.00%             1  [unknown]             [k] 0xffffffffa6b48506
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a6a
+     0.00%             1  [unknown]             [k] 0xffffffffa74126a7
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e787a7
+     0.00%             1  [unknown]             [k] 0xffffffffa700413f
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6fecc3b
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80d3f
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9938c
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa74a1956
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804df
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

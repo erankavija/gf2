@@ -1,0 +1,72 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2525606156
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    98.07%          2698  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.33%             9  dense-arm             [.] dense_arm::run::{{closure}}
+     0.18%             5  libc.so.6             [.] malloc
+     0.15%             5  [unknown]             [k] 0xffffffffa6801280
+     0.07%             2  [unknown]             [k] 0xffffffffa6801d22
+     0.07%             3  libc.so.6             [.] cfree
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e5c4
+     0.04%             1  [unknown]             [k] 0xffffffffa6caf163
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb40
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.04%             1  [unknown]             [k] 0xffffffffa6c92baa
+     0.04%             1  [unknown]             [k] 0xffffffffa6cae989
+     0.04%             1  libc.so.6             [.] 0x00000000000a61d3
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d04
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a129
+     0.04%             1  [unknown]             [k] 0xffffffffa6801290
+     0.04%             1  [unknown]             [k] 0xffffffffa6801284
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e5bd
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef9747
+     0.04%             1  [unknown]             [k] 0xffffffffa6c9057e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f24d
+     0.04%             1  libc.so.6             [.] 0x00000000000a6198
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f77
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c416
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6145
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::admit
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e2e
+     0.04%             1  libc.so.6             [.] 0x00000000000a619d
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3d7d
+     0.04%             1  libc.so.6             [.] 0x00000000000a5005
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61c26
+     0.04%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  [unknown]             [k] 0xffffffffa6b48557
+     0.01%             1  [unknown]             [k] 0xffffffffa7d61c0f
+     0.01%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33f4d
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000aed9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000410e
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029564
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78837
+     0.00%             1  [unknown]             [k] 0xffffffffa6eddd5e
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0594
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab8b2
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa7d805b8
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f94aae
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80560
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

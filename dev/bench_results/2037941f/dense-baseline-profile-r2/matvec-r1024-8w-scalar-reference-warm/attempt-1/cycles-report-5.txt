@@ -1,0 +1,59 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2550728629
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    98.52%          2740  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.25%             7  dense-arm             [.] dense_arm::run::{{closure}}
+     0.14%             4  [unknown]             [k] 0xffffffffa6801280
+     0.11%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  libc.so.6             [.] cfree
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             2  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee65e8
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d9a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f63
+     0.04%             1  [unknown]             [k] 0xffffffffa6edd984
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a16e
+     0.04%             1  libc.so.6             [.] 0x00000000000a763c
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f3b
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93085
+     0.04%             1  libc.so.6             [.] 0x00000000000a6198
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3fd7
+     0.04%             1  libc.so.6             [.] 0x00000000000a6204
+     0.04%             1  [unknown]             [k] 0xffffffffa7da470f
+     0.04%             1  libc.so.6             [.] 0x00000000000a6252
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6d15
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94bf
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.00%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bb00
+     0.00%             1  libc.so.6             [.] 0x0000000000069fc3
+     0.00%             1  libc.so.6             [.] 0x00000000001789ef
+     0.00%             1  [unknown]             [k] 0xffffffffa6fcdd54
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000103fd
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa7d89ab6
+     0.00%             1  [unknown]             [k] 0xffffffffa7d65a71
+     0.00%             1  [unknown]             [k] 0xffffffffa6b48506
+     0.00%             1  [unknown]             [k] 0xffffffffa6f7ec21
+     0.00%             1  [unknown]             [k] 0xffffffffa6eff5db
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c88
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#

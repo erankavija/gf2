@@ -1,0 +1,53 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2681726192
+#
+# Overhead       Samples  Shared Object         Symbol                                          
+# ........  ............  ....................  ................................................
+#
+    79.18%          2247  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    14.19%           402  dense-arm             [.] dense_arm::run::{{closure}}
+     6.46%           183  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa6caf160
+     0.04%             1  [unknown]             [k] 0xffffffffa6bfa256
+     0.04%             1  [unknown]             [k] 0xffffffffa6c92bc4
+     0.04%             1  [unknown]             [k] 0xffffffffa6b0827d
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000001b9aa
+     0.01%             1  dense-arm             [.] alloc::fmt::format::format_inner
+     0.00%             1  ld-linux-x86-64.so.2  [.] __tunable_get_val
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029f04
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef969f
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016496
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a56
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6fe39f4
+     0.00%             3  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6eb1c21
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000827f
+     0.00%             1  [unknown]             [k] 0xffffffffa6fd1bf5
+     0.00%             1  [unknown]             [k] 0xffffffffa6fec3b0
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0542
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000014ab4
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c84
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000007cab
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000027ab5
+     0.00%             1  libc.so.6             [.] execvp
+     0.00%             1  [unknown]             [k] 0xffffffffa6aab359
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1ca87
+     0.00%             1  [unknown]             [k] 0xffffffffa6fed3d7
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61c72
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#

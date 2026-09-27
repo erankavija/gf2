@@ -1,0 +1,71 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2590794505
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    59.56%          1667  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    29.61%           833  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     9.41%           264  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb51
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3fcf
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e630
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e5b5
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92eb3
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed5380
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f10
+     0.04%             1  [unknown]             [k] 0xffffffffa6e8ceda
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c29b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed54a9
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee437f
+     0.04%             1  libc.so.6             [.] 0x00000000000a5edc
+     0.04%             1  [unknown]             [k] 0xffffffffa6b48575
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f152
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed53c0
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9428b
+     0.04%             1  libc.so.6             [.] 0x00000000000a5011
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.04%             1  libc.so.6             [.] 0x00000000000a5019
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef9794
+     0.04%             1  [unknown]             [k] 0xffffffffa690410b
+     0.04%             1  libc.so.6             [.] cfree
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e5f3
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6d84
+     0.01%             1  [unknown]             [k] 0xffffffffa68015f4
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a924
+     0.00%             1  libc.so.6             [.] 0x00000000000694f1
+     0.00%             1  dense-arm             [.] <usize as core::fmt::Display>::fmt
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afd4
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5fba
+     0.00%             2  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed7610
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff04f1
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0586
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77947
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0425
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed65f0
+     0.00%             1  [unknown]             [k] 0xffffffffa6f99338
+     0.00%             1  [unknown]             [k] 0xffffffffa6fca782
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+
+
+#
+# (Tip: To browse sample contexts use perf report --sample 10 and select in context menu)
+#
