@@ -1,0 +1,243 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "bitvec-residual-bmi2-route",
+    "issue": "00dd43c3",
+    "purpose": "kernel-family",
+    "description": "Exploratory pilot of the shipped residual BitVec shift route. The baseline holds the public shift on its scalar funnel through the test-build switch; the candidate releases the switch for the BMI2-gated route. Both arms run the same executable, residual offset, seeded bits and cache state, and report their executed route. The profile receipt at dev/bench_results/c04dd4ac/residual-shift-profile/receipt.json (SHA-256 bb70db8ce001425b1cbd8d4b3d144beb04cba5331fb53a9a7dc27e2f60d45616) is context for selecting the material cells in both directions, not evidence inherited by this family. The public primitive has no downstream production caller, so cells measure isolated latency or throughput. Confirmation retains the largest set its ledger's P-20 tail-support budget admits, in this priority order: left and right resident, left and right streaming, left and right byte-residual, then left lane-crossing. The lane-crossing cell is the smallest material boundary; paired consequential sizes take priority. Frozen retention rule: retain the gated route only if acceptance verifies the confirmation, no confirmatory cell records fail or not-confirmatory, and at least one cell in each direction records pass. Otherwise remove it and keep the scalar funnel. Every not-material, regressed or inconclusive result remains published."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-26T07:29:22Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.2,
+    "rationale": "With no downstream production caller, a permanent BMI2 route must show a visible gain at the public primitive: twenty percent is the minimum return judged to repay the added dispatch and kernel surface.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A change within ten percent is treated as equivalent at this isolated primitive; the confirmation freezer must put the margin above the pilot's observed resolution.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "Both arms run the same residual operation in the same executable, so this family has no workload-control gap to classify."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 700,
+    "maintenance_rationale": "The one isolated BMI2 funnel kernel and its detected dispatch are the candidate surface. The ceiling covers that surface and its safety contracts; a wider vector route would require another proposal."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/00dd43c3/residual-shift-family-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "left-lane-crossing-r7-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-lane-crossing-len257-residual7-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 257,
+          "residual_offset": 7,
+          "control_offset": 64
+        },
+        "seed": 8502
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-byte-residual-r8-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-byte-residual-len4097-residual8-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 4097,
+          "residual_offset": 8,
+          "control_offset": 64
+        },
+        "seed": 8503
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-resident-r63-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-resident-len65537-residual63-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 65537,
+          "residual_offset": 63,
+          "control_offset": 64
+        },
+        "seed": 8504
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "left-streaming-r65-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-left-streaming-len33554439-residual65-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 33554439,
+          "residual_offset": 65,
+          "control_offset": 64
+        },
+        "seed": 8505
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-byte-residual-r8-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-byte-residual-len4097-residual8-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 4097,
+          "residual_offset": 8,
+          "control_offset": 64
+        },
+        "seed": 8508
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-resident-r63-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-resident-len65537-residual63-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 65537,
+          "residual_offset": 63,
+          "control_offset": 64
+        },
+        "seed": 8509
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "right-streaming-r65-w64",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": {
+        "identity": "bitvec-right-streaming-len33554439-residual65-scalar-vs-bmi2",
+        "size": {
+          "length_bits": 33554439,
+          "residual_offset": 65,
+          "control_offset": 64
+        },
+        "seed": 8510
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "streaming",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "conservative-portable"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
