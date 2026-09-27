@@ -21,8 +21,17 @@ uses the actual six-pair receipt and reports resolution-insufficient. The
 receipt supplies no confirmatory or production-adoption evidence. Its bytes,
 the original sampling requirement, and this discrepancy remain preserved.
 
-Research review `bd066df1` passes with this discrepancy as an advisory.
-Accepting the six-pair exploratory result as the terminal comparison requires
-an explicit sampling exception; issue closure awaits that decision. A fresh
-24-pair run would be a separately identified corrected pilot, not an extension
-of this completed receipt.
+## Approved exception: ISA-PILOT-6
+
+The invoker approves `ISA-PILOT-6` on 2026-09-27: this explicitly nonconforming
+six-pair exploratory pilot is the terminal ISA-L comparison, with no
+confirmation and no production-adoption claim. The exception applies only to
+receipt SHA-256
+`b479513125bf558cfe4bb70d31697e089a60d86ba1f8b17dd5bcdfbbfc05d009`.
+The 24-pair sampling requirement and the discrepancy remain visible. No other
+family, margin, resolution ceiling, or sample changes. The exception terminates
+with this comparison; it authorizes no future six-pair family run.
+
+Research review `bd066df1` passes with the discrepancy as an advisory. Its
+resolution is this approved exception, not a claim that six satisfies the
+original requirement.

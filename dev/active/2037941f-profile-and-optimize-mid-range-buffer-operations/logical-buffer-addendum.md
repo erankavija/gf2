@@ -385,6 +385,14 @@ aligned and boundary cells; offset pointers are outside ISA-L's qualified
 alignment contract. This amendment changes wording only. It changes no cell,
 sample, reservation, seed, margin, resolution rule, or acceptance verdict.
 
+### Amendment 3 (2026-09-27, invoker ruling on issue `65c0e13d`) — ISA-PILOT-6
+
+The named [ISA-PILOT-6 exception](isal-sampling-discrepancy.md#approved-exception-isa-pilot-6)
+accepts the identified six-pair ISA-L pilot as the terminal exploratory
+comparison, preserving its nonconformance to the 24-pair requirement. It
+authorizes no confirmation, production adoption, or future six-pair family
+run. The original requirement and all measured bytes remain preserved.
+
 ## Receipt and stopping evidence
 
 Every campaign snapshots this document, the measurement contract, protocol,
