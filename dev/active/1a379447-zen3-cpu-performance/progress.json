@@ -668,7 +668,7 @@
           "title": "Implement and confirm the logical-buffer outcome",
           "classification": "implementation",
           "status": "done",
-          "tracker_state": "in_progress",
+          "tracker_state": "done",
           "dispatch": {
             "model": "gpt-6-sol",
             "reasoning_effort": "high",
@@ -676,14 +676,15 @@
             "branch": "worktree-agent-fcb04d66",
             "base": "cd353653a",
             "session": 26
-          }
+          },
+          "worktree_reclaimed": true
         },
         {
           "id": "c73ffa25",
           "short_id": "c73ffa25",
           "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
           "classification": "research",
-          "status": "in_progress; preparation merged and CI passed; code gate requires queued receipts/profile and the resulting portfolio before closure.",
+          "status": "in_progress; accepted baselines and complete Sept28 profile collected; final attribution/portfolio and gates pending.",
           "tracker_state": "in_progress",
           "dispatch": {
             "model": "gpt-6-sol xhigh",
@@ -719,7 +720,7 @@
           "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
           "classification": "research",
           "status": "done",
-          "tracker_state": "in_progress",
+          "tracker_state": "done",
           "dispatch": {
             "model": "gpt-6-sol",
             "reasoning_effort": "xhigh",
@@ -727,7 +728,8 @@
             "branch": "worktree-agent-a1ad6d4e",
             "base": "cd353653a",
             "session": 26
-          }
+          },
+          "worktree_reclaimed": true
         }
       ]
     },
@@ -2041,7 +2043,7 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "September27 logs verified: eleven successful jobs; dense profile rejected noncanonical JSON before sampling. Fixed print newline in pinned worker05c7c1707; retries to fresh r2 profile directory. September28 timer armed for dense profile key479f388792038140 and residual confirmation keyd01d0731883044f8. Completed jobs skipped by done markers; other waves held."
+    "current_observation": "September28 window completed23:04:29Z. Dense profile key479f388792038140 and residual confirmation keyd01d0731883044f8 both complete, own logs verified. No pending current-wave queue job; downstream M4RI preparation awaits dense task closure. Standing authorization covers later02:00 Helsinki windows as required."
   },
   "session_scope": {
     "session": 26,
