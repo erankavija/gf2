@@ -1939,7 +1939,8 @@
     "Session 24 dispatch: Sol high e1f9a78f round7 in agent-e1f9a78f-r7; Sol xhigh 9fb40c83 round4 in agent-9fb40c83-r4; Sol high read-only wave readiness survey. Both worker trees anchored to 93d3d72fb. Gates only; no additional independent review. Stale September15 DVB lease recovered. No Astra.",
     "Session24: e1f9a78f DONE at8a9d49c79; lead review r7; code/doc review zero findings, clean merged-tree cargo-ci passes. DVB round4 preparation merged with cargo-ci pass; old attribution and provenance reproduce byte-for-byte; fresh profile queued (12-minute estimate), F3 stays open pending evidence. c73ffa25 now dependency-ready.",
     "Session 24: c73ffa25 preparation merged at efaea4eaf; merged CI passes. Code gate76ce431c reports absent receipts, profile and portfolio (REQ-01,03-06); these require the queued window. No completion claim. Invoker approves DVB round5 after interview.",
-    "Session25: approved DVB rounds6/7 complete; code gate547264f9 passes with coverage advisory tracked as9f0e385e. Queue restored, lease released, handoff requested by user. Research criteria still await scheduled evidence."
+    "Session25: approved DVB rounds6/7 complete; code gate547264f9 passes with coverage advisory tracked as9f0e385e. Queue restored, lease released, handoff requested by user. Research criteria still await scheduled evidence.",
+    "Session26: resume current wave3 only. Three Sol workers finalize dense, DVB and logical candidate evidence from September27 window; no Astra. Dense profile launch failed before sampling. Lead audits coverage addressability and remaining pilot paths. Existing pinned measurement trees preserved."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -1973,11 +1974,11 @@
     "state_dir": ".agents/bench-window",
     "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
     "note": "User authorizes 02:00 Europe/Helsinki on subsequent nights as needed for current wave 3. Arm each next window after reviewing prior results and queue readiness.",
-    "current_observation": "September 27 02:00 EEST timer verified active. DVB round7 code gate passes; fresh profile restored. Twelve pending jobs, 220 estimated minutes. Pinned measurement trees unchanged. Later independent confirmations and M4RI remain held."
+    "current_observation": "September27 window ran 12 jobs and ended2026-09-27T00:03:49Z. Eleven rc0; dense profile rc2 before sampling (noncanonical tuning JSON). Workers verify authoritative logs and receipts. No next timer armed yet."
   },
   "session_scope": {
-    "session": 25,
-    "date": "2026-09-26",
+    "session": 26,
+    "date": "2026-09-27",
     "instruction": "Complete current wave 3 only; model by task difficulty; Astra requires explicit permission.",
     "wave_3_containers": [
       "2037941f",
@@ -2000,11 +2001,12 @@
     "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
-    "completed_this_session": [
-      "e1f9a78f"
-    ],
-    "active_workers": {},
-    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at 815010276",
-    "handoff_instruction": "User requests handoff after the current rework; stop after recording round7 result and queue status."
+    "completed_this_session": [],
+    "active_workers": {
+      "c73ffa25": "Sol xhigh dense_results, preserved agent-c73ffa25",
+      "9fb40c83": "Sol high dvb_results, preserved agent-9fb40c83-r4",
+      "bc091474": "Sol xhigh logical_results, preserved agent-bc091474"
+    },
+    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at 815010276"
   }
 }
