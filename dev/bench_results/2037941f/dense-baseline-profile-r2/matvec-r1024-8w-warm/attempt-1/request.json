@@ -1,0 +1,1 @@
+{"schema":"zen3-benchmark-arm-request-v1","cell_id":"matvec-r1024-8w-warm","arm":"matvec-a","role":"baseline","pair":0,"case":{"question":"allocated-matvec","seed":8049191449235058548,"shape":"full","words":8},"cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":1}

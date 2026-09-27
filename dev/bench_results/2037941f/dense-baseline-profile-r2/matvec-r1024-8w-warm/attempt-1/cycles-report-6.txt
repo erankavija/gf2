@@ -1,0 +1,69 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2582831818
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    59.54%          1665  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    29.84%           836  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     9.12%           256  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             4  libc.so.6             [.] malloc
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.07%             3  libc.so.6             [.] cfree
+     0.07%             2  [unknown]             [k] 0xffffffffa6f1b483
+     0.04%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  libc.so.6             [.] 0x00000000000a72a2
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e570
+     0.04%             1  libc.so.6             [.] 0x00000000000a6198
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c38c
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61c89
+     0.04%             1  [unknown]             [k] 0xffffffffa6edda10
+     0.04%             1  [unknown]             [k] 0xffffffffa6ecaf7f
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98780
+     0.04%             1  [unknown]             [k] 0xffffffffa6c6679f
+     0.04%             1  [unknown]             [k] 0xffffffffa6ef94c8
+     0.04%             1  libc.so.6             [.] 0x00000000000a624d
+     0.04%             1  [unknown]             [k] 0xffffffffa6f18fd2
+     0.04%             1  [unknown]             [k] 0xffffffffa7d929fd
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c14
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  libc.so.6             [.] 0x00000000000a5011
+     0.04%             1  [unknown]             [k] 0xffffffffa6c957a6
+     0.04%             1  libc.so.6             [.] 0x00000000000a7121
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.04%             1  [unknown]             [k] 0xffffffffa6bfa256
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed5467
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb51
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f145
+     0.01%             1  libc.so.6             [.] clock_gettime
+     0.01%             1  [unknown]             [k] 0xffffffffa6b4cb67
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed6247
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000afa7
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e82b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa7d61e78
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f1
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed542a
+     0.00%             2  [unknown]             [k] 0xffffffffa6f5c396
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0573
+     0.00%             1  [unknown]             [k] 0xffffffffa6fca6c4
+     0.00%             1  libc.so.6             [.] __libc_alloca_cutoff
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77871
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0fb5a
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804df
+
+
+#
+# (Tip: Show current config key-value pairs: perf config --list)
+#

@@ -1,0 +1,115 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2680870921
+#
+# Overhead       Samples  Shared Object         Symbol                                               
+# ........  ............  ....................  .....................................................
+#
+    78.36%          2232  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    17.16%           489  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.75%            50  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.61%            57  [unknown]             [k] 0xffffffffa6f12633
+     0.39%            16  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::touch
+     0.19%            17  [unknown]             [k] 0xffffffffa6f1900a
+     0.14%             4  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.05%             2  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             2  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f4
+     0.04%             1  libc.so.6             [.] 0x00000000000a6252
+     0.04%             1  libc.so.6             [.] 0x00000000000a61b7
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3f14
+     0.04%             1  libc.so.6             [.] 0x00000000000a767d
+     0.04%             1  [unknown]             [k] 0xffffffffa7d74535
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee615e
+     0.04%             1  [unknown]             [k] 0xffffffffa7d92046
+     0.04%             1  [unknown]             [k] 0xffffffffa6b7955c
+     0.03%             4  [unknown]             [k] 0xffffffffa6f5c396
+     0.03%             3  [unknown]             [k] 0xffffffffa6f1e5f3
+     0.02%             2  [unknown]             [k] 0xffffffffa6f18ff5
+     0.02%             2  [unknown]             [k] 0xffffffffa6eb1c18
+     0.02%             2  [unknown]             [k] 0xffffffffa7da3f82
+     0.02%             2  [unknown]             [k] 0xffffffffa6f5c29b
+     0.02%             2  [unknown]             [k] 0xffffffffa6c65708
+     0.02%             2  [unknown]             [k] 0xffffffffa6ee3d70
+     0.02%             2  [unknown]             [k] 0xffffffffa6f930d2
+     0.02%             2  [unknown]             [k] 0xffffffffa6f9a142
+     0.02%             2  [unknown]             [k] 0xffffffffa6f94135
+     0.02%             2  [unknown]             [k] 0xffffffffa6f98780
+     0.02%             2  [unknown]             [k] 0xffffffffa7da460b
+     0.02%             2  [unknown]             [k] 0xffffffffa6ee6152
+     0.02%             2  [unknown]             [k] 0xffffffffa6ef969f
+     0.02%             2  [unknown]             [k] 0xffffffffa6f9309e
+     0.01%             1  [unknown]             [k] 0xffffffffa6f987a8
+     0.01%             1  [unknown]             [k] 0xffffffffa74acb27
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee5ef4
+     0.01%             1  [unknown]             [k] 0xffffffffa6f98074
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f145
+     0.01%             1  [unknown]             [k] 0xffffffffa7412690
+     0.01%             1  [unknown]             [k] 0xffffffffa6eb1c21
+     0.01%             1  [unknown]             [k] 0xffffffffa6f987aa
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee5d9a
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3c45
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef94bf
+     0.01%             1  [unknown]             [k] 0xffffffffa741263f
+     0.01%             1  [unknown]             [k] 0xffffffffa68018d9
+     0.01%             1  [unknown]             [k] 0xffffffffa74acaf0
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f152
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee4053
+     0.01%             1  [unknown]             [k] 0xffffffffa6f98767
+     0.01%             1  [unknown]             [k] 0xffffffffa6edda1e
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef976d
+     0.01%             1  [unknown]             [k] 0xffffffffa7412672
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee6141
+     0.01%             1  [unknown]             [k] 0xffffffffa6f930a5
+     0.01%             1  [unknown]             [k] 0xffffffffa6f98067
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef96a2
+     0.01%             1  [unknown]             [k] 0xffffffffa690410b
+     0.01%             1  [unknown]             [k] 0xffffffffa7412644
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c2a4
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9414e
+     0.01%             1  [unknown]             [k] 0xffffffffa6f94110
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef96f9
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee6120
+     0.01%             1  [unknown]             [k] 0xffffffffa6f18fca
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee5cfa
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee4058
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b34d
+     0.01%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.01%             1  [unknown]             [k] 0xffffffffa6c656f0
+     0.01%             1  [unknown]             [k] 0xffffffffa6ba9537
+     0.01%             1  [unknown]             [k] 0xffffffffa6b491f3
+     0.01%             1  [unknown]             [k] 0xffffffffa6f980d5
+     0.01%             1  [unknown]             [k] 0xffffffffa6ed5467
+     0.01%             1  [unknown]             [k] 0xffffffffa6b4928f
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c391
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  [unknown]             [k] 0xffffffffa6e779ef
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a688
+     0.00%             1  [unknown]             [k] 0xffffffffa68000ad
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f1
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80560
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001b408
+     0.00%             1  [unknown]             [k] 0xffffffffa6edde7d
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee65e8
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78702
+     0.00%             1  [unknown]             [k] 0xffffffffa6800084
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1b413
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede75d
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef94ec
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: To set sample time separation other than 100ms with --sort time use --time-quantum)
+#

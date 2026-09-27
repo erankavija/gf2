@@ -1,0 +1,79 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2585027992
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    57.98%          1622  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    31.56%           884  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     8.68%           243  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.11%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.11%             3  libc.so.6             [.] cfree
+     0.07%             2  libc.so.6             [.] 0x00000000000a75fe
+     0.07%             2  [unknown]             [k] 0xffffffffa6ef96a2
+     0.07%             2  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  libc.so.6             [.] malloc
+     0.07%             2  libc.so.6             [.] 0x00000000000a7669
+     0.04%             2  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa7da460b
+     0.04%             1  libc.so.6             [.] 0x00000000000a6317
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f10
+     0.04%             1  [unknown]             [k] 0xffffffffa74a1956
+     0.04%             1  libc.so.6             [.] 0x00000000000a6204
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9879d
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b2b9
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b354
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8e58c
+     0.04%             1  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.04%             1  [unknown]             [k] 0xffffffffa6f8f9dd
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed541a
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e713
+     0.04%             1  [unknown]             [k] 0xffffffffa6edda08
+     0.04%             1  [unknown]             [k] 0xffffffffa7d66164
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9a142
+     0.04%             1  [unknown]             [k] 0xffffffffa6b4928f
+     0.04%             1  [unknown]             [k] 0xffffffffa7d929fd
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f63
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee40ba
+     0.04%             1  libc.so.6             [.] 0x00000000000a75a1
+     0.04%             1  libc.so.6             [.] 0x00000000000a71f4
+     0.04%             1  [unknown]             [k] 0xffffffffa6c5cb40
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a920
+     0.00%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+     0.00%             1  [unknown]             [k] 0xffffffffa7412697
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b288
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000103e4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0282
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9429e
+     0.00%             1  [unknown]             [k] 0xffffffffa6f96dde
+     0.00%             1  [unknown]             [k] 0xffffffffa6f96de5
+     0.00%             1  [unknown]             [k] 0xffffffffa6e7888c
+     0.00%             1  [unknown]             [k] 0xffffffffa7004178
+     0.00%             1  [unknown]             [k] 0xffffffffa690410b
+     0.00%             1  [unknown]             [k] 0xffffffffa6feccee
+     0.00%             1  [unknown]             [k] 0xffffffffa6c97042
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff04d5
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80572
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33084
+     0.00%             1  [unknown]             [k] 0xffffffffa6f331e6
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+
+
+#
+# (Tip: To only collect call graph on one event use perf record -e cpu/cpu-cycles,callgraph=1/,branches ; perf report --show-ref-call-graph)
+#

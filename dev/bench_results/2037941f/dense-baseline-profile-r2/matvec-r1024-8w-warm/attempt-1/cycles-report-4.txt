@@ -1,0 +1,69 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2588925976
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    59.47%          1671  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    30.50%           856  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     8.74%           245  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.14%             4  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.07%             2  [unknown]             [k] 0xffffffffa6f1900a
+     0.04%             1  libc.so.6             [.] 0x00000000000a7628
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e87
+     0.04%             1  libc.so.6             [.] 0x00000000000a629b
+     0.04%             1  [unknown]             [k] 0xffffffffa6edc5dc
+     0.04%             1  libc.so.6             [.] cfree
+     0.04%             1  libc.so.6             [.] 0x00000000000a5d05
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa6edda13
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5e02
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93cd6
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93db5
+     0.04%             1  libc.so.6             [.] 0x00000000000a621c
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.04%             1  libc.so.6             [.] 0x00000000000a700b
+     0.04%             1  libc.so.6             [.] 0x00000000000a4fe0
+     0.04%             1  [unknown]             [k] 0xffffffffa6f19000
+     0.04%             1  [unknown]             [k] 0xffffffffa6f987b8
+     0.04%             1  libc.so.6             [.] 0x00000000000a61bb
+     0.04%             1  libc.so.6             [.] 0x00000000000a5ee6
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f63
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e574
+     0.04%             1  [unknown]             [k] 0xffffffffa6f47552
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f16e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f98780
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94145
+     0.01%             1  libc.so.6             [.] 0x00000000001791a7
+     0.01%             1  dense-arm             [.] alloc::fmt::format::format_inner
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000b272
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af28
+     0.00%             1  [unknown]             [k] 0xffffffffa6f9918c
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             2  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6eebdf4
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1098b
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78cd7
+     0.00%             2  [unknown]             [k] 0xffffffffa6f18ff5
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef97d5
+     0.00%             1  [unknown]             [k] 0xffffffffa7004178
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0392
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  libc.so.6             [.] 0x00000000000e70ef
+     0.00%             1  [unknown]             [k] 0xffffffffa6800005
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33371
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#
