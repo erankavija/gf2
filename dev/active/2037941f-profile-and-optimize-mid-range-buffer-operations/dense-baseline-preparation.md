@@ -1,4 +1,4 @@
-# Dense-parity baseline preparation
+# Dense-parity baseline evidence and assembly
 
 > **Diátaxis Type:** Research
 >
@@ -9,11 +9,13 @@ The two gf2 baseline families use the committed
 [harness](dense-parity-harness.md). The frozen campaign JSON retains the
 harness owner's `family.issue=e1f9a78f`; the
 [benchmark queue](../1a379447-zen3-cpu-performance/bench-window/queue.tsv)
-assigns collection to `c73ffa25`. The external M4RI comparison belongs to
+records collection under `c73ffa25`. The external M4RI comparison belongs to
 `50f0bd42`.
 
-The queued campaigns collect the isolated fused-entry and allocated public
-`BitMatrix::matvec` identity baselines. The release harness
+The [isolated](../../bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot/receipt.json)
+and [allocated](../../bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json)
+campaign receipts contain the fused-entry and public `BitMatrix::matvec`
+identity baselines. The release harness
 [validation record](survey/dense-baseline-validation.txt) covers the scalar
 reference, the selected SIMD lane, canonical bit indexing, output length,
 zero tail padding, and the boundary cases. The shared
@@ -48,11 +50,12 @@ cells, the allocated streaming cell, and the scalar reference. Its output
 retains actual commands, arm results, hardware counters, sampled symbols,
 annotated cycle samples, runtime host facts and a digest-bound append-only log.
 The [summary generator](survey/summarize-dense-profile.py) reports medians
-with order-statistic intervals over the repeated counter passes. The queued
-profile requires both baseline receipts before it runs.
+with order-statistic intervals over the repeated counter passes. The launcher
+requires both accepted baseline receipts before profiling.
 
-The [portfolio](plan.md) is frozen after the baseline receipt and current
-profile establish a cost center. It names at most one distinct fusion within
-the frozen complexity budget, or records that the profile supports no
-candidate. The established fused route and generic carry-save result remain
-the prior evidence cited by the addendum.
+The completed [profile log](../../bench_results/2037941f/dense-baseline-profile-r2/execution.log)
+and [summary](../../bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md)
+retain the cost attribution. The [portfolio outcome](../c73ffa25/outcome.md)
+records no supported distinct fusion within the frozen budget. The established
+fused route and generic carry-save result remain the prior evidence cited by
+the addendum.

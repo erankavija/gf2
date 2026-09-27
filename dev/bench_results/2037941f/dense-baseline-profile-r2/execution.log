@@ -1,0 +1,48 @@
+identity arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643 scalar=2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e tool=50cf442ecb6b6ffe302d25d9545bc23d2437c4822046bac7476c17e6d0d76a37 script=5190a9f718f1563536f4635c292de9794468689f1e2050cd4e398a49d0223b5c summary=9c11fc367a3273e568d552d0e21427003fc94cdc24b12beb18e98a13611cc852 closure=a173cda64eaaa69ca9bf23cf0e54f848a7e15b36d37eb7b62901c83cce67e5e1 isolated-addendum=28685a0913aed107090c0c489de6a68fe47c534314854551b2d015e2a8ac31fb allocated-addendum=19950912eb0ba79797f4041e1daa6ad288b7bb14834459cc7b04dee08db3ad35
+session start 2026-09-27T23:00:00Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh window 
+cpu=0 affinity=pid 2258955's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-isolated-fused-parity and-popcnt-8w-warm and-popcnt-a simd 
+session start 2026-09-27T23:00:01Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-isolated-fused-parity and-popcnt-8w-warm and-popcnt-a simd 
+cpu=0 affinity=pid 2259071's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell and-popcnt-8w-warm start 2026-09-27T23:00:01Z attempt=1 request=3bdeb5872e0f0ddd17384823590a1ec1543fc729337b073a9bd2c80bc1fa7814 arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+cell and-popcnt-8w-warm done 2026-09-27T23:00:17Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-isolated-fused-parity and-popcnt-64w-warm and-popcnt-a simd 
+session start 2026-09-27T23:00:17Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-isolated-fused-parity and-popcnt-64w-warm and-popcnt-a simd 
+cpu=0 affinity=pid 2259552's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell and-popcnt-64w-warm start 2026-09-27T23:00:17Z attempt=1 request=687c647c42cb7a2d48f4090911b3620781d4a0fc8d7e3eb17d427d0a99a856fb arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+cell and-popcnt-64w-warm done 2026-09-27T23:00:33Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-8w-warm matvec-a simd 
+session start 2026-09-27T23:00:33Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-8w-warm matvec-a simd 
+cpu=0 affinity=pid 2259956's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell matvec-r1024-8w-warm start 2026-09-27T23:00:33Z attempt=1 request=1f37e6017655a8c42a8b97ae71359f615f504ba5ffbca24658e27483b7bf119b arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+cell matvec-r1024-8w-warm done 2026-09-27T23:00:49Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-64w-warm matvec-a simd 
+session start 2026-09-27T23:00:49Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-64w-warm matvec-a simd 
+cpu=0 affinity=pid 2260351's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell matvec-r1024-64w-warm start 2026-09-27T23:00:49Z attempt=1 request=bcca5246a11a1125f143ac9e2276769694a56cf59a6ddecc80aa16288d76bfad arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+cell matvec-r1024-64w-warm done 2026-09-27T23:01:05Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-64w-streaming matvec-a simd 
+session start 2026-09-27T23:01:06Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-64w-streaming matvec-a simd 
+cpu=0 affinity=pid 2260790's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell matvec-r1024-64w-streaming start 2026-09-27T23:01:06Z attempt=1 request=7ddcc7b30041ae9edb1007267a55a97f481e67a8816e50ef702db4a2a873361f arm=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+cell matvec-r1024-64w-streaming done 2026-09-27T23:01:22Z attempt=1
+wrapper command=dev/scripts/ccx1-bench-flock.sh --full-host dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-8w-scalar-reference-warm matvec-scalar-reference scalar 
+session start 2026-09-27T23:01:22Z
+command=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh --case dev/bench_results/2037941f/dense-baseline-profile-r2 2037941f-dense-allocated-matvec matvec-r1024-8w-scalar-reference-warm matvec-scalar-reference scalar 
+cpu=0 affinity=pid 2261081's current affinity list: 0-23
+host=fraktaali kernel=7.2.6-arch2-1 rustc=rustc 1.95.0 (59807616e 2026-04-14) perf=perf version 7.2.6-1
+cell matvec-r1024-8w-scalar-reference-warm start 2026-09-27T23:01:22Z attempt=1 request=72e7ac13c26ac1cc3d2ce38f49583623d32bb4e838bec2d4ac9d1f4c89b49937 arm=2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e
+cell matvec-r1024-8w-scalar-reference-warm done 2026-09-27T23:01:38Z attempt=1
+complete 2026-09-27T23:01:38Z

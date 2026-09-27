@@ -1,0 +1,391 @@
+ Percent |	Source code & Disassembly of dense-arm for cycles:u (2148 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     000000000005c1f0 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>:
+    1.49 :   5c1f0:  cmp    %rsi,%rcx
+    0.05 :   5c1f3:  cmovb  %rcx,%rsi
+    0.00 :   5c1f7:  test   %rsi,%rsi
+    0.00 :   5c1fa:  je     5c21a <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x2a>
+    0.00 :   5c1fc:  mov    %rsi,%rcx
+    0.00 :   5c1ff:  shr    $0x2,%rcx
+    4.51 :   5c203:  je     5c21d <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x2d>
+    0.42 :   5c205:  vpxor  %xmm0,%xmm0,%xmm0
+    0.05 :   5c209:  cmp    $0x1,%rcx
+    0.42 :   5c20d:  jne    5c226 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x36>
+    0.00 :   5c20f:  xor    %eax,%eax
+    0.00 :   5c211:  vpxor  %xmm1,%xmm1,%xmm1
+    0.00 :   5c215:  jmp    5c2d2 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0xe2>
+    0.00 :   5c21a:  xor    %eax,%eax
+    0.00 :   5c21c:  ret
+    0.00 :   5c21d:  vpxor  %xmm1,%xmm1,%xmm1
+    0.00 :   5c221:  jmp    5c314 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x124>
+    0.05 :   5c226:  movabs $0x3fffffffffffffe,%r8
+    0.28 :   5c230:  and    %rcx,%r8
+    0.79 :   5c233:  vpxor  %xmm2,%xmm2,%xmm2
+    0.00 :   5c237:  mov    $0x20,%r9d
+    0.00 :   5c23d:  xor    %eax,%eax
+    0.00 :   5c23f:  vpbroadcastb -0x4ef89(%rip),%ymm3        # d2bf <anon.fe72b17733f4e05d6c726019e522a586.608.llvm.12321553074421741178+0x24>
+    0.70 :   5c248:  vmovdqa -0x4f4f0(%rip),%ymm4        # cd60 <anon.81ea35462bb24f68d1deb5f4db6ea875.223.llvm.5735055854656340041+0x3c>
+    0.37 :   5c250:  vpxor  %xmm1,%xmm1,%xmm1
+    0.65 :   5c254:  data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   5c260:  vmovdqu -0x20(%rdx,%r9,1),%ymm5
+    1.72 :   5c267:  vmovdqu (%rdx,%r9,1),%ymm6
+    1.26 :   5c26d:  vpand  -0x20(%rdi,%r9,1),%ymm5,%ymm5
+    3.12 :   5c274:  vpsrlw $0x4,%ymm5,%ymm7
+    1.12 :   5c279:  vpand  %ymm3,%ymm5,%ymm5
+    5.77 :   5c27d:  vpshufb %ymm5,%ymm4,%ymm5
+    1.54 :   5c282:  vpand  %ymm3,%ymm7,%ymm7
+    0.79 :   5c286:  vpshufb %ymm7,%ymm4,%ymm7
+    1.40 :   5c28b:  vpaddb %ymm5,%ymm7,%ymm5
+    1.30 :   5c28f:  vpsadbw %ymm2,%ymm5,%ymm5
+    7.26 :   5c293:  vpand  (%rdi,%r9,1),%ymm6,%ymm6
+   21.60 :   5c299:  vpaddq %ymm1,%ymm5,%ymm1
+    7.12 :   5c29d:  vpsrlw $0x4,%ymm6,%ymm5
+    1.77 :   5c2a2:  vpand  %ymm3,%ymm6,%ymm6
+    0.14 :   5c2a6:  vpshufb %ymm6,%ymm4,%ymm6
+    0.88 :   5c2ab:  vpand  %ymm3,%ymm5,%ymm5
+    0.42 :   5c2af:  vpshufb %ymm5,%ymm4,%ymm5
+    0.84 :   5c2b4:  vpaddb %ymm6,%ymm5,%ymm5
+    1.63 :   5c2b8:  vpsadbw %ymm2,%ymm5,%ymm5
+    8.80 :   5c2bc:  vpaddq %ymm1,%ymm5,%ymm1
+   10.25 :   5c2c0:  add    $0x2,%rax
+    0.79 :   5c2c4:  add    $0x40,%r9
+    0.19 :   5c2c8:  cmp    %rax,%r8
+    0.61 :   5c2cb:  jne    5c260 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x70>
+    0.00 :   5c2cd:  test   $0x1,%cl
+    0.00 :   5c2d0:  je     5c314 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x124>
+    0.00 :   5c2d2:  shl    $0x5,%rax
+    0.00 :   5c2d6:  vmovdqu (%rdx,%rax,1),%ymm2
+    0.00 :   5c2db:  vpand  (%rdi,%rax,1),%ymm2,%ymm2
+    0.00 :   5c2e0:  vpsrlw $0x4,%ymm2,%ymm3
+    0.00 :   5c2e5:  vpbroadcastb -0x4f02f(%rip),%ymm4        # d2bf <anon.fe72b17733f4e05d6c726019e522a586.608.llvm.12321553074421741178+0x24>
+    0.00 :   5c2ee:  vpand  %ymm4,%ymm2,%ymm2
+    0.00 :   5c2f2:  vmovdqa -0x4f59a(%rip),%ymm5        # cd60 <anon.81ea35462bb24f68d1deb5f4db6ea875.223.llvm.5735055854656340041+0x3c>
+    0.00 :   5c2fa:  vpshufb %ymm2,%ymm5,%ymm2
+    0.00 :   5c2ff:  vpand  %ymm4,%ymm3,%ymm3
+    0.00 :   5c303:  vpshufb %ymm3,%ymm5,%ymm3
+    0.00 :   5c308:  vpaddb %ymm2,%ymm3,%ymm2
+    0.00 :   5c30c:  vpsadbw %ymm0,%ymm2,%ymm0
+    0.00 :   5c310:  vpaddq %ymm1,%ymm0,%ymm1
+    0.00 :   5c314:  vextracti128 $0x1,%ymm1,%xmm0
+    3.54 :   5c31a:  vpaddq %xmm1,%xmm0,%xmm0
+    3.86 :   5c31e:  vpshufd $0xee,%xmm0,%xmm1
+    0.88 :   5c323:  vpaddq %xmm1,%xmm0,%xmm0
+    1.45 :   5c327:  vmovq  %xmm0,%rax
+    0.09 :   5c32c:  movabs $0xffffffffffffffc,%r10
+    0.00 :   5c336:  and    %rsi,%r10
+    0.05 :   5c339:  cmp    %rsi,%r10
+    0.00 :   5c33c:  jne    5c342 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x152>
+    0.00 :   5c33e:  vzeroupper
+    0.05 :   5c341:  ret
+    0.00 :   5c342:  push   %r14
+    0.00 :   5c344:  push   %rbx
+    0.00 :   5c345:  mov    %r10,%r8
+    0.00 :   5c348:  or     $0x1,%r8
+    0.00 :   5c34c:  cmp    %r8,%rsi
+    0.00 :   5c34f:  cmova  %rsi,%r8
+    0.00 :   5c353:  mov    %r8,%rcx
+    0.00 :   5c356:  sub    %r10,%rcx
+    0.00 :   5c359:  cmp    $0x4,%rcx
+    0.00 :   5c35d:  jae    5c367 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x177>
+    0.00 :   5c35f:  mov    %r10,%rcx
+    0.00 :   5c362:  jmp    5c545 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x355>
+    0.00 :   5c367:  cmp    $0x10,%rcx
+    0.00 :   5c36b:  jae    5c375 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x185>
+    0.00 :   5c36d:  xor    %r9d,%r9d
+    0.00 :   5c370:  jmp    5c4c4 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x2d4>
+    0.00 :   5c375:  mov    %rcx,%r9
+    0.00 :   5c378:  and    $0xfffffffffffffff0,%r9
+    0.00 :   5c37c:  vmovq  %rax,%xmm0
+    0.00 :   5c381:  mov    %rsi,%r11
+    0.00 :   5c384:  and    $0xfffffffffffffffc,%r11
+    0.00 :   5c388:  lea    (%rdx,%r11,8),%rax
+    0.00 :   5c38c:  add    $0x60,%rax
+    0.00 :   5c390:  lea    (%rdi,%r11,8),%r11
+    0.00 :   5c394:  add    $0x60,%r11
+    0.00 :   5c398:  vpxor  %xmm1,%xmm1,%xmm1
+    0.00 :   5c39c:  xor    %ebx,%ebx
+    0.00 :   5c39e:  vpbroadcastb -0x4f0e8(%rip),%ymm2        # d2bf <anon.fe72b17733f4e05d6c726019e522a586.608.llvm.12321553074421741178+0x24>
+    0.00 :   5c3a7:  vmovdqa -0x4f64f(%rip),%ymm3        # cd60 <anon.81ea35462bb24f68d1deb5f4db6ea875.223.llvm.5735055854656340041+0x3c>
+    0.00 :   5c3af:  vpxor  %xmm4,%xmm4,%xmm4
+    0.00 :   5c3b3:  vpxor  %xmm5,%xmm5,%xmm5
+    0.00 :   5c3b7:  vpxor  %xmm6,%xmm6,%xmm6
+    0.00 :   5c3bb:  nopl   0x0(%rax,%rax,1)
+    0.00 :   5c3c0:  vmovdqu -0x60(%rax,%rbx,8),%ymm7
+    0.00 :   5c3c6:  vmovdqu -0x40(%rax,%rbx,8),%ymm8
+    0.00 :   5c3cc:  vmovdqu -0x20(%rax,%rbx,8),%ymm9
+    0.00 :   5c3d2:  vmovdqu (%rax,%rbx,8),%ymm10
+    0.00 :   5c3d7:  vpand  -0x60(%r11,%rbx,8),%ymm7,%ymm7
+    0.00 :   5c3de:  vpand  -0x40(%r11,%rbx,8),%ymm8,%ymm8
+    0.00 :   5c3e5:  vpand  -0x20(%r11,%rbx,8),%ymm9,%ymm9
+    0.00 :   5c3ec:  vpand  (%r11,%rbx,8),%ymm10,%ymm10
+    0.00 :   5c3f2:  vpand  %ymm2,%ymm7,%ymm11
+    0.00 :   5c3f6:  vpshufb %ymm11,%ymm3,%ymm11
+    0.00 :   5c3fb:  vpsrlw $0x4,%ymm7,%ymm7
+    0.00 :   5c400:  vpand  %ymm2,%ymm7,%ymm7
+    0.00 :   5c404:  vpshufb %ymm7,%ymm3,%ymm7
+    0.00 :   5c409:  vpaddb %ymm7,%ymm11,%ymm7
+    0.00 :   5c40d:  vpsadbw %ymm1,%ymm7,%ymm7
+    0.00 :   5c411:  vpaddq %ymm0,%ymm7,%ymm0
+    0.00 :   5c415:  vpand  %ymm2,%ymm8,%ymm7
+    0.00 :   5c419:  vpshufb %ymm7,%ymm3,%ymm7
+    0.00 :   5c41e:  vpsrlw $0x4,%ymm8,%ymm8
+    0.00 :   5c424:  vpand  %ymm2,%ymm8,%ymm8
+    0.00 :   5c428:  vpshufb %ymm8,%ymm3,%ymm8
+    0.00 :   5c42d:  vpaddb %ymm7,%ymm8,%ymm7
+    0.00 :   5c431:  vpsadbw %ymm1,%ymm7,%ymm7
+    0.00 :   5c435:  vpaddq %ymm4,%ymm7,%ymm4
+    0.00 :   5c439:  vpand  %ymm2,%ymm9,%ymm7
+    0.00 :   5c43d:  vpshufb %ymm7,%ymm3,%ymm7
+    0.00 :   5c442:  vpsrlw $0x4,%ymm9,%ymm8
+    0.00 :   5c448:  vpand  %ymm2,%ymm8,%ymm8
+    0.00 :   5c44c:  vpshufb %ymm8,%ymm3,%ymm8
+    0.00 :   5c451:  vpaddb %ymm7,%ymm8,%ymm7
+    0.00 :   5c455:  vpsadbw %ymm1,%ymm7,%ymm7
+    0.00 :   5c459:  vpaddq %ymm5,%ymm7,%ymm5
+    0.00 :   5c45d:  vpand  %ymm2,%ymm10,%ymm7
+    0.00 :   5c461:  vpshufb %ymm7,%ymm3,%ymm7
+    0.00 :   5c466:  vpsrlw $0x4,%ymm10,%ymm8
+    0.00 :   5c46c:  vpand  %ymm2,%ymm8,%ymm8
+    0.00 :   5c470:  vpshufb %ymm8,%ymm3,%ymm8
+    0.00 :   5c475:  vpaddb %ymm7,%ymm8,%ymm7
+    0.00 :   5c479:  vpsadbw %ymm1,%ymm7,%ymm7
+    0.00 :   5c47d:  vpaddq %ymm6,%ymm7,%ymm6
+    0.00 :   5c481:  add    $0x10,%rbx
+    0.00 :   5c485:  cmp    %rbx,%r9
+    0.00 :   5c488:  jne    5c3c0 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x1d0>
+    0.00 :   5c48e:  vpaddq %ymm0,%ymm4,%ymm0
+    0.00 :   5c492:  vpaddq %ymm0,%ymm5,%ymm0
+    0.00 :   5c496:  vpaddq %ymm0,%ymm6,%ymm0
+    0.00 :   5c49a:  vextracti128 $0x1,%ymm0,%xmm1
+    0.00 :   5c4a0:  vpaddq %xmm1,%xmm0,%xmm0
+    0.00 :   5c4a4:  vpshufd $0xee,%xmm0,%xmm1
+    0.00 :   5c4a9:  vpaddq %xmm1,%xmm0,%xmm0
+    0.00 :   5c4ad:  vmovq  %xmm0,%rax
+    0.00 :   5c4b2:  cmp    %r9,%rcx
+    0.00 :   5c4b5:  je     5c5b4 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x3c4>
+    0.00 :   5c4bb:  test   $0xc,%cl
+    0.00 :   5c4be:  je     5c5bb <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x3cb>
+    0.00 :   5c4c4:  and    $0x3,%r8d
+    0.00 :   5c4c8:  sub    %r8,%rcx
+    0.00 :   5c4cb:  add    %r10,%rcx
+    0.00 :   5c4ce:  vmovq  %rax,%xmm0
+    0.00 :   5c4d3:  add    %r10,%r9
+    0.00 :   5c4d6:  vpbroadcastb -0x4f220(%rip),%ymm1        # d2bf <anon.fe72b17733f4e05d6c726019e522a586.608.llvm.12321553074421741178+0x24>
+    0.00 :   5c4df:  vmovdqa -0x4f787(%rip),%ymm2        # cd60 <anon.81ea35462bb24f68d1deb5f4db6ea875.223.llvm.5735055854656340041+0x3c>
+    0.00 :   5c4e7:  vpxor  %xmm3,%xmm3,%xmm3
+    0.00 :   5c4eb:  nopl   0x0(%rax,%rax,1)
+    0.00 :   5c4f0:  vmovdqu (%rdx,%r9,8),%ymm4
+    0.00 :   5c4f6:  vpand  (%rdi,%r9,8),%ymm4,%ymm4
+    0.00 :   5c4fc:  vpand  %ymm1,%ymm4,%ymm5
+    0.00 :   5c500:  vpshufb %ymm5,%ymm2,%ymm5
+    0.00 :   5c505:  vpsrlw $0x4,%ymm4,%ymm4
+    0.00 :   5c50a:  vpand  %ymm1,%ymm4,%ymm4
+    0.00 :   5c50e:  vpshufb %ymm4,%ymm2,%ymm4
+    0.00 :   5c513:  vpaddb %ymm5,%ymm4,%ymm4
+    0.00 :   5c517:  vpsadbw %ymm3,%ymm4,%ymm4
+    0.00 :   5c51b:  vpaddq %ymm0,%ymm4,%ymm0
+    0.00 :   5c51f:  add    $0x4,%r9
+    0.00 :   5c523:  cmp    %r9,%rcx
+    0.00 :   5c526:  jne    5c4f0 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x300>
+    0.00 :   5c528:  vextracti128 $0x1,%ymm0,%xmm1
+    0.00 :   5c52e:  vpaddq %xmm1,%xmm0,%xmm0
+    0.00 :   5c532:  vpshufd $0xee,%xmm0,%xmm1
+    0.00 :   5c537:  vpaddq %xmm1,%xmm0,%xmm0
+    0.00 :   5c53b:  vmovq  %xmm0,%rax
+    0.00 :   5c540:  test   %r8,%r8
+    0.00 :   5c543:  je     5c5b4 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x3c4>
+    0.00 :   5c545:  movabs $0x5555555555555555,%r8
+    0.00 :   5c54f:  movabs $0x3333333333333333,%r9
+    0.00 :   5c559:  movabs $0xf0f0f0f0f0f0f0f,%r10
+    0.00 :   5c563:  movabs $0x101010101010101,%r11
+    0.00 :   5c56d:  nopl   (%rax)
+    0.00 :   5c570:  mov    (%rdx,%rcx,8),%rbx
+    0.00 :   5c574:  and    (%rdi,%rcx,8),%rbx
+    0.00 :   5c578:  inc    %rcx
+    0.00 :   5c57b:  mov    %rbx,%r14
+    0.00 :   5c57e:  shr    $1,%r14
+    0.00 :   5c581:  and    %r8,%r14
+    0.00 :   5c584:  sub    %r14,%rbx
+    0.00 :   5c587:  mov    %rbx,%r14
+    0.00 :   5c58a:  and    %r9,%r14
+    0.00 :   5c58d:  shr    $0x2,%rbx
+    0.00 :   5c591:  and    %r9,%rbx
+    0.00 :   5c594:  add    %r14,%rbx
+    0.00 :   5c597:  mov    %rbx,%r14
+    0.00 :   5c59a:  shr    $0x4,%r14
+    0.00 :   5c59e:  add    %rbx,%r14
+    0.00 :   5c5a1:  and    %r10,%r14
+    0.00 :   5c5a4:  imul   %r11,%r14
+    0.00 :   5c5a8:  shr    $0x38,%r14
+    0.00 :   5c5ac:  add    %r14,%rax
+    0.00 :   5c5af:  cmp    %rsi,%rcx
+    0.00 :   5c5b2:  jb     5c570 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x380>
+    0.00 :   5c5b4:  pop    %rbx
+    0.00 :   5c5b5:  pop    %r14
+    0.00 :   5c5b7:  vzeroupper
+    0.00 :   5c5ba:  ret
+    0.00 :   5c5bb:  add    %r9,%r10
+    0.00 :   5c5be:  jmp    5c35f <gf2_kernels_simd::x86::avx2::avx2_and_popcnt+0x16f>
+ Percent |	Source code & Disassembly of dense-arm for cycles:u (489 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     000000000005b280 <gf2_core::matrix::BitMatrix::matvec_simd>:
+    0.00 :   5b280:  push   %rbp
+    0.00 :   5b281:  push   %r15
+    0.00 :   5b283:  push   %r14
+    0.00 :   5b285:  push   %r13
+    0.00 :   5b287:  push   %r12
+    0.00 :   5b289:  push   %rbx
+    0.00 :   5b28a:  sub    $0x88,%rsp
+    0.00 :   5b291:  mov    %rcx,0x28(%rsp)
+    0.00 :   5b296:  mov    %rdx,0x20(%rsp)
+    0.00 :   5b29b:  mov    %rsi,%rbp
+    0.00 :   5b29e:  mov    %rdi,0x8(%rsp)
+    0.00 :   5b2a3:  mov    0x18(%rsi),%r15
+    0.00 :   5b2a7:  mov    %r15,%r14
+    0.00 :   5b2aa:  shr    $0x6,%r14
+    0.00 :   5b2ae:  mov    %r15d,%eax
+    0.00 :   5b2b1:  and    $0x3f,%eax
+    0.20 :   5b2b4:  cmp    $0x1,%rax
+    0.00 :   5b2b8:  sbb    $0xffffffffffffffff,%r14
+    0.00 :   5b2bc:  test   %r15,%r15
+    0.00 :   5b2bf:  je     5b2e5 <gf2_core::matrix::BitMatrix::matvec_simd+0x65>
+    0.00 :   5b2c1:  lea    0x0(,%r14,8),%rbx
+    0.00 :   5b2c9:  mov    %rbx,%rdi
+    0.00 :   5b2cc:  call   *0x4d896(%rip)        # a8b68 <malloc@GLIBC_2.2.5>
+    0.00 :   5b2d2:  test   %rax,%rax
+    0.00 :   5b2d5:  jne    5b2ed <gf2_core::matrix::BitMatrix::matvec_simd+0x6d>
+    0.00 :   5b2d7:  mov    $0x8,%edi
+    0.00 :   5b2dc:  mov    %rbx,%rsi
+    0.00 :   5b2df:  call   *0x4d833(%rip)        # a8b18 <_DYNAMIC+0x1f8>
+    0.00 :   5b2e5:  mov    $0x8,%eax
+    0.00 :   5b2ea:  xor    %r14d,%r14d
+    0.00 :   5b2ed:  mov    %r14,0x30(%rsp)
+    0.00 :   5b2f2:  mov    %rax,0x38(%rsp)
+    0.00 :   5b2f7:  xorps  %xmm0,%xmm0
+    0.00 :   5b2fa:  movups %xmm0,0x40(%rsp)
+    0.00 :   5b2ff:  movq   $0x0,0x4d(%rsp)
+    0.00 :   5b308:  movabs $0x8000000000000000,%rax
+    0.00 :   5b312:  mov    %rax,0x58(%rsp)
+    0.00 :   5b317:  mov    0x28(%rbp),%rsi
+    0.00 :   5b31b:  test   %rsi,%rsi
+    0.00 :   5b31e:  je     5b489 <gf2_core::matrix::BitMatrix::matvec_simd+0x209>
+    0.00 :   5b324:  mov    %r15,(%rsp)
+    0.00 :   5b328:  test   %r15,%r15
+    0.00 :   5b32b:  je     5b43a <gf2_core::matrix::BitMatrix::matvec_simd+0x1ba>
+    0.00 :   5b331:  mov    0x10(%rbp),%r13
+    0.00 :   5b335:  mov    %r13,%rax
+    0.00 :   5b338:  or     %rsi,%rax
+    0.00 :   5b33b:  shr    $0x20,%rax
+    0.00 :   5b33f:  je     5b34b <gf2_core::matrix::BitMatrix::matvec_simd+0xcb>
+    0.00 :   5b341:  mov    %r13,%rax
+    0.00 :   5b344:  xor    %edx,%edx
+    0.00 :   5b346:  div    %rsi
+    0.00 :   5b349:  jmp    5b352 <gf2_core::matrix::BitMatrix::matvec_simd+0xd2>
+    0.00 :   5b34b:  mov    %r13d,%eax
+    0.00 :   5b34e:  xor    %edx,%edx
+    0.00 :   5b350:  div    %esi
+    0.00 :   5b352:  sub    %rdx,%r13
+    0.00 :   5b355:  mov    0x8(%rbp),%rbp
+    0.00 :   5b359:  lea    0x0(,%rsi,8),%rax
+    0.00 :   5b361:  mov    %rax,0x10(%rsp)
+    0.00 :   5b366:  mov    %rsi,0x18(%rsp)
+    0.00 :   5b36b:  jmp    5b3a7 <gf2_core::matrix::BitMatrix::matvec_simd+0x127>
+    0.00 :   5b36d:  nopl   (%rax)
+    0.00 :   5b370:  mov    $0x1,%eax
+    0.20 :   5b375:  mov    %r14d,%ecx
+    0.00 :   5b378:  shl    %cl,%rax
+    0.00 :   5b37b:  mov    0x38(%rsp),%rcx
+    1.64 :   5b380:  or     %rax,(%rcx,%rbx,8)
+    6.94 :   5b384:  mov    (%rsp),%rax
+   27.39 :   5b388:  dec    %rax
+    1.02 :   5b38b:  add    0x10(%rsp),%rbp
+    0.00 :   5b390:  incq   0x48(%rsp)
+    1.43 :   5b395:  mov    %rax,(%rsp)
+    0.41 :   5b399:  test   %rax,%rax
+    0.21 :   5b39c:  mov    0x18(%rsp),%rsi
+    1.64 :   5b3a1:  je     5b43a <gf2_core::matrix::BitMatrix::matvec_simd+0x1ba>
+    2.04 :   5b3a7:  sub    %rsi,%r13
+    0.00 :   5b3aa:  jb     5b43a <gf2_core::matrix::BitMatrix::matvec_simd+0x1ba>
+    0.00 :   5b3b0:  mov    %rbp,%rdi
+    0.00 :   5b3b3:  mov    0x20(%rsp),%rdx
+    0.20 :   5b3b8:  mov    0x28(%rsp),%rcx
+    0.00 :   5b3bd:  mov    0x4dc3c(%rip),%rax        # a9000 <_DYNAMIC+0x6e0>
+    0.41 :   5b3c4:  call   *0x50(%rax)
+    0.41 :   5b3c7:  mov    %rax,%r15
+    4.91 :   5b3ca:  mov    0x48(%rsp),%rbx
+    0.41 :   5b3cf:  mov    %rbx,%r14
+    0.00 :   5b3d2:  and    $0x3f,%r14
+    0.00 :   5b3d6:  je     5b3e0 <gf2_core::matrix::BitMatrix::matvec_simd+0x160>
+    0.00 :   5b3d8:  test   $0x1,%r15b
+   20.27 :   5b3dc:  je     5b384 <gf2_core::matrix::BitMatrix::matvec_simd+0x104>
+    0.00 :   5b3de:  jmp    5b416 <gf2_core::matrix::BitMatrix::matvec_simd+0x196>
+    0.00 :   5b3e0:  mov    0x40(%rsp),%r12
+    0.41 :   5b3e5:  cmp    0x30(%rsp),%r12
+    0.00 :   5b3ea:  jne    5b3f7 <gf2_core::matrix::BitMatrix::matvec_simd+0x177>
+    0.00 :   5b3ec:  lea    0x30(%rsp),%rdi
+    0.00 :   5b3f1:  call   *0x4db21(%rip)        # a8f18 <_DYNAMIC+0x5f8>
+    0.00 :   5b3f7:  mov    0x38(%rsp),%rax
+    0.00 :   5b3fc:  movq   $0x0,(%rax,%r12,8)
+    0.21 :   5b404:  inc    %r12
+    0.00 :   5b407:  mov    %r12,0x40(%rsp)
+    0.00 :   5b40c:  test   $0x1,%r15b
+    0.00 :   5b410:  je     5b384 <gf2_core::matrix::BitMatrix::matvec_simd+0x104>
+   21.70 :   5b416:  shr    $0x6,%rbx
+    1.64 :   5b41a:  mov    0x40(%rsp),%rsi
+    5.10 :   5b41f:  cmp    %rsi,%rbx
+    1.22 :   5b422:  jb     5b370 <gf2_core::matrix::BitMatrix::matvec_simd+0xf0>
+    0.00 :   5b428:  lea    0x4b2d1(%rip),%rdx        # a6700 <anon.fe72b17733f4e05d6c726019e522a586.53.llvm.12321553074421741178+0x40>
+    0.00 :   5b42f:  mov    %rbx,%rdi
+    0.00 :   5b432:  call   *0x4d6f0(%rip)        # a8b28 <_DYNAMIC+0x208>
+    0.00 :   5b438:  jmp    5b4a2 <gf2_core::matrix::BitMatrix::matvec_simd+0x222>
+    0.00 :   5b43a:  mov    0x80(%rsp),%rax
+    0.00 :   5b442:  mov    0x8(%rsp),%rcx
+    0.00 :   5b447:  mov    %rax,0x50(%rcx)
+    0.00 :   5b44b:  movups 0x70(%rsp),%xmm0
+    0.00 :   5b450:  movups %xmm0,0x40(%rcx)
+    0.00 :   5b454:  movups 0x30(%rsp),%xmm0
+    0.00 :   5b459:  movups 0x40(%rsp),%xmm1
+    0.00 :   5b45e:  movups 0x50(%rsp),%xmm2
+    0.00 :   5b463:  movups 0x60(%rsp),%xmm3
+    0.00 :   5b468:  movups %xmm3,0x30(%rcx)
+    0.00 :   5b46c:  movups %xmm2,0x20(%rcx)
+    0.00 :   5b470:  movups %xmm1,0x10(%rcx)
+    0.00 :   5b474:  movups %xmm0,(%rcx)
+    0.00 :   5b477:  add    $0x88,%rsp
+    0.00 :   5b47e:  pop    %rbx
+    0.00 :   5b47f:  pop    %r12
+    0.00 :   5b481:  pop    %r13
+    0.00 :   5b483:  pop    %r14
+    0.00 :   5b485:  pop    %r15
+    0.00 :   5b487:  pop    %rbp
+    0.00 :   5b488:  ret
+    0.00 :   5b489:  lea    -0x4e210(%rip),%rdi        # d280 <anon.8cfae0649b24339a7c6ff37f2bd6b634.1589.llvm.13263554319387139704+0x4a0>
+    0.00 :   5b490:  lea    0x4b281(%rip),%rdx        # a6718 <anon.fe72b17733f4e05d6c726019e522a586.53.llvm.12321553074421741178+0x58>
+    0.00 :   5b497:  mov    $0x37,%esi
+    0.00 :   5b49c:  call   *0x4d6fe(%rip)        # a8ba0 <_DYNAMIC+0x280>
+    0.00 :   5b4a2:  ud2
+    0.00 :   5b4a4:  jmp    5b4a6 <gf2_core::matrix::BitMatrix::matvec_simd+0x226>
+    0.00 :   5b4a6:  mov    %rax,%rbx
+    0.00 :   5b4a9:  lea    0x30(%rsp),%rdi
+    0.00 :   5b4ae:  call   5b240 <core::ptr::drop_in_place<gf2_core::bitvec::BitVec>>
+    0.00 :   5b4b3:  mov    %rbx,%rdi
+    0.00 :   5b4b6:  call   a3cb0 <_Unwind_Resume@plt>
+ Percent |	Source code & Disassembly of dense-arm for cycles:u (50 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     000000000005d1d0 <gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn>:
+  100.00 :   5d1d0:  jmp    5c1f0 <gf2_kernels_simd::x86::avx2::avx2_and_popcnt>

@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2640452051
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    77.47%          2186  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    19.16%           540  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.48%            71  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.21%             6  dense-arm             [.] dense_arm::run::{{closure}}
+     0.21%             6  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f08
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f52
+     0.04%             1  [unknown]             [k] 0xffffffffa7d9436e
+     0.04%             3  [unknown]             [k] 0xffffffffa6c656f0
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f23
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed5467
+     0.04%             1  [unknown]             [k] 0xffffffffa6eb1c18
+     0.04%             1  libc.so.6             [.] malloc
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3f14
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef94bb
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9819b
+     0.01%             1  [unknown]             [k] 0xffffffffa6f98080
+     0.01%             1  libc.so.6             [.] 0x0000000000176485
+     0.00%             1  libc.so.6             [.] setlocale
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000002a684
+     0.00%             1  [unknown]             [k] 0xffffffffa6ee5cd6
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010c07
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af9d
+     0.00%             1  [unknown]             [k] 0xffffffffa6f91569
+     0.00%             1  [unknown]             [k] 0xffffffffa6e788b8
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77947
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa6e786b3
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0335
+     0.00%             2  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff05c7
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77825
+     0.00%             1  libc.so.6             [.] 0x000000000017a2bd
+     0.00%             1  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7595f71
+     0.00%             1  [unknown]             [k] 0xffffffffa7d9469f
+
+
+#
+# (Tip: To change sampling frequency to 100 Hz: perf record -F 100)
+#

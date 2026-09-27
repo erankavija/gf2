@@ -1,0 +1,57 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2638154837
+#
+# Overhead       Samples  Shared Object         Symbol                                                      
+# ........  ............  ....................  ............................................................
+#
+    78.12%          2208  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    18.58%           525  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.37%            67  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.11%             3  libc.so.6             [.] malloc
+     0.11%             3  [unknown]             [k] 0xffffffffa6801280
+     0.11%             3  dense-arm             [.] dense_arm::run::{{closure}}
+     0.07%             2  [unknown]             [k] 0xffffffffa6b79544
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97022
+     0.04%             1  [unknown]             [k] 0xffffffffa68015f0
+     0.04%             1  libc.so.6             [.] 0x00000000000a6253
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  libc.so.6             [.] 0x00000000000a6191
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee6104
+     0.04%             1  libc.so.6             [.] 0x00000000000a6230
+     0.04%             1  [unknown]             [k] 0xffffffffa6ca92c4
+     0.04%             1  dense-arm             [.] dense_parity_harness::routes::OutputSink::release_window
+     0.04%             1  [unknown]             [k] 0xffffffffa6c957a6
+     0.04%             1  [unknown]             [k] 0xffffffffa6c8fa37
+     0.04%             1  libc.so.6             [.] 0x00000000000a7696
+     0.04%             1  [unknown]             [k] 0xffffffffa6c913a1
+     0.04%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef96a2
+     0.01%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af84
+     0.01%             1  libc.so.6             [.] sigaltstack
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016694
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000010404
+     0.00%             1  [unknown]             [k] 0xffffffffa6eddd5e
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.00%             1  [unknown]             [k] 0xffffffffa7d804e6
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a1f1
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018b52
+     0.00%             1  [unknown]             [k] 0xffffffffa6eb1c26
+     0.00%             2  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             2  [unknown]             [k] 0xffffffffa7d8054b
+     0.00%             1  [unknown]             [k] 0xffffffffa7004152
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede422
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33084
+     0.00%             1  [unknown]             [k] 0xffffffffa6f992c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff3d73
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#

@@ -1,0 +1,6 @@
+# started on Mon Sep 28 02:00:15 2026
+
+2284726888,,L1-dcache-loads:u,562396962,100.00,,
+30264,,L1-dcache-load-misses:u,562396962,100.00,,
+102684,,cache-references:u,562396962,100.00,,
+25398,,cache-misses:u,562396962,100.00,,

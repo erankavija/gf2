@@ -1,0 +1,131 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2640705137
+#
+# Overhead       Samples  Shared Object         Symbol                                                  
+# ........  ............  ....................  ........................................................
+#
+    78.52%          2200  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    17.58%           493  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     1.39%            39  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.48%            46  [unknown]             [k] 0xffffffffa6f12633
+     0.36%            15  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::touch
+     0.23%            21  [unknown]             [k] 0xffffffffa6f1900a
+     0.14%             4  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.07%             2  libc.so.6             [.] malloc
+     0.05%             4  [unknown]             [k] 0xffffffffa6f1b24c
+     0.04%             1  [unknown]             [k] 0xffffffffa6801280
+     0.04%             1  libc.so.6             [.] 0x00000000000a5f0c
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c181
+     0.04%             1  [unknown]             [k] 0xffffffffa7307a84
+     0.04%             2  libc.so.6             [.] cfree
+     0.04%             1  dense-arm             [.] dense_arm::run::{{closure}}
+     0.03%             3  [unknown]             [k] 0xffffffffa6eb1c18
+     0.03%             3  [unknown]             [k] 0xffffffffa6f94156
+     0.02%             2  [unknown]             [k] 0xffffffffa6c5cb51
+     0.02%             2  [unknown]             [k] 0xffffffffa6f47552
+     0.02%             2  [unknown]             [k] 0xffffffffa6f987aa
+     0.02%             2  [unknown]             [k] 0xffffffffa6f930ae
+     0.02%             3  [unknown]             [k] 0xffffffffa7da460b
+     0.02%             2  [unknown]             [k] 0xffffffffa6f9309e
+     0.02%             2  [unknown]             [k] 0xffffffffa6ee6104
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b13e
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee4053
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3fde
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3c5b
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef94b2
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f0f1
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee40c5
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1e57d
+     0.01%             1  [unknown]             [k] 0xffffffffa7412644
+     0.01%             1  [unknown]             [k] 0xffffffffa6c6570a
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b21d
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b36c
+     0.01%             1  [unknown]             [k] 0xffffffffa6f98067
+     0.01%             1  [unknown]             [k] 0xffffffffa6f18fca
+     0.01%             1  [unknown]             [k] 0xffffffffa6f47549
+     0.01%             1  [unknown]             [k] 0xffffffffa6ba9520
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee5dd8
+     0.01%             1  [unknown]             [k] 0xffffffffa6f94135
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1e758
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee40c1
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f166
+     0.01%             1  [unknown]             [k] 0xffffffffa7d71bcb
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5f287
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3d70
+     0.01%             1  [unknown]             [k] 0xffffffffa6f94120
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9a16e
+     0.01%             1  [unknown]             [k] 0xffffffffa6eee3cd
+     0.01%             1  [unknown]             [k] 0xffffffffa6f93086
+     0.01%             1  [unknown]             [k] 0xffffffffa6b493f8
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef9782
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9a173
+     0.01%             1  [unknown]             [k] 0xffffffffa7412667
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c2a4
+     0.01%             1  [unknown]             [k] 0xffffffffa6f940f1
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3fd7
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee65fc
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1b372
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee4448
+     0.01%             1  [unknown]             [k] 0xffffffffa6f98780
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee6152
+     0.01%             1  [unknown]             [k] 0xffffffffa7412672
+     0.01%             1  [unknown]             [k] 0xffffffffa7412647
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9a140
+     0.01%             1  [unknown]             [k] 0xffffffffa6f18ff5
+     0.01%             1  [unknown]             [k] 0xffffffffa6f18fd2
+     0.01%             1  [unknown]             [k] 0xffffffffa6e8d428
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef9770
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c416
+     0.01%             1  [unknown]             [k] 0xffffffffa6f94109
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3f9a
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee403b
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef94c8
+     0.01%             1  [unknown]             [k] 0xffffffffa6f930a5
+     0.01%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef96a2
+     0.01%             1  [unknown]             [k] 0xffffffffa6f8fb63
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9a167
+     0.01%             1  [unknown]             [k] 0xffffffffa6801d30
+     0.01%             1  [unknown]             [k] 0xffffffffa6f1e570
+     0.01%             1  [unknown]             [k] 0xffffffffa7d61dc3
+     0.01%             1  [unknown]             [k] 0xffffffffa6ee3d7d
+     0.01%             1  [unknown]             [k] 0xffffffffa6f9879d
+     0.01%             1  [unknown]             [k] 0xffffffffa6ef96ba
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000002951e
+     0.01%             1  dense-arm             [.] tuning_campaign_support::transport::decode_canonical
+     0.01%             1  [unknown]             [k] 0xffffffffa6f0d8ca
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0f006
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000babe
+     0.00%             1  [unknown]             [k] 0xffffffffa7317044
+     0.00%             1  [unknown]             [k] 0xffffffffa6edc6e5
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000c994
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x00000000000093b8
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029b44
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c29b
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000008dd1
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1905f
+     0.00%             1  [unknown]             [k] 0xffffffffa6fed3b7
+     0.00%             1  [unknown]             [k] 0xffffffffa6fd4eb7
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef97e1
+     0.00%             1  libc.so.6             [.] 0x0000000000176400
+     0.00%             1  [unknown]             [k] 0xffffffffa6ed542d
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80dc5
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000007bd3
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000820f
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6e77825
+     0.00%             1  [unknown]             [k] 0xffffffffa6f32cc5
+     0.00%             1  [unknown]             [k] 0xffffffffa6f3316d
+
+
+#
+# (Tip: Treat branches as callchains: perf record -b ... ; perf report --branch-history)
+#

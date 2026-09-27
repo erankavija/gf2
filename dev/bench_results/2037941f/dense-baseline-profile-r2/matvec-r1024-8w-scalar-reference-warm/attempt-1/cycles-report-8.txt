@@ -1,0 +1,96 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2529874683
+#
+# Overhead       Samples  Shared Object         Symbol                                               
+# ........  ............  ....................  .....................................................
+#
+    97.42%          2676  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.29%             8  [unknown]             [k] 0xffffffffa6801280
+     0.18%             5  dense-arm             [.] dense_arm::run::{{closure}}
+     0.15%             4  libc.so.6             [.] malloc
+     0.11%             3  [unknown]             [k] 0xffffffffa68015f0
+     0.07%             2  libc.so.6             [.] 0x00000000000a5d05
+     0.07%             2  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.07%             4  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  [unknown]             [k] 0xffffffffa6b492b6
+     0.04%             1  libc.so.6             [.] 0x00000000000a6e2e
+     0.04%             1  [unknown]             [k] 0xffffffffa6f93db5
+     0.04%             1  [unknown]             [k] 0xffffffffa6801d22
+     0.04%             1  [unknown]             [k] 0xffffffffa6efc623
+     0.04%             1  [unknown]             [k] 0xffffffffa6c91314
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3fd0
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d14
+     0.04%             1  [unknown]             [k] 0xffffffffa7da3fd4
+     0.04%             1  libc.so.6             [.] 0x00000000000a5cf8
+     0.04%             1  [unknown]             [k] 0xffffffffa6f987aa
+     0.04%             1  [unknown]             [k] 0xffffffffa6c8ea9b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5d97
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee65e8
+     0.04%             1  [unknown]             [k] 0xffffffffa6e8d428
+     0.04%             1  [unknown]             [k] 0xffffffffa7d8f964
+     0.04%             1  [unknown]             [k] 0xffffffffa6f94257
+     0.04%             1  [unknown]             [k] 0xffffffffa6bfa256
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1e713
+     0.04%             1  libc.so.6             [.] 0x00000000000a79b6
+     0.04%             1  [unknown]             [k] 0xffffffffa6f1b24c
+     0.04%             1  libc.so.6             [.] 0x00000000000a7684
+     0.04%             1  [unknown]             [k] 0xffffffffa7d61d22
+     0.04%             1  [unknown]             [k] 0xffffffffa6c8ead3
+     0.04%             1  libc.so.6             [.] 0x00000000000a7628
+     0.04%             1  [unknown]             [k] 0xffffffffa6f47552
+     0.04%             1  libc.so.6             [.] 0x00000000000a767d
+     0.04%             1  [unknown]             [k] 0xffffffffa6f10490
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f31
+     0.04%             1  libc.so.6             [.] 0x00000000000a61fe
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee3f7d
+     0.04%             1  libc.so.6             [.] 0x00000000000a4f15
+     0.04%             1  [unknown]             [k] 0xffffffffa6f9428b
+     0.04%             1  [unknown]             [k] 0xffffffffa6ed6984
+     0.04%             1  [unknown]             [k] 0xffffffffa6b4856e
+     0.04%             1  libc.so.6             [.] 0x00000000000a503a
+     0.04%             1  [unknown]             [k] 0xffffffffa6efa701
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5f24d
+     0.04%             1  [unknown]             [k] 0xffffffffa6ee5f63
+     0.04%             1  [unknown]             [k] 0xffffffffa6edd997
+     0.04%             1  [unknown]             [k] 0xffffffffa6f5c38c
+     0.04%             1  [unknown]             [k] 0xffffffffa6f940f1
+     0.04%             1  [unknown]             [k] 0xffffffffa6efc614
+     0.03%             1  [unknown]             [k] 0xffffffffa7d929fd
+     0.01%             1  [unknown]             [k] 0xffffffffa7d64f4a
+     0.01%             1  dense-arm             [.] dense_parity_harness::fixture::MatvecBanks::build
+     0.01%             1  [unknown]             [k] 0xffffffffa7316666
+     0.01%             2  ld-linux-x86-64.so.2  [.] 0x000000000000b219
+     0.00%             1  [unknown]             [k] 0xffffffffa6f991a2
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000ad33
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000016e55
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001f080
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000001a270
+     0.00%             1  [unknown]             [k] 0xffffffffa6f18ff5
+     0.00%             1  [unknown]             [k] 0xffffffffa6f1e843
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c396
+     0.00%             1  [unknown]             [k] 0xffffffffa6febf83
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff02ea
+     0.00%             1  [unknown]             [k] 0xffffffffa6e787cd
+     0.00%             1  [unknown]             [k] 0xffffffffa6e786f4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff2144
+     0.00%             3  [unknown]             [k] 0xffffffffa6ede422
+     0.00%             1  libc.so.6             [.] 0x000000000017ade4
+     0.00%             1  [unknown]             [k] 0xffffffffa6fe38b7
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000029546
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000001785a4
+     0.00%             1  taskset               [.] 0x0000000000003f30
+     0.00%             1  [unknown]             [k] 0xffffffffa6f33136
+     0.00%             1  [unknown]             [k] 0xffffffffa6fd1bf5
+     0.00%             1  [unknown]             [k] 0xffffffffa7d8e584
+
+
+#
+# (Tip: To group events which need to be collected together for accuracy use {}: perf record -e {cycles,branches}' ...)
+#

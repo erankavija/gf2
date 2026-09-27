@@ -1,0 +1,50 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2696371315
+#
+# Overhead       Samples  Shared Object         Symbol                                             
+# ........  ............  ....................  ...................................................
+#
+    79.36%          2300  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    17.77%           515  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec_simd
+     2.20%            64  dense-arm             [.] gf2_kernels_simd::x86::avx2::fns::and_popcnt_fn
+     0.17%             5  dense-arm             [.] dense_arm::run::{{closure}}
+     0.14%             4  libc.so.6             [.] malloc
+     0.05%             5  [unknown]             [k] 0xffffffffa6f12633
+     0.04%             1  [unknown]             [k] 0xffffffffa6c97022
+     0.04%             1  [unknown]             [k] 0xffffffffa6af7b97
+     0.03%             1  [unknown]             [k] 0xffffffffa7d92a46
+     0.03%             1  [unknown]             [k] 0xffffffffa6801280
+     0.03%             1  libc.so.6             [.] 0x00000000000a4f45
+     0.03%             1  dense-arm             [.] gf2_core::matrix::BitMatrix::matvec
+     0.03%             1  [unknown]             [k] 0xffffffffa6f1900a
+     0.03%             1  [unknown]             [k] 0xffffffffa6f1e630
+     0.01%             1  ld-linux-x86-64.so.2  [.] 0x000000000000af91
+     0.00%             1  [unknown]             [k] 0xffffffffa6f0f01a
+     0.00%             1  [unknown]             [k] 0xffffffffa6efc916
+     0.00%             1  [unknown]             [k] 0xffffffffa7d663d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6fdbb80
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018a93
+     0.00%             1  [unknown]             [k] 0xffffffffa68001c8
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778e8
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef9694
+     0.00%             1  [unknown]             [k] 0xffffffffa6ef975f
+     0.00%             1  [unknown]             [k] 0xffffffffa6e786f4
+     0.00%             1  [unknown]             [k] 0xffffffffa73140bf
+     0.00%             1  [unknown]             [k] 0xffffffffa700415c
+     0.00%             1  [unknown]             [k] 0xffffffffa6ede6e0
+     0.00%             1  libc.so.6             [.] 0x00000000001763b0
+     0.00%             1  [unknown]             [k] 0xffffffffa6c2774e
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff0425
+     0.00%             1  [unknown]             [k] 0xffffffffa6ff51b4
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80c95
+
+
+#
+# (Tip: Limit to show entries above 5% only: perf report --percent-limit 5)
+#

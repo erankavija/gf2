@@ -1,0 +1,40 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 2645537180
+#
+# Overhead       Samples  Shared Object         Symbol                                                                            
+# ........  ............  ....................  ..................................................................................
+#
+    57.59%          1621  dense-arm             [.] gf2_kernels_simd::x86::avx2::avx2_and_popcnt
+    28.34%           796  dense-arm             [.] dense_arm::run::{{closure}}
+    14.04%           395  dense-arm             [.] tuning_campaign_support::timing::time_calls
+     0.01%             1  dense-arm             [.] <core::marker::PhantomData<T> as serde_core::de::DeserializeSeed>::deserialize
+     0.01%             1  [unknown]             [k] 0xffffffffa6e778d4
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bc5d
+     0.00%             1  [unknown]             [k] 0xffffffffa6f7ee61
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000bae3
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x000000000000add9
+     0.00%             1  [unknown]             [k] 0xffffffffa70155b9
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000018b42
+     0.00%             1  [unknown]             [k] 0xffffffffa6c5cb58
+     0.00%             1  [unknown]             [k] 0xffffffffa6c656f0
+     0.00%             2  [unknown]             [k] 0xffffffffa7004185
+     0.00%             1  [unknown]             [k] 0xffffffffa7d80565
+     0.00%             1  [unknown]             [k] 0xffffffffa6f2e647
+     0.00%             1  [unknown]             [k] 0xffffffffa6f12633
+     0.00%             1  [unknown]             [k] 0xffffffffa7314086
+     0.00%             1  [unknown]             [k] 0xffffffffa6e778c5
+     0.00%             1  libc.so.6             [.] getenv
+     0.00%             1  [unknown]             [k] 0xffffffffa6e78686
+     0.00%             1  [unknown]             [k] 0xffffffffa6f38046
+     0.00%             1  [unknown]             [k] 0xffffffffa6f5c416
+     0.00%             1  [unknown]             [k] 0xffffffffa6f993dd
+
+
+#
+# (Tip: To filter subset of samples with report or script add --time X-Y or --cpu A,B,C or --socket-filter ...)
+#
