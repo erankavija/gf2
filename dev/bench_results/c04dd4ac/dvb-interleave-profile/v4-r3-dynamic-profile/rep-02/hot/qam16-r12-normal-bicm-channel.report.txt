@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 2954258163
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ................  ........................................................................................................................................  ....................
+#
+    46.40%          1633  dvb-profile       [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     4.97%           169  dvb-profile       [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     3.81%           139  dvb-profile       [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+     2.16%            83  dvb-profile       [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs                                                     -      -            
+    22.30%           807  dvb-profile       [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     1.07%            37  dvb-profile       [.] gf2_kernels_simd::modem::avx2::pam_sq_distances_f64_avx2_safe                                                                         -      -            
+     0.88%            31  [unknown]         [k] 0xffffffffa6801280                                                                                                                    -      -            
+     0.55%            19  [unknown]         [k] 0xffffffffa6e8d428                                                                                                                    -      -            
+     0.50%            23  [unknown]         [k] 0xffffffffa6f12633                                                                                                                    -      -            
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#

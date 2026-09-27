@@ -1,0 +1,19 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 3411098056
+#
+# Overhead       Samples  Shared Object         Symbol                                      IPC   [IPC Coverage]
+# ........  ............  ....................  ..........................................  ....................
+#
+    59.33%          2328  dvb-profile           [.] survey_gf2_side::pack_bits              -      -            
+     6.38%           247  dvb-profile           [.] survey_gf2_side::unpack_words           -      -            
+    29.39%          1120  dvb-profile           [.] xdsopl_pctitl_qam16_r12_normal_fwd_mut  -      -            
+
+
+#
+# (Tip: Sample related events with: perf record -e '{cycles,instructions}:S')
+#

@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 2810788645
+#
+# Overhead       Samples  Shared Object         Symbol                                     IPC   [IPC Coverage]
+# ........  ............  ....................  .........................................  ....................
+#
+    34.26%          1363  dvb-profile           [.] survey_gf2_side::pack_bits             -      -            
+    19.91%           794  dvb-profile           [.] survey_gf2_side::unpack_words          -      -            
+    27.42%          1095  dvb-profile           [.] xdsopl_pctitl_qam64_r12_short_fwd_mut  -      -            
+     0.80%            32  libc.so.6             [.] 0x00000000001765a4                     -      -            
+     0.83%            33  libc.so.6             [.] 0x00000000001765ae                     -      -            
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

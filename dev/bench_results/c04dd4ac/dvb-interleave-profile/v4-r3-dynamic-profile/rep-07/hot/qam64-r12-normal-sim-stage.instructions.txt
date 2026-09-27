@@ -1,0 +1,212 @@
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (4007 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000037010 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave>:
+    0.00 :   37010:  push   %rbp
+         : 7     /// ```
+         : 8     ///
+         : 9     /// # Complexity
+         : 10    ///
+         : 11    /// O(N) where N = `frame_bits()`.
+         : 12    pub fn interleave(&self, bits: &BitVec) -> BitVec {
+    0.00 :   37011:  push   %r15
+    0.00 :   37013:  push   %r14
+    0.00 :   37015:  push   %r13
+    0.00 :   37017:  push   %r12
+    0.00 :   37019:  push   %rbx
+    0.00 :   3701a:  sub    $0x78,%rsp
+         : 19    self.config.nc * self.config.nr
+    0.00 :   3701e:  mov    0x20(%rsi),%rbp
+    0.00 :   37022:  imul   0x18(%rsi),%rbp
+    0.00 :   37027:  mov    %rbp,0x60(%rsp)
+         : 23    /// bv.push_bit(true);
+         : 24    /// assert_eq!(bv.len(), 1);
+         : 25    /// ```
+         : 26    #[inline]
+         : 27    pub fn len(&self) -> usize {
+         : 28    self.len_bits
+    0.00 :   3702c:  mov    0x18(%rdx),%rax
+    0.00 :   37030:  mov    %rax,0x68(%rsp)
+         : 31    let n = self.frame_bits();
+         : 32    assert_eq!(
+    0.00 :   37035:  cmp    %rbp,%rax
+    0.00 :   37038:  jne    371fb <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x1eb>
+    0.00 :   3703e:  mov    %ebp,%eax
+    0.00 :   37040:  and    $0x3f,%eax
+    0.00 :   37043:  mov    %rbp,%r15
+    0.00 :   37046:  shr    $0x6,%r15
+    0.00 :   3704a:  mov    %rdx,%r14
+    0.00 :   3704d:  mov    %rsi,%r12
+    0.00 :   37050:  mov    %rdi,%rbx
+    0.00 :   37053:  cmp    $0x1,%rax
+    0.00 :   37057:  sbb    $0xffffffffffffffff,%r15
+    0.00 :   3705b:  test   %rbp,%rbp
+    0.00 :   3705e:  je     37094 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x84>
+    0.00 :   37060:  lea    0x0(,%r15,8),%r13
+    0.00 :   37068:  lock incq 0x40518(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   37070:  mov    $0x1,%edi
+    0.00 :   37075:  lock add %r13,0x40513(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   3707d:  mov    %r13,%rsi
+    0.00 :   37080:  call   *0x3e95a(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   37086:  test   %rax,%rax
+    0.00 :   37089:  je     37261 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x251>
+    0.00 :   3708f:  mov    %r15,%rcx
+    0.00 :   37092:  jmp    3709b <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x8b>
+    0.00 :   37094:  mov    $0x8,%eax
+    0.00 :   37099:  xor    %ecx,%ecx
+         : 58    Self {
+    0.00 :   3709b:  mov    %rcx,0x8(%rsp)
+    0.00 :   370a0:  mov    0x48(%r12),%rcx
+    0.00 :   370a5:  movabs $0x8000000000000000,%rdx
+    0.00 :   370af:  mov    %rax,0x10(%rsp)
+    0.03 :   370b4:  mov    %r15,0x18(%rsp)
+    0.00 :   370b9:  mov    %rbp,0x20(%rsp)
+    0.00 :   370be:  movl   $0x0,0x28(%rsp)
+    0.00 :   370c6:  movb   $0x0,0x2c(%rsp)
+    0.00 :   370cb:  mov    %rdx,0x30(%rsp)
+    0.00 :   370d0:  test   %rcx,%rcx
+    0.00 :   370d3:  je     3714d <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x13d>
+    0.00 :   370d5:  mov    0x40(%r12),%rdx
+    0.00 :   370da:  shl    $0x3,%rcx
+    0.00 :   370de:  mov    $0x1,%r9d
+    0.00 :   370e4:  xor    %r8d,%r8d
+    0.00 :   370e7:  jmp    370f9 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0xe9>
+    0.00 :   370e9:  nopl   0x0(%rax)
+    2.19 :   370f0:  inc    %r8
+   19.46 :   370f3:  add    $0xfffffffffffffff8,%rcx
+    0.00 :   370f7:  je     3714d <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x13d>
+         : 79    /// assert_eq!(bv.get(0), true);
+         : 80    /// assert_eq!(bv.get(1), false);
+         : 81    /// ```
+         : 82    #[inline]
+         : 83    pub fn get(&self, idx: usize) -> bool {
+         : 84    assert!(idx < self.len_bits, "index out of bounds");
+    0.00 :   370f9:  cmp    0x18(%r14),%r8
+    6.91 :   370fd:  jae    371c7 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x1b7>
+    0.00 :   37103:  mov    0x10(%r14),%rsi
+         : 88    let word_idx = idx / 64;
+    0.08 :   37107:  mov    %r8,%rdi
+    0.13 :   3710a:  shr    $0x6,%rdi
+    0.05 :   3710e:  cmp    %rsi,%rdi
+    5.63 :   37111:  jae    37242 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x232>
+    0.00 :   37117:  mov    0x8(%r14),%rsi
+         : 94    let bit_idx = idx % 64;
+         : 95    (self.data[word_idx] >> bit_idx) & 1 == 1
+    2.78 :   3711b:  mov    (%rsi,%rdi,8),%rsi
+   16.20 :   3711f:  bt     %r8,%rsi
+         : 98    n,
+         : 99    bits.len()
+         : 100   );
+         : 101   let mut out = BitVec::zeros(n);
+         : 102   for (i, &out_idx) in self.forward.iter().enumerate() {
+         : 103   if bits.get(i) {
+    3.59 :   37123:  jae    370f0 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0xe0>
+    2.11 :   37125:  mov    (%rdx,%r8,8),%rsi
+         : 106   /// bv.push_bit(false);
+         : 107   /// bv.set(0, true);
+         : 108   /// assert_eq!(bv.get(0), true);
+         : 109   /// ```
+         : 110   pub fn set(&mut self, idx: usize, bit: bool) {
+         : 111   assert!(idx < self.len_bits, "index out of bounds");
+   24.49 :   37129:  cmp    %rbp,%rsi
+    1.18 :   3712c:  jae    371e1 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x1d1>
+         : 114   let word_idx = idx / 64;
+    0.00 :   37132:  mov    %rsi,%rdi
+    0.00 :   37135:  shr    $0x6,%rdi
+    0.08 :   37139:  cmp    %r15,%rdi
+    1.52 :   3713c:  jae    37250 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x240>
+         : 119   let bit_idx = idx % 64;
+         :
+         : 121   if bit {
+         : 122   self.data[word_idx] |= 1u64 << bit_idx;
+    0.00 :   37142:  shlx   %rsi,%r9,%rsi
+    0.00 :   37147:  or     %rsi,(%rax,%rdi,8)
+         : 125   } else {
+         : 126   self.data[word_idx] &= !(1u64 << bit_idx);
+         : 127   }
+         : 128   }
+   13.58 :   3714b:  jmp    370f0 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0xe0>
+         : 130   out.set(out_idx, true);
+         : 131   }
+         : 132   }
+         : 133   out
+    0.00 :   3714d:  vmovups 0x40(%rsp),%ymm1
+    0.02 :   37153:  vmovups 0x38(%rsp),%xmm0
+    0.00 :   37159:  mov    0x8(%rsp),%rax
+    0.00 :   3715e:  mov    0x10(%rsp),%rcx
+    0.00 :   37163:  mov    0x18(%rsp),%rdx
+    0.00 :   37168:  mov    0x20(%rsp),%rsi
+    0.00 :   3716d:  mov    0x28(%rsp),%edi
+    0.00 :   37171:  movzbl 0x2c(%rsp),%r8d
+    0.00 :   37177:  movzwl 0x2d(%rsp),%r9d
+    0.00 :   3717d:  movzbl 0x2f(%rsp),%r10d
+    0.00 :   37183:  mov    0x30(%rsp),%r11
+    0.00 :   37188:  mov    %edi,0x20(%rbx)
+    0.00 :   3718b:  mov    %r8b,0x24(%rbx)
+    0.00 :   3718f:  mov    %r9w,0x25(%rbx)
+    0.00 :   37194:  mov    %r10b,0x27(%rbx)
+    0.00 :   37198:  mov    %r11,0x28(%rbx)
+    0.00 :   3719c:  mov    %rax,(%rbx)
+    0.00 :   3719f:  mov    %rcx,0x8(%rbx)
+    0.00 :   371a3:  mov    %rdx,0x10(%rbx)
+    0.00 :   371a7:  mov    %rsi,0x18(%rbx)
+    0.00 :   371ab:  vmovups %ymm1,0x38(%rbx)
+    0.00 :   371b0:  vmovups %xmm0,0x30(%rbx)
+         : 156   }
+    0.00 :   371b5:  add    $0x78,%rsp
+    0.00 :   371b9:  pop    %rbx
+    0.00 :   371ba:  pop    %r12
+    0.00 :   371bc:  pop    %r13
+    0.00 :   371be:  pop    %r14
+    0.00 :   371c0:  pop    %r15
+    0.00 :   371c2:  pop    %rbp
+    0.00 :   371c3:  vzeroupper
+    0.00 :   371c6:  ret
+         : 166   assert!(idx < self.len_bits, "index out of bounds");
+    0.00 :   371c7:  lea    -0x2c633(%rip),%rdi        # ab9b <core::num::flt2dec::strategy::dragon::POW5TO256+0x193>
+    0.00 :   371ce:  lea    0x3cceb(%rip),%rdx        # 73ec0 <__frame_dummy_init_array_entry+0x13a0>
+    0.00 :   371d5:  mov    $0x27,%esi
+    0.00 :   371da:  call   2cbc0 <core::panicking::panic_fmt>
+    0.00 :   371df:  jmp    3725f <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x24f>
+         : 172   assert!(idx < self.len_bits, "index out of bounds");
+    0.00 :   371e1:  lea    -0x2c64d(%rip),%rdi        # ab9b <core::num::flt2dec::strategy::dragon::POW5TO256+0x193>
+    0.00 :   371e8:  lea    0x3cd19(%rip),%rdx        # 73f08 <__frame_dummy_init_array_entry+0x13e8>
+    0.00 :   371ef:  mov    $0x27,%esi
+    0.00 :   371f4:  call   2cbc0 <core::panicking::panic_fmt>
+    0.00 :   371f9:  jmp    3725f <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x24f>
+         : 178   self.len_bits
+    0.00 :   371fb:  mov    %rax,0x70(%rsp)
+    0.00 :   37200:  lea    0x60(%rsp),%rsi
+         : 181   assert_eq!(
+    0.00 :   37205:  lea    -0x158c(%rip),%rax        # 35c80 <<u64 as core::fmt::Display>::fmt>
+    0.00 :   3720c:  lea    0x70(%rsp),%rcx
+    0.00 :   37211:  lea    -0x2e5b2(%rip),%rdx        # 8c66 <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x40d6>
+    0.00 :   37218:  lea    0x3ca39(%rip),%r8        # 73c58 <__frame_dummy_init_array_entry+0x1138>
+    0.00 :   3721f:  lea    0x68(%rsp),%rdi
+    0.00 :   37224:  mov    %rsi,0x8(%rsp)
+    0.00 :   37229:  mov    %rax,0x10(%rsp)
+    0.00 :   3722e:  mov    %rcx,0x18(%rsp)
+    0.00 :   37233:  lea    0x8(%rsp),%rcx
+    0.00 :   37238:  mov    %rax,0x20(%rsp)
+    0.00 :   3723d:  call   2dc92 <core::panicking::assert_failed::<usize, usize>>
+    0.00 :   37242:  lea    0x3cc8f(%rip),%rdx        # 73ed8 <__frame_dummy_init_array_entry+0x13b8>
+    0.00 :   37249:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   3724e:  jmp    3725f <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x24f>
+    0.00 :   37250:  lea    0x3ccc9(%rip),%rdx        # 73f20 <__frame_dummy_init_array_entry+0x1400>
+    0.00 :   37257:  mov    %r15,%rsi
+    0.00 :   3725a:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   3725f:  ud2
+    0.00 :   37261:  mov    $0x8,%edi
+    0.00 :   37266:  mov    %r13,%rsi
+    0.00 :   37269:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   3726e:  jmp    37270 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x260>
+    0.00 :   37270:  lea    0x8(%rsp),%rdi
+    0.00 :   37275:  mov    %rax,%rbx
+         : 206   }
+    0.00 :   37278:  call   35ef0 <core::ptr::drop_in_place<gf2_core::bitvec::BitVec>>
+    0.00 :   3727d:  mov    %rbx,%rdi
+    0.00 :   37280:  call   71b00 <_Unwind_Resume@plt>
