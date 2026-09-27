@@ -5,6 +5,7 @@
 //! dense-campaign list    --family <id>
 //! dense-campaign cells   --family <id> --issue <8-hex> --frozen-utc <t> --output <path>
 //! dense-campaign verify  --family <id> --addendum <path>
+//! dense-campaign unavailable --family <id> --addendum <path> --output <path>
 //! dense-campaign plan    --family <id> --addendum <path> --campaign-id <id>
 //!                        --campaign-seed <n> --lock <absolute> --gf2-executable <path>
 //!                        --producing-manifest <path> --output <path>
@@ -134,7 +135,7 @@ fn transcribe(arguments: &Arguments) -> Result<FamilyAddendum, String> {
 fn run() -> Result<(), String> {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let (command, rest) = raw.split_first().ok_or(
-        "usage: dense-campaign <pins|list|cells|verify|plan|inputs|profile-request> --flag value ...",
+        "usage: dense-campaign <pins|list|cells|verify|unavailable|plan|inputs|profile-request> --flag value ...",
     )?;
     let arguments = Arguments::parse(rest)?;
     match command.as_str() {
@@ -162,6 +163,7 @@ fn run() -> Result<(), String> {
             Ok(())
         }
         "verify" => verify(&arguments),
+        "unavailable" => unavailable(&arguments),
         "plan" => project(&arguments),
         "profile-request" => profile_request(&arguments),
         "inputs" => {
@@ -177,8 +179,8 @@ fn run() -> Result<(), String> {
     }
 }
 
-/// Prints the frozen input identities a timed run refuses to start without.
-fn pins() -> Result<(), String> {
+/// Verifies the frozen prose bytes both projections cite.
+fn pinned_addendum_digest() -> Result<String, String> {
     let path = dense_parity_harness::cells::ADDENDUM_PATH;
     let bytes = std::fs::read(path)
         .map_err(|error| format!("cannot read {path} from the repository root: {error}"))?;
@@ -189,6 +191,13 @@ fn pins() -> Result<(), String> {
             dense_parity_harness::cells::ADDENDUM_SHA256
         ));
     }
+    Ok(observed)
+}
+
+/// Prints the frozen input identities a timed run refuses to start without.
+fn pins() -> Result<(), String> {
+    let path = dense_parity_harness::cells::ADDENDUM_PATH;
+    let observed = pinned_addendum_digest()?;
     println!("addendum={path}");
     println!("addendum_sha256={observed}");
     println!(
@@ -220,8 +229,41 @@ fn pins() -> Result<(), String> {
     Ok(())
 }
 
-/// Re-derives a family's transcription and compares it with committed JSON.
-fn verified_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum), String> {
+/// Projects the comparator shapes the frozen qualification does not admit.
+fn unavailable(arguments: &Arguments) -> Result<(), String> {
+    let (question, addendum) = family_addendum(arguments)?;
+    if question != Question::MatvecVsM4ri {
+        return Err("unavailable rows belong only to the M4RI comparator".into());
+    }
+    for row in UNAVAILABLE_ROWS {
+        if addendum.cell(row.row_id).is_some() {
+            return Err(format!("{} is also a measured cell", row.row_id));
+        }
+    }
+    let digest = pinned_addendum_digest()?;
+    let mut table = format!(
+        "# addendum={} sha256={}\n# family={}\ncell_id\tstride_words\tstatus\tsamples\tcomparisons\treason\n",
+        dense_parity_harness::cells::ADDENDUM_PATH,
+        digest,
+        question.family_id(),
+    );
+    for row in UNAVAILABLE_ROWS {
+        if row.reason.contains('\t') || row.reason.contains('\n') {
+            return Err(format!("{} has an invalid unavailable reason", row.row_id));
+        }
+        table.push_str(&format!(
+            "{}\t{}\tunavailable\t0\t0\t{}\n",
+            row.row_id, row.stride_words, row.reason
+        ));
+    }
+    let output = arguments.required("output")?;
+    std::fs::write(output, table).map_err(|error| format!("cannot write {output}: {error}"))?;
+    println!("{output}: unavailable M4RI shapes from the frozen addendum");
+    Ok(())
+}
+
+/// Decodes a schema-valid family addendum, including a derived confirmation.
+fn family_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum), String> {
     let question = question(arguments)?;
     let path = arguments.required("addendum")?;
     let bytes = std::fs::read(path).map_err(|error| format!("cannot read {path}: {error}"))?;
@@ -236,6 +278,14 @@ fn verified_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum)
             question.family_id()
         ));
     }
+    Ok((question, candidate))
+}
+
+/// Re-derives a pilot transcription and compares it with committed JSON.
+fn verified_addendum(arguments: &Arguments) -> Result<(Question, FamilyAddendum), String> {
+    let (question, candidate) = family_addendum(arguments)?;
+    let path = arguments.required("addendum")?;
+    let bytes = std::fs::read(path).map_err(|error| format!("cannot read {path}: {error}"))?;
     let frozen = candidate
         .frozen
         .frozen_utc
