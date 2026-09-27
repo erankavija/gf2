@@ -1,0 +1,151 @@
+{
+  "schema": "source-evidence-v1",
+  "issue": "fcb04d66",
+  "source_revision": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+  "claims": [
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/Cargo.toml",
+      "line": 53,
+      "verbatim": "default = [\"rand\", \"io\"]",
+      "why": "The ordinary feature set excludes SIMD.",
+      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/Cargo.toml",
+      "line": 57,
+      "verbatim": "simd = []",
+      "why": "SIMD dispatch is feature gated.",
+      "sha256": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 83,
+      "verbatim": "pub(crate) const SIMD_MIN_WORDS_DEFAULT: usize = 8;",
+      "why": "The conservative default threshold is eight words.",
+      "sha256": "0b1492433aa0c4de35261d7714af5ebafabbd8f27dc2d8410e1b1066cb07dce0"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 89,
+      "verbatim": "const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;",
+      "why": "Without the baked-tuning flag, the selector uses the conservative threshold.",
+      "sha256": "0b1492433aa0c4de35261d7714af5ebafabbd8f27dc2d8410e1b1066cb07dce0"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/kernels/backend.rs",
+      "line": 115,
+      "verbatim": "    if _size >= SIMD_MIN_WORDS {",
+      "why": "The SIMD route requires the length threshold.",
+      "sha256": "0b1492433aa0c4de35261d7714af5ebafabbd8f27dc2d8410e1b1066cb07dce0"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 62,
+      "verbatim": "            .unwrap_or(scalar_xor_inplace),",
+      "why": "The public XOR resolver falls back to scalar when SIMD is unavailable.",
+      "sha256": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/kernels/ops.rs",
+      "line": 100,
+      "verbatim": "    let xor = resolve_xor_inplace(dst.len());",
+      "why": "The public XOR operation uses the existing resolver.",
+      "sha256": "f403317def8759869e20c7631c4ef8ce857453ce0fa0556a802ffb55b8d35042"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 21,
+      "verbatim": "#[cfg(gf2_xor_unroll2)]",
+      "why": "The factor-two kernel requires an explicit experimental cfg.",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 23,
+      "verbatim": "#[cfg(gf2_xor_unroll4)]",
+      "why": "The factor-four kernel requires an explicit experimental cfg.",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 42,
+      "verbatim": "    #[cfg(any(gf2_xor_unroll2, gf2_xor_unroll4))]",
+      "why": "The experimental unrolled loop is excluded from an ordinary build.",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 30,
+      "verbatim": "/// The caller must have passed runtime AVX2 detection; the safe logical",
+      "why": "The kernel safety contract requires runtime AVX2 detection.",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
+      "line": 36,
+      "verbatim": "unsafe fn avx2_xor_into(dst: &mut [u64], src: &[u64]) {",
+      "why": "The intrinsic function is isolated in the SIMD crate.",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 44,
+      "verbatim": "/// 2. Bit `i` is stored at `data[i >> 6] & (1u64 << (i & 63))`.",
+      "why": "The type states canonical little-endian bit indexing.",
+      "sha256": "21bed369cb2ca6345c923df438c7a356d3e928bec18cd029c89cfa9245b0d76f"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 45,
+      "verbatim": "/// 3. Padding bits beyond `len_bits` in the last word are always zero.",
+      "why": "The type states zero padding beyond the logical bit length.",
+      "sha256": "21bed369cb2ca6345c923df438c7a356d3e928bec18cd029c89cfa9245b0d76f"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/tests/simd_equiv/mod.rs",
+      "line": 56,
+      "verbatim": "pub const WORD_BOUNDARY_LENGTHS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];",
+      "why": "The shared scalar/SIMD helper declares word-boundary cases.",
+      "sha256": "48a6793bc83d4b7f887c3f80ae04e4fc0fd3e6bd522984c5097120aefda6bd9c"
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/matrix.rs",
+      "line": 1027,
+      "verbatim": "    pub fn row_xor(&mut self, dst: usize, src: usize) {",
+      "why": "The public row XOR is the whole-consumer path.",
+      "sha256": "1b0a330d57301b24b16947d9486ffa2e550bb91cbad57d5fdcc4f24cc9b3959d"
+    }
+  ]
+}
