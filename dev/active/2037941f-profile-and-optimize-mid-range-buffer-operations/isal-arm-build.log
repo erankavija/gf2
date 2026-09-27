@@ -1,30 +1,33 @@
+cargo-budget: 24 jobs (1 live, 24 cpus)
        Fresh unicode-ident v1.0.24
        Fresh version_check v0.9.5
-       Fresh find-msvc-tools v0.1.12
-       Fresh shlex v2.0.1
        Fresh proc-macro2 v1.0.107
-       Fresh cc v1.4.6
-       Fresh typenum v1.20.1
+       Fresh shlex v2.0.1
+       Fresh find-msvc-tools v0.1.12
        Fresh once_cell v1.21.4
+       Fresh typenum v1.20.1
        Fresh cfg_aliases v0.2.2
-       Fresh memchr v2.8.3
-       Fresh autocfg v1.5.1
-       Fresh itoa v1.0.18
        Fresh bitflags v2.13.2
-       Fresh hashbrown v0.17.1
+       Fresh itoa v1.0.18
+       Fresh autocfg v1.5.1
+       Fresh memchr v2.8.3
        Fresh equivalent v1.0.2
        Fresh regex-syntax v0.8.11
-       Fresh toml_write v0.1.2
-       Fresh cfg-if v1.0.4
+       Fresh hashbrown v0.17.1
+       Fresh arrayvec v0.7.8
        Fresh quote v1.0.47
        Fresh serde_core v1.0.229
        Fresh libc v0.2.189
+       Fresh cc v1.4.6
+       Fresh zerocopy v0.8.57
        Fresh tracing-core v0.1.36
-       Fresh regex-automata v0.4.18
        Fresh indexmap v2.14.2
+       Fresh regex-automata v0.4.18
+       Fresh toml_write v0.1.2
        Fresh log v0.4.34
-       Fresh arrayvec v0.7.8
        Fresh constant_time_eq v0.4.2
+       Fresh pin-project-lite v0.2.17
+       Fresh winnow v0.7.15
        Fresh lazy_static v1.5.0
 warning: eliding a lifetime that's named elsewhere is confusing
   --> /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lazy_static-1.5.0/src/inline_lazy.rs:26:43
@@ -41,12 +44,10 @@ help: consistently use `'static`
 26 |     pub fn get<F>(&'static self, f: F) -> &'static T
    |                                            +++++++
 
-       Fresh cpufeatures v0.3.1
-       Fresh pin-project-lite v0.2.17
-       Fresh winnow v0.7.15
+       Fresh cfg-if v1.0.4
 warning: `lazy_static` (lib) generated 1 warning
        Fresh syn v3.0.5
-       Fresh zerocopy v0.8.57
+       Fresh getrandom v0.2.17
 warning: unexpected `cfg` condition name: `relaxed_coherence`
    --> /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/generic-array-0.14.7/src/impls.rs:136:19
     |
@@ -172,8 +173,8 @@ help: use `'_` for type paths
 290 |     pub unsafe fn iter_position(&mut self) -> (slice::Iter<'_, T>, &mut usize) {
     |                                                            +++
 
-       Fresh getrandom v0.2.17
        Fresh zmij v1.0.23
+       Fresh ppv-lite86 v0.2.21
        Fresh generic-array v0.14.7
        Fresh syn v2.0.119
        Fresh libm v0.2.16
@@ -215,6 +216,17 @@ warning: an associated constant with this name may be added to the standard libr
     = warning: once this associated item is added to the standard library, the ambiguity may cause an error or change in behavior!
     = note: for more information, see issue #48919 <https://github.com/rust-lang/rust/issues/48919>
     = note: this warning originates in the macro `float_impl` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+       Fresh cpufeatures v0.3.1
+       Fresh matchers v0.2.0
+       Fresh tracing-log v0.2.0
+warning: lint `private_in_public` has been removed: replaced with another group of lints, see RFC <https://rust-lang.github.io/rfcs/2145-type-privacy.html> for more information
+   --> /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-log-0.2.0/src/lib.rs:115:5
+    |
+115 |     private_in_public,
+    |     ^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(renamed_and_removed_lints)]` on by default
 
        Fresh sharded-slab v0.1.7
 warning: unexpected `cfg` condition name: `loom`
@@ -2224,38 +2236,18 @@ warning: unexpected `cfg` condition name: `slab_print`
     = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
     = note: this warning originates in the macro `test_println` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-       Fresh matchers v0.2.0
-       Fresh tracing-log v0.2.0
-warning: lint `private_in_public` has been removed: replaced with another group of lints, see RFC <https://rust-lang.github.io/rfcs/2145-type-privacy.html> for more information
-   --> /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-log-0.2.0/src/lib.rs:115:5
-    |
-115 |     private_in_public,
-    |     ^^^^^^^^^^^^^^^^^
-    |
-    = note: `#[warn(renamed_and_removed_lints)]` on by default
-
        Fresh thread_local v1.1.10
-       Fresh smallvec v1.16.1
-       Fresh gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-kernels-simd)
        Fresh nu-ansi-term v0.50.3
        Fresh cpufeatures v0.2.17
+       Fresh gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-kernels-simd)
+       Fresh smallvec v1.16.1
        Fresh linux-raw-sys v0.12.1
 warning: `generic-array` (lib) generated 6 warnings
 warning: `generic-array` (lib) generated 6 warnings (6 duplicates)
 warning: `libm` (lib) generated 2 warnings
-warning: blake3@1.8.7: gcc: error: unrecognized command-line option ‘-?’
-warning: blake3@1.8.7: gcc: fatal error: no input files
-warning: blake3@1.8.7: compilation terminated.
-warning: blake3@1.8.7: gcc: error: unrecognized command-line option ‘-?’
-warning: blake3@1.8.7: gcc: fatal error: no input files
-warning: blake3@1.8.7: compilation terminated.
-warning: blake3@1.8.7: gcc: error: unrecognized command-line option ‘-?’
-warning: blake3@1.8.7: gcc: fatal error: no input files
-warning: blake3@1.8.7: compilation terminated.
-warning: `sharded-slab` (lib) generated 105 warnings
 warning: `tracing-log` (lib) generated 1 warning
+warning: `sharded-slab` (lib) generated 105 warnings
        Fresh serde_derive v1.0.229
-       Fresh ppv-lite86 v0.2.21
        Fresh rand_core v0.6.4
 warning: unexpected `cfg` condition name: `doc_cfg`
   --> /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/src/lib.rs:38:13
@@ -2338,25 +2330,44 @@ warning: unexpected `cfg` condition name: `doc_cfg`
     = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
 
        Fresh serde_json v1.0.151
-       Fresh tracing-attributes v0.1.31
-       Fresh crypto-common v0.1.7
        Fresh block-buffer v0.10.4
+       Fresh crypto-common v0.1.7
+       Fresh tracing-attributes v0.1.31
        Fresh num-traits v0.2.19
-       Fresh blake3 v1.8.7
        Fresh nix v0.31.3
        Fresh rustix v1.1.4
 warning: `rand_core` (lib) generated 6 warnings
+warning: blake3@1.8.7: gcc: error: unrecognized command-line option ‘-?’
+warning: blake3@1.8.7: gcc: fatal error: no input files
+warning: blake3@1.8.7: compilation terminated.
+warning: blake3@1.8.7: gcc: error: unrecognized command-line option ‘-?’
+warning: blake3@1.8.7: gcc: fatal error: no input files
+warning: blake3@1.8.7: compilation terminated.
+warning: blake3@1.8.7: gcc: error: unrecognized command-line option ‘-?’
+warning: blake3@1.8.7: gcc: fatal error: no input files
+warning: blake3@1.8.7: compilation terminated.
        Fresh serde v1.0.229
        Fresh rand_chacha v0.3.1
-       Fresh digest v0.10.7
        Fresh tracing v0.1.44
+       Fresh blake3 v1.8.7
+       Fresh digest v0.10.7
        Fresh ctrlc v3.5.2
+       Fresh serde_spanned v0.6.9
        Fresh toml_datetime v0.6.11
        Fresh rand v0.8.8
-       Fresh serde_spanned v0.6.9
        Fresh tracing-serde v0.2.0
        Fresh sha2 v0.10.9
        Fresh toml_edit v0.22.27
+       Fresh gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-core)
+warning: function `choose_k_block` is never used
+   --> /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-core/src/alg/m4rm.rs:532:4
+    |
+532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
+    |    ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+       Fresh tracing-subscriber v0.3.23
        Fresh rand_distr v0.4.3
 warning: unexpected `cfg` condition name: `doc_cfg`
   --> /home/vkaskivuo/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_distr-0.4.3/src/lib.rs:23:13
@@ -2810,28 +2821,18 @@ warning: field `n` is never read
     |
     = note: `Zipf` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
 
-       Fresh tracing-subscriber v0.3.23
-       Fresh gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-core)
-warning: function `choose_k_block` is never used
-   --> /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-core/src/alg/m4rm.rs:532:4
-    |
-532 | fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
-    |    ^^^^^^^^^^^^^^
-    |
-    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
-
        Fresh tuning-campaign-support v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/tools/tuning-campaign-support)
-warning: `rand_distr` (lib) generated 35 warnings
 warning: `gf2-core` (lib) generated 1 warning
+warning: `rand_distr` (lib) generated 35 warnings
        Fresh toml v0.8.23
        Dirty logical-buffer-harness v0.0.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness): the env variable GF2_ISAL_SOURCE changed
    Compiling logical-buffer-harness v0.0.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness)
        Fresh gf2-coding v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/crates/gf2-coding)
      Running `CARGO=/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo CARGO_CFG_FEATURE=isal CARGO_CFG_PANIC=unwind CARGO_CFG_TARGET_ABI='' CARGO_CFG_TARGET_ARCH=x86_64 CARGO_CFG_TARGET_ENDIAN=little CARGO_CFG_TARGET_ENV=gnu CARGO_CFG_TARGET_FAMILY=unix CARGO_CFG_TARGET_FEATURE=fxsr,sse,sse2 CARGO_CFG_TARGET_HAS_ATOMIC=16,32,64,8,ptr CARGO_CFG_TARGET_OS=linux CARGO_CFG_TARGET_POINTER_WIDTH=64 CARGO_CFG_TARGET_VENDOR=unknown CARGO_CFG_UNIX='' CARGO_ENCODED_RUSTFLAGS='' CARGO_FEATURE_ISAL=1 CARGO_MANIFEST_DIR=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness CARGO_MANIFEST_PATH=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml CARGO_PKG_AUTHORS='' CARGO_PKG_DESCRIPTION='' CARGO_PKG_HOMEPAGE='' CARGO_PKG_LICENSE='' CARGO_PKG_LICENSE_FILE='' CARGO_PKG_NAME=logical-buffer-harness CARGO_PKG_README='' CARGO_PKG_REPOSITORY='' CARGO_PKG_RUST_VERSION=1.95 CARGO_PKG_VERSION=0.0.0 CARGO_PKG_VERSION_MAJOR=0 CARGO_PKG_VERSION_MINOR=0 CARGO_PKG_VERSION_PATCH=0 CARGO_PKG_VERSION_PRE='' DEBUG=false HOST=x86_64-unknown-linux-gnu LD_LIBRARY_PATH='/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release:/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps:/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib:/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib' NUM_JOBS=24 OPT_LEVEL=3 OUT_DIR=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out PROFILE=release RAYON_NUM_THREADS=4 RUSTC=/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/rustc RUSTDOC=/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/rustdoc TARGET=x86_64-unknown-linux-gnu /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-cf49bc852d40e752/build-script-build`
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=GF2_ISAL_SOURCE
-[logical-buffer-harness 0.0.0] cargo:rerun-if-changed=/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/raid/raid_base.c
-[logical-buffer-harness 0.0.0] cargo:rerun-if-changed=/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include/raid.h
-[logical-buffer-harness 0.0.0] cargo:rerun-if-changed=/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/LICENSE
+[logical-buffer-harness 0.0.0] cargo:rerun-if-changed=/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/isa-l/raid/raid_base.c
+[logical-buffer-harness 0.0.0] cargo:rerun-if-changed=/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/isa-l/include/raid.h
+[logical-buffer-harness 0.0.0] cargo:rerun-if-changed=/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/isa-l/LICENSE
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=CC_FORCE_DISABLE
 [logical-buffer-harness 0.0.0] CC_FORCE_DISABLE = None
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=CC_x86_64-unknown-linux-gnu
@@ -2843,13 +2844,13 @@ warning: `gf2-core` (lib) generated 1 warning
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=CC
 [logical-buffer-harness 0.0.0] CC = Some(/usr/bin/gcc)
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
-[logical-buffer-harness 0.0.0] running: env -u CC_SHIM_OUT_DIR -u CC_SHIM_OUT_FILES "/usr/bin/gcc" "-E" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/5320517279205957254detect_compiler_family.c"
-[logical-buffer-harness 0.0.0] # 0 "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/5320517279205957254detect_compiler_family.c"
+[logical-buffer-harness 0.0.0] running: env -u CC_SHIM_OUT_DIR -u CC_SHIM_OUT_FILES "/usr/bin/gcc" "-E" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/16120374366678712659detect_compiler_family.c"
+[logical-buffer-harness 0.0.0] # 0 "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/16120374366678712659detect_compiler_family.c"
 [logical-buffer-harness 0.0.0] # 0 "<built-in>"
 [logical-buffer-harness 0.0.0] # 0 "<command-line>"
 [logical-buffer-harness 0.0.0] # 1 "/usr/include/stdc-predef.h" 1 3
 [logical-buffer-harness 0.0.0] # 0 "<command-line>" 2
-[logical-buffer-harness 0.0.0] # 1 "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/5320517279205957254detect_compiler_family.c"
+[logical-buffer-harness 0.0.0] # 1 "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/16120374366678712659detect_compiler_family.c"
 [logical-buffer-harness 0.0.0]
 [logical-buffer-harness 0.0.0]
 [logical-buffer-harness 0.0.0]
@@ -2872,7 +2873,7 @@ warning: `gf2-core` (lib) generated 1 warning
 [logical-buffer-harness 0.0.0] CFLAGS_x86_64_unknown_linux_gnu = None
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=CFLAGS_x86_64-unknown-linux-gnu
 [logical-buffer-harness 0.0.0] CFLAGS_x86_64-unknown-linux-gnu = None
-[logical-buffer-harness 0.0.0] running: LC_ALL="C" "/usr/bin/gcc" "-O3" "-ffunction-sections" "-fdata-sections" "-fPIC" "-m64" "-I" "/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/include" "-Wall" "-Wextra" "-std=c11" "-O3" "-march=native" "-Wall" "-Wextra" "-Werror" "-o" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/792c8d7c107aca74-raid_base.o" "-c" "/home/vkaskivuo/Projects/gf2/.agents/ext/6fb89a3c/isa-l/raid/raid_base.c"
+[logical-buffer-harness 0.0.0] running: LC_ALL="C" "/usr/bin/gcc" "-O3" "-ffunction-sections" "-fdata-sections" "-fPIC" "-m64" "-I" "/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/isa-l/include" "-Wall" "-Wextra" "-std=c11" "-O3" "-march=native" "-Wall" "-Wextra" "-Werror" "-o" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/dac1ea6f44cbcacf-raid_base.o" "-c" "/home/vkaskivuo/Projects/gf2/.agents/ext/6c6b09b1/isa-l/raid/raid_base.c"
 [logical-buffer-harness 0.0.0] exit status: 0
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=AR_x86_64-unknown-linux-gnu
 [logical-buffer-harness 0.0.0] AR_x86_64-unknown-linux-gnu = None
@@ -2890,7 +2891,7 @@ warning: `gf2-core` (lib) generated 1 warning
 [logical-buffer-harness 0.0.0] ARFLAGS_x86_64_unknown_linux_gnu = None
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=ARFLAGS_x86_64-unknown-linux-gnu
 [logical-buffer-harness 0.0.0] ARFLAGS_x86_64-unknown-linux-gnu = None
-[logical-buffer-harness 0.0.0] running: ZERO_AR_DATE="1" "ar" "cqD" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/libisal_raid_base.a" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/792c8d7c107aca74-raid_base.o"
+[logical-buffer-harness 0.0.0] running: ZERO_AR_DATE="1" "ar" "cqD" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/libisal_raid_base.a" "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out/dac1ea6f44cbcacf-raid_base.o"
 [logical-buffer-harness 0.0.0] exit status: 0
 [logical-buffer-harness 0.0.0] cargo:rerun-if-env-changed=AR_x86_64-unknown-linux-gnu
 [logical-buffer-harness 0.0.0] AR_x86_64-unknown-linux-gnu = None
@@ -2917,4 +2918,4 @@ warning: logical-buffer-harness@0.0.0: gcc: fatal error: no input files
 warning: logical-buffer-harness@0.0.0: compilation terminated.
      Running `CARGO=/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo CARGO_CRATE_NAME=logical_buffer_harness CARGO_MANIFEST_DIR=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness CARGO_MANIFEST_PATH=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml CARGO_PKG_AUTHORS='' CARGO_PKG_DESCRIPTION='' CARGO_PKG_HOMEPAGE='' CARGO_PKG_LICENSE='' CARGO_PKG_LICENSE_FILE='' CARGO_PKG_NAME=logical-buffer-harness CARGO_PKG_README='' CARGO_PKG_REPOSITORY='' CARGO_PKG_RUST_VERSION=1.95 CARGO_PKG_VERSION=0.0.0 CARGO_PKG_VERSION_MAJOR=0 CARGO_PKG_VERSION_MINOR=0 CARGO_PKG_VERSION_PATCH=0 CARGO_PKG_VERSION_PRE='' CARGO_PRIMARY_PACKAGE=1 LD_LIBRARY_PATH='/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps:/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib' OUT_DIR=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out RAYON_NUM_THREADS=4 /home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/rustc --crate-name logical_buffer_harness --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C opt-level=3 -C linker-plugin-lto -C codegen-units=1 --cfg 'feature="isal"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("isal"))' -C metadata=60b91c480a07ff7e -C extra-filename=-7c38f063f477b905 --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps -C strip=debuginfo -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps --extern gf2_coding=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libgf2_coding-8a0b0e1308f95af8.rmeta --extern gf2_core=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libgf2_core-4c5526bf63f39082.rmeta --extern serde=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libserde-4059aac4e275b04d.rmeta --extern serde_json=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libserde_json-decc3575cf049c36.rmeta --extern tuning_campaign_support=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libtuning_campaign_support-c7c0a5060c9db4d2.rmeta -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/blake3-901054773e69dd6a/out -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/blake3-901054773e69dd6a/out -l static=isal_raid_base`
      Running `CARGO=/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/cargo CARGO_BIN_NAME=logical-isal-arm CARGO_CRATE_NAME=logical_isal_arm CARGO_MANIFEST_DIR=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness CARGO_MANIFEST_PATH=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml CARGO_PKG_AUTHORS='' CARGO_PKG_DESCRIPTION='' CARGO_PKG_HOMEPAGE='' CARGO_PKG_LICENSE='' CARGO_PKG_LICENSE_FILE='' CARGO_PKG_NAME=logical-buffer-harness CARGO_PKG_README='' CARGO_PKG_REPOSITORY='' CARGO_PKG_RUST_VERSION=1.95 CARGO_PKG_VERSION=0.0.0 CARGO_PKG_VERSION_MAJOR=0 CARGO_PKG_VERSION_MINOR=0 CARGO_PKG_VERSION_PATCH=0 CARGO_PKG_VERSION_PRE='' CARGO_PRIMARY_PACKAGE=1 LD_LIBRARY_PATH='/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps:/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib' OUT_DIR=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out RAYON_NUM_THREADS=4 /home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/bin/rustc --crate-name logical_isal_arm --edition=2021 src/bin/logical-isal-arm.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C opt-level=3 -C lto=thin -C codegen-units=1 --cfg 'feature="isal"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("isal"))' -C metadata=baecdc12dc31cd15 -C extra-filename=-482903327ea7fd53 --out-dir /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps -C strip=debuginfo -L dependency=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps --extern gf2_coding=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libgf2_coding-8a0b0e1308f95af8.rlib --extern gf2_core=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libgf2_core-4c5526bf63f39082.rlib --extern logical_buffer_harness=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/liblogical_buffer_harness-7c38f063f477b905.rlib --extern serde=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libserde-4059aac4e275b04d.rlib --extern serde_json=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libserde_json-decc3575cf049c36.rlib --extern tuning_campaign_support=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/deps/libtuning_campaign_support-c7c0a5060c9db4d2.rlib -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/logical-buffer-harness-e59e134564ff1f93/out -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/blake3-901054773e69dd6a/out -L native=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/build/blake3-901054773e69dd6a/out`
-    Finished `release` profile [optimized] target(s) in 4.10s
+    Finished `release` profile [optimized] target(s) in 4.07s

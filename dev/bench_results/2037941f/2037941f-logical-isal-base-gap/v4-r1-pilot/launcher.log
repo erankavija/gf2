@@ -1,0 +1,33 @@
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh window --family 2037941f-logical-isal-base-gap --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json --run-id v4-r1 --isal
+# started_utc: 2026-09-26T23:17:31Z
+# gf2 revision (informational): 8f2875d8c35d4526fe389cdc7b68cae7d5c7fa1d
+# addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md
+# addendum_sha256=290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074
+# addendum_identity=2037941f-logical-buffer-v1
+# addendum_frozen_utc=2026-09-15T03:56:39Z
+# comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-comparator.md
+# family=2037941f-logical-isolated-xor ledger=dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl cells=17
+# family=2037941f-logical-public-row-xor ledger=dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl cells=17
+# family=2037941f-logical-nr-construction ledger=dev/bench_results/2037941f/logical-nr-construction-ledger.jsonl cells=6
+# family=2037941f-logical-isal-base-gap ledger=dev/bench_results/2037941f/logical-isal-base-gap-ledger.jsonl cells=12
+# campaign addendum: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/logical-isal-base-gap.json sha256=47edde468edc884c30b202b8290575a33d01de4f39d4df55f857e0c9936edbd2
+# producing manifest: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-producing-inputs.json sha256=5e8a1515846b9547b84b2f390f96672933eb2d0a5d108dff04551c6659644809
+# gf2 arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-arms/release/logical-arm sha256=491d9e257c7def4bb3da27b91356068e645ef126d3388525522408ac21744448
+# isal arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-isal-arm/release/logical-isal-arm sha256=84e3b2625ac9a72546347b30cb632a628a163fb0acc495bde94f02163f492b23
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap.plan.json sha256=82138aad788eee189015a4e41ccc7161d144aedb2ec917cfc7e225c5b6535309
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14);binary: rustc;commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860;commit-date: 2026-04-14;host: x86_64-unknown-linux-gnu;release: 1.95.0;LLVM version: 22.1.2;
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap/execution.log
+# session 3 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap/execution.log
+# session 4 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap/execution.log
+# session 5 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/target/bb769456-campaigns/v4-r1-2037941f-logical-isal-base-gap/execution.log
+# session 6 exit: 0
+GF2_BENCHMARK_RECEIPT=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-65c0e13d/dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
