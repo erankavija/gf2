@@ -667,7 +667,7 @@
           "short_id": "fcb04d66",
           "title": "Implement and confirm the logical-buffer outcome",
           "classification": "implementation",
-          "status": "in_progress: session26 dispatched after dependencies closed; see session_scope active_workers.",
+          "status": "done",
           "tracker_state": "in_progress",
           "dispatch": {
             "model": "gpt-6-sol",
@@ -1875,7 +1875,7 @@
     {
       "issue": "fcb04d66",
       "subject": "Research gate 45bac0a3 advisory F1: unroll profile tables need exact invocation and RNG/version provenance links.",
-      "disposition": "Docs-only follow-up in progress using retained invocation logs and pinned fixture source; no new timing or raw-data edits.",
+      "disposition": "Resolved in profile-provenance.md and source-evidence ledger at c5393116e; exact runtime logs linked, source-derived seed/RNG declarations distinguished. Final merged CI passes; no timing/raw-data edits.",
       "criterion_named_by": "2037941f REQ05/REQ06"
     }
   ],
@@ -2052,7 +2052,6 @@
       "c04dd4ac"
     ],
     "remaining_descendants": [
-      "fcb04d66",
       "c73ffa25",
       "50f0bd42",
       "6e87c436",
@@ -2068,11 +2067,10 @@
       "9fb40c83",
       "65c0e13d",
       "bc091474",
-      "a1ad6d4e"
+      "a1ad6d4e",
+      "fcb04d66"
     ],
-    "active_workers": {
-      "fcb04d66": "Sol high isal_results; all five gates pass, closing research advisory on existing unroll-profile provenance"
-    },
+    "active_workers": {},
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
   }
 }
