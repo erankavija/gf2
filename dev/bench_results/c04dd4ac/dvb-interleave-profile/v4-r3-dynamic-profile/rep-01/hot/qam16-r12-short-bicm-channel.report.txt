@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 3072347758
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ....................  ........................................................................................................................................  ....................
+#
+    62.17%          2480  dvb-profile           [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     4.18%           168  dvb-profile           [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     4.12%           166  dvb-profile           [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+     5.26%           208  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs                                                     -      -            
+     9.45%           374  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     2.44%            98  dvb-profile           [.] gf2_kernels_simd::modem::avx2::pam_sq_distances_f64_avx2_safe                                                                         -      -            
+
+
+#
+# (Tip: If call chains don't work try perf record --call-graph dwarf or --call-graph lbr)
+#

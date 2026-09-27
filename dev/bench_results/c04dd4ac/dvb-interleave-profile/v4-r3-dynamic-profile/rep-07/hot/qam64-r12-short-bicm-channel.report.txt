@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 3640798838
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ....................  ........................................................................................................................................  ....................
+#
+    71.52%          2862  dvb-profile           [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     2.36%            95  dvb-profile           [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     3.94%           158  dvb-profile           [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+     4.83%           188  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs                                                     -      -            
+     8.09%           322  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     2.13%            86  dvb-profile           [.] gf2_kernels_simd::modem::avx2::pam_sq_distances_f64_avx2_safe                                                                         -      -            
+
+
+#
+# (Tip: To collect Processor Trace with samples use perf record -e '{intel_pt//,cycles}' ; perf script --call-trace or --insn-trace --xed -F +ipc (remove --xed if no xed))
+#

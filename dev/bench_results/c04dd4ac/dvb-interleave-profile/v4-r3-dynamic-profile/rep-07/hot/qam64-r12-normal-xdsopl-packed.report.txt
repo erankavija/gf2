@@ -1,0 +1,19 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 3446586289
+#
+# Overhead       Samples  Shared Object         Symbol                                      IPC   [IPC Coverage]
+# ........  ............  ....................  ..........................................  ....................
+#
+    60.94%          2395  dvb-profile           [.] survey_gf2_side::pack_bits              -      -            
+     7.45%           290  dvb-profile           [.] survey_gf2_side::unpack_words           -      -            
+    20.57%           789  dvb-profile           [.] xdsopl_pctitl_qam64_r12_normal_fwd_mut  -      -            
+
+
+#
+# (Tip: If call chains don't work try perf record --call-graph dwarf or --call-graph lbr)
+#

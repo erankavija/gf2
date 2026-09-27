@@ -1,0 +1,23 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 2963023238
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ................  ........................................................................................................................................  ....................
+#
+    47.64%          1678  dvb-profile       [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     6.73%           229  dvb-profile       [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     2.68%            94  dvb-profile       [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+     1.62%            62  dvb-profile       [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs                                                     -      -            
+    20.88%           754  dvb-profile       [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     0.97%            34  dvb-profile       [.] gf2_kernels_simd::modem::avx2::pam_sq_distances_f64_avx2_safe                                                                         -      -            
+     0.55%            19  [unknown]         [k] 0xffffffffa6801280                                                                                                                    -      -            
+
+
+#
+# (Tip: To adjust path to source files to local file system use perf report --prefix=... --prefix-strip=...)
+#
