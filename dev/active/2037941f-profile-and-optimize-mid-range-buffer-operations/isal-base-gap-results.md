@@ -20,14 +20,16 @@ output inside the timed call. The receipt's kernel-isolated windows and the
 tables' separate setup probes answer the isolated question. They do not
 establish a whole-consumer speedup. The
 [semantic qualification](isal-probe-record.txt) checks the canonical bit mapping,
-source preservation, and boundary lengths. Offset ISA-L pointers fall outside
-the qualified alignment contract, so the frozen ISA-L family contains no offset
-sample.
+source preservation, and boundary lengths. Semantic equivalence applies to
+the frozen aligned and boundary cells. Offset ISA-L pointers fall outside the
+qualified alignment contract; the generated companion availability table
+records them as inapplicable with zero samples.
 
 The public SIMD-dispatched ISA-L `xor_gen` route has no qualified executable on
-this host. The generated [availability row](../../bench_results/2037941f/isal-dispatch-availability.md)
-preserves the NASM-absence reason and zero samples from the qualification
-records. It does not infer SIMD performance from the scalar arm.
+this host. The generated [availability table](../../bench_results/2037941f/isal-dispatch-availability.md)
+preserves the NASM-absence and offset-alignment reasons with zero samples from
+the qualification records. It does not infer SIMD performance from the scalar
+arm.
 
 The [launcher log](../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log)
 and [invocation log](../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log)
@@ -36,10 +38,7 @@ configuration and toolchain; [arm build provenance](isal-arm-build-record.txt)
 pins compiler identity, cleared Make overrides, object `.comment` records,
 and the verbose build log.
 
-The frozen [logical addendum](logical-buffer-addendum.md) says every ISA-L
-receipt carries the unavailable dispatch row. The frozen
-[harness contract](logical-harness.md) says this external status is outside the
-runner's cells. The accepted runner receipt contains the measured scalar
-cells; the companion availability row records the dispatch status without
-altering raw receipt bytes. The two descriptions need a single authoritative
-wording before a literal receipt-row requirement can be claimed satisfied.
+The [logical addendum](logical-buffer-addendum.md) and
+[harness contract](logical-harness.md) place the external availability rows in
+the companion table. The accepted runner receipt contains the measured scalar
+cells, and its raw bytes remain the evidence for acceptance.
