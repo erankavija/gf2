@@ -64,12 +64,13 @@ family's seeds depend on the position of its question in the addendum. Each
 additional fixture bank consumes the next output of that cell's own stream,
 started at its workload seed.
 
-The declared unavailable row `isal-dispatched-xor-gen` carries no workload and
-no samples, so it takes no ordinal and generates no seed. It is not a runner
-cell: the runner's only unavailable path is an unresolvable core arm. The
-ISA-L family's receipt and table generator in `65c0e13d` carries that row with
-the NASM-absence reason from [`isal-comparator.md`](isal-comparator.md); the
-row spends no comparison, and the family's confirmatory reservation is the
+The unavailable `isal-dispatched-xor-gen` row and inapplicable offset-pointer
+row carry no workload or samples, so neither takes an ordinal or generates a
+seed. They are companion availability rows, not runner cells: the runner's
+only unavailable path is an unresolvable core arm. The ISA-L availability
+generator in `65c0e13d` derives both reasons from
+[`isal-comparator.md`](isal-comparator.md) and the qualification record. These
+rows spend no comparison, and the family's confirmatory reservation is the
 five scalar-gap cells the addendum's Amendment 1 declares ($m = 5$).
 
 `logical-campaign cells` transcribes one family into a protocol version-4
