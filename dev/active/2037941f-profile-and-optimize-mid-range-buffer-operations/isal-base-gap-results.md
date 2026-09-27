@@ -13,6 +13,11 @@ applies the frozen family ceiling to the primary cells and records
 `resolution-insufficient`; this family makes no confirmatory reservation or
 production selection.
 
+The [ISA-PILOT-6 exception](isal-sampling-discrepancy.md) records the
+invoker-approved terminal use of this six-pair pilot despite the prose
+addendum's 24-pair requirement. Runner acceptance alone does not establish
+compliance with that requirement.
+
 The comparison uses aligned, fresh destinations and the same bytewise XOR
 output. The gf2 arm copies the first input and calls the public in-place XOR;
 the ISA-L arm forms its pointer array and calls `xor_gen_base`. Both observe the
