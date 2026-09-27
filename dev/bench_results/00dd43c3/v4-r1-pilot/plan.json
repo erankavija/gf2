@@ -1,0 +1,130 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "00dd43c3-residual-bmi2-pilot-v4-r1",
+  "issue": "00dd43c3",
+  "label": "pilot",
+  "campaign_seed": 2026092600,
+  "addendum": "dev/active/00dd43c3/pilot-addendum.json",
+  "producing_manifest": "dev/active/00dd43c3/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "residual-scalar": {
+      "build": "conservative-portable",
+      "description": "Public BitVec shift at the declared residual offset, held on the scalar funnel",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/release/deps/shifts-9f8d6039725c588b",
+      "arguments": [],
+      "environment": {
+        "GF2_SHIFT_ARM": "residual-scalar"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    },
+    "residual-gated": {
+      "build": "conservative-portable",
+      "description": "The same public shift and executable with the force switch clear",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-00dd43c3/target/release/deps/shifts-9f8d6039725c588b",
+      "arguments": [],
+      "environment": {
+        "GF2_SHIFT_ARM": "residual-gated"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "left-lane-crossing-r7-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "left",
+        "length_bits": 257,
+        "residual_offset": 7,
+        "control_offset": 64,
+        "seed": 8502
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "left-byte-residual-r8-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "left",
+        "length_bits": 4097,
+        "residual_offset": 8,
+        "control_offset": 64,
+        "seed": 8503
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "left-resident-r63-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "left",
+        "length_bits": 65537,
+        "residual_offset": 63,
+        "control_offset": 64,
+        "seed": 8504
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "left-streaming-r65-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "left",
+        "length_bits": 33554439,
+        "residual_offset": 65,
+        "control_offset": 64,
+        "seed": 8505
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "right-byte-residual-r8-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "right",
+        "length_bits": 4097,
+        "residual_offset": 8,
+        "control_offset": 64,
+        "seed": 8508
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "right-resident-r63-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "right",
+        "length_bits": 65537,
+        "residual_offset": 63,
+        "control_offset": 64,
+        "seed": 8509
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "right-streaming-r65-w64",
+      "baseline_arm": "residual-scalar",
+      "candidate_arm": "residual-gated",
+      "case": {
+        "direction": "right",
+        "length_bits": 33554439,
+        "residual_offset": 65,
+        "control_offset": 64,
+        "seed": 8510
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 2
+}
