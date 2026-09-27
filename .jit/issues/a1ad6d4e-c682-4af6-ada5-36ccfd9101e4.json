@@ -62,8 +62,34 @@
       "doc_type": "evidence",
       "label": "BitSlice source and callsite evidence",
       "path": "dev/active/a1ad6d4e/survey/source-evidence.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "bea1a202ede5a94cee01d51c96ae227aafbdc35d13db81b26f3d4da52d59f6a1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../a1ad6d4e/outcome.md",
+          "resolved_path": "dev/active/a1ad6d4e/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5e3130047a3b93cacf67db18cb33d134c1bc99e7395a4409db4de721795cdc1a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../a1ad6d4e/survey/source-evidence.json",
+          "resolved_path": "dev/active/a1ad6d4e/survey/source-evidence.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Final lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/a1ad6d4e-r1.md"
     }
   ],
+  "done_at": "2026-09-27T20:43:47.111917764Z",
   "first_ready_at": "2026-09-16T22:37:28.127608288Z",
   "gates_required": [
     "cargo-ci",
@@ -100,7 +126,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
-  "updated_at": "2026-09-27T20:42:35.170494029Z"
+  "updated_at": "2026-09-27T20:43:47.111917764Z"
 }
