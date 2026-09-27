@@ -1,0 +1,129 @@
+{
+  "source_commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+  "callsite_search": {
+    "argv": [
+      "rg",
+      "-n",
+      "from_bitslice|bit_slice\\(",
+      "crates",
+      "--glob",
+      "*.rs"
+    ],
+    "exit_code": 0,
+    "stdout": [
+      "crates/gf2-core/src/bitvec.rs:1085:    pub fn from_bitslice(slice: crate::BitSlice) -> Self {",
+      "crates/gf2-core/src/bitvec.rs:2115:        let s = bv.bit_slice(2..6);",
+      "crates/gf2-core/src/bitvec.rs:2119:        let round = BitVec::from_bitslice(s);",
+      "crates/gf2-core/src/bitvec.rs:2130:        let s1 = bv.bit_slice(0..63);",
+      "crates/gf2-core/src/bitvec.rs:2131:        let s2 = bv.bit_slice(0..64);",
+      "crates/gf2-core/src/bitvec.rs:2132:        let s3 = bv.bit_slice(1..65);",
+      "crates/gf2-coding/src/bch/extended.rs:381:    /// assert_eq!(BitVec::from_bitslice(codeword.bit_slice(..code.k())), message);"
+    ]
+  },
+  "entries": [
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitslice.rs",
+      "line": 10,
+      "verbatim": "pub struct BitSlice<'a> {",
+      "why": "BitSlice is the current view type."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitslice.rs",
+      "line": 11,
+      "verbatim": "    pub(crate) words: &'a [u64],",
+      "why": "Backing words are crate-private."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitslice.rs",
+      "line": 12,
+      "verbatim": "    pub(crate) offset: usize,   // bit offset from the start of `words`",
+      "why": "The view carries an offset."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitslice.rs",
+      "line": 13,
+      "verbatim": "    pub(crate) len_bits: usize, // number of live bits in the view",
+      "why": "The view carries a logical length."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitslice.rs",
+      "line": 31,
+      "verbatim": "    pub fn get(&self, i: usize) -> bool {",
+      "why": "The public read operation is indexed bit access."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 1035,
+      "verbatim": "    pub fn bit_slice<R: std::ops::RangeBounds<usize>>(&self, range: R) -> crate::BitSlice<'_> {",
+      "why": "BitVec creates a BitSlice view."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 1085,
+      "verbatim": "    pub fn from_bitslice(slice: crate::BitSlice) -> Self {",
+      "why": "The copy constructor accepts a BitSlice."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 1089,
+      "verbatim": "        let mut out = BitVec::with_capacity(slice.len_bits);",
+      "why": "The copy constructor allocates an output."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 1091,
+      "verbatim": "            out.push_bit(slice.get(i));",
+      "why": "The copy constructor pushes each indexed bit."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-core/src/bitvec.rs",
+      "line": 2119,
+      "verbatim": "        let round = BitVec::from_bitslice(s);",
+      "why": "The core callsite is inside a unit test."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-coding/src/bch/extended.rs",
+      "line": 381,
+      "verbatim": "    /// assert_eq!(BitVec::from_bitslice(codeword.bit_slice(..code.k())), message);",
+      "why": "The coding callsite is a rustdoc assertion."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 1982,
+      "verbatim": "fn packed_bitslice_batch(",
+      "why": "The BCH lane algorithm has a separate bitslice name."
+    },
+    {
+      "project": "gf2",
+      "commit": "cd353653a2aaa7d0f6f82369b8a6d022c1c09cb4",
+      "path": "crates/gf2-coding/src/bch/encode.rs",
+      "line": 2002,
+      "verbatim": "                *window = packed_message_window(plan, message.words(), degree, count);",
+      "why": "The BCH lane algorithm reads BitVec words directly."
+    }
+  ]
+}
