@@ -1,0 +1,47 @@
+# command: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh window --family 2037941f-dense-allocated-matvec --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-allocated-matvec.json --run-id v4-r1
+# started_utc: 2026-09-26T23:06:00Z
+# gf2 revision (informational): 815010276692bd4a4c441151e06e189bc135e7a3
+# addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md
+# addendum_sha256=fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb
+# addendum_identity=2037941f-dense-parity-v1
+# addendum_frozen_utc=2026-09-16T16:16:04Z
+# comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md
+# family=2037941f-dense-isolated-fused-parity ledger=dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl cells=12
+# family=2037941f-dense-allocated-matvec ledger=dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl cells=24
+# family=2037941f-dense-matvec-vs-m4ri ledger=dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl cells=8
+# unavailable_row=m4ri-gap-65x576-unqualified stride=9w reason=The matched-operation specification verifies no such shape
+# unavailable_row=m4ri-gap-65x4032-unqualified stride=63w reason=The matched-operation specification verifies no such shape
+# unavailable_row=m4ri-gap-65x4160-unqualified stride=65w reason=The matched-operation specification verifies no such shape
+# campaign addendum: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-allocated-matvec.json sha256=19950912eb0ba79797f4041e1daa6ad288b7bb14834459cc7b04dee08db3ad35
+# producing manifest: dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json sha256=a173cda64eaaa69ca9bf23cf0e54f848a7e15b36d37eb7b62901c83cce67e5e1
+# gf2 arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-arms/release/dense-arm sha256=588f59b1129ec454f3e6fb183403eb7328a40d3c4e954d2e0857848ced0fb643
+# scalar arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-scalar-arm/release/dense-arm sha256=2d69bcc2494e7fcc16295fd910a31fb9bba4b21b7bfc1c59fddb595a42db542e
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec.plan.json sha256=333e66cd6be0ba105418bdba29003c2cf4015c333b4a06576a8d6ace86004705
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14);binary: rustc;commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860;commit-date: 2026-04-14;host: x86_64-unknown-linux-gnu;release: 1.95.0;LLVM version: 22.1.2;
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 1 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 2 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 3 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 4 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 5 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 6 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 7 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 8 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 9 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 10 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 11 exit: 3
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/target/e1f9a78f-campaigns/v4-r1-2037941f-dense-allocated-matvec/execution.log
+# session 12 exit: 0
+GF2_BENCHMARK_RECEIPT=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c73ffa25/dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+# acceptance exit: 0
