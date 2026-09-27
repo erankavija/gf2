@@ -1,0 +1,2 @@
+xor-8w-a64-warm@public-xor-a
+row-xor-8w-full-warm@row-xor-a

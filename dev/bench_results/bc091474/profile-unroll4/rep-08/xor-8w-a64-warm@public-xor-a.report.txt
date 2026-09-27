@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cpu/cycles/Pu'
+# Event count (approx.): 4848951537
+#
+# Overhead  Command          Shared Object         Symbol                                             
+# ........  ...............  ....................  ...................................................
+#
+    41.43%  logical-profile  logical-profile       [.] logical_profile::drive
+    20.90%  logical-profile  logical-profile       [.] logical_buffer_harness::fixture::XorBanks::pair
+    18.05%  logical-profile  logical-profile       [.] logical_profile::measure::{{closure}}
+    17.10%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::avx2_xor_into
+     2.52%  logical-profile  logical-profile       [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#
