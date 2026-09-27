@@ -1407,7 +1407,8 @@
     "9fb40c83": 8,
     "f8dd4dde": 1,
     "d45aff82": 2,
-    "18a87159": 1
+    "18a87159": 1,
+    "bc091474": 1
   },
   "surfaced_pitfalls": [
     {
@@ -1963,7 +1964,8 @@
     "Session 24: c73ffa25 preparation merged at efaea4eaf; merged CI passes. Code gate76ce431c reports absent receipts, profile and portfolio (REQ-01,03-06); these require the queued window. No completion claim. Invoker approves DVB round5 after interview.",
     "Session25: approved DVB rounds6/7 complete; code gate547264f9 passes with coverage advisory tracked as9f0e385e. Queue restored, lease released, handoff requested by user. Research criteria still await scheduled evidence.",
     "Session26: resume current wave3 only. Three Sol workers finalize dense, DVB and logical candidate evidence from September27 window; no Astra. Dense profile launch failed before sampling. Lead audits coverage addressability and remaining pilot paths. Existing pinned measurement trees preserved.",
-    "Session26 continuation: 9f0e385e DONE at a8b294998. Residual confirmation six cells frozen/smoked/queued, merged4d1beee1d CI PASS. Dense baseline evidence and newline fix merged09555e7ee CI PASS; new profile awaits September28. DVB fresh9rep evidence mergede759188c9 CI PASS; research review closes counter finding but flags bare setup/share statistics, round8 approved. ISA pilot merged919ea1c9b CI PASS; family resolution exceeds fixed cap, no confirmation; approved contract clarification91cb9b7fc. Logical portfolio no candidate; final report about to merge. No Astra or active-session timing."
+    "Session26 continuation: 9f0e385e DONE at a8b294998. Residual confirmation six cells frozen/smoked/queued, merged4d1beee1d CI PASS. Dense baseline evidence and newline fix merged09555e7ee CI PASS; new profile awaits September28. DVB fresh9rep evidence mergede759188c9 CI PASS; research review closes counter finding but flags bare setup/share statistics, round8 approved. ISA pilot merged919ea1c9b CI PASS; family resolution exceeds fixed cap, no confirmation; approved contract clarification91cb9b7fc. Logical portfolio no candidate; final report about to merge. No Astra or active-session timing.",
+    "Session26: approved DVB round8 merged dde907e5b, ISA clarification merged9d1955123, logical sampled-symbol uncertainty merged08ec2888a; each clean merged-tree CI PASS. ISA and DVB document checks have zero errors. Logical checker treats Python f-string templates as literal Markdown links; generated outputs resolve. Final code/research gate chain starts after links. No worker active; pinned dense/residual timers unchanged."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2026,11 +2028,7 @@
     "completed_this_session": [
       "9f0e385e"
     ],
-    "active_workers": {
-      "9fb40c83": "Sol high dvb_results round8 approved",
-      "65c0e13d": "Sol high isal_results approved clarification",
-      "bc091474": "Sol xhigh logical_results final combined outcome"
-    },
+    "active_workers": {},
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
   }
 }
