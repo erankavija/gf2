@@ -38,7 +38,7 @@ The ISA-L specification is
 and the qualified scalar symbol is always labelled `xor_gen_base/scalar`.
 The public dispatched `xor_gen` arm is **unavailable** in this addendum because
 the qualifying host has no NASM-built multibinary executable or observed
-dispatch route. Its unavailable row is retained with that reason and zero
+dispatch route. The companion availability table retains that reason and zero
 samples. A later NASM installation does not silently enable it; admitting
 `xor_gen` requires a newly qualified comparator and a versioned amendment.
 
@@ -154,10 +154,12 @@ Cell identifiers are `nr-construct-{suffix}-{cache}`.
 The ISA-L scalar-gap primary family uses the five anchor word counts, `a64`,
 `warm`, `kernel-isolated`, and `single-core-latency`; its identifiers are
 `isal-base-gap-{W}w-a64-warm`. Exploratory rows add $W=7$, $W=66$, and the
-five anchor `streaming` cells. Every receipt also carries the unavailable
-`isal-dispatched-xor-gen` row with the qualified NASM-absence reason and zero
-samples. That declared unavailable row is retained with its reason and zero
-samples; it spends no comparison in a confirmatory reservation (Amendment 1).
+five anchor `streaming` cells. The companion availability table carries the
+unavailable `isal-dispatched-xor-gen` row with the qualified NASM-absence reason
+and zero samples. That external row spends no comparison in a confirmatory
+reservation (Amendment 1). ISA-L offset-pointer cells are inapplicable under
+the qualified alignment contract and have a zero-sample companion row
+(Amendment 2).
 
 The 6-physical-core, 12-physical-core, and 24-logical-CPU arms are inapplicable
 to these serial APIs. Receipts retain each inapplicable arm and its reason;
@@ -369,9 +371,19 @@ cells and reserves five, so the frozen $m=6$ could never be reserved and the
 family's confirmation (`65c0e13d`) could not start. The invoker ruled on
 2026-09-16 that this closed addendum is amended to $m=5$ and
 $\alpha_c=0.005$ rather than changing the protocol or the ledger mechanism.
-The unavailable row stays in every receipt with its reason and zero samples;
-it spends no comparison. No other family, cell, seed, margin, or budget
-changes.
+The unavailable row stays in the companion availability table with its reason
+and zero samples; it spends no comparison. No other family, cell, seed, margin,
+or budget changes.
+
+### Amendment 2 (2026-09-27, invoker ruling on issue `65c0e13d`) — external availability wording
+
+The ISA-L runner receipt contains its declared aligned scalar-gap cells. The
+companion availability table carries the unavailable public dispatched route
+and the inapplicable offset-pointer route, each with a qualified reason and
+zero samples. Semantic equivalence for this comparator applies to the frozen
+aligned and boundary cells; offset pointers are outside ISA-L's qualified
+alignment contract. This amendment changes wording only. It changes no cell,
+sample, reservation, seed, margin, resolution rule, or acceptance verdict.
 
 ## Receipt and stopping evidence
 
