@@ -667,8 +667,16 @@
           "short_id": "fcb04d66",
           "title": "Implement and confirm the logical-buffer outcome",
           "classification": "implementation",
-          "status": "pending; merged from 23a08297, b8ef6f13 (session 19)",
-          "tracker_state": "backlog"
+          "status": "in_progress: session26 dispatched after dependencies closed; see session_scope active_workers.",
+          "tracker_state": "in_progress",
+          "dispatch": {
+            "model": "gpt-6-sol",
+            "reasoning_effort": "high",
+            "worktree": ".agents/worktrees/agent-fcb04d66",
+            "branch": "worktree-agent-fcb04d66",
+            "base": "cd353653a",
+            "session": 26
+          }
         },
         {
           "id": "c73ffa25",
@@ -710,8 +718,16 @@
           "short_id": "a1ad6d4e",
           "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
           "classification": "research",
-          "status": "pending; merged from 552fae3b, c9cf13ee, 3f57a279, c71becc5, 7d3ced35, 4497e541 (session 19)",
-          "tracker_state": "backlog"
+          "status": "in_progress: session26 dispatched after dependencies closed; see session_scope active_workers.",
+          "tracker_state": "in_progress",
+          "dispatch": {
+            "model": "gpt-6-sol",
+            "reasoning_effort": "xhigh",
+            "worktree": ".agents/worktrees/agent-a1ad6d4e",
+            "branch": "worktree-agent-a1ad6d4e",
+            "base": "cd353653a",
+            "session": 26
+          }
         }
       ]
     },
@@ -2047,7 +2063,10 @@
       "65c0e13d",
       "bc091474"
     ],
-    "active_workers": {},
+    "active_workers": {
+      "fcb04d66": "Sol high isal_results, agent-fcb04d66 at cd353653a; focused semantic verification, heavy slot",
+      "a1ad6d4e": "Sol xhigh logical_results, agent-a1ad6d4e at cd353653a; private BitSlice assessment, no build slot yet"
+    },
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
   }
 }
