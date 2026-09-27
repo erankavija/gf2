@@ -1,0 +1,19 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 3433039004
+#
+# Overhead       Samples  Shared Object         Symbol                                      IPC   [IPC Coverage]
+# ........  ............  ....................  ..........................................  ....................
+#
+    59.35%          2330  dvb-profile           [.] survey_gf2_side::pack_bits              -      -            
+     8.23%           317  dvb-profile           [.] survey_gf2_side::unpack_words           -      -            
+    23.58%           900  dvb-profile           [.] xdsopl_pctitl_qam16_r12_normal_fwd_mut  -      -            
+
+
+#
+# (Tip: To add Node.js USDT(User-Level Statically Defined Tracing): perf buildid-cache --add `which node`)
+#

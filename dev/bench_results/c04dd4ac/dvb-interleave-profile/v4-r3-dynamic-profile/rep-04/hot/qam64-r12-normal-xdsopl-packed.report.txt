@@ -1,0 +1,19 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 3424731196
+#
+# Overhead       Samples  Shared Object     Symbol                                      IPC   [IPC Coverage]
+# ........  ............  ................  ..........................................  ....................
+#
+    60.67%          2391  dvb-profile       [.] survey_gf2_side::pack_bits              -      -            
+     7.86%           305  dvb-profile       [.] survey_gf2_side::unpack_words           -      -            
+    20.00%           764  dvb-profile       [.] xdsopl_pctitl_qam64_r12_normal_fwd_mut  -      -            
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

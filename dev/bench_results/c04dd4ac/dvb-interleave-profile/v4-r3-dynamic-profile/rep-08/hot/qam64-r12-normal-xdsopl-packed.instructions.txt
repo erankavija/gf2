@@ -1,0 +1,444 @@
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (2373 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000070ae0 <survey_gf2_side::pack_bits>:
+         : 6     .map(|index| ((words[index >> 6] >> (index & 63)) & 1) as i32)
+         : 7     .collect()
+         : 8     }
+         :
+         : 10    /// Packs 0/1 values using the canonical little-endian bit numbering.
+         : 11    pub fn pack_bits(bits: &[i32]) -> Vec<u64> {
+    0.00 :   70ae0:  push   %rbp
+    0.00 :   70ae1:  push   %r15
+    0.00 :   70ae3:  push   %r14
+    0.00 :   70ae5:  push   %r13
+    0.00 :   70ae7:  push   %r12
+    0.00 :   70ae9:  push   %rbx
+    0.00 :   70aea:  sub    $0x38,%rsp
+    0.00 :   70aee:  lea    0x3f(%rdx),%rbx
+    0.00 :   70af2:  mov    %rdx,%r12
+    0.00 :   70af5:  mov    %rsi,%r13
+    0.00 :   70af8:  mov    %rdi,%r15
+    0.00 :   70afb:  shr    $0x6,%rbx
+    0.00 :   70aff:  je     70b3a <survey_gf2_side::pack_bits+0x5a>
+    0.00 :   70b01:  lea    0x0(,%rbx,8),%rbp
+    0.00 :   70b09:  lock incq 0x6a77(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   70b11:  mov    $0x1,%edi
+    0.00 :   70b16:  lock add %rbp,0x6a72(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   70b1e:  mov    %rbp,%rsi
+    0.00 :   70b21:  call   *0x4eb9(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   70b27:  test   %rax,%rax
+    0.00 :   70b2a:  je     70c09 <survey_gf2_side::pack_bits+0x129>
+    0.00 :   70b30:  mov    %rax,%r14
+    0.00 :   70b33:  test   %r12,%r12
+    0.00 :   70b36:  jne    70b45 <survey_gf2_side::pack_bits+0x65>
+    0.00 :   70b38:  jmp    70b94 <survey_gf2_side::pack_bits+0xb4>
+    0.00 :   70b3a:  mov    $0x8,%r14d
+    0.00 :   70b40:  test   %r12,%r12
+    0.00 :   70b43:  je     70b94 <survey_gf2_side::pack_bits+0xb4>
+    0.00 :   70b45:  shl    $0x2,%r12
+    0.00 :   70b49:  mov    $0x1,%ecx
+    0.00 :   70b4e:  xor    %eax,%eax
+    0.00 :   70b50:  jmp    70b69 <survey_gf2_side::pack_bits+0x89>
+    0.00 :   70b52:  data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   70b60:  inc    %rax
+   24.12 :   70b63:  add    $0xfffffffffffffffc,%r12
+    0.17 :   70b67:  je     70b94 <survey_gf2_side::pack_bits+0xb4>
+         : 48    let mut words = vec![0_u64; bits.len().div_ceil(64)];
+         : 49    for (index, &bit) in bits.iter().enumerate() {
+    0.00 :   70b69:  mov    0x0(%r13,%rax,4),%edx
+   19.96 :   70b6e:  mov    %rax,0x10(%rsp)
+         : 52    assert!(bit == 0 || bit == 1, "non-bit value {bit} at index {index}");
+    0.00 :   70b73:  cmp    $0x2,%edx
+    4.22 :   70b76:  jae    70bae <survey_gf2_side::pack_bits+0xce>
+    0.00 :   70b78:  cmp    $0x1,%edx
+         : 56    if bit == 1 {
+    0.51 :   70b7b:  jne    70b60 <survey_gf2_side::pack_bits+0x80>
+         : 58    words[index >> 6] |= 1_u64 << (index & 63);
+    0.00 :   70b7d:  mov    %rax,%rdi
+   25.94 :   70b80:  shr    $0x6,%rdi
+    1.74 :   70b84:  cmp    %rbx,%rdi
+    2.24 :   70b87:  jae    70bf8 <survey_gf2_side::pack_bits+0x118>
+    0.00 :   70b89:  shlx   %rax,%rcx,%rdx
+    0.00 :   70b8e:  or     %rdx,(%r14,%rdi,8)
+   21.10 :   70b92:  jmp    70b60 <survey_gf2_side::pack_bits+0x80>
+         : 66    }
+         : 67    }
+         : 68    words
+    0.00 :   70b94:  mov    %rbx,(%r15)
+    0.00 :   70b97:  mov    %r14,0x8(%r15)
+    0.00 :   70b9b:  mov    %rbx,0x10(%r15)
+         : 72    }
+    0.00 :   70b9f:  add    $0x38,%rsp
+    0.00 :   70ba3:  pop    %rbx
+    0.00 :   70ba4:  pop    %r12
+    0.00 :   70ba6:  pop    %r13
+    0.00 :   70ba8:  pop    %r14
+    0.00 :   70baa:  pop    %r15
+    0.00 :   70bac:  pop    %rbp
+    0.00 :   70bad:  ret
+    0.00 :   70bae:  lea    0xc(%rsp),%rax
+         : 82    assert!(bit == 0 || bit == 1, "non-bit value {bit} at index {index}");
+    0.00 :   70bb3:  lea    -0x3d36a(%rip),%rcx        # 33850 <<i32 as core::fmt::Display>::fmt>
+    0.00 :   70bba:  lea    0x10(%rsp),%r8
+         : 85    for (index, &bit) in bits.iter().enumerate() {
+    0.00 :   70bbf:  mov    %edx,0xc(%rsp)
+         : 87    assert!(bit == 0 || bit == 1, "non-bit value {bit} at index {index}");
+    0.00 :   70bc3:  mov    %rax,0x18(%rsp)
+    0.00 :   70bc8:  mov    %rcx,0x20(%rsp)
+    0.00 :   70bcd:  lea    -0x3af54(%rip),%rcx        # 35c80 <<u64 as core::fmt::Display>::fmt>
+    0.00 :   70bd4:  mov    %r8,0x28(%rsp)
+    0.00 :   70bd9:  mov    %rcx,0x30(%rsp)
+    0.00 :   70bde:  lea    -0x67e65(%rip),%rdi        # 8d80 <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x41f0>
+    0.00 :   70be5:  lea    0x4ab4(%rip),%rdx        # 756a0 <__frame_dummy_init_array_entry+0x2b80>
+    0.00 :   70bec:  lea    0x18(%rsp),%rsi
+    0.00 :   70bf1:  call   2cbc0 <core::panicking::panic_fmt>
+    0.00 :   70bf6:  jmp    70c07 <survey_gf2_side::pack_bits+0x127>
+    0.00 :   70bf8:  lea    0x4a89(%rip),%rdx        # 75688 <__frame_dummy_init_array_entry+0x2b68>
+    0.00 :   70bff:  mov    %rbx,%rsi
+    0.00 :   70c02:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   70c07:  ud2
+    0.00 :   70c09:  mov    $0x8,%edi
+    0.00 :   70c0e:  mov    %rbp,%rsi
+    0.00 :   70c11:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   70c16:  mov    %rax,%r15
+    0.00 :   70c19:  test   %rbx,%rbx
+    0.00 :   70c1c:  je     70c27 <survey_gf2_side::pack_bits+0x147>
+    0.00 :   70c1e:  mov    %r14,%rdi
+    0.00 :   70c21:  call   *0x4d99(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   70c27:  mov    %r15,%rdi
+    0.00 :   70c2a:  call   71b00 <_Unwind_Resume@plt>
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (785 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000071320 <xdsopl_pctitl_qam64_r12_normal_fwd_mut>:
+         : 6     static const int N = NUM;
+         : 7     static const int M = 360;
+         : 8     static const int K = N - M * Q;
+         : 9     static void fwd(TYPE *out, TYPE *in)
+         : 10    {
+         : 11    for (int k = 0; k < K; ++k)
+    0.00 :   71320:  lea    -0x4(%rsi),%rax
+         : 13    forward_mut<Qam16Normal>(in, out);
+         : 14    }
+         :
+         : 16    extern "C" void xdsopl_pctitl_qam64_r12_normal_fwd_mut(int32_t* in,
+         : 17    int32_t* out)
+         : 18    {
+    0.00 :   71324:  push   %rbp
+    0.00 :   71325:  mov    %rsi,%r11
+    0.00 :   71328:  sub    %rdi,%rax
+    0.00 :   7132b:  mov    %rsp,%rbp
+    0.00 :   7132e:  push   %rbx
+    0.00 :   7132f:  cmp    $0x18,%rax
+    0.00 :   71333:  mov    $0x0,%eax
+    0.00 :   71338:  jbe    71536 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x216>
+         : 27    out[k] = in[k];
+    0.00 :   7133e:  vmovdqu (%rdi,%rax,1),%ymm0
+    2.43 :   71343:  vmovdqu %ymm0,(%r11,%rax,1)
+         : 30    for (int k = 0; k < K; ++k)
+    1.03 :   71349:  add    $0x20,%rax
+    0.00 :   7134d:  cmp    $0x1fa40,%rax
+    0.00 :   71353:  jne    7133e <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x1e>
+    0.00 :   71355:  lea    0x1fa40(%r11),%r8
+    0.00 :   7135c:  lea    0x1fa40(%rdi),%r9
+    0.00 :   71363:  lea    0x3f480(%rdi),%rcx
+         : 37    for (int q = 0; q < Q; ++q)
+    0.00 :   7136a:  xor    %r10d,%r10d
+         : 39    for (int m = 0; m < M; ++m)
+    0.00 :   7136d:  lea    -0x164(%rcx),%rax
+    0.00 :   71374:  mov    %r8,%rdx
+    0.00 :   71377:  cmp    %rax,%r8
+    0.00 :   7137a:  setae  %al
+    0.00 :   7137d:  add    $0x5a0,%r8
+    0.00 :   71384:  cmp    %r8,%r9
+    0.00 :   71387:  jae    71391 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x71>
+    0.00 :   71389:  test   %al,%al
+    0.00 :   7138b:  je     71580 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x260>
+    0.00 :   71391:  mov    %r9,%rax
+    0.00 :   71394:  nop
+    0.00 :   71395:  data16 cs nopw 0x0(%rax,%rax,1)
+         : 52    out[K+M*q+m] = in[K+Q*m+q];
+    0.13 :   713a0:  vmovd  0x870(%rax),%xmm3
+    0.00 :   713a8:  vmovd  0x5a0(%rax),%xmm4
+    0.00 :   713b0:  add    $0xb40,%rax
+    0.00 :   713b6:  add    $0x20,%rdx
+    0.00 :   713ba:  vpinsrd $0x1,-0x168(%rax),%xmm3,%xmm0
+    0.00 :   713c4:  vpinsrd $0x1,-0x438(%rax),%xmm4,%xmm1
+    0.00 :   713ce:  vmovd  -0x870(%rax),%xmm5
+    0.13 :   713d6:  vmovd  -0xb40(%rax),%xmm6
+    0.13 :   713de:  vpinsrd $0x1,-0x708(%rax),%xmm5,%xmm2
+    0.13 :   713e8:  vpunpcklqdq %xmm0,%xmm1,%xmm1
+    0.00 :   713ec:  vpinsrd $0x1,-0x9d8(%rax),%xmm6,%xmm0
+    0.00 :   713f6:  vpunpcklqdq %xmm2,%xmm0,%xmm0
+    0.00 :   713fa:  vinserti128 $0x1,%xmm1,%ymm0,%ymm0
+    0.13 :   71400:  vmovdqu %ymm0,-0x20(%rdx)
+         : 67    for (int m = 0; m < M; ++m)
+    0.00 :   71405:  cmp    %rcx,%rax
+    0.00 :   71408:  jne    713a0 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x80>
+         : 70    for (int q = 0; q < Q; ++q)
+    0.00 :   7140a:  inc    %r10d
+    0.00 :   7140d:  add    $0x4,%r9
+    0.00 :   71411:  add    $0x4,%rcx
+    0.00 :   71415:  cmp    $0x5a,%r10d
+    0.00 :   71419:  jne    7136d <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x4d>
+    0.00 :   7141f:  mov    %rdi,%rax
+    0.00 :   71422:  sub    %r11,%rax
+    0.00 :   71425:  sub    $0x4,%rax
+    0.00 :   71429:  cmp    $0x18,%rax
+    0.00 :   7142d:  mov    $0x0,%eax
+    0.00 :   71432:  jbe    71560 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x240>
+         : 82    static const int ROWS = N / COLS;
+         : 83    static void fwd(TYPE *out, TYPE *in)
+         : 84    {
+         : 85    PITL<TYPE, N, Q>::fwd(out, in);
+         : 86    for (int n = 0; n < N; ++n)
+         : 87    in[n] = out[n];
+    0.00 :   71438:  vmovdqu (%r11,%rax,1),%ymm0
+    2.32 :   7143e:  vmovdqu %ymm0,(%rdi,%rax,1)
+         : 90    for (int n = 0; n < N; ++n)
+    5.91 :   71443:  add    $0x20,%rax
+    0.00 :   71447:  cmp    $0x3f480,%rax
+    0.00 :   7144d:  jne    71438 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x118>
+         : 94    for (int q = 0; q < Q; ++q)
+    0.00 :   7144f:  mov    $0x1518,%r8d
+         : 96    struct CT12
+         : 97    {
+         : 98    static const int N = 12;
+         : 99    static void fwd(TYPE *out, TYPE *in, int S, int R)
+         : 100   {
+         : 101   out[0] = in[0*S+(R+S-T0)%S];
+    0.00 :   71455:  mov    $0x1518,%ecx
+    0.00 :   7145a:  nopw   0x0(%rax,%rax,1)
+    0.00 :   71460:  mov    %r8d,%eax
+         : 105   for (int row = 0; row < ROWS; ++row)
+    0.00 :   71463:  add    $0x30,%rsi
+         : 107   out[0] = in[0*S+(R+S-T0)%S];
+    0.00 :   71467:  cltd
+    0.00 :   71468:  idiv   %ecx
+    0.00 :   7146a:  mov    (%rdi,%rdx,4),%eax
+    9.02 :   7146d:  mov    %eax,-0x30(%rsi)
+         : 112   out[1] = in[1*S+(R+S-T1)%S];
+    0.00 :   71470:  mov    0x5460(%rdi,%rdx,4),%eax
+    1.02 :   71477:  mov    %eax,-0x2c(%rsi)
+         : 115   out[2] = in[2*S+(R+S-T2)%S];
+    0.00 :   7147a:  lea    -0x2(%r8),%eax
+    0.00 :   7147e:  cltd
+    0.00 :   7147f:  idiv   %ecx
+    0.00 :   71481:  lea    0x2a30(%rdx),%eax
+    2.93 :   71487:  mov    (%rdi,%rax,4),%edx
+    9.42 :   7148a:  mov    %edx,-0x28(%rsi)
+         : 122   out[3] = in[3*S+(R+S-T3)%S];
+    0.00 :   7148d:  mov    0x5460(%rdi,%rax,4),%eax
+    0.13 :   71494:  mov    %eax,-0x24(%rsi)
+         : 125   out[4] = in[4*S+(R+S-T4)%S];
+    0.63 :   71497:  lea    -0x3(%r8),%eax
+    0.00 :   7149b:  cltd
+    0.00 :   7149c:  idiv   %ecx
+    0.00 :   7149e:  lea    0x5460(%rdx),%eax
+    1.02 :   714a4:  mov    (%rdi,%rax,4),%eax
+    9.78 :   714a7:  mov    %eax,-0x20(%rsi)
+         : 132   out[5] = in[5*S+(R+S-T5)%S];
+    0.00 :   714aa:  lea    -0x4(%r8),%eax
+    0.00 :   714ae:  cltd
+    0.00 :   714af:  idiv   %ecx
+    0.00 :   714b1:  lea    0x6978(%rdx),%eax
+    1.81 :   714b7:  mov    (%rdi,%rax,4),%edx
+    8.78 :   714ba:  mov    %edx,-0x1c(%rsi)
+         : 139   out[6] = in[6*S+(R+S-T6)%S];
+    0.13 :   714bd:  mov    0x5460(%rdi,%rax,4),%eax
+    0.00 :   714c4:  mov    %eax,-0x18(%rsi)
+         : 142   out[7] = in[7*S+(R+S-T7)%S];
+    1.15 :   714c7:  lea    -0x5(%r8),%eax
+    0.00 :   714cb:  cltd
+    0.00 :   714cc:  idiv   %ecx
+    0.00 :   714ce:  lea    0x93a8(%rdx),%eax
+    0.64 :   714d4:  mov    (%rdi,%rax,4),%edx
+    8.43 :   714d7:  mov    %edx,-0x14(%rsi)
+         : 149   out[8] = in[8*S+(R+S-T8)%S];
+    0.00 :   714da:  mov    0x5460(%rdi,%rax,4),%eax
+    0.13 :   714e1:  mov    %eax,-0x10(%rsi)
+         : 152   out[9] = in[9*S+(R+S-T9)%S];
+    0.63 :   714e4:  lea    -0x7(%r8),%eax
+    0.00 :   714e8:  cltd
+    0.00 :   714e9:  idiv   %ecx
+    0.00 :   714eb:  lea    0xbdd8(%rdx),%eax
+    1.02 :   714f1:  mov    (%rdi,%rax,4),%eax
+    9.30 :   714f4:  mov    %eax,-0xc(%rsi)
+         : 159   out[10] = in[10*S+(R+S-T10)%S];
+    0.00 :   714f7:  lea    -0x8(%r8),%eax
+    0.00 :   714fb:  cltd
+    0.00 :   714fc:  idiv   %ecx
+    0.00 :   714fe:  lea    0xd2f0(%rdx),%eax
+    1.15 :   71504:  mov    (%rdi,%rax,4),%eax
+    8.80 :   71507:  mov    %eax,-0x8(%rsi)
+         : 166   out[11] = in[11*S+(R+S-T11)%S];
+    0.00 :   7150a:  lea    -0x9(%r8),%eax
+         : 168   for (int row = 0; row < ROWS; ++row)
+    0.00 :   7150e:  inc    %r8d
+         : 170   out[11] = in[11*S+(R+S-T11)%S];
+    0.00 :   71511:  cltd
+    0.00 :   71512:  idiv   %ecx
+    0.00 :   71514:  lea    0xe808(%rdx),%eax
+    1.53 :   7151a:  mov    (%rdi,%rax,4),%eax
+   10.23 :   7151d:  mov    %eax,-0x4(%rsi)
+         : 176   for (int row = 0; row < ROWS; ++row)
+    0.00 :   71520:  cmp    $0x2a30,%r8d
+    0.00 :   71527:  jne    71460 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x140>
+    0.00 :   7152d:  vzeroupper
+         : 180   forward_mut<Qam64Normal>(in, out);
+         : 181   }
+    0.00 :   71530:  mov    -0x8(%rbp),%rbx
+    0.00 :   71534:  leave
+    0.00 :   71535:  ret
+         : 185   out[k] = in[k];
+    0.00 :   71536:  mov    (%rdi,%rax,1),%edx
+    0.00 :   71539:  mov    %edx,(%r11,%rax,1)
+         : 188   for (int k = 0; k < K; ++k)
+    0.00 :   7153d:  add    $0x4,%rax
+    0.00 :   71541:  cmp    $0x1fa40,%rax
+    0.00 :   71547:  jne    71536 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x216>
+    0.00 :   71549:  jmp    71355 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x35>
+    0.00 :   7154e:  nopl   0x0(%rax)
+    0.00 :   71555:  data16 cs nopw 0x0(%rax,%rax,1)
+         : 195   in[n] = out[n];
+    0.00 :   71560:  mov    (%r11,%rax,1),%edx
+    0.00 :   71564:  mov    %edx,(%rdi,%rax,1)
+         : 198   for (int n = 0; n < N; ++n)
+    0.00 :   71567:  add    $0x4,%rax
+    0.00 :   7156b:  cmp    $0x3f480,%rax
+    0.00 :   71571:  jne    71560 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x240>
+    0.00 :   71573:  jmp    7144f <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x12f>
+    0.00 :   71578:  nopl   0x0(%rax,%rax,1)
+         : 204   {
+    0.00 :   71580:  mov    %r9,%rax
+    0.00 :   71583:  nopl   0x0(%rax)
+    0.00 :   7158a:  data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   71595:  data16 cs nopw 0x0(%rax,%rax,1)
+         : 209   out[K+M*q+m] = in[K+Q*m+q];
+    0.00 :   715a0:  mov    (%rax),%ebx
+         : 211   for (int m = 0; m < M; ++m)
+    0.00 :   715a2:  add    $0x168,%rax
+    0.00 :   715a8:  add    $0x4,%rdx
+         : 214   out[K+M*q+m] = in[K+Q*m+q];
+    0.00 :   715ac:  mov    %ebx,-0x4(%rdx)
+         : 216   for (int m = 0; m < M; ++m)
+    0.00 :   715af:  cmp    %rcx,%rax
+    0.00 :   715b2:  jne    715a0 <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0x280>
+    0.00 :   715b4:  jmp    7140a <xdsopl_pctitl_qam64_r12_normal_fwd_mut+0xea>
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (309 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000702b0 <survey_gf2_side::unpack_words>:
+         : 6     })
+         : 7     .collect()
+         : 8     }
+         :
+         : 10    /// Unpacks canonical little-endian words into one 0/1 `i32` per bit.
+         : 11    pub fn unpack_words(words: &[u64], bits: usize) -> Vec<i32> {
+    0.00 :   702b0:  push   %r15
+    0.00 :   702b2:  push   %r14
+    0.00 :   702b4:  push   %r13
+    0.00 :   702b6:  push   %r12
+    0.00 :   702b8:  push   %rbx
+    0.00 :   702b9:  mov    %ecx,%r8d
+    0.00 :   702bc:  and    $0x3f,%r8d
+    0.00 :   702c0:  mov    %rcx,%rax
+    0.00 :   702c3:  shr    $0x6,%rax
+    0.00 :   702c7:  cmp    $0x1,%r8
+    0.00 :   702cb:  sbb    $0xffffffffffffffff,%rax
+         : 23    assert!(words.len() >= bits.div_ceil(64));
+    0.00 :   702cf:  cmp    %rax,%rdx
+    0.00 :   702d2:  jb     703a6 <survey_gf2_side::unpack_words+0xf6>
+    0.00 :   702d8:  lea    0x0(,%rcx,4),%r14
+    0.00 :   702e0:  mov    %rcx,%rax
+    0.00 :   702e3:  shr    $0x3e,%rax
+    0.00 :   702e7:  movabs $0x7ffffffffffffffd,%r8
+    0.00 :   702f1:  sete   %al
+    0.00 :   702f4:  cmp    %r8,%r14
+    0.00 :   702f7:  setb   %r8b
+    0.00 :   702fb:  test   %r8b,%al
+    0.00 :   702fe:  jne    70305 <survey_gf2_side::unpack_words+0x55>
+    0.00 :   70300:  call   2c370 <alloc::raw_vec::capacity_overflow>
+    0.00 :   70305:  test   %r14,%r14
+    0.00 :   70308:  je     70351 <survey_gf2_side::unpack_words+0xa1>
+    0.00 :   7030a:  lock incq 0x7276(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   70312:  mov    %rdi,%rbx
+    0.00 :   70315:  mov    %r14,%rdi
+    0.00 :   70318:  mov    %rdx,%r15
+    0.00 :   7031b:  mov    %rcx,%r13
+    0.00 :   7031e:  mov    %rsi,%r12
+    0.00 :   70321:  lock add %r14,0x7267(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   70329:  call   *0x5689(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   7032f:  mov    %rbx,%rdi
+    0.00 :   70332:  mov    %r12,%rsi
+    0.00 :   70335:  mov    %r13,%rcx
+    0.00 :   70338:  mov    %r15,%rdx
+    0.00 :   7033b:  mov    %rax,%rbx
+    0.00 :   7033e:  mov    %r13,%r8
+    0.00 :   70341:  test   %rax,%rax
+    0.00 :   70344:  je     703d5 <survey_gf2_side::unpack_words+0x125>
+    0.00 :   7034a:  test   %rcx,%rcx
+    0.00 :   7034d:  jne    7035e <survey_gf2_side::unpack_words+0xae>
+    0.00 :   7034f:  jmp    70391 <survey_gf2_side::unpack_words+0xe1>
+    0.00 :   70351:  mov    $0x4,%ebx
+    0.00 :   70356:  xor    %r8d,%r8d
+    0.00 :   70359:  test   %rcx,%rcx
+    0.00 :   7035c:  je     70391 <survey_gf2_side::unpack_words+0xe1>
+    0.00 :   7035e:  xor    %r9d,%r9d
+    0.00 :   70361:  data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 63    (0..bits)
+         : 64    .map(|index| ((words[index >> 6] >> (index & 63)) & 1) as i32)
+    0.00 :   70370:  mov    %r9,%rax
+    0.00 :   70373:  shr    $0x6,%rax
+    0.00 :   70377:  cmp    %rdx,%rax
+    0.00 :   7037a:  jae    703be <survey_gf2_side::unpack_words+0x10e>
+    0.00 :   7037c:  shrx   %r9,(%rsi,%rax,8),%rax
+    1.95 :   70382:  and    $0x1,%eax
+   54.12 :   70385:  mov    %eax,(%rbx,%r9,4)
+    0.00 :   70389:  inc    %r9
+    0.00 :   7038c:  cmp    %r9,%rcx
+   43.94 :   7038f:  jne    70370 <survey_gf2_side::unpack_words+0xc0>
+    0.00 :   70391:  mov    %r8,(%rdi)
+    0.00 :   70394:  mov    %rbx,0x8(%rdi)
+    0.00 :   70398:  mov    %rcx,0x10(%rdi)
+         : 78    .collect()
+         : 79    }
+    0.00 :   7039c:  pop    %rbx
+    0.00 :   7039d:  pop    %r12
+    0.00 :   7039f:  pop    %r13
+    0.00 :   703a1:  pop    %r14
+    0.00 :   703a3:  pop    %r15
+    0.00 :   703a5:  ret
+         : 86    assert!(words.len() >= bits.div_ceil(64));
+    0.00 :   703a6:  lea    -0x641e7(%rip),%rdi        # c1c6 <core::num::flt2dec::strategy::dragon::POW5TO256+0x17be>
+    0.00 :   703ad:  lea    0x5244(%rip),%rdx        # 755f8 <__frame_dummy_init_array_entry+0x2ad8>
+    0.00 :   703b4:  mov    $0x32,%esi
+    0.00 :   703b9:  call   2e5e0 <core::panicking::panic>
+         : 91    .map(|index| ((words[index >> 6] >> (index & 63)) & 1) as i32)
+    0.00 :   703be:  lea    0x524b(%rip),%rcx        # 75610 <__frame_dummy_init_array_entry+0x2af0>
+    0.00 :   703c5:  mov    %rdx,%rsi
+    0.00 :   703c8:  mov    %rax,%rdi
+    0.00 :   703cb:  mov    %rcx,%rdx
+    0.00 :   703ce:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   703d3:  ud2
+    0.00 :   703d5:  mov    $0x4,%edi
+    0.00 :   703da:  mov    %r14,%rsi
+    0.00 :   703dd:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   703e2:  mov    %rbx,%rdi
+    0.00 :   703e5:  mov    %rax,%r14
+    0.00 :   703e8:  call   *0x55d2(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   703ee:  mov    %r14,%rdi
+    0.00 :   703f1:  call   71b00 <_Unwind_Resume@plt>

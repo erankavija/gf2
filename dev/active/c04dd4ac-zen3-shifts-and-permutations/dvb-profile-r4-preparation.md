@@ -9,7 +9,9 @@ continues to decide materiality. The fresh dynamic profile writes to
 Its nine repetitions each collect the declared hardware counters, hot symbols,
 and instruction samples. The attribution renderer uses the fresh perf outputs
 beside the accepted paired and across-session cost evidence. The scheduled run
-is pending; this note makes no interval or closure claim for it.
+completes in the September 27 benchmark window. Its
+append-only profile log closes all nine repetitions, and its raw counter and
+sample files support the generated intervals and provenance closure.
 
 The exact queue line is in
 [`bench-window/queue.tsv`](../1a379447-zen3-cpu-performance/bench-window/queue.tsv).
@@ -20,10 +22,11 @@ the actual executable and its build record. The existing provenance renderer
 checks that snapshot against the measured tree and records the top-level and
 inner invocation.
 
-After the scheduled run, generate the provenance record and attribution tables
-from the committed fresh profile. Review all nine perf statuses and the
-interval tables before replacing the report's single-session characterization.
-A nonzero perf status stays in the profile as an unavailable outcome.
+The fresh profile's generated provenance record and attribution tables
+interpret its committed raw files. All perf statuses are zero; each repetition
+contains counters, sampled reports and instruction listings for every case.
+The report cites those repeated intervals while retaining the accepted paired
+receipt for the materiality decision.
 
 ## Cumulative review resolution
 
@@ -31,9 +34,8 @@ Before editing, the cumulative audit read the supplied failed gate records,
 ran `jit doc list 9fb40c83`, scanned every linked path for deferred-item
 markers, and searched the issue's active and benchmark roots for each finding's
 smoke, provenance, single-session and `rep-01` terms. The linked-document
-deferred-marker scan found no matches. The remaining single-session statements
-refer to the preserved v4-r2 profile; the fresh profile and tables remain
-pending the scheduled run.
+deferred-marker scan found no matches. The remaining single-session statements refer to the preserved v4-r2 profile.
+The fresh profile and tables carry repeated counter and sample intervals.
 
 | Round | Finding | Resolution at this tree |
 |---|---|---|
@@ -45,8 +47,8 @@ pending the scheduled run.
 | R2 code F2 | Long smoke comments repeated across files. | The shared launcher and renderer use concise contracts; the per-finding scan found no private smoke driver. |
 | R2 research F1 | Dynamic profile lacked invocation and source/build/RNG closure. | `v4-r2-dynamic-profile-provenance.md` pins the old profile; the fresh profile's runtime snapshot and `survey/make-profile-provenance.py` bind its own closure and argv. |
 | R2 research F2 | BICM scatter shares lacked intervals. | `dvb-interleave-profile-tables.md`, “Scatter share of the BICM channel across sessions,” gives nine-session intervals. |
-| R2 research F3 | Counter, symbol and instruction tables came from one session. | `survey/run-profile.sh` collects all three in every fresh repetition; `survey/make-dvb-tables.py` computes nine-session intervals. **Pending scheduled evidence.** |
-| R3 research F3 | Retained-session counters and top symbols still lacked intervals. | Fresh profile and renderer prepared as above. **Pending scheduled evidence and report update.** |
+| R2 research F3 | Counter, symbol and instruction tables came from one session. | `survey/run-profile.sh` collects all three in every fresh repetition; `survey/make-dvb-tables.py` computes nine-session intervals. The fresh profile supplies the repeated evidence. |
+| R3 research F3 | Retained-session counters and top symbols still lacked intervals. | Fresh profile and renderer prepared as above. The fresh profile and report supply repeated intervals. |
 
 ## Annotation command validation
 
