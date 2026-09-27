@@ -63,9 +63,14 @@ receipt, the profile session records and the source-evidence ledger, and is the
 authoritative location for every figure below. Each table states the samples it
 summarises and carries the interval the generator's declared method gives that
 sample, or labels the figure descriptive where no interval is available. The
-dynamic profile session's invocation, executable digest, content-pinned source
-and build closure, RNG declaration and sampling plan are the generated
-[`v4-r2-dynamic-profile-provenance.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
+preserved v4-r2 wall-time profile has its
+[`provenance record`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
+The fresh nine-repetition perf profile has its own
+[`provenance record`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md)
+and [`session summary`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md).
+The tables use the accepted paired receipt for materiality, the preserved
+profile for wall-time composition, and the fresh profile for repeated hardware
+counters, hot symbols and instructions.
 
 - **Isolated cost beside whole-consumer cost.** The isolated scatter and the
   one-frame `BitInterleave::process` that wraps it agree to within the
@@ -94,28 +99,22 @@ and build closure, RNG declaration and sampling plan are the generated
   [`v4-r2-dynamic-profile/profile-summary.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md)
   renders too. The counting allocator adds relaxed atomics, so those wall times
   explain composition only.
-- **Call graph and hot symbols.** One symbol,
-  `DvbT2BitInterleaver::interleave`, carries almost the whole isolated and
-  stage profile, while the BICM channel's largest share belongs to the
-  demapper; the per-case top symbol and its sample count are the hot-symbol
-  table, which labels both as descriptive observations of the one session that
-  retains samples. The scatter's share of the full max-log BICM channel is the
-  share table: a per-session quotient over the nine sessions with its interval,
-  and beside it the Amdahl ceiling that follows from the share as an estimate.
-  The profile summary carries the same quotient as a bare descriptive figure
-  formed from across-session medians, and the share table is the figure to
-  cite.
-- **Hot instructions.** Within the scatter the samples concentrate on the
-  bounds comparison of the permutation index, the loop counter update and
-  back edge, and the data-dependent bit test that decides whether an output
-  bit is set; the per-instruction shares, the samples behind them and the
-  Wilson interval of each share are the hot-instruction table. That listing,
-  the hot-symbol table and the hardware-counter table all come from the one
-  session that retains counters and perf samples. The tables label them
-  descriptive single-session observations with n = 1; only the first session
-  collects counters, so no repetition retains the data an across-session
-  interval would need, and no conclusion of this report rests on a comparison
-  between their rows.
+- **Call graph and hot symbols.** The hot-symbol table gives the selected
+  production scatter the dominant sampled share in the isolated and simulation
+  stage routes, while the full BICM channel's largest sampled share belongs to
+  the demapper. Each share has a nine-repetition interval and the underlying
+  sample-count range. The scatter-share table divides direct scatter time by
+  full max-log BICM time within each of the preserved profile's nine sessions,
+  with an interval; its Amdahl ceiling is an estimate. These separate-process
+  composition figures do not replace the paired receipt's materiality decision.
+- **Hardware counters and hot instructions.** The fresh profile repeats
+  perf-stat counters, sampled symbols and instruction annotation in all nine
+  sessions. The tables report intervals for counter rates per bit, IPC, symbol
+  shares and the selected route's instruction shares. The sampled scatter
+  concentrates on the permutation-index comparison, bit test, loop updates
+  and back edge. The instruction rows identify the actual executed form,
+  including its bounds checks; they neither prove a branch-free candidate
+  feasible nor justify nominating one against the whole-consumer result.
 
 ## Frozen experiment
 
@@ -169,17 +168,25 @@ cell, completes every frozen cell at the declared pairs with status `measured`,
 and closes with a terminal `complete` record; the acceptance summary accepts the
 receipt and qualifies it for no production selection.
 
-The repeated dynamic profile writes to
-[`v4-r2-dynamic-profile`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log),
-which records each completed session in its append-only log. It measures four
-paths for every MODCOD: direct scatter, the simulation stage, xdsopl at the
-packed boundary, and the complete `BicmAwgnChannel` max-log path. Nine sessions
-provide the order-statistic interval for each wall-time figure; one session
-records allocation counts, hardware counters, hot symbols and instruction
-annotation.
+The preserved
+[`v4-r2-dynamic-profile`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log)
+records nine completed sessions of direct scatter, the simulation stage,
+packed-boundary xdsopl and the full max-log BICM channel for every MODCOD. Its
+wall-time intervals and allocation census remain in the attribution tables.
 
-That session records its executable digest per repetition but no source or build
-closure, so
+The fresh
+[`v4-r3-dynamic-profile`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log)
+closes with nine completed repetitions. Every repetition records all sixteen
+cases, successful counters and hot samples, and instruction listings. The
+generated tables carry nine-repetition intervals for counters, hot symbols and
+hot instructions. The fresh session's input snapshot verifies against the
+measured tree; its executable, build, source, runtime host, invocation, RNG and
+sampling closure are in its generated provenance record. The scheduled
+orchestration log records the job's successful exit, while the profile's own
+append-only log establishes completion.
+
+The preserved v4-r2 session records its executable digest per repetition but
+no source or build closure, so
 [`survey/make-profile-provenance.py`](survey/make-profile-provenance.py)
 reconstructs one from committed objects and publishes it as
 [`v4-r2-dynamic-profile-provenance.md`](../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md).
@@ -196,15 +203,13 @@ embeds its checkout location and the measured build ran in another worktree, so
 the digest is reproducible nowhere else and no rebuild is attempted. The
 generator's docstring states this limit and the rest of the method.
 
-That session's own annotation step passes an option its `perf` build rejects, so
-each case keeps an empty `.annotate.txt` beside the `.err` file that names the
-rejected option. The samples themselves are complete, and
-[`survey/render-hot-instructions.sh`](survey/render-hot-instructions.sh)
-disassembles the pinned executable against them to produce each case's
-`.instructions.txt`. That render measures nothing and takes no host mutex, so
-it reproduces outside the benchmark window;
-[`survey/run-profile.sh`](survey/run-profile.sh) carries the same flags for a
-session that renders its listing directly.
+The preserved v4-r2 session contains empty `.annotate.txt` files and stderr
+that names an option rejection. Offline annotation of its retained data
+succeeds with both command forms, as the
+[`review record`](../1a379447-zen3-cpu-performance/reviews/9fb40c83-r4.md)
+documents. [`survey/render-hot-instructions.sh`](survey/render-hot-instructions.sh)
+produces its instruction listings from those retained samples without a new
+measurement. The fresh v4-r3 launcher records its listings in each repetition.
 
 One attempt of this family is voided: campaign
 `v4-r1-9fb40c83-dvb-interleave-profile` aborts on a procedural defect in its
