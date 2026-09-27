@@ -4,9 +4,9 @@
 # every line below is projected from the semantic oracle's output and the
 # families' smoke records under target/; a rerun on the same executables
 # reproduces it byte for byte
-# dense-arm (target/e1f9a78f-arms/release/dense-arm) sha256: 2c77115f47e5114b2101f6521de9836bb8ee0b86427e63ebdc92a3f387a07bd3
-# dense-m4ri-arm (target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm) sha256: 1e49f6a01096ec6835bb093dc941625b0b3b6e47dbc17eb5b11fe8cdfbb26548
-# dense-arm (target/e1f9a78f-scalar-arm/release/dense-arm) sha256: abf9a95d7776d57ca2e4f42eb00f45f83de7e713aa486e2758969029184cfcc5
+# dense-arm (target/e1f9a78f-arms/release/dense-arm) sha256: d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695
+# dense-m4ri-arm (target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm) sha256: 40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e
+# dense-arm (target/e1f9a78f-scalar-arm/release/dense-arm) sha256: ccbbc7e628fbf59b1ade0dd0f4cc9150ed96cd33cca6a25cd793c0ff7d39787c
 PASS semantic oracle: 108 cases, 21465 checks
 PASS campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 cells
 PASS staged campaign e1f9a78f-2037941f-dense-isolated-fused-parity-arm-smoke: 2 sessions, 1 pause, append-only log and checkpoints, 0 timing samples, finalize refused
