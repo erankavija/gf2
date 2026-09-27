@@ -89,6 +89,42 @@
       "format": "markdown",
       "label": "Overnight residual BMI2 pilot queue line",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Residual shift pilot receipt",
+      "path": "dev/bench_results/00dd43c3/v4-r1-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Residual shift pilot execution log",
+      "path": "dev/bench_results/00dd43c3/v4-r1-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Residual shift pilot acceptance",
+      "path": "dev/bench_results/00dd43c3/v4-r1-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "label": "Frozen residual shift confirmation",
+      "path": "dev/active/00dd43c3/confirmation-addendum.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Confirmation cell and resolution derivation",
+      "path": "dev/active/00dd43c3/confirmation-derivation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "validation",
+      "label": "Untimed confirmation smoke",
+      "path": "dev/active/00dd43c3/confirmation-smoke.json"
     }
   ],
   "first_ready_at": "2026-09-19T15:37:57.876881427Z",
@@ -118,5 +154,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Confirm the BMI2 residual shift route against the scalar funnel",
-  "updated_at": "2026-09-26T08:02:17.734767345Z"
+  "updated_at": "2026-09-27T19:20:12.761064724Z"
 }

@@ -13,51 +13,19 @@
       "assets": [
         {
           "asset_type": "local",
+          "content_hash": "2dd91078454198b0f3102241d484b6f76ee4a4898208f4844e1698a29f104be9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/smoke-dvb-arms.sh",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "694d4dae728a8db813033327b9db7301ba6a5ae6460193e75b36351e7b76f061",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md",
           "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2f67b9b176a1e29f0c89c5f0463f1b3323328ab9b94b3395462b74a5290257f5",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "dvb-interleave-profile-tables.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile-tables.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "f7b3bff2bae6cfb0f0bd824f8e5e0517acabf1158fada95a4bb8378558994dbc",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/render-hot-instructions.sh",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/render-hot-instructions.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a17b82285a659683559e210d9753d91e3f37dd44cb863fa4bdd5453d6d001335",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log",
-          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "dvb-profile-addendum.json",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c444a8b2dcaaae145dcdb5a274390443897d56db8803230d9ebdfc74f0aa4e3d",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/run-profile.sh",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-profile.sh"
         },
         {
           "asset_type": "local",
@@ -69,27 +37,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "9b10d100cede9fcfb4980a8a503bb45af9ba25ea6ff74808617894c4d8d27d3f",
+          "content_hash": "0615c25f5b1b0a08739b6a21c38eb4d09ea6af3cc5fef4525b8e11bdcafd08ec",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log",
-          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b73bca56c8cb6b0a06eab939dc198f7971426db7b79ebedc512c430a4437f753",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/runner-smoke.txt",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/runner-smoke.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2d46c7eefea5e1f7e6333436098e089a2204e41238fba077bea0cf2c7ced6147",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "dvb-profile-trial-ledger.jsonl",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl"
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md"
         },
         {
           "asset_type": "local",
@@ -101,11 +53,35 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "0fcaaa43ad3e20d48d353dbee5549c01dc139e19a4840b055af4ed67b03c8e1d",
+          "content_hash": "2872152b8f2a0b20ffec52257a0190904b5cdae913384eb0311a87ffd629fc43",
           "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/harness-validation.txt",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/harness-validation.txt"
+          "mime_type": "text/markdown",
+          "original_path": "dvb-interleave-profile-tables.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2d46c7eefea5e1f7e6333436098e089a2204e41238fba077bea0cf2c7ced6147",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dvb-profile-trial-ledger.jsonl",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-trial-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "283070fe51481a0e7872751a2aafbb7231dd418411c34a1e685c741dea943e9b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/reviews/9fb40c83-r4.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5caae7875322a4ee230a4e462488a91c2c1dfe92f0178acb6edb7e095c2d4a6d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/render-hot-instructions.sh",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/render-hot-instructions.sh"
         },
         {
           "asset_type": "local",
@@ -117,11 +93,83 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "ab7d287850568a2602a15738a79b974747b3a533cf4fb886462d62813f226235",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/runner-smoke.txt",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9b10d100cede9fcfb4980a8a503bb45af9ba25ea6ff74808617894c4d8d27d3f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "828b8c96afbe529ff352f59f9c726bb0d27acbbdc46df8927d0daff5855fbe0b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-dvb-tables.py",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-tables.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4d0c6646e1a3e9ddfb53c5865501b89e849a60e770574b904c336a41afa8c4b1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-profile-provenance.py",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-profile-provenance.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3a7a7aba8190290099e609ccf3974a569f5782c0463b17e9f8919f0a5d592b1c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile-provenance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "47865f3f83bba6dc085d91fcfc828cc0424a0869289a0505564b548ab2a3d869",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dvb-profile-addendum.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-addendum.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eb381c9a11d95c26b669549fa46b9a306dc9d31be33f34ba91baa9f7b236013f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "3556227f663ce3fa222ffeb7660393ac5d3dcb2ea7c5aaf4907e8185bb48f3be",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md",
           "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "476603af89c5e4998d7801d3c6224b7fab256aa666874057c200586725d58d2a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a1bfdcb9ea6fba1e5d4b792beb11cef5de941d9ceb13f7d51ed23ee0b3245901",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "survey/harness-validation.txt",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/harness-validation.txt"
         },
         {
           "asset_type": "local",
@@ -133,25 +181,17 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "2dd91078454198b0f3102241d484b6f76ee4a4898208f4844e1698a29f104be9",
+          "content_hash": "a17b82285a659683559e210d9753d91e3f37dd44cb863fa4bdd5453d6d001335",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "survey/smoke-dvb-arms.sh",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "6cc157cf3729d25b8a3927789cdf3f776fc30ded41e558bc2a09b1d52a29742d",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/make-dvb-tables.py",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-dvb-tables.py"
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r1-pilot-abandoned/execution.log"
         }
       ],
       "commit": null,
       "doc_type": "research",
       "format": "markdown",
-      "label": "DVB-T2 interleaver profile report",
+      "label": "DVB production interleaver profile and disposition",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md"
     },
     {
@@ -262,7 +302,7 @@
       "commit": null,
       "doc_type": "reference",
       "format": "markdown",
-      "label": "DVB-T2 interleaver attribution tables (generated)",
+      "label": "DVB attribution tables with repeated perf intervals",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile-tables.md"
     },
     {
@@ -336,7 +376,7 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "62fdea27611ea416adf97a094a5529e655c45f609a69d06d9ded5120062d8218",
+          "content_hash": "6caf376671b5063b3d027a16a69da81606b2cf0a7d92ce0ab81899e859223076",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../1a379447-zen3-cpu-performance/bench-window/queue.tsv",
@@ -354,7 +394,7 @@
       "commit": null,
       "doc_type": "research",
       "format": "markdown",
-      "label": "DVB nine-session interval preparation and audit",
+      "label": "DVB profile preparation and evidence audit",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-profile-r4-preparation.md"
     },
     {
@@ -428,6 +468,26 @@
       "format": "markdown",
       "label": "Round-seven review: code passes, measured profile pending",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/9fb40c83-r7.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Fresh nine-repetition DVB profile execution log",
+      "path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Fresh DVB profile session summary",
+      "path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/profile-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Fresh DVB profile provenance closure",
+      "path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -472,5 +532,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-26T14:42:36.068283578Z"
+  "updated_at": "2026-09-27T19:20:11.665111068Z"
 }
