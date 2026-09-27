@@ -2070,7 +2070,11 @@
       "a1ad6d4e",
       "fcb04d66"
     ],
-    "active_workers": {},
-    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
+    "active_workers": {
+      "c73ffa25": "Sol xhigh logical_results; Sept28 profile completed, preserving outputs and deriving portfolio",
+      "00dd43c3": "Sol high isal_results; Sept28 confirmation accepted, verifying frozen retention decision"
+    },
+    "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
+    "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions."
   }
 }
