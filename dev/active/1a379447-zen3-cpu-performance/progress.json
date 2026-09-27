@@ -1965,7 +1965,8 @@
     "Session25: approved DVB rounds6/7 complete; code gate547264f9 passes with coverage advisory tracked as9f0e385e. Queue restored, lease released, handoff requested by user. Research criteria still await scheduled evidence.",
     "Session26: resume current wave3 only. Three Sol workers finalize dense, DVB and logical candidate evidence from September27 window; no Astra. Dense profile launch failed before sampling. Lead audits coverage addressability and remaining pilot paths. Existing pinned measurement trees preserved.",
     "Session26 continuation: 9f0e385e DONE at a8b294998. Residual confirmation six cells frozen/smoked/queued, merged4d1beee1d CI PASS. Dense baseline evidence and newline fix merged09555e7ee CI PASS; new profile awaits September28. DVB fresh9rep evidence mergede759188c9 CI PASS; research review closes counter finding but flags bare setup/share statistics, round8 approved. ISA pilot merged919ea1c9b CI PASS; family resolution exceeds fixed cap, no confirmation; approved contract clarification91cb9b7fc. Logical portfolio no candidate; final report about to merge. No Astra or active-session timing.",
-    "Session26: approved DVB round8 merged dde907e5b, ISA clarification merged9d1955123, logical sampled-symbol uncertainty merged08ec2888a; each clean merged-tree CI PASS. ISA and DVB document checks have zero errors. Logical checker treats Python f-string templates as literal Markdown links; generated outputs resolve. Final code/research gate chain starts after links. No worker active; pinned dense/residual timers unchanged."
+    "Session26: approved DVB round8 merged dde907e5b, ISA clarification merged9d1955123, logical sampled-symbol uncertainty merged08ec2888a; each clean merged-tree CI PASS. ISA and DVB document checks have zero errors. Logical checker treats Python f-string templates as literal Markdown links; generated outputs resolve. Final code/research gate chain starts after links. No worker active; pinned dense/residual timers unchanged.",
+    "Session26: DVB9fb40c83 DONE eb7d94e0a. Code b753b580 passes with existing coverage advisory resolved by9f0e385e; research36a97137 passes zero findings. Story publication still waits residual-shift confirmation00dd43c3. ISA-L code review next."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2019,14 +2020,14 @@
       "6e87c436",
       "2ad3a3e0",
       "00dd43c3",
-      "9fb40c83",
       "a0812b83"
     ],
     "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
     "completed_this_session": [
-      "9f0e385e"
+      "9f0e385e",
+      "9fb40c83"
     ],
     "active_workers": {},
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707"
