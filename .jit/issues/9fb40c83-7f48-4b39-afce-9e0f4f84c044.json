@@ -509,7 +509,7 @@
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-09-19T14:56:46.118076214Z",
+      "updated_at": "2026-09-27T19:24:44.427527590Z",
       "updated_by": "auto:executor"
     }
   },
@@ -532,5 +532,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-27T19:20:11.665111068Z"
+  "updated_at": "2026-09-27T19:24:44.427527590Z"
 }
