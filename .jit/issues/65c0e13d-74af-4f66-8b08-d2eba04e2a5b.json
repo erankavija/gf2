@@ -6,7 +6,7 @@
   "dependencies": [
     "18a87159-ff6a-483b-ade2-9830ed0f1a69"
   ],
-  "description": "Execute the frozen ISA-L comparison against equivalent gf2 XOR cells and publish both isolated and adapter-inclusive observations.\n\n## Background\n\nThe dispatched ISA-L route is used only when the qualified build has NASM and exposes the public SIMD path. Otherwise the receipt labels `xor_gen_base` as a scalar base arm and preserves dispatched-route unavailability. No external arm is called a competitive baseline without measured compatibility.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt contains raw samples, exact external build and run commands, content-pinned inputs, runtime selected-symbol evidence, statistical interpretation, and all setup, adapter, conversion, and output costs.\n- [hard] REQ-02: Semantically equivalent output is demonstrated for the frozen aligned, offset, and boundary cells, with isolated throughput reported separately from consumer relevance.\n- [hard] REQ-03: Losing, inconclusive, base-only, or unavailable cells remain in the committed evidence without triggering production adoption.\n- [hard] REQ-04: The ISA-L probe and arm builds record compiler identity and build-time provenance before any measurement: the resolved compiler path and version, `MAKEFLAGS`, `GNUMAKEFLAGS`, `MFLAGS` and `MAKEFILES` cleared, the verbose build transcript, and the `.comment` section of every produced object, following the M4RI pins in `survey/m4ri-build-pins.sh` and `survey/check-m4ri-build-provenance.sh`; the bare `cc` in `survey/run-isal-xor-probe.sh` is replaced by the resolved compiler and the qualification record is regenerated with it.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.\n\nInvoker ruling 2026-09-16 (execution-lead escalation): the ISA-L compiler-provenance repair belongs to this task rather than a separate one; REQ-04 records it.\n",
+  "description": "Execute the frozen ISA-L comparison against equivalent gf2 XOR cells and publish both isolated and adapter-inclusive observations.\n\n## Background\n\nThe dispatched ISA-L route is used only when the qualified build has NASM and exposes the public SIMD path. Otherwise the receipt labels `xor_gen_base` as a scalar base arm and preserves dispatched-route unavailability. No external arm is called a competitive baseline without measured compatibility.\n\n## Success Criteria\n\n- [hard] REQ-01: The receipt contains raw samples, exact external build and run commands, content-pinned inputs, runtime selected-symbol evidence, statistical interpretation, and all setup, adapter, conversion, and output costs.\n- [hard] REQ-02: Semantically equivalent output is demonstrated for the frozen qualified aligned and boundary cells; offset cells outside the qualified alignment contract are recorded as inapplicable with their reason and zero samples. Isolated throughput is reported separately from consumer relevance.\n- [hard] REQ-03: Losing, inconclusive, base-only, or unavailable cells remain in the committed evidence without triggering production adoption.\n- [hard] REQ-04: The ISA-L probe and arm builds record compiler identity and build-time provenance before any measurement: the resolved compiler path and version, `MAKEFLAGS`, `GNUMAKEFLAGS`, `MFLAGS` and `MAKEFILES` cleared, the verbose build transcript, and the `.comment` section of every produced object, following the M4RI pins in `survey/m4ri-build-pins.sh` and `survey/check-m4ri-build-provenance.sh`; the bare `cc` in `survey/run-isal-xor-probe.sh` is replaced by the resolved compiler and the qualification record is regenerated with it.\n\n## Notes\n\nRun only in the benchmark window on the prepared host under the full-host wrapper.\n\nInvoker ruling 2026-09-16 (execution-lead escalation): the ISA-L compiler-provenance repair belongs to this task rather than a separate one; REQ-04 records it.\n\nInvoker ruling 2026-09-27: qualified aligned and boundary cells require output equivalence; unqualified offset cells are inapplicable. Unavailable external routes are retained in the companion availability table rather than inserted into raw runner receipts. These clarifications change no samples or statistical rules.\n",
   "documents": [
     {
       "commit": null,
@@ -141,6 +141,161 @@
       "format": "markdown",
       "label": "Release harness validation with ISA-L",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/logical-harness-validation.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2950114e17c507f61865c383a7bba7fe01a51b9e2a27a5f611ee36ba61b6641d",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "isal-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b479513125bf558cfe4bb70d31697e089a60d86ba1f8b17dd5bcdfbbfc05d009",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c56ffc8c47dea053bc2559874600bc375d3d7b9c4907c6e67b8955619f6f524d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-dispatch-availability.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-dispatch-availability.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f82e9f79394b57591f575772370d25449577ca7aa29e59152296a562b46356e7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "logical-harness.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-harness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec5f9f64960ab567d7a58808104110fd457381f94448ef988034e0dcb5d17839",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-tables.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ab4fd181e01146eec4bc08ee2fbce56a8fcea919dab2cd3634da2d5f6cd43c20",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ac01ff6637935b087ab782d361ee59f2d8e97b13b6890487f6573f90580ca4f1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b44e866fea4629e1f7882ab6eef06a1c2c94b78bb8c220b94c0cd727eda27dbc",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "isal-arm-build-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-arm-build-record.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "ISA-L scalar XOR comparison and stopping interpretation",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "ISA-L scalar-gap pilot raw receipt",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "ISA-L scalar-gap pilot acceptance",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "ISA-L scalar-gap canonical execution log",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "ISA-L scalar-gap launcher commands",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "ISA-L scalar-gap exact invocations",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "ISA-L scalar-gap generated interval and cost tables",
+      "path": "dev/bench_results/2037941f/isal-base-gap-tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "ISA-L frozen resolution-insufficient outcome",
+      "path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "ISA-L dispatched XOR unavailable companion row",
+      "path": "dev/bench_results/2037941f/isal-dispatch-availability.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "ISA-L frozen stopping-result generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-isal-outcome.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "ISA-L unavailable-route row generator",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-isal-availability.py"
     }
   ],
   "first_ready_at": "2026-09-16T22:42:51.432965529Z",
@@ -171,5 +326,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-26T08:23:29.965982788Z"
+  "updated_at": "2026-09-27T19:31:01.956878660Z"
 }
