@@ -297,8 +297,50 @@
       "format": "markdown",
       "label": "Candidate profile commands and source-derived fixture identity",
       "path": "dev/active/fcb04d66/profile-provenance.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "703ed1e84d8a8b55d6757f1675566683b6655bc4943ceff0c104e3793d69e338",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../fcb04d66/survey/source-evidence.json",
+          "resolved_path": "dev/active/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "487d7975a03ccc8010f9aa5e493b8a7f19bdc99916b63aa7a45e4d484d1c9e61",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../fcb04d66/no-change-outcome.md",
+          "resolved_path": "dev/active/fcb04d66/no-change-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a21bd78422559ed708c9824eb3281351a2012fcdd92109a6a0951b4eab3465df",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../fcb04d66/verification.md",
+          "resolved_path": "dev/active/fcb04d66/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c5c9fb90b7802fca366e671697d973d8df61d6ed90d241f86b2845a5d3832f09",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../fcb04d66/profile-provenance.md",
+          "resolved_path": "dev/active/fcb04d66/profile-provenance.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Final lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/fcb04d66-r1.md"
     }
   ],
+  "done_at": "2026-09-27T21:01:11.010943810Z",
   "first_ready_at": "2026-09-16T22:38:18.352726539Z",
   "gates_required": [
     "cargo-ci",
@@ -348,7 +390,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Implement and confirm the logical-buffer outcome",
-  "updated_at": "2026-09-27T21:00:32.936891477Z"
+  "updated_at": "2026-09-27T21:01:11.010943810Z"
 }
