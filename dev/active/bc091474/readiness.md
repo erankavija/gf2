@@ -27,4 +27,4 @@ The [benchmark queue](../1a379447-zen3-cpu-performance/bench-window/queue.tsv) c
 
 After each pilot, the issue launcher runs the existing execution-log checker and independent acceptance evaluator, then commits only that receipt directory and its family ledger, including ignored `Cargo.lock` snapshots. A retry with an existing receipt verifies and commits it without collecting new samples. A completed candidate profile is checked for nine finished repetitions before its output directory is committed. This lets later queue lines read a clean, committed ledger.
 
-No candidate timings, adjusted confidence bounds, candidate profile results, or confirmation receipt exist yet. The first window must complete the four pilots and both profiles before the predeclared selection rule can choose one confirmatory identity or a no-candidate outcome. No production route is selected here.
+The [pilot outcome](pilot-outcome.md) and [generated tables](candidate-tables.md) contain the completed candidate measurements and the frozen screen's no-candidate result. No confirmation is admitted and no production route is selected.
