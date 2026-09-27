@@ -34,8 +34,8 @@ scheduled profile.
 
 The preserved [profile execution log](../../bench_results/2037941f/dense-baseline-profile/execution.log)
 records a launch failure in its first cell before a completed profile pass.
-The request encoder appends a newline to compact JSON, which the arm's
-byte-exact fresh-child parser rejects. The
+The failed attempt's request contains a trailing newline after compact JSON,
+which the arm's byte-exact fresh-child parser rejects. The
 [wire regression](survey/test-dense-profile-request.py) checks the encoder's
 actual output. The [profile launcher](survey/run-dense-profile.sh) uses a fresh
 output directory for its next run, so the failed attempt remains intact.
