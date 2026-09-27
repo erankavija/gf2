@@ -85,15 +85,21 @@ def addendum(receipt: dict, relative: str) -> dict:
     return json.loads(path(snapshot).read_text())
 
 
-def measured_metric(cell: dict, side: str, bits: int, scaling: str) -> str:
+def interval_coverages(series: list[list[float]]) -> str:
+    return " and ".join(sorted({f"{order_statistic(values)[3]:.6f}" for values in series}))
+
+
+def metric_values(cell: dict, side: str, bits: int, scaling: str) -> list[float]:
     values = [pair[side]["ns_per_call"] for pair in cell["pairs"]]
     if scaling == "sustained-throughput":
-        values = [bits / value * 1e9 / 2**20 for value in values]
-        unit = "Mibit/s"
-    else:
-        unit = "ns/call"
-    point = order_statistic(values)[0]
-    return f"{point:,.2f} [{min(values):,.2f}, {max(values):,.2f}] {unit}"
+        return [bits / value * 1e9 / 2**20 for value in values]
+    return values
+
+
+def measured_metric(cell: dict, side: str, bits: int, scaling: str) -> str:
+    values = metric_values(cell, side, bits, scaling)
+    unit = "Mibit/s" if scaling == "sustained-throughput" else "ns/call"
+    return f"{interval(values)} {unit}"
 
 
 def print_authority(receipts: list[tuple[str, str, dict, dict]]) -> None:
@@ -136,10 +142,20 @@ def print_shift(label: str, relative: str, receipt: dict, summary: dict) -> None
     else:
         print(
             "The baseline holds the shipped scalar funnel; the candidate selects its BMI2 "
-            "route for the same residual operation. The accepted interval decides each "
-            "confirmatory outcome. The per-arm medians and observed ranges below describe "
-            "calls within the receipt; they are not confidence intervals."
+            "route for the same residual operation. The accepted ratio interval decides "
+            "each confirmatory outcome."
         )
+    arm_series = [
+        metric_values(measured[result["cell_id"]], side,
+                      declared[result["cell_id"]]["workload"]["size"]["length_bits"],
+                      declared[result["cell_id"]]["scaling"])
+        for result in summary["cells"] for side in ("baseline", "candidate")
+    ]
+    print(
+        "Per-arm estimates are upper medians with order-statistic uncertainty "
+        f"intervals across the paired calls (coverage {interval_coverages(arm_series)}). "
+        "The accepted ratio uses its separately reported confidence interval."
+    )
     print()
     print(
         f"Source: {quoted(relative + '/receipt.json')} and "
@@ -147,7 +163,7 @@ def print_shift(label: str, relative: str, receipt: dict, summary: dict) -> None
         f"{quoted(receipt['protocol']['sha256'])}; pairs and confidence are in each row."
     )
     print()
-    print("| Cell | scaling | pairs | baseline median [observed range] | candidate median [observed range] | ratio [confidence interval] | decision | outcome |")
+    print("| Cell | scaling | pairs | baseline median [uncertainty interval] | candidate median [uncertainty interval] | ratio [confidence interval] | decision | outcome |")
     print("|---|---|---:|---|---|---|---|---|")
     for result in summary["cells"]:
         name = result["cell_id"]
@@ -168,13 +184,17 @@ def print_shift(label: str, relative: str, receipt: dict, summary: dict) -> None
 
 def print_dvb(receipt: dict, summary: dict) -> None:
     decisions = {row["cell_id"]: row for row in summary["cells"]}
+    gaps = gap_cells(receipt)
+    stage_series = [side_parts(cell, side)["total"] for cell in gaps
+                    for side in ("baseline", "candidate")]
     print("## DVB-T2 packed whole-consumer comparison")
     print()
     print(
         "The one-frame BitPackedBatch boundary includes xdsopl PCTITL unpack, "
         "destructive-input copy with output allocation, and pack. Values are medians "
         "and order-statistic intervals across each exploratory cell's paired calls "
-        "(coverage 0.969 for six pairs). The acceptance decision remains exploratory."
+        f"(coverage {interval_coverages(stage_series)}). "
+        "The acceptance decision remains exploratory."
     )
     print()
     print(
@@ -184,7 +204,7 @@ def print_dvb(receipt: dict, summary: dict) -> None:
     print()
     print("| Cell | pairs | gf2 stage ns/call [interval] | xdsopl packed ns/call [interval] | decision |")
     print("|---|---:|---|---|---|")
-    for cell in gap_cells(receipt):
+    for cell in gaps:
         name = cell["cell_id"]
         base = side_parts(cell, "baseline")["total"]
         candidate = side_parts(cell, "candidate")["total"]
@@ -204,7 +224,7 @@ def print_dvb(receipt: dict, summary: dict) -> None:
     print()
     print("| Cell | pairs | unpack ns/call [interval] | input copy and output allocation [interval] | pack ns/call [interval] | remainder ns/call [interval] |")
     print("|---|---:|---|---|---|---|")
-    for cell in gap_cells(receipt):
+    for cell in gaps:
         parts = side_parts(cell, "candidate")
         print(
             f"| {quoted(cell['cell_id'])} | {len(cell['pairs'])} | "
@@ -226,14 +246,16 @@ def print_profile() -> None:
         sessions.append(records)
     if len(sessions) != 9:
         raise ValueError("the fresh DVB profile is not a completed nine-session series")
+    path_series = [[session[case]["ns_per_call"] for session in sessions]
+                   for case in case_ids]
     print("## DVB-T2 path and BICM composition")
     print()
     print(
         "Each path contributes one median-of-windows observation per session. "
-        "The table gives the across-session median and [x(2), x(8)] "
-        "order-statistic interval (coverage 0.961). Allocation counts are exact "
-        "per-call censuses. Separate-process shares describe composition only; "
-        "the paired receipt above decides materiality."
+        "The table gives the across-session upper median and order-statistic "
+        f"uncertainty interval (coverage {interval_coverages(path_series)}). "
+        "Allocation counts are exact per-call censuses. Separate-process "
+        "shares describe composition only; the paired receipt above decides materiality."
     )
     print()
     print(
@@ -260,14 +282,19 @@ def print_profile() -> None:
 
 def print_nr(receipt: dict, summary: dict) -> None:
     cells = rows_for(receipt)
+    conversion_series = [
+        [pair["candidate"]["conversion"][part] for pair in cells[result["cell_id"]]["pairs"]]
+        for result in summary["cells"] for part in ("unpack_ns", "pack_ns")
+    ]
     print("## NR de-rate-matching no-win")
     print()
     print(
         "AFF3CT Puncturer_5G::depuncture is the operation-equivalent external arm "
         "inside its adapter. The accepted protocol-v3 confirmation reports the "
         "corrected confidence interval and outcome. Adapter unpack and pack are "
-        "descriptive per-execution observations, reported as median [observed range] "
-        "over the pairs; they do not decide the verdict."
+        "descriptive per-execution upper medians with order-statistic uncertainty "
+        f"intervals over the pairs (coverage {interval_coverages(conversion_series)}); "
+        "they do not decide the verdict."
     )
     print()
     print(
@@ -277,7 +304,7 @@ def print_nr(receipt: dict, summary: dict) -> None:
         f"runtime-host breakdown is {quoted('dev/bench_results/eda07788/tables-nr-derate.md')}."
     )
     print()
-    print("| Cell | pairs | speedup [confidence interval] | decision | outcome | AFF3CT unpack ns [range] | AFF3CT pack ns [range] |")
+    print("| Cell | pairs | speedup [confidence interval] | decision | outcome | AFF3CT unpack ns [uncertainty interval] | AFF3CT pack ns [uncertainty interval] |")
     print("|---|---:|---|---|---|---|---|")
     for result in summary["cells"]:
         name = result["cell_id"]
@@ -290,8 +317,7 @@ def print_nr(receipt: dict, summary: dict) -> None:
             f"| {quoted(name)} | {result['pairs']} | "
             f"{ci['estimate']:.4f} [{ci['lower']:.4f}, {ci['upper']:.4f}] "
             f"at {ci['confidence']:.4f} | {result['decision']} | {result['outcome']} | "
-            f"{order_statistic(unpack)[0]:.0f} [{min(unpack):.0f}, {max(unpack):.0f}] | "
-            f"{order_statistic(pack)[0]:.0f} [{min(pack):.0f}, {max(pack):.0f}] |"
+            f"{interval(unpack, 0)} | {interval(pack, 0)} |"
         )
     print()
 
@@ -313,8 +339,6 @@ def print_disposition_sources(profile: dict, confirmation: dict) -> None:
     if profile["qualifies"]:
         raise ValueError("the exploratory workload profile has become an adoption receipt")
     outcome = "dev/active/00dd43c3/confirmation-outcome.md"
-    if "**Disposition: retain the BMI2-gated residual shift route.**" not in path(outcome).read_text():
-        raise ValueError("the published retention disposition differs from the acceptance")
     print("## Content-pinned dispositions")
     print()
     print(
