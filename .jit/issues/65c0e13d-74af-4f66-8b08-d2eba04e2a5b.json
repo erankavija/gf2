@@ -426,8 +426,26 @@
       "format": "markdown",
       "label": "Six-pair pilot versus frozen sampling requirement",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-sampling-discrepancy.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "8f46b64b309b330a444a57dedf8ecbeb3b63db5b6f0089b33bdf39875d24017c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead acceptance with approved sampling exception",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/65c0e13d-r1.md"
     }
   ],
+  "done_at": "2026-09-27T20:17:55.666189826Z",
   "first_ready_at": "2026-09-16T22:42:51.432965529Z",
   "gates_required": [
     "cargo-ci",
@@ -464,7 +482,7 @@
     "epic:zen3-cpu-performance"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Measure the ISA-L XOR comparison",
-  "updated_at": "2026-09-27T20:16:35.919307093Z"
+  "updated_at": "2026-09-27T20:17:55.666189826Z"
 }
