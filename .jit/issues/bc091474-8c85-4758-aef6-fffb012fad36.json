@@ -98,6 +98,331 @@
       "doc_type": "implementation",
       "label": null,
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d14b0e887b0f8546795a1079e7c43b6204c30a9832edd604cef04d944df82229",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/bc091474/profile-unroll2/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "candidate-tables.md",
+          "resolved_path": "dev/active/bc091474/candidate-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7066d88d8e698976c78fe5da08f9bcd7282e9d76fc236d9d44e65d1322976aee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../scripts/verify-campaign-log.py",
+          "resolved_path": "dev/scripts/verify-campaign-log.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40a52fc9233bf9b5111794cd13220c91ab4f94292ed4f7f06ae72fdbc97eaf22",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "asm/baseline-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/baseline-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33e1a3f3a4f22faa2a4c9eb74b5e4189515bb950c729a9ff9d3b6227573ddf82",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "portfolio.md",
+          "resolved_path": "dev/active/bc091474/portfolio.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa61d7da1809a672b48d21c74066f8071cc3cc7909eddc3dd9b45476f7293631",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "asm/unroll2-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "290685bf5ab2837e9a38602acead3d33005c2c14b8b883a30bcf863d8c2b7074",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c56ffc8c47dea053bc2559874600bc375d3d7b9c4907c6e67b8955619f6f524d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-dispatch-availability.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-dispatch-availability.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c299cddb1278848f6e52f72078fe770f9c6068349216bfc41931750719edc099",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/isal-base-gap-results.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cac82390f86c3ab8f3ac0337cac80668cdcfe12c48ff8220b07c5723b32ac4cd",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/bc091474/profile-unroll4/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2cbb67820673a4451d815e05fe034b3e36114824eed4982851084a08c0e18632",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "asm/unroll4-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Logical candidate selection outcome",
+      "path": "dev/active/bc091474/pilot-outcome.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "5031a0c23fedd69356322d80668414098f1f33e4906bdb12a3a85d10037a73c2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "91fe3e7e3c8da21a81020a4cbc9ba4c91c3df1ba182c8b6aec2d47c69faf7a3d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2e9a1ecffa392df8b774a9ab976c9abf431c01e7946afd9d921e0c690389fd3d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cac82390f86c3ab8f3ac0337cac80668cdcfe12c48ff8220b07c5723b32ac4cd",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/bc091474/profile-unroll4/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40a52fc9233bf9b5111794cd13220c91ab4f94292ed4f7f06ae72fdbc97eaf22",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "asm/baseline-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/baseline-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a766df569b2b48cd4d607ecb9d60c1c5f03dec39092754abe51fb33347ace304",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/logical-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "33e1a3f3a4f22faa2a4c9eb74b5e4189515bb950c729a9ff9d3b6227573ddf82",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "portfolio.md",
+          "resolved_path": "dev/active/bc091474/portfolio.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0dc7254c7580d71bb44ea126e8802021a0adb1debafd64d6c512a54dbbb79a16",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88637bf1e64f971b8042d673457c5f6c2cf71ae695001accbd8d2570616a7ba3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "71e61a0a98e52945a2cd3aa11f1f250a5013933774e6cbbc5b175e2539089778",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2cbb67820673a4451d815e05fe034b3e36114824eed4982851084a08c0e18632",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "asm/unroll4-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d14b0e887b0f8546795a1079e7c43b6204c30a9832edd604cef04d944df82229",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/bc091474/profile-unroll2/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa61d7da1809a672b48d21c74066f8071cc3cc7909eddc3dd9b45476f7293631",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "asm/unroll2-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3575971c785bd707504f845c2bdc109248e2ba557bafc6f24cc08d423734bcf8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/execution.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "53f3fa7404ee8aa8fd165cd5518b47e257e46b051e9793043d7cdfe159853470",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/logical-isolated-xor-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/logical-isolated-xor-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f546e37a089cd7f918a0c50a745ab49acb799a9d9aa73ae308c55b29eee92207",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/logical-public-row-xor-ledger.jsonl",
+          "resolved_path": "dev/bench_results/2037941f/logical-public-row-xor-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eb6d3b9600e6b667cd2c00995dd08971f97ae712fc5a896e2afdb80edc88f6f3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/execution.log"
+        }
+      ],
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Logical candidate generated tables",
+      "path": "dev/active/bc091474/candidate-tables.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/execution.log",
+          "resolved_path": "dev/bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/execution.log"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/{FAMILIES[family]}/bc091474-u{factor}-pilot/acceptance-summary.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Logical candidate table generator",
+      "path": "dev/active/bc091474/make-candidate-tables.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Factor 2 isolated pilot",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Factor 2 public-row pilot",
+      "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Factor 4 isolated pilot",
+      "path": "dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Factor 4 public-row pilot",
+      "path": "dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Factor 2 profile",
+      "path": "dev/bench_results/bc091474/profile-unroll2/profile-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Factor 4 profile",
+      "path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
     }
   ],
   "first_ready_at": "2026-09-16T22:36:38.239101559Z",
@@ -129,5 +454,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze, measure and select the logical-buffer candidates",
-  "updated_at": "2026-09-26T09:00:09.752198230Z"
+  "updated_at": "2026-09-27T19:33:25.600286794Z"
 }
