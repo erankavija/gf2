@@ -7,14 +7,76 @@
     "bc091474-8c85-4758-aef6-fffb012fad36"
   ],
   "description": "Freeze the private zero-copy candidate, measure the private BitSlice zero-copy prototype and select the zero-copy integration outcome.\n\n## Background\n\n**552fae3b — Freeze the private zero-copy candidate.** Turn the relevant logical consumer baselines into one bounded private BitSlice copy-avoidance experiment before prototype samples are collected. BitSlice remains a bit view and the experiment may use only a private measurement prototype. The portfolio fixes one measured consumer, copy-inclusive comparator, offset/alignment cases, complexity budget, and stop rule without authorizing public borrowed-word API or production semantics.\n\n**c9cf13ee — Measure a private BitSlice zero-copy prototype.** Prototype zero-copy access privately inside the measurement harness and test whether avoided copying benefits a real mid-range consumer. `BitSlice` remains an offset bit view with bit accessors, not a borrowed-word API. This study does not add public methods, change layout, or adopt a production path. Its adapter must make alignment, bit offset, logical length, and tail masking costs visible.\n\n**3f57a279 — Select the zero-copy integration outcome.** Apply the frozen adoption rules to the private BitSlice prototype and decide whether an integration through existing private abstractions is justified. BitSlice remains a bit view and no new public borrowed-word API is authorized by this story. A qualifying consumer gain may justify a private integration design. If realizing it requires a lasting public API or shared-infrastructure change, this branch closes as no-adoption, records the pending owner decision for a later explicitly authorized container, and does not block story completion.\n\n## Success Criteria\n\n- [hard] REQ-01: (552fae3b REQ-01) The portfolio names one exact private prototype, consumer cell, baseline, offset/alignment cases, profile rationale, implementation complexity budget, comparison family, and stop condition before candidate measurement.\n- [hard] REQ-02: (552fae3b REQ-02) A missing consumer signal is recorded as a no-candidate outcome and leaves production unchanged.\n- [hard] REQ-03: (552fae3b REQ-03) No public borrowed-word API, shared-infrastructure change, or production route is authorized by the portfolio.\n\n- [hard] REQ-04: (c9cf13ee REQ-01) A private prototype covers the predeclared consumer cell without exposing a new public borrowed-word surface or bypassing canonical logical semantics.\n- [hard] REQ-05: (c9cf13ee REQ-02) Exact results hold for empty, aligned, deliberately offset, and 0/1/63/64/65 boundary cases with zero tail padding.\n- [hard] REQ-06: (c9cf13ee REQ-03) The receipt reports copy-inclusive and prototype costs, adjusted confidence bounds, equivalence results, complexity accounting, and preserved negative or inconclusive outcomes.\n\n- [hard] REQ-07: (3f57a279 REQ-01) The decision applies the predeclared worthwhile-effect, equivalence-margin, complexity, and whole-consumer rules to the private prototype evidence.\n- [hard] REQ-08: (3f57a279 REQ-02) A qualifying existing-abstraction result names one bounded private integration target, while a non-qualifying result preserves the no-win and leaves production unchanged.\n- [hard] REQ-09: (3f57a279 REQ-03) Evidence requiring a public borrowed-word API or shared infrastructure resolves here to no-adoption plus a pending owner decision for later work, without waiting for that decision.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 552fae3b, c9cf13ee, 3f57a279; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n552fae3b: This is an experimental selection contract, not an architecture or production adoption decision.\n\nc9cf13ee: Only qualifying consumer evidence can reach a separately reviewed integration design; this issue itself cannot authorize API work.\n\n3f57a279: This issue selects whether private design work is warranted; it does not design or implement the integration.\n\n## Conditional follow-up (created by the lead only if this task selects the candidate)\n\n**c71becc5 — Design the qualifying zero-copy integration.** Produce a bounded integration design only for a private BitSlice experiment that qualifies through existing abstractions.\n\n- [hard] follow-up criterion REQ-01 of c71becc5: The design maps qualifying evidence to one bounded private consumer integration through existing canonical abstractions, or emits a closed no-adoption record without proposing code.\n- [hard] follow-up criterion REQ-02 of c71becc5: Alignment, bit offset, logical length, tail masking, safety, scalar fallback, and complexity contracts are explicit for any implementable private route.\n- [hard] follow-up criterion REQ-03 of c71becc5: Any public borrowed-word API or shared-infrastructure requirement terminates this story branch as no-adoption plus a pending owner decision, with no implementable contract for that route.\n\n**7d3ced35 — Implement the approved private zero-copy outcome.** Apply the zero-copy integration contract only when it authorizes a bounded path through existing private abstractions; otherwise preserve the recorded no-change outcome.\n\n- [hard] follow-up criterion REQ-01 of 7d3ced35: The approved existing-abstraction integration is implemented exactly for its bounded consumer, or the no-adoption contract leaves production unchanged.\n- [hard] follow-up criterion REQ-02 of 7d3ced35: Shared semantic coverage proves correct offset handling, alignment behavior, logical length, zero tail padding, and 0/1/63/64/65 boundary results.\n- [hard] follow-up criterion REQ-03 of 7d3ced35: No public borrowed-word API, shared-infrastructure change, second buffer abstraction, or dispatch bypass is implemented by this story branch.\n\n**4497e541 — Confirm the private zero-copy production outcome.** Run holdout confirmation for an approved private zero-copy integration through existing abstractions, or publish the final no-change verdict.\n\n- [hard] follow-up criterion REQ-01 of 4497e541: Any adopted private integration has paired or interleaved holdout samples against the pinned pre-change baseline with adjusted confidence bounds and equivalence-margin results.\n- [hard] follow-up criterion REQ-02 of 4497e541: Whole-consumer benefit survives all adapter costs and semantic checks; otherwise the integration is not accepted and the contradictory evidence remains committed.\n- [hard] follow-up criterion REQ-03 of 4497e541: The receipt pins contract, addendum, executable, configuration, inputs, runtime provenance, profiles, and exact commands by content identity, while any no-adoption path records why no after measurement is applicable.\n- [hard] follow-up criterion REQ-04 of 4497e541: A public/shared requirement produces no timed samples in this issue and remains only a pending owner decision for a separately authorized container.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d865245aa0f8fe4c6e020498e0e34b2539c5ce9a3e07ccdc9a174c81351107a3",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bench_results/2037941f/logical-profile/cases.txt",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/cases.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86ea6b97e4655091c42e78e9fa85a52863bcc3d3d341c4000fad1c9e891582db",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c29eff5fc2696ef9d471fead473f7428a5eff445655b902acc91837f765078b2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/2037941f/logical-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8ded5a3c62702c10184dcda6326066473334c9b74865ccaa1d20ffa166c2c101",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5e3130047a3b93cacf67db18cb33d134c1bc99e7395a4409db4de721795cdc1a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/a1ad6d4e/survey/source-evidence.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Private BitSlice zero-copy no-candidate outcome",
+      "path": "dev/active/a1ad6d4e/outcome.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "BitSlice source and callsite evidence",
+      "path": "dev/active/a1ad6d4e/survey/source-evidence.json"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:37:28.127608288Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-27T20:36:32.263478616Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "a1ad6d4e-c682-4af6-ada5-36ccfd9101e4",
   "labels": [
     "component:benchmarks",
@@ -30,5 +92,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
-  "updated_at": "2026-09-27T20:26:52.058463755Z"
+  "updated_at": "2026-09-27T20:36:51.750402508Z"
 }
