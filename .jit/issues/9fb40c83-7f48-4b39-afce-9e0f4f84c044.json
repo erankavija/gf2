@@ -515,6 +515,13 @@
       "format": "markdown",
       "label": "DVB profile summary renderer",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/summarize-profile.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Completed coverage-addressability advisory resolution",
+      "path": "dev/active/9f0e385e/coverage-addressability.md"
     }
   ],
   "first_ready_at": "2026-09-15T00:57:24.562407727Z",
@@ -531,7 +538,7 @@
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-09-26T14:40:15.319640305Z",
+      "updated_at": "2026-09-27T19:43:44.387271251Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -559,5 +566,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-27T19:36:47.038604350Z"
+  "updated_at": "2026-09-27T19:44:49.961299971Z"
 }
