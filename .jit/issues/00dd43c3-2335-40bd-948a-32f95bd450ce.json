@@ -337,8 +337,26 @@
       "format": "markdown",
       "label": "Frozen residual-shift retention rule with current disposition link",
       "path": "dev/active/f8dd4dde/retention-rule.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../00dd43c3/confirmation-outcome.md",
+          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Final residual confirmation lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/00dd43c3-r1.md"
     }
   ],
+  "done_at": "2026-09-27T23:23:36.311083650Z",
   "first_ready_at": "2026-09-19T15:37:57.876881427Z",
   "gates_required": [
     "cargo-ci",
@@ -374,7 +392,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Confirm the BMI2 residual shift route against the scalar funnel",
-  "updated_at": "2026-09-27T23:22:03.836853412Z"
+  "updated_at": "2026-09-27T23:23:36.311083650Z"
 }
