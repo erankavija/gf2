@@ -194,6 +194,11 @@
       "status": "passed",
       "updated_at": "2026-09-27T23:53:39.600832332Z",
       "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-27T23:59:09.188775666Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "a0812b83-3d03-4317-aad4-f0d702444f14",
@@ -217,5 +222,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Publish the shift-permutation dispositions",
-  "updated_at": "2026-09-27T23:55:53.083339354Z"
+  "updated_at": "2026-09-27T23:59:09.188775666Z"
 }
