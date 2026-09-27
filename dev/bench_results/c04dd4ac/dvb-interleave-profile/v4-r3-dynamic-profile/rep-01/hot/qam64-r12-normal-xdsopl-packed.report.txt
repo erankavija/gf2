@@ -1,0 +1,19 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 3431408781
+#
+# Overhead       Samples  Shared Object     Symbol                                      IPC   [IPC Coverage]
+# ........  ............  ................  ..........................................  ....................
+#
+    60.00%          2363  dvb-profile       [.] survey_gf2_side::pack_bits              -      -            
+     8.94%           345  dvb-profile       [.] survey_gf2_side::unpack_words           -      -            
+    20.35%           789  dvb-profile       [.] xdsopl_pctitl_qam64_r12_normal_fwd_mut  -      -            
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

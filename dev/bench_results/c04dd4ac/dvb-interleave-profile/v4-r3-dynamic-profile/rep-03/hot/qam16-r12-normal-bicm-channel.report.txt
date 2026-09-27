@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 2951280448
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ....................  ........................................................................................................................................  ....................
+#
+    48.97%          1716  dvb-profile           [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     5.98%           202  dvb-profile           [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     2.47%            86  dvb-profile           [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+     1.20%            46  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs                                                     -      -            
+    20.69%           750  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     0.75%            29  dvb-profile           [.] gf2_kernels_simd::modem::avx2::pam_sq_distances_f64_avx2_safe                                                                         -      -            
+     0.67%            26  [unknown]             [k] 0xffffffffa6801280                                                                                                                    -      -            
+     0.53%            18  [unknown]             [k] 0xffffffffa6e8d428                                                                                                                    -      -            
+     0.65%            27  [unknown]             [k] 0xffffffffa6f12633                                                                                                                    -      -            
+
+
+#
+# (Tip: Compare performance results with: perf diff [<old file> <new file>])
+#

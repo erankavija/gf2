@@ -1,0 +1,26 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 2965147793
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ............  ....................  ........................................................................................................................................  ....................
+#
+    51.75%          1814  dvb-profile           [.] <gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs  -      -            
+     5.51%           187  dvb-profile           [.] <gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits                             -      -            
+     1.42%            50  dvb-profile           [.] dvb_profile::prepare::{{closure}}                                                                                                     -      -            
+     0.66%            25  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs                                                     -      -            
+    20.27%           728  dvb-profile           [.] gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave                                                            -      -            
+     0.60%            21  dvb-profile           [.] gf2_kernels_simd::modem::avx2::pam_sq_distances_f64_avx2_safe                                                                         -      -            
+     0.65%            22  [unknown]             [k] 0xffffffffa6801280                                                                                                                    -      -            
+     0.53%            18  [unknown]             [k] 0xffffffffa6e8d428                                                                                                                    -      -            
+     0.56%            19  [unknown]             [k] 0xffffffffa6efc62a                                                                                                                    -      -            
+     0.55%            26  [unknown]             [k] 0xffffffffa6f12633                                                                                                                    -      -            
+
+
+#
+# (Tip: Create an archive with symtabs to analyse on other machine: perf archive)
+#

@@ -1,0 +1,2458 @@
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (1716 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000266f0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs>:
+         : 6     /// # Complexity
+         : 7     ///
+         : 8     /// `O(num_symbols * sqrt(M) * m)` where `M = 2^m` is the
+         : 9     /// constellation order; the distance kernel and the reduction are
+         : 10    /// both linear in the per-symbol work.
+         : 11    fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
+    0.00 :   266f0:  push   %rbp
+    0.00 :   266f1:  push   %r15
+    0.00 :   266f3:  push   %r14
+    0.00 :   266f5:  push   %r13
+    0.00 :   266f7:  push   %r12
+    0.00 :   266f9:  push   %rbx
+    0.00 :   266fa:  sub    $0x1c8,%rsp
+         : 19    &self.labels,
+         : 20    &self.bit_channels,
+         : 21    self.bits_per_symbol,
+         : 22    self.normalization,
+         : 23    self.normalization_scale,
+         : 24    self.capabilities,
+    0.00 :   26701:  vmovups 0x50(%rdi),%xmm5
+    0.00 :   26706:  vmovups 0x8(%rdi),%xmm0
+    0.00 :   2670b:  vmovupd 0x20(%rdi),%xmm1
+    0.00 :   26710:  vmovupd 0x38(%rdi),%xmm2
+         : 29    self.normalization,
+    0.00 :   26715:  vmovss 0x4c(%rdi),%xmm3
+         : 31    self.normalization_scale,
+    0.00 :   2671a:  vmovss 0x68(%rdi),%xmm4
+    0.00 :   2671f:  mov    %rcx,%r8
+    0.00 :   26722:  mov    %rdx,0xa0(%rsp)
+         : 35    let m = self.m_total as usize;
+    0.00 :   2672a:  movzbl 0x91(%rdi),%eax
+         : 37    self.capabilities,
+    0.00 :   26731:  mov    0x60(%rdi),%rdx
+         : 39    self.bits_per_symbol,
+    0.00 :   26735:  movzbl 0x6c(%rdi),%r9d
+         : 41    self.normalization,
+    0.00 :   2673a:  mov    0x48(%rdi),%ecx
+    0.00 :   2673d:  mov    %rsi,%rbx
+    0.00 :   26740:  mov    %rdi,%rbp
+    0.00 :   26743:  mov    %rax,0xf0(%rsp)
+         : 46    self.capabilities,
+    0.00 :   2674b:  mov    %rdx,0x188(%rsp)
+    0.00 :   26753:  vmovups %xmm5,0x178(%rsp)
+         : 49    bits_per_symbol: u8,
+         : 50    normalization: Normalization<S>,
+         : 51    normalization_scale: S,
+         : 52    capabilities: ModemCapabilities,
+         : 53    ) -> Self {
+         : 54    Self {
+    0.00 :   2675c:  vmovups %xmm0,0x190(%rsp)
+    0.00 :   26765:  vmovupd %xmm1,0x1a0(%rsp)
+    0.00 :   2676e:  vmovupd %xmm2,0x1b0(%rsp)
+    0.00 :   26777:  mov    %r9b,0x1c4(%rsp)
+    0.00 :   2677f:  mov    %ecx,0x170(%rsp)
+    0.00 :   26786:  vmovss %xmm3,0x174(%rsp)
+    0.00 :   2678f:  vmovss %xmm4,0x1c0(%rsp)
+         : 62    let view = self.spec.view();
+         : 63    let num_symbols = super::demapper::validate_demap_input(
+    0.00 :   26798:  lea    -0x1d2a5(%rip),%rdi        # 94fa <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x496a>
+    0.00 :   2679f:  lea    0x170(%rsp),%rdx
+    0.00 :   267a7:  mov    $0x1f,%esi
+    0.00 :   267ac:  mov    %rbx,%rcx
+    0.00 :   267af:  mov    %r8,0x88(%rsp)
+    0.00 :   267b7:  call   1d490 <gf2_coding::modem::demapper::validate_demap_input>
+         : 70    &view,
+         : 71    &input,
+         : 72    out_llrs.len(),
+         : 73    );
+         :
+         : 75    if num_symbols == 0 {
+    0.00 :   267bc:  test   %rax,%rax
+    0.00 :   267bf:  je     27667 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf77>
+         : 78    return;
+         : 79    }
+         :
+         : 81    let axis_len = if self.is_bpsk {
+    0.00 :   267c5:  movzbl 0x92(%rbp),%edi
+    0.00 :   267cc:  movzbl 0x90(%rbp),%esi
+    0.00 :   267d3:  mov    %rax,%r14
+    0.00 :   267d6:  mov    $0x1,%eax
+    0.00 :   267db:  mov    $0x2,%edx
+    0.00 :   267e0:  lea    0x0(,%r14,8),%r15
+    0.00 :   267e8:  movabs $0x7ffffffffffffff8,%rcx
+    0.00 :   267f2:  mov    %edi,%r12d
+    0.00 :   267f5:  and    $0x3f,%r12d
+    0.00 :   267f9:  test   %sil,%sil
+    0.00 :   267fc:  shlx   %r12,%rax,%rax
+    0.00 :   26801:  cmove  %rax,%rdx
+    0.00 :   26805:  mov    %r14,%rax
+    0.00 :   26808:  shr    $0x3d,%rax
+    0.00 :   2680c:  sete   %al
+    0.00 :   2680f:  cmp    %rcx,%r15
+    0.00 :   26812:  setbe  %cl
+    0.00 :   26815:  test   %cl,%al
+    0.00 :   26817:  jne    2681e <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x12e>
+    0.00 :   26819:  call   2c370 <alloc::raw_vec::capacity_overflow>
+    0.00 :   2681e:  mov    %rdi,0x100(%rsp)
+    0.00 :   26826:  mov    %sil,0x17(%rsp)
+    0.00 :   2682b:  mov    %rdx,0x30(%rsp)
+    0.00 :   26830:  lock incq 0x50d50(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   26838:  lock add %r15,0x50d50(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   26840:  mov    %r15,%rdi
+    0.00 :   26843:  call   *0x4f16f(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   26849:  test   %rax,%rax
+    0.00 :   2684c:  je     277ba <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x10ca>
+    0.00 :   26852:  mov    %r14,0x108(%rsp)
+    0.00 :   2685a:  mov    %rax,0x110(%rsp)
+    0.00 :   26862:  movq   $0x0,0x118(%rsp)
+    0.00 :   2686e:  mov    %rax,%r13
+    0.00 :   26871:  lock incq 0x50d0f(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   26879:  lock add %r15,0x50d0f(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   26881:  mov    %r15,%rdi
+    0.00 :   26884:  call   *0x4f12e(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   2688a:  test   %rax,%rax
+    0.00 :   2688d:  je     277c7 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x10d7>
+    0.00 :   26893:  mov    %r14,0xa8(%rsp)
+    0.00 :   2689b:  mov    %rax,0xb0(%rsp)
+    0.00 :   268a3:  movq   $0x0,0xb8(%rsp)
+    0.00 :   268af:  lock incq 0x50cd1(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   268b7:  lock add %r15,0x50cd1(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   268bf:  mov    %r15,%rdi
+    0.00 :   268c2:  call   *0x4f0f0(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   268c8:  test   %rax,%rax
+    0.00 :   268cb:  je     277d6 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x10e6>
+    0.00 :   268d1:  mov    %r14,0xc0(%rsp)
+    0.00 :   268d9:  mov    %rax,0xc8(%rsp)
+    0.00 :   268e1:  mov    %rbp,0x130(%rsp)
+    0.00 :   268e9:  mov    %r12,0x128(%rsp)
+    0.00 :   268f1:  movq   $0x0,0xd0(%rsp)
+    0.00 :   268fd:  lock incq 0x50c83(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   26905:  lock add %r15,0x50c83(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   2690d:  mov    %r15,%rdi
+    0.00 :   26910:  call   *0x4f0a2(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   26916:  test   %rax,%rax
+    0.00 :   26919:  je     277e5 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x10f5>
+    0.00 :   2691f:  mov    0x8(%rbx),%rdx
+    0.00 :   26923:  mov    (%rbx),%rcx
+    0.00 :   26926:  mov    0x48(%rbx),%rdi
+    0.00 :   2692a:  mov    %r14,0xd8(%rsp)
+    0.00 :   26932:  mov    %rax,0xe0(%rsp)
+    0.00 :   2693a:  mov    %r14,0x78(%rsp)
+    0.00 :   2693f:  movq   $0x0,0xe8(%rsp)
+    0.00 :   2694b:  mov    %rbx,0x120(%rsp)
+    0.00 :   26953:  mov    %rdx,0x38(%rsp)
+    0.00 :   26958:  mov    0x10(%rbx),%rdx
+    0.00 :   2695c:  mov    %rcx,0x98(%rsp)
+    0.00 :   26964:  mov    0x18(%rbx),%rcx
+    0.00 :   26968:  mov    %rdi,0x70(%rsp)
+    0.00 :   2696d:  mov    %rdx,0xf8(%rsp)
+    0.00 :   26975:  mov    0x38(%rbx),%rdx
+    0.00 :   26979:  mov    %rcx,0x58(%rsp)
+    0.00 :   2697e:  mov    0x30(%rbx),%rcx
+    0.00 :   26982:  mov    %rdx,0x40(%rsp)
+    0.00 :   26987:  mov    0x40(%rbx),%rdx
+    0.00 :   2698b:  test   %rcx,%rcx
+    0.00 :   2698e:  mov    %rcx,0x90(%rsp)
+    0.00 :   26996:  sete   %sil
+    0.00 :   2699a:  test   %rdx,%rdx
+    0.00 :   2699d:  mov    %rdx,0x138(%rsp)
+    0.00 :   269a5:  mov    0x20(%rbx),%rdx
+    0.00 :   269a9:  sete   %cl
+    0.00 :   269ac:  xor    %r15d,%r15d
+    0.00 :   269af:  or     %sil,%cl
+    0.00 :   269b2:  mov    %cl,0x68(%rsp)
+    0.00 :   269b6:  mov    0x28(%rbx),%rcx
+    0.00 :   269ba:  mov    %rdx,0x48(%rsp)
+    0.00 :   269bf:  mov    %rcx,0x50(%rsp)
+    0.00 :   269c4:  lea    0x4c84d(%rip),%rcx        # 73218 <__frame_dummy_init_array_entry+0x6f8>
+    0.00 :   269cb:  mov    %rcx,0x80(%rsp)
+    0.00 :   269d3:  jmp    26a09 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x319>
+    0.00 :   269d5:  data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   269e0:  vmovsd 0x8(%rsp),%xmm0
+    0.40 :   269e6:  mov    0xe0(%rsp),%rbx
+    0.00 :   269ee:  vmovsd %xmm0,(%rbx,%rbp,8)
+    0.00 :   269f3:  inc    %rbp
+    0.00 :   269f6:  mov    %rbp,0xe8(%rsp)
+    0.00 :   269fe:  cmp    %r15,0x78(%rsp)
+    0.00 :   26a03:  je     26c98 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x5a8>
+         : 184   // allocation-free hot path.
+         : 185   let mut z_i: Vec<f64> = Vec::with_capacity(num_symbols);
+         : 186   let mut z_q: Vec<f64> = Vec::with_capacity(num_symbols);
+         : 187   let mut g_scratch: Vec<f64> = Vec::with_capacity(num_symbols);
+         : 188   let mut inv_n0_eq: Vec<f64> = Vec::with_capacity(num_symbols);
+         : 189   for k in 0..num_symbols {
+    0.00 :   26a09:  mov    %r15,0x140(%rsp)
+         : 191   let y_i = input.rx_i[k].to_f64();
+    0.00 :   26a11:  cmp    %r15,0x38(%rsp)
+    0.00 :   26a16:  je     27724 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1034>
+         : 194   let y_q = input.rx_q[k].to_f64();
+    0.00 :   26a1c:  cmp    %r15,0x58(%rsp)
+    0.18 :   26a21:  je     2772b <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x103b>
+    0.00 :   26a27:  mov    0x98(%rsp),%rax
+    0.00 :   26a2f:  vmovsd -0x22237(%rip),%xmm1        # 4800 <__abi_tag+0x4504>
+         : 199   let (h_i, h_q) = match (input.gain_i, input.gain_q) {
+    0.00 :   26a37:  cmpb   $0x0,0x68(%rsp)
+    0.00 :   26a3c:  vmovss (%rax,%r15,4),%xmm0
+    0.00 :   26a42:  mov    0xf8(%rsp),%rax
+    0.00 :   26a4a:  vmovsd %xmm1,0x18(%rsp)
+    0.00 :   26a50:  vmovss %xmm0,0x20(%rsp)
+         : 205   let y_q = input.rx_q[k].to_f64();
+    0.29 :   26a56:  vmovss (%rax,%r15,4),%xmm0
+    0.00 :   26a5c:  vmovss %xmm0,0x28(%rsp)
+    0.00 :   26a62:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   26a66:  vmovsd %xmm0,0x8(%rsp)
+         : 210   let (h_i, h_q) = match (input.gain_i, input.gain_q) {
+    0.00 :   26a6c:  jne    26ab4 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x3c4>
+         : 212   (Some(gi), Some(gq)) => (gi[k].to_f64(), gq[k].to_f64()),
+    0.00 :   26a6e:  cmp    0x40(%rsp),%r15
+    0.00 :   26a73:  jae    27761 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1071>
+    0.00 :   26a79:  cmp    0x70(%rsp),%r15
+    0.00 :   26a7e:  jae    2776f <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x107f>
+    0.00 :   26a84:  mov    0x90(%rsp),%rax
+    0.00 :   26a8c:  vmovss (%rax,%r15,4),%xmm0
+    0.00 :   26a92:  mov    0x138(%rsp),%rax
+         : 220   fn to_f32(self) -> f32 {
+         : 221   self
+         : 222   }
+         : 223   #[inline]
+         : 224   fn to_f64(self) -> f64 {
+         : 225   self as f64
+    0.00 :   26a9a:  vcvtss2sd %xmm0,%xmm0,%xmm0
+    0.00 :   26a9e:  vmovsd %xmm0,0x18(%rsp)
+    0.00 :   26aa4:  vmovss (%rax,%r15,4),%xmm0
+    0.00 :   26aaa:  vcvtss2sd %xmm0,%xmm0,%xmm0
+    0.00 :   26aae:  vmovsd %xmm0,0x8(%rsp)
+         : 231   _ => (1.0_f64, 0.0_f64),
+         : 232   };
+         : 233   let n0 = input.noise_var[k].to_f64();
+    0.00 :   26ab4:  cmp    %r15,0x50(%rsp)
+    0.00 :   26ab9:  je     27746 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1056>
+    0.00 :   26abf:  mov    0x48(%rsp),%rax
+    0.00 :   26ac4:  vmovd  (%rax,%r15,4),%xmm0
+    0.00 :   26aca:  vmovd  %xmm0,%eax
+    0.00 :   26ace:  vcvtss2sd %xmm0,%xmm0,%xmm0
+         : 240   assert!(
+         : 241   n0 > 0.0 && n0.is_finite(),
+    0.00 :   26ad2:  test   %eax,%eax
+    0.00 :   26ad4:  sets   %cl
+    0.00 :   26ad7:  and    $0x7fffffff,%eax
+    0.00 :   26adc:  lea    -0x800000(%rax),%edx
+    0.00 :   26ae2:  lea    -0x1(%rax),%esi
+    0.12 :   26ae5:  vmovsd %xmm0,0x60(%rsp)
+         : 248   let n0 = input.noise_var[k].to_f64();
+    0.00 :   26aeb:  vmovsd %xmm0,0x148(%rsp)
+         : 250   n0 > 0.0 && n0.is_finite(),
+    0.00 :   26af4:  cmp    $0x7f000000,%edx
+    0.00 :   26afa:  setb   %dl
+    0.00 :   26afd:  and    %cl,%dl
+    0.00 :   26aff:  cmp    $0x7fffff,%esi
+    0.00 :   26b05:  setb   %sil
+    0.00 :   26b09:  and    %cl,%sil
+    0.06 :   26b0c:  test   %eax,%eax
+    0.00 :   26b0e:  sete   %cl
+    0.00 :   26b11:  cmp    $0x7f800000,%eax
+    0.00 :   26b16:  sete   %dil
+    0.00 :   26b1a:  or     %cl,%dil
+    0.00 :   26b1d:  cmp    $0x7f800001,%eax
+    0.00 :   26b22:  setge  %al
+    0.00 :   26b25:  or     %dil,%al
+    0.06 :   26b28:  or     %sil,%al
+    0.00 :   26b2b:  or     %dl,%al
+    0.00 :   26b2d:  cmp    $0x1,%al
+    0.00 :   26b2f:  je     27679 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf89>
+    0.00 :   26b35:  cmp    0x108(%rsp),%r15
+    0.00 :   26b3d:  jne    26b54 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x464>
+    0.00 :   26b3f:  lea    0x108(%rsp),%rdi
+    0.00 :   26b47:  call   38770 <alloc::raw_vec::RawVec<T,A>::grow_one>
+    0.00 :   26b4c:  mov    0x110(%rsp),%r13
+    0.00 :   26b54:  vmovss 0x20(%rsp),%xmm0
+    0.00 :   26b5a:  vcvtss2sd %xmm0,%xmm0,%xmm1
+    0.00 :   26b5e:  vmovss 0x28(%rsp),%xmm0
+    0.06 :   26b64:  vmovsd %xmm1,0x20(%rsp)
+    0.00 :   26b6a:  vcvtss2sd %xmm0,%xmm0,%xmm2
+         :
+         : 280   // Pre-rotate by conj(h) so the kernel runs on axis-separable
+         : 281   // data: |y - h p|^2 / n0 == |z - g p|^2 / (n0 * g) where
+         : 282   // z = conj(h) * y and g = |h|^2.
+         : 283   let g = h_i * h_i + h_q * h_q;
+         : 284   z_i.push(h_i * y_i + h_q * y_q);
+    0.00 :   26b6e:  vmulsd 0x18(%rsp),%xmm1,%xmm0
+    0.00 :   26b74:  vmovsd %xmm2,0x28(%rsp)
+    0.00 :   26b7a:  vmulsd 0x8(%rsp),%xmm2,%xmm2
+    0.06 :   26b80:  vaddsd %xmm0,%xmm2,%xmm0
+    0.00 :   26b84:  vmovsd %xmm0,0x0(%r13,%r15,8)
+    0.00 :   26b8b:  inc    %r15
+    0.06 :   26b8e:  mov    0xb8(%rsp),%rbx
+    0.00 :   26b96:  mov    %r15,0x118(%rsp)
+    0.00 :   26b9e:  cmp    0xa8(%rsp),%rbx
+    0.00 :   26ba6:  jne    26bb5 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x4c5>
+    0.00 :   26ba8:  lea    0xa8(%rsp),%rdi
+    0.00 :   26bb0:  call   38770 <alloc::raw_vec::RawVec<T,A>::grow_one>
+    0.00 :   26bb5:  vmovsd 0x28(%rsp),%xmm0
+    0.00 :   26bbb:  vmovsd 0x20(%rsp),%xmm1
+    0.00 :   26bc1:  mov    0xb0(%rsp),%rax
+         : 300   z_q.push(h_i * y_q - h_q * y_i);
+    0.00 :   26bc9:  vmulsd 0x18(%rsp),%xmm0,%xmm0
+    0.06 :   26bcf:  vmulsd 0x8(%rsp),%xmm1,%xmm1
+    0.12 :   26bd5:  vsubsd %xmm1,%xmm0,%xmm0
+    0.06 :   26bd9:  vmovsd %xmm0,(%rax,%rbx,8)
+    0.06 :   26bde:  inc    %rbx
+    0.00 :   26be1:  mov    0xd0(%rsp),%r12
+    0.00 :   26be9:  mov    %rbx,0xb8(%rsp)
+    0.00 :   26bf1:  cmp    0xc0(%rsp),%r12
+    0.00 :   26bf9:  jne    26c08 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x518>
+    0.00 :   26bfb:  lea    0xc0(%rsp),%rdi
+    0.00 :   26c03:  call   38770 <alloc::raw_vec::RawVec<T,A>::grow_one>
+    0.00 :   26c08:  vmovsd 0x18(%rsp),%xmm0
+    0.00 :   26c0e:  vmovsd 0x8(%rsp),%xmm1
+    0.00 :   26c14:  mov    0xc8(%rsp),%rax
+    0.00 :   26c1c:  mov    %rax,%r14
+    0.06 :   26c1f:  vmulsd %xmm0,%xmm0,%xmm0
+    0.00 :   26c23:  vmulsd %xmm1,%xmm1,%xmm1
+    0.00 :   26c27:  vaddsd %xmm0,%xmm1,%xmm0
+    0.00 :   26c2b:  vmovsd 0x60(%rsp),%xmm1
+    0.00 :   26c31:  vmovsd %xmm0,(%rax,%r12,8)
+    0.00 :   26c37:  inc    %r12
+    0.06 :   26c3a:  mov    %r12,0xd0(%rsp)
+         : 323   // kernel makes it emit a zero distance slab for this
+         : 324   // symbol (contract defined in `gf2_kernels_simd::modem`);
+         : 325   // the subsequent subset-reduction then produces zero LLRs
+         : 326   // without touching NaN. Matches the reference demapper's
+         : 327   // behaviour at h = 0 on these presets.
+         : 328   let n0_eq = n0 * g;
+    0.00 :   26c42:  vmulsd %xmm1,%xmm0,%xmm0
+         : 330   let inv = if n0_eq <= f64::EPSILON * n0 {
+    0.06 :   26c46:  vmulsd -0x2245e(%rip),%xmm1,%xmm1        # 47f0 <__abi_tag+0x44f4>
+    0.00 :   26c4e:  vucomisd %xmm0,%xmm1
+    0.00 :   26c52:  vxorpd %xmm1,%xmm1,%xmm1
+    0.00 :   26c56:  vmovsd %xmm1,0x8(%rsp)
+    0.00 :   26c5c:  jae    26c70 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x580>
+    0.00 :   26c5e:  vmovsd -0x22466(%rip),%xmm1        # 4800 <__abi_tag+0x4504>
+    0.00 :   26c66:  vdivsd %xmm0,%xmm1,%xmm0
+    0.18 :   26c6a:  vmovsd %xmm0,0x8(%rsp)
+    0.00 :   26c70:  mov    0xe8(%rsp),%rbp
+    0.00 :   26c78:  cmp    0xd8(%rsp),%rbp
+    0.00 :   26c80:  jne    269e0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x2f0>
+    0.00 :   26c86:  lea    0xd8(%rsp),%rdi
+    0.00 :   26c8e:  call   38770 <alloc::raw_vec::RawVec<T,A>::grow_one>
+    0.00 :   26c93:  jmp    269e0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x2f0>
+    0.00 :   26c98:  movzbl 0x17(%rsp),%r15d
+    0.00 :   26c9e:  mov    $0x1,%eax
+    0.00 :   26ca3:  mov    0x78(%rsp),%rcx
+         :
+         : 349   // Pass 2: distance-kernel dispatch. I axis always, Q axis only
+         : 350   // for QAM. Levels are the same on both axes (enforced in
+         : 351   // `FastGrayQamDemapper::new`), so we reuse the single level
+         : 352   // table for both kernel calls.
+         : 353   let mut d_i: Vec<f64> = vec![0.0; num_symbols * axis_len];
+    0.00 :   26ca8:  test   %r15b,%r15b
+    0.00 :   26cab:  cmove  0x128(%rsp),%eax
+    0.00 :   26cb3:  shlx   %rax,%rcx,%r13
+    0.00 :   26cb8:  movabs $0x1fffffffffffffff,%rax
+    0.00 :   26cc2:  movabs $0x7ffffffffffffff8,%rcx
+    0.00 :   26ccc:  lea    0x0(,%r13,8),%rsi
+    0.00 :   26cd4:  cmp    %rax,%r13
+    0.00 :   26cd7:  seta   %al
+    0.00 :   26cda:  cmp    %rcx,%rsi
+    0.00 :   26cdd:  seta   %cl
+    0.00 :   26ce0:  or     %al,%cl
+    0.00 :   26ce2:  je     26cf0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x600>
+    0.00 :   26ce4:  xor    %edi,%edi
+    0.00 :   26ce6:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   26ceb:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   26cf0:  mov    %r13,0x50(%rsp)
+    0.00 :   26cf5:  test   %rsi,%rsi
+    0.00 :   26cf8:  je     26d47 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x657>
+    0.00 :   26cfa:  lock incq 0x50886(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   26d02:  lock add %rsi,0x50886(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   26d0a:  mov    $0x1,%edi
+    0.00 :   26d0f:  mov    %rsi,0x8(%rsp)
+    0.00 :   26d14:  call   *0x4ecc6(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   26d1a:  mov    %rax,0x48(%rsp)
+    0.00 :   26d1f:  test   %rax,%rax
+    0.00 :   26d22:  je     277f4 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1104>
+         : 380   let mut d_q: Vec<f64> = if self.is_bpsk {
+    0.00 :   26d28:  test   %r15b,%r15b
+    0.00 :   26d2b:  je     26d70 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x680>
+    0.00 :   26d2d:  mov    $0x8,%eax
+    0.00 :   26d32:  mov    $0x1,%dl
+    0.00 :   26d34:  movq   $0x0,0x68(%rsp)
+    0.00 :   26d3d:  mov    %r13,%rcx
+    0.00 :   26d40:  mov    %rax,0x40(%rsp)
+    0.00 :   26d45:  jmp    26db2 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x6c2>
+    0.00 :   26d47:  mov    $0x0,%esi
+    0.00 :   26d4c:  mov    $0x8,%eax
+    0.00 :   26d51:  mov    $0x1,%dl
+    0.00 :   26d53:  xor    %ecx,%ecx
+    0.00 :   26d55:  mov    %rsi,0x68(%rsp)
+    0.00 :   26d5a:  mov    $0x8,%esi
+    0.00 :   26d5f:  mov    %rax,0x48(%rsp)
+    0.00 :   26d64:  mov    %rsi,0x40(%rsp)
+    0.00 :   26d69:  test   %r15b,%r15b
+    0.00 :   26d6c:  je     26da2 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x6b2>
+    0.00 :   26d6e:  jmp    26db2 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x6c2>
+    0.00 :   26d70:  lea    0x0(,%r13,8),%r15
+    0.00 :   26d78:  lock incq 0x50808(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   26d80:  lock add %r15,0x50808(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   26d88:  mov    $0x1,%edi
+    0.00 :   26d8d:  mov    %r15,%rsi
+    0.00 :   26d90:  call   *0x4ec4a(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   26d96:  test   %rax,%rax
+    0.00 :   26d99:  je     27803 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1113>
+    0.00 :   26d9f:  mov    %r13,%rcx
+    0.00 :   26da2:  test   %rcx,%rcx
+    0.00 :   26da5:  mov    %r13,0x68(%rsp)
+    0.00 :   26daa:  mov    %rax,0x40(%rsp)
+    0.00 :   26daf:  sete   %dl
+    0.00 :   26db2:  mov    0x130(%rsp),%rax
+    0.00 :   26dba:  mov    %rcx,0x70(%rsp)
+    0.00 :   26dbf:  mov    0x110(%rsp),%rdi
+    0.00 :   26dc7:  mov    %dl,0x90(%rsp)
+         : 417   } else {
+         : 418   vec![0.0; num_symbols * axis_len]
+         : 419   };
+         :
+         : 421   run_pam_distance_kernel(
+         : 422   self.kernel_fns,
+    0.00 :   26dce:  mov    0x88(%rax),%r15
+    0.00 :   26dd5:  mov    0x78(%rax),%r9
+    0.00 :   26dd9:  mov    0x80(%rax),%rcx
+         : 426   g: &[f64],
+         : 427   inv_n0_eq: &[f64],
+         : 428   pam_levels: &[f64],
+         : 429   out: &mut [f64],
+         : 430   ) {
+         : 431   (fns.pam_sq_distances_fn)(z, g, inv_n0_eq, pam_levels, out);
+    0.00 :   26de0:  mov    (%r15),%rax
+    0.00 :   26de3:  mov    0x78(%rsp),%rsi
+    0.00 :   26de8:  mov    %r14,%rdx
+    0.00 :   26deb:  mov    %rcx,%r14
+    0.00 :   26dee:  mov    %rbx,%r8
+    0.00 :   26df1:  mov    %r9,%rbx
+    0.00 :   26df4:  mov    %r12,%rcx
+    0.00 :   26df7:  mov    %rbp,%r9
+    0.00 :   26dfa:  push   %r13
+    0.00 :   26dfc:  push   0x50(%rsp)
+    0.00 :   26e00:  push   %r14
+    0.00 :   26e02:  push   %rbx
+    0.00 :   26e03:  call   *%rax
+    0.00 :   26e05:  add    $0x20,%rsp
+    0.00 :   26e09:  mov    0x100(%rsp),%r13
+         : 447   if !self.is_bpsk {
+    0.00 :   26e11:  cmpb   $0x0,0x17(%rsp)
+    0.00 :   26e16:  je     26f11 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x821>
+    0.00 :   26e1c:  mov    0x120(%rsp),%rax
+    0.00 :   26e24:  mov    0x30(%rsp),%r9
+    0.00 :   26e29:  testb  $0x1,0x50(%rax)
+    0.00 :   26e2d:  je     273ed <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xcfd>
+    0.00 :   26e33:  vmovsd -0x22673(%rip),%xmm0        # 47c8 <__abi_tag+0x44cc>
+    0.00 :   26e3b:  mov    0x48(%rsp),%rcx
+    0.00 :   26e40:  mov    0x78(%rsp),%r8
+    0.00 :   26e45:  mov    0x50(%rsp),%rdx
+    0.00 :   26e4a:  lea    0x0(,%r9,8),%rax
+    0.00 :   26e52:  lea    0x4c38f(%rip),%r11        # 731e8 <__frame_dummy_init_array_entry+0x6c8>
+    0.00 :   26e59:  xor    %ebp,%ebp
+    0.00 :   26e5b:  nopl   0x0(%rax,%rax,1)
+         : 462   let slab = &d_i[k * axis_len..(k + 1) * axis_len];
+    0.00 :   26e60:  lea    0x2(%rbp,%rbp,1),%rsi
+    0.00 :   26e65:  lea    0x0(%rbp,%rbp,1),%rdi
+    0.00 :   26e6a:  cmp    %rdi,%rsi
+    0.00 :   26e6d:  jb     276d7 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xfe7>
+    0.00 :   26e73:  cmp    %rdx,%rsi
+    0.00 :   26e76:  ja     276d7 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xfe7>
+    0.00 :   26e7c:  lea    0x1(%rbp),%r10
+    0.00 :   26e80:  mov    %rax,%rsi
+    0.00 :   26e83:  xor    %edi,%edi
+    0.00 :   26e85:  vmovapd %xmm0,%xmm1
+    0.00 :   26e89:  vmovapd %xmm0,%xmm2
+    0.00 :   26e8d:  jmp    26e9c <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7ac>
+    0.00 :   26e8f:  nop
+    0.00 :   26e90:  inc    %rdi
+    0.00 :   26e93:  add    $0xfffffffffffffff8,%rsi
+    0.00 :   26e97:  cmp    %rdi,%r9
+    0.00 :   26e9a:  je     26ed0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7e0>
+    0.00 :   26e9c:  test   %rsi,%rsi
+    0.00 :   26e9f:  je     26ed0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7e0>
+         : 482   method: DemapMethod,
+         : 483   ) -> f64 {
+         : 484   use super::bit_pack::bit_at_msb_first;
+         : 485   let mut d_min0 = f64::INFINITY;
+         : 486   let mut d_min1 = f64::INFINITY;
+         : 487   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   26ea1:  vmovsd (%rcx,%rdi,8),%xmm3
+         : 489   let bit = bit_at_msb_first(label_bits(j), bit_idx, bits_per_symbol);
+         : 490   if bit == 0 {
+    0.00 :   26ea6:  test   $0x1,%dil
+    0.00 :   26eaa:  jne    26ec0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7d0>
+         : 493   if dj < d_min0 {
+    0.00 :   26eac:  vucomisd %xmm3,%xmm1
+    0.00 :   26eb0:  jbe    26e90 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7a0>
+    0.00 :   26eb2:  vmovapd %xmm3,%xmm1
+    0.00 :   26eb6:  jmp    26e90 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7a0>
+    0.00 :   26eb8:  nopl   0x0(%rax,%rax,1)
+         : 499   d_min0 = dj;
+         : 500   }
+         : 501   } else if dj < d_min1 {
+    0.00 :   26ec0:  vucomisd %xmm3,%xmm2
+    0.00 :   26ec4:  jbe    26e90 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7a0>
+    0.00 :   26ec6:  vmovapd %xmm3,%xmm2
+    0.00 :   26eca:  jmp    26e90 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x7a0>
+    0.00 :   26ecc:  nopl   0x0(%rax)
+         : 507   out_llrs[k * m] = Llr::new(llr as f32);
+    0.00 :   26ed0:  imul   0xf0(%rsp),%rbp
+    0.00 :   26ed9:  cmp    0x88(%rsp),%rbp
+    0.00 :   26ee1:  jae    277a6 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x10b6>
+         : 511   d_min1 = dj;
+         : 512   }
+         : 513   }
+         : 514   match method {
+         : 515   DemapMethod::MaxLog => -d_min0 + d_min1,
+    0.00 :   26ee7:  vsubsd %xmm1,%xmm2,%xmm1
+    0.00 :   26eeb:  mov    0xa0(%rsp),%rsi
+    0.00 :   26ef3:  add    $0x10,%rcx
+    0.00 :   26ef7:  vcvtsd2ss %xmm1,%xmm1,%xmm1
+    0.00 :   26efb:  vmovss %xmm1,(%rsi,%rbp,4)
+    0.00 :   26f00:  mov    %r10,%rbp
+    0.00 :   26f03:  cmp    %r8,%r10
+    0.00 :   26f06:  jne    26e60 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x770>
+    0.00 :   26f0c:  jmp    275db <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xeeb>
+    0.00 :   26f11:  mov    0xc8(%rsp),%rdx
+         : 526   (fns.pam_sq_distances_fn)(z, g, inv_n0_eq, pam_levels, out);
+    0.00 :   26f19:  mov    (%r15),%rax
+    0.00 :   26f1c:  mov    0xb0(%rsp),%rdi
+    0.00 :   26f24:  mov    0xb8(%rsp),%rsi
+    0.00 :   26f2c:  mov    0xd0(%rsp),%rcx
+    0.00 :   26f34:  mov    0xe0(%rsp),%r8
+    0.00 :   26f3c:  mov    0xe8(%rsp),%r9
+    0.00 :   26f44:  push   0x68(%rsp)
+    0.00 :   26f48:  push   0x48(%rsp)
+    0.00 :   26f4c:  push   %r14
+    0.00 :   26f4e:  push   %rbx
+    0.00 :   26f4f:  call   *%rax
+    0.00 :   26f51:  add    $0x20,%rsp
+    0.00 :   26f55:  mov    0x120(%rsp),%rax
+    0.00 :   26f5d:  mov    0x30(%rsp),%r8
+    0.00 :   26f62:  mov    0x50(%rsp),%rdx
+    0.00 :   26f67:  movzbl 0x50(%rax),%eax
+    0.00 :   26f6b:  lea    0x0(,%r8,8),%rbx
+    0.00 :   26f73:  mov    %rbx,0x98(%rsp)
+    0.00 :   26f7b:  mov    %al,0x38(%rsp)
+    0.00 :   26f7f:  xor    %eax,%eax
+    0.00 :   26f81:  jmp    26fa8 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x8b8>
+    0.00 :   26f83:  data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   26f90:  mov    0xf8(%rsp),%rax
+    0.17 :   26f98:  mov    0x50(%rsp),%rdx
+    0.00 :   26f9d:  cmp    0x78(%rsp),%rax
+    0.12 :   26fa2:  je     275db <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xeeb>
+    0.00 :   26fa8:  mov    0x128(%rsp),%r9
+    0.58 :   26fb0:  lea    0x1(%rax),%rcx
+    0.00 :   26fb4:  mov    %rax,%rsi
+    0.71 :   26fb7:  mov    %rsi,0x60(%rsp)
+         : 557   let i_slab = &d_i[k * axis_len..(k + 1) * axis_len];
+    0.00 :   26fbc:  shlx   %r9,%rsi,%rdi
+    0.00 :   26fc1:  shlx   %r9,%rcx,%rsi
+    0.00 :   26fc6:  cmp    %rdi,%rsi
+    0.00 :   26fc9:  jb     276e0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xff0>
+    0.00 :   26fcf:  cmp    %rdx,%rsi
+    0.06 :   26fd2:  ja     276e0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xff0>
+    0.00 :   26fd8:  cmp    0x68(%rsp),%rsi
+    0.41 :   26fdd:  ja     276e9 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xff9>
+    0.00 :   26fe3:  mov    %rcx,0xf8(%rsp)
+    0.00 :   26feb:  test   %r13,%r13
+    0.52 :   26fee:  je     26f90 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x8a0>
+    0.00 :   26ff0:  mov    0x60(%rsp),%rcx
+    0.96 :   26ff5:  mov    0x48(%rsp),%rax
+    0.00 :   26ffa:  mov    0x40(%rsp),%rdx
+    0.00 :   26fff:  xor    %ebp,%ebp
+    0.00 :   27001:  imul   0xf0(%rsp),%rcx
+    0.00 :   2700a:  lea    (%rax,%rdi,8),%r15
+    0.06 :   2700e:  lea    (%rdx,%rdi,8),%r12
+    0.00 :   27012:  mov    %rcx,0x60(%rsp)
+    0.00 :   27017:  nopw   0x0(%rax,%rax,1)
+    0.64 :   27020:  vmovsd -0x22860(%rip),%xmm1        # 47c8 <__abi_tag+0x44cc>
+    0.00 :   27028:  lea    0x1(%rbp),%rax
+    0.12 :   2702c:  mov    $0x1,%ecx
+    0.00 :   27031:  mov    %rax,0x58(%rsp)
+    0.00 :   27036:  mov    %ebp,%eax
+    0.18 :   27038:  not    %al
+    0.54 :   2703a:  add    %r13b,%al
+    0.06 :   2703d:  and    $0xf,%al
+    0.95 :   2703f:  shlx   %eax,%ecx,%r14d
+    0.06 :   27044:  mov    %rbx,%rax
+    0.00 :   27047:  xor    %ecx,%ecx
+    0.00 :   27049:  vmovapd %xmm1,%xmm0
+    0.00 :   2704d:  jmp    27064 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x974>
+    0.00 :   2704f:  nop
+    5.06 :   27050:  vmovapd %xmm0,%xmm2
+   11.98 :   27054:  inc    %rcx
+    4.29 :   27057:  add    $0xfffffffffffffff8,%rax
+    0.00 :   2705b:  vmovapd %xmm2,%xmm0
+    0.52 :   2705f:  cmp    %rcx,%r8
+    0.63 :   27062:  je     270a4 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x9b4>
+    0.12 :   27064:  test   %rax,%rax
+    2.05 :   27067:  je     270a0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x9b0>
+         : 600   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   27069:  vmovsd (%r15,%rcx,8),%xmm2
+         : 602   if bit == 0 {
+    1.95 :   2706f:  test   %r14w,%cx
+    0.99 :   27073:  je     27090 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x9a0>
+         : 605   } else if dj < d_min1 {
+    0.00 :   27075:  vucomisd %xmm2,%xmm1
+    2.86 :   27079:  jbe    27050 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x960>
+    5.18 :   2707b:  vmovapd %xmm2,%xmm1
+    1.21 :   2707f:  jmp    27050 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x960>
+    0.00 :   27081:  data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 611   if dj < d_min0 {
+    0.00 :   27090:  vucomisd %xmm2,%xmm0
+    2.35 :   27094:  ja     27054 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x964>
+    0.81 :   27096:  jmp    27050 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x960>
+    0.00 :   27098:  nopl   0x0(%rax,%rax,1)
+    0.00 :   270a0:  vmovapd %xmm0,%xmm2
+         : 617   match method {
+    0.00 :   270a4:  cmpb   $0x0,0x38(%rsp)
+    1.79 :   270a9:  je     270c0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x9d0>
+         : 620   DemapMethod::MaxLog => -d_min0 + d_min1,
+    0.65 :   270ab:  vsubsd %xmm2,%xmm1,%xmm0
+    0.46 :   270af:  jmp    271d4 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xae4>
+    0.00 :   270b4:  data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   270c0:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   270c4:  mov    %rbx,%r13
+    0.00 :   270c7:  vmovsd %xmm0,0x18(%rsp)
+    0.00 :   270cd:  xor    %ebx,%ebx
+    0.00 :   270cf:  vxorpd %xmm3,%xmm3,%xmm3
+    0.00 :   270d3:  vmovsd %xmm1,0x20(%rsp)
+    0.00 :   270d9:  vmovsd %xmm2,0x28(%rsp)
+    0.00 :   270df:  jmp    2712d <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xa3d>
+    0.00 :   270e1:  data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 633   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+         : 634   let bit = bit_at_msb_first(label_bits(j), bit_idx, bits_per_symbol);
+         : 635   if bit == 0 {
+         : 636   sum0 += (d_min0 - dj).exp();
+         : 637   } else {
+         : 638   sum1 += (d_min1 - dj).exp();
+    0.00 :   270f0:  vsubsd %xmm0,%xmm1,%xmm0
+    0.00 :   270f4:  call   *0x4e916(%rip)        # 75a10 <exp@GLIBC_2.29>
+    0.00 :   270fa:  vmovsd 0x18(%rsp),%xmm1
+    0.00 :   27100:  vmovsd 0x8(%rsp),%xmm3
+    0.00 :   27106:  vaddsd %xmm0,%xmm1,%xmm1
+    0.00 :   2710a:  vmovsd %xmm1,0x18(%rsp)
+    0.00 :   27110:  vmovsd 0x20(%rsp),%xmm1
+    0.00 :   27116:  vmovsd 0x28(%rsp),%xmm2
+    0.00 :   2711c:  mov    0x30(%rsp),%r8
+    0.00 :   27121:  inc    %rbx
+    0.00 :   27124:  add    $0xfffffffffffffff8,%r13
+    0.00 :   27128:  cmp    %rbx,%r8
+    0.00 :   2712b:  je     27160 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xa70>
+    0.00 :   2712d:  test   %r13,%r13
+    0.00 :   27130:  je     27160 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xa70>
+         : 654   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   27132:  vmovsd (%r15,%rbx,8),%xmm0
+    0.00 :   27138:  vmovsd %xmm3,0x8(%rsp)
+         : 657   if bit == 0 {
+    0.00 :   2713e:  test   %r14w,%bx
+    0.00 :   27142:  jne    270f0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xa00>
+         : 660   sum0 += (d_min0 - dj).exp();
+    0.00 :   27144:  vsubsd %xmm0,%xmm2,%xmm0
+    0.00 :   27148:  call   *0x4e8c2(%rip)        # 75a10 <exp@GLIBC_2.29>
+    0.00 :   2714e:  vmovsd 0x8(%rsp),%xmm3
+    0.00 :   27154:  vaddsd %xmm0,%xmm3,%xmm3
+         : 665   if bit == 0 {
+    0.00 :   27158:  jmp    27110 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xa20>
+    0.00 :   2715a:  nopw   0x0(%rax,%rax,1)
+    0.00 :   27160:  vmovsd -0x22950(%rip),%xmm4        # 4818 <__abi_tag+0x451c>
+         : 669   }
+         : 670   }
+         : 671   let log0 = if sum0 > 0.0 {
+    0.00 :   27168:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   2716c:  vucomisd %xmm0,%xmm3
+    0.00 :   27170:  jbe    27187 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xa97>
+    0.00 :   27172:  vmovapd %xmm3,%xmm0
+    0.00 :   27176:  call   *0x4e89c(%rip)        # 75a18 <log@GLIBC_2.29>
+         : 677   -d_min0 + sum0.ln()
+    0.00 :   2717c:  vsubsd 0x28(%rsp),%xmm0,%xmm4
+    0.00 :   27182:  mov    0x30(%rsp),%r8
+    0.00 :   27187:  vmovsd 0x18(%rsp),%xmm2
+         : 681   } else {
+         : 682   f64::NEG_INFINITY
+         : 683   };
+         : 684   let log1 = if sum1 > 0.0 {
+    0.00 :   2718d:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   27191:  mov    0x100(%rsp),%r13
+    0.00 :   27199:  mov    0x98(%rsp),%rbx
+    0.00 :   271a1:  vucomisd %xmm0,%xmm2
+    0.00 :   271a5:  vmovsd -0x22995(%rip),%xmm0        # 4818 <__abi_tag+0x451c>
+    0.00 :   271ad:  jbe    271d0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xae0>
+    0.00 :   271af:  vmovapd %xmm2,%xmm0
+    0.00 :   271b3:  vmovsd %xmm4,0x8(%rsp)
+    0.00 :   271b9:  call   *0x4e859(%rip)        # 75a18 <log@GLIBC_2.29>
+         : 694   -d_min1 + sum1.ln()
+    0.00 :   271bf:  vsubsd 0x20(%rsp),%xmm0,%xmm0
+    0.00 :   271c5:  vmovsd 0x8(%rsp),%xmm4
+    0.00 :   271cb:  mov    0x30(%rsp),%r8
+         : 698   } else {
+         : 699   f64::NEG_INFINITY
+         : 700   };
+         : 701   log0 - log1
+    0.00 :   271d0:  vsubsd %xmm0,%xmm4,%xmm0
+         : 703   out_llrs[k * m + b as usize] = Llr::new(llr as f32);
+    0.06 :   271d4:  add    0x60(%rsp),%rbp
+    0.29 :   271d9:  cmp    0x88(%rsp),%rbp
+    0.34 :   271e1:  jae    276ff <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x100f>
+    0.00 :   271e7:  mov    0xa0(%rsp),%rax
+    0.06 :   271ef:  mov    0x58(%rsp),%rcx
+    0.48 :   271f4:  vcvtsd2ss %xmm0,%xmm0,%xmm0
+    0.64 :   271f8:  vmovss %xmm0,(%rax,%rbp,4)
+    1.35 :   271fd:  mov    %rcx,%rbp
+    0.00 :   27200:  cmp    %r13,%rcx
+    0.00 :   27203:  jne    27020 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x930>
+    0.00 :   27209:  xor    %r15d,%r15d
+    0.00 :   2720c:  nopl   0x0(%rax)
+    0.00 :   27210:  vmovsd -0x22a50(%rip),%xmm1        # 47c8 <__abi_tag+0x44cc>
+    0.00 :   27218:  mov    %r15,%r14
+    0.42 :   2721b:  mov    %r14d,%eax
+    0.46 :   2721e:  mov    $0x1,%ecx
+    0.17 :   27223:  inc    %r15
+    0.77 :   27226:  not    %al
+    0.00 :   27228:  add    %r13b,%al
+    0.30 :   2722b:  and    $0xf,%al
+    0.00 :   2722d:  shlx   %eax,%ecx,%ebp
+    0.00 :   27232:  mov    %rbx,%rax
+    0.27 :   27235:  xor    %ecx,%ecx
+    0.28 :   27237:  vmovapd %xmm1,%xmm0
+    0.23 :   2723b:  jmp    27254 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb64>
+    0.00 :   2723d:  nopl   (%rax)
+    5.48 :   27240:  vmovapd %xmm0,%xmm2
+   11.94 :   27244:  inc    %rcx
+    3.25 :   27247:  add    $0xfffffffffffffff8,%rax
+    0.00 :   2724b:  vmovapd %xmm2,%xmm0
+    0.36 :   2724f:  cmp    %rcx,%r8
+    1.12 :   27252:  je     27284 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb94>
+    0.46 :   27254:  test   %rax,%rax
+    1.92 :   27257:  je     27280 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb90>
+         : 738   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   27259:  vmovsd (%r12,%rcx,8),%xmm2
+         : 740   if bit == 0 {
+    2.12 :   2725f:  test   %bp,%cx
+    0.06 :   27262:  je     27270 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb80>
+         : 743   } else if dj < d_min1 {
+    0.00 :   27264:  vucomisd %xmm2,%xmm1
+    2.77 :   27268:  jbe    27240 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb50>
+    4.87 :   2726a:  vmovapd %xmm2,%xmm1
+    1.16 :   2726e:  jmp    27240 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb50>
+         : 748   if dj < d_min0 {
+    0.00 :   27270:  vucomisd %xmm2,%xmm0
+    1.56 :   27274:  ja     27244 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb54>
+    0.71 :   27276:  jmp    27240 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb50>
+    0.00 :   27278:  nopl   0x0(%rax,%rax,1)
+    0.00 :   27280:  vmovapd %xmm0,%xmm2
+         : 754   match method {
+    0.00 :   27284:  cmpb   $0x0,0x38(%rsp)
+    1.88 :   27289:  je     272a0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xbb0>
+         : 757   DemapMethod::MaxLog => -d_min0 + d_min1,
+    0.24 :   2728b:  vsubsd %xmm2,%xmm1,%xmm0
+    0.24 :   2728f:  jmp    273b4 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xcc4>
+    0.00 :   27294:  data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   272a0:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   272a4:  mov    %rbx,%r13
+    0.00 :   272a7:  vmovsd %xmm0,0x18(%rsp)
+    0.00 :   272ad:  xor    %ebx,%ebx
+    0.00 :   272af:  vxorpd %xmm3,%xmm3,%xmm3
+    0.00 :   272b3:  vmovsd %xmm1,0x20(%rsp)
+    0.00 :   272b9:  vmovsd %xmm2,0x28(%rsp)
+    0.00 :   272bf:  jmp    2730d <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xc1d>
+    0.00 :   272c1:  data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 770   sum1 += (d_min1 - dj).exp();
+    0.00 :   272d0:  vsubsd %xmm0,%xmm1,%xmm0
+    0.00 :   272d4:  call   *0x4e736(%rip)        # 75a10 <exp@GLIBC_2.29>
+    0.00 :   272da:  vmovsd 0x18(%rsp),%xmm1
+    0.00 :   272e0:  vmovsd 0x8(%rsp),%xmm3
+    0.00 :   272e6:  vaddsd %xmm0,%xmm1,%xmm1
+    0.00 :   272ea:  vmovsd %xmm1,0x18(%rsp)
+    0.00 :   272f0:  vmovsd 0x20(%rsp),%xmm1
+    0.00 :   272f6:  vmovsd 0x28(%rsp),%xmm2
+    0.00 :   272fc:  mov    0x30(%rsp),%r8
+    0.00 :   27301:  inc    %rbx
+    0.00 :   27304:  add    $0xfffffffffffffff8,%r13
+    0.00 :   27308:  cmp    %rbx,%r8
+    0.00 :   2730b:  je     27340 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xc50>
+    0.00 :   2730d:  test   %r13,%r13
+    0.00 :   27310:  je     27340 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xc50>
+         : 786   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   27312:  vmovsd (%r12,%rbx,8),%xmm0
+    0.00 :   27318:  vmovsd %xmm3,0x8(%rsp)
+         : 789   if bit == 0 {
+    0.00 :   2731e:  test   %bp,%bx
+    0.00 :   27321:  jne    272d0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xbe0>
+         : 792   sum0 += (d_min0 - dj).exp();
+    0.00 :   27323:  vsubsd %xmm0,%xmm2,%xmm0
+    0.00 :   27327:  call   *0x4e6e3(%rip)        # 75a10 <exp@GLIBC_2.29>
+    0.00 :   2732d:  vmovsd 0x8(%rsp),%xmm3
+    0.00 :   27333:  vaddsd %xmm0,%xmm3,%xmm3
+         : 797   if bit == 0 {
+    0.00 :   27337:  jmp    272f0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xc00>
+    0.00 :   27339:  nopl   0x0(%rax)
+    0.00 :   27340:  vmovsd -0x22b30(%rip),%xmm4        # 4818 <__abi_tag+0x451c>
+         : 801   let log0 = if sum0 > 0.0 {
+    0.00 :   27348:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   2734c:  vucomisd %xmm0,%xmm3
+    0.00 :   27350:  jbe    27367 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xc77>
+    0.00 :   27352:  vmovapd %xmm3,%xmm0
+    0.00 :   27356:  call   *0x4e6bc(%rip)        # 75a18 <log@GLIBC_2.29>
+         : 807   -d_min0 + sum0.ln()
+    0.00 :   2735c:  vsubsd 0x28(%rsp),%xmm0,%xmm4
+    0.00 :   27362:  mov    0x30(%rsp),%r8
+    0.00 :   27367:  vmovsd 0x18(%rsp),%xmm2
+         : 811   let log1 = if sum1 > 0.0 {
+    0.00 :   2736d:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   27371:  mov    0x100(%rsp),%r13
+    0.00 :   27379:  mov    0x98(%rsp),%rbx
+    0.00 :   27381:  vucomisd %xmm0,%xmm2
+    0.00 :   27385:  vmovsd -0x22b75(%rip),%xmm0        # 4818 <__abi_tag+0x451c>
+    0.00 :   2738d:  jbe    273b0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xcc0>
+    0.00 :   2738f:  vmovapd %xmm2,%xmm0
+    0.00 :   27393:  vmovsd %xmm4,0x8(%rsp)
+    0.00 :   27399:  call   *0x4e679(%rip)        # 75a18 <log@GLIBC_2.29>
+         : 821   -d_min1 + sum1.ln()
+    0.00 :   2739f:  vsubsd 0x20(%rsp),%xmm0,%xmm0
+    0.00 :   273a5:  vmovsd 0x8(%rsp),%xmm4
+    0.00 :   273ab:  mov    0x30(%rsp),%r8
+         : 825   log0 - log1
+    0.00 :   273b0:  vsubsd %xmm0,%xmm4,%xmm0
+         : 827   out_llrs[k * m + (m_half + b) as usize] = Llr::new(llr as f32);
+    0.06 :   273b4:  add    %r13b,%r14b
+    0.00 :   273b7:  movzbl %r14b,%ebp
+    0.00 :   273bb:  add    0x60(%rsp),%rbp
+    0.00 :   273c0:  cmp    0x88(%rsp),%rbp
+    0.47 :   273c8:  jae    27708 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1018>
+    0.00 :   273ce:  mov    0xa0(%rsp),%rax
+    0.70 :   273d6:  vcvtsd2ss %xmm0,%xmm0,%xmm0
+    0.05 :   273da:  vmovss %xmm0,(%rax,%rbp,4)
+    1.52 :   273df:  cmp    %r13,%r15
+    0.00 :   273e2:  jne    27210 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xb20>
+    0.00 :   273e8:  jmp    26f90 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x8a0>
+    0.00 :   273ed:  mov    0x4e61c(%rip),%r12        # 75a10 <exp@GLIBC_2.29>
+    0.00 :   273f4:  mov    0x48(%rsp),%r13
+    0.00 :   273f9:  mov    0x50(%rsp),%rdx
+    0.00 :   273fe:  lea    0x0(,%r9,8),%r14
+    0.00 :   27406:  xor    %ebp,%ebp
+    0.00 :   27408:  mov    %r14,0x60(%rsp)
+    0.00 :   2740d:  nopl   (%rax)
+         : 846   let slab = &d_i[k * axis_len..(k + 1) * axis_len];
+    0.00 :   27410:  lea    0x2(%rbp,%rbp,1),%rsi
+    0.00 :   27415:  lea    0x0(%rbp,%rbp,1),%rdi
+    0.00 :   2741a:  cmp    %rdi,%rsi
+    0.00 :   2741d:  jb     276d7 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xfe7>
+    0.00 :   27423:  cmp    %rdx,%rsi
+    0.00 :   27426:  ja     276d7 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xfe7>
+    0.00 :   2742c:  vmovsd -0x22c6c(%rip),%xmm1        # 47c8 <__abi_tag+0x44cc>
+    0.00 :   27434:  lea    0x1(%rbp),%r15
+    0.00 :   27438:  mov    %r14,%rax
+    0.00 :   2743b:  xor    %ecx,%ecx
+    0.00 :   2743d:  vmovapd %xmm1,%xmm0
+    0.00 :   27441:  vmovsd %xmm1,0x18(%rsp)
+    0.00 :   27447:  jmp    27464 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd74>
+    0.00 :   27449:  nopl   0x0(%rax)
+    0.00 :   27450:  vmovapd %xmm0,%xmm2
+    0.00 :   27454:  inc    %rcx
+    0.00 :   27457:  add    $0xfffffffffffffff8,%rax
+    0.00 :   2745b:  vmovapd %xmm2,%xmm0
+    0.00 :   2745f:  cmp    %rcx,%r9
+    0.00 :   27462:  je     274a4 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xdb4>
+    0.00 :   27464:  test   %rax,%rax
+    0.00 :   27467:  je     274a0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xdb0>
+         : 869   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   27469:  vmovsd 0x0(%r13,%rcx,8),%xmm2
+         : 871   if bit == 0 {
+    0.00 :   27470:  test   $0x1,%cl
+    0.00 :   27473:  jne    27480 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd90>
+         : 874   if dj < d_min0 {
+    0.00 :   27475:  vucomisd %xmm2,%xmm0
+    0.00 :   27479:  jbe    27450 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd60>
+    0.00 :   2747b:  jmp    27454 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd64>
+    0.00 :   2747d:  nopl   (%rax)
+    0.00 :   27480:  vmovsd 0x18(%rsp),%xmm1
+         : 880   } else if dj < d_min1 {
+    0.00 :   27486:  vucomisd %xmm2,%xmm1
+    0.00 :   2748a:  jbe    27450 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd60>
+    0.00 :   2748c:  vmovsd %xmm2,0x18(%rsp)
+    0.00 :   27492:  jmp    27450 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd60>
+    0.00 :   27494:  data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   274a0:  vmovapd %xmm0,%xmm2
+    0.00 :   274a4:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   274a8:  vmovsd %xmm0,0x20(%rsp)
+    0.00 :   274ae:  xor    %ebx,%ebx
+    0.00 :   274b0:  vxorpd %xmm1,%xmm1,%xmm1
+    0.00 :   274b4:  vmovsd %xmm2,0x28(%rsp)
+    0.00 :   274ba:  jmp    274fa <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xe0a>
+    0.00 :   274bc:  nopl   0x0(%rax)
+    0.00 :   274c0:  vmovsd 0x18(%rsp),%xmm1
+         : 895   sum1 += (d_min1 - dj).exp();
+    0.00 :   274c6:  vsubsd %xmm0,%xmm1,%xmm0
+    0.00 :   274ca:  call   *%r12
+    0.00 :   274cd:  vmovsd 0x20(%rsp),%xmm1
+    0.00 :   274d3:  vaddsd %xmm0,%xmm1,%xmm1
+    0.00 :   274d7:  vmovsd %xmm1,0x20(%rsp)
+    0.00 :   274dd:  vmovsd 0x8(%rsp),%xmm1
+    0.00 :   274e3:  vmovsd 0x28(%rsp),%xmm2
+    0.00 :   274e9:  mov    0x30(%rsp),%r9
+    0.00 :   274ee:  inc    %rbx
+    0.00 :   274f1:  add    $0xfffffffffffffff8,%r14
+    0.00 :   274f5:  cmp    %rbx,%r9
+    0.00 :   274f8:  je     27530 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xe40>
+    0.00 :   274fa:  test   %r14,%r14
+    0.00 :   274fd:  je     27530 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xe40>
+         : 910   for (j, &dj) in distances.iter().enumerate().take(n_labels) {
+    0.00 :   274ff:  vmovsd 0x0(%r13,%rbx,8),%xmm0
+    0.00 :   27506:  vmovsd %xmm1,0x8(%rsp)
+         : 913   if bit == 0 {
+    0.00 :   2750c:  test   $0x1,%bl
+    0.00 :   2750f:  jne    274c0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xdd0>
+         : 916   sum0 += (d_min0 - dj).exp();
+    0.00 :   27511:  vsubsd %xmm0,%xmm2,%xmm0
+    0.00 :   27515:  call   *%r12
+    0.00 :   27518:  vmovsd 0x8(%rsp),%xmm1
+    0.00 :   2751e:  vaddsd %xmm0,%xmm1,%xmm1
+         : 921   if bit == 0 {
+    0.00 :   27522:  jmp    274e3 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xdf3>
+    0.00 :   27524:  data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   27530:  vmovsd -0x22d20(%rip),%xmm3        # 4818 <__abi_tag+0x451c>
+         : 925   let log0 = if sum0 > 0.0 {
+    0.00 :   27538:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   2753c:  vucomisd %xmm0,%xmm1
+    0.00 :   27540:  jbe    27557 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xe67>
+    0.00 :   27542:  vmovapd %xmm1,%xmm0
+    0.00 :   27546:  call   *0x4e4cc(%rip)        # 75a18 <log@GLIBC_2.29>
+         : 931   -d_min0 + sum0.ln()
+    0.00 :   2754c:  vsubsd 0x28(%rsp),%xmm0,%xmm3
+    0.00 :   27552:  mov    0x30(%rsp),%r9
+    0.00 :   27557:  vmovsd 0x20(%rsp),%xmm1
+         : 935   let log1 = if sum1 > 0.0 {
+    0.00 :   2755d:  vxorpd %xmm0,%xmm0,%xmm0
+    0.00 :   27561:  mov    0x78(%rsp),%rbx
+    0.00 :   27566:  vucomisd %xmm0,%xmm1
+    0.00 :   2756a:  vmovsd -0x22d5a(%rip),%xmm0        # 4818 <__abi_tag+0x451c>
+    0.00 :   27572:  jbe    27595 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xea5>
+    0.00 :   27574:  vmovapd %xmm1,%xmm0
+    0.00 :   27578:  vmovsd %xmm3,0x8(%rsp)
+    0.00 :   2757e:  call   *0x4e494(%rip)        # 75a18 <log@GLIBC_2.29>
+         : 944   -d_min1 + sum1.ln()
+    0.00 :   27584:  vsubsd 0x18(%rsp),%xmm0,%xmm0
+    0.00 :   2758a:  vmovsd 0x8(%rsp),%xmm3
+    0.00 :   27590:  mov    0x30(%rsp),%r9
+         : 948   out_llrs[k * m] = Llr::new(llr as f32);
+    0.00 :   27595:  imul   0xf0(%rsp),%rbp
+    0.00 :   2759e:  cmp    0x88(%rsp),%rbp
+    0.00 :   275a6:  jae    277ae <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x10be>
+         : 952   log0 - log1
+    0.00 :   275ac:  vsubsd %xmm0,%xmm3,%xmm0
+    0.00 :   275b0:  mov    0xa0(%rsp),%rax
+    0.00 :   275b8:  mov    0x50(%rsp),%rdx
+    0.00 :   275bd:  mov    0x60(%rsp),%r14
+    0.00 :   275c2:  add    $0x10,%r13
+    0.00 :   275c6:  vcvtsd2ss %xmm0,%xmm0,%xmm0
+    0.00 :   275ca:  vmovss %xmm0,(%rax,%rbp,4)
+    0.00 :   275cf:  mov    %r15,%rbp
+    0.00 :   275d2:  cmp    %rbx,%r15
+    0.00 :   275d5:  jne    27410 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xd20>
+    0.00 :   275db:  cmpb   $0x0,0x90(%rsp)
+    0.00 :   275e3:  jne    275f0 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf00>
+    0.00 :   275e5:  mov    0x40(%rsp),%rdi
+    0.00 :   275ea:  call   *0x4e3d0(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   275f0:  cmpq   $0x0,0x70(%rsp)
+    0.00 :   275f6:  je     27603 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf13>
+    0.00 :   275f8:  mov    0x48(%rsp),%rdi
+    0.00 :   275fd:  call   *0x4e3bd(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   27603:  cmpq   $0x0,0xd8(%rsp)
+    0.00 :   2760c:  je     2761c <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf2c>
+         : 973   }
+    0.00 :   2760e:  mov    0xe0(%rsp),%rdi
+    0.00 :   27616:  call   *0x4e3a4(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2761c:  cmpq   $0x0,0xc0(%rsp)
+    0.00 :   27625:  je     27635 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf45>
+    0.00 :   27627:  mov    0xc8(%rsp),%rdi
+    0.00 :   2762f:  call   *0x4e38b(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   27635:  cmpq   $0x0,0xa8(%rsp)
+    0.00 :   2763e:  je     2764e <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf5e>
+    0.00 :   27640:  mov    0xb0(%rsp),%rdi
+    0.00 :   27648:  call   *0x4e372(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2764e:  cmpq   $0x0,0x108(%rsp)
+    0.00 :   27657:  je     27667 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0xf77>
+    0.00 :   27659:  mov    0x110(%rsp),%rdi
+    0.00 :   27661:  call   *0x4e359(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   27667:  add    $0x1c8,%rsp
+    0.00 :   2766e:  pop    %rbx
+    0.00 :   2766f:  pop    %r12
+    0.00 :   27671:  pop    %r13
+    0.00 :   27673:  pop    %r14
+    0.00 :   27675:  pop    %r15
+    0.00 :   27677:  pop    %rbp
+    0.00 :   27678:  ret
+    0.00 :   27679:  lea    0x140(%rsp),%rax
+         : 997   assert!(
+    0.00 :   27681:  lea    0xe5f8(%rip),%rcx        # 35c80 <<u64 as core::fmt::Display>::fmt>
+    0.00 :   27688:  lea    0x148(%rsp),%r8
+    0.00 :   27690:  mov    %rax,0x150(%rsp)
+    0.00 :   27698:  mov    %rcx,0x158(%rsp)
+    0.00 :   276a0:  lea    0xe4c9(%rip),%rcx        # 35b70 <<f64 as core::fmt::Display>::fmt>
+    0.00 :   276a7:  mov    %r8,0x160(%rsp)
+    0.00 :   276af:  mov    %rcx,0x168(%rsp)
+    0.00 :   276b7:  lea    -0x1eba1(%rip),%rdi        # 8b1d <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x3f8d>
+    0.00 :   276be:  lea    0x4bbcb(%rip),%rdx        # 73290 <__frame_dummy_init_array_entry+0x770>
+    0.00 :   276c5:  lea    0x150(%rsp),%rsi
+    0.00 :   276cd:  call   2cbc0 <core::panicking::panic_fmt>
+    0.00 :   276d2:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   276d7:  lea    0x4bb22(%rip),%rcx        # 73200 <__frame_dummy_init_array_entry+0x6e0>
+    0.00 :   276de:  jmp    276f5 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1005>
+    0.00 :   276e0:  lea    0x4bae9(%rip),%rcx        # 731d0 <__frame_dummy_init_array_entry+0x6b0>
+    0.00 :   276e7:  jmp    276f5 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1005>
+    0.00 :   276e9:  mov    0x68(%rsp),%rdx
+    0.00 :   276ee:  lea    0x4bac3(%rip),%rcx        # 731b8 <__frame_dummy_init_array_entry+0x698>
+    0.00 :   276f5:  call   2e4f0 <core::slice::index::slice_index_fail>
+    0.00 :   276fa:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   276ff:  lea    0x4ba9a(%rip),%rdx        # 731a0 <__frame_dummy_init_array_entry+0x680>
+         : 1019  out_llrs[k * m] = Llr::new(llr as f32);
+    0.00 :   27706:  jmp    2770f <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x101f>
+    0.00 :   27708:  lea    0x4ba79(%rip),%rdx        # 73188 <__frame_dummy_init_array_entry+0x668>
+    0.00 :   2770f:  mov    0x88(%rsp),%rsi
+    0.00 :   27717:  mov    %rbp,%rdi
+    0.00 :   2771a:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   2771f:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   27724:  mov    0x38(%rsp),%rax
+    0.00 :   27729:  jmp    27788 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1098>
+    0.00 :   2772b:  mov    0x58(%rsp),%rax
+    0.00 :   27730:  lea    0x4baf9(%rip),%rcx        # 73230 <__frame_dummy_init_array_entry+0x710>
+    0.00 :   27737:  mov    %rcx,0x80(%rsp)
+    0.00 :   2773f:  mov    %rax,0x38(%rsp)
+         : 1032  let n0 = input.noise_var[k].to_f64();
+    0.00 :   27744:  jmp    2778d <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x109d>
+    0.00 :   27746:  mov    0x50(%rsp),%rax
+    0.00 :   2774b:  lea    0x4bb26(%rip),%rcx        # 73278 <__frame_dummy_init_array_entry+0x758>
+    0.00 :   27752:  mov    %rcx,0x80(%rsp)
+    0.00 :   2775a:  mov    %rax,0x38(%rsp)
+    0.00 :   2775f:  jmp    27788 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1098>
+    0.00 :   27761:  mov    0x40(%rsp),%rax
+    0.00 :   27766:  lea    0x4badb(%rip),%rcx        # 73248 <__frame_dummy_init_array_entry+0x728>
+    0.00 :   2776d:  jmp    2777b <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x108b>
+    0.00 :   2776f:  mov    0x70(%rsp),%rax
+    0.00 :   27774:  lea    0x4bae5(%rip),%rcx        # 73260 <__frame_dummy_init_array_entry+0x740>
+    0.00 :   2777b:  mov    %r15,0x38(%rsp)
+    0.00 :   27780:  mov    %rcx,0x80(%rsp)
+    0.00 :   27788:  mov    %rax,0x58(%rsp)
+    0.00 :   2778d:  mov    0x38(%rsp),%rdi
+    0.00 :   27792:  mov    0x58(%rsp),%rsi
+    0.00 :   27797:  mov    0x80(%rsp),%rdx
+    0.00 :   2779f:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   277a4:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   277a6:  mov    %r11,%rdx
+         : 1053  out_llrs[k * m] = Llr::new(llr as f32);
+    0.00 :   277a9:  jmp    2770f <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x101f>
+    0.00 :   277ae:  lea    0x4ba33(%rip),%rdx        # 731e8 <__frame_dummy_init_array_entry+0x6c8>
+    0.00 :   277b5:  jmp    2770f <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x101f>
+    0.00 :   277ba:  mov    $0x8,%edi
+    0.00 :   277bf:  mov    %r15,%rsi
+    0.00 :   277c2:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   277c7:  mov    $0x8,%edi
+    0.00 :   277cc:  mov    %r15,%rsi
+    0.00 :   277cf:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   277d4:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   277d6:  mov    $0x8,%edi
+    0.00 :   277db:  mov    %r15,%rsi
+    0.00 :   277de:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   277e3:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   277e5:  mov    $0x8,%edi
+    0.00 :   277ea:  mov    %r15,%rsi
+    0.00 :   277ed:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   277f2:  jmp    27810 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1120>
+    0.00 :   277f4:  mov    0x8(%rsp),%rsi
+    0.00 :   277f9:  mov    $0x8,%edi
+    0.00 :   277fe:  jmp    26ce6 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x5f6>
+    0.00 :   27803:  mov    $0x8,%edi
+    0.00 :   27808:  mov    %r15,%rsi
+    0.00 :   2780b:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   27810:  ud2
+    0.00 :   27812:  mov    %rax,%rbx
+    0.00 :   27815:  mov    0x50(%rsp),%rax
+    0.00 :   2781a:  jmp    2784a <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x115a>
+    0.00 :   2781c:  mov    %rax,%rbx
+    0.00 :   2781f:  jmp    27878 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1188>
+    0.00 :   27821:  mov    %rax,%rbx
+    0.00 :   27824:  jmp    27891 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x11a1>
+    0.00 :   27826:  mov    %rax,%rbx
+    0.00 :   27829:  jmp    278aa <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x11ba>
+    0.00 :   2782b:  jmp    2785c <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x116c>
+    0.00 :   2782d:  cmpb   $0x0,0x90(%rsp)
+    0.00 :   27835:  mov    %rax,%rbx
+    0.00 :   27838:  jne    27845 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1155>
+    0.00 :   2783a:  mov    0x40(%rsp),%rdi
+    0.00 :   2783f:  call   *0x4e17b(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   27845:  mov    0x70(%rsp),%rax
+    0.00 :   2784a:  test   %rax,%rax
+    0.00 :   2784d:  je     2785f <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x116f>
+    0.00 :   2784f:  mov    0x48(%rsp),%rdi
+    0.00 :   27854:  call   *0x4e166(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2785a:  jmp    2785f <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x116f>
+    0.00 :   2785c:  mov    %rax,%rbx
+    0.00 :   2785f:  cmpq   $0x0,0xd8(%rsp)
+    0.00 :   27868:  je     27878 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x1188>
+         : 1103  }
+    0.00 :   2786a:  mov    0xe0(%rsp),%rdi
+    0.00 :   27872:  call   *0x4e148(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   27878:  cmpq   $0x0,0xc0(%rsp)
+    0.00 :   27881:  je     27891 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x11a1>
+    0.00 :   27883:  mov    0xc8(%rsp),%rdi
+    0.00 :   2788b:  call   *0x4e12f(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   27891:  cmpq   $0x0,0xa8(%rsp)
+    0.00 :   2789a:  je     278aa <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x11ba>
+    0.00 :   2789c:  mov    0xb0(%rsp),%rdi
+    0.00 :   278a4:  call   *0x4e116(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   278aa:  cmpq   $0x0,0x108(%rsp)
+    0.00 :   278b3:  je     278c3 <<gf2_coding::modem::fast_gray_qam_demapper::FastGrayQamDemapper<S> as gf2_coding::modem::demapper::BatchSoftDemapper<S>>::demap_llrs+0x11d3>
+    0.00 :   278b5:  mov    0x110(%rsp),%rdi
+    0.00 :   278bd:  call   *0x4e0fd(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   278c3:  mov    %rbx,%rdi
+    0.00 :   278c6:  call   71b00 <_Unwind_Resume@plt>
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (750 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000037010 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave>:
+    0.00 :   37010:  push   %rbp
+         : 7     /// ```
+         : 8     ///
+         : 9     /// # Complexity
+         : 10    ///
+         : 11    /// O(N) where N = `frame_bits()`.
+         : 12    pub fn interleave(&self, bits: &BitVec) -> BitVec {
+    0.00 :   37011:  push   %r15
+    0.00 :   37013:  push   %r14
+    0.00 :   37015:  push   %r13
+    0.00 :   37017:  push   %r12
+    0.00 :   37019:  push   %rbx
+    0.00 :   3701a:  sub    $0x78,%rsp
+         : 19    self.config.nc * self.config.nr
+    0.00 :   3701e:  mov    0x20(%rsi),%rbp
+    0.00 :   37022:  imul   0x18(%rsi),%rbp
+    0.00 :   37027:  mov    %rbp,0x60(%rsp)
+         : 23    /// bv.push_bit(true);
+         : 24    /// assert_eq!(bv.len(), 1);
+         : 25    /// ```
+         : 26    #[inline]
+         : 27    pub fn len(&self) -> usize {
+         : 28    self.len_bits
+    0.00 :   3702c:  mov    0x18(%rdx),%rax
+    0.00 :   37030:  mov    %rax,0x68(%rsp)
+         : 31    let n = self.frame_bits();
+         : 32    assert_eq!(
+    0.00 :   37035:  cmp    %rbp,%rax
+    0.00 :   37038:  jne    371fb <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x1eb>
+    0.00 :   3703e:  mov    %ebp,%eax
+    0.00 :   37040:  and    $0x3f,%eax
+    0.00 :   37043:  mov    %rbp,%r15
+    0.00 :   37046:  shr    $0x6,%r15
+    0.00 :   3704a:  mov    %rdx,%r14
+    0.00 :   3704d:  mov    %rsi,%r12
+    0.00 :   37050:  mov    %rdi,%rbx
+    0.00 :   37053:  cmp    $0x1,%rax
+    0.00 :   37057:  sbb    $0xffffffffffffffff,%r15
+    0.00 :   3705b:  test   %rbp,%rbp
+    0.00 :   3705e:  je     37094 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x84>
+    0.00 :   37060:  lea    0x0(,%r15,8),%r13
+    0.00 :   37068:  lock incq 0x40518(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   37070:  mov    $0x1,%edi
+    0.00 :   37075:  lock add %r13,0x40513(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   3707d:  mov    %r13,%rsi
+    0.00 :   37080:  call   *0x3e95a(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   37086:  test   %rax,%rax
+    0.00 :   37089:  je     37261 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x251>
+    0.00 :   3708f:  mov    %r15,%rcx
+    0.00 :   37092:  jmp    3709b <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x8b>
+    0.00 :   37094:  mov    $0x8,%eax
+    0.00 :   37099:  xor    %ecx,%ecx
+         : 58    Self {
+    0.00 :   3709b:  mov    %rcx,0x8(%rsp)
+    0.00 :   370a0:  mov    0x48(%r12),%rcx
+    0.00 :   370a5:  movabs $0x8000000000000000,%rdx
+    0.00 :   370af:  mov    %rax,0x10(%rsp)
+    0.00 :   370b4:  mov    %r15,0x18(%rsp)
+    0.00 :   370b9:  mov    %rbp,0x20(%rsp)
+    0.00 :   370be:  movl   $0x0,0x28(%rsp)
+    0.00 :   370c6:  movb   $0x0,0x2c(%rsp)
+    0.00 :   370cb:  mov    %rdx,0x30(%rsp)
+    0.00 :   370d0:  test   %rcx,%rcx
+    0.00 :   370d3:  je     3714d <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x13d>
+    0.00 :   370d5:  mov    0x40(%r12),%rdx
+    0.00 :   370da:  shl    $0x3,%rcx
+    0.00 :   370de:  mov    $0x1,%r9d
+    0.00 :   370e4:  xor    %r8d,%r8d
+    0.00 :   370e7:  jmp    370f9 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0xe9>
+    0.00 :   370e9:  nopl   0x0(%rax)
+    1.78 :   370f0:  inc    %r8
+   18.45 :   370f3:  add    $0xfffffffffffffff8,%rcx
+    0.00 :   370f7:  je     3714d <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x13d>
+         : 79    /// assert_eq!(bv.get(0), true);
+         : 80    /// assert_eq!(bv.get(1), false);
+         : 81    /// ```
+         : 82    #[inline]
+         : 83    pub fn get(&self, idx: usize) -> bool {
+         : 84    assert!(idx < self.len_bits, "index out of bounds");
+    0.00 :   370f9:  cmp    0x18(%r14),%r8
+    6.98 :   370fd:  jae    371c7 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x1b7>
+    0.00 :   37103:  mov    0x10(%r14),%rsi
+         : 88    let word_idx = idx / 64;
+    0.14 :   37107:  mov    %r8,%rdi
+    0.00 :   3710a:  shr    $0x6,%rdi
+    0.00 :   3710e:  cmp    %rsi,%rdi
+    5.67 :   37111:  jae    37242 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x232>
+    0.00 :   37117:  mov    0x8(%r14),%rsi
+         : 94    let bit_idx = idx % 64;
+         : 95    (self.data[word_idx] >> bit_idx) & 1 == 1
+    2.61 :   3711b:  mov    (%rsi,%rdi,8),%rsi
+   17.92 :   3711f:  bt     %r8,%rsi
+         : 98    n,
+         : 99    bits.len()
+         : 100   );
+         : 101   let mut out = BitVec::zeros(n);
+         : 102   for (i, &out_idx) in self.forward.iter().enumerate() {
+         : 103   if bits.get(i) {
+    4.32 :   37123:  jae    370f0 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0xe0>
+    1.85 :   37125:  mov    (%rdx,%r8,8),%rsi
+         : 106   /// bv.push_bit(false);
+         : 107   /// bv.set(0, true);
+         : 108   /// assert_eq!(bv.get(0), true);
+         : 109   /// ```
+         : 110   pub fn set(&mut self, idx: usize, bit: bool) {
+         : 111   assert!(idx < self.len_bits, "index out of bounds");
+   25.17 :   37129:  cmp    %rbp,%rsi
+    1.60 :   3712c:  jae    371e1 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x1d1>
+         : 114   let word_idx = idx / 64;
+    0.00 :   37132:  mov    %rsi,%rdi
+    0.00 :   37135:  shr    $0x6,%rdi
+    0.13 :   37139:  cmp    %r15,%rdi
+    1.60 :   3713c:  jae    37250 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x240>
+         : 119   let bit_idx = idx % 64;
+         :
+         : 121   if bit {
+         : 122   self.data[word_idx] |= 1u64 << bit_idx;
+    0.00 :   37142:  shlx   %rsi,%r9,%rsi
+    0.00 :   37147:  or     %rsi,(%rax,%rdi,8)
+         : 125   } else {
+         : 126   self.data[word_idx] &= !(1u64 << bit_idx);
+         : 127   }
+         : 128   }
+   11.80 :   3714b:  jmp    370f0 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0xe0>
+         : 130   out.set(out_idx, true);
+         : 131   }
+         : 132   }
+         : 133   out
+    0.00 :   3714d:  vmovups 0x40(%rsp),%ymm1
+    0.00 :   37153:  vmovups 0x38(%rsp),%xmm0
+    0.00 :   37159:  mov    0x8(%rsp),%rax
+    0.00 :   3715e:  mov    0x10(%rsp),%rcx
+    0.00 :   37163:  mov    0x18(%rsp),%rdx
+    0.00 :   37168:  mov    0x20(%rsp),%rsi
+    0.00 :   3716d:  mov    0x28(%rsp),%edi
+    0.00 :   37171:  movzbl 0x2c(%rsp),%r8d
+    0.00 :   37177:  movzwl 0x2d(%rsp),%r9d
+    0.00 :   3717d:  movzbl 0x2f(%rsp),%r10d
+    0.00 :   37183:  mov    0x30(%rsp),%r11
+    0.00 :   37188:  mov    %edi,0x20(%rbx)
+    0.00 :   3718b:  mov    %r8b,0x24(%rbx)
+    0.00 :   3718f:  mov    %r9w,0x25(%rbx)
+    0.00 :   37194:  mov    %r10b,0x27(%rbx)
+    0.00 :   37198:  mov    %r11,0x28(%rbx)
+    0.00 :   3719c:  mov    %rax,(%rbx)
+    0.00 :   3719f:  mov    %rcx,0x8(%rbx)
+    0.00 :   371a3:  mov    %rdx,0x10(%rbx)
+    0.00 :   371a7:  mov    %rsi,0x18(%rbx)
+    0.00 :   371ab:  vmovups %ymm1,0x38(%rbx)
+    0.00 :   371b0:  vmovups %xmm0,0x30(%rbx)
+         : 156   }
+    0.00 :   371b5:  add    $0x78,%rsp
+    0.00 :   371b9:  pop    %rbx
+    0.00 :   371ba:  pop    %r12
+    0.00 :   371bc:  pop    %r13
+    0.00 :   371be:  pop    %r14
+    0.00 :   371c0:  pop    %r15
+    0.00 :   371c2:  pop    %rbp
+    0.00 :   371c3:  vzeroupper
+    0.00 :   371c6:  ret
+         : 166   assert!(idx < self.len_bits, "index out of bounds");
+    0.00 :   371c7:  lea    -0x2c633(%rip),%rdi        # ab9b <core::num::flt2dec::strategy::dragon::POW5TO256+0x193>
+    0.00 :   371ce:  lea    0x3cceb(%rip),%rdx        # 73ec0 <__frame_dummy_init_array_entry+0x13a0>
+    0.00 :   371d5:  mov    $0x27,%esi
+    0.00 :   371da:  call   2cbc0 <core::panicking::panic_fmt>
+    0.00 :   371df:  jmp    3725f <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x24f>
+         : 172   assert!(idx < self.len_bits, "index out of bounds");
+    0.00 :   371e1:  lea    -0x2c64d(%rip),%rdi        # ab9b <core::num::flt2dec::strategy::dragon::POW5TO256+0x193>
+    0.00 :   371e8:  lea    0x3cd19(%rip),%rdx        # 73f08 <__frame_dummy_init_array_entry+0x13e8>
+    0.00 :   371ef:  mov    $0x27,%esi
+    0.00 :   371f4:  call   2cbc0 <core::panicking::panic_fmt>
+    0.00 :   371f9:  jmp    3725f <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x24f>
+         : 178   self.len_bits
+    0.00 :   371fb:  mov    %rax,0x70(%rsp)
+    0.00 :   37200:  lea    0x60(%rsp),%rsi
+         : 181   assert_eq!(
+    0.00 :   37205:  lea    -0x158c(%rip),%rax        # 35c80 <<u64 as core::fmt::Display>::fmt>
+    0.00 :   3720c:  lea    0x70(%rsp),%rcx
+    0.00 :   37211:  lea    -0x2e5b2(%rip),%rdx        # 8c66 <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x40d6>
+    0.00 :   37218:  lea    0x3ca39(%rip),%r8        # 73c58 <__frame_dummy_init_array_entry+0x1138>
+    0.00 :   3721f:  lea    0x68(%rsp),%rdi
+    0.00 :   37224:  mov    %rsi,0x8(%rsp)
+    0.00 :   37229:  mov    %rax,0x10(%rsp)
+    0.00 :   3722e:  mov    %rcx,0x18(%rsp)
+    0.00 :   37233:  lea    0x8(%rsp),%rcx
+    0.00 :   37238:  mov    %rax,0x20(%rsp)
+    0.00 :   3723d:  call   2dc92 <core::panicking::assert_failed::<usize, usize>>
+    0.00 :   37242:  lea    0x3cc8f(%rip),%rdx        # 73ed8 <__frame_dummy_init_array_entry+0x13b8>
+    0.00 :   37249:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   3724e:  jmp    3725f <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x24f>
+    0.00 :   37250:  lea    0x3ccc9(%rip),%rdx        # 73f20 <__frame_dummy_init_array_entry+0x1400>
+    0.00 :   37257:  mov    %r15,%rsi
+    0.00 :   3725a:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   3725f:  ud2
+    0.00 :   37261:  mov    $0x8,%edi
+    0.00 :   37266:  mov    %r13,%rsi
+    0.00 :   37269:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   3726e:  jmp    37270 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave+0x260>
+    0.00 :   37270:  lea    0x8(%rsp),%rdi
+    0.00 :   37275:  mov    %rax,%rbx
+         : 206   }
+    0.00 :   37278:  call   35ef0 <core::ptr::drop_in_place<gf2_core::bitvec::BitVec>>
+    0.00 :   3727d:  mov    %rbx,%rdi
+    0.00 :   37280:  call   71b00 <_Unwind_Resume@plt>
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (202 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000025590 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits>:
+         : 6     fn spec(&self) -> super::ModemView<'_, S> {
+         : 7     self.inner.spec()
+         : 8     }
+         :
+         : 10    #[inline]
+         : 11    fn map_bits(&self, bits: &[bool], out_i: &mut [S], out_q: &mut [S]) {
+    0.00 :   25590:  push   %rbp
+    0.00 :   25591:  push   %r15
+    0.00 :   25593:  push   %r14
+    0.00 :   25595:  push   %r13
+    0.00 :   25597:  push   %r12
+    0.00 :   25599:  push   %rbx
+    0.00 :   2559a:  sub    $0x28,%rsp
+    0.00 :   2559e:  mov    %r9,%r15
+    0.00 :   255a1:  mov    0x60(%rsp),%r9
+         : 21    self.spec.view()
+         : 22    }
+         :
+         : 24    fn map_bits(&self, bits: &[bool], out_i: &mut [S], out_q: &mut [S]) {
+         : 25    let m = self.m_total as usize;
+         : 26    let num_symbols = super::bit_pack::check_batch_lengths(
+    0.00 :   255a6:  movzbl 0x8b(%rdi),%r14d
+    0.00 :   255ae:  mov    %rsi,(%rsp)
+    0.00 :   255b2:  mov    %rdi,%rbp
+    0.00 :   255b5:  lea    -0x1c0fa(%rip),%rdi        # 94c2 <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x4932>
+    0.00 :   255bc:  mov    $0x17,%esi
+    0.00 :   255c1:  mov    %rdx,%rbx
+    0.00 :   255c4:  mov    %rcx,%r13
+    0.00 :   255c7:  mov    %r8,%r12
+    0.00 :   255ca:  mov    %rbx,%rcx
+    0.00 :   255cd:  mov    %r14d,%edx
+    0.00 :   255d0:  call   1d320 <gf2_coding::modem::bit_pack::check_batch_lengths>
+         : 38    bits.len(),
+         : 39    out_i.len(),
+         : 40    out_q.len(),
+         : 41    );
+         :
+         : 43    if self.is_bpsk {
+    0.00 :   255d5:  cmpb   $0x1,0x8a(%rbp)
+    0.00 :   255dc:  jne    25640 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0xb0>
+    0.00 :   255de:  mov    0x60(%rsp),%r8
+    0.00 :   255e3:  mov    (%rsp),%rdx
+    0.00 :   255e7:  test   %r12,%r12
+    0.00 :   255ea:  je     258b6 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x326>
+    0.00 :   255f0:  mov    0x78(%rbp),%rax
+    0.00 :   255f4:  mov    0x80(%rbp),%rsi
+    0.00 :   255fb:  xor    %ecx,%ecx
+    0.00 :   255fd:  nopl   (%rax)
+         : 54    for k in 0..num_symbols {
+         : 55    let b = bits[k] as usize;
+    0.00 :   25600:  cmp    %rcx,%rbx
+    0.00 :   25603:  je     258da <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x34a>
+    0.00 :   25609:  movzbl (%rdx,%rcx,1),%edi
+    0.00 :   2560d:  cmp    %rdi,%rsi
+    0.00 :   25610:  jbe    258fe <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x36e>
+         : 61    out_i[k] = self.pam_levels[b];
+    0.00 :   25616:  vmovss (%rax,%rdi,4),%xmm0
+    0.00 :   2561b:  vmovss %xmm0,0x0(%r13,%rcx,4)
+         : 64    out_q[k] = S::zero();
+    0.00 :   25622:  cmp    %rcx,%r8
+    0.00 :   25625:  je     258ec <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x35c>
+    0.00 :   2562b:  movl   $0x0,(%r15,%rcx,4)
+    0.00 :   25633:  inc    %rcx
+    0.00 :   25636:  cmp    %rcx,%r12
+    0.00 :   25639:  jne    25600 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x70>
+    0.00 :   2563b:  jmp    258b6 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x326>
+    0.00 :   25640:  mov    0x60(%rsp),%r8
+    0.00 :   25645:  mov    (%rsp),%r11
+    0.00 :   25649:  test   %r12,%r12
+    0.00 :   2564c:  je     258b6 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x326>
+    0.00 :   25652:  mov    0x78(%rbp),%rcx
+    0.00 :   25656:  mov    0x80(%rbp),%rsi
+    0.00 :   2565d:  test   %r14,%r14
+    0.00 :   25660:  je     25881 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x2f1>
+    0.00 :   25666:  movzbl 0x8c(%rbp),%eax
+    0.00 :   2566d:  movzwl 0x88(%rbp),%edx
+    0.00 :   25674:  lea    -0x8(%r14),%rdi
+    0.00 :   25678:  mov    %r14d,%r10d
+    0.00 :   2567b:  and    $0xfffffff8,%r10d
+    0.00 :   2567f:  mov    %r14d,%r9d
+    0.00 :   25682:  and    $0x7,%r9d
+    0.00 :   25686:  xor    %ebp,%ebp
+    0.00 :   25688:  shr    $0x3,%rdi
+    0.00 :   2568c:  add    %r11,%r10
+    0.00 :   2568f:  mov    %rdi,0x20(%rsp)
+    0.00 :   25694:  inc    %rdi
+    0.00 :   25697:  mov    %rdi,0x18(%rsp)
+    0.00 :   2569c:  and    $0xfffffffffffffffe,%rdi
+    0.00 :   256a0:  mov    %rdi,0x10(%rsp)
+    0.00 :   256a5:  and    $0xf,%eax
+    0.00 :   256a8:  mov    %eax,0xc(%rsp)
+    0.00 :   256ac:  nopl   0x0(%rax)
+         : 98    }
+         :
+         : 100   let m_half = self.m_half;
+         : 101   let mask_half = self.mask_half;
+         : 102   for k in 0..num_symbols {
+         : 103   let base = k * m;
+    0.00 :   256b0:  mov    %rbp,%rdi
+    0.50 :   256b3:  imul   %r14,%rdi
+         : 106   let label = super::bit_pack::pack_label_msb_first(&bits[base..base + m]);
+    0.00 :   256b7:  mov    %rdi,%rax
+    0.99 :   256ba:  add    %r14,%rax
+    0.00 :   256bd:  jb     258c8 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x338>
+    0.00 :   256c3:  cmp    %rbx,%rax
+    0.00 :   256c6:  ja     258c8 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x338>
+    0.00 :   256cc:  add    %r11,%rdi
+    9.51 :   256cf:  cmp    $0x8,%r14b
+    0.00 :   256d3:  jae    256e0 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x150>
+    0.00 :   256d5:  xor    %eax,%eax
+    1.48 :   256d7:  jmp    257ff <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x26f>
+    0.00 :   256dc:  nopl   0x0(%rax)
+    0.00 :   256e0:  cmpq   $0x0,0x20(%rsp)
+    0.00 :   256e6:  je     257a8 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x218>
+    0.00 :   256ec:  mov    0x10(%rsp),%rax
+    0.00 :   256f1:  data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   25700:  add    $0x10,%rdi
+    0.00 :   25704:  add    $0xfffffffffffffffe,%rax
+    0.00 :   25708:  jne    25700 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x170>
+         : 125   ///
+         : 126   /// O(bits_per_symbol).
+         : 127   #[inline]
+         : 128   pub(crate) fn pack_label_msb_first(symbol_bits: &[bool]) -> u16 {
+         : 129   let mut label: u16 = 0;
+         : 130   for &b in symbol_bits {
+    0.00 :   2570a:  movzbl -0xf(%rdi),%r11d
+    0.00 :   2570f:  movzbl -0x10(%rdi),%eax
+         : 133   label = (label << 1) | u16::from(b);
+    0.00 :   25713:  shl    $0x2,%r11d
+    0.00 :   25717:  lea    (%r11,%rax,8),%eax
+         : 136   for &b in symbol_bits {
+    0.00 :   2571b:  movzbl -0xe(%rdi),%r11d
+         : 138   label = (label << 1) | u16::from(b);
+    0.00 :   25720:  lea    (%rax,%r11,2),%eax
+         : 140   for &b in symbol_bits {
+    0.00 :   25724:  movzbl -0xd(%rdi),%r11d
+         : 142   label = (label << 1) | u16::from(b);
+    0.00 :   25729:  or     %eax,%r11d
+         : 144   for &b in symbol_bits {
+    0.00 :   2572c:  movzbl -0xc(%rdi),%eax
+         : 146   label = (label << 1) | u16::from(b);
+    0.00 :   25730:  add    %eax,%eax
+    0.00 :   25732:  lea    (%rax,%r11,4),%eax
+         : 149   for &b in symbol_bits {
+    0.00 :   25736:  movzbl -0xb(%rdi),%r11d
+         : 151   label = (label << 1) | u16::from(b);
+    0.00 :   2573b:  or     %eax,%r11d
+         : 153   for &b in symbol_bits {
+    0.00 :   2573e:  movzbl -0xa(%rdi),%eax
+         : 155   label = (label << 1) | u16::from(b);
+    0.00 :   25742:  add    %eax,%eax
+    0.00 :   25744:  lea    (%rax,%r11,4),%eax
+         : 158   for &b in symbol_bits {
+    0.00 :   25748:  movzbl -0x9(%rdi),%r11d
+         : 160   label = (label << 1) | u16::from(b);
+    0.00 :   2574d:  or     %eax,%r11d
+         : 162   for &b in symbol_bits {
+    0.00 :   25750:  movzbl -0x8(%rdi),%eax
+         : 164   label = (label << 1) | u16::from(b);
+    0.00 :   25754:  add    %eax,%eax
+    0.00 :   25756:  lea    (%rax,%r11,4),%eax
+         : 167   for &b in symbol_bits {
+    0.00 :   2575a:  movzbl -0x7(%rdi),%r11d
+         : 169   label = (label << 1) | u16::from(b);
+    0.00 :   2575f:  or     %eax,%r11d
+         : 171   for &b in symbol_bits {
+    0.00 :   25762:  movzbl -0x6(%rdi),%eax
+         : 173   label = (label << 1) | u16::from(b);
+    0.00 :   25766:  add    %eax,%eax
+    0.00 :   25768:  lea    (%rax,%r11,4),%eax
+         : 176   for &b in symbol_bits {
+    0.00 :   2576c:  movzbl -0x5(%rdi),%r11d
+         : 178   label = (label << 1) | u16::from(b);
+    0.00 :   25771:  or     %eax,%r11d
+         : 180   for &b in symbol_bits {
+    0.00 :   25774:  movzbl -0x4(%rdi),%eax
+         : 182   label = (label << 1) | u16::from(b);
+    0.00 :   25778:  add    %eax,%eax
+    0.00 :   2577a:  lea    (%rax,%r11,4),%eax
+         : 185   for &b in symbol_bits {
+    0.00 :   2577e:  movzbl -0x3(%rdi),%r11d
+         : 187   label = (label << 1) | u16::from(b);
+    0.00 :   25783:  or     %eax,%r11d
+         : 189   for &b in symbol_bits {
+    0.00 :   25786:  movzbl -0x2(%rdi),%eax
+         : 191   label = (label << 1) | u16::from(b);
+    0.00 :   2578a:  add    %eax,%eax
+    0.00 :   2578c:  lea    (%rax,%r11,4),%r11d
+         : 194   for &b in symbol_bits {
+    0.00 :   25790:  movzbl -0x1(%rdi),%eax
+         : 196   label = (label << 1) | u16::from(b);
+    0.00 :   25794:  or     %r11d,%eax
+    0.00 :   25797:  testb  $0x1,0x18(%rsp)
+    0.00 :   2579c:  jne    257aa <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x21a>
+    0.00 :   2579e:  mov    %r10,%rdi
+    0.00 :   257a1:  test   %r9,%r9
+    0.00 :   257a4:  jne    257ff <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x26f>
+    0.00 :   257a6:  jmp    25821 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x291>
+    0.00 :   257a8:  xor    %eax,%eax
+         : 205   for &b in symbol_bits {
+    0.00 :   257aa:  movzbl (%rdi),%r11d
+    0.00 :   257ae:  movzbl 0x1(%rdi),%r8d
+         : 208   label = (label << 1) | u16::from(b);
+    0.00 :   257b3:  add    %r11d,%r11d
+    0.00 :   257b6:  lea    (%r11,%rax,4),%eax
+         : 211   for &b in symbol_bits {
+    0.00 :   257ba:  movzbl 0x3(%rdi),%r11d
+         : 213   label = (label << 1) | u16::from(b);
+    0.00 :   257bf:  or     %r8d,%eax
+         : 215   for &b in symbol_bits {
+    0.00 :   257c2:  movzbl 0x2(%rdi),%r8d
+         : 217   label = (label << 1) | u16::from(b);
+    0.00 :   257c7:  add    %r8d,%r8d
+    0.00 :   257ca:  lea    (%r8,%rax,4),%eax
+         : 220   for &b in symbol_bits {
+    0.00 :   257ce:  movzbl 0x4(%rdi),%r8d
+         : 222   label = (label << 1) | u16::from(b);
+    0.00 :   257d3:  or     %r11d,%eax
+         : 224   for &b in symbol_bits {
+    0.00 :   257d6:  movzbl 0x5(%rdi),%r11d
+         : 226   label = (label << 1) | u16::from(b);
+    0.00 :   257db:  add    %r8d,%r8d
+    0.00 :   257de:  lea    (%r8,%rax,4),%eax
+         : 229   for &b in symbol_bits {
+    0.00 :   257e2:  movzbl 0x6(%rdi),%r8d
+    0.00 :   257e7:  movzbl 0x7(%rdi),%edi
+         : 232   label = (label << 1) | u16::from(b);
+    0.00 :   257eb:  or     %r11d,%eax
+    0.00 :   257ee:  add    %r8d,%r8d
+    0.00 :   257f1:  lea    (%r8,%rax,4),%eax
+    0.00 :   257f5:  or     %edi,%eax
+    0.00 :   257f7:  mov    %r10,%rdi
+    0.00 :   257fa:  test   %r9,%r9
+    0.00 :   257fd:  je     25821 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x291>
+    1.97 :   257ff:  xor    %r11d,%r11d
+    0.00 :   25802:  data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 242   for &b in symbol_bits {
+    0.93 :   25810:  movzbl (%rdi,%r11,1),%r8d
+    4.95 :   25815:  inc    %r11
+         : 245   label = (label << 1) | u16::from(b);
+    2.47 :   25818:  lea    (%r8,%rax,2),%eax
+   15.01 :   2581c:  cmp    %r11,%r9
+    0.98 :   2581f:  jne    25810 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x280>
+    0.00 :   25821:  mov    0xc(%rsp),%r8d
+         : 250   let i_label = ((label >> m_half) & mask_half) as usize;
+    0.00 :   25826:  movzwl %ax,%edi
+    2.47 :   25829:  shrx   %r8d,%edi,%edi
+    8.43 :   2582e:  and    %edx,%edi
+    1.99 :   25830:  cmp    %rdi,%rsi
+    3.95 :   25833:  jbe    2592b <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x39b>
+         : 256   let q_label = (label & mask_half) as usize;
+         : 257   out_i[k] = self.pam_levels[i_label];
+    0.00 :   25839:  vmovss (%rcx,%rdi,4),%xmm0
+   18.23 :   2583e:  mov    0x60(%rsp),%r8
+    0.00 :   25843:  and    %edx,%eax
+    0.00 :   25845:  movzwl %ax,%eax
+    0.00 :   25848:  vmovss %xmm0,0x0(%r13,%rbp,4)
+   16.79 :   2584f:  cmp    %rax,%rsi
+    0.50 :   25852:  jbe    2591c <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x38c>
+    0.00 :   25858:  mov    (%rsp),%r11
+         : 266   out_q[k] = self.pam_levels[q_label];
+    0.00 :   2585c:  cmp    %r8,%rbp
+    0.50 :   2585f:  je     2590a <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x37a>
+    0.00 :   25865:  vmovss (%rcx,%rax,4),%xmm0
+    0.50 :   2586a:  add    %r14,%r10
+    0.00 :   2586d:  vmovss %xmm0,(%r15,%rbp,4)
+    5.39 :   25873:  inc    %rbp
+    0.00 :   25876:  cmp    %r12,%rbp
+    2.46 :   25879:  jne    256b0 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x120>
+    0.00 :   2587f:  jmp    258b6 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x326>
+    0.00 :   25881:  test   %rsi,%rsi
+    0.00 :   25884:  je     25937 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x3a7>
+    0.00 :   2588a:  xor    %edi,%edi
+    0.00 :   2588c:  xor    %eax,%eax
+    0.00 :   2588e:  xchg   %ax,%ax
+    0.00 :   25890:  cmp    %rbx,%rdi
+    0.00 :   25893:  ja     258c5 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x335>
+         : 283   out_i[k] = self.pam_levels[i_label];
+    0.00 :   25895:  vmovss (%rcx),%xmm0
+    0.00 :   25899:  vmovss %xmm0,0x0(%r13,%rax,4)
+         : 286   out_q[k] = self.pam_levels[q_label];
+    0.00 :   258a0:  cmp    %rax,%r8
+    0.00 :   258a3:  je     2590a <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x37a>
+    0.00 :   258a5:  vmovss %xmm0,(%r15,%rax,4)
+    0.00 :   258ab:  inc    %rax
+    0.00 :   258ae:  add    %r14,%rdi
+    0.00 :   258b1:  cmp    %rax,%r12
+    0.00 :   258b4:  jne    25890 <<gf2_coding::modem::spec::GrayQamMapperFactory<S> as gf2_coding::modem::mapper::BatchMapper<S>>::map_bits+0x300>
+         : 294   self.inner.map_bits(bits, out_i, out_q);
+         : 295   }
+    0.00 :   258b6:  add    $0x28,%rsp
+    0.00 :   258ba:  pop    %rbx
+    0.00 :   258bb:  pop    %r12
+    0.00 :   258bd:  pop    %r13
+    0.00 :   258bf:  pop    %r14
+    0.00 :   258c1:  pop    %r15
+    0.00 :   258c3:  pop    %rbp
+    0.00 :   258c4:  ret
+    0.00 :   258c5:  mov    %rdi,%rax
+    0.00 :   258c8:  lea    0x4d799(%rip),%rcx        # 73068 <__frame_dummy_init_array_entry+0x548>
+    0.00 :   258cf:  mov    %rax,%rsi
+    0.00 :   258d2:  mov    %rbx,%rdx
+    0.00 :   258d5:  call   2e4f0 <core::slice::index::slice_index_fail>
+         : 309   let b = bits[k] as usize;
+    0.00 :   258da:  lea    0x4d79f(%rip),%rdx        # 73080 <__frame_dummy_init_array_entry+0x560>
+    0.00 :   258e1:  mov    %rbx,%rdi
+    0.00 :   258e4:  mov    %rbx,%rsi
+    0.00 :   258e7:  call   2e7f7 <core::panicking::panic_bounds_check>
+         : 314   out_q[k] = S::zero();
+    0.00 :   258ec:  lea    0x4d7bd(%rip),%rdx        # 730b0 <__frame_dummy_init_array_entry+0x590>
+    0.00 :   258f3:  mov    %r8,%rdi
+    0.00 :   258f6:  mov    %r8,%rsi
+    0.00 :   258f9:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   258fe:  lea    0x4d793(%rip),%rdx        # 73098 <__frame_dummy_init_array_entry+0x578>
+    0.00 :   25905:  call   2e7f7 <core::panicking::panic_bounds_check>
+         : 321   out_q[k] = self.pam_levels[q_label];
+    0.00 :   2590a:  lea    0x4d73f(%rip),%rdx        # 73050 <__frame_dummy_init_array_entry+0x530>
+    0.00 :   25911:  mov    %r8,%rdi
+    0.00 :   25914:  mov    %r8,%rsi
+    0.00 :   25917:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   2591c:  lea    0x4d715(%rip),%rdx        # 73038 <__frame_dummy_init_array_entry+0x518>
+    0.00 :   25923:  mov    %rax,%rdi
+    0.00 :   25926:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   2592b:  lea    0x4d6ee(%rip),%rdx        # 73020 <__frame_dummy_init_array_entry+0x500>
+    0.00 :   25932:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   25937:  lea    0x4d6e2(%rip),%rdx        # 73020 <__frame_dummy_init_array_entry+0x500>
+    0.00 :   2593e:  xor    %edi,%edi
+    0.00 :   25940:  xor    %esi,%esi
+    0.00 :   25942:  call   2e7f7 <core::panicking::panic_bounds_check>
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (86 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000024a40 <dvb_profile::prepare::{{closure}}>:
+         : 6     selected_path: format!(
+         : 7     "gf2-coding/BicmAwgnChannel::transmit_and_demodulate_with_noise/max-log/{}",
+         : 8     case.modcod
+         : 9     ),
+         : 10    setup_ns,
+         : 11    body: Box::new(move || {
+    0.00 :   24a40:  push   %rbp
+    0.00 :   24a41:  push   %r15
+    0.00 :   24a43:  push   %r14
+    0.00 :   24a45:  push   %r13
+    0.00 :   24a47:  push   %r12
+    0.00 :   24a49:  push   %rbx
+    0.00 :   24a4a:  sub    $0x118,%rsp
+         : 19    sigma: f32,
+         : 20    noise_var: f32,
+         : 21    mut next_noise: impl FnMut() -> f32,
+         : 22    ) -> Vec<Llr> {
+         : 23    let n_ldpc = bits.len();
+         : 24    let num_symbols = n_ldpc / self.bits_per_symbol;
+    0.00 :   24a51:  mov    0xd8(%rdi),%r14
+    0.00 :   24a58:  test   %r14,%r14
+    0.00 :   24a5b:  je     251d3 <dvb_profile::prepare::{{closure}}+0x793>
+    0.00 :   24a61:  mov    0x100(%rdi),%rax
+    0.00 :   24a68:  mov    %rdi,%r15
+    0.00 :   24a6b:  mov    %rax,%rcx
+    0.00 :   24a6e:  or     %r14,%rcx
+    0.00 :   24a71:  mov    %rax,0x38(%rsp)
+    0.00 :   24a76:  shr    $0x20,%rcx
+    0.00 :   24a7a:  je     24a83 <dvb_profile::prepare::{{closure}}+0x43>
+    0.00 :   24a7c:  xor    %edx,%edx
+    0.00 :   24a7e:  div    %r14
+    0.00 :   24a81:  jmp    24a88 <dvb_profile::prepare::{{closure}}+0x48>
+    0.00 :   24a83:  xor    %edx,%edx
+    0.00 :   24a85:  div    %r14d
+         :
+         : 41    let mapper = self.spec.preferred_mapper();
+    0.00 :   24a88:  lea    0x68(%r15),%rbx
+    0.00 :   24a8c:  mov    %rax,0x18(%rsp)
+    0.00 :   24a91:  mov    %rbx,%rdi
+    0.00 :   24a94:  call   1bc40 <gf2_coding::modem::spec::ModemSpec<S>::preferred_mapper>
+    0.00 :   24a99:  mov    %rax,%r12
+    0.00 :   24a9c:  mov    %rdx,0x8(%rsp)
+         : 48    let demapper = self.spec.preferred_soft_demapper();
+    0.00 :   24aa1:  mov    %rbx,%rdi
+    0.00 :   24aa4:  call   1c450 <gf2_coding::modem::spec::ModemSpec<S>::preferred_soft_demapper>
+    0.00 :   24aa9:  mov    %rax,0x20(%rsp)
+    0.00 :   24aae:  mov    %rdx,0x28(%rsp)
+         : 53    black_box(channel.transmit_and_demodulate_with_noise(&input, 0.0, 1.0, || 0.0));
+    0.00 :   24ab3:  lea    0xe8(%r15),%rdx
+    0.00 :   24aba:  lea    0x60(%rsp),%rdi
+         :
+         : 57    // 1. Bit interleave: FECFRAME order → interleaved order.
+         : 58    let interleaved = self.interleaver.interleave(bits);
+    0.00 :   24abf:  mov    %r15,%rsi
+    0.00 :   24ac2:  call   37010 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::interleave>
+         : 61    /// bv.push_bit(true);
+         : 62    /// assert_eq!(bv.len(), 1);
+         : 63    /// ```
+         : 64    #[inline]
+         : 65    pub fn len(&self) -> usize {
+         : 66    self.len_bits
+    0.00 :   24ac7:  mov    0x78(%rsp),%r13
+    0.00 :   24acc:  mov    0x8(%rsp),%rbx
+    0.00 :   24ad1:  mov    0x18(%rsp),%r8
+    0.00 :   24ad6:  test   %r13,%r13
+    0.00 :   24ad9:  jns    24aea <dvb_profile::prepare::{{closure}}+0xaa>
+    0.00 :   24adb:  xor    %edi,%edi
+    0.00 :   24add:  mov    %r13,%rsi
+    0.00 :   24ae0:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   24ae5:  jmp    25223 <dvb_profile::prepare::{{closure}}+0x7e3>
+    0.00 :   24aea:  je     24b57 <dvb_profile::prepare::{{closure}}+0x117>
+    0.00 :   24aec:  lock incq 0x52a94(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   24af4:  mov    %r13,%rdi
+    0.00 :   24af7:  lock add %r13,0x52a91(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   24aff:  call   *0x50eb3(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   24b05:  test   %rax,%rax
+    0.00 :   24b08:  je     251df <dvb_profile::prepare::{{closure}}+0x79f>
+    0.00 :   24b0e:  mov    %rax,%rbp
+    0.00 :   24b11:  mov    0x68(%rsp),%rax
+    0.00 :   24b16:  mov    0x70(%rsp),%rsi
+    0.00 :   24b1b:  mov    0x18(%rsp),%r8
+    0.00 :   24b20:  xor    %ecx,%ecx
+    0.00 :   24b22:  data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 89    /// assert_eq!(bv.get(1), false);
+         : 90    /// ```
+         : 91    #[inline]
+         : 92    pub fn get(&self, idx: usize) -> bool {
+         : 93    assert!(idx < self.len_bits, "index out of bounds");
+         : 94    let word_idx = idx / 64;
+    0.00 :   24b30:  mov    %rcx,%rdi
+    2.33 :   24b33:  shr    $0x6,%rdi
+    0.00 :   24b37:  cmp    %rsi,%rdi
+    3.42 :   24b3a:  jae    251c5 <dvb_profile::prepare::{{closure}}+0x785>
+         : 99    let bit_idx = idx % 64;
+         : 100   (self.data[word_idx] >> bit_idx) & 1 == 1
+    0.00 :   24b40:  mov    (%rax,%rdi,8),%rdx
+   32.45 :   24b44:  bt     %rcx,%rdx
+   20.81 :   24b48:  setb   0x0(%rbp,%rcx,1)
+   21.25 :   24b4d:  inc    %rcx
+    1.16 :   24b50:  cmp    %rcx,%r13
+    0.00 :   24b53:  jne    24b30 <dvb_profile::prepare::{{closure}}+0xf0>
+    0.00 :   24b55:  jmp    24b5c <dvb_profile::prepare::{{closure}}+0x11c>
+    0.00 :   24b57:  mov    $0x1,%ebp
+    0.00 :   24b5c:  lea    0x0(,%r8,4),%rsi
+    0.00 :   24b64:  mov    %r8,%rax
+    0.00 :   24b67:  shr    $0x3e,%rax
+    0.00 :   24b6b:  movabs $0x7ffffffffffffffc,%rcx
+    0.00 :   24b75:  setne  %al
+    0.00 :   24b78:  cmp    %rcx,%rsi
+    0.00 :   24b7b:  seta   %cl
+    0.00 :   24b7e:  or     %al,%cl
+    0.00 :   24b80:  je     24b8e <dvb_profile::prepare::{{closure}}+0x14e>
+    0.00 :   24b82:  xor    %edi,%edi
+    0.00 :   24b84:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   24b89:  jmp    25223 <dvb_profile::prepare::{{closure}}+0x7e3>
+    0.00 :   24b8e:  mov    %r15,0x58(%rsp)
+    0.00 :   24b93:  mov    %r12,0x30(%rsp)
+    0.00 :   24b98:  mov    %rsi,0x10(%rsp)
+    0.00 :   24b9d:  test   %rsi,%rsi
+    0.00 :   24ba0:  je     24c02 <dvb_profile::prepare::{{closure}}+0x1c2>
+    0.00 :   24ba2:  lock incq 0x529de(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   24baa:  mov    $0x1,%edi
+    0.00 :   24baf:  mov    %rsi,%r12
+    0.00 :   24bb2:  lock add %rsi,0x529d6(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   24bba:  call   *0x50e20(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   24bc0:  test   %rax,%rax
+    0.00 :   24bc3:  je     251e9 <dvb_profile::prepare::{{closure}}+0x7a9>
+    0.00 :   24bc9:  lock incq 0x529b7(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   24bd1:  mov    $0x1,%edi
+    0.00 :   24bd6:  mov    %rax,%r15
+    0.00 :   24bd9:  mov    %r12,%rsi
+    0.00 :   24bdc:  lock add %r12,0x529ac(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   24be4:  call   *0x50df6(%rip)        # 759e0 <calloc@GLIBC_2.2.5>
+    0.00 :   24bea:  test   %rax,%rax
+    0.00 :   24bed:  je     251fe <dvb_profile::prepare::{{closure}}+0x7be>
+    0.00 :   24bf3:  mov    0x18(%rsp),%r8
+    0.00 :   24bf8:  mov    %rax,%r12
+    0.00 :   24bfb:  mov    %r8,0x48(%rsp)
+    0.00 :   24c00:  jmp    24c17 <dvb_profile::prepare::{{closure}}+0x1d7>
+    0.00 :   24c02:  mov    $0x4,%r15d
+    0.00 :   24c08:  mov    $0x4,%r12d
+    0.00 :   24c0e:  movq   $0x0,0x48(%rsp)
+         : 148   (**self).spec()
+         : 149   }
+         :
+         : 151   #[inline]
+         : 152   fn map_bits(&self, bits: &[bool], out_i: &mut [S], out_q: &mut [S]) {
+         : 153   (**self).map_bits(bits, out_i, out_q);
+    0.00 :   24c17:  mov    0x20(%rbx),%rax
+    0.00 :   24c1b:  mov    0x30(%rsp),%rdi
+    0.00 :   24c20:  mov    %r8,(%rsp)
+    0.00 :   24c24:  mov    %rbp,%rsi
+    0.00 :   24c27:  mov    %r13,%rdx
+    0.00 :   24c2a:  mov    %r15,%rcx
+    0.00 :   24c2d:  mov    %r12,%r9
+    0.00 :   24c30:  call   *%rax
+    0.00 :   24c32:  mov    0x38(%rsp),%r8
+    0.00 :   24c37:  mov    0x10(%rsp),%r9
+    0.00 :   24c3c:  cmp    %r8,%r14
+    0.00 :   24c3f:  ja     24e11 <dvb_profile::prepare::{{closure}}+0x3d1>
+    0.00 :   24c45:  lea    -0x4(%r9),%rcx
+    0.00 :   24c49:  mov    %r15,%rdx
+    0.00 :   24c4c:  mov    %rcx,%rax
+    0.00 :   24c4f:  shr    $0x2,%rax
+    0.00 :   24c53:  inc    %rax
+    0.00 :   24c56:  cmp    $0xc,%rcx
+    0.00 :   24c5a:  jb     24d14 <dvb_profile::prepare::{{closure}}+0x2d4>
+    0.00 :   24c60:  cmp    $0x7c,%rcx
+    0.00 :   24c64:  jae    24c6a <dvb_profile::prepare::{{closure}}+0x22a>
+    0.00 :   24c66:  xor    %edx,%edx
+    0.00 :   24c68:  jmp    24cdc <dvb_profile::prepare::{{closure}}+0x29c>
+    0.00 :   24c6a:  movabs $0x7ffffffffffffffc,%rdx
+    0.00 :   24c74:  xor    %esi,%esi
+    0.00 :   24c76:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   24c7a:  add    $0xffffffffffffffe4,%rdx
+    0.00 :   24c7e:  and    %rax,%rdx
+    0.00 :   24c81:  data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 183   mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
+         :
+         : 185   // 3. AWGN: independent noise on the I axis (all symbols) then the Q axis
+         : 186   //    (all symbols), per the documented draw contract.
+         : 187   for s in tx_i.iter_mut() {
+         : 188   *s += sigma * next_noise();
+    0.00 :   24c90:  vaddps (%r15,%rsi,4),%ymm0,%ymm1
+    0.00 :   24c96:  vaddps 0x20(%r15,%rsi,4),%ymm0,%ymm2
+    3.67 :   24c9d:  vaddps 0x40(%r15,%rsi,4),%ymm0,%ymm3
+    1.21 :   24ca4:  vaddps 0x60(%r15,%rsi,4),%ymm0,%ymm4
+    1.62 :   24cab:  vmovups %ymm1,(%r15,%rsi,4)
+    3.60 :   24cb1:  vmovups %ymm2,0x20(%r15,%rsi,4)
+    1.22 :   24cb8:  vmovups %ymm3,0x40(%r15,%rsi,4)
+    0.00 :   24cbf:  vmovups %ymm4,0x60(%r15,%rsi,4)
+    1.19 :   24cc6:  add    $0x20,%rsi
+    0.00 :   24cca:  cmp    %rsi,%rdx
+    0.00 :   24ccd:  jne    24c90 <dvb_profile::prepare::{{closure}}+0x250>
+    0.00 :   24ccf:  cmp    %rdx,%rax
+    0.00 :   24cd2:  je     24d0a <dvb_profile::prepare::{{closure}}+0x2ca>
+    0.00 :   24cd4:  test   $0x1c,%al
+    0.00 :   24cd6:  je     251bc <dvb_profile::prepare::{{closure}}+0x77c>
+    0.00 :   24cdc:  movabs $0x7ffffffffffffffc,%rdi
+    0.00 :   24ce6:  mov    %rax,%rsi
+    0.00 :   24ce9:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   24ced:  and    %rdi,%rsi
+    0.00 :   24cf0:  vaddps (%r15,%rdx,4),%xmm0,%xmm1
+    0.00 :   24cf6:  vmovups %xmm1,(%r15,%rdx,4)
+    0.00 :   24cfc:  add    $0x4,%rdx
+    0.00 :   24d00:  cmp    %rdx,%rsi
+    0.00 :   24d03:  jne    24cf0 <dvb_profile::prepare::{{closure}}+0x2b0>
+    0.00 :   24d05:  cmp    %rsi,%rax
+    0.00 :   24d08:  jne    24d10 <dvb_profile::prepare::{{closure}}+0x2d0>
+    0.00 :   24d0a:  lea    (%r12,%r9,1),%rdx
+    0.00 :   24d0e:  jmp    24d42 <dvb_profile::prepare::{{closure}}+0x302>
+    0.00 :   24d10:  lea    (%r15,%rsi,4),%rdx
+    0.00 :   24d14:  lea    (%r15,%r9,1),%rsi
+    0.00 :   24d18:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   24d1c:  nopl   0x0(%rax)
+    0.00 :   24d20:  vaddss (%rdx),%xmm0,%xmm1
+    0.00 :   24d24:  vmovss %xmm1,(%rdx)
+    0.00 :   24d28:  add    $0x4,%rdx
+    0.00 :   24d2c:  cmp    %rsi,%rdx
+    0.00 :   24d2f:  jne    24d20 <dvb_profile::prepare::{{closure}}+0x2e0>
+    0.00 :   24d31:  lea    (%r12,%r9,1),%rdx
+    0.00 :   24d35:  mov    %r12,%rsi
+    0.00 :   24d38:  cmp    $0xc,%rcx
+    0.00 :   24d3c:  jb     24dee <dvb_profile::prepare::{{closure}}+0x3ae>
+    0.00 :   24d42:  cmp    $0x7c,%rcx
+    0.00 :   24d46:  jae    24d4c <dvb_profile::prepare::{{closure}}+0x30c>
+    0.00 :   24d48:  xor    %ecx,%ecx
+    0.00 :   24d4a:  jmp    24dbc <dvb_profile::prepare::{{closure}}+0x37c>
+    0.00 :   24d4c:  movabs $0x7ffffffffffffffc,%rcx
+    0.00 :   24d56:  xor    %esi,%esi
+    0.00 :   24d58:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   24d5c:  add    $0xffffffffffffffe4,%rcx
+    0.00 :   24d60:  and    %rax,%rcx
+    0.00 :   24d63:  data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+         : 240   }
+         : 241   for s in tx_q.iter_mut() {
+         : 242   *s += sigma * next_noise();
+    0.00 :   24d70:  vaddps (%r12,%rsi,4),%ymm0,%ymm1
+    0.00 :   24d76:  vaddps 0x20(%r12,%rsi,4),%ymm0,%ymm2
+    1.20 :   24d7d:  vaddps 0x40(%r12,%rsi,4),%ymm0,%ymm3
+    0.00 :   24d84:  vaddps 0x60(%r12,%rsi,4),%ymm0,%ymm4
+    0.00 :   24d8b:  vmovups %ymm1,(%r12,%rsi,4)
+    2.41 :   24d91:  vmovups %ymm2,0x20(%r12,%rsi,4)
+    1.23 :   24d98:  vmovups %ymm3,0x40(%r12,%rsi,4)
+    0.00 :   24d9f:  vmovups %ymm4,0x60(%r12,%rsi,4)
+    0.00 :   24da6:  add    $0x20,%rsi
+    0.00 :   24daa:  cmp    %rsi,%rcx
+    0.00 :   24dad:  jne    24d70 <dvb_profile::prepare::{{closure}}+0x330>
+    0.00 :   24daf:  cmp    %rcx,%rax
+    0.00 :   24db2:  je     24e11 <dvb_profile::prepare::{{closure}}+0x3d1>
+    0.00 :   24db4:  test   $0x1c,%al
+    0.00 :   24db6:  je     251b3 <dvb_profile::prepare::{{closure}}+0x773>
+    0.00 :   24dbc:  movabs $0x7ffffffffffffffc,%rdi
+    0.00 :   24dc6:  mov    %rax,%rsi
+    0.00 :   24dc9:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   24dcd:  and    %rdi,%rsi
+    0.00 :   24dd0:  vaddps (%r12,%rcx,4),%xmm0,%xmm1
+    0.00 :   24dd6:  vmovups %xmm1,(%r12,%rcx,4)
+    0.00 :   24ddc:  add    $0x4,%rcx
+    0.00 :   24de0:  cmp    %rcx,%rsi
+    0.00 :   24de3:  jne    24dd0 <dvb_profile::prepare::{{closure}}+0x390>
+    0.00 :   24de5:  cmp    %rsi,%rax
+    0.00 :   24de8:  je     24e11 <dvb_profile::prepare::{{closure}}+0x3d1>
+    0.00 :   24dea:  lea    (%r12,%rsi,4),%rsi
+    0.00 :   24dee:  vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   24df2:  data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   24e00:  vaddss (%rsi),%xmm0,%xmm1
+    0.00 :   24e04:  vmovss %xmm1,(%rsi)
+    0.00 :   24e08:  add    $0x4,%rsi
+    0.00 :   24e0c:  cmp    %rdx,%rsi
+    0.00 :   24e0f:  jne    24e00 <dvb_profile::prepare::{{closure}}+0x3c0>
+    0.00 :   24e11:  test   %r9,%r9
+    0.00 :   24e14:  je     24ee1 <dvb_profile::prepare::{{closure}}+0x4a1>
+    0.00 :   24e1a:  lock incq 0x52766(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    1.21 :   24e22:  mov    %r9,%rdi
+    0.00 :   24e25:  mov    %r8,%rbx
+    0.00 :   24e28:  lock add %r9,0x52760(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   24e30:  vzeroupper
+    0.00 :   24e33:  call   *0x50b7f(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   24e39:  mov    0x18(%rsp),%rdi
+    0.00 :   24e3e:  mov    %rbx,%r8
+    0.00 :   24e41:  mov    %rax,%rbx
+    0.00 :   24e44:  mov    %rdi,0x40(%rsp)
+    0.00 :   24e49:  test   %rax,%rax
+    0.00 :   24e4c:  je     2520f <dvb_profile::prepare::{{closure}}+0x7cf>
+    0.00 :   24e52:  movabs $0x3fffffffffffffff,%rax
+    0.00 :   24e5c:  cmp    $0x2,%rdi
+    0.00 :   24e60:  jb     24f08 <dvb_profile::prepare::{{closure}}+0x4c8>
+    0.00 :   24e66:  mov    $0x1,%edx
+    0.00 :   24e6b:  mov    %rbx,%rcx
+    0.00 :   24e6e:  cmp    $0x21,%rdi
+    0.00 :   24e72:  jb     24ebd <dvb_profile::prepare::{{closure}}+0x47d>
+    0.00 :   24e74:  vbroadcastss -0x2029d(%rip),%ymm0        # 4be0 <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x50>
+    0.00 :   24e7d:  lea    -0x1(%rdi),%rsi
+    0.00 :   24e81:  xor    %ecx,%ecx
+    0.00 :   24e83:  mov    %rsi,%rdx
+    0.00 :   24e86:  and    $0xffffffffffffffe0,%rdx
+    0.00 :   24e8a:  nopw   0x0(%rax,%rax,1)
+    0.00 :   24e90:  vmovups %ymm0,(%rbx,%rcx,4)
+    0.00 :   24e95:  vmovups %ymm0,0x20(%rbx,%rcx,4)
+    0.00 :   24e9b:  vmovups %ymm0,0x40(%rbx,%rcx,4)
+    0.00 :   24ea1:  vmovups %ymm0,0x60(%rbx,%rcx,4)
+    0.00 :   24ea7:  add    $0x20,%rcx
+    0.00 :   24eab:  cmp    %rcx,%rdx
+    0.00 :   24eae:  jne    24e90 <dvb_profile::prepare::{{closure}}+0x450>
+    0.00 :   24eb0:  lea    (%rbx,%rdx,4),%rcx
+    0.00 :   24eb4:  cmp    %rdx,%rsi
+    0.00 :   24eb7:  je     24f10 <dvb_profile::prepare::{{closure}}+0x4d0>
+    0.00 :   24eb9:  or     $0x1,%rdx
+    0.00 :   24ebd:  mov    %rdi,%rsi
+    0.00 :   24ec0:  sub    %rdx,%rsi
+    0.00 :   24ec3:  data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   24ed0:  movl   $0x3f800000,(%rcx)
+    0.00 :   24ed6:  add    $0x4,%rcx
+    0.00 :   24eda:  dec    %rsi
+    0.00 :   24edd:  jne    24ed0 <dvb_profile::prepare::{{closure}}+0x490>
+    0.00 :   24edf:  jmp    24f10 <dvb_profile::prepare::{{closure}}+0x4d0>
+    0.00 :   24ee1:  mov    0x18(%rsp),%rdi
+    0.00 :   24ee6:  mov    $0x4,%ebx
+    0.00 :   24eeb:  movq   $0x0,0x40(%rsp)
+    0.00 :   24ef4:  movabs $0x3fffffffffffffff,%rax
+    0.00 :   24efe:  cmp    $0x2,%rdi
+    0.00 :   24f02:  jae    24e66 <dvb_profile::prepare::{{closure}}+0x426>
+    0.00 :   24f08:  mov    %rbx,%rcx
+    0.00 :   24f0b:  cmp    %r8,%r14
+    0.00 :   24f0e:  ja     24f16 <dvb_profile::prepare::{{closure}}+0x4d6>
+    0.00 :   24f10:  movl   $0x3f800000,(%rcx)
+    0.00 :   24f16:  lea    0x0(,%r8,4),%r14
+    0.00 :   24f1e:  cmp    %rax,%r8
+    0.00 :   24f21:  movabs $0x7ffffffffffffffc,%rcx
+    0.00 :   24f2b:  seta   %al
+    0.00 :   24f2e:  cmp    %rcx,%r14
+    0.00 :   24f31:  seta   %cl
+    0.00 :   24f34:  or     %al,%cl
+    0.00 :   24f36:  je     24f4a <dvb_profile::prepare::{{closure}}+0x50a>
+    0.00 :   24f38:  xor    %edi,%edi
+    0.00 :   24f3a:  mov    %r14,%rsi
+    0.00 :   24f3d:  vzeroupper
+    0.00 :   24f40:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   24f45:  jmp    25223 <dvb_profile::prepare::{{closure}}+0x7e3>
+    0.00 :   24f4a:  test   %r14,%r14
+    0.00 :   24f4d:  je     24fb7 <dvb_profile::prepare::{{closure}}+0x577>
+    0.00 :   24f4f:  lock incq 0x52631(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   24f57:  mov    %r14,%rdi
+    0.00 :   24f5a:  lock add %r14,0x5262e(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   24f62:  vzeroupper
+    0.00 :   24f65:  call   *0x50a4d(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   24f6b:  mov    0x38(%rsp),%r8
+    0.00 :   24f70:  mov    %rax,%r9
+    0.00 :   24f73:  mov    %r8,%rax
+    0.00 :   24f76:  test   %r9,%r9
+    0.00 :   24f79:  je     25225 <dvb_profile::prepare::{{closure}}+0x7e5>
+    0.00 :   24f7f:  mov    %r9,0x10(%rsp)
+    0.00 :   24f84:  mov    %rax,0x50(%rsp)
+    0.00 :   24f89:  cmp    $0x2,%r8
+    0.00 :   24f8d:  jb     24fcf <dvb_profile::prepare::{{closure}}+0x58f>
+    0.00 :   24f8f:  lea    -0x4(%r14),%rdx
+    0.00 :   24f93:  mov    %r9,%rdi
+    0.00 :   24f96:  xor    %esi,%esi
+    0.00 :   24f98:  vzeroupper
+    0.00 :   24f9b:  call   *0x50a37(%rip)        # 759d8 <memset@GLIBC_2.2.5>
+    0.00 :   24fa1:  mov    0x10(%rsp),%r9
+    0.00 :   24fa6:  mov    0x38(%rsp),%r8
+    0.00 :   24fab:  mov    0x18(%rsp),%rcx
+    0.00 :   24fb0:  lea    -0x4(%r14,%r9,1),%rax
+    0.00 :   24fb5:  jmp    24fdc <dvb_profile::prepare::{{closure}}+0x59c>
+    0.00 :   24fb7:  mov    $0x4,%r9d
+    0.00 :   24fbd:  xor    %eax,%eax
+    0.00 :   24fbf:  mov    %r9,0x10(%rsp)
+    0.00 :   24fc4:  mov    %rax,0x50(%rsp)
+    0.00 :   24fc9:  cmp    $0x2,%r8
+    0.00 :   24fcd:  jae    24f8f <dvb_profile::prepare::{{closure}}+0x54f>
+    0.00 :   24fcf:  mov    0x18(%rsp),%rcx
+    0.00 :   24fd4:  mov    %r9,%rax
+    0.00 :   24fd7:  test   %r8,%r8
+    0.00 :   24fda:  je     24fe2 <dvb_profile::prepare::{{closure}}+0x5a2>
+    0.00 :   24fdc:  movl   $0x0,(%rax)
+    0.00 :   24fe2:  mov    0x58(%rsp),%r14
+         :
+         : 385   // 4. QAM soft demap → interleaved LLRs.
+         : 386   let noise_var_buf = vec![noise_var; num_symbols];
+         : 387   let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
+         : 388   demapper.demap_llrs(
+         : 389   DemapInput {
+    0.00 :   24fe7:  mov    %r15,0xc0(%rsp)
+    0.00 :   24fef:  mov    %rcx,0xc8(%rsp)
+    0.00 :   24ff7:  mov    %r12,0xd0(%rsp)
+    0.00 :   24fff:  mov    %rcx,0xd8(%rsp)
+    0.00 :   25007:  movq   $0x0,0xf0(%rsp)
+    0.00 :   25013:  movq   $0x0,0x100(%rsp)
+    0.00 :   2501f:  mov    %rbx,0xe0(%rsp)
+    0.00 :   25027:  mov    %rcx,0xe8(%rsp)
+         : 398   rx_i: &tx_i,
+         : 399   rx_q: &tx_q,
+         : 400   gain_i: None,
+         : 401   gain_q: None,
+         : 402   noise_var: &noise_var_buf,
+         : 403   method: self.demap,
+    0.00 :   2502f:  movzbl 0xe0(%r14),%eax
+         : 405   DemapInput {
+    0.00 :   25037:  mov    %al,0x110(%rsp)
+    0.00 :   2503e:  mov    0x20(%rsp),%rdi
+    0.00 :   25043:  mov    0x28(%rsp),%rax
+    0.00 :   25048:  lea    0xc0(%rsp),%rsi
+         : 410   (**self).spec()
+         : 411   }
+         :
+         : 413   #[inline]
+         : 414   fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
+         : 415   (**self).demap_llrs(input, out_llrs);
+    0.00 :   25050:  mov    %r9,%rdx
+    0.00 :   25053:  mov    %r8,%rcx
+    0.00 :   25056:  vzeroupper
+    0.00 :   25059:  call   *0x20(%rax)
+    0.00 :   2505c:  mov    0x10(%rsp),%rdx
+    0.00 :   25061:  mov    0x38(%rsp),%rcx
+    0.00 :   25066:  lea    0xc0(%rsp),%rdi
+         : 423   },
+         : 424   &mut interleaved_llrs,
+         : 425   );
+         :
+         : 427   // 5. Bit deinterleave LLRs → FECFRAME order.
+         : 428   self.interleaver.deinterleave_llrs(&interleaved_llrs)
+    0.00 :   2506e:  mov    %r14,%rsi
+    0.00 :   25071:  call   37290 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs>
+    0.00 :   25076:  cmpq   $0x0,0x50(%rsp)
+    0.00 :   2507c:  je     25089 <dvb_profile::prepare::{{closure}}+0x649>
+    0.00 :   2507e:  mov    0x10(%rsp),%rdi
+    0.00 :   25083:  call   *0x50937(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25089:  cmpq   $0x0,0x40(%rsp)
+    0.00 :   2508f:  je     2509a <dvb_profile::prepare::{{closure}}+0x65a>
+    0.00 :   25091:  mov    %rbx,%rdi
+    0.00 :   25094:  call   *0x50926(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2509a:  cmpq   $0x0,0x48(%rsp)
+    0.00 :   250a0:  je     250b3 <dvb_profile::prepare::{{closure}}+0x673>
+    0.00 :   250a2:  mov    0x50917(%rip),%rbx        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   250a9:  mov    %r12,%rdi
+    0.00 :   250ac:  call   *%rbx
+    0.00 :   250ae:  mov    %r15,%rdi
+    0.00 :   250b1:  call   *%rbx
+    0.00 :   250b3:  test   %r13,%r13
+    0.00 :   250b6:  je     250c1 <dvb_profile::prepare::{{closure}}+0x681>
+    0.00 :   250b8:  mov    %rbp,%rdi
+    0.00 :   250bb:  call   *0x508ff(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   250c1:  cmpq   $0x0,0x60(%rsp)
+    0.00 :   250c7:  mov    0x30(%rsp),%r12
+    0.00 :   250cc:  mov    0x8(%rsp),%rbx
+    0.00 :   250d1:  je     250de <dvb_profile::prepare::{{closure}}+0x69e>
+    0.00 :   250d3:  mov    0x68(%rsp),%rdi
+    0.00 :   250d8:  call   *0x508e2(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   250de:  mov    0x88(%rsp),%rax
+    0.00 :   250e6:  movabs $0x7ffffffffffffffc,%rcx
+    0.00 :   250f0:  add    $0x4,%rcx
+    0.00 :   250f4:  cmp    %rcx,%rax
+    0.00 :   250f7:  je     25125 <dvb_profile::prepare::{{closure}}+0x6e5>
+    0.00 :   250f9:  test   %rax,%rax
+    0.00 :   250fc:  je     2510c <dvb_profile::prepare::{{closure}}+0x6cc>
+    0.00 :   250fe:  mov    0x90(%rsp),%rdi
+    0.00 :   25106:  call   *0x508b4(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2510c:  cmpq   $0x0,0xa0(%rsp)
+    0.00 :   25115:  je     25125 <dvb_profile::prepare::{{closure}}+0x6e5>
+    0.00 :   25117:  mov    0xa8(%rsp),%rdi
+    0.00 :   2511f:  call   *0x5089b(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25125:  mov    0x28(%rsp),%rax
+    0.00 :   2512a:  mov    (%rax),%rax
+    0.00 :   2512d:  test   %rax,%rax
+    0.00 :   25130:  je     25139 <dvb_profile::prepare::{{closure}}+0x6f9>
+    0.00 :   25132:  mov    0x20(%rsp),%rdi
+    0.00 :   25137:  call   *%rax
+    0.00 :   25139:  mov    0x28(%rsp),%rax
+    0.00 :   2513e:  cmpq   $0x0,0x8(%rax)
+    0.00 :   25143:  je     25150 <dvb_profile::prepare::{{closure}}+0x710>
+    0.00 :   25145:  mov    0x20(%rsp),%rdi
+    0.00 :   2514a:  call   *0x50870(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25150:  mov    (%rbx),%rax
+    0.00 :   25153:  test   %rax,%rax
+    0.00 :   25156:  je     2515d <dvb_profile::prepare::{{closure}}+0x71d>
+    0.00 :   25158:  mov    %r12,%rdi
+    0.00 :   2515b:  call   *%rax
+    0.00 :   2515d:  cmpq   $0x0,0x8(%rbx)
+    0.00 :   25162:  je     2516d <dvb_profile::prepare::{{closure}}+0x72d>
+    0.00 :   25164:  mov    %r12,%rdi
+    0.00 :   25167:  call   *0x50853(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2516d:  vmovups 0xc0(%rsp),%xmm0
+    0.00 :   25176:  mov    0xd0(%rsp),%rax
+    0.00 :   2517e:  mov    %rax,0x70(%rsp)
+    0.00 :   25183:  lea    0x60(%rsp),%rax
+    0.00 :   25188:  vmovaps %xmm0,0x60(%rsp)
+    0.00 :   2518e:  cmpq   $0x0,0x60(%rsp)
+    0.00 :   25194:  je     251a1 <dvb_profile::prepare::{{closure}}+0x761>
+    0.00 :   25196:  mov    0x68(%rsp),%rdi
+    0.00 :   2519b:  call   *0x5081f(%rip)        # 759c0 <free@GLIBC_2.2.5>
+         : 498   }),
+    0.00 :   251a1:  add    $0x118,%rsp
+    0.00 :   251a8:  pop    %rbx
+    0.00 :   251a9:  pop    %r12
+    0.00 :   251ab:  pop    %r13
+    0.00 :   251ad:  pop    %r14
+    0.00 :   251af:  pop    %r15
+    0.00 :   251b1:  pop    %rbp
+    0.00 :   251b2:  ret
+    0.00 :   251b3:  lea    (%r12,%rcx,4),%rsi
+    0.00 :   251b7:  jmp    24dee <dvb_profile::prepare::{{closure}}+0x3ae>
+    0.00 :   251bc:  lea    (%r15,%rdx,4),%rdx
+    0.00 :   251c0:  jmp    24d14 <dvb_profile::prepare::{{closure}}+0x2d4>
+    0.00 :   251c5:  lea    0x4ed0c(%rip),%rdx        # 73ed8 <__frame_dummy_init_array_entry+0x13b8>
+    0.00 :   251cc:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   251d1:  jmp    25223 <dvb_profile::prepare::{{closure}}+0x7e3>
+         : 514   let num_symbols = n_ldpc / self.bits_per_symbol;
+    0.00 :   251d3:  lea    0x4d94e(%rip),%rdi        # 72b28 <__frame_dummy_init_array_entry+0x8>
+    0.00 :   251da:  call   30370 <core::panicking::panic_const::panic_const_div_by_zero>
+    0.00 :   251df:  mov    $0x1,%edi
+    0.00 :   251e4:  jmp    24add <dvb_profile::prepare::{{closure}}+0x9d>
+    0.00 :   251e9:  mov    0x30(%rsp),%rax
+    0.00 :   251ee:  mov    $0x4,%edi
+    0.00 :   251f3:  mov    %r12,%rsi
+    0.00 :   251f6:  mov    %rax,%r12
+    0.00 :   251f9:  jmp    24b84 <dvb_profile::prepare::{{closure}}+0x144>
+    0.00 :   251fe:  mov    0x10(%rsp),%rsi
+    0.00 :   25203:  mov    $0x4,%edi
+    0.00 :   25208:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   2520d:  jmp    25223 <dvb_profile::prepare::{{closure}}+0x7e3>
+    0.00 :   2520f:  mov    0x10(%rsp),%rsi
+    0.00 :   25214:  mov    0x8(%rsp),%rbx
+    0.00 :   25219:  mov    $0x4,%edi
+    0.00 :   2521e:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   25223:  ud2
+    0.00 :   25225:  mov    $0x4,%edi
+    0.00 :   2522a:  jmp    24f3a <dvb_profile::prepare::{{closure}}+0x4fa>
+    0.00 :   2522f:  mov    %rax,%r14
+    0.00 :   25232:  jmp    253b4 <dvb_profile::prepare::{{closure}}+0x974>
+    0.00 :   25237:  mov    0x28(%rsp),%rcx
+    0.00 :   2523c:  mov    %rax,%r14
+    0.00 :   2523f:  cmpq   $0x0,0x8(%rcx)
+    0.00 :   25244:  je     252a1 <dvb_profile::prepare::{{closure}}+0x861>
+    0.00 :   25246:  mov    0x20(%rsp),%rdi
+    0.00 :   2524b:  call   *0x5076f(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25251:  jmp    252a1 <dvb_profile::prepare::{{closure}}+0x861>
+    0.00 :   25253:  mov    0x30(%rsp),%r12
+    0.00 :   25258:  mov    0x8(%rsp),%rbx
+    0.00 :   2525d:  cmp    0x38(%rsp),%r14
+    0.00 :   25262:  mov    %rax,%r14
+    0.00 :   25265:  jbe    252e4 <dvb_profile::prepare::{{closure}}+0x8a4>
+    0.00 :   25267:  jmp    2530f <dvb_profile::prepare::{{closure}}+0x8cf>
+    0.00 :   2526c:  cmpq   $0x0,0x50(%rsp)
+    0.00 :   25272:  mov    %rax,%r14
+    0.00 :   25275:  je     252c1 <dvb_profile::prepare::{{closure}}+0x881>
+    0.00 :   25277:  mov    0x10(%rsp),%rdi
+    0.00 :   2527c:  call   *0x5073e(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25282:  jmp    252c1 <dvb_profile::prepare::{{closure}}+0x881>
+    0.00 :   25284:  mov    %rax,%r14
+    0.00 :   25287:  cmpq   $0x0,0x48(%rsp)
+    0.00 :   2528d:  jne    252d6 <dvb_profile::prepare::{{closure}}+0x896>
+    0.00 :   2528f:  jmp    25305 <dvb_profile::prepare::{{closure}}+0x8c5>
+    0.00 :   25291:  mov    0x8(%rsp),%rbx
+    0.00 :   25296:  mov    %rax,%r14
+    0.00 :   25299:  jmp    2537c <dvb_profile::prepare::{{closure}}+0x93c>
+    0.00 :   2529e:  mov    %rax,%r14
+    0.00 :   252a1:  mov    0x8(%rsp),%rbx
+    0.00 :   252a6:  jmp    253a7 <dvb_profile::prepare::{{closure}}+0x967>
+    0.00 :   252ab:  mov    %rbp,%rdi
+    0.00 :   252ae:  mov    %rax,%r14
+    0.00 :   252b1:  call   *0x50709(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   252b7:  mov    0x8(%rsp),%rbx
+    0.00 :   252bc:  jmp    25322 <dvb_profile::prepare::{{closure}}+0x8e2>
+    0.00 :   252be:  mov    %rax,%r14
+    0.00 :   252c1:  cmpq   $0x0,0x40(%rsp)
+    0.00 :   252c7:  jne    252ef <dvb_profile::prepare::{{closure}}+0x8af>
+    0.00 :   252c9:  mov    0x8(%rsp),%rbx
+    0.00 :   252ce:  cmpq   $0x0,0x48(%rsp)
+    0.00 :   252d4:  je     25305 <dvb_profile::prepare::{{closure}}+0x8c5>
+    0.00 :   252d6:  mov    %r12,%rdi
+    0.00 :   252d9:  call   *0x506e1(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   252df:  mov    0x30(%rsp),%r12
+    0.00 :   252e4:  mov    %r15,%rdi
+    0.00 :   252e7:  call   *0x506d3(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   252ed:  jmp    2530f <dvb_profile::prepare::{{closure}}+0x8cf>
+    0.00 :   252ef:  mov    %rbx,%rdi
+    0.00 :   252f2:  call   *0x506c8(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   252f8:  mov    0x8(%rsp),%rbx
+    0.00 :   252fd:  cmpq   $0x0,0x48(%rsp)
+    0.00 :   25303:  jne    252d6 <dvb_profile::prepare::{{closure}}+0x896>
+    0.00 :   25305:  mov    0x30(%rsp),%r12
+    0.00 :   2530a:  jmp    2530f <dvb_profile::prepare::{{closure}}+0x8cf>
+    0.00 :   2530c:  mov    %rax,%r14
+    0.00 :   2530f:  test   %r13,%r13
+    0.00 :   25312:  je     25322 <dvb_profile::prepare::{{closure}}+0x8e2>
+    0.00 :   25314:  mov    %rbp,%rdi
+    0.00 :   25317:  call   *0x506a3(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2531d:  jmp    25322 <dvb_profile::prepare::{{closure}}+0x8e2>
+    0.00 :   2531f:  mov    %rax,%r14
+    0.00 :   25322:  cmpq   $0x0,0x60(%rsp)
+    0.00 :   25328:  je     25335 <dvb_profile::prepare::{{closure}}+0x8f5>
+    0.00 :   2532a:  mov    0x68(%rsp),%rdi
+    0.00 :   2532f:  call   *0x5068b(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25335:  mov    0x88(%rsp),%rax
+    0.00 :   2533d:  movabs $0x7ffffffffffffffc,%rcx
+    0.00 :   25347:  add    $0x4,%rcx
+    0.00 :   2534b:  cmp    %rcx,%rax
+    0.00 :   2534e:  je     2537c <dvb_profile::prepare::{{closure}}+0x93c>
+    0.00 :   25350:  test   %rax,%rax
+    0.00 :   25353:  je     25363 <dvb_profile::prepare::{{closure}}+0x923>
+    0.00 :   25355:  mov    0x90(%rsp),%rdi
+    0.00 :   2535d:  call   *0x5065d(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   25363:  cmpq   $0x0,0xa0(%rsp)
+    0.00 :   2536c:  je     2537c <dvb_profile::prepare::{{closure}}+0x93c>
+    0.00 :   2536e:  mov    0xa8(%rsp),%rdi
+    0.00 :   25376:  call   *0x50644(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   2537c:  mov    0x28(%rsp),%rax
+    0.00 :   25381:  mov    (%rax),%rax
+    0.00 :   25384:  test   %rax,%rax
+    0.00 :   25387:  je     25390 <dvb_profile::prepare::{{closure}}+0x950>
+    0.00 :   25389:  mov    0x20(%rsp),%rdi
+    0.00 :   2538e:  call   *%rax
+    0.00 :   25390:  mov    0x28(%rsp),%rax
+    0.00 :   25395:  cmpq   $0x0,0x8(%rax)
+    0.00 :   2539a:  je     253a7 <dvb_profile::prepare::{{closure}}+0x967>
+    0.00 :   2539c:  mov    0x20(%rsp),%rdi
+    0.00 :   253a1:  call   *0x50619(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   253a7:  mov    (%rbx),%rax
+    0.00 :   253aa:  test   %rax,%rax
+    0.00 :   253ad:  je     253b4 <dvb_profile::prepare::{{closure}}+0x974>
+    0.00 :   253af:  mov    %r12,%rdi
+    0.00 :   253b2:  call   *%rax
+    0.00 :   253b4:  cmpq   $0x0,0x8(%rbx)
+    0.00 :   253b9:  je     253c4 <dvb_profile::prepare::{{closure}}+0x984>
+    0.00 :   253bb:  mov    %r12,%rdi
+    0.00 :   253be:  call   *0x505fc(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   253c4:  mov    %r14,%rdi
+    0.00 :   253c7:  call   71b00 <_Unwind_Resume@plt>
+    0.00 :   253cc:  cmpq   $0x0,0x8(%rbx)
+    0.00 :   253d1:  jne    253e6 <dvb_profile::prepare::{{closure}}+0x9a6>
+    0.00 :   253d3:  jmp    253ef <dvb_profile::prepare::{{closure}}+0x9af>
+    0.00 :   253d5:  mov    0x28(%rsp),%rax
+    0.00 :   253da:  mov    0x20(%rsp),%r12
+    0.00 :   253df:  cmpq   $0x0,0x8(%rax)
+    0.00 :   253e4:  je     253ef <dvb_profile::prepare::{{closure}}+0x9af>
+         : 643   }
+    0.00 :   253e6:  mov    %r12,%rdi
+    0.00 :   253e9:  call   *0x505d1(%rip)        # 759c0 <free@GLIBC_2.2.5>
+         : 646   pub fn transmit_and_demodulate_with_noise(
+    0.00 :   253ef:  call   30083 <core::panicking::panic_in_cleanup>
+ Percent |	Source code & Disassembly of dvb-profile for cycles:u (46 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000037290 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs>:
+    0.00 :   37290:  push   %rbp
+         : 7     /// ```
+         : 8     ///
+         : 9     /// # Complexity
+         : 10    ///
+         : 11    /// O(N) where N = `frame_bits()`.
+         : 12    pub fn deinterleave_llrs(&self, llrs: &[Llr]) -> Vec<Llr> {
+    0.00 :   37291:  push   %r15
+    0.00 :   37293:  push   %r14
+    0.00 :   37295:  push   %r13
+    0.00 :   37297:  push   %r12
+    0.00 :   37299:  push   %rbx
+    0.00 :   3729a:  sub    $0x38,%rsp
+         : 19    self.config.nc * self.config.nr
+    0.00 :   3729e:  mov    0x20(%rsi),%rax
+    0.00 :   372a2:  mov    %rcx,%rbx
+         : 22    let n = self.frame_bits();
+         : 23    assert_eq!(
+         : 24    llrs.len(),
+    0.00 :   372a5:  mov    %rcx,0x8(%rsp)
+         : 26    self.config.nc * self.config.nr
+    0.00 :   372aa:  imul   0x18(%rsi),%rax
+    0.00 :   372af:  mov    %rax,(%rsp)
+         : 29    assert_eq!(
+    0.00 :   372b3:  cmp    %rax,%rcx
+    0.00 :   372b6:  jne    3739d <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x10d>
+    0.00 :   372bc:  mov    %rdx,%r12
+    0.00 :   372bf:  mov    %rsi,%r13
+    0.00 :   372c2:  mov    %rdi,%r15
+    0.00 :   372c5:  test   %rbx,%rbx
+    0.00 :   372c8:  je     3732b <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x9b>
+    0.00 :   372ca:  lea    0x0(,%rbx,4),%rbp
+    0.00 :   372d2:  lock incq 0x402ae(%rip)        # 77588 <dvb_profile::ALLOCATIONS>
+    0.00 :   372da:  lock add %rbp,0x402ae(%rip)        # 77590 <dvb_profile::ALLOCATED_BYTES>
+    0.00 :   372e2:  mov    %rbp,%rdi
+    0.00 :   372e5:  call   *0x3e6cd(%rip)        # 759b8 <malloc@GLIBC_2.2.5>
+    0.00 :   372eb:  test   %rax,%rax
+    0.00 :   372ee:  je     373fa <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x16a>
+    0.00 :   372f4:  mov    $0x1,%r9d
+    0.00 :   372fa:  mov    %rax,%r14
+    0.00 :   372fd:  cmp    $0x1,%rbx
+    0.00 :   37301:  je     3731a <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x8a>
+    0.00 :   37303:  lea    -0x4(%rbp),%rdx
+    0.00 :   37307:  mov    %r14,%rdi
+    0.00 :   3730a:  xor    %esi,%esi
+    0.00 :   3730c:  call   *0x3e6c6(%rip)        # 759d8 <memset@GLIBC_2.2.5>
+    0.00 :   37312:  lea    -0x4(%rbp,%r14,1),%rax
+    0.00 :   37317:  mov    %rbx,%r9
+    0.00 :   3731a:  movl   $0x0,(%rax)
+    0.00 :   37320:  mov    0x60(%r13),%rax
+    0.00 :   37324:  test   %rax,%rax
+    0.00 :   37327:  jne    3733d <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0xad>
+    0.00 :   37329:  jmp    37383 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0xf3>
+    0.00 :   3732b:  mov    $0x4,%r14d
+    0.00 :   37331:  xor    %r9d,%r9d
+    0.00 :   37334:  mov    0x60(%r13),%rax
+    0.00 :   37338:  test   %rax,%rax
+    0.00 :   3733b:  je     37383 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0xf3>
+    0.00 :   3733d:  mov    0x58(%r13),%rcx
+    0.00 :   37341:  shl    $0x3,%rax
+    0.00 :   37345:  lea    0x3c93c(%rip),%rdx        # 73c88 <__frame_dummy_init_array_entry+0x1168>
+    0.00 :   3734c:  lea    0x3c94d(%rip),%r8        # 73ca0 <__frame_dummy_init_array_entry+0x1180>
+    0.00 :   37353:  xor    %esi,%esi
+    0.00 :   37355:  data16 cs nopw 0x0(%rax,%rax,1)
+         : 70    n,
+         : 71    llrs.len()
+         : 72    );
+         : 73    let mut out = vec![Llr::zero(); n];
+         : 74    for (out_idx, &src_idx) in self.inverse.iter().enumerate() {
+         : 75    out[src_idx] = llrs[out_idx];
+    0.00 :   37360:  cmp    %rsi,%rbx
+    2.19 :   37363:  je     373e2 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x152>
+    0.00 :   37365:  mov    (%rcx,%rsi,8),%rdi
+   10.43 :   37369:  cmp    %rbx,%rdi
+    2.19 :   3736c:  jae    373ea <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x15a>
+    0.00 :   3736e:  vmovss (%r12,%rsi,4),%xmm0
+    8.82 :   37374:  inc    %rsi
+    0.00 :   37377:  add    $0xfffffffffffffff8,%rax
+    0.00 :   3737b:  vmovss %xmm0,(%r14,%rdi,4)
+   76.36 :   37381:  jne    37360 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0xd0>
+         : 86    }
+         : 87    out
+    0.00 :   37383:  mov    %r9,(%r15)
+    0.00 :   37386:  mov    %r14,0x8(%r15)
+    0.00 :   3738a:  mov    %rbx,0x10(%r15)
+         : 91    }
+    0.00 :   3738e:  add    $0x38,%rsp
+    0.00 :   37392:  pop    %rbx
+    0.00 :   37393:  pop    %r12
+    0.00 :   37395:  pop    %r13
+    0.00 :   37397:  pop    %r14
+    0.00 :   37399:  pop    %r15
+    0.00 :   3739b:  pop    %rbp
+    0.00 :   3739c:  ret
+         : 100   assert_eq!(
+    0.00 :   3739d:  lea    -0x1724(%rip),%rax        # 35c80 <<u64 as core::fmt::Display>::fmt>
+    0.00 :   373a4:  lea    0x10(%rsp),%rcx
+    0.00 :   373a9:  mov    %rsp,%rsi
+    0.00 :   373ac:  mov    %rsi,0x18(%rsp)
+    0.00 :   373b1:  lea    -0x2ee52(%rip),%rdx        # 8566 <serde_json::ser::Formatter::write_char_escape::HEX_DIGITS+0x39d6>
+    0.00 :   373b8:  lea    0x3c8b1(%rip),%r8        # 73c70 <__frame_dummy_init_array_entry+0x1150>
+    0.00 :   373bf:  lea    0x8(%rsp),%rdi
+         : 108   llrs.len()
+    0.00 :   373c4:  mov    %rbx,0x10(%rsp)
+         : 110   assert_eq!(
+    0.00 :   373c9:  mov    %rax,0x20(%rsp)
+    0.00 :   373ce:  mov    %rcx,0x28(%rsp)
+    0.00 :   373d3:  lea    0x18(%rsp),%rcx
+    0.00 :   373d8:  mov    %rax,0x30(%rsp)
+    0.00 :   373dd:  call   2dc92 <core::panicking::assert_failed::<usize, usize>>
+    0.00 :   373e2:  mov    %r9,%r15
+    0.00 :   373e5:  mov    %rbx,%rdi
+    0.00 :   373e8:  jmp    373f0 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x160>
+    0.00 :   373ea:  mov    %r9,%r15
+    0.00 :   373ed:  mov    %r8,%rdx
+         : 121   out[src_idx] = llrs[out_idx];
+    0.00 :   373f0:  mov    %rbx,%rsi
+    0.00 :   373f3:  call   2e7f7 <core::panicking::panic_bounds_check>
+    0.00 :   373f8:  ud2
+    0.00 :   373fa:  mov    $0x4,%edi
+    0.00 :   373ff:  mov    %rbp,%rsi
+    0.00 :   37402:  call   2c240 <alloc::raw_vec::handle_error>
+    0.00 :   37407:  mov    %rax,%rbx
+    0.00 :   3740a:  test   %r15,%r15
+    0.00 :   3740d:  je     37418 <gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver::deinterleave_llrs+0x188>
+    0.00 :   3740f:  mov    %r14,%rdi
+    0.00 :   37412:  call   *0x3e5a8(%rip)        # 759c0 <free@GLIBC_2.2.5>
+    0.00 :   37418:  mov    %rbx,%rdi
+    0.00 :   3741b:  call   71b00 <_Unwind_Resume@plt>
