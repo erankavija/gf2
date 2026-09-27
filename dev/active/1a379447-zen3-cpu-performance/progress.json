@@ -684,8 +684,8 @@
           "short_id": "c73ffa25",
           "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
           "classification": "research",
-          "status": "in_progress; accepted baselines and complete Sept28 profile collected; final attribution/portfolio and gates pending.",
-          "tracker_state": "in_progress",
+          "status": "done",
+          "tracker_state": "done",
           "dispatch": {
             "model": "gpt-6-sol xhigh",
             "worktree": ".agents/worktrees/agent-c73ffa25",
@@ -703,8 +703,16 @@
           "short_id": "50f0bd42",
           "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
           "classification": "research",
-          "status": "pending; merged from 44fcbdc2, 5db985b0, 6ba2e919 (session 19)",
-          "tracker_state": "backlog"
+          "status": "in_progress",
+          "tracker_state": "in_progress",
+          "dispatch": {
+            "model": "gpt-6-sol",
+            "reasoning_effort": "xhigh",
+            "worktree": ".agents/worktrees/agent-50f0bd42",
+            "branch": "worktree-agent-50f0bd42",
+            "base": "bbdf0c1f5",
+            "session": 26
+          }
         },
         {
           "id": "6e87c436",
@@ -2057,7 +2065,6 @@
       "c04dd4ac"
     ],
     "remaining_descendants": [
-      "c73ffa25",
       "50f0bd42",
       "6e87c436",
       "2ad3a3e0",
@@ -2073,15 +2080,15 @@
       "bc091474",
       "a1ad6d4e",
       "fcb04d66",
-      "00dd43c3"
+      "00dd43c3",
+      "c73ffa25"
     ],
     "active_workers": {
-      "a0812b83": "Sol high dvb_results; fresh worktree agent-a0812b83 at949550c25; generated shift/permutation publication"
+      "a0812b83": "Sol high dvb_results; fresh worktree agent-a0812b83 at949550c25; generated shift/permutation publication",
+      "50f0bd42": "Sol xhigh logical_results; fresh agent-50f0bd42 atbbdf0c1f5; M4RI preparation, heavy build/test slot"
     },
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
-    "pending_reviews": [
-      "c73ffa25; merged dd5aa481a, full CI passes, code/research pending"
-    ]
+    "pending_reviews": []
   }
 }
