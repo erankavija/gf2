@@ -1418,17 +1418,19 @@
     },
     {
       "issue": "50f0bd42",
-      "status": "pending",
+      "status": "approved",
       "reason": "Frozen dense addendum requires three predeclared unavailable shapes inside every receipt, but strict protocol v4 cannot encode them without false arm applicability. Concrete tested proposal keeps them in a generated zero-sample companion beside receipt.json.",
       "proposal": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md (merged; full CI passed)",
-      "requested": "Approve narrow companion-table amendment; measured cells,24pairs and.040resolution ceiling unchanged."
+      "requested": "Approve narrow companion-table amendment; measured cells,24pairs and.040resolution ceiling unchanged.",
+      "resolution": "Invoker explicitly approved both prepared amendments on2026-09-28; apply exact proposed changes."
     },
     {
       "issue": "c04dd4ac",
-      "status": "pending",
+      "status": "approved",
       "reason": "Documentation review228fc432 F2 requires updating obsolete scalar-only issue background. Skill requires explicit approval for any description change.",
       "proposal": "dev/active/c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md",
-      "requested": "Approve only the quoted current-route replacement sentence; preserve every criterion and gate."
+      "requested": "Approve only the quoted current-route replacement sentence; preserve every criterion and gate.",
+      "resolution": "Invoker explicitly approved both prepared amendments on2026-09-28; apply exact proposed changes."
     }
   ],
   "rework_counts": {
@@ -2040,7 +2042,8 @@
     "Session 26: a0812b83 pre-gate review found per-arm shift and NR adapter medians reported with observed ranges. Rework 1 reuses canonical order-statistic intervals and derives coverage. No prior failed code-review runs; linked design deferred-item scan found no punted scope. M4RI preparation found strict receipt JSON cannot encode predeclared unqualified shapes; worker prepares a concrete companion-table amendment for invoker approval before adoption. No timing is queued.",
     "Session26: a0812b83 DONE after fullCI, code0ec59744, doc29a58ab3 and research9d556616 all pass. Lead review and c04 pitfall audit committed. Direct .jit storage citation repaired to canonical graph query after registration rejection; all artifacts linked. c04dd4ac claimed for final checkpoint. M4RI preparation branch2b75c6462 passes release/50tests/oracles/zero-window smoke; exact plan8cells\u00d724pairs. No active build; companion-table amendment awaits invoker, queue held.",
     "Session26: c04dd4ac code review369860dc failed F1: investigation still says BMI2 unused and shifts lack materiality. Related sweep also finds old DVB rebuild status and the feasibility proposal describing the residual branch as scalar-only. Round1 fixes current narrative via citations and regenerates publication pins; no raw evidence, frozen rules or production edits.",
-    "Session26 handoff21: c04 code re-review5ffbbf6f passes after e77bbdb22/3cc62baff stale-narrative repair. Doc228fc432 fails F1 stale registered hashes and F2 obsolete issue background. F1 repaired by stable85fc review citation, regenerated table, current doc registration and independent SHA checks (20 story,18 publication assets). Full CI passes at3d3fd00b6. F2 awaits exact drafted background approval; description unchanged. Round2 reserved for these findings. M4RI prep2b75c6462 merged, fullCI passed; all5artifacts linked. Its companion-table amendment also awaits approval, queue held. No timed work queued or future timer; subsequent02:00Helsinki authorization persists."
+    "Session26 handoff21: c04 code re-review5ffbbf6f passes after e77bbdb22/3cc62baff stale-narrative repair. Doc228fc432 fails F1 stale registered hashes and F2 obsolete issue background. F1 repaired by stable85fc review citation, regenerated table, current doc registration and independent SHA checks (20 story,18 publication assets). Full CI passes at3d3fd00b6. F2 awaits exact drafted background approval; description unchanged. Round2 reserved for these findings. M4RI prep2b75c6462 merged, fullCI passed; all5artifacts linked. Its companion-table amendment also awaits approval, queue held. No timed work queued or future timer; subsequent02:00Helsinki authorization persists.",
+    "Invoker approved both pending amendments on2026-09-28. Exact c04 background replacement applied with all other description bytes unchanged. M4RI worker resumes approved companion amendment in existing pinned tree; no timed work in session."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2104,12 +2107,14 @@
       "c73ffa25",
       "a0812b83"
     ],
-    "active_workers": {},
+    "active_workers": {
+      "50f0bd42": "Sol xhigh logical_results; approved companion amendment and final untimed preparation; heavy slot"
+    },
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
     "pending_reviews": [
-      "c04dd4ac doc-review F2 requires approved background correction; F1 hashes repaired; research/holistic pending",
-      "50f0bd42 unavailable-row companion amendment approval; preparation merged and CI passed"
+      "c04dd4ac documentation re-review, then research and holistic gates",
+      "50f0bd42 final approved preparation before next authorized02:00Helsinki window"
     ]
   }
 }
