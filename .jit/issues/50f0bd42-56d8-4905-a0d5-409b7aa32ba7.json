@@ -8,7 +8,215 @@
     "fcb04d66-e997-491e-8855-a505e139a39b"
   ],
   "description": "Measure the M4RI dense comparison and the profile-selected matvec fusion, then select the dense-parity production outcome.\n\n## Background\n\n**44fcbdc2 — Measure the M4RI dense comparison.** Execute the frozen M4RI matched-operation comparison against the dense gf2 consumer and publish both operation and adapter-inclusive observations. Only the qualified consuming operation is measured. Transpose or BCH-generator results are not substitutes. Matrix construction, representation conversion, execution, and output materialization stay visible in the whole-consumer arm.\n\n**5db985b0 — Measure the profile-selected matvec fusion.** Implement at most one profile-justified dense-matvec fusion experiment that is distinct from the selected fused AND-popcount route. The current AVX2 path already fuses AND with population accumulation, and the generic carry-save comparator is already unselected. If the baseline exposes no distinct material fusion opportunity within budget, the study records a no-candidate result rather than relabelling either established route. Any intrinsic arm retains runtime feature gating plus the tested scalar fallback, and every new unsafe boundary requires an explicit safety contract.\n\n**6ba2e919 — Select the dense-parity production outcome.** Apply the frozen adoption rules to the profile-selected fusion and M4RI comparison evidence, producing one auditable dense-parity outcome. Selection uses confidence-bound allocated whole-consumer benefit, exact parity equivalence, maintenance complexity, and declared dispatch domain. M4RI isolated throughput cannot select an incompatible production route, and the current fused AND-popcount implementation remains when no candidate qualifies.\n\n## Success Criteria\n\n- [hard] REQ-01: (44fcbdc2 REQ-01) The receipt contains raw samples, exact external build and run commands, content-pinned matrices, runtime path evidence, statistical interpretation, and all construction, adapter, conversion, and output costs.\n- [hard] REQ-02: (44fcbdc2 REQ-02) Semantically equivalent output is demonstrated for the frozen dimensions and boundary cells, with isolated operation throughput reported separately from consumer benefit.\n- [hard] REQ-03: (44fcbdc2 REQ-03) Losing, inconclusive, unmatched, or unavailable cells remain in the committed evidence without triggering production adoption.\n\n- [hard] REQ-04: (5db985b0 REQ-01) The candidate is traceable to a measured cost center and has shared exact-output coverage for scalar fallback plus aligned, offset, and 0/1/63/64/65 boundary cases.\n- [hard] REQ-05: (5db985b0 REQ-02) The receipt reports allocated whole-`matvec` samples, adjusted confidence bounds, equivalence results, complexity accounting, annotated release assembly, and profile attribution.\n- [hard] REQ-06: (5db985b0 REQ-03) The current fused AND-popcount path remains the baseline rather than a new candidate, no production selection changes here, and a no-candidate or losing outcome is preserved.\n- [hard] REQ-07: (5db985b0 REQ-04) Every new unsafe boundary is isolated to `gf2-kernels-simd` and carries an explicit safety contract covering pointer validity, slice lengths, aliasing, required target features, runtime gating, and scalar fallback reachability.\n\n- [hard] REQ-08: (6ba2e919 REQ-01) The decision evaluates each eligible candidate against the predeclared worthwhile-effect, equivalence-margin, complexity, and multiple-comparison rules using only confirmatory evidence.\n- [hard] REQ-09: (6ba2e919 REQ-02) At most one bounded production change is selected with its exact dispatch domain and required before/after cells, or a no-adoption outcome preserves the established route and all losing evidence.\n- [hard] REQ-10: (6ba2e919 REQ-03) The existing fused AND-popcount and rejected generic carry-save routes remain prior evidence rather than being presented as new optimization work.\n\n## Notes\n\nMerged in session 19 (invoker ruling, 2026-09-17) from 44fcbdc2, 5db985b0, 6ba2e919; every criterion above is verbatim from its source issue and none is loosened. The merged task runs each stage in its source order (freeze committed before any trial, pilot before confirmation) and follows dev/active/1a379447-zen3-cpu-performance/worker-brief.md and protocol v4.\n\n44fcbdc2: Run only in the benchmark window on the prepared host under the full-host wrapper.\n\n5db985b0: Any intrinsic-bearing experiment must compile and test with Rust 1.95 and remain inside the SIMD kernel crate.\n\n6ba2e919: The decision record is the only authority consumed by the conditional adoption task.\n\n\nSource references: [AlbrechtBard2026].\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dc8295b275310a7a3e2fa3bbd396d0c3847458f75d30b6d26ba6643c0dc4c44d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a115a5f3b1bbec080dcfc117246cb3be2f7adfc7951313b6ea33f0ec58161c7b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../c7113c5a/survey/freeze-confirmation.py",
+          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c077b9e148e3a4a29e44f877726652ddb61ec26893829a4bb917a0517fae2a62",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "unavailable-rows.example.tsv",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a36fcacf5d3548e4d40008eb1037052c7aae0e91386688e8021910b5a25f4bde",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "815f5179831bc5cf36e9942b7ab1cf2613e0e9d003e74c14502acb029ee5f869",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "unavailable-rows-amendment-draft.md",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08391af0a472ce45557f8189e4df8b84204445209c7a8fa58595d81e9e86d212",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3ce461f6e08d609631cafe49435be0c204975a45f8402ccbbdc1906bbccacf0b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c00f26e688ba0200f2bbf064e1ca53385fd240361122707090be25c06c7c68cc",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "M4RI comparison frozen preparation and criterion disposition",
+      "path": "dev/active/50f0bd42/preparation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c077b9e148e3a4a29e44f877726652ddb61ec26893829a4bb917a0517fae2a62",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "unavailable-rows.example.tsv",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7674f8e4b50ecbe837d9441fb8e529c99cac356fca41e88be3447ec46bcd241e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ecc50e332bb9d8ab5d61f18f9dfa2fe6f62d4b179371e3e464d1c22f9f0867d3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3ce461f6e08d609631cafe49435be0c204975a45f8402ccbbdc1906bbccacf0b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4aa9aec8078531cc5e8e7b5615aa0b1301e46b0edcfc859232033047e1bd4e27",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/src/protocol.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/protocol.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c98b375b02f88ca18cb55e657aff2ce64f39b0e2a4d5c9dc88bf91b0c4033ecf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/wire.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/wire.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4835012ba867ccb46477929d07d7f0e8f0be712560c2deec32330975852f5def",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a115a5f3b1bbec080dcfc117246cb3be2f7adfc7951313b6ea33f0ec58161c7b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../c7113c5a/survey/freeze-confirmation.py",
+          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Proposed narrow unavailable-receipt amendment",
+      "path": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Generated zero-sample unavailable-row example",
+      "path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Rust 1.95 release harness and semantic validation",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Zero-window staged M4RI and gf2 smoke",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt"
+    }
+  ],
   "first_ready_at": "2026-09-16T22:37:53.286171086Z",
   "gates_required": [
     "cargo-ci",
@@ -16,7 +224,13 @@
     "research-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-28T00:14:40.589172573Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "50f0bd42-56d8-4905-a0d5-409b7aa32ba7",
   "labels": [
     "cites:AlbrechtBard2026",
@@ -35,5 +249,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-09-27T23:36:04.747091771Z"
+  "updated_at": "2026-09-28T00:15:07.977779454Z"
 }
