@@ -202,7 +202,7 @@ the scalar fallback behind runtime capability detection. This profile remains
 exploratory; feasibility makes no speed claim.
 
 The amended [plan](plan.md) and its
-[re-review](../1a379447-zen3-cpu-performance/progress.json) place the BMI2-gated
+[re-review](../1a379447-zen3-cpu-performance/reviews/85fc5ff4-r1.md) place the BMI2-gated
 scalar funnel implementation (`f8dd4dde`) and its A/B confirmation (`00dd43c3`)
 behind this profile, with publication (`a0812b83`) behind the confirmation.
 Both leaves are complete. The [accepted confirmation](../00dd43c3/confirmation-outcome.md)
