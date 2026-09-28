@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 27,
-  "wave_notes": "Wave 27 executes a83583e0. The exact 717-cell premeasurement protocol was independently reviewed and committed at 07090b4b. Premeasurement implementation and rework 1 are committed and independently reviewed. The invoker selected option C: amend protocol section 7 so the existing exact static host-admission policy binding is sufficient, without adding a live-host evidence artifact. The amendment and any matching implementation/test changes remain unstarted; the invoker then directed an immediate handoff and stop.",
+  "wave_notes": "Wave 27 executes a83583e0. Session 14 (2026-09-28): option C implemented and committed at 15d47f3bc (protocol section 7, truthful HostAdmissionPolicy in driver and validator, descriptive held-lock HostObservation, producing manifest covers host.rs/process.rs and linked support modules). Premeasurement gates cargo-ci, code-review and doc-review passed. Interactive launch stopped before LockHeld because ccx1-bench-flock.sh only locks inside the overnight benchmark window; zero-work attempt preserved under dev/active/a83583e0/failed-attempts/. Fresh campaign queued (eebbc778c) in the 1a379447 bench-window queue after the M4RI pilot, pinned worktree .agents/worktrees/agent-a83583e0-run, timer gf2-bench-window-20260929 at 2026-09-28T23:00Z.",
   "open_escalations": [],
   "waves": [
     {
@@ -1399,6 +1399,11 @@
       "task": "a83583e0 option C read-only audit",
       "model": "gpt-5.6-terra high",
       "result": "interrupted on immediate handoff direction; no file changes"
+    },
+    {
+      "task": "a83583e0 option C implementation and premeasurement checks",
+      "model": "claude-opus-5-5",
+      "result": "passed lead review; committed 15d47f3bc; all premeasurement gates passed"
     }
   ]
 }
