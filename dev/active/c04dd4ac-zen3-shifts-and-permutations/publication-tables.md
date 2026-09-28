@@ -125,7 +125,7 @@ The exploratory profile's receipt and summary match their context pins. The conf
 | `dev/active/00dd43c3/pilot-addendum.json` | `8712cd79a9d511d9bbc9b8701aa3241c85279959c3272f15c0c56f08a3df0d2f` | frozen retention rule |
 | `dev/active/00dd43c3/confirmation-derivation.txt` | `36ee11f4502b047d43c11ad65aff4ab7a11b42033e2e92703430b9abecc0e4a2` | retained and dropped pilot cells |
 | `dev/active/00dd43c3/confirmation-outcome.md` | `01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19` | completed retention disposition |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` | `4a21c61059ac28b8fdc90007c595e0ff8495dabfc3aa8f8ba29338af86f2fce8` | material workload disposition |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` | `0c00e6538c9496022b12087ea4744c5f55e56d650454fd02116b1f41d08b2a2b` | material workload disposition |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` | `ff772ffc6558e49f69803f7b89decb94baac704b770ac3e4e3cb6f1b0e80c9ad` | Rust 1.95 and scalar-fallback feasibility |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md` | `7a29558048008ea9d1d608acf0ff6b0f3e5a1a05f4f45b697ab5f6d9de832ce5` | DVB not-material disposition |
 | `dev/active/eda07788/findings.md` | `6a165de79f5e3a31665878dbf406ee6148f1ad25c1806b02aba7d1c49373d9c6` | NR no-win and unavailable mappings |
