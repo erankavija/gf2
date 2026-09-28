@@ -27,11 +27,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "d7c4a108117632eac079a34d0f7860d0c0d8af37fe0f81a9aceecd7f0241a46c",
+          "content_hash": "5ba513f3f7b10f1f8a61c2d9934fd545ce6920bfd54c8ea188738bd76ced869f",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.md"
+          "original_path": "publication-tables.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-tables.md"
         },
         {
           "asset_type": "local",
@@ -43,107 +43,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "9c2aa8e1cffcd7f90fe483290b886c687e1ac50ba041d56cdb0a5d6b514f0e3b",
+          "content_hash": "7595e364dbadd9c86a69e8433022e541794540dad3f289c8b869cbfe92c34ebc",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../f8dd4dde/retention-rule.md",
-          "resolved_path": "dev/active/f8dd4dde/retention-rule.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a2ea1ae2eeeebfe627f6ef460e7b64c5ee6813e7005c580b55314125e925a3dc",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "694d4dae728a8db813033327b9db7301ba6a5ae6460193e75b36351e7b76f061",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md",
-          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "353ae6d7f6eb4ef22d27c794cf3296ddbf86d0ae05252aaf7b56bc790ef64b96",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "review.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/review.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a5849d292ae72deb7c3c5764d032b8f3b9396fda8cb0b54e90cc1665aba872a2",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../1a379447-zen3-cpu-performance/progress.json",
-          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/progress.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../00dd43c3/confirmation-outcome.md",
-          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7a29558048008ea9d1d608acf0ff6b0f3e5a1a05f4f45b697ab5f6d9de832ce5",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "dvb-interleave-profile.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4a21c61059ac28b8fdc90007c595e0ff8495dabfc3aa8f8ba29338af86f2fce8",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "shift-profile.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b711f763f69d77a34f25ec51a25ecfa9e19abcd46fa4723850641cc062ff07a1",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "plan.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2a5fcf2827bd9f9e724f4faab059acae64d44428e6f681b55f21b32252323271",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "breakdown.json",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/breakdown.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "1894fb6393d2a88b0c53897b52978222789bc2e6b93476dfa66929c59dbd9b09",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "publication-tables.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-tables.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "1738ab405e6da15b3b102dfc550050e88a70866aebde767ed623f7736ed02cc8",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "shift-feasibility-record.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "eb381c9a11d95c26b669549fa46b9a306dc9d31be33f34ba91baa9f7b236013f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md",
-          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md"
+          "original_path": "../1a379447-zen3-cpu-performance/reviews/85fc5ff4-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/85fc5ff4-r1.md"
         },
         {
           "asset_type": "local",
@@ -155,11 +59,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "a6c634fa1bdee3da38dd06cbe8f26c2898feb8ae869cd0eba6caca6c176dcde9",
+          "content_hash": "353ae6d7f6eb4ef22d27c794cf3296ddbf86d0ae05252aaf7b56bc790ef64b96",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "investigation.md",
-          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md"
+          "original_path": "review.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/review.md"
         },
         {
           "asset_type": "local",
@@ -168,6 +72,102 @@
           "mime_type": "text/markdown",
           "original_path": "../eda07788/findings.md",
           "resolved_path": "dev/active/eda07788/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9c2aa8e1cffcd7f90fe483290b886c687e1ac50ba041d56cdb0a5d6b514f0e3b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f8dd4dde/retention-rule.md",
+          "resolved_path": "dev/active/f8dd4dde/retention-rule.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0c00e6538c9496022b12087ea4744c5f55e56d650454fd02116b1f41d08b2a2b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "shift-profile.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ff772ffc6558e49f69803f7b89decb94baac704b770ac3e4e3cb6f1b0e80c9ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "shift-feasibility-record.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7a29558048008ea9d1d608acf0ff6b0f3e5a1a05f4f45b697ab5f6d9de832ce5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dvb-interleave-profile.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "694d4dae728a8db813033327b9db7301ba6a5ae6460193e75b36351e7b76f061",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../00dd43c3/confirmation-outcome.md",
+          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b711f763f69d77a34f25ec51a25ecfa9e19abcd46fa4723850641cc062ff07a1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eb381c9a11d95c26b669549fa46b9a306dc9d31be33f34ba91baa9f7b236013f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md",
+          "resolved_path": "dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile-provenance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "888599c97c4197e66ccc87c66b53103075d55ab1869dd2a0dfaf33c48c3f06eb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2a5fcf2827bd9f9e724f4faab059acae64d44428e6f681b55f21b32252323271",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a2ea1ae2eeeebfe627f6ef460e7b64c5ee6813e7005c580b55314125e925a3dc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d7c4a108117632eac079a34d0f7860d0c0d8af37fe0f81a9aceecd7f0241a46c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/00dd43c3/v4-r1-confirmation/acceptance-summary.md"
         }
       ],
       "commit": null,
@@ -175,6 +175,31 @@
       "format": "markdown",
       "label": "Completed story evidence and dispositions",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../00dd43c3/confirmation-outcome.md",
+          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9c2aa8e1cffcd7f90fe483290b886c687e1ac50ba041d56cdb0a5d6b514f0e3b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f8dd4dde/retention-rule.md",
+          "resolved_path": "dev/active/f8dd4dde/retention-rule.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Proposed issue-background correction",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:17:30.493810853Z",
@@ -195,7 +220,7 @@
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-28T00:22:04.408429181Z",
+      "updated_at": "2026-09-28T00:33:10.417704205Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -229,5 +254,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-28T00:31:17.805582871Z"
+  "updated_at": "2026-09-28T00:34:01.703588486Z"
 }
