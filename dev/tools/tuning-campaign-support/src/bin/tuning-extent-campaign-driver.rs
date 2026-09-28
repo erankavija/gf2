@@ -16,7 +16,7 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 use tuning_campaign_support::campaign::*;
 use tuning_campaign_support::host::{
-    command_text, inherited_lock, lock_available, require_affinity, CpuAffinity,
+    command_text, inherited_lock, lock_available, require_affinity, CpuAffinity, HostObservation,
 };
 use tuning_campaign_support::journal::{
     CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
@@ -128,33 +128,51 @@ fn record_budget(
     Ok(())
 }
 
+/// What admits a session to the host.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum HostAdmission {
+    /// The single `ccx1-bench-flock.sh --full-host` outer lock.
+    FullHostOuterLock,
+}
+/// The role of the journaled held-lock `HostObservation`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum HostObservationRole {
+    /// Retained data that gates neither admission nor resume.
+    Descriptive,
+}
+/// Protocol §7 host admission. Driver and validator both require this exact
+/// declaration.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct HostAdmissionPolicy {
-    required_observations: Vec<String>,
-    no_competing_substantial_work_required: bool,
-    isolated_process_listing_is_sufficient: bool,
-    held_mutex_is_sufficient: bool,
+    admission: HostAdmission,
+    host_observation: HostObservationRole,
+    /// The serialized `HostObservation` fields, sorted.
+    recorded_observations: Vec<String>,
 }
 impl HostAdmissionPolicy {
     fn declared() -> Self {
         Self {
-            required_observations: [
+            admission: HostAdmission::FullHostOuterLock,
+            host_observation: HostObservationRole::Descriptive,
+            recorded_observations: [
                 "affinity",
-                "available-memory",
-                "competing-cpu-gpu-work",
-                "cpu-features",
-                "cpu-model",
-                "governor",
-                "load",
-                "os-kernel",
+                "available_memory_kib",
+                "cpu_flags",
+                "cpu_model",
+                "governors",
+                "hostname",
+                "load_average",
+                "observed_utc",
+                "os_kernel",
+                "smt_active",
+                "topology",
             ]
             .into_iter()
             .map(str::to_owned)
             .collect(),
-            no_competing_substantial_work_required: true,
-            isolated_process_listing_is_sufficient: false,
-            held_mutex_is_sufficient: false,
         }
     }
 }
@@ -1591,6 +1609,7 @@ fn run_session(stage: &Path, session_id: &str) -> io::Result<SessionOutcome> {
     let result = match (|| {
         let observed = CpuAffinity::observe()?;
         log.append(JournalEvent::DriverDiagnostic,None,json!({"kind":"cpu-affinity","phase":"held-lock","observed":observed,"expected":config.affinity}))?;
+        log.append(JournalEvent::DriverDiagnostic,None,json!({"kind":"host-observation","phase":"held-lock","observed":HostObservation::observe()?}))?;
         require_affinity(&config.affinity, &observed)?;
         verify_config(&config)?;
         work(&config, &mut log, start)
@@ -2548,6 +2567,16 @@ mod tests {
         assert_eq!(inherited_lock(&path).unwrap(), std::process::id());
         lock.unlock().unwrap();
         assert!(inherited_lock(&path).is_err());
+    }
+    #[test]
+    fn host_admission_policy_names_exactly_the_recorded_host_observation() {
+        let recorded = serde_json::to_value(HostObservation::observe().unwrap()).unwrap();
+        let mut fields: Vec<String> = recorded.as_object().unwrap().keys().cloned().collect();
+        fields.sort_unstable();
+        assert_eq!(
+            fields,
+            HostAdmissionPolicy::declared().recorded_observations
+        );
     }
     #[test]
     fn simultaneous_binary_streams_are_drained_without_loss() {

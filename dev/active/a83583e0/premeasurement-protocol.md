@@ -690,11 +690,17 @@ measurement phase. The only permitted writes during measurement are outside
 the repository in the stage. Narrative-only changes after completion do not
 invalidate evidence; their producing-behavior identity remains pinned.
 
-The lead observes the actual host, including load, competing CPU/GPU work,
-governor, CPU model/features, OS, affinity, and available memory. A sandbox's
-isolated process listing is not host-idle evidence. A held mutex alone is not
-host-idle evidence. The driver records these observations and requires the
-prepared host to have no competing substantial work before entry.
+Host admission is the exact static `HostAdmissionPolicy` binding in the
+campaign configuration, which the driver and the independent validator both
+require to equal the reviewed declaration, together with the single full-host
+outer lock below. The lock serializes this campaign against every other
+benchmark job that honors it. Directly after the held-lock affinity record,
+the driver journals one runtime `HostObservation` (hostname, CPU model and
+flags, OS, governors, SMT, affinity, topology, load average, available memory,
+and observation time) as retained descriptive data; the policy names its exact
+field set, which the validator checks. Load average and available memory are
+not admission checks or resume identity, and no live competing-work evidence
+is produced. (Amendment 2026-09-28, invoker option C.)
 
 The shell launcher invokes `dev/scripts/ccx1-bench-flock.sh --full-host` once
 around `run-session`, covering every calibration and composition action in
@@ -887,9 +893,9 @@ before edits; it is not silently taken from another issue's completed scope.
 - Workspace/dev-only support wiring: `Cargo.toml`, `Cargo.lock`,
   `dev/tools/tuning-campaign-support/Cargo.toml`, and its
   `src/lib.rs`, `src/transport.rs`, `src/timing.rs`, `src/seed.rs`,
-  `src/statistics.rs`, `src/journal.rs`, `src/campaign.rs`, and
-  `src/bin/tuning-extent-campaign-driver.rs`, plus focused tests within that
-  crate. The shared API covers opaque work manifests/process orchestration,
+  `src/statistics.rs`, `src/journal.rs`, `src/campaign.rs`, `src/host.rs`,
+  `src/process.rs`, and `src/bin/tuning-extent-campaign-driver.rs`, plus
+  focused tests within that crate. The shared API covers opaque work manifests/process orchestration,
   timeout/streaming progress, the three session modes and their typed lifecycle,
   strict resume/checkpoint/recovery, and generic coupled analyses; owner
   selector semantics remain in the owner producers.
