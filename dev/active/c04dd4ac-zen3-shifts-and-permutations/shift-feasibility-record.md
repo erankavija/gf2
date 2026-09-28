@@ -6,9 +6,10 @@
 **Barrier:** REQ-05, the planning-time Rust 1.95 compile and assembly record
 
 The [workload profile](shift-profile.md) records a material disposition and
-nominates two forms. REQ-05 holds the profile open until a Rust 1.95 compile
-and assembly record proves each nominated form feasible, with a runtime-gated
-scalar fallback for every capability-gated form. This artifact is that record.
+nominates two forms. REQ-05 requires a Rust 1.95 compile and assembly record
+for each form, with a runtime-gated scalar fallback. This artifact satisfies
+that planning-time barrier; the [completed confirmation](../00dd43c3/confirmation-outcome.md)
+is the separate authority for the selected route's performance and retention.
 
 It is planning evidence. It changes no production crate, adds no production
 line, measures no time and claims no speedup. Its whole subject is what the
@@ -93,7 +94,7 @@ The gate is a single `is_x86_feature_detected!` check per form in the
 prototype's `select`, applied before any dispatch, and each entry point
 returns the form it actually ran. A form whose feature the host lacks becomes
 the scalar funnel, and the caller can see that it did. The fallback is the
-portable funnel the production paths run today, compiled with no
+portable funnel the selected production route retains, compiled with no
 target-feature scope and no `unsafe`. On a non-x86 target the gate resolves to
 the fallback unconditionally.
 
@@ -129,49 +130,26 @@ The prototype is also not a candidate implementation. It has no `BitVec`
 dependency, no dispatch table entry and no feature flag; it exists to be
 compiled and read.
 
-## Where REQ-05 continues
+## Completed bracket and route
 
-The amended [plan](plan.md) rests on this record. It creates the candidate
-implementation leaf for the BMI2-gated scalar funnel (`f8dd4dde`) and its A/B
-confirmation leaf (`00dd43c3`), makes them depend on this profile, and re-homes
-publication behind the confirmation in the instantiated dependency graph. The
-AVX2 lane-crossing funnel stays feasible and unselected in this epic; the
-plan's decision table records the ruling. This record creates no issue itself.
+The amended [plan](plan.md) uses this feasibility record to place the selected
+BMI2-gated funnel implementation (`f8dd4dde`) and its A/B confirmation
+(`00dd43c3`) behind the material profile. Both leaves are complete, and
+publication follows the confirmation in the instantiated dependency graph.
+The AVX2 lane-crossing form remains feasible at Rust 1.95 and unselected in
+this epic for the reason in the plan's decision table. The prototype remains
+planning evidence, not an implementation or a speed claim.
 
-## Scope proposal for the candidate leaves
+The [retained production route](../f8dd4dde/retention-rule.md) places the BMI2
+funnel in `gf2-kernels-simd`, the owning CPU intrinsic crate. `BitVec` sends
+residual offsets to [`crate::residual_shift`](../../../crates/gf2-core/src/residual_shift.rs),
+which selects the bundle when the non-default `simd` cargo feature and observed
+`bmi2` capability permit it, and otherwise runs the portable scalar funnel.
+The shared behavioural suite checks both routes, including the fallback.
 
-Input to that amendment, held to what the evidence above supports. The leaves'
-own criteria govern where they differ from it.
-
-Every claim below about the production shift paths is pinned in
-[`survey/shift-source-evidence.json`](survey/shift-source-evidence.json)
-rather than by a line number here.
-
-**Candidate implementation leaf.** The kernel lives in `gf2-kernels-simd`
-beside the existing word-shift kernels, since it is the only production crate
-that may contain `unsafe` and the AVX2 form needs it; the BMI2 form needs a
-`#[target_feature]` scope but no raw pointers, so it can be written safely
-there too. The dispatch point is the `bit_shift != 0` branch of
-`BitVec::shift_left` and `BitVec::shift_right`, which today falls straight
-into the scalar funnel while the `bit_shift == 0` branch already consults
-`crate::simd::maybe_simd()`; the residual branch gains the same consultation,
-behind the same `simd` cargo feature and the same runtime detection, with the
-present loop as the fallback. Evidence supports building the BMI2 form first:
-it reaches its intended instructions from the expression the production loop
-already contains, so it costs a target-feature scope and a gate rather than a
-new kernel. The leaf's behavioural suite is the existing `BitVec` shift tests
-extended with the corpus shape this record's prototype uses, run once per
-form through the repository's dispatch-forcing convention, with the
-process-global override serialized as `crates/gf2-core/tests/prime_route_dispatch.rs` does.
-
-**Confirmation leaf.** An A/B family over the same arms the profile measured,
-residual against residual: the current scalar funnel as A and the gated kernel
-as B, at the profile's material cells, so the confirmation answers the
-question the profile left open rather than re-running the word-aligned
-control. Its cell count is whatever P-20 admits for this family's ledger at
-the time it is frozen, computed from the campaign support sources, and its
-addendum is derived from the committed pilot receipt by the canonical
-freezer. A family whose ledger admits no confirmatory cell records that
-arithmetic as its outcome.
-
-Both leaves depend on this profile. Neither is authorized by this record.
+The [accepted confirmation](../00dd43c3/confirmation-outcome.md) compares the
+same residual operation through the scalar and BMI2 routes, using the material
+cells selected from the exploratory profile under the frozen family rule. Its
+acceptance summary qualifies and its frozen retention rule keeps the BMI2 route.
+The dropped lane-crossing pilot cell remains exploratory and is distinct from
+the unimplemented AVX2 nomination.
