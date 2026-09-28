@@ -11,7 +11,7 @@
     "description": "Whole-consumer comparison of public BitMatrix::matvec with the qualified external M4RI mzd_mul over the qualified shapes, both arms charging construction, conversion, execution and output. This addendum is the pilot: every cell is exploratory and no cell decides adoption."
   },
   "frozen": {
-    "frozen_utc": "2026-09-16T16:16:04Z"
+    "frozen_utc": "2026-09-28T06:22:24Z"
   },
   "effect": {
     "worthwhile_speedup": null,

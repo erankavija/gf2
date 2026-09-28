@@ -48,6 +48,8 @@ def closure():
             + [
                 str(HARNESS / "build.rs"),
                 str(STORY / "dense-parity-addendum.md"),
+                str(STORY / "dense-parity-addendum-v1.md"),
+                str(STORY / "dense-parity-amendment-v2.md"),
                 str(STORY / "m4ri-operation-match.md"),
                 str(STORY / "m4ri-probe-record.txt"),
                 str(SURVEY / "m4ri_matvec_arm.c"),

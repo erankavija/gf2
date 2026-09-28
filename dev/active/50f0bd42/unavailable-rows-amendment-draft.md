@@ -1,12 +1,13 @@
-# Draft: M4RI predeclared unavailable-row recording
+# Approved proposal: M4RI predeclared unavailable-row recording
 
 > **Diátaxis Type:** Explanation
 >
-> **Status:** proposed; the frozen dense-parity addendum remains authoritative.
+> **Status:** approved 2026-09-28; incorporated in the
+> [versioned amendment](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md).
 
 ## Conflict and narrow replacement
 
-The [frozen addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#m4ri-comparator)
+The [v1 addendum](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md#m4ri-comparator)
 states:
 
 > Three anchor strides have no M4RI arm. Their rows are retained in every
@@ -22,7 +23,7 @@ rejected by the [case decoder](../2037941f-profile-and-optimize-mid-range-buffer
 Declaring a false core arm or an unqualified timed case would change the
 measurement contract.
 
-Proposed replacement for that paragraph, subject to owner approval:
+Approved replacement for that paragraph:
 
 > Three anchor strides have no qualified M4RI arm. Each M4RI receipt directory
 > contains a generated `unavailable-rows.tsv` companion that records their
@@ -43,7 +44,7 @@ row is counted as a comparison or used for resolution.
 ## Prepared implementation
 
 The [canonical dense campaign tool](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs)
-has a proposed `unavailable` projection. It validates the family addendum
+has an `unavailable` projection. It validates the family addendum
 through the canonical protocol model, checks the M4RI family and frozen prose
 digest, and rejects overlap with any measured cell. It then renders tab-separated rows with
 `cell_id`, `stride_words`, `status`, `samples`, `comparisons`, and `reason`.
@@ -53,7 +54,7 @@ Its header names the family and addendum digest. The
 places the projection beside `receipt.json` after pilot finalization. The generator
 derives rows from the existing `UNAVAILABLE_ROWS` constants; it creates no
 new qualification, arm, timing cell, or statistical rule. The queue entry
-remains held while this amendment is undecided.
+remains under lead control until the committed preparation passes review.
 
 A later confirmation uses the same command with its freezer-derived addendum
 and output path in that confirmation's receipt directory:
@@ -70,6 +71,6 @@ and family description after ordinary schema validation; it does not require
 the pilot's exact transcription. The confirmation still follows the canonical
 [freezer](../c7113c5a/survey/freeze-confirmation.py) and runner checks.
 
-An approved amendment should be committed and included in the comparator
-receipt's producing-input snapshot before the timed run. The frozen v1 bytes
-and prior receipts remain unchanged.
+The approved amendment is in the comparator receipt's
+[producing-input snapshot](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json).
+The frozen v1 bytes and prior receipts remain unchanged.
