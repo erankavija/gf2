@@ -2070,7 +2070,8 @@
     "handoff-18.md",
     "handoff-19.md",
     "handoff-20.md",
-    "handoff-21.md"
+    "handoff-21.md",
+    "handoff-22.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -2096,7 +2097,7 @@
       "6e87c436",
       "2ad3a3e0"
     ],
-    "note": "Wave3 only. Shift story c04dd4ac DONE; dense2037941f remains. Both user approvals applied. No active workers/builds/gates; M4RI pilot is scheduled for2026-09-29 02:00Helsinki. Lead waits to process its receipt.",
+    "note": "Wave3 only. Shift story c04dd4ac DONE; dense2037941f remains. Both amendments approved and applied. No active workers/builds/gates. Session ended by user; M4RI pilot timer remains scheduled for2026-09-29 02:00Helsinki.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
     "completed_this_session": [
@@ -2124,7 +2125,9 @@
       "worktree": ".agents/worktrees/agent-50f0bd42",
       "head": "458f38afe7b33f7260bbdeca5a96c768d3f80b36",
       "timer": "gf2-bench-window-20260929.timer",
-      "status": "timer verified active; sole unfinished active queue job; waiting for scheduled run"
-    }
+      "status": "timer verified active at2026-09-28T11:22Z; pilot not started; session ended by invoker"
+    },
+    "ended_at": "2026-09-28T11:22:36Z",
+    "end_reason": "Invoker explicitly requested handoff and end of session; authorized scheduled timer remains active."
   }
 }
