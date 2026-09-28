@@ -1,7 +1,7 @@
 {
   "schema": "dense-parity-source-evidence-v1",
   "issue": "96c94b81",
-  "addendum_identity": "2037941f-dense-parity-v1",
+  "addendum_identity": "2037941f-dense-parity-v2",
   "claims": [
     {
       "project": "gf2",
@@ -95,57 +95,57 @@
     },
     {
       "project": "gf2",
-      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "commit": "e2e3d8ff3158ba152173cf67b913638c35dc26e3",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 115,
       "occurrences": 1,
       "verbatim": "    pub fn with_capacity(bits: usize) -> Self {",
-      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+      "sha256": "21bed369cb2ca6345c923df438c7a356d3e928bec18cd029c89cfa9245b0d76f",
       "why": "The output allocation is one reservation of the ceiling of rows over 64 words, made inside the timed public call."
     },
     {
       "project": "gf2",
-      "commit": "a64de229e17134f29b7ffe7def4c8e8e38e8b7dd",
+      "commit": "e2e3d8ff3158ba152173cf67b913638c35dc26e3",
       "path": "crates/gf2-core/src/bitvec.rs",
       "line": 283,
       "occurrences": 1,
       "verbatim": "    pub fn push_bit(&mut self, bit: bool) {",
-      "sha256": "a0981e13e454bed64ae0b3fcfbd05e99fb712804c62b74a4b7ba7182667fdb69",
+      "sha256": "21bed369cb2ca6345c923df438c7a356d3e928bec18cd029c89cfa9245b0d76f",
       "why": "Each output bit is appended through a branch on the parity value, so output density is part of the allocated cost."
     },
     {
       "project": "gf2",
-      "commit": "cfa3184188c277c6e42afab46d1e1686a932b99e",
+      "commit": "c3010276373f3b60332cbcdebb1abae9f5be79c2",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 316,
+      "line": 343,
       "occurrences": 1,
       "verbatim": "unsafe fn avx2_and_popcnt(lhs: &[u64], rhs: &[u64]) -> u64 {",
-      "sha256": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12",
       "why": "This is the kernel identity the bundle field reaches on an AVX2 host, and the body the complexity budget is measured against."
     },
     {
       "project": "gf2",
-      "commit": "cfa3184188c277c6e42afab46d1e1686a932b99e",
+      "commit": "c3010276373f3b60332cbcdebb1abae9f5be79c2",
       "path": "crates/gf2-kernels-simd/src/x86/avx2.rs",
-      "line": 686,
+      "line": 713,
       "occurrences": 1,
       "verbatim": "    fn and_popcnt_fn(lhs: &[u64], rhs: &[u64]) -> u64 {",
-      "sha256": "f119a166b2836fc25dafcf482dea95035fc8d9d8e68c324a6daa0c504e6e539f",
+      "sha256": "0764c8c70a58d88df49829166826b9fe402fc45e9365222706d3d6f1a0e8be12",
       "why": "The bundle field is this wrapper, so an arm that devirtualises it measures a different route than a consumer reaches."
     },
     {
       "project": "gf2",
-      "commit": "6b81438f149ed7f2b6201eb5951cf677f52f8c8a",
+      "commit": "e2e3d8ff3158ba152173cf67b913638c35dc26e3",
       "path": "crates/gf2-kernels-simd/src/lib.rs",
-      "line": 129,
+      "line": 130,
       "occurrences": 1,
       "verbatim": "    pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,",
-      "sha256": "eeb7802dca6163c711b226d565d26dfc0de2093ed0087c19ad56235a5ed0455e",
+      "sha256": "513dd58d846a668f6c0845f68b05c81fbc5c7c80e4b90b7e415fc0c210b4cc43",
       "why": "The carry-save fused comparator stays a direct comparator field that no automatic resolver selects, so it is not a candidate here."
     },
     {
       "project": "gf2",
-      "commit": "f689ccacedcb855448f58068d45334a9574ab1cf",
+      "commit": "a4876dededf952489f491f05ce2730acf1f26016",
       "path": "crates/gf2-core/Cargo.toml",
       "line": 57,
       "occurrences": 1,

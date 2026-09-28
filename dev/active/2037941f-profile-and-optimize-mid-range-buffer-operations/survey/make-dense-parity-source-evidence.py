@@ -185,7 +185,7 @@ def main():
     document = {
         "schema": "dense-parity-source-evidence-v1",
         "issue": "96c94b81",
-        "addendum_identity": "2037941f-dense-parity-v1",
+        "addendum_identity": "2037941f-dense-parity-v2",
         "claims": records,
     }
     (ROOT / OUTPUT).write_text(json.dumps(document, indent=2) + "\n")

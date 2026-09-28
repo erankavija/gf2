@@ -1,6 +1,6 @@
 //! Dense-parity measurement harness for story `2037941f` (jit:e1f9a78f).
 //!
-//! The harness implements the frozen addendum `2037941f-dense-parity-v1`: its
+//! The harness implements the frozen addendum `2037941f-dense-parity-v2`: its
 //! questions, their exact cell matrices, its seeding rule, its cache policies
 //! and its untimed correctness oracle. It changes no production code and no
 //! production selection.
