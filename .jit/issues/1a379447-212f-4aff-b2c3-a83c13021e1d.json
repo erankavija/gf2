@@ -1050,6 +1050,103 @@
       "format": "markdown",
       "label": "Session 25: DVB restored to 02:00 queue, handoff requested",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-20.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d8effdc93be93cc4af263876fe766fe56acec7e3c0bdae0d0ca61fff8ace4962",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ac2816e18e05e4e24b270801c26b186b713032200d347225b29be26810c1d32",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/c04dd4ac-pitfall-audit.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/c04dd4ac-pitfall-audit.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c077b9e148e3a4a29e44f877726652ddb61ec26893829a4bb917a0517fae2a62",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../50f0bd42/unavailable-rows.example.tsv",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a7b283a85c3d07768557bfc90b9c9a9694650a723e8bffa50e0fc8f7ee81ffdd",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/a0812b83-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/a0812b83-r1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08391af0a472ce45557f8189e4df8b84204445209c7a8fa58595d81e9e86d212",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../00dd43c3/confirmation-outcome.md",
+          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "815f5179831bc5cf36e9942b7ab1cf2613e0e9d003e74c14502acb029ee5f869",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../50f0bd42/unavailable-rows-amendment-draft.md",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0bb73e8e8fe934d9d6899bbfa6c4d1d9ccd99e9e2d638638b524eeaeff68c95",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../50f0bd42/preparation.md",
+          "resolved_path": "dev/active/50f0bd42/preparation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "487d7975a03ccc8010f9aa5e493b8a7f19bdc99916b63aa7a45e4d484d1c9e61",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../fcb04d66/no-change-outcome.md",
+          "resolved_path": "dev/active/fcb04d66/no-change-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bea1a202ede5a94cee01d51c96ae227aafbdc35d13db81b26f3d4da52d59f6a1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../a1ad6d4e/outcome.md",
+          "resolved_path": "dev/active/a1ad6d4e/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f18f3a52b884020a6f4f97bfd8943507e8c074125553753276452bcfdc0eb79d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "progress.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/progress.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Session26 wave3 handoff and pending decisions",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-21.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -1073,5 +1170,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-26T14:42:36.203789580Z"
+  "updated_at": "2026-09-28T00:36:48.389611753Z"
 }
