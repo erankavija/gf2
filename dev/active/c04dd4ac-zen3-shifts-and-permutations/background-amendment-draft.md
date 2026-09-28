@@ -1,15 +1,15 @@
-# Proposed correction to the shift-story background
+# Approved correction to the shift-story background
 
 > **Diátaxis Type:** Explanation
 >
-> **Status:** awaiting invoker approval; the issue description is unchanged.
+> **Status:** approved by the invoker and applied on 2026-09-28.
 
 Documentation review `228fc432` finding F2 identifies a stale statement in
 story `c04dd4ac`. The [implemented route](../f8dd4dde/retention-rule.md) and
 [confirmation outcome](../00dd43c3/confirmation-outcome.md) establish the
 current behavior.
 
-Replace only the first sentence under `## Background`:
+Approved replacement of only the first sentence under `## Background`:
 
 > BitVec explicitly dispatches whole-word shifts; residual-bit shifts use ordinary Rust loops.
 
