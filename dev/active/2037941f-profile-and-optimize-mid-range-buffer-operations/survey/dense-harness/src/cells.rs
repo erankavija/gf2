@@ -19,7 +19,7 @@ pub const ADDENDUM_PATH: &str =
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md";
 /// Content identity of that frozen document, verified before a timed run.
 pub const ADDENDUM_SHA256: &str =
-    "5807a3b5b17e190d7f4dfae5db197ae02d09d01e041cf64c24cef694838709ae";
+    "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2";
 /// Addendum identity string the frozen document declares.
 pub const ADDENDUM_IDENTITY: &str = "2037941f-dense-parity-v2";
 /// Freeze time the frozen document declares.

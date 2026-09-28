@@ -334,9 +334,10 @@ Cache policies are exact:
   before the first window, and fix `cold_calls` to one. It is a first-use
   series, not a hardware cache-miss-latency claim.
 
-Every exploratory cell runs exactly 24 paired executions, the protocol's pilot
-maximum, except the rows this addendum declares unavailable in advance, which
-run none. Every confirmatory cell runs exactly 24 fresh paired executions. Each
+Every measured exploratory cell runs exactly 24 paired executions, the
+protocol's pilot maximum. The three predeclared unqualified M4RI shapes have
+no runner-plan cell and execute no pairs. Every confirmatory cell runs exactly
+24 fresh paired executions. Each
 pair launches adjacent fresh baseline and compared-arm children in the
 protocol's seed-determined, two-pair-counterbalanced order. Each warm or
 streaming execution uses five windows targeted at 100 ms after calibration; a
@@ -413,7 +414,9 @@ The decision interval $[\ell,u]$ follows protocol version 4: `improved` when
 $\ell$ reaches the worthwhile or material-gap threshold, `not-worse` when
 $\ell\ge 1/\theta_{\mathrm{eq}}$, `regressed` when $u<1/\theta_{\mathrm{eq}}$,
 and `inconclusive` otherwise. Negative, not-material, unstable, inconclusive,
-unavailable, and inapplicable rows stay in the receipt.
+runtime-discovered unavailable, and inapplicable measured rows stay in
+`receipt.json`. The three predeclared unqualified M4RI shapes stay in its
+`unavailable-rows.tsv` companion.
 
 ## Effect, resolution, and complexity rules
 
@@ -584,7 +587,8 @@ attempt abandoned once by the next session before that cell is measured again.
 Receipts retain exact commands, raw pairs and windows, seeds, cache claims,
 observed routes and operand alignment, fixture-bank sizes, output validation,
 assembly, profiles, host facts, statistical decisions, and every negative,
-unavailable, or inapplicable row.
+runtime-discovered unavailable, or inapplicable measured row. M4RI receipt
+directories also retain the companion of predeclared unqualified shapes.
 
 A current pre-change baseline and a fresh after build are mandatory for any
 production adoption. Navigation commits and unrelated worktree changes are
