@@ -7,7 +7,7 @@
 > **Owning issue:** `e1f9a78f`
 >
 > **Implements:** [`dense-parity-addendum.md`](dense-parity-addendum.md),
-> identity `2037941f-dense-parity-v1`
+> identity `2037941f-dense-parity-v2`
 
 This document is the `parity-measurement-interface` named by
 [`plan.md`](plan.md). It fixes cell identity, semantic validation, route
@@ -78,10 +78,9 @@ The three rows the addendum declares unavailable in advance,
 `m4ri-gap-65x576-unqualified`, `m4ri-gap-65x4032-unqualified` and
 `m4ri-gap-65x4160-unqualified`, carry no workload and no samples, so they take
 no ordinal and generate no seed. They are not runner cells; the harness
-publishes them as `cells::UNAVAILABLE_ROWS` with their strides and reasons, and
-`dense-campaign pins` prints them, so the comparator family's receipt and table
-generator retains each row with the reason the matched-operation specification
-gives. Because those rows are exploratory they spend no comparison.
+publishes them as `cells::UNAVAILABLE_ROWS` with their strides and reasons.
+`dense-campaign unavailable` projects them to an `unavailable-rows.tsv`
+companion beside the M4RI receipt with zero samples and comparisons.
 
 `dense-campaign cells` transcribes one family into a protocol version-4
 campaign JSON addendum against `dev/active/f547c394/addendum.schema.json`. The
@@ -202,8 +201,8 @@ frozen fixed call count, executes no measured operation before the first
 window, and calibrates nothing.
 
 Each timed execution runs the protocol's five windows at its 100 ms target and
-each exploratory cell runs its pilot maximum of paired executions, both frozen
-by the addendum. The projected plan therefore states that pair count rather
+each measured exploratory cell runs its pilot maximum of paired executions,
+both frozen by the addendum. The projected plan therefore states that pair count rather
 than leaving the protocol to select its pilot minimum, and every arm refuses a
 request whose window count or target is neither that protocol nor the validation
 position's zero-window budget.
@@ -248,7 +247,9 @@ code: the terminal record is `complete` and every declared cell has one
 
 The receipt directory is the canonical output of a timed run: `receipt.json`,
 the plan, the pinned inputs, the execution log, the checkpoint manifest, and the
-acceptance summary written by `benchmark-acceptance`. Arms emit exactly one
+acceptance summary written by `benchmark-acceptance`. The M4RI directory also
+contains the generated `unavailable-rows.tsv` companion for predeclared
+unqualified shapes; they are absent from `receipt.json`. Arms emit exactly one
 `zen3-benchmark-arm-result-v1` line each; the runner assembles
 `zen3-benchmark-receipt-v1`. The harness defines no receipt schema of its own.
 
@@ -262,7 +263,8 @@ The non-timed smoke produces no receipt. Its output is the shared
 `survey/make-dense-producing-inputs.py` writes
 `survey/dense-producing-inputs.json`, the content closure every receipt
 snapshots: the measured crates' sources, the harness sources, the C comparator
-shim, the shared campaign support, the frozen addendum, the matched-operation
+shim, the shared campaign support, the canonical and archived addenda, the
+approved M4RI amendment, the matched-operation
 specification and its qualification record, the protocol and contract
 documents, and the build inputs. The build inputs carry every Cargo manifest and
 lock file a timed executable is built from and the closure manifest itself,

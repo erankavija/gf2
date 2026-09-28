@@ -5,7 +5,7 @@
 > **Owning issue:** `c73ffa25`
 
 The two gf2 baseline families use the committed
-[dense-parity addendum](dense-parity-addendum.md) and its
+[dense-parity addendum v1](dense-parity-addendum-v1.md) and its
 [harness](dense-parity-harness.md). The frozen campaign JSON retains the
 harness owner's `family.issue=e1f9a78f`; the
 [benchmark queue](../1a379447-zen3-cpu-performance/bench-window/queue.tsv)
