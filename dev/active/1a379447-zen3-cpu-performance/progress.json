@@ -1465,7 +1465,8 @@
     "00dd43c3": 1,
     "c73ffa25": 1,
     "a0812b83": 2,
-    "c04dd4ac": 2
+    "c04dd4ac": 2,
+    "50f0bd42": 1
   },
   "surfaced_pitfalls": [
     {
@@ -2044,7 +2045,8 @@
     "Session26: c04dd4ac code review369860dc failed F1: investigation still says BMI2 unused and shifts lack materiality. Related sweep also finds old DVB rebuild status and the feasibility proposal describing the residual branch as scalar-only. Round1 fixes current narrative via citations and regenerates publication pins; no raw evidence, frozen rules or production edits.",
     "Session26 handoff21: c04 code re-review5ffbbf6f passes after e77bbdb22/3cc62baff stale-narrative repair. Doc228fc432 fails F1 stale registered hashes and F2 obsolete issue background. F1 repaired by stable85fc review citation, regenerated table, current doc registration and independent SHA checks (20 story,18 publication assets). Full CI passes at3d3fd00b6. F2 awaits exact drafted background approval; description unchanged. Round2 reserved for these findings. M4RI prep2b75c6462 merged, fullCI passed; all5artifacts linked. Its companion-table amendment also awaits approval, queue held. No timed work queued or future timer; subsequent02:00Helsinki authorization persists.",
     "Invoker approved both pending amendments on2026-09-28. Exact c04 background replacement applied with all other description bytes unchanged. M4RI worker resumes approved companion amendment in existing pinned tree; no timed work in session.",
-    "2026-09-28: c04dd4ac DONE. All7gates pass; code5ffbbf6f, docd7ed6fd2, researcha81574d2, holistic262b7be8. Approved exact background applied, all registered asset hashes verified. Final review reviews/c04dd4ac-r2.md. Wave3 remains open on2037941f. M4RI final preparation clarifies two remaining generic unavailable-row sentences under the approved distinction; no timing."
+    "2026-09-28: c04dd4ac DONE. All7gates pass; code5ffbbf6f, docd7ed6fd2, researcha81574d2, holistic262b7be8. Approved exact background applied, all registered asset hashes verified. Final review reviews/c04dd4ac-r2.md. Wave3 remains open on2037941f. M4RI final preparation clarifies two remaining generic unavailable-row sentences under the approved distinction; no timing.",
+    "2026-09-28: approved M4RI v2 amendment merged; final458f38afe preserves v1 bytes, exact8qualified cells\u00d724pairs and fixed.040 ceiling. Generic receipt and sampling prose now distinguishes runtime-unavailable measured cells from3predeclared exclusions in companion. Full merged CI passes; final source pins, release tests/oracles and zero-window smoke pass. Pilot queue activated for next authorized02:00Helsinki window; no timings run in session."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2109,13 +2111,20 @@
       "a0812b83",
       "c04dd4ac"
     ],
-    "active_workers": {
-      "50f0bd42": "Sol xhigh logical_results; approved companion amendment and final untimed preparation; heavy slot"
-    },
+    "active_workers": {},
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
     "pending_reviews": [
-      "50f0bd42 amended preparation final identity checks, merge CI and next authorized benchmark window"
-    ]
+      "50f0bd42 pilot scheduled preparation complete; wait for authorized benchmark window"
+    ],
+    "m4ri_window": {
+      "date": "2026-09-29 02:00 Europe/Helsinki",
+      "utc": "2026-09-28T23:00:00Z",
+      "key": "53a5bb9b75c30e58",
+      "worktree": ".agents/worktrees/agent-50f0bd42",
+      "head": "458f38afe7b33f7260bbdeca5a96c768d3f80b36",
+      "timer": "gf2-bench-window-20260929.timer",
+      "status": "queue committed; timer verification follows"
+    }
   }
 }
