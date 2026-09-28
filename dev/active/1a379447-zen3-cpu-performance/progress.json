@@ -1420,8 +1420,15 @@
       "issue": "50f0bd42",
       "status": "pending",
       "reason": "Frozen dense addendum requires three predeclared unavailable shapes inside every receipt, but strict protocol v4 cannot encode them without false arm applicability. Concrete tested proposal keeps them in a generated zero-sample companion beside receipt.json.",
-      "proposal": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md on worktree-agent-50f0bd42 at2b75c6462",
+      "proposal": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md (merged; full CI passed)",
       "requested": "Approve narrow companion-table amendment; measured cells,24pairs and.040resolution ceiling unchanged."
+    },
+    {
+      "issue": "c04dd4ac",
+      "status": "pending",
+      "reason": "Documentation review228fc432 F2 requires updating obsolete scalar-only issue background. Skill requires explicit approval for any description change.",
+      "proposal": "dev/active/c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md",
+      "requested": "Approve only the quoted current-route replacement sentence; preserve every criterion and gate."
     }
   ],
   "rework_counts": {
@@ -1456,7 +1463,7 @@
     "00dd43c3": 1,
     "c73ffa25": 1,
     "a0812b83": 2,
-    "c04dd4ac": 1
+    "c04dd4ac": 2
   },
   "surfaced_pitfalls": [
     {
@@ -2032,7 +2039,8 @@
     "Session26: bc091474 DONE01482e86d; fcb04d66 and a1ad6d4e newly ready. Next dispatch Sol high for no-change production verification and Sol xhigh for private BitSlice candidate assessment. Wave3 remains current; dense/residual measurements still scheduled02:00 Helsinki.",
     "Session 26: a0812b83 pre-gate review found per-arm shift and NR adapter medians reported with observed ranges. Rework 1 reuses canonical order-statistic intervals and derives coverage. No prior failed code-review runs; linked design deferred-item scan found no punted scope. M4RI preparation found strict receipt JSON cannot encode predeclared unqualified shapes; worker prepares a concrete companion-table amendment for invoker approval before adoption. No timing is queued.",
     "Session26: a0812b83 DONE after fullCI, code0ec59744, doc29a58ab3 and research9d556616 all pass. Lead review and c04 pitfall audit committed. Direct .jit storage citation repaired to canonical graph query after registration rejection; all artifacts linked. c04dd4ac claimed for final checkpoint. M4RI preparation branch2b75c6462 passes release/50tests/oracles/zero-window smoke; exact plan8cells\u00d724pairs. No active build; companion-table amendment awaits invoker, queue held.",
-    "Session26: c04dd4ac code review369860dc failed F1: investigation still says BMI2 unused and shifts lack materiality. Related sweep also finds old DVB rebuild status and the feasibility proposal describing the residual branch as scalar-only. Round1 fixes current narrative via citations and regenerates publication pins; no raw evidence, frozen rules or production edits."
+    "Session26: c04dd4ac code review369860dc failed F1: investigation still says BMI2 unused and shifts lack materiality. Related sweep also finds old DVB rebuild status and the feasibility proposal describing the residual branch as scalar-only. Round1 fixes current narrative via citations and regenerates publication pins; no raw evidence, frozen rules or production edits.",
+    "Session26 handoff21: c04 code re-review5ffbbf6f passes after e77bbdb22/3cc62baff stale-narrative repair. Doc228fc432 fails F1 stale registered hashes and F2 obsolete issue background. F1 repaired by stable85fc review citation, regenerated table, current doc registration and independent SHA checks (20 story,18 publication assets). Full CI passes at3d3fd00b6. F2 awaits exact drafted background approval; description unchanged. Round2 reserved for these findings. M4RI prep2b75c6462 merged, fullCI passed; all5artifacts linked. Its companion-table amendment also awaits approval, queue held. No timed work queued or future timer; subsequent02:00Helsinki authorization persists."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2055,7 +2063,8 @@
     "handoff-17.md",
     "handoff-18.md",
     "handoff-19.md",
-    "handoff-20.md"
+    "handoff-20.md",
+    "handoff-21.md"
   ],
   "pending_artifact_links": {
     "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -2081,7 +2090,7 @@
       "6e87c436",
       "2ad3a3e0"
     ],
-    "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation.",
+    "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation. No active builds, agents, gates or future timer at handoff21; two concrete approvals are pending.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
     "completed_this_session": [
@@ -2099,8 +2108,8 @@
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
     "pending_reviews": [
-      "c04dd4ac story checkpoint gates",
-      "50f0bd42 amendment approval; prepared worker HEAD 2b75c6462"
+      "c04dd4ac doc-review F2 requires approved background correction; F1 hashes repaired; research/holistic pending",
+      "50f0bd42 unavailable-row companion amendment approval; preparation merged and CI passed"
     ]
   }
 }
