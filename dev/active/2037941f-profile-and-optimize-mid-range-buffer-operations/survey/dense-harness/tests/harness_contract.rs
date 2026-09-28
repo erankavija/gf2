@@ -1386,17 +1386,14 @@ fn the_carried_pins_are_the_frozen_addendums_own_identity() {
     }
 }
 
-/// Every family's canonical ledger is the committed empty genesis file its
-/// first confirmation counts from (§ Estimator, confidence, and multiple
-/// comparisons), and the three families own three distinct ledgers.
+/// Every family keeps its own canonical ledger across pilot and confirmation.
 #[test]
-fn every_family_ledger_exists_at_genesis() {
+fn every_family_ledger_exists_and_has_a_distinct_path() {
     let root = repository_root();
     let mut paths = BTreeSet::new();
     for question in Question::ALL {
         let path = question.ledger_path();
-        let bytes = std::fs::read(root.join(path)).unwrap_or_else(|error| panic!("{path}: {error}"));
-        assert!(bytes.is_empty(), "{path} is past genesis");
+        std::fs::read(root.join(path)).unwrap_or_else(|error| panic!("{path}: {error}"));
         assert!(paths.insert(path), "{path} is shared");
         assert_eq!(Question::from_family_id(question.family_id()), Some(question));
     }

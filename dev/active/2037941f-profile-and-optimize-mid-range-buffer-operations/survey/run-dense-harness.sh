@@ -379,6 +379,10 @@ PY
 
     "${runner}" finalize "${stage}" "${out}" | tee -a "${launch}"
     cp "${launch}" "${out}/launcher.log"
+    if [[ "${family}" == 2037941f-dense-matvec-vs-m4ri ]]; then
+        "${CAMPAIGN_TOOL}" unavailable --family "${family}" \
+            --addendum "${addendum}" --output "${out}/unavailable-rows.tsv"
+    fi
     set +e
     "${acceptance}" "${out}" | tee -a "${out}/launcher.log"
     local verdict=${PIPESTATUS[0]}
