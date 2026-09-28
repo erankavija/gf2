@@ -405,7 +405,7 @@
           "short_id": "c04dd4ac",
           "title": "Optimize arbitrary-offset shifts and coding permutations",
           "classification": "implementation",
-          "status": "in_progress",
+          "status": "done",
           "tracker_state": "backlog"
         },
         {
@@ -2043,7 +2043,8 @@
     "Session26: a0812b83 DONE after fullCI, code0ec59744, doc29a58ab3 and research9d556616 all pass. Lead review and c04 pitfall audit committed. Direct .jit storage citation repaired to canonical graph query after registration rejection; all artifacts linked. c04dd4ac claimed for final checkpoint. M4RI preparation branch2b75c6462 passes release/50tests/oracles/zero-window smoke; exact plan8cells\u00d724pairs. No active build; companion-table amendment awaits invoker, queue held.",
     "Session26: c04dd4ac code review369860dc failed F1: investigation still says BMI2 unused and shifts lack materiality. Related sweep also finds old DVB rebuild status and the feasibility proposal describing the residual branch as scalar-only. Round1 fixes current narrative via citations and regenerates publication pins; no raw evidence, frozen rules or production edits.",
     "Session26 handoff21: c04 code re-review5ffbbf6f passes after e77bbdb22/3cc62baff stale-narrative repair. Doc228fc432 fails F1 stale registered hashes and F2 obsolete issue background. F1 repaired by stable85fc review citation, regenerated table, current doc registration and independent SHA checks (20 story,18 publication assets). Full CI passes at3d3fd00b6. F2 awaits exact drafted background approval; description unchanged. Round2 reserved for these findings. M4RI prep2b75c6462 merged, fullCI passed; all5artifacts linked. Its companion-table amendment also awaits approval, queue held. No timed work queued or future timer; subsequent02:00Helsinki authorization persists.",
-    "Invoker approved both pending amendments on2026-09-28. Exact c04 background replacement applied with all other description bytes unchanged. M4RI worker resumes approved companion amendment in existing pinned tree; no timed work in session."
+    "Invoker approved both pending amendments on2026-09-28. Exact c04 background replacement applied with all other description bytes unchanged. M4RI worker resumes approved companion amendment in existing pinned tree; no timed work in session.",
+    "2026-09-28: c04dd4ac DONE. All7gates pass; code5ffbbf6f, docd7ed6fd2, researcha81574d2, holistic262b7be8. Approved exact background applied, all registered asset hashes verified. Final review reviews/c04dd4ac-r2.md. Wave3 remains open on2037941f. M4RI final preparation clarifies two remaining generic unavailable-row sentences under the approved distinction; no timing."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2105,7 +2106,8 @@
       "fcb04d66",
       "00dd43c3",
       "c73ffa25",
-      "a0812b83"
+      "a0812b83",
+      "c04dd4ac"
     ],
     "active_workers": {
       "50f0bd42": "Sol xhigh logical_results; approved companion amendment and final untimed preparation; heavy slot"
@@ -2113,8 +2115,7 @@
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
     "pending_reviews": [
-      "c04dd4ac documentation re-review, then research and holistic gates",
-      "50f0bd42 final approved preparation before next authorized02:00Helsinki window"
+      "50f0bd42 amended preparation final identity checks, merge CI and next authorized benchmark window"
     ]
   }
 }
