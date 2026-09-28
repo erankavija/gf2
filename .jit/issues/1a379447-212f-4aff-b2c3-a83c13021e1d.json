@@ -1147,6 +1147,79 @@
       "format": "markdown",
       "label": "Session26 wave3 handoff and pending decisions",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-21.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9ac2816e18e05e4e24b270801c26b186b713032200d347225b29be26810c1d32",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/c04dd4ac-pitfall-audit.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/c04dd4ac-pitfall-audit.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "757cc9c054ae68d680156b44e2ccd5e2f0a579536a8fda18f5c67c886e121136",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/c04dd4ac-r2.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/c04dd4ac-r2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "df8fa6af7d446abd0afe13c4eb20f21eb8b38c4b6e09c40591b21cacd791644d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c04dd4ac-zen3-shifts-and-permutations/publication-findings.md",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec311e7eeb13a2e2ddb3ae7e73afa527d20b6239c3afaed2e5e3cca1e4924b8d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-21.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-21.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "adaec3b0513dd2aa3068154c1d46d845d7725762f2a992c47ddafba7e76ac19d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../50f0bd42/preparation.md",
+          "resolved_path": "dev/active/50f0bd42/preparation.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Session26 final handoff and scheduled M4RI pilot",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-22.md"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -1170,5 +1243,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-28T00:36:48.389611753Z"
+  "updated_at": "2026-09-28T11:24:35.913946531Z"
 }
