@@ -180,25 +180,25 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../00dd43c3/confirmation-outcome.md",
-          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "9c2aa8e1cffcd7f90fe483290b886c687e1ac50ba041d56cdb0a5d6b514f0e3b",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../f8dd4dde/retention-rule.md",
           "resolved_path": "dev/active/f8dd4dde/retention-rule.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../00dd43c3/confirmation-outcome.md",
+          "resolved_path": "dev/active/00dd43c3/confirmation-outcome.md"
         }
       ],
       "commit": null,
       "doc_type": "review",
       "format": "markdown",
-      "label": "Proposed issue-background correction",
+      "label": "Approved issue-background correction",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/background-amendment-draft.md"
     }
   ],
@@ -254,5 +254,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-28T06:20:19.476038881Z"
+  "updated_at": "2026-09-28T06:20:19.827463848Z"
 }
