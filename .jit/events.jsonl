@@ -13812,3 +13812,4 @@
 {"fields":["documents"],"id":"99a794a7-3d65-4158-af8a-1981cb42ec37","issue_id":"1a379447-212f-4aff-b2c3-a83c13021e1d","timestamp":"2026-09-28T00:36:48.389611753Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["description"],"id":"deda9995-3f5a-47ae-ac2a-b5cfcdf3a644","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T06:20:19.476038881Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["documents"],"id":"c6fed0e8-1c98-423c-a10f-db7fcedd9b5f","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T06:20:19.827463848Z","type":"issue_updated","updated_by":"doc-update"}
+{"gate_key":"doc-review","id":"0f5cdbb2-a51c-411d-9a70-3d5d669c7b98","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T06:22:31.780899528Z","type":"gate_passed","updated_by":"auto:executor"}
