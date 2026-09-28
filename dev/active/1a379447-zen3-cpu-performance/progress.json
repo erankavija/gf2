@@ -2096,7 +2096,7 @@
       "6e87c436",
       "2ad3a3e0"
     ],
-    "note": "Descendants stored in later original wave buckets remain prerequisites of the two wave-3 stories; finish those stories before advancing. Later independent GF(2^8) and LDPC confirmation leaves stay outside this invocation. No active builds, agents, gates or future timer at handoff21; two concrete approvals are pending.",
+    "note": "Wave3 only. Shift story c04dd4ac DONE; dense2037941f remains. Both user approvals applied. No active workers/builds/gates; M4RI pilot is scheduled for2026-09-29 02:00Helsinki. Lead waits to process its receipt.",
     "user_preference": "Obtaining results matters more than excessive provenance bookkeeping; keep repairs scoped to explicit requirements and no new provenance machinery.",
     "benchmark_time": "02:00 Europe/Helsinki, from 2026-09-27, subsequent nights as needed for wave 3",
     "completed_this_session": [
@@ -2115,7 +2115,7 @@
     "pinned_dense_baseline": ".agents/worktrees/agent-c73ffa25 at05c7c1707",
     "benchmark_latest": "2026-09-27T23:00:00Z\u201323:04:29Z: dense profile retry and residual confirmation both rc0; all declared profile cells complete; confirmation six24-pair cells complete across three resumable sessions.",
     "pending_reviews": [
-      "50f0bd42 pilot scheduled preparation complete; wait for authorized benchmark window"
+      "After scheduled M4RI pilot: commit raw evidence and ledger, verify completeness/pair counts, derive fixed-resolution outcome; then remaining dense descendants"
     ],
     "m4ri_window": {
       "date": "2026-09-29 02:00 Europe/Helsinki",
@@ -2124,7 +2124,7 @@
       "worktree": ".agents/worktrees/agent-50f0bd42",
       "head": "458f38afe7b33f7260bbdeca5a96c768d3f80b36",
       "timer": "gf2-bench-window-20260929.timer",
-      "status": "queue committed; timer verification follows"
+      "status": "timer verified active; sole unfinished active queue job; waiting for scheduled run"
     }
   }
 }
