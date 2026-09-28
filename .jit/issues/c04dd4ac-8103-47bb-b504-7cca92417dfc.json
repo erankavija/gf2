@@ -203,6 +203,11 @@
       "updated_at": "2026-09-28T00:27:21.071496573Z",
       "updated_by": "auto:executor"
     },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-09-28T00:31:17.805582871Z",
+      "updated_by": "auto:executor"
+    },
     "repo-validate": {
       "status": "passed",
       "updated_at": "2026-09-28T00:07:02.186096963Z",
@@ -224,5 +229,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-28T00:27:21.071496573Z"
+  "updated_at": "2026-09-28T00:31:17.805582871Z"
 }

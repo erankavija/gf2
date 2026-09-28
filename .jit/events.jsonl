@@ -13804,3 +13804,4 @@
 {"fields":["documents"],"id":"7b8e1656-444c-424f-bcd3-b4c172653853","issue_id":"50f0bd42-56d8-4905-a0d5-409b7aa32ba7","timestamp":"2026-09-28T00:15:07.977779454Z","type":"issue_updated","updated_by":"doc-add"}
 {"gate_key":"cargo-ci","id":"a289261e-cbbd-4155-beaa-3fb188b92725","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:22:04.408429181Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"2718cf76-b17d-458d-9aa7-01666236a905","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:27:21.071496573Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"7df2a912-4bb4-4cf4-a80c-73ee699bc2c4","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:31:17.805582871Z","type":"gate_failed","updated_by":"auto:executor"}
