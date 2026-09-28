@@ -3,9 +3,9 @@
 # timing: none; the command builds release binaries and runs semantic validators only
 # rustc: 1.95.0 (59807616e 2026-04-14); LLVM 22.1.2; x86_64-unknown-linux-gnu
 # addendum=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md
-# addendum_sha256=fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb
-# addendum_identity=2037941f-dense-parity-v1
-# addendum_frozen_utc=2026-09-16T16:16:04Z
+# addendum_sha256=5807a3b5b17e190d7f4dfae5db197ae02d09d01e041cf64c24cef694838709ae
+# addendum_identity=2037941f-dense-parity-v2
+# addendum_frozen_utc=2026-09-28T06:22:24Z
 # comparator=dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md
 # family=2037941f-dense-isolated-fused-parity ledger=dev/bench_results/2037941f/dense-isolated-fused-parity-ledger.jsonl cells=12
 # family=2037941f-dense-allocated-matvec ledger=dev/bench_results/2037941f/dense-allocated-matvec-ledger.jsonl cells=24
@@ -128,6 +128,6 @@ PASS m4ri-65x65: 71 checks
 # dense-m4ri-arm sha256: 40966ad90d7440b41af1b83532e9832a15e5570d3a9168cb5a3359ad9a07691e
 # libm4ri.so sha256: 1c8426066115170009ee0ebbb06ca97841d64bc51fd3192ef2a580aaad8801bb
 # dense-arm sha256: d6c49ea259820b7da536e0594d12f512671a3b2c8aab148963e253c0dc8ae695
-# dense-campaign sha256: b1a723d1c97f4627eaab4f93b60e6a81377c0360fe11398911ce89d167393ad3
+# dense-campaign sha256: 539f551e99521ad7be24e19030eccf1dc4907a12c5b736070077389da9e19bd3
 # dense-oracle sha256: 895bb4106780f5f05c7fc287b79112fa00eff5212ad9638384dbcce88fd782aa
 # dense-arm (scalar-reference) sha256: ccbbc7e628fbf59b1ade0dd0f4cc9150ed96cd33cca6a25cd793c0ff7d39787c
