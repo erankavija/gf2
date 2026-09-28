@@ -13795,3 +13795,4 @@
 {"gate_key":"cargo-ci","id":"09ff4195-3c1e-4ab8-84ef-22f9adb0742b","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:06:31.613714921Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"asm-artefact-present","id":"66eff766-e334-4da5-9e83-944aaec71d19","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:07:00.492939527Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"repo-validate","id":"84a10e38-ed66-4140-8322-0ffa274ab0e2","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:07:02.186096963Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"8d16f12a-e040-4d4d-8730-830303974d73","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:11:32.165025405Z","type":"gate_failed","updated_by":"auto:executor"}
