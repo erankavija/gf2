@@ -126,7 +126,7 @@ The exploratory profile's receipt and summary match their context pins. The conf
 | `dev/active/00dd43c3/confirmation-derivation.txt` | `36ee11f4502b047d43c11ad65aff4ab7a11b42033e2e92703430b9abecc0e4a2` | retained and dropped pilot cells |
 | `dev/active/00dd43c3/confirmation-outcome.md` | `01ce89392397f2ad886b8a780a4d0634891e6ec6e6a49635ace0721d54263d19` | completed retention disposition |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-profile.md` | `4a21c61059ac28b8fdc90007c595e0ff8495dabfc3aa8f8ba29338af86f2fce8` | material workload disposition |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` | `1738ab405e6da15b3b102dfc550050e88a70866aebde767ed623f7736ed02cc8` | Rust 1.95 and scalar-fallback feasibility |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md` | `ff772ffc6558e49f69803f7b89decb94baac704b770ac3e4e3cb6f1b0e80c9ad` | Rust 1.95 and scalar-fallback feasibility |
 | `dev/active/c04dd4ac-zen3-shifts-and-permutations/dvb-interleave-profile.md` | `7a29558048008ea9d1d608acf0ff6b0f3e5a1a05f4f45b697ab5f6d9de832ce5` | DVB not-material disposition |
 | `dev/active/eda07788/findings.md` | `6a165de79f5e3a31665878dbf406ee6148f1ad25c1806b02aba7d1c49373d9c6` | NR no-win and unavailable mappings |
-| `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md` | `a6c634fa1bdee3da38dd06cbe8f26c2898feb8ae869cd0eba6caca6c176dcde9` | consumer and comparator survey |
+| `dev/active/c04dd4ac-zen3-shifts-and-permutations/investigation.md` | `888599c97c4197e66ccc87c66b53103075d55ab1869dd2a0dfaf33c48c3f06eb` | consumer and comparator survey |
