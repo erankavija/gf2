@@ -44,13 +44,24 @@ shows the shared runner's resume/checkpoint path, exact fresh and retained
 M4RI routes, and zero timing windows or receipt samples. The
 [unavailable-row example](unavailable-rows.example.tsv) is an untimed
 projection of the predeclared excluded shapes; a synthetic confirmation-shape
-addendum produced byte-identical output in a throwaway `target/` check.
+addendum produced byte-identical output in a throwaway `target/` check. The
+projected pilot plan has eight qualified cells, exactly 24 pairs in each,
+and no predeclared unavailable shape. The staged M4RI smoke exercises fresh
+and retained calls with zero timing windows.
 
-The [narrow amendment draft](unavailable-rows-amendment-draft.md) explains the
-conflict between the frozen receipt wording and protocol-v4's unavailable
-mechanism. The benchmark queue entry remains held until that wording is
-approved and the amendment enters the comparator receipt's producing-input
-snapshot. No timed M4RI samples or selection verdict are claimed here.
+The [approved v2 amendment](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md)
+resolves the frozen receipt wording against protocol-v4's unavailable mechanism.
+The [original v1 prose](../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md)
+remains byte-identical for earlier receipts. The comparator receipt's
+[producing-input snapshot](../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json)
+includes both versions and the amendment. The benchmark queue remains under
+lead control. No timed M4RI samples or selection verdict are claimed here.
+
+The queue entry for the next authorized benchmark window is:
+
+```text
+50f0bd42	.agents/worktrees/agent-50f0bd42	25	dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh window --family 2037941f-dense-matvec-vs-m4ri --addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json --run-id v4-r1 --m4ri
+```
 
 ## Criterion disposition
 

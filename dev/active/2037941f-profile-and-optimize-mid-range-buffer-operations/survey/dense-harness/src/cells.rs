@@ -1,4 +1,4 @@
-//! The frozen cell table of addendum `2037941f-dense-parity-v1`.
+//! The frozen cell table of addendum `2037941f-dense-parity-v2`.
 //!
 //! [`cells`] returns every cell the addendum declares, in the addendum's own
 //! order: the cell-matrix sections in document order, and within each section
@@ -19,11 +19,11 @@ pub const ADDENDUM_PATH: &str =
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md";
 /// Content identity of that frozen document, verified before a timed run.
 pub const ADDENDUM_SHA256: &str =
-    "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb";
+    "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2";
 /// Addendum identity string the frozen document declares.
-pub const ADDENDUM_IDENTITY: &str = "2037941f-dense-parity-v1";
+pub const ADDENDUM_IDENTITY: &str = "2037941f-dense-parity-v2";
 /// Freeze time the frozen document declares.
-pub const ADDENDUM_FROZEN_UTC: &str = "2026-09-16T16:16:04Z";
+pub const ADDENDUM_FROZEN_UTC: &str = "2026-09-28T06:22:24Z";
 /// Repository-relative path of the qualified M4RI matched-operation specification.
 pub const COMPARATOR_PATH: &str =
     "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md";

@@ -7,7 +7,7 @@
 > **Subject:** [`dense-parity-harness.md`](dense-parity-harness.md), the harness
 > under [`survey/dense-harness/`](survey/dense-harness/)
 >
-> **Against:** [`dense-parity-addendum.md`](dense-parity-addendum.md), identity
+> **Against:** [`dense-parity-addendum-v1.md`](dense-parity-addendum-v1.md), identity
 > `2037941f-dense-parity-v1`, and the
 > [measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
 > and [protocol version 4](../f547c394/protocol.md) it specializes

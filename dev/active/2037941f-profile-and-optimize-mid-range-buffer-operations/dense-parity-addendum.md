@@ -2,11 +2,15 @@
 
 > **Diátaxis Type:** Reference
 >
-> **Addendum identity:** `2037941f-dense-parity-v1`
+> **Addendum identity:** `2037941f-dense-parity-v2`
 >
 > **Owning protocol issue:** `96c94b81`
 >
-> **Frozen UTC:** `2026-09-16T16:16:04Z`
+> **Frozen UTC:** `2026-09-28T06:22:24Z`
+
+The [v1 addendum](dense-parity-addendum-v1.md) preserves the original frozen
+bytes and receipts. The [approved v2 amendment](dense-parity-amendment-v2.md)
+changes only the recording location of predeclared unqualified M4RI shapes.
 
 This addendum freezes the dense-parity questions, cells, inputs, statistical
 rules, and adoption limits for story `2037941f`. It specializes the
@@ -237,11 +241,15 @@ both arms reuse their converted matrix and vector and both still allocate and
 fill a fresh output. A retained-state cell never replaces a fresh
 whole-consumer cell.
 
-Three anchor strides have no M4RI arm. Their rows are retained in every
-receipt as `unavailable` with a reason and zero samples, and because they carry
-the `exploratory` role they spend no comparison:
+Three anchor strides have no qualified M4RI arm. Each M4RI receipt directory
+contains a generated `unavailable-rows.tsv` companion that records their
+cell identifiers, strides, `unavailable` status, reason, zero samples and
+zero comparisons. These rows are absent from the runner plan and
+`receipt.json`; they execute no arm and spend no comparison. The companion
+cites the frozen addendum's SHA-256 and is projected from the harness's
+frozen unavailable-row table:
 
-| Retained unavailable cell | gf2 stride | Reason |
+| Predeclared unavailable cell | gf2 stride | Reason |
 |---|---:|---|
 | `m4ri-gap-65x576-unqualified` | 9 words | The matched-operation specification verifies no such shape |
 | `m4ri-gap-65x4032-unqualified` | 63 words | The matched-operation specification verifies no such shape |
@@ -326,9 +334,10 @@ Cache policies are exact:
   before the first window, and fix `cold_calls` to one. It is a first-use
   series, not a hardware cache-miss-latency claim.
 
-Every exploratory cell runs exactly 24 paired executions, the protocol's pilot
-maximum, except the rows this addendum declares unavailable in advance, which
-run none. Every confirmatory cell runs exactly 24 fresh paired executions. Each
+Every measured exploratory cell runs exactly 24 paired executions, the
+protocol's pilot maximum. The three predeclared unqualified M4RI shapes have
+no runner-plan cell and execute no pairs. Every confirmatory cell runs exactly
+24 fresh paired executions. Each
 pair launches adjacent fresh baseline and compared-arm children in the
 protocol's seed-determined, two-pair-counterbalanced order. Each warm or
 streaming execution uses five windows targeted at 100 ms after calibration; a
@@ -358,10 +367,9 @@ $\alpha_c=\alpha_t/m$, where the append-only ledger supplies $t$ and the
 cumulative reserved comparison count $m$. A reservation counts a family's
 non-exploratory cells only, at both the reservation and the verification site
 (source evidence, claims on
-`dev/tools/tuning-campaign-support/src/trial_ledger.rs`). This addendum
-therefore gives the `exploratory` role to every row it declares unavailable in
-advance, so those rows are retained in each receipt with their reason and zero
-samples and spend no comparison. A cell that carries a confirmatory role spends
+`dev/tools/tuning-campaign-support/src/trial_ledger.rs`). Predeclared
+unqualified M4RI rows are projected to the companion with zero samples and
+spend no comparison. A cell that carries a confirmatory role spends
 its comparison whatever its outcome, including an unavailability the runner
 discovers at execution time.
 
@@ -406,7 +414,9 @@ The decision interval $[\ell,u]$ follows protocol version 4: `improved` when
 $\ell$ reaches the worthwhile or material-gap threshold, `not-worse` when
 $\ell\ge 1/\theta_{\mathrm{eq}}$, `regressed` when $u<1/\theta_{\mathrm{eq}}$,
 and `inconclusive` otherwise. Negative, not-material, unstable, inconclusive,
-unavailable, and inapplicable rows stay in the receipt.
+runtime-discovered unavailable, and inapplicable measured rows stay in
+`receipt.json`. The three predeclared unqualified M4RI shapes stay in its
+`unavailable-rows.tsv` companion.
 
 ## Effect, resolution, and complexity rules
 
@@ -577,7 +587,8 @@ attempt abandoned once by the next session before that cell is measured again.
 Receipts retain exact commands, raw pairs and windows, seeds, cache claims,
 observed routes and operand alignment, fixture-bank sizes, output validation,
 assembly, profiles, host facts, statistical decisions, and every negative,
-unavailable, or inapplicable row.
+runtime-discovered unavailable, or inapplicable measured row. M4RI receipt
+directories also retain the companion of predeclared unqualified shapes.
 
 A current pre-change baseline and a fresh after build are mandatory for any
 production adoption. Navigation commits and unrelated worktree changes are
