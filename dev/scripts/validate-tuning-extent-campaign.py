@@ -92,14 +92,16 @@ CORE_BEHAVIOR = "tuning-calibration-v4"
 ALGEBRA_BEHAVIOR = "algebra-tuning-calibration-v1"
 PRODUCING_INPUTS_SCHEMA = "tuning-campaign-producing-inputs-v1"
 PRODUCING_MANIFEST = "dev/active/a83583e0/producing-build-inputs.json"
+# Protocol §7: the full-host outer lock admits a session; the held-lock host
+# observation is descriptive and gates nothing.
 HOST_ADMISSION_POLICY = {
-    "required_observations": [
-        "affinity", "available-memory", "competing-cpu-gpu-work",
-        "cpu-features", "cpu-model", "governor", "load", "os-kernel",
+    "admission": "full-host-outer-lock",
+    "host_observation": "descriptive",
+    "recorded_observations": [
+        "affinity", "available_memory_kib", "cpu_flags", "cpu_model", "governors",
+        "hostname", "load_average", "observed_utc", "os_kernel", "smt_active",
+        "topology",
     ],
-    "no_competing_substantial_work_required": True,
-    "isolated_process_listing_is_sufficient": False,
-    "held_mutex_is_sufficient": False,
 }
 
 ALGEBRA_CANDIDATES = [4096, 16384, 65536, 262144, 1048576]
@@ -2753,6 +2755,18 @@ def clean_process_outcome(value: Any, where: str) -> None:
         fail(f"{where} is not an exited process")
 
 
+def validate_host_observation(details: Any, affinity: Any, where: str) -> None:
+    """Checks the shape of the descriptive held-lock host observation."""
+    require(set(details) == {"kind", "phase", "observed"}
+            and details["kind"] == "host-observation" and details["phase"] == "held-lock",
+            f"{where} diagnostic shape mismatch")
+    observed = details["observed"]
+    require(type(observed) is dict
+            and sorted(observed) == HOST_ADMISSION_POLICY["recorded_observations"]
+            and observed["affinity"] == affinity,
+            f"{where} differs from the declared recorded observations")
+
+
 def validate_budget_diagnostic(record: Any, process: str, boundary: str,
                                unit_key: str | None = None) -> None:
     require(record["event"] == "driver-diagnostic", "missing driver budget diagnostic")
@@ -3232,6 +3246,15 @@ def validate_sessions(stage: Path, log_data: bytes, records: list[dict[str, Any]
             require(all(record["sequence"] > held_affinity[0]["sequence"]
                         for record in protected_work),
                     f"session {directory.name} launched work before held-lock affinity proof")
+            host_records = [record for record in records
+                            if record["session_id"] == directory.name
+                            and record["event"] == "driver-diagnostic"
+                            and record["details"].get("kind") == "host-observation"]
+            require(len(host_records) == 1
+                    and host_records[0]["sequence"] == held_affinity[0]["sequence"] + 1,
+                    f"session {directory.name} lacks its held-lock host observation")
+            validate_host_observation(host_records[0]["details"], campaign_config["affinity"],
+                                      f"session {directory.name} host observation")
         else:
             require(not any(record["session_id"] == directory.name
                             and record["event"] in {"child-spawn", "orchestration-start"}
@@ -3717,6 +3740,16 @@ def self_test() -> None:
         pass
     else:
         fail("unreaped process mutation was accepted")
+    host = {"kind": "host-observation", "phase": "held-lock",
+            "observed": {name: [0] if name == "affinity" else None
+                         for name in HOST_ADMISSION_POLICY["recorded_observations"]}}
+    validate_host_observation(host, [0], "host observation self-test")
+    forged = copy.deepcopy(host)
+    forged["observed"]["competing_work"] = "idle"
+    must_reject(lambda: validate_host_observation(forged, [0], "forged"),
+                "undeclared host observation field")
+    must_reject(lambda: validate_host_observation(host, [1], "moved"),
+                "host observation affinity mismatch")
     try:
         validate_affinity([2, 2], "duplicate affinity mutation")
     except ValidationError:
