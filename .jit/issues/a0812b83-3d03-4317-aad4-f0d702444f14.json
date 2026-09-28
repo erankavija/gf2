@@ -175,8 +175,16 @@
       "format": "markdown",
       "label": "Shift-permutation family dispositions and story criteria",
       "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/publication-findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Final lead publication review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/a0812b83-r1.md"
     }
   ],
+  "done_at": "2026-09-28T00:05:22.871701083Z",
   "first_ready_at": "2026-09-27T23:23:36.542122686Z",
   "gates_required": [
     "cargo-ci",
@@ -199,6 +207,11 @@
       "status": "passed",
       "updated_at": "2026-09-27T23:59:09.188775666Z",
       "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-09-28T00:04:40.384090269Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "a0812b83-3d03-4317-aad4-f0d702444f14",
@@ -220,7 +233,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Publish the shift-permutation dispositions",
-  "updated_at": "2026-09-27T23:59:09.188775666Z"
+  "updated_at": "2026-09-28T00:05:22.871701083Z"
 }
