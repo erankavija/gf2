@@ -187,7 +187,23 @@
     "holistic-review",
     "repo-validate"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-09-28T00:07:00.492939527Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-09-28T00:06:31.613714921Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-09-28T00:07:02.186096963Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
   "labels": [
     "epic:zen3-cpu-performance",
@@ -203,5 +219,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-28T00:05:23.992126413Z"
+  "updated_at": "2026-09-28T00:07:02.186096963Z"
 }

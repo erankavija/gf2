@@ -13792,3 +13792,6 @@
 {"assignee":"agent:jit-execution-lead","id":"3857eb63-0abd-47f5-ba5d-be0b02922dae","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:05:23.631751200Z","type":"issue_claimed"}
 {"fields":["documents"],"id":"741fb7b1-b05c-4570-a218-bc99fb2ea7dd","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:05:23.816080064Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"c4f6f414-5521-47e8-bfe1-a50a2a3cdb68","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:05:23.992126413Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"cargo-ci","id":"09ff4195-3c1e-4ab8-84ef-22f9adb0742b","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:06:31.613714921Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"asm-artefact-present","id":"66eff766-e334-4da5-9e83-944aaec71d19","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:07:00.492939527Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"repo-validate","id":"84a10e38-ed66-4140-8322-0ffa274ab0e2","issue_id":"c04dd4ac-8103-47bb-b504-7cca92417dfc","timestamp":"2026-09-28T00:07:02.186096963Z","type":"gate_passed","updated_by":"auto:executor"}
