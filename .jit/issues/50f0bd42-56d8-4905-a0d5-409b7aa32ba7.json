@@ -13,35 +13,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
           "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "dc8295b275310a7a3e2fa3bbd396d0c3847458f75d30b6d26ba6643c0dc4c44d",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a115a5f3b1bbec080dcfc117246cb3be2f7adfc7951313b6ea33f0ec58161c7b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../c7113c5a/survey/freeze-confirmation.py",
-          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c077b9e148e3a4a29e44f877726652ddb61ec26893829a4bb917a0517fae2a62",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "unavailable-rows.example.tsv",
-          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
         },
         {
           "asset_type": "local",
@@ -53,31 +29,15 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "815f5179831bc5cf36e9942b7ab1cf2613e0e9d003e74c14502acb029ee5f869",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "unavailable-rows-amendment-draft.md",
-          "resolved_path": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md"
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "08391af0a472ce45557f8189e4df8b84204445209c7a8fa58595d81e9e86d212",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../c73ffa25/outcome.md",
-          "resolved_path": "dev/active/c73ffa25/outcome.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "3ce461f6e08d609631cafe49435be0c204975a45f8402ccbbdc1906bbccacf0b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c00f26e688ba0200f2bbf064e1ca53385fd240361122707090be25c06c7c68cc",
+          "content_hash": "e38dab765dfac1413626475cf48239910c412e111123383db67da6a9ad131870",
           "is_shared": false,
           "mime_type": "text/plain",
           "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness-validation.txt",
@@ -85,11 +45,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
         },
         {
           "asset_type": "local",
@@ -101,11 +61,67 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "unavailable-rows.example.tsv",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../f547c394/protocol.md",
           "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a115a5f3b1bbec080dcfc117246cb3be2f7adfc7951313b6ea33f0ec58161c7b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../c7113c5a/survey/freeze-confirmation.py",
+          "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "08391af0a472ce45557f8189e4df8b84204445209c7a8fa58595d81e9e86d212",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/c73ffa25/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dc8295b275310a7a3e2fa3bbd396d0c3847458f75d30b6d26ba6643c0dc4c44d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7f174969f8171ab06800a10448de754809a48a744939e979050acf73722ed89a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json"
         }
       ],
       "commit": null,
@@ -118,27 +134,27 @@
       "assets": [
         {
           "asset_type": "local",
+          "content_hash": "4835012ba867ccb46477929d07d7f0e8f0be712560c2deec32330975852f5def",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c077b9e148e3a4a29e44f877726652ddb61ec26893829a4bb917a0517fae2a62",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "unavailable-rows.example.tsv",
-          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7674f8e4b50ecbe837d9441fb8e529c99cac356fca41e88be3447ec46bcd241e",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs"
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
         },
         {
           "asset_type": "local",
@@ -150,19 +166,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "3ce461f6e08d609631cafe49435be0c204975a45f8402ccbbdc1906bbccacf0b",
+          "content_hash": "7f174969f8171ab06800a10448de754809a48a744939e979050acf73722ed89a",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4aa9aec8078531cc5e8e7b5615aa0b1301e46b0edcfc859232033047e1bd4e27",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../tools/tuning-campaign-support/src/protocol.rs",
-          "resolved_path": "dev/tools/tuning-campaign-support/src/protocol.rs"
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json"
         },
         {
           "asset_type": "local",
@@ -174,11 +182,35 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "4835012ba867ccb46477929d07d7f0e8f0be712560c2deec32330975852f5def",
+          "content_hash": "5d6dfa786625f94df421f643585ce9ab900875a4d4b84787dbd2598fbf05d2cb",
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
-          "resolved_path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs"
+          "original_path": "unavailable-rows.example.tsv",
+          "resolved_path": "dev/active/50f0bd42/unavailable-rows.example.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4aa9aec8078531cc5e8e7b5615aa0b1301e46b0edcfc859232033047e1bd4e27",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/src/protocol.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/protocol.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "10cc1516edf6044d902e3cf29fbdf7bc3c6bd5c25fa3903915aa6a97ce35f880",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7674f8e4b50ecbe837d9441fb8e529c99cac356fca41e88be3447ec46bcd241e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs"
         },
         {
           "asset_type": "local",
@@ -187,12 +219,20 @@
           "mime_type": null,
           "original_path": "../c7113c5a/survey/freeze-confirmation.py",
           "resolved_path": "dev/active/c7113c5a/survey/freeze-confirmation.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
         }
       ],
       "commit": null,
       "doc_type": "research",
       "format": "markdown",
-      "label": "Proposed narrow unavailable-receipt amendment",
+      "label": "Approved unavailable-row proposal and conflict record",
       "path": "dev/active/50f0bd42/unavailable-rows-amendment-draft.md"
     },
     {
@@ -215,6 +255,438 @@
       "format": "markdown",
       "label": "Zero-window staged M4RI and gf2 smoke",
       "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-runner-smoke.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7674f8e4b50ecbe837d9441fb8e529c99cac356fca41e88be3447ec46bcd241e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-harness/src/bin/dense-campaign.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/bin/dense-campaign.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "55c749a2e773530b38f0c68cb991031bc9a1d7a55f3f1d8f236481cd1af7ee37",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-harness/src/cells.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/cells.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Approved versioned unavailable-row amendment",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ca6a7d1d433a5994381c8819e7cdd4e265e6d6aecfc7d2a57529195dbf5c4d58",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/m4ri-build-pins.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "949aed84fec7839f3cad2383daf01f682da45e5b83c37dc487ae84903a73c99b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/check-m4ri-build-provenance.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-m4ri-build-provenance.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3ed481c92c24b6887aa1258f5260809dce9d62c602955162da260289bce0d72",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../04b85d10/findings.md",
+          "resolved_path": "dev/active/04b85d10/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b413c01fc045b6017a1bcee71784e9ca4f3f158ff7593a01f8f598b7bb99d77",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-amendment-v2.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-amendment-v2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../f547c394/addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "089883c3439913cb79064908b0e9dd98686ebb800124939bf3dbf335566da43f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/5cbb6545/tables.md",
+          "resolved_path": "dev/bench_results/5cbb6545/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "22016f47de82502a989a6e46f1e1d92bc43e5144709212d9701da994e3d5707c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8896a6c30bb509b7320e64a8fec5dc8fe5601edb7e2a3ad117912b110a1d5800",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-parity-source-evidence.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d50e65ba0964bce5926549cf32041c8817c7d8d63576b50a93a853eb73b64e21",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-dense-parity-source-evidence.py",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d1d8eeac58070975ba930cd1d60db94f96417fc1b8600dd2aef698e3a565b498",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-m4ri-matvec-probe.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e761c1335ef1ff1e6c39f5610cd552aa78282293e3faf69467d2f3ab6fc188c2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../crates/gf2-core/src/matrix.asm.txt",
+          "resolved_path": "crates/gf2-core/src/matrix.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fcc13c23a18db121f7d7ff85f80c422da21883ddedf151080e61a2ae9e10dfdb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum-v1.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3460aaa053fc8f0398c489118324bdc3947fa06a1666b21b4019de266fa325b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/tables.md",
+          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa88b8372deb892a230dcae5d1429b02db0517d9d576885bb9dc23074609182c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/m4ri_matvec_probe.c",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2f71d2fab2c3bb03d35f63654a1d9be63b9f4c0446b1758f1a446f29ba716e0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../5cbb6545/findings.md",
+          "resolved_path": "dev/active/5cbb6545/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Canonical dense-parity addendum v2",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f3460aaa053fc8f0398c489118324bdc3947fa06a1666b21b4019de266fa325b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/04b85d10/tables.md",
+          "resolved_path": "dev/bench_results/04b85d10/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64004e045aad1122061373f23226d15863845b60168eb14954db6a9572895a0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "m4ri-operation-match.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-operation-match.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2f71d2fab2c3bb03d35f63654a1d9be63b9f4c0446b1758f1a446f29ba716e0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../5cbb6545/findings.md",
+          "resolved_path": "dev/active/5cbb6545/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ca6a7d1d433a5994381c8819e7cdd4e265e6d6aecfc7d2a57529195dbf5c4d58",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/m4ri-build-pins.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri-build-pins.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d50e65ba0964bce5926549cf32041c8817c7d8d63576b50a93a853eb73b64e21",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/make-dense-parity-source-evidence.py",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/make-dense-parity-source-evidence.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "949aed84fec7839f3cad2383daf01f682da45e5b83c37dc487ae84903a73c99b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/check-m4ri-build-provenance.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/check-m4ri-build-provenance.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa88b8372deb892a230dcae5d1429b02db0517d9d576885bb9dc23074609182c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/m4ri_matvec_probe.c",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/m4ri_matvec_probe.c"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d1d8eeac58070975ba930cd1d60db94f96417fc1b8600dd2aef698e3a565b498",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/run-m4ri-matvec-probe.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "22016f47de82502a989a6e46f1e1d92bc43e5144709212d9701da994e3d5707c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "089883c3439913cb79064908b0e9dd98686ebb800124939bf3dbf335566da43f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/5cbb6545/tables.md",
+          "resolved_path": "dev/bench_results/5cbb6545/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3ed481c92c24b6887aa1258f5260809dce9d62c602955162da260289bce0d72",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../04b85d10/findings.md",
+          "resolved_path": "dev/active/04b85d10/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e761c1335ef1ff1e6c39f5610cd552aa78282293e3faf69467d2f3ab6fc188c2",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../crates/gf2-core/src/matrix.asm.txt",
+          "resolved_path": "crates/gf2-core/src/matrix.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../f547c394/addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93bd03d571692318f867508b6cd4a97b9b9fa35dba4f1303a090c37ef716095c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/amendment-v4.md",
+          "resolved_path": "dev/active/f547c394/amendment-v4.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../f547c394/protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8896a6c30bb509b7320e64a8fec5dc8fe5601edb7e2a3ad117912b110a1d5800",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/dense-parity-source-evidence.json",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-parity-source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Historical byte-identical dense-parity addendum v1",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum-v1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7e088574182c627b9d9858fd74bd11c5f7774bb0d6fa5d57b4565e53ee89fac2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "73cc11b4b57bc3a35dd98bf164b3df0f145259a508fd80e16db5105020bb3963",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b39ae1e960a10a690f154a5391392777aa121c43615100a3723ea9e0b33407d9",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "m4ri-probe-record.txt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/m4ri-probe-record.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "04a230ae926a63a3da93386544c32d1cf11a6da0bb2bfb2f840fb572d0943572",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "dense-parity-conformance.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-conformance.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Current dense-parity harness and companion semantics",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-harness.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "protocol",
+      "label": "Frozen eight-cell M4RI pilot addendum",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Comparator producing-input closure",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json"
     }
   ],
   "first_ready_at": "2026-09-16T22:37:53.286171086Z",
@@ -227,7 +699,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-28T00:14:40.589172573Z",
+      "updated_at": "2026-09-28T06:40:53.145597475Z",
       "updated_by": "auto:executor"
     }
   },
@@ -249,5 +721,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-09-28T00:15:07.977779454Z"
+  "updated_at": "2026-09-28T06:41:49.022867440Z"
 }
