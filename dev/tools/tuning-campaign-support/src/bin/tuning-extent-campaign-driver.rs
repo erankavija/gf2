@@ -689,11 +689,13 @@ fn validate_campaign_stage(stage: &Path, campaign_id: &str) -> io::Result<()> {
     let (stamp, pid) = suffix
         .rsplit_once('-')
         .ok_or_else(|| invalid("campaign ID lacks launcher PID"))?;
+    // Lowercase `t`/`z` keep the ID a valid `ProfileId`; the owners reject any
+    // other ID when the campaign manifest is built, before any timed cell.
     if stamp.len() != 16
-        || stamp.as_bytes().get(8) != Some(&b'T')
+        || stamp.as_bytes().get(8) != Some(&b't')
         || !stamp[..8].bytes().all(|byte| byte.is_ascii_digit())
         || !stamp[9..15].bytes().all(|byte| byte.is_ascii_digit())
-        || !stamp.ends_with('Z')
+        || !stamp.ends_with('z')
         || pid.starts_with('0')
         || pid.parse::<u32>().is_err()
     {
@@ -2602,16 +2604,44 @@ mod tests {
 
     #[test]
     fn campaign_stage_policy_rejects_non_tmp_and_mismatched_paths() {
-        let campaign = format!("gf2-a83583e0-20260905T000000Z-{}", std::process::id());
+        let campaign = format!("gf2-a83583e0-20260905t000000z-{}", std::process::id());
         let expected = Path::new("/tmp").join(&campaign);
         assert!(validate_campaign_stage(&expected, &campaign).is_ok());
         assert!(validate_campaign_stage(Path::new("/tmp/other"), &campaign).is_err());
         assert!(validate_campaign_stage(&expected, "gf2-a83583e0-20260905-000000-1").is_err());
         assert!(validate_campaign_stage(
-            Path::new("/home/example/gf2-a83583e0-20260905T000000Z-1"),
-            "gf2-a83583e0-20260905T000000Z-1"
+            Path::new("/home/example/gf2-a83583e0-20260905t000000z-1"),
+            "gf2-a83583e0-20260905t000000z-1"
         )
         .is_err());
+        let uppercase = format!("gf2-a83583e0-20260905T000000Z-{}", std::process::id());
+        assert!(validate_campaign_stage(&Path::new("/tmp").join(&uppercase), &uppercase).is_err());
+    }
+
+    #[test]
+    fn campaign_stage_policy_accepts_the_launcher_minted_id() {
+        let launcher = fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../../dev/scripts/tuning-extent-campaign.sh"),
+        )
+        .unwrap();
+        let format = launcher
+            .lines()
+            .find_map(|line| {
+                line.trim()
+                    .strip_prefix("campaign=gf2-a83583e0-$(date -u ")?
+                    .strip_suffix(")-$$")
+            })
+            .expect("launcher mints its campaign ID from one date format");
+        let stamp = Command::new("date").args(["-u", format]).output().unwrap();
+        assert!(stamp.status.success());
+        let campaign = format!(
+            "gf2-a83583e0-{}-{}",
+            String::from_utf8(stamp.stdout).unwrap().trim_end(),
+            std::process::id()
+        );
+        let stage = fs::canonicalize("/tmp").unwrap().join(&campaign);
+        validate_campaign_stage(&stage, &campaign).unwrap();
     }
 
     #[test]

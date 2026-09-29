@@ -3,6 +3,7 @@
 # Usage: tuning-extent-campaign.sh [campaign-id]
 # With no argument a fresh run ID and its exact /tmp stage are created. Passing
 # an ID resumes that already-created stage; arbitrary destinations are invalid.
+# The ID becomes the emitted profiles' ProfileId, so it stays lowercase kebab case.
 set -euo pipefail
 if [[ $# -gt 1 ]]; then
   echo 'usage: tuning-extent-campaign.sh [campaign-id]' >&2
@@ -12,13 +13,13 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 requested_campaign=${1:-}
 if [[ -n $requested_campaign ]]; then
-  if [[ ! $requested_campaign =~ ^gf2-a83583e0-[0-9]{8}T[0-9]{6}Z-[1-9][0-9]*$ ]]; then
-    echo 'campaign ID must match gf2-a83583e0-<UTC-stamp>-<launcher-pid>' >&2
+  if [[ ! $requested_campaign =~ ^gf2-a83583e0-[0-9]{8}t[0-9]{6}z-[1-9][0-9]*$ ]]; then
+    echo 'campaign ID must match gf2-a83583e0-<yyyymmddthhmmssz UTC>-<launcher-pid>' >&2
     exit 2
   fi
   campaign=$requested_campaign
 else
-  campaign=gf2-a83583e0-$(date -u +%Y%m%dT%H%M%SZ)-$$
+  campaign=gf2-a83583e0-$(date -u +%Y%m%dt%H%M%Sz)-$$
 fi
 stage=/tmp/$campaign
 stage_preexisted=false

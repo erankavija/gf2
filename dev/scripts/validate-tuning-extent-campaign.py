@@ -72,7 +72,9 @@ OWNER_COUNTS = {
     },
 }
 SHA = re.compile(r"[0-9a-f]{64}\Z")
-RUN_ID = re.compile(r"gf2-a83583e0-[0-9]{8}T[0-9]{6}Z-[1-9][0-9]*\Z")
+RUN_ID = re.compile(r"gf2-a83583e0-[0-9]{8}t[0-9]{6}z-[1-9][0-9]*\Z")
+# Mirrors gf2_core::tuning::ProfileId::parse; the run ID names emitted profiles.
+PROFILE_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/+-]*\Z")
 JOURNAL_EVENTS = {
     "campaign-start", "session-start", "session-prepared", "session-recovery",
@@ -3702,8 +3704,26 @@ def reconstruction_self_test() -> None:
     must_reject(lambda:validate_sample({**sample,'elapsed_ns':True},0,0,None),'boolean elapsed')
 
 
+def launcher_run_id_self_test() -> None:
+    """A run ID minted by the launcher's own format is a valid RUN_ID and ProfileId."""
+    launcher = Path(__file__).resolve().parent / "tuning-extent-campaign.sh"
+    formats = re.findall(r"^\s*campaign=gf2-a83583e0-\$\(date -u (\+\S+)\)-\$\$$",
+                         launcher.read_text(), re.MULTILINE)
+    require(len(formats) == 1, "launcher must mint its run ID from one date format")
+    stamp = subprocess.run(["date", "-u", formats[0]], check=True, capture_output=True,
+                           text=True).stdout.strip()
+    minted = f"gf2-a83583e0-{stamp}-4242"
+    require(RUN_ID.fullmatch(minted) is not None, f"launcher-minted {minted} fails RUN_ID")
+    require(PROFILE_ID.fullmatch(minted) is not None,
+            f"launcher-minted {minted} is not a ProfileId")
+    uppercase = f"gf2-a83583e0-{stamp.upper()}-4242"
+    require(RUN_ID.fullmatch(uppercase) is None and PROFILE_ID.fullmatch(uppercase) is None,
+            "uppercase run ID stamp mutation was accepted")
+
+
 def self_test() -> None:
     reconstruction_self_test()
+    launcher_run_id_self_test()
     require(mix_seed(0x5ECC9BF800000000, 27, 0, 0xC00) ==
             mix_seed(0x5ECC9BF800000000, 27, 0, 0xC00), "seed self-test")
     require(rotated(["a", "b", "c"], 1) == ["a", "c", "b"], "rotation self-test")
