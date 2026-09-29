@@ -106,6 +106,12 @@ HOST_ADMISSION_POLICY = {
     ],
 }
 
+# Protocol §9 repository publication of a complete stage.
+REPOSITORY_PUBLICATION_DIR = "repository-publication"
+REPOSITORY_PLAN_SCHEMA = "tuning-campaign-repository-plan-v1"
+REPOSITORY_REOPEN_SCHEMA = "tuning-campaign-repository-reopen-v1"
+TUNING_EVIDENCE = "dev/benchmarks/tuning_profiles"
+
 ALGEBRA_CANDIDATES = [4096, 16384, 65536, 262144, 1048576]
 ALGEBRA_DIMS = [20, 22, 24]
 EXTENT_GRIDS: dict[str, list[Any]] = {
@@ -3069,7 +3075,8 @@ def validate_derivation(stage: Path, original: Any, resolved: Any, decisions: An
 
 def checksum_artifact_boundary(stage: Path) -> set[Path]:
     excluded = {"execution.log", "active-session.json", "active-preparation.json",
-                "session-writer.lock", "sessions", "artifact-publications"}
+                "session-writer.lock", "sessions", "artifact-publications",
+                REPOSITORY_PUBLICATION_DIR}
     artifacts: set[Path] = set()
 
     def collect(directory: Path) -> None:
@@ -3561,6 +3568,139 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
             "algebra_manifest_sha256": algebra_manifest["manifest_sha256"]}
 
 
+def publication_layout(campaign: str) -> dict[str, str]:
+    """Protocol §9 destinations derived from the run ID, keyed by role."""
+    return {
+        "core-owner.json": f"crates/gf2-core/data/tuning-profiles/{campaign}.json",
+        "algebra-owner.json": f"crates/gf2-algebra/data/tuning-profiles/{campaign}.json",
+        "complete.json": f"dev/reference_data/tuning-profiles/{campaign}.json",
+        "receipt.md": f"{TUNING_EVIDENCE}/{campaign}.md",
+        "execution.log": f"{TUNING_EVIDENCE}/{campaign}-execution.log",
+        "results": f"{TUNING_EVIDENCE}/{campaign}-results",
+        "session": f"{TUNING_EVIDENCE}/{campaign}-session",
+        "checksum": f"{TUNING_EVIDENCE}/{campaign}.sha256",
+    }
+
+
+def expected_publication(stage: Path, campaign: str) -> dict[str, str]:
+    """Independently maps every published stage file to its destination.
+
+    Accepted checkpoints, raw attempt streams and accepted bundles are the
+    results; every other checksummed file, the session control state and the
+    validation record form the session record. Staged executables are pinned
+    by digest in the staging manifest and are not published.
+    """
+    layout = publication_layout(campaign)
+    files = set(checksum_artifact_boundary(stage))
+    for path in (stage / "sessions").rglob("*"):
+        require(not path.is_symlink(), "symlink in staged session state")
+        if not path.is_dir():
+            require(path.is_file(), "non-file in staged session state")
+            files.add(path)
+    files |= {stage / "execution.log", stage / REPOSITORY_PUBLICATION_DIR / "validation.json"}
+    mapping: dict[str, str] = {}
+    for path in files:
+        source = path.relative_to(stage).as_posix()
+        if source in {"core-owner.json", "algebra-owner.json", "complete.json", "receipt.md",
+                      "execution.log"}:
+            destination = layout[source]
+        elif source == f"{REPOSITORY_PUBLICATION_DIR}/validation.json":
+            destination = f"{layout['session']}/validation.json"
+        elif source.startswith("bin/"):
+            continue
+        elif (source.startswith(("checkpoints/", "raw-attempts/"))
+              or source in {"core-accepted.json", "algebra-accepted.json"}):
+            destination = f"{layout['results']}/{source}"
+        else:
+            destination = f"{layout['session']}/{source}"
+        require(destination not in mapping, f"two stage files publish to {destination}")
+        mapping[destination] = source
+    require(all(layout[role] in mapping for role in
+                ["core-owner.json", "algebra-owner.json", "complete.json", "receipt.md"]),
+            "stage lacks an owner, complete or receipt publication source")
+    return mapping
+
+
+def validate_publication(stage_arg: str, repository_arg: str) -> dict[str, Any]:
+    """Checks a repository publication of a stage that passed full validation.
+
+    The staged plan must equal this independent mapping; every destination
+    must hold its stage source's bytes; owned trees hold exactly their planned
+    files; reopen evidence and the checksum manifest, once present, must bind
+    exactly the published digests.
+    """
+    stage, repository = Path(stage_arg), Path(repository_arg)
+    for path, where in [(stage, "--stage"), (repository, "--publication")]:
+        require(path.is_absolute() and path.is_dir() and not path.is_symlink()
+                and path.resolve() == path, f"{where} must be a canonical directory")
+    campaign = load_json(stage / "campaign.json")["campaign_id"]
+    require(isinstance(campaign, str) and RUN_ID.fullmatch(campaign) is not None,
+            "publication campaign ID is malformed")
+    layout = publication_layout(campaign)
+    record = f"{layout['session']}/repository-publication.json"
+    verification = f"{layout['session']}/repository-reopen.json"
+    expected = expected_publication(stage, campaign)
+    entries = [{"source": expected[destination], "destination": destination,
+                "sha256": digest((stage / expected[destination]).read_bytes())}
+               for destination in sorted(expected)]
+    staged_plan = stage / REPOSITORY_PUBLICATION_DIR / "plan.json"
+    require(load_json(staged_plan) == {
+                "schema": REPOSITORY_PLAN_SCHEMA, "campaign_id": campaign, "entries": entries,
+                "owned_directories": [layout["results"], layout["session"]],
+                "record": record, "verification": verification,
+                "checksum_manifest": layout["checksum"]},
+            "staged publication plan differs from the independent destination mapping")
+    record_path = repository / record
+    require(record_path.is_file() and not record_path.is_symlink()
+            and record_path.read_bytes() == staged_plan.read_bytes(),
+            "published plan record differs from the staged plan")
+    for entry in entries:
+        destination = repository / entry["destination"]
+        require(destination.is_file() and not destination.is_symlink()
+                and digest(destination.read_bytes()) == entry["sha256"],
+                f"published {entry['destination']} differs from its stage source")
+    verification_path = repository / verification
+    for owned in [layout["results"], layout["session"]]:
+        root = repository / owned
+        found = set()
+        for path in root.rglob("*"):
+            require(not path.is_symlink(), f"symlink in published {owned}")
+            if not path.is_dir():
+                found.add(path)
+        planned = {repository / entry["destination"] for entry in entries
+                   if entry["destination"].startswith(owned + "/")} | {record_path}
+        if verification_path.exists():
+            planned.add(verification_path)
+        require(found == {path for path in planned if path.is_relative_to(root)},
+                f"published {owned} differs from its planned file set")
+    if verification_path.exists():
+        evidence = load_json(verification_path)
+        composition = load_json(stage / "composition.json")
+        require(evidence == {
+                    "algebra": {"path": layout["algebra-owner.json"], "sha256": digest(
+                        (repository / layout["algebra-owner.json"]).read_bytes())},
+                    "complete": {"path": layout["complete.json"], "sha256": digest(
+                        (repository / layout["complete.json"]).read_bytes())},
+                    "composer_sha256": composition["tool_sha256"],
+                    "core": {"path": layout["core-owner.json"], "sha256": digest(
+                        (repository / layout["core-owner.json"]).read_bytes())},
+                    "profile_arguments": composition["args"][4:],
+                    "schema": REPOSITORY_REOPEN_SCHEMA},
+                "reopen evidence does not bind the published envelopes")
+    checksum_path = repository / layout["checksum"]
+    if checksum_path.exists():
+        require(verification_path.is_file(), "checksum manifest precedes reopen evidence")
+        rows = sorted([(entry["destination"], entry["sha256"]) for entry in entries]
+                      + [(record, digest(record_path.read_bytes())),
+                         (verification, digest(verification_path.read_bytes()))])
+        require(checksum_path.read_bytes() ==
+                "".join(f"{sha}  {path}\n" for path, sha in rows).encode(),
+                "checksum manifest differs from the published digests")
+    return {"schema": "tuning-extent-campaign-publication-v1", "campaign_id": campaign,
+            "status": "published" if checksum_path.exists() else "publication-incomplete",
+            "entries": len(entries)}
+
+
 def must_reject(action: Any, where: str) -> None:
     try:
         action()
@@ -3721,9 +3861,93 @@ def launcher_run_id_self_test() -> None:
             "uppercase run ID stamp mutation was accepted")
 
 
+def publication_self_test() -> None:
+    """The layout is the protocol's table; the publication check rejects drift."""
+    protocol = Path(__file__).resolve().parents[1] / "active/a83583e0/premeasurement-protocol.md"
+    table = protocol.read_text().split("Repository destinations are derived", 1)[1]
+    declared = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|$", table.split("\n\n", 2)[1],
+                              re.MULTILINE))
+    layout = publication_layout("<run-id>")
+    require(declared == {value + "/" if role in {"results", "session"} else value
+                         for role, value in layout.items()},
+            "publication layout differs from the protocol destination table")
+    campaign = "gf2-a83583e0-19700101t000000z-1"
+    layout = publication_layout(campaign)
+    with tempfile.TemporaryDirectory(prefix="gf2-validator-publication-", dir="/tmp") as temporary:
+        stage = Path(temporary).resolve() / "stage"
+        repository = Path(temporary).resolve() / "repository"
+        tool = "a" * 64
+        sources = {
+            "campaign.json": compact({"campaign_id": campaign}),
+            "composition.json": compact({"tool_sha256": tool, "args": [
+                "complete", "core", "algebra", "output", campaign,
+                "1970-01-01T00:00:00Z", "0" * 40, "false", tool]}),
+            "core-owner.json": b"{}", "algebra-owner.json": b"[]", "complete.json": b"{ }",
+            "receipt.md": b"# receipt\n", "execution.log": b"{}\n",
+            "checkpoints/units/unit.json": b"{}", "raw-attempts/a.stdout": b"out",
+            "core-accepted.json": b"{}", "bin/driver": b"executable",
+            "sessions/s1/checksum.json": b"{}", "artifact-publications/x/intent.json": b"{}",
+            f"{REPOSITORY_PUBLICATION_DIR}/validation.json": b"{}",
+        }
+        for relative, data in sources.items():
+            (stage / relative).parent.mkdir(parents=True, exist_ok=True)
+            (stage / relative).write_bytes(data)
+        mapping = expected_publication(stage, campaign)
+        require(not any(source.startswith(("bin/", "artifact-publications/"))
+                        for source in mapping.values())
+                and mapping[layout["core-owner.json"]] == "core-owner.json"
+                and mapping[f"{layout['results']}/raw-attempts/a.stdout"] == "raw-attempts/a.stdout"
+                and mapping[f"{layout['session']}/sessions/s1/checksum.json"]
+                    == "sessions/s1/checksum.json",
+                "publication mapping self-test")
+        entries = [{"source": mapping[d], "destination": d,
+                    "sha256": digest(sources[mapping[d]])} for d in sorted(mapping)]
+        record = f"{layout['session']}/repository-publication.json"
+        verification = f"{layout['session']}/repository-reopen.json"
+        plan = compact({"schema": REPOSITORY_PLAN_SCHEMA, "campaign_id": campaign,
+                        "entries": entries,
+                        "owned_directories": [layout["results"], layout["session"]],
+                        "record": record, "verification": verification,
+                        "checksum_manifest": layout["checksum"]})
+        (stage / REPOSITORY_PUBLICATION_DIR / "plan.json").write_bytes(plan)
+        for destination, source in mapping.items():
+            (repository / destination).parent.mkdir(parents=True, exist_ok=True)
+            (repository / destination).write_bytes(sources[source])
+        (repository / record).write_bytes(plan)
+        validate_publication(str(stage), str(repository))
+        def envelope(source: str) -> dict[str, str]:
+            return {"path": layout[source], "sha256": digest(sources[source])}
+        evidence = compact({
+            "algebra": envelope("algebra-owner.json"), "complete": envelope("complete.json"),
+            "composer_sha256": tool, "core": envelope("core-owner.json"),
+            "profile_arguments": [campaign, "1970-01-01T00:00:00Z", "0" * 40, "false", tool],
+            "schema": REPOSITORY_REOPEN_SCHEMA})
+        (repository / verification).write_bytes(evidence)
+        rows = sorted([(entry["destination"], entry["sha256"]) for entry in entries]
+                      + [(record, digest(plan)), (verification, digest(evidence))])
+        manifest = "".join(f"{sha}  {path}\n" for path, sha in rows).encode()
+        (repository / layout["checksum"]).write_bytes(manifest)
+        require(validate_publication(str(stage), str(repository))["status"] == "published",
+                "complete publication self-test")
+        core = repository / layout["core-owner.json"]
+        core.write_bytes(b"{ }")
+        must_reject(lambda: validate_publication(str(stage), str(repository)),
+                    "changed published envelope")
+        core.write_bytes(b"{}")
+        extra = repository / layout["results"] / "extra.json"
+        extra.write_bytes(b"{}")
+        must_reject(lambda: validate_publication(str(stage), str(repository)),
+                    "unplanned published result")
+        extra.unlink()
+        (repository / layout["checksum"]).write_bytes(manifest[:-1])
+        must_reject(lambda: validate_publication(str(stage), str(repository)),
+                    "truncated checksum manifest")
+
+
 def self_test() -> None:
     reconstruction_self_test()
     launcher_run_id_self_test()
+    publication_self_test()
     require(mix_seed(0x5ECC9BF800000000, 27, 0, 0xC00) ==
             mix_seed(0x5ECC9BF800000000, 27, 0, 0xC00), "seed self-test")
     require(rotated(["a", "b", "c"], 1) == ["a", "c", "b"], "rotation self-test")
@@ -3885,12 +4109,18 @@ def main() -> int:
     group.add_argument("--self-test", action="store_true")
     parser.add_argument("--preterminal", action="store_true",
                         help="validate immediately before Complete/checksum publication")
+    parser.add_argument("--publication", metavar="REPOSITORY",
+                        help="check the repository publication of a fully validated stage")
     args = parser.parse_args()
     try:
         if args.self_test:
-            require(not args.preterminal, "--preterminal requires --stage")
+            require(not args.preterminal and args.publication is None,
+                    "--preterminal and --publication require --stage")
             self_test()
             output = {"schema": "tuning-extent-campaign-validator-self-test-v1", "status": "pass"}
+        elif args.publication is not None:
+            require(not args.preterminal, "--publication checks a complete stage")
+            output = validate_publication(args.stage, args.publication)
         else:
             output = validate_stage(args.stage, args.preterminal)
         print("GF2_TUNING_VALIDATION=" + compact(output).decode())

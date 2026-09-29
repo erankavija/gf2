@@ -1082,6 +1082,66 @@ fn budget_terminal_checksum_gap_and_same_identity_resume_preserve_the_prefix() {
 }
 
 #[test]
+fn only_a_retired_complete_terminal_makes_a_campaign_publishable() {
+    let tmp = scratch("campaign-layer");
+    let first = descriptor(tmp.path());
+    let campaign = first.campaign_id.clone();
+    assert!(!campaign_complete(&first.channels, &campaign).unwrap());
+    let mut log = log(tmp.path());
+    let mut store = SessionStore::prepare(first.clone()).unwrap();
+    store.announce_prepared(&mut log, &mut Vec::new()).unwrap();
+    store.consume_mode(SessionMode::RunSession).unwrap();
+    store
+        .transition(
+            &mut log,
+            SessionTransition::LockHeld {
+                evidence: LockEvidence {
+                    lock_path: first.lock_path.clone(),
+                    holder_pid: 123,
+                    observation: token("inherited"),
+                },
+            },
+        )
+        .unwrap();
+    store
+        .transition(
+            &mut log,
+            SessionTransition::WorkFinished {
+                evidence: WorkEvidence {
+                    outcome: SessionOutcome::Complete,
+                    all_descendants_reaped: true,
+                    active_elapsed_ns: 1,
+                },
+            },
+        )
+        .unwrap();
+    drop(store);
+    let mut store = SessionStore::reopen(first.clone()).unwrap();
+    store.consume_mode(SessionMode::FinalizeSession).unwrap();
+    for transition in [
+        SessionTransition::WrapperReturned {
+            evidence: WrapperEvidence {
+                exit_code: Some(0),
+                signal: None,
+            },
+        },
+        SessionTransition::LockRelease {
+            evidence: ReleaseEvidence::CleanReaped,
+        },
+        SessionTransition::Terminal {
+            outcome: SessionOutcome::Complete,
+        },
+    ] {
+        store.transition(&mut log, transition).unwrap();
+    }
+    // The synced terminal alone is not publishable: the claim is still active.
+    assert!(!campaign_complete(&first.channels, &campaign).unwrap());
+    let pin = store.write_checksum(&mut log, vec![]).unwrap();
+    store.retire(&mut log, &pin).unwrap();
+    assert!(campaign_complete(&first.channels, &campaign).unwrap());
+}
+
+#[test]
 fn recovery_requires_release_then_censored_interruption_and_allows_resume() {
     let tmp = scratch("campaign-layer");
     let first = descriptor(tmp.path());

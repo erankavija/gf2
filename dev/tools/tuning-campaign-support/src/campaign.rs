@@ -369,6 +369,18 @@ impl ProcessDescriptor {
         }
         Ok(())
     }
+    /// Verifies the staged identity and builds its command with `arguments`,
+    /// the cleared-then-declared environment and the declared directory.
+    pub fn command(&self, arguments: &[String]) -> io::Result<std::process::Command> {
+        self.verify_staged()?;
+        let mut command = std::process::Command::new(&self.executable);
+        command
+            .args(arguments)
+            .current_dir(&self.working_directory)
+            .env_clear()
+            .envs(&self.environment);
+        Ok(command)
+    }
 }
 fn absolute_path(path: &Path) -> io::Result<()> {
     let reconstructed: PathBuf = path.components().collect();
@@ -4487,6 +4499,289 @@ pub fn publish_artifact(stage: &Path, path: &Path, content: &[u8]) -> io::Result
         path: path.into(),
         sha256: intent.content_sha256,
     })
+}
+
+/// Reports whether the campaign closed `complete`: no session or preparation
+/// claim remains, and the journal ends at the `complete` terminal of a
+/// checksummed, retired session. Only such a stage is publishable.
+pub fn campaign_complete(channels: &SessionChannels, campaign_id: &Token) -> io::Result<bool> {
+    channels.validate()?;
+    let stage = &channels.stage;
+    if stage.join("active-session.json").try_exists()?
+        || stage.join("active-preparation.json").try_exists()?
+        || !channels.execution_log.try_exists()?
+    {
+        return Ok(false);
+    }
+    let records =
+        ExecutionLog::validate_prefix(&fs::read(&channels.execution_log)?, campaign_id.as_str())?;
+    let Some(last) = records.last() else {
+        return Ok(false);
+    };
+    let session = stage.join("sessions").join(&last.session_id);
+    Ok(last.event == JournalEvent::Complete
+        && session.join("checksum.json").try_exists()?
+        && session.join("retired.json").try_exists()?)
+}
+
+/// Stage directory holding the repository-publication journal. Written only
+/// after the final session checksum, it lies outside that checksum boundary.
+pub const REPOSITORY_PUBLICATION_DIR: &str = "repository-publication";
+/// Schema of [`RepositoryPlan`].
+pub const REPOSITORY_PLAN_SCHEMA: &str = "tuning-campaign-repository-plan-v1";
+
+/// One stage file copied byte for byte to a repository destination.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RepositoryEntry {
+    /// Stage-relative source path.
+    pub source: String,
+    /// Repository-relative destination path.
+    pub destination: String,
+    pub sha256: Sha256Digest,
+}
+
+/// Immutable plan publishing a validated stage into a repository checkout.
+/// Entries are sorted by destination. `record` receives this plan,
+/// `verification` the caller's post-copy verification evidence, and
+/// `checksum_manifest`, written last, the digest of every other destination.
+/// The file set under each owned directory must equal its planned files.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RepositoryPlan {
+    pub schema: String,
+    pub campaign_id: Token,
+    pub entries: Vec<RepositoryEntry>,
+    pub owned_directories: Vec<String>,
+    pub record: String,
+    pub verification: String,
+    pub checksum_manifest: String,
+}
+
+fn relative_path(value: &str) -> io::Result<&Path> {
+    let path = Path::new(value);
+    if value.is_empty()
+        || value.contains('\0')
+        || value.ends_with('/')
+        || !path
+            .components()
+            .all(|component| matches!(component, Component::Normal(_)))
+        || path.components().collect::<PathBuf>().as_os_str() != path.as_os_str()
+    {
+        return Err(invalid("publication path must be relative and normalized"));
+    }
+    Ok(path)
+}
+
+impl RepositoryPlan {
+    /// Hashes each stage source of `mapping` (destination to stage-relative
+    /// source) and validates the resulting plan.
+    pub fn new(
+        stage: &Path,
+        campaign_id: Token,
+        mapping: BTreeMap<String, String>,
+        owned_directories: Vec<String>,
+        record: String,
+        verification: String,
+        checksum_manifest: String,
+    ) -> io::Result<Self> {
+        let mut entries = Vec::with_capacity(mapping.len());
+        for (destination, source) in mapping {
+            let path = stage.join(relative_path(&source)?);
+            let metadata = fs::symlink_metadata(&path)?;
+            if !metadata.file_type().is_file() {
+                return Err(invalid("publication source is not a regular stage file"));
+            }
+            entries.push(RepositoryEntry {
+                sha256: Sha256Digest::of(&fs::read(&path)?),
+                source,
+                destination,
+            });
+        }
+        let plan = Self {
+            schema: REPOSITORY_PLAN_SCHEMA.into(),
+            campaign_id,
+            entries,
+            owned_directories,
+            record,
+            verification,
+            checksum_manifest,
+        };
+        plan.validate()?;
+        Ok(plan)
+    }
+
+    /// Rejects unnormalized paths, unsorted or duplicate destinations, and
+    /// generated destinations that collide with an entry.
+    pub fn validate(&self) -> io::Result<()> {
+        if self.schema != REPOSITORY_PLAN_SCHEMA || self.entries.is_empty() {
+            return Err(invalid("repository plan schema or entries mismatch"));
+        }
+        let mut destinations = BTreeSet::new();
+        for entry in &self.entries {
+            relative_path(&entry.source)?;
+            relative_path(&entry.destination)?;
+            if destinations
+                .last()
+                .is_some_and(|last: &&str| *last >= entry.destination.as_str())
+            {
+                return Err(invalid("repository plan destinations are unsorted"));
+            }
+            destinations.insert(entry.destination.as_str());
+        }
+        for generated in [&self.record, &self.verification, &self.checksum_manifest] {
+            relative_path(generated)?;
+            if !destinations.insert(generated.as_str()) {
+                return Err(invalid("repository plan destination is not unique"));
+            }
+        }
+        for directory in &self.owned_directories {
+            relative_path(directory)?;
+        }
+        Ok(())
+    }
+
+    fn checksum_text(&self, record: &[u8], verification: &[u8]) -> Vec<u8> {
+        let mut rows: Vec<(&str, Sha256Digest)> = self
+            .entries
+            .iter()
+            .map(|entry| (entry.destination.as_str(), entry.sha256.clone()))
+            .collect();
+        rows.push((&self.record, Sha256Digest::of(record)));
+        rows.push((&self.verification, Sha256Digest::of(verification)));
+        rows.sort();
+        rows.iter()
+            .map(|(path, digest)| format!("{}  {path}\n", digest.as_str()))
+            .collect::<String>()
+            .into_bytes()
+    }
+
+    fn verify_owned_directories(&self, repository: &Path) -> io::Result<()> {
+        fn collect(directory: &Path, files: &mut BTreeSet<PathBuf>) -> io::Result<()> {
+            for entry in fs::read_dir(directory)? {
+                let entry = entry?;
+                let kind = entry.file_type()?;
+                if kind.is_dir() {
+                    collect(&entry.path(), files)?;
+                } else if kind.is_file() {
+                    files.insert(entry.path());
+                } else {
+                    return Err(invalid("owned publication tree contains a non-file"));
+                }
+            }
+            Ok(())
+        }
+        let planned: BTreeSet<PathBuf> = self
+            .entries
+            .iter()
+            .map(|entry| entry.destination.as_str())
+            .chain([self.record.as_str(), self.verification.as_str()])
+            .map(|destination| repository.join(destination))
+            .collect();
+        for directory in &self.owned_directories {
+            let root = repository.join(directory);
+            let mut found = BTreeSet::new();
+            collect(&root, &mut found)?;
+            let expected: BTreeSet<_> = planned
+                .iter()
+                .filter(|path| path.starts_with(&root))
+                .cloned()
+                .collect();
+            if found != expected {
+                return Err(invalid(format!(
+                    "owned publication tree {directory} differs from its plan"
+                )));
+            }
+        }
+        Ok(())
+    }
+}
+
+fn create_repository_directories(repository: &Path, directory: &Path) -> io::Result<()> {
+    let relative = directory
+        .strip_prefix(repository)
+        .map_err(|_| invalid("publication directory escapes the repository"))?;
+    let mut current = repository.to_path_buf();
+    for component in relative.components() {
+        let parent = current.clone();
+        current.push(component);
+        match fs::create_dir(&current) {
+            Ok(()) => File::open(&parent)?.sync_all()?,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+                if !fs::symlink_metadata(&current)?.file_type().is_dir() {
+                    return Err(invalid("publication directory is not a real directory"));
+                }
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    Ok(())
+}
+
+fn publish_repository_file(
+    stage: &Path,
+    repository: &Path,
+    destination: &str,
+    content: &[u8],
+) -> io::Result<ArtifactIdentity> {
+    let target = repository.join(relative_path(destination)?);
+    create_repository_directories(
+        repository,
+        target
+            .parent()
+            .ok_or_else(|| invalid("publication target lacks parent"))?,
+    )?;
+    publish_artifact(stage, &target, content)
+}
+
+/// Publishes a validated stage into `repository` under `plan` and returns the
+/// checksum manifest, which is written last and marks a complete publication.
+///
+/// The plan is journaled at `stage/repository-publication/plan.json` before
+/// any destination is touched. Every destination then goes through
+/// [`publish_artifact`]: a durable per-path intent, a create-new temporary in
+/// the destination directory, sync, atomic rename and directory sync. An
+/// existing destination with different bytes is refused and left unchanged.
+/// `verify` runs after every entry and the plan record are in place; it
+/// strictly reopens the published files and returns deterministic evidence.
+/// Retrying the same plan after any interruption reverifies each published
+/// file by its bytes and finishes the rest; a changed plan is refused.
+pub fn publish_repository(
+    stage: &Path,
+    repository: &Path,
+    plan: &RepositoryPlan,
+    verify: impl FnOnce(&Path) -> io::Result<Vec<u8>>,
+) -> io::Result<ArtifactIdentity> {
+    absolute_path(stage)?;
+    absolute_path(repository)?;
+    if fs::canonicalize(stage)? != stage
+        || fs::canonicalize(repository)? != repository
+        || !repository.is_dir()
+    {
+        return Err(invalid("publication stage or repository is not canonical"));
+    }
+    plan.validate()?;
+    let record = bytes(plan)?;
+    let journal = stage.join(REPOSITORY_PUBLICATION_DIR);
+    create_repository_directories(stage, &journal)?;
+    publish_artifact(stage, &journal.join("plan.json"), &record)?;
+    for entry in &plan.entries {
+        let content = fs::read(stage.join(&entry.source))?;
+        if Sha256Digest::of(&content) != entry.sha256 {
+            return Err(invalid("stage source changed after publication planning"));
+        }
+        publish_repository_file(stage, repository, &entry.destination, &content)?;
+    }
+    publish_repository_file(stage, repository, &plan.record, &record)?;
+    let evidence = verify(repository)?;
+    publish_repository_file(stage, repository, &plan.verification, &evidence)?;
+    plan.verify_owned_directories(repository)?;
+    publish_repository_file(
+        stage,
+        repository,
+        &plan.checksum_manifest,
+        &plan.checksum_text(&record, &evidence),
+    )
 }
 
 #[derive(Serialize)]

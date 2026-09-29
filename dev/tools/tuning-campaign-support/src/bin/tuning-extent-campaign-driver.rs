@@ -3,15 +3,18 @@
 //! The launcher builds and stages every executable before preparation. Each
 //! handoff names one immutable session; only run-session executes measurement
 //! or composition, under the inherited full-host flock. Finalization observes
-//! wrapper return and release before publishing terminal evidence.
+//! wrapper return and release before publishing terminal evidence. After a
+//! `complete` terminal, `publish-campaign` copies the validated stage to its
+//! repository destinations.
 #![deny(unsafe_code)]
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::env;
+use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
 use tuning_campaign_support::campaign::*;
@@ -204,16 +207,6 @@ fn process(config: &CampaignConfig, id: &str) -> io::Result<ProcessDescriptor> {
         .cloned()
         .ok_or_else(|| invalid("unknown staged process"))
 }
-fn process_command(process: &ProcessDescriptor, args: &[String]) -> io::Result<Command> {
-    process.verify_staged()?;
-    let mut command = Command::new(&process.executable);
-    command
-        .args(args)
-        .current_dir(&process.working_directory)
-        .env_clear()
-        .envs(&process.environment);
-    Ok(command)
-}
 fn operation(
     process: &ProcessDescriptor,
     request: &OwnerOperation,
@@ -235,7 +228,7 @@ fn invoke_owner(
         log.append(JournalEvent::OrchestrationStart,None,json!({"kind":"orchestration-start","process":process.id,"request_sha256":Sha256Digest::of(input),"arguments":arguments}))?;
     }
     let result = run_process(
-        process_command(process, arguments)?,
+        process.command(arguments)?,
         input,
         Duration::from_secs(CHILD_TIMEOUT_SECONDS),
         Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
@@ -756,6 +749,11 @@ fn prepare(
         recover(&channels.stage)?;
     }
     let campaign_id = Token::new(campaign_id)?;
+    if campaign_complete(&channels, &campaign_id)? {
+        return Err(invalid(
+            "campaign is complete; publish-campaign finishes its repository publication",
+        ));
+    }
     let inputs = bootstrap_inputs(&channels, &campaign_id)?;
     let preparation = PreparationStore::begin(
         channels.clone(),
@@ -944,7 +942,7 @@ fn bounded_unit_with_hook(
     )?;
     let state = std::cell::RefCell::new((log, None::<ChildAttempt>, Vec::<u8>::new()));
     let result = run_process(
-        process_command(&process, &process.arguments)?,
+        process.command(&process.arguments)?,
         unit.case.as_str().as_bytes(),
         Duration::from_secs(CHILD_TIMEOUT_SECONDS),
         Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
@@ -1322,7 +1320,7 @@ fn emit(
             json!({"kind":"orchestration-start","process":"composer","request":request}),
         )?;
         let result = run_process(
-            process_command(&composer, &args)?,
+            composer.command(&args)?,
             b"",
             Duration::from_secs(CHILD_TIMEOUT_SECONDS),
             Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
@@ -1698,62 +1696,80 @@ fn proof(
         lock_available: lock_available(&descriptor.lock_path)?,
     })
 }
-fn finish_checksum(store: SessionStore, log: &mut ExecutionLog) -> io::Result<()> {
-    let descriptor = store.descriptor().clone();
-    let stage = &descriptor.channels.stage;
-    fn collect(path: &Path, artifacts: &mut Vec<ArtifactIdentity>) -> io::Result<()> {
-        for entry in fs::read_dir(path)? {
-            let entry = entry?;
-            let path = entry.path();
-            let name = entry.file_name();
-            if [
-                "execution.log",
-                "active-session.json",
-                "active-preparation.json",
-                "session-writer.lock",
-                "sessions",
-                "artifact-publications",
-            ]
-            .iter()
-            .any(|skip| name == *skip)
-            {
-                continue;
-            }
-            if entry.file_type()?.is_symlink() {
-                return Err(invalid("symlink in staged evidence"));
-            }
-            if path.is_dir() {
-                collect(&path, artifacts)?;
-            } else {
-                artifacts.push(artifact(&path)?);
-            }
+/// Regular files below `directory`, skipping entries named in `skip` at any
+/// depth; a symlink is rejected.
+fn stage_files(directory: &Path, skip: &[&str], files: &mut Vec<PathBuf>) -> io::Result<()> {
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        let path = entry.path();
+        if skip.iter().any(|name| entry.file_name() == *name) {
+            continue;
         }
-        Ok(())
+        if entry.file_type()?.is_symlink() {
+            return Err(invalid("symlink in staged evidence"));
+        }
+        if path.is_dir() {
+            stage_files(&path, skip, files)?;
+        } else {
+            files.push(path);
+        }
     }
-    let mut artifacts = Vec::new();
-    collect(stage, &mut artifacts)?;
+    Ok(())
+}
+/// Files the final session checksum pins: everything except the journal,
+/// the active claims, session control state and publication journals.
+fn checksum_boundary(stage: &Path) -> io::Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    stage_files(
+        stage,
+        &[
+            "execution.log",
+            "active-session.json",
+            "active-preparation.json",
+            "session-writer.lock",
+            "sessions",
+            "artifact-publications",
+            REPOSITORY_PUBLICATION_DIR,
+        ],
+        &mut files,
+    )?;
+    Ok(files)
+}
+fn finish_checksum(store: SessionStore, log: &mut ExecutionLog) -> io::Result<()> {
+    let stage = store.descriptor().channels.stage.clone();
+    let artifacts = checksum_boundary(&stage)?
+        .iter()
+        .map(|path| artifact(path))
+        .collect::<io::Result<Vec<_>>>()?;
     let identity = store.write_checksum(log, artifacts)?;
     store.retire(log, &identity)
 }
-fn validator(config: &CampaignConfig, preterminal: bool) -> io::Result<()> {
-    if artifact(&config.validator.path)? != config.validator {
-        return Err(invalid("validator identity changed"));
-    }
-    let mut command = Command::new("python3");
-    command
-        .arg(&config.validator.path)
+/// Runs the independent validator with `arguments` after `--stage STAGE` and
+/// returns its stdout, which is also forwarded with its stderr.
+fn run_validator(validator: &Path, stage: &Path, arguments: &[&OsStr]) -> io::Result<Vec<u8>> {
+    let output = Command::new("python3")
+        .arg(validator)
         .arg("--stage")
-        .arg(&config.channels.stage);
-    if preterminal {
-        command.arg("--preterminal");
-    }
-    let output = command.output()?;
+        .arg(stage)
+        .args(arguments)
+        .output()?;
     io::stdout().write_all(&output.stdout)?;
     io::stderr().write_all(&output.stderr)?;
     if !output.status.success() {
         return Err(invalid("independent validation failed"));
     }
-    Ok(())
+    Ok(output.stdout)
+}
+fn validator(config: &CampaignConfig, preterminal: bool) -> io::Result<()> {
+    if artifact(&config.validator.path)? != config.validator {
+        return Err(invalid("validator identity changed"));
+    }
+    let arguments: &[&OsStr] = if preterminal {
+        &[OsStr::new("--preterminal")]
+    } else {
+        &[]
+    };
+    run_validator(&config.validator.path, &config.channels.stage, arguments).map(drop)
 }
 fn observed_failure(records: &[tuning_campaign_support::journal::JournalRecord]) -> bool {
     records.iter().any(|record| {
@@ -1967,15 +1983,294 @@ fn discover_preparation(stage: &Path) -> io::Result<()> {
     writeln!(output)?;
     output.flush()
 }
+const TUNING_EVIDENCE: &str = "dev/benchmarks/tuning_profiles";
+/// Protocol §9 repository destinations, all derived from the run ID.
+struct RepositoryLayout<'a> {
+    id: &'a str,
+}
+impl RepositoryLayout<'_> {
+    fn core_owner(&self) -> String {
+        format!("crates/gf2-core/data/tuning-profiles/{}.json", self.id)
+    }
+    fn algebra_owner(&self) -> String {
+        format!("crates/gf2-algebra/data/tuning-profiles/{}.json", self.id)
+    }
+    fn complete(&self) -> String {
+        format!("dev/reference_data/tuning-profiles/{}.json", self.id)
+    }
+    fn receipt(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}.md", self.id)
+    }
+    fn execution_log(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}-execution.log", self.id)
+    }
+    fn results(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}-results", self.id)
+    }
+    fn session(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}-session", self.id)
+    }
+    fn checksum(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}.sha256", self.id)
+    }
+}
+/// Maps every published stage file to its protocol §9 destination. Accepted
+/// checkpoints, raw attempt streams and accepted bundles are the results;
+/// every other checksummed file, the session control state and the
+/// validation record form the session record. Staged executables under
+/// `bin/` are pinned by digest in the staging manifest and are not copied.
+fn repository_mapping(
+    stage: &Path,
+    layout: &RepositoryLayout,
+) -> io::Result<BTreeMap<String, String>> {
+    let mut files = checksum_boundary(stage)?;
+    stage_files(&stage.join("sessions"), &[], &mut files)?;
+    files.push(stage.join("execution.log"));
+    files.push(
+        stage
+            .join(REPOSITORY_PUBLICATION_DIR)
+            .join("validation.json"),
+    );
+    let mut mapping = BTreeMap::new();
+    for path in files {
+        let source = path
+            .strip_prefix(stage)
+            .map_err(invalid)?
+            .to_str()
+            .ok_or_else(|| invalid("non-UTF-8 stage path"))?
+            .to_owned();
+        let destination = match source.as_str() {
+            "core-owner.json" => layout.core_owner(),
+            "algebra-owner.json" => layout.algebra_owner(),
+            "complete.json" => layout.complete(),
+            "receipt.md" => layout.receipt(),
+            "execution.log" => layout.execution_log(),
+            "repository-publication/validation.json" => {
+                format!("{}/validation.json", layout.session())
+            }
+            other if other.starts_with("bin/") => continue,
+            other
+                if other.starts_with("checkpoints/")
+                    || other.starts_with("raw-attempts/")
+                    || other == "core-accepted.json"
+                    || other == "algebra-accepted.json" =>
+            {
+                format!("{}/{other}", layout.results())
+            }
+            other => format!("{}/{other}", layout.session()),
+        };
+        if mapping.insert(destination, source).is_some() {
+            return Err(invalid("two stage files map to one repository destination"));
+        }
+    }
+    for required in [
+        layout.core_owner(),
+        layout.algebra_owner(),
+        layout.complete(),
+        layout.receipt(),
+    ] {
+        if !mapping.contains_key(&required) {
+            return Err(invalid(format!("stage lacks the source of {required}")));
+        }
+    }
+    Ok(mapping)
+}
+/// The composer's profile/provenance arguments from the accepted composition.
+fn reopen_arguments(stage: &Path, campaign_id: &Token) -> io::Result<Vec<String>> {
+    let composition: Value = read_json(&stage.join("composition.json"))?;
+    let args: Vec<String> = serde_json::from_value(
+        composition
+            .get("args")
+            .cloned()
+            .ok_or_else(|| invalid("composition lacks its arguments"))?,
+    )
+    .map_err(invalid)?;
+    if args.len() != 9 || args[0] != "complete" || args[4] != campaign_id.as_str() {
+        return Err(invalid("composition arguments are not the declared form"));
+    }
+    Ok(args[4..].to_vec())
+}
+/// Strictly reopens the three published envelopes through the staged
+/// composer's complete loader: both owners with their owner-only codecs and
+/// the recomposed complete envelope with both. Its output must equal the
+/// published complete envelope byte for byte; it is verification evidence
+/// only and never a publishable artifact.
+fn reopen_published(
+    stage: &Path,
+    repository: &Path,
+    layout: &RepositoryLayout,
+    composer: &ProcessDescriptor,
+    profile_arguments: &[String],
+) -> io::Result<Vec<u8>> {
+    let published = [
+        layout.core_owner(),
+        layout.algebra_owner(),
+        layout.complete(),
+    ];
+    let identities = published
+        .iter()
+        .map(|path| {
+            Ok(json!({"path":path,"sha256":Sha256Digest::of(&fs::read(repository.join(path))?)}))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
+    let attempts = stage.join(REPOSITORY_PUBLICATION_DIR).join("reopen");
+    fs::create_dir_all(&attempts)?;
+    File::open(stage.join(REPOSITORY_PUBLICATION_DIR))?.sync_all()?;
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_nanos();
+    let directory = attempts.join(format!("{}-{nonce}", std::process::id()));
+    fs::create_dir(&directory)?;
+    File::open(&attempts)?.sync_all()?;
+    let output = directory.join("complete.json");
+    let mut args = vec!["complete".to_owned()];
+    for path in [
+        repository.join(&published[0]),
+        repository.join(&published[1]),
+        output.clone(),
+    ] {
+        args.push(
+            path.to_str()
+                .ok_or_else(|| invalid("non-UTF-8 reopen path"))?
+                .to_owned(),
+        );
+    }
+    args.extend(profile_arguments.iter().cloned());
+    let result = run_process(
+        composer.command(&args)?,
+        b"",
+        Duration::from_secs(CHILD_TIMEOUT_SECONDS),
+        Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
+        |_| Ok(()),
+        |_| Ok(()),
+    )?;
+    save(
+        &directory.join("exit.json"),
+        &json!({"args":args,"outcome":result.outcome,"stdout":result.stdout,"stderr":result.stderr}),
+    )?;
+    if !result.outcome.accepts_result()? || result.callback_error.is_some() {
+        return Err(invalid(
+            "published envelopes failed the composer's strict reopen",
+        ));
+    }
+    if fs::read(&output)? != fs::read(repository.join(&published[2]))? {
+        return Err(invalid(
+            "strictly reopened composition differs from the published complete envelope",
+        ));
+    }
+    encoded(&json!({
+        "schema":"tuning-campaign-repository-reopen-v1",
+        "composer_sha256":composer.executable_sha256,
+        "profile_arguments":profile_arguments,
+        "core":identities[0],
+        "algebra":identities[1],
+        "complete":identities[2],
+    }))
+}
+/// Publishes a complete, validated stage into `repository`: plans the
+/// protocol §9 destinations, copies them through the durable publication
+/// journal, strictly reopens the published envelopes, has the independent
+/// validator check the publication, then writes the checksum manifest.
+fn publish_to_repository(
+    stage: &Path,
+    repository: &Path,
+    campaign_id: &Token,
+    validation: &[u8],
+    composer: &ProcessDescriptor,
+    validator: &Path,
+) -> io::Result<ArtifactIdentity> {
+    let journal = stage.join(REPOSITORY_PUBLICATION_DIR);
+    fs::create_dir_all(&journal)?;
+    File::open(stage)?.sync_all()?;
+    publish_artifact(stage, &journal.join("validation.json"), validation)?;
+    let layout = RepositoryLayout {
+        id: campaign_id.as_str(),
+    };
+    let profile_arguments = reopen_arguments(stage, campaign_id)?;
+    let plan = RepositoryPlan::new(
+        stage,
+        campaign_id.clone(),
+        repository_mapping(stage, &layout)?,
+        vec![layout.results(), layout.session()],
+        format!("{}/repository-publication.json", layout.session()),
+        format!("{}/repository-reopen.json", layout.session()),
+        layout.checksum(),
+    )?;
+    publish_repository(stage, repository, &plan, |repository| {
+        let evidence = reopen_published(stage, repository, &layout, composer, &profile_arguments)?;
+        run_validator(
+            validator,
+            stage,
+            &[OsStr::new("--publication"), repository.as_os_str()],
+        )?;
+        Ok(evidence)
+    })
+}
+/// Post-finalization publication of a complete campaign into the repository
+/// checkout it was prepared from. Returns `None` while the campaign is not
+/// complete. Idempotent: a retry after any interruption finishes the rest.
+fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
+    let config: CampaignConfig = read_json(&stage.join("campaign.json"))?;
+    validate_campaign_stage(stage, config.campaign_id.as_str())?;
+    if config.channels.stage != stage {
+        return Err(invalid("campaign channels name another stage"));
+    }
+    if !campaign_complete(&config.channels, &config.campaign_id)? {
+        return Ok(None);
+    }
+    if artifact(&config.validator.path)? != config.validator {
+        return Err(invalid("validator identity changed"));
+    }
+    let stdout = run_validator(&config.validator.path, stage, &[])?;
+    let validation = stdout
+        .strip_prefix(b"GF2_TUNING_VALIDATION=")
+        .and_then(|line| line.strip_suffix(b"\n"))
+        .ok_or_else(|| invalid("validator output is not one validation record"))?;
+    let record: Value = serde_json::from_slice(validation).map_err(invalid)?;
+    if record.get("status").and_then(Value::as_str) != Some("complete-valid")
+        || record.get("campaign_id").and_then(Value::as_str) != Some(config.campaign_id.as_str())
+    {
+        return Err(invalid("validation record is not this complete campaign"));
+    }
+    let composer = process(&config, "composer")?;
+    publish_to_repository(
+        stage,
+        &composer.working_directory,
+        &config.campaign_id,
+        validation,
+        &composer,
+        &config.validator.path,
+    )
+    .map(Some)
+}
 fn main() {
     let args: Vec<_> = env::args().skip(1).collect();
+    if let [mode, stage] = args.as_slice() {
+        if mode == "publish-campaign" {
+            match publish_campaign(Path::new(stage)) {
+                Ok(Some(manifest)) => {
+                    println!("GF2_CAMPAIGN_PUBLICATION={}", manifest.path.display());
+                    return;
+                }
+                Ok(None) => {
+                    eprintln!("tuning-extent-campaign-driver: campaign is not complete; nothing to publish");
+                    std::process::exit(3);
+                }
+                Err(error) => {
+                    eprintln!("tuning-extent-campaign-driver: {error}");
+                    std::process::exit(1);
+                }
+            }
+        }
+    }
     let result=match args.as_slice(){
         [mode,stage] if mode=="discover-preparation"=>discover_preparation(Path::new(stage)).map(|_|SessionOutcome::Paused),
         [mode,stage,campaign,session,lock,staging] if mode=="prepare-session"=>prepare(Path::new(stage),campaign,session,Path::new(lock),Some(Path::new(staging))).map(|_|SessionOutcome::Paused),
         [mode,stage,campaign,session,lock] if mode=="prepare-session"=>prepare(Path::new(stage),campaign,session,Path::new(lock),None).map(|_|SessionOutcome::Paused),
         [mode,stage,session] if mode=="run-session"=>run_session(Path::new(stage),session),
         [mode,stage,session,status] if mode=="finalize-session"=>status.parse::<i32>().map_err(invalid).and_then(|status|finalize(Path::new(stage),session,status)),
-        _=>Err(invalid("usage: driver discover-preparation STAGE | prepare-session STAGE CAMPAIGN SESSION LOCK [STAGING_INPUT] | run-session STAGE SESSION | finalize-session STAGE SESSION WRAPPER_EXIT"))
+        _=>Err(invalid("usage: driver discover-preparation STAGE | prepare-session STAGE CAMPAIGN SESSION LOCK [STAGING_INPUT] | run-session STAGE SESSION | finalize-session STAGE SESSION WRAPPER_EXIT | publish-campaign STAGE"))
     };
     match result {
         Ok(SessionOutcome::Failed) => std::process::exit(1),
@@ -2003,7 +2298,7 @@ mod tests {
             environment: measurement_environment(),
             working_directory: fs::canonicalize(".").unwrap(),
         };
-        let output = process_command(&process, &[]).unwrap().output().unwrap();
+        let output = process.command(&[]).unwrap().output().unwrap();
         assert!(output.status.success());
         let actual: BTreeMap<String, String> = String::from_utf8(output.stdout)
             .unwrap()
@@ -2730,5 +3025,253 @@ mod tests {
                 ..
             } => all_descendants_reaped,
         });
+    }
+
+    /// A synthetic complete stage, a stand-in composer that accepts only the
+    /// exact published owners and a real validator publication check.
+    struct PublicationFixture {
+        _root: Scratch,
+        root: PathBuf,
+        stage: PathBuf,
+        campaign: Token,
+        composer: ProcessDescriptor,
+        validator: PathBuf,
+    }
+    impl PublicationFixture {
+        fn new() -> Self {
+            use std::os::unix::fs::PermissionsExt;
+            let scratch_root = scratch("gf2-driver-publication");
+            let root = fs::canonicalize(scratch_root.path()).unwrap();
+            let campaign = Token::new("gf2-a83583e0-19700101t000000z-1").unwrap();
+            let stage = root.join("stage");
+            let files: [(&str, &[u8]); 14] = [
+                ("core-owner.json", b"{\"owner\":\"core\"}"),
+                ("algebra-owner.json", b"{\"owner\":\"algebra\"}"),
+                ("complete.json", b"{\"owners\":2}"),
+                ("receipt.md", b"# receipt\n"),
+                ("execution.log", b"{\"sequence\":0}\n"),
+                (
+                    "campaign.json",
+                    b"{\"campaign_id\":\"gf2-a83583e0-19700101t000000z-1\"}",
+                ),
+                ("checkpoints/manifest.json", b"{}"),
+                ("checkpoints/units/unit.json", b"{\"unit\":1}"),
+                ("raw-attempts/attempt.stdout", b"GF2_TUNING_RESULT={}"),
+                ("core-accepted.json", b"{\"accepted\":1}"),
+                ("algebra-accepted.json", b"{\"accepted\":2}"),
+                ("bin/driver", b"staged executable"),
+                ("sessions/s1/checksum.json", b"{\"checksum\":1}"),
+                ("build/source-before.json", b"{\"phase\":\"before-build\"}"),
+            ];
+            for (relative, content) in files {
+                fs::create_dir_all(stage.join(relative).parent().unwrap()).unwrap();
+                fs::write(stage.join(relative), content).unwrap();
+            }
+            let digest =
+                |relative: &str| Sha256Digest::of(&fs::read(stage.join(relative)).unwrap());
+            let tail = [
+                campaign.as_str(),
+                "1970-01-01T00:00:00Z",
+                "0000000000000000000000000000000000000000",
+                "false",
+            ];
+            let executable = root.join("composer");
+            fs::write(
+                &executable,
+                format!(
+                    "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\nsum() {{ sha256sum < \"$1\" | cut -d' ' -f1; }}\ntest \"$1\" = complete || exit 2\ntest -e {root}/reject && exit 3\ntest \"$(sum \"$2\")\" = {core} || exit 4\ntest \"$(sum \"$3\")\" = {algebra} || exit 5\ntest \"$5 $6 $7 $8\" = \"{tail}\" || exit 6\nif test -e {root}/skew; then printf skew > \"$4\"; else cat {complete} > \"$4\"; fi\n",
+                    root = root.display(),
+                    core = digest("core-owner.json").as_str(),
+                    algebra = digest("algebra-owner.json").as_str(),
+                    tail = tail.join(" "),
+                    complete = stage.join("complete.json").display(),
+                ),
+            )
+            .unwrap();
+            fs::set_permissions(&executable, fs::Permissions::from_mode(0o755)).unwrap();
+            let executable = artifact(&executable).unwrap();
+            let mut arguments: Vec<String> = ["complete", "core", "algebra", "output"]
+                .into_iter()
+                .chain(tail)
+                .map(str::to_owned)
+                .collect();
+            arguments.push(executable.sha256.as_str().into());
+            fs::write(
+                stage.join("composition.json"),
+                encoded(&json!({"args":arguments,"tool_sha256":executable.sha256})).unwrap(),
+            )
+            .unwrap();
+            let composer = ProcessDescriptor {
+                id: Token::new("composer").unwrap(),
+                executable: executable.path,
+                executable_sha256: executable.sha256,
+                arguments: vec![],
+                environment: measurement_environment(),
+                working_directory: root.clone(),
+            };
+            let validator = fs::canonicalize(
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../scripts/validate-tuning-extent-campaign.py"),
+            )
+            .unwrap();
+            Self {
+                _root: scratch_root,
+                root,
+                stage,
+                campaign,
+                composer,
+                validator,
+            }
+        }
+        fn repository(&self, name: &str) -> PathBuf {
+            let repository = self.root.join(name);
+            fs::create_dir(&repository).unwrap();
+            repository
+        }
+        fn publish(&self, repository: &Path) -> io::Result<ArtifactIdentity> {
+            publish_to_repository(
+                &self.stage,
+                repository,
+                &self.campaign,
+                b"{\"status\":\"complete-valid\"}",
+                &self.composer,
+                &self.validator,
+            )
+        }
+    }
+
+    #[test]
+    fn publication_populates_every_protocol_destination_and_refuses_overwrite() {
+        let fixture = PublicationFixture::new();
+        let id = fixture.campaign.as_str();
+        let layout = RepositoryLayout { id };
+
+        let occupied = fixture.repository("occupied");
+        let foreign = occupied.join(layout.core_owner());
+        fs::create_dir_all(foreign.parent().unwrap()).unwrap();
+        fs::write(&foreign, b"existing evidence").unwrap();
+        let refused = fixture.publish(&occupied).unwrap_err().to_string();
+        assert!(refused.contains("contradicts durable intent"), "{refused}");
+        assert_eq!(fs::read(&foreign).unwrap(), b"existing evidence");
+        assert!(!occupied.join(layout.checksum()).exists());
+
+        let repository = fixture.repository("repository");
+        let manifest = fixture.publish(&repository).unwrap();
+        assert_eq!(manifest.path, repository.join(layout.checksum()));
+        for (source, destination) in [
+            ("core-owner.json", layout.core_owner()),
+            ("algebra-owner.json", layout.algebra_owner()),
+            ("complete.json", layout.complete()),
+            ("receipt.md", layout.receipt()),
+            ("execution.log", layout.execution_log()),
+            (
+                "checkpoints/units/unit.json",
+                format!("{}/checkpoints/units/unit.json", layout.results()),
+            ),
+            (
+                "raw-attempts/attempt.stdout",
+                format!("{}/raw-attempts/attempt.stdout", layout.results()),
+            ),
+            (
+                "core-accepted.json",
+                format!("{}/core-accepted.json", layout.results()),
+            ),
+            (
+                "campaign.json",
+                format!("{}/campaign.json", layout.session()),
+            ),
+            (
+                "sessions/s1/checksum.json",
+                format!("{}/sessions/s1/checksum.json", layout.session()),
+            ),
+            (
+                "repository-publication/validation.json",
+                format!("{}/validation.json", layout.session()),
+            ),
+        ] {
+            assert_eq!(
+                fs::read(repository.join(&destination)).unwrap(),
+                fs::read(fixture.stage.join(source)).unwrap(),
+                "{destination}"
+            );
+        }
+        assert!(!repository
+            .join(layout.session())
+            .join("bin/driver")
+            .exists());
+        let reopen: Value = serde_json::from_slice(
+            &fs::read(
+                repository
+                    .join(layout.session())
+                    .join("repository-reopen.json"),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            reopen["complete"]["sha256"].as_str(),
+            Some(Sha256Digest::of(&fs::read(repository.join(layout.complete())).unwrap()).as_str())
+        );
+        let listed = fs::read_to_string(&manifest.path).unwrap();
+        let plan: RepositoryPlan = read_json(
+            &fixture
+                .stage
+                .join(REPOSITORY_PUBLICATION_DIR)
+                .join("plan.json"),
+        )
+        .unwrap();
+        assert_eq!(listed.lines().count(), plan.entries.len() + 2);
+        for line in listed.lines() {
+            let (digest, path) = line.split_once("  ").unwrap();
+            assert_eq!(
+                Sha256Digest::of(&fs::read(repository.join(path)).unwrap()).as_str(),
+                digest
+            );
+        }
+        assert_eq!(fixture.publish(&repository).unwrap(), manifest);
+    }
+
+    #[test]
+    fn interrupted_publication_resumes_under_the_same_plan() {
+        let fixture = PublicationFixture::new();
+        let layout = RepositoryLayout {
+            id: fixture.campaign.as_str(),
+        };
+        let repository = fixture.repository("repository");
+        let checksum = repository.join(layout.checksum());
+        for (marker, reason) in [
+            ("skew", "differs from the published complete envelope"),
+            ("reject", "failed the composer's strict reopen"),
+        ] {
+            fs::write(fixture.root.join(marker), b"").unwrap();
+            let error = fixture.publish(&repository).unwrap_err().to_string();
+            assert!(error.contains(reason), "{error}");
+            fs::remove_file(fixture.root.join(marker)).unwrap();
+            assert!(repository.join(layout.complete()).is_file());
+            assert!(!checksum.exists());
+        }
+        // A crash left one destination missing and another only as a partial
+        // temporary beside its absent final name.
+        let removed = repository.join(layout.results()).join("core-accepted.json");
+        fs::remove_file(&removed).unwrap();
+        let receipt = repository.join(layout.receipt());
+        let bytes = fs::read(&receipt).unwrap();
+        fs::remove_file(&receipt).unwrap();
+        let temporary = receipt.with_file_name(format!(
+            ".{}.tmp-1-2-0",
+            receipt.file_name().unwrap().to_str().unwrap()
+        ));
+        fs::write(&temporary, &bytes[..3]).unwrap();
+        fixture.publish(&repository).unwrap();
+        assert!(checksum.is_file());
+        assert!(!temporary.exists());
+        assert_eq!(fs::read(&receipt).unwrap(), bytes);
+        assert_eq!(
+            fs::read(&removed).unwrap(),
+            fs::read(fixture.stage.join("core-accepted.json")).unwrap()
+        );
+        let unplanned = repository.join(layout.results()).join("unplanned.json");
+        fs::write(&unplanned, b"{}").unwrap();
+        assert!(fixture.publish(&repository).is_err());
     }
 }

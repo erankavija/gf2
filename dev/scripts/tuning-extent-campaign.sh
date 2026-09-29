@@ -4,6 +4,8 @@
 # With no argument a fresh run ID and its exact /tmp stage are created. Passing
 # an ID resumes that already-created stage; arbitrary destinations are invalid.
 # The ID becomes the emitted profiles' ProfileId, so it stays lowercase kebab case.
+# A complete campaign ends by publishing its stage into this checkout; resuming
+# a complete campaign only finishes that publication.
 set -euo pipefail
 if [[ $# -gt 1 ]]; then
   echo 'usage: tuning-extent-campaign.sh [campaign-id]' >&2
@@ -46,6 +48,19 @@ export GF2_CCX1_LOCK="$lock"
 export RUSTUP_TOOLCHAIN=1.95.0
 export RAYON_NUM_THREADS=4
 export CARGO_CI_NO_SCCACHE=1
+# publish-campaign exits 3 while the campaign is not complete.
+publish() {
+  set +e
+  "$stage/bin/driver" publish-campaign "$stage"
+  publication=$?
+  set -e
+}
+if [[ -x "$stage/bin/driver" && -f "$stage/campaign.json" ]]; then
+  publish
+  if [[ $publication != 3 ]]; then
+    exit "$publication"
+  fi
+fi
 pending=null
 if [[ -x "$stage/bin/driver" ]]; then
   pending=$("$stage/bin/driver" discover-preparation "$stage")
@@ -140,3 +155,9 @@ wrapper_exit=$?
 trap - INT TERM
 set -e
 "$stage/bin/driver" finalize-session "$stage" "$session" "$wrapper_exit"
+publish
+if [[ $publication == 3 ]]; then
+  # Paused or budget-exhausted: resume later under the same campaign ID.
+  exit 0
+fi
+exit "$publication"
