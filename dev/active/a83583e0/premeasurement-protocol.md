@@ -832,7 +832,10 @@ when the selected tile pair differs from the conservative pair. Dot's
 conservative declaration likewise remains unchanged, and its baked witness
 checks the published chunk through the ordinary production path.
 
-The run ID is `gf2-a83583e0-<UTC-stamp>-<launcher-pid>`, fixed before launch.
+The run ID is `gf2-a83583e0-<UTC-stamp>-<launcher-pid>`, fixed before launch;
+the stamp is `date -u +%Y%m%dt%H%M%Sz`. The run ID is also the `ProfileId` of
+every emitted envelope, so it is lowercase kebab case, and each owner's
+campaign manifest rejects an ID that `ProfileId::parse` rejects.
 Repository destinations are derived from that one ID:
 
 | Artifact | Destination |

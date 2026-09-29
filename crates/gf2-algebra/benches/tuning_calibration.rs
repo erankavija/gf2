@@ -376,6 +376,14 @@ fn validate_case(case: &AlgebraCase) -> Result<(), String> {
 }
 
 fn campaign_manifest(request: ManifestRequest) -> Result<OwnerManifest, String> {
+    // Emission names the owner profile by the campaign ID; refuse an ID the
+    // loader would reject before any cell is measured.
+    ProfileId::parse(request.campaign_id.as_str()).map_err(|_| {
+        format!(
+            "campaign ID `{}` is not a lowercase kebab-case tuning profile ID",
+            request.campaign_id.as_str()
+        )
+    })?;
     request
         .channels
         .validate()
@@ -1453,13 +1461,16 @@ mod tests {
         }
     }
 
+    /// A campaign ID in the exact form the extent-campaign launcher mints.
+    const LAUNCHER_CAMPAIGN_ID: &str = "gf2-a83583e0-20260905t000000z-1";
+
     fn manifest_request(label: &str) -> (gf2_core::test_scratch::Scratch, ManifestRequest) {
         let directory = test_root(label);
         let stage = directory.path().to_path_buf();
         (
             directory,
             ManifestRequest {
-                campaign_id: token(format!("test-{label}")).unwrap(),
+                campaign_id: token(LAUNCHER_CAMPAIGN_ID).unwrap(),
                 protocol_sha256: Sha256Digest::new(ZERO_SHA).unwrap(),
                 channels: SessionChannels {
                     execution_log: stage.join("execution.log"),
@@ -1590,6 +1601,17 @@ mod tests {
         assert_eq!(first.seeds.streams.len(), 8);
         assert_eq!(first.seeds.streams[0].role, 0x0c00);
         assert_eq!(first.seeds.streams[7].role, 0x70c00);
+    }
+
+    #[test]
+    fn campaign_manifest_rejects_an_id_the_profile_loader_rejects() {
+        let (_scratch, request) = manifest_request("uppercase-id");
+        let error = campaign_manifest(ManifestRequest {
+            campaign_id: token("gf2-a83583e0-20260905T000000Z-1").unwrap(),
+            ..request
+        })
+        .unwrap_err();
+        assert!(error.contains("tuning profile ID"), "{error}");
     }
 
     #[test]
@@ -1965,6 +1987,7 @@ mod tests {
         assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
         let text = String::from_utf8(bytes).unwrap();
         let reopened = algebra_registry().unwrap().from_json(&text).unwrap();
+        assert_eq!(reopened.profile_id().as_str(), LAUNCHER_CAMPAIGN_ID);
         assert_eq!(
             reopened.section_ids().collect::<Vec<_>>(),
             [AlgebraTuning::ID.as_str()]

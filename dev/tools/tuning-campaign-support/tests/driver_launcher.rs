@@ -20,7 +20,7 @@ fn executable(path: &Path, content: &str) {
 fn launcher_replays_preparation(complete_temporary: bool) {
     let root = scratch("gf2-launcher-discovery");
     let campaign = format!(
-        "gf2-a83583e0-19700101T00000{}Z-{}{}",
+        "gf2-a83583e0-19700101t00000{}z-{}{}",
         u8::from(complete_temporary),
         std::process::id(),
         u8::from(complete_temporary)

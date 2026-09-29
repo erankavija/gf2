@@ -9116,6 +9116,14 @@ mod campaign_owner {
         Ok(cases)
     }
     fn manifest(request: &neutral::ManifestRequest) -> Result<OwnerManifest, String> {
+        // Emission names the owner profile by the campaign ID; refuse an ID the
+        // loader would reject before any cell is measured.
+        ProfileId::parse(request.campaign_id.as_str()).map_err(|_| {
+            format!(
+                "campaign ID `{}` is not a lowercase kebab-case tuning profile ID",
+                request.campaign_id.as_str()
+            )
+        })?;
         request.channels.validate().map_err(err)?;
         preflight()?;
         let [process] = request.processes.as_slice() else {
@@ -10018,6 +10026,11 @@ mod campaign_owner {
             return Err("owner emission requires authorized campaign environment".to_owned());
         }
         require_campaign_environment()?;
+        publish_owner(request)
+    }
+    /// Analyzes, emits and strictly reopens the owner envelope once
+    /// [`emit_owner`] has admitted the campaign environment.
+    fn publish_owner(request: &neutral::EmitOwnerRequest) -> Result<OwnerResponse, String> {
         let bundle: neutral::AcceptedResultsBundle =
             request.accepted_results.read().map_err(err)?;
         let input = AnalysisInput::new(
@@ -10319,11 +10332,19 @@ mod campaign_owner {
         #[allow(unused_imports)] // custom bench compilation omits test entry points
         use super::*;
 
+        /// A campaign ID in the exact form the extent-campaign launcher mints.
+        #[allow(dead_code)]
+        const LAUNCHER_CAMPAIGN_ID: &str = "gf2-a83583e0-20260905t000000z-1";
+
         #[allow(dead_code)]
         fn request() -> neutral::ManifestRequest {
-            let stage = PathBuf::from("/tmp/gf2-core-owner-contract");
+            request_at(PathBuf::from("/tmp/gf2-core-owner-contract"))
+        }
+
+        #[allow(dead_code)]
+        fn request_at(stage: PathBuf) -> neutral::ManifestRequest {
             neutral::ManifestRequest {
-                campaign_id: token("gf2-owner-contract").unwrap(),
+                campaign_id: token(LAUNCHER_CAMPAIGN_ID).unwrap(),
                 protocol_sha256: Sha256Digest::of(b"declared protocol"),
                 channels: neutral::SessionChannels {
                     execution_log: stage.join("execution.log"),
@@ -10485,7 +10506,18 @@ mod campaign_owner {
             OwnerManifest,
             neutral::AcceptedResultsBundle,
         ) {
-            let request = request();
+            synthetic_bundle_for(request(), proposed, elapsed)
+        }
+        #[allow(dead_code)]
+        fn synthetic_bundle_for(
+            request: neutral::ManifestRequest,
+            proposed: &M4rmVector,
+            elapsed: impl Fn(&ExtentCell) -> u64,
+        ) -> (
+            neutral::ManifestRequest,
+            OwnerManifest,
+            neutral::AcceptedResultsBundle,
+        ) {
             let manifest = manifest(&request).unwrap();
             let accepted = manifest
                 .ordered_units
@@ -10660,6 +10692,99 @@ mod campaign_owner {
             assert!(decide_owner(&input)
                 .unwrap_err()
                 .contains("accepted case differs from selected vector"));
+        }
+        #[test]
+        fn campaign_manifest_rejects_an_id_the_profile_loader_rejects() {
+            let mut uppercase = request();
+            uppercase.campaign_id = token("gf2-a83583e0-20260905T000000Z-1").unwrap();
+            let error = manifest(&uppercase).unwrap_err();
+            assert!(error.contains("tuning profile ID"), "{error}");
+            assert!(manifest(&request()).is_ok());
+        }
+        #[test]
+        fn owner_emission_publishes_the_launcher_named_profile_and_strictly_reopens_it() {
+            if simd_backend().is_none() {
+                return;
+            }
+            let stage_scratch = scratch("gf2-core-owner-emit");
+            let stage = fs::canonicalize(stage_scratch.path()).unwrap();
+            let (request, manifest, bundle) = synthetic_bundle_for(
+                request_at(stage.clone()),
+                &M4rmVector::conservative(),
+                |_| 1000,
+            );
+            let bundle_bytes = serde_json::to_vec(&bundle).unwrap();
+            let bundle_path = stage.join("accepted.json");
+            fs::write(&bundle_path, &bundle_bytes).unwrap();
+            let binary = sha256_file(&env::current_exe().unwrap()).unwrap();
+            let identity = tuning_campaign_support::journal::ResumeIdentity {
+                protocol_digest: request.protocol_sha256.as_str().to_owned(),
+                source_revision: "0".repeat(40),
+                source_sha256: "0".repeat(64),
+                ordered_work_manifest_sha256: "0".repeat(64),
+                process_descriptors_sha256: "0".repeat(64),
+                executable_sha256: [("core-producer".to_owned(), binary.as_str().to_owned())]
+                    .into(),
+                behavior_sha256: [(
+                    "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
+                    "0".repeat(64),
+                )]
+                .into(),
+                lifecycle_schema: neutral::LIFECYCLE_SCHEMA.to_owned(),
+                lifecycle_behavior_sha256: "0".repeat(64),
+                feature_contract: neutral::FEATURE_CONTRACT.to_owned(),
+                thread_contract: neutral::THREAD_CONTRACT.to_owned(),
+                host_identity: "test-host".to_owned(),
+            };
+            let emit = neutral::EmitOwnerRequest {
+                campaign_id: request.campaign_id.clone(),
+                manifest_sha256: manifest.manifest_sha256.clone(),
+                accepted_results: neutral::ArtifactIdentity {
+                    path: bundle_path,
+                    sha256: Sha256Digest::of(&bundle_bytes),
+                },
+                measurement: neutral::ObservedProvenance {
+                    identity: identity.clone(),
+                    process: token("core-producer").unwrap(),
+                    observed_utc: "2026-09-05T00:00:00Z".to_owned(),
+                    runtime: CanonicalJson::from_serializable(&RuntimeFacts {
+                        source_dirty: false,
+                        toolchain: "rustc 1.95.0".to_owned(),
+                        cpu_model: "test-cpu".to_owned(),
+                        cpu_features: vec!["avx2".to_owned(), "pclmulqdq".to_owned()],
+                        os_kernel: "test-kernel".to_owned(),
+                        governor: "performance".to_owned(),
+                        receipt: format!(
+                            "dev/benchmarks/tuning_profiles/{LAUNCHER_CAMPAIGN_ID}.md"
+                        ),
+                    })
+                    .unwrap(),
+                },
+                assembly: neutral::ObservedProvenance {
+                    identity,
+                    process: token("core-producer").unwrap(),
+                    observed_utc: "2026-09-05T00:01:00Z".to_owned(),
+                    runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
+                        source_dirty: false,
+                        tool: "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
+                        tool_sha256: binary.as_str().to_owned(),
+                    })
+                    .unwrap(),
+                },
+                output: stage.join("core-owner.json"),
+            };
+            let OwnerResponse::EmitOwner { artifact, .. } = publish_owner(&emit).unwrap() else {
+                panic!("owner emission returned another response");
+            };
+            let bytes = fs::read(&artifact.path).unwrap();
+            assert_eq!(artifact.sha256, Sha256Digest::of(&bytes));
+            let reopened =
+                ProducedCoreProfile::from_json(&String::from_utf8(bytes).unwrap()).unwrap();
+            assert_eq!(reopened.id.as_str(), LAUNCHER_CAMPAIGN_ID);
+            assert_eq!(
+                reopened.section.selectors(),
+                CoreTuning::CONSERVATIVE.selectors()
+            );
         }
         #[test]
         fn reporting_preflight_rejects_a_default_missing_from_an_extent_grid() {
