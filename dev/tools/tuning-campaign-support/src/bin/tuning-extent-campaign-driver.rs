@@ -222,9 +222,12 @@ fn invoke_owner(
     input: &[u8],
     mut log: Option<&mut ExecutionLog>,
 ) -> io::Result<OwnerResponse> {
-    let start_sequence = log.as_ref().map(|l| l.next_sequence());
+    let mut start_sequence = None;
     if let Some(log) = log.as_mut() {
         record_budget(log, "before-launch", process.id.as_str(), None)?;
+        // The exit names the start record itself, not the budget diagnostic
+        // journaled before it.
+        start_sequence = Some(log.next_sequence());
         log.append(JournalEvent::OrchestrationStart,None,json!({"kind":"orchestration-start","process":process.id,"request_sha256":Sha256Digest::of(input),"arguments":arguments}))?;
     }
     let result = run_process(
@@ -1142,33 +1145,152 @@ fn make_receipt(
         .and_then(Value::as_u64)
         .ok_or_else(|| invalid("receipt session count missing"))?;
     save(&stage.join("receipt-projection.json"), &projection)?;
-    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nSee each raw result payload below.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n",config.campaign_id.as_str(),config.protocol.path.display(),config.protocol.sha256.as_str(),config.identity.source_revision,serde_json::to_string_pretty(responses).map_err(invalid)?);
-    receipt.push_str(&format!("Preparation CPU affinity: `{:?}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",config.affinity.cpus()));
-    for manifest in &config.manifests {
-        receipt.push_str(&format!(
-            "Owner `{}` uses protocol `{}` and behavior `{}`; executable `{}`.\n\n",
-            manifest.owner.as_str(),
-            manifest.owner_protocol.as_str(),
-            manifest.behavior_token.as_str(),
-            manifest.processes[0].executable_sha256.as_str()
+    let facts = ReceiptFacts {
+        campaign_id: config.campaign_id.as_str(),
+        protocol: &config.protocol,
+        source_revision: &config.identity.source_revision,
+        affinity: format!("{:?}", config.affinity.cpus()),
+        owners: config
+            .manifests
+            .iter()
+            .map(|manifest| {
+                [
+                    manifest.owner.as_str().to_owned(),
+                    manifest.owner_protocol.as_str().to_owned(),
+                    manifest.behavior_token.as_str().to_owned(),
+                    manifest.processes[0].executable_sha256.as_str().to_owned(),
+                ]
+            })
+            .collect(),
+        counts,
+        attempts,
+        orchestration,
+        sessions,
+    };
+    publish_receipt_documents(
+        stage,
+        &facts,
+        bundles
+            .iter()
+            .flat_map(|b| b.accepted.iter().map(|r| &r.unit)),
+        responses,
+    )
+}
+/// Publishes the archived raw result index and complete owner decisions, then
+/// the receipt that pins both by digest.
+fn publish_receipt_documents<'a>(
+    stage: &Path,
+    facts: &ReceiptFacts,
+    units: impl Iterator<Item = &'a LaunchUnit>,
+    responses: &[OwnerResponse],
+) -> io::Result<()> {
+    let index = raw_result_index(units);
+    publish_artifact(stage, &stage.join(RAW_RESULT_INDEX), index.as_bytes())?;
+    let decisions = encoded(&responses)?;
+    publish_artifact(stage, &stage.join(OWNER_DECISIONS), &decisions)?;
+    let receipt = render_receipt(facts, responses, index.as_bytes(), &decisions)?;
+    publish_artifact(stage, &stage.join("receipt.md"), receipt.as_bytes())?;
+    Ok(())
+}
+/// Stage file listing every accepted raw key; archived beside the checkpoints
+/// so the committed receipt stays bounded by the declared grid.
+const RAW_RESULT_INDEX: &str = "raw-result-index.md";
+/// Stage file holding the complete owner responses, raw timing windows
+/// included; archived and pinned by digest from the receipt.
+const OWNER_DECISIONS: &str = "owner-decisions.json";
+/// Replaces every raw `samples` array with its length as `sample_count`. The
+/// surrounding summaries (medians, spreads, selections, ties, fallbacks and
+/// curve flags) stay unchanged.
+fn summarize_samples(value: &mut Value) {
+    match value {
+        Value::Object(map) => {
+            if let Some(count) = map.get("samples").and_then(Value::as_array).map(Vec::len) {
+                map.remove("samples");
+                map.insert("sample_count".into(), count.into());
+            }
+            map.values_mut().for_each(summarize_samples);
+        }
+        Value::Array(items) => items.iter_mut().for_each(summarize_samples),
+        _ => {}
+    }
+}
+/// The owner responses as the receipt shows them: each embedded decisions
+/// document with its raw window arrays summarized.
+fn receipt_decisions(responses: &[OwnerResponse]) -> io::Result<Vec<Value>> {
+    responses
+        .iter()
+        .map(|response| {
+            let mut value = serde_json::to_value(response).map_err(invalid)?;
+            if let Some(decisions) = value.get_mut("decisions") {
+                let mut parsed: Value = serde_json::from_str(
+                    decisions
+                        .as_str()
+                        .ok_or_else(|| invalid("owner decisions are not embedded JSON"))?,
+                )
+                .map_err(invalid)?;
+                summarize_samples(&mut parsed);
+                *decisions = Value::String(serde_json::to_string(&parsed).map_err(invalid)?);
+            }
+            Ok(value)
+        })
+        .collect()
+}
+/// One line per accepted raw key with its field, stratum, candidate and task.
+fn raw_result_index<'a>(units: impl Iterator<Item = &'a LaunchUnit>) -> String {
+    let mut index = String::from("# Raw result index\n\n");
+    for unit in units {
+        index.push_str(&format!(
+            "- `{}`: `{}` / `{}` / `{}` / `{:?}`\n",
+            unit.key.as_str(),
+            unit.identity.field.as_str(),
+            unit.identity.stratum.as_str(),
+            unit.identity.candidate.as_str(),
+            unit.identity.task
         ));
     }
-    receipt.push_str(&format!("Accepted accounting: {} cells, {} probes, {} timed children, {} accepted results, {} raw windows, {} timing progress records. Observed {} attempts, {} orchestration actions, {} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n",counts.cells,counts.probes,counts.timed_children,counts.accepted_results,counts.windows,counts.progress_records,attempts,orchestration,sessions));
-    for bundle in bundles {
-        for accepted in &bundle.accepted {
-            receipt.push_str(&format!(
-                "- `{}`: `{}` / `{}` / `{}` / `{:?}`\n",
-                accepted.unit.key.as_str(),
-                accepted.unit.identity.field.as_str(),
-                accepted.unit.identity.stratum.as_str(),
-                accepted.unit.identity.candidate.as_str(),
-                accepted.unit.identity.task
-            ));
-        }
+    index
+}
+/// Journal-derived and configuration facts the receipt states.
+struct ReceiptFacts<'a> {
+    campaign_id: &'a str,
+    protocol: &'a ArtifactIdentity,
+    source_revision: &'a str,
+    affinity: String,
+    /// Owner, owner protocol, behavior token and executable digest.
+    owners: Vec<[String; 4]>,
+    counts: DeclaredCounts,
+    attempts: u64,
+    orchestration: u64,
+    sessions: u64,
+}
+/// The receipt: fixed sections, the owner decisions with raw windows
+/// summarized, and the digests of the archived raw result index and complete
+/// owner decisions. Its size is bounded by the declared grid, not by the
+/// accepted-result or timing-window count.
+fn render_receipt(
+    facts: &ReceiptFacts,
+    responses: &[OwnerResponse],
+    index: &[u8],
+    decisions: &[u8],
+) -> io::Result<String> {
+    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n",facts.campaign_id,facts.protocol.path.display(),facts.protocol.sha256.as_str(),facts.source_revision,serde_json::to_string_pretty(&receipt_decisions(responses)?).map_err(invalid)?);
+    receipt.push_str(&format!("Preparation CPU affinity: `{}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",facts.affinity));
+    for [owner, protocol, behavior, executable] in &facts.owners {
+        receipt.push_str(&format!(
+            "Owner `{owner}` uses protocol `{protocol}` and behavior `{behavior}`; executable `{executable}`.\n\n"
+        ));
     }
-    let path = stage.join("receipt.md");
-    publish_artifact(stage, &path, receipt.as_bytes())?;
-    Ok(())
+    let counts = &facts.counts;
+    receipt.push_str(&format!("Accepted accounting: {} cells, {} probes, {} timed children, {} accepted results, {} raw windows, {} timing progress records. Observed {} attempts, {} orchestration actions, {} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n",counts.cells,counts.probes,counts.timed_children,counts.accepted_results,counts.windows,counts.progress_records,facts.attempts,facts.orchestration,facts.sessions));
+    receipt.push_str(&format!(
+        "The archived `{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{}`.\n",
+        Sha256Digest::of(index).as_str()
+    ));
+    receipt.push_str(&format!(
+        "The archived `{OWNER_DECISIONS}` holds the complete owner decisions, every raw timing window included; SHA-256 `{}`. The decisions above replace each raw `samples` array with its `sample_count`.\n",
+        Sha256Digest::of(decisions).as_str()
+    ));
+    Ok(receipt)
 }
 fn candidate_directory(
     stage: &Path,
@@ -1984,6 +2106,21 @@ fn discover_preparation(stage: &Path) -> io::Result<()> {
     output.flush()
 }
 const TUNING_EVIDENCE: &str = "dev/benchmarks/tuning_profiles";
+/// Stage records small enough to commit in the session record. Every other
+/// published stage file, bulk evidence and the execution log included, goes
+/// to the git-ignored evidence archive.
+const COMMITTED_SESSION_RECORDS: [&str; 10] = [
+    "algebra-capability-report.json",
+    "algebra-list-grid.json",
+    "algebra-self-check.json",
+    "build/source-after.json",
+    "build/source-before.json",
+    "composition.json",
+    "core-capability-report.json",
+    "core-list-grid.json",
+    "core-self-check.json",
+    "staging-manifest.json",
+];
 /// Protocol §9 repository destinations, all derived from the run ID.
 struct RepositoryLayout<'a> {
     id: &'a str,
@@ -2001,24 +2138,25 @@ impl RepositoryLayout<'_> {
     fn receipt(&self) -> String {
         format!("{TUNING_EVIDENCE}/{}.md", self.id)
     }
-    fn execution_log(&self) -> String {
-        format!("{TUNING_EVIDENCE}/{}-execution.log", self.id)
-    }
-    fn results(&self) -> String {
-        format!("{TUNING_EVIDENCE}/{}-results", self.id)
+    fn checksum(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}.sha256", self.id)
     }
     fn session(&self) -> String {
         format!("{TUNING_EVIDENCE}/{}-session", self.id)
     }
-    fn checksum(&self) -> String {
-        format!("{TUNING_EVIDENCE}/{}.sha256", self.id)
+    fn archive(&self) -> String {
+        format!(".agents/campaign-evidence/{}", self.id)
+    }
+    fn execution_log(&self) -> String {
+        format!("{}/execution.log", self.archive())
     }
 }
-/// Maps every published stage file to its protocol §9 destination. Accepted
-/// checkpoints, raw attempt streams and accepted bundles are the results;
-/// every other checksummed file, the session control state and the
-/// validation record form the session record. Staged executables under
-/// `bin/` are pinned by digest in the staging manifest and are not copied.
+/// Maps every published stage file to its protocol §9 destination: the
+/// envelopes and receipt to their committed rows, the declared small records
+/// and the validation record to the committed session record, and every other
+/// stage file to the same relative path in the archive. Staged executables
+/// under `bin/` are pinned by digest in the staging manifest and are not
+/// copied.
 fn repository_mapping(
     stage: &Path,
     layout: &RepositoryLayout,
@@ -2044,20 +2182,14 @@ fn repository_mapping(
             "algebra-owner.json" => layout.algebra_owner(),
             "complete.json" => layout.complete(),
             "receipt.md" => layout.receipt(),
-            "execution.log" => layout.execution_log(),
             "repository-publication/validation.json" => {
                 format!("{}/validation.json", layout.session())
             }
             other if other.starts_with("bin/") => continue,
-            other
-                if other.starts_with("checkpoints/")
-                    || other.starts_with("raw-attempts/")
-                    || other == "core-accepted.json"
-                    || other == "algebra-accepted.json" =>
-            {
-                format!("{}/{other}", layout.results())
+            other if COMMITTED_SESSION_RECORDS.contains(&other) => {
+                format!("{}/{other}", layout.session())
             }
-            other => format!("{}/{other}", layout.session()),
+            other => format!("{}/{other}", layout.archive()),
         };
         if mapping.insert(destination, source).is_some() {
             return Err(invalid("two stage files map to one repository destination"));
@@ -2068,6 +2200,7 @@ fn repository_mapping(
         layout.algebra_owner(),
         layout.complete(),
         layout.receipt(),
+        layout.execution_log(),
     ] {
         if !mapping.contains_key(&required) {
             return Err(invalid(format!("stage lacks the source of {required}")));
@@ -2192,8 +2325,9 @@ fn publish_to_repository(
         stage,
         campaign_id.clone(),
         repository_mapping(stage, &layout)?,
-        vec![layout.results(), layout.session()],
-        format!("{}/repository-publication.json", layout.session()),
+        vec![layout.session()],
+        layout.archive(),
+        vec![layout.execution_log()],
         format!("{}/repository-reopen.json", layout.session()),
         layout.checksum(),
     )?;
@@ -2340,6 +2474,25 @@ mod tests {
             verify_report_response(label, &response).unwrap();
         }
         assert!(report_cli(&process, "unknown", None).is_err());
+
+        let mut log = ExecutionLog::create_new(&stage, "campaign", "session").unwrap();
+        log.append(JournalEvent::CampaignStart, None, json!({}))
+            .unwrap();
+        report_cli(&process, "self-check", Some(&mut log)).unwrap();
+        let records =
+            ExecutionLog::validate_prefix(&fs::read(log.path()).unwrap(), "campaign").unwrap();
+        let start = records
+            .iter()
+            .find(|record| record.event == JournalEvent::OrchestrationStart)
+            .unwrap();
+        let exit = records
+            .iter()
+            .find(|record| record.event == JournalEvent::OrchestrationExit)
+            .unwrap();
+        assert_eq!(
+            exit.details["start_sequence"].as_u64(),
+            Some(start.sequence)
+        );
     }
 
     #[test]
@@ -3158,35 +3311,35 @@ mod tests {
         let repository = fixture.repository("repository");
         let manifest = fixture.publish(&repository).unwrap();
         assert_eq!(manifest.path, repository.join(layout.checksum()));
+        let archive = |relative: &str| format!("{}/{relative}", layout.archive());
+        let session = |relative: &str| format!("{}/{relative}", layout.session());
         for (source, destination) in [
             ("core-owner.json", layout.core_owner()),
             ("algebra-owner.json", layout.algebra_owner()),
             ("complete.json", layout.complete()),
             ("receipt.md", layout.receipt()),
-            ("execution.log", layout.execution_log()),
             (
-                "checkpoints/units/unit.json",
-                format!("{}/checkpoints/units/unit.json", layout.results()),
-            ),
-            (
-                "raw-attempts/attempt.stdout",
-                format!("{}/raw-attempts/attempt.stdout", layout.results()),
-            ),
-            (
-                "core-accepted.json",
-                format!("{}/core-accepted.json", layout.results()),
-            ),
-            (
-                "campaign.json",
-                format!("{}/campaign.json", layout.session()),
-            ),
-            (
-                "sessions/s1/checksum.json",
-                format!("{}/sessions/s1/checksum.json", layout.session()),
+                "build/source-before.json",
+                session("build/source-before.json"),
             ),
             (
                 "repository-publication/validation.json",
-                format!("{}/validation.json", layout.session()),
+                session("validation.json"),
+            ),
+            ("execution.log", layout.execution_log()),
+            ("campaign.json", archive("campaign.json")),
+            (
+                "checkpoints/units/unit.json",
+                archive("checkpoints/units/unit.json"),
+            ),
+            (
+                "raw-attempts/attempt.stdout",
+                archive("raw-attempts/attempt.stdout"),
+            ),
+            ("core-accepted.json", archive("core-accepted.json")),
+            (
+                "sessions/s1/checksum.json",
+                archive("sessions/s1/checksum.json"),
             ),
         ] {
             assert_eq!(
@@ -3195,24 +3348,40 @@ mod tests {
                 "{destination}"
             );
         }
-        assert!(!repository
-            .join(layout.session())
-            .join("bin/driver")
-            .exists());
+        assert!(!repository.join(archive("bin/driver")).exists());
         let reopen: Value = serde_json::from_slice(
-            &fs::read(
-                repository
-                    .join(layout.session())
-                    .join("repository-reopen.json"),
-            )
-            .unwrap(),
+            &fs::read(repository.join(session("repository-reopen.json"))).unwrap(),
         )
         .unwrap();
         assert_eq!(
             reopen["complete"]["sha256"].as_str(),
             Some(Sha256Digest::of(&fs::read(repository.join(layout.complete())).unwrap()).as_str())
         );
-        let listed = fs::read_to_string(&manifest.path).unwrap();
+        // Every committed file, the archived journal and the archive manifest
+        // are pinned by the committed manifest; the archive manifest pins every
+        // other archived file.
+        let pinned = |manifest: &Path| -> BTreeMap<String, String> {
+            fs::read_to_string(manifest)
+                .unwrap()
+                .lines()
+                .map(|line| {
+                    let (digest, path) = line.split_once("  ").unwrap();
+                    assert_eq!(
+                        Sha256Digest::of(&fs::read(repository.join(path)).unwrap()).as_str(),
+                        digest,
+                        "{path}"
+                    );
+                    (path.to_owned(), digest.to_owned())
+                })
+                .collect()
+        };
+        let committed = pinned(&manifest.path);
+        let archived = pinned(&repository.join(archive("SHA256SUMS")));
+        assert!(committed.contains_key(&layout.execution_log()));
+        assert!(committed.contains_key(&archive("SHA256SUMS")));
+        assert!(committed.contains_key(&layout.core_owner()));
+        assert!(archived.contains_key(&archive("raw-attempts/attempt.stdout")));
+        assert!(archived.contains_key(&archive("repository-publication/plan.json")));
         let plan: RepositoryPlan = read_json(
             &fixture
                 .stage
@@ -3220,15 +3389,47 @@ mod tests {
                 .join("plan.json"),
         )
         .unwrap();
-        assert_eq!(listed.lines().count(), plan.entries.len() + 2);
-        for line in listed.lines() {
-            let (digest, path) = line.split_once("  ").unwrap();
+        for entry in &plan.entries {
+            let listed = if entry.destination.starts_with(&layout.archive()) {
+                &archived
+            } else {
+                &committed
+            };
             assert_eq!(
-                Sha256Digest::of(&fs::read(repository.join(path)).unwrap()).as_str(),
-                digest
+                listed.get(&entry.destination),
+                Some(&entry.sha256.as_str().to_owned())
             );
         }
         assert_eq!(fixture.publish(&repository).unwrap(), manifest);
+    }
+
+    #[test]
+    fn oversized_committed_destination_fails_before_the_plan_is_journaled() {
+        let fixture = PublicationFixture::new();
+        let layout = RepositoryLayout {
+            id: fixture.campaign.as_str(),
+        };
+        fs::write(
+            fixture.stage.join("receipt.md"),
+            vec![b'#'; COMMITTED_LIMIT_BYTES as usize + 1],
+        )
+        .unwrap();
+        let repository = fixture.repository("repository");
+        let error = fixture.publish(&repository).unwrap_err().to_string();
+        assert!(
+            error.contains(&format!(
+                "committed destination {} is {} bytes",
+                layout.receipt(),
+                COMMITTED_LIMIT_BYTES + 1
+            )),
+            "{error}"
+        );
+        assert!(!fixture
+            .stage
+            .join(REPOSITORY_PUBLICATION_DIR)
+            .join("plan.json")
+            .exists());
+        assert_eq!(fs::read_dir(&repository).unwrap().count(), 0);
     }
 
     #[test]
@@ -3250,9 +3451,9 @@ mod tests {
             assert!(repository.join(layout.complete()).is_file());
             assert!(!checksum.exists());
         }
-        // A crash left one destination missing and another only as a partial
-        // temporary beside its absent final name.
-        let removed = repository.join(layout.results()).join("core-accepted.json");
+        // A crash left one archived destination missing and a committed one
+        // only as a partial temporary beside its absent final name.
+        let removed = repository.join(layout.archive()).join("core-accepted.json");
         fs::remove_file(&removed).unwrap();
         let receipt = repository.join(layout.receipt());
         let bytes = fs::read(&receipt).unwrap();
@@ -3270,8 +3471,397 @@ mod tests {
             fs::read(&removed).unwrap(),
             fs::read(fixture.stage.join("core-accepted.json")).unwrap()
         );
-        let unplanned = repository.join(layout.results()).join("unplanned.json");
+        let unplanned = repository.join(layout.archive()).join("unplanned.json");
         fs::write(&unplanned, b"{}").unwrap();
         assert!(fixture.publish(&repository).is_err());
+    }
+
+    /// Worst-case full-scale receipt: 4,302 accepted units and owner decisions
+    /// carrying every one of the 7,650 retained-threshold timing windows at
+    /// the widest values the protocol admits (2^32 calls, the 120 s child
+    /// limit), plus the one-factor, GEMM and joint decisions at twice the
+    /// 30,947 bytes measured on the 2026-09-28 stage.
+    #[test]
+    fn full_scale_receipt_stays_within_a_quarter_of_the_committed_limit() {
+        let campaign = Token::new("gf2-a83583e0-19700101t000000z-1").unwrap();
+        let units: Vec<LaunchUnit> = (0..4302u64)
+            .map(|ordinal| {
+                let task = match ordinal % 6 {
+                    0 => Task::Probe,
+                    execution => Task::Measure {
+                        execution: execution - 1,
+                    },
+                };
+                LaunchUnit::new(
+                    ordinal,
+                    UnitIdentity {
+                        protocol: Token::new("core-tuning-campaign-v4").unwrap(),
+                        owner: Token::new("gf2-core").unwrap(),
+                        campaign_id: campaign.clone(),
+                        phase: Token::new("extent").unwrap(),
+                        field: Token::new("triangular.trsm_blocked_min_dim").unwrap(),
+                        stratum: Token::new(format!("size-{ordinal}-standard")).unwrap(),
+                        candidate: Token::new("conservative").unwrap(),
+                        task,
+                    },
+                    Token::new("core-producer").unwrap(),
+                    CanonicalJson::new("{}".to_owned()).unwrap(),
+                )
+                .unwrap()
+            })
+            .collect();
+        let index = raw_result_index(units.iter());
+        assert_eq!(
+            index.lines().filter(|line| line.starts_with("- `")).count(),
+            4302
+        );
+        let window = json!({"execution":4,"repetition":4,"calls":1u64 << 32,"elapsed_ns":120_000_000_000u64});
+        let samples = vec![window; 25];
+        let points: Vec<_> = (0..153)
+            .map(|size| json!({"size":size,"conservative":{"median":1.0e9,"spread":0.5,"samples":samples},"asymptotic":{"median":1.0e9,"spread":0.5,"samples":samples}}))
+            .collect();
+        let decisions = json!({
+            "schema":"core-tuning-campaign-v4",
+            "retained_thresholds":points,
+            "extents":"x".repeat(2 * 30_947),
+        });
+        let artifact = ArtifactIdentity {
+            path: PathBuf::from("/tmp/owner.json"),
+            sha256: Sha256Digest::of(b""),
+        };
+        let responses = [
+            OwnerResponse::EmitOwner {
+                artifact: artifact.clone(),
+                decisions: CanonicalJson::from_serializable(&decisions).unwrap(),
+            },
+            OwnerResponse::EmitOwner {
+                artifact,
+                decisions: CanonicalJson::from_serializable(&json!({"selected":65536})).unwrap(),
+            },
+        ];
+        let protocol = ArtifactIdentity {
+            path: PathBuf::from("/repository/dev/active/a83583e0/premeasurement-protocol.md"),
+            sha256: Sha256Digest::of(b"protocol"),
+        };
+        let facts = ReceiptFacts {
+            campaign_id: campaign.as_str(),
+            protocol: &protocol,
+            source_revision: "0000000000000000000000000000000000000000",
+            affinity: format!("{:?}", (0..64).collect::<Vec<u32>>()),
+            owners: vec![["gf2-core".into(), "p".into(), "b".into(), "0".repeat(64)]; 2],
+            counts: DeclaredCounts::for_cells(717).unwrap(),
+            attempts: u64::MAX,
+            orchestration: u64::MAX,
+            sessions: u64::MAX,
+        };
+        let decisions = encoded(&responses).unwrap();
+        let receipt = render_receipt(&facts, &responses, index.as_bytes(), &decisions).unwrap();
+        assert!(receipt.contains(Sha256Digest::of(&decisions).as_str()));
+        assert!(!receipt.contains("elapsed_ns"));
+        assert!(receipt.contains("sample_count"));
+        assert!(receipt.contains(Sha256Digest::of(index.as_bytes()).as_str()));
+        assert!(!receipt.contains("size-4301-standard"));
+        let limit = usize::try_from(COMMITTED_LIMIT_BYTES).unwrap();
+        assert!(
+            receipt.len() <= limit / 4,
+            "receipt is {} bytes against its {}-byte target",
+            receipt.len(),
+            limit / 4
+        );
+        eprintln!(
+            "full-scale receipt bytes: {}; raw index bytes: {}",
+            receipt.len(),
+            index.len()
+        );
+    }
+
+    /// Renders the receipt documents with the driver and checks them with the
+    /// validator's real receipt checks; either side drifting fails.
+    #[test]
+    fn rendered_receipt_documents_pass_the_validator_receipt_checks() {
+        let scratch_root = scratch("gf2-driver-receipt-check");
+        let stage = fs::canonicalize(scratch_root.path()).unwrap();
+        let campaign = Token::new("gf2-a83583e0-19700101t000000z-1").unwrap();
+        let fields = [
+            "gemm.tiles",
+            "field_vec.dot_chunk_len",
+            "triangular.trsm_panel_rows",
+        ];
+        let units: Vec<LaunchUnit> = (0..18u64)
+            .map(|ordinal| {
+                let task = match ordinal % 6 {
+                    0 => Task::Probe,
+                    execution => Task::Measure {
+                        execution: execution - 1,
+                    },
+                };
+                LaunchUnit::new(
+                    ordinal,
+                    UnitIdentity {
+                        protocol: Token::new("core-tuning-campaign-v4").unwrap(),
+                        owner: Token::new("gf2-core").unwrap(),
+                        campaign_id: campaign.clone(),
+                        phase: Token::new("extent").unwrap(),
+                        field: Token::new(fields[ordinal as usize / 6]).unwrap(),
+                        stratum: Token::new("shape-0").unwrap(),
+                        candidate: Token::new("128").unwrap(),
+                        task,
+                    },
+                    Token::new("core-producer").unwrap(),
+                    CanonicalJson::new("{}".to_owned()).unwrap(),
+                )
+                .unwrap()
+            })
+            .collect();
+        let (core_units, algebra_units) = units.split_at(12);
+        let bundle = |units: &[LaunchUnit]| json!({"accepted": units.iter().map(|unit| json!({"unit": unit})).collect::<Vec<_>>()});
+        let arm = json!({"median":2.5,"spread":0.125,"samples":[{"execution":0,"repetition":0,"calls":7,"elapsed_ns":250_000_001u64}]});
+        let responses = [
+            OwnerResponse::EmitOwner {
+                artifact: ArtifactIdentity {
+                    path: stage.join("core-owner.json"),
+                    sha256: Sha256Digest::of(b"core"),
+                },
+                decisions: CanonicalJson::from_serializable(&json!({"schema":"core-tuning-campaign-v4","retained_thresholds":[{"points":[{"size":8,"conservative":arm}]}],"gemm":{"selected":[32,64],"reason":"structural-schedule-tie"}})).unwrap(),
+            },
+            OwnerResponse::EmitOwner {
+                artifact: ArtifactIdentity {
+                    path: stage.join("algebra-owner.json"),
+                    sha256: Sha256Digest::of(b"algebra"),
+                },
+                decisions: CanonicalJson::from_serializable(&json!({"schema":"algebra-tuning-analysis-v1","selected":65536})).unwrap(),
+            },
+        ];
+        let protocol = ArtifactIdentity {
+            path: PathBuf::from("/repository/dev/active/a83583e0/premeasurement-protocol.md"),
+            sha256: Sha256Digest::of(b"protocol"),
+        };
+        let affinity: Vec<u32> = vec![0, 2, 4, 6];
+        let owners = [
+            [
+                "gf2-core",
+                "core-tuning-campaign-v4",
+                "tuning-calibration-v4",
+            ],
+            [
+                "gf2-algebra",
+                "algebra-tuning-campaign-v1",
+                "algebra-tuning-calibration-v1",
+            ],
+        ];
+        let executable = "e".repeat(64);
+        let counts = DeclaredCounts::for_cells(717).unwrap();
+        let files = [
+            (
+                "campaign.json",
+                json!({
+                    "campaign_id": campaign,
+                    "protocol": protocol,
+                    "identity": {"source_revision": "0".repeat(40)},
+                    "affinity": affinity,
+                    "manifests": owners.iter().map(|[owner, protocol, behavior]| json!({
+                        "owner": owner,
+                        "owner_protocol": protocol,
+                        "behavior_token": behavior,
+                        "processes": [{"executable_sha256": executable}],
+                    })).collect::<Vec<_>>(),
+                }),
+            ),
+            ("core-accepted.json", bundle(core_units)),
+            ("algebra-accepted.json", bundle(algebra_units)),
+            (
+                "receipt-projection.json",
+                json!({"owners": responses, "counts": counts, "attempts": 4401, "orchestration": 9, "sessions": 2}),
+            ),
+        ];
+        for (name, value) in &files {
+            fs::write(stage.join(name), encoded(value).unwrap()).unwrap();
+        }
+        let facts = ReceiptFacts {
+            campaign_id: campaign.as_str(),
+            protocol: &protocol,
+            source_revision: &"0".repeat(40),
+            affinity: format!("{affinity:?}"),
+            owners: owners
+                .iter()
+                .map(|[owner, protocol, behavior]| {
+                    [
+                        (*owner).to_owned(),
+                        (*protocol).to_owned(),
+                        (*behavior).to_owned(),
+                        executable.clone(),
+                    ]
+                })
+                .collect(),
+            counts,
+            attempts: 4401,
+            orchestration: 9,
+            sessions: 2,
+        };
+        publish_receipt_documents(&stage, &facts, units.iter(), &responses).unwrap();
+        let validator = fs::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../scripts/validate-tuning-extent-campaign.py"),
+        )
+        .unwrap();
+        let check = || {
+            Command::new("python3")
+                .arg(&validator)
+                .arg("--stage")
+                .arg(&stage)
+                .arg("--receipt-check")
+                .output()
+                .unwrap()
+        };
+        let output = check();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let receipt = stage.join("receipt.md");
+        let text = fs::read_to_string(&receipt).unwrap();
+        fs::write(&receipt, text.replace("sample_count", "samples_count")).unwrap();
+        let output = check();
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("receipt"));
+    }
+
+    /// The validator reconstructs the typed encodings the driver and children
+    /// hash from the sorted-key values checkpoints and journals store, and
+    /// encodes floats and decision reasons as serde does. A campaign stage's
+    /// validation depends on each of these agreeing byte for byte.
+    #[test]
+    fn validator_reproduces_the_rust_encodings_it_binds() {
+        use tuning_campaign_support::statistics::DecisionReason;
+        use tuning_campaign_support::timing::TimingSample;
+        let scratch_root = scratch("gf2-driver-encoding-check");
+        let identity = |task| UnitIdentity {
+            protocol: Token::new("core-tuning-campaign-v4").unwrap(),
+            owner: Token::new("gf2-core").unwrap(),
+            campaign_id: Token::new("gf2-a83583e0-19700101t000000z-1").unwrap(),
+            phase: Token::new("extent").unwrap(),
+            field: Token::new("field_vec.dot_chunk_len").unwrap(),
+            stratum: Token::new("shape-0").unwrap(),
+            candidate: Token::new("128").unwrap(),
+            task,
+        };
+        let pair = |value: &dyn erased::Encode| json!({"value": value.value(), "bytes": String::from_utf8(value.bytes()).unwrap()});
+        let mut units = Vec::new();
+        let mut results = Vec::new();
+        let mut progress = Vec::new();
+        let mut requests = Vec::new();
+        for task in [Task::Probe, Task::Measure { execution: 3 }] {
+            let unit = LaunchUnit::new(
+                7,
+                identity(task),
+                Token::new("core-producer").unwrap(),
+                CanonicalJson::new("{\"spread\":0.00009182966022193755}".to_owned()).unwrap(),
+            )
+            .unwrap();
+            let samples = match task {
+                Task::Probe => vec![],
+                Task::Measure { execution } => (0..5)
+                    .map(|repetition| {
+                        TimingSample::new(execution, repetition, 1 << 32, 250_000_001).unwrap()
+                    })
+                    .collect(),
+            };
+            let result = ChildResult {
+                schema: RESULT_SCHEMA.into(),
+                identity: identity(task),
+                case_sha256: Sha256Digest::of(unit.case.as_str().as_bytes()),
+                outcome: ChildOutcome::Complete,
+                samples,
+                payload: CanonicalJson::new("{\"median\":1.5e-7}".to_owned()).unwrap(),
+            };
+            units.push(pair(&unit));
+            results.push(pair(&result));
+            requests.push(pair(&OwnerOperation::ValidateResult {
+                unit: Box::new(unit.clone()),
+                result: Box::new(result.clone()),
+            }));
+            if let Task::Measure { .. } = task {
+                for kind in [
+                    ProgressKind::CalibrationComplete { calls: 9 },
+                    ProgressKind::WindowComplete {
+                        repetition: 4,
+                        calls: 9,
+                        elapsed_ns: 250_000_001,
+                    },
+                ] {
+                    progress.push(pair(
+                        &ProgressRecord::new(identity(task), result.case_sha256.clone(), kind)
+                            .unwrap(),
+                    ));
+                }
+            }
+        }
+        // Typed f64 fields (child results, owner decisions) and the sorted
+        // `Value` copies in checkpoints and journals.
+        let values = [
+            1e-5,
+            9.182966022193755e-05,
+            1.5e-6,
+            1e-4,
+            123.0,
+            1e15,
+            1e16,
+            1e300,
+            2.5e-7,
+            -3.25e-8,
+            5e-324,
+            219_961_611.0,
+        ];
+        let mut floats: Vec<String> = values
+            .iter()
+            .map(|value| serde_json::to_string(&json!({ "x": [value] })).unwrap())
+            .collect();
+        floats.extend(
+            values
+                .iter()
+                .map(|value| format!("{{\"x\":[{}]}}", serde_json::to_string(value).unwrap())),
+        );
+        let fixture = json!({
+            "typed": {"unit": units, "result": results, "progress": progress, "validate_request": requests},
+            "floats": floats,
+            "selected_non_default": DecisionReason::SelectedNonDefault,
+        });
+        let path = scratch_root.path().join("fixture.json");
+        fs::write(&path, serde_json::to_vec(&fixture).unwrap()).unwrap();
+        let validator = fs::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../scripts/validate-tuning-extent-campaign.py"),
+        )
+        .unwrap();
+        let output = Command::new("python3")
+            .arg(&validator)
+            .arg("--encoding-check")
+            .arg(&path)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    /// Serialized forms of one Rust value: the sorted-key JSON value that
+    /// checkpoints and journals store, and the typed bytes that are hashed.
+    mod erased {
+        use serde::Serialize;
+        pub trait Encode {
+            fn value(&self) -> serde_json::Value;
+            fn bytes(&self) -> Vec<u8>;
+        }
+        impl<T: Serialize> Encode for T {
+            fn value(&self) -> serde_json::Value {
+                serde_json::to_value(self).unwrap()
+            }
+            fn bytes(&self) -> Vec<u8> {
+                serde_json::to_vec(self).unwrap()
+            }
+        }
     }
 }
