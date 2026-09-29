@@ -4528,7 +4528,9 @@ pub fn campaign_complete(channels: &SessionChannels, campaign_id: &Token) -> io:
 /// after the final session checksum, it lies outside that checksum boundary.
 pub const REPOSITORY_PUBLICATION_DIR: &str = "repository-publication";
 /// Schema of [`RepositoryPlan`].
-pub const REPOSITORY_PLAN_SCHEMA: &str = "tuning-campaign-repository-plan-v1";
+pub const REPOSITORY_PLAN_SCHEMA: &str = "tuning-campaign-repository-plan-v2";
+/// Hard upper bound on every committed publication destination.
+pub const COMMITTED_LIMIT_BYTES: u64 = 1 << 20;
 
 /// One stage file copied byte for byte to a repository destination.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -4538,22 +4540,32 @@ pub struct RepositoryEntry {
     pub source: String,
     /// Repository-relative destination path.
     pub destination: String,
+    pub bytes: u64,
     pub sha256: Sha256Digest,
 }
 
 /// Immutable plan publishing a validated stage into a repository checkout.
-/// Entries are sorted by destination. `record` receives this plan,
-/// `verification` the caller's post-copy verification evidence, and
-/// `checksum_manifest`, written last, the digest of every other destination.
-/// The file set under each owned directory must equal its planned files.
+///
+/// Destinations under `archive_root` form the uncommitted evidence archive;
+/// every other destination is committed and at most
+/// [`COMMITTED_LIMIT_BYTES`] long. Entries are sorted by destination.
+/// `record` (archived) receives this plan and `archive_manifest` (archived)
+/// the digest of every other archived file. `verification` (committed)
+/// receives the caller's post-copy verification evidence. `checksum_manifest`
+/// (committed, written last) lists every committed destination, then the
+/// archive manifest and each `pinned_archive` destination. The file set under
+/// each committed directory and under the archive root must equal the plan.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RepositoryPlan {
     pub schema: String,
     pub campaign_id: Token,
     pub entries: Vec<RepositoryEntry>,
-    pub owned_directories: Vec<String>,
+    pub committed_directories: Vec<String>,
+    pub archive_root: String,
     pub record: String,
+    pub archive_manifest: String,
+    pub pinned_archive: Vec<String>,
     pub verification: String,
     pub checksum_manifest: String,
 }
@@ -4573,27 +4585,40 @@ fn relative_path(value: &str) -> io::Result<&Path> {
     Ok(path)
 }
 
+fn committed_size(destination: &str, bytes: u64) -> io::Result<()> {
+    if bytes > COMMITTED_LIMIT_BYTES {
+        return Err(invalid(format!(
+            "committed destination {destination} is {bytes} bytes, over the \
+             {COMMITTED_LIMIT_BYTES}-byte committed limit"
+        )));
+    }
+    Ok(())
+}
+
 impl RepositoryPlan {
-    /// Hashes each stage source of `mapping` (destination to stage-relative
-    /// source) and validates the resulting plan.
+    /// Sizes and hashes each stage source of `entries` (destination to
+    /// stage-relative source) and validates the resulting plan.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         stage: &Path,
         campaign_id: Token,
         mapping: BTreeMap<String, String>,
-        owned_directories: Vec<String>,
-        record: String,
+        committed_directories: Vec<String>,
+        archive_root: String,
+        pinned_archive: Vec<String>,
         verification: String,
         checksum_manifest: String,
     ) -> io::Result<Self> {
         let mut entries = Vec::with_capacity(mapping.len());
         for (destination, source) in mapping {
             let path = stage.join(relative_path(&source)?);
-            let metadata = fs::symlink_metadata(&path)?;
-            if !metadata.file_type().is_file() {
+            if !fs::symlink_metadata(&path)?.file_type().is_file() {
                 return Err(invalid("publication source is not a regular stage file"));
             }
+            let content = fs::read(&path)?;
             entries.push(RepositoryEntry {
-                sha256: Sha256Digest::of(&fs::read(&path)?),
+                bytes: content.len() as u64,
+                sha256: Sha256Digest::of(&content),
                 source,
                 destination,
             });
@@ -4602,8 +4627,11 @@ impl RepositoryPlan {
             schema: REPOSITORY_PLAN_SCHEMA.into(),
             campaign_id,
             entries,
-            owned_directories,
-            record,
+            committed_directories,
+            record: format!("{archive_root}/{REPOSITORY_PUBLICATION_DIR}/plan.json"),
+            archive_manifest: format!("{archive_root}/SHA256SUMS"),
+            archive_root,
+            pinned_archive,
             verification,
             checksum_manifest,
         };
@@ -4611,12 +4639,18 @@ impl RepositoryPlan {
         Ok(plan)
     }
 
-    /// Rejects unnormalized paths, unsorted or duplicate destinations, and
-    /// generated destinations that collide with an entry.
+    fn archived(&self, destination: &str) -> bool {
+        Path::new(destination).starts_with(&self.archive_root)
+    }
+
+    /// Rejects unnormalized paths, unsorted or duplicate destinations,
+    /// misplaced generated destinations, pins outside the archived entries,
+    /// and any committed entry over [`COMMITTED_LIMIT_BYTES`].
     pub fn validate(&self) -> io::Result<()> {
         if self.schema != REPOSITORY_PLAN_SCHEMA || self.entries.is_empty() {
             return Err(invalid("repository plan schema or entries mismatch"));
         }
+        relative_path(&self.archive_root)?;
         let mut destinations = BTreeSet::new();
         for entry in &self.entries {
             relative_path(&entry.source)?;
@@ -4628,32 +4662,76 @@ impl RepositoryPlan {
                 return Err(invalid("repository plan destinations are unsorted"));
             }
             destinations.insert(entry.destination.as_str());
-        }
-        for generated in [&self.record, &self.verification, &self.checksum_manifest] {
-            relative_path(generated)?;
-            if !destinations.insert(generated.as_str()) {
-                return Err(invalid("repository plan destination is not unique"));
+            if !self.archived(&entry.destination) {
+                committed_size(&entry.destination, entry.bytes)?;
             }
         }
-        for directory in &self.owned_directories {
+        for (generated, archived) in [
+            (&self.record, true),
+            (&self.archive_manifest, true),
+            (&self.verification, false),
+            (&self.checksum_manifest, false),
+        ] {
+            relative_path(generated)?;
+            if self.archived(generated) != archived || !destinations.insert(generated.as_str()) {
+                return Err(invalid(
+                    "repository plan generated destination is misplaced",
+                ));
+            }
+        }
+        for directory in &self.committed_directories {
             relative_path(directory)?;
+            if self.archived(directory) {
+                return Err(invalid("committed directory lies inside the archive"));
+            }
+        }
+        if !self.pinned_archive.iter().all(|pin| {
+            self.archived(pin) && self.entries.iter().any(|entry| entry.destination == *pin)
+        }) {
+            return Err(invalid(
+                "pinned archive destination is not an archived entry",
+            ));
         }
         Ok(())
     }
 
-    fn checksum_text(&self, record: &[u8], verification: &[u8]) -> Vec<u8> {
-        let mut rows: Vec<(&str, Sha256Digest)> = self
-            .entries
-            .iter()
-            .map(|entry| (entry.destination.as_str(), entry.sha256.clone()))
-            .collect();
-        rows.push((&self.record, Sha256Digest::of(record)));
-        rows.push((&self.verification, Sha256Digest::of(verification)));
+    fn rows(rows: &mut [(String, Sha256Digest)]) -> Vec<u8> {
         rows.sort();
         rows.iter()
             .map(|(path, digest)| format!("{}  {path}\n", digest.as_str()))
             .collect::<String>()
             .into_bytes()
+    }
+
+    fn archive_text(&self, record: &[u8]) -> Vec<u8> {
+        let mut rows: Vec<_> = self
+            .entries
+            .iter()
+            .filter(|entry| self.archived(&entry.destination))
+            .map(|entry| (entry.destination.clone(), entry.sha256.clone()))
+            .collect();
+        rows.push((self.record.clone(), Sha256Digest::of(record)));
+        Self::rows(&mut rows)
+    }
+
+    fn checksum_text(&self, archive: &[u8], verification: &[u8]) -> Vec<u8> {
+        let mut committed: Vec<_> = self
+            .entries
+            .iter()
+            .filter(|entry| !self.archived(&entry.destination))
+            .map(|entry| (entry.destination.clone(), entry.sha256.clone()))
+            .collect();
+        committed.push((self.verification.clone(), Sha256Digest::of(verification)));
+        let mut archived: Vec<_> = self
+            .entries
+            .iter()
+            .filter(|entry| self.pinned_archive.contains(&entry.destination))
+            .map(|entry| (entry.destination.clone(), entry.sha256.clone()))
+            .collect();
+        archived.push((self.archive_manifest.clone(), Sha256Digest::of(archive)));
+        let mut text = Self::rows(&mut committed);
+        text.extend(Self::rows(&mut archived));
+        text
     }
 
     fn verify_owned_directories(&self, repository: &Path) -> io::Result<()> {
@@ -4675,10 +4753,18 @@ impl RepositoryPlan {
             .entries
             .iter()
             .map(|entry| entry.destination.as_str())
-            .chain([self.record.as_str(), self.verification.as_str()])
+            .chain([
+                self.record.as_str(),
+                self.archive_manifest.as_str(),
+                self.verification.as_str(),
+            ])
             .map(|destination| repository.join(destination))
             .collect();
-        for directory in &self.owned_directories {
+        for directory in self
+            .committed_directories
+            .iter()
+            .chain([&self.archive_root])
+        {
             let root = repository.join(directory);
             let mut found = BTreeSet::new();
             collect(&root, &mut found)?;
@@ -4737,12 +4823,14 @@ fn publish_repository_file(
 /// Publishes a validated stage into `repository` under `plan` and returns the
 /// checksum manifest, which is written last and marks a complete publication.
 ///
-/// The plan is journaled at `stage/repository-publication/plan.json` before
-/// any destination is touched. Every destination then goes through
-/// [`publish_artifact`]: a durable per-path intent, a create-new temporary in
-/// the destination directory, sync, atomic rename and directory sync. An
-/// existing destination with different bytes is refused and left unchanged.
-/// `verify` runs after every entry and the plan record are in place; it
+/// The plan is validated, including the committed size limit, and journaled
+/// at `stage/repository-publication/plan.json` before any destination is
+/// touched, so a limit violation leaves nothing durable to contradict a
+/// corrected plan. Every destination then goes through [`publish_artifact`]:
+/// a durable per-path intent, a create-new temporary in the destination
+/// directory, sync, atomic rename and directory sync. An existing destination
+/// with different bytes is refused and left unchanged. `verify` runs after
+/// every entry, the plan record and the archive manifest are in place; it
 /// strictly reopens the published files and returns deterministic evidence.
 /// Retrying the same plan after any interruption reverifies each published
 /// file by its bytes and finishes the rest; a changed plan is refused.
@@ -4767,21 +4855,21 @@ pub fn publish_repository(
     publish_artifact(stage, &journal.join("plan.json"), &record)?;
     for entry in &plan.entries {
         let content = fs::read(stage.join(&entry.source))?;
-        if Sha256Digest::of(&content) != entry.sha256 {
+        if content.len() as u64 != entry.bytes || Sha256Digest::of(&content) != entry.sha256 {
             return Err(invalid("stage source changed after publication planning"));
         }
         publish_repository_file(stage, repository, &entry.destination, &content)?;
     }
     publish_repository_file(stage, repository, &plan.record, &record)?;
+    let archive = plan.archive_text(&record);
+    publish_repository_file(stage, repository, &plan.archive_manifest, &archive)?;
     let evidence = verify(repository)?;
+    committed_size(&plan.verification, evidence.len() as u64)?;
     publish_repository_file(stage, repository, &plan.verification, &evidence)?;
     plan.verify_owned_directories(repository)?;
-    publish_repository_file(
-        stage,
-        repository,
-        &plan.checksum_manifest,
-        &plan.checksum_text(&record, &evidence),
-    )
+    let checksum = plan.checksum_text(&archive, &evidence);
+    committed_size(&plan.checksum_manifest, checksum.len() as u64)?;
+    publish_repository_file(stage, repository, &plan.checksum_manifest, &checksum)
 }
 
 #[derive(Serialize)]

@@ -788,8 +788,18 @@ section-specific provenance and assembly; grids/controls/seed allocation;
 coverage/accounting/resume history; effective routes and semantic witnesses;
 raw-sample projection and uncertainty; argmin/threshold decisions and
 contradictions; owner/composite strict validation; and limitations. Each
-numeric table row has a resolvable raw-result key. The receipt does not add a
-second manually maintained selector inventory or claim unmeasured optima.
+numeric table row has a resolvable raw-result key through the raw result
+index, a separate stage file `raw-result-index.md` with one row per accepted
+key. The receipt names that file and its SHA-256 in place of an inline list.
+The complete owner decisions, every raw timing window included, form the
+stage file `owner-decisions.json`, which the receipt likewise names with its
+SHA-256. The receipt shows those decisions with each raw `samples` array
+replaced by its `sample_count`; the medians, spreads, selections, ties,
+fallbacks and curve flags beside it stay. REQ-03's timing samples are thus
+all recorded, in digest-pinned archived evidence the receipt cites, and the
+receipt's size depends on the declared grid only, never on the accepted-result
+or timing-window count. The receipt does not add a second manually
+maintained selector inventory or claim unmeasured optima.
 
 ## 9. Behavior identity, artifacts, and atomic cutover
 
@@ -850,10 +860,22 @@ Repository destinations are derived from that one ID:
 | Algebra-owner envelope | `crates/gf2-algebra/data/tuning-profiles/<run-id>.json` |
 | Complete envelope | `dev/reference_data/tuning-profiles/<run-id>.json` |
 | Receipt | `dev/benchmarks/tuning_profiles/<run-id>.md` |
-| Execution log | `dev/benchmarks/tuning_profiles/<run-id>-execution.log` |
-| Raw accepted results and checkpoints | `dev/benchmarks/tuning_profiles/<run-id>-results/` |
-| Build/provenance/composition/validation record | `dev/benchmarks/tuning_profiles/<run-id>-session/` |
 | Repository-relative checksum manifest | `dev/benchmarks/tuning_profiles/<run-id>.sha256` |
+| Declared small build/provenance/composition/validation/reopen records | `dev/benchmarks/tuning_profiles/<run-id>-session/` |
+| Execution log (archived) | `.agents/campaign-evidence/<run-id>/execution.log` |
+| Archive manifest (archived) | `.agents/campaign-evidence/<run-id>/SHA256SUMS` |
+| Raw accepted results, checkpoints and every other stage record (archived) | `.agents/campaign-evidence/<run-id>/` |
+
+The first six rows are committed. Every committed destination is at most
+1 MiB, a hard publication rule that the driver and the independent validator
+both enforce. The archive under `.agents/campaign-evidence/` is git-ignored and
+keeps the stage's relative paths. The split keeps bulk evidence, tens of
+megabytes per file for the journal, manifests, accepted bundles and
+checkpoints, out of git (invoker decision 2026-09-29, repository size). The
+committed checksum manifest pins the archive: it lists the execution log's
+and the archive manifest's SHA-256 after the committed rows, and the archive
+manifest lists every archived file. Listing every archived file in the
+committed manifest would itself exceed the committed limit.
 
 Each owner writes to an absent stage destination by create-new temporary file,
 flush/sync, atomic rename, and strict owner-only reopen. The result must have
@@ -894,12 +916,25 @@ Repository publication requires a `complete` terminal whose session is
 checksummed and retired, followed by a passing full independent validation.
 `publish-campaign` records that validation output and journals a plan at
 `stage/repository-publication/plan.json` before touching any destination.
-The plan maps each stage file onto the table above. The owner, complete,
-receipt and journal files take their own rows. Accepted checkpoints, raw
-attempt streams and accepted bundles go to `<run-id>-results/`. Every other
-checksummed file, the session control state, the validation record, the plan
-and the reopen evidence go to `<run-id>-session/`. Staged executables stay
-pinned by digest in the staging manifest and are not copied. Each destination
+The plan maps each stage file onto the table above. The owner, complete and
+receipt files take their own rows. A declared list of small records (build
+source observations, staging manifest, preflight reports, composition record)
+the validation record and the reopen evidence go to `<run-id>-session/`. Every other stage file,
+including the journal, accepted checkpoints, raw attempt streams, accepted
+bundles, manifests and session control state, keeps its relative path in the
+archive, beside the plan record and the archive manifest. The declared list,
+not an observed size, decides the split; a committed file over 1 MiB fails
+publication before its plan is journaled. Every committed file has a size
+fixed by the declared grid and code, independent of accepted-result and
+attempt counts: the envelopes carry one typed section each; the validation,
+reopen, composition, staging and build-source records have fixed fields; the
+preflight reports are written before any child runs; the checksum manifest
+has one row per committed file plus two archive rows; and the receipt holds
+fixed sections, the sample-summarized owner decisions and two archive
+digests. With all 4,302 accepted keys and all 7,650 retained-threshold
+windows at the 2^32-call and 120-second bounds, the receipt stays within
+256 KiB. Staged executables stay pinned by
+digest in the staging manifest and are not copied. Each destination
 goes through the stage's durable per-path publication intent: a create-new
 temporary in the destination directory, sync, atomic rename and directory
 sync. A destination holding different bytes is refused and left unchanged,
@@ -907,7 +942,9 @@ so existing evidence is never overwritten. After every copy the staged
 composer's complete loader strictly reopens both published owners with their
 owner-only codecs and recomposes the complete envelope, which must equal the
 published one byte for byte. The independent validator then checks the
-published tree against its own mapping of this table. The repository-relative
+published tree against its own mapping of this table, including the archive,
+whose absence is an explicit failure, and the archived journal against the
+stage journal. The repository-relative
 checksum manifest is written last and marks a complete publication. The
 destinations live in the checkout the campaign was prepared from. A retry
 under the same run ID reverifies every published file by its bytes and
@@ -979,10 +1016,10 @@ before edits; it is not silently taken from another issue's completed scope.
   `crates/gf2-algebra/src/tuning.rs`,
   `crates/gf2-algebra/tests/tuning_section.rs`, and
   `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`.
-- Thin build/stage/lock/finalize launcher, independent validation, and CI:
-  `dev/scripts/tuning-extent-campaign.sh`,
-  `dev/scripts/validate-tuning-extent-campaign.py`, and
-  `scripts/cargo-ci.sh`.
+- Thin build/stage/lock/finalize launcher, independent validation, CI, and
+  the evidence-archive ignore rule: `dev/scripts/tuning-extent-campaign.sh`,
+  `dev/scripts/validate-tuning-extent-campaign.py`, `scripts/cargo-ci.sh`,
+  and `.gitignore`.
 - Present-tense API/provenance citations:
   `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` and rustdoc in the above
   changed production modules; append-only amendments to

@@ -108,9 +108,24 @@ HOST_ADMISSION_POLICY = {
 
 # Protocol §9 repository publication of a complete stage.
 REPOSITORY_PUBLICATION_DIR = "repository-publication"
-REPOSITORY_PLAN_SCHEMA = "tuning-campaign-repository-plan-v1"
+# Archived stage file listing every accepted raw key; the receipt pins its digest.
+RAW_RESULT_INDEX = "raw-result-index.md"
+# Archived complete owner responses, raw timing windows included.
+OWNER_DECISIONS = "owner-decisions.json"
+REPOSITORY_PLAN_SCHEMA = "tuning-campaign-repository-plan-v2"
 REPOSITORY_REOPEN_SCHEMA = "tuning-campaign-repository-reopen-v1"
 TUNING_EVIDENCE = "dev/benchmarks/tuning_profiles"
+# Git-ignored bulk evidence archive; the committed checksum manifest pins it.
+EVIDENCE_ARCHIVE = ".agents/campaign-evidence"
+# Hard upper bound on every committed publication destination.
+COMMITTED_LIMIT_BYTES = 1 << 20
+# Declared stage records small enough for the committed session record.
+COMMITTED_SESSION_RECORDS = frozenset({
+    "algebra-capability-report.json", "algebra-list-grid.json", "algebra-self-check.json",
+    "build/source-after.json", "build/source-before.json", "composition.json",
+    "core-capability-report.json", "core-list-grid.json", "core-self-check.json",
+    "staging-manifest.json",
+})
 
 ALGEBRA_CANDIDATES = [4096, 16384, 65536, 262144, 1048576]
 ALGEBRA_DIMS = [20, 22, 24]
@@ -297,9 +312,27 @@ def duplicate_checked(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
+# Python writes a decimal exponent signed and zero-padded (`1.5e-06`, `1e+16`)
+# and uses exponent form from 1e-4 down; the workspace serde_json (ryu) writes
+# `1.5e-6` and `1e16`, and positional decimals down to 1e-5 (`0.00009`). Both
+# use the shortest round-trip digits.
+_PYTHON_EXPONENT = re.compile(r"(?<=[:\[,])(-?)(\d(?:\.\d+)?)e([-+])(\d+)(?=[,\]}])")
+
+
+def _serde_float(match: re.Match[str]) -> str:
+    sign, mantissa, direction, exponent = (match.group(1), match.group(2), match.group(3),
+                                           int(match.group(4)))
+    if direction == "+":
+        return f"{sign}{mantissa}e{exponent}"
+    if exponent <= 5:
+        return f"{sign}0.{'0' * (exponent - 1)}{mantissa.replace('.', '')}"
+    return f"{sign}{mantissa}e-{exponent}"
+
+
 def compact(value: Any) -> bytes:
-    return json.dumps(value, ensure_ascii=False, allow_nan=False,
-                      separators=(",", ":")).encode()
+    """Canonical compact JSON as the Rust side (serde_json) writes it."""
+    text = json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+    return _PYTHON_EXPONENT.sub(_serde_float, text).encode()
 
 
 def digest(data: bytes) -> str:
@@ -845,7 +878,10 @@ def validate_threshold_route(case: Any, outcome: Any) -> None:
     elif index == 14:
         effective, capability = ("WholeGemm" if arm else "PerCell"), "fp251_whole_gemm_available=true"
     elif index == 15:
-        effective = case["kind"]["spec"]["variant"]
+        # The owner reports the variant's display spelling (`generic`,
+        # `two_adic`); the case carries its serialized enum name.
+        effective = {"generic_interpolation": "generic",
+                     "two_adic_interpolation": "two_adic"}[case["kind"]["spec"]["variant"]]
     require(outcome["requested_route"] == outcome["observed_route"] == route
             and outcome["effective_observation"] == effective
             and outcome["capability_observation"] == capability,
@@ -1477,7 +1513,10 @@ def validate_bundle(bundle: Any, manifest: Any,
         paired_semantics[coordinate] = (operands, semantic)
         require(checkpoint["result_sha256"] == digest(compact(bound)),
                 "checkpoint bound-result digest mismatch")
-        require(checkpoint["case"] == unit and checkpoint["case_sha256"] == digest(compact(unit)),
+        # The checkpoint hashes its stored canonical case bytes, whose key order
+        # is the journal's canonical JSON value order, not the manifest's.
+        require(checkpoint["case"] == unit
+                and checkpoint["case_sha256"] == digest(compact(checkpoint["case"])),
                 "checkpoint unit binding mismatch")
         results.append(result)
     return results
@@ -1735,6 +1774,60 @@ def replay_lifecycle(records: list[Any], descriptors: dict[str,Any], preterminal
             'censored_sessions':sum(state['state']=='interrupted' for state in states.values())}
 
 
+IDENTITY_KEYS = ["protocol", "owner", "campaign_id", "phase", "field", "stratum",
+                 "candidate", "task"]
+
+
+def typed_identity(identity: Any) -> dict[str, Any]:
+    """A unit identity in `UnitIdentity` field order, the task tag first."""
+    require(set(identity) == set(IDENTITY_KEYS), "unit identity fields differ")
+    task = identity["task"]
+    return {key: identity[key] for key in IDENTITY_KEYS} | {
+        "task": {"kind": task["kind"]} | {k: v for k, v in task.items() if k != "kind"}}
+
+
+def typed_unit(unit: Any) -> dict[str, Any]:
+    """A launch unit in `LaunchUnit` field order."""
+    keys = ["ordinal", "identity", "key", "process", "case", "expected_progress"]
+    require(set(unit) == set(keys), "launch unit fields differ")
+    return {key: unit[key] for key in keys} | {"identity": typed_identity(unit["identity"])}
+
+
+def typed_progress(record: Any) -> dict[str, Any]:
+    """A progress record in `ProgressRecord` field order, as a child writes it."""
+    require(set(record) == {"schema", "identity", "case_sha256", "progress"},
+            "progress record fields differ")
+    progress = record["progress"]
+    order = ["event", "calls"] if progress.get("event") == "calibration-complete" else [
+        "event", "repetition", "calls", "elapsed_ns"]
+    require(set(progress) == set(order), "progress event fields differ")
+    return {"schema": record["schema"], "identity": typed_identity(record["identity"]),
+            "case_sha256": record["case_sha256"],
+            "progress": {key: progress[key] for key in order}}
+
+
+def typed_child_result(result: Any) -> dict[str, Any]:
+    """A child result in `ChildResult` field order.
+
+    Checkpoints store the result as a canonical JSON value, whose keys are
+    sorted; the journal and owner requests bind the typed encoding the driver
+    serialized.
+    """
+    sample_keys = ["execution", "repetition", "calls", "elapsed_ns"]
+    require(set(result) == {"schema", "identity", "case_sha256", "outcome", "samples",
+                            "payload"}
+            and all(set(sample) == set(sample_keys) for sample in result["samples"]),
+            "child result fields differ from the typed result")
+    return {
+        "schema": result["schema"],
+        "identity": typed_identity(result["identity"]),
+        "case_sha256": result["case_sha256"],
+        "outcome": result["outcome"],
+        "samples": [{key: sample[key] for key in sample_keys} for sample in result["samples"]],
+        "payload": result["payload"],
+    }
+
+
 def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends: list[int],
                      checkpoint_files: dict[str, Any], campaign_config: Any,
                      preterminal: bool) -> None:
@@ -1874,7 +1967,7 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
         attempt = bound["attempt"]
         require(key in validated and attempt in spawn, "accepted unit lacks spawn/validation")
         case_sha = digest(checkpoint["case"]["case"].encode())
-        result_sha = digest(compact(bound["result"]))
+        result_sha = digest(compact(typed_child_result(bound["result"])))
         spawn_details, spawn_record = spawn[attempt]
         validation_details, validation_record = validated[key]
         cell_starts = [record for record in records if record["event"] == "cell-start"
@@ -1894,15 +1987,20 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
                                         "attempt": attempt, "result_sha256": result_sha}
                 and validation_record.get("case") == checkpoint["case"]["identity"],
                 "owner validation evidence mismatch")
-        validation_request = {"operation": "validate-result", "unit": checkpoint["case"],
-                              "result": bound["result"]}
+        validation_request = {"operation": "validate-result",
+                              "unit": typed_unit(checkpoint["case"]),
+                              "result": typed_child_result(bound["result"])}
         request_sha = digest(compact(validation_request))
         starts = orchestration_starts[(checkpoint["case"]["process"], request_sha)]
         matching_pairs = [(start, exit) for start in starts
                           for exit in orchestration_exits[start["sequence"]]
-                          if exit["sequence"] + 1 == validation_record["sequence"]]
+                          if exit["sequence"] + 2 == validation_record["sequence"]]
         require(len(matching_pairs) == 1,
                 "owner validation invocation/decision journal order mismatch")
+        # The driver journals its after-result budget observation between the
+        # validation exit and the recorded decision.
+        validate_budget_diagnostic(records[validation_record["sequence"] - 1],
+                                   checkpoint["case"]["process"], "after-result")
         validation_exit = matching_pairs[0][1]["details"]
         clean_process_outcome(validation_exit.get("outcome"), "owner validation outcome")
         expected_response = compact({"operation": "validate-result", "unit_key": key,
@@ -1952,12 +2050,12 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
                 and exit_record.get("case") == checkpoint["case"]["identity"],
                 "accepted raw stream/exit digest binding mismatch")
         clean_process_outcome(exit_details["outcome"], "accepted child outcome")
-        expected_stdout = b"GF2_TUNING_RESULT=" + compact(bound["result"])
+        expected_stdout = b"GF2_TUNING_RESULT=" + compact(typed_child_result(bound["result"]))
         require(stdout in {expected_stdout, expected_stdout + b"\n"},
                 "accepted raw stdout differs from the bound result")
         progress = progress_by_attempt[attempt]
-        expected_stderr = b"".join(b"GF2_TUNING_PROGRESS=" + compact(item) + b"\n"
-                                   for item in progress)
+        expected_stderr = b"".join(b"GF2_TUNING_PROGRESS=" + compact(typed_progress(item))
+                                   + b"\n" for item in progress)
         require(stderr == expected_stderr,
                 "accepted raw stderr differs from journaled progress")
         require(spawn_record["sequence"] < raw_record["sequence"] < exit_record["sequence"]
@@ -2187,7 +2285,7 @@ def analyze_gemm(series: list[dict[str, Any]], default: tuple[int, int]) -> dict
             reason = "cross-stratum-conflict"
         else:
             selected = series[winner]["candidate"]
-            reason = "measured-default" if winner == default_index else "selected-nondefault"
+            reason = "measured-default" if winner == default_index else "selected-non-default"
             boundary = {"row": winner // 3 in {0, 2}, "column": winner % 3 in {0, 2}}
     return {"selected": list(selected), "reason": reason, "grid_boundary_limited": boundary,
             "scores": [{**item, "candidate": list(item["candidate"])} for item in score],
@@ -2463,8 +2561,6 @@ def validate_decisions(core_bundle: Any, algebra_bundle: Any,
     for enum_name, field in zip(enum_names, fields):
         require(enum_name in named, f"missing owner extent decision {enum_name}")
         expected = extent_wire(recomputed[field])
-        # Rust's spelling is selected-nondefault (without the second hyphen).
-        expected["reason"] = expected["reason"].replace("selected-non-default", "selected-nondefault")
         close_numeric(expected, named[enum_name], f"decision {field}")
 
     gemm_series = build_extent_series(
@@ -2538,7 +2634,6 @@ def validate_decisions(core_bundle: Any, algebra_bundle: Any,
             strata.append(times)
         series.append({"candidate": candidate, "schedules": schedules, "strata": strata})
     algebra_expected = analyze_extent(series, 65536)
-    algebra_expected["reason"] = algebra_expected["reason"].replace("selected-non-default", "selected-nondefault")
     close_numeric(algebra_expected, algebra_decisions["decision"], "algebra decision")
     require(algebra_decisions["selected"] == algebra_expected["selected"]
             and algebra_decisions["accepted_result_count"] == 90,
@@ -3335,14 +3430,21 @@ def validate_sessions(stage: Path, log_data: bytes, records: list[dict[str, Any]
                 "active session claim differs from final session descriptor")
 
 
-RECEIPT_TEMPLATE = '# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nSee each raw result payload below.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n'
+RECEIPT_TEMPLATE = '# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n'
 
-def validate_receipt_text(text: str, projection: Any, config: Any, bundles: list[Any]) -> None:
+def validate_receipt_text(text: str, projection: Any, config: Any, bundles: list[Any],
+                          decisions_sha: str) -> None:
     """Bind every visible byte, numerical claim and raw row to checked evidence."""
     match=re.search(r'```json\n(.*?)\n```',text,re.S)
     require(match is not None,'receipt decision block missing')
     decisions=load_json_bytes(match.group(1).encode(),'receipt decision block',canonical=False)
-    require(decisions==projection['owners'],'receipt decisions differ from independently recomputed owners')
+    require(isinstance(decisions,list) and len(decisions)==len(projection['owners'])
+            and all(isinstance(shown,dict) and shown.keys()==owner.keys()
+                    and all(shown[key]==owner[key] for key in owner if key!='decisions')
+                    and embedded(shown['decisions'],'receipt decisions')
+                        ==summarize_samples(embedded(owner['decisions'],'owner decisions'))
+                    for shown,owner in zip(decisions,projection['owners'])),
+            'receipt decisions differ from the summarized owner decisions')
     prefix=RECEIPT_TEMPLATE.format(config['campaign_id'],config['protocol']['path'],
                                    config['protocol']['sha256'],config['identity']['source_revision'],
                                    match.group(1))
@@ -3351,35 +3453,38 @@ def validate_receipt_text(text: str, projection: Any, config: Any, bundles: list
         expected+=f"Owner `{manifest['owner']}` uses protocol `{manifest['owner_protocol']}` and behavior `{manifest['behavior_token']}`; executable `{manifest['processes'][0]['executable_sha256']}`.\n\n"
     c=projection['counts']
     expected+=f"Accepted accounting: {c['cells']} cells, {c['probes']} probes, {c['timed_children']} timed children, {c['accepted_results']} accepted results, {c['windows']} raw windows, {c['progress_records']} timing progress records. Observed {projection['attempts']} attempts, {projection['orchestration']} orchestration actions, {projection['sessions']} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n"
+    expected+=f"The archived `{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{digest(raw_result_index(bundles).encode())}`.\n"
+    expected+=f"The archived `{OWNER_DECISIONS}` holds the complete owner decisions, every raw timing window included; SHA-256 `{decisions_sha}`. The decisions above replace each raw `samples` array with its `sample_count`.\n"
+    require(text==expected,'receipt text/numerical row differs from deterministic evidence projection')
+
+
+def summarize_samples(value: Any) -> Any:
+    """Owner decisions with each raw `samples` array replaced by `sample_count`."""
+    if isinstance(value, dict):
+        return {("sample_count" if key == "samples" and isinstance(item, list) else key):
+                (len(item) if key == "samples" and isinstance(item, list)
+                 else summarize_samples(item))
+                for key, item in value.items()}
+    if isinstance(value, list):
+        return [summarize_samples(item) for item in value]
+    return value
+
+
+def raw_result_index(bundles: list[Any]) -> str:
+    """The archived raw-key index, one row per accepted result in bundle order."""
+    index = "# Raw result index\n\n"
     for bundle in bundles:
         for entry in bundle['accepted']:
             unit=entry['unit'];identity=unit['identity'];task=task_index(identity['task'])
             task_text='Probe' if task==0 else f'Measure {{ execution: {task-1} }}'
-            expected+=f"- `{unit['key']}`: `{identity['field']}` / `{identity['stratum']}` / `{identity['candidate']}` / `{task_text}`\n"
-    require(text==expected,'receipt text/numerical row differs from deterministic evidence projection')
+            index+=f"- `{unit['key']}`: `{identity['field']}` / `{identity['stratum']}` / `{identity['candidate']}` / `{task_text}`\n"
+    return index
 
 
 def validate_receipt(stage: Path, campaign: str, core_bundle: Any, algebra_bundle: Any,
                      campaign_config: Any, core_response: Any, algebra_response: Any,
                      records: list[dict[str, Any]], checkpoint_files: dict[str, Any]) -> None:
-    receipt = stage / "receipt.md"
-    require(receipt.is_file() and not receipt.is_symlink(), "missing staged receipt.md")
-    text = receipt.read_text(encoding="utf-8")
-    for witness in [campaign, "a83583e0", "GEMM", "dot", "4302", "17925", "21510",
-                    CORE_PROTOCOL, ALGEBRA_PROTOCOL, CORE_BEHAVIOR, ALGEBRA_BEHAVIOR]:
-        require(witness in text, f"receipt lacks required witness {witness!r}")
     affinity = validate_affinity(campaign_config["affinity"], "campaign affinity")
-    require(f"Preparation CPU affinity: `{affinity}`" in text,
-            "receipt lacks the exact preparation CPU affinity")
-    # Every reported numeric table can resolve to immutable raw keys when the
-    # receipt cites unit keys; require both publication-critical families.
-    keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]}
-    cited = {token for token in re.findall(r"[0-9a-f]{64}", text) if token in keys}
-    gemm_keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]
-                 if entry["unit"]["identity"]["field"] == "gemm.tiles"}
-    dot_keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]
-                if entry["unit"]["identity"]["field"] == "field_vec.dot_chunk_len"}
-    require(cited & gemm_keys and cited & dot_keys, "receipt lacks resolvable GEMM/dot raw keys")
     projection = load_json(stage / "receipt-projection.json")
     require_keys(projection, ["schema", "campaign_id", "protocol", "identity", "runtime",
                               "affinity",
@@ -3419,7 +3524,98 @@ def validate_receipt(stage: Path, campaign: str, core_bundle: Any, algebra_bundl
             and projection["raw_artifacts"] == expected_artifacts
             and projection["raw_keys"] == expected_keys,
             "receipt projection differs from immutable campaign evidence")
-    validate_receipt_text(text, projection, campaign_config, [core_bundle, algebra_bundle])
+    validate_receipt_documents(stage, campaign, core_bundle, algebra_bundle, campaign_config,
+                               projection)
+
+
+def validate_receipt_documents(stage: Path, campaign: str, core_bundle: Any,
+                               algebra_bundle: Any, campaign_config: Any,
+                               projection: Any) -> None:
+    """Checks the receipt, raw result index and owner decisions the driver renders.
+
+    `projection["owners"]` holds the accepted owner responses; the full stage
+    validation binds them to the owner emissions and the journal first.
+    """
+    receipt = stage / "receipt.md"
+    require(receipt.is_file() and not receipt.is_symlink(), "missing staged receipt.md")
+    text = receipt.read_text(encoding="utf-8")
+    for witness in [campaign, "a83583e0", "GEMM", "dot", "4302", "17925", "21510",
+                    CORE_PROTOCOL, ALGEBRA_PROTOCOL, CORE_BEHAVIOR, ALGEBRA_BEHAVIOR]:
+        require(witness in text, f"receipt lacks required witness {witness!r}")
+    affinity = validate_affinity(campaign_config["affinity"], "campaign affinity")
+    require(f"Preparation CPU affinity: `{affinity}`" in text,
+            "receipt lacks the exact preparation CPU affinity")
+    decisions_path = stage / OWNER_DECISIONS
+    require(decisions_path.is_file() and not decisions_path.is_symlink()
+            and load_json(decisions_path) == projection["owners"],
+            "archived owner decisions differ from the accepted owner responses")
+    # Every reported numeric table resolves to immutable raw keys through the
+    # archived index; require both publication-critical families.
+    index_path = stage / RAW_RESULT_INDEX
+    require(index_path.is_file() and not index_path.is_symlink()
+            and index_path.read_text(encoding="utf-8")
+                == raw_result_index([core_bundle, algebra_bundle]),
+            "raw result index differs from the accepted bundles")
+    keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]}
+    cited = {token for token in re.findall(r"[0-9a-f]{64}", index_path.read_text())
+             if token in keys}
+    gemm_keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]
+                 if entry["unit"]["identity"]["field"] == "gemm.tiles"}
+    dot_keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]
+                if entry["unit"]["identity"]["field"] == "field_vec.dot_chunk_len"}
+    require(cited & gemm_keys and cited & dot_keys,
+            "raw result index lacks resolvable GEMM/dot raw keys")
+    validate_receipt_text(text, projection, campaign_config, [core_bundle, algebra_bundle],
+                          digest(decisions_path.read_bytes()))
+
+
+def check_encodings(fixture_arg: str) -> dict[str, Any]:
+    """`--encoding-check`: this validator's Rust-encoding reconstructions.
+
+    The fixture holds values the Rust side serialized. Each `value` is the
+    sorted-key JSON value a checkpoint or journal stores; `bytes` is the typed
+    encoding the driver or child wrote and hashed. Floats must re-encode as
+    serde_json writes them, and decision reasons must use serde's spelling.
+    """
+    fixture = load_json_bytes(Path(fixture_arg).read_bytes(), "encoding fixture",
+                              canonical=False)
+    typed = {"result": typed_child_result, "unit": typed_unit, "progress": typed_progress,
+             "validate_request": lambda value: {
+                 "operation": value["operation"], "unit": typed_unit(value["unit"]),
+                 "result": typed_child_result(value["result"])}}
+    for name, entry in fixture["typed"].items():
+        for item in entry:
+            require(compact(typed[name](item["value"])) == item["bytes"].encode(),
+                    f"typed {name} encoding differs from the Rust bytes")
+    for text in fixture["floats"]:
+        require(compact(load_json_bytes(text.encode(), "float", canonical=False))
+                == text.encode(), f"float encoding differs from serde_json: {text}")
+    require(fixture["selected_non_default"] == "selected-non-default"
+            and analyze_extent([{"candidate": c, "schedules": [c], "strata": [[t] * 5]}
+                                for c, t in [(1, 2.0), (2, 1.0)]], 1)["reason"]
+                == fixture["selected_non_default"],
+            "decision reason spelling differs from serde's")
+    return {"schema": "tuning-extent-campaign-encoding-check-v1", "status": "encodings-valid"}
+
+
+def check_receipt_documents(stage_arg: str) -> dict[str, Any]:
+    """`--receipt-check`: the receipt-document checks on a driver-rendered stage.
+
+    Reads `campaign.json`, both accepted bundles and `receipt-projection.json`
+    and runs exactly the checks the full validation applies to the receipt, the
+    raw result index and the archived owner decisions, so the driver's
+    rendering and these expectations are tested against each other.
+    """
+    stage = Path(stage_arg)
+    require(stage.is_absolute() and stage.is_dir() and stage.resolve() == stage,
+            "--stage must be a canonical directory")
+    config = load_json(stage / "campaign.json")
+    projection = load_json(stage / "receipt-projection.json")
+    validate_receipt_documents(stage, config["campaign_id"],
+                               load_json(stage / "core-accepted.json"),
+                               load_json(stage / "algebra-accepted.json"), config, projection)
+    return {"schema": "tuning-extent-campaign-receipt-check-v1",
+            "campaign_id": config["campaign_id"], "status": "receipt-valid"}
 
 
 def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
@@ -3570,25 +3766,28 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
 
 def publication_layout(campaign: str) -> dict[str, str]:
     """Protocol §9 destinations derived from the run ID, keyed by role."""
+    archive = f"{EVIDENCE_ARCHIVE}/{campaign}"
     return {
         "core-owner.json": f"crates/gf2-core/data/tuning-profiles/{campaign}.json",
         "algebra-owner.json": f"crates/gf2-algebra/data/tuning-profiles/{campaign}.json",
         "complete.json": f"dev/reference_data/tuning-profiles/{campaign}.json",
         "receipt.md": f"{TUNING_EVIDENCE}/{campaign}.md",
-        "execution.log": f"{TUNING_EVIDENCE}/{campaign}-execution.log",
-        "results": f"{TUNING_EVIDENCE}/{campaign}-results",
-        "session": f"{TUNING_EVIDENCE}/{campaign}-session",
         "checksum": f"{TUNING_EVIDENCE}/{campaign}.sha256",
+        "session": f"{TUNING_EVIDENCE}/{campaign}-session",
+        "execution.log": f"{archive}/execution.log",
+        "archive-manifest": f"{archive}/SHA256SUMS",
+        "archive": archive,
     }
 
 
 def expected_publication(stage: Path, campaign: str) -> dict[str, str]:
     """Independently maps every published stage file to its destination.
 
-    Accepted checkpoints, raw attempt streams and accepted bundles are the
-    results; every other checksummed file, the session control state and the
-    validation record form the session record. Staged executables are pinned
-    by digest in the staging manifest and are not published.
+    Envelopes and receipt take their committed rows; the declared small
+    records and the validation record form the committed session record;
+    every other stage file keeps its relative path in the evidence archive.
+    Staged executables are pinned by digest in the staging manifest and are
+    not published.
     """
     layout = publication_layout(campaign)
     files = set(checksum_artifact_boundary(stage))
@@ -3601,33 +3800,46 @@ def expected_publication(stage: Path, campaign: str) -> dict[str, str]:
     mapping: dict[str, str] = {}
     for path in files:
         source = path.relative_to(stage).as_posix()
-        if source in {"core-owner.json", "algebra-owner.json", "complete.json", "receipt.md",
-                      "execution.log"}:
+        if source in {"core-owner.json", "algebra-owner.json", "complete.json", "receipt.md"}:
             destination = layout[source]
         elif source == f"{REPOSITORY_PUBLICATION_DIR}/validation.json":
             destination = f"{layout['session']}/validation.json"
         elif source.startswith("bin/"):
             continue
-        elif (source.startswith(("checkpoints/", "raw-attempts/"))
-              or source in {"core-accepted.json", "algebra-accepted.json"}):
-            destination = f"{layout['results']}/{source}"
-        else:
+        elif source in COMMITTED_SESSION_RECORDS:
             destination = f"{layout['session']}/{source}"
+        else:
+            destination = f"{layout['archive']}/{source}"
         require(destination not in mapping, f"two stage files publish to {destination}")
         mapping[destination] = source
     require(all(layout[role] in mapping for role in
-                ["core-owner.json", "algebra-owner.json", "complete.json", "receipt.md"]),
-            "stage lacks an owner, complete or receipt publication source")
+                ["core-owner.json", "algebra-owner.json", "complete.json", "receipt.md",
+                 "execution.log"]),
+            "stage lacks an owner, complete, receipt or execution-log publication source")
     return mapping
+
+
+def checksum_rows(rows: list[tuple[str, str]]) -> bytes:
+    return "".join(f"{sha}  {path}\n" for path, sha in sorted(rows)).encode()
+
+
+def committed_size(path: Path, destination: str) -> None:
+    size = path.stat().st_size
+    require(size <= COMMITTED_LIMIT_BYTES,
+            f"committed destination {destination} is {size} bytes, over the "
+            f"{COMMITTED_LIMIT_BYTES}-byte committed limit")
 
 
 def validate_publication(stage_arg: str, repository_arg: str) -> dict[str, Any]:
     """Checks a repository publication of a stage that passed full validation.
 
-    The staged plan must equal this independent mapping; every destination
-    must hold its stage source's bytes; owned trees hold exactly their planned
-    files; reopen evidence and the checksum manifest, once present, must bind
-    exactly the published digests.
+    The staged plan must equal this independent mapping. Every committed and
+    archived destination must hold its stage source's bytes, and no committed
+    destination may exceed the committed limit. The archived execution log
+    must equal the stage journal. The committed session record and the
+    archive hold exactly their planned files. The archive manifest, reopen
+    evidence and committed checksum manifest, once present, must bind exactly
+    the published digests.
     """
     stage, repository = Path(stage_arg), Path(repository_arg)
     for path, where in [(stage, "--stage"), (repository, "--publication")]:
@@ -3637,64 +3849,87 @@ def validate_publication(stage_arg: str, repository_arg: str) -> dict[str, Any]:
     require(isinstance(campaign, str) and RUN_ID.fullmatch(campaign) is not None,
             "publication campaign ID is malformed")
     layout = publication_layout(campaign)
-    record = f"{layout['session']}/repository-publication.json"
+    archive = repository / layout["archive"]
+    require(archive.is_dir() and not archive.is_symlink(),
+            f"campaign evidence archive {layout['archive']}/ is missing from {repository}; "
+            "the bulk evidence it holds cannot be verified")
+    record = f"{layout['archive']}/{REPOSITORY_PUBLICATION_DIR}/plan.json"
     verification = f"{layout['session']}/repository-reopen.json"
     expected = expected_publication(stage, campaign)
-    entries = [{"source": expected[destination], "destination": destination,
-                "sha256": digest((stage / expected[destination]).read_bytes())}
-               for destination in sorted(expected)]
+    entries = []
+    for destination in sorted(expected):
+        data = (stage / expected[destination]).read_bytes()
+        entries.append({"source": expected[destination], "destination": destination,
+                        "bytes": len(data), "sha256": digest(data)})
     staged_plan = stage / REPOSITORY_PUBLICATION_DIR / "plan.json"
     require(load_json(staged_plan) == {
                 "schema": REPOSITORY_PLAN_SCHEMA, "campaign_id": campaign, "entries": entries,
-                "owned_directories": [layout["results"], layout["session"]],
-                "record": record, "verification": verification,
-                "checksum_manifest": layout["checksum"]},
+                "committed_directories": [layout["session"]],
+                "archive_root": layout["archive"], "record": record,
+                "archive_manifest": layout["archive-manifest"],
+                "pinned_archive": [layout["execution.log"]],
+                "verification": verification, "checksum_manifest": layout["checksum"]},
             "staged publication plan differs from the independent destination mapping")
-    record_path = repository / record
-    require(record_path.is_file() and not record_path.is_symlink()
-            and record_path.read_bytes() == staged_plan.read_bytes(),
-            "published plan record differs from the staged plan")
+    archived = lambda destination: destination.startswith(layout["archive"] + "/")
     for entry in entries:
         destination = repository / entry["destination"]
-        require(destination.is_file() and not destination.is_symlink()
-                and digest(destination.read_bytes()) == entry["sha256"],
-                f"published {entry['destination']} differs from its stage source")
+        kind = "archived" if archived(entry["destination"]) else "committed"
+        require(destination.is_file() and not destination.is_symlink(),
+                f"{kind} destination {entry['destination']} is missing")
+        require(digest(destination.read_bytes()) == entry["sha256"],
+                f"{kind} destination {entry['destination']} differs from its stage source")
+        if kind == "committed":
+            committed_size(destination, entry["destination"])
+    require(digest((repository / layout["execution.log"]).read_bytes())
+            == digest((stage / "execution.log").read_bytes()),
+            "archived execution log differs from the stage journal")
+    record_path = repository / record
+    require(record_path.is_file() and record_path.read_bytes() == staged_plan.read_bytes(),
+            "archived plan record differs from the staged plan")
+    archive_manifest = repository / layout["archive-manifest"]
+    archive_text = checksum_rows(
+        [(entry["destination"], entry["sha256"]) for entry in entries
+         if archived(entry["destination"])] + [(record, digest(record_path.read_bytes()))])
+    require(archive_manifest.is_file() and archive_manifest.read_bytes() == archive_text,
+            "archive manifest differs from the archived digests")
     verification_path = repository / verification
-    for owned in [layout["results"], layout["session"]]:
+    planned = {repository / entry["destination"] for entry in entries} | {
+        record_path, archive_manifest}
+    if verification_path.exists():
+        planned.add(verification_path)
+    for owned in [layout["session"], layout["archive"]]:
         root = repository / owned
         found = set()
         for path in root.rglob("*"):
             require(not path.is_symlink(), f"symlink in published {owned}")
             if not path.is_dir():
                 found.add(path)
-        planned = {repository / entry["destination"] for entry in entries
-                   if entry["destination"].startswith(owned + "/")} | {record_path}
-        if verification_path.exists():
-            planned.add(verification_path)
         require(found == {path for path in planned if path.is_relative_to(root)},
                 f"published {owned} differs from its planned file set")
     if verification_path.exists():
+        committed_size(verification_path, verification)
         evidence = load_json(verification_path)
         composition = load_json(stage / "composition.json")
+        envelope = lambda role: {"path": layout[role],
+                                 "sha256": digest((repository / layout[role]).read_bytes())}
         require(evidence == {
-                    "algebra": {"path": layout["algebra-owner.json"], "sha256": digest(
-                        (repository / layout["algebra-owner.json"]).read_bytes())},
-                    "complete": {"path": layout["complete.json"], "sha256": digest(
-                        (repository / layout["complete.json"]).read_bytes())},
+                    "algebra": envelope("algebra-owner.json"),
+                    "complete": envelope("complete.json"),
                     "composer_sha256": composition["tool_sha256"],
-                    "core": {"path": layout["core-owner.json"], "sha256": digest(
-                        (repository / layout["core-owner.json"]).read_bytes())},
+                    "core": envelope("core-owner.json"),
                     "profile_arguments": composition["args"][4:],
                     "schema": REPOSITORY_REOPEN_SCHEMA},
                 "reopen evidence does not bind the published envelopes")
     checksum_path = repository / layout["checksum"]
     if checksum_path.exists():
         require(verification_path.is_file(), "checksum manifest precedes reopen evidence")
-        rows = sorted([(entry["destination"], entry["sha256"]) for entry in entries]
-                      + [(record, digest(record_path.read_bytes())),
-                         (verification, digest(verification_path.read_bytes()))])
-        require(checksum_path.read_bytes() ==
-                "".join(f"{sha}  {path}\n" for path, sha in rows).encode(),
+        committed_size(checksum_path, layout["checksum"])
+        committed = [(entry["destination"], entry["sha256"]) for entry in entries
+                     if not archived(entry["destination"])]
+        committed.append((verification, digest(verification_path.read_bytes())))
+        pinned = [(layout["execution.log"], digest((stage / "execution.log").read_bytes())),
+                  (layout["archive-manifest"], digest(archive_text))]
+        require(checksum_path.read_bytes() == checksum_rows(committed) + checksum_rows(pinned),
                 "checksum manifest differs from the published digests")
     return {"schema": "tuning-extent-campaign-publication-v1", "campaign_id": campaign,
             "status": "published" if checksum_path.exists() else "publication-incomplete",
@@ -3861,6 +4096,32 @@ def launcher_run_id_self_test() -> None:
             "uppercase run ID stamp mutation was accepted")
 
 
+def float_encoding_self_test() -> None:
+    """Values the workspace serde_json 1.0.145 writes, float_roundtrip enabled."""
+    for value, rust in [(1e-5, "0.00001"), (9.182966022193755e-05, "0.00009182966022193755"),
+                        (1.5e-6, "1.5e-6"), (1e-4, "0.0001"), (123.0, "123.0"),
+                        (1e15, "1000000000000000.0"), (1e16, "1e16"), (1e21, "1e21"),
+                        (2.5e-7, "2.5e-7"), (-3.25e-8, "-3.25e-8"), (0.1, "0.1"),
+                        (1e300, "1e300"), (5e-324, "5e-324"), (219961611.0, "219961611.0")]:
+        require(compact([value]) == f"[{rust}]".encode()
+                and compact({"x": value}) == f'{{"x":{rust}}}'.encode(),
+                f"float {value!r} encodes unlike serde_json")
+    require(compact(["1.5e-06"]) == b'["1.5e-06"]', "string contents were rewritten")
+
+
+def receipt_summary_self_test() -> None:
+    """Raw windows leave the receipt; every summary beside them stays."""
+    arm = {"median": 2.0, "spread": 0.1, "samples": [{"calls": 1, "elapsed_ns": 2}] * 25}
+    decisions = {"retained_thresholds": [{"points": [{"size": 8, "conservative": arm}],
+                                          "selection": {"fallback": "tie"}}]}
+    summary = summarize_samples(decisions)
+    require(summary == {"retained_thresholds": [{"points": [{"size": 8, "conservative": {
+                "median": 2.0, "spread": 0.1, "sample_count": 25}}],
+                "selection": {"fallback": "tie"}}]}
+            and "elapsed_ns" not in compact(summary).decode(),
+            "receipt sample summary self-test")
+
+
 def publication_self_test() -> None:
     """The layout is the protocol's table; the publication check rejects drift."""
     protocol = Path(__file__).resolve().parents[1] / "active/a83583e0/premeasurement-protocol.md"
@@ -3868,7 +4129,7 @@ def publication_self_test() -> None:
     declared = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|$", table.split("\n\n", 2)[1],
                               re.MULTILINE))
     layout = publication_layout("<run-id>")
-    require(declared == {value + "/" if role in {"results", "session"} else value
+    require(declared == {value + "/" if role in {"archive", "session"} else value
                          for role, value in layout.items()},
             "publication layout differs from the protocol destination table")
     campaign = "gf2-a83583e0-19700101t000000z-1"
@@ -3877,16 +4138,17 @@ def publication_self_test() -> None:
         stage = Path(temporary).resolve() / "stage"
         repository = Path(temporary).resolve() / "repository"
         tool = "a" * 64
+        profile_arguments = [campaign, "1970-01-01T00:00:00Z", "0" * 40, "false", tool]
         sources = {
             "campaign.json": compact({"campaign_id": campaign}),
             "composition.json": compact({"tool_sha256": tool, "args": [
-                "complete", "core", "algebra", "output", campaign,
-                "1970-01-01T00:00:00Z", "0" * 40, "false", tool]}),
+                "complete", "core", "algebra", "output", *profile_arguments]}),
             "core-owner.json": b"{}", "algebra-owner.json": b"[]", "complete.json": b"{ }",
             "receipt.md": b"# receipt\n", "execution.log": b"{}\n",
-            "checkpoints/units/unit.json": b"{}", "raw-attempts/a.stdout": b"out",
-            "core-accepted.json": b"{}", "bin/driver": b"executable",
-            "sessions/s1/checksum.json": b"{}", "artifact-publications/x/intent.json": b"{}",
+            "staging-manifest.json": b"{}", "checkpoints/units/unit.json": b"{}",
+            "raw-attempts/a.stdout": b"out", "core-accepted.json": b"{}",
+            "bin/driver": b"executable", "sessions/s1/checksum.json": b"{}",
+            "artifact-publications/x/intent.json": b"{}",
             f"{REPOSITORY_PUBLICATION_DIR}/validation.json": b"{}",
         }
         for relative, data in sources.items():
@@ -3896,36 +4158,55 @@ def publication_self_test() -> None:
         require(not any(source.startswith(("bin/", "artifact-publications/"))
                         for source in mapping.values())
                 and mapping[layout["core-owner.json"]] == "core-owner.json"
-                and mapping[f"{layout['results']}/raw-attempts/a.stdout"] == "raw-attempts/a.stdout"
-                and mapping[f"{layout['session']}/sessions/s1/checksum.json"]
-                    == "sessions/s1/checksum.json",
+                and mapping[layout["execution.log"]] == "execution.log"
+                and mapping[f"{layout['session']}/staging-manifest.json"]
+                    == "staging-manifest.json"
+                and mapping[f"{layout['archive']}/campaign.json"] == "campaign.json"
+                and mapping[f"{layout['archive']}/raw-attempts/a.stdout"]
+                    == "raw-attempts/a.stdout",
                 "publication mapping self-test")
-        entries = [{"source": mapping[d], "destination": d,
+        entries = [{"source": mapping[d], "destination": d, "bytes": len(sources[mapping[d]]),
                     "sha256": digest(sources[mapping[d]])} for d in sorted(mapping)]
-        record = f"{layout['session']}/repository-publication.json"
+        record = f"{layout['archive']}/{REPOSITORY_PUBLICATION_DIR}/plan.json"
         verification = f"{layout['session']}/repository-reopen.json"
         plan = compact({"schema": REPOSITORY_PLAN_SCHEMA, "campaign_id": campaign,
-                        "entries": entries,
-                        "owned_directories": [layout["results"], layout["session"]],
-                        "record": record, "verification": verification,
+                        "entries": entries, "committed_directories": [layout["session"]],
+                        "archive_root": layout["archive"], "record": record,
+                        "archive_manifest": layout["archive-manifest"],
+                        "pinned_archive": [layout["execution.log"]],
+                        "verification": verification,
                         "checksum_manifest": layout["checksum"]})
         (stage / REPOSITORY_PUBLICATION_DIR / "plan.json").write_bytes(plan)
+        must_reject(lambda: validate_publication(str(stage), str(stage)), "missing archive")
+        try:
+            validate_publication(str(stage), str(stage))
+        except ValidationError as error:
+            require("campaign evidence archive" in str(error) and "is missing" in str(error),
+                    "missing archive error is not explicit")
         for destination, source in mapping.items():
             (repository / destination).parent.mkdir(parents=True, exist_ok=True)
             (repository / destination).write_bytes(sources[source])
+        (repository / record).parent.mkdir(parents=True, exist_ok=True)
         (repository / record).write_bytes(plan)
-        validate_publication(str(stage), str(repository))
+        archived = [(e["destination"], e["sha256"]) for e in entries
+                    if e["destination"].startswith(layout["archive"] + "/")]
+        archive_text = checksum_rows(archived + [(record, digest(plan))])
+        (repository / layout["archive-manifest"]).write_bytes(archive_text)
+        require(validate_publication(str(stage), str(repository))["status"]
+                == "publication-incomplete", "incomplete publication self-test")
+
         def envelope(source: str) -> dict[str, str]:
             return {"path": layout[source], "sha256": digest(sources[source])}
         evidence = compact({
             "algebra": envelope("algebra-owner.json"), "complete": envelope("complete.json"),
             "composer_sha256": tool, "core": envelope("core-owner.json"),
-            "profile_arguments": [campaign, "1970-01-01T00:00:00Z", "0" * 40, "false", tool],
-            "schema": REPOSITORY_REOPEN_SCHEMA})
+            "profile_arguments": profile_arguments, "schema": REPOSITORY_REOPEN_SCHEMA})
         (repository / verification).write_bytes(evidence)
-        rows = sorted([(entry["destination"], entry["sha256"]) for entry in entries]
-                      + [(record, digest(plan)), (verification, digest(evidence))])
-        manifest = "".join(f"{sha}  {path}\n" for path, sha in rows).encode()
+        committed = [(e["destination"], e["sha256"]) for e in entries
+                     if not e["destination"].startswith(layout["archive"] + "/")]
+        manifest = (checksum_rows(committed + [(verification, digest(evidence))])
+                    + checksum_rows([(layout["execution.log"], digest(sources["execution.log"])),
+                                     (layout["archive-manifest"], digest(archive_text))]))
         (repository / layout["checksum"]).write_bytes(manifest)
         require(validate_publication(str(stage), str(repository))["status"] == "published",
                 "complete publication self-test")
@@ -3934,20 +4215,30 @@ def publication_self_test() -> None:
         must_reject(lambda: validate_publication(str(stage), str(repository)),
                     "changed published envelope")
         core.write_bytes(b"{}")
-        extra = repository / layout["results"] / "extra.json"
+        log = repository / layout["execution.log"]
+        log.write_bytes(b"{}\n{}\n")
+        must_reject(lambda: validate_publication(str(stage), str(repository)),
+                    "archived journal differing from the stage")
+        log.write_bytes(sources["execution.log"])
+        extra = repository / layout["archive"] / "extra.json"
         extra.write_bytes(b"{}")
         must_reject(lambda: validate_publication(str(stage), str(repository)),
-                    "unplanned published result")
+                    "unplanned archived file")
         extra.unlink()
         (repository / layout["checksum"]).write_bytes(manifest[:-1])
         must_reject(lambda: validate_publication(str(stage), str(repository)),
                     "truncated checksum manifest")
+        oversized = Path(temporary) / "oversized"
+        oversized.write_bytes(b"x" * (COMMITTED_LIMIT_BYTES + 1))
+        must_reject(lambda: committed_size(oversized, "oversized"), "oversized committed file")
 
 
 def self_test() -> None:
     reconstruction_self_test()
     launcher_run_id_self_test()
     publication_self_test()
+    receipt_summary_self_test()
+    float_encoding_self_test()
     require(mix_seed(0x5ECC9BF800000000, 27, 0, 0xC00) ==
             mix_seed(0x5ECC9BF800000000, 27, 0, 0xC00), "seed self-test")
     require(rotated(["a", "b", "c"], 1) == ["a", "c", "b"], "rotation self-test")
@@ -4107,17 +4398,30 @@ def main() -> int:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--stage", help="canonical absolute campaign stage")
     group.add_argument("--self-test", action="store_true")
+    group.add_argument("--encoding-check", metavar="FIXTURE",
+                       help="check Rust-encoding reconstructions against a fixture")
     parser.add_argument("--preterminal", action="store_true",
                         help="validate immediately before Complete/checksum publication")
+    parser.add_argument("--receipt-check", action="store_true",
+                        help="check only the receipt documents a driver rendered into --stage")
     parser.add_argument("--publication", metavar="REPOSITORY",
                         help="check the repository publication of a fully validated stage")
     args = parser.parse_args()
     try:
         if args.self_test:
-            require(not args.preterminal and args.publication is None,
-                    "--preterminal and --publication require --stage")
+            require(not args.preterminal and args.publication is None
+                    and not args.receipt_check,
+                    "--preterminal, --publication and --receipt-check require --stage")
             self_test()
             output = {"schema": "tuning-extent-campaign-validator-self-test-v1", "status": "pass"}
+        elif args.encoding_check is not None:
+            require(args.stage is None and not args.preterminal and args.publication is None,
+                    "--encoding-check takes only its fixture")
+            output = check_encodings(args.encoding_check)
+        elif args.receipt_check:
+            require(not args.preterminal and args.publication is None,
+                    "--receipt-check checks only the receipt documents")
+            output = check_receipt_documents(args.stage)
         elif args.publication is not None:
             require(not args.preterminal, "--publication checks a complete stage")
             output = validate_publication(args.stage, args.publication)

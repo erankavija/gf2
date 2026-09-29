@@ -83,6 +83,8 @@ benchmarks/reference/ntl_gf2pow32_smoke
 .agents/worktrees/
 # Shared Cargo build cache for agent worktrees; regenerated on demand.
 .agents/cache-pool/
+# Bulk tuning-campaign evidence; the committed <run-id>.sha256 manifests pin it.
+.agents/campaign-evidence/
 
 # sim_runner transient progress logs (final results live in
 # .csv / .json next to them)
