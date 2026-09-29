@@ -143,3 +143,69 @@ fn launcher_rejects_arbitrary_stage_paths_before_creating_them() {
     assert_eq!(result.status.code(), Some(2));
     assert!(!forbidden.exists());
 }
+
+/// Relaunching an existing stage first asks the driver to publish it: a
+/// complete campaign (exit 0) or a publication failure ends the launch, and
+/// only an incomplete campaign (exit 3) proceeds to session preparation.
+#[test]
+fn launcher_resumes_publication_before_preparing_another_session() {
+    for (publish_exit, launcher_exit, prepared) in [(0, 0, false), (1, 1, false), (3, 73, true)] {
+        let root = scratch("gf2-launcher-publication");
+        let campaign = format!(
+            "gf2-a83583e0-19700101t00000{publish_exit}z-{}",
+            std::process::id()
+        );
+        let stage = ScratchPath::create(Path::new("/tmp"), &campaign);
+        fs::write(
+            stage.join("campaign.json"),
+            format!("{{\"campaign_id\":\"{campaign}\"}}"),
+        )
+        .unwrap();
+        fs::create_dir(stage.join("bin")).unwrap();
+        executable(
+            &stage.join("bin/driver"),
+            "#!/usr/bin/env python3\nimport os,sys\nif sys.argv[1]=='publish-campaign':\n    open(os.environ['TEST_PUBLISH_CAPTURE'],'w').write(sys.argv[2])\n    sys.exit(int(os.environ['TEST_PUBLISH_EXIT']))\nif sys.argv[1]=='discover-preparation':\n    print('null'); sys.exit(0)\nif sys.argv[1]=='prepare-session':\n    open(os.environ['TEST_PREPARE_CAPTURE'],'w').write('prepared')\n    sys.exit(73)\nsys.exit(92)\n",
+        );
+        let path_bin = root.join("path-bin");
+        fs::create_dir(&path_bin).unwrap();
+        executable(
+            &path_bin.join("git"),
+            "#!/bin/sh\nprintf '%s\\n' \"$TEST_REPO\"\n",
+        );
+        let repo = root.join("repo");
+        fs::create_dir(&repo).unwrap();
+        let launcher = root.join("launcher.sh");
+        fs::write(
+            &launcher,
+            include_str!("../../../scripts/tuning-extent-campaign.sh"),
+        )
+        .unwrap();
+        let publish_capture = root.join("published");
+        let prepare_capture = root.join("prepared");
+        let result = Command::new("bash")
+            .arg(&launcher)
+            .arg(&campaign)
+            .env(
+                "PATH",
+                format!("{}:{}", path_bin.display(), std::env::var("PATH").unwrap()),
+            )
+            .env("GF2_CCX1_LOCK", root.join("host.lock"))
+            .env("TEST_REPO", &repo)
+            .env("TEST_PUBLISH_EXIT", publish_exit.to_string())
+            .env("TEST_PUBLISH_CAPTURE", &publish_capture)
+            .env("TEST_PREPARE_CAPTURE", &prepare_capture)
+            .output()
+            .unwrap();
+        assert_eq!(
+            result.status.code(),
+            Some(launcher_exit),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert_eq!(
+            fs::read_to_string(&publish_capture).unwrap(),
+            stage.to_str().unwrap()
+        );
+        assert_eq!(prepare_capture.exists(), prepared);
+    }
+}

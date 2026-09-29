@@ -560,6 +560,10 @@ launcher runs `prepare-session` outside the benchmark lock, invokes
 `run-session` inside one full-host lock wrapper, then calls `finalize-session`
 after that wrapper returns. These modes share one typed session state machine
 in `src/campaign.rs`; shell traps do not implement journal or checkpoint rules.
+The launcher then calls the non-session `publish-campaign` mode, which
+publishes a `complete` campaign into the repository checkout (§9) and exits 3
+for a campaign that is not complete. Relaunching the ID of a complete campaign
+runs only that mode, and preparation refuses a complete campaign.
 
 `prepare-session` creates or strictly reopens the stage, validates immutable
 resume identity and completed units, and claims the sole active session writer.
@@ -711,9 +715,11 @@ under the lock. All directly executed binaries receive `GF2_BENCH=1`,
 and inherited held-lock evidence are runtime-observed and emitted. Resume
 reacquires that same outer mutex and records a new hold interval before any
 unfinished work; completed units are never replayed. Composition occurs under
-the final hold. Preparation and post-release validation/finalization are the
-explicit untimed lifecycle modes; no owner measurement or composition runs
-outside the one lock domain.
+the final hold. Preparation, post-release validation/finalization and repository
+publication are the explicit untimed modes; no owner measurement or
+composition runs outside the one lock domain. Publication's strict reopen runs
+the staged composer only as a verifier whose output must equal the complete
+envelope composed under the lock byte for byte.
 
 ## 8. Fresh-child, codec, and fail-closed contract
 
@@ -882,10 +888,40 @@ all fallbacks, measured-set complement, canonical wrapper equality, and every
 hash. It does not treat a scratch validator's own untested assertions as
 evidence. Rust strict reopen remains authoritative for codec semantics.
 Validation also verifies log/checkpoint completeness and the absence of a
-publishable partial campaign. Successful stage files are copied byte-for-byte
-to unique absent repository destinations, compared with stage, checksummed,
-and committed atomically with the current-reader cutover. Existing evidence
-is never overwritten.
+publishable partial campaign.
+
+Repository publication requires a `complete` terminal whose session is
+checksummed and retired, followed by a passing full independent validation.
+`publish-campaign` records that validation output and journals a plan at
+`stage/repository-publication/plan.json` before touching any destination.
+The plan maps each stage file onto the table above. The owner, complete,
+receipt and journal files take their own rows. Accepted checkpoints, raw
+attempt streams and accepted bundles go to `<run-id>-results/`. Every other
+checksummed file, the session control state, the validation record, the plan
+and the reopen evidence go to `<run-id>-session/`. Staged executables stay
+pinned by digest in the staging manifest and are not copied. Each destination
+goes through the stage's durable per-path publication intent: a create-new
+temporary in the destination directory, sync, atomic rename and directory
+sync. A destination holding different bytes is refused and left unchanged,
+so existing evidence is never overwritten. After every copy the staged
+composer's complete loader strictly reopens both published owners with their
+owner-only codecs and recomposes the complete envelope, which must equal the
+published one byte for byte. The independent validator then checks the
+published tree against its own mapping of this table. The repository-relative
+checksum manifest is written last and marks a complete publication. The
+destinations live in the checkout the campaign was prepared from. A retry
+under the same run ID reverifies every published file by its bytes and
+finishes the rest; a changed plan is refused. The publication journal lies
+outside the stage checksum boundary, so it never alters validated stage
+evidence.
+
+The current-reader cutover above (measured v4 owner and complete envelopes
+as the committed current readers, baked constants and citations, removal of
+`PREPUBLICATION_HARNESS_SCHEMA`, and the v3 rejection test) is the single
+publication commit, authored from the published destinations after the
+action; the action edits no source. Current authority is selected only by
+committed readers, so a published envelope becomes current only with that
+commit.
 
 ## 10. Exact implementation boundary and premeasurement checks
 
