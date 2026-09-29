@@ -114,12 +114,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-28T13:00:34.658839371Z",
+      "updated_at": "2026-09-29T08:36:43.160370465Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "passed",
-      "updated_at": "2026-09-28T13:04:46.769949468Z",
+      "status": "failed",
+      "updated_at": "2026-09-29T08:40:57.606335771Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -139,5 +139,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-09-28T13:06:51.118146862Z"
+  "updated_at": "2026-09-29T08:40:57.606335771Z"
 }
