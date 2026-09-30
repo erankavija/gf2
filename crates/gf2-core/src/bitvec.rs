@@ -183,12 +183,12 @@ impl BitVec {
 
     /// Creates a `BitVec` from raw word data with specified bit length.
     ///
-    /// The caller must ensure tail masking invariant: padding bits beyond
-    /// `len_bits` in the last word must be zero.
+    /// Words beyond `len_bits.div_ceil(64)` are discarded and bits at or
+    /// above `len_bits` in the last kept word are cleared.
     ///
     /// # Panics
     ///
-    /// Panics if `words.len() * 64 < len_bits`.
+    /// Panics if `data.len() * 64 < len_bits`.
     ///
     /// # Examples
     ///
@@ -201,7 +201,7 @@ impl BitVec {
     /// assert!(bv.get(1));
     /// assert!(bv.get(3));
     /// ```
-    pub fn from_words(data: Vec<u64>, len_bits: usize) -> Self {
+    pub fn from_words(mut data: Vec<u64>, len_bits: usize) -> Self {
         let required_words = len_bits.div_ceil(64);
         assert!(
             data.len() >= required_words,
@@ -209,12 +209,15 @@ impl BitVec {
             required_words,
             data.len()
         );
+        data.truncate(required_words);
 
-        Self {
+        let mut bv = Self {
             data,
             len_bits,
             rank_select_index: Mutex::new(None),
-        }
+        };
+        bv.mask_tail();
+        bv
     }
 
     /// Returns a slice of the underlying word storage.
@@ -1797,6 +1800,47 @@ mod tests {
                 let mask = (1u64 << used_bits) - 1;
                 assert_eq!(*last_word, mask);
             }
+        }
+    }
+
+    /// Padding bits above `len % 64` in the last word are zero and trailing
+    /// words are all padding.
+    fn assert_padding_zero(bv: &BitVec) {
+        let len = bv.len();
+        let used_words = len.div_ceil(64);
+        let words = bv.words();
+        if !len.is_multiple_of(64) {
+            assert_eq!(
+                words[used_words - 1] >> (len % 64),
+                0,
+                "dirty tail padding at len={len}"
+            );
+        }
+        assert!(
+            words[used_words..].iter().all(|&w| w == 0),
+            "dirty padding word beyond len={len}"
+        );
+    }
+
+    #[test]
+    fn test_from_words_masks_dirty_tail() {
+        for len in [0_usize, 1, 63, 64, 65] {
+            let bv = BitVec::from_words(vec![u64::MAX; len.div_ceil(64)], len);
+            assert_eq!(bv.len(), len);
+            assert_padding_zero(&bv);
+            assert_eq!(bv.count_ones(), len, "popcount at len={len}");
+            assert_eq!(bv, BitVec::ones(len), "equality at len={len}");
+        }
+    }
+
+    #[test]
+    fn test_from_words_drops_excess_words() {
+        for len in [0_usize, 1, 63, 64, 65] {
+            let bv = BitVec::from_words(vec![u64::MAX; len.div_ceil(64) + 2], len);
+            assert_eq!(bv.len(), len);
+            assert_padding_zero(&bv);
+            assert_eq!(bv.count_ones(), len, "popcount at len={len}");
+            assert_eq!(bv, BitVec::ones(len), "equality at len={len}");
         }
     }
 
