@@ -512,9 +512,9 @@ fn calibrated_core_format_two_accepts_current_harness_and_rejects_others() {
         &measurement
     );
 
-    // The currently published v3 owner remains readable only across the named
-    // a83583e0 prepublication boundary. Publication of the v4 owner removes
-    // this assertion together with the temporary codec acceptance.
+    // `tuning-calibration-v3` reopens only through the named
+    // `PREPUBLICATION_HARNESS_SCHEMA` boundary (jit:a83583e0; premeasurement
+    // protocol §9), alongside the current v4 harness.
     let prepublication = json.replacen(CoreTuningCodec::HARNESS_SCHEMA, "tuning-calibration-v3", 1);
     let prepublication = recompute_content_digest(&prepublication);
     assert!(registry.from_json(&prepublication).is_ok());

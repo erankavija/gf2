@@ -872,6 +872,11 @@ both enforce. The archive under `.agents/campaign-evidence/` is git-ignored and
 keeps the stage's relative paths. The split keeps bulk evidence, tens of
 megabytes per file for the journal, manifests, accepted bundles and
 checkpoints, out of git (invoker decision 2026-09-29, repository size). The
+archive is host-local: a fresh checkout holds the committed receipt, envelopes
+and checksum manifest, and re-validating the raw evidence requires the
+producing host's archive. REQ-03 is satisfied by the committed receipt's
+records and summaries together with that digest-pinned archive (invoker
+decision 2026-09-30). The
 committed checksum manifest pins the archive: it lists the execution log's
 and the archive manifest's SHA-256 after the committed rows, and the archive
 manifest lists every archived file. Listing every archived file in the
