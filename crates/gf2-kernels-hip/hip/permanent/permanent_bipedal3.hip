@@ -185,8 +185,8 @@ __global__ void permanent_bipedal3_kernel(const unsigned char* __restrict__ matr
     // consistency narrowing). The GPU sequential Gray walk at n=64 would
     // take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps), so n=64 is
     // computationally infeasible and is excluded from the supported range.
-    // The CPU reference (permanent_bipedal3_singleword) supports n=64 via
-    // a u128 Gray-code counter; the GPU kernel does not need that range.
+    // The CPU reference permanent_bipedal3_singleword was correspondingly
+    // narrowed to n <= 63.
     //
     // Empty-matrix case (n == 0): permanent of the empty matrix is 1
     // (the empty permutation has product 1 — vacuous product). The host
@@ -313,7 +313,8 @@ __global__ void permanent_bipedal3_kernel(const unsigned char* __restrict__ matr
 //   n            — matrix dimension (square, n×n); must satisfy 1 <= n <= 63.
 //                  n=64 is excluded: the GPU sequential Gray walk at n=64 would
 //                  take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps).
-//                  The CPU reference supports n=64 via a u128 Gray counter.
+//                  The CPU reference was narrowed to n ≤ 63 on 2026-05-15 for
+//                  CPU/GPU consistency.
 //   m            — batch size (number of matrices).
 //   out_ptr      — device pointer to M uint64_t outputs.
 //
