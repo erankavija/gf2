@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "**Severity: critical · Dimension: tail-masking** (report finding #1)\n\n`BitVec::from_words` (`crates/gf2-core/src/bitvec.rs:204`) is the only public constructor that accepts caller-supplied words without calling `mask_tail()`. Every other constructor that could produce dirty padding masks. When a caller passes a final word with bits set above `len_bits % 64`, the padding-bits-must-be-zero invariant is broken, silently corrupting popcount, rank/select, equality, and all downstream bitwise operations.\n\nThis is the most critical correctness invariant in the crate (AGENTS.md design invariant #1).\n\n## Success Criteria\n\n- [hard] REQ-01: `BitVec::from_words` calls `mask_tail()` before returning, enforcing the invariant internally.\n- [hard] REQ-02: The \"caller must ensure padding is zero\" note is removed from the doc comment (invariant now enforced, not delegated).\n- [hard] REQ-03: A regression test constructs a `BitVec` via `from_words` with a deliberately dirty final word and asserts padding bits are zero (and that popcount/equality are correct). Cover word-boundary lengths (1, 63, 64, 65 bits).\n- [hard] REQ-04: Full `cargo nextest --profile ci` and clippy pass.\n",
   "documents": [],
+  "done_at": "2026-09-30T22:09:39.254024824Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -13,14 +14,19 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-06-30T20:12:27.089412749Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-30T22:00:28.409829105Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-06-30T20:12:27.089476519Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-09-30T22:05:06.468800302Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-09-30T22:07:19.720968613Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "79873126-1d34-4dd9-ba67-e3f691242ed9",
@@ -30,7 +36,7 @@
     "component:gf2-core"
   ],
   "priority": "critical",
-  "state": "in_progress",
+  "state": "done",
   "title": "Enforce tail masking in BitVec::from_words",
-  "updated_at": "2026-09-30T21:09:45.464944659Z"
+  "updated_at": "2026-09-30T22:09:39.254024824Z"
 }
