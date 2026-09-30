@@ -1,166 +1,157 @@
-//! Information-theory utilities: Shannon capacity and minimum Eb/N0 limits.
+//! Information-theory utilities: SNR-unit conversion, binary-input AWGN
+//! (BI-AWGN) capacity and dispersion, and the BPSK Shannon limit.
 //!
-//! These helpers are modem-agnostic — they describe the AWGN channel itself,
-//! not any particular mapper/demapper. They moved here from the old
-//! `channel` module when the BPSK-specific surface was deleted as part of
-//! the modem-framework cleanup.
+//! # SNR convention
 //!
-//! All capacities are expressed as bits per channel use for the BPSK
-//! constellation, which is the standard reference for binary coding
-//! research.
+//! The channel primitives take the symbol SNR `Es/N0` in dB. For BPSK
+//! (antipodal amplitude `a`, real noise variance `σ² = N0/2`),
+//! `Es/N0 = a²/(2σ²)`. A code of rate `R` mapped onto a constellation with
+//! `m` bits per symbol carries `Es = m·R·Eb`; [`ebn0_to_esn0`] and
+//! [`esn0_to_ebn0`] are the one place that factor is applied. For BPSK
+//! `m = 1`, so `Es/N0 = R·Eb/N0`.
+//!
+//! Capacities and dispersions are in bits per channel use and bits² per
+//! channel use.
 
-/// Computes the Shannon capacity for BPSK over AWGN at the given Eb/N0.
-///
-/// For BPSK modulation, the channel capacity in bits per channel use is:
-/// $$
-/// C = 1 - \int_{-\infty}^{\infty} p(y) \log_2\left(\frac{1}{p(y|+1) + p(y|-1)}\right) dy
-/// $$
-///
-/// where $p(y|x)$ is the Gaussian conditional density.
+/// Converts Es/N0 (dB) to Eb/N0 (dB): `Eb/N0 = Es/N0 − 10·log10(m·R)`.
 ///
 /// # Arguments
 ///
-/// * `eb_n0_db` - Energy per bit to noise ratio in dB (= Es/N0 for BPSK)
-///
-/// # Returns
-///
-/// Channel capacity in bits per channel use (0 to 1.0).
+/// - `es_n0_db`: Symbol energy per noise power spectral density, in dB.
+/// - `bits_per_symbol`: Coded bits per constellation symbol `m` (1 for
+///   BPSK, 4 for 16-QAM).
+/// - `code_rate`: Code rate `R` as a fraction (0.5 for rate 1/2).
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_coding::info_theory::shannon_capacity;
+/// use gf2_coding::info_theory::{ebn0_to_esn0, esn0_to_ebn0};
+/// // BPSK, rate 3/4: Es/N0 sits 10·log10(0.75) ≈ −1.249 dB below Eb/N0.
+/// let es_n0 = ebn0_to_esn0(2.0, 1, 0.75);
+/// assert!((es_n0 - (2.0 + 10.0 * 0.75_f64.log10())).abs() < 1e-12);
+/// assert!((esn0_to_ebn0(es_n0, 1, 0.75) - 2.0).abs() < 1e-12);
+/// ```
+pub fn esn0_to_ebn0(es_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
+    es_n0_db - 10.0 * (bits_per_symbol as f64 * code_rate).log10()
+}
+
+/// Converts Eb/N0 (dB) to Es/N0 (dB): `Es/N0 = Eb/N0 + 10·log10(m·R)`.
 ///
-/// let capacity = shannon_capacity(3.0);
-/// assert!(capacity > 0.7 && capacity < 0.8);
+/// Arguments as for [`esn0_to_ebn0`].
+pub fn ebn0_to_esn0(eb_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
+    eb_n0_db + 10.0 * (bits_per_symbol as f64 * code_rate).log10()
+}
+
+/// Half-width of the standard-normal integration window, in standard
+/// deviations. The Gaussian weight beyond it is below 1e-30.
+const Z_MAX: f64 = 12.0;
+
+/// Trapezoidal-rule node count over `[−Z_MAX, Z_MAX]`. The integrand is
+/// smooth and Gaussian-weighted, so the rule converges spectrally.
+const NUM_NODES: usize = 2400;
+
+/// Evaluates `f(i(z))` for the BI-AWGN information density at each node and
+/// returns the Gaussian-weighted mean, `E[f(i)]`.
+///
+/// With `x = +1` sent and `y = a + z`, `z ~ N(0, 1)`, `a = sqrt(2·Es/N0)`,
+/// the information density is `i = 1 − log2(1 + exp(−2a·y))` bits.
+fn bi_awgn_expectation(es_n0_db: f64, f: impl Fn(f64) -> f64) -> f64 {
+    let es_n0 = 10.0_f64.powf(es_n0_db / 10.0);
+    let a = (2.0 * es_n0).sqrt();
+    let dz = 2.0 * Z_MAX / NUM_NODES as f64;
+    let inv_sqrt_2pi = 1.0 / (2.0 * std::f64::consts::PI).sqrt();
+
+    let mut acc = 0.0;
+    for k in 0..=NUM_NODES {
+        let z = -Z_MAX + k as f64 * dz;
+        let llr = 2.0 * a * (a + z);
+        // log(1 + e^{−llr}) evaluated without overflow.
+        let softplus = (-llr).max(0.0) + (-llr.abs()).exp().ln_1p();
+        let density = 1.0 - softplus / std::f64::consts::LN_2;
+        let weight = if k == 0 || k == NUM_NODES { 0.5 } else { 1.0 };
+        acc += weight * (-0.5 * z * z).exp() * inv_sqrt_2pi * f(density);
+    }
+    acc * dz
+}
+
+/// Capacity of the binary-input AWGN channel (BPSK with equiprobable inputs)
+/// at symbol SNR `es_n0_db`, in bits per channel use.
+///
+/// `C = E[i]` with `i = 1 − log2(1 + exp(−2a·y))`, `y ~ N(a, 1)`,
+/// `a = sqrt(2·Es/N0)`; this is the BI-AWGN capacity of \[PPV2010\] with
+/// channel SNR `P = 2·Es/N0`. To evaluate at a bit SNR, convert with
+/// [`ebn0_to_esn0`] using `bits_per_symbol = 1` and the code rate.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::info_theory::{bi_awgn_capacity, ebn0_to_esn0};
+/// // Rate 3/4 at its Shannon limit (Eb/N0 ≈ 1.626 dB) has capacity 3/4.
+/// let c = bi_awgn_capacity(ebn0_to_esn0(1.626, 1, 0.75));
+/// assert!((c - 0.75).abs() < 1e-3);
 /// ```
 ///
 /// # Complexity
 ///
-/// O(N) where N is the fixed number of trapezoidal-rule integration
-/// nodes (currently 1000); effectively constant time.
-pub fn shannon_capacity(eb_n0_db: f64) -> f64 {
-    let snr = 10.0_f64.powf(eb_n0_db / 10.0);
-    shannon_capacity_numerical(snr)
+/// O(N) for the fixed node count N = 2400; effectively constant time.
+pub fn bi_awgn_capacity(es_n0_db: f64) -> f64 {
+    bi_awgn_expectation(es_n0_db, |i| i).clamp(0.0, 1.0)
 }
 
-/// Returns the minimum Eb/N0 (in dB) required to achieve a given rate.
+/// Channel dispersion of the binary-input AWGN channel at symbol SNR
+/// `es_n0_db`, in bits² per channel use.
 ///
-/// This is the Shannon limit: the theoretical minimum SNR needed for
-/// reliable communication at the specified rate over a BPSK AWGN channel.
+/// `V = Var[i]` for the information density of [`bi_awgn_capacity`]
+/// (the BI-AWGN dispersion of \[PPV2010\] with `P = 2·Es/N0`). It is the
+/// second-order term of the normal approximation
+/// `R ≈ C − sqrt(V/n)·Q⁻¹(ε)`.
 ///
-/// For rate R, finds Eb/N0 such that `shannon_capacity(Eb/N0) = R`.
+/// # Complexity
 ///
-/// # Arguments
+/// O(N) for the fixed node count N = 2400; effectively constant time.
+pub fn bi_awgn_dispersion(es_n0_db: f64) -> f64 {
+    let mean = bi_awgn_expectation(es_n0_db, |i| i);
+    bi_awgn_expectation(es_n0_db, |i| (i - mean) * (i - mean)).max(0.0)
+}
+
+/// Minimum Eb/N0 (dB) for reliable BPSK transmission at code rate `rate`
+/// over AWGN: the Eb/N0 at which
+/// `bi_awgn_capacity(ebn0_to_esn0(Eb/N0, 1, rate)) = rate`.
 ///
-/// * `rate` - Code rate, must be in `(0, 1]`.
+/// Returns `f64::INFINITY` for `rate = 1`, since the BI-AWGN capacity stays
+/// below one bit at every finite SNR. As `rate → 0` the limit approaches
+/// `10·log10(ln 2) ≈ −1.59 dB`.
 ///
 /// # Panics
 ///
 /// Panics if `rate` is not in `(0, 1]`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::info_theory::shannon_limit;
-///
-/// // Rate 1/2 code requires approximately 0.2 dB at Shannon limit
-/// let eb_n0_min = shannon_limit(0.5);
-/// assert!(eb_n0_min < 1.0 && eb_n0_min > -1.0);
-/// ```
-///
 /// # Complexity
 ///
-/// O(K · N) where K is the binary-search iteration cap (60) and N is
-/// the fixed integration-node count from [`shannon_capacity`];
-/// effectively constant time.
+/// O(K · N) for K = 64 bisection steps and the N capacity-integration
+/// nodes; effectively constant time.
 pub fn shannon_limit(rate: f64) -> f64 {
-    assert!(rate > 0.0 && rate <= 1.0, "Rate must be in (0, 1]");
+    assert!(
+        rate > 0.0 && rate <= 1.0,
+        "rate must be in (0, 1], got {rate}"
+    );
+    if rate == 1.0 {
+        return f64::INFINITY;
+    }
 
-    // Binary search for Eb/N0 where capacity equals rate
-    let mut low = -10.0_f64;
-    let mut high = 25.0_f64;
-
-    for _ in 0..60 {
-        let mid = (low + high) / 2.0;
-        let capacity = shannon_capacity(mid);
-
-        if (capacity - rate).abs() < 1e-6 {
-            return mid;
-        }
-
-        if capacity > rate {
-            high = mid;
-        } else {
+    // Capacity is strictly increasing in Eb/N0 at fixed rate. The lower end
+    // sits below the ultimate limit 10·log10(ln 2), where capacity < rate for
+    // every rate; the upper end exceeds the limit of every rate whose
+    // capacity gap is resolvable in f64.
+    let mut low = -1.6_f64;
+    let mut high = 40.0_f64;
+    for _ in 0..64 {
+        let mid = 0.5 * (low + high);
+        if bi_awgn_capacity(ebn0_to_esn0(mid, 1, rate)) < rate {
             low = mid;
+        } else {
+            high = mid;
         }
     }
-
-    (low + high) / 2.0
-}
-
-/// Numerically computes Shannon capacity for BPSK at given SNR (Eb/N0).
-///
-/// For BPSK modulation over AWGN, the capacity is:
-/// `C = 1 - integral_{-inf}^{inf} f(y) log2(1 + exp(-2*sqrt(SNR)*y)) dy`
-/// where f(y) is N(sqrt(SNR), 1) distribution and SNR = Eb/N0.
-fn shannon_capacity_numerical(eb_n0_linear: f64) -> f64 {
-    let sqrt_snr = eb_n0_linear.sqrt();
-
-    let num_points = 1000;
-    let y_max = sqrt_snr + 6.0;
-    let dy = 2.0 * y_max / num_points as f64;
-
-    let sqrt_2pi = (2.0 * std::f64::consts::PI).sqrt();
-    let mut integral = 0.0;
-
-    for i in 0..=num_points {
-        let y = -y_max + i as f64 * dy;
-
-        let f_y = (-(y - sqrt_snr).powi(2) / 2.0).exp() / sqrt_2pi;
-
-        let arg = -2.0 * sqrt_snr * y;
-        let log_term = if arg > 20.0 {
-            arg / std::f64::consts::LN_2
-        } else if arg < -20.0 {
-            0.0
-        } else {
-            (1.0 + arg.exp()).log2()
-        };
-
-        let weight = if i == 0 || i == num_points { 0.5 } else { 1.0 };
-        integral += weight * f_y * log_term;
-    }
-
-    let capacity = 1.0 - integral * dy;
-    capacity.clamp(0.0, 1.0)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_shannon_capacity_high_snr() {
-        let capacity = shannon_capacity(20.0);
-        assert!(capacity > 0.95);
-    }
-
-    #[test]
-    fn test_shannon_capacity_low_snr() {
-        let capacity = shannon_capacity(-10.0);
-        assert!(capacity < 0.2);
-    }
-
-    #[test]
-    fn test_shannon_limit_rate_half() {
-        let eb_n0_min = shannon_limit(0.5);
-        assert!(eb_n0_min > -1.0 && eb_n0_min < 1.0);
-    }
-
-    #[test]
-    fn test_shannon_limit_rate_high() {
-        let eb_n0_min = shannon_limit(0.9);
-        assert!(eb_n0_min > 2.0);
-    }
+    0.5 * (low + high)
 }

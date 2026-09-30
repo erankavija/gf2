@@ -36,9 +36,8 @@
 
 use rand::Rng as _;
 
-use gf2_coding::dvb_t2_bicm_harness::{
-    box_muller_cos, ebn0_to_esn0, esn0_to_ebn0, rate_f64, BicmAwgnChannel,
-};
+use gf2_coding::dvb_t2_bicm_harness::{box_muller_cos, rate_f64, BicmAwgnChannel};
+use gf2_coding::info_theory::{ebn0_to_esn0, esn0_to_ebn0};
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
