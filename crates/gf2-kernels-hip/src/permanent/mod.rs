@@ -95,8 +95,7 @@ extern "C" {
     /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
     ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
     ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
-    ///   `permanent_bipedal3_singleword` was narrowed to n ≤ 63 on 2026-05-15
-    ///   for CPU/GPU consistency.
+    ///   `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
     /// - `out_ptr` — device pointer to a single `u64` output that receives
     ///   the permanent value modulo 3 (in `{0, 1, 2}`).
     ///
@@ -138,8 +137,7 @@ extern "C" {
     /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
     ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
     ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
-    ///   `permanent_bipedal5_singleword` was narrowed to n ≤ 63 on 2026-05-15
-    ///   for CPU/GPU consistency.
+    ///   `permanent_bipedal5_singleword` has the same bound, `n <= 63`.
     /// - `out_ptr` — device pointer to a single `u64` output that receives
     ///   the permanent value modulo 5 (in `{0, 1, 2, 3, 4}`).
     ///
@@ -300,8 +298,7 @@ const GF7_INIT_UNINIT: i32 = i32::MIN;
 /// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
 ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
 ///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal3_singleword` was narrowed to n ≤ 63 on 2026-05-15
-///   for CPU/GPU consistency.
+///   `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
 /// - `out_ptr` — device pointer to a single `u64` that receives the permanent
 ///   value modulo 3 (value in `{0, 1, 2}`).
 ///
@@ -356,8 +353,7 @@ pub unsafe fn compute_permanent_gf3(matrix_ptr: *const u8, n: c_int, out_ptr: *m
 /// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
 ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
 ///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal3_singleword` was narrowed to n ≤ 63 on 2026-05-15
-///   for CPU/GPU consistency.
+///   `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
 /// - `m` — batch size (number of matrices); must be `>= 1`.
 /// - `out_ptr` — device pointer to `m` consecutive `u64` outputs. On success,
 ///   `out_ptr[i]` receives the permanent of matrix `i` modulo 3 (value in
@@ -487,8 +483,7 @@ unsafe fn compute_permanent_gf3_batch_on_stream_with_kernel_start_event(
 /// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
 ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
 ///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal5_singleword` was narrowed to n ≤ 63 on 2026-05-15
-///   for CPU/GPU consistency.
+///   `permanent_bipedal5_singleword` has the same bound, `n <= 63`.
 /// - `out_ptr` — device pointer to a single `u64` that receives the permanent
 ///   value modulo 5 (value in `{0, 1, 2, 3, 4}`).
 ///
@@ -543,8 +538,7 @@ pub unsafe fn compute_permanent_gf5(matrix_ptr: *const u8, n: c_int, out_ptr: *m
 /// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
 ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
 ///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal5_singleword` was narrowed to n ≤ 63 on 2026-05-15
-///   for CPU/GPU consistency.
+///   `permanent_bipedal5_singleword` has the same bound, `n <= 63`.
 /// - `m` — batch size (number of matrices); must be `>= 1`.
 /// - `out_ptr` — device pointer to `m` consecutive `u64` outputs. On success,
 ///   `out_ptr[i]` receives the permanent of matrix `i` modulo 5 (value in
