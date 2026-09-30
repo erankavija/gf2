@@ -106,9 +106,8 @@ __global__ void permanent_bipedal7_kernel(const unsigned char* __restrict__ matr
     // Range guards ordered so n == 0 is handled correctly before the
     // out-of-range rejection.
     //
-    // Supported range: 1 <= n <= 63 (post 2026-05-15 CPU/GPU consistency
-    // narrowing). GPU sequential Gray walk at n=64 would take ~600 years
-    // on gfx1030 (2^64 ≈ 1.8×10^19 steps) — infeasible.
+    // Supported range: 1 <= n <= 63. GPU sequential Gray walk at n=64 would
+    // take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps) — infeasible.
     //
     // Empty-matrix case (n == 0): permanent of the empty matrix is 1
     // (the empty permutation has product 1 — vacuous product). The host

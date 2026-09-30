@@ -1,17 +1,18 @@
-//! Multi-word streaming column-sum path for `permanent_bipedal3` at `n > 64`.
+//! Multi-word streaming column-sum path for `permanent_bipedal3` at `n ≥ 64`.
 //!
 //! ## Algorithm
 //!
 //! This module implements the R3 cache-blocking design from
-//! `dev/plans/60c30e2d/r3_multi_word_streaming.md`. The algorithm evaluates Ryser's
-//! inclusion-exclusion formula in binary-reflected Gray-code subset order:
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`.
+//! The algorithm evaluates Ryser's inclusion-exclusion formula in
+//! binary-reflected Gray-code subset order:
 //!
 //! ```text
 //! perm(A) = (-1)^n * sum_{S ⊆ [n], S ≠ ∅}  (-1)^|S|  * prod_{i=0}^{n-1}  sum_{j ∈ S} A[i,j]
 //! ```
 //!
 //! At each Gray step exactly one column is added to or subtracted from a
-//! packed column-sum buffer. For `n > 64` the column-sum spans
+//! packed column-sum buffer. The column-sum spans
 //! `W = ceil(n / 64)` words per leg (`mag` + `sgn`), updated via the
 //! Scheinerman 2024 (arXiv 2407.20205v2) Theorem 2.1
 //! bipedal-3 add/sub formulas (6 bitwise ops per word per leg per step).
@@ -31,16 +32,16 @@
 //!
 //! ## Gray-code counter
 //!
-//! For `n > 64` the loop counter does not fit in a single `u64`. This module
+//! For `n ≥ 64` the `2^n` loop bound does not fit in a single `u64`. This module
 //! maintains the counter as a little-endian `[u64; 4]` array (supporting
 //! `n ≤ 255`) together with a separate bit-vector tracking the current active
 //! subset (`g_k = k ^ (k >> 1)` in scalar notation). The flip index is
 //! derived from the counter's trailing-zeros position.
 //!
-//! Note: for `n ≥ 65`, the `2^n` outer loop is astronomically large and
-//! infeasible to run to completion in any practical timeframe. The
-//! cross-check tests at large `n` are therefore marked
-//! `#[ignore = "sim: ..."]` per project test-tier rules.
+//! Note: for `n ≥ 64`, the `2^n` outer loop is astronomically large and
+//! infeasible to run to completion in any practical timeframe. The tests
+//! therefore call this function directly at small `n` (at most 24), where
+//! the walk is feasible and the generic Ryser oracle applies.
 
 use gf2_core::gfp::Fp;
 
@@ -49,7 +50,8 @@ use crate::packed::PackedField;
 
 /// Maximum supported `n` for the multi-word streaming path.
 ///
-/// Per R3 `dev/plans/60c30e2d/r3_multi_word_streaming.md` §1 and §5:
+/// Per R3 `dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`
+/// §1 and §5:
 /// above `n = 255` single-thread time is dominated by the `2^n` outer
 /// enumeration regardless of cache behaviour. That regime belongs to
 /// `W3-T15` (rayon parallel) and `W5` (HIP/ROCm GPU).
@@ -99,18 +101,27 @@ const _: () = {
     assert!(matrix_bytes_for_n(N_MAX_MULTIWORD) <= MAX_MATRIX_BYTES_FOR_L1);
 };
 
-/// Compute the permanent of `mat` over `F_3` for `n ∈ (64, N_MAX_MULTIWORD]`
-/// using the multi-word streaming column-sum.
+/// Compute the permanent of `mat` over `F_3` using the multi-word streaming
+/// column-sum.
 ///
-/// This is the R3 design's scalar reference implementation (`dev/plans/
-/// r3_multi_word_streaming.md` §8 pseudocode, transcribed directly). It is
-/// bit-identical to `permanent_ryser::<Fp<3>>` by the R3 validation plan
-/// (§9.2) and to `permanent_bipedal3_singleword` at `n = 64` (§9.1).
+/// The dispatcher [`permanent_bipedal3`](crate::permanent::bipedal3::permanent_bipedal3)
+/// routes `64 ≤ n ≤ N_MAX_MULTIWORD` here and `n ≤ 63` to
+/// [`permanent_bipedal3_singleword`](crate::permanent::bipedal3::permanent_bipedal3_singleword).
+/// Direct calls accept any `n` in `1..=N_MAX_MULTIWORD`.
+///
+/// This is the R3 design's scalar reference implementation
+/// (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`
+/// §8 pseudocode, transcribed directly). Its tests compare it bit-for-bit
+/// against `permanent_ryser::<Fp<3>>` on random matrices at
+/// `n ∈ {2, 5, 8, 16}` (fast tier) and `n ∈ {20, 24}` (slow tier), and on
+/// block-diagonal matrices `A_{n0} ⊕ I` at `n ∈ {10, 16, 20}`. No oracle
+/// covers `n ≥ 64`: `permanent_bipedal3_singleword` and `permanent_ryser`
+/// both reject it, and the `2^n` walk is infeasible there.
 ///
 /// # Arguments
 ///
 /// * `mat` — An `n × n` [`Bipedal3Matrix`] (column-major, `rows == cols`),
-///   with `64 < n ≤ N_MAX_MULTIWORD`.
+///   with `1 ≤ n ≤ N_MAX_MULTIWORD`.
 ///
 /// # Examples
 ///
@@ -161,8 +172,7 @@ pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
         "permanent_bipedal3_multiword: n = {n} exceeds N_MAX_MULTIWORD = {N_MAX_MULTIWORD}"
     );
     // Note: no lower-bound assert. The dispatcher routes `n <= 63` to the
-    // singleword fast path for perf (post 2026-05-15 CPU/GPU consistency
-    // narrowing), but calling this function directly at small `n` is
+    // singleword fast path, but calling this function directly at small `n` is
     // correctness-preserving — the `[u64; 4]` Gray counter and word-wise
     // loops handle `n` in `1..=N_MAX_MULTIWORD` uniformly.
     // The §9.2 validation plan relies on this property: small-`n` direct
@@ -540,10 +550,10 @@ mod tests {
     // debug and release builds.
     //
     // Per the in-session amendment recorded in
-    // `dev/active/a7886bd8/a7886bd8-amendments-2026-05-11.md` (criterion 3, option
-    // "Block-decomposable cross-check"). 850 trials total spans n ∈
-    // {2, 5, 8, 16, 20}; the larger n ∈ {24, 32, 48, 60} cases live in
-    // the slow tier via `#[ignore = "slow: ..."]`.
+    // `dev/archive/ae82bd73-gf2-algebra-permanent/active/a7886bd8/a7886bd8-amendments-2026-05-11.md`
+    // (criterion 3, option "Block-decomposable cross-check"). The fast tier
+    // runs 800 trials over n ∈ {2, 5, 8, 16}; n ∈ {20, 24} live in the
+    // slow tier via `#[ignore = "slow: ..."]`.
     // -----------------------------------------------------------------------
 
     fn run_multiword_vs_ryser_at_n(n: usize, n_trials: u64, seed_tag: u64) {
