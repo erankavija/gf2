@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-30T21:09:45.709849934Z",
   "context": {},
   "created_at": "2026-08-07T15:02:21.199991448Z",
   "dependencies": [],
@@ -19,7 +20,7 @@
     "cites:PPV2010"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "BPSK capacity helper misreads Eb/N0; Shannon limit biased off rate 1/2",
-  "updated_at": "2026-08-07T15:02:21.199991448Z"
+  "updated_at": "2026-09-30T21:09:45.709849934Z"
 }

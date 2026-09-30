@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-09-30T21:09:45.464944659Z",
   "context": {},
   "created_at": "2026-06-30T20:04:21.150862637Z",
   "dependencies": [],
@@ -29,7 +30,7 @@
     "component:gf2-core"
   ],
   "priority": "critical",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Enforce tail masking in BitVec::from_words",
-  "updated_at": "2026-08-05T12:24:03.995586027Z"
+  "updated_at": "2026-09-30T21:09:45.464944659Z"
 }
