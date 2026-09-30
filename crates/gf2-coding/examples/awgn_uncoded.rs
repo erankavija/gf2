@@ -5,11 +5,11 @@
 //! - AWGN channel simulation at various Eb/N0 values
 //! - Soft-decision (LLR) and hard-decision decoding
 //! - Bit error rate (BER) computation
-//! - Comparison with Shannon limit
+//! - BI-AWGN capacity at each point and the Shannon limits of coded rates
 //!
 //! This serves as a baseline for comparing coded vs. uncoded transmission.
 
-use gf2_coding::info_theory::{shannon_capacity, shannon_limit};
+use gf2_coding::info_theory::{bi_awgn_capacity, ebn0_to_esn0, shannon_limit};
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 
 fn main() {
@@ -36,24 +36,22 @@ fn main() {
     let mut rng = rand::thread_rng();
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
-    let code_rate = 1.0; // uncoded
+    let code_rate = 1.0; // uncoded: Es/N0 = Eb/N0
 
-    println!("┌──────────┬─────────────┬────────────────┬────────────┐");
-    println!("│ Eb/N0 dB │     BER     │  Shannon Limit │  Gap (dB)  │");
-    println!("├──────────┼─────────────┼────────────────┼────────────┤");
+    println!("┌──────────┬─────────────┬────────────────┐");
+    println!("│ Eb/N0 dB │     BER     │ Capacity (bit) │");
+    println!("├──────────┼─────────────┼────────────────┤");
 
     for result in &results {
-        let capacity = shannon_capacity(result.eb_n0_db);
-        let limit = shannon_limit(code_rate);
-        let gap = result.eb_n0_db - limit;
+        let capacity = bi_awgn_capacity(ebn0_to_esn0(result.eb_n0_db, 1, code_rate));
 
         println!(
-            "│   {:5.1}  │  {:9.6}  │     {:6.4}     │   {:6.2}   │",
-            result.eb_n0_db, result.ber, capacity, gap
+            "│   {:5.1}  │  {:9.6}  │     {:6.4}     │",
+            result.eb_n0_db, result.ber, capacity
         );
     }
 
-    println!("└──────────┴─────────────┴────────────────┴────────────┘\n");
+    println!("└──────────┴─────────────┴────────────────┘\n");
 
     // Export to CSV
     let csv = SimulationRunner::results_to_csv(&results, true);
@@ -61,12 +59,14 @@ fn main() {
     println!("{}", csv);
 
     println!("\nNotes:");
-    println!(
-        "- Shannon limit for rate {} is {:.2} dB",
-        code_rate,
-        shannon_limit(code_rate)
-    );
-    println!("- At Shannon limit, capacity = rate (reliable communication theoretically possible)");
-    println!("- Gap shows how far uncoded transmission is from the Shannon limit");
-    println!("- Coded systems can operate closer to the Shannon limit");
+    println!("- Capacity: BI-AWGN capacity at Es/N0 = Eb/N0 (rate 1)");
+    println!("- Rate 1 has no finite Shannon limit: capacity < 1 bit at every SNR");
+    for rate in [1.0 / 3.0, 0.5, 0.75, 0.9] {
+        println!(
+            "- Shannon limit for rate {:.3} is {:.2} dB Eb/N0",
+            rate,
+            shannon_limit(rate)
+        );
+    }
+    println!("- Coded systems trade rate for operation closer to these limits");
 }

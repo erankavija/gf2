@@ -9,7 +9,6 @@
 //!
 //! # Provided items
 //!
-//! - [`esn0_to_ebn0`] / [`ebn0_to_esn0`] — SNR unit conversion.
 //! - [`rate_f64`] — Code rate as a floating-point fraction.
 //! - [`rate_display`] — Human-readable slash notation (`"1/2"`, `"2/3"`, …).
 //! - [`rate_underscore`] — Filename-safe underscore notation (`"1_2"`, `"2_3"`, …).
@@ -20,6 +19,7 @@
 
 #![deny(unsafe_code)]
 
+use crate::info_theory::ebn0_to_esn0;
 use crate::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver;
 use crate::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use crate::ldpc::dvb_t2::concat::DvbT2Concat;
@@ -30,52 +30,6 @@ use crate::traits::BlockEncoder;
 use crate::CodeRate;
 use gf2_core::BitVec;
 use rand::Rng;
-
-// ---------------------------------------------------------------------------
-// SNR conversion
-// ---------------------------------------------------------------------------
-
-/// Convert Es/N0 (dB) to Eb/N0 (dB).
-///
-/// # Arguments
-///
-/// - `es_n0_db`: Symbol energy per noise power spectral density, in dB.
-/// - `bits_per_symbol`: Number of bits per QAM symbol (e.g. 4 for 16-QAM).
-/// - `code_rate`: Code rate as a fraction (e.g. 0.5 for rate-1/2).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::esn0_to_ebn0;
-/// // 16-QAM rate 1/2: offset = 10*log10(4 * 0.5) = 10*log10(2) ≈ 3.0103 dB
-/// let eb_n0 = esn0_to_ebn0(6.0, 4, 0.5);
-/// let expected = 6.0 - 10.0_f64 * 2.0_f64.log10();
-/// assert!((eb_n0 - expected).abs() < 1e-10);
-/// ```
-pub fn esn0_to_ebn0(es_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
-    es_n0_db - 10.0 * (bits_per_symbol as f64 * code_rate).log10()
-}
-
-/// Convert Eb/N0 (dB) to Es/N0 (dB).
-///
-/// # Arguments
-///
-/// - `eb_n0_db`: Bit energy per noise power spectral density, in dB.
-/// - `bits_per_symbol`: Number of bits per QAM symbol (e.g. 4 for 16-QAM).
-/// - `code_rate`: Code rate as a fraction (e.g. 0.5 for rate-1/2).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::ebn0_to_esn0;
-/// // 16-QAM rate 1/2: offset = 10*log10(4 * 0.5) = 10*log10(2) ≈ 3.0103 dB
-/// let es_n0 = ebn0_to_esn0(3.0, 4, 0.5);
-/// let expected = 3.0 + 10.0_f64 * 2.0_f64.log10();
-/// assert!((es_n0 - expected).abs() < 1e-10);
-/// ```
-pub fn ebn0_to_esn0(eb_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
-    eb_n0_db + 10.0 * (bits_per_symbol as f64 * code_rate).log10()
-}
 
 // ---------------------------------------------------------------------------
 // Box-Muller noise
@@ -564,50 +518,6 @@ pub const BASELINE_MATRIX_CELL_COUNT: usize = 27;
 mod tests {
     use super::*;
     use crate::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-
-    // --- SNR conversion ---
-
-    #[test]
-    fn test_snr_roundtrip_16qam_rate1_2() {
-        // 16-QAM, rate 1/2: 10*log10(4 * 0.5) = 10*log10(2) ≈ 3.0103 dB offset
-        let bits_per_symbol = 4;
-        let rate = 0.5;
-        let original_esn0 = 6.25_f64;
-        let ebn0 = esn0_to_ebn0(original_esn0, bits_per_symbol, rate);
-        let recovered = ebn0_to_esn0(ebn0, bits_per_symbol, rate);
-        assert!(
-            (recovered - original_esn0).abs() < 1e-12,
-            "round-trip failed: {original_esn0} -> {ebn0} -> {recovered}"
-        );
-    }
-
-    #[test]
-    fn test_snr_roundtrip_64qam_rate2_3() {
-        let bits_per_symbol = 6;
-        let rate = 2.0 / 3.0;
-        let original_esn0 = 13.5_f64;
-        let ebn0 = esn0_to_ebn0(original_esn0, bits_per_symbol, rate);
-        let recovered = ebn0_to_esn0(ebn0, bits_per_symbol, rate);
-        assert!(
-            (recovered - original_esn0).abs() < 1e-12,
-            "round-trip failed: {original_esn0} -> {ebn0} -> {recovered}"
-        );
-    }
-
-    #[test]
-    fn test_esn0_to_ebn0_known_value() {
-        // 16-QAM rate 1/2: offset = 10*log10(4*0.5) = 10*log10(2) ≈ 3.0103 dB
-        let ebn0 = esn0_to_ebn0(6.0, 4, 0.5);
-        let expected = 6.0 - 10.0 * 2.0_f64.log10();
-        assert!((ebn0 - expected).abs() < 1e-12);
-    }
-
-    #[test]
-    fn test_ebn0_to_esn0_known_value() {
-        let esn0 = ebn0_to_esn0(3.0, 4, 0.5);
-        let expected = 3.0 + 10.0 * 2.0_f64.log10();
-        assert!((esn0 - expected).abs() < 1e-12);
-    }
 
     // --- Naming helpers: all 6 baseline MODCODs ---
 

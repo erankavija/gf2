@@ -9,7 +9,7 @@
 //!
 //! Compares coded vs. uncoded performance to show LDPC coding gain.
 
-use gf2_coding::info_theory::{shannon_capacity, shannon_limit};
+use gf2_coding::info_theory::{bi_awgn_capacity, ebn0_to_esn0, shannon_limit};
 use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
 use gf2_coding::traits::IterativeSoftDecoder;
 use gf2_coding::{LdpcCode, LdpcDecoder};
@@ -59,7 +59,7 @@ fn main() {
         let (fer, avg_iter, uncoded_ber) =
             simulate_ldpc_transmission(&code, num_frames, eb_n0_db, max_iterations);
 
-        let capacity = shannon_capacity(eb_n0_db);
+        let capacity = bi_awgn_capacity(ebn0_to_esn0(eb_n0_db, 1, code.rate()));
 
         println!(
             "│   {:5.1}  │  {:6.4}  │   {:5.1}  │   {:8.6}   │  {:6.4}  │",
@@ -73,7 +73,7 @@ fn main() {
     println!("- FER: Frame Error Rate (proportion of incorrectly decoded frames)");
     println!("- Avg Iter: Average number of BP iterations per frame");
     println!("- Uncoded BER: Baseline bit error rate without coding");
-    println!("- Capacity: Shannon capacity at this Eb/N0 (max achievable rate)");
+    println!("- Capacity: BI-AWGN capacity at this Eb/N0 and the code rate (max achievable rate)");
     println!("- LDPC shows coding gain: lower FER than uncoded BER at same Eb/N0");
     println!();
     println!("Shannon Limit Analysis:");

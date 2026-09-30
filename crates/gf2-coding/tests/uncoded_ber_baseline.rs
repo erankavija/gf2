@@ -3,7 +3,7 @@
 //! These tests establish reference BER values for uncoded BPSK transmission
 //! over AWGN channels, serving as a baseline for comparing coded systems.
 
-use gf2_coding::info_theory::shannon_capacity;
+use gf2_coding::info_theory::bi_awgn_capacity;
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 
 #[test]
@@ -98,16 +98,16 @@ fn test_ber_far_from_shannon_limit() {
     let mut rng = rand::thread_rng();
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
-    // At 3 dB, capacity is ~0.72, far below rate 1.0
-    let capacity = shannon_capacity(3.0);
-    assert!(capacity < 1.0, "Capacity at 3 dB should be < 1.0");
+    // Uncoded (rate 1): Es/N0 = Eb/N0 = 3 dB, where capacity is ~0.91 bit,
+    // below the transmitted rate 1.0
+    let capacity = bi_awgn_capacity(3.0);
     assert!(
-        capacity > 0.7 && capacity < 0.8,
-        "Capacity at 3 dB should be ~0.72, got {}",
+        capacity > 0.9 && capacity < 0.92,
+        "Capacity at Es/N0 = 3 dB should be ~0.91, got {}",
         capacity
     );
 
-    // BER is non-zero, showing we're operating above the Shannon limit
+    // BER is non-zero: rate 1.0 exceeds the channel capacity
     assert!(
         results[0].ber > 0.001,
         "BER should be significant at 3 dB for rate 1.0"
