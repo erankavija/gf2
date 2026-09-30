@@ -36,9 +36,10 @@
 #![deny(unsafe_code)]
 
 use gf2_coding::dvb_t2_bicm_harness::{
-    esn0_to_ebn0, mod_str, parse_baseline_csv, rate_display as rate_str, rate_f64,
-    BaselineCellResult, BicmAwgnChannel, BicmFecEncoder, BASELINE_MATRIX_CELL_COUNT,
+    mod_str, parse_baseline_csv, rate_display as rate_str, rate_f64, BaselineCellResult,
+    BicmAwgnChannel, BicmFecEncoder, BASELINE_MATRIX_CELL_COUNT,
 };
+use gf2_coding::info_theory::esn0_to_ebn0;
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };

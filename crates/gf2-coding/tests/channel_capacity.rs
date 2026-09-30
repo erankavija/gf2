@@ -1,217 +1,152 @@
-//! Integration tests for Shannon channel capacity calculations.
-//!
-//! Validates that the AWGN channel capacity computations match theoretical
-//! predictions and satisfy fundamental information-theoretic constraints.
+//! Canonical suite for the binary-input AWGN capacity, dispersion, SNR-unit
+//! conversion, and BPSK Shannon limit in `gf2_coding::info_theory`.
 
-use gf2_coding::info_theory::{shannon_capacity, shannon_limit};
+use gf2_coding::info_theory::{
+    bi_awgn_capacity, bi_awgn_dispersion, ebn0_to_esn0, esn0_to_ebn0, shannon_limit,
+};
+use gf2_coding::modem::awgn_link::unit_energy_sigma_sq_from_eb_n0_db;
 
-/// Known Shannon capacity values for BPSK over AWGN at specific Eb/N0 points.
+/// BI-AWGN capacity and dispersion at Es/N0 points: (Es/N0 dB, C bits,
+/// V bits²). Computed independently of this crate by adaptive Gauss–Kronrod
+/// quadrature (`scipy.integrate.quad`, epsrel 1e-14) of the mean and variance
+/// of `i = 1 − log2(1 + exp(−2a(a + z)))`, `z ~ N(0, 1)`, `a = sqrt(2·Es/N0)`.
+const REFERENCE_CAPACITY_DISPERSION: &[(f64, f64, f64)] = &[
+    (-10.0, 0.131416082353, 0.31641800871),
+    (-3.0, 0.48671359211, 0.659712378047),
+    (0.0, 0.72145159079, 0.533271940479),
+    (3.0, 0.912352116906, 0.223239060342),
+    (6.0, 0.990263800775, 0.029690421597),
+    (10.0, 0.99998332824, 5.83925621148e-05),
+];
+
+/// Published BPSK Shannon limits (minimum Eb/N0 in dB) at rates spanning
+/// (0, 1): (rate, limit, tolerance). Each tolerance is half a unit of the
+/// printed precision plus 0.001 dB.
 ///
-/// Reference values computed using numerical integration of the BPSK capacity formula.
-/// Format: (Eb/N0 in dB, expected capacity in bits/symbol)
-const REFERENCE_CAPACITY_VALUES: &[(f64, f64)] = &[
-    // Very low SNR
-    (-2.0, 0.348879),
-    (0.0, 0.485944),
-    // Moderate SNR
-    (3.0, 0.720661),
-    (6.0, 0.911880),
-    (9.0, 0.990164),
-    // High SNR
-    (12.0, 0.999854),
-    (15.0, 1.000000),
+/// - Rates 1/3, 1/2, 2/3, 3/4: [Lentmaier2010] Table II, column
+///   `(Eb/N0)_sh`, printed to 0.001 dB.
+/// - Rates 1/6, 1/4: [Ccsds2020] §3.3 (vertical asymptotes of Figure 3-3),
+///   printed to 0.1 dB.
+const PUBLISHED_SHANNON_LIMITS: &[(f64, f64, f64)] = &[
+    (1.0 / 6.0, -1.1, 0.051),
+    (0.25, -0.8, 0.051),
+    (1.0 / 3.0, -0.495, 0.0015),
+    (0.5, 0.187, 0.0015),
+    (2.0 / 3.0, 1.059, 0.0015),
+    (0.75, 1.626, 0.0015),
 ];
 
 #[test]
-fn test_capacity_at_reference_points() {
-    for &(eb_n0_db, expected) in REFERENCE_CAPACITY_VALUES {
-        let capacity = shannon_capacity(eb_n0_db);
-        let error = (capacity - expected).abs();
-
-        // Allow 0.1% relative error for numerical stability
-        let tolerance = expected * 0.001;
+fn test_capacity_and_dispersion_match_reference_quadrature() {
+    for &(es_n0_db, c_ref, v_ref) in REFERENCE_CAPACITY_DISPERSION {
+        let c = bi_awgn_capacity(es_n0_db);
+        let v = bi_awgn_dispersion(es_n0_db);
         assert!(
-            error < tolerance,
-            "Capacity mismatch at Eb/N0={} dB: expected {}, got {} (error: {})",
-            eb_n0_db,
-            expected,
-            capacity,
-            error
+            (c - c_ref).abs() < 1e-9,
+            "C at Es/N0 = {es_n0_db} dB: got {c}, reference {c_ref}"
+        );
+        assert!(
+            (v - v_ref).abs() < 1e-9,
+            "V at Es/N0 = {es_n0_db} dB: got {v}, reference {v_ref}"
         );
     }
 }
 
 #[test]
-fn test_capacity_monotonic_with_snr() {
-    let eb_n0_values = vec![-2.0, 0.0, 2.0, 4.0, 6.0, 8.0, 10.0];
-
-    let mut prev_capacity = 0.0;
-    for &eb_n0_db in &eb_n0_values {
-        let capacity = shannon_capacity(eb_n0_db);
+fn test_shannon_limit_matches_published_values() {
+    for &(rate, published_db, tol_db) in PUBLISHED_SHANNON_LIMITS {
+        let limit_db = shannon_limit(rate);
         assert!(
-            capacity > prev_capacity,
-            "Capacity should increase with Eb/N0: at {} dB got {}, previous was {}",
-            eb_n0_db,
-            capacity,
-            prev_capacity
-        );
-        prev_capacity = capacity;
-    }
-}
-
-#[test]
-fn test_capacity_bounds() {
-    // Capacity must be in [0, 1] for all valid SNR values
-    for eb_n0_db in [-5.0, -2.0, 0.0, 3.0, 6.0, 9.0, 15.0, 20.0] {
-        let capacity = shannon_capacity(eb_n0_db);
-        assert!(
-            (0.0..=1.0).contains(&capacity),
-            "Capacity out of bounds at Eb/N0={} dB: {}",
-            eb_n0_db,
-            capacity
+            (limit_db - published_db).abs() <= tol_db,
+            "rate {rate}: shannon_limit = {limit_db} dB, published {published_db} ± {tol_db} dB"
         );
     }
 }
 
 #[test]
-fn test_capacity_approaches_zero_at_low_snr() {
-    let capacity = shannon_capacity(-10.0);
+fn test_shannon_limit_approaches_ultimate_limit_at_low_rate() {
+    let ultimate_db = 10.0 * std::f64::consts::LN_2.log10();
+    let limit_db = shannon_limit(1e-3);
     assert!(
-        capacity < 0.2,
-        "Capacity should be small at very low SNR, got {}",
-        capacity
+        limit_db > ultimate_db && limit_db - ultimate_db < 0.01,
+        "rate 1e-3: {limit_db} dB, ultimate limit {ultimate_db} dB"
     );
 }
 
 #[test]
-fn test_capacity_approaches_one_at_high_snr() {
-    let capacity = shannon_capacity(20.0);
-    assert!(capacity > 0.99, "Capacity should approach 1.0 at high SNR");
+fn test_shannon_limit_is_infinite_at_rate_one() {
+    assert_eq!(shannon_limit(1.0), f64::INFINITY);
 }
 
 #[test]
-fn test_shannon_limit_for_rate_half() {
-    let rate = 0.5;
-    let eb_n0_min = shannon_limit(rate);
-
-    // Theoretical Shannon limit for rate 1/2 is approximately 0.19 dB
-    assert!(
-        eb_n0_min > -0.5 && eb_n0_min < 0.5,
-        "Shannon limit for rate 1/2 should be near 0.19 dB, got {}",
-        eb_n0_min
-    );
+#[should_panic(expected = "rate must be in (0, 1]")]
+fn test_shannon_limit_rejects_zero_rate() {
+    shannon_limit(0.0);
 }
 
 #[test]
-fn test_shannon_limit_for_various_rates() {
-    // Test that Shannon limit increases with rate
-    let rates = vec![0.25, 0.5, 0.75, 0.9];
-    let mut prev_limit = f64::NEG_INFINITY;
-
-    for &rate in &rates {
-        let limit = shannon_limit(rate);
-        assert!(
-            limit > prev_limit,
-            "Shannon limit should increase with rate: at rate {} got {} dB, previous was {}",
-            rate,
-            limit,
-            prev_limit
-        );
-        prev_limit = limit;
+fn test_ebn0_esn0_offset_is_rate_aware() {
+    for &(m, rate) in &[(1usize, 0.9), (1, 1.0 / 3.0), (4, 0.5), (6, 0.75)] {
+        let es_n0 = ebn0_to_esn0(2.0, m, rate);
+        let offset = 10.0 * (m as f64 * rate).log10();
+        assert!((es_n0 - 2.0 - offset).abs() < 1e-12);
+        assert!((esn0_to_ebn0(es_n0, m, rate) - 2.0).abs() < 1e-12);
     }
 }
 
 #[test]
-fn test_shannon_limit_consistency() {
-    // Verify that capacity at Shannon limit equals the target rate
-    for &rate in &[0.25, 0.5, 0.75, 0.9] {
-        let eb_n0_limit = shannon_limit(rate);
-        let capacity = shannon_capacity(eb_n0_limit);
-
-        let error = (capacity - rate).abs();
+fn test_esn0_agrees_with_modem_link_noise_variance() {
+    // Unit-energy real BPSK: sigma² = N0/2 = 1/(2·Es/N0).
+    for &(rate, eb_n0_db) in &[(0.9, 3.0), (1.0 / 3.0, -0.5), (0.5, 1.0)] {
+        let es_n0_lin = 10.0_f64.powf(ebn0_to_esn0(eb_n0_db, 1, rate) / 10.0);
+        let sigma_sq = unit_energy_sigma_sq_from_eb_n0_db(1, rate, eb_n0_db);
         assert!(
-            error < 0.002,
-            "Capacity at Shannon limit should equal rate: rate={}, limit={} dB, capacity={}, error={}",
-            rate, eb_n0_limit, capacity, error
+            (sigma_sq - 1.0 / (2.0 * es_n0_lin)).abs() < 1e-12 * sigma_sq,
+            "rate {rate}, Eb/N0 {eb_n0_db} dB"
         );
     }
 }
 
 #[test]
-fn test_shannon_limit_for_rate_one() {
-    let rate = 1.0;
-    let eb_n0_min = shannon_limit(rate);
-
-    // For rate 1.0, Shannon limit approaches infinity (need infinite SNR)
-    // But for BPSK, practical limit is very high
-    assert!(
-        eb_n0_min > 5.0,
-        "Shannon limit for rate 1.0 should be high, got {} dB",
-        eb_n0_min
-    );
+fn test_dispersion_vanishes_at_high_snr() {
+    assert!(bi_awgn_dispersion(20.0) < 1e-12);
+    assert!(bi_awgn_capacity(20.0) > 1.0 - 1e-12);
 }
 
-#[test]
-fn test_capacity_with_different_rates() {
-    // This test no longer makes sense since capacity doesn't take rate
-    // Shannon capacity is a property of the channel alone
-    // We test that capacity increases with SNR instead
-    let capacity_low = shannon_capacity(0.0);
-    let capacity_high = shannon_capacity(6.0);
-
-    assert!(capacity_high > capacity_low);
-}
-
-#[cfg(test)]
 mod property_tests {
     use super::*;
     use proptest::prelude::*;
 
     proptest! {
         #[test]
-        fn capacity_always_in_unit_interval(
-            eb_n0_db in -5.0..20.0
-        ) {
-            let capacity = shannon_capacity(eb_n0_db);
-            prop_assert!((0.0..=1.0).contains(&capacity));
-        }
-
-        #[test]
-        fn capacity_increases_with_snr(
-            eb_n0_low in -5.0..10.0,
+        fn capacity_in_unit_interval_and_increasing(
+            es_n0_db in -20.0..20.0,
             delta in 0.1..5.0
         ) {
-            let eb_n0_high = eb_n0_low + delta;
-            let cap_low = shannon_capacity(eb_n0_low);
-            let cap_high = shannon_capacity(eb_n0_high);
-            prop_assert!(cap_high > cap_low);
+            let low = bi_awgn_capacity(es_n0_db);
+            let high = bi_awgn_capacity(es_n0_db + delta);
+            prop_assert!((0.0..=1.0).contains(&low));
+            prop_assert!(high > low || high == 1.0);
         }
 
         #[test]
-        fn shannon_limit_achieves_rate(
-            rate in 0.2..0.95
-        ) {
-            let limit = shannon_limit(rate);
-            let capacity = shannon_capacity(limit);
-            let error = (capacity - rate).abs();
-            prop_assert!(error < 0.002, "Error {} exceeds tolerance for rate {}", error, rate);
+        fn dispersion_nonnegative(es_n0_db in -20.0..20.0) {
+            prop_assert!(bi_awgn_dispersion(es_n0_db) >= 0.0);
+        }
+
+        #[test]
+        fn capacity_at_shannon_limit_equals_rate(rate in 0.02..0.98) {
+            let limit_db = shannon_limit(rate);
+            let c = bi_awgn_capacity(ebn0_to_esn0(limit_db, 1, rate));
+            prop_assert!((c - rate).abs() < 1e-9, "rate {}: C = {}", rate, c);
         }
 
         #[test]
         fn shannon_limit_increases_with_rate(
-            rate_low in 0.2f64..0.75f64,
-            delta in 0.05f64..0.15f64
+            rate_low in 0.02f64..0.9f64,
+            delta in 0.01f64..0.08f64
         ) {
-            let rate_high = (rate_low + delta).min(0.95);
-            // Only test if rates are sufficiently different
-            if rate_high - rate_low < 0.03 {
-                return Ok(());
-            }
-            let limit_low = shannon_limit(rate_low);
-            let limit_high = shannon_limit(rate_high);
-            prop_assert!(limit_high > limit_low - 0.01,
-                "Shannon limit should increase: rate {} -> {} gave {} -> {} dB",
-                rate_low, rate_high, limit_low, limit_high);
+            prop_assert!(shannon_limit(rate_low + delta) > shannon_limit(rate_low));
         }
     }
 }

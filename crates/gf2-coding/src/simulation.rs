@@ -2883,7 +2883,7 @@ where
         // that heartbeat and snr_completed events carry the SNR fields.
         #[cfg(feature = "sim-observability")]
         let _snr_span_guard = {
-            let es_n0_db = eb_n0_db + 10.0 * (k as f64 / n as f64).log10();
+            let es_n0_db = crate::info_theory::ebn0_to_esn0(eb_n0_db, 1, k as f64 / n as f64);
             tracing::info_span!(
                 "snr_point",
                 eb_n0_db = eb_n0_db,
@@ -3663,7 +3663,7 @@ impl SimulationRunner {
             let _snr_guard = tracing::info_span!(
                 "snr_point",
                 eb_n0_db = eb_n0_db,
-                es_n0_db = eb_n0_db + 10.0 * (k as f64 / n as f64).log10(),
+                es_n0_db = crate::info_theory::ebn0_to_esn0(eb_n0_db, 1, k as f64 / n as f64),
                 frames_target = config.max_frames,
                 errors_target = config.min_errors,
             )
