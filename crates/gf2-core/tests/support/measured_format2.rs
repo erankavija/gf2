@@ -30,8 +30,8 @@ pub(crate) fn omitted_fields_section(family: &str, fields: &[&str]) -> CoreTunin
     match measured.measurement {
         MeasurementProvenance::Calibrated { receipt, .. } => {
             // Strict registry reopen above validates the committed owner's
-            // harness token through the codec's named prepublication boundary.
-            // The current producer token may advance before atomic publication.
+            // harness token through the named `PREPUBLICATION_HARNESS_SCHEMA`
+            // boundary (jit:a83583e0; premeasurement protocol §9).
             assert_eq!(receipt.as_str(), MEASURED_RECEIPT);
         }
         MeasurementProvenance::Inherited => panic!("measured core section is not inherited"),

@@ -1476,9 +1476,10 @@ impl CorePresence {
 
 #[cfg(feature = "tuning-profile")]
 const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v4";
-// Named prepublication boundary for jit:a83583e0. The repository's current
-// measured owner is v3 while the cumulative v4 campaign is prepared. Remove
-// this acceptance atomically with publication of the v4 owner envelope.
+// Named `PREPUBLICATION_HARNESS_SCHEMA` boundary (jit:a83583e0): the codec
+// accepts `tuning-calibration-v3` alongside the current v4 harness and
+// rejects every other token. Tracked removal condition: premeasurement
+// protocol §9 (dev/active/a83583e0/premeasurement-protocol.md).
 #[cfg(feature = "tuning-profile")]
 const PREPUBLICATION_HARNESS_SCHEMA: &str = "tuning-calibration-v3";
 
