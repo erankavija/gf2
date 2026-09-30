@@ -119,7 +119,7 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-09-29T19:44:18.123109003Z",
+      "updated_at": "2026-09-30T20:59:17.399966805Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -139,5 +139,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-09-30T20:55:11.608795382Z"
+  "updated_at": "2026-09-30T20:59:17.399966805Z"
 }
