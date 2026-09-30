@@ -2891,7 +2891,7 @@ mod vec_tests {
 /// Storing each column as a contiguous [`Bipedal3Vec`] allows those
 /// algorithms to `column(j)` without scatter-gather, matching the access
 /// pattern of the R3 multi-word streaming design
-/// (`dev/plans/60c30e2d/r3_multi_word_streaming.md` §2.1).
+/// (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md` §2.1).
 ///
 /// # Mask-tail invariant
 ///
