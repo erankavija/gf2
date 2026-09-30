@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 27,
-  "wave_notes": "Wave 27 executes a83583e0. Session 14 (2026-09-28): option C implemented and committed at 15d47f3bc (protocol section 7, truthful HostAdmissionPolicy in driver and validator, descriptive held-lock HostObservation, producing manifest covers host.rs/process.rs and linked support modules). Premeasurement gates cargo-ci, code-review and doc-review passed. Interactive launch stopped before LockHeld because ccx1-bench-flock.sh only locks inside the overnight benchmark window; zero-work attempt preserved under dev/active/a83583e0/failed-attempts/. Fresh campaign queued (eebbc778c) in the 1a379447 bench-window queue after the M4RI pilot, pinned worktree .agents/worktrees/agent-a83583e0-run, timer gf2-bench-window-20260929 at 2026-09-28T23:00Z.",
+  "wave_notes": "Wave 27 executes a83583e0. Session 15 (2026-09-30): 2026-09-29 window campaign measured all phases then failed at core emit-owner on an uppercase run ID (not a ProfileId). Fixed (1b30a5f29), publication step added and bulk evidence moved to a git-ignored host-local archive with a 1 MiB committed-file limit (47da059e7, 9cf955df8), seven driver/validator mismatches fixed (9cf955df8), REQ-03 amended with invoker approval (7982d2c6f), prose fix (21790510c). code-review now fails only on the not-yet-executed campaign. Fresh campaign queued; worktree agent-a83583e0-run at 21790510c; timer gf2-bench-window-20261001 at 2026-09-30T23:00Z.",
   "open_escalations": [],
   "waves": [
     {
@@ -462,8 +462,8 @@
           "short_id": "a83583e0",
           "title": "Design and implement the extent-sweep protocol",
           "classification": "implementation",
-          "model": "opus",
-          "status": "planned",
+          "model": "opus; session 15: claude-opus workers, claude-sonnet prose fix",
+          "status": "awaiting-window-measurement",
           "notes": "tuning_calibration.rs \u2014 schedule after 389aa4de lands (same bench file)"
         },
         {
@@ -774,8 +774,8 @@
           "short_id": "a83583e0",
           "title": "Design and implement the extent-sweep protocol",
           "classification": "implementation",
-          "model": "gpt-5.6-sol xhigh; gpt-5.6-terra high review/rework",
-          "status": "paused-after-owner-decision",
+          "model": "gpt-5.6-sol xhigh; gpt-5.6-terra high review/rework; session 15: claude-opus workers, claude-sonnet prose fix",
+          "status": "awaiting-window-measurement",
           "notes": "Claimed by the execution lead after eaae1b56 closed. The exact premeasurement protocol passed independent review and is committed at 07090b4b. Premeasurement tooling is committed at ecd85315. Rework 1 closed a driver/validator canonical staging-path mismatch and passed independent re-review. The invoker selected option C: static host-admission policy binding is sufficient; protocol section 7 must be amended before gates or measurement. Sol implementation and Terra read-only audit dispatches were interrupted immediately on the invoker's handoff-and-stop direction and made no file changes. The user prohibited Astra-class subagents; current and future dispatch uses Sol/Terra/Luna tiers only."
         }
       ],
@@ -1274,7 +1274,7 @@
     "389aa4de": 1,
     "06ba0418": 0,
     "eaae1b56": 1,
-    "a83583e0": 1
+    "a83583e0": 2
   },
   "surfaced_pitfalls": [
     {
