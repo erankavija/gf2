@@ -106,10 +106,10 @@ __global__ void permanent_bipedal5_kernel(const unsigned char* __restrict__ matr
     // Range guards ordered so n == 0 is handled correctly before the
     // out-of-range rejection.
     //
-    // Supported range: 1 <= n <= 63 (post 2026-05-15 CPU/GPU consistency
-    // narrowing; the CPU reference permanent_bipedal5_singleword was
-    // correspondingly narrowed). GPU sequential Gray walk at n=64 would
-    // take ~600 years on gfx1030 — infeasible.
+    // Supported range: 1 <= n <= 63. The CPU reference
+    // permanent_bipedal5_singleword has the same bound, n <= 63. GPU
+    // sequential Gray walk at n=64 would take ~600 years on gfx1030 —
+    // infeasible.
     //
     // Empty-matrix case (n == 0): permanent of the empty matrix is 1
     // (vacuous product). The host wrapper rejects n <= 0 before launch,
@@ -231,8 +231,8 @@ __global__ void permanent_bipedal5_kernel(const unsigned char* __restrict__ matr
 //   n            — matrix dimension (square, n×n); must satisfy 1 <= n <= 63.
 //                  n=64 is excluded: the GPU sequential Gray walk at n=64 would
 //                  take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps).
-//                  The CPU reference was narrowed to n ≤ 63 on 2026-05-15 for
-//                  CPU/GPU consistency.
+//                  The CPU reference permanent_bipedal5_singleword has the
+//                  same bound, n <= 63.
 //   m            — batch size (number of matrices).
 //   out_ptr      — device pointer to M uint64_t outputs.
 //

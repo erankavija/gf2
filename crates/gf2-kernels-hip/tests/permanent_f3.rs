@@ -160,9 +160,8 @@ fn test_permanent_bipedal3_gpu_bit_identity_n40() {
 /// n=63 is the maximum supported by the GPU kernel (`1 <= n <= 63`). At n=64
 /// the sequential Gray walk would require 2^64 ≈ 1.8×10^19 steps (~600 years
 /// on gfx1030); that dimension is excluded from the GPU path. The CPU
-/// reference (`permanent_bipedal3_singleword`) was narrowed to n ≤ 63 on
-/// 2026-05-15 for CPU/GPU consistency. This test catches any future
-/// regression at the boundary.
+/// reference `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
+/// This test catches any future regression at the boundary.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn test_permanent_bipedal3_gpu_bit_identity_n63() {
