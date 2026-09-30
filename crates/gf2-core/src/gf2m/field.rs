@@ -234,9 +234,8 @@ impl<V: UintExt> Gf2mField_<V> {
     ///
     /// # Panics
     ///
-    /// Panics if `m == 0` or `m >= V::BITS` (the leading coefficient at bit `m`
-    /// would not fit in `V`, even though the stored value represents only the
-    /// lower `m` bits of the reduction polynomial).
+    /// Panics if `m == 0` or `m >= V::BITS` (the polynomial is stored with its
+    /// leading coefficient explicit at bit `m`, which must fit in `V`).
     ///
     /// # Example
     ///

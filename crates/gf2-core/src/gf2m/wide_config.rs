@@ -17,8 +17,13 @@
 //! The irreducible polynomial is stored as its **low-order `M` bits** in
 //! `MODULUS`, packed little-endian across `N` `u64` words (bit `i` lives in
 //! `MODULUS[i >> 6]` at position `1u64 << (i & 63)`). The leading coefficient
-//! at bit `M` is **implicit and always 1**, matching the convention already
-//! used by [`crate::gf2m::Gf2mField_::new`]. The invariant
+//! at bit `M` is **implicit and always 1**. The single-word carrier
+//! [`crate::gf2m::Gf2mField_::new`] differs: its polynomial stores the
+//! leading term explicitly at bit `m` (`x^4 + x + 1` is `0b10011`), and
+//! [`crate::field::extension::BinaryPrimeExt::new`] reads that bit to build
+//! the monic modulus. The field identity of a `Gf2mWide` appends the implicit
+//! leading coefficient, so both carriers name the same monic modulus. The
+//! invariant
 //! `64 * (N - 1) < M <= 64 * N` ensures every `[u64; N]` modulus word is
 //! meaningful and that no bit of a reduced element sits above the top word.
 //!
