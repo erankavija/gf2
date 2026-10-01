@@ -75,8 +75,8 @@
 
 **Integration**:
 - LDPC encoder uses `ComputeBackend::batch_matvec_transpose`
-- BCH encoder batch APIs: legacy `BchEncoder::encode_batch()`; canonical
-  `BchCode::{encode_batch, encode_batch_parallel}` in `bch::encode`
+- BCH encoder batch APIs: `BchCode::{encode_batch, encode_batch_parallel}` in
+  `bch::encode`
 - Richardson-Urbanke encoding uses backend for parallel operations
 - Zero breaking changes (all 221 tests pass)
 

@@ -3,11 +3,13 @@
 //! rungs 4-5; design doc §10).
 //!
 //! Rung 4 — DVB-T2 Short (GF(2^14)) and Normal (GF(2^16)) syndrome
-//!   byte-identity: 200 frames per config at a fixed seed, MIXED valid
-//!   codewords (all-zero syndromes), `<= t` correctable errors, and `> t`
-//!   uncorrectable errors. All `2t` u16 syndromes equal the CPU
-//!   `BchDecoder::compute_syndromes` with ZERO tolerance (exact integer GF
-//!   arithmetic — no ULP drift, unlike LDPC).
+//!   byte-identity: 200 shortened frames per config at a fixed seed, MIXED
+//!   valid codewords (all-zero syndromes), `<= t` correctable errors, and
+//!   `> t` uncorrectable errors, each written into its mother code's
+//!   coordinates. All `2t` u16 syndromes of
+//!   `BinaryBchDecoder::compute_syndromes_batch_gpu` equal the CPU sums
+//!   `S_j = sum_i r_i beta^{ij}`, `j = 1..=2t`, with ZERO tolerance (exact
+//!   integer GF arithmetic — no ULP drift, unlike LDPC).
 //! Rung 5 — outcome identity: over the canonical construction model,
 //!   `BinaryBchDecoder::correct_batch_gpu` reports the same
 //!   `BchDecodeOutcome` and leaves the same corrected word as the per-word CPU
@@ -22,16 +24,14 @@
 
 #![cfg(feature = "hip")]
 
-use gf2_coding::bch::dvb_t2::{DvbBchParams, FrameSize};
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbBchParams, DvbT2BchCode, FrameSize};
 use gf2_coding::bch::spec::{BchSpec, DesignedDistance};
-use gf2_coding::bch::{
-    BchCode, BchDecodeOutcome, BchDecoder, BchEncoder, BinaryBchCode, BinaryBchDecoder,
-};
-use gf2_coding::traits::BlockEncoder;
+use gf2_coding::bch::{BchDecodeOutcome, BinaryBchCode, BinaryBchDecoder};
+use gf2_coding::traits::block::{BlockCode, BlockEncoder};
 use gf2_coding::CodeRate;
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::field::FiniteField;
-use gf2_core::gf2m::Gf2mField;
+use gf2_core::gf2m::{Gf2mElement, Gf2mField};
 use gf2_core::BitVec;
 use gf2_kernels_hip::host::device_mem_info;
 
@@ -81,50 +81,81 @@ fn mixed_error_count(f: usize, t: usize, rng: &mut SplitMix64) -> usize {
 // Rung 4 — the device syndrome evaluator, on the DVB-T2 configurations
 // ---------------------------------------------------------------------------
 
-/// One fixture frame: a valid codeword with a chosen number of bit errors
-/// injected at distinct random positions.
-fn build_frame(encoder: &BchEncoder, k: usize, errors: usize, rng: &mut SplitMix64) -> BitVec {
+/// One fixture frame: a valid shortened codeword with a chosen number of bit
+/// errors injected at distinct random positions.
+fn build_frame(code: &DvbT2BchCode, errors: usize, rng: &mut SplitMix64) -> BitVec {
     // Random message, systematic encode -> valid codeword.
-    let mut msg = BitVec::zeros(k);
-    for i in 0..k {
+    let mut msg = BitVec::zeros(code.k());
+    for i in 0..code.k() {
         if rng.next_u64() & 1 == 1 {
             msg.set(i, true);
         }
     }
-    let mut cw = encoder.encode(&msg);
+    let mut cw = code.encode(&msg).expect("a K_bch-bit message encodes");
     inject(&mut cw, errors, rng);
     cw
 }
 
+/// Writes a shortened word into the mother code's internal coordinates, where
+/// coordinate `i` carries the coefficient of `x^i`; the removed coordinates
+/// carry zero.
+fn lift(code: &DvbT2BchCode, word: &BitVec) -> BitVec {
+    let map = code.coordinate_map();
+    let plan = code.mother().plan();
+    let mut lifted = BitVec::zeros(code.mother().code().n());
+    for derived in 0..word.len() {
+        let user = map.mother_position(derived).expect("a kept coordinate");
+        let internal = plan.internal_coordinate(user).expect("a mother coordinate");
+        lifted.set(internal, word.get(derived));
+    }
+    lifted
+}
+
+/// The CPU syndromes `S_j = sum_i r_i beta^{ij}` for `j = 1..=count`.
+fn cpu_syndromes(word: &BitVec, root: &Gf2mElement, count: usize) -> Vec<Gf2mElement> {
+    let zero = root.field().zero();
+    let mut point = root.clone();
+    let mut syndromes = Vec::with_capacity(count);
+    for _ in 0..count {
+        let mut sum = zero.clone();
+        let mut power = root.field().one();
+        for index in 0..word.len() {
+            if word.get(index) {
+                sum = &sum + &power;
+            }
+            power = &power * &point;
+        }
+        syndromes.push(sum);
+        point = &point * root;
+    }
+    syndromes
+}
+
 /// Builds the 200-frame mixed population for one config: ~1/3 valid, ~1/3
 /// `<= t` errors, ~1/3 `> t` errors (deterministic per seed).
-fn mixed_population(
-    encoder: &BchEncoder,
-    k: usize,
-    t: usize,
-    frames: usize,
-    seed: u64,
-) -> Vec<BitVec> {
+fn mixed_population(code: &DvbT2BchCode, t: usize, frames: usize, seed: u64) -> Vec<BitVec> {
     let mut rng = SplitMix64::new(seed);
     let mut out = Vec::with_capacity(frames);
     for f in 0..frames {
         let errors = mixed_error_count(f, t, &mut rng);
-        out.push(build_frame(encoder, k, errors, &mut rng));
+        out.push(build_frame(code, errors, &mut rng));
     }
     out
 }
 
 fn run_syndrome_identity(frame_size: FrameSize, label: &str) {
-    let code = BchCode::dvb_t2(frame_size, CodeRate::Rate1_2);
-    let k = code.k();
-    let t = code.t();
+    let code = dvb_t2_bch_code(frame_size, CodeRate::Rate1_2).expect("a standard configuration");
+    let mother = code.mother().code();
+    let t = mother.correction_radius();
     let two_t = 2 * t;
-    let encoder = BchEncoder::new(code.clone());
-    let decoder = BchDecoder::new(code);
+    let decoder = BinaryBchDecoder::new(mother);
 
     let frames = 200usize;
     let seed = 0x9012_F8A0_0000_0001 ^ (label.len() as u64);
-    let population = mixed_population(&encoder, k, t, frames, seed);
+    let population: Vec<BitVec> = mixed_population(&code, t, frames, seed)
+        .iter()
+        .map(|word| lift(&code, word))
+        .collect();
 
     // GPU syndromes == CPU syndromes, every frame, zero tolerance.
     let gpu_syndromes = decoder
@@ -132,7 +163,7 @@ fn run_syndrome_identity(frame_size: FrameSize, label: &str) {
         .expect("GPU syndrome batch");
     assert_eq!(gpu_syndromes.len(), frames);
     for (f, frame) in population.iter().enumerate() {
-        let cpu = decoder.compute_syndromes(frame);
+        let cpu = cpu_syndromes(frame, mother.root(), two_t);
         let gpu = &gpu_syndromes[f];
         assert_eq!(gpu.len(), two_t, "{label} frame {f}: syndrome count");
         for i in 0..two_t {

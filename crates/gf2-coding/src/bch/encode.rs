@@ -2916,9 +2916,7 @@ where
 mod tests {
     use super::*;
     use crate::bch::spec::{BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent};
-    use crate::bch::{BchCode as LegacyBchCode, BchEncoder as LegacyBchEncoder};
     use crate::traits::block::conformance;
-    use crate::traits::compat::binary_v1::BlockEncoder as V1BlockEncoder;
     use gf2_core::field::extension::BinaryPrimeExt;
     use gf2_core::field::modulus_select::select_modulus;
     use gf2_core::field::ConstField;
@@ -2929,7 +2927,7 @@ mod tests {
 
     /// The binary parameter points the construction suite pins, as
     /// `(m, primitive polynomial, n, k, t)`.
-    const LEGACY_BINARY_POINTS: &[(usize, u64, usize, usize, usize)] = &[
+    const BINARY_POINTS: &[(usize, u64, usize, usize, usize)] = &[
         (3, 0b1011, 7, 4, 1),
         (4, 0b10011, 15, 11, 1),
         (4, 0b10011, 15, 7, 2),
@@ -3095,10 +3093,10 @@ mod tests {
 
         #[test]
         fn prop_binary_encoding_produces_codewords(
-            point in 0usize..LEGACY_BINARY_POINTS.len(),
+            point in 0usize..BINARY_POINTS.len(),
             seed: u64,
         ) {
-            let (m, modulus, _, _, t) = LEGACY_BINARY_POINTS[point];
+            let (m, modulus, _, _, t) = BINARY_POINTS[point];
             let code = binary_narrow_sense(m, modulus, 2 * t as u64 + 1);
             let message = seeded_bits(code.k(), seed);
             for &layout in LAYOUTS {
@@ -3130,33 +3128,42 @@ mod tests {
         }
     }
 
-    // -- REQ-03: agreement with the current binary encoder -----------------
+    // -- REQ-03: the descending layout is the transmission order ------------
 
     #[test]
-    fn binary_encoding_agrees_with_the_legacy_encoder() {
-        for &(m, modulus, n, k, t) in LEGACY_BINARY_POINTS {
+    fn the_descending_layout_puts_the_highest_degree_first() {
+        for &(m, modulus, n, k, t) in BINARY_POINTS {
             let code = binary_narrow_sense(m, modulus, 2 * t as u64 + 1);
             assert_eq!((code.n(), code.k()), (n, k));
 
-            let legacy =
-                LegacyBchEncoder::new(LegacyBchCode::new(n, k, t, Gf2mField::new(m, modulus)));
             for seed in 0..4u64 {
                 let message = seeded_bits(k, seed | 1);
-                let expected = V1BlockEncoder::encode(&legacy, &message);
-                let actual = code
+                let codeword = code
                     .encode_systematic(&message, SystematicLayout::MessageParityDescending)
                     .expect("a k-bit message encodes");
-                assert_eq!(
-                    actual, expected,
-                    "BCH({n}, {k}, {t}) must agree bit for bit under the declared layout"
+                // Bit u carries the coefficient of x^{n-1-u}: the message
+                // fills the top k degrees and the generator divides the word.
+                let polynomial = FieldPoly::new(
+                    (0..n)
+                        .map(|degree| Fp::<2>::new(u64::from(codeword.get(n - 1 - degree))))
+                        .collect(),
                 );
+                let (_, remainder) = polynomial.div_rem(code.generator());
+                assert!(remainder.is_zero(), "BCH({n}, {k}, {t}) seed {seed}");
+                for position in 0..k {
+                    assert_eq!(
+                        codeword.get(position),
+                        message.get(position),
+                        "BCH({n}, {k}, {t}) seed {seed} message bit {position}"
+                    );
+                }
             }
         }
     }
 
     #[test]
     fn the_packed_path_agrees_with_the_field_generic_reference() {
-        for &(m, modulus, _, _, t) in LEGACY_BINARY_POINTS {
+        for &(m, modulus, _, _, t) in BINARY_POINTS {
             let designed_distance = 2 * t as u64 + 1;
             let packed = binary_narrow_sense(m, modulus, designed_distance);
             let reference = dense_binary_narrow_sense(m, modulus, designed_distance);
@@ -3569,10 +3576,10 @@ mod tests {
 
         #[test]
         fn prop_every_binary_path_writes_one_codeword(
-            point in 0usize..LEGACY_BINARY_POINTS.len(),
+            point in 0usize..BINARY_POINTS.len(),
             seed: u64,
         ) {
-            let (m, modulus, _, _, t) = LEGACY_BINARY_POINTS[point];
+            let (m, modulus, _, _, t) = BINARY_POINTS[point];
             let code = binary_narrow_sense(m, modulus, 2 * t as u64 + 1);
             let messages = seeded_bit_batch(code.k(), 9, seed);
             for &layout in LAYOUTS {

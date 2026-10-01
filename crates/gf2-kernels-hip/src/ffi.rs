@@ -355,8 +355,8 @@ extern "C" {
     /// For each frame and each evaluation point `α^(i+1)` (`i = 0..two_t-1`),
     /// computes the syndrome `S_{i+1} = r(α^(i+1))` by Horner's rule over
     /// GF(2^m) using the uploaded `exp` / `log` tables. One device thread per
-    /// `(frame, point)`. Byte-identical to the CPU
-    /// `BchDecoder::compute_syndromes` path (design doc §5, §6, §10).
+    /// `(frame, point)`. Byte-identical to the CPU syndrome evaluation of
+    /// `gf2_coding::bch::BinaryBchDecoder` (design doc §5, §6, §10).
     ///
     /// # Arguments
     /// - `d_coeffs`: device ptr, `[batch_size * words_per_frame]` u64 packed

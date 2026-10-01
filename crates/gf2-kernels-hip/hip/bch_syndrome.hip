@@ -1,7 +1,7 @@
 // Device-side batch BCH syndrome evaluator (design doc §5, §6, §10).
 //
-// Reproduces, bit-for-bit, the CPU `gf2_coding::bch::BchDecoder::compute_syndromes`
-// path: for each received polynomial r(x) and each evaluation point α^(i+1)
+// Reproduces, bit-for-bit, the CPU syndrome evaluation of
+// `gf2_coding::bch::BinaryBchDecoder`: for each received polynomial r(x) and each evaluation point α^(i+1)
 // (i = 0..2t-1), the syndrome S_{i+1} = r(α^(i+1)) is computed by Horner's rule
 // over GF(2^m). Berlekamp-Massey and Chien search stay on the CPU (issue
 // background); this kernel is ONLY the syndrome-evaluation sub-step.
