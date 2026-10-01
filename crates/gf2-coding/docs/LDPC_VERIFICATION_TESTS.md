@@ -258,7 +258,6 @@ If decoding tests fail:
 - **Implementation**: Phase C10.6 (Richardson-Urbanke systematic encoding)
 - **Related Docs**:
   - [DVB_T2.md](DVB_T2.md) - DVB-T2 implementation and verification status
-  - [ROADMAP.md](../ROADMAP.md) - Phase C10.6 implementation plan
   - `tests/dvb_t2_bch_verification.rs` - BCH verification (reference implementation)
 
 ## See Also
