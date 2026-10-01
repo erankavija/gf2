@@ -62,7 +62,7 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-25: Unassociated historical material moves to `dev/archive/legacy/<original-relative-path>`, preserving its original hierarchy beneath `legacy/` for provenance and collision avoidance.
 - D-26: JIT `managed_paths` may be expanded temporarily to cover legacy buckets needed for archival. The final policy contains no obsolete managed path.
 - D-27: Operational research directories consumed by scripts, CI or code remain under `dev/`: `benchmarks`, `bench_results`, `campaigns`, `reference_data`, `research`, `scripts`, `simulation_results`, `studies`, and `tools`. Their loose narrative Markdown is archived or relocated.
-- D-28: `dev/plans` and `dev/presentations` are eliminated through JIT archives, legacy archival, or purpose-specific relocation. The final `dev/` top level contains no obsolete documentation bucket.
+- D-28: `dev/plans`, `dev/presentations` and `dev/sessions` (session notes; planner default during epic planning) are eliminated through JIT archives, legacy archival, or purpose-specific relocation. The final `dev/` top level contains no obsolete documentation bucket.
 - D-29: A complete migration manifest records every pre-overhaul artifact and its disposition. A script monitors migration progress against that manifest.
 - D-30: The progress script is transient. It is removed after the final complete migration check; lasting enforcement comes from invariants and review gates rather than a frozen migration inventory.
 - D-31: Durable documentation rules live as project-scoped JIT invariants. One-time migration outcomes live as addressable epic requirements.
