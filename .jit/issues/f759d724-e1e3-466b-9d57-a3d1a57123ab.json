@@ -7,6 +7,7 @@
   ],
   "description": "Update the prose that references the removed BCH surface — crate README, the systematic-encoding and parallelization documents, and the primitive-polynomial guide — to describe the canonical model in present tense.\n\n## Success Criteria\n\n- [hard] REQ-01: No tracked document under the crates or docs trees references the removed constructors, `ExtendedBchCode`, or the redundant-parameter conventions; updated prose describes the canonical surface in present tense.\n",
   "documents": [],
+  "first_ready_at": "2026-10-01T09:56:42.751845719Z",
   "gates_required": [
     "doc-review"
   ],
@@ -19,7 +20,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Sweep stale prose references to the removed BCH surface",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-10-01T09:56:42.751845719Z"
 }
