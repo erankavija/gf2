@@ -1227,6 +1227,25 @@ generously — it is the only lemma in the sketch that reasons about machine wor
 representation, and the word-boundary branch is exactly where the production
 code needed its own dedicated test (`:3190`).
 
+The landed module reaches three steps by a different route; every lemma
+statement is the one above.
+
+- **L5.3** — the register is a coefficient function `ℕ → B` and `regRun`
+  recurses on the iteration count, mirroring `for degree in (0..k).rev()`.
+  `coeff_step` reaches the closed form through
+  `Polynomial.modByMonic_eq_of_dvd_sub`, subtracting $\text{fb}\cdot g$ and
+  reading coefficients, rather than by substituting
+  $T^{\rho} \equiv -\sum_{i<\rho} g_i T^{i}$.
+- **L5.4** — the maps are stated on `ℕ` in the production's branch form with
+  explicit range hypotheses; `internalAt_ascending_eq_mod` gives the rotation
+  and `Layout.equiv` the permutation of `Fin n`.
+- **L5.6** — words are `BitVec 64` and bits are read with `BitVec.getLsbD`;
+  `Packed.readBit_eq` proves the production's `(x >> s) & 1 == 1` is that read.
+  The feedback is a single-bit read, so the readout lemma holds on the bits
+  below $\rho$ without the mask; the mask's effect, that the register stays
+  clear from degree $\rho$ on in both branches of `packed_tail_mask`, is the
+  separate invariant `Packed.clean_step`.
+
 ### 5. Assumptions
 
 - **A-01** applies; the anchor table is the discharge, with two independent-
