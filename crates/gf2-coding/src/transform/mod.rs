@@ -48,8 +48,7 @@ use std::fmt;
 /// The appended coordinate is the final coordinate, at position `n` in the
 /// derived coordinate space.  Encoding first delegates to the mother and
 /// then appends `-sum(codeword)`.  Thus the binary specialization appends the
-/// overall parity bit and agrees with the legacy extended-BCH convention,
-/// whose parity bit is the last `[message | parity | overall-parity]`
+/// overall parity bit as the last `[message | parity | overall-parity]`
 /// coordinate.
 ///
 /// The wrapper preserves the mother's dimension: its parameters are
@@ -1576,7 +1575,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::RankDerivedMother;
+    use crate::test_support::{
+        constrained_generator, field_matrix_rank, projected_generator, RankDerivedMother,
+    };
     use crate::traits::block::{
         BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess,
     };
@@ -1682,68 +1683,6 @@ mod tests {
                 }
             }
             Ok(self.k() <= self.n())
-        }
-    }
-
-    fn direct_shortened_rank<F>(generator: &FieldMatrix<F>, removed: &[usize]) -> usize
-    where
-        F: FiniteField,
-    {
-        let zero = if generator.rows() > 0 && generator.cols() > 0 {
-            generator.get(0, 0).zero_like()
-        } else {
-            F::zero_hint().expect("test fields have a static zero")
-        };
-        let kept = (0..generator.cols())
-            .filter(|column| !removed.contains(column))
-            .collect::<Vec<_>>();
-        let mut constraints = FieldMatrix::new(removed.len(), generator.rows(), zero.clone());
-        for (row, &column) in removed.iter().enumerate() {
-            for message_row in 0..generator.rows() {
-                constraints.set(row, message_row, generator.get(message_row, column));
-            }
-        }
-        let basis = if removed.is_empty() {
-            identity_basis(generator.rows(), &zero)
-        } else {
-            constraints.nullspace()
-        };
-        let mut result = FieldMatrix::new(basis.len(), kept.len(), zero.clone());
-        for (row, vector) in basis.iter().enumerate() {
-            for (column, &mother_column) in kept.iter().enumerate() {
-                let mut value = zero.zero_like();
-                for message_row in 0..generator.rows() {
-                    value +=
-                        vector.get(message_row).clone() * generator.get(message_row, mother_column);
-                }
-                result.set(row, column, value);
-            }
-        }
-        result.rank()
-    }
-
-    fn direct_punctured_rank<F>(generator: &FieldMatrix<F>, removed: &[usize]) -> usize
-    where
-        F: FiniteField,
-    {
-        let zero = if generator.rows() > 0 && generator.cols() > 0 {
-            generator.get(0, 0).zero_like()
-        } else {
-            F::zero_hint().expect("test fields have a static zero")
-        };
-        let kept = (0..generator.cols())
-            .filter(|column| !removed.contains(column))
-            .collect::<Vec<_>>();
-        let mut projected = FieldMatrix::new(generator.rows(), kept.len(), zero.clone());
-        for row in 0..generator.rows() {
-            for (column, &mother_column) in kept.iter().enumerate() {
-                projected.set(row, column, generator.get(row, mother_column));
-            }
-        }
-        if projected.cols() == 0 {
-            0
-        } else {
-            projected.rank()
         }
     }
 
@@ -2118,61 +2057,6 @@ mod tests {
     }
 
     #[test]
-    fn extension_matches_legacy_extended_bch_parity_position() {
-        use crate::bch::extended::ExtendedBchCode;
-        use crate::bch::BchCode;
-        use gf2_core::gf2m::Gf2mField;
-
-        let field = Gf2mField::new(4, 0b10011).with_tables();
-        let base = BchCode::new(15, 11, 1, field);
-        let mother = LinearBlockCode::new_systematic(
-            crate::traits::GeneratorMatrixAccess::generator_matrix(&base),
-            None,
-        );
-        let extended = Extended::new(mother).unwrap();
-        let legacy = ExtendedBchCode::from_bch(&base);
-
-        for raw_message in [0usize, 1, 0x155, 0x2aa, 0x7ff] {
-            let mut message = BitVec::zeros(extended.k());
-            for position in 0..extended.k() {
-                message.set(position, (raw_message >> position) & 1 == 1);
-            }
-            let actual = extended.encode(&message).unwrap();
-            let expected = crate::traits::BlockEncoder::encode(&legacy, &message);
-            assert_eq!(actual, expected, "message {raw_message}");
-        }
-    }
-
-    #[test]
-    fn extended_parity_check_matches_legacy_extended_bch() {
-        use crate::bch::extended::ExtendedBchCode;
-        let legacy = ExtendedBchCode::ebch_16_11();
-        let legacy_generator = crate::traits::GeneratorMatrixAccess::generator_matrix(&legacy);
-        let legacy_parity = legacy.parity_check();
-
-        let mut mother_generator = BitMatrix::zeros(legacy.k(), legacy.n() - 1);
-        for row in 0..mother_generator.rows() {
-            for column in 0..mother_generator.cols() {
-                mother_generator.set(row, column, legacy_generator.get(row, column));
-            }
-        }
-        let mut mother_parity =
-            BitMatrix::zeros(legacy_parity.rows() - 1, legacy_parity.cols() - 1);
-        for row in 0..mother_parity.rows() {
-            for column in 0..mother_parity.cols() {
-                mother_parity.set(row, column, legacy_parity.get(row, column));
-            }
-        }
-        let mother = LinearBlockCode::new_systematic(mother_generator, Some(mother_parity));
-        let extended = Extended::new(mother).expect("an extended BCH code fits in memory");
-
-        assert_eq!(
-            extended.parity_check_matrix().unwrap(),
-            *legacy.parity_check()
-        );
-    }
-
-    #[test]
     fn nonbinary_extension_parity_check_annihilates_every_codeword() {
         let zero = Fp::<5>::new(0);
         let mother = crate::traits::block::conformance::RepetitionCode::new(3, zero);
@@ -2542,7 +2426,10 @@ mod tests {
                 dense.set(row, column, Fp::<2>::new(generator.get(row, column) as u64));
             }
         }
-        assert_eq!(punctured.k(), direct_punctured_rank(&dense, &[0, 1]));
+        assert_eq!(
+            punctured.k(),
+            field_matrix_rank(&projected_generator(&dense, &[0, 1], &Fp::<2>::new(0)))
+        );
     }
 
     #[test]
@@ -2713,7 +2600,7 @@ mod tests {
                     dense.set(row, column, Fp::<2>::new(generator.get(row, column) as u64));
                 }
             }
-            prop_assert_eq!(shortened.k(), direct_shortened_rank(&dense, &removed));
+            prop_assert_eq!(shortened.k(), field_matrix_rank(&constrained_generator(&dense, &removed, &Fp::<2>::new(0))));
         }
 
         #[test]
@@ -2732,7 +2619,7 @@ mod tests {
                 .collect::<Vec<_>>();
             let code = DenseTestCode { generator: generator.clone(), zero: Fp::<5>::new(0) };
             let shortened = Shortened::new(code, removed.clone()).unwrap();
-            prop_assert_eq!(shortened.k(), direct_shortened_rank(&generator, &removed));
+            prop_assert_eq!(shortened.k(), field_matrix_rank(&constrained_generator(&generator, &removed, &Fp::<5>::new(0))));
         }
 
         #[test]
@@ -2759,7 +2646,7 @@ mod tests {
                     dense.set(row, column, Fp::<2>::new(generator.get(row, column) as u64));
                 }
             }
-            prop_assert_eq!(punctured.k(), direct_punctured_rank(&dense, &removed));
+            prop_assert_eq!(punctured.k(), field_matrix_rank(&projected_generator(&dense, &removed, &Fp::<2>::new(0))));
         }
 
         #[test]
@@ -2777,7 +2664,7 @@ mod tests {
                 .collect::<Vec<_>>();
             let code = DenseTestCode { generator: generator.clone(), zero: Fp::<5>::new(0) };
             let punctured = Punctured::new(code, removed.clone()).unwrap();
-            prop_assert_eq!(punctured.k(), direct_punctured_rank(&generator, &removed));
+            prop_assert_eq!(punctured.k(), field_matrix_rank(&projected_generator(&generator, &removed, &Fp::<5>::new(0))));
         }
 
         #[test]
