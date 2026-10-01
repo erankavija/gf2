@@ -39,12 +39,12 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:cce5da8c/REQ-01",
     "cites:@/citation/Fossorier1995",
-    "cites:@/citation/Yue2022"
+    "cites:@/citation/Yue2022",
+    "satisfies:b7157be6/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Shared OSD reprocessing engine",
-  "updated_at": "2026-10-01T22:41:47.942284289Z"
+  "updated_at": "2026-10-01T23:05:53.028829394Z"
 }

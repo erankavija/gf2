@@ -22,14 +22,10 @@
     "type:task",
     "component:gf2-kernels-simd",
     "component:gf2-core",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "resolution:merged-into-50f0bd42"
   ],
   "priority": "normal",
   "state": "rejected",
   "title": "Measure the profile-selected matvec fusion",
-  "updated_at": "2026-09-16T23:28:54.241776469Z"
+  "updated_at": "2026-10-01T23:05:51.462076617Z"
 }

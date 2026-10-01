@@ -37,12 +37,12 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:cce5da8c/REQ-03",
     "cites:@/citation/Fossorier1995",
-    "cites:@/citation/Roffe2020"
+    "cites:@/citation/Roffe2020",
+    "satisfies:b7157be6/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Syndrome-domain OSD adapter",
-  "updated_at": "2026-10-01T22:41:31.539840421Z"
+  "updated_at": "2026-10-01T23:05:51.320757605Z"
 }

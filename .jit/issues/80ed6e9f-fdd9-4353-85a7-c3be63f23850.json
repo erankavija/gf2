@@ -21,14 +21,10 @@
     "type:task",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "resolution:merged-into-bc091474"
   ],
   "priority": "normal",
   "state": "rejected",
   "title": "Measure the consumer-specific dispatch candidate",
-  "updated_at": "2026-09-16T23:25:30.290831854Z"
+  "updated_at": "2026-10-01T23:05:52.172309800Z"
 }

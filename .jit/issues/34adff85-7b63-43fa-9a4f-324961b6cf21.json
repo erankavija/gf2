@@ -14,7 +14,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-01T22:35:45.296510784Z",
+      "updated_at": "2026-10-01T23:06:13.193302227Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -34,5 +34,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Build rustdoc and run doctests in the Rust CI gate",
-  "updated_at": "2026-10-01T22:41:22.450238692Z"
+  "updated_at": "2026-10-01T23:06:13.193302227Z"
 }

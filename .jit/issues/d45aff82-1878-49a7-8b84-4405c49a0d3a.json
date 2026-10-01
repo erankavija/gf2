@@ -135,10 +135,10 @@
     "type:task",
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01"
+    "satisfies:1a379447/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Provide one shared non-timed arm smoke in the campaign tools",
-  "updated_at": "2026-09-19T15:51:47.633331783Z"
+  "updated_at": "2026-10-01T23:05:54.171004661Z"
 }

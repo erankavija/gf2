@@ -20,14 +20,10 @@
     "type:task",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "resolution:merged-into-c73ffa25"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Record the dense-matvec baseline",
-  "updated_at": "2026-09-16T23:27:38.238302521Z"
+  "updated_at": "2026-10-01T23:05:49.631754154Z"
 }

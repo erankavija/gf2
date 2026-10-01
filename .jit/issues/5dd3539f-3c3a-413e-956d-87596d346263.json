@@ -37,11 +37,11 @@
     "type:task",
     "epic:osd",
     "component:gf2-core",
-    "satisfies:cce5da8c/REQ-01",
-    "cites:@/citation/Fossorier1995"
+    "cites:@/citation/Fossorier1995",
+    "satisfies:b7157be6/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Ordered-column elimination transform",
-  "updated_at": "2026-10-01T22:41:32.808757337Z"
+  "updated_at": "2026-10-01T23:05:51.608472438Z"
 }

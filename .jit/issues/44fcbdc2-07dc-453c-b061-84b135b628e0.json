@@ -20,14 +20,11 @@
     "type:task",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-03",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "resolution:merged-into-50f0bd42",
     "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "normal",
   "state": "rejected",
   "title": "Measure the M4RI dense comparison",
-  "updated_at": "2026-10-01T22:41:26.535544944Z"
+  "updated_at": "2026-10-01T23:05:50.870977779Z"
 }

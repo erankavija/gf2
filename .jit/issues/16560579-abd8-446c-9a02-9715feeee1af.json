@@ -32,8 +32,6 @@
     "component:gf2-core",
     "component:gf2-coding",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
     "story:zen3-shifts-and-permutations",
     "type:breakdown",
     "brackets:c04dd4ac",
@@ -42,5 +40,5 @@
   "priority": "normal",
   "state": "done",
   "title": "breakdown: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-10-01T22:41:14.270501895Z"
+  "updated_at": "2026-10-01T23:05:49.318319952Z"
 }

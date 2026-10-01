@@ -20,13 +20,10 @@
     "type:task",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-02",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "resolution:merged-into-fcb04d66"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Confirm the logical-buffer production outcome",
-  "updated_at": "2026-09-16T23:27:13.456167069Z"
+  "updated_at": "2026-10-01T23:05:53.169410453Z"
 }

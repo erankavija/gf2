@@ -216,14 +216,14 @@
     "component:benchmarks",
     "component:gf2-coding",
     "type:task",
-    "satisfies:d77176e5/REQ-01",
     "cites:@/citation/Cassagne2019",
     "cites:@/citation/Srsran2026",
     "cites:@/citation/Xdsopl2026",
-    "cites:@/citation/OpenAirInterface2026"
+    "cites:@/citation/OpenAirInterface2026",
+    "satisfies:1a379447/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Establish compatible LDPC decoder benchmark arms",
-  "updated_at": "2026-10-01T22:41:53.566196410Z"
+  "updated_at": "2026-10-01T23:05:53.309425828Z"
 }

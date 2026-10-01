@@ -37,12 +37,12 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:cce5da8c/REQ-01",
     "cites:@/citation/Fossorier1995",
-    "cites:@/citation/Yue2022"
+    "cites:@/citation/Yue2022",
+    "satisfies:b7157be6/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Bounded OSD pattern enumeration",
-  "updated_at": "2026-10-01T22:41:35.054087689Z"
+  "updated_at": "2026-10-01T23:05:51.888790240Z"
 }

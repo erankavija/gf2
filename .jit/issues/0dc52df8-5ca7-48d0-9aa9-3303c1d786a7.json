@@ -5,7 +5,34 @@
   "created_at": "2026-10-01T22:21:55.414199171Z",
   "dependencies": [],
   "description": "Rewrite every unqualified `cites:<key>` label to the qualified form `cites:@/citation/<key>`, which the installed JIT resolves through the citation registry.\n\n## Background\n\nThe installed JIT no longer resolves unqualified link labels. Every `cites:<key>` label (177 at filing) is reported by `jit validate` as a dangling-item-link error, so `repo-validate` fails repository-wide.\n\n## Success Criteria\n\n- [hard] REQ-01: Every `cites:` label names its citation as `cites:@/citation/<key>`, and each key resolves through `jit item show`; a label whose key is absent from `.jit/references.toml` is listed in the commit message with its issue and handled without inventing a registry entry.\n- [hard] REQ-02: `jit validate` reports no dangling-item-link error for a `cites:` label.\n- [hard] REQ-03: Configuration examples, planning tooling and manifests in this repository that emit or document `cites:` labels use only the qualified form.",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "bf8a5ae90250d69e79279f41c5403f0bcb23353cfcbe30bcdfc6d5f165c13b80",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "migrate-labels-2.sh",
+          "resolved_path": "dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels-2.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e7fb36227d79dafedf32a1f799e4be0f5ef7e3278276533a0956bf684404072",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "migrate-labels.sh",
+          "resolved_path": "dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels.sh"
+        }
+      ],
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Link-label migration record",
+      "path": "dev/active/86b9c719-quality-documentation-tech-debt/label-migration.md"
+    }
+  ],
+  "done_at": "2026-10-01T23:09:50.879124968Z",
   "first_ready_at": "2026-10-01T22:21:55.414199171Z",
   "gates_required": [],
   "gates_status": {},
@@ -16,7 +43,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Migrate cites labels to the qualified citation form",
-  "updated_at": "2026-10-01T22:22:03.430472304Z"
+  "updated_at": "2026-10-01T23:09:50.879124968Z"
 }

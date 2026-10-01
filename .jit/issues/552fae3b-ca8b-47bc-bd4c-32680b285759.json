@@ -20,14 +20,10 @@
   "labels": [
     "type:task",
     "component:gf2-core",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "resolution:merged-into-a1ad6d4e"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Freeze the private zero-copy candidate",
-  "updated_at": "2026-09-16T23:30:37.991955262Z"
+  "updated_at": "2026-10-01T23:05:51.167800605Z"
 }

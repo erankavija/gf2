@@ -19,13 +19,10 @@
   "labels": [
     "type:task",
     "component:gf2-core",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-06",
     "resolution:merged-into-a1ad6d4e"
   ],
   "priority": "high",
   "state": "rejected",
   "title": "Select the zero-copy integration outcome",
-  "updated_at": "2026-09-16T23:31:55.080907883Z"
+  "updated_at": "2026-10-01T23:05:50.396143398Z"
 }
