@@ -740,6 +740,16 @@
       "source": "227ac5c8 worker (session 11)",
       "finding": "BinaryBchDecoder decodes internal coordinates only; user-layout decode needs a caller-side coordinate map",
       "disposition": "filed cbd1eb28 outside the epic"
+    },
+    {
+      "source": "0c21cb1e worker (session 11)",
+      "finding": "crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs (no wave-12 owner) holds legacy sites: lines 86/102 &BchEncoder, 118 BchCode::dvb_t2, 122 BchEncoder::new, 123 BchDecoder::new, 135 compute_syndromes, module doc 9-14",
+      "disposition": "4a2baa12 migrates it before deleting the legacy surface"
+    },
+    {
+      "source": "0c21cb1e worker (session 11)",
+      "finding": "gpu_bch_syndrome_throughput now measures the DVB-T2 normal mother (n=65535) syndrome evaluation, not the shortened 32400 frame; CPU arms time correct_in_place on error-free words; smoke 24-thread pool slower than 1 thread (15 vs 53.6 fps), uninvestigated",
+      "disposition": "documented in the bin; any 9012f8a0 re-receipt states the workload"
     }
   ],
   "coordination": {
