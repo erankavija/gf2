@@ -242,7 +242,7 @@
   {
     "key": "inventory-active-zen3-early",
     "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-    "description": "Each tracked artifact in the `dev/active/` entries owned by epic 1a379447 whose names sort from `00dd43c3` through `3be770d5`, including the epic directory and entries shared with d77176e5 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epic 1a379447 whose names sort from `00dd43c3` through `3be770d5`, including the epic directory and entries shared with d77176e5, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "description": "Each tracked artifact in the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `00dd43c3`, `04b85d10`, `07ca8585`, `12fdeb5b`, `19513245`, `1a379447-zen3-cpu-performance`, `1c602857`, `1d0da41f`, `1d4fd63d`, `2037941f-profile-and-optimize-mid-range-buffer-operations`, `26465e6c`, `3be770d5`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 12fdeb5b, 2037941f-profile-and-optimize-mid-range-buffer-operations, 26465e6c, 04b85d10, 1d4fd63d and 1c602857; `1a379447-zen3-cpu-performance/measurement-contract.md` is pinned by `CONTRACT_PATH` and rule P-02.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -272,7 +272,8 @@
         "D-53",
         "INV-A",
         "INV-§0.6",
-        "PD-03"
+        "PD-03",
+        "CC-§1"
       ],
       "terminal": {
         "consumer_family": "overhaul migration workers",
@@ -290,7 +291,7 @@
   {
     "key": "inventory-active-zen3-late",
     "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
-    "description": "Each tracked artifact in the `dev/active/` entries owned by epic 1a379447 whose names sort from `428f2f6b` through `fcb04d66`, including f547c394 and entries shared with d77176e5 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epic 1a379447 whose names sort from `428f2f6b` through `fcb04d66`, including f547c394 and entries shared with d77176e5, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "description": "Each tracked artifact in the twenty-three zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twenty-three zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `428f2f6b`, `4c1e441f`, `50f0bd42`, `53c5a8c0`, `5cbb6545`, `613574db`, `6c6b09b1`, `6fb89a3c`, `9f0e385e`, `a1ad6d4e`, `a203a23c`, `ad2a6a58`, `bc091474`, `bdc507a3`, `c04dd4ac-zen3-shifts-and-permutations`, `c077a88b`, `c7113c5a`, `c73ffa25`, `eda07788`, `f547c394`, `f63a2464`, `f8dd4dde`, `fcb04d66`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: f547c394, eda07788, 5cbb6545, c7113c5a, 6fb89a3c and 53c5a8c0.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -320,7 +321,8 @@
         "D-53",
         "INV-A",
         "INV-§0.6",
-        "PD-03"
+        "PD-03",
+        "CC-§1"
       ],
       "terminal": {
         "consumer_family": "overhaul migration workers",
@@ -338,7 +340,7 @@
   {
     "key": "inventory-active-field-dispatch",
     "title": "Inventory the field-dispatch dev/active entries",
-    "description": "Each tracked artifact in the `dev/active/` entries owned by epic 6dc81018, including those shared with 86b9c719 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 6dc81018) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epic 6dc81018, including those shared with 86b9c719, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "description": "Each tracked artifact in the eighteen field-dispatch `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 6dc81018) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the eighteen field-dispatch `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `1ac74567`, `220cab0b`, `2a85f728`, `34d85cb9`, `389aa4de`, `3fa7c9d0`, `50b47eae`, `6dc81018-field-capability-dispatch`, `7d7c647c`, `7d824b2f`, `9162956b`, `972e2b88`, `a83583e0`, `dbd8787d`, `e6ea0dde`, `eaae1b56`, `eb9b324c`, `fc976a80`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: a83583e0 and dbd8787d.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -368,12 +370,13 @@
         "D-53",
         "INV-A",
         "INV-§0.6",
-        "PD-03"
+        "PD-03",
+        "CC-§1"
       ],
       "terminal": {
         "consumer_family": "overhaul migration workers",
         "test_boundary": "progress checker report",
-        "worker_sized_reason": "About 18 entries with roughly 480 files, classified by a reusable ownership scan",
+        "worker_sized_reason": "Eighteen entries with roughly 480 files, classified by a reusable ownership scan",
         "footprint": {
           "touches": [
             "dev/active/fa787f85-documentation-overhaul"
@@ -386,7 +389,7 @@
   {
     "key": "inventory-active-open-epics",
     "title": "Inventory the other open-epic dev/active entries",
-    "description": "Each tracked artifact in the `dev/active/` entries owned by epics b8206228, 86b9c719 (alone), ae03bcd0, b4b4b9ee, the aed96ef9 group and fa787f85, plus each entry owned by an open epic that no other inventory shard names (for example `dev/active/0b0714e0/`, owned by epic cffc15dd) receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (the remaining class (a) rows; entries created after that survey fall here too) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epics b8206228, 86b9c719 (alone), ae03bcd0, b4b4b9ee, the aed96ef9 group and fa787f85, plus each entry owned by an open epic that no other inventory shard names (for example `dev/active/0b0714e0/`, owned by epic cffc15dd), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "description": "Each tracked artifact in the nineteen open-epic `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (the remaining class (a) rows) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the nineteen open-epic `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `02b8137c`, `0b0714e0`, `0de41c82`, `150d7d79`, `3d522ba0`, `3f664839`, `41c3d91d`, `4e732b56`, `591a1c5e`, `64fd3afd`, `8b3fe657`, `aabc528a`, `ae03bcd0-general-bch`, `aed96ef9-finite-blocklength-bounds`, `b4b4b9ee-tech-debt-2026-06-30`, `b8206228-permanent-statistics`, `d1b4f85e`, `fa787f85-documentation-overhaul`, `fd9d5416`. `0b0714e0` belongs to epic cffc15dd and `fd9d5416` to epic ae03bcd0; both postdate the investigation survey and predate the freeze. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 02b8137c, 3f664839, d1b4f85e and 591a1c5e.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -416,12 +419,13 @@
         "D-53",
         "INV-A",
         "INV-§0.6",
-        "PD-03"
+        "PD-03",
+        "CC-§1"
       ],
       "terminal": {
         "consumer_family": "overhaul migration workers",
         "test_boundary": "progress checker report",
-        "worker_sized_reason": "About 18 entries with roughly 160 files, classified by a reusable ownership scan",
+        "worker_sized_reason": "Nineteen entries with roughly 170 files, classified by a reusable ownership scan",
         "footprint": {
           "touches": [
             "dev/active/fa787f85-documentation-overhaul"
@@ -434,7 +438,7 @@
   {
     "key": "inventory-active-terminal-ownerless",
     "title": "Inventory terminal, ownerless and empty dev/active entries",
-    "description": "Each tracked artifact in the `dev/active/` entries owned by terminal issues, entries without a defensible owner, and empty untracked leftover directories (recorded with the deletion disposition) receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (classes (b), (b-empty) and (c)) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by terminal issues, entries without a defensible owner, and empty untracked leftover directories (recorded with the deletion disposition), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "description": "Each tracked artifact in the five terminal-owned or ownerless `dev/active/` entries listed below, plus the empty untracked leftover directories listed in the investigation's Appendix A (recorded with the deletion disposition) present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (classes (b), (b-empty) and (c)) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the five terminal-owned or ownerless `dev/active/` entries listed below, plus the empty untracked leftover directories listed in the investigation's Appendix A (recorded with the deletion disposition) present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `37e0b235`, `babcf05e-gf2-core-ppc-spiral`, `charon-patch-backup-2026-05-15`, `DOCUMENTATION_AUDIT.md`, `e095a100-gfpm-arithmetic`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -464,12 +468,13 @@
         "D-53",
         "INV-A",
         "INV-§0.6",
-        "PD-03"
+        "PD-03",
+        "CC-§1"
       ],
       "terminal": {
         "consumer_family": "overhaul migration workers",
         "test_boundary": "progress checker report",
-        "worker_sized_reason": "About 48 entries, most of them empty, with about a dozen tracked files",
+        "worker_sized_reason": "Five tracked entries with about a dozen files, plus 43 empty directories",
         "footprint": {
           "touches": [
             "dev/active/fa787f85-documentation-overhaul"
@@ -2653,9 +2658,56 @@
     }
   },
   {
+    "key": "code-pinned-entry-plan",
+    "title": "File tolerance and move tasks for code-pinned dev/active entries",
+    "description": "Frozen `dev/active/` entries whose paths code, tests, scripts or relative Cargo dependencies check cannot move by plain regrouping. Each one gets a tolerance task, which makes its consumer accept the recorded historical path, and a move task.\n\n## Background\n\nThe code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) identifies code-pinned entries beyond f547c394, 02b8137c and 3f664839, including tuning-campaign declarations and fixtures, smoke-run records read by a receipt-rendering test, and survey harness crates whose Cargo path dependency on `dev/tools/tuning-campaign-support` is relative to the crate's depth.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked record lists every frozen entry the inventory marks code-pinned, with its consumers, and states for each either the filed tolerance and move tasks or a recorded reason it stays in place (for example, a pinned file already inside its epic's directory).\n- [hard] REQ-02: Each filed tolerance task requires the consumer to accept the recorded historical path, with the consumer's verdicts or test results over committed artifacts identical before and after, recorded against a baseline.\n- [hard] REQ-03: Each filed move task depends on its tolerance task, keeps digest-pinned inputs byte-identical, and moves nothing while the entry's owning issue is in progress.\n- [hard] REQ-04: Each filed task has standalone success criteria and sits in this epic's dependency subtree, so the epic cannot close before it.\n- [hard] REQ-05: Entries already covered by existing overhaul tasks (f547c394, 02b8137c and 3f664839) are recorded as covered, not refiled.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "inventory-active-zen3-early",
+      "inventory-active-zen3-late",
+      "inventory-active-field-dispatch",
+      "inventory-active-open-epics",
+      "inventory-active-terminal-ownerless"
+    ],
+    "planning": {
+      "outcome": "Each frozen code-pinned dev/active entry has filed tolerance and move tasks or a recorded reason it stays",
+      "contract_refs": [
+        "active-layout",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-53",
+        "CC-§1",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "overhaul execution lead",
+        "test_boundary": "linked code-pinned entry record",
+        "worker_sized_reason": "About twenty entries, each one tracker filing from inventory rows",
+        "footprint": {
+          "creates": [
+            "dev/active/fa787f85-documentation-overhaul/code-pinned-entries.md"
+          ]
+        }
+      }
+    }
+  },
+  {
     "key": "regroup-active-zen3",
     "title": "Regroup flat zen3 dev/active entries under their epic dir",
-    "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447, except f547c394). Rustdoc in several crates and `dev/scripts/receipt-input-omissions.json` cite these paths. Receipts quote them as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447). Code-pinned entries are excluded: f547c394, 12fdeb5b, eda07788, 2037941f-profile-and-optimize-mid-range-buffer-operations, c7113c5a, 6fb89a3c, 04b85d10, 1d4fd63d, 53c5a8c0, 1c602857, 26465e6c and 5cbb6545. Rustdoc in several crates and `dev/scripts/receipt-input-omissions.json` cite these paths. Receipts quote them as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2707,7 +2759,7 @@
   {
     "key": "regroup-active-field-dispatch",
     "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
-    "description": "About 18 flat `dev/active/` entries belong to the field capability dispatch epic (6dc81018), several shared with epic 86b9c719. They move under the owning epic's canonical directory.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic includes 6dc81018).\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "description": "About 18 flat `dev/active/` entries belong to the field capability dispatch epic (6dc81018), several shared with epic 86b9c719. They move under the owning epic's canonical directory.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic includes 6dc81018). Code-pinned entries a83583e0 and dbd8787d are excluded.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2757,7 +2809,7 @@
   {
     "key": "regroup-active-remaining",
     "title": "Regroup the remaining flat dev/active entries under epic dirs",
-    "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. Those without a non-comment code consumer move under their owning epics' canonical directories; `02b8137c` and `3f664839`, whose paths gf2-sim code checks, are excluded.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. Those without a non-comment code consumer move under their owning epics' canonical directories; `02b8137c` and `3f664839`, whose paths gf2-sim code checks, are excluded.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window. Code-pinned entries d1b4f85e and 591a1c5e are excluded, along with 02b8137c and 3f664839.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -3211,6 +3263,7 @@
     ],
     "depends_on": [
       "resolve-dev-strays",
+      "code-pinned-entry-plan",
       "regroup-active-field-dispatch",
       "move-f547c394-inputs",
       "move-3f664839-design",
