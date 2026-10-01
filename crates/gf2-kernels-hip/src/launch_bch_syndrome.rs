@@ -2,11 +2,11 @@
 //! (`hip/bch_syndrome.hip`, design doc §5 / §6 / §7 / §10).
 //!
 //! [`GpuBchSyndrome`] owns the device-resident field tables (`exp` / `log`,
-//! uploaded once) and the `α^1..α^(2t)` evaluation points, plus the reusable
+//! uploaded once) and the `2t` syndrome evaluation points, plus the reusable
 //! per-batch packed-coefficient input and syndrome-output buffers. It runs the
 //! same Horner syndrome evaluation as the CPU path of
 //! `gf2_coding::bch::BinaryBchDecoder` —
-//! `S_{i+1} = r(α^(i+1))` over GF(2^m) — and returns the `2t` u16 field-element
+//! `S_i = r(β_i)` over GF(2^m) at each evaluation point `β_i` — and returns the `2t` u16 field-element
 //! syndromes per frame, **byte-identical** to the CPU table-backed arithmetic
 //! (design doc §5: the GPU multiply is the uploaded CPU `exp`/`log` table, so
 //! equality is exact and total — no ULP drift, unlike the LDPC f32 path).
@@ -21,13 +21,14 @@
 //! (under `--features hip`) drive this wrapper and rehydrate the u16
 //! syndromes into `Gf2mElement`s.
 //!
-//! # Coefficient layout — host-side reorder, packed bits (design doc §6)
+//! # Coefficient layout — packed bits (design doc §6)
 //!
-//! The caller reorders each received frame into the design-doc §3.1 `coeffs`
-//! order (parity bits reversed, then message bits reversed) and packs it as a
-//! little-endian bit stream of `n` bits per frame
-//! ([`words_per_frame`](GpuBchSyndrome::words_per_frame) u64 words). The kernel
-//! runs a pure Horner pass with no knowledge of the parity/message split.
+//! Each received frame is a little-endian bit stream of `n` bits
+//! ([`words_per_frame`](GpuBchSyndrome::words_per_frame) u64 words) in which
+//! bit `i` is the coefficient of `x^i`. A canonical `gf2_core::BitVec` word of
+//! the construction model is already in that order, so its words are the
+//! stream. The kernel runs a pure Horner pass with no knowledge of the
+//! parity/message split.
 //!
 //! # Default-stream path (design doc §7)
 //!
@@ -145,7 +146,7 @@ impl BchFieldTables {
 /// A reusable device-side batch BCH syndrome evaluator.
 ///
 /// Holds the persistent device-resident field tables (`exp` / `log`) and the
-/// `α^1..α^(2t)` evaluation points (uploaded once), plus the reusable per-batch
+/// `2t` evaluation points (uploaded once), plus the reusable per-batch
 /// packed-coefficient input and u16 syndrome-output buffers, sized for up to
 /// `max_batch` frames at construction. Repeated
 /// [`evaluate_batch`](Self::evaluate_batch) calls reuse the same allocations.
@@ -163,7 +164,7 @@ impl BchFieldTables {
 ///     log[e as usize] = i as u16;
 /// }
 /// let tables = BchFieldTables::new(4, exp, log);
-/// let points = vec![2u16, 4, 8, 3]; // α^1..α^4
+/// let points = vec![2u16, 4, 8, 3]; // α^1..α^4, any four points work
 /// let mut ev = GpuBchSyndrome::new(&tables, &points, 15, 2, 8, 0).expect("build");
 /// // One all-zero frame (1 u64 word covers 15 bits): all syndromes zero.
 /// let syndromes = ev.evaluate_batch(&[0u64], 1).expect("evaluate");
@@ -196,8 +197,9 @@ impl GpuBchSyndrome {
     /// # Arguments
     ///
     /// * `tables` — the GF(2^m) `exp` / `log` tables (from the live CPU field).
-    /// * `eval_points` — the `α^1..α^(2t)` syndrome points (as u16 field
-    ///   values), length `2t`.
+    /// * `eval_points` — the syndrome evaluation points (as u16 field values),
+    ///   length `2t`. `BinaryBchDecoder` passes one orbit representative per
+    ///   Frobenius orbit of its defining set.
     /// * `n` — codeword length (coefficient count per frame).
     /// * `t` — error-correction capability (`2t` syndromes per frame).
     /// * `max_batch` — maximum frames per evaluate call (sizes device buffers).
@@ -293,15 +295,14 @@ impl GpuBchSyndrome {
     /// Evaluates the `2t` BCH syndromes for a batch of `batch` frames.
     ///
     /// `coeff_streams` is `batch * words_per_frame` u64 words: frame `f`'s
-    /// packed coefficient stream is `coeff_streams[f * wpf .. (f+1) * wpf]`, in
-    /// the design-doc §3.1 order (parity bits reversed, then message bits
-    /// reversed), little-endian bit order. Runs on the default stream with
+    /// packed coefficient stream is `coeff_streams[f * wpf .. (f+1) * wpf]`,
+    /// little-endian bit order with bit `i` the coefficient of `x^i`. Runs on the default stream with
     /// synchronous H2D / D2H and `hipDeviceSynchronize` completion.
     ///
     /// # Returns
     ///
     /// `batch * 2t` u16 syndromes, row-major per frame: frame `f`'s syndromes
-    /// `S_1..S_{2t}` are `out[f * 2t .. (f+1) * 2t]`.
+    /// `S_1..S_{2t}`, one per evaluation point in upload order, are `out[f * 2t .. (f+1) * 2t]`.
     ///
     /// # Errors
     ///
