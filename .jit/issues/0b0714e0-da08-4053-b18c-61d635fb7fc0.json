@@ -4,7 +4,15 @@
   "created_at": "2026-10-01T09:35:48.875562507Z",
   "dependencies": [],
   "description": "The `gf2-sim` Rayleigh and Rician stages compute $r = h x + n$ and discard $h$, so the downstream Gray-QAM demap stages compute LLRs under an AWGN metric. Fading-channel LLRs from the stage pipeline are therefore mismatched to the channel.\n\n## Background\n\n`SymbolBatch` (`crates/gf2-sim/src/batch.rs`) carries only I/Q lanes. `Rayleigh::apply` and `Rician::apply` (`crates/gf2-sim/src/channels/`) draw a per-symbol complex gain and apply it to the symbol without exposing it. `GrayQamDemapCore::demap_frame` (`crates/gf2-sim/src/stages/mod.rs`) always passes `gain_i: None`, `gain_q: None` and a single scalar `noise_var` in `DemapInput`.\n\nThe modem layer already supports coherent fading demapping: `DemapInput::gain_i` / `gain_q` accept per-symbol complex gains, and `gf2_coding::fading::QpskRicianChannelModel` uses them. The missing piece is the `gf2-sim` pipeline data model.\n\n## Success Criteria\n\n- [hard] REQ-01: Fading channel stages expose the per-symbol complex gain they apply to downstream stages through the pipeline's batch type.\n- [hard] REQ-02: The CPU Gray-QAM demap stages (DVB-T2 and NR) pass the per-symbol gain to `DemapInput::gain_i` / `gain_q` when present, and `None` for AWGN.\n- [hard] REQ-03: For a fixed seed, demapped LLRs from a Rayleigh stage chain equal the LLRs produced by calling `FastGrayQamDemapper` directly with the same received samples and gains, bit for bit.\n- [hard] REQ-04: AWGN-chain outputs and the existing byte-identity suites are unchanged.\n- [hard] REQ-05: The per-symbol RNG word budget and `FRAME_STRIDE` contract of the fading stages are unchanged.\n\n## Notes\n\nPerfect channel-state information at the receiver is the target model. Estimated-CSI receivers are a separate concern.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Channel gain design",
+      "path": "dev/active/0b0714e0/0b0714e0-channel-gain-design.md"
+    }
+  ],
   "first_ready_at": "2026-10-01T09:35:48.875562507Z",
   "gates_required": [
     "cargo-ci",
@@ -37,5 +45,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Carry channel gains from gf2-sim fading stages to the soft demapper",
-  "updated_at": "2026-10-01T09:40:52.422429178Z"
+  "updated_at": "2026-10-01T13:50:45.287111453Z"
 }

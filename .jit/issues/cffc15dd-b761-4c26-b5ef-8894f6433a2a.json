@@ -3,6 +3,7 @@
   "context": {},
   "created_at": "2026-10-01T09:40:40.670968347Z",
   "dependencies": [
+    "17746400-34ff-4b15-8c60-3080b79237b2",
     "2fb70026-4962-4eda-a235-adbd88330b1e",
     "5d285878-4bec-481b-9471-22c00dcc89c1",
     "68adf337-b4df-4d3d-9d0a-f106f0fdfd18"
@@ -26,5 +27,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Channel models for link simulation",
-  "updated_at": "2026-10-01T09:40:50.041812012Z"
+  "updated_at": "2026-10-01T13:51:15.007394902Z"
 }

@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T13:50:46.131601456Z",
+  "dependencies": [],
+  "description": "Two independent Rician fading channel implementations exist, which violates the convention-convergence invariant: one channel model should have one form.\n\n## Background\n\n`gf2_coding::fading::RicianChannel` (`crates/gf2-coding/src/fading.rs`) models block Rician fading with `f64` complex gains for `QpskRicianChannelModel`. `gf2_sim::channels::Rician` (`crates/gf2-sim/src/channels/rician.rs`) models per-symbol Rician fading as an `f32` pipeline stage with a deterministic ChaCha20 word budget. They differ in parameterisation, coherence model, scalar type and RNG contract, and nothing states which is canonical.\n\n## Success Criteria\n\n- [hard] REQ-01: One Rician fading model is canonical, with the gain-generation logic in one library location; the other surface either delegates to it or is removed.\n- [hard] REQ-02: Block and per-symbol coherence are both expressible through the canonical model, or the remaining difference is a named exception with a tracked convergence condition.\n- [hard] REQ-03: Existing seeded outputs of `gf2-sim` fading stages are unchanged, verified by the existing byte-identity suites.\n- [hard] REQ-04: Existing `QpskRicianChannelModel` results are unchanged or re-pinned explicitly in the same change, with the reason recorded.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T13:50:46.131601456Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "17746400-34ff-4b15-8c60-3080b79237b2",
+  "labels": [
+    "epic:channel-models",
+    "component:gf2-coding",
+    "component:gf2-sim",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Converge the two Rician fading channel models",
+  "updated_at": "2026-10-01T13:50:46.131601456Z"
+}
