@@ -31,26 +31,7 @@ These counts are audit evidence, not permanent product facts. They belong in thi
 
 ## Success Criteria
 
-- [hard] REQ-01: Project-wide addressable documentation invariants define and enforce the researcher audience, adapted Diátaxis placement, current-state-only prose, absence of marketing and future promises, single-source facts, evidence-backed performance claims, concise style, and non-trivial-example policy.
-- [hard] REQ-02: The root `AGENTS.md` is the authoritative operational guide and remains at or below 200 lines; `CLAUDE.md` is a symlink to it; any crate-local `AGENTS.md` contains only recursively scoped crate constraints and independently remains at or below 200 lines; `CONTRIBUTING.md` is removed.
-- [hard] REQ-03: The root `README.md` is a concise researcher-facing landing page containing gf2's purpose, supported capability map, crate-selection guidance, current installation constraints, an evidence-linked performance summary, and links to permanent documentation without duplicating API walkthroughs.
-- [hard] REQ-04: Permanent documentation uses `docs/tutorials/`, `docs/how-to/`, `docs/concepts/`, and `docs/reference/`; it includes concise entry pages for `gf2-core`, `gf2-coding`, `gf2-algebra`, and `gf2-sim`, plus research-grade workflows that exercise advanced supported features.
-- [hard] REQ-05: Every permanent page has freshly authored explanatory prose and structure; only independently verified code, commands, equations, identifiers, and empirical data are reused from prior material.
-- [hard] REQ-06: Every performance claim links to commit-pinned evidence that identifies hardware, build flags, dataset, baseline, and measurement date; permanent prose contains no unsupported or hand-copied volatile result tables.
-- [hard] REQ-07: Rustdoc examples are audited across the workspace; tautological examples for accessors, constants, simple constructors, and direct mappings are removed; retained examples materially clarify non-obvious contracts and compile under the canonical documentation checks; before-and-after example counts and documentation-test timing are recorded.
-- [hard] REQ-08: Root and crate roadmaps are inspected for untracked relevant work, that work is represented in JIT where necessary, and the roadmap files are removed as obsolete status duplicates.
-- [hard] REQ-09: Presentation decks and their complete asset bundles are preserved with their owning terminal epics, excluded from permanent documentation navigation, and not edited merely to make historical claims current.
-- [hard] REQ-10: Every eligible terminal epic's linked documents and supported bundles are archived through JIT container archival into a marker-backed `<short-id>-<human-readable-slug>/` directory with valid rewritten references and verified bytes.
-- [hard] REQ-11: Documents belonging to non-terminal epics remain under `dev/active/<epic-short-id>-<slug>/`, are individually linked to their owning issues, and archive as a coherent container when the epic becomes terminal.
-- [hard] REQ-12: A legacy document is associated with an issue only through an existing JIT document reference, an unambiguous issue identifier, or unique tagged-commit provenance; unassociated material is preserved under `dev/archive/legacy/<original-relative-path>`.
-- [hard] REQ-13: A complete migration manifest classifies every pre-overhaul documentation artifact as a JIT container archive, legacy archive, retained operational asset, deletion, or freshly rewritten topic; a transient progress checker reports migration completeness and is removed after final verification.
-- [hard] REQ-14: The final `dev/` top level contains no obsolete documentation buckets; operational research directories consumed by tooling remain, while loose `plans`, `bench_results`, `simulation_results`, and `presentations` paths are eliminated through archival or purpose-specific relocation.
-- [hard] REQ-15: JIT documentation policy temporarily manages every legacy source needed for safe archival and ends with only the clean post-overhaul managed and permanent paths configured.
-- [hard] REQ-16: An automated documentation-review gate is grounded in the addressable invariants, and a mechanical gate checks links, anchors, citations, and registry projections; Rustdoc and retained examples compile through the Rust CI gate.
-- [hard] REQ-17: Permanent documentation contains only supported behavior at overhaul completion; historical narration, migration language, superseded alternatives, speculation, and future promises occur only in archived development artifacts or JIT work items.
-- [hard] REQ-18: Existing documentation-remediation tasks are reconciled with this contract: surviving requirements are adapted into the overhaul DAG, and obsolete deliverables are rejected with an explicit resolution only after their relevant requirement is preserved elsewhere.
-- [hard] REQ-19: The permanent documentation surface and every executed archive plan finish with no unresolved internal links, anchors, local citations, or addressable-item references.
-- [hard] REQ-20: A planning brief linked from this epic records the complete investigation and interview outcome, including every approved scope decision, invariant, archival rule, target structure, enforcement decision, inherited-task disposition, implementation constraint, and deferred breakdown concern.
+The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 
 ## Decisions
 
@@ -80,8 +61,8 @@ These counts are audit evidence, not permanent product facts. They belong in thi
 - D-24: A document is associated with an issue only through an existing JIT document reference, an unambiguous issue ID, or unique `jit:<short-id>` commit provenance. Ambiguous association is never guessed.
 - D-25: Unassociated historical material moves to `dev/archive/legacy/<original-relative-path>`, preserving its original hierarchy beneath `legacy/` for provenance and collision avoidance.
 - D-26: JIT `managed_paths` may be expanded temporarily to cover legacy buckets needed for archival. The final policy contains no obsolete managed path.
-- D-27: Operational research directories consumed by scripts may remain under `dev/`: `benchmarks`, `campaigns`, `reference_data`, `research`, and `scripts`. Loose documentation buckets do not remain.
-- D-28: `dev/plans`, `dev/bench_results`, `dev/simulation_results`, and `dev/presentations` are eliminated through JIT archives, legacy archival, or purpose-specific relocation. The final `dev/` top level contains no obsolete path.
+- D-27: Operational research directories consumed by scripts, CI or code remain under `dev/`: `benchmarks`, `bench_results`, `campaigns`, `reference_data`, `research`, `scripts`, `simulation_results`, `studies`, and `tools`. Their loose narrative Markdown is archived or relocated.
+- D-28: `dev/plans` and `dev/presentations` are eliminated through JIT archives, legacy archival, or purpose-specific relocation. The final `dev/` top level contains no obsolete documentation bucket.
 - D-29: A complete migration manifest records every pre-overhaul artifact and its disposition. A script monitors migration progress against that manifest.
 - D-30: The progress script is transient. It is removed after the final complete migration check; lasting enforcement comes from invariants and review gates rather than a frozen migration inventory.
 - D-31: Durable documentation rules live as project-scoped JIT invariants. One-time migration outcomes live as addressable epic requirements.
