@@ -17,11 +17,13 @@
 //!   shared modem framework) and performs hard decisions directly on the
 //!   LLRs it returns.
 //! - **Coded (immutable decoder)**: For [`SoftDecoder`] implementations that
-//!   take `&self` ([`run_coded`]).
+//!   take `&self` ([`run_coded`](SimulationRunner::run_coded)).
 //! - **Coded iterative (mutable decoder)**: For [`IterativeSoftDecoder`]
-//!   implementations that take `&mut self` ([`run_coded_iterative`]).
+//!   implementations that take `&mut self`
+//!   ([`run_coded_iterative`](SimulationRunner::run_coded_iterative)).
 //! - **Coded iterative parallel**: Parallel SNR sweeps (with the `parallel`
-//!   feature) using a decoder factory closure ([`run_coded_iterative_parallel`]).
+//!   feature) using a decoder factory closure
+//!   ([`run_coded_iterative_parallel`](SimulationRunner::run_coded_iterative_parallel)).
 //!   Falls back to sequential execution without the feature.
 //!
 //! # Channel Abstraction
@@ -31,10 +33,12 @@
 //! modem-framework adapter
 //! [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) also implements
 //! [`ChannelModel`], so any validated
-//! [`ModemSpec`](crate::modem::ModemSpec) (BPSK, QPSK, 16-/64-/256-QAM, ...)
+//! [`ModemSpec`] (BPSK, QPSK, 16-/64-/256-QAM, ...)
 //! can be plugged into every `*_with_channel` runner entry point as well as
-//! into [`run_coded`], [`run_coded_iterative`], and
-//! [`run_coded_iterative_parallel`], which already accept any
+//! into [`run_coded`](SimulationRunner::run_coded),
+//! [`run_coded_iterative`](SimulationRunner::run_coded_iterative), and
+//! [`run_coded_iterative_parallel`](SimulationRunner::run_coded_iterative_parallel),
+//! which already accept any
 //! `C: ChannelModel`.
 //!
 //! # Output
@@ -1558,7 +1562,7 @@ impl SimulationRunner {
     /// and applies a hard decision to the returned LLRs (convention:
     /// positive LLR => bit 0, negative LLR => bit 1; this matches the
     /// modem framework's
-    /// [`BatchSoftDemapper`](crate::modem::BatchSoftDemapper) output
+    /// [`BatchSoftDemapper`] output
     /// sign). All modulation, noise generation, and demapping live
     /// inside [`ChannelModel::transmit_and_demodulate`] — this method
     /// never reimplements a BPSK LLR formula or a noise draw itself.
@@ -1567,9 +1571,9 @@ impl SimulationRunner {
     /// reference path (at equal `StdRng` seeds it converges to the same
     /// BER as the legacy uncoded runner). Passing
     /// [`crate::modem::ModemChannelAdapter`] runs any validated
-    /// [`ModemSpec`](crate::modem::ModemSpec) (BPSK, QPSK, 16-/64-/256-QAM)
-    /// over AWGN with the shared [`BatchMapper`](crate::modem::BatchMapper)
-    /// and [`BatchSoftDemapper`](crate::modem::BatchSoftDemapper) surfaces.
+    /// [`ModemSpec`] (BPSK, QPSK, 16-/64-/256-QAM)
+    /// over AWGN with the shared [`BatchMapper`]
+    /// and [`BatchSoftDemapper`] surfaces.
     ///
     /// # Arguments
     ///
@@ -3307,7 +3311,8 @@ impl SimulationRunner {
 
     /// Runs a coded simulation using a mutable [`IterativeSoftDecoder`].
     ///
-    /// Similar to [`run_coded`] but accepts a decoder requiring `&mut self`,
+    /// Similar to [`run_coded`](Self::run_coded) but accepts a decoder
+    /// requiring `&mut self`,
     /// as is typical for iterative belief-propagation decoders that maintain
     /// internal message state.
     ///
@@ -3801,7 +3806,7 @@ impl SimulationRunner {
     /// in a closure that returns [`DecoderResult`].
     ///
     /// Supports incremental CSV output, JSONL progress logging, and resume from
-    /// existing results, identical to [`run_coded_iterative`].
+    /// existing results, identical to [`run_coded_iterative`](Self::run_coded_iterative).
     ///
     /// # Arguments
     ///

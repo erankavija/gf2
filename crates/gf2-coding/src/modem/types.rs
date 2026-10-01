@@ -274,7 +274,7 @@ pub enum DemapMethod {
 /// test-vector generators consume this; hot demap loops never read it.
 ///
 /// Each flag describes a property of the bit-channel LLR under AWGN with
-/// the normalization contract documented at the [`super::modem`] module
+/// the normalization contract documented at the [`modem`](super) module
 /// level.
 ///
 /// # Examples

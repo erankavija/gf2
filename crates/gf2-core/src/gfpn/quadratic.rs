@@ -689,7 +689,7 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
 
     /// Delegates to the base field: because each tower component accumulates
     /// independently, the safe per-component budget on unreduced products
-    /// equals [`C::BaseField::max_unreduced_additions`].
+    /// equals `C::BaseField::max_unreduced_additions`.
     fn max_unreduced_additions() -> usize {
         C::BaseField::max_unreduced_additions()
     }

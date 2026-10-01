@@ -93,7 +93,7 @@ const fn use_specialized_storage(p: u64) -> bool {
 /// An element of the prime field GF(P) for a compile-time-known prime `P`.
 ///
 /// The public API operates on canonical values in `[0, P)`. The internal
-/// storage form is chosen at compile time via [`use_specialized_storage`]:
+/// storage form is chosen at compile time via `use_specialized_storage`:
 ///
 /// - **Canonical form** (value in `[0, P)`) for specialised Mersenne
 ///   (`n ≥ 31`) and Proth (`n ≥ 24`) primes. `new`/`value` are essentially
@@ -311,7 +311,7 @@ impl<const P: u64> Add for Fp<P> {
     /// Branchless modular addition.
     ///
     /// Selects between Montgomery-form and canonical-form addition at
-    /// compile time based on [`use_specialized_storage`]. Both paths are
+    /// compile time based on `use_specialized_storage`. Both paths are
     /// identical modular adds on `u64`; the distinction only matters for
     /// consistency with the chosen storage form of `self.0`.
     ///

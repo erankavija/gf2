@@ -8,7 +8,7 @@
 //! `dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md` § 9.
 //!
 //! The unsafe AVX2 + FMA3 implementation lives in
-//! [`crate::x86::fp_medium_f64`]; this module exposes only safe
+//! `crate::x86::fp_medium_f64`; this module exposes only safe
 //! function-pointer wrappers through the [`FpMediumF64Fns`] table
 //! returned by [`detect`]. Callers without AVX2 + FMA3 receive `None`
 //! and must fall back to the u16-lane fp_medium panel kernel (or

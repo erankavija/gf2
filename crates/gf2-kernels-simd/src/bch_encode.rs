@@ -39,7 +39,7 @@
 //!
 //! The transpose is [`crate::transpose`]'s primitive rather than a second
 //! copy of it, and the fold's carry-less multiply is
-//! [`crate::x86::clmul`]'s PCLMULQDQ primitive or
+//! `crate::x86::clmul`'s PCLMULQDQ primitive or
 //! [`crate::clmul_u64_scalar`], never a third one.
 //! [`bitslice_scratch_words`] and [`bitslice_split`] fix the buffer geometry
 //! the bit-sliced methods read, and [`fold_barrett_constant`] derives the one

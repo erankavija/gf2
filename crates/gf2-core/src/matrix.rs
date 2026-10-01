@@ -1269,7 +1269,7 @@ impl BitMatrix {
     /// [`Self::transpose`] driven by one caller-chosen 64×64 block kernel.
     ///
     /// [`Self::transpose`] is this function at the kernel
-    /// [`resolved_block_kernel`](Self::resolved_block_kernel) returns, so the
+    /// `resolved_block_kernel` returns, so the
     /// tiling, the output allocation, the zero padding of a partial input
     /// tile and the output tail mask are the same work either way and only
     /// the block primitive differs. A caller names a kernel through

@@ -1,7 +1,7 @@
 //! Batch element-wise GF(2^m) multiply / square for `m ∈ {8, 16, 32}`.
 //!
 //! These free functions wrap the SIMD-dispatched batch kernel
-//! ([`crate::simd::maybe_gf2m_batch`]) introduced for `jit:ec286cee` (kernel
+//! (`crate::simd::maybe_gf2m_batch`) introduced for `jit:ec286cee` (kernel
 //! C1, gf2-core PPC-spiral epic). Callers receive a SIMD-accelerated path
 //! when the runtime CPU advertises `avx2 + vpclmulqdq + sse4.1`, and an
 //! equivalent scalar fallback otherwise. Both paths use Barrett reduction
@@ -11,7 +11,7 @@
 //!
 //! * **Batch-shaped workloads** — Reed-Solomon syndrome computation,
 //!   BCH error-locator evaluation, network-coding GEMV, AES-GCM-Kuznyechik
-//!   sponge mixing — where many independent (a[i] · b[i]) products are
+//!   sponge mixing — where many independent (`a[i] · b[i]`) products are
 //!   computed against the same field. Per-element [`crate::gf2m::Gf2mField`]
 //!   `mul` already routes through PCLMULQDQ + Barrett but is bounded by the
 //!   per-call dispatch overhead; the batched kernel amortises that cost

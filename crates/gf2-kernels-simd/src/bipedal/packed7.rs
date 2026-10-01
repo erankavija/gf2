@@ -12,7 +12,7 @@
 //!
 //! # SIMD strategy
 //!
-//! AVX2 batch entry points live in [`crate::x86::bipedal_avx2_packed7`]; they
+//! AVX2 batch entry points live in `crate::x86::bipedal_avx2_packed7`; they
 //! batch byte-pair LUT lookups per u64 within each AVX2 register. A gather-based
 //! approach could improve throughput but is deferred; the scalar-LUT-inside-SIMD
 //! path already benefits from register-widened loop overhead reduction.
@@ -24,7 +24,7 @@
 //! operand, so a `Config7: BipedalLikeConfig` impl that zeroed the unused `sgn`
 //! stream would be technically faithful but dead code, since the production F_7
 //! path already uses the dedicated single-plane LUT batch entry points. F_7
-//! therefore ships *only* via [`crate::x86::bipedal_avx2_packed7`], the
+//! therefore ships *only* via `crate::x86::bipedal_avx2_packed7`, the
 //! runtime-detection bundle [`F7AvxFns`], and the scalar fallbacks below.
 //! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!
