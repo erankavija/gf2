@@ -82,14 +82,15 @@
       "path": "dev/active/fa787f85-documentation-overhaul/archive-preview-results.md"
     }
   ],
+  "done_at": "2026-10-01T14:42:48.674717034Z",
   "first_ready_at": "2026-10-01T10:37:17.124171866Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T14:08:20.874094583Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T14:42:35.876011183Z",
       "updated_by": "auto:executor"
     }
   },
@@ -100,7 +101,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "planning: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T14:08:20.874094583Z"
+  "updated_at": "2026-10-01T14:42:48.674717034Z"
 }
