@@ -193,7 +193,7 @@ pub fn next_power_of_2(v: u64) -> u64 {
 **Phase 4 Completed:**
 - ✅ Comprehensive SIMD vs Scalar benchmarks created
 - ✅ Tested 12 different buffer sizes: 1, 2, 4, 7, 8, 16, 32, 64, 128, 256, 1024, 4096 words
-- ✅ **8-word threshold VALIDATED** as optimal crossover point
+- ✅ Phase 4 Criterion run placed the crossover at the conservative eight-word default; the host calibration below supersedes it for baked builds
 - ✅ Measured actual speedups: 3.4-3.6x for large buffers (≥64 words)
 - ✅ Confirmed scalar faster below the conservative default due to dispatch overhead
 - ✅ Peak SIMD throughput: 97 GiB/s vs 28 GiB/s scalar
@@ -326,7 +326,7 @@ All equivalence tests added to `src/kernels/simd/mod.rs` tests module:
 - SIMD: ~97 GiB/s (3.46x improvement)
 
 **Validation:**
-- ✅ **8-word threshold confirmed optimal**
+- ✅ Crossover at the conservative eight-word default in this Phase 4 Criterion run (the current calibrated value is four words; see Phase 4 above)
 - ✅ Scalar faster below the conservative default (dispatch overhead ~0.8ns)
 - ✅ SIMD 3.4-3.6x faster for large buffers
 - ✅ Predictions matched: conservative default accurate, speedups as expected
@@ -651,7 +651,7 @@ When optimizing an operation:
 **Phase 4 Complete** - Performance Benchmarking
 - ✅ Created comprehensive SIMD vs Scalar benchmark suite
 - ✅ Tested 12 buffer sizes from 1 to 4096 words
-- ✅ **8-word threshold VALIDATED** - optimal crossover confirmed
+- ✅ Crossover at the conservative eight-word default in the Phase 4 Criterion run; the calibrated baked value is four words
 - ✅ Measured 3.4-3.6x SIMD speedup for large buffers (≥64 words)
 - ✅ Confirmed scalar faster below the conservative default (0.64-0.91x)
 - ✅ Peak throughput: SIMD 97 GiB/s vs Scalar 28 GiB/s
