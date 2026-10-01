@@ -255,7 +255,7 @@ run_step fmt    "$BUDGET" cargo fmt --all -- --check
 # .github/workflows/ci.yml.
 DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand,llr-f64"
 run_step doc     env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
-run_step doctest "$BUDGET" cargo test --doc --workspace --release $DOC_FEAT_FLAGS
+run_step doctest "$BUDGET" --test cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 
 # Baked selector fields (DEC-G, and the follow-on families of
 # dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
