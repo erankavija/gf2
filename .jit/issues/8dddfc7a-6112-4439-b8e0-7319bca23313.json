@@ -12,6 +12,54 @@
       "format": "markdown",
       "label": "Investigation",
       "path": "dev/active/fa787f85-documentation-overhaul/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "221c86032056db15acada600ff126168d69a66fc51987f0cde542f2608a323cb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "57e5618b0ecc041297c8c3ff87396845bbc8d5fc3c6877a01946fc53c9be59cb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "fa787f85-rustdoc-example-audit.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-audit.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fbee6f38b8baf3b62b36ec67fa7a2aeb356ff6635a73bd1aa9a5dd74a88555ce",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "affcfe527b75932113edd2b1ecd0442baf63b9f24568e8ca0282c93dd5d6be74",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "fa787f85-planning-brief.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/fa787f85-planning-brief.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Plan",
+      "path": "dev/active/fa787f85-documentation-overhaul/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Breakdown manifest",
+      "path": "dev/active/fa787f85-documentation-overhaul/breakdown.json"
     }
   ],
   "first_ready_at": "2026-10-01T10:37:17.124171866Z",
@@ -34,5 +82,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T11:14:46.482186994Z"
+  "updated_at": "2026-10-01T11:42:15.969314095Z"
 }
