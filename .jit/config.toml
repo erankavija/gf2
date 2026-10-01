@@ -65,7 +65,7 @@ unique = false
 
 [namespaces.cites]
 description = "Literature citation link: names a bibliography entry (citekey) in .jit/references.toml that the labeled issue builds on or reproduces."
-examples = ["cites:GGK2025", "cites:Fossorier1995"]
+examples = ["cites:@/citation/GGK2025", "cites:@/citation/Fossorier1995"]
 unique = false
 
 [namespaces.epic]
