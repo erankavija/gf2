@@ -6,13 +6,19 @@
   "dependencies": [
     "4a2baa12-af89-47f2-abb4-90b741929b5e"
   ],
-  "description": "Update the prose that references the removed BCH surface — crate README, the systematic-encoding and parallelization documents, and the primitive-polynomial guide — to describe the canonical model in present tense.\n\n## Success Criteria\n\n- [hard] REQ-01: No tracked document under the crates or docs trees references the removed constructors, `ExtendedBchCode`, or the redundant-parameter conventions; updated prose describes the canonical surface in present tense.\n",
+  "description": "Update the prose that references the removed BCH surface — crate README, the systematic-encoding and parallelization documents, and the primitive-polynomial guide — to describe the canonical model in present tense.\n\n## Success Criteria\n\n- [hard] REQ-01: No tracked document under the crates or docs trees references the removed constructors, `ExtendedBchCode`, or the redundant-parameter conventions; updated prose describes the canonical surface in present tense.\n\n## Decisions\n\n- DEC-01 (invoker, 2026-10-01): Archived documents (paths with an `archive` directory segment) are immutable historical records outside REQ-01 and doc-review scope; they are not modified.",
   "documents": [],
   "first_ready_at": "2026-10-01T09:56:42.751845719Z",
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T10:13:01.829895216Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "f759d724-e1e3-466b-9d57-a3d1a57123ab",
   "labels": [
     "type:task",
@@ -23,5 +29,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Sweep stale prose references to the removed BCH surface",
-  "updated_at": "2026-10-01T09:56:53.462012153Z"
+  "updated_at": "2026-10-01T10:14:26.051568372Z"
 }
