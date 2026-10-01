@@ -121,9 +121,9 @@ impl BchComponentCode {
         );
 
         // The narrow-sense primitive BCH code over the auto-selected GF(2^m)
-        // uses the same standard primitive polynomial as before, and its
-        // designed distance 2t + 1 reproduces the legacy consecutive-root
-        // generator (LCM of the minimal polynomials of alpha^1..alpha^(2t)).
+        // uses the standard primitive polynomial, and its designed distance
+        // 2t + 1 gives the consecutive-root generator (LCM of the minimal
+        // polynomials of alpha^1..alpha^(2t)).
         let designed_distance =
             DesignedDistance::try_from(2 * t as u64 + 1).expect("a positive BCH designed distance");
         let bch = BinaryBchCode::<u64>::primitive_narrow_sense_auto(
