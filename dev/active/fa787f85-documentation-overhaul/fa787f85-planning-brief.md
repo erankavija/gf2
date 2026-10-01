@@ -61,14 +61,14 @@ These counts are audit evidence, not permanent product facts. They belong in thi
 - D-05: Trivial Rustdoc examples are removed. Accessors, constants, direct mappings, and simple constructors do not receive examples merely to satisfy a coverage convention. Retained examples demonstrate non-obvious behavior or material contracts.
 - D-06: The primary audience is researchers evaluating or adopting gf2. The permanent documentation assumes relevant technical competence and does not teach elementary finite-field concepts or the simplest Hamming-code construction.
 - D-07: Tutorials are limited to research-grade end-to-end workflows that exercise advanced supported capabilities, such as reproducing performance evidence, configuring standards-based experiments, or evaluating advanced algebra and decoding paths.
-- D-08: Performance is a first-class adoption concern. Claims remain concise and non-marketing, link to detailed receipts, and identify the commit, hardware, build flags, workload, baseline, and measurement date.
+- D-08: Performance is a first-class adoption concern. Claims remain concise and non-marketing, live on a `docs/reference/` evidence page, link to detailed receipts, and identify the commit, hardware, build flags, workload, baseline, and measurement date.
 - D-09: Existing explanatory prose is not promoted verbatim into permanent documentation. Verified code, commands, equations, standard identifiers, and empirical data may be reused after independent verification.
 - D-10: The permanent format is repository Markdown plus Rustdoc. A documentation-site generator is not part of this epic.
 - D-11: Permanent prose states only current supported behavior. It contains no speculation, future promises, migration narration, implementation history, or comparisons framed as “now A rather than former B.”
 - D-12: Experimental or incomplete capabilities appear only when they provide usable current behavior. Limitations belong in reference material; planned work remains in JIT.
 - D-13: `CONTRIBUTING.md` is removed. Root `AGENTS.md` becomes the authoritative operational guide, and `CLAUDE.md` becomes a symlink to it.
 - D-14: Every `AGENTS.md` has an absolute hard limit of 200 lines. Crate-local files exist only for genuinely crate-specific recursively scoped constraints and do not restate root policy.
-- D-15: The root README becomes a concise researcher-facing landing page with a brief statement of what gf2 strives to be, a supported capability map, crate-selection guidance, current installation constraints, evidence-linked performance highlights, and links into permanent documentation.
+- D-15: The root README is a concise researcher-facing landing page with a brief statement of what gf2 strives to be, a supported capability map, crate-selection guidance, current installation constraints, and links into permanent documentation. Performance claims live on a `docs/reference/` evidence page, not in the README.
 - D-16: Installation documentation follows the current-state rule without exception. It describes only dependency and publishing mechanisms available at overhaul completion.
 - D-17: Permanent documentation uses an adapted Diátaxis layout: `tutorials/`, `how-to/`, `concepts/`, and `reference/`. This placement rule is itself a project invariant.
 - D-18: `gf2-core`, `gf2-coding`, `gf2-algebra`, and `gf2-sim` each receive a concise adopter-facing entry page. SIMD and HIP kernel crates are documented through acceleration and integration guidance as implementation backends.
@@ -92,10 +92,10 @@ These counts are audit evidence, not permanent product facts. They belong in thi
 - D-36: The epic has high priority. It is release-significant but does not displace correctness work assigned critical priority.
 - D-37: The prerequisite story defines, projects, tests, and obtains approval for the documentation contract before rewrite and archival tasks become available.
 - D-38: The full implementation breakdown is deferred until this epic and prerequisite contract story exist. Breakdown must cover every epic requirement and preserve the story-as-checkpoint dependency shape.
-- D-39: The prerequisite story registers three invariant groups: comment concision, current-capability-only scope, and examples plus document layout. Researcher-audience, Diátaxis-placement and no-marketing invariants are registered with the permanent-documentation rewrite (`9b2886a7`). Story decisions DEC-01 to DEC-06 on `3f29e945` record the details.
-- D-40: The migration-manifest schema and progress checker are epic migration work (`a24b2af7`), gated on the prerequisite story.
-- D-41: A workspace-wide source documentation tersification sweep (`f357b3dc`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
 - D-39: This planning brief is a linked epic artifact and records the full outcome of the investigation and interview.
+- D-40: The prerequisite story registers three invariant groups: comment concision, current-capability-only scope, and examples plus document layout. Researcher-audience, Diátaxis-placement and no-marketing invariants are registered with the permanent-documentation rewrite (`9b2886a7`). Story decisions DEC-01 to DEC-06 on `3f29e945` record the details.
+- D-41: The migration-manifest schema and progress checker are epic migration work (`a24b2af7`), gated on the prerequisite story.
+- D-42: A workspace-wide source documentation tersification sweep (`f357b3dc`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
 
 ## Target Structure
 

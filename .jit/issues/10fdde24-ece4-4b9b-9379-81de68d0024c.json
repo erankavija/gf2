@@ -1,0 +1,37 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T10:36:11.786309896Z",
+  "dependencies": [
+    "8dddfc7a-6112-4439-b8e0-7319bca23313"
+  ],
+  "description": "After the plan-review checkpoint passes, decompose the plan for Overhaul documentation for research adoption (fa787f85) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
+  "documents": [],
+  "gates_required": [
+    "coverage-preview",
+    "breakdown-review"
+  ],
+  "gates_status": {
+    "breakdown-review": {
+      "status": "pending",
+      "updated_at": "2026-10-01T10:36:11.786309896Z",
+      "updated_by": null
+    },
+    "coverage-preview": {
+      "status": "pending",
+      "updated_at": "2026-10-01T10:36:11.786309896Z",
+      "updated_by": null
+    }
+  },
+  "id": "10fdde24-ece4-4b9b-9379-81de68d0024c",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:docs",
+    "type:breakdown",
+    "brackets:fa787f85"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "breakdown: Overhaul documentation for research adoption",
+  "updated_at": "2026-10-01T10:36:11.786309896Z"
+}
