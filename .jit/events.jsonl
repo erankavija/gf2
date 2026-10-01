@@ -13879,3 +13879,4 @@
 {"from":"backlog","id":"b9adcee9-0614-4a8a-a1d4-1d61cded8795","issue_id":"dbd8787d-fee6-49db-be64-b055796f8756","timestamp":"2026-10-01T03:37:20.789193484Z","to":"ready","type":"issue_state_changed"}
 {"from":"ready","id":"db9e5d1b-2e38-4e5d-b896-8b3d6e988774","issue_id":"dbd8787d-fee6-49db-be64-b055796f8756","timestamp":"2026-10-01T03:37:30.291974514Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"2f0a7f0f-9c0c-49a9-8029-e155b3430acf","issue_id":"dbd8787d-fee6-49db-be64-b055796f8756","timestamp":"2026-10-01T03:37:30.291974514Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"b76c2f76-f7da-4f97-b55d-42a85684db29","issue_id":"dbd8787d-fee6-49db-be64-b055796f8756","timestamp":"2026-10-01T04:15:04.933918556Z","type":"issue_updated","updated_by":"doc-add"}
