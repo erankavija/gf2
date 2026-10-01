@@ -178,7 +178,7 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 - ✅ CpuBackend with SIMD auto-selection and rayon support
 - ✅ Batch operations: `batch_matvec`, `batch_matvec_transpose`
 - ✅ LDPC encoder integrated with CpuBackend
-- ✅ BCH batch API added: `BchEncoder::encode_batch()`
+- ✅ BCH batch encoding API (workspace batch on `BlockEncoder`)
 - ✅ Integration tests: 6 tests covering batch operations
 - ✅ Benchmarks created for performance tracking
 - ✅ All 221 gf2-coding + 452 gf2-core tests pass
