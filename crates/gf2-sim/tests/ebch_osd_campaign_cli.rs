@@ -169,9 +169,7 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
 
 /// The first pinned cell's sampled evidence at seed 42 is a recorded fixture:
 /// the eBCH(128,64,22) construction, its systematic encoder, and the OSD
-/// generator it hands the decoder determine every counter below. The values
-/// were recorded from the executable before the code moved onto the canonical
-/// extended-BCH model and are unchanged by it.
+/// generator it hands the decoder determine every counter below.
 #[test]
 fn first_cell_evidence_at_the_pinned_seed_is_a_recorded_fixture() {
     let dir = temp_dir("pinned-evidence");
