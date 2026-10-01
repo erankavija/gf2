@@ -14,7 +14,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-01T08:32:05.338827284Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T08:35:37.224810499Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "591a1c5e-d36b-42be-b27e-65bc9a7b3e9a",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate gf2-coding benchmarks",
-  "updated_at": "2026-10-01T07:46:28.120279516Z"
+  "updated_at": "2026-10-01T08:35:37.224810499Z"
 }

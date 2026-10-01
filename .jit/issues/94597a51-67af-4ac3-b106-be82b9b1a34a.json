@@ -34,13 +34,30 @@
       "path": "dev/active/64fd3afd/proof-sketch.md"
     }
   ],
+  "done_at": "2026-10-01T08:40:08.791170357Z",
   "first_ready_at": "2026-10-01T07:07:54.142255254Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "lake-build"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-01T08:37:02.923382252Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-01T08:40:00.772944323Z",
+      "updated_by": "auto:executor"
+    },
+    "lake-build": {
+      "status": "passed",
+      "updated_at": "2026-10-01T08:32:42.571888588Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "94597a51-67af-4ac3-b106-be82b9b1a34a",
   "labels": [
     "type:task",
@@ -50,7 +67,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Lean proofs: systematic encoding correctness",
-  "updated_at": "2026-10-01T08:16:18.941820752Z"
+  "updated_at": "2026-10-01T08:40:08.791170357Z"
 }
