@@ -36,6 +36,11 @@
       "reason": "Documentation contract story; every documentation work source reaches it."
     },
     {
+      "from_key": "register-no-dev-path-coupling",
+      "to_issue": "3f29e945",
+      "reason": "The invariant registry, its projection region and the enforces linkage come from the documentation contract story."
+    },
+    {
       "from_key": "inventory-active-zen3-early",
       "to_issue": "a24b2af7",
       "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
