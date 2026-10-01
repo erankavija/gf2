@@ -89,7 +89,7 @@
   "gates_status": {
     "plan-review": {
       "status": "failed",
-      "updated_at": "2026-10-01T13:18:12.643614990Z",
+      "updated_at": "2026-10-01T14:08:20.874094583Z",
       "updated_by": "auto:executor"
     }
   },
@@ -102,5 +102,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T13:54:20.247142371Z"
+  "updated_at": "2026-10-01T14:08:20.874094583Z"
 }
