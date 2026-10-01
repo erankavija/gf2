@@ -20,6 +20,11 @@
       "status": "passed",
       "updated_at": "2026-09-03T05:39:42.852375434Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T07:01:35.405714863Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "97410c80-aba2-420f-870c-b71a5066d5e4",
@@ -32,5 +37,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
-  "updated_at": "2026-09-03T05:39:42.852375434Z"
+  "updated_at": "2026-10-01T07:01:35.405714863Z"
 }

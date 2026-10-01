@@ -34,6 +34,7 @@
       "path": "dev/active/64fd3afd/proof-sketch.md"
     }
   ],
+  "done_at": "2026-10-01T07:07:53.945662942Z",
   "first_ready_at": "2026-09-02T16:17:00.030601274Z",
   "gates_required": [
     "code-review",
@@ -47,8 +48,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-03T04:54:18.733702988Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T06:47:19.434810335Z",
       "updated_by": "auto:executor"
     },
     "lake-build": {
@@ -66,7 +67,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-09-03T04:54:18.733702988Z"
+  "updated_at": "2026-10-01T07:07:53.945662942Z"
 }

@@ -196,6 +196,7 @@
       "path": "dev/active/ae03bcd0-general-bch/oracle-receipt.md"
     }
   ],
+  "done_at": "2026-10-01T07:07:54.338662925Z",
   "first_ready_at": "2026-09-02T05:46:01.370786388Z",
   "gates_required": [
     "cargo-ci",
@@ -215,13 +216,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-09-03T04:54:35.106005572Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T07:03:52.889132330Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-09-03T04:54:39.221948429Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T07:07:39.622401784Z",
       "updated_by": "auto:executor"
     }
   },
@@ -233,7 +234,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-09-03T04:54:39.221948429Z"
+  "updated_at": "2026-10-01T07:07:54.338662925Z"
 }

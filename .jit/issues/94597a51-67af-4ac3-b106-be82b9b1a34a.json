@@ -7,6 +7,7 @@
   ],
   "description": "Implement the sketch's Lean obligation that systematic encoding preserves the message and produces a multiple of the generator polynomial.\n\n## Success Criteria\n\n- [hard] REQ-01: The encoding-correctness lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the encoding production path exactly as the approved sketch assigns, with refinement evidence landed where assigned.\n",
   "documents": [],
+  "first_ready_at": "2026-10-01T07:07:54.142255254Z",
   "gates_required": [
     "code-review",
     "doc-review",
@@ -22,7 +23,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Lean proofs: systematic encoding correctness",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-10-01T07:07:54.142255254Z"
 }
