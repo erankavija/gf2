@@ -13,12 +13,6 @@
 //! let _ = Rayleigh::new(6.25, 4);
 //! let _ = Rician::new(6.25, 4, 2.0);
 //! ```
-//!
-//! # Non-goals
-//!
-//! Frequency-selective/multipath fading, phase noise, frequency offset, and
-//! GPU channel stages are out of scope for this task. GPU AWGN is Phase B
-//! (`f6004add`).
 
 use rand::Rng as _;
 use rand_chacha::ChaCha20Rng;
