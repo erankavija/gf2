@@ -622,4 +622,3 @@ impl DvbBchParams {
 - **Phase 2**: Primitive polynomial generation via exhaustive and trinomial search
 - **Phase 3**: Performance optimization (parallel search, SIMD, GPU)
 - **Phase 4**: State-of-the-art algorithms for large degrees (m > 64)
-
