@@ -21,6 +21,16 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T19:24:41.066871989Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T19:27:13.114524025Z",
+      "updated_by": "auto:executor"
+    },
     "repo-validate": {
       "status": "passed",
       "updated_at": "2026-10-01T19:21:19.061205973Z",
@@ -40,5 +50,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Register and project the documentation invariants",
-  "updated_at": "2026-10-01T19:21:19.061205973Z"
+  "updated_at": "2026-10-01T19:27:13.114524025Z"
 }
