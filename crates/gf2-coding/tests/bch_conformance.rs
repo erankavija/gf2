@@ -94,7 +94,7 @@
 //! standards-vector agreement in `bch_oracle_agreement.rs`, the primitive
 //! search in `bch_primitive_verification.rs`, the shortening derivations'
 //! selection rule, cost and DVB-T2 rows in `shortened_fast_path.rs`, and the
-//! decoding laws of the pre-cutover binary type in its own module. None of
+//! decoding laws of the binary decoder in its own module. None of
 //! those assert a law this suite asserts, so none is folded in here.
 
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2MotherCode, FrameSize};

@@ -1,8 +1,8 @@
 // Device-side batch BCH syndrome evaluator (design doc §5, §6, §10).
 //
 // Reproduces, bit-for-bit, the CPU syndrome evaluation of
-// `gf2_coding::bch::BinaryBchDecoder`: for each received polynomial r(x) and each evaluation point α^(i+1)
-// (i = 0..2t-1), the syndrome S_{i+1} = r(α^(i+1)) is computed by Horner's rule
+// `gf2_coding::bch::BinaryBchDecoder`: for each received polynomial r(x) and each evaluation point β_i
+// (i = 0..2t-1), the syndrome S_i = r(β_i) is computed by Horner's rule
 // over GF(2^m). Berlekamp-Massey and Chien search stay on the CPU (issue
 // background); this kernel is ONLY the syndrome-evaluation sub-step.
 //
@@ -20,21 +20,20 @@
 // GF(2^m) is XOR. There is NO on-device table regeneration — the tables ARE
 // the CPU tables, so equality is exact by construction.
 //
-// # Coefficient layout — host-side reorder, packed bits (design doc §6)
+// # Coefficient layout — packed bits (design doc §6)
 //
-// The host reorders each received BitVec into the design-doc §3.1 `coeffs`
-// order (parity bits reversed, then message bits reversed) and uploads it as a
-// packed little-endian bit stream of `n` bits per frame
-// (`words_per_frame = ceil(n/64)` u64 words). The kernel does a PURE Horner
-// pass with no knowledge of the parity/message split: `coeff_bit(f, d)` is one
-// word load + shift from frame `f`'s packed stream. This keeps the exactness
-// (the reorder lives in tested Rust) and the upload small (bits, not expanded
-// field elements).
+// Each received BitVec is uploaded as a packed little-endian bit stream of `n`
+// bits per frame (`words_per_frame = ceil(n/64)` u64 words) in which bit d is
+// the coefficient of x^d, the canonical word order, so the words need no
+// reorder. The kernel does a PURE Horner pass with no knowledge of the
+// parity/message split: `coeff_bit(f, d)` is one word load + shift from frame
+// `f`'s packed stream. The upload is small (bits, not expanded field
+// elements).
 //
 // # Thread mapping — one thread per (frame, point) (design doc §6)
 //
 // A flat grid of `batch * 2t` threads. Thread `gid = f * (2t) + i` evaluates
-// `S_{i+1}` for frame `f` at point `d_points[i] = α^(i+1)` (uploaded as u16):
+// `S_i` for frame `f` at point `d_points[i]` (uploaded as u16):
 //
 //   acc = coeff_bit(f, n-1)                 // leading coefficient (0 or 1)
 //   for d = n-2 down to 0:
@@ -76,7 +75,7 @@ __device__ __forceinline__ uint16_t coeff_bit(const uint64_t* __restrict__ coeff
 // Batch BCH syndrome evaluation: one thread per (frame, syndrome point).
 //
 //   d_coeffs     [batch * words_per_frame] packed coeff streams (§3.1 order)
-//   d_points     [two_t] u16 evaluation points α^1 .. α^(2t)
+//   d_points     [two_t] u16 evaluation points
 //   d_log        [2^m]     uploaded discrete-log table
 //   d_exp        [2^m - 1] uploaded antilog table
 //   d_syndromes  [batch * two_t] u16 syndromes (out), row-major per frame

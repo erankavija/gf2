@@ -85,7 +85,7 @@ mod tests {
     use crate::test_vectors;
 
     #[test]
-    #[ignore]
+    #[ignore = "sim: requires the DVB test vectors (DVB_TEST_VECTORS_PATH)"]
     fn test_load_vv001_cr35() {
         if !test_vectors::test_vectors_available() {
             eprintln!("Test vectors not available, skipping test");
@@ -103,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "sim: requires the DVB test vectors (DVB_TEST_VECTORS_PATH)"]
     fn test_load_tp04_structure() {
         if !test_vectors::test_vectors_available() {
             eprintln!("Test vectors not available, skipping test");
@@ -137,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "sim: requires the DVB test vectors (DVB_TEST_VECTORS_PATH)"]
     fn test_all_test_points_consistent() {
         if !test_vectors::test_vectors_available() {
             eprintln!("Test vectors not available, skipping test");
