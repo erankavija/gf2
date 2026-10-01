@@ -1,7 +1,7 @@
 {
   "epic_id": "ae03bcd0-8881-4308-99f5-cad2b3c717d1",
   "epic_short_id": "ae03bcd0",
-  "current_wave": 11,
+  "current_wave": 14,
   "waves": [
     {
       "wave_number": 1,
@@ -385,7 +385,7 @@
           "title": "External oracle and standards-vector agreement",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: merged dddd121f; cargo-ci, code-review, doc-review passed; research-review R3 findings closed lead-direct 01003c2d; doc-review and research-review re-run PENDING (last runs recorded \"Agent produced no output\", not verdicts)"
+          "status": "done"
         },
         {
           "key": "lean-closure",
@@ -414,7 +414,7 @@
           "title": "Shared property and conformance suites across field classes",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: merged 9672d944; cargo-ci passed; code-review PENDING (last run recorded \"Agent produced no output\", not a verdict)"
+          "status": "done"
         },
         {
           "key": "cutover-components",
@@ -422,7 +422,7 @@
           "title": "Migrate the component-code BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "session 10: native Sonnet; lead review PASS (gldpc/bcjr migrated to canonical construction + traits::block, osd evidence test, lib.rs canonical re-exports); merged e54ad63c; cargo-ci passed; code-review PENDING (needs a run)"
+          "status": "done"
         },
         {
           "key": "cutover-dvbt2",
@@ -430,7 +430,7 @@
           "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "session 10: native Opus; lead review PASS (DvbT2MotherCode declares MessageParityDescending so Shortened<DvbT2MotherCode> reproduces the standard bit for bit on all twelve configurations; DvbT2BchDecoder decodes through the mother citing 1a8f6acd; legacy BchCode::dvb_t2 relocated to core.rs with its differential tests); merged 17d511af + lead-direct survey precision e78aebcf; cargo-ci passed; code-review PENDING (needs a run)"
+          "status": "done"
         },
         {
           "key": "pin-baseline-receipt",
@@ -451,7 +451,7 @@
           "title": "Migrate gf2-coding benchmarks",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "cutover-bins-examples",
@@ -459,7 +459,7 @@
           "title": "Migrate gf2-coding binaries and examples",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "cutover-sim",
@@ -467,7 +467,7 @@
           "title": "Migrate gf2-sim BCH consumers",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "cutover-test-suite",
@@ -475,7 +475,7 @@
           "title": "Migrate gf2-coding integration tests",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "lean-generator",
@@ -483,7 +483,7 @@
           "title": "Lean proofs: generator base-field membership and root correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "session 10: rework 1 merged f6f11755; lake-build + code-review passed; doc-review R2 F1 closed by linking the O-4 sketch; doc-review re-run PENDING (last run recorded \"Agent produced no output\", not a verdict)"
+          "status": "done"
         }
       ]
     },
@@ -496,7 +496,7 @@
           "title": "Extend Criterion benchmarks to the selected workloads",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "cutover-removal",
@@ -504,7 +504,7 @@
           "title": "Delete the superseded BCH code surface",
           "classification": "implementation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "lean-encoding",
@@ -512,7 +512,7 @@
           "title": "Lean proofs: systematic encoding correctness",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -525,7 +525,7 @@
           "title": "Sweep stale prose references to the removed BCH surface",
           "classification": "documentation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         },
         {
           "key": "perf-receipts",
@@ -533,7 +533,7 @@
           "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "pending"
+          "status": "in_progress (prep merged; awaiting window data)"
         }
       ]
     },
@@ -546,7 +546,7 @@
           "title": "Researcher-oriented rustdoc and runnable examples",
           "classification": "documentation",
           "difficulty": "easy",
-          "status": "pending"
+          "status": "done"
         }
       ]
     }
@@ -613,7 +613,14 @@
     "444c06bc": "2 (+ lead-direct panic docs)",
     "3f7edef1": "2 + lead-direct attempt-package fix",
     "88ca7d2f": "0 + lead-direct (runner collection fix)",
-    "b1bd75ca": 1
+    "b1bd75ca": 1,
+    "e1e0e7ff": "0 + 1 (session 11)",
+    "5ee83cd3": "0 + 1 (session 11)",
+    "97410c80": "0 + 1 (session 11)",
+    "591a1c5e": "0 + 1 (session 11)",
+    "ef8ff9c4": "0 + 1 (session 11)",
+    "d1b4f85e": "0 + 1 (session 11)",
+    "94597a51": "0 + 1 (session 11)"
   },
   "surfaced_pitfalls": [
     {
@@ -836,7 +843,12 @@
     "R-51 (session 10): generic derived-code decoding stays outside the epic (REQ-09, 1a8f6acd); the DVB-T2 outer decoder decodes through the mother (zero-filled removed leading message coordinates, BinaryBchDecoder on the mother, bbframe read from the kept message coordinates), implemented once in the DVB-T2 module as a documented composition citing @/issue/1a8f6acd as the tracked home of the generic form.",
     "R-52 (session 10): the canonical DVB-T2 code (Shortened<BinaryBchCode> via the systematic restriction) must reproduce the legacy encoder/decoder bit for bit on all twelve (frame, rate) configurations; the standards constructor declares its layout (epic REQ-07).",
     "R-53 (session 10): 97410c80 reclassified from easy to hard (new canonical type, decoder composition, layout pinning, survey-doc prose) and dispatched to native Opus.",
-    "R-54 (session 10): 97410c80 deviation accepted \u2014 the mother's default BlockEncoder layout is ascending while ETSI transmits descending, so a DvbT2MotherCode newtype declares SystematicLayout::MessageParityDescending (DVB_T2_LAYOUT) and Shortened<DvbT2MotherCode> is the DVB-T2 code (R-52 holds bit for bit); the legacy-vs-canonical differential tests live in core.rs beside the relocated legacy constructor because they need BchEncoder/BchDecoder, and vanish with 4a2baa12."
+    "R-54 (session 10): 97410c80 deviation accepted \u2014 the mother's default BlockEncoder layout is ascending while ETSI transmits descending, so a DvbT2MotherCode newtype declares SystematicLayout::MessageParityDescending (DVB_T2_LAYOUT) and Shortened<DvbT2MotherCode> is the DVB-T2 code (R-52 holds bit for bit); the legacy-vs-canonical differential tests live in core.rs beside the relocated legacy constructor because they need BchEncoder/BchDecoder, and vanish with 4a2baa12.",
+    "R-55 (session 11): 97410c80 code-review F1 resolved by implementing 113ae672 inside the rework: generic bch::LayoutView<X,S,M>; DvbT2MotherCode is a type alias (supersedes the R-54 newtype). F2: BchCode::dvb_t2 built from the canonical code; later deleted by 4a2baa12. 113ae672 closed as delivered.",
+    "R-56 (session 11): invoker DEC-01 on f759d724 \u2014 archived documents (paths with an archive segment) are immutable and outside REQ-01/doc-review scope.",
+    "R-57 (session 11): fd9d5416 comparison basis \u2014 Tier A (88ca7d2f, 591a1c5e mapping, 7 cells) plus Tier B (4e732b56 survey pre-cutover gf2 W1 cells, option A); fallback option B (re-measure legacy encoder at 74871c6b) only if research-review rejects cross-harness comparison.",
+    "R-58 (session 11): fd9d5416 \u2014 W2 cells reported, excluded from the non-regression verdict (legacy harness timed construction+materialization); W6 cells reported as reference-family throughput (no calibrated coding profile; calibration is follow-up work).",
+    "R-59 (session 11): invoker \u2014 all ROADMAP files, .github/copilot-instructions.md and the Copilot agent config are obsolete and deleted; JIT is the progress tracker."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",
@@ -905,5 +917,8 @@
     "Session 10 (cont.): 203ee826 done 941f81db; e1e0e7ff merged 9672d944 with cargo-ci passed; 3f7edef1 code/doc passed, research R3 closed lead-direct, re-runs queued; b1bd75ca doc-review R2 closed by linking the sketch; 97410c80 dispatched (Opus) at 941f81db; 5ee83cd3 (Sonnet) mid-cargo-ci.",
     "Session 10 handoff (2026-09-03 ~05:00Z): four AI gate runs returned \"Agent produced no output\" (b1bd75ca doc-review, e1e0e7ff code-review, 3f7edef1 doc-review + research-review); re-run them first next session. 97410c80 (Opus) in flight; 5ee83cd3 (Sonnet) complete on branch, report pending. Wave-12 briefs drafted in session-10-prompts/.",
     "Session 10 end (~05:45Z): 5ee83cd3 merged e54ad63c (cargo-ci passed) and 97410c80 merged 17d511af (cargo-ci passed); both await code-review. Five AI gate runs outstanding in total (b1bd75ca doc-review, e1e0e7ff/5ee83cd3/97410c80 code-review, 3f7edef1 doc-review + research-review). Wave 12 ready to dispatch once 5ee83cd3 and 97410c80 are done; briefs in session-10-prompts/. Worktrees agent-{2b6968d3,88ca7d2f,d7749931,bd0edfa2,203ee826} reclaimed."
+  ],
+  "session_notes_s11": [
+    "Session 11 (2026-10-01, lead session shared with 6dc81018): re-ran the six pending AI gates; closed b1bd75ca, 3f7edef1; reworked and closed 5ee83cd3 (lead-direct prose), 97410c80 (+113ae672), e1e0e7ff; dispatched wave 12 + 94597a51 in parallel, all closed after one rework each where needed; 4a2baa12 deleted the legacy surface (lead fixes: hip-only import scope, fmt); f759d724 closed with DEC-01; d1b4f85e closed and its runner queued for the 2026-10-01T23:00Z window after dbd8787d; 4ad869d6 closed; fd9d5416 prep (receipt protocol + renderer) merged. Filed cbd1eb28 (user-layout decode) outside the epic."
   ]
 }
