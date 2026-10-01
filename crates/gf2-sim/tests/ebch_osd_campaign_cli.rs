@@ -167,6 +167,34 @@ fn worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged() {
     );
 }
 
+/// The first pinned cell's sampled evidence at seed 42 is a recorded fixture:
+/// the eBCH(128,64,22) construction, its systematic encoder, and the OSD
+/// generator it hands the decoder determine every counter below. The values
+/// were recorded from the executable before the code moved onto the canonical
+/// extended-BCH model and are unchanged by it.
+#[test]
+fn first_cell_evidence_at_the_pinned_seed_is_a_recorded_fixture() {
+    let dir = temp_dir("pinned-evidence");
+    let output = run(&workers_campaign_args(dir.path(), "64", "1000000", "1"));
+    assert!(
+        output.status.success(),
+        "pinned-evidence run failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let receipt = receipt(&dir.path().join("receipt.json"));
+    let cell = serde_json::to_value(&receipt.cell_results[0]).expect("serialize cell evidence");
+    assert_eq!(cell["cell"]["id"], "order-2-point-00");
+    assert_eq!(cell["seed"], 6873647415619822776_u64);
+    assert_eq!(cell["samples"], 64);
+    assert_eq!(cell["sampled_bits"], 64 * 64);
+    assert_eq!(cell["bit_errors"], 112);
+    assert_eq!(cell["block_errors"], 8);
+    assert_eq!(cell["squared_block_bit_errors"], 1584);
+    assert_eq!(cell["work"]["eliminations"], 64);
+    assert_eq!(cell["work"]["generated_patterns"], 133_184);
+    assert_eq!(cell["work"]["tested_candidates"], 133_184);
+}
+
 #[test]
 fn campaign_maps_pinned_cells_and_resumes_into_the_same_receipt() {
     let dir = temp_dir("resume");
