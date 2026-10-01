@@ -65,8 +65,7 @@
 //!   [`crate::tuning::CodingTuning`] answers whether the active profile
 //!   admits it at this redundancy and batch length. The conservative section
 //!   admits only the reference, so a process that installs no profile
-//!   encodes exactly as it did before any family beyond the reference was
-//!   registered.
+//!   encodes every batch with the reference recurrence.
 //!
 //! The seam walks [`EncodeFamily::REGISTERED`] in order and takes the first
 //! entry both decisions accept, which the reference always terminates. A
