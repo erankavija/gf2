@@ -719,7 +719,7 @@
     {
       "source": "591a1c5e worker (session 11)",
       "finding": "batch_operations bch_batch/{1,10,50,100} keeps its Criterion ID but now measures the primitive narrow-sense GF(2^14) dd=25 code (n=16383,k=16215) instead of the non-canonical legacy (16200,16008,t=12); bch_batch_decode/* and bch_single_vs_batch/batch_api loop allocation-free decode_into (DvbT2BchDecoder has no batch API)",
-      "disposition": "fd9d5416/d1b4f85e: report these cells as not like-for-like with the 88ca7d2f baseline"
+      "disposition": "superseded by 591a1c5e rework 1: non-comparable cells renamed (bch_encode_pns_16383_16215/*, bch_single_vs_batch/decode_into_loop); mapping in dev/active/591a1c5e/smoke-run.md; fd9d5416/d1b4f85e use it"
     },
     {
       "source": "591a1c5e/94597a51 workers (session 11)",
