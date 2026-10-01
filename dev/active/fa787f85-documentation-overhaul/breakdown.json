@@ -23,7 +23,7 @@
       "source_refs": [
         "REQ-18",
         "REQ-20",
-        "OD-01",
+        "D-43",
         "D-02",
         "D-03",
         "INV-§3.13",
@@ -67,7 +67,7 @@
       "contract_refs": [],
       "source_refs": [
         "REQ-08",
-        "OD-05",
+        "D-47",
         "D-19",
         "INV-§3.9"
       ],
@@ -201,7 +201,7 @@
         "REQ-14",
         "D-27",
         "D-28",
-        "OD-07",
+        "D-49",
         "INV-§3.1",
         "INV-B",
         "INV-§0.4",
@@ -247,7 +247,7 @@
         "REQ-13",
         "REQ-12",
         "REQ-09",
-        "OD-04",
+        "D-46",
         "D-09",
         "INV-§3.4",
         "INV-§3.5",
@@ -445,341 +445,6 @@
     }
   },
   {
-    "key": "execute-terminal-archives",
-    "title": "Run container archival for eligible terminal epics",
-    "description": "Eligible terminal epics, and archived epics whose newly linked documents remain outside their archive, are archived through JIT container archival into marker-backed directories, with in-file citations repointed alongside.\n\n## Background\n\nArchival rewrites only issue document references, never file content (`dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 2), so citation repointing is part of each execution.\n\n## Success Criteria\n\n- [hard] REQ-01: Every container that the preview record marks eligible, other than b7157be6, is archived into a marker-backed `<short-id>-<slug>/` directory with byte verification passing.\n- [hard] REQ-02: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change; receipt directories stay byte-identical.\n- [hard] REQ-03: A rerun of each executed archive reports no change.\n- [hard] REQ-04: The manifest records each executed row as complete, and the progress checker reports their destination assertions passing.\n- [hard] REQ-05: A link scan of each executed archive directory and each repointed file reports no unresolved local link.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-10",
-      "satisfies:REQ-19"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "archive-candidate-preview"
-    ],
-    "planning": {
-      "outcome": "Eligible terminal epics are archived with markers, verified bytes and repointed citations",
-      "contract_refs": [
-        "archive-execution-protocol",
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-10",
-        "REQ-19",
-        "D-21",
-        "D-22",
-        "PD-01",
-        "PD-02",
-        "INV-§0.2",
-        "INV-§4"
-      ],
-      "terminal": {
-        "consumer_family": "archived epic readers",
-        "test_boundary": "archive rerun no-op",
-        "worker_sized_reason": "A previewed, blocker-free set of containers run through one idempotent command each",
-        "footprint": {
-          "touches": [
-            "dev/archive",
-            "dev/active",
-            ".jit/issues"
-          ],
-          "uncertainty": "exact container set comes from the preview record"
-        }
-      }
-    }
-  },
-  {
-    "key": "remove-active-husks",
-    "title": "Clear empty leftover dirs under dev/active",
-    "description": "Executed archives left empty untracked directories under `dev/active/`, and two survey directories hold untracked `__pycache__` output. They obscure which entries hold live work.\n\n## Background\n\n`dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A lists 43 empty leftovers and the two cache directories.\n\n## Success Criteria\n\n- [hard] REQ-01: No empty or cache-only untracked directory remains under `dev/active/`.\n- [hard] REQ-02: No tracked file changes.\n- [hard] REQ-03: The manifest's deletion rows for these directories record completion.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "inventory-dev-active"
-    ],
-    "planning": {
-      "outcome": "dev/active holds only directories with tracked content",
-      "contract_refs": [
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-11",
-        "PD-03",
-        "INV-A",
-        "INV-§0.6"
-      ],
-      "terminal": {
-        "consumer_family": "active-directory readers",
-        "test_boundary": "untracked directory listing",
-        "worker_sized_reason": "About 45 untracked empty or cache-only directories, no tracked edits",
-        "footprint": {
-          "touches": [
-            "dev/active"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "regroup-active-zen3-ci-inputs",
-    "title": "Regroup the f547c394 CI inputs under their epic dir",
-    "description": "The flat `dev/active/f547c394/` entry holds files that CI reads directly. It moves under its owning epic's directory together with the scripts that read it, so CI keeps working.\n\n## Background\n\n`dev/scripts/check-campaign-producing-closure.py:33` reads `dev/active/f547c394/producing-inputs.json` and `dev/scripts/check-addendum-schema-versions.py:53` reads `dev/active/f547c394/addendum*.schema.json`, both through `scripts/cargo-ci.sh`. The entry is shared by epics 1a379447 and d77176e5. Receipts quote `dev/active/` paths as provenance strings and stay byte-identical.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: The campaign producing-closure check and the addendum schema-version check read the new paths in the same commit, and the Rust CI gate passes, including both checks.\n- [hard] REQ-04: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "link-owned-artifacts"
-    ],
-    "planning": {
-      "outcome": "f547c394 lives under its epic dir and the CI checks read it there",
-      "contract_refs": [
-        "active-layout",
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-11",
-        "D-23",
-        "PD-03",
-        "INV-§3.1",
-        "INV-§6"
-      ],
-      "terminal": {
-        "consumer_family": "CI receipt checks",
-        "test_boundary": "Rust CI gate",
-        "worker_sized_reason": "One 96-file entry and two script path constants changed together",
-        "footprint": {
-          "touches": [
-            "dev/active/f547c394",
-            "dev/active/1a379447-zen3-cpu-performance",
-            "dev/scripts/check-campaign-producing-closure.py",
-            "dev/scripts/check-addendum-schema-versions.py"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "regroup-active-zen3",
-    "title": "Regroup flat zen3 dev/active entries under their epic dir",
-    "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447, except f547c394). Receipts quote these paths as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: No receipt directory under `dev/bench_results/` changes, and the Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "link-owned-artifacts"
-    ],
-    "planning": {
-      "outcome": "Flat zen3 entries live under the zen3 epic dir with relinked references",
-      "contract_refs": [
-        "active-layout",
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-11",
-        "D-22",
-        "D-23",
-        "PD-03",
-        "INV-A",
-        "INV-§6"
-      ],
-      "terminal": {
-        "consumer_family": "zen3 epic contributors",
-        "test_boundary": "link scan of moved entries",
-        "worker_sized_reason": "Scripted moves and relinks for one epic's entries with a fixed rule",
-        "footprint": {
-          "touches": [
-            "dev/active",
-            "dev/active/1a379447-zen3-cpu-performance",
-            ".jit/issues"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "regroup-active-field-dispatch",
-    "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
-    "description": "About 18 flat `dev/active/` entries belong to the field capability dispatch epic (6dc81018), several shared with epic 86b9c719. They move under the owning epic's canonical directory.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic includes 6dc81018).\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: No receipt directory under `dev/bench_results/` changes, and the Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "link-owned-artifacts"
-    ],
-    "planning": {
-      "outcome": "Flat field-dispatch entries live under their epic dir with relinked references",
-      "contract_refs": [
-        "active-layout",
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-11",
-        "D-23",
-        "PD-03",
-        "INV-A"
-      ],
-      "terminal": {
-        "consumer_family": "field-dispatch epic contributors",
-        "test_boundary": "link scan of moved entries",
-        "worker_sized_reason": "Scripted moves and relinks for one epic's entries with a fixed rule",
-        "footprint": {
-          "touches": [
-            "dev/active",
-            "dev/active/6dc81018-field-capability-dispatch",
-            ".jit/issues"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "regroup-active-remaining",
-    "title": "Regroup the remaining flat dev/active entries under epic dirs",
-    "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. They move under their owning epics' canonical directories.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: No receipt directory under `dev/bench_results/` changes, and the Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "link-owned-artifacts"
-    ],
-    "planning": {
-      "outcome": "Remaining flat entries live under their epic dirs with relinked references",
-      "contract_refs": [
-        "active-layout",
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-11",
-        "D-23",
-        "PD-03",
-        "INV-A",
-        "INV-§3.14"
-      ],
-      "terminal": {
-        "consumer_family": "open epic contributors",
-        "test_boundary": "link scan of moved entries",
-        "worker_sized_reason": "About fifteen small entries across five epics, scripted with one rule",
-        "footprint": {
-          "touches": [
-            "dev/active",
-            ".jit/issues"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "resolve-dev-strays",
-    "title": "Resolve stray and ownerless dev entries",
-    "description": "A few `dev/` entries fit no live epic: files of terminal owners left in `dev/active/`, two entries without a defensible owner, and an unmarked code stub inside `dev/archive/`.\n\n## Background\n\nStrays: `37e0b235/` (rejected task under archived 806eb14e), `babcf05e-gf2-core-ppc-spiral/` and `e095a100-gfpm-arithmetic/`. Ownerless: `DOCUMENTATION_AUDIT.md` and `charon-patch-backup-2026-05-15/`. Stub: `dev/archive/packed_field_stub/`. Evidence in `dev/active/fa787f85-documentation-overhaul/investigation.md` §1.1 and Appendices A and B.\n\n## Success Criteria\n\n- [hard] REQ-01: Each terminal-owned stray is in its owning epic's marker-backed archive directory as a byte-verified copy, or is removed as identical to a file already archived there, as recorded in the manifest.\n- [hard] REQ-02: Each ownerless entry and the unmarked code stub live under `dev/archive/legacy/<original-relative-path>`.\n- [hard] REQ-03: Inbound citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: The manifest records each row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-12",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "execute-terminal-archives"
-    ],
-    "planning": {
-      "outcome": "Stray and ownerless dev entries sit with their owners or in the legacy mirror",
-      "contract_refs": [
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-12",
-        "REQ-11",
-        "D-24",
-        "D-25",
-        "PD-02",
-        "PD-03",
-        "INV-§1.1",
-        "INV-A",
-        "INV-B"
-      ],
-      "terminal": {
-        "consumer_family": "archive readers",
-        "test_boundary": "link scan of moved entries",
-        "worker_sized_reason": "Six small entries with recorded owners or recorded lack of one",
-        "footprint": {
-          "creates": [
-            "dev/archive/legacy"
-          ],
-          "touches": [
-            "dev/active",
-            "dev/archive"
-          ]
-        }
-      }
-    }
-  },
-  {
     "key": "sweep-baseline-census",
     "title": "Record the pre-sweep comment census",
     "description": "The source-comment sweep reports each crate's comment-line share before and after. The baseline is measured once, before any sweep edit, by a reproducible method.\n\n## Background\n\n`dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix C gives a 2026-10-01 count and its method.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked completion record states, per crate under `crates/`, the comment-line count, non-blank Rust line count and comment share, with the exact counting command.\n- [hard] REQ-02: The record states, per crate, the number of comment lines matching the sweep pattern below.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-03: The record names the commit measured.\n",
@@ -804,7 +469,7 @@
       ],
       "source_refs": [
         "REQ-27",
-        "OD-02",
+        "D-44",
         "INV-C"
       ],
       "terminal": {
@@ -858,7 +523,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -920,7 +585,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -977,7 +642,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1036,7 +701,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1096,7 +761,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1151,7 +816,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1207,7 +872,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1272,7 +937,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1333,7 +998,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1390,7 +1055,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1412,7 +1077,7 @@
   {
     "key": "sweep-coding-bch",
     "title": "Tersify comments in gf2-coding BCH and transform modules",
-    "description": "Bring the comments and Rustdoc in gf2-coding BCH and transform modules to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-coding/src/bch/` and `crates/gf2-coding/src/transform/`, about 4,400 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form. The BCH and transform modules have concurrent rustdoc and example work in another epic; this unit runs once that work has landed so edits do not collide.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
+    "description": "Bring the comments and Rustdoc in gf2-coding BCH and transform modules to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-coding/src/bch/` and `crates/gf2-coding/src/transform/`, about 4,400 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form. The BCH and transform modules are also edited by open work in the general BCH epic; this unit runs in a window when that epic has no in-flight edits to them.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -1445,7 +1110,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1502,7 +1167,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1557,7 +1222,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1615,7 +1280,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1686,7 +1351,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1743,7 +1408,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1801,7 +1466,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1859,7 +1524,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1894,8 +1559,8 @@
   },
   {
     "key": "sweep-sim-tests-bins",
-    "title": "Tersify comments in gf2-sim tests, binaries and examples",
-    "description": "Bring the comments and Rustdoc in gf2-sim tests, binaries and examples to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-sim/tests/`, `crates/gf2-sim/src/bin/` and `crates/gf2-sim/examples/`, about 4,700 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form. The DVB-T2 AWGN campaign binary's header carries migration narration.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
+    "title": "Tersify comments in gf2-sim tests, benches, binaries and examples",
+    "description": "Bring the comments and Rustdoc in gf2-sim tests, benches, binaries and examples to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-sim/tests/`, `crates/gf2-sim/benches/`, `crates/gf2-sim/src/bin/` and `crates/gf2-sim/examples/`, about 4,700 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form. The DVB-T2 AWGN campaign binary's header carries migration narration.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -1917,7 +1582,7 @@
       "sweep-baseline-census"
     ],
     "planning": {
-      "outcome": "Comments in gf2-sim tests, binaries and examples carry only current, non-obvious content in shortest form",
+      "outcome": "Comments in gf2-sim tests, benches, binaries and examples carry only current, non-obvious content in shortest form",
       "contract_refs": [
         "sweep-unit-rules"
       ],
@@ -1928,7 +1593,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -1941,6 +1606,7 @@
         "footprint": {
           "touches": [
             "crates/gf2-sim/tests",
+            "crates/gf2-sim/benches",
             "crates/gf2-sim/src/bin",
             "crates/gf2-sim/examples"
           ]
@@ -1985,7 +1651,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -2007,7 +1673,7 @@
   {
     "key": "sweep-algebra-rest",
     "title": "Tersify comments in the remaining gf2-algebra files",
-    "description": "Bring the comments and Rustdoc in the remaining gf2-algebra files to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-algebra/` Rust files outside `src/packed/` (sources, tests, benches and examples), about 4,500 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
+    "description": "Bring the comments and Rustdoc in the remaining gf2-algebra files to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-algebra/src/` files `gpu.rs`, `gray.rs`, `lib.rs`, `parallel.rs`, `testutil.rs` and `tuning.rs`, `src/permanent/`, and `tests/`, `benches/` and `examples/`, about 4,500 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2040,7 +1706,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -2052,8 +1718,13 @@
         "worker_sized_reason": "About 4,500 comment lines in one module group, one review pass",
         "footprint": {
           "touches": [
+            "crates/gf2-algebra/src/gpu.rs",
+            "crates/gf2-algebra/src/gray.rs",
+            "crates/gf2-algebra/src/lib.rs",
+            "crates/gf2-algebra/src/parallel.rs",
+            "crates/gf2-algebra/src/testutil.rs",
+            "crates/gf2-algebra/src/tuning.rs",
             "crates/gf2-algebra/src/permanent",
-            "crates/gf2-algebra/src",
             "crates/gf2-algebra/tests",
             "crates/gf2-algebra/benches",
             "crates/gf2-algebra/examples"
@@ -2099,7 +1770,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -2121,7 +1792,7 @@
   {
     "key": "sweep-simd-rest",
     "title": "Tersify comments in the remaining gf2-kernels-simd files",
-    "description": "Bring the comments and Rustdoc in the remaining gf2-kernels-simd files to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-kernels-simd/` Rust files outside `src/x86/`, about 4,000 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
+    "description": "Bring the comments and Rustdoc in the remaining gf2-kernels-simd files to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-kernels-simd/src/bipedal/` and the top-level `src/*.rs` files, about 4,000 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2154,7 +1825,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -2166,9 +1837,29 @@
         "worker_sized_reason": "About 4,000 comment lines in one module group, one review pass",
         "footprint": {
           "touches": [
-            "crates/gf2-kernels-simd/src",
-            "crates/gf2-kernels-simd/tests",
-            "crates/gf2-kernels-simd/benches"
+            "crates/gf2-kernels-simd/src/bipedal",
+            "crates/gf2-kernels-simd/src/bch_encode.rs",
+            "crates/gf2-kernels-simd/src/clmul_scalar.rs",
+            "crates/gf2-kernels-simd/src/fp65537.rs",
+            "crates/gf2-kernels-simd/src/fp_generic.rs",
+            "crates/gf2-kernels-simd/src/fp_medium.rs",
+            "crates/gf2-kernels-simd/src/fp_medium_f64.rs",
+            "crates/gf2-kernels-simd/src/fp_medium_ple.rs",
+            "crates/gf2-kernels-simd/src/fp_small.rs",
+            "crates/gf2-kernels-simd/src/fp_small_f32.rs",
+            "crates/gf2-kernels-simd/src/fp_small_panel.rs",
+            "crates/gf2-kernels-simd/src/fp_small_ple.rs",
+            "crates/gf2-kernels-simd/src/gf2m.rs",
+            "crates/gf2-kernels-simd/src/gf2m_batch.rs",
+            "crates/gf2-kernels-simd/src/gf2m_gemm.rs",
+            "crates/gf2-kernels-simd/src/gf2m_wide.rs",
+            "crates/gf2-kernels-simd/src/lib.rs",
+            "crates/gf2-kernels-simd/src/llr.rs",
+            "crates/gf2-kernels-simd/src/mersenne.rs",
+            "crates/gf2-kernels-simd/src/modem.rs",
+            "crates/gf2-kernels-simd/src/prefetch.rs",
+            "crates/gf2-kernels-simd/src/shift_funnel.rs",
+            "crates/gf2-kernels-simd/src/transpose.rs"
           ]
         }
       },
@@ -2211,7 +1902,7 @@
         "REQ-23",
         "REQ-25",
         "REQ-26",
-        "OD-02",
+        "D-44",
         "D-04",
         "D-42",
         "INV-§5.3",
@@ -2284,7 +1975,7 @@
       "source_refs": [
         "REQ-24",
         "REQ-27",
-        "OD-02",
+        "D-44",
         "INV-C"
       ],
       "terminal": {
@@ -2335,11 +2026,513 @@
         "REQ-25",
         "REQ-26",
         "REQ-27",
-        "OD-02",
+        "D-44",
         "D-42",
         "D-04",
         "PD-09"
       ]
+    }
+  },
+  {
+    "key": "execute-terminal-archives",
+    "title": "Run container archival for eligible terminal epics",
+    "description": "Eligible terminal epics, and archived epics whose newly linked documents remain outside their archive, are archived through JIT container archival into marker-backed directories, with in-file citations repointed alongside.\n\n## Background\n\nArchival rewrites only issue document references, never file content (`dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 2), so citation repointing is part of each execution.\n\n## Success Criteria\n\n- [hard] REQ-01: Every container that the preview record marks eligible, other than b7157be6, is archived into a marker-backed `<short-id>-<slug>/` directory with byte verification passing.\n- [hard] REQ-02: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change; receipt directories stay byte-identical.\n- [hard] REQ-03: A rerun of each executed archive reports no change.\n- [hard] REQ-04: The manifest records each executed row as complete, and the progress checker reports their destination assertions passing.\n- [hard] REQ-05: A link scan of each executed archive directory and each repointed file reports no unresolved local link.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-10",
+      "satisfies:REQ-19"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "archive-candidate-preview",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Eligible terminal epics are archived with markers, verified bytes and repointed citations",
+      "contract_refs": [
+        "archive-execution-protocol",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-10",
+        "REQ-19",
+        "D-21",
+        "D-22",
+        "PD-01",
+        "PD-02",
+        "INV-§0.2",
+        "INV-§4"
+      ],
+      "terminal": {
+        "consumer_family": "archived epic readers",
+        "test_boundary": "archive rerun no-op",
+        "worker_sized_reason": "A previewed, blocker-free set of containers run through one idempotent command each",
+        "footprint": {
+          "touches": [
+            "dev/archive",
+            "dev/active",
+            ".jit/issues",
+            "crates",
+            "README.md",
+            "dev/scripts/receipt-input-omissions.json"
+          ],
+          "uncertainty": "exact container set comes from the preview record; exact crate files are those citing a moved path"
+        }
+      }
+    }
+  },
+  {
+    "key": "resolve-dev-strays",
+    "title": "Resolve stray and ownerless dev entries",
+    "description": "A few `dev/` entries fit no live epic: files of terminal owners left in `dev/active/`, two entries without a defensible owner, and an unmarked code stub inside `dev/archive/`.\n\n## Background\n\nStrays: `37e0b235/` (rejected task under archived 806eb14e), `babcf05e-gf2-core-ppc-spiral/` and `e095a100-gfpm-arithmetic/`. Ownerless: `DOCUMENTATION_AUDIT.md` and `charon-patch-backup-2026-05-15/`. Stub: `dev/archive/packed_field_stub/`. Evidence in `dev/active/fa787f85-documentation-overhaul/investigation.md` §1.1 and Appendices A and B.\n\n## Success Criteria\n\n- [hard] REQ-01: Each terminal-owned stray is in its owning epic's marker-backed archive directory as a byte-verified copy, or is removed as identical to a file already archived there, as recorded in the manifest.\n- [hard] REQ-02: Each ownerless entry and the unmarked code stub live under `dev/archive/legacy/<original-relative-path>`.\n- [hard] REQ-03: Inbound citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: The manifest records each row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-12",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "execute-terminal-archives"
+    ],
+    "planning": {
+      "outcome": "Stray and ownerless dev entries sit with their owners or in the legacy mirror",
+      "contract_refs": [
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-12",
+        "REQ-11",
+        "D-24",
+        "D-25",
+        "PD-02",
+        "PD-03",
+        "INV-§1.1",
+        "INV-A",
+        "INV-B"
+      ],
+      "terminal": {
+        "consumer_family": "archive readers",
+        "test_boundary": "link scan of moved entries",
+        "worker_sized_reason": "Six small entries with recorded owners or recorded lack of one",
+        "footprint": {
+          "creates": [
+            "dev/archive/legacy"
+          ],
+          "touches": [
+            "dev/active",
+            "dev/archive"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "regroup-active-zen3",
+    "title": "Regroup flat zen3 dev/active entries under their epic dir",
+    "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447, except f547c394). Rustdoc in several crates and `dev/scripts/receipt-input-omissions.json` cite these paths. Receipts quote them as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: No receipt directory under `dev/bench_results/` changes, and the Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Flat zen3 entries live under the zen3 epic dir with relinked references",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-22",
+        "D-23",
+        "PD-03",
+        "INV-A",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "zen3 epic contributors",
+        "test_boundary": "link scan of moved entries",
+        "worker_sized_reason": "Scripted moves and relinks for one epic's entries with a fixed rule",
+        "footprint": {
+          "touches": [
+            "crates",
+            "dev/scripts/receipt-input-omissions.json",
+            "dev/active",
+            "dev/active/1a379447-zen3-cpu-performance",
+            ".jit/issues"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "regroup-active-field-dispatch",
+    "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
+    "description": "About 18 flat `dev/active/` entries belong to the field capability dispatch epic (6dc81018), several shared with epic 86b9c719. They move under the owning epic's canonical directory.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic includes 6dc81018).\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: No receipt directory under `dev/bench_results/` changes, and the Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Flat field-dispatch entries live under their epic dir with relinked references",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "PD-03",
+        "INV-A"
+      ],
+      "terminal": {
+        "consumer_family": "field-dispatch epic contributors",
+        "test_boundary": "link scan of moved entries",
+        "worker_sized_reason": "Scripted moves and relinks for one epic's entries with a fixed rule",
+        "footprint": {
+          "touches": [
+            "crates",
+            "dev/scripts/receipt-input-omissions.json",
+            "dev/active",
+            "dev/active/6dc81018-field-capability-dispatch",
+            ".jit/issues"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "regroup-active-remaining",
+    "title": "Regroup the remaining flat dev/active entries under epic dirs",
+    "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. They move under their owning epics' canonical directories.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: No receipt directory under `dev/bench_results/` changes, and the Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Remaining flat entries live under their epic dirs with relinked references",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "PD-03",
+        "INV-A",
+        "INV-§3.14"
+      ],
+      "terminal": {
+        "consumer_family": "open epic contributors",
+        "test_boundary": "link scan of moved entries",
+        "worker_sized_reason": "About fifteen small entries across five epics, scripted with one rule",
+        "footprint": {
+          "touches": [
+            "crates",
+            "dev/scripts/receipt-input-omissions.json",
+            "dev/active",
+            ".jit/issues"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "receipt-pin-path-tolerance",
+    "title": "Accept historical protocol pin paths in receipt verification",
+    "description": "The tuning-campaign tooling pins the f547c394 protocol and addendum schema paths in every receipt and rejects any receipt whose pin path differs (rule P-02). Verification accepts each recorded historical pin path, so committed receipts stay valid when the protocol files relocate.\n\n## Background\n\n`dev/tools/tuning-campaign-support/src/protocol.rs:25,27,1102` define `PROTOCOL_PATH`, `ADDENDUM_SCHEMA_PATH` and the default producing-manifest path under `dev/active/f547c394/`; `src/receipt.rs:1028-1048` (rule P-02) requires an exact match. About 780 files under `dev/bench_results/` quote the old path as runtime-observed provenance, which must stay valid.\n\n## Success Criteria\n\n- [hard] REQ-01: Rule P-02 accepts a receipt whose pin path is the current protocol or addendum-schema path or a path on an explicit list of recorded historical pin paths, and still rejects any other path.\n- [hard] REQ-02: Every committed receipt under `dev/bench_results/` verifies, unchanged, before and after a fixture relocation of the protocol files to a new path.\n- [hard] REQ-03: A test pins a receipt to a relocated protocol path and verifies it, and a test confirms an unlisted path is rejected.\n- [hard] REQ-04: No committed receipt or receipt-input snapshot changes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:tooling",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "inventory-dev-buckets"
+    ],
+    "planning": {
+      "outcome": "Receipt verification accepts recorded historical pin paths, keeping committed receipts valid across relocation",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-11",
+        "D-52",
+        "INV-§6",
+        "INV-§3.1"
+      ],
+      "terminal": {
+        "consumer_family": "tuning campaign receipt verifiers",
+        "test_boundary": "committed receipt verification run",
+        "worker_sized_reason": "One verification rule, its path constants and two focused tests",
+        "footprint": {
+          "touches": [
+            "dev/tools/tuning-campaign-support/src/protocol.rs",
+            "dev/tools/tuning-campaign-support/src/receipt.rs",
+            "dev/tools/tuning-campaign-support/tests/protocol_contracts.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "move-f547c394-inputs",
+    "title": "Move the f547c394 protocol inputs under their epic dir",
+    "description": "The flat `dev/active/f547c394/` entry holds the campaign protocol, addendum schemas and producing inputs that CI and the tuning-campaign tooling read. It moves under its owning epic's directory together with every reader of its path.\n\n## Background\n\nReaders: `dev/scripts/check-campaign-producing-closure.py:33`, `dev/scripts/check-addendum-schema-versions.py:53`, `dev/tools/tuning-campaign-support/src/protocol.rs`, `src/bin/benchmark-ab-runner.rs:145`, `tests/protocol_contracts.rs` and `tests/addendum_schema_versions.rs`. The entry is shared by epics 1a379447 and d77176e5. Receipts quote the old path as provenance strings and stay byte-identical.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: The tuning-campaign tooling's current protocol, addendum-schema and producing-manifest paths, the benchmark A/B runner, its tests, and the two CI check scripts read the new location in the same commit; the old location is recorded as a historical pin path.\n- [hard] REQ-04: Every committed receipt still verifies, and the Rust CI gate passes, including the receipt, addendum and producing-closure checks.\n- [hard] REQ-05: In-file citations to old paths outside receipt directories are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: The manifest records each moved row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "receipt-pin-path-tolerance",
+      "regroup-active-zen3"
+    ],
+    "planning": {
+      "outcome": "f547c394 lives under its epic dir and its CI and tooling readers use the new path",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-52",
+        "PD-03",
+        "INV-§3.1",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "tuning campaign tooling users",
+        "test_boundary": "Rust CI gate",
+        "worker_sized_reason": "One 96-file entry plus path constants in six known reader files",
+        "footprint": {
+          "touches": [
+            "dev/active/f547c394",
+            "dev/active/1a379447-zen3-cpu-performance",
+            "dev/scripts/check-campaign-producing-closure.py",
+            "dev/scripts/check-addendum-schema-versions.py",
+            "dev/tools/tuning-campaign-support/src/protocol.rs",
+            "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+            "dev/tools/tuning-campaign-support/tests/protocol_contracts.rs",
+            "dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "relocate-bench-narrative",
+    "title": "Relocate loose narrative reports out of dev/bench_results",
+    "description": "`dev/bench_results/` is an operational receipt store read by CI with hard-coded prefixes. Its receipt directories stay; its loose narrative Markdown reports move to their owners or the legacy mirror.\n\n## Background\n\nCI consumers and receipt structure are in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1, §3.10 and §6.\n\n## Success Criteria\n\n- [hard] REQ-01: No loose narrative Markdown file remains at the top level of `dev/bench_results/`; receipt directories and files read by scripts or tests are unchanged.\n- [hard] REQ-02: Reports owned by terminal epics live in those epics' archive directories; reports owned by open epics live under their epic's `dev/active/` directory and are linked; unowned reports live in the legacy mirror.\n- [hard] REQ-03: Citations of moved reports are repointed, a link scan of the touched files reports no unresolved local link, and the receipt checks in the Rust CI gate pass.\n- [hard] REQ-04: The manifest records each row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-14"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "execute-terminal-archives",
+      "regroup-active-zen3"
+    ],
+    "planning": {
+      "outcome": "dev/bench_results keeps only operational receipts and data",
+      "contract_refs": [
+        "relocation-protocol",
+        "migration-manifest",
+        "active-layout"
+      ],
+      "source_refs": [
+        "REQ-14",
+        "D-49",
+        "PD-02",
+        "INV-§3.1",
+        "INV-§3.10",
+        "INV-§6",
+        "INV-§0.4"
+      ],
+      "terminal": {
+        "consumer_family": "benchmark evidence readers",
+        "test_boundary": "Rust CI receipt checks",
+        "worker_sized_reason": "Roughly twenty loose reports with recorded owners; receipts untouched",
+        "footprint": {
+          "touches": [
+            "dev/bench_results",
+            "dev/active",
+            "dev/archive"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "relocate-sim-studies-narrative",
+    "title": "Relocate loose narrative Markdown out of simulation_results and studies",
+    "description": "`dev/simulation_results/` and `dev/studies/` are operational inputs read by gf2-sim code and tests. Their loose narrative Markdown moves to owner directories or the legacy mirror while every consumed file stays in place.\n\n## Background\n\nCode and test consumers are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and §0 finding 4.\n\n## Success Criteria\n\n- [hard] REQ-01: No narrative Markdown that no code, test or campaign reads remains in `dev/simulation_results/` or `dev/studies/`; files read through dataset paths, `include_bytes!`, campaign configs or tests are unchanged.\n- [hard] REQ-02: Moved notes owned by open epics live under their epic's `dev/active/` directory and are linked; notes owned by terminal epics live in their archive directories; unowned notes live in the legacy mirror.\n- [hard] REQ-03: Citations of moved notes are repointed, a link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-14"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "repair-osd-archive",
+      "regroup-active-remaining"
+    ],
+    "planning": {
+      "outcome": "simulation_results and studies keep only consumed operational files",
+      "contract_refs": [
+        "relocation-protocol",
+        "migration-manifest",
+        "active-layout"
+      ],
+      "source_refs": [
+        "REQ-14",
+        "D-49",
+        "PD-02",
+        "INV-§3.1",
+        "INV-§0.4"
+      ],
+      "terminal": {
+        "consumer_family": "simulation dataset readers",
+        "test_boundary": "Rust CI gate",
+        "worker_sized_reason": "A small set of notes beside consumed datasets, moved by recorded rows",
+        "footprint": {
+          "touches": [
+            "dev/simulation_results",
+            "dev/studies",
+            "dev/active"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "remove-active-husks",
+    "title": "Clear empty leftover dirs under dev/active",
+    "description": "Executed archives and the overhaul's own moves leave empty untracked directories under `dev/active/`, and two survey directories hold untracked `__pycache__` output. They obscure which entries hold live work.\n\n## Background\n\n`dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A lists 43 empty leftovers and the two cache directories.\n\n## Success Criteria\n\n- [hard] REQ-01: No empty or cache-only untracked directory remains under `dev/active/`.\n- [hard] REQ-02: No tracked file changes.\n- [hard] REQ-03: The manifest's deletion rows for these directories record completion.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "resolve-dev-strays",
+      "regroup-active-field-dispatch",
+      "move-f547c394-inputs",
+      "relocate-bench-narrative",
+      "relocate-sim-studies-narrative"
+    ],
+    "planning": {
+      "outcome": "dev/active holds only directories with tracked content",
+      "contract_refs": [
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "PD-03",
+        "INV-A",
+        "INV-§0.6"
+      ],
+      "terminal": {
+        "consumer_family": "active-directory readers",
+        "test_boundary": "untracked directory listing",
+        "worker_sized_reason": "Several dozen untracked empty or cache-only directories, no tracked edits",
+        "footprint": {
+          "touches": [
+            "dev/active"
+          ]
+        }
+      }
     }
   },
   {
@@ -2360,8 +2553,7 @@
       "doc-review"
     ],
     "depends_on": [
-      "execute-terminal-archives",
-      "tersification-sweep"
+      "execute-terminal-archives"
     ],
     "planning": {
       "outcome": "dev/plans is gone and no citation of its paths dangles",
@@ -2484,104 +2676,6 @@
     }
   },
   {
-    "key": "relocate-bench-narrative",
-    "title": "Relocate loose narrative reports out of dev/bench_results",
-    "description": "`dev/bench_results/` is an operational receipt store read by CI with hard-coded prefixes. Its receipt directories stay; its loose narrative Markdown reports move to their owners or the legacy mirror.\n\n## Background\n\nCI consumers and receipt structure are in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1, §3.10 and §6.\n\n## Success Criteria\n\n- [hard] REQ-01: No loose narrative Markdown file remains at the top level of `dev/bench_results/`; receipt directories and files read by scripts or tests are unchanged.\n- [hard] REQ-02: Reports owned by terminal epics live in those epics' archive directories; reports owned by open epics live under their epic's `dev/active/` directory and are linked; unowned reports live in the legacy mirror.\n- [hard] REQ-03: Citations of moved reports are repointed, a link scan of the touched files reports no unresolved local link, and the receipt checks in the Rust CI gate pass.\n- [hard] REQ-04: The manifest records each row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-14"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "execute-terminal-archives",
-      "regroup-active-zen3"
-    ],
-    "planning": {
-      "outcome": "dev/bench_results keeps only operational receipts and data",
-      "contract_refs": [
-        "relocation-protocol",
-        "migration-manifest",
-        "active-layout"
-      ],
-      "source_refs": [
-        "REQ-14",
-        "OD-07",
-        "PD-02",
-        "INV-§3.1",
-        "INV-§3.10",
-        "INV-§6",
-        "INV-§0.4"
-      ],
-      "terminal": {
-        "consumer_family": "benchmark evidence readers",
-        "test_boundary": "Rust CI receipt checks",
-        "worker_sized_reason": "Roughly twenty loose reports with recorded owners; receipts untouched",
-        "footprint": {
-          "touches": [
-            "dev/bench_results",
-            "dev/active",
-            "dev/archive"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "relocate-sim-studies-narrative",
-    "title": "Relocate loose narrative Markdown out of simulation_results and studies",
-    "description": "`dev/simulation_results/` and `dev/studies/` are operational inputs read by gf2-sim code and tests. Their loose narrative Markdown moves to owner directories or the legacy mirror while every consumed file stays in place.\n\n## Background\n\nCode and test consumers are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and §0 finding 4.\n\n## Success Criteria\n\n- [hard] REQ-01: No narrative Markdown that no code, test or campaign reads remains in `dev/simulation_results/` or `dev/studies/`; files read through dataset paths, `include_bytes!`, campaign configs or tests are unchanged.\n- [hard] REQ-02: Moved notes owned by open epics live under their epic's `dev/active/` directory and are linked; notes owned by terminal epics live in their archive directories; unowned notes live in the legacy mirror.\n- [hard] REQ-03: Citations of moved notes are repointed, a link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-14"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "repair-osd-archive",
-      "regroup-active-remaining"
-    ],
-    "planning": {
-      "outcome": "simulation_results and studies keep only consumed operational files",
-      "contract_refs": [
-        "relocation-protocol",
-        "migration-manifest",
-        "active-layout"
-      ],
-      "source_refs": [
-        "REQ-14",
-        "OD-07",
-        "PD-02",
-        "INV-§3.1",
-        "INV-§0.4"
-      ],
-      "terminal": {
-        "consumer_family": "simulation dataset readers",
-        "test_boundary": "Rust CI gate",
-        "worker_sized_reason": "A small set of notes beside consumed datasets, moved by recorded rows",
-        "footprint": {
-          "touches": [
-            "dev/simulation_results",
-            "dev/studies",
-            "dev/active"
-          ]
-        }
-      }
-    }
-  },
-  {
     "key": "move-presentation-decks",
     "title": "Move presentation decks into their epics' archive dirs",
     "description": "The four presentation decks under `docs/presentations/` belong to archived epics. They move, with their complete asset bundles, into those epics' archive directories and leave permanent navigation.\n\n## Background\n\nJIT archival never moves files outside `dev/`, so the decks move by explicit relocation. The shared figures directory splits by owner, relative links climbing into `dev/` change depth, and some deck links were already unresolved before the move. Details in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.4.\n\n## Success Criteria\n\n- [hard] REQ-01: Each deck bundle (talk, base stylesheet, themes and owned figures) lives under its owning epic's archive directory, and `docs/presentations/` does not exist.\n- [hard] REQ-02: Deck prose and claims are unchanged; only link targets change, and every link in each moved bundle resolves, including links that were unresolved before the move.\n- [hard] REQ-03: Each owning epic's document references name the new paths and their recorded asset bundles resolve.\n- [hard] REQ-04: No permanent page links to a deck, and inbound `dev/active/` citations are repointed.\n- [hard] REQ-05: The manifest records each row as complete.\n",
@@ -2610,7 +2704,7 @@
         "REQ-09",
         "D-20",
         "PD-02",
-        "PD-04",
+        "D-51",
         "INV-§3.4",
         "INV-§0.1"
       ],
@@ -2645,7 +2739,8 @@
       "doc-review"
     ],
     "depends_on": [
-      "move-presentation-decks"
+      "move-presentation-decks",
+      "tersification-sweep"
     ],
     "planning": {
       "outcome": "The figure example writes outside the permanent docs tree",
@@ -2669,7 +2764,7 @@
   {
     "key": "docs-scaffold-index",
     "title": "Create the docs index and quadrant layout",
-    "description": "Permanent documentation uses an adapted Diátaxis layout under `docs/`. A single index routes researchers to tutorials, how-to guides, concepts, reference pages and the crate entry pages.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/index.md` has one section each for tutorials, how-to guides, concepts and reference, plus a crate section linking the entry pages of `gf2-core`, `gf2-coding`, `gf2-algebra` and `gf2-sim`.\n- [hard] REQ-02: Each section states its quadrant's purpose in one sentence and cites the registered placement invariant by address rather than restating it.\n- [hard] REQ-03: The index links only to pages present in the tree, and its links resolve.\n- [hard] REQ-04: The index prose carries no marketing, history or future promises.\n",
+    "description": "Permanent documentation uses an adapted Diátaxis layout under `docs/`. A single index routes researchers to tutorials, how-to guides, concepts, reference pages and the crate entry pages.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/index.md` has one section each for tutorials, how-to guides, concepts and reference, plus a crate section linking the existing entry pages of `gf2-core`, `gf2-coding` and `gf2-algebra`.\n- [hard] REQ-02: Each section states its quadrant's purpose in one sentence and cites the registered placement invariant by address rather than restating it.\n- [hard] REQ-03: The index links only to pages present in the tree, and its links resolve.\n- [hard] REQ-04: The index prose carries no marketing, history or future promises.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2684,7 +2779,7 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "docs/index.md routes readers to the four quadrants and the crate entry pages",
+      "outcome": "docs/index.md routes readers to the four quadrants and the existing crate entry pages",
       "contract_refs": [
         "docs-surface-layout"
       ],
@@ -2692,7 +2787,7 @@
         "REQ-04",
         "D-17",
         "D-10",
-        "PD-08",
+        "D-50",
         "PD-10"
       ],
       "terminal": {
@@ -2737,7 +2832,7 @@
         "REQ-05",
         "REQ-17",
         "D-18",
-        "PD-08",
+        "D-50",
         "INV-§3.5",
         "INV-§6"
       ],
@@ -2783,7 +2878,7 @@
         "REQ-05",
         "REQ-17",
         "D-18",
-        "PD-08",
+        "D-50",
         "INV-§3.5",
         "INV-§6"
       ],
@@ -2829,7 +2924,7 @@
         "REQ-05",
         "REQ-17",
         "D-18",
-        "PD-08",
+        "D-50",
         "INV-§3.5",
         "INV-§6"
       ],
@@ -2848,7 +2943,7 @@
   {
     "key": "entry-page-gf2-sim",
     "title": "Write the gf2-sim README as its entry page",
-    "description": "The `gf2-sim` README is the crate's concise adopter-facing entry page: what the crate provides, when to choose it, and where its reference material lives.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. A crate README is the crate's entry page; the docs index links it.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-sim/README.md` states simulation pipelines, standards presets, campaign binaries, checkpointing, feature flags, and when to choose the crate, verified against the crate's current public API and Cargo manifest.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from gf2-sim crate and module Rustdoc are limited to verified code, commands and identifiers.\n- [hard] REQ-03: It carries no performance figures, API walkthrough duplicating Rustdoc, hand-maintained example list, history, or future promises; it links to the crate's Rustdoc and to `docs/index.md`.\n- [hard] REQ-04: It links to no file under a crate-local `docs/` directory.\n- [hard] REQ-05: Its links and commands resolve, and the Rust CI gate passes.\n",
+    "description": "The `gf2-sim` README is the crate's concise adopter-facing entry page: what the crate provides, when to choose it, and where its reference material lives.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. A crate README is the crate's entry page; the docs index links it.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-sim/README.md` states simulation pipelines, standards presets, campaign binaries, checkpointing, feature flags, and when to choose the crate, verified against the crate's current public API and Cargo manifest.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from gf2-sim crate and module Rustdoc are limited to verified code, commands and identifiers.\n- [hard] REQ-03: It carries no performance figures, API walkthrough duplicating Rustdoc, hand-maintained example list, history, or future promises; it links to the crate's Rustdoc and to `docs/index.md`.\n- [hard] REQ-04: It links to no file under a crate-local `docs/` directory.\n- [hard] REQ-05: Its links and commands resolve, and the Rust CI gate passes.\n- [hard] REQ-06: The crate section of `docs/index.md` links `crates/gf2-sim/README.md`.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2875,7 +2970,7 @@
         "REQ-05",
         "REQ-17",
         "D-18",
-        "PD-08",
+        "D-50",
         "INV-§3.5",
         "INV-§6"
       ],
@@ -2886,6 +2981,9 @@
         "footprint": {
           "creates": [
             "crates/gf2-sim/README.md"
+          ],
+          "touches": [
+            "docs/index.md"
           ]
         }
       }
@@ -3051,7 +3149,7 @@
       ],
       "source_refs": [
         "REQ-06",
-        "OD-06",
+        "D-48",
         "D-08",
         "D-15",
         "INV-§3.10",
@@ -3377,7 +3475,7 @@
       "source_refs": [
         "REQ-04",
         "REQ-05",
-        "OD-03",
+        "D-45",
         "D-07",
         "INV-§5.2"
       ],
@@ -3418,7 +3516,7 @@
       "contract_refs": [],
       "source_refs": [
         "REQ-04",
-        "OD-03",
+        "D-45",
         "INV-§5.2"
       ],
       "terminal": {
@@ -3467,7 +3565,7 @@
       "source_refs": [
         "REQ-04",
         "REQ-05",
-        "OD-03",
+        "D-45",
         "D-07",
         "INV-§5.2"
       ],
@@ -3481,6 +3579,52 @@
           ],
           "touches": [
             "docs/index.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "readme-landing-page",
+    "title": "Rewrite README for research adoption",
+    "description": "Rewrite the root README as gf2's concise entry point for researchers evaluating or adopting the library. The page presents only supported current behavior and directs readers to canonical crate, workflow, reference and performance material.\n\n## Background\n\nThe current README omits gf2-sim from its layout table, contains an API tour, marketing wording, future-facing contributor notes, and links to crate-local guides and the contributor guide (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5, §3.6 and finding 9).\n\n## Success Criteria\n\n- [hard] REQ-01: `README.md` briefly states what gf2 strives to provide for research-grade finite-field computing and coding theory without marketing superlatives or future promises.\n- [hard] REQ-02: The workspace capability map accurately includes `gf2-core`, `gf2-coding`, `gf2-algebra` and `gf2-sim`; SIMD and HIP crates are described as implementation backends through their supported integration paths.\n- [hard] REQ-03: Acceleration and feature claims are verified against current manifests and code, including correct ownership of GPU LDPC belief propagation and default features.\n- [hard] REQ-04: Installation instructions describe only mechanisms available in the current tree and identify material toolchain or hardware constraints.\n- [hard] REQ-05: The README carries no performance claims or result figures; readers reach performance evidence through the permanent documentation index.\n- [hard] REQ-06: The README links to the permanent documentation index and the research tutorials without embedding elementary API tutorials or duplicating Rustdoc.\n- [hard] REQ-07: All README links, commands, crate names and feature names pass the documentation and Rust CI gates.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "tutorial-link-simulation",
+      "tutorial-linear-algebra",
+      "remove-contributing-guide"
+    ],
+    "planning": {
+      "outcome": "The root README is a concise current-state landing page linking the docs index and tutorials",
+      "contract_refs": [
+        "docs-surface-layout"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "D-15",
+        "D-16",
+        "D-48",
+        "INV-§0.9",
+        "INV-§3.5"
+      ],
+      "terminal": {
+        "consumer_family": "researchers evaluating gf2",
+        "test_boundary": "docs link check",
+        "worker_sized_reason": "One landing page of about one screen with verified claims",
+        "footprint": {
+          "touches": [
+            "README.md"
           ]
         }
       }
@@ -3555,7 +3699,8 @@
       "howto-select-acceleration",
       "howto-reproduce-evidence",
       "tutorial-linear-algebra",
-      "inventory-permanent-sources"
+      "inventory-permanent-sources",
+      "tersification-sweep"
     ],
     "planning": {
       "outcome": "gf2-core crate guides are preserved in the legacy mirror with no dangling citation",
@@ -3565,7 +3710,7 @@
       ],
       "source_refs": [
         "REQ-12",
-        "OD-04",
+        "D-46",
         "D-25",
         "PD-02",
         "INV-§3.5"
@@ -3581,7 +3726,9 @@
           "touches": [
             "crates/gf2-core/docs",
             "crates/gf2-core/benches",
-            "crates/gf2-core/src/field",
+            "crates/gf2-core/README.md",
+            "crates/gf2-core/src/field/winograd.rs",
+            "crates/gf2-core/src/field/expr.rs",
             "dev/active"
           ]
         }
@@ -3618,7 +3765,7 @@
       ],
       "source_refs": [
         "REQ-12",
-        "OD-04",
+        "D-46",
         "D-25",
         "PD-02",
         "INV-§3.5"
@@ -3681,7 +3828,7 @@
   {
     "key": "audit-permanent-content",
     "title": "Audit the permanent surface against the docs invariants",
-    "description": "Once rewriting, relocation and source-comment work land, the permanent surface is audited as a whole so that it presents only supported current behavior under the registered documentation invariants.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked audit record covers the root README, `docs/`, crate READMEs, `AGENTS.md`, and crate- and module-level Rustdoc, and cites the invariant address of each finding.\n- [hard] REQ-02: Permanent text describes only supported current behavior: historical narration, migration language, superseded alternatives, speculation and future promises are absent, and each finding is fixed in the same change.\n- [hard] REQ-03: The root README contains gf2's purpose, capability map, crate-selection guidance, installation constraints and links into `docs/`, and no performance claim or API walkthrough.\n- [hard] REQ-04: No performance figure appears outside the performance evidence reference page.\n- [hard] REQ-05: For each permanent page the record lists the prior sources mined and confirms, by comparison against them, that no explanatory prose was carried over verbatim.\n",
+    "description": "Once rewriting and relocation land, the permanent pages are audited together so that they present only supported current behavior under the registered documentation invariants.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked audit record covers the root README, `docs/`, crate READMEs, `AGENTS.md` and the crate-root `lib.rs` docs, and cites the invariant address of each finding.\n- [hard] REQ-02: Permanent text describes only supported current behavior: historical narration, migration language, superseded alternatives, speculation and future promises are absent, and each finding is fixed in the same change.\n- [hard] REQ-03: No performance figure appears outside the performance evidence reference page.\n- [hard] REQ-04: For each permanent page the record lists the prior sources mined and confirms, by comparison against them, that no explanatory prose was carried over verbatim.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -3689,7 +3836,6 @@
       "component:docs",
       "satisfies:REQ-17",
       "satisfies:REQ-01",
-      "satisfies:REQ-03",
       "satisfies:REQ-05",
       "satisfies:REQ-06"
     ],
@@ -3706,12 +3852,11 @@
       "legacy-move-gf2-core-guides",
       "legacy-move-gf2-coding-guides",
       "archive-lean-pipeline-doc",
-      "tersification-sweep",
-      "remove-contributing-guide",
+      "readme-landing-page",
       "retarget-figure-generator"
     ],
     "planning": {
-      "outcome": "The permanent surface conforms to the registered docs invariants, with findings fixed",
+      "outcome": "The permanent pages conform to the registered docs invariants, with findings fixed",
       "contract_refs": [
         "docs-surface-layout",
         "performance-evidence-page"
@@ -3719,7 +3864,6 @@
       "source_refs": [
         "REQ-17",
         "REQ-01",
-        "REQ-03",
         "REQ-05",
         "REQ-06",
         "D-11",
@@ -3729,9 +3873,9 @@
         "INV-§0.9"
       ],
       "terminal": {
-        "consumer_family": "researchers adopting gf2",
+        "consumer_family": "permanent page readers",
         "test_boundary": "linked audit record",
-        "worker_sized_reason": "About twenty freshly written pages plus crate-level Rustdoc, reviewed once",
+        "worker_sized_reason": "About twenty freshly written pages plus seven crate-root docs, reviewed once",
         "footprint": {
           "creates": [
             "dev/active/fa787f85-documentation-overhaul/permanent-surface-audit.md"
@@ -3739,7 +3883,20 @@
           "touches": [
             "README.md",
             "docs",
-            "crates"
+            "AGENTS.md",
+            "crates/gf2-core/README.md",
+            "crates/gf2-coding/README.md",
+            "crates/gf2-algebra/README.md",
+            "crates/gf2-sim/README.md",
+            "crates/gf2-kernels-simd/README.md",
+            "crates/gf2-stats/README.md",
+            "crates/gf2-core/src/lib.rs",
+            "crates/gf2-coding/src/lib.rs",
+            "crates/gf2-algebra/src/lib.rs",
+            "crates/gf2-sim/src/lib.rs",
+            "crates/gf2-kernels-simd/src/lib.rs",
+            "crates/gf2-kernels-hip/src/lib.rs",
+            "crates/gf2-stats/src/lib.rs"
           ]
         }
       }
@@ -3778,7 +3935,7 @@
         "REQ-14",
         "D-27",
         "D-28",
-        "OD-07",
+        "D-49",
         "PD-11",
         "INV-§3.1"
       ],
@@ -3815,8 +3972,6 @@
     "depends_on": [
       "rewrite-dev-index",
       "remove-active-husks",
-      "regroup-active-zen3-ci-inputs",
-      "regroup-active-field-dispatch",
       "audit-permanent-content"
     ],
     "planning": {
