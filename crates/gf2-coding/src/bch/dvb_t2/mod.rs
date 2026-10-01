@@ -21,18 +21,16 @@
 //! # Declared coordinate layout
 //!
 //! The standard transmits the highest-degree coefficient first, in both the
-//! message block and the parity block. The mother code therefore presents
-//! [`SystematicLayout::MessageParityDescending`] rather than the repository's
-//! default ascending layout, and [`DVB_T2_LAYOUT`] names it. This is the
-//! declared standards-specific layout of this constructor: user coordinate
-//! $u$ of the mother carries the coefficient of $x^{n - 1 - u}$, so the
-//! shortened code's coordinate $d$ is a message bit for $d < K_{bch}$ and a
-//! parity bit above it, exactly as the standard's bit order requires.
+//! message block and the parity block, so the constructor declares
+//! [`SystematicLayout::MessageParityDescending`], named [`DVB_T2_LAYOUT`]:
+//! user coordinate $u$ of the mother carries the coefficient of
+//! $x^{n - 1 - u}$, and the shortened code's coordinate $d$ is a message bit
+//! for $d < K_{bch}$ and a parity bit above it, as the standard's bit order
+//! requires.
 //!
-//! [`DvbT2MotherCode`] is the mother code under that declaration. Its
-//! generator and parity-check matrices are the canonical ones read through
-//! the same coordinate involution, so the matrix contract and the encoder
-//! agree on one layout.
+//! [`DvbT2MotherCode`] is the canonical mother code in a [`LayoutView`] under
+//! that declaration, so its encoder and both matrices describe the
+//! standard's order.
 //!
 //! # Concatenation with LDPC
 //!
@@ -91,14 +89,12 @@ use gf2_core::gf2m::Gf2mField;
 use gf2_core::gfp::Fp;
 use gf2_core::{BitMatrix, BitVec};
 
-use crate::bch::encode::{SystematicLayout, SystematicPlan};
+use crate::bch::encode::{LayoutView, SystematicLayout, SystematicPlan};
 use crate::bch::error::BchError;
 use crate::bch::spec::{BinaryBchCode, DesignedDistance};
 use crate::bch::{BchDecodeOutcome, BchDecodeWorkspace, BinaryBchDecoder};
 use crate::error::CodeError;
-use crate::traits::block::{
-    BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess,
-};
+use crate::traits::block::BlockCode;
 use crate::transform::{CoordinateMap, Shortened};
 use crate::CodeRate;
 
@@ -110,203 +106,31 @@ use crate::CodeRate;
 /// [`SystematicLayout::MessageParityDescending`].
 pub const DVB_T2_LAYOUT: SystematicLayout = SystematicLayout::MessageParityDescending;
 
-// ---------------------------------------------------------------------------
-// The mother code under the declared layout
-// ---------------------------------------------------------------------------
-
 /// The DVB-T2 outer BCH mother code presented in the standard's transmission
-/// order.
-///
-/// The wrapped code is the canonical primitive narrow-sense BCH code over the
-/// frame size's splitting field, with designed distance $2t + 1$. This value
-/// presents it under [`DVB_T2_LAYOUT`] instead of the repository's default
-/// ascending layout: encoding writes the standard's bit order, and both
-/// matrices are written in the same order, so
-/// [`GeneratorMatrixAccess::is_systematic`] and the encoder describe one
-/// layout.
-///
-/// The two layouts differ by one coordinate involution. User coordinate $u$
-/// of the descending layout carries the coefficient of $x^{n - 1 - u}$ and
-/// user coordinate $u$ of the ascending layout carries the coefficient of
-/// $x^{(u + n - k) \bmod n}$, so the descending presentation of a matrix is
-/// the ascending one with its rows reversed, its first $k$ columns reversed,
-/// and its remaining $n - k$ columns reversed.
-#[derive(Clone, Debug)]
-pub struct DvbT2MotherCode {
-    code: BinaryBchCode,
-}
-
-impl DvbT2MotherCode {
-    /// Builds the mother code the configuration of `params` shortens.
-    ///
-    /// The extension degree and primitive polynomial come from `params`, and
-    /// the designed distance is $2t + 1$ for the table's correction radius.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`BchError::Field`] when the table's polynomial does not
-    /// present the extension field, [`BchError::InvalidDesignedDistance`] for
-    /// a zero correction radius, and the construction errors of
-    /// [`BinaryBchCode::primitive_narrow_sense`].
-    pub fn new(params: DvbBchParams) -> Result<Self, BchError> {
-        let field = Gf2mField::new(params.field_m, params.primitive_poly).with_tables();
-        let extension = BinaryPrimeExt::new(field)?;
-        let designed_distance = DesignedDistance::try_from(2 * params.t as u64 + 1)?;
-        Ok(Self {
-            code: BinaryBchCode::primitive_narrow_sense(extension, designed_distance)?,
-        })
-    }
-
-    /// Returns the wrapped code in the repository's default layout.
-    pub fn canonical(&self) -> &BinaryBchCode {
-        &self.code
-    }
-
-    /// Returns the wrapped code, dropping the layout declaration.
-    pub fn into_canonical(self) -> BinaryBchCode {
-        self.code
-    }
-
-    /// Returns the correction radius the code's witnessed bound implies.
-    pub fn correction_radius(&self) -> usize {
-        self.code.correction_radius()
-    }
-
-    /// Returns the mother internal coordinate presented at user coordinate
-    /// `user`, the exponent $i$ of the monomial $x^i$ it carries.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`CodeError::CoordinateOutOfRange`] when `user` is not below
-    /// the codeword length.
-    pub fn internal_coordinate(&self, user: usize) -> Result<usize, CodeError> {
-        self.code
-            .systematic_plan(DVB_T2_LAYOUT)
-            .internal_coordinate(user)
-    }
-}
-
-impl BlockCode for DvbT2MotherCode {
-    type Symbol = Fp<2>;
-    type Symbols = BitVec;
-
-    fn symbol_zero(&self) -> Self::Symbol {
-        BlockCode::symbol_zero(&self.code)
-    }
-
-    fn k(&self) -> usize {
-        BlockCode::k(&self.code)
-    }
-
-    fn n(&self) -> usize {
-        BlockCode::n(&self.code)
-    }
-}
-
-impl BlockEncoder for DvbT2MotherCode {
-    /// Encodes under [`DVB_T2_LAYOUT`], the standard's transmission order.
-    ///
-    /// # Errors
-    ///
-    /// Propagates the [`CodeError`] returned by
-    /// [`BinaryBchCode::encode_systematic_into`].
-    fn encode_into(
-        &self,
-        message: &Self::Symbols,
-        codeword: &mut Self::Symbols,
-    ) -> Result<(), CodeError> {
-        self.code
-            .encode_systematic_into(message, DVB_T2_LAYOUT, codeword)
-    }
-}
-
-impl GeneratorMatrixAccess for DvbT2MotherCode {
-    type GeneratorMatrix = BitMatrix;
-
-    /// Writes $G = [\,I_k \mid P\,]$ under [`DVB_T2_LAYOUT`].
-    ///
-    /// # Errors
-    ///
-    /// Propagates the shape error of the wrapped code's materialization.
-    ///
-    /// # Complexity
-    ///
-    /// The wrapped materialization plus $O(kn)$ coordinate swaps.
-    fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
-        self.code.generator_matrix_into(out)?;
-        to_transmission_order(out, BlockCode::k(self), BlockCode::n(self));
-        Ok(())
-    }
-
-    /// Reports `true` without materializing anything.
-    ///
-    /// The coordinate involution maps the message block onto itself, so the
-    /// declared layout keeps the identity the default layout writes in
-    /// columns $0$ to $k - 1$.
-    fn is_systematic(&self) -> Result<bool, CodeError> {
-        self.code.is_systematic()
-    }
-}
-
-impl ParityCheckMatrixAccess for DvbT2MotherCode {
-    type ParityCheckMatrix = BitMatrix;
-
-    /// Writes $H = [\,P^{\mathsf T} \mid I_{n-k}\,]$ under [`DVB_T2_LAYOUT`].
-    ///
-    /// # Errors
-    ///
-    /// Propagates the shape error of the wrapped code's materialization.
-    ///
-    /// # Complexity
-    ///
-    /// The wrapped materialization plus $O((n - k)n)$ coordinate swaps.
-    fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
-        self.code.parity_check_matrix_into(out)?;
-        to_transmission_order(out, BlockCode::k(self), BlockCode::n(self));
-        Ok(())
-    }
-}
-
-/// Rewrites a matrix written in the default user layout into the declared
-/// transmission order, in place.
-///
-/// Entry $(i, c)$ of the result is entry $(\mathrm{rows} - 1 - i,
-/// \sigma(c))$ of the input, for the column involution $\sigma(c) = k - 1 -
-/// c$ below $k$ and $\sigma(c) = n + k - 1 - c$ above it. Both halves are
-/// involutions, so the rewrite is a sequence of swaps and needs no second
-/// buffer.
-fn to_transmission_order(matrix: &mut BitMatrix, dimension: usize, length: usize) {
-    let rows = matrix.rows();
-    for row in 0..rows / 2 {
-        matrix.swap_rows(row, rows - 1 - row);
-    }
-
-    let redundancy = length - dimension;
-    for row in 0..rows {
-        for column in 0..dimension / 2 {
-            swap_cells(matrix, row, column, dimension - 1 - column);
-        }
-        for offset in 0..redundancy / 2 {
-            swap_cells(matrix, row, dimension + offset, length - 1 - offset);
-        }
-    }
-}
-
-/// Exchanges two cells of one matrix row.
-fn swap_cells(matrix: &mut BitMatrix, row: usize, left: usize, right: usize) {
-    let held = matrix.get(row, left);
-    let other = matrix.get(row, right);
-    matrix.set(row, left, other);
-    matrix.set(row, right, held);
-}
-
-// ---------------------------------------------------------------------------
-// The shortened standards code
-// ---------------------------------------------------------------------------
+/// order: the canonical primitive narrow-sense binary BCH code over the frame
+/// size's splitting field, with designed distance $2t + 1$, under
+/// [`DVB_T2_LAYOUT`].
+pub type DvbT2MotherCode = LayoutView<BinaryPrimeExt, BitVec, BitMatrix>;
 
 /// The DVB-T2 outer BCH code: the mother code of its frame size shortened on
 /// its leading message coordinates.
 pub type DvbT2BchCode = Shortened<DvbT2MotherCode>;
+
+/// Builds the mother code the configuration of `params` shortens.
+///
+/// # Errors
+///
+/// Returns [`BchError::Field`] when the table's polynomial does not present
+/// the extension field, [`BchError::InvalidDesignedDistance`] for a zero
+/// correction radius, and the construction errors of
+/// [`BinaryBchCode::primitive_narrow_sense`].
+fn mother_code(params: DvbBchParams) -> Result<DvbT2MotherCode, BchError> {
+    let field = Gf2mField::new(params.field_m, params.primitive_poly).with_tables();
+    let extension = BinaryPrimeExt::new(field)?;
+    let designed_distance = DesignedDistance::try_from(2 * params.t as u64 + 1)?;
+    let code = BinaryBchCode::primitive_narrow_sense(extension, designed_distance)?;
+    Ok(LayoutView::new(code, DVB_T2_LAYOUT))
+}
 
 /// Builds the DVB-T2 outer BCH code for one frame size and code rate.
 ///
@@ -319,9 +143,11 @@ pub type DvbT2BchCode = Shortened<DvbT2MotherCode>;
 ///
 /// # Errors
 ///
-/// Returns the construction errors of [`DvbT2MotherCode::new`], and
-/// [`BchError::Code`] when the table's $K_{bch}$ exceeds the mother
-/// dimension.
+/// Returns [`BchError::Field`] when the table's polynomial does not present
+/// the extension field, [`BchError::InvalidDesignedDistance`] for a zero
+/// correction radius, the construction errors of
+/// [`BinaryBchCode::primitive_narrow_sense`], and [`BchError::Code`] when the
+/// table's $K_{bch}$ exceeds the mother dimension.
 ///
 /// # Complexity
 ///
@@ -342,7 +168,7 @@ pub type DvbT2BchCode = Shortened<DvbT2MotherCode>;
 /// ```
 pub fn dvb_t2_bch_code(frame_size: FrameSize, rate: CodeRate) -> Result<DvbT2BchCode, BchError> {
     let params = DvbBchParams::for_code(frame_size, rate);
-    let mother = DvbT2MotherCode::new(params)?;
+    let mother = mother_code(params)?;
     let dimension = BlockCode::k(&mother);
     let shortening = dimension
         .checked_sub(params.k)
@@ -406,7 +232,7 @@ impl<'code> DvbT2BchDecoder<'code> {
     pub fn new(code: &'code DvbT2BchCode) -> Self {
         Self {
             code,
-            mother: BinaryBchDecoder::new(code.mother().canonical()),
+            mother: BinaryBchDecoder::new(code.mother().code()),
         }
     }
 
@@ -456,11 +282,7 @@ impl<'code> DvbT2BchDecoder<'code> {
         let outcome = self.correct_lifted(received, workspace)?;
         if matches!(outcome, BchDecodeOutcome::Corrected { .. }) {
             let map = self.code.coordinate_map();
-            let plan = self
-                .code
-                .mother()
-                .canonical()
-                .systematic_plan(DVB_T2_LAYOUT);
+            let plan = self.code.mother().plan();
             for derived in 0..BlockCode::n(self.code) {
                 let internal = internal_of(map, &plan, derived)?;
                 received.set(derived, workspace.word.get(internal));
@@ -502,11 +324,7 @@ impl<'code> DvbT2BchDecoder<'code> {
 
         let outcome = self.correct_lifted(received, workspace)?;
         let map = self.code.coordinate_map();
-        let plan = self
-            .code
-            .mother()
-            .canonical()
-            .systematic_plan(DVB_T2_LAYOUT);
+        let plan = self.code.mother().plan();
         for derived in 0..dimension {
             let internal = internal_of(map, &plan, derived)?;
             bbframe.set(derived, workspace.word.get(internal));
@@ -552,11 +370,7 @@ impl<'code> DvbT2BchDecoder<'code> {
         workspace.word.resize(mother_length, false);
 
         let map = self.code.coordinate_map();
-        let plan = self
-            .code
-            .mother()
-            .canonical()
-            .systematic_plan(DVB_T2_LAYOUT);
+        let plan = self.code.mother().plan();
         for derived in 0..length {
             let internal = internal_of(map, &plan, derived)?;
             workspace.word.set(internal, received.get(derived));
@@ -579,18 +393,9 @@ fn internal_of(
 }
 
 #[cfg(test)]
-impl DvbT2MotherCode {
-    /// Declares the transmission order on an arbitrary binary code, so the
-    /// layout contract can be exercised at a size a materialized matrix fits.
-    fn declare(code: BinaryBchCode) -> Self {
-        Self { code }
-    }
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bch::spec::{BchSpec, DesignedDistance};
+    use crate::traits::block::BlockEncoder;
     use crate::transform::ShortenedDerivation;
     use gf2_core::field::FiniteField;
     use rand::rngs::StdRng;
@@ -628,20 +433,6 @@ mod tests {
         positions.into_iter().collect()
     }
 
-    /// Builds a small binary primitive narrow-sense code under the declared
-    /// layout, small enough for a materialized generator matrix.
-    fn small_mother(degree: usize, modulus: u64, designed_distance: u64) -> DvbT2MotherCode {
-        let extension =
-            BinaryPrimeExt::new(Gf2mField::new(degree, modulus)).expect("a primitive modulus");
-        let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
-            extension,
-            designed_distance: DesignedDistance::try_from(designed_distance)
-                .expect("a positive designed distance"),
-        })
-        .expect("a binary primitive narrow-sense code");
-        DvbT2MotherCode::declare(code)
-    }
-
     #[test]
     fn every_configuration_takes_the_systematic_restriction() {
         for (frame_size, rate) in configurations() {
@@ -656,7 +447,7 @@ mod tests {
                 "derivation for {frame_size:?} {rate:?}"
             );
             assert_eq!(
-                code.mother().correction_radius(),
+                code.mother().code().correction_radius(),
                 params.t,
                 "correction radius for {frame_size:?} {rate:?}"
             );
@@ -672,7 +463,7 @@ mod tests {
     fn every_mother_generator_is_the_standard_product() {
         for (frame_size, rate) in configurations() {
             let params = DvbBchParams::for_code(frame_size, rate);
-            let mother = DvbT2MotherCode::new(params).expect("a standard configuration");
+            let mother = mother_code(params).expect("a standard configuration");
 
             let table = match frame_size {
                 FrameSize::Short => generators::SHORT_GENERATORS,
@@ -686,7 +477,7 @@ mod tests {
                 "the standard's generator degree is the parity length for {frame_size:?} {rate:?}"
             );
 
-            let canonical = mother.canonical().generator();
+            let canonical = mother.code().generator();
             assert_eq!(
                 canonical.degree(),
                 Some(degree),
@@ -711,6 +502,8 @@ mod tests {
             let params = DvbBchParams::for_code(frame_size, rate);
             let code = dvb_t2_bch_code(frame_size, rate).expect("a standard configuration");
             let mother = code.mother();
+            assert_eq!(mother.layout(), DVB_T2_LAYOUT);
+            let plan = mother.plan();
             let length = BlockCode::n(mother);
 
             // User coordinate u of the mother carries the coefficient of
@@ -718,15 +511,14 @@ mod tests {
             // the mother's low degrees, in descending order.
             for user in [0, 1, length / 2, length - 1] {
                 assert_eq!(
-                    mother
-                        .internal_coordinate(user)
+                    plan.internal_coordinate(user)
                         .expect("an in-range user coordinate"),
                     length - 1 - user,
                     "user coordinate {user} of {frame_size:?} {rate:?}"
                 );
             }
             assert!(matches!(
-                mother.internal_coordinate(length),
+                plan.internal_coordinate(length),
                 Err(CodeError::CoordinateOutOfRange { .. })
             ));
 
@@ -734,61 +526,11 @@ mod tests {
             for derived in [0, params.k - 1, params.k, params.n - 1] {
                 let user = map.mother_position(derived).expect("a kept coordinate");
                 assert_eq!(
-                    mother
-                        .internal_coordinate(user)
+                    plan.internal_coordinate(user)
                         .expect("an in-range user coordinate"),
                     params.n - 1 - derived,
                     "derived coordinate {derived} of {frame_size:?} {rate:?}"
                 );
-            }
-
-            assert_eq!(
-                BlockCode::n(
-                    &DvbT2MotherCode::new(params)
-                        .expect("a mother")
-                        .into_canonical()
-                ),
-                length,
-                "the unwrapped code keeps the mother length"
-            );
-        }
-    }
-
-    #[test]
-    fn the_declared_layout_matrices_agree_with_the_declared_encoder() {
-        for (degree, modulus, designed_distance) in
-            [(4, 0b10011, 5), (4, 0b10011, 3), (5, 0b100101, 7)]
-        {
-            let mother = small_mother(degree, modulus, designed_distance);
-            let length = BlockCode::n(&mother);
-            let dimension = BlockCode::k(&mother);
-            let generator = mother.generator_matrix().expect("a materialized generator");
-            let check = mother.parity_check_matrix().expect("a materialized check");
-
-            assert!(mother.is_systematic().expect("a systematic report"));
-            for row in 0..dimension {
-                let mut basis = BitVec::zeros(dimension);
-                basis.set(row, true);
-                let codeword = mother.encode(&basis).expect("a basis vector encodes");
-
-                for column in 0..length {
-                    assert_eq!(
-                        generator.get(row, column),
-                        codeword.get(column),
-                        "generator ({row},{column}) is the encoding of basis vector {row}"
-                    );
-                }
-
-                for parity_row in 0..check.rows() {
-                    let mut sum = false;
-                    for column in 0..length {
-                        sum ^= check.get(parity_row, column) && codeword.get(column);
-                    }
-                    assert!(
-                        !sum,
-                        "check row {parity_row} annihilates generator row {row}"
-                    );
-                }
             }
         }
     }

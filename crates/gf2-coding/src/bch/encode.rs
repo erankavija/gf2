@@ -34,7 +34,8 @@
 //! is written, so selecting a layout costs no permutation pass and no second
 //! buffer. [`SystematicPlan`] is the descriptor an encode call consumes: a
 //! code's generator, dimensions, and symbol-field witness together with the
-//! chosen layout.
+//! chosen layout. [`LayoutView`] declares one layout for a whole code, so
+//! every canonical block-code trait answers in it.
 //!
 //! # Representations
 //!
@@ -2749,6 +2750,165 @@ where
     /// [`BchCode::encode_systematic_into`].
     fn encode_into(&self, message: &S, codeword: &mut S) -> Result<(), CodeError> {
         self.encode_systematic_into(message, SystematicLayout::default(), codeword)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// A code presented under a declared layout
+// ---------------------------------------------------------------------------
+
+/// A BCH code presented under one declared [`SystematicLayout`].
+///
+/// [`BchCode`] answers the canonical block-code traits in the default layout.
+/// A constructor whose standard transmits another layout declares it by
+/// wrapping its code in this view: [`BlockCode`], [`BlockEncoder`],
+/// [`GeneratorMatrixAccess`](crate::traits::block::GeneratorMatrixAccess) and
+/// [`ParityCheckMatrixAccess`](crate::traits::block::ParityCheckMatrixAccess)
+/// then all answer in the declared layout, so the encoder and both matrices
+/// describe one coordinate order. Derived codes such as
+/// [`Shortened`](crate::transform::Shortened) compose with the view as with
+/// any other block code.
+///
+/// Every layout carries the message on user coordinates $0$ to $k - 1$, so
+/// the view is systematic in the canonical message order whatever layout it
+/// declares. The matrices are the default-layout ones with rows and columns
+/// permuted by the correspondence between the two layouts; see
+/// [`crate::bch::matrix`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::bch::encode::{LayoutView, SystematicLayout};
+/// use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+/// use gf2_coding::traits::block::{BlockEncoder, GeneratorMatrixAccess};
+/// use gf2_core::field::extension::BinaryPrimeExt;
+/// use gf2_core::gf2m::Gf2mField;
+/// use gf2_core::BitVec;
+///
+/// let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+///     extension: BinaryPrimeExt::new(Gf2mField::new(4, 0b10011))?,
+///     designed_distance: DesignedDistance::try_from(5)?,
+/// })?;
+/// let layout = SystematicLayout::MessageParityDescending;
+/// let view = LayoutView::new(code.clone(), layout);
+///
+/// // The trait encoder writes the declared layout ...
+/// let message = BitVec::random_seeded(7, 0xAE03_BCD0);
+/// let codeword = view.encode(&message)?;
+/// assert_eq!(codeword, code.encode_systematic(&message, layout)?);
+///
+/// // ... and the generator matrix is written in the same order.
+/// let generator = view.generator_matrix()?;
+/// let mut basis = BitVec::zeros(7);
+/// basis.set(2, true);
+/// let row = view.encode(&basis)?;
+/// for column in 0..15 {
+///     assert_eq!(generator.get(2, column), row.get(column));
+/// }
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LayoutView<X, S, M>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    code: BchCode<X, S, M>,
+    layout: SystematicLayout,
+}
+
+impl<X, S, M> LayoutView<X, S, M>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    /// Presents `code` under `layout`.
+    pub fn new(code: BchCode<X, S, M>, layout: SystematicLayout) -> Self {
+        Self { code, layout }
+    }
+
+    /// Returns the wrapped code, which answers in the default layout.
+    pub fn code(&self) -> &BchCode<X, S, M> {
+        &self.code
+    }
+
+    /// Returns the wrapped code, dropping the layout declaration.
+    pub fn into_code(self) -> BchCode<X, S, M> {
+        self.code
+    }
+
+    /// Returns the declared layout.
+    pub fn layout(&self) -> SystematicLayout {
+        self.layout
+    }
+
+    /// Returns the wrapped code's encoding descriptor under the declared
+    /// layout, which maps the view's coordinates to internal coordinates.
+    pub fn plan(&self) -> SystematicPlan<'_, X::Base> {
+        SystematicPlan {
+            generator: self.code.generator(),
+            zero: BlockCode::symbol_zero(&self.code),
+            length: self.code.n(),
+            dimension: self.code.k(),
+            layout: self.layout,
+        }
+    }
+
+    /// Returns the correspondence $\sigma$ from the declared layout's
+    /// coordinates to the default layout's coordinates that carry the same
+    /// internal coordinate.
+    ///
+    /// The returned map takes a coordinate below $n$. It maps $0$ to $k - 1$
+    /// onto itself, because every layout carries the message there.
+    pub(crate) fn default_correspondence(&self) -> impl Fn(usize) -> usize + '_ {
+        let declared = self.plan();
+        let default = SystematicPlan {
+            layout: SystematicLayout::default(),
+            ..declared.clone()
+        };
+        move |user| default.user_at(declared.internal_at(user))
+    }
+}
+
+impl<X, S, M> BlockCode for LayoutView<X, S, M>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    type Symbol = X::Base;
+    type Symbols = S;
+
+    fn symbol_zero(&self) -> Self::Symbol {
+        BlockCode::symbol_zero(&self.code)
+    }
+
+    fn k(&self) -> usize {
+        self.code.k()
+    }
+
+    fn n(&self) -> usize {
+        self.code.n()
+    }
+}
+
+impl<X, S, M> BlockEncoder for LayoutView<X, S, M>
+where
+    X: FieldExtension,
+    S: SystematicKernel<X::Base>,
+    M: SymbolMatrix<X::Base>,
+{
+    /// Encodes under the declared layout.
+    ///
+    /// # Errors
+    ///
+    /// Propagates the [`CodeError`] returned by
+    /// [`BchCode::encode_systematic_into`].
+    fn encode_into(&self, message: &S, codeword: &mut S) -> Result<(), CodeError> {
+        self.code
+            .encode_systematic_into(message, self.layout, codeword)
     }
 }
 
