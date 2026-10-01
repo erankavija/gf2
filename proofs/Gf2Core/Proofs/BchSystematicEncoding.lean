@@ -49,8 +49,9 @@
   the form `reset_registers` (`crates/gf2-coding/src/bch/encode.rs:1394`) writes them, as the
   hypothesis `Packed.LowSpec`.
 
-  Assumptions: the sketch's register rows A-01 (refinement by named anchor), A-11, A-04
-  and A-05. The model is generic over a Mathlib `Field` and is never instantiated at the
+  Assumptions: the sketch's register rows A-01 (refinement by named anchor), A-11, A-12
+  (the hypothesis `Packed.LowSpec`), A-13 (only the reference family is modelled), A-04 and
+  A-05. The model is generic over a Mathlib `Field` and is never instantiated at the
   extracted `FpVal` carrier, so it does not rest on any link between the extracted
   `FpVal.mul'`/`FpVal.add'` and the ring operations of `Gf2Core.Proofs.FpField`.
 
