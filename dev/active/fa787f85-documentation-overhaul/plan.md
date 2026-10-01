@@ -3,7 +3,7 @@
 > Planning node: 8dddfc7a. Authoritative graph:
 > [breakdown.json](breakdown.json).
 
-Source IDs: `REQ-01`..`REQ-20` are the epic's criteria, `REQ-21`..`REQ-27` the
+Source IDs: `ARCH-§n` cites section n of the [archive preview results](archive-preview-results.md); `REQ-01`..`REQ-20` are the epic's criteria, `REQ-21`..`REQ-27` the
 replacement sweep story's, and `REQ-31`..`REQ-40` the contract story's. `D-xx`
 are brief decisions (D-43..D-53 record the 2026-10-01 owner decisions), `DEC-xx` are
 3f29e945 decisions, and `OD-08` and `PD-xx` are rows of the decisions table
@@ -23,7 +23,7 @@ its scope finding k, and `INV-A/B/C` its appendices.
 | REQ-07 | a0a29512 removes tautological examples and 153297cf settles accessor gaps, both before the sweep; a final census measures the corpus after it. | audit + census script linked to fa787f85 |
 | REQ-08 | Retroactive mapping of the three deleted roadmaps (D-47), split by file and, for the root roadmap, by section group. | INV-§3.9 |
 | REQ-09 | Decks move by `git mv` into their owners' archive dirs, and every link target is repaired (D-51); the figure example stops writing under `docs/`. | INV-§3.4, INV-§0.1 |
-| REQ-10 | Bounded preview, then the b7157be6 repair, then execution of eligible containers with paired citation commits. | INV-§1.2 scan never finished; INV-§0.7 |
+| REQ-10 | The previews are done ([archive preview results](archive-preview-results.md)). Five re-archive tasks, grouped by artifact count, collect 217 terminal-story artifacts into ten existing epic archives. A separate task resolves b7157be6's unmarked hand archive and then archives it through JIT. The six terminal stories under open epics are not archived now (D-22). | ARCH-§1..§3; INV-§0.7 |
 | REQ-11 | Ownership links, then per-epic regrouping after the sweep, restricted to entries without code consumers. Code-pinned entries (f547c394, 02b8137c, 3f664839) move only after their consumer accepts the recorded historical path, with unchanged verdicts on committed artifacts (D-52, D-53). Entries found later with code consumers are filed as new tolerance-then-move tasks under this epic before it closes. Husks are cleared last. | INV-A, INV-§0.6; INV-§6 holds only for entries without code consumers |
 | REQ-12 | Admissible-evidence rule (D-24) in the inventory; ownerless material and mined guides move to the legacy mirror by `git mv`. | INV-§0.3: no legacy primitive |
 | REQ-13 | a24b2af7 defines the schema and checker; seven inventory shards populate it (five for `dev/active`, one each for the other dev buckets and the permanent-path sources); the checker retires after the final check. Tooling Markdown under `.agents/`, `contrib/`, `packages/` and `.jit/` is not documentation and is excluded. | INV-A, INV-B |
@@ -124,8 +124,6 @@ algebra, which the second tutorial uses. Producer:
 | inventory-permanent-sources | Populate the migration manifest for permanent-path sources | task | Each permanent-path source has a manifest row with disposition, destination and inbound references | migration-manifest | REQ-13, REQ-12, REQ-09, D-46, D-09, INV-§3.4, INV-§3.5, INV-§0.1, PD-02 | touches 1, uncertain | — | — |
 | expand-managed-paths | Widen the docs policy to manage archival sources | task | The docs policy temporarily manages each container-archive source and lists no absent path | migration-manifest | REQ-15, D-26, INV-§3.1, INV-§4 | touches 1 | — | inventory-active-zen3-early, inventory-active-zen3-late, inventory-active-field-dispatch, inventory-active-open-epics, inventory-active-terminal-ownerless, inventory-dev-buckets, inventory-permanent-sources |
 | link-owned-artifacts | Link unlinked owned artifacts to their issues | task | Defensibly owned artifacts carry document references on their owning issues | migration-manifest | REQ-12, REQ-11, D-24, INV-A | touches 1 | — | expand-managed-paths |
-| archive-candidate-preview | Preview terminal-epic archive candidates | task | Each terminal or newly extended archived epic has a recorded preview with resolved blockers | archive-execution-protocol, migration-manifest | REQ-10, D-21, PD-01, INV-§1.1, INV-§1.2, INV-§4 | creates 1 | — | link-owned-artifacts |
-| repair-osd-archive | Bring the hand-archived OSD epic under container archival | task | Epic b7157be6 is archived with a marker, verified bytes and resolvable references | archive-execution-protocol, relocation-protocol | REQ-10, PD-01, INV-§0.7, INV-§1.1, INV-§1.2 | touches 2 | — | archive-candidate-preview |
 | sweep-baseline-census | Record the pre-sweep comment census | task | A reproducible per-crate comment census exists before sweep edits begin | sweep-unit-rules | REQ-27, D-44, INV-C | creates 1 | — | — |
 | sweep-core-field-poly | Tersify comments in gf2-core field polynomial and extension modules | task | Comments in gf2-core field polynomial and extension modules carry only current, non-obvious content in shortest form | sweep-unit-rules | REQ-17, REQ-21, REQ-22, REQ-23, REQ-25, REQ-26, D-44, D-04, D-42, INV-§5.3, INV-C | touches 8 | source-tersification | sweep-baseline-census |
 | sweep-core-field-dense | Tersify comments in gf2-core dense field matrix modules | task | Comments in gf2-core dense field matrix modules carry only current, non-obvious content in shortest form | sweep-unit-rules | REQ-17, REQ-21, REQ-22, REQ-23, REQ-25, REQ-26, D-44, D-04, D-42, INV-§5.3, INV-C | touches 3 | source-tersification | sweep-baseline-census |
@@ -153,8 +151,13 @@ algebra, which the second tutorial uses. Producer:
 | sweep-hip-stats | Tersify comments in the gf2-kernels-hip and gf2-stats crates | task | Comments in the gf2-kernels-hip and gf2-stats crates carry only current, non-obvious content in shortest form | sweep-unit-rules | REQ-17, REQ-21, REQ-22, REQ-23, REQ-25, REQ-26, D-44, D-04, D-42, INV-§5.3, INV-C | touches 2 | source-tersification | sweep-baseline-census |
 | sweep-completion-record | Close the sweep with the after census and justification list | task | The sweep's before-and-after census and justified matches are recorded | sweep-baseline, sweep-unit-rules | REQ-24, REQ-27, D-44, INV-C | touches 1 | — | sweep-core-field-poly, sweep-core-field-dense, sweep-core-field-algorithms, sweep-core-field-traits, sweep-core-gf2m, sweep-core-prime-fields, sweep-core-bit-structures, sweep-core-runtime, sweep-core-tests-benches, sweep-coding-ldpc, sweep-coding-bch, sweep-coding-modem, sweep-coding-decoders, sweep-coding-core-src, sweep-coding-tests-benches, sweep-sim-campaigns, sweep-sim-pipeline, sweep-sim-runtime, sweep-sim-tests-bins, sweep-algebra-packed, sweep-algebra-rest, sweep-simd-x86, sweep-simd-rest, sweep-hip-stats |
 | tersification-sweep | Workspace source-comment tersification sweep | story | Workspace Rust comments carry only current, non-obvious content in shortest form | sweep-unit-rules | REQ-17, REQ-21, REQ-22, REQ-23, REQ-24, REQ-25, REQ-26, REQ-27, D-44, D-42, D-04, PD-09 | — | — | sweep-completion-record |
-| execute-terminal-archives | Run container archival for eligible terminal epics | task | Eligible terminal epics are archived with markers, verified bytes and repointed citations | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4 | touches 6, uncertain | — | archive-candidate-preview, tersification-sweep |
-| resolve-dev-strays | Resolve stray and ownerless dev entries | task | Stray and ownerless dev entries sit with their owners or in the legacy mirror | relocation-protocol, migration-manifest | REQ-12, REQ-11, D-24, D-25, PD-02, PD-03, INV-§1.1, INV-A, INV-B | creates 1, touches 2 | — | execute-terminal-archives |
+| repair-osd-archive | Bring the hand-archived OSD epic under container archival | task | Epic b7157be6 is archived with a marker, verified bytes and resolvable references | archive-execution-protocol, relocation-protocol | REQ-10, PD-01, INV-§0.7, INV-§1.1, ARCH-§3 | touches 2 | — | link-owned-artifacts, tersification-sweep |
+| rearchive-97bf0879 | Re-archive epic 97bf0879 to collect its terminal stories | task | Terminal-story artifacts of 97bf0879 sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 6, uncertain | — | link-owned-artifacts, tersification-sweep |
+| rearchive-026fc832 | Re-archive epic 026fc832 to collect its terminal stories | task | Terminal-story artifacts of 026fc832 sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 6, uncertain | — | link-owned-artifacts, tersification-sweep |
+| rearchive-babcf05e-f9717e7e | Re-archive epics babcf05e, f9717e7e to collect their terminal stories | task | Terminal-story artifacts of babcf05e, f9717e7e sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 7, uncertain | — | link-owned-artifacts, tersification-sweep |
+| rearchive-bb85c68a-6efb756b | Re-archive epics bb85c68a, 6efb756b to collect their terminal stories | task | Terminal-story artifacts of bb85c68a, 6efb756b sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 7, uncertain | — | link-owned-artifacts, tersification-sweep |
+| rearchive-small-epics | Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories | task | Terminal-story artifacts of e095a100, 806eb14e, 2928ccce, d4851c3d sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 9, uncertain | — | link-owned-artifacts, tersification-sweep |
+| resolve-dev-strays | Resolve stray and ownerless dev entries | task | Stray and ownerless dev entries sit with their owners or in the legacy mirror | relocation-protocol, migration-manifest | REQ-12, REQ-11, D-24, D-25, PD-02, PD-03, INV-§1.1, INV-A, INV-B | creates 1, touches 2 | — | rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics |
 | regroup-active-zen3 | Regroup flat zen3 dev/active entries under their epic dir | task | Flat zen3 entries live under the zen3 epic dir with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-22, D-23, PD-03, INV-A, INV-§6 | touches 5, uncertain | — | link-owned-artifacts, tersification-sweep |
 | regroup-active-field-dispatch | Regroup flat field-dispatch dev/active entries under their epic dir | task | Flat field-dispatch entries live under their epic dir with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, PD-03, INV-A | touches 5, uncertain | — | link-owned-artifacts, tersification-sweep |
 | regroup-active-remaining | Regroup the remaining flat dev/active entries under epic dirs | task | Remaining flat entries live under their epic dirs with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, PD-03, INV-A, INV-§3.14 | touches 4, uncertain | — | link-owned-artifacts, tersification-sweep |
@@ -164,10 +167,10 @@ algebra, which the second tutorial uses. Producer:
 | move-3f664839-design | Move the 3f664839 design entry under its epic dir | task | The 3f664839 design lives under its epic dir and validation reads it there | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, PD-03, INV-A, INV-§6 | touches 6 | — | rare-event-design-path-tolerance, regroup-active-remaining |
 | campaign-validation-path-tolerance | Accept historical frozen-evidence paths in campaign validation | task | Campaign validation accepts recorded historical frozen-evidence paths with verdicts unchanged | — | REQ-11, D-53, INV-§6 | creates 1, touches 2 | — | — |
 | move-02b8137c-journal | Move the 02b8137c validation journal under its epic dir | task | The 02b8137c journal lives under its epic dir and validation reads it there | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, PD-03, INV-A, INV-§6 | touches 6 | — | campaign-validation-path-tolerance, regroup-active-remaining |
-| relocate-bench-narrative | Relocate loose narrative reports out of dev/bench_results | task | dev/bench_results keeps only operational receipts and data | relocation-protocol, migration-manifest, active-layout | REQ-14, D-49, PD-02, INV-§3.1, INV-§3.10, INV-§6, INV-§0.4 | touches 3 | — | execute-terminal-archives, regroup-active-zen3 |
+| relocate-bench-narrative | Relocate loose narrative reports out of dev/bench_results | task | dev/bench_results keeps only operational receipts and data | relocation-protocol, migration-manifest, active-layout | REQ-14, D-49, PD-02, INV-§3.1, INV-§3.10, INV-§6, INV-§0.4 | touches 3 | — | rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics, regroup-active-zen3 |
 | relocate-sim-studies-narrative | Relocate loose narrative Markdown out of simulation_results and studies | task | simulation_results and studies keep only consumed operational files | relocation-protocol, migration-manifest, active-layout | REQ-14, D-49, PD-02, INV-§3.1, INV-§0.4 | touches 3 | — | repair-osd-archive, regroup-active-remaining |
 | remove-active-husks | Clear empty leftover dirs under dev/active | task | dev/active holds only directories with tracked content | migration-manifest | REQ-11, PD-03, INV-A, INV-§0.6 | touches 1 | — | resolve-dev-strays, regroup-active-field-dispatch, move-f547c394-inputs, move-3f664839-design, move-02b8137c-journal, relocate-bench-narrative, relocate-sim-studies-narrative |
-| eliminate-dev-plans | Empty dev/plans through archival or legacy moves | task | dev/plans is gone and no citation of its paths dangles | relocation-protocol, migration-manifest | REQ-14, REQ-12, D-28, PD-02, INV-§3.1, INV-§1.1, INV-§6 | touches 6 | — | execute-terminal-archives |
+| eliminate-dev-plans | Empty dev/plans through archival or legacy moves | task | dev/plans is gone and no citation of its paths dangles | relocation-protocol, migration-manifest | REQ-14, REQ-12, D-28, PD-02, INV-§3.1, INV-§1.1, INV-§6 | touches 6 | — | rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics |
 | eliminate-dev-sessions | Empty dev/sessions into owner dirs or the legacy mirror | task | dev/sessions is gone and its notes sit with owners or in the legacy mirror | relocation-protocol, migration-manifest | REQ-14, D-28, D-25, INV-§3.1 | touches 2 | — | link-owned-artifacts |
 | eliminate-dev-presentations | Empty dev/presentations of leftover theme files | task | dev/presentations is gone with its stylesheets resolved against their owners | relocation-protocol, migration-manifest | REQ-14, D-28, INV-§3.1, INV-§6 | touches 2 | — | link-owned-artifacts |
 | move-presentation-decks | Move presentation decks into their epics' archive dirs | task | Each deck bundle lives with its archived epic and no permanent page links it | relocation-protocol, migration-manifest | REQ-09, D-20, PD-02, D-51, INV-§3.4, INV-§0.1 | touches 3 | — | inventory-permanent-sources |
@@ -190,7 +193,7 @@ algebra, which the second tutorial uses. Producer:
 | tutorial-link-simulation | Write the coded-modulation link simulation tutorial | task | A tutorial reproduces a standards-based coded-modulation link simulation with gf2-sim | docs-surface-layout | REQ-04, REQ-05, D-45, D-07, INV-§5.2 | creates 1, touches 1 | — | reference-standards-conformance, howto-run-campaigns |
 | fieldmatrix-example-program | Add a FieldMatrix linear-algebra example program to gf2-core | task | gf2-core ships a tested example of large finite-field linear algebra | — | REQ-04, D-45, INV-§5.2 | creates 2 | — | — |
 | tutorial-linear-algebra | Write the finite-field linear algebra at scale tutorial | task | A tutorial demonstrates large-scale finite-field linear algebra with gf2-core | docs-surface-layout, fieldmatrix-example | REQ-04, REQ-05, D-45, D-07, INV-§5.2 | creates 1, touches 1 | — | fieldmatrix-example-program, docs-scaffold-index |
-| readme-landing-page | Rewrite README for research adoption | task | The root README is a concise current-state landing page linking the docs index and tutorials | docs-surface-layout | REQ-03, D-15, D-16, D-48, INV-§0.9, INV-§3.5 | touches 1 | — | tutorial-link-simulation, tutorial-linear-algebra, remove-contributing-guide, execute-terminal-archives |
+| readme-landing-page | Rewrite README for research adoption | task | The root README is a concise current-state landing page linking the docs index and tutorials | docs-surface-layout | REQ-03, D-15, D-16, D-48, INV-§0.9, INV-§3.5 | touches 1 | — | tutorial-link-simulation, tutorial-linear-algebra, remove-contributing-guide, rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics |
 | archive-lean-pipeline-doc | Move the Lean pipeline guide into its epic's archive dir | task | The Lean pipeline guide lives with its archived epic and docs root holds only the index | relocation-protocol, migration-manifest | REQ-04, REQ-12, PD-02, INV-§1.1 | touches 3 | — | howto-formal-verification, inventory-permanent-sources |
 | legacy-move-gf2-core-guides | Move gf2-core crate guides into the legacy mirror | task | gf2-core crate guides are preserved in the legacy mirror with no dangling citation | relocation-protocol, migration-manifest | REQ-12, D-46, D-25, PD-02, INV-§3.5 | creates 1, touches 6 | — | entry-page-gf2-core, concept-field-arithmetic, howto-select-acceleration, howto-reproduce-evidence, tutorial-linear-algebra, inventory-permanent-sources, tersification-sweep |
 | legacy-move-gf2-coding-guides | Move gf2-coding crate guides into the legacy mirror | task | gf2-coding crate guides are preserved in the legacy mirror with no dangling citation | relocation-protocol, migration-manifest | REQ-12, D-46, D-25, PD-02, INV-§3.5 | creates 1, touches 2 | — | entry-page-gf2-coding, tutorial-link-simulation, howto-select-acceleration, inventory-permanent-sources |
@@ -218,82 +221,85 @@ flowchart LR
     N12["inventory-permanent-sources: Populate the migration manifest for permanent-path sources"]
     N13["expand-managed-paths: Widen the docs policy to manage archival sources"]
     N14["link-owned-artifacts: Link unlinked owned artifacts to their issues"]
-    N15["archive-candidate-preview: Preview terminal-epic archive candidates"]
-    N16["repair-osd-archive: Bring the hand-archived OSD epic under container archival"]
-    N17["sweep-baseline-census: Record the pre-sweep comment census"]
-    N18["sweep-core-field-poly: Tersify comments in gf2-core field polynomial and extension modules"]
-    N19["sweep-core-field-dense: Tersify comments in gf2-core dense field matrix modules"]
-    N20["sweep-core-field-algorithms: Tersify comments in gf2-core field matrix algorithm modules"]
-    N21["sweep-core-field-traits: Tersify comments in gf2-core field trait and vector modules"]
-    N22["sweep-core-gf2m: Tersify comments in the gf2-core GF(2^m) module"]
-    N23["sweep-core-prime-fields: Tersify comments in the gf2-core prime-field modules"]
-    N24["sweep-core-bit-structures: Tersify comments in gf2-core bit-level structures"]
-    N25["sweep-core-runtime: Tersify comments in gf2-core runtime support modules"]
-    N26["sweep-core-tests-benches: Tersify comments in gf2-core tests, benches and examples"]
-    N27["sweep-coding-ldpc: Tersify comments in the gf2-coding LDPC module"]
-    N28["sweep-coding-bch: Tersify comments in gf2-coding BCH and transform modules"]
-    N29["sweep-coding-modem: Tersify comments in the gf2-coding modem module"]
-    N30["sweep-coding-decoders: Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules"]
-    N31["sweep-coding-core-src: Tersify comments in the remaining gf2-coding source files"]
-    N32["sweep-coding-tests-benches: Tersify comments in gf2-coding tests, benches and examples"]
-    N33["sweep-sim-campaigns: Tersify comments in gf2-sim executor and campaign modules"]
-    N34["sweep-sim-pipeline: Tersify comments in gf2-sim GPU, preset, stage and graph modules"]
-    N35["sweep-sim-runtime: Tersify comments in the remaining gf2-sim source files"]
-    N36["sweep-sim-tests-bins: Tersify comments in gf2-sim tests, benches, binaries and examples"]
-    N37["sweep-algebra-packed: Tersify comments in the gf2-algebra packed-field module"]
-    N38["sweep-algebra-rest: Tersify comments in the remaining gf2-algebra files"]
-    N39["sweep-simd-x86: Tersify comments in the gf2-kernels-simd x86 module"]
-    N40["sweep-simd-rest: Tersify comments in the remaining gf2-kernels-simd files"]
-    N41["sweep-hip-stats: Tersify comments in the gf2-kernels-hip and gf2-stats crates"]
-    N42["sweep-completion-record: Close the sweep with the after census and justification list"]
-    N43["tersification-sweep: Workspace source-comment tersification sweep"]
-    N44["execute-terminal-archives: Run container archival for eligible terminal epics"]
-    N45["resolve-dev-strays: Resolve stray and ownerless dev entries"]
-    N46["regroup-active-zen3: Regroup flat zen3 dev/active entries under their epic dir"]
-    N47["regroup-active-field-dispatch: Regroup flat field-dispatch dev/active entries under their epic dir"]
-    N48["regroup-active-remaining: Regroup the remaining flat dev/active entries under epic dirs"]
-    N49["receipt-pin-path-tolerance: Accept historical protocol pin paths in receipt verification"]
-    N50["move-f547c394-inputs: Move the f547c394 protocol inputs under their epic dir"]
-    N51["rare-event-design-path-tolerance: Accept the historical design path in rare-event artifact validation"]
-    N52["move-3f664839-design: Move the 3f664839 design entry under its epic dir"]
-    N53["campaign-validation-path-tolerance: Accept historical frozen-evidence paths in campaign validation"]
-    N54["move-02b8137c-journal: Move the 02b8137c validation journal under its epic dir"]
-    N55["relocate-bench-narrative: Relocate loose narrative reports out of dev/bench_results"]
-    N56["relocate-sim-studies-narrative: Relocate loose narrative Markdown out of simulation_results and studies"]
-    N57["remove-active-husks: Clear empty leftover dirs under dev/active"]
-    N58["eliminate-dev-plans: Empty dev/plans through archival or legacy moves"]
-    N59["eliminate-dev-sessions: Empty dev/sessions into owner dirs or the legacy mirror"]
-    N60["eliminate-dev-presentations: Empty dev/presentations of leftover theme files"]
-    N61["move-presentation-decks: Move presentation decks into their epics' archive dirs"]
-    N62["retarget-figure-generator: Point the presentation figure example at a caller-chosen output dir"]
-    N63["docs-scaffold-index: Create the docs index and quadrant layout"]
-    N64["entry-page-gf2-core: Rewrite the gf2-core README as its entry page"]
-    N65["entry-page-gf2-coding: Rewrite the gf2-coding README as its entry page"]
-    N66["entry-page-gf2-algebra: Rewrite the gf2-algebra README as its entry page"]
-    N67["entry-page-gf2-sim: Write the gf2-sim README as its entry page"]
-    N68["concept-acceleration-architecture: Write the acceleration architecture concepts page"]
-    N69["backend-crate-readmes: Rewrite the SIMD kernel and statistics crate READMEs"]
-    N70["concept-field-arithmetic: Write the finite-field arithmetic concepts page"]
-    N71["reference-performance-evidence: Write the performance evidence reference page"]
-    N72["howto-select-acceleration: Write the acceleration selection how-to"]
-    N73["howto-reproduce-evidence: Write the evidence reproduction how-to"]
-    N74["howto-run-campaigns: Write the simulation campaign how-to"]
-    N75["howto-formal-verification: Write the formal verification how-to"]
-    N76["reference-standards-conformance: Write the standards conformance reference page"]
-    N77["reference-supported-configurations: Write the supported configurations reference page"]
-    N78["tutorial-link-simulation: Write the coded-modulation link simulation tutorial"]
-    N79["fieldmatrix-example-program: Add a FieldMatrix linear-algebra example program to gf2-core"]
-    N80["tutorial-linear-algebra: Write the finite-field linear algebra at scale tutorial"]
-    N81["readme-landing-page: Rewrite README for research adoption"]
-    N82["archive-lean-pipeline-doc: Move the Lean pipeline guide into its epic's archive dir"]
-    N83["legacy-move-gf2-core-guides: Move gf2-core crate guides into the legacy mirror"]
-    N84["legacy-move-gf2-coding-guides: Move gf2-coding crate guides into the legacy mirror"]
-    N85["verify-rustdoc-examples: Record the final Rustdoc example census and doctest timing"]
-    N86["audit-permanent-content: Audit the permanent surface against the docs invariants"]
-    N87["rewrite-dev-index: Rewrite dev/index.md for the final dev layout"]
-    N88["finalize-docs-policy: Narrow the docs policy to post-overhaul paths"]
-    N89["verify-final-links: Verify links across the permanent surface and executed archives"]
-    N90["retire-migration-checker: Retire the transient progress checker after the final check"]
+    N15["sweep-baseline-census: Record the pre-sweep comment census"]
+    N16["sweep-core-field-poly: Tersify comments in gf2-core field polynomial and extension modules"]
+    N17["sweep-core-field-dense: Tersify comments in gf2-core dense field matrix modules"]
+    N18["sweep-core-field-algorithms: Tersify comments in gf2-core field matrix algorithm modules"]
+    N19["sweep-core-field-traits: Tersify comments in gf2-core field trait and vector modules"]
+    N20["sweep-core-gf2m: Tersify comments in the gf2-core GF(2^m) module"]
+    N21["sweep-core-prime-fields: Tersify comments in the gf2-core prime-field modules"]
+    N22["sweep-core-bit-structures: Tersify comments in gf2-core bit-level structures"]
+    N23["sweep-core-runtime: Tersify comments in gf2-core runtime support modules"]
+    N24["sweep-core-tests-benches: Tersify comments in gf2-core tests, benches and examples"]
+    N25["sweep-coding-ldpc: Tersify comments in the gf2-coding LDPC module"]
+    N26["sweep-coding-bch: Tersify comments in gf2-coding BCH and transform modules"]
+    N27["sweep-coding-modem: Tersify comments in the gf2-coding modem module"]
+    N28["sweep-coding-decoders: Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules"]
+    N29["sweep-coding-core-src: Tersify comments in the remaining gf2-coding source files"]
+    N30["sweep-coding-tests-benches: Tersify comments in gf2-coding tests, benches and examples"]
+    N31["sweep-sim-campaigns: Tersify comments in gf2-sim executor and campaign modules"]
+    N32["sweep-sim-pipeline: Tersify comments in gf2-sim GPU, preset, stage and graph modules"]
+    N33["sweep-sim-runtime: Tersify comments in the remaining gf2-sim source files"]
+    N34["sweep-sim-tests-bins: Tersify comments in gf2-sim tests, benches, binaries and examples"]
+    N35["sweep-algebra-packed: Tersify comments in the gf2-algebra packed-field module"]
+    N36["sweep-algebra-rest: Tersify comments in the remaining gf2-algebra files"]
+    N37["sweep-simd-x86: Tersify comments in the gf2-kernels-simd x86 module"]
+    N38["sweep-simd-rest: Tersify comments in the remaining gf2-kernels-simd files"]
+    N39["sweep-hip-stats: Tersify comments in the gf2-kernels-hip and gf2-stats crates"]
+    N40["sweep-completion-record: Close the sweep with the after census and justification list"]
+    N41["tersification-sweep: Workspace source-comment tersification sweep"]
+    N42["repair-osd-archive: Bring the hand-archived OSD epic under container archival"]
+    N43["rearchive-97bf0879: Re-archive epic 97bf0879 to collect its terminal stories"]
+    N44["rearchive-026fc832: Re-archive epic 026fc832 to collect its terminal stories"]
+    N45["rearchive-babcf05e-f9717e7e: Re-archive epics babcf05e, f9717e7e to collect their terminal stories"]
+    N46["rearchive-bb85c68a-6efb756b: Re-archive epics bb85c68a, 6efb756b to collect their terminal stories"]
+    N47["rearchive-small-epics: Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories"]
+    N48["resolve-dev-strays: Resolve stray and ownerless dev entries"]
+    N49["regroup-active-zen3: Regroup flat zen3 dev/active entries under their epic dir"]
+    N50["regroup-active-field-dispatch: Regroup flat field-dispatch dev/active entries under their epic dir"]
+    N51["regroup-active-remaining: Regroup the remaining flat dev/active entries under epic dirs"]
+    N52["receipt-pin-path-tolerance: Accept historical protocol pin paths in receipt verification"]
+    N53["move-f547c394-inputs: Move the f547c394 protocol inputs under their epic dir"]
+    N54["rare-event-design-path-tolerance: Accept the historical design path in rare-event artifact validation"]
+    N55["move-3f664839-design: Move the 3f664839 design entry under its epic dir"]
+    N56["campaign-validation-path-tolerance: Accept historical frozen-evidence paths in campaign validation"]
+    N57["move-02b8137c-journal: Move the 02b8137c validation journal under its epic dir"]
+    N58["relocate-bench-narrative: Relocate loose narrative reports out of dev/bench_results"]
+    N59["relocate-sim-studies-narrative: Relocate loose narrative Markdown out of simulation_results and studies"]
+    N60["remove-active-husks: Clear empty leftover dirs under dev/active"]
+    N61["eliminate-dev-plans: Empty dev/plans through archival or legacy moves"]
+    N62["eliminate-dev-sessions: Empty dev/sessions into owner dirs or the legacy mirror"]
+    N63["eliminate-dev-presentations: Empty dev/presentations of leftover theme files"]
+    N64["move-presentation-decks: Move presentation decks into their epics' archive dirs"]
+    N65["retarget-figure-generator: Point the presentation figure example at a caller-chosen output dir"]
+    N66["docs-scaffold-index: Create the docs index and quadrant layout"]
+    N67["entry-page-gf2-core: Rewrite the gf2-core README as its entry page"]
+    N68["entry-page-gf2-coding: Rewrite the gf2-coding README as its entry page"]
+    N69["entry-page-gf2-algebra: Rewrite the gf2-algebra README as its entry page"]
+    N70["entry-page-gf2-sim: Write the gf2-sim README as its entry page"]
+    N71["concept-acceleration-architecture: Write the acceleration architecture concepts page"]
+    N72["backend-crate-readmes: Rewrite the SIMD kernel and statistics crate READMEs"]
+    N73["concept-field-arithmetic: Write the finite-field arithmetic concepts page"]
+    N74["reference-performance-evidence: Write the performance evidence reference page"]
+    N75["howto-select-acceleration: Write the acceleration selection how-to"]
+    N76["howto-reproduce-evidence: Write the evidence reproduction how-to"]
+    N77["howto-run-campaigns: Write the simulation campaign how-to"]
+    N78["howto-formal-verification: Write the formal verification how-to"]
+    N79["reference-standards-conformance: Write the standards conformance reference page"]
+    N80["reference-supported-configurations: Write the supported configurations reference page"]
+    N81["tutorial-link-simulation: Write the coded-modulation link simulation tutorial"]
+    N82["fieldmatrix-example-program: Add a FieldMatrix linear-algebra example program to gf2-core"]
+    N83["tutorial-linear-algebra: Write the finite-field linear algebra at scale tutorial"]
+    N84["readme-landing-page: Rewrite README for research adoption"]
+    N85["archive-lean-pipeline-doc: Move the Lean pipeline guide into its epic's archive dir"]
+    N86["legacy-move-gf2-core-guides: Move gf2-core crate guides into the legacy mirror"]
+    N87["legacy-move-gf2-coding-guides: Move gf2-coding crate guides into the legacy mirror"]
+    N88["verify-rustdoc-examples: Record the final Rustdoc example census and doctest timing"]
+    N89["audit-permanent-content: Audit the permanent surface against the docs invariants"]
+    N90["rewrite-dev-index: Rewrite dev/index.md for the final dev layout"]
+    N91["finalize-docs-policy: Narrow the docs policy to post-overhaul paths"]
+    N92["verify-final-links: Verify links across the permanent surface and executed archives"]
+    N93["retire-migration-checker: Retire the transient progress checker after the final check"]
     N6 --> N13
     N7 --> N13
     N8 --> N13
@@ -302,147 +308,171 @@ flowchart LR
     N11 --> N13
     N12 --> N13
     N13 --> N14
-    N14 --> N15
     N15 --> N16
-    N17 --> N18
-    N17 --> N19
-    N17 --> N20
-    N17 --> N21
-    N17 --> N22
-    N17 --> N23
-    N17 --> N24
-    N17 --> N25
-    N17 --> N26
-    N17 --> N27
-    N17 --> N28
-    N17 --> N29
-    N17 --> N30
-    N17 --> N31
-    N17 --> N32
-    N17 --> N33
-    N17 --> N34
-    N17 --> N35
-    N17 --> N36
-    N17 --> N37
-    N17 --> N38
-    N17 --> N39
+    N15 --> N17
+    N15 --> N18
+    N15 --> N19
+    N15 --> N20
+    N15 --> N21
+    N15 --> N22
+    N15 --> N23
+    N15 --> N24
+    N15 --> N25
+    N15 --> N26
+    N15 --> N27
+    N15 --> N28
+    N15 --> N29
+    N15 --> N30
+    N15 --> N31
+    N15 --> N32
+    N15 --> N33
+    N15 --> N34
+    N15 --> N35
+    N15 --> N36
+    N15 --> N37
+    N15 --> N38
+    N15 --> N39
+    N16 --> N40
     N17 --> N40
-    N17 --> N41
-    N18 --> N42
-    N19 --> N42
-    N20 --> N42
-    N21 --> N42
-    N22 --> N42
-    N23 --> N42
-    N24 --> N42
-    N25 --> N42
-    N26 --> N42
-    N27 --> N42
-    N28 --> N42
-    N29 --> N42
-    N30 --> N42
-    N31 --> N42
-    N32 --> N42
-    N33 --> N42
-    N34 --> N42
-    N35 --> N42
-    N36 --> N42
-    N37 --> N42
-    N38 --> N42
-    N39 --> N42
-    N40 --> N42
+    N18 --> N40
+    N19 --> N40
+    N20 --> N40
+    N21 --> N40
+    N22 --> N40
+    N23 --> N40
+    N24 --> N40
+    N25 --> N40
+    N26 --> N40
+    N27 --> N40
+    N28 --> N40
+    N29 --> N40
+    N30 --> N40
+    N31 --> N40
+    N32 --> N40
+    N33 --> N40
+    N34 --> N40
+    N35 --> N40
+    N36 --> N40
+    N37 --> N40
+    N38 --> N40
+    N39 --> N40
+    N40 --> N41
+    N14 --> N42
     N41 --> N42
-    N42 --> N43
-    N15 --> N44
-    N43 --> N44
-    N44 --> N45
+    N14 --> N43
+    N41 --> N43
+    N14 --> N44
+    N41 --> N44
+    N14 --> N45
+    N41 --> N45
     N14 --> N46
-    N43 --> N46
+    N41 --> N46
     N14 --> N47
-    N43 --> N47
-    N14 --> N48
+    N41 --> N47
     N43 --> N48
-    N49 --> N50
-    N46 --> N50
-    N51 --> N52
-    N48 --> N52
-    N53 --> N54
-    N48 --> N54
-    N44 --> N55
-    N46 --> N55
-    N16 --> N56
-    N48 --> N56
-    N45 --> N57
-    N47 --> N57
-    N50 --> N57
-    N52 --> N57
-    N54 --> N57
-    N55 --> N57
+    N44 --> N48
+    N45 --> N48
+    N46 --> N48
+    N47 --> N48
+    N14 --> N49
+    N41 --> N49
+    N14 --> N50
+    N41 --> N50
+    N14 --> N51
+    N41 --> N51
+    N52 --> N53
+    N49 --> N53
+    N54 --> N55
+    N51 --> N55
     N56 --> N57
+    N51 --> N57
+    N43 --> N58
     N44 --> N58
-    N14 --> N59
-    N14 --> N60
-    N12 --> N61
-    N61 --> N62
-    N43 --> N62
-    N63 --> N64
-    N63 --> N65
-    N63 --> N66
-    N63 --> N67
-    N63 --> N68
-    N68 --> N69
-    N63 --> N70
-    N63 --> N71
-    N68 --> N72
+    N45 --> N58
+    N46 --> N58
+    N47 --> N58
+    N49 --> N58
+    N42 --> N59
+    N51 --> N59
+    N48 --> N60
+    N50 --> N60
+    N53 --> N60
+    N55 --> N60
+    N57 --> N60
+    N58 --> N60
+    N59 --> N60
+    N43 --> N61
+    N44 --> N61
+    N45 --> N61
+    N46 --> N61
+    N47 --> N61
+    N14 --> N62
+    N14 --> N63
+    N12 --> N64
+    N64 --> N65
+    N41 --> N65
+    N66 --> N67
+    N66 --> N68
+    N66 --> N69
+    N66 --> N70
+    N66 --> N71
     N71 --> N72
-    N71 --> N73
-    N63 --> N74
-    N63 --> N75
-    N63 --> N76
-    N63 --> N77
-    N76 --> N78
-    N74 --> N78
-    N79 --> N80
-    N63 --> N80
-    N78 --> N81
-    N80 --> N81
-    N5 --> N81
-    N44 --> N81
-    N75 --> N82
-    N12 --> N82
-    N64 --> N83
-    N70 --> N83
-    N72 --> N83
-    N73 --> N83
-    N80 --> N83
-    N12 --> N83
-    N43 --> N83
-    N65 --> N84
-    N78 --> N84
-    N72 --> N84
-    N12 --> N84
-    N43 --> N85
-    N66 --> N86
+    N66 --> N73
+    N66 --> N74
+    N71 --> N75
+    N74 --> N75
+    N74 --> N76
+    N66 --> N77
+    N66 --> N78
+    N66 --> N79
+    N66 --> N80
+    N79 --> N81
+    N77 --> N81
+    N82 --> N83
+    N66 --> N83
+    N81 --> N84
+    N83 --> N84
+    N5 --> N84
+    N43 --> N84
+    N44 --> N84
+    N45 --> N84
+    N46 --> N84
+    N47 --> N84
+    N78 --> N85
+    N12 --> N85
     N67 --> N86
-    N69 --> N86
-    N77 --> N86
+    N73 --> N86
+    N75 --> N86
+    N76 --> N86
     N83 --> N86
-    N84 --> N86
-    N82 --> N86
-    N81 --> N86
-    N62 --> N86
-    N58 --> N87
-    N59 --> N87
-    N60 --> N87
-    N55 --> N87
-    N56 --> N87
-    N45 --> N87
-    N87 --> N88
-    N57 --> N88
-    N86 --> N88
-    N88 --> N89
+    N12 --> N86
+    N41 --> N86
+    N68 --> N87
+    N81 --> N87
+    N75 --> N87
+    N12 --> N87
+    N41 --> N88
+    N69 --> N89
+    N70 --> N89
+    N72 --> N89
+    N80 --> N89
+    N86 --> N89
+    N87 --> N89
     N85 --> N89
-    N89 --> N90
+    N84 --> N89
+    N65 --> N89
+    N61 --> N90
+    N62 --> N90
+    N63 --> N90
+    N58 --> N90
+    N59 --> N90
+    N48 --> N90
+    N90 --> N91
+    N60 --> N91
+    N89 --> N91
+    N91 --> N92
+    N88 --> N92
+    N92 --> N93
 ```
 <!-- jit:breakdown-overview:end -->
 
@@ -462,7 +492,7 @@ flowchart LR
 | D-52 f547c394 | Owner decision: the entry moves under its epic dir. First, rule P-02 is changed to accept recorded historical pin paths. The baseline is benchmark-acceptance verdicts and findings over every committed `zen3-benchmark-receipt-v1` `receipt.json` outside `inputs/`, recorded in `receipt-verdict-baseline.md`; verdicts must be identical after the change and again after the move. CI does not run this check. The move then switches the tooling, runner, tests and CI scripts to the new path. Rejected: keeping it as an operational exception. |
 | D-53 other code-pinned entries | Owner decision: 3f664839 (rare-event design, pinned by `permanent_rare_event/artifact.rs`) and 02b8137c (frozen validation journal, pinned by `permanent_campaign/validation.rs`) follow the D-52 pattern. Each has its own validator verdict baseline record. The 02b8137c move starts only after issue 02b8137c is done or rejected, checked against the tracker at execution (no edge, for the coverage reason in the external-wiring row). Any further code-pinned entry found by the inventory gets new tolerance and move tasks. Rejected: keeping code-pinned entries in place. |
 | OD-08 gates | 3f29e945 DEC-01..DEC-06 hold. Manifest gates use only registered keys (D-35): leaves get `cargo-ci`, `code-review` and `doc-review`; the story adds `repo-validate` and `holistic-review`. Once 8f61d6de registers `docs-mechanical`, the execution lead adds it to every open overhaul issue. |
-| PD-01 archive candidates | Default: preview with an adequate budget, or one container at a time; repair b7157be6 (no marker, state done, shared review file) separately. |
+| PD-01 archive scope | Owner-supplied previews of all 72 terminal unarchived containers bound the work: ten archived epics are re-archived to collect their terminal stories (ARCH-§1), b7157be6 is repaired from its destination conflict (ARCH-§3), and the six open-epic stories wait for their epics (ARCH-§2, D-22). Each task re-previews before execution because ownership linking adds documents. |
 | PD-02 non-JIT moves | Default: JIT archival rewrites only `documents[]`, never leaves `dev/` and cannot target the legacy mirror, so legacy, deck and Lean-guide moves follow `relocation-protocol`. |
 | PD-03 dev/active cleanup | Default: generic regroup tasks move only entries with no non-comment consumer recorded by the inventory, after the sweep, because Rustdoc cites `dev/active` paths. Strays and ownerless entries follow D-24/D-25; husks are cleared after every move. |
 | PD-05 AGENTS.md at 199/200 lines | Risk. Mitigation: 495807a3 REQ-05 removes superseded hand-written prose; CONTRIBUTING guidance moves in only if it fits. |
@@ -473,7 +503,7 @@ flowchart LR
 | PD-11 dev orientation | Default: `dev/index.md` is rewritten for the final layout; `dev/authoring-conventions.md` stays as operational guidance. |
 | External wiring | [external-wiring.json](external-wiring.json) is authoritative, and the breakdown step applies it verbatim: edges from manifest keys to existing issues, the f357b3dc and 44c98235 supersessions (each rejected `resolution:obsolete` once its replacement exists; the replacement carries its criteria), and the external `satisfies` labels, which are already present on the live issues. Every `from_key` exists in the manifest, and no edge closes a cycle. Every `to_issue` is an overhaul issue outside other epics' closures; the only foreign issue reached transitively is 0b45a5fa, a done task with no `satisfies` label and no dependencies. No edge targets another epic's issue (for example 02b8137c or ae03bcd0), because coverage credit is transitive. The three tolerance tasks are code changes that need no documentation contract, so they are spine sources with no external edge. |
 | Ordering the graph cannot encode | Two preconditions. `regroup-active-remaining` (ae03bcd0 entries) and `sweep-coding-bch` run in a window with no in-flight ae03bcd0 edits to its `dev/active` dir or to gf2-coding `bch/` and `transform/` (INV-§3.14). `move-02b8137c-journal` moves nothing until issue 02b8137c is done or rejected; this is a hard criterion of the task, verified against the tracker. An edge into either epic would pull its work and labels into this subtree. |
-| README ordering | `readme-landing-page` runs after `execute-terminal-archives`, the only other task that edits `README.md`. Regroup and archive tasks declare `crates`, because their citation scans determine the exact files; expect rebases. |
+| README ordering | `readme-landing-page` runs after the re-archive tasks, the only other tasks that edit `README.md`. Regroup and archive tasks declare `crates`, because their citation scans determine the exact files; expect rebases. |
 | Concurrent edits | `contrib/gates/doc-review-prompt.md` is being edited in another session and is outside this plan's footprints. |
 | Receipt and evidence integrity | Digest-pinned inputs and `dev/bench_results/` prefixes never change. Each code-pinned move follows its tolerance change and repeats the recorded verdict baseline (D-52, D-53). |
 | Shared manifest file | The seven inventory shards write one manifest file; each writes a disjoint row scope, and merges are row-level. |
@@ -484,5 +514,6 @@ flowchart LR
 - [Investigation](investigation.md) holds the full inventories, consumers and
   counts. This plan cites it and does not copy them.
 - [Planning brief](fa787f85-planning-brief.md) holds D-01..D-53.
+- [Archive preview results](archive-preview-results.md) hold the per-epic preview counts.
 - [Rustdoc example audit](fa787f85-rustdoc-example-audit.md) is the REQ-07
   baseline.
