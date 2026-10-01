@@ -159,6 +159,10 @@ name = "bch_genmatrix"
 harness = false
 
 [[bench]]
+name = "bch_encode_w1"
+harness = false
+
+[[bench]]
 name = "ldpc_decode"
 harness = false
 

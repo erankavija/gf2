@@ -14,8 +14,15 @@
 //   GF(2^4) at designed distance 3. `sequential_loop` calls the allocating
 //   `BlockEncoder::encode` once per message and `batch_operation` calls
 //   `BinaryBchCode::encode_batch`.
+//
+// Each BCH benchmark appends the family its measured call runs to the
+// dispatch record `bch_workloads` documents.
 
+mod bch_workloads;
+
+use bch_workloads::record;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use gf2_coding::bch::encode::EncodeFamily;
 use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
 use gf2_coding::bch::SystematicLayout;
 use gf2_coding::ldpc::encoding::EncodingCache;
@@ -26,6 +33,7 @@ use gf2_coding::CodeRate;
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::BitVec;
+use serde_json::json;
 use std::path::PathBuf;
 
 /// Load LDPC cache from standard location
@@ -76,6 +84,20 @@ fn primitive_code(degree: usize, modulus: u64, designed_distance: u64) -> Binary
     BinaryBchCode::primitive_narrow_sense(extension, designed_distance).unwrap()
 }
 
+/// Appends the dispatch record of one BCH encoding benchmark.
+fn record_bch(id: String, n: usize, k: usize, batch: usize, entry: &str, family: EncodeFamily) {
+    record(&json!({
+        "id": id,
+        "workload": "baseline-comparable",
+        "n": n,
+        "k": k,
+        "batch": batch,
+        "workers": 1,
+        "entry": entry,
+        "family": family.name(),
+    }));
+}
+
 /// Benchmark BCH batch encoding
 fn bench_bch_batch(c: &mut Criterion) {
     // Primitive narrow-sense BCH over GF(2^14), t = 12 (designed distance 25).
@@ -92,6 +114,14 @@ fn bench_bch_batch(c: &mut Criterion) {
         let total_bits = k * batch_size;
 
         group.throughput(Throughput::Bytes(total_bits as u64 / 8));
+        record_bch(
+            format!("bch_encode_pns_16383_16215/{batch_size}"),
+            code.n(),
+            k,
+            *batch_size,
+            "BchCode::encode_batch",
+            code.selected_encode_family(SystematicLayout::default(), *batch_size),
+        );
         group.bench_with_input(
             BenchmarkId::from_parameter(batch_size),
             batch_size,
@@ -163,6 +193,24 @@ fn bench_bch_sequential_vs_batch(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("bch_sequential_vs_batch");
     group.throughput(Throughput::Bytes((k * batch_size) as u64 / 8));
+    // The single-message path runs the reference recurrence; the family seam
+    // belongs to the batch entry points.
+    record_bch(
+        "bch_sequential_vs_batch/sequential_loop".to_owned(),
+        code.n(),
+        k,
+        batch_size,
+        "BlockEncoder::encode",
+        EncodeFamily::REFERENCE,
+    );
+    record_bch(
+        "bch_sequential_vs_batch/batch_operation".to_owned(),
+        code.n(),
+        k,
+        batch_size,
+        "BchCode::encode_batch",
+        code.selected_encode_family(SystematicLayout::default(), batch_size),
+    );
 
     group.bench_function("sequential_loop", |b| {
         b.iter(|| {
