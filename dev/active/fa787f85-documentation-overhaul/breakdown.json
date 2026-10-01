@@ -666,96 +666,6 @@
     }
   },
   {
-    "key": "archive-candidate-preview",
-    "title": "Preview terminal-epic archive candidates",
-    "description": "Container archival needs an eligibility preview per terminal epic before execution. The repository-wide candidate scan did not finish within 30 minutes, so the previews run with an adequate time budget or one container at a time.\n\n## Background\n\nArchival semantics, blocker classes and the expected blockers are in `dev/active/fa787f85-documentation-overhaul/investigation.md` §1.1, §1.2 and §4.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked preview record lists every terminal epic that is not yet archived, and every archived epic with newly linked unarchived documents, with eligibility, destination root, artifact count, owner set, reference changes and blockers.\n- [hard] REQ-02: Each blocker has a recorded resolution: ownership correction, copy case, link repair, or exclusion with reason.\n- [hard] REQ-03: The record states the preview method and time budget.\n- [hard] REQ-04: The manifest's container-archive rows match the previewed artifact sets.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-10"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "link-owned-artifacts"
-    ],
-    "planning": {
-      "outcome": "Each terminal or newly extended archived epic has a recorded preview with resolved blockers",
-      "contract_refs": [
-        "archive-execution-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-10",
-        "D-21",
-        "PD-01",
-        "INV-§1.1",
-        "INV-§1.2",
-        "INV-§4"
-      ],
-      "terminal": {
-        "consumer_family": "JIT archive planner",
-        "test_boundary": "linked preview record",
-        "worker_sized_reason": "Evaluate-only previews for roughly fifteen containers with known blocker classes",
-        "footprint": {
-          "creates": [
-            "dev/active/fa787f85-documentation-overhaul/archive-previews.md"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "repair-osd-archive",
-    "title": "Bring the hand-archived OSD epic under container archival",
-    "description": "Epic b7157be6 was moved into `dev/archive/b7157be6-osd/` by plain git: the directory has no container marker, the epic's state is done rather than archived, and it still links a review file shared with four open epics.\n\n## Background\n\nArchival adopts only a markerless bare `<short8>/` directory, so the slugged markerless directory may raise a destination conflict that needs resolution first. Evidence: `dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 7 and §1.1.\n\n## Success Criteria\n\n- [hard] REQ-01: The epic's archive directory carries a container marker with the epic's full identifier, and the epic's state is archived.\n- [hard] REQ-02: The shared external-review file stays at its live path for the open epics, and the archived epic holds a byte-verified copy.\n- [hard] REQ-03: The linked dataset under `dev/simulation_results/osd-ebch-128-64/` stays in place and its consuming test passes.\n- [hard] REQ-04: A rerun of the container archival reports no change.\n- [hard] REQ-05: In-file citations to moved paths are repointed, and a link scan of the touched files reports no unresolved local link.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-10"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "archive-candidate-preview"
-    ],
-    "planning": {
-      "outcome": "Epic b7157be6 is archived with a marker, verified bytes and resolvable references",
-      "contract_refs": [
-        "archive-execution-protocol",
-        "relocation-protocol"
-      ],
-      "source_refs": [
-        "REQ-10",
-        "PD-01",
-        "INV-§0.7",
-        "INV-§1.1",
-        "INV-§1.2"
-      ],
-      "terminal": {
-        "consumer_family": "archived OSD epic readers",
-        "test_boundary": "archive rerun no-op",
-        "worker_sized_reason": "One container with three linked artifacts and one known conflict",
-        "footprint": {
-          "touches": [
-            "dev/archive/b7157be6-osd",
-            ".jit/issues"
-          ]
-        }
-      }
-    }
-  },
-  {
     "key": "sweep-baseline-census",
     "title": "Record the pre-sweep comment census",
     "description": "The source-comment sweep reports each crate's comment-line share before and after. The baseline is measured once, before any sweep edit, by a reproducible method.\n\n## Background\n\n`dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix C gives a 2026-10-01 count and its method.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked completion record states, per crate under `crates/`, the comment-line count, non-blank Rust line count and comment share, with the exact counting command.\n- [hard] REQ-02: The record states, per crate, the number of comment lines matching the sweep pattern below.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-03: The record names the commit measured.\n",
@@ -2345,9 +2255,55 @@
     }
   },
   {
-    "key": "execute-terminal-archives",
-    "title": "Run container archival for eligible terminal epics",
-    "description": "Eligible terminal epics, and archived epics whose newly linked documents remain outside their archive, are archived through JIT container archival into marker-backed directories, with in-file citations repointed alongside.\n\n## Background\n\nArchival rewrites only issue document references, never file content (`dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 2), so citation repointing is part of each execution.\n\n## Success Criteria\n\n- [hard] REQ-01: Every container that the preview record marks eligible, other than b7157be6, is archived into a marker-backed `<short-id>-<slug>/` directory with byte verification passing.\n- [hard] REQ-02: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change; receipt directories stay byte-identical.\n- [hard] REQ-03: A rerun of each executed archive reports no change.\n- [hard] REQ-04: The manifest records each executed row as complete, and the progress checker reports their destination assertions passing.\n- [hard] REQ-05: A link scan of each executed archive directory and each repointed file reports no unresolved local link.\n",
+    "key": "repair-osd-archive",
+    "title": "Bring the hand-archived OSD epic under container archival",
+    "description": "Epic b7157be6 was moved into `dev/archive/b7157be6-osd/` by plain git: the directory has no container marker, the epic's state is done rather than archived, and it still links a review file shared with four open epics. Its archive preview is blocked by a destination conflict on that unmarked directory, with 31 artifacts in scope.\n\n## Background\n\nArchival adopts only a markerless bare `<short8>/` directory, so the slugged markerless directory may raise a destination conflict that needs resolution first. Evidence: `dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 7 and §1.1, and the archive preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`.\n\n## Success Criteria\n\n- [hard] REQ-01: The unmarked hand archive is resolved first (adopted into, or reconciled with, the planner's destination with no file lost), after which the archive preview reports the epic eligible with no destination conflict.\n- [hard] REQ-02: The epic's archive directory carries a container marker with the epic's full identifier, and the epic's state is archived.\n- [hard] REQ-03: The shared external-review file stays at its live path for the open epics, and the archived epic holds a byte-verified copy.\n- [hard] REQ-04: The linked dataset under `dev/simulation_results/osd-ebch-128-64/` stays in place and its consuming test passes.\n- [hard] REQ-05: A rerun of the container archival reports no change.\n- [hard] REQ-06: In-file citations to moved paths are repointed, and a link scan of the touched files reports no unresolved local link.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Epic b7157be6 is archived with a marker, verified bytes and resolvable references",
+      "contract_refs": [
+        "archive-execution-protocol",
+        "relocation-protocol"
+      ],
+      "source_refs": [
+        "REQ-10",
+        "PD-01",
+        "INV-§0.7",
+        "INV-§1.1",
+        "ARCH-§3"
+      ],
+      "terminal": {
+        "consumer_family": "archived OSD epic readers",
+        "test_boundary": "archive rerun no-op",
+        "worker_sized_reason": "One container with 31 artifacts and one known destination conflict",
+        "footprint": {
+          "touches": [
+            "dev/archive/b7157be6-osd",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "rearchive-97bf0879",
+    "title": "Re-archive epic 97bf0879 to collect its terminal stories",
+    "description": "Terminal stories under the archived epic 97bf0879 still hold 68 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2362,11 +2318,11 @@
       "doc-review"
     ],
     "depends_on": [
-      "archive-candidate-preview",
+      "link-owned-artifacts",
       "tersification-sweep"
     ],
     "planning": {
-      "outcome": "Eligible terminal epics are archived with markers, verified bytes and repointed citations",
+      "outcome": "Terminal-story artifacts of 97bf0879 sit in their epic archive with verified bytes",
       "contract_refs": [
         "archive-execution-protocol",
         "relocation-protocol",
@@ -2380,22 +2336,261 @@
         "PD-01",
         "PD-02",
         "INV-§0.2",
-        "INV-§4"
+        "INV-§4",
+        "ARCH-§1",
+        "ARCH-§2"
       ],
       "terminal": {
         "consumer_family": "archived epic readers",
         "test_boundary": "archive rerun no-op",
-        "worker_sized_reason": "A previewed, blocker-free set of containers run through one idempotent command each",
+        "worker_sized_reason": "About 68 previewed artifacts in 1 epic archive, one idempotent run each",
         "footprint": {
           "touches": [
-            "dev/archive",
+            "dev/archive/97bf0879-gf2-core-sota-performance",
             "dev/active",
             ".jit/issues",
             "crates",
             "README.md",
             "dev/scripts/receipt-input-omissions.json"
           ],
-          "uncertainty": "exact container set comes from the preview record; exact crate files are those citing a moved path"
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "rearchive-026fc832",
+    "title": "Re-archive epic 026fc832 to collect its terminal stories",
+    "description": "Terminal stories under the archived epic 026fc832 still hold 65 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-10",
+      "satisfies:REQ-19"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Terminal-story artifacts of 026fc832 sit in their epic archive with verified bytes",
+      "contract_refs": [
+        "archive-execution-protocol",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-10",
+        "REQ-19",
+        "D-21",
+        "D-22",
+        "PD-01",
+        "PD-02",
+        "INV-§0.2",
+        "INV-§4",
+        "ARCH-§1",
+        "ARCH-§2"
+      ],
+      "terminal": {
+        "consumer_family": "archived epic readers",
+        "test_boundary": "archive rerun no-op",
+        "worker_sized_reason": "About 65 previewed artifacts in 1 epic archive, one idempotent run each",
+        "footprint": {
+          "touches": [
+            "dev/archive/026fc832-gf2-core-sota-stretch",
+            "dev/active",
+            ".jit/issues",
+            "crates",
+            "README.md",
+            "dev/scripts/receipt-input-omissions.json"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "rearchive-babcf05e-f9717e7e",
+    "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
+    "description": "Terminal stories under the archived epics babcf05e, f9717e7e still hold 37 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-10",
+      "satisfies:REQ-19"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Terminal-story artifacts of babcf05e, f9717e7e sit in their epic archive with verified bytes",
+      "contract_refs": [
+        "archive-execution-protocol",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-10",
+        "REQ-19",
+        "D-21",
+        "D-22",
+        "PD-01",
+        "PD-02",
+        "INV-§0.2",
+        "INV-§4",
+        "ARCH-§1",
+        "ARCH-§2"
+      ],
+      "terminal": {
+        "consumer_family": "archived epic readers",
+        "test_boundary": "archive rerun no-op",
+        "worker_sized_reason": "About 37 previewed artifacts in 2 epic archives, one idempotent run each",
+        "footprint": {
+          "touches": [
+            "dev/archive/babcf05e-gf2-core-ppc-spiral",
+            "dev/archive/f9717e7e-gf2-sim",
+            "dev/active",
+            ".jit/issues",
+            "crates",
+            "README.md",
+            "dev/scripts/receipt-input-omissions.json"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "rearchive-bb85c68a-6efb756b",
+    "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
+    "description": "Terminal stories under the archived epics bb85c68a, 6efb756b still hold 26 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-10",
+      "satisfies:REQ-19"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Terminal-story artifacts of bb85c68a, 6efb756b sit in their epic archive with verified bytes",
+      "contract_refs": [
+        "archive-execution-protocol",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-10",
+        "REQ-19",
+        "D-21",
+        "D-22",
+        "PD-01",
+        "PD-02",
+        "INV-§0.2",
+        "INV-§4",
+        "ARCH-§1",
+        "ARCH-§2"
+      ],
+      "terminal": {
+        "consumer_family": "archived epic readers",
+        "test_boundary": "archive rerun no-op",
+        "worker_sized_reason": "About 26 previewed artifacts in 2 epic archives, one idempotent run each",
+        "footprint": {
+          "touches": [
+            "dev/archive/bb85c68a-field-linear-algebra",
+            "dev/archive/6efb756b-grand",
+            "dev/active",
+            ".jit/issues",
+            "crates",
+            "README.md",
+            "dev/scripts/receipt-input-omissions.json"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "rearchive-small-epics",
+    "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
+    "description": "Terminal stories under the archived epics e095a100, 806eb14e, 2928ccce, d4851c3d still hold 21 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-10",
+      "satisfies:REQ-19"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Terminal-story artifacts of e095a100, 806eb14e, 2928ccce, d4851c3d sit in their epic archive with verified bytes",
+      "contract_refs": [
+        "archive-execution-protocol",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-10",
+        "REQ-19",
+        "D-21",
+        "D-22",
+        "PD-01",
+        "PD-02",
+        "INV-§0.2",
+        "INV-§4",
+        "ARCH-§1",
+        "ARCH-§2"
+      ],
+      "terminal": {
+        "consumer_family": "archived epic readers",
+        "test_boundary": "archive rerun no-op",
+        "worker_sized_reason": "About 21 previewed artifacts in 4 epic archives, one idempotent run each",
+        "footprint": {
+          "touches": [
+            "dev/archive/e095a100-gfpm-arithmetic",
+            "dev/archive/806eb14e-hip-gpu-prototype",
+            "dev/archive/2928ccce-dvb-t2-awgn-campaign",
+            "dev/archive/d4851c3d-modem-framework",
+            "dev/active",
+            ".jit/issues",
+            "crates",
+            "README.md",
+            "dev/scripts/receipt-input-omissions.json"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
         }
       }
     }
@@ -2418,7 +2613,11 @@
       "doc-review"
     ],
     "depends_on": [
-      "execute-terminal-archives"
+      "rearchive-97bf0879",
+      "rearchive-026fc832",
+      "rearchive-babcf05e-f9717e7e",
+      "rearchive-bb85c68a-6efb756b",
+      "rearchive-small-epics"
     ],
     "planning": {
       "outcome": "Stray and ownerless dev entries sit with their owners or in the legacy mirror",
@@ -2909,7 +3108,11 @@
       "doc-review"
     ],
     "depends_on": [
-      "execute-terminal-archives",
+      "rearchive-97bf0879",
+      "rearchive-026fc832",
+      "rearchive-babcf05e-f9717e7e",
+      "rearchive-bb85c68a-6efb756b",
+      "rearchive-small-epics",
       "regroup-active-zen3"
     ],
     "planning": {
@@ -3056,7 +3259,11 @@
       "doc-review"
     ],
     "depends_on": [
-      "execute-terminal-archives"
+      "rearchive-97bf0879",
+      "rearchive-026fc832",
+      "rearchive-babcf05e-f9717e7e",
+      "rearchive-bb85c68a-6efb756b",
+      "rearchive-small-epics"
     ],
     "planning": {
       "outcome": "dev/plans is gone and no citation of its paths dangles",
@@ -4107,7 +4314,11 @@
       "tutorial-link-simulation",
       "tutorial-linear-algebra",
       "remove-contributing-guide",
-      "execute-terminal-archives"
+      "rearchive-97bf0879",
+      "rearchive-026fc832",
+      "rearchive-babcf05e-f9717e7e",
+      "rearchive-bb85c68a-6efb756b",
+      "rearchive-small-epics"
     ],
     "planning": {
       "outcome": "The root README is a concise current-state landing page linking the docs index and tutorials",
