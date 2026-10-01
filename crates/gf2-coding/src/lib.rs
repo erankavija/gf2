@@ -21,6 +21,16 @@
 //! Decoding is provided by [`SyndromeTableDecoder`], which uses a precomputed
 //! syndrome table for efficient single-error correction.
 //!
+//! # BCH Codes
+//!
+//! The [`bch`] module constructs BCH codes over any supported base field from
+//! independent inputs, encodes them systematically in a declared coordinate
+//! layout, decodes binary codes, and materializes their generator and
+//! parity-check matrices. Its module documentation is the researcher's
+//! guide: the workflow, distance terminology, coordinate conventions, error
+//! contracts, decoder guarantees, complexity, and performance-path
+//! selection, with the runnable examples that exercise them.
+//!
 //! # Streaming Codes
 //!
 //! Convolutional codes process bits in a streaming fashion. The module provides
