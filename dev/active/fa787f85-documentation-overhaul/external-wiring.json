@@ -1,0 +1,125 @@
+{
+  "edges": [
+    {
+      "from_key": "triage-doc-issues",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "roadmap-map-root-planned",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "roadmap-map-root-questions",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "roadmap-map-gf2-core",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "roadmap-map-gf2-coding",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "remove-contributing-guide",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "fieldmatrix-example-program",
+      "to_issue": "3f29e945",
+      "reason": "Documentation contract story; every documentation work source reaches it."
+    },
+    {
+      "from_key": "inventory-active-zen3-early",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "inventory-active-zen3-late",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "inventory-active-field-dispatch",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "inventory-active-open-epics",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "inventory-active-terminal-ownerless",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "inventory-dev-buckets",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "inventory-permanent-sources",
+      "to_issue": "a24b2af7",
+      "reason": "Manifest rows follow the committed migration-manifest schema and progress checker."
+    },
+    {
+      "from_key": "docs-scaffold-index",
+      "to_issue": "9b2886a7",
+      "reason": "Permanent-page authoring follows the registered audience, placement and tone invariants."
+    },
+    {
+      "from_key": "sweep-baseline-census",
+      "to_issue": "153297cf",
+      "reason": "Rustdoc example removal and accessor-example decisions (153297cf, and a0a29512 through its live edge) land before sweep units edit the same doc blocks."
+    },
+    {
+      "from_key": "sweep-baseline-census",
+      "to_issue": "12907582",
+      "reason": "Surviving Rustdoc drift corrections land before sweep units edit the same doc blocks."
+    }
+  ],
+  "supersessions": [
+    {
+      "issue": "f357b3dc",
+      "replaced_by_key": "tersification-sweep",
+      "resolution": "obsolete"
+    },
+    {
+      "issue": "44c98235",
+      "replaced_by_key": "readme-landing-page",
+      "resolution": "obsolete"
+    }
+  ],
+  "labels_applied": [
+    {
+      "issue": "153297cf",
+      "labels": [
+        "satisfies:REQ-07"
+      ],
+      "status": "present"
+    },
+    {
+      "issue": "3f29e945",
+      "labels": [
+        "satisfies:REQ-01",
+        "satisfies:REQ-16"
+      ],
+      "status": "present"
+    },
+    {
+      "issue": "12907582",
+      "labels": [
+        "satisfies:REQ-17"
+      ],
+      "status": "present"
+    }
+  ]
+}
