@@ -3,22 +3,17 @@
 // Measures performance of batch encoding/decoding with ComputeBackend.
 // Run with: cargo bench --bench batch_operations
 //
-// The BCH groups run on the canonical construction model
-// (`gf2_coding::bch::spec::BinaryBchCode`) and keep their Criterion IDs.
+// The BCH groups encode with `gf2_coding::bch::spec::BinaryBchCode`.
 //
-// - `bch_batch` encodes with the primitive narrow-sense binary BCH code over
+// - `bch_encode_pns_16383_16215` encodes batches of 1, 10, 50 and 100
+//   all-zero messages with the primitive narrow-sense binary BCH code over
 //   GF(2^14) at designed distance 25 (n = 16383, k = 16215, 168 parity bits).
-//   It shares its field and generator polynomial with the earlier
-//   BCH(16200, 16008, 12) construction but is a different code: that
-//   construction paired the 168-bit generator with a 192-bit redundancy, so
-//   its length and dimension have no canonical counterpart. The measured
-//   message is 207 bits longer and the redundancy 24 bits shorter. Batches go
-//   through `BinaryBchCode::encode_batch`, which allocates its result
-//   (fresh-alloc).
-// - `bch_sequential_vs_batch` encodes with the (15, 11) code over GF(2^4) at
-//   designed distance 3, the same code parameters and batch size as before.
-//   `sequential_loop` calls the allocating `BlockEncoder::encode` once per
-//   message and `batch_operation` calls `BinaryBchCode::encode_batch`.
+//   Each iteration calls `BinaryBchCode::encode_batch`, which allocates its
+//   result.
+// - `bch_sequential_vs_batch` encodes 100 messages with the (15, 11) code over
+//   GF(2^4) at designed distance 3. `sequential_loop` calls the allocating
+//   `BlockEncoder::encode` once per message and `batch_operation` calls
+//   `BinaryBchCode::encode_batch`.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
@@ -90,7 +85,7 @@ fn bench_bch_batch(c: &mut Criterion) {
 
     let message = BitVec::zeros(k);
 
-    let mut group = c.benchmark_group("bch_batch");
+    let mut group = c.benchmark_group("bch_encode_pns_16383_16215");
 
     for batch_size in [1, 10, 50, 100].iter() {
         let messages: Vec<_> = (0..*batch_size).map(|_| message.clone()).collect();
