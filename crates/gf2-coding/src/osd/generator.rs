@@ -601,9 +601,9 @@ mod tests {
         assert!(detailed.syndrome_check_passed);
     }
 
-    /// A canonical BCH code satisfies the decoder's legacy generator-matrix
-    /// bound through the `binary-code-v1` blanket adapter, with no
-    /// BCH-specific path in this module.
+    /// A canonical BCH code satisfies the decoder's generator-matrix bound
+    /// through the `binary-code-v1` blanket adapter, with no BCH-specific
+    /// path in this module.
     #[test]
     fn accepts_a_canonical_bch_generator_matrix() {
         use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
