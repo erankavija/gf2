@@ -8,10 +8,11 @@ set -euo pipefail
 #   exit 0 — gate passed; exit 1 — gate failed; stdout — report text.
 #
 # Tier 1 parses the gate context JSON with jq and reads the citation registry.
-# It scopes inline citekeys and cites:<key> labels to the issue under review:
+# It scopes inline citekeys and cites:@/citation/<key> labels to the issue under
+# review:
 #   1. Every inline citekey token [AuthorYYYY] resolves in .jit/references.toml.
-#   2. Every issue-owned cites:<key> label resolves in the registry.
-#   3. Every issue-owned cites:<key> label's key is also mentioned in the issue
+#   2. Every issue-owned cites:@/citation/<key> label resolves in the registry.
+#   3. Every issue-owned cites:@/citation/<key> label's key is also mentioned in the issue
 #      text (label/text drift check).
 # Any tier-1 finding fails the gate without spending an AI review.
 
@@ -38,8 +39,8 @@ issue_text=$(jq -r '
 label_keys=$(jq -r --arg key_pattern "$KEY_PATTERN" '
   (.issue.labels // [])[]
   | select(type == "string")
-  | select(test("^cites:" + $key_pattern + "$"))
-  | sub("^cites:"; "")
+  | select(test("^cites:@/citation/" + $key_pattern + "$"))
+  | sub("^cites:@/citation/"; "")
 ' "$JIT_CONTEXT_FILE" | sort -u || true)
 
 has_key() {
@@ -60,8 +61,8 @@ done
 
 # 2 + 3. cites: labels must resolve and be mentioned in the issue text.
 for k in $label_keys; do
-  has_key "$k" || report "label cites:$k does not resolve in $REFS_FILE"
-  grep -qF "[$k]" <<< "$issue_text" || report "label cites:$k has no matching [$k] citation in the issue text"
+  has_key "$k" || report "label cites:@/citation/$k does not resolve in $REFS_FILE"
+  grep -qF "[$k]" <<< "$issue_text" || report "label cites:@/citation/$k has no matching [$k] citation in the issue text"
 done
 
 if [ "$failures" -gt 0 ]; then

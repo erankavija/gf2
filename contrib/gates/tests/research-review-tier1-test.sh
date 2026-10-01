@@ -96,7 +96,7 @@ run_case() {
       ;;
     owned_label_text_drift)
       assert_output_contains "$output" \
-        "TIER1-F1: label cites:GGK2025 has no matching [GGK2025] citation in the issue text"
+        "TIER1-F1: label cites:@/citation/GGK2025 has no matching [GGK2025] citation in the issue text"
       assert_output_contains "$output" "VERDICT: FAIL"
       ;;
     owned_label_cited_ok)
@@ -105,7 +105,7 @@ run_case() {
       ;;
     owned_label_unresolvable)
       assert_output_contains "$output" \
-        "label cites:Nope2099 does not resolve in $REFS_FILE"
+        "label cites:@/citation/Nope2099 does not resolve in $REFS_FILE"
       assert_output_contains "$output" "VERDICT: FAIL"
       ;;
     inline_unresolvable_in_issue_text)
@@ -130,17 +130,17 @@ dependency_labels_not_attributed() {
     "Clean issue" \
     "The issue text contains no citation." \
     '[]' \
-    '[{"labels":["cites:GGK2025"]},{"labels":["cites:HKS2026"]}]' \
+    '[{"labels":["cites:@/citation/GGK2025"]},{"labels":["cites:@/citation/HKS2026"]}]' \
     "Review prompt mentions [Zzz9999]." \
     "Clean gate description." \
-    '[{"stdout":"A prior failure mentioned [GGK2025] and cites:HKS2026."}]'
+    '[{"stdout":"A prior failure mentioned [GGK2025] and cites:@/citation/HKS2026."}]'
 }
 
 owned_label_text_drift() {
   make_context "$1" \
     "Label drift" \
     "The issue text omits its required source." \
-    '["cites:GGK2025"]' \
+    '["cites:@/citation/GGK2025"]' \
     '[]' \
     "Clean review prompt." \
     "Clean gate description." \
@@ -151,7 +151,7 @@ owned_label_cited_ok() {
   make_context "$1" \
     "Cited issue" \
     "The issue is grounded in [GGK2025]." \
-    '["cites:GGK2025"]' \
+    '["cites:@/citation/GGK2025"]' \
     '[]' \
     "Clean review prompt." \
     "Clean gate description." \
@@ -162,7 +162,7 @@ owned_label_unresolvable() {
   make_context "$1" \
     "Unknown source" \
     "The issue cites [Nope2099]." \
-    '["cites:Nope2099"]' \
+    '["cites:@/citation/Nope2099"]' \
     '[]' \
     "Clean review prompt." \
     "Clean gate description." \
