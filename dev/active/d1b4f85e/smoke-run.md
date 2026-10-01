@@ -6,16 +6,19 @@ one-second warm-up and measurement windows on a shared, unpinned host. It is
 **not a measurement receipt**; `fd9d5416` takes the measurements with
 [`run.sh`](run.sh) in a benchmark window.
 
-- Revision: `9eb76a8d608dc31dea0eaf386f9d820b51e7643e` (bench sources as committed)
+- Revisions (bench sources as committed): `9eb76a8d608dc31dea0eaf386f9d820b51e7643e`
+  for `bch_encode_w1` and `batch_operations`, whose measured code is unchanged
+  at `113a02378c2ff0106f1e43198f43456d077e3a0e`; `113a02378c2ff0106f1e43198f43456d077e3a0e`
+  for `bch_genmatrix`
 - Host: AMD Ryzen 9 5900X 12-Core (24 threads), Linux 7.2.6-arch2-1 x86_64, rustc 1.97.0, Cargo `bench` profile, no CPU pinning, no host lock
-- Smoke window: 2026-10-01T09:09:06Z to 09:39:38Z
+- Smoke windows: 2026-10-01T09:09:06Z to 09:39:38Z (`bch_encode_w1`, `batch_operations`); 10:15:48Z to 10:25:48Z (`bch_genmatrix`)
 - Commands, from the repository root:
 
 ```text
 env RAYON_NUM_THREADS=6 GF2_BCH_DISPATCH_RECORD=<scratch>/w1.jsonl ./scripts/cargo-budget.sh cargo bench -p gf2-coding --features parallel --bench bch_encode_w1 -- --warm-up-time 1 --measurement-time 1 --sample-size 10 --noplot
 env GF2_BCH_DISPATCH_RECORD=<scratch>/w2.jsonl ./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench bch_genmatrix -- --warm-up-time 1 --measurement-time 1 --sample-size 10 --noplot
 env GF2_BCH_DISPATCH_RECORD=<scratch>/bo.jsonl ./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench batch_operations -- bch_ --warm-up-time 1 --measurement-time 1 --sample-size 10 --noplot
-GF2_BENCH=1 target/release/deps/bch_genmatrix-<hash> --bench --test 'bch_genmatrix_w2/materialize/.*/T2N$'
+env GF2_BENCH=1 GF2_BCH_DISPATCH_RECORD=<scratch>/t2n.jsonl target/release/deps/bch_genmatrix-<hash> --bench --test 'bch_genmatrix_w2/materialize/.*/T2N$'
 ```
 
 A group that sets its own sample count (ten on the large rows, a hundred
@@ -23,28 +26,36 @@ elsewhere) keeps it over `--sample-size`.
 
 ## Outcome
 
-- All three targets exit 0. The W1 target registers 256 cells, the W2 target
-  50 without `GF2_BENCH` (58 with it), and `batch_operations` 6 BCH cells;
+- Every command exits 0. The W1 target registers 256 cells, the W2 target
+  50 without `GF2_BENCH` and 58 with it, and `batch_operations` 6 BCH cells;
   every cell has a dispatch-record line, and no ID repeats.
-- Every W1 record reports `rayon_pool_width` 6. The output digests agree
-  across every path of each row and batch; the bench asserts it before
-  measuring, so a disagreement aborts the run.
+- Every W1 and W2 record carries `workers`, `rayon_pool_width`, and
+  `output_fnv1a`. W1 records report a pool width of 6; W2 records, built
+  without the `parallel` feature, report 1.
+- The benches assert before timing that every path of a W1 row and batch, and
+  every path of a W2 row, writes the same output; no assertion fired. The
+  `GF2_BENCH=1` run includes `T2N-mother` (canonical against reference) and
+  `T2N` (fresh against caller-buffer, and every generator row against the
+  encoding of its basis vector).
+- `run.sh`'s post-check, applied to these records and Criterion outputs,
+  passes. With one W2 digest altered, it fails and names the disagreeing row.
 - The detected encode kernel bundle is `avx2-pclmul`; each kernel-bundle
   family also runs its `scalar` arm.
 - Under the conservative profile every `selected=` cell reports
   `poly-remainder-scalar`.
-- The `GF2_BENCH=1` shortened `T2N` W2 cells (`materialize/fresh-alloc/T2N`,
-  `materialize/warm-reuse/T2N`) pass in `--test` mode, about a minute per
-  iteration; they have no smoke time below.
+- The `GF2_BENCH=1` `--test` run takes 5 min 34 s, mostly the `T2N-mother`
+  reference and the `T2N` checks before timing; the two shortened `T2N` W2
+  cells have no smoke time below.
 
 ## Full-run wall-time estimate
 
 From the smoke per-iteration times under the run's Criterion defaults (3 s
 warm-up, 5 s measurement, flat sampling where an iteration outlasts the
 target): about 57 minutes for the 312 cells below, about 20 minutes for the
-two shortened `T2N` W2 cells, a few minutes for the `T2N-mother` W2 cells,
-the `bch_parallel` decode groups and per-cell setup, so **about 90 minutes**
-in total plus the pre-lock build. This is an estimate, not a measurement.
+two shortened `T2N` W2 cells, about 10 minutes for the `T2N-mother` W2 cells
+and the `GF2_BENCH=1` checks before timing, plus the `bch_parallel` decode
+groups and per-cell setup, so **about 100 minutes** in total plus the pre-lock
+build. This is an estimate, not a measurement.
 
 ## Criterion IDs and smoke times (low / mid / high), not a measurement receipt
 
@@ -306,56 +317,56 @@ in total plus the pre-lock build. This is an estimate, not a measurement.
 | `bch_encode_w1/selected=poly-remainder-scalar/W1/fresh-alloc/N4/B=4096` | 367.13 ms / 370.40 ms / 373.88 ms |
 | `bch_encode_w1/selected=poly-remainder-scalar/W6/warm-reuse/N4/B=4096` | 2.2594 s / 2.3198 s / 2.3851 s |
 | `bch_encode_w1/selected=poly-remainder-scalar/W6/fresh-alloc/N4/B=4096` | 2.2236 s / 2.2609 s / 2.3019 s |
-| `bch_genmatrix_w2/materialize/fresh-alloc/B1` | 42.904 ns / 42.948 ns / 42.986 ns |
-| `bch_genmatrix_w2/reference/fresh-alloc/B1` | 440.18 ns / 441.70 ns / 443.62 ns |
-| `bch_genmatrix_w2/materialize/warm-reuse/B1` | 35.898 ns / 35.927 ns / 35.961 ns |
-| `bch_genmatrix_w2/reference/warm-reuse/B1` | 439.81 ns / 440.62 ns / 441.56 ns |
-| `bch_genmatrix_w2/materialize/fresh-alloc/B2` | 465.96 ns / 468.08 ns / 471.93 ns |
-| `bch_genmatrix_w2/reference/fresh-alloc/B2` | 43.434 µs / 43.958 µs / 44.759 µs |
-| `bch_genmatrix_w2/materialize/warm-reuse/B2` | 465.23 ns / 467.36 ns / 471.05 ns |
-| `bch_genmatrix_w2/reference/warm-reuse/B2` | 40.932 µs / 41.329 µs / 41.844 µs |
-| `bch_genmatrix_w2/materialize/fresh-alloc/B3` | 1.8198 µs / 1.9478 µs / 2.0784 µs |
-| `bch_genmatrix_w2/reference/fresh-alloc/B3` | 392.34 µs / 415.61 µs / 439.69 µs |
-| `bch_genmatrix_w2/materialize/warm-reuse/B3` | 2.0405 µs / 2.0993 µs / 2.1536 µs |
-| `bch_genmatrix_w2/reference/warm-reuse/B3` | 546.04 µs / 552.47 µs / 558.56 µs |
-| `bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother` | 4.7845 ms / 5.0265 ms / 5.1808 ms |
-| `bch_genmatrix_w2/reference/fresh-alloc/T2S-mother` | 2.0202 s / 2.2422 s / 2.6356 s |
-| `bch_genmatrix_w2/materialize/warm-reuse/T2S-mother` | 854.62 µs / 1.0022 ms / 1.1289 ms |
-| `bch_genmatrix_w2/reference/warm-reuse/T2S-mother` | 2.1567 s / 2.4844 s / 2.8357 s |
-| `bch_genmatrix_w2/materialize/fresh-alloc/N1` | 77.287 ns / 77.528 ns / 77.823 ns |
-| `bch_genmatrix_w2/reference/fresh-alloc/N1` | 611.94 ns / 715.24 ns / 845.75 ns |
-| `bch_genmatrix_w2/materialize/warm-reuse/N1` | 78.971 ns / 81.923 ns / 85.929 ns |
-| `bch_genmatrix_w2/reference/warm-reuse/N1` | 343.88 ns / 345.39 ns / 347.32 ns |
-| `bch_genmatrix_w2/materialize/fresh-alloc/N2` | 551.03 ns / 553.03 ns / 555.53 ns |
-| `bch_genmatrix_w2/reference/fresh-alloc/N2` | 6.6627 µs / 6.7029 µs / 6.7664 µs |
-| `bch_genmatrix_w2/materialize/warm-reuse/N2` | 458.74 ns / 459.93 ns / 461.31 ns |
-| `bch_genmatrix_w2/reference/warm-reuse/N2` | 6.6354 µs / 6.6699 µs / 6.7244 µs |
-| `bch_genmatrix_w2/materialize/fresh-alloc/N3` | 3.6851 µs / 4.0209 µs / 4.3554 µs |
-| `bch_genmatrix_w2/reference/fresh-alloc/N3` | 14.129 µs / 14.144 µs / 14.158 µs |
-| `bch_genmatrix_w2/materialize/warm-reuse/N3` | 2.3492 µs / 2.3546 µs / 2.3611 µs |
-| `bch_genmatrix_w2/reference/warm-reuse/N3` | 15.658 µs / 15.731 µs / 15.805 µs |
-| `bch_genmatrix_w2/materialize/fresh-alloc/N4` | 587.88 µs / 588.42 µs / 588.98 µs |
-| `bch_genmatrix_w2/reference/fresh-alloc/N4` | 24.964 ms / 25.114 ms / 25.273 ms |
-| `bch_genmatrix_w2/materialize/warm-reuse/N4` | 343.35 µs / 345.42 µs / 347.63 µs |
-| `bch_genmatrix_w2/reference/warm-reuse/N4` | 24.369 ms / 24.467 ms / 24.581 ms |
-| `bch_genmatrix_w2/materialize/fresh-alloc/T2S` | 1.9081 s / 1.9153 s / 1.9237 s |
-| `bch_genmatrix_w2/materialize/warm-reuse/T2S` | 2.0655 s / 3.2255 s / 5.1730 s |
-| `bch_paritycheck/materialize/warm-reuse/B1` | 105.99 ns / 106.38 ns / 106.95 ns |
-| `bch_paritycheck/reference/warm-reuse/B1` | 536.48 ns / 540.49 ns / 545.65 ns |
-| `bch_paritycheck/materialize/warm-reuse/B2` | 23.402 µs / 26.359 µs / 29.581 µs |
-| `bch_paritycheck/reference/warm-reuse/B2` | 94.666 µs / 110.75 µs / 129.33 µs |
-| `bch_paritycheck/materialize/warm-reuse/B3` | 10.836 µs / 12.006 µs / 13.391 µs |
-| `bch_paritycheck/reference/warm-reuse/B3` | 174.07 µs / 175.34 µs / 176.76 µs |
-| `bch_paritycheck/materialize/warm-reuse/T2S-mother` | 12.929 ms / 13.403 ms / 14.243 ms |
-| `bch_paritycheck/reference/warm-reuse/T2S-mother` | 1.6365 s / 1.8582 s / 2.0822 s |
-| `bch_paritycheck/materialize/warm-reuse/N1` | 80.544 ns / 84.578 ns / 89.628 ns |
-| `bch_paritycheck/reference/warm-reuse/N1` | 410.61 ns / 413.60 ns / 416.87 ns |
-| `bch_paritycheck/materialize/warm-reuse/N2` | 368.17 ns / 378.18 ns / 396.33 ns |
-| `bch_paritycheck/reference/warm-reuse/N2` | 7.5751 µs / 7.8505 µs / 8.1897 µs |
-| `bch_paritycheck/materialize/warm-reuse/N3` | 2.0175 µs / 2.0406 µs / 2.0722 µs |
-| `bch_paritycheck/reference/warm-reuse/N3` | 15.459 µs / 15.481 µs / 15.505 µs |
-| `bch_paritycheck/materialize/warm-reuse/N4` | 164.90 µs / 165.50 µs / 166.23 µs |
-| `bch_paritycheck/reference/warm-reuse/N4` | 24.895 ms / 25.053 ms / 25.242 ms |
+| `bch_genmatrix_w2/materialize/fresh-alloc/B1` | 47.934 ns / 49.583 ns / 51.569 ns |
+| `bch_genmatrix_w2/reference/fresh-alloc/B1` | 484.73 ns / 491.43 ns / 499.20 ns |
+| `bch_genmatrix_w2/materialize/warm-reuse/B1` | 36.512 ns / 36.767 ns / 37.095 ns |
+| `bch_genmatrix_w2/reference/warm-reuse/B1` | 443.61 ns / 445.92 ns / 448.07 ns |
+| `bch_genmatrix_w2/materialize/fresh-alloc/B2` | 608.51 ns / 647.65 ns / 689.23 ns |
+| `bch_genmatrix_w2/reference/fresh-alloc/B2` | 40.596 µs / 40.914 µs / 41.280 µs |
+| `bch_genmatrix_w2/materialize/warm-reuse/B2` | 544.97 ns / 575.69 ns / 609.48 ns |
+| `bch_genmatrix_w2/reference/warm-reuse/B2` | 41.258 µs / 41.559 µs / 41.922 µs |
+| `bch_genmatrix_w2/materialize/fresh-alloc/B3` | 1.4942 µs / 1.5035 µs / 1.5151 µs |
+| `bch_genmatrix_w2/reference/fresh-alloc/B3` | 286.45 µs / 287.13 µs / 288.06 µs |
+| `bch_genmatrix_w2/materialize/warm-reuse/B3` | 2.0929 µs / 2.2517 µs / 2.4020 µs |
+| `bch_genmatrix_w2/reference/warm-reuse/B3` | 302.51 µs / 304.89 µs / 307.76 µs |
+| `bch_genmatrix_w2/materialize/fresh-alloc/T2S-mother` | 3.0238 ms / 3.1814 ms / 3.4262 ms |
+| `bch_genmatrix_w2/reference/fresh-alloc/T2S-mother` | 1.9812 s / 2.1374 s / 2.4030 s |
+| `bch_genmatrix_w2/materialize/warm-reuse/T2S-mother` | 1.1901 ms / 1.2883 ms / 1.3913 ms |
+| `bch_genmatrix_w2/reference/warm-reuse/T2S-mother` | 1.9843 s / 2.1409 s / 2.3677 s |
+| `bch_genmatrix_w2/materialize/fresh-alloc/N1` | 80.889 ns / 81.171 ns / 81.467 ns |
+| `bch_genmatrix_w2/reference/fresh-alloc/N1` | 341.64 ns / 345.84 ns / 350.79 ns |
+| `bch_genmatrix_w2/materialize/warm-reuse/N1` | 72.226 ns / 72.328 ns / 72.428 ns |
+| `bch_genmatrix_w2/reference/warm-reuse/N1` | 354.50 ns / 362.22 ns / 372.39 ns |
+| `bch_genmatrix_w2/materialize/fresh-alloc/N2` | 591.29 ns / 592.04 ns / 592.81 ns |
+| `bch_genmatrix_w2/reference/fresh-alloc/N2` | 6.7333 µs / 6.8293 µs / 6.9396 µs |
+| `bch_genmatrix_w2/materialize/warm-reuse/N2` | 489.32 ns / 492.17 ns / 494.97 ns |
+| `bch_genmatrix_w2/reference/warm-reuse/N2` | 6.3722 µs / 6.4274 µs / 6.4989 µs |
+| `bch_genmatrix_w2/materialize/fresh-alloc/N3` | 3.7159 µs / 3.7224 µs / 3.7289 µs |
+| `bch_genmatrix_w2/reference/fresh-alloc/N3` | 14.357 µs / 14.419 µs / 14.488 µs |
+| `bch_genmatrix_w2/materialize/warm-reuse/N3` | 1.8198 µs / 1.8238 µs / 1.8285 µs |
+| `bch_genmatrix_w2/reference/warm-reuse/N3` | 14.460 µs / 14.479 µs / 14.497 µs |
+| `bch_genmatrix_w2/materialize/fresh-alloc/N4` | 560.05 µs / 561.34 µs / 563.29 µs |
+| `bch_genmatrix_w2/reference/fresh-alloc/N4` | 25.717 ms / 25.930 ms / 26.158 ms |
+| `bch_genmatrix_w2/materialize/warm-reuse/N4` | 346.90 µs / 348.82 µs / 350.50 µs |
+| `bch_genmatrix_w2/reference/warm-reuse/N4` | 24.725 ms / 24.801 ms / 24.883 ms |
+| `bch_genmatrix_w2/materialize/fresh-alloc/T2S` | 1.7769 s / 1.7903 s / 1.8064 s |
+| `bch_genmatrix_w2/materialize/warm-reuse/T2S` | 1.7824 s / 1.8297 s / 1.8980 s |
+| `bch_paritycheck/materialize/warm-reuse/B1` | 163.97 ns / 175.00 ns / 185.90 ns |
+| `bch_paritycheck/reference/warm-reuse/B1` | 758.35 ns / 795.63 ns / 840.50 ns |
+| `bch_paritycheck/materialize/warm-reuse/B2` | 11.695 µs / 11.834 µs / 11.963 µs |
+| `bch_paritycheck/reference/warm-reuse/B2` | 71.355 µs / 72.441 µs / 73.415 µs |
+| `bch_paritycheck/materialize/warm-reuse/B3` | 13.497 µs / 14.262 µs / 15.110 µs |
+| `bch_paritycheck/reference/warm-reuse/B3` | 176.53 µs / 177.14 µs / 177.86 µs |
+| `bch_paritycheck/materialize/warm-reuse/T2S-mother` | 11.689 ms / 11.744 ms / 11.827 ms |
+| `bch_paritycheck/reference/warm-reuse/T2S-mother` | 1.3752 s / 1.3803 s / 1.3873 s |
+| `bch_paritycheck/materialize/warm-reuse/N1` | 65.771 ns / 65.839 ns / 65.907 ns |
+| `bch_paritycheck/reference/warm-reuse/N1` | 364.06 ns / 364.37 ns / 364.71 ns |
+| `bch_paritycheck/materialize/warm-reuse/N2` | 312.84 ns / 313.36 ns / 313.94 ns |
+| `bch_paritycheck/reference/warm-reuse/N2` | 6.2956 µs / 6.3042 µs / 6.3135 µs |
+| `bch_paritycheck/materialize/warm-reuse/N3` | 1.7215 µs / 1.7237 µs / 1.7258 µs |
+| `bch_paritycheck/reference/warm-reuse/N3` | 15.563 µs / 15.592 µs / 15.627 µs |
+| `bch_paritycheck/materialize/warm-reuse/N4` | 163.36 µs / 163.57 µs / 163.82 µs |
+| `bch_paritycheck/reference/warm-reuse/N4` | 23.685 ms / 23.708 ms / 23.734 ms |
 | `bch_encode_pns_16383_16215/1` | 68.546 µs / 68.817 µs / 69.316 µs |
 | `bch_encode_pns_16383_16215/10` | 658.22 µs / 664.93 µs / 679.11 µs |
 | `bch_encode_pns_16383_16215/50` | 3.3862 ms / 3.3892 ms / 3.3919 ms |
