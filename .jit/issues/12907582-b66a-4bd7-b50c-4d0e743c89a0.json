@@ -7,7 +7,15 @@
     "3f29e945-8b12-4862-82c8-f2ec6573287c"
   ],
   "description": "Correct factual drift in source-level documentation and operational comments that will survive the documentation migration. Material located only in obsolete roadmaps, contributor prose, or historical presentations is handled by removal or archival rather than edited in place.\n\n## Success Criteria\n\n- [hard] REQ-01: Surviving crate- and module-level Rustdoc states the correct packed-lane layouts, implemented SIMD targets, and public API surface as verified against current code. The single-word permanent bounds are verified as already correct rather than re-fixed here: `0b45a5fa` owns that correction and blocks this issue.\n- [hard] REQ-04: Bare implementation TODOs found by the inherited drift audit are either implemented within an explicitly scoped child issue or replaced by a traceable JIT item without adding promises to adopter documentation.\n- [hard] REQ-05: Findings whose only location is a removed contributor file, removed roadmap, rewritten permanent page, or archived presentation are classified in the migration manifest rather than patched in obsolete prose.\n- [hard] REQ-06: Rust formatting, Rustdoc compilation, documentation review, and code review pass for every surviving source-level edit.\n\n## Notes\n\nNarration and designator removal (former REQ-02 and REQ-03) moved to the workspace documentation tersification sweep on 2026-10-01; this issue covers factual drift. Requirement IDs stay stable.\n\nRe-homed from epic `b4b4b9ee` to `fa787f85` on 2026-08-07 so that code remediation is not gated on the documentation contract. Depends on `0b45a5fa` (F_3 permanent bound) so the bound this issue verifies is already corrected upstream.\n\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Drift pre-audit",
+      "path": "dev/active/fa787f85-documentation-overhaul/12907582-drift-preaudit.md"
+    }
+  ],
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -40,5 +48,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-01T13:19:13.198515039Z"
+  "updated_at": "2026-10-01T13:58:43.326303827Z"
 }
