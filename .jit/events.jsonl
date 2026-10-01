@@ -14381,3 +14381,5 @@
 {"gate_key":"breakdown-review","id":"10f70aae-4aa0-47ae-9ac4-50d6fba7bdd8","issue_id":"10fdde24-ece4-4b9b-9379-81de68d0024c","timestamp":"2026-10-01T14:50:32.788936532Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"683edcae-3b30-4da7-8c3c-7c498255dd5e","issue_id":"10fdde24-ece4-4b9b-9379-81de68d0024c","timestamp":"2026-10-01T14:50:44.975755143Z","to":"done","type":"issue_state_changed"}
 {"id":"673395fe-ab54-4397-aa7e-b666f26dd615","issue_id":"10fdde24-ece4-4b9b-9379-81de68d0024c","timestamp":"2026-10-01T14:50:44.975755143Z","type":"issue_completed"}
+{"id":"c50be1d7-eda0-4bcf-bc13-f8bd90c7806d","issue_id":"f023b88b-b44f-440f-852c-7f2ce25b1b54","priority":"normal","timestamp":"2026-10-01T15:39:40.385472954Z","title":"Migrate satisfies labels to the container-qualified form","type":"issue_created"}
+{"fields":["dependencies"],"id":"87153b1b-48df-4e5b-a3c5-167ab4fc36ea","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-10-01T15:39:52.527446014Z","type":"issue_updated","updated_by":"dependency-add"}

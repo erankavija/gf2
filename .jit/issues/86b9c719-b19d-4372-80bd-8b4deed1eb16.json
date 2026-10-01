@@ -41,7 +41,8 @@
     "dc744095-0573-4f40-8513-f7e90f269dec",
     "de3ec390-e827-493c-90c3-b2f48fdb4e52",
     "e2c649cd-12e6-430a-be7a-7cd5165695b0",
-    "ec3971f3-8a4d-4200-9905-505dc19ebc9e"
+    "ec3971f3-8a4d-4200-9905-505dc19ebc9e",
+    "f023b88b-b44f-440f-852c-7f2ce25b1b54"
   ],
   "description": "API ergonomics polish, documentation improvements, example restructuring, and technical debt cleanup across the workspace.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Quality, documentation, and tech debt” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
@@ -61,5 +62,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Quality, documentation, and tech debt",
-  "updated_at": "2026-09-04T21:14:24.667872147Z"
+  "updated_at": "2026-10-01T15:39:52.527446014Z"
 }
