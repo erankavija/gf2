@@ -14394,3 +14394,9 @@
 {"id":"584dd345-e140-40b5-b398-dd820fb0df8f","issue_id":"495807a3-caeb-4680-8429-13d7da4a590d","timestamp":"2026-10-01T19:32:34.885422470Z","type":"issue_completed"}
 {"from":"backlog","id":"19f02688-ed89-4cf3-bfdf-2da359781252","issue_id":"56378e82-2a72-44ef-96b6-1d12d7332976","timestamp":"2026-10-01T19:32:35.359870196Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"98a2acb5-19d8-46da-a0f3-9d4ad3c55183","issue_id":"dcd38c45-66ae-43ed-b689-3a9dcd2600b3","timestamp":"2026-10-01T19:32:35.721954773Z","to":"ready","type":"issue_state_changed"}
+{"id":"cabd9f89-b884-4c9a-8d37-83f0da626923","issue_id":"0dc52df8-5ca7-48d0-9aa9-3303c1d786a7","priority":"high","timestamp":"2026-10-01T22:21:55.414199171Z","title":"Migrate cites labels to the qualified citation form","type":"issue_created"}
+{"fields":["dependencies"],"id":"5712a849-e4b8-447e-abc3-761b1a1a42aa","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-10-01T22:22:03.188132620Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"efc3b189-8e38-4451-8464-733886f7a702","issue_id":"f023b88b-b44f-440f-852c-7f2ce25b1b54","timestamp":"2026-10-01T22:22:03.307443746Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"897e403e-4613-4815-bd20-427326508132","issue_id":"f023b88b-b44f-440f-852c-7f2ce25b1b54","timestamp":"2026-10-01T22:22:03.307443746Z","type":"issue_claimed"}
+{"from":"ready","id":"b79f9de4-c4b3-41a4-a680-d302225977e4","issue_id":"0dc52df8-5ca7-48d0-9aa9-3303c1d786a7","timestamp":"2026-10-01T22:22:03.430472304Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"93903278-5c81-45bd-b8fd-03e8d13877e7","issue_id":"0dc52df8-5ca7-48d0-9aa9-3303c1d786a7","timestamp":"2026-10-01T22:22:03.430472304Z","type":"issue_claimed"}

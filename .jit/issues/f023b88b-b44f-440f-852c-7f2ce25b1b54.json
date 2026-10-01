@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-01T22:22:03.307443746Z",
   "context": {},
   "created_at": "2026-10-01T15:39:40.385472954Z",
   "dependencies": [],
@@ -18,7 +19,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Migrate satisfies labels to the container-qualified form",
-  "updated_at": "2026-10-01T15:39:40.385472954Z"
+  "updated_at": "2026-10-01T22:22:03.307443746Z"
 }
