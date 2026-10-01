@@ -15,7 +15,7 @@
     "type:enhancement"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Shortened<C> systematic restriction lacks an allocation-free encode path",
-  "updated_at": "2026-09-03T05:38:20.287239712Z"
+  "updated_at": "2026-10-01T07:46:12.301732787Z"
 }

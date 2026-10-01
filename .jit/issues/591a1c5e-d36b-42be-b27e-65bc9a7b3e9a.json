@@ -8,6 +8,7 @@
   ],
   "description": "Migrate the gf2-coding Criterion benchmarks consuming legacy BCH constructors to the canonical model, preserving benchmark IDs where the measured behavior is unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each bench in this task's inventory compiles and runs on the canonical model, keeping comparable benchmark IDs for the non-regression comparison.\n",
   "documents": [],
+  "first_ready_at": "2026-10-01T07:46:12.085397870Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -21,7 +22,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Migrate gf2-coding benchmarks",
-  "updated_at": "2026-08-28T23:04:06.062337929Z"
+  "updated_at": "2026-10-01T07:46:12.085397870Z"
 }
