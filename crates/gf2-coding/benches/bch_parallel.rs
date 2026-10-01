@@ -1,17 +1,15 @@
-// BCH batch decoding benchmarks on the canonical DVB-T2 code.
+// BCH decoding benchmarks on the DVB-T2 short-frame rate-1/2 outer code
+// (`dvb_t2_bch_code`: n = 7200, k = 7032, t = 12).
 //
-// The code is the DVB-T2 short-frame rate-1/2 outer BCH code
-// (`dvb_t2_bch_code`: n = 7200, k = 7032, t = 12), encoded and decoded
-// through the canonical surface. The Criterion IDs are unchanged. Two
-// measured behaviors differ from the earlier decoder:
+// Every codeword is error-free and carries a message whose low 8 bits are the
+// message index.
 //
-// - `DvbT2BchDecoder` has no batch entry point, so the batch cells
-//   (`bch_batch_decode/*` and `bch_single_vs_batch/batch_api`) loop over the
-//   codewords with `decode_into` on one reused workspace and output buffer.
-//   They are allocation-free per codeword (warm-reuse), where the earlier
-//   batch call allocated its results.
-// - `bch_single_vs_batch/single_loop` calls the allocating `decode` once per
-//   codeword, so it keeps the fresh-alloc state of the earlier single loop.
+// - `bch_batch_decode/<B>` decodes B codewords (1, 10, 50, 100) in sequence
+//   with the allocating `DvbT2BchDecoder::decode`, collecting the results.
+// - `bch_single_vs_batch/single_loop` decodes 50 codewords the same way.
+// - `bch_single_vs_batch/decode_into_loop` decodes the same 50 codewords with
+//   `DvbT2BchDecoder::decode_into` on one reused workspace and output buffer,
+//   which performs no per-codeword allocation.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::bch::dvb_t2::{
@@ -63,15 +61,11 @@ fn benchmark_bch_batch_decode(c: &mut Criterion) {
     // DVB-T2 Short frame: k=7032, n=7200, t=12
     let code = dvb_t2_short_code();
     let decoder = OuterDecoder::new(&code);
-    let mut workspace = decoder.workspace();
-    let mut bbframe = BitVec::zeros(code.k());
 
     // Test batch sizes: 1, 10, 50, 100
     for batch_size in [1, 10, 50, 100].iter() {
         let codewords = codewords(&code, *batch_size);
-        let outcome = decoder
-            .decode_into(&codewords[0], &mut bbframe, &mut workspace)
-            .unwrap();
+        let (outcome, _) = decoder.decode(&codewords[0]).unwrap();
         assert_eq!(outcome, BchDecodeOutcome::NoErrors);
 
         group.throughput(Throughput::Elements(*batch_size as u64));
@@ -80,12 +74,11 @@ fn benchmark_bch_batch_decode(c: &mut Criterion) {
             batch_size,
             |b, _| {
                 b.iter(|| {
-                    decode_all(
-                        &decoder,
-                        black_box(&codewords),
-                        &mut bbframe,
-                        &mut workspace,
-                    );
+                    let decoded: Vec<_> = black_box(&codewords)
+                        .iter()
+                        .map(|cw| decoder.decode(cw).unwrap())
+                        .collect();
+                    black_box(decoded);
                 });
             },
         );
@@ -104,7 +97,7 @@ fn benchmark_bch_single_vs_batch(c: &mut Criterion) {
 
     let codewords = codewords(&code, 50);
 
-    // Single decode loop (allocating)
+    // Allocating decode loop
     group.bench_function("single_loop", |b| {
         b.iter(|| {
             let decoded: Vec<_> = codewords
@@ -115,8 +108,8 @@ fn benchmark_bch_single_vs_batch(c: &mut Criterion) {
         });
     });
 
-    // Batch decode (one reused workspace)
-    group.bench_function("batch_api", |b| {
+    // Decode loop on one reused workspace
+    group.bench_function("decode_into_loop", |b| {
         b.iter(|| {
             decode_all(
                 &decoder,
