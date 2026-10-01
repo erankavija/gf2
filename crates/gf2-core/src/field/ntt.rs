@@ -20,7 +20,8 @@
 //!
 //! The inverse transform uses `ω_m^{-1}` everywhere; callers that need
 //! the usual `F(F^{-1}(x)) = x` identity must additionally scale by
-//! `n^{-1}` after the inverse pass. [`FieldPoly::mul_ntt`] does that
+//! `n^{-1}` after the inverse pass.
+//! [`FieldPoly::mul_ntt`](crate::field::poly::FieldPoly::mul_ntt) does that
 //! scaling internally.
 //!
 //! # Why radix-2 suffices
@@ -55,7 +56,8 @@
 //! §Falsification record reports `mul_fast` at 3,793 ns for `out_len` 127
 //! on the `FieldPoly::mul` arm and 12,057 ns for `out_len` 129 on the NTT
 //! arm. The active `polynomial.karatsuba_max_out_len()` profile value
-//! controls whether [`FieldPoly::mul_ntt`] is selected. Regenerate the table
+//! controls whether [`FieldPoly::mul_ntt`](crate::field::poly::FieldPoly::mul_ntt)
+//! is selected. Regenerate the table
 //! with `cargo bench -p gf2-core --bench field_poly -- --quick`.
 
 use crate::field::TwoAdicField;

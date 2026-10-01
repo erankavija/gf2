@@ -1,5 +1,5 @@
 //! Strassen–Winograd recursive matrix multiplication over a
-//! [`FiniteField`](crate::field::FiniteField).
+//! [`FiniteField`].
 //!
 //! This module implements the sub-cubic Strassen–Winograd variant described
 //! in Dumas–Pernet §1.4 (algorithm 1.6): 7 recursive half-size multiplies
@@ -9,7 +9,7 @@
 //!
 //! The public entry point is [`gemm_winograd`]. Below the active
 //! `gemm.winograd_min_dim` profile value — resolved once per call, with
-//! [`WINOGRAD_MIN_DIM_DEFAULT`] as its conservative default — the
+//! `WINOGRAD_MIN_DIM_DEFAULT` as its conservative default — the
 //! recursion peels down to T1's classical blocked gemm, which inherits
 //! the crate's SIMD path via `FieldVec::dot_product_slices`. Odd dimensions are handled by padding a
 //! single row/column of zero field elements, recursing, then slicing the
@@ -32,7 +32,7 @@
 //!
 //! Before a sub-problem at depth `l` is handed to the base-case gemm the
 //! production recursion
-//! ([`gemm_winograd_inner`]) reads
+//! (`gemm_winograd_inner`) reads
 //! [`theorem_4_bound`] directly with the current `level + 1` and
 //! compares it against the classical-gemm delayed-reduction headroom
 //! `F::max_unreduced_additions() · (p − 1)²`. When the bound would
@@ -129,7 +129,7 @@ pub enum WinogradRoute {
 /// Reports the [`gemm_winograd`] arm for an `m × k` by `k × n` product.
 ///
 /// The comparison uses the active `gemm.winograd_min_dim` profile field. The
-/// conservative default comes from [`WINOGRAD_MIN_DIM_DEFAULT`] through
+/// conservative default comes from `WINOGRAD_MIN_DIM_DEFAULT` through
 /// [`crate::tuning::CoreTuning::CONSERVATIVE`]. The effective threshold is
 /// floored at two, matching the recursive dispatcher's progress guard.
 #[must_use]
@@ -187,7 +187,7 @@ pub fn last_winograd_dispatch_route() -> Option<WinogradRoute> {
 }
 
 /// Strassen–Winograd matrix multiplication over an arbitrary
-/// [`FiniteField`](crate::field::FiniteField).
+/// [`FiniteField`].
 ///
 /// Below the active `gemm.winograd_min_dim` profile field the implementation
 /// dispatches directly to the classical blocked [`gemm`] — that path already

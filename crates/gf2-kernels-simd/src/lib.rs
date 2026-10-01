@@ -116,7 +116,7 @@ pub struct LogicalFns {
     pub popcnt_scalar_fn: fn(&[u64]) -> u64,
     /// Counts set bits through a Harley-Seal carry-save loop over 512-byte
     /// blocks, counting every block remainder through the per-vector nibble
-    /// lookup [Mula2018].
+    /// lookup \[Mula2018\].
     ///
     /// This is a measured comparator and is not selected by `gf2-core`'s
     /// automatic dispatch because its confirmation receipt does not qualify.

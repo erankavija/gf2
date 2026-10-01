@@ -84,7 +84,7 @@ pub fn reset_last_effective_soa_chunk() {
     LAST_EFFECTIVE_SOA_CHUNK.store(0, std::sync::atomic::Ordering::SeqCst);
 }
 
-/// The selected arm of the [`should_parallelize_soa_batch_resolved`] length dispatch.
+/// The selected arm of the `should_parallelize_soa_batch_resolved` length dispatch.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SoaParallelRoute {
     /// Run the batch on the calling thread.
@@ -93,12 +93,12 @@ pub enum SoaParallelRoute {
     Parallel,
 }
 
-/// Reports the length-based arm of [`should_parallelize_soa_batch_resolved`] for a
+/// Reports the length-based arm of `should_parallelize_soa_batch_resolved` for a
 /// SoA batch of `len` elements.
 ///
 /// The comparison uses the active `soa_batch.parallel_min_len()` profile
 /// value. It does not account for rayon thread availability;
-/// [`should_parallelize_soa_batch_resolved`] applies that separately.
+/// `should_parallelize_soa_batch_resolved` applies that separately.
 #[must_use]
 pub fn soa_parallel_route(len: usize) -> SoaParallelRoute {
     soa_parallel_route_resolved(tuning::active().soa_batch().parallel_min_len(), len)

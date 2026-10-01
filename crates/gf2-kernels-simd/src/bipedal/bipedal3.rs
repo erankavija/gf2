@@ -26,7 +26,7 @@
 //! entry points instead (see JIT issue `1f769232` amendment).
 //!
 //! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
-//! [`crate::x86::bipedal_avx2`] so the asm-artefact-present gate fires on
+//! `crate::x86::bipedal_avx2` so the asm-artefact-present gate fires on
 //! source changes — see the W4 wave plan and `dev/plans/c7542983/r4_simd_batching_decision.md`.
 
 use super::framework::BipedalLikeConfig;
@@ -62,7 +62,7 @@ pub fn has_avx2() -> bool {
 /// [`Avx2Lane`] (the only lane shape currently wired); each `*_lane`
 /// method is `#[inline(always)]` so it inlines cleanly into the
 /// AVX2-feature-enabled batch entry points (`run_*_batch`) defined in
-/// [`crate::x86::bipedal_avx2`].
+/// `crate::x86::bipedal_avx2`.
 ///
 /// This struct is zero-sized — it is a type-level tag only.
 ///
@@ -163,7 +163,7 @@ impl BipedalLikeConfig for Config3 {
 /// [`Config3::MagLane`] / [`Config3::SgnLane`] associated types.
 ///
 /// The associated batch entry points (`run_add_batch`, `run_sub_batch`,
-/// `run_mul_batch`, `run_neg_batch`) live in [`crate::x86::bipedal_avx2`]
+/// `run_mul_batch`, `run_neg_batch`) live in `crate::x86::bipedal_avx2`
 /// so the asm-artefact-present gate fires on changes to them. Call those
 /// directly — they are re-exported via [`crate::bipedal`] for convenience.
 ///

@@ -1283,7 +1283,7 @@ impl Drop for ExecutionLock {
 ///
 /// Receipt work is `O(C + S + T)` for cells, selected shards, and attempts;
 /// each admitted shard has the permanent and determinant cost documented by
-/// [`evaluate_work_item_with_worker_count_and_accelerator`].
+/// `evaluate_work_item_with_worker_count_and_accelerator`.
 pub fn execute_campaign_cell(
     campaign_root: &Path,
     scope: ExactCellScope,

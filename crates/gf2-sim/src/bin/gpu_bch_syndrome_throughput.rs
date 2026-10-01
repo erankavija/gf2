@@ -5,7 +5,7 @@
 //! Normal Rate 1/2 BCH mother code (n = 65535, GF(2^16), t = 12, 2t = 24 — the
 //! design workload's field and radius), decode sub-step vs decode sub-step: the
 //! GPU
-//! [`compute_syndromes_batch_gpu`](gf2_coding::bch::BinaryBchDecoder::compute_syndromes_batch_gpu)
+//! `compute_syndromes_batch_gpu`
 //! path (H2D of packed coeff streams + Horner kernel + D2H of syndromes) against
 //! the CPU syndrome evaluation measured **in isolation** (NO Berlekamp-Massey /
 //! Chien), at 1 thread and at the full rayon pool. The canonical decoder

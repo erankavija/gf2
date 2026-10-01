@@ -13,7 +13,7 @@
 //! # Turbo Decoding
 //!
 //! The block turbo decoder iterates between row and column SISO decoding using
-//! either [`SoGrand`](crate::grand::SoGrand) or [`BcjrDecoder`](crate::bcjr::BcjrDecoder)
+//! either [`SoGrand`] or [`BcjrDecoder`]
 //! as the component SISO decoder (selected via [`TurboDecoderConfig::use_bcjr`]).
 //! Extrinsic information is exchanged between row and column steps with a scaling
 //! factor alpha (typically 0.5). Early termination occurs when the hard-decision
@@ -27,7 +27,7 @@
 //! The [`ProductComponent`] trait abstracts over component codes. Any code that
 //! provides a parity-check matrix, n/k dimensions, an even-code flag, and a
 //! [`BlockEncoder`] implementation can be used as a component. Built-in
-//! implementations exist for [`ExtendedBchComponent`](crate::product::ExtendedBchComponent)
+//! implementations exist for [`ExtendedBchComponent`]
 //! and [`CrcCode`](crate::crc::CrcCode).
 //!
 //! # Examples
@@ -972,7 +972,8 @@ pub struct TurboDecoderResult {
 }
 
 impl From<TurboDecoderResult> for crate::traits::DecoderResult {
-    /// Converts a [`TurboDecoderResult`] into a generic [`DecoderResult`].
+    /// Converts a [`TurboDecoderResult`] into a generic
+    /// [`DecoderResult`](crate::traits::DecoderResult).
     ///
     /// Field mapping:
     /// - `decoded_bits` maps directly.
@@ -1001,8 +1002,8 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
 /// turbo-level list-BLER short-circuit is applied.
 ///
 /// The component SISO engine is selected via [`TurboDecoderConfig::use_bcjr`]:
-/// - `false` (default): uses [`SoGrand`](crate::grand::SoGrand) (query-based)
-/// - `true`: uses [`BcjrDecoder`](crate::bcjr::BcjrDecoder) (trellis-based, exact APP)
+/// - `false` (default): uses [`SoGrand`] (query-based)
+/// - `true`: uses [`BcjrDecoder`] (trellis-based, exact APP)
 ///
 /// The type parameter `C` is the component code, which must implement
 /// [`ProductComponent`] and [`Clone`].

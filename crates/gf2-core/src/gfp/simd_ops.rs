@@ -1678,7 +1678,7 @@ const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
 
 /// The arm the prime-field GEMM dispatchers run for one cell.
 ///
-/// Each variant names one kernel invocation site: [`prime_gemm_select`]
+/// Each variant names one kernel invocation site: `prime_gemm_select`
 /// chooses the variant and the dispatcher's `match` runs the site it names, so
 /// the enum is the whole vocabulary of prime-field GEMM arms. The two cascades
 /// cover disjoint prime windows — the f32 variants are reachable only for
@@ -1800,10 +1800,10 @@ pub(crate) fn prime_gemm_select<const P: u64>(m: usize, k: usize, n: usize) -> P
 /// The window halves of the decision take their bounds from the tuning
 /// profile's `prime_route.f32_min_prime`, `prime_route.f32_min_cols` and
 /// `prime_route.f64_min_cols` fields, baked at compile time through
-/// [`select_f32_path`] and [`select_f64_path`]
+/// `select_f32_path` and `select_f64_path`
 /// (`dev/active/7d824b2f/design.md` §3.11).
 ///
-/// The reporter is [`prime_gemm_select`], the function the dispatchers
+/// The reporter is `prime_gemm_select`, the function the dispatchers
 /// themselves select on, so what this reports is what the dispatcher runs.
 /// See that function for the gate chain and for which parts of it are baked
 /// and which are runtime state (host-detected kernels, GF(251) switches).

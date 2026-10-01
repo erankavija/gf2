@@ -27,7 +27,7 @@
 //! `mask_tail` invariant and is the single most important correctness
 //! rule in this module. All arithmetic (`Add`, `Sub`, `Neg`, `Mul`,
 //! `scale`, `div_rem`, `gcd`, …) is written so that it calls
-//! [`FieldPoly::normalise`] before returning. Equality is *structural* —
+//! `FieldPoly::normalise` before returning. Equality is *structural* —
 //! two `FieldPoly`s are equal iff their normalised `coeffs` slices
 //! compare equal element-wise.
 //!
@@ -1331,7 +1331,7 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// 1. **Leaves**: build `M_i = x - points[i]` for every point.
     /// 2. **Subproduct tree** (bottom-up): pair-merge siblings through
-    ///    [`FieldPoly::Mul`] (which in turn dispatches schoolbook /
+    ///    `FieldPoly::mul` (which in turn dispatches schoolbook /
     ///    Karatsuba according to `polynomial.karatsuba_min_degree()`), recording every
     ///    internal node.
     /// 3. **Reduction** (top-down): starting from `self mod root`,
@@ -2457,7 +2457,7 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// # Algorithm
 ///
 /// 1. Build the leaves `M_i = x - points[i]`.
-/// 2. Bottom-up, pair-merge siblings through [`FieldPoly::Mul`],
+/// 2. Bottom-up, pair-merge siblings through `FieldPoly::mul`,
 ///    carrying an odd final node up without a partner. The tree is
 ///    retained in full as a flat `Vec<Vec<FieldPoly<F>>>`.
 /// 3. Top-down, reduce `poly` modulo the root, then split each

@@ -744,7 +744,7 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
 
     /// Delegates to the base field. Because each tower coefficient accumulates
     /// independently, the per-component limit equals
-    /// [`C::BaseField::max_unreduced_additions`].
+    /// `C::BaseField::max_unreduced_additions`.
     fn max_unreduced_additions() -> usize {
         C::BaseField::max_unreduced_additions()
     }

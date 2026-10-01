@@ -46,7 +46,7 @@
 //! positions `>= Cfg::M` in the top word equal to zero. This is the
 //! multi-word generalisation of the project-wide tail-masking invariant
 //! documented in `CLAUDE.md` ("Key design invariants: Tail masking"). The
-//! private helper [`Gf2mWide::mask_tail_in_place`] enforces this. In release
+//! private helper `Gf2mWide::mask_tail_in_place` enforces this. In release
 //! builds of XOR-based operations the invariant is preserved automatically
 //! because XOR of two zero-tailed operands is zero-tailed; callers that
 //! fabricate words from raw input must use [`Gf2mWide::new`] (which masks)
@@ -976,7 +976,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// ## Alternative: Extended Euclidean Algorithm
     ///
     /// An alternative to Fermat inversion is the **binary extended Euclidean
-    /// algorithm** (BEEA) over GF(2)[x], which runs in O(M²) bit operations
+    /// algorithm** (BEEA) over GF(2)\[x\], which runs in O(M²) bit operations
     /// but avoids the O(M) multiplications of the Fermat approach. For large
     /// `M` (e.g. M = 256) the BEEA is often faster in practice. This
     /// implementation uses Fermat for simplicity and correctness; a BEEA-based
@@ -1960,8 +1960,9 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
     /// `"Gf2mWide::order exceeds u128 for M = {M}"`.
     ///
     /// This is a fundamental limitation of the `u128` return type of
-    /// [`ConstField::order`]. For `M = 256` (the largest config tested in this
-    /// crate), callers should use [`Self::order_log2`] or `Cfg::M` directly
+    /// [`ConstField::order`](crate::field::ConstField::order). For `M = 256`
+    /// (the largest config tested in this crate), callers should use
+    /// [`order_log2`](crate::field::ConstField::order_log2) or `Cfg::M` directly
     /// rather than relying on `order()`. The shared `ConstField` axiom
     /// harness in `field::axiom_tests::test_const_field_axioms_with_cases`
     /// gates the `order()` check on `order_log2() <= 127` and falls back to
@@ -2008,7 +2009,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
     }
 
     /// Returns `floor(log2(2^M)) = M` — the bit-width of the field
-    /// order. Unlike [`Self::order`], this is always safe to call for
+    /// order. Unlike [`order`](crate::field::ConstField::order), this is always safe to call for
     /// `M >= 128`, letting the axiom harness and other callers probe
     /// the field's size without triggering the `u128` overflow panic.
     ///
