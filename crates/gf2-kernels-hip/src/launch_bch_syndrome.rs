@@ -4,8 +4,8 @@
 //! [`GpuBchSyndrome`] owns the device-resident field tables (`exp` / `log`,
 //! uploaded once) and the `α^1..α^(2t)` evaluation points, plus the reusable
 //! per-batch packed-coefficient input and syndrome-output buffers. It runs the
-//! same Horner syndrome evaluation as the CPU
-//! [`compute_syndromes`](../../gf2_coding/bch/struct.BchDecoder.html) path —
+//! same Horner syndrome evaluation as the CPU path of
+//! `gf2_coding::bch::BinaryBchDecoder` —
 //! `S_{i+1} = r(α^(i+1))` over GF(2^m) — and returns the `2t` u16 field-element
 //! syndromes per frame, **byte-identical** to the CPU table-backed arithmetic
 //! (design doc §5: the GPU multiply is the uploaded CPU `exp`/`log` table, so
@@ -17,8 +17,9 @@
 //! *intermediate* decode sub-step, so it is not a natural full-decode
 //! `Stage<In, Out>` like [`GpuLdpcBp`](crate::GpuLdpcBp). Berlekamp-Massey and
 //! Chien search remain on the CPU; the `gf2-coding`
-//! `BchDecoder::compute_syndromes_batch_gpu` hook (under `--features hip`)
-//! drives this wrapper and rehydrates the u16 syndromes into `Gf2mElement`s.
+//! `BinaryBchDecoder::{compute_syndromes_batch_gpu, correct_batch_gpu}` hooks
+//! (under `--features hip`) drive this wrapper and rehydrate the u16
+//! syndromes into `Gf2mElement`s.
 //!
 //! # Coefficient layout — host-side reorder, packed bits (design doc §6)
 //!
