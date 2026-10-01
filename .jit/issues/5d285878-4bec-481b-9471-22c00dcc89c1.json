@@ -1,0 +1,44 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T09:36:28.694103866Z",
+  "dependencies": [
+    "0b0714e0-da08-4053-b18c-61d635fb7fc0"
+  ],
+  "description": "Add frequency-selective (multipath) fading channels so coded-modulation chains can be evaluated over realistic broadcast and cellular channels, such as DVB-T2 TU6 or 3GPP TDL profiles, in addition to flat fading.\n\n## Background\n\nThe channel stages in `crates/gf2-sim/src/channels/` model AWGN and frequency-flat Rayleigh and Rician fading, each drawing a fixed number of ChaCha20 words per symbol so the executor can seek any frame deterministically. A tapped-delay-line channel has inter-symbol memory, so it needs either an OFDM-style modulator and demodulator, giving one flat gain per subcarrier, or a time-domain channel with an equalizer. Either choice affects the stage graph and the per-frame RNG layout. `gf2-coding`'s `ChannelModel` trait accepts multipath models without structural change.\n\n## Success Criteria\n\n- [hard] REQ-01: A tapped-delay-line channel with a configurable power-delay profile exists, with at least one standard profile (for example DVB-T2 TU6 or a 3GPP TDL profile) provided as a preset.\n- [hard] REQ-02: Received symbols reach the soft demapper with the per-symbol (or per-subcarrier) effective gain, so LLRs use the coherent fading metric.\n- [hard] REQ-03: Frame outputs are byte-identical across worker counts at a fixed seed, consistent with the executor's per-frame seek contract.\n- [hard] REQ-04: The empirical channel statistics (average tap powers and the frequency correlation implied by the delay profile) match the configured profile within a stated tolerance in a statistical test.\n- [hard] REQ-05: A coded BER/FER sweep over the new channel runs end to end through the preset or graph API.\n\n## Notes\n\nChoosing between an OFDM front end and time-domain equalization is part of this issue's design. Doppler (time-varying taps) may be split out if the design warrants it.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T09:36:28.694103866Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-10-01T09:37:46.777571007Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-10-01T09:37:46.777571007Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-10-01T09:37:46.777571007Z",
+      "updated_by": null
+    }
+  },
+  "id": "5d285878-4bec-481b-9471-22c00dcc89c1",
+  "labels": [
+    "component:gf2-sim",
+    "component:gf2-coding",
+    "type:enhancement",
+    "epic:channel-models"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Frequency-selective multipath channel models",
+  "updated_at": "2026-10-01T09:40:53.528846122Z"
+}

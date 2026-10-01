@@ -1,0 +1,41 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T09:36:15.336610713Z",
+  "dependencies": [],
+  "description": "Add oscillator phase noise and carrier frequency offset as channel impairments so receiver robustness and high-order QAM degradation can be studied.\n\n## Background\n\nThe `gf2-sim` channel stages model additive noise and memoryless fading. Phase noise (for example a Wiener process) and frequency offset are stateful across symbols within a frame, which interacts with the per-frame RNG seek contract and with the demapper's assumption of a known channel phase.\n\n## Success Criteria\n\n- [hard] REQ-01: A phase-noise stage with a configurable model (at minimum a Wiener phase process parameterised by linewidth or variance per symbol) exists.\n- [hard] REQ-02: A carrier-frequency-offset stage with a configurable normalised offset exists.\n- [hard] REQ-03: Both stages are deterministic per frame at a fixed seed and byte-identical across worker counts.\n- [hard] REQ-04: A statistical test confirms the generated phase process matches the configured model within a stated tolerance.\n\n## Notes\n\nCompensation (phase tracking, CFO estimation) is receiver-side work and may be tracked separately.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T09:36:15.336610713Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-10-01T09:37:47.418593525Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-10-01T09:37:47.418593525Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-10-01T09:37:47.418593525Z",
+      "updated_by": null
+    }
+  },
+  "id": "2fb70026-4962-4eda-a235-adbd88330b1e",
+  "labels": [
+    "component:gf2-sim",
+    "type:enhancement",
+    "epic:channel-models"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Phase noise and carrier frequency offset impairments",
+  "updated_at": "2026-10-01T09:40:54.441771894Z"
+}

@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T09:40:40.670968347Z",
+  "dependencies": [
+    "2fb70026-4962-4eda-a235-adbd88330b1e",
+    "5d285878-4bec-481b-9471-22c00dcc89c1",
+    "68adf337-b4df-4d3d-9d0a-f106f0fdfd18"
+  ],
+  "description": "Extend the simulation channel layer beyond AWGN and frequency-flat fading so coded-modulation chains can be evaluated over the channels that real broadcast and cellular links experience.\n\n## Background\n\n`gf2-coding` exposes channels through the `ChannelModel` trait (bits to LLRs), and `gf2-sim` exposes them as `Stage<SymbolBatch, SymbolBatch>` impls with a deterministic per-frame ChaCha20 seek contract. The current set is AWGN, flat Rayleigh and flat Rician, CPU-only for fading. The `gf2-sim` fading stages do not pass channel gains to the soft demapper, so fading LLRs use an AWGN metric. Fixing that is the foundation for every further fading model.\n\n## Success Criteria\n\n- [hard] REQ-01: `gf2-sim` fading chains produce LLRs under the coherent fading metric, using the per-symbol channel gain.\n- [hard] REQ-02: At least one standard frequency-selective multipath profile is available and usable in a coded BER/FER sweep.\n- [hard] REQ-03: Phase-noise and carrier-frequency-offset impairments are available as deterministic channel stages.\n- [hard] REQ-04: Rayleigh and Rician fading stages run on the GPU path with CPU fallback.\n- [hard] REQ-05: Every channel stage keeps byte-identical frame output across worker counts at a fixed seed.\n\n## Notes\n\nChannel models outside this list are added as further children rather than excluded in module documentation.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T09:40:40.670968347Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "cffc15dd-b761-4c26-b5ef-8894f6433a2a",
+  "labels": [
+    "epic:channel-models",
+    "component:gf2-sim",
+    "component:gf2-coding",
+    "type:epic"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Channel models for link simulation",
+  "updated_at": "2026-10-01T09:40:50.041812012Z"
+}

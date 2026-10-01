@@ -17,7 +17,13 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-01T09:40:06.605414690Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "4a2baa12-af89-47f2-abb4-90b741929b5e",
   "labels": [
     "type:task",
@@ -28,5 +34,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Delete the superseded BCH code surface",
-  "updated_at": "2026-10-01T09:11:07.772499509Z"
+  "updated_at": "2026-10-01T09:40:06.605414690Z"
 }

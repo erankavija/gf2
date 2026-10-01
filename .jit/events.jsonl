@@ -13961,3 +13961,32 @@
 {"from":"backlog","id":"ed4c05b8-fddc-4f8c-b194-1c02bf2e40b7","issue_id":"4a2baa12-af89-47f2-abb4-90b741929b5e","timestamp":"2026-10-01T09:10:51.821580765Z","to":"ready","type":"issue_state_changed"}
 {"from":"ready","id":"844ae58d-60b7-4e79-969f-ab2514167e55","issue_id":"4a2baa12-af89-47f2-abb4-90b741929b5e","timestamp":"2026-10-01T09:11:07.772499509Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"6e192b8c-8723-4a93-bd7d-fa271cead927","issue_id":"4a2baa12-af89-47f2-abb4-90b741929b5e","timestamp":"2026-10-01T09:11:07.772499509Z","type":"issue_claimed"}
+{"id":"c34357bb-f360-40bf-8c74-793e2c571242","issue_id":"0b0714e0-da08-4053-b18c-61d635fb7fc0","priority":"high","timestamp":"2026-10-01T09:35:48.875562507Z","title":"Carry channel gains from gf2-sim fading stages to the soft demapper","type":"issue_created"}
+{"id":"69c89ea3-8bfa-4852-9456-463d85ab0284","issue_id":"2fb70026-4962-4eda-a235-adbd88330b1e","priority":"low","timestamp":"2026-10-01T09:36:15.336610713Z","title":"Phase noise and carrier frequency offset impairments","type":"issue_created"}
+{"id":"67f71a5c-b1c1-4d46-acdb-a475e86806ac","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","priority":"low","timestamp":"2026-10-01T09:36:19.627287973Z","title":"GPU fading channel stages","type":"issue_created"}
+{"id":"202790b6-b539-4311-af11-99ed5f95b7a1","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","priority":"normal","timestamp":"2026-10-01T09:36:28.694103866Z","title":"Frequency-selective multipath channel models","type":"issue_created"}
+{"from":"ready","id":"32d58b58-b3a6-4131-b4b2-4be2aa19c19e","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","timestamp":"2026-10-01T09:36:32.575946938Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"fd66c82f-1709-4190-aa2a-44f2983e9548","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","timestamp":"2026-10-01T09:36:32.575946938Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"e8a14478-f9d5-499b-a86a-7897272d38cb","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:36:33.772086600Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"e5cad43e-79c4-468f-976b-a21f03b8f60e","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:36:33.772086600Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"1a03e2e1-983e-48c7-bdd4-19e1e15147ad","issue_id":"0b0714e0-da08-4053-b18c-61d635fb7fc0","timestamp":"2026-10-01T09:37:46.177093317Z","type":"gate_added"}
+{"gate_key":"code-review","id":"6ab40789-c04e-40a0-9ee9-a57a0b026b3d","issue_id":"0b0714e0-da08-4053-b18c-61d635fb7fc0","timestamp":"2026-10-01T09:37:46.177093317Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"e237b4c5-08c1-461c-a008-7ce039247600","issue_id":"0b0714e0-da08-4053-b18c-61d635fb7fc0","timestamp":"2026-10-01T09:37:46.177093317Z","type":"gate_added"}
+{"gate_key":"cargo-ci","id":"6a725d42-bd85-4d2f-a4a6-35accdb2bcc4","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","timestamp":"2026-10-01T09:37:46.777571007Z","type":"gate_added"}
+{"gate_key":"code-review","id":"d8dc68fb-748d-47c2-9d47-d6b857ca70b2","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","timestamp":"2026-10-01T09:37:46.777571007Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"ab7e1d7d-b1e9-4bb7-b588-dec0f9a84632","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","timestamp":"2026-10-01T09:37:46.777571007Z","type":"gate_added"}
+{"gate_key":"cargo-ci","id":"57fe3187-5703-40fb-a43a-2ca46a38608d","issue_id":"2fb70026-4962-4eda-a235-adbd88330b1e","timestamp":"2026-10-01T09:37:47.418593525Z","type":"gate_added"}
+{"gate_key":"code-review","id":"74294c6a-c184-4056-8dd1-07463320e107","issue_id":"2fb70026-4962-4eda-a235-adbd88330b1e","timestamp":"2026-10-01T09:37:47.418593525Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"01496aa9-6767-4ba4-a4ec-11cf2a1ee9bc","issue_id":"2fb70026-4962-4eda-a235-adbd88330b1e","timestamp":"2026-10-01T09:37:47.418593525Z","type":"gate_added"}
+{"gate_key":"cargo-ci","id":"360576d9-ea39-4504-8e1d-391c381f2a9b","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:37:48.064360520Z","type":"gate_added"}
+{"gate_key":"code-review","id":"b429894b-8eac-47e7-8e6b-50bfb44ee822","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:37:48.064360520Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"057d779c-a37e-41a9-93b6-6889a91ebc7c","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:37:48.064360520Z","type":"gate_added"}
+{"gate_key":"gf2-kernels-hip-ci","id":"89a68c75-5742-4506-87d9-94c4e4c83f9e","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:37:48.064360520Z","type":"gate_added"}
+{"gate_key":"cargo-ci","id":"25912983-ccf6-45b0-a099-3808806f84b6","issue_id":"4a2baa12-af89-47f2-abb4-90b741929b5e","timestamp":"2026-10-01T09:40:06.605414690Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"2b181a35-2f70-4bcf-a7f2-33907bef0b51","issue_id":"cffc15dd-b761-4c26-b5ef-8894f6433a2a","priority":"normal","timestamp":"2026-10-01T09:40:40.670968347Z","title":"Channel models for link simulation","type":"issue_created"}
+{"from":"ready","id":"0723a859-afd8-4f8b-85de-0296f0642073","issue_id":"cffc15dd-b761-4c26-b5ef-8894f6433a2a","timestamp":"2026-10-01T09:40:50.041812012Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"93b2d4d5-932e-42c1-8636-59876fb5956d","issue_id":"cffc15dd-b761-4c26-b5ef-8894f6433a2a","timestamp":"2026-10-01T09:40:50.041812012Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["labels"],"id":"b0c6f4f0-c19d-4f39-bf56-7a34c816f305","issue_id":"0b0714e0-da08-4053-b18c-61d635fb7fc0","timestamp":"2026-10-01T09:40:52.422429178Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["labels"],"id":"60961e4f-45d7-4b96-b24c-e12d3ee9d609","issue_id":"5d285878-4bec-481b-9471-22c00dcc89c1","timestamp":"2026-10-01T09:40:53.528846122Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["labels"],"id":"319ba297-22ed-4c1c-a0a8-58fa9544a645","issue_id":"2fb70026-4962-4eda-a235-adbd88330b1e","timestamp":"2026-10-01T09:40:54.441771894Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["labels"],"id":"4325634a-c172-4b29-a4be-a23a5492d810","issue_id":"68adf337-b4df-4d3d-9d0a-f106f0fdfd18","timestamp":"2026-10-01T09:40:55.809136621Z","type":"issue_updated","updated_by":"issue-update"}
