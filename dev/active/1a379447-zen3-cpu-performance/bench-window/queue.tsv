@@ -40,3 +40,4 @@ bc091474	.agents/worktrees/agent-bc091474	8	dev/active/bc091474/run-candidate.sh
 00dd43c3	.agents/worktrees/agent-00dd43c3	20	dev/active/00dd43c3/survey/run-campaign.sh window confirmation
 a83583e0	.agents/worktrees/agent-a83583e0-run	180	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/scripts/tuning-extent-campaign.sh
 dbd8787d	.agents/worktrees/agent-dbd8787d-run	200	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/scripts/tuning-extent-campaign.sh dbd8787d
+d1b4f85e	.agents/worktrees/agent-d1b4f85e-run	105	env PATH=/home/vkaskivuo/.cargo/bin:/usr/local/bin:/usr/bin dev/active/d1b4f85e/run.sh dev/bench_results/fd9d5416/2026-10-02-d1b4f85e-w1w2
