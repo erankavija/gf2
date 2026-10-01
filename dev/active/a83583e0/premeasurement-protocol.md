@@ -1,9 +1,10 @@
 # Crate-owned extent calibration: premeasurement protocol
 
-Status: premeasurement declaration for review. The epic lead has selected the
-in-scope architecture in §1. Implementation follows acceptance of this exact
-declaration; measurement follows committed implementation and premeasurement
-validation. Issue `a83583e0` supplies the success criteria.
+Status: executed. Campaign `gf2-a83583e0-20260930t230000z-2728298` ran this
+declaration as committed at `21790510c` and is published; its receipt is
+[`gf2-a83583e0-20260930t230000z-2728298.md`](../../benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md)
+with the [evidence index](../../benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298-evidence.md).
+Issue `a83583e0` supplies the success criteria.
 
 This declaration applies the selector convention in
 [`7d824b2f/design.md`](../7d824b2f/design.md), its appended extent amendment,

@@ -44,7 +44,7 @@ This document describes the kernel architecture in gf2-core and tracks optimizat
   eight-word threshold; a build with `RUSTFLAGS="--cfg gf2_tuning_baked"`
   uses the committed calibrated value of four words. Runtime profile
   installation does not govern this boundary. The baked routing witnesses run
-  with `RUSTFLAGS="--cfg gf2_tuning_baked" cargo test -p gf2-core --features simd,tuning-profile --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable`;
+  with `RUSTFLAGS="--cfg gf2_tuning_baked" ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd,tuning-profile --cargo-profile ci-test --profile ci --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable`;
   the frozen selector non-regression harness's self-tests assert the default
   configuration's threshold bracket, so they report a re-pinning need under
   the baked cfg — the pinned procedure runs on default builds only.
