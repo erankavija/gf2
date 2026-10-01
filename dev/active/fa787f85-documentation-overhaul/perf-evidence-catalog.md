@@ -10,6 +10,15 @@ performance claim in permanent docs (`README.md`, crate READMEs,
 `crates/*/docs/`, `docs/`) with its backing status. Paths are repository
 relative. Catalog date: 2026-10-01.
 
+Coverage: all 145 zen3 receipts, all loose `dev/bench_results/*.md`, the
+tuning-profile and permanent-campaign receipts, gf2-sim and DVB-T2 receipts
+(current and archived), and every performance statement in `README.md`,
+crate READMEs, `crates/*/docs/*.md`, `benchmarks/README.md` and `docs/`.
+Not covered: contents of raw `dev/benchmarks/*-criterion.txt` and
+`*-perf-stat.txt`, `dev/archive/6efb756b-grand/`, `dev/studies/`,
+`dev/simulation_results/`, rustdoc prose in `crates/*/src/` beyond the two
+`lib.rs` lines in section 4.6, and `crates/*/docs/archive/`.
+
 Field legend in tables: H hardware, F build flags/toolchain, W dataset or
 workload, B baseline, D date, C commit SHA. `+` recorded in-file, `~` partial
 or indirect (e.g. "standard development machine", command line only, content
