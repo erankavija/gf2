@@ -110,6 +110,13 @@
       "format": "markdown",
       "label": null,
       "path": "dev/active/6dc81018-field-capability-dispatch/handoff-15.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Session 16: dbd8787d window armed",
+      "path": "dev/active/6dc81018-field-capability-dispatch/handoff-16.md"
     }
   ],
   "first_ready_at": "2026-08-18T18:49:20.500605671Z",
@@ -145,5 +152,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-09-30T21:03:10.797577393Z"
+  "updated_at": "2026-10-01T05:43:08.385530863Z"
 }
