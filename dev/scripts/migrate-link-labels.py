@@ -11,7 +11,11 @@ is not `planning` or `breakdown`) that declares requirement `<id>` and whose
 label-coverage walk reaches the labelled issue. The walk follows dependency
 edges downward and never enters a `planning` or `breakdown` issue; distance is
 the number of edges. A tie at the nearest distance, or no declaring container,
-leaves the label unchanged and listed.
+leaves the label unchanged and listed. A container named by one of the
+labelled issue's membership labels (`[type_hierarchy.label_associations]`)
+outranks a nearer one; the nearest such member owns the label. A qualified
+label naming the plain nearest owner moves to that membership owner.
+`--drop-orphans` removes labels no container can own.
 
 `cites:<key>` becomes `cites:@/citation/<key>` when `<key>` is a registered
 citation; an unregistered key is left unchanged and listed.
@@ -111,19 +115,43 @@ def unqualified(issue, namespace):
             if l.startswith(prefix) and "/" not in l[len(prefix):]]
 
 
-def plan_satisfies(issues, declared, containers):
+def nearest(owners):
+    """The unique nearest (distance, short) of a sorted list, else None."""
+    if owners and (len(owners) == 1 or owners[0][0] < owners[1][0]):
+        return owners[0]
+    return None
+
+
+def is_member(issue, container, associations):
+    namespace = associations.get(issue_type(container))
+    own = {l for l in container.get("labels", []) if namespace and l.startswith(f"{namespace}:")}
+    return bool(own & set(issue.get("labels", [])))
+
+
+def plan_satisfies(issues, declared, containers, associations):
     dependents = dependents_of(issues)
     rows = []
     for issue in sorted(issues.values(), key=lambda i: i["id"]):
-        values = unqualified(issue, "satisfies")
-        if not values:
+        labels = [l[len("satisfies:"):] for l in issue.get("labels", []) if l.startswith("satisfies:")]
+        if not labels:
             continue
         reach = {} if excluded(issue) else ancestors(issue["id"], issues, dependents)
-        for value in values:
+        for label in labels:
+            scope, _, value = label.rpartition("/")
             row = {"issue": issue["id"][:SHORT], "state": issue.get("state"),
-                   "label": f"satisfies:{value}", "replacement": None}
+                   "label": f"satisfies:{label}", "replacement": None}
             owners = sorted((d, a[:SHORT]) for a, d in reach.items()
                             if issue_type(issues[a]) in containers and value in declared.get(a[:SHORT], ()))
+            full = {a[:SHORT]: a for a in reach}
+            members = [o for o in owners if is_member(issue, issues[full[o[1]]], associations)]
+            pool = members or owners
+            if scope:
+                plain, chosen = nearest(owners), nearest(members)
+                if plain and chosen and plain[1] == scope != chosen[1]:
+                    row["kind"], row["replacement"] = "requalified", f"satisfies:{chosen[1]}/{value}"
+                    row["owner_distance"], row["declaring"] = chosen[0], [f"{s}@{d}" for d, s in owners]
+                    rows.append(row)
+                continue
             if excluded(issue):
                 row["kind"], row["reason"] = "orphan", "labelled issue is planning/breakdown; no coverage walk reaches it"
             elif not owners:
@@ -132,12 +160,12 @@ def plan_satisfies(issues, declared, containers):
                 row["kind"] = "orphan"
                 row["reason"] = (f"declared only as an unmarked criterion by {', '.join(unmarked)}" if unmarked
                                  else "no reaching container declares the id")
-            elif len(owners) > 1 and owners[0][0] == owners[1][0]:
-                tied = [s for d, s in owners if d == owners[0][0]]
-                row["kind"], row["reason"] = "ambiguous", f"tie at distance {owners[0][0]}: {', '.join(tied)}"
+            elif not nearest(pool):
+                tied = [s for d, s in pool if d == pool[0][0]]
+                row["kind"], row["reason"] = "ambiguous", f"tie at distance {pool[0][0]}: {', '.join(tied)}"
             else:
-                row["kind"], row["replacement"] = "rewritten", f"satisfies:{owners[0][1]}/{value}"
-                row["owner_distance"] = owners[0][0]
+                row["kind"], row["replacement"] = "rewritten", f"satisfies:{pool[0][1]}/{value}"
+                row["owner_distance"] = pool[0][0]
             row["declaring"] = [f"{s}@{d}" for d, s in owners]
             rows.append(row)
     return rows
@@ -157,12 +185,14 @@ def plan_cites(issues, keys):
     return rows
 
 
-def script(rows, issues):
+def script(rows, issues, drop_orphans):
     full = {i[:SHORT]: i for i in issues}
     by_issue = collections.defaultdict(list)
     for row in rows:
         if row["replacement"]:
             by_issue[row["issue"]] += ["--remove-label", row["label"], "--label", row["replacement"]]
+        elif drop_orphans and row["kind"] == "orphan":
+            by_issue[row["issue"]] += ["--remove-label", row["label"]]
     lines = ["#!/usr/bin/env bash",
              "# Generated by dev/scripts/migrate-link-labels.py. Idempotent: removing an absent",
              "# label and adding a present one are no-ops.",
@@ -198,20 +228,24 @@ def membership_conflicts(sat, issues, associations):
 def record(sat, cit, conflicts):
     count = lambda rows: collections.Counter(r["kind"] for r in rows)
     s, c = count(sat), count(cit)
-    unresolved = [r for r in sat if r["kind"] != "rewritten"]
+    unresolved = [r for r in sat if r["kind"] in ("ambiguous", "orphan")]
     return "\n\n".join([
         "## Label counts",
-        table(["Namespace", "Labels", "Rewritten", "Ambiguous", "Orphan / unregistered"], [
-            ["satisfies", len(sat), s["rewritten"], s["ambiguous"], s["orphan"]],
-            ["cites", len(cit), c["rewritten"], 0, c["unregistered"]]]),
+        table(["Namespace", "Unqualified", "Rewritten", "Requalified", "Ambiguous", "Orphan / unregistered"], [
+            ["satisfies", len(sat) - s["requalified"], s["rewritten"], s["requalified"], s["ambiguous"], s["orphan"]],
+            ["cites", len(cit), c["rewritten"], 0, 0, c["unregistered"]]]),
         "Owner distance of rewritten `satisfies` labels: " + ", ".join(
             f"{d} edge(s): {n}" for d, n in sorted(collections.Counter(
                 r["owner_distance"] for r in sat if r["kind"] == "rewritten").items())) + ".",
+        "## Requalified satisfies labels",
+        table(["Issue", "Label", "Membership owner", "Declaring containers @distance"],
+              [[r["issue"], f"`{r['label']}`", r["replacement"].split(":")[1].split("/")[0], ", ".join(r["declaring"])]
+               for r in sat if r["kind"] == "requalified"]),
         "## Unqualified satisfies labels",
         table(["Issue", "State", "Label", "Kind", "Reason"],
               [[r["issue"], r["state"], f"`{r['label']}`", r["kind"], r["reason"]] for r in unresolved]),
         "## Owners outside the labelled issue's membership",
-        "The DAG decides the owner; each row's labelled issue carries a different membership label.",
+        "Rewritten labels whose owner carries no membership label of the labelled issue while the issue is a member of another container of that type.",
         table(["Issue", "Label", "Owner", "Owner membership", "Issue membership", "Declaring containers @distance"],
               conflicts),
         "## Unregistered cites labels",
@@ -288,11 +322,14 @@ def main():
     parser.add_argument("--script", help="write the jit issue update script here")
     parser.add_argument("--record", help="write the markdown label record here")
     parser.add_argument("--json", help="write the per-label plan as JSON here")
+    parser.add_argument("--drop-orphans", action="store_true", help="remove labels no container can own")
     parser.add_argument("--verify", metavar="MIGRATED_ROOT")
+    parser.add_argument("--items-from", metavar="REPO", help="jit repository listing items (default: --root)")
     args = parser.parse_args()
 
     issues = load_issues(args.root)
-    requirements = items(args.root, args.jit, "requirement")
+    source = args.items_from or args.root
+    requirements = items(source, args.jit, "requirement")
     declared = collections.defaultdict(set)
     hard = collections.defaultdict(set)
     for item in requirements:
@@ -300,14 +337,14 @@ def main():
         if re.sub(r"^\[[ xX]\]\s*", "", item["text"]).startswith("[hard]"):
             hard[item["scope"]].add(item["self_id"])
     containers, associations = hierarchy(args.root)
-    sat = plan_satisfies(issues, declared, containers)
+    sat = plan_satisfies(issues, declared, containers, associations)
     if args.verify:
         print(verify(args.root, args.verify, hard, sat, containers), end="")
         return
-    cit = plan_cites(issues, {i["self_id"] for i in items(args.root, args.jit, "citation")})
+    cit = plan_cites(issues, {i["self_id"] for i in items(source, args.jit, "citation")})
     if args.script:
         with open(args.script, "w") as handle:
-            handle.write(script(sat + cit, issues))
+            handle.write(script(sat + cit, issues, args.drop_orphans))
         os.chmod(args.script, 0o755)
     if args.json:
         with open(args.json, "w") as handle:
