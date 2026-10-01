@@ -46,9 +46,9 @@
     }
   },
   {
-    "key": "roadmap-coverage-map",
-    "title": "Map deleted roadmap items to tracked work",
-    "description": "The root, gf2-core and gf2-coding roadmaps were deleted as obsolete status duplicates without a check that their planned items are tracked. This work maps each planned item so relevant work stays represented in the tracker.\n\n## Background\n\nThe deleted files are recoverable from git as `61c3f0a6a^:ROADMAP.md`, `61c3f0a6a^:crates/gf2-core/ROADMAP.md` and `791beb2b0^:crates/gf2-coding/ROADMAP.md`. `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.9 locates their planned sections and counts their items.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked mapping record lists every planned, unchecked, open-question and future-direction item from the three deleted roadmaps, citing revision and line, with one disposition: tracked by a named issue, delivered by named code, obsolete with a reason, or newly filed.\n- [hard] REQ-02: Each item classified as untracked relevant work has a filed backlog issue with standalone success criteria, named in the record.\n- [hard] REQ-03: No roadmap file exists in the tree.\n",
+    "key": "roadmap-map-root-planned",
+    "title": "Map the root roadmap's planned milestones and goals",
+    "description": "The roadmaps were deleted as obsolete status duplicates without a check that their planned items are tracked. This work maps the planned items of the root roadmap's Planned, Research Goals and Long-Term Vision sections so relevant work stays represented in the tracker.\n\n## Background\n\nThe deleted files are recoverable from git as `61c3f0a6a^:ROADMAP.md`, `61c3f0a6a^:crates/gf2-core/ROADMAP.md` and `791beb2b0^:crates/gf2-coding/ROADMAP.md`. `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.9 locates their planned sections and counts their items. Epics already covering roadmap themes include GPU production, FPGA, competitive benchmarking, polar codes, neural BP and GNU Radio integration.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked mapping record lists each planned, unchecked, open-question or future-direction item of the root roadmap's Planned, Research Goals and Long-Term Vision sections, citing revision and line, with one disposition: tracked by a named issue, delivered by named code, obsolete with a reason, or newly filed.\n- [hard] REQ-02: Each item classified as untracked relevant work has a filed backlog issue with standalone success criteria, named in the record.\n- [hard] REQ-03: No roadmap file exists in the tree.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -63,7 +63,7 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "Each planned item of the deleted roadmaps maps to an issue, code, or a recorded obsolescence",
+      "outcome": "Each planned item of the root roadmap's Planned, Research Goals and Long-Term Vision sections maps to an issue, code, or a recorded obsolescence",
       "contract_refs": [],
       "source_refs": [
         "REQ-08",
@@ -74,10 +74,124 @@
       "terminal": {
         "consumer_family": "tracker backlog readers",
         "test_boundary": "linked roadmap mapping record",
-        "worker_sized_reason": "Three historical files with about 420 bullets, mostly already tracked or delivered",
+        "worker_sized_reason": "About 26 items in one historical section group",
         "footprint": {
           "creates": [
-            "dev/active/fa787f85-documentation-overhaul/roadmap-coverage.md"
+            "dev/active/fa787f85-documentation-overhaul/roadmap-coverage-root-planned.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "roadmap-map-root-questions",
+    "title": "Map the root roadmap's open questions and publication items",
+    "description": "The roadmaps were deleted as obsolete status duplicates without a check that their planned items are tracked. This work maps the planned items of the root roadmap's Open Research Questions and Publication & Validation sections so relevant work stays represented in the tracker.\n\n## Background\n\nThe deleted files are recoverable from git as `61c3f0a6a^:ROADMAP.md`, `61c3f0a6a^:crates/gf2-core/ROADMAP.md` and `791beb2b0^:crates/gf2-coding/ROADMAP.md`. `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.9 locates their planned sections and counts their items. Epics already covering roadmap themes include GPU production, FPGA, competitive benchmarking, polar codes, neural BP and GNU Radio integration.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked mapping record lists each planned, unchecked, open-question or future-direction item of the root roadmap's Open Research Questions and Publication & Validation sections, citing revision and line, with one disposition: tracked by a named issue, delivered by named code, obsolete with a reason, or newly filed.\n- [hard] REQ-02: Each item classified as untracked relevant work has a filed backlog issue with standalone success criteria, named in the record.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each planned item of the root roadmap's Open Research Questions and Publication & Validation sections maps to an issue, code, or a recorded obsolescence",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-08",
+        "D-47",
+        "D-19",
+        "INV-§3.9"
+      ],
+      "terminal": {
+        "consumer_family": "tracker backlog readers",
+        "test_boundary": "linked roadmap mapping record",
+        "worker_sized_reason": "About 29 items in one historical section group",
+        "footprint": {
+          "creates": [
+            "dev/active/fa787f85-documentation-overhaul/roadmap-coverage-root-questions.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "roadmap-map-gf2-core",
+    "title": "Map the gf2-core roadmap's planned phases",
+    "description": "The roadmaps were deleted as obsolete status duplicates without a check that their planned items are tracked. This work maps the planned items of the gf2-core roadmap's Planned Phases, Future Directions and Roadmap Priorities sections so relevant work stays represented in the tracker.\n\n## Background\n\nThe deleted files are recoverable from git as `61c3f0a6a^:ROADMAP.md`, `61c3f0a6a^:crates/gf2-core/ROADMAP.md` and `791beb2b0^:crates/gf2-coding/ROADMAP.md`. `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.9 locates their planned sections and counts their items. Epics already covering roadmap themes include GPU production, FPGA, competitive benchmarking, polar codes, neural BP and GNU Radio integration.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked mapping record lists each planned, unchecked, open-question or future-direction item of the gf2-core roadmap's Planned Phases, Future Directions and Roadmap Priorities sections, citing revision and line, with one disposition: tracked by a named issue, delivered by named code, obsolete with a reason, or newly filed.\n- [hard] REQ-02: Each item classified as untracked relevant work has a filed backlog issue with standalone success criteria, named in the record.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each planned item of the gf2-core roadmap's Planned Phases, Future Directions and Roadmap Priorities sections maps to an issue, code, or a recorded obsolescence",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-08",
+        "D-47",
+        "D-19",
+        "INV-§3.9"
+      ],
+      "terminal": {
+        "consumer_family": "tracker backlog readers",
+        "test_boundary": "linked roadmap mapping record",
+        "worker_sized_reason": "About 78 items in one historical section group",
+        "footprint": {
+          "creates": [
+            "dev/active/fa787f85-documentation-overhaul/roadmap-coverage-gf2-core.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "roadmap-map-gf2-coding",
+    "title": "Map the gf2-coding roadmap's unchecked items",
+    "description": "The roadmaps were deleted as obsolete status duplicates without a check that their planned items are tracked. This work maps the planned items of the gf2-coding roadmap's unchecked items and planned phases so relevant work stays represented in the tracker.\n\n## Background\n\nThe deleted files are recoverable from git as `61c3f0a6a^:ROADMAP.md`, `61c3f0a6a^:crates/gf2-core/ROADMAP.md` and `791beb2b0^:crates/gf2-coding/ROADMAP.md`. `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.9 locates their planned sections and counts their items. Epics already covering roadmap themes include GPU production, FPGA, competitive benchmarking, polar codes, neural BP and GNU Radio integration.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked mapping record lists each planned, unchecked, open-question or future-direction item of the gf2-coding roadmap's unchecked items and planned phases, citing revision and line, with one disposition: tracked by a named issue, delivered by named code, obsolete with a reason, or newly filed.\n- [hard] REQ-02: Each item classified as untracked relevant work has a filed backlog issue with standalone success criteria, named in the record.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each planned item of the gf2-coding roadmap's unchecked items and planned phases maps to an issue, code, or a recorded obsolescence",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-08",
+        "D-47",
+        "D-19",
+        "INV-§3.9"
+      ],
+      "terminal": {
+        "consumer_family": "tracker backlog readers",
+        "test_boundary": "linked roadmap mapping record",
+        "worker_sized_reason": "About 46 items in one historical section group",
+        "footprint": {
+          "creates": [
+            "dev/active/fa787f85-documentation-overhaul/roadmap-coverage-gf2-coding.md"
           ]
         }
       }
@@ -126,9 +240,9 @@
     }
   },
   {
-    "key": "inventory-dev-active",
-    "title": "Populate the migration manifest for dev/active",
-    "description": "Every tracked artifact under `dev/active/` receives one manifest row with ownership evidence and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file under `dev/active/`, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Empty untracked leftover directories appear with the deletion disposition.\n- [hard] REQ-05: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-06: The progress checker reports the rows schema-valid with every source assertion passing.\n",
+    "key": "inventory-active-zen3-early",
+    "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
+    "description": "Each tracked artifact in the `dev/active/` entries owned by epic 1a379447 whose names sort from `00dd43c3` through `3be770d5`, including the epic directory and entries shared with d77176e5 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epic 1a379447 whose names sort from `00dd43c3` through `3be770d5`, including the epic directory and entries shared with d77176e5, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -144,7 +258,7 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "Each dev/active artifact has a manifest row with admissible ownership evidence and a disposition",
+      "outcome": "Each early zen3 dev/active artifact has a manifest row with evidence, consumers and a disposition",
       "contract_refs": [
         "migration-manifest",
         "active-layout"
@@ -155,6 +269,7 @@
         "REQ-11",
         "D-24",
         "D-29",
+        "D-53",
         "INV-A",
         "INV-§0.6",
         "PD-03"
@@ -162,7 +277,199 @@
       "terminal": {
         "consumer_family": "overhaul migration workers",
         "test_boundary": "progress checker report",
-        "worker_sized_reason": "About 1,950 files in 118 entries, classified by a reusable ownership scan",
+        "worker_sized_reason": "Twelve entries with about 660 files, classified by a reusable ownership scan",
+        "footprint": {
+          "touches": [
+            "dev/active/fa787f85-documentation-overhaul"
+          ],
+          "uncertainty": "manifest file name is fixed by the committed manifest schema; it lives in the overhaul epic's dev/active directory"
+        }
+      }
+    }
+  },
+  {
+    "key": "inventory-active-zen3-late",
+    "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
+    "description": "Each tracked artifact in the `dev/active/` entries owned by epic 1a379447 whose names sort from `428f2f6b` through `fcb04d66`, including f547c394 and entries shared with d77176e5 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epic 1a379447 whose names sort from `428f2f6b` through `fcb04d66`, including f547c394 and entries shared with d77176e5, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-13",
+      "satisfies:REQ-12"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each late zen3 dev/active artifact has a manifest row with evidence, consumers and a disposition",
+      "contract_refs": [
+        "migration-manifest",
+        "active-layout"
+      ],
+      "source_refs": [
+        "REQ-13",
+        "REQ-12",
+        "REQ-11",
+        "D-24",
+        "D-29",
+        "D-53",
+        "INV-A",
+        "INV-§0.6",
+        "PD-03"
+      ],
+      "terminal": {
+        "consumer_family": "overhaul migration workers",
+        "test_boundary": "progress checker report",
+        "worker_sized_reason": "Twenty-three entries with about 640 files, classified by a reusable ownership scan",
+        "footprint": {
+          "touches": [
+            "dev/active/fa787f85-documentation-overhaul"
+          ],
+          "uncertainty": "manifest file name is fixed by the committed manifest schema; it lives in the overhaul epic's dev/active directory"
+        }
+      }
+    }
+  },
+  {
+    "key": "inventory-active-field-dispatch",
+    "title": "Inventory the field-dispatch dev/active entries",
+    "description": "Each tracked artifact in the `dev/active/` entries owned by epic 6dc81018, including those shared with 86b9c719 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 6dc81018) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epic 6dc81018, including those shared with 86b9c719, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-13",
+      "satisfies:REQ-12"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each field-dispatch dev/active artifact has a manifest row with evidence, consumers and a disposition",
+      "contract_refs": [
+        "migration-manifest",
+        "active-layout"
+      ],
+      "source_refs": [
+        "REQ-13",
+        "REQ-12",
+        "REQ-11",
+        "D-24",
+        "D-29",
+        "D-53",
+        "INV-A",
+        "INV-§0.6",
+        "PD-03"
+      ],
+      "terminal": {
+        "consumer_family": "overhaul migration workers",
+        "test_boundary": "progress checker report",
+        "worker_sized_reason": "About 18 entries with roughly 480 files, classified by a reusable ownership scan",
+        "footprint": {
+          "touches": [
+            "dev/active/fa787f85-documentation-overhaul"
+          ],
+          "uncertainty": "manifest file name is fixed by the committed manifest schema; it lives in the overhaul epic's dev/active directory"
+        }
+      }
+    }
+  },
+  {
+    "key": "inventory-active-open-epics",
+    "title": "Inventory the other open-epic dev/active entries",
+    "description": "Each tracked artifact in the `dev/active/` entries owned by epics b8206228, 86b9c719 (alone), ae03bcd0, b4b4b9ee, the aed96ef9 group and fa787f85 receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (the remaining class (a) rows) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by epics b8206228, 86b9c719 (alone), ae03bcd0, b4b4b9ee, the aed96ef9 group and fa787f85, with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-13",
+      "satisfies:REQ-12"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each other open-epic dev/active artifact has a manifest row with evidence, consumers and a disposition",
+      "contract_refs": [
+        "migration-manifest",
+        "active-layout"
+      ],
+      "source_refs": [
+        "REQ-13",
+        "REQ-12",
+        "REQ-11",
+        "D-24",
+        "D-29",
+        "D-53",
+        "INV-A",
+        "INV-§0.6",
+        "PD-03"
+      ],
+      "terminal": {
+        "consumer_family": "overhaul migration workers",
+        "test_boundary": "progress checker report",
+        "worker_sized_reason": "About 17 entries with roughly 160 files, classified by a reusable ownership scan",
+        "footprint": {
+          "touches": [
+            "dev/active/fa787f85-documentation-overhaul"
+          ],
+          "uncertainty": "manifest file name is fixed by the committed manifest schema; it lives in the overhaul epic's dev/active directory"
+        }
+      }
+    }
+  },
+  {
+    "key": "inventory-active-terminal-ownerless",
+    "title": "Inventory terminal, ownerless and empty dev/active entries",
+    "description": "Each tracked artifact in the `dev/active/` entries owned by terminal issues, entries without a defensible owner, and empty untracked leftover directories (recorded with the deletion disposition) receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (classes (b), (b-empty) and (c)) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the `dev/active/` entries owned by terminal issues, entries without a defensible owner, and empty untracked leftover directories (recorded with the deletion disposition), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling or configuration) records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-13",
+      "satisfies:REQ-12"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Each terminal, ownerless or empty dev/active artifact has a manifest row with evidence, consumers and a disposition",
+      "contract_refs": [
+        "migration-manifest",
+        "active-layout"
+      ],
+      "source_refs": [
+        "REQ-13",
+        "REQ-12",
+        "REQ-11",
+        "D-24",
+        "D-29",
+        "D-53",
+        "INV-A",
+        "INV-§0.6",
+        "PD-03"
+      ],
+      "terminal": {
+        "consumer_family": "overhaul migration workers",
+        "test_boundary": "progress checker report",
+        "worker_sized_reason": "About 48 entries, most of them empty, with about a dozen tracked files",
         "footprint": {
           "touches": [
             "dev/active/fa787f85-documentation-overhaul"
@@ -284,7 +591,11 @@
       "doc-review"
     ],
     "depends_on": [
-      "inventory-dev-active",
+      "inventory-active-zen3-early",
+      "inventory-active-zen3-late",
+      "inventory-active-field-dispatch",
+      "inventory-active-open-epics",
+      "inventory-active-terminal-ownerless",
       "inventory-dev-buckets",
       "inventory-permanent-sources"
     ],

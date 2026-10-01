@@ -60,6 +60,12 @@
       "format": "markdown",
       "label": "Breakdown manifest",
       "path": "dev/active/fa787f85-documentation-overhaul/breakdown.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "label": "External wiring",
+      "path": "dev/active/fa787f85-documentation-overhaul/external-wiring.json"
     }
   ],
   "first_ready_at": "2026-10-01T10:37:17.124171866Z",
@@ -82,5 +88,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T13:18:12.643614990Z"
+  "updated_at": "2026-10-01T13:24:10.813050452Z"
 }
