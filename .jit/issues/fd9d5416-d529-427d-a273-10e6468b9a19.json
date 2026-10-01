@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-01T11:17:08.023814774Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -23,7 +24,7 @@
     "satisfies:REQ-14"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
-  "updated_at": "2026-10-01T11:01:00.699226534Z"
+  "updated_at": "2026-10-01T11:17:08.023814774Z"
 }
