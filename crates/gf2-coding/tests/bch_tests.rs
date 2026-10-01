@@ -14,7 +14,6 @@
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder, FrameSize};
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
-use gf2_coding::bch::{BchCode, BchDecoder, BchEncoder};
 use gf2_coding::bch::{BchDecodeOutcome, BinaryBchDecoder, SystematicLayout};
 use gf2_coding::error::CodeError;
 use gf2_coding::traits::block::{BlockCode, BlockEncoder};
@@ -22,7 +21,6 @@ use gf2_coding::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
 use gf2_core::field::FieldPoly;
 use gf2_core::gf2m::Gf2mField;
-use gf2_core::gf2m::Gf2mPoly;
 use gf2_core::gfp::Fp;
 use gf2_core::BitVec;
 
@@ -335,223 +333,188 @@ mod encoding_tests {
     }
 }
 
+/// A zero syndrome is observable as [`BchDecodeOutcome::NoErrors`], and a
+/// nonzero one as any other outcome.
 mod syndrome_tests {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
 
     #[test]
     fn test_syndrome_zero_for_valid_codeword() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
             msg.set(i, i % 3 == 0);
         }
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
-        let syndromes = decoder.compute_syndromes(&cw);
-
-        // All syndromes should be zero for valid codeword
-        for (i, s) in syndromes.iter().enumerate() {
-            assert!(
-                s.is_zero(),
-                "Syndrome S_{} must be zero for valid codeword",
-                i + 1
-            );
-        }
+        let decoded = decode(&code, &cw);
+        assert_eq!(
+            decoded.outcome,
+            BchDecodeOutcome::NoErrors,
+            "Syndrome must be zero for valid codeword"
+        );
+        assert!(decoded.error_positions.is_empty());
     }
 
     #[test]
     fn test_syndrome_nonzero_with_error() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
             msg.set(i, (i / 2) % 2 == 0);
         }
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Introduce single-bit error
         cw.set(5, !cw.get(5));
 
-        let syndromes = decoder.compute_syndromes(&cw);
-
-        // At least one syndrome should be non-zero
-        let has_nonzero = syndromes.iter().any(|s| !s.is_zero());
-        assert!(has_nonzero, "Syndrome must detect error");
+        assert_ne!(
+            decode(&code, &cw).outcome,
+            BchDecodeOutcome::NoErrors,
+            "Syndrome must detect error"
+        );
     }
 
+    /// The decoder evaluates the syndromes the witnessed run of $2t$
+    /// consecutive roots names, and its correction radius is that run's
+    /// $t$.
     #[test]
     fn test_syndrome_length() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
+        let decoder = BinaryBchDecoder::new(&code);
 
-        let cw = BitVec::zeros(15);
-        let syndromes = decoder.compute_syndromes(&cw);
-
-        // Should compute 2t syndromes
-        assert_eq!(syndromes.len(), 2 * code.t());
+        assert_eq!(code.distance_bound().consecutive_root_count(), 2);
+        assert_eq!(decoder.correction_radius(), 1);
     }
 
     #[test]
     fn test_syndrome_multiple_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::zeros(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Introduce 2 errors
         cw.set(3, !cw.get(3));
         cw.set(10, !cw.get(10));
 
-        let syndromes = decoder.compute_syndromes(&cw);
-
-        // Syndromes should be non-zero
-        let has_nonzero = syndromes.iter().any(|s| !s.is_zero());
-        assert!(has_nonzero, "Syndromes must detect multiple errors");
+        assert_ne!(
+            decode(&code, &cw).outcome,
+            BchDecodeOutcome::NoErrors,
+            "Syndromes must detect multiple errors"
+        );
     }
 
+    /// A received word of the wrong length is a typed decode error.
     #[test]
-    #[should_panic(expected = "Received vector must have length")]
-    fn test_syndrome_wrong_length_panics() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let decoder = BchDecoder::new(code.clone());
+    fn test_syndrome_wrong_length_rejected() {
+        let code = gf16_code(1);
+        let decoder = BinaryBchDecoder::new(&code);
 
         let cw = BitVec::zeros(14); // Wrong length
-        decoder.compute_syndromes(&cw);
+        assert_eq!(
+            decoder.decode(&cw),
+            Err(BchError::Decode(CodeError::BufferLengthMismatch {
+                expected: 15,
+                actual: 14
+            }))
+        );
     }
 }
 
+/// The error-locator degree is observable as the corrected count.
 mod berlekamp_massey_tests {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
 
     #[test]
     fn test_berlekamp_massey_no_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
-        // All-zero syndromes (no errors)
-        let syndromes = vec![field.zero(); 2];
-        let lambda = decoder.berlekamp_massey(&syndromes);
-
-        // Error locator should be Λ(x) = 1 (constant polynomial)
-        assert_eq!(lambda.degree(), Some(0));
-        assert!(lambda.coeff(0).is_one());
+        // The zero word has all-zero syndromes, so Λ(x) = 1.
+        let decoded = decode(&code, &BitVec::zeros(15));
+        assert_eq!(decoded.outcome.corrected_count(), Some(0));
     }
 
     #[test]
     fn test_berlekamp_massey_single_error() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field.clone());
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         let msg = BitVec::ones(11);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
         cw.set(5, !cw.get(5)); // Single error at position 5
 
-        let syndromes = decoder.compute_syndromes(&cw);
-        let lambda = decoder.berlekamp_massey(&syndromes);
-
         // For single error, degree should be 1
-        assert_eq!(lambda.degree(), Some(1));
+        assert_eq!(
+            decode(&code, &cw).outcome,
+            BchDecodeOutcome::Corrected { count: 1 }
+        );
     }
 
     #[test]
     fn test_berlekamp_massey_two_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field.clone());
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::zeros(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject 2 errors
         cw.set(3, !cw.get(3));
         cw.set(10, !cw.get(10));
 
-        let syndromes = decoder.compute_syndromes(&cw);
-        let lambda = decoder.berlekamp_massey(&syndromes);
-
         // For 2 errors, degree should be 2
-        assert_eq!(lambda.degree(), Some(2));
+        assert_eq!(
+            decode(&code, &cw).outcome,
+            BchDecodeOutcome::Corrected { count: 2 }
+        );
     }
 
     #[test]
     fn test_berlekamp_massey_degree_bound() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field.clone());
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::ones(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject t errors
         cw.set(1, !cw.get(1));
         cw.set(8, !cw.get(8));
 
-        let syndromes = decoder.compute_syndromes(&cw);
-        let lambda = decoder.berlekamp_massey(&syndromes);
-
         // Degree should be at most t
-        assert!(lambda.degree().unwrap_or(0) <= code.t());
+        let count = decode(&code, &cw)
+            .outcome
+            .corrected_count()
+            .expect("t errors are corrected");
+        assert!(count <= code.correction_radius());
     }
 }
 
+/// The Chien-search roots are observable as the corrected coordinates.
 mod chien_search_tests {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
 
     #[test]
     fn test_chien_search_no_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
-        // Lambda(x) = 1 means no errors
-        let lambda = Gf2mPoly::constant(field.one());
-        let positions = decoder.chien_search(&lambda);
-
-        assert_eq!(positions.len(), 0);
+        // Λ(x) = 1 means no errors
+        let decoded = decode(&code, &BitVec::zeros(15));
+        assert_eq!(decoded.error_positions.len(), 0);
     }
 
     #[test]
     fn test_chien_search_single_error() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field.clone());
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         let msg = BitVec::ones(11);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject error at bitvec position 5
         let bitvec_error_pos = 5;
         cw.set(bitvec_error_pos, !cw.get(bitvec_error_pos));
 
-        let syndromes = decoder.compute_syndromes(&cw);
-        let lambda = decoder.berlekamp_massey(&syndromes);
-        let poly_positions = decoder.chien_search(&lambda);
-
-        // Chien search returns polynomial degree positions
-        // With DVB-T2 convention (bit 0 = highest coeff), need to map back
-        // Polynomial degree i → bitvec position (n-1-i)
-        let bitvec_positions: Vec<_> = poly_positions.iter().map(|&p| code.n() - 1 - p).collect();
+        let bitvec_positions = decode(&code, &cw).error_positions;
 
         assert_eq!(bitvec_positions.len(), 1);
         assert_eq!(bitvec_positions[0], bitvec_error_pos);
@@ -559,13 +522,10 @@ mod chien_search_tests {
 
     #[test]
     fn test_chien_search_multiple_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field.clone());
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::zeros(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject 2 errors at bitvec positions
         let bitvec_errors = vec![3, 10];
@@ -573,15 +533,7 @@ mod chien_search_tests {
             cw.set(pos, !cw.get(pos));
         }
 
-        let syndromes = decoder.compute_syndromes(&cw);
-        let lambda = decoder.berlekamp_massey(&syndromes);
-        let poly_positions = decoder.chien_search(&lambda);
-
-        // Chien search returns polynomial degree positions
-        // Map back to bitvec positions: polynomial degree i → bitvec position (n-1-i)
-        let mut bitvec_positions: Vec<_> =
-            poly_positions.iter().map(|&p| code.n() - 1 - p).collect();
-        bitvec_positions.sort();
+        let bitvec_positions = decode(&code, &cw).error_positions;
 
         assert_eq!(bitvec_positions.len(), 2);
         assert_eq!(bitvec_positions, bitvec_errors);
@@ -589,90 +541,70 @@ mod chien_search_tests {
 
     #[test]
     fn test_chien_search_correctable_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field.clone());
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::ones(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject exactly t errors
         cw.set(0, !cw.get(0));
         cw.set(14, !cw.get(14));
 
-        let syndromes = decoder.compute_syndromes(&cw);
-        let lambda = decoder.berlekamp_massey(&syndromes);
-        let positions = decoder.chien_search(&lambda);
-
         // Should find exactly t error positions
-        assert_eq!(positions.len(), code.t());
+        let positions = decode(&code, &cw).error_positions;
+        assert_eq!(positions.len(), code.correction_radius());
     }
 }
 
 mod decoder_integration_tests {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
-    use gf2_coding::traits::HardDecisionDecoder;
 
     #[test]
     fn test_decode_no_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         let msg = BitVec::ones(11);
-        let cw = encoder.encode(&msg);
-        let decoded = decoder.decode(&cw);
+        let cw = encode(&code, &msg);
+        let decoded = decode_message(&code, &cw);
 
         assert_eq!(decoded, msg);
     }
 
     #[test]
     fn test_decode_single_error() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
             msg.set(i, i % 3 == 0);
         }
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject single error
         cw.set(7, !cw.get(7));
 
-        let decoded = decoder.decode(&cw);
+        let decoded = decode_message(&code, &cw);
         assert_eq!(decoded, msg);
     }
 
     #[test]
     fn test_decode_multiple_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::ones(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject 2 errors (within correction capability)
         cw.set(2, !cw.get(2));
         cw.set(12, !cw.get(12));
 
-        let decoded = decoder.decode(&cw);
+        let decoded = decode_message(&code, &cw);
         assert_eq!(decoded, msg);
     }
 
     #[test]
     fn test_decode_roundtrip_various_messages() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         // Test various message patterns
         let test_messages = vec![BitVec::zeros(11), BitVec::ones(11), {
@@ -684,74 +616,60 @@ mod decoder_integration_tests {
         }];
 
         for msg in test_messages {
-            let cw = encoder.encode(&msg);
-            let decoded = decoder.decode(&cw);
+            let cw = encode(&code, &msg);
+            let decoded = decode_message(&code, &cw);
             assert_eq!(decoded, msg, "Roundtrip failed for message");
         }
     }
 
     #[test]
     fn test_decode_corrects_up_to_t_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::zeros(7);
-        let mut cw = encoder.encode(&msg);
+        let mut cw = encode(&code, &msg);
 
         // Inject exactly t errors
         cw.set(1, !cw.get(1));
         cw.set(8, !cw.get(8));
 
-        let decoded = decoder.decode(&cw);
+        let decoded = decode_message(&code, &cw);
         assert_eq!(decoded, msg);
     }
 }
 
 mod known_bch_codes {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
-    use gf2_coding::traits::HardDecisionDecoder;
 
     /// Test BCH(15, 7, 2) - well-documented in literature
     /// Generator polynomial: x^8 + x^7 + x^6 + x^4 + 1 (over GF(2^4))
     #[test]
     fn test_bch_15_7_2_properties() {
-        let field = Gf2mField::new(4, 0b10011).with_tables(); // x^4 + x + 1
-        let code = BchCode::new(15, 7, 2, field.clone());
+        let code = gf16_code(2); // x^4 + x + 1
 
         // Verify parameters
         assert_eq!(code.n(), 15);
         assert_eq!(code.k(), 7);
-        assert_eq!(code.t(), 2);
-        assert_eq!(code.designed_distance(), 5); // 2t + 1
+        assert_eq!(code.correction_radius(), 2);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 5); // 2t + 1
 
         // Verify generator polynomial degree
-        let g = code.generator();
-        assert_eq!(g.degree(), Some(8)); // n - k = 15 - 7 = 8
+        assert_eq!(code.generator().degree(), Some(8)); // n - k = 15 - 7 = 8
 
         // Generator should have roots at α, α^2, α^3, α^4
-        let alpha = field.primitive_element().unwrap();
-        let mut alpha_power = alpha.clone();
-        for i in 1..=4 {
-            let eval = g.eval(&alpha_power);
-            assert!(eval.is_zero(), "Generator must have α^{} as root", i);
-            alpha_power = &alpha_power * &alpha;
-        }
+        assert_generator_vanishes_at_consecutive_powers(&code, 2);
     }
 
     /// Test BCH(15, 11, 1) - single error correcting
     /// This is equivalent to Hamming(15, 11)
     #[test]
     fn test_bch_15_11_1_hamming_equivalence() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
+        let code = gf16_code(1);
 
         assert_eq!(code.n(), 15);
         assert_eq!(code.k(), 11);
-        assert_eq!(code.t(), 1);
-        assert_eq!(code.designed_distance(), 3); // Hamming distance
+        assert_eq!(code.correction_radius(), 1);
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 3); // Hamming distance
 
         // Generator polynomial should have degree n - k = 4
         assert_eq!(code.generator().degree(), Some(4));
@@ -760,10 +678,7 @@ mod known_bch_codes {
     /// Test linearity: c1 + c2 should be a valid codeword if c1, c2 are
     #[test]
     fn test_linearity_property() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         // Encode two different messages
         let mut m1 = BitVec::zeros(11);
@@ -776,8 +691,8 @@ mod known_bch_codes {
             m2.set(i, i % 3 == 0);
         }
 
-        let c1 = encoder.encode(&m1);
-        let c2 = encoder.encode(&m2);
+        let c1 = encode(&code, &m1);
+        let c2 = encode(&code, &m2);
 
         // c1 XOR c2 should decode to m1 XOR m2
         let mut c_sum = BitVec::zeros(15);
@@ -790,26 +705,23 @@ mod known_bch_codes {
             m_sum.set(i, m1.get(i) ^ m2.get(i));
         }
 
-        let decoded_sum = decoder.decode(&c_sum);
+        let decoded_sum = decode_message(&code, &c_sum);
         assert_eq!(decoded_sum, m_sum, "Linearity property violated");
     }
 }
 
 mod error_correction_limits {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
-    use gf2_coding::traits::HardDecisionDecoder;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
 
     /// Test that exactly t errors can be corrected
     #[test]
     fn test_corrects_exactly_t_errors() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 7, 2, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(2);
 
         let msg = BitVec::ones(7);
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
         // Test with exactly t = 2 errors at various positions
         let error_patterns = vec![(0, 5), (1, 14), (3, 10), (7, 12)];
@@ -819,7 +731,7 @@ mod error_correction_limits {
             received.set(pos1, !received.get(pos1));
             received.set(pos2, !received.get(pos2));
 
-            let decoded = decoder.decode(&received);
+            let decoded = decode_message(&code, &received);
             assert_eq!(
                 decoded, msg,
                 "Failed to correct errors at positions {} and {}",
@@ -828,27 +740,23 @@ mod error_correction_limits {
         }
     }
 
-    /// Test multiple random error patterns within correction capability
+    /// Test multiple seeded random error patterns within correction capability
     #[test]
     fn test_random_correctable_errors() {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
 
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = gf16_code(1);
 
         // Test 20 random single-error patterns
         for _ in 0..20 {
             let msg = BitVec::ones(11);
-            let mut cw = encoder.encode(&msg);
+            let mut cw = encode(&code, &msg);
 
             // Inject single error at random position
             let error_pos = rng.gen_range(0..15);
             cw.set(error_pos, !cw.get(error_pos));
 
-            let decoded = decoder.decode(&cw);
+            let decoded = decode_message(&code, &cw);
             assert_eq!(
                 decoded, msg,
                 "Failed to correct error at position {}",
@@ -911,9 +819,7 @@ mod systematic_encoding_validation {
 
 mod dvb_t2_validation {
     use super::*;
-    use gf2_coding::bch::CodeRate;
-    use gf2_coding::traits::BlockEncoder as _;
-    use gf2_coding::traits::HardDecisionDecoder;
+    use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
     /// Verify DVB-T2 Short frame parameters match ETSI EN 302 755 specification
@@ -929,13 +835,18 @@ mod dvb_t2_validation {
         ];
 
         for (rate, n, k, t) in expected {
-            let code = BchCode::dvb_t2(FrameSize::Short, rate);
+            let code = dvb_t2_bch_code(FrameSize::Short, rate).unwrap();
             assert_eq!(code.n(), n, "Wrong n for {:?}", rate);
             assert_eq!(code.k(), k, "Wrong k for {:?}", rate);
-            assert_eq!(code.t(), t, "Wrong t for {:?}", rate);
+            assert_eq!(
+                code.mother().code().correction_radius(),
+                t,
+                "Wrong t for {:?}",
+                rate
+            );
 
             // Verify generator polynomial degree equals BCH parity bits
-            let deg = code.generator().degree().unwrap();
+            let deg = code.mother().code().generator().degree().unwrap();
             assert_eq!(
                 deg,
                 n - k,
@@ -960,13 +871,18 @@ mod dvb_t2_validation {
         ];
 
         for (rate, n, k, t) in expected {
-            let code = BchCode::dvb_t2(FrameSize::Normal, rate);
+            let code = dvb_t2_bch_code(FrameSize::Normal, rate).unwrap();
             assert_eq!(code.n(), n, "Wrong n for {:?}", rate);
             assert_eq!(code.k(), k, "Wrong k for {:?}", rate);
-            assert_eq!(code.t(), t, "Wrong t for {:?}", rate);
+            assert_eq!(
+                code.mother().code().correction_radius(),
+                t,
+                "Wrong t for {:?}",
+                rate
+            );
 
             // Verify generator polynomial degree equals BCH parity bits
-            let deg = code.generator().degree().unwrap();
+            let deg = code.mother().code().generator().degree().unwrap();
             assert_eq!(
                 deg,
                 n - k,
@@ -981,116 +897,105 @@ mod dvb_t2_validation {
     /// Test DVB-T2 short frame encode/decode
     #[test]
     fn test_dvb_t2_short_encode_decode() {
-        let code = BchCode::dvb_t2(FrameSize::Short, CodeRate::Rate1_2);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = dvb_t2_bch_code(FrameSize::Short, CodeRate::Rate1_2).unwrap();
+        let decoder = DvbT2BchDecoder::new(&code);
 
         // Create test message (all zeros for simplicity)
         let msg = BitVec::zeros(code.k());
 
         // Encode
-        let cw = encoder.encode(&msg);
+        let cw = code.encode(&msg).unwrap();
         assert_eq!(cw.len(), code.n());
 
         // Decode without errors
-        let decoded = decoder.decode(&cw);
+        let (outcome, decoded) = decoder.decode(&cw).unwrap();
+        assert_eq!(outcome, BchDecodeOutcome::NoErrors);
         assert_eq!(decoded, msg);
     }
 
     /// Test DVB-T2 normal frame encode/decode
     #[test]
     fn test_dvb_t2_normal_encode_decode() {
-        let code = BchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+        let decoder = DvbT2BchDecoder::new(&code);
 
         // Create test message (all zeros for simplicity)
         let msg = BitVec::zeros(code.k());
 
         // Encode
-        let cw = encoder.encode(&msg);
+        let cw = code.encode(&msg).unwrap();
         assert_eq!(cw.len(), code.n());
 
         // Decode without errors
-        let decoded = decoder.decode(&cw);
+        let (outcome, decoded) = decoder.decode(&cw).unwrap();
+        assert_eq!(outcome, BchDecodeOutcome::NoErrors);
         assert_eq!(decoded, msg);
+    }
+
+    /// Injects `num_errors` distinct seeded errors into `codeword` and
+    /// asserts that the decoder corrects all of them.
+    fn assert_corrects(
+        code: &DvbT2BchCode,
+        msg: &BitVec,
+        codeword: &BitVec,
+        num_errors: usize,
+        rng: &mut StdRng,
+    ) {
+        let mut corrupted = codeword.clone();
+        let mut positions = Vec::new();
+
+        // Inject errors at random positions
+        for _ in 0..num_errors {
+            loop {
+                let pos = rng.gen_range(0..code.n());
+                if !positions.contains(&pos) {
+                    positions.push(pos);
+                    corrupted.set(pos, !corrupted.get(pos));
+                    break;
+                }
+            }
+        }
+
+        let (outcome, decoded) = DvbT2BchDecoder::new(code).decode(&corrupted).unwrap();
+        assert_eq!(outcome, BchDecodeOutcome::Corrected { count: num_errors });
+        assert_eq!(
+            decoded,
+            *msg,
+            "Failed to correct {} errors (t={})",
+            num_errors,
+            code.mother().code().correction_radius()
+        );
     }
 
     /// Test DVB-T2 short frame error correction capability
     #[test]
     fn test_dvb_t2_short_error_correction() {
-        let code = BchCode::dvb_t2(FrameSize::Short, CodeRate::Rate1_2);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = dvb_t2_bch_code(FrameSize::Short, CodeRate::Rate1_2).unwrap();
+        let t = code.mother().code().correction_radius();
 
-        let mut rng = rand::rngs::StdRng::seed_from_u64(54321);
+        let mut rng = StdRng::seed_from_u64(54321);
         let msg = BitVec::random(code.k(), &mut rng);
-        let cw = encoder.encode(&msg);
+        let cw = code.encode(&msg).unwrap();
 
         // Test correction of 1, t/2, and t errors
-        for num_errors in [1, code.t() / 2, code.t()] {
-            let mut corrupted = cw.clone();
-            let mut positions = Vec::new();
-
-            // Inject errors at random positions
-            for _ in 0..num_errors {
-                loop {
-                    let pos = rng.gen_range(0..code.n());
-                    if !positions.contains(&pos) {
-                        positions.push(pos);
-                        corrupted.set(pos, !corrupted.get(pos));
-                        break;
-                    }
-                }
-            }
-
-            let decoded = decoder.decode(&corrupted);
-            assert_eq!(
-                decoded,
-                msg,
-                "Failed to correct {} errors (t={})",
-                num_errors,
-                code.t()
-            );
+        for num_errors in [1, t / 2, t] {
+            assert_corrects(&code, &msg, &cw, num_errors, &mut rng);
         }
     }
 
     /// Test DVB-T2 normal frame error correction capability
     #[test]
     fn test_dvb_t2_normal_error_correction() {
-        let code = BchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2);
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code.clone());
+        let code = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+        let t = code.mother().code().correction_radius();
 
-        let mut rng = rand::rngs::StdRng::seed_from_u64(98765);
+        let mut rng = StdRng::seed_from_u64(98765);
         let msg = BitVec::random(code.k(), &mut rng);
-        let cw = encoder.encode(&msg);
+        let cw = code.encode(&msg).unwrap();
 
         // Test correction of 1, t/2, and t errors
-        for num_errors in [1, code.t() / 2, code.t()] {
-            let mut corrupted = cw.clone();
-            let mut positions = Vec::new();
-
-            // Inject errors at random positions
-            for _ in 0..num_errors {
-                loop {
-                    let pos = rng.gen_range(0..code.n());
-                    if !positions.contains(&pos) {
-                        positions.push(pos);
-                        corrupted.set(pos, !corrupted.get(pos));
-                        break;
-                    }
-                }
-            }
-
-            let decoded = decoder.decode(&corrupted);
-            assert_eq!(
-                decoded,
-                msg,
-                "Failed to correct {} errors (t={})",
-                num_errors,
-                code.t()
-            );
+        for num_errors in [1, t / 2, t] {
+            assert_corrects(&code, &msg, &cw, num_errors, &mut rng);
         }
     }
 
@@ -1107,30 +1012,19 @@ mod dvb_t2_validation {
         ];
 
         for rate in rates {
-            let code = BchCode::dvb_t2(FrameSize::Short, rate);
-            let encoder = BchEncoder::new(code.clone());
-            let decoder = BchDecoder::new(code.clone());
+            let code = dvb_t2_bch_code(FrameSize::Short, rate).unwrap();
 
-            let mut rng = rand::rngs::StdRng::seed_from_u64(11111);
+            let mut rng = StdRng::seed_from_u64(11111);
             let msg = BitVec::random(code.k(), &mut rng);
-            let mut cw = encoder.encode(&msg);
+            let cw = code.encode(&msg).unwrap();
 
             // Test with single error
-            let error_pos = rng.gen_range(0..code.n());
-            cw.set(error_pos, !cw.get(error_pos));
-
-            let decoded = decoder.decode(&cw);
-            assert_eq!(
-                decoded, msg,
-                "Short frame rate {:?} failed single error correction",
-                rate
-            );
+            assert_corrects(&code, &msg, &cw, 1, &mut rng);
         }
     }
 
     /// Test DVB-T2 normal frame - all code rates with error correction
     #[test]
-    #[ignore = "slow: encode+correct all 6 DVB-T2 normal BCH rates; large n exceeds 5s"]
     fn test_dvb_t2_normal_all_rates_error_correction() {
         let rates = [
             CodeRate::Rate1_2,
@@ -1142,24 +1036,14 @@ mod dvb_t2_validation {
         ];
 
         for rate in rates {
-            let code = BchCode::dvb_t2(FrameSize::Normal, rate);
-            let encoder = BchEncoder::new(code.clone());
-            let decoder = BchDecoder::new(code.clone());
+            let code = dvb_t2_bch_code(FrameSize::Normal, rate).unwrap();
 
-            let mut rng = rand::rngs::StdRng::seed_from_u64(22222);
+            let mut rng = StdRng::seed_from_u64(22222);
             let msg = BitVec::random(code.k(), &mut rng);
-            let mut cw = encoder.encode(&msg);
+            let cw = code.encode(&msg).unwrap();
 
             // Test with single error
-            let error_pos = rng.gen_range(0..code.n());
-            cw.set(error_pos, !cw.get(error_pos));
-
-            let decoded = decoder.decode(&cw);
-            assert_eq!(
-                decoded, msg,
-                "Normal frame rate {:?} failed single error correction",
-                rate
-            );
+            assert_corrects(&code, &msg, &cw, 1, &mut rng);
         }
     }
 }
