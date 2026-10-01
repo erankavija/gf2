@@ -725,6 +725,21 @@
       "source": "591a1c5e/94597a51 workers (session 11)",
       "finding": "seeded worktree target pool holds a stale gf2-kernels-simd artifact (missing shift_funnel); cargo clean -p gf2-kernels-simd per profile fixes it",
       "disposition": "purge gf2-kernels-simd from the pool before the next dispatch"
+    },
+    {
+      "source": "227ac5c8 worker (session 11)",
+      "finding": "tests/bch_oracle_agreement.rs:51 import and :982 BchEncoder::new(LegacyBchCode::dvb_t2(...)) still use the legacy surface",
+      "disposition": "4a2baa12 migrates or removes these with the legacy surface (R-52 evidence role decided there)"
+    },
+    {
+      "source": "227ac5c8 worker (session 11)",
+      "finding": "stale prose: tests/bch_conformance.rs:97 ('decoding laws of the pre-cutover binary type'), gf2-core/src/gf2m/field.rs:4076 ('manual workaround in gf2-coding/tests/bch_tests.rs'); tests/test_vectors/loader.rs tests carry bare #[ignore]",
+      "disposition": "f759d724 sweep (bare ignore tier fix included)"
+    },
+    {
+      "source": "227ac5c8 worker (session 11)",
+      "finding": "BinaryBchDecoder decodes internal coordinates only; user-layout decode needs a caller-side coordinate map",
+      "disposition": "filed cbd1eb28 outside the epic"
     }
   ],
   "coordination": {
