@@ -344,7 +344,34 @@ runner is `dev/active/d1b4f85e/run.sh`. The cells this subsection adds beyond
   entry points select their family from the profile and take no family
   argument; under the conservative profile that is the reference.
 
-Every cell names its dispatch path in its Criterion ID and in the line it
-appends to the dispatch record that `bch_workloads.rs` documents, together
-with its worker count, cache state, observed parallel pool width, and an
-output digest that is equal across every path of one row and batch.
+**Benchmark IDs.** W1 cells are
+`bch_encode_w1/<path>/W<workers>/<cache>/<row>/B=<batch>`, where `<path>`
+names the dispatch path the measured call takes:
+
+* `family=<name>[<kernel>]` — `encode_batch_family_into` over one workspace
+  under the named family; the bracket names the kernel bundle (`avx2-pclmul`
+  or `scalar`) for the families that run one.
+* `selected=<name>[<kernel>]` — the entry points that select the family from
+  the active profile: `encode_batch` (`W1`, `fresh-alloc`),
+  `encode_batch_parallel_into` (`W6`, `warm-reuse`), and
+  `encode_batch_parallel` (`W6`, `fresh-alloc`); the name is the family
+  `selected_encode_family` reports for the batch length.
+* `route=shortened-restriction` — the DVB-T2 rows' `BlockEncoder`, one message
+  at a time: `encode` per message (`fresh-alloc`) and `encode_into` into
+  reused codeword buffers (`warm-reuse`).
+
+W2 cells are `bch_genmatrix_w2/<materialize|reference>/<cache>/<row>` and
+`bch_paritycheck/<materialize|reference>/warm-reuse/<row>`: `materialize` is
+the canonical path (`generator_matrix`, `generator_matrix_into`,
+`parity_check_matrix_into`), `reference` the basis-vector oracle of
+`gf2_coding::test_support`.
+
+**Dispatch record.** With `GF2_BCH_DISPATCH_RECORD` naming a file, every
+W1 and W2 cell appends one JSON line before it is timed: `id`, `workload`,
+`row`, its dimensions, `cache`, the measured `entry` point, the dispatch path
+(`family` and `kernel` for W1, `path` and `matrix` representation for W2),
+`workers`, the observed `rayon_pool_width`, and `output_fnv1a`, a digest of the
+cell's output computed outside the timed loop. Every path of one W1 row and
+batch, and every path of one W2 row, writes the same output: the benches
+assert it before timing, and the window runner checks it again over the
+record.

@@ -1,23 +1,7 @@
-//! Shared rows, fixtures, and dispatch record for the BCH workload benches.
-//!
-//! Included from sibling bench files through `mod bch_workloads;`; it is not
-//! a `[[bench]]` target of its own. The binary rows are the
-//! workload-selection contract's (`dev/active/4e732b56/workload-selection.md`)
-//! § 2 rows on the canonical construction model, with the two DVB-T2 rows at
-//! the mother lengths its § 9 amendments fix. The nonbinary rows come from
-//! [`gf2_coding::test_support::visit_bch_corpus`], the evidence protocol's
-//! corpus, so neither table is restated here.
-//!
-//! # Dispatch record
-//!
-//! When `GF2_BCH_DISPATCH_RECORD` names a file, every registered benchmark
-//! appends one JSON line to it before it runs: the Criterion ID together with
-//! the dispatch path the measured call takes, the worker and cache state, the
-//! process's parallel pool width, and an FNV-1a digest of the cell's output
-//! computed outside the timed region. A receipt attributes each Criterion
-//! estimate through that line. The facts are observed at run time from the
-//! library's own reports (`selected_encode_family`, `selected_encode_kernel`,
-//! `max_parallel_batch_workers`, `Shortened::derivation`).
+//! Rows, fixtures, output digests, and the dispatch record shared by the BCH
+//! workload benches, included through `mod bch_workloads;`. The cells, their
+//! IDs, and the record format are the d1b4f85e amendment of
+//! `dev/active/4e732b56/workload-selection.md`.
 
 #![allow(dead_code)]
 
@@ -27,9 +11,10 @@ use std::io::Write;
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support::bch_corpus_index;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldIdentity};
+use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::{FieldVec, FiniteField};
 use gf2_core::gf2m::Gf2mField;
-use gf2_core::BitVec;
+use gf2_core::{BitMatrix, BitVec};
 
 /// Batch sizes $B$ of the contract's § 3.
 pub const BATCHES: [usize; 4] = [1, 16, 256, 4096];
@@ -168,6 +153,34 @@ impl<F: FiniteField + FieldIdentity> OutputDigest for FieldVec<F> {
             std::iter::once(item.len() as u64)
                 .chain(item.iter().map(|symbol| bch_corpus_index(symbol) as u64))
         }))
+    }
+}
+
+/// A digest of a materialized matrix, identical for identical matrices.
+pub trait MatrixDigest {
+    /// Digests the shape and every entry in row-major order.
+    fn matrix_digest(&self) -> u64;
+}
+
+impl MatrixDigest for BitMatrix {
+    fn matrix_digest(&self) -> u64 {
+        let shape = [self.rows() as u64, self.cols() as u64];
+        fnv1a(
+            shape
+                .into_iter()
+                .chain((0..self.rows()).flat_map(|row| self.row_words(row).iter().copied())),
+        )
+    }
+}
+
+impl<F: FiniteField + FieldIdentity> MatrixDigest for FieldMatrix<F> {
+    fn matrix_digest(&self) -> u64 {
+        let shape = [self.rows() as u64, self.cols() as u64];
+        fnv1a(shape.into_iter().chain((0..self.rows()).flat_map(|row| {
+            self.row(row)
+                .iter()
+                .map(|symbol| bch_corpus_index(symbol) as u64)
+        })))
     }
 }
 
