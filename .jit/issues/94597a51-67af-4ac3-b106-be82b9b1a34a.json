@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-01T07:46:29.568133812Z",
   "context": {},
   "created_at": "2026-08-28T22:50:47.339714882Z",
   "dependencies": [
@@ -23,7 +24,7 @@
     "satisfies:REQ-12"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Lean proofs: systematic encoding correctness",
-  "updated_at": "2026-10-01T07:07:54.142255254Z"
+  "updated_at": "2026-10-01T07:46:29.568133812Z"
 }
