@@ -13870,3 +13870,4 @@
 {"gate_key":"doc-review","id":"6182359e-7331-47f7-9e6f-235288dc2bb5","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-10-01T03:25:43.080348867Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["documents"],"id":"98c1b2e0-5224-4049-a784-9de90b33c692","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-10-01T03:26:48.884410313Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a87c288d-6c73-438e-97bf-445e0dfb1ed3","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-10-01T03:26:48.986625223Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"43e797ab-615f-407f-b11b-5c645d6e39bf","issue_id":"a83583e0-7cfb-4e65-9273-69631929e297","timestamp":"2026-10-01T03:29:49.921450513Z","type":"gate_failed","updated_by":"auto:executor"}

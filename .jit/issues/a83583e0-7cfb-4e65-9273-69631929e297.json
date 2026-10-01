@@ -156,7 +156,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-01T03:25:43.080348867Z",
+      "updated_at": "2026-10-01T03:29:49.921450513Z",
       "updated_by": "auto:executor"
     }
   },
@@ -171,5 +171,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-10-01T03:26:48.986625223Z"
+  "updated_at": "2026-10-01T03:29:49.921450513Z"
 }
