@@ -1162,7 +1162,7 @@ mod canonical_decoder_tests {
     use super::*;
     use crate::bch::spec::{BchSpec, DesignedDistance, RootExponent};
     use gf2_core::field::extension::BinaryPrimeExt;
-    use gf2_core::gf2m::{Gf2mElement, Gf2mField};
+    use gf2_core::gf2m::Gf2mField;
     use gf2_core::gfp::Fp;
     use proptest::prelude::*;
     use std::sync::OnceLock;
@@ -1938,7 +1938,7 @@ mod canonical_decoder_tests {
         /// A batch's syndromes in the row-major layout the device pass returns,
         /// evaluated on the CPU: the device multiply is the CPU multiply, so
         /// the bookkeeping sees the same rows either way.
-        fn host_syndromes(decoder: &BinaryBchDecoder<'_>, frames: &[BitVec]) -> Vec<Gf2mElement> {
+        fn host_syndromes(decoder: &BinaryBchDecoder<'_>, frames: &[BitVec]) -> Vec<gf2_core::gf2m::Gf2mElement> {
             let mut row = vec![decoder.zero.clone(); decoder.syndrome_points.len()];
             let mut evaluated = Vec::with_capacity(frames.len() * row.len());
             for frame in frames {
