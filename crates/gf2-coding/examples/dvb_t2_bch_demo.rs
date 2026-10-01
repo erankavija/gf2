@@ -8,47 +8,50 @@
 //! - Error correction capabilities up to t errors
 //! - Concatenation with LDPC codes
 //!
-//! ⚠️  IMPLEMENTATION STATUS:
-//! - Normal frame configurations work correctly
-//! - Short frame has decoding issues (even without errors)
-//! - Error correction is not yet working reliably
-//! - Requires verification against DVB-T2 reference implementation
+//! Run with:
+//!
+//! ```text
+//! ./scripts/cargo-budget.sh cargo run --release -p gf2-coding --example dvb_t2_bch_demo
+//! ```
 
-use gf2_coding::bch::dvb_t2::FrameSize;
-use gf2_coding::bch::{BchCode, BchDecoder, BchEncoder};
-use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchDecoder, FrameSize};
+use gf2_coding::traits::block::{BlockCode, BlockEncoder};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::Rng;
 
-fn main() {
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+fn main() -> Result<()> {
     println!("DVB-T2 BCH Outer Code Example");
     println!("=============================\n");
 
     // Short frame, rate 1/2
-    demo_configuration(FrameSize::Short, CodeRate::Rate1_2);
+    demo_configuration(FrameSize::Short, CodeRate::Rate1_2)?;
     println!();
 
     // Normal frame, rate 1/2
-    demo_configuration(FrameSize::Normal, CodeRate::Rate1_2);
+    demo_configuration(FrameSize::Normal, CodeRate::Rate1_2)?;
     println!();
 
     // Normal frame, rate 2/3 (uses t=10 instead of t=12)
-    demo_configuration(FrameSize::Normal, CodeRate::Rate2_3);
+    demo_configuration(FrameSize::Normal, CodeRate::Rate2_3)?;
     println!();
 
     // Demonstrate error correction
     println!("\n================================================");
     println!("Error Correction Demonstration");
     println!("================================================\n");
-    demo_error_correction(FrameSize::Short, CodeRate::Rate1_2);
+    demo_error_correction(FrameSize::Short, CodeRate::Rate1_2)?;
+    Ok(())
 }
 
-fn demo_configuration(frame_size: FrameSize, rate: CodeRate) {
+fn demo_configuration(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
     println!("Configuration: {:?} Frame, Rate {:?}", frame_size, rate);
 
     // Create BCH code
-    let code = BchCode::dvb_t2(frame_size, rate);
+    let code = dvb_t2_bch_code(frame_size, rate)?;
+    let decoder = DvbT2BchDecoder::new(&code);
 
     println!("  BCH parameters:");
     println!("    n (output) = {} (= k_ldpc, input to LDPC)", code.n());
@@ -57,17 +60,18 @@ fn demo_configuration(frame_size: FrameSize, rate: CodeRate) {
         "    m (parity) = {} (BCH error correction bits)",
         code.n() - code.k()
     );
-    println!("    t          = {} (correctable errors)", code.t());
+    println!(
+        "    t          = {} (correctable errors)",
+        decoder.correction_radius()
+    );
 
-    // Create encoder/decoder
-    let encoder = BchEncoder::new(code.clone());
-    let decoder = BchDecoder::new(code.clone());
+    // Create decoder
 
     // Test: Simple roundtrip without errors
     let mut rng = rand::thread_rng();
     let message = BitVec::random(code.k(), &mut rng);
-    let codeword = encoder.encode(&message);
-    let decoded = decoder.decode(&codeword);
+    let codeword = code.encode(&message)?;
+    let (_, decoded) = decoder.decode(&codeword)?;
 
     if decoded == message {
         println!("  ✓ Roundtrip without errors successful");
@@ -75,29 +79,30 @@ fn demo_configuration(frame_size: FrameSize, rate: CodeRate) {
         println!("  ✗ Roundtrip FAILED - decoder not working correctly");
         println!("  ⚠️  This confirms the need for verification!");
     }
+    Ok(())
 }
 
-fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) {
+fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
     println!("Configuration: {:?} Frame, Rate {:?}", frame_size, rate);
 
-    let code = BchCode::dvb_t2(frame_size, rate);
-    let encoder = BchEncoder::new(code.clone());
-    let decoder = BchDecoder::new(code.clone());
+    let code = dvb_t2_bch_code(frame_size, rate)?;
+    let decoder = DvbT2BchDecoder::new(&code);
+    let t = decoder.correction_radius();
 
-    println!("  BCH({}, {}, t={})", code.n(), code.k(), code.t());
-    println!("  Can correct up to {} bit errors\n", code.t());
+    println!("  BCH({}, {}, t={})", code.n(), code.k(), t);
+    println!("  Can correct up to {} bit errors\n", t);
 
     // Create a random message
     let mut rng = rand::thread_rng();
     let message = BitVec::random(code.k(), &mut rng);
 
     // Encode
-    let codeword = encoder.encode(&message);
+    let codeword = code.encode(&message)?;
     println!("  Original message: {} bits", message.len());
     println!("  Encoded codeword: {} bits", codeword.len());
 
     // Test error correction at different error levels
-    for num_errors in [0, code.t() / 2, code.t()] {
+    for num_errors in [0, t / 2, t] {
         println!("\n  Testing with {} error(s):", num_errors);
 
         // Introduce random errors
@@ -118,7 +123,7 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) {
         }
 
         // Decode
-        let decoded = decoder.decode(&corrupted);
+        let (_, decoded) = decoder.decode(&corrupted)?;
 
         // Check result
         if decoded == message {
@@ -137,7 +142,7 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) {
     }
 
     // Test beyond error correction capability
-    let num_errors = code.t() + 1;
+    let num_errors = t + 1;
     println!(
         "\n  Testing with {} errors (beyond capability):",
         num_errors
@@ -157,13 +162,12 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) {
 
     println!("    Error positions: {:?}", error_positions);
 
-    let decoded = decoder.decode(&corrupted);
+    let (_, decoded) = decoder.decode(&corrupted)?;
 
     if decoded == message {
         println!(
             "    ⚠️  Unexpectedly corrected {} errors (beyond t={})",
-            num_errors,
-            code.t()
+            num_errors, t
         );
     } else {
         println!("    ✓ Correctly failed to decode (too many errors)");
@@ -175,4 +179,5 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) {
     println!("     - ✓ Short frames: 0, 6, and 12 errors corrected successfully");
     println!("     - ✓ Error detection: Correctly detects when too many errors present");
     println!("     - ✓ Ready for use in DVB-T2 outer coding");
+    Ok(())
 }
