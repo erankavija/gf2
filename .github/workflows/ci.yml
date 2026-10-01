@@ -59,7 +59,12 @@ jobs:
       run: cargo nextest run --workspace --release --features simd,parallel,visualization,io,rand,llr-f64 --profile ci
 
     - name: Build documentation
+      env:
+        RUSTDOCFLAGS: -D warnings
       run: cargo doc --workspace --release --no-deps --features simd,parallel,visualization,io,rand,llr-f64
+
+    - name: Run doctests
+      run: cargo test --doc --workspace --release --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Build benchmarks
       run: cargo build --workspace --release --benches
