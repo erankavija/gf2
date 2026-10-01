@@ -87,7 +87,8 @@ scratch_fixtures() {
 system_fixtures() {
   [ -d "$SYSTEM_TMPDIR" ] || return 0
   find "$SYSTEM_TMPDIR" -mindepth 1 -maxdepth 1 -type d \
-    \( -name 'gf2-a83583e0-*' -o -name 'gf2-f547c394-*' -o -name 'gf2sim-*' \
+    \( -name 'gf2-a83583e0-*' -o -name 'gf2-dbd8787d-*' -o -name 'gf2-f547c394-*' \
+       -o -name 'gf2sim-*' \
        -o -name 'gf2-coordinator-fixture-*' -o -name 'gf2-driver-*' \
        -o -name 'tuning-campaign-support-*' -o -name 'gf2-launcher-*' \) 2>/dev/null
 }

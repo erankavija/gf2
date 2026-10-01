@@ -2664,6 +2664,9 @@ pub(crate) trait ObservationPolicy {
 
     #[inline(always)]
     fn ple_panel_cols(_cols: usize) {}
+
+    #[inline(always)]
+    fn ple_base_route(_scalar_base_max_cols: usize, _route: usize) {}
 }
 
 /// Observation policy used by ordinary public entry points.
@@ -2708,6 +2711,14 @@ impl ObservationPolicy for RecordObservations {
         crate::field::ple::record_ple_panel_cols(cols);
         #[cfg(not(any(test, feature = "test-support")))]
         let _ = cols;
+    }
+
+    #[inline(always)]
+    fn ple_base_route(scalar_base_max_cols: usize, route: usize) {
+        #[cfg(any(test, feature = "test-support"))]
+        crate::field::ple::record_ple_base_route(scalar_base_max_cols, route);
+        #[cfg(not(any(test, feature = "test-support")))]
+        let _ = (scalar_base_max_cols, route);
     }
 }
 
