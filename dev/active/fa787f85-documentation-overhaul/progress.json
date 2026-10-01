@@ -912,7 +912,9 @@
  ],
  "created_during_execution": [],
  "escalations": [],
- "rework_counts": {},
+ "rework_counts": {
+  "495807a3": 1
+ },
  "surfaced_pitfalls": [],
  "notes": [
   "495807a3 work landed on main before this session (4133f4152); gates run by lead.",
