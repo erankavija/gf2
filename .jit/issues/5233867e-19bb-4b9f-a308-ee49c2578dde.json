@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-05"
+    "satisfies:ae03bcd0/REQ-05"
   ],
   "priority": "high",
   "state": "done",
   "title": "Generic puncturing over arbitrary coordinate sets",
-  "updated_at": "2026-09-01T12:40:49.709307425Z"
+  "updated_at": "2026-10-01T22:41:29.610986985Z"
 }

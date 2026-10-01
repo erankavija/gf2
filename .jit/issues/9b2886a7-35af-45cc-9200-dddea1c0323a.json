@@ -26,11 +26,11 @@
   "labels": [
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-01",
-    "type:task"
+    "type:task",
+    "satisfies:fa787f85/REQ-01"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-01T14:08:23.422395030Z"
+  "updated_at": "2026-10-01T22:41:45.268157857Z"
 }

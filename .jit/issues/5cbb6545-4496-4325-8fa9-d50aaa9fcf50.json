@@ -232,14 +232,14 @@
     "epic:zen3-cpu-performance",
     "component:gf2-core",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "cites:Libpopcnt2026",
-    "cites:Mula2018",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/Libpopcnt2026",
+    "cites:@/citation/Mula2018"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-09-13T20:09:02.007568906Z"
+  "updated_at": "2026-10-01T22:41:32.549088769Z"
 }

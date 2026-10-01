@@ -32,12 +32,12 @@
   "labels": [
     "epic:coverage-90",
     "type:task",
-    "satisfies:REQ-1",
-    "satisfies:REQ-2",
-    "satisfies:REQ-3"
+    "satisfies:7be754bd/REQ-1",
+    "satisfies:7be754bd/REQ-2",
+    "satisfies:7be754bd/REQ-3"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Verify all crates at 90% coverage and refresh badges",
-  "updated_at": "2026-08-05T12:07:48.821063986Z"
+  "updated_at": "2026-10-01T22:42:02.655717655Z"
 }

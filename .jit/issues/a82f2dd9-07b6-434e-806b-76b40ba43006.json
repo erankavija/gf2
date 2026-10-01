@@ -31,14 +31,14 @@
     "type:task",
     "epic:osd",
     "component:gf2-sim",
-    "satisfies:REQ-02",
-    "cites:Fossorier1995",
-    "cites:Yue2022",
-    "cites:Fossorier1994",
-    "cites:Isaka1999"
+    "satisfies:b7157be6/REQ-02",
+    "cites:@/citation/Fossorier1995",
+    "cites:@/citation/Yue2022",
+    "cites:@/citation/Fossorier1994",
+    "cites:@/citation/Isaka1999"
   ],
   "priority": "high",
   "state": "done",
   "title": "Published eBCH OSD curve dataset",
-  "updated_at": "2026-08-25T17:08:28.130852846Z"
+  "updated_at": "2026-10-01T22:41:47.219485459Z"
 }

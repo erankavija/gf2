@@ -92,11 +92,11 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:gf2-core",
-    "satisfies:REQ-06",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Design cached GF(2^8) tables and consumer hooks",
-  "updated_at": "2026-09-16T12:18:01.070928274Z"
+  "updated_at": "2026-10-01T22:41:33.319268314Z"
 }

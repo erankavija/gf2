@@ -15,11 +15,11 @@
     "type:task",
     "epic:additive-ntt",
     "component:gf2-core",
-    "cites:Lch2014",
-    "cites:DiamondPosen2023"
+    "cites:@/citation/Lch2014",
+    "cites:@/citation/DiamondPosen2023"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Design study for the additive NTT: basis, tower integration, API, benchmarks",
-  "updated_at": "2026-08-07T12:33:46.047657760Z"
+  "updated_at": "2026-10-01T22:41:19.082493591Z"
 }

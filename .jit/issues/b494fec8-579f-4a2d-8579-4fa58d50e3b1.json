@@ -31,10 +31,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-stats",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Workspace convergence of the rand 0.9 ecosystem",
-  "updated_at": "2026-08-09T13:08:08.822989011Z"
+  "updated_at": "2026-10-01T22:41:50.344935347Z"
 }

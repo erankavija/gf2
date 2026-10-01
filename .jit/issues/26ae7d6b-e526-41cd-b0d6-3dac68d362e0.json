@@ -36,11 +36,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Cut the GEMM selectors over to the tuning profile",
-  "updated_at": "2026-08-23T13:53:51.863312097Z"
+  "updated_at": "2026-10-01T22:41:19.999546365Z"
 }

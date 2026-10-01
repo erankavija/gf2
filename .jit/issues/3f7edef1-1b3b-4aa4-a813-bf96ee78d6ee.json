@@ -231,10 +231,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-11"
+    "satisfies:ae03bcd0/REQ-11"
   ],
   "priority": "high",
   "state": "done",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-10-01T07:07:54.338662925Z"
+  "updated_at": "2026-10-01T22:41:24.847623821Z"
 }

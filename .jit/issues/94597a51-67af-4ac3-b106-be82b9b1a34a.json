@@ -64,10 +64,10 @@
     "epic:general-bch",
     "component:gf2-core",
     "component:gf2-coding",
-    "satisfies:REQ-12"
+    "satisfies:ae03bcd0/REQ-12"
   ],
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: systematic encoding correctness",
-  "updated_at": "2026-10-01T08:40:08.791170357Z"
+  "updated_at": "2026-10-01T22:41:44.132644085Z"
 }

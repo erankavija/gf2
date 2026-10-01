@@ -23,12 +23,12 @@
     "type:simulation",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-03",
-    "cites:HKS2026",
-    "cites:Scheinerman2024"
+    "satisfies:b8206228/REQ-03",
+    "cites:@/citation/HKS2026",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Campaign arm for $q = 3$ as reproduction",
-  "updated_at": "2026-08-30T12:24:30.224036250Z"
+  "updated_at": "2026-10-01T22:41:42.946542181Z"
 }

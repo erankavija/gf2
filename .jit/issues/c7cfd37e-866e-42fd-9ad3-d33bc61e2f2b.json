@@ -27,15 +27,15 @@
     "type:epic",
     "epic:additive-ntt",
     "component:gf2-core",
-    "cites:Lch2014",
-    "cites:DiamondPosen2023",
-    "cites:DiamondPosen2024",
-    "cites:Blaze2024",
-    "cites:Jang2026",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "cites:@/citation/Lch2014",
+    "cites:@/citation/DiamondPosen2023",
+    "cites:@/citation/DiamondPosen2024",
+    "cites:@/citation/Blaze2024",
+    "cites:@/citation/Jang2026"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Additive NTT over GF(2^m) for Reed–Solomon, proof-system, and PQC workloads",
-  "updated_at": "2026-08-18T18:56:16.124399371Z"
+  "updated_at": "2026-10-01T22:41:54.907746671Z"
 }

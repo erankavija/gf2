@@ -142,13 +142,13 @@
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:AlbrechtBard2026",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:2037941f/REQ-03",
+    "satisfies:2037941f/REQ-06",
+    "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Qualify a matched M4RI consumer operation",
-  "updated_at": "2026-09-16T22:08:56.224459032Z"
+  "updated_at": "2026-10-01T22:41:43.697618879Z"
 }

@@ -20,10 +20,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:gf2-core",
-    "satisfies:REQ-04"
+    "satisfies:fa787f85/REQ-04"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
-  "updated_at": "2026-10-01T14:43:32.142202796Z"
+  "updated_at": "2026-10-01T22:41:51.655233514Z"
 }

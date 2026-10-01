@@ -32,10 +32,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Migrate gf2-coding binaries and examples",
-  "updated_at": "2026-10-01T09:10:48.580696135Z"
+  "updated_at": "2026-10-01T22:42:03.390643913Z"
 }

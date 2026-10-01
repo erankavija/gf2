@@ -37,10 +37,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-12"
+    "satisfies:ae03bcd0/REQ-12"
   ],
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: quotient reduction preserves the represented element",
-  "updated_at": "2026-09-02T06:54:55.656369486Z"
+  "updated_at": "2026-10-01T22:41:21.960438930Z"
 }

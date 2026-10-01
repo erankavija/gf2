@@ -19,11 +19,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-10",
-    "satisfies:REQ-19"
+    "satisfies:fa787f85/REQ-10",
+    "satisfies:fa787f85/REQ-19"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:22.942225245Z"
 }

@@ -18,11 +18,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05"
+    "satisfies:fa787f85/REQ-04",
+    "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Write the gf2-sim README as its entry page",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:49.411412402Z"
 }

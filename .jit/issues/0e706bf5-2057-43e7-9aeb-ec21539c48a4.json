@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-02"
+    "satisfies:ae03bcd0/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Implement compile-time configured quotient extensions with equivalence evidence",
-  "updated_at": "2026-09-01T12:06:48.067556557Z"
+  "updated_at": "2026-10-01T22:41:12.907670725Z"
 }

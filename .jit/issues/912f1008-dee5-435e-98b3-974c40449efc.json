@@ -63,13 +63,13 @@
   "labels": [
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "cites:GGK2025",
-    "cites:HKS2026",
-    "cites:Scheinerman2024",
-    "type:planning"
+    "type:planning",
+    "cites:@/citation/GGK2025",
+    "cites:@/citation/HKS2026",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "high",
   "state": "done",
   "title": "Plan the permanent-statistics campaign breakdown",
-  "updated_at": "2026-08-09T11:01:40.552988611Z"
+  "updated_at": "2026-10-01T22:41:43.113324541Z"
 }

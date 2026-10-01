@@ -35,12 +35,12 @@
     "component:gf2-coding",
     "component:gf2-kernels-simd",
     "component:gf2-sim",
-    "satisfies:REQ-04",
-    "satisfies:REQ-06",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-04",
+    "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Calibrate production dispatch for the 5900X",
-  "updated_at": "2026-09-16T22:40:37.248163099Z"
+  "updated_at": "2026-10-01T22:41:33.581557357Z"
 }

@@ -37,10 +37,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-stats",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Empty gf2-stats workspace member crate",
-  "updated_at": "2026-08-09T15:01:23.965407457Z"
+  "updated_at": "2026-10-01T22:41:29.919702516Z"
 }

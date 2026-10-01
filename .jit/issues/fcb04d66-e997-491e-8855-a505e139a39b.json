@@ -382,15 +382,15 @@
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:zen3-cpu-performance",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
-    "type:task"
+    "type:task",
+    "satisfies:2037941f/REQ-02",
+    "satisfies:2037941f/REQ-04",
+    "satisfies:2037941f/REQ-05",
+    "satisfies:2037941f/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Implement and confirm the logical-buffer outcome",
-  "updated_at": "2026-09-27T21:01:11.010943810Z"
+  "updated_at": "2026-10-01T22:42:07.422084294Z"
 }

@@ -37,10 +37,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-12"
+    "satisfies:ae03bcd0/REQ-12"
   ],
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: q-cyclotomic seed closure",
-  "updated_at": "2026-09-02T16:16:51.438218316Z"
+  "updated_at": "2026-10-01T22:41:57.904861484Z"
 }

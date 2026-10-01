@@ -44,12 +44,12 @@
   "labels": [
     "type:task",
     "component:gf2-core",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Route the dense FieldMatrix product for GF(2^8) through the cached table",
-  "updated_at": "2026-09-17T21:50:00.265166243Z"
+  "updated_at": "2026-10-01T22:41:51.514409138Z"
 }

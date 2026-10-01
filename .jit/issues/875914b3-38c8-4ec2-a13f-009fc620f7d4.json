@@ -20,10 +20,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-08"
+    "satisfies:fa787f85/REQ-08"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Map the gf2-coding roadmap's unchecked items",
-  "updated_at": "2026-10-01T14:43:31.712605052Z"
+  "updated_at": "2026-10-01T22:41:40.459490362Z"
 }

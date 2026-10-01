@@ -572,17 +572,17 @@
     "story:zen3-shifts-and-permutations",
     "component:gf2-coding",
     "component:benchmarks",
-    "cites:Xdsopl2026",
-    "cites:Etsi2015",
-    "satisfies:REQ-01",
-    "satisfies:REQ-07",
-    "satisfies:REQ-08",
-    "satisfies:REQ-09",
-    "satisfies:REQ-10",
-    "satisfies:REQ-11"
+    "satisfies:c04dd4ac/REQ-01",
+    "satisfies:c04dd4ac/REQ-07",
+    "satisfies:c04dd4ac/REQ-08",
+    "satisfies:c04dd4ac/REQ-09",
+    "satisfies:c04dd4ac/REQ-10",
+    "satisfies:c04dd4ac/REQ-11",
+    "cites:@/citation/Xdsopl2026",
+    "cites:@/citation/Etsi2015"
   ],
   "priority": "high",
   "state": "done",
   "title": "Profile the production DVB-T2 bit interleaver",
-  "updated_at": "2026-09-27T19:51:31.151336009Z"
+  "updated_at": "2026-10-01T22:41:45.929411664Z"
 }

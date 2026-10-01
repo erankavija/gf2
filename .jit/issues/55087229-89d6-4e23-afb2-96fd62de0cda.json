@@ -28,15 +28,15 @@
     "type:epic",
     "epic:pac-aed",
     "component:gf2-coding",
-    "cites:Arikan2019",
-    "cites:Yao2020",
-    "cites:PacScl2024",
-    "cites:Aed2024",
-    "cites:Rcaed2023",
-    "cites:Rowshan2024"
+    "cites:@/citation/Arikan2019",
+    "cites:@/citation/Yao2020",
+    "cites:@/citation/PacScl2024",
+    "cites:@/citation/Aed2024",
+    "cites:@/citation/Rcaed2023",
+    "cites:@/citation/Rowshan2024"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "PAC codes and automorphism-ensemble decoding for short blocklengths",
-  "updated_at": "2026-08-07T15:03:06.436050777Z"
+  "updated_at": "2026-10-01T22:41:30.519307830Z"
 }

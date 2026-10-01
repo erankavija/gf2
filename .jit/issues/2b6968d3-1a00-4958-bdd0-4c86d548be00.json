@@ -32,10 +32,10 @@
     "epic:general-bch",
     "component:gf2-kernels-simd",
     "component:gf2-coding",
-    "satisfies:REQ-13"
+    "satisfies:ae03bcd0/REQ-13"
   ],
   "priority": "high",
   "state": "done",
   "title": "AVX2 batch-encoding kernels with complete feature detection and tested scalar fallback",
-  "updated_at": "2026-09-02T16:23:38.574012678Z"
+  "updated_at": "2026-10-01T22:41:21.081128357Z"
 }

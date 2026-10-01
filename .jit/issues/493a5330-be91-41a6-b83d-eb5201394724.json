@@ -18,11 +18,11 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-03",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "low",
   "state": "backlog",
   "title": "Add property tests to the SIMD prime-field kernel modules",
-  "updated_at": "2026-08-07T12:22:13.470051249Z"
+  "updated_at": "2026-10-01T22:41:26.720343685Z"
 }

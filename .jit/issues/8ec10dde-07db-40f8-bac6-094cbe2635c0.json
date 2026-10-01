@@ -42,12 +42,12 @@
   "labels": [
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "satisfies:REQ-06",
-    "cites:GGK2025",
-    "type:task"
+    "type:task",
+    "satisfies:b8206228/REQ-06",
+    "cites:@/citation/GGK2025"
   ],
   "priority": "high",
   "state": "done",
   "title": "Exact compressed-state permanental-rank propagation",
-  "updated_at": "2026-08-30T04:50:44.669338189Z"
+  "updated_at": "2026-10-01T22:41:42.065340787Z"
 }

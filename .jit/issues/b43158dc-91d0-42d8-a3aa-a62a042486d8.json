@@ -17,11 +17,11 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-algebra",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-03",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Add direct algebraic property tests for the packed F_5 and F_7 types",
-  "updated_at": "2026-08-07T12:22:13.470051249Z"
+  "updated_at": "2026-10-01T22:41:50.020081086Z"
 }

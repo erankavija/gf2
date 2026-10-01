@@ -708,13 +708,13 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-core",
     "component:gf2-coding",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-09-13T07:16:35.738890792Z"
+  "updated_at": "2026-10-01T22:41:11.110925295Z"
 }

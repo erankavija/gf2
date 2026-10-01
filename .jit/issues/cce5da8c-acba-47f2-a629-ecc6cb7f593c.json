@@ -28,14 +28,14 @@
     "epic:qldpc-decoding",
     "component:gf2-core",
     "component:gf2-coding",
-    "cites:Gidney2021",
-    "cites:Bravyi2024",
-    "cites:Roffe2020",
-    "cites:Muller2025",
-    "cites:Hillmann2024"
+    "cites:@/citation/Gidney2021",
+    "cites:@/citation/Bravyi2024",
+    "cites:@/citation/Roffe2020",
+    "cites:@/citation/Muller2025",
+    "cites:@/citation/Hillmann2024"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Quantum LDPC decoding with classical GF(2) machinery",
-  "updated_at": "2026-08-25T19:05:29.163956659Z"
+  "updated_at": "2026-10-01T22:41:55.967969923Z"
 }

@@ -37,11 +37,11 @@
     "epic:field-capability-dispatch",
     "component:gf2-core",
     "component:gf2-algebra",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Cut tuning over to crate-owned typed sections",
-  "updated_at": "2026-08-26T04:00:40.765681659Z"
+  "updated_at": "2026-10-01T22:41:51.948687810Z"
 }

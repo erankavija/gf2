@@ -29,10 +29,10 @@
     "story:documentation-contract",
     "component:tooling",
     "type:task",
-    "satisfies:REQ-38"
+    "satisfies:3f29e945/REQ-38"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Build rustdoc and run doctests in the Rust CI gate",
-  "updated_at": "2026-10-01T22:40:34.364446256Z"
+  "updated_at": "2026-10-01T22:41:22.450238692Z"
 }

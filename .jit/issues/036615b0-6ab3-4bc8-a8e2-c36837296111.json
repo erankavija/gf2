@@ -20,11 +20,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-13",
-    "satisfies:REQ-12"
+    "satisfies:fa787f85/REQ-13",
+    "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Inventory terminal, ownerless and empty dev/active entries",
-  "updated_at": "2026-10-01T14:43:33.437411954Z"
+  "updated_at": "2026-10-01T22:41:10.814621702Z"
 }

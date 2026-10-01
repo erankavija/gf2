@@ -25,11 +25,11 @@
   "id": "a0a29512-ce14-4110-a541-65ef6612278d",
   "labels": [
     "epic:documentation-overhaul",
-    "satisfies:REQ-07",
-    "type:task"
+    "type:task",
+    "satisfies:fa787f85/REQ-07"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Remove tautological Rustdoc examples across the workspace",
-  "updated_at": "2026-08-07T11:43:44.605974261Z"
+  "updated_at": "2026-10-01T22:41:46.183453201Z"
 }

@@ -47,10 +47,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "cites:Scheinerman2024"
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "high",
   "state": "done",
   "title": "Exact enumeration anchors for the smallest cells",
-  "updated_at": "2026-08-13T15:46:28.605805771Z"
+  "updated_at": "2026-10-01T22:41:26.215880291Z"
 }

@@ -125,10 +125,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04"
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Pin the non-regression benchmark set and tolerance",
-  "updated_at": "2026-08-19T06:51:16.406385034Z"
+  "updated_at": "2026-10-01T22:42:00.738032682Z"
 }

@@ -38,10 +38,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-algebra",
-    "satisfies:REQ-03"
+    "satisfies:0de41c82/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Purpose-domain stream address allocator",
-  "updated_at": "2026-08-10T00:23:23.682904082Z"
+  "updated_at": "2026-10-01T22:41:58.523475583Z"
 }

@@ -71,10 +71,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-04"
+    "satisfies:0de41c82/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Architecture scope statement with compile evidence",
-  "updated_at": "2026-08-10T10:02:48.634281442Z"
+  "updated_at": "2026-10-01T22:41:37.133713306Z"
 }

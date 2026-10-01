@@ -37,12 +37,12 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:REQ-01",
-    "cites:Fossorier1995",
-    "cites:Yue2022"
+    "satisfies:cce5da8c/REQ-01",
+    "cites:@/citation/Fossorier1995",
+    "cites:@/citation/Yue2022"
   ],
   "priority": "high",
   "state": "done",
   "title": "Canonical reliability permutation API",
-  "updated_at": "2026-08-25T13:32:07.079533568Z"
+  "updated_at": "2026-10-01T22:41:23.090220810Z"
 }

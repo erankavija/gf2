@@ -34,10 +34,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-13"
+    "satisfies:ae03bcd0/REQ-13"
   ],
   "priority": "high",
   "state": "done",
   "title": "Extend Criterion benchmarks to the selected workloads",
-  "updated_at": "2026-10-01T11:00:58.474002228Z"
+  "updated_at": "2026-10-01T22:41:56.698282335Z"
 }

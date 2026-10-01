@@ -152,13 +152,13 @@
   "labels": [
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "cites:IsaL2026",
     "type:task",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:2037941f/REQ-01",
+    "cites:@/citation/IsaL2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Amend the frozen ISA-L family to five confirmatory cells",
-  "updated_at": "2026-09-17T00:49:20.977561640Z"
+  "updated_at": "2026-10-01T22:41:52.252983647Z"
 }

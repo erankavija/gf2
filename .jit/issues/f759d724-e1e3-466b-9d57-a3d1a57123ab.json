@@ -25,10 +25,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Sweep stale prose references to the removed BCH surface",
-  "updated_at": "2026-10-01T10:23:16.120363630Z"
+  "updated_at": "2026-10-01T22:42:05.767017254Z"
 }

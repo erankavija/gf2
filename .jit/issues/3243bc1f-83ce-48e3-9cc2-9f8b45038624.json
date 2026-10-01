@@ -35,11 +35,11 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-coding",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-03",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Add property tests for BCH encode and decode invariants",
-  "updated_at": "2026-08-31T17:50:51.521573964Z"
+  "updated_at": "2026-10-01T22:41:21.676698578Z"
 }

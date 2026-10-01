@@ -224,10 +224,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-04"
+    "satisfies:0de41c82/REQ-04"
   ],
   "priority": "high",
   "state": "done",
   "title": "Runtime qualification of wave utilization and launch duration",
-  "updated_at": "2026-08-16T01:25:02.691763455Z"
+  "updated_at": "2026-10-01T22:41:47.508840332Z"
 }

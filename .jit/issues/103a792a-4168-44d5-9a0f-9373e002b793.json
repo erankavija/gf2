@@ -24,10 +24,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-12"
+    "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Move gf2-core crate guides into the legacy mirror",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:13.061565833Z"
 }

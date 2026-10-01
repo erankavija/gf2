@@ -162,15 +162,15 @@
     "epic:zen3-cpu-performance",
     "component:gf2-core",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "cites:IsaL2026",
-    "cites:GfComplete2026",
     "type:task",
-    "cites:Mfourrie2026"
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/IsaL2026",
+    "cites:@/citation/GfComplete2026",
+    "cites:@/citation/Mfourrie2026"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Assess byte-field acceleration in vector and matrix consumers",
-  "updated_at": "2026-09-15T02:43:30.679609078Z"
+  "updated_at": "2026-10-01T22:41:15.773217326Z"
 }

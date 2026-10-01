@@ -34,11 +34,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Hoist the uniform trait-selector defaults into their modules",
-  "updated_at": "2026-08-23T07:47:05.059260538Z"
+  "updated_at": "2026-10-01T22:41:34.365062766Z"
 }

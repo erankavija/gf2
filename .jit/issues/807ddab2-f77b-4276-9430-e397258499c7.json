@@ -21,11 +21,11 @@
     "component:gf2-coding",
     "component:gf2-kernels-simd",
     "component:gf2-sim",
-    "satisfies:REQ-06",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Trim comments and rustdoc in epic-touched files to the non-obvious-only standard",
-  "updated_at": "2026-09-16T22:23:52.917273572Z"
+  "updated_at": "2026-10-01T22:41:39.062018189Z"
 }

@@ -645,16 +645,16 @@
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:zen3-cpu-performance",
-    "satisfies:REQ-01",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
-    "type:task"
+    "type:task",
+    "satisfies:2037941f/REQ-01",
+    "satisfies:2037941f/REQ-02",
+    "satisfies:2037941f/REQ-04",
+    "satisfies:2037941f/REQ-05",
+    "satisfies:2037941f/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Record the dense-matvec baseline and freeze the dense-parity portfolio",
-  "updated_at": "2026-09-27T23:35:42.060496007Z"
+  "updated_at": "2026-10-01T22:41:54.756967540Z"
 }

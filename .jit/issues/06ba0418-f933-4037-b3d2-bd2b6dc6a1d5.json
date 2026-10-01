@@ -24,11 +24,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Record the executed seam at the convention sources",
-  "updated_at": "2026-09-01T02:45:04.682411904Z"
+  "updated_at": "2026-10-01T22:41:11.407942432Z"
 }

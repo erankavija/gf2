@@ -17,11 +17,11 @@
   "labels": [
     "type:task",
     "epic:permanent-statistics",
-    "satisfies:REQ-03",
-    "cites:Scheinerman2024"
+    "satisfies:b8206228/REQ-03",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Published zero-fraction curves and tables for the three fields",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-10-01T22:42:05.611063625Z"
 }

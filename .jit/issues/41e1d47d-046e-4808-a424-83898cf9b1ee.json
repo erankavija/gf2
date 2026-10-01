@@ -20,11 +20,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-18",
-    "satisfies:REQ-20"
+    "satisfies:fa787f85/REQ-18",
+    "satisfies:fa787f85/REQ-20"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-01T14:43:30.852739741Z"
+  "updated_at": "2026-10-01T22:41:25.749141359Z"
 }

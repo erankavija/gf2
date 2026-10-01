@@ -33,10 +33,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-05"
+    "satisfies:6dc81018/REQ-05"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Spike Charon extraction of a trait-generic field algorithm",
-  "updated_at": "2026-08-19T04:45:28.735182572Z"
+  "updated_at": "2026-10-01T22:41:22.626716496Z"
 }

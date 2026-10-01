@@ -31,10 +31,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Batch-parallel processor path for campaign shards",
-  "updated_at": "2026-08-17T19:16:23.305521412Z"
+  "updated_at": "2026-10-01T22:42:01.515092075Z"
 }

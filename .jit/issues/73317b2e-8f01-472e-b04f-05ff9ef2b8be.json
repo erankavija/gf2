@@ -32,11 +32,11 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-02",
-    "cites:HKS2026"
+    "satisfies:b8206228/REQ-02",
+    "cites:@/citation/HKS2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Standing acceptance tests for campaign cells",
-  "updated_at": "2026-08-30T12:05:59.820551771Z"
+  "updated_at": "2026-10-01T22:41:36.645725374Z"
 }

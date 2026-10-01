@@ -31,10 +31,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Determinant companion evaluated on the campaign's matrices",
-  "updated_at": "2026-08-17T18:41:51.868005449Z"
+  "updated_at": "2026-10-01T22:41:27.470174796Z"
 }

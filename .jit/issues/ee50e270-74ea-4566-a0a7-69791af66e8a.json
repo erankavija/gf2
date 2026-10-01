@@ -18,11 +18,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-05",
-    "satisfies:REQ-17"
+    "satisfies:fa787f85/REQ-05",
+    "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite the SIMD kernel and statistics crate READMEs",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:42:03.100038563Z"
 }

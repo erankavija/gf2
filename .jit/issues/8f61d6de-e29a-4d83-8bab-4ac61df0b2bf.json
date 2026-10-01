@@ -20,12 +20,12 @@
     "story:documentation-contract",
     "component:tooling",
     "type:task",
-    "satisfies:REQ-36",
-    "satisfies:REQ-37",
-    "satisfies:REQ-40"
+    "satisfies:3f29e945/REQ-36",
+    "satisfies:3f29e945/REQ-37",
+    "satisfies:3f29e945/REQ-40"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Add the docs-mechanical gate with self-tests",
-  "updated_at": "2026-10-01T11:41:05.334728870Z"
+  "updated_at": "2026-10-01T22:41:42.643624572Z"
 }

@@ -39,13 +39,13 @@
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
     "component:gf2-algebra",
-    "cites:Scheinerman2024",
-    "satisfies:REQ-02",
-    "satisfies:REQ-05",
-    "satisfies:REQ-08"
+    "satisfies:0de41c82/REQ-02",
+    "satisfies:0de41c82/REQ-05",
+    "satisfies:0de41c82/REQ-08",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "normal",
   "state": "done",
   "title": "F_5 three-plane accumulator prototype beside the byte-arithmetic control",
-  "updated_at": "2026-08-10T09:03:56.109340709Z"
+  "updated_at": "2026-10-01T22:41:30.957512654Z"
 }

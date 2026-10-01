@@ -18,11 +18,11 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-06",
-    "cites:GGK2025"
+    "satisfies:b8206228/REQ-06",
+    "cites:@/citation/GGK2025"
   ],
   "priority": "low",
   "state": "backlog",
   "title": "Exact permanental-rank probability beyond direct sampling",
-  "updated_at": "2026-08-24T08:20:12.428984674Z"
+  "updated_at": "2026-10-01T22:41:49.124937534Z"
 }

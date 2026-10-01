@@ -23,11 +23,11 @@
     "satisfies:REQ-03",
     "satisfies:REQ-05",
     "satisfies:REQ-06",
-    "cites:AlbrechtBard2026",
-    "resolution:merged-into-50f0bd42"
+    "resolution:merged-into-50f0bd42",
+    "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "normal",
   "state": "rejected",
   "title": "Measure the M4RI dense comparison",
-  "updated_at": "2026-09-16T23:28:29.558586639Z"
+  "updated_at": "2026-10-01T22:41:26.535544944Z"
 }

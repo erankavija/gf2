@@ -32,10 +32,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03"
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Cut the bit-backend selector over to profile-driven selection",
-  "updated_at": "2026-08-19T23:30:19.232740858Z"
+  "updated_at": "2026-10-01T22:41:12.463706469Z"
 }

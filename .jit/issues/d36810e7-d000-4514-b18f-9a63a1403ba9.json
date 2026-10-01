@@ -37,10 +37,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-03"
+    "satisfies:b8206228/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Source identity and integrity for published datasets",
-  "updated_at": "2026-08-09T22:49:48.169271792Z"
+  "updated_at": "2026-10-01T22:41:57.158728683Z"
 }

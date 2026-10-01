@@ -38,11 +38,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Extend the tuning schema with the seam fields",
-  "updated_at": "2026-08-23T15:53:55.489126626Z"
+  "updated_at": "2026-10-01T22:42:03.528741983Z"
 }

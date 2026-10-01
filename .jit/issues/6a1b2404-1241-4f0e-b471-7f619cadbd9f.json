@@ -38,10 +38,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-07"
+    "satisfies:ae03bcd0/REQ-07"
   ],
   "priority": "high",
   "state": "done",
   "title": "General systematic BCH encoding across supported base fields",
-  "updated_at": "2026-09-01T15:11:25.022651749Z"
+  "updated_at": "2026-10-01T22:41:34.799166247Z"
 }

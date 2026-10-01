@@ -339,14 +339,14 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-coding",
     "component:gf2-core",
-    "cites:Cassagne2019",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "cites:@/citation/Cassagne2019"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Establish compatible shift and coding-permutation baselines",
-  "updated_at": "2026-09-10T22:14:35.941839588Z"
+  "updated_at": "2026-10-01T22:42:02.806147884Z"
 }

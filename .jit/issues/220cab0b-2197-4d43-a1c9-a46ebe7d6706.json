@@ -51,10 +51,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03"
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Design the versioned tuning-profile format and selection integration",
-  "updated_at": "2026-08-19T05:20:31.946750773Z"
+  "updated_at": "2026-10-01T22:41:18.258136223Z"
 }

@@ -26,13 +26,13 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-17",
-    "satisfies:REQ-01",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06"
+    "satisfies:fa787f85/REQ-17",
+    "satisfies:fa787f85/REQ-01",
+    "satisfies:fa787f85/REQ-05",
+    "satisfies:fa787f85/REQ-06"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Audit the permanent surface against the docs invariants",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:42:07.263259738Z"
 }

@@ -21,10 +21,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-11"
+    "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Move the addendum fixture entries under the zen3 epic dir",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:36.221407118Z"
 }

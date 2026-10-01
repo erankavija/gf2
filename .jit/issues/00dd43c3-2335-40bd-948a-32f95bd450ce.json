@@ -387,12 +387,12 @@
     "story:zen3-shifts-and-permutations",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "satisfies:REQ-07",
-    "satisfies:REQ-11"
+    "satisfies:c04dd4ac/REQ-01",
+    "satisfies:c04dd4ac/REQ-07",
+    "satisfies:c04dd4ac/REQ-11"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Confirm the BMI2 residual shift route against the scalar funnel",
-  "updated_at": "2026-09-27T23:23:36.311083650Z"
+  "updated_at": "2026-10-01T22:41:10.027756854Z"
 }

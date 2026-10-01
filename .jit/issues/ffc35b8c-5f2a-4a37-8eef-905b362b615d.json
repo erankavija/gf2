@@ -21,10 +21,10 @@
     "epic:documentation-overhaul",
     "component:docs",
     "story:source-tersification-sweep",
-    "satisfies:REQ-17"
+    "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Workspace source-comment tersification sweep",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:42:08.048557947Z"
 }

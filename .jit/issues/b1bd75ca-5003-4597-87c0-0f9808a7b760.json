@@ -64,10 +64,10 @@
     "epic:general-bch",
     "component:gf2-core",
     "component:gf2-coding",
-    "satisfies:REQ-12"
+    "satisfies:ae03bcd0/REQ-12"
   ],
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-10-01T07:07:53.945662942Z"
+  "updated_at": "2026-10-01T22:41:49.566409316Z"
 }

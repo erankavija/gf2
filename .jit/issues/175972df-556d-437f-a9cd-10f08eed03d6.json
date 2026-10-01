@@ -37,11 +37,11 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "satisfies:REQ-04",
-    "cites:GGK2025"
+    "satisfies:b8206228/REQ-04",
+    "cites:@/citation/GGK2025"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Permanental rank-deficiency predicate with exact validation",
-  "updated_at": "2026-08-09T22:17:29.523067921Z"
+  "updated_at": "2026-10-01T22:41:14.410994869Z"
 }

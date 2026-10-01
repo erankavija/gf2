@@ -37,11 +37,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Cut the PLE selectors over to the tuning profile",
-  "updated_at": "2026-08-23T18:08:46.633705865Z"
+  "updated_at": "2026-10-01T22:42:00.567553001Z"
 }

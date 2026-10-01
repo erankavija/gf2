@@ -237,14 +237,14 @@
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
     "component:gf2-algebra",
-    "cites:Scheinerman2024",
-    "satisfies:REQ-03",
-    "satisfies:REQ-07",
-    "satisfies:REQ-09",
-    "satisfies:REQ-10"
+    "satisfies:0de41c82/REQ-03",
+    "satisfies:0de41c82/REQ-07",
+    "satisfies:0de41c82/REQ-09",
+    "satisfies:0de41c82/REQ-10",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "high",
   "state": "done",
   "title": "F_5 preregistered receipt campaign",
-  "updated_at": "2026-08-15T09:28:30.838390714Z"
+  "updated_at": "2026-10-01T22:41:43.257396774Z"
 }

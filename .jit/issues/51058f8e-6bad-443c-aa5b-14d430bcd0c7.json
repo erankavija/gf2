@@ -89,11 +89,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Predeclare the across-build control arm for the post-cutover comparison",
-  "updated_at": "2026-08-19T21:27:32.212957671Z"
+  "updated_at": "2026-10-01T22:41:29.018297569Z"
 }

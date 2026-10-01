@@ -17,11 +17,11 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-02",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Add the required test prefix to the SIMD kernel module tests",
-  "updated_at": "2026-08-17T20:46:11.822602089Z"
+  "updated_at": "2026-10-01T22:42:07.880493050Z"
 }

@@ -46,10 +46,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Campaign driver scheduling and shard emission",
-  "updated_at": "2026-08-16T00:12:51.969502576Z"
+  "updated_at": "2026-10-01T22:41:25.607980581Z"
 }

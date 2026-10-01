@@ -28,11 +28,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Reduce the per-call cost of the bit-backend threshold read",
-  "updated_at": "2026-08-20T08:21:22.799239764Z"
+  "updated_at": "2026-10-01T22:41:54.284946748Z"
 }

@@ -37,11 +37,11 @@
   "labels": [
     "type:task",
     "epic:permanent-statistics",
-    "satisfies:REQ-03",
-    "cites:Scheinerman2024"
+    "satisfies:b8206228/REQ-03",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Curve and table generation pipeline",
-  "updated_at": "2026-08-10T11:08:33.104989504Z"
+  "updated_at": "2026-10-01T22:41:53.709538379Z"
 }

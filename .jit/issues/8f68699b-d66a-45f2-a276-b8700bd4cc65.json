@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-07"
+    "satisfies:ae03bcd0/REQ-07"
   ],
   "priority": "high",
   "state": "done",
   "title": "Allocation-free single, workspace batch, and parallel batch encoding",
-  "updated_at": "2026-09-01T18:54:24.728028742Z"
+  "updated_at": "2026-10-01T22:41:42.798121783Z"
 }

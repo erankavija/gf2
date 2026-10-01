@@ -55,11 +55,11 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "type:bug"
+    "type:bug",
+    "satisfies:1a379447/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Keep captured child diagnostics when the runner's request write fails",
-  "updated_at": "2026-09-16T18:50:09.044387732Z"
+  "updated_at": "2026-10-01T22:41:39.200799233Z"
 }

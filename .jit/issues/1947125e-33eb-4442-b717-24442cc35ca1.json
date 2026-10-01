@@ -32,10 +32,10 @@
     "epic:permanent-statistics",
     "component:gf2-sim",
     "component:gf2-algebra",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Shared behavioural conformance suite across campaign backends",
-  "updated_at": "2026-08-25T09:59:17.184825443Z"
+  "updated_at": "2026-10-01T22:41:15.595519015Z"
 }

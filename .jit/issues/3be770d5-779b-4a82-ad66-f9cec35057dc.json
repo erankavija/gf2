@@ -810,12 +810,12 @@
     "component:gf2-coding",
     "epic:competitive-benchmarking",
     "epic:zen3-cpu-performance",
-    "satisfies:REQ-01",
-    "satisfies:REQ-03",
-    "cites:Cassagne2019"
+    "satisfies:d77176e5/REQ-01",
+    "satisfies:1a379447/REQ-03",
+    "cites:@/citation/Cassagne2019"
   ],
   "priority": "high",
   "state": "done",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-09-12T17:34:28.321336973Z"
+  "updated_at": "2026-10-01T22:41:23.691953736Z"
 }

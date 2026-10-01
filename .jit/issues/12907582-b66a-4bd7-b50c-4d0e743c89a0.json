@@ -43,10 +43,10 @@
     "type:task",
     "component:docs",
     "epic:documentation-overhaul",
-    "satisfies:REQ-17"
+    "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-01T13:58:43.326303827Z"
+  "updated_at": "2026-10-01T22:41:13.361599796Z"
 }

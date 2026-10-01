@@ -19,12 +19,12 @@
     "component:gf2-core",
     "component:gf2-coding",
     "brackets:c7cfd37e",
-    "cites:Lch2014",
-    "cites:DiamondPosen2023",
-    "type:breakdown"
+    "type:breakdown",
+    "cites:@/citation/Lch2014",
+    "cites:@/citation/DiamondPosen2023"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "breakdown: Additive NTT over GF(2^m) for Reed–Solomon, proof-system, and PQC workloads",
-  "updated_at": "2026-08-18T18:54:19.124738962Z"
+  "updated_at": "2026-10-01T22:41:43.556686943Z"
 }

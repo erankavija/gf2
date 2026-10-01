@@ -16,12 +16,12 @@
   "labels": [
     "type:task",
     "epic:permanent-statistics",
-    "satisfies:REQ-05",
-    "cites:GGK2025",
-    "cites:HKS2026"
+    "satisfies:b8206228/REQ-05",
+    "cites:@/citation/GGK2025",
+    "cites:@/citation/HKS2026"
   ],
   "priority": "low",
   "state": "backlog",
   "title": "Convergence-shape model comparison for the deviation term",
-  "updated_at": "2026-08-23T22:39:06.776658343Z"
+  "updated_at": "2026-10-01T22:41:30.213888957Z"
 }

@@ -54,13 +54,13 @@
     "component:gf2-kernels-simd",
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "epic:zen3-cpu-performance",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "cites:IsaL2026",
-    "cites:AlbrechtBard2026"
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/IsaL2026",
+    "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-09-15T00:56:52.125884691Z"
+  "updated_at": "2026-10-01T22:41:17.822278833Z"
 }

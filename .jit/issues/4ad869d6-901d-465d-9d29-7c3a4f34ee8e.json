@@ -34,10 +34,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-15"
+    "satisfies:ae03bcd0/REQ-15"
   ],
   "priority": "high",
   "state": "done",
   "title": "Researcher-oriented rustdoc and runnable examples",
-  "updated_at": "2026-10-01T11:06:46.916887377Z"
+  "updated_at": "2026-10-01T22:41:27.633494377Z"
 }

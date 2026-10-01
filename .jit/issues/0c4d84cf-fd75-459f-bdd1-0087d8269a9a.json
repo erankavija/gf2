@@ -37,11 +37,11 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-06",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-06",
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Introduce field-generic block-code traits with binary specializations",
-  "updated_at": "2026-09-01T07:45:08.064642842Z"
+  "updated_at": "2026-10-01T22:41:12.159630133Z"
 }

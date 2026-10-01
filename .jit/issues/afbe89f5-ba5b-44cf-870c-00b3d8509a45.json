@@ -17,12 +17,12 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-sim",
-    "satisfies:REQ-01",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-01",
+    "satisfies:b4b4b9ee/REQ-03",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Share the mean/sigma and Es/N0 conversion helpers across gf2-sim binaries",
-  "updated_at": "2026-08-07T12:22:09.483114622Z"
+  "updated_at": "2026-10-01T22:41:48.984054978Z"
 }

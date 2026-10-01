@@ -609,16 +609,16 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-core",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "cites:GfTwoX2026",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/GfTwoX2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
-  "updated_at": "2026-09-15T00:40:07.609840453Z"
+  "updated_at": "2026-10-01T22:41:30.068465316Z"
 }

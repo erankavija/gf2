@@ -37,11 +37,11 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:REQ-04",
-    "cites:Yue2022"
+    "satisfies:b7157be6/REQ-04",
+    "cites:@/citation/Yue2022"
   ],
   "priority": "normal",
   "state": "done",
   "title": "OSD pattern segmentation policy",
-  "updated_at": "2026-08-25T20:01:45.159942629Z"
+  "updated_at": "2026-10-01T22:41:49.865580174Z"
 }

@@ -40,11 +40,11 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04"
+    "satisfies:ae03bcd0/REQ-03",
+    "satisfies:ae03bcd0/REQ-04"
   ],
   "priority": "high",
   "state": "done",
   "title": "Implement BchSpec and the consecutive-root construction path",
-  "updated_at": "2026-09-01T13:13:01.088235997Z"
+  "updated_at": "2026-10-01T22:41:18.662964891Z"
 }

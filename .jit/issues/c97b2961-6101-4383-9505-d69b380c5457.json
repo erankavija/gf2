@@ -37,12 +37,12 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:REQ-01",
-    "cites:Fossorier1995",
-    "cites:Yue2022"
+    "satisfies:cce5da8c/REQ-01",
+    "cites:@/citation/Fossorier1995",
+    "cites:@/citation/Yue2022"
   ],
   "priority": "high",
   "state": "done",
   "title": "Generator-matrix OSD decoder",
-  "updated_at": "2026-08-25T17:43:34.690301887Z"
+  "updated_at": "2026-10-01T22:41:55.500841598Z"
 }

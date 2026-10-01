@@ -18,10 +18,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:gf2-sim",
-    "satisfies:REQ-11"
+    "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:13.214445406Z"
 }

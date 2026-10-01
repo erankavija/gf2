@@ -29,10 +29,10 @@
     "type:bug",
     "epic:finite-blocklength-bounds",
     "component:gf2-coding",
-    "cites:PPV2010"
+    "cites:@/citation/PPV2010"
   ],
   "priority": "high",
   "state": "done",
   "title": "BPSK capacity helper misreads Eb/N0; Shannon limit biased off rate 1/2",
-  "updated_at": "2026-09-30T22:09:39.591022788Z"
+  "updated_at": "2026-10-01T22:41:21.819636685Z"
 }

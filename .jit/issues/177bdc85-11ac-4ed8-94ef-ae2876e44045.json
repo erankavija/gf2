@@ -32,10 +32,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-07"
+    "satisfies:ae03bcd0/REQ-07"
   ],
   "priority": "high",
   "state": "done",
   "title": "Profile-driven dispatch among equivalent batch-encoding algorithms",
-  "updated_at": "2026-09-01T20:56:10.320863788Z"
+  "updated_at": "2026-10-01T22:41:14.563367518Z"
 }

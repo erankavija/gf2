@@ -51,10 +51,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-01"
+    "satisfies:ae03bcd0/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Design the relative field-extension abstraction and field identity",
-  "updated_at": "2026-09-01T11:06:49.389899948Z"
+  "updated_at": "2026-10-01T22:41:48.242817625Z"
 }

@@ -705,21 +705,21 @@
   },
   "id": "50f0bd42-56d8-4905-a0d5-409b7aa32ba7",
   "labels": [
-    "cites:AlbrechtBard2026",
     "component:benchmarks",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:zen3-cpu-performance",
-    "satisfies:REQ-02",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
-    "type:task"
+    "type:task",
+    "satisfies:2037941f/REQ-02",
+    "satisfies:2037941f/REQ-03",
+    "satisfies:2037941f/REQ-04",
+    "satisfies:2037941f/REQ-05",
+    "satisfies:2037941f/REQ-06",
+    "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-09-28T06:41:49.022867440Z"
+  "updated_at": "2026-10-01T22:41:28.863655427Z"
 }

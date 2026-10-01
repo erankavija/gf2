@@ -17,12 +17,12 @@
     "epic:additive-ntt",
     "component:gf2-core",
     "component:gf2-coding",
-    "cites:Lch2014",
-    "cites:DiamondPosen2023",
-    "type:planning"
+    "type:planning",
+    "cites:@/citation/Lch2014",
+    "cites:@/citation/DiamondPosen2023"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Plan the additive-NTT breakdown",
-  "updated_at": "2026-08-18T18:56:10.249469521Z"
+  "updated_at": "2026-10-01T22:41:40.751522140Z"
 }

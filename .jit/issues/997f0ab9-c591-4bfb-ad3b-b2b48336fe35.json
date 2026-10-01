@@ -25,10 +25,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-16"
+    "satisfies:ae03bcd0/REQ-16"
   ],
   "priority": "high",
   "state": "done",
   "title": "Create the tracked follow-up issues against the canonical interfaces",
-  "updated_at": "2026-09-01T06:37:15.683567094Z"
+  "updated_at": "2026-10-01T22:41:45.133721157Z"
 }

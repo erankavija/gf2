@@ -203,12 +203,12 @@
     "type:simulation",
     "epic:osd",
     "component:gf2-sim",
-    "satisfies:REQ-02",
-    "cites:Fossorier1995",
-    "cites:Fossorier1994"
+    "satisfies:b7157be6/REQ-02",
+    "cites:@/citation/Fossorier1995",
+    "cites:@/citation/Fossorier1994"
   ],
   "priority": "high",
   "state": "done",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-08-27T16:39:09.398360501Z"
+  "updated_at": "2026-10-01T22:41:56.404091375Z"
 }

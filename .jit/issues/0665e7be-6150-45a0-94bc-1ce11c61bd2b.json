@@ -16,11 +16,11 @@
   "labels": [
     "type:task",
     "epic:permanent-statistics",
-    "satisfies:REQ-05",
-    "cites:HKS2026"
+    "satisfies:b8206228/REQ-05",
+    "cites:@/citation/HKS2026"
   ],
   "priority": "low",
   "state": "backlog",
   "title": "Permanental against determinantal zero-fraction comparison figure",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-10-01T22:41:11.263039253Z"
 }

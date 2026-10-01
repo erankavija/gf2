@@ -14,10 +14,10 @@
   "labels": [
     "type:task",
     "component:gf2-sim",
-    "cites:Fossorier1994"
+    "cites:@/citation/Fossorier1994"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Reference dataset does not record what the Fossorier1994 union-bound rows bound",
-  "updated_at": "2026-08-27T16:09:21.206362235Z"
+  "updated_at": "2026-10-01T22:41:46.518448929Z"
 }

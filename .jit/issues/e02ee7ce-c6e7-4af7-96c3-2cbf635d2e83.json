@@ -45,10 +45,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-03"
+    "satisfies:0de41c82/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Per-phase timing columns in the harness cell record",
-  "updated_at": "2026-08-10T03:31:32.643703049Z"
+  "updated_at": "2026-10-01T22:41:59.467592648Z"
 }

@@ -44,13 +44,13 @@
   "labels": [
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "satisfies:REQ-04",
     "type:task",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:2037941f/REQ-01",
+    "satisfies:2037941f/REQ-04"
   ],
   "priority": "high",
   "state": "done",
   "title": "Verify the logical producing-input closure before a timed run",
-  "updated_at": "2026-09-17T21:30:56.794125487Z"
+  "updated_at": "2026-10-01T22:41:11.859623570Z"
 }

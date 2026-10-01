@@ -37,10 +37,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-stats",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
-  "updated_at": "2026-08-09T20:42:49.568932743Z"
+  "updated_at": "2026-10-01T22:41:34.968745653Z"
 }

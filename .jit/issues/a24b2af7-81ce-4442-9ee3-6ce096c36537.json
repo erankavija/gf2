@@ -17,11 +17,11 @@
   "labels": [
     "epic:documentation-overhaul",
     "component:tooling",
-    "satisfies:REQ-13",
-    "type:task"
+    "type:task",
+    "satisfies:fa787f85/REQ-13"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-01T10:04:07.784790157Z"
+  "updated_at": "2026-10-01T22:41:46.656481879Z"
 }

@@ -37,10 +37,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "cites:Scheinerman2024"
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-08-10T03:40:17.945570039Z"
+  "updated_at": "2026-10-01T22:41:58.672910146Z"
 }

@@ -118,15 +118,15 @@
     "component:benchmarks",
     "component:gf2-core",
     "epic:zen3-cpu-performance",
-    "satisfies:REQ-02",
-    "satisfies:REQ-04",
-    "satisfies:REQ-05",
-    "satisfies:REQ-06",
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
-    "type:task"
+    "type:task",
+    "satisfies:2037941f/REQ-02",
+    "satisfies:2037941f/REQ-04",
+    "satisfies:2037941f/REQ-05",
+    "satisfies:2037941f/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
-  "updated_at": "2026-09-27T20:43:47.111917764Z"
+  "updated_at": "2026-10-01T22:41:46.377194072Z"
 }

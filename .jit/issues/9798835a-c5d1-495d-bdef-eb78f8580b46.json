@@ -39,10 +39,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-algebra",
-    "satisfies:REQ-03"
+    "satisfies:0de41c82/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Registry-derived schedule adapter for prototype candidates",
-  "updated_at": "2026-08-10T05:08:50.025100977Z"
+  "updated_at": "2026-10-01T22:41:44.699258385Z"
 }

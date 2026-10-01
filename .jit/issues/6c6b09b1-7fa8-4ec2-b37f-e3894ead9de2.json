@@ -914,15 +914,15 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-core",
-    "cites:Mfourrie2026",
-    "cites:IsaL2026",
-    "cites:GfComplete2026",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "cites:@/citation/Mfourrie2026",
+    "cites:@/citation/IsaL2026",
+    "cites:@/citation/GfComplete2026"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Establish byte-field vector and matrix comparison arms",
-  "updated_at": "2026-09-13T07:07:46.094381065Z"
+  "updated_at": "2026-10-01T22:41:35.228047409Z"
 }

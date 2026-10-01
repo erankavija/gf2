@@ -22,10 +22,10 @@
     "epic:documentation-overhaul",
     "component:docs",
     "story:source-tersification-sweep",
-    "satisfies:REQ-27"
+    "satisfies:ffc35b8c/REQ-27"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Record the pre-sweep comment census",
-  "updated_at": "2026-10-01T14:43:34.518274058Z"
+  "updated_at": "2026-10-01T22:41:33.490265888Z"
 }

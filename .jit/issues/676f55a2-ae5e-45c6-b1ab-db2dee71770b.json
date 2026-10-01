@@ -84,11 +84,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Bake the bit-backend threshold as a compile-time constant from the committed profile",
-  "updated_at": "2026-08-21T09:19:01.587593789Z"
+  "updated_at": "2026-10-01T22:41:34.193428189Z"
 }

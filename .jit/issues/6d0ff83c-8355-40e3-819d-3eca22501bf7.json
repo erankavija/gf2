@@ -38,11 +38,11 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-algebra",
-    "satisfies:REQ-02",
-    "satisfies:REQ-10"
+    "satisfies:0de41c82/REQ-02",
+    "satisfies:0de41c82/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Deterministic fixture corpus with CPU-oracle equivalence checking",
-  "updated_at": "2026-08-10T04:07:29.346073026Z"
+  "updated_at": "2026-10-01T22:41:35.502547909Z"
 }

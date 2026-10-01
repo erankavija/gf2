@@ -34,13 +34,13 @@
     "component:gf2-kernels-simd",
     "satisfies:REQ-02",
     "satisfies:REQ-06",
-    "cites:Cassagne2019",
     "story:zen3-shifts-and-permutations",
     "type:breakdown",
-    "brackets:c04dd4ac"
+    "brackets:c04dd4ac",
+    "cites:@/citation/Cassagne2019"
   ],
   "priority": "normal",
   "state": "done",
   "title": "breakdown: Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-09-18T14:16:26.942803809Z"
+  "updated_at": "2026-10-01T22:41:14.270501895Z"
 }

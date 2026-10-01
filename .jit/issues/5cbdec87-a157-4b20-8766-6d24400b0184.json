@@ -37,10 +37,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Migrate gf2-kernels-hip BCH test consumers",
-  "updated_at": "2026-09-01T19:55:58.854746140Z"
+  "updated_at": "2026-10-01T22:41:32.637323131Z"
 }

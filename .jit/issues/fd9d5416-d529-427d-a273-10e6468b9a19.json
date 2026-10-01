@@ -110,11 +110,11 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-13",
-    "satisfies:REQ-14"
+    "satisfies:ae03bcd0/REQ-13",
+    "satisfies:ae03bcd0/REQ-14"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
-  "updated_at": "2026-10-01T11:43:17.750434226Z"
+  "updated_at": "2026-10-01T22:42:07.580606138Z"
 }

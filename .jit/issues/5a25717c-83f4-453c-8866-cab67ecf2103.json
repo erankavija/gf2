@@ -18,10 +18,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:tooling",
-    "satisfies:REQ-11"
+    "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Locate receipt-pinned campaign inputs by content identity",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:32.118771780Z"
 }

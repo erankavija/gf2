@@ -448,14 +448,14 @@
     "epic:zen3-cpu-performance",
     "component:benchmarks",
     "component:gf2-coding",
-    "satisfies:REQ-01",
-    "cites:Cassagne2019",
-    "cites:Srsran2026",
-    "cites:ThreeGpp2017",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/Srsran2026",
+    "cites:@/citation/ThreeGpp2017"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Establish 5G NR rate-matched encoder baselines",
-  "updated_at": "2026-09-13T08:40:59.662999180Z"
+  "updated_at": "2026-10-01T22:41:13.510879459Z"
 }

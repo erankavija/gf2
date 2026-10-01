@@ -120,13 +120,13 @@
     "story:zen3-shifts-and-permutations",
     "component:gf2-core",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-07",
-    "satisfies:REQ-08",
-    "satisfies:REQ-09",
-    "satisfies:REQ-11"
+    "satisfies:c04dd4ac/REQ-07",
+    "satisfies:c04dd4ac/REQ-08",
+    "satisfies:c04dd4ac/REQ-09",
+    "satisfies:c04dd4ac/REQ-11"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
-  "updated_at": "2026-09-18T17:03:21.575276835Z"
+  "updated_at": "2026-10-01T22:42:06.063763759Z"
 }

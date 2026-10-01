@@ -381,15 +381,15 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-core",
-    "cites:AlbrechtBard2026",
-    "cites:Bitshuffle2026",
-    "cites:IsaL2026",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "cites:@/citation/AlbrechtBard2026",
+    "cites:@/citation/Bitshuffle2026",
+    "cites:@/citation/IsaL2026"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-09-12T18:00:33.353010894Z"
+  "updated_at": "2026-10-01T22:41:36.075887277Z"
 }

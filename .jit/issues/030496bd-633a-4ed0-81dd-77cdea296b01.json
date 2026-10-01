@@ -42,11 +42,11 @@
     "epic:documentation-overhaul",
     "component:docs",
     "story:source-tersification-sweep",
-    "satisfies:REQ-24",
-    "satisfies:REQ-27"
+    "satisfies:ffc35b8c/REQ-24",
+    "satisfies:ffc35b8c/REQ-27"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Close the sweep with the after census and justification list",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:10.351163698Z"
 }

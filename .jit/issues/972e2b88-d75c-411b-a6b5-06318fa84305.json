@@ -101,11 +101,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Predeclare the layout-attribution amendment to the selector non-regression verdict",
-  "updated_at": "2026-08-20T20:47:49.554249607Z"
+  "updated_at": "2026-10-01T22:41:44.417465623Z"
 }

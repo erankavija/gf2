@@ -666,16 +666,16 @@
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "component:gf2-coding",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "cites:AlbrechtBard2026",
-    "cites:Bitshuffle2026",
-    "cites:Cassagne2019",
-    "cites:Djelic2011",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/AlbrechtBard2026",
+    "cites:@/citation/Bitshuffle2026",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/Djelic2011"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Optimize bit transpose and bitslice conversion",
-  "updated_at": "2026-09-13T18:21:20.570758139Z"
+  "updated_at": "2026-10-01T22:41:17.528409904Z"
 }

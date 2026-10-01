@@ -758,10 +758,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04"
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-08-22T20:02:21.163779662Z"
+  "updated_at": "2026-10-01T22:41:28.712261093Z"
 }

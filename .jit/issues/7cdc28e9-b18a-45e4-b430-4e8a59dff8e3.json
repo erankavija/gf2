@@ -64,10 +64,10 @@
     "type:bug",
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-05"
+    "satisfies:1a379447/REQ-05"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Skip non-benchmark receipts in the receipt re-evaluation checker",
-  "updated_at": "2026-09-16T18:50:34.055796937Z"
+  "updated_at": "2026-10-01T22:41:38.184748957Z"
 }

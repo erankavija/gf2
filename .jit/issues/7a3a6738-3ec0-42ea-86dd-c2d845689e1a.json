@@ -67,11 +67,11 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06"
+    "satisfies:ae03bcd0/REQ-03",
+    "satisfies:ae03bcd0/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Design BchSpec, the code-trait generalization, and the compatibility boundary",
-  "updated_at": "2026-09-02T05:37:58.718253780Z"
+  "updated_at": "2026-10-01T22:41:37.603697947Z"
 }

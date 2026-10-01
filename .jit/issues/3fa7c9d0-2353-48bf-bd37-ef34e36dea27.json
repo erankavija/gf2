@@ -31,11 +31,11 @@
     "epic:field-capability-dispatch",
     "component:gf2-core",
     "component:gf2-algebra",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Design crate-owned typed tuning sections",
-  "updated_at": "2026-08-25T20:15:23.312935784Z"
+  "updated_at": "2026-10-01T22:41:25.000404003Z"
 }

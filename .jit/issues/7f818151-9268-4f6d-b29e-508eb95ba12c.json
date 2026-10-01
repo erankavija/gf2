@@ -25,10 +25,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-algebra",
-    "satisfies:REQ-02"
+    "satisfies:6dc81018/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Retire the packed-trait parallel declarations in the research stub",
-  "updated_at": "2026-08-19T05:10:31.962367344Z"
+  "updated_at": "2026-10-01T22:41:38.918225067Z"
 }

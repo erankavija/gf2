@@ -17,11 +17,11 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-01",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-01",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Replace raw HIP FFI in test helpers with the crate's RAII buffers",
-  "updated_at": "2026-08-07T12:22:09.483114622Z"
+  "updated_at": "2026-10-01T22:41:36.352435929Z"
 }

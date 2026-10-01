@@ -20,11 +20,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-13",
-    "satisfies:REQ-12"
+    "satisfies:fa787f85/REQ-13",
+    "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-01T14:43:32.579585775Z"
+  "updated_at": "2026-10-01T22:41:32.357870443Z"
 }

@@ -27,12 +27,12 @@
     "type:epic",
     "epic:finite-blocklength-bounds",
     "component:gf2-coding",
-    "cites:PPV2010",
-    "cites:Yue2022",
-    "cites:LiZhang2026"
+    "cites:@/citation/PPV2010",
+    "cites:@/citation/Yue2022",
+    "cites:@/citation/LiZhang2026"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Finite-blocklength bounds for short-code benchmarking",
-  "updated_at": "2026-09-30T22:09:39.906266289Z"
+  "updated_at": "2026-10-01T22:41:48.549127353Z"
 }

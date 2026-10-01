@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-02"
+    "satisfies:ae03bcd0/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Automatic modulus selection: Conway registry plus deterministic verified search",
-  "updated_at": "2026-09-01T10:45:27.779568666Z"
+  "updated_at": "2026-10-01T22:42:06.368635909Z"
 }

@@ -37,11 +37,11 @@
     "type:task",
     "epic:osd",
     "component:gf2-sim",
-    "satisfies:REQ-02",
-    "cites:Fossorier1995"
+    "satisfies:b7157be6/REQ-02",
+    "cites:@/citation/Fossorier1995"
   ],
   "priority": "high",
   "state": "done",
   "title": "Reusable OSD campaign protocol",
-  "updated_at": "2026-08-25T13:35:55.362702370Z"
+  "updated_at": "2026-10-01T22:41:53.132519392Z"
 }

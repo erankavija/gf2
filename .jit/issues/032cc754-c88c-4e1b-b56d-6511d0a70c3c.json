@@ -32,10 +32,10 @@
     "epic:permanent-statistics",
     "component:gf2-sim",
     "component:gf2-algebra",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Processor backend selection for campaign cells",
-  "updated_at": "2026-08-20T12:45:10.694948202Z"
+  "updated_at": "2026-10-01T22:41:10.506657485Z"
 }

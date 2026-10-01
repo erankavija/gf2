@@ -44,12 +44,12 @@
     "story:documentation-contract",
     "component:docs",
     "type:task",
-    "satisfies:REQ-31",
-    "satisfies:REQ-32",
-    "satisfies:REQ-33"
+    "satisfies:3f29e945/REQ-31",
+    "satisfies:3f29e945/REQ-32",
+    "satisfies:3f29e945/REQ-33"
   ],
   "priority": "high",
   "state": "done",
   "title": "Register and project the documentation invariants",
-  "updated_at": "2026-10-01T19:32:34.885422470Z"
+  "updated_at": "2026-10-01T22:41:26.867884868Z"
 }

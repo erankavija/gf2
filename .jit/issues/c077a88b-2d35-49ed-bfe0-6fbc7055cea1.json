@@ -214,16 +214,16 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-coding",
-    "cites:Cassagne2019",
-    "cites:Srsran2026",
-    "cites:Xdsopl2026",
-    "cites:OpenAirInterface2026",
-    "type:task"
+    "type:task",
+    "satisfies:d77176e5/REQ-01",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/Srsran2026",
+    "cites:@/citation/Xdsopl2026",
+    "cites:@/citation/OpenAirInterface2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Establish compatible LDPC decoder benchmark arms",
-  "updated_at": "2026-09-10T16:21:47.776765510Z"
+  "updated_at": "2026-10-01T22:41:53.566196410Z"
 }

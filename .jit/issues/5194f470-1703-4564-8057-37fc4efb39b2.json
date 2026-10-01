@@ -37,10 +37,10 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:REQ-04"
+    "satisfies:b7157be6/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "OSD discard thresholds",
-  "updated_at": "2026-08-26T03:08:24.346634193Z"
+  "updated_at": "2026-10-01T22:41:29.461581232Z"
 }

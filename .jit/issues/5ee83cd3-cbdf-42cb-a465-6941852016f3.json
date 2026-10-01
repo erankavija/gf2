@@ -34,10 +34,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Migrate the component-code BCH consumers to the canonical model",
-  "updated_at": "2026-10-01T07:13:14.534758400Z"
+  "updated_at": "2026-10-01T22:41:33.064098781Z"
 }

@@ -70,10 +70,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03"
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Implement the tuning-profile type, loader, and conservative defaults",
-  "updated_at": "2026-08-19T17:11:03.866929905Z"
+  "updated_at": "2026-10-01T22:42:04.571392508Z"
 }

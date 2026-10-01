@@ -31,11 +31,11 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-stats",
-    "satisfies:REQ-02",
-    "cites:HKS2026"
+    "satisfies:b8206228/REQ-02",
+    "cites:@/citation/HKS2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Preregistered exact binomial tests for campaign cells",
-  "updated_at": "2026-08-10T11:38:03.348183944Z"
+  "updated_at": "2026-10-01T22:41:25.301250481Z"
 }

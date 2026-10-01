@@ -52,11 +52,11 @@
     "epic:field-capability-dispatch",
     "component:gf2-core",
     "component:gf2-algebra",
-    "satisfies:REQ-01",
-    "satisfies:REQ-02"
+    "satisfies:6dc81018/REQ-01",
+    "satisfies:6dc81018/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Author the field-capability classification",
-  "updated_at": "2026-08-18T20:54:10.044592120Z"
+  "updated_at": "2026-10-01T22:41:19.851925152Z"
 }

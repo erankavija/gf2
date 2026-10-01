@@ -31,11 +31,11 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-03",
-    "satisfies:REQ-04"
+    "satisfies:ae03bcd0/REQ-03",
+    "satisfies:ae03bcd0/REQ-04"
   ],
   "priority": "high",
   "state": "done",
   "title": "Construction from explicitly supplied generator polynomials",
-  "updated_at": "2026-09-01T16:39:15.270751548Z"
+  "updated_at": "2026-10-01T22:41:15.137111498Z"
 }

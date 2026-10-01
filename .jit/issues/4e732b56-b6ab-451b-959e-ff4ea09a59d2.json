@@ -339,10 +339,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-13"
+    "satisfies:ae03bcd0/REQ-13"
   ],
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-09-03T05:37:01.291478011Z"
+  "updated_at": "2026-10-01T22:41:28.257817178Z"
 }

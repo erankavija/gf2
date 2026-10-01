@@ -22,11 +22,11 @@
     "type:simulation",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-03",
-    "cites:HKS2026"
+    "satisfies:b8206228/REQ-03",
+    "cites:@/citation/HKS2026"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Campaign arm for $q = 5$",
-  "updated_at": "2026-08-30T12:24:21.288238874Z"
+  "updated_at": "2026-10-01T22:41:17.212629343Z"
 }

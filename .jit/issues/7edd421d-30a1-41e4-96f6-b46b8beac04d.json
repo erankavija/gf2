@@ -38,10 +38,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-03"
+    "satisfies:0de41c82/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "HIP event timing API for device-side kernel spans",
-  "updated_at": "2026-08-10T01:13:37.805877400Z"
+  "updated_at": "2026-10-01T22:41:38.778549008Z"
 }

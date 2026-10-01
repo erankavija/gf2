@@ -37,11 +37,11 @@
     "type:bug",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-07",
-    "satisfies:REQ-08"
+    "satisfies:ae03bcd0/REQ-07",
+    "satisfies:ae03bcd0/REQ-08"
   ],
   "priority": "high",
   "state": "done",
   "title": "Canonical BCH matrices use the systematic user layout",
-  "updated_at": "2026-09-02T17:28:09.432778910Z"
+  "updated_at": "2026-10-01T22:41:26.054899614Z"
 }

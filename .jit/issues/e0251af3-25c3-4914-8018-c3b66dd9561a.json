@@ -45,11 +45,11 @@
     "type:simulation",
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "satisfies:REQ-04",
-    "cites:GGK2025"
+    "satisfies:b8206228/REQ-04",
+    "cites:@/citation/GGK2025"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Observable-event rate estimates for permanental rank deficiency",
-  "updated_at": "2026-08-13T17:32:22.009736824Z"
+  "updated_at": "2026-10-01T22:41:59.314626075Z"
 }

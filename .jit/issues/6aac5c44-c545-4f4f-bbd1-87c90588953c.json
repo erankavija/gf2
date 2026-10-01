@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-01"
+    "satisfies:ae03bcd0/REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Minimal polynomials of extension elements over an arbitrary base field",
-  "updated_at": "2026-09-01T09:35:17.267397709Z"
+  "updated_at": "2026-10-01T22:41:34.886100232Z"
 }

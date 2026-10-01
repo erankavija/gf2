@@ -51,11 +51,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Remove the trait selectors and regenerate the proof surface",
-  "updated_at": "2026-09-01T02:26:40.930452768Z"
+  "updated_at": "2026-10-01T22:41:32.254012574Z"
 }

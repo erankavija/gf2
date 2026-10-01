@@ -88,11 +88,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the seam threshold fields",
-  "updated_at": "2026-10-01T05:42:37.602863065Z"
+  "updated_at": "2026-10-01T22:41:58.208097945Z"
 }

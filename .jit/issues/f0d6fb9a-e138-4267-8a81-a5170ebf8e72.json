@@ -36,12 +36,12 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:REQ-02",
-    "cites:Fossorier1995",
-    "cites:Yue2022"
+    "satisfies:b7157be6/REQ-02",
+    "cites:@/citation/Fossorier1995",
+    "cites:@/citation/Yue2022"
   ],
   "priority": "high",
   "state": "done",
   "title": "Named eBCH(128,64) reference factory",
-  "updated_at": "2026-08-25T17:08:58.957541945Z"
+  "updated_at": "2026-10-01T22:42:03.671035337Z"
 }

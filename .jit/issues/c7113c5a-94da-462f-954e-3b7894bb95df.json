@@ -260,13 +260,13 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-core",
-    "cites:GfTwoX2026",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "cites:@/citation/GfTwoX2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Establish equivalent polynomial multiplication baselines",
-  "updated_at": "2026-09-11T16:10:26.172000665Z"
+  "updated_at": "2026-10-01T22:41:54.593605919Z"
 }

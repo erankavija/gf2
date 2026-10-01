@@ -37,12 +37,12 @@
   "labels": [
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-05",
-    "satisfies:REQ-13",
-    "type:task"
+    "type:task",
+    "satisfies:ae03bcd0/REQ-05",
+    "satisfies:ae03bcd0/REQ-13"
   ],
   "priority": "high",
   "state": "done",
   "title": "Systematic fast path for the generic shortening wrapper",
-  "updated_at": "2026-09-03T04:52:29.134297881Z"
+  "updated_at": "2026-10-01T22:41:17.978599634Z"
 }

@@ -208,11 +208,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-08-22T16:24:32.105750922Z"
+  "updated_at": "2026-10-01T22:42:01.656160992Z"
 }

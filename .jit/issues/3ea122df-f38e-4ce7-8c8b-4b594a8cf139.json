@@ -103,15 +103,15 @@
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "satisfies:REQ-02",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:IsaL2026",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:2037941f/REQ-01",
+    "satisfies:2037941f/REQ-02",
+    "satisfies:2037941f/REQ-03",
+    "satisfies:2037941f/REQ-06",
+    "cites:@/citation/IsaL2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Freeze the logical-buffer measurement addendum",
-  "updated_at": "2026-09-16T21:58:38.073481250Z"
+  "updated_at": "2026-10-01T22:41:24.274825547Z"
 }

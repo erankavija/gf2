@@ -18,10 +18,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:gf2-sim",
-    "satisfies:REQ-11"
+    "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:20.574314190Z"
 }

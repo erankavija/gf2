@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-04"
+    "satisfies:ae03bcd0/REQ-04"
   ],
   "priority": "high",
   "state": "done",
   "title": "Implement the layered typed error surface for coding APIs",
-  "updated_at": "2026-09-01T07:03:22.433333555Z"
+  "updated_at": "2026-10-01T22:42:01.963348755Z"
 }

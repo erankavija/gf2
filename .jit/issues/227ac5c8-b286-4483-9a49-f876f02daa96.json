@@ -32,10 +32,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Migrate gf2-coding integration tests",
-  "updated_at": "2026-10-01T09:02:28.375321917Z"
+  "updated_at": "2026-10-01T22:41:18.399818283Z"
 }

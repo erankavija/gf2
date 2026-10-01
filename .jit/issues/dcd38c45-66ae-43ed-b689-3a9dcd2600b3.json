@@ -19,10 +19,10 @@
     "story:documentation-contract",
     "component:tooling",
     "type:task",
-    "satisfies:REQ-35"
+    "satisfies:3f29e945/REQ-35"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Ground the doc-review gate in the documentation invariants",
-  "updated_at": "2026-10-01T19:32:35.721954773Z"
+  "updated_at": "2026-10-01T22:41:58.380942568Z"
 }

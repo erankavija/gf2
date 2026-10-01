@@ -17,11 +17,11 @@
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-algebra",
-    "satisfies:REQ-01",
-    "satisfies:REQ-04"
+    "satisfies:b4b4b9ee/REQ-01",
+    "satisfies:b4b4b9ee/REQ-04"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Document Packed5Matrix equality and debug formatting",
-  "updated_at": "2026-08-07T12:22:17.477025157Z"
+  "updated_at": "2026-10-01T22:41:56.111424333Z"
 }

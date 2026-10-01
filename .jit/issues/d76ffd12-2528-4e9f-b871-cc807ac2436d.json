@@ -38,11 +38,11 @@
     "type:task",
     "epic:osd",
     "component:gf2-coding",
-    "satisfies:REQ-03",
-    "cites:Roffe2020"
+    "satisfies:b7157be6/REQ-03",
+    "cites:@/citation/Roffe2020"
   ],
   "priority": "high",
   "state": "done",
   "title": "Mutable BP fallback composition",
-  "updated_at": "2026-08-25T21:42:19.930161280Z"
+  "updated_at": "2026-10-01T22:41:57.757868354Z"
 }

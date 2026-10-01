@@ -442,13 +442,13 @@
     "epic:zen3-cpu-performance",
     "component:gf2-coding",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:Cassagne2019",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-03",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/Cassagne2019"
   ],
   "priority": "high",
   "state": "done",
   "title": "Remove allocation and repeated edge traversal from LDPC updates",
-  "updated_at": "2026-09-15T02:48:22.399648491Z"
+  "updated_at": "2026-10-01T22:41:11.560270191Z"
 }

@@ -298,11 +298,11 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:gf2-core",
-    "satisfies:REQ-02",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-09-13T12:00:43.204262357Z"
+  "updated_at": "2026-10-01T22:41:16.703425043Z"
 }

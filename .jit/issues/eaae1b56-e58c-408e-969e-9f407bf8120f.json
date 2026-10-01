@@ -220,11 +220,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-09-04T23:12:37.450546318Z"
+  "updated_at": "2026-10-01T22:42:01.065634019Z"
 }

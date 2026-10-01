@@ -196,12 +196,12 @@
     "type:epic",
     "epic:permanent-statistics",
     "component:gf2-algebra",
-    "cites:GGK2025",
-    "cites:HKS2026",
-    "cites:Scheinerman2024"
+    "cites:@/citation/GGK2025",
+    "cites:@/citation/HKS2026",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-31T19:01:31.028552436Z"
+  "updated_at": "2026-10-01T22:41:52.103756815Z"
 }

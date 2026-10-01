@@ -244,15 +244,15 @@
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-01",
-    "satisfies:REQ-02",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:AlbrechtBard2026",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:2037941f/REQ-01",
+    "satisfies:2037941f/REQ-02",
+    "satisfies:2037941f/REQ-03",
+    "satisfies:2037941f/REQ-06",
+    "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Freeze the dense-parity measurement addendum",
-  "updated_at": "2026-09-16T22:09:21.107485315Z"
+  "updated_at": "2026-10-01T22:41:44.276247796Z"
 }

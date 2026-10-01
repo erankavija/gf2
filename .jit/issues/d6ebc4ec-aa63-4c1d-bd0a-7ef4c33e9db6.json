@@ -20,11 +20,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:tooling",
-    "satisfies:REQ-15",
-    "satisfies:REQ-16"
+    "satisfies:fa787f85/REQ-15",
+    "satisfies:fa787f85/REQ-16"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Narrow the docs policy to post-overhaul paths",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:57.593908Z"
 }

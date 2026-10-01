@@ -96,13 +96,13 @@
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words",
     "component:gf2-core",
     "component:benchmarks",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:IsaL2026",
-    "epic:zen3-cpu-performance"
+    "epic:zen3-cpu-performance",
+    "satisfies:2037941f/REQ-03",
+    "satisfies:2037941f/REQ-06",
+    "cites:@/citation/IsaL2026"
   ],
   "priority": "high",
   "state": "done",
   "title": "Qualify the ISA-L XOR comparator",
-  "updated_at": "2026-09-16T21:57:48.866523020Z"
+  "updated_at": "2026-10-01T22:41:24.127351504Z"
 }

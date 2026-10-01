@@ -52,11 +52,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Resolve the attributable regression at bit_backend/not_inplace/words=1 before the next measured session",
-  "updated_at": "2026-08-22T14:46:31.660667866Z"
+  "updated_at": "2026-10-01T22:42:07.110197065Z"
 }

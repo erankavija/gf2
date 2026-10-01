@@ -31,10 +31,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Accelerator execution for campaign cells",
-  "updated_at": "2026-08-23T23:15:46.172817265Z"
+  "updated_at": "2026-10-01T22:41:46.940260011Z"
 }

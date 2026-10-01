@@ -672,19 +672,19 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-coding",
     "component:gf2-kernels-simd",
     "story:zen3-ldpc-frame-simd",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:Cassagne2019",
-    "cites:Srsran2026",
-    "cites:Xdsopl2026",
-    "type:task"
+    "type:task",
+    "satisfies:ed3d490e/REQ-01",
+    "satisfies:1a379447/REQ-03",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/Srsran2026",
+    "cites:@/citation/Xdsopl2026"
   ],
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-09-19T15:06:52.357890394Z"
+  "updated_at": "2026-10-01T22:42:05.321439790Z"
 }

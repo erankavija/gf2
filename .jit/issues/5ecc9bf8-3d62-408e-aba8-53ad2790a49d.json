@@ -39,10 +39,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03"
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Implement the explicit host-calibration benchmark action",
-  "updated_at": "2026-08-19T22:36:54.436337192Z"
+  "updated_at": "2026-10-01T22:41:32.977623479Z"
 }

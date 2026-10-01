@@ -57,10 +57,10 @@
     "type:task",
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04"
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Record the pre-cutover baseline receipt",
-  "updated_at": "2026-08-19T21:13:08.954074342Z"
+  "updated_at": "2026-10-01T22:41:20.142473042Z"
 }

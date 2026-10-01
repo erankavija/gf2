@@ -35,10 +35,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-10"
+    "satisfies:ae03bcd0/REQ-10"
   ],
   "priority": "high",
   "state": "done",
   "title": "Delete the superseded BCH code surface",
-  "updated_at": "2026-10-01T09:56:39.749114855Z"
+  "updated_at": "2026-10-01T22:41:27.310702107Z"
 }

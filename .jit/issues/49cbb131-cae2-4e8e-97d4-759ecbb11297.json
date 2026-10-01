@@ -31,10 +31,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-stats",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Wilson score interval estimator",
-  "updated_at": "2026-08-10T04:23:11.622449914Z"
+  "updated_at": "2026-10-01T22:41:27.161672706Z"
 }

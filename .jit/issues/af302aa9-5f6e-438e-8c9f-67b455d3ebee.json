@@ -44,10 +44,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-09"
+    "satisfies:0de41c82/REQ-09"
   ],
   "priority": "high",
   "state": "done",
   "title": "Dependency-chained Gray update micro-measurement mode",
-  "updated_at": "2026-08-10T08:47:29.027888943Z"
+  "updated_at": "2026-10-01T22:41:48.698571916Z"
 }

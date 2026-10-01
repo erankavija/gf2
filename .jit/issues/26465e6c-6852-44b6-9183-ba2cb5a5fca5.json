@@ -339,14 +339,14 @@
   "labels": [
     "epic:zen3-cpu-performance",
     "component:benchmarks",
-    "satisfies:REQ-01",
     "component:gf2-core",
-    "cites:Libpopcnt2026",
-    "cites:Mula2018",
-    "type:task"
+    "type:task",
+    "satisfies:1a379447/REQ-01",
+    "cites:@/citation/Libpopcnt2026",
+    "cites:@/citation/Mula2018"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Establish population-count and fused-reduction baselines",
-  "updated_at": "2026-09-12T06:49:43.700243389Z"
+  "updated_at": "2026-10-01T22:41:19.702696950Z"
 }

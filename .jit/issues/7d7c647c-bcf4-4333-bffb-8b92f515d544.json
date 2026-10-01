@@ -56,11 +56,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Design the proof-surface seam for the trait-associated selectors",
-  "updated_at": "2026-08-22T22:15:41.572669142Z"
+  "updated_at": "2026-10-01T22:41:38.329343053Z"
 }

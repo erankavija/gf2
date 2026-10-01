@@ -19,10 +19,10 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:docs",
-    "satisfies:REQ-11"
+    "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:38.623616264Z"
 }

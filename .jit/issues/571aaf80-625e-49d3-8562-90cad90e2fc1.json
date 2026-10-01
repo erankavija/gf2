@@ -31,10 +31,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-03"
+    "satisfies:ae03bcd0/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Construction at non-primitive lengths with both root conventions",
-  "updated_at": "2026-09-01T20:02:33.035780066Z"
+  "updated_at": "2026-10-01T22:41:31.104307132Z"
 }

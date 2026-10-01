@@ -77,11 +77,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Eliminate the per-call cost of the bit-backend selection boundary",
-  "updated_at": "2026-08-20T20:38:36.898033463Z"
+  "updated_at": "2026-10-01T22:41:20.729501676Z"
 }

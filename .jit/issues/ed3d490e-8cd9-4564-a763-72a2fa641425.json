@@ -32,16 +32,16 @@
     "component:gf2-coding",
     "component:gf2-kernels-simd",
     "component:gf2-sim",
-    "satisfies:REQ-03",
-    "satisfies:REQ-06",
-    "cites:Cassagne2019",
     "story:zen3-ldpc-frame-simd",
     "type:story",
-    "cites:Srsran2026",
-    "cites:Xdsopl2026"
+    "satisfies:1a379447/REQ-03",
+    "satisfies:1a379447/REQ-06",
+    "cites:@/citation/Cassagne2019",
+    "cites:@/citation/Srsran2026",
+    "cites:@/citation/Xdsopl2026"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Vectorize LDPC decoding across frames",
-  "updated_at": "2026-09-13T17:01:43.604265599Z"
+  "updated_at": "2026-10-01T22:42:02.374807529Z"
 }

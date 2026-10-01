@@ -38,10 +38,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-coding",
-    "satisfies:REQ-03"
+    "satisfies:ae03bcd0/REQ-03"
   ],
   "priority": "high",
   "state": "done",
   "title": "Add delegating convenience constructors with automatic field selection",
-  "updated_at": "2026-09-02T05:45:52.633512458Z"
+  "updated_at": "2026-10-01T22:41:16.874362707Z"
 }

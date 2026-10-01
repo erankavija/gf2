@@ -165,12 +165,12 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-03",
     "type:task",
-    "component:gf2-algebra"
+    "component:gf2-algebra",
+    "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-10-01T03:37:20.618543106Z"
+  "updated_at": "2026-10-01T22:41:47.360401914Z"
 }

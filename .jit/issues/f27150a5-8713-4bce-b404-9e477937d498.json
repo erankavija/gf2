@@ -20,10 +20,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-03"
+    "satisfies:b8206228/REQ-03"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Deterministic finalization of a completed campaign dataset",
-  "updated_at": "2026-08-09T18:05:30.992624206Z"
+  "updated_at": "2026-10-01T22:42:04.278327004Z"
 }

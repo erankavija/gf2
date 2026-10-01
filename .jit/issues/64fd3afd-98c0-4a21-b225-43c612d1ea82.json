@@ -57,10 +57,10 @@
     "type:task",
     "epic:general-bch",
     "component:gf2-core",
-    "satisfies:REQ-12"
+    "satisfies:ae03bcd0/REQ-12"
   ],
   "priority": "high",
   "state": "done",
   "title": "Author the formal-proof sketch for the algebraic foundations",
-  "updated_at": "2026-09-03T04:24:29.165237308Z"
+  "updated_at": "2026-10-01T22:41:33.666759992Z"
 }

@@ -382,12 +382,12 @@
     "epic:zen3-cpu-performance",
     "component:gf2-core",
     "component:gf2-kernels-simd",
-    "satisfies:REQ-02",
-    "satisfies:REQ-06",
-    "type:bug"
+    "type:bug",
+    "satisfies:1a379447/REQ-02",
+    "satisfies:1a379447/REQ-06"
   ],
   "priority": "high",
   "state": "done",
   "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
-  "updated_at": "2026-09-10T17:10:33.383941955Z"
+  "updated_at": "2026-10-01T22:41:17.375218759Z"
 }

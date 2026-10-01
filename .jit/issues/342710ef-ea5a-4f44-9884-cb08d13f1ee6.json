@@ -50,10 +50,10 @@
     "epic:permanent-statistics",
     "story:gpu-wave-permanents",
     "component:gf2-kernels-hip",
-    "satisfies:REQ-09"
+    "satisfies:0de41c82/REQ-09"
   ],
   "priority": "high",
   "state": "done",
   "title": "Horizontal product micro-measurement mode",
-  "updated_at": "2026-08-10T11:14:59.009859702Z"
+  "updated_at": "2026-10-01T22:41:22.263154179Z"
 }

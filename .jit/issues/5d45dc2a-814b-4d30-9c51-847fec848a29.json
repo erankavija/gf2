@@ -28,11 +28,11 @@
   "labels": [
     "epic:quality-documentation-tech-debt",
     "component:gf2-kernels-simd",
-    "cites:Scheinerman2024",
-    "type:bug"
+    "type:bug",
+    "cites:@/citation/Scheinerman2024"
   ],
   "priority": "low",
   "state": "done",
   "title": "Bipedal3 reference doc denies a codeword its own formulas produce",
-  "updated_at": "2026-08-17T20:04:32.699831294Z"
+  "updated_at": "2026-10-01T22:41:32.725071211Z"
 }

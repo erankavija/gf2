@@ -38,10 +38,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-sim",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-  "updated_at": "2026-08-17T17:03:40.626771572Z"
+  "updated_at": "2026-10-01T22:41:29.311418554Z"
 }

@@ -24,11 +24,11 @@
     "component:docs",
     "type:story",
     "story:documentation-contract",
-    "satisfies:REQ-01",
-    "satisfies:REQ-16"
+    "satisfies:f357b3dc/REQ-01",
+    "satisfies:fa787f85/REQ-16"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Define documentation contract and enforcement baseline",
-  "updated_at": "2026-10-01T13:19:03.114197618Z"
+  "updated_at": "2026-10-01T22:41:24.553951084Z"
 }

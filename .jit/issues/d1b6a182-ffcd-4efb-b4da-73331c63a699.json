@@ -31,10 +31,10 @@
     "type:task",
     "epic:permanent-statistics",
     "component:gf2-stats",
-    "satisfies:REQ-02"
+    "satisfies:b8206228/REQ-02"
   ],
   "priority": "high",
   "state": "done",
   "title": "Clopper-Pearson interval estimator with coverage demonstration",
-  "updated_at": "2026-08-10T06:34:27.094430424Z"
+  "updated_at": "2026-10-01T22:41:56.847291836Z"
 }

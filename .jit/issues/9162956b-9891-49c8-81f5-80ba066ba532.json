@@ -364,11 +364,11 @@
   "labels": [
     "epic:field-capability-dispatch",
     "component:gf2-core",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:6dc81018/REQ-04"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Predeclare the coverage-repairing ensemble-axes amendment v2",
-  "updated_at": "2026-08-21T20:01:22.318519931Z"
+  "updated_at": "2026-10-01T22:41:43.412624760Z"
 }

@@ -19,14 +19,14 @@
     "epic:documentation-overhaul",
     "component:gf2-core",
     "story:source-tersification-sweep",
-    "satisfies:REQ-21",
-    "satisfies:REQ-22",
-    "satisfies:REQ-23",
-    "satisfies:REQ-25",
-    "satisfies:REQ-26"
+    "satisfies:ffc35b8c/REQ-21",
+    "satisfies:ffc35b8c/REQ-22",
+    "satisfies:ffc35b8c/REQ-23",
+    "satisfies:ffc35b8c/REQ-25",
+    "satisfies:ffc35b8c/REQ-26"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-core prime-field modules",
-  "updated_at": "2026-10-01T14:43:15.466350554Z"
+  "updated_at": "2026-10-01T22:41:23.978921117Z"
 }
