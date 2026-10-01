@@ -122,4 +122,4 @@ If you're adding new documentation:
 1. Add the file to the appropriate section above
 2. Include a brief description of its purpose and audience
 3. Update the "Last updated" date
-4. Ensure the document follows the project's documentation standards (see `../.github/copilot-instructions.md`)
+4. Ensure the document follows the project's documentation standards (see `AGENTS.md` at the repository root)
