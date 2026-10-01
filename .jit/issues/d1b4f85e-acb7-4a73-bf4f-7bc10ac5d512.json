@@ -10,6 +10,7 @@
   ],
   "description": "Extend the existing BCH Criterion benches to the workload-selection contract: field-generic and AVX2 large-batch encoding and generator-matrix materialization, with worker-count sweeps and dispatch-path reporting.\n\n## Success Criteria\n\n- [hard] REQ-01: Criterion targets cover both selected workloads on the canonical model, binary and nonbinary, reporting the dispatch path taken.\n- [hard] REQ-02: Benchmarks run on the existing harness conventions and emit data consumable by the receipt task.\n",
   "documents": [],
+  "first_ready_at": "2026-10-01T08:54:05.749726542Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -23,7 +24,7 @@
     "satisfies:REQ-13"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend Criterion benchmarks to the selected workloads",
-  "updated_at": "2026-08-28T23:05:13.728416158Z"
+  "updated_at": "2026-10-01T08:54:05.749726542Z"
 }

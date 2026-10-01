@@ -17,6 +17,7 @@
       "path": "dev/active/591a1c5e/smoke-run.md"
     }
   ],
+  "done_at": "2026-10-01T08:54:05.369522794Z",
   "first_ready_at": "2026-10-01T07:46:12.085397870Z",
   "gates_required": [
     "cargo-ci",
@@ -25,12 +26,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-01T08:32:05.338827284Z",
+      "updated_at": "2026-10-01T08:50:10.356197698Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T08:35:37.224810499Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T08:53:57.791045015Z",
       "updated_by": "auto:executor"
     }
   },
@@ -42,7 +43,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Migrate gf2-coding benchmarks",
-  "updated_at": "2026-10-01T08:48:57.345481700Z"
+  "updated_at": "2026-10-01T08:54:05.369522794Z"
 }
