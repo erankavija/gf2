@@ -15,6 +15,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/breakdown-keymap.json"
     }
   ],
+  "done_at": "2026-10-01T14:50:44.975755143Z",
   "first_ready_at": "2026-10-01T14:42:48.847123065Z",
   "gates_required": [
     "coverage-preview",
@@ -22,14 +23,14 @@
   ],
   "gates_status": {
     "breakdown-review": {
-      "status": "pending",
-      "updated_at": "2026-10-01T10:36:11.786309896Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-01T14:50:32.788936532Z",
+      "updated_by": "auto:executor"
     },
     "coverage-preview": {
-      "status": "pending",
-      "updated_at": "2026-10-01T10:36:11.786309896Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-01T14:44:29.494317424Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "10fdde24-ece4-4b9b-9379-81de68d0024c",
@@ -40,7 +41,7 @@
     "brackets:fa787f85"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "breakdown: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T14:44:27.467270522Z"
+  "updated_at": "2026-10-01T14:50:44.975755143Z"
 }
