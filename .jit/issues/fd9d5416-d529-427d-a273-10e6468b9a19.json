@@ -8,7 +8,97 @@
     "e1e0e7ff-36f3-46e4-8bcb-db406c526bcb"
   ],
   "description": "Produce the committed benchmark receipts on suitable uncontended hosts: no statistically measurable throughput regression against the pinned pre-cutover baseline, deterministic results across supported worker counts, tested scalar fallback for AVX2 dispatch, and the comparison rows against the survey's selected external baselines.\n\n## Background\n\nThe regression comparison uses the pre-cutover baseline receipt pinned by its dedicated issue, under the evidence protocol's statistical rule. The comparison against the strongest external baseline is the epic's aspirational target; the receipts report it either way.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed receipts demonstrate non-regression versus the pinned pre-cutover baseline under the protocol's one-sided bound, determinism across worker counts, and scalar-fallback coverage, with host, seed, revision, and toolchain recorded.\n- [hard] REQ-02: Receipts include the external-baseline comparison rows for both workloads with the survey's protocol, reporting the aspirational outcome explicitly.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c99359f9cc25ae0e9eae81474a88b76e5729272c8a75a2ae76b2bc297d36914f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "render_receipt.py",
+          "resolved_path": "dev/active/fd9d5416/render_receipt.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d9f3ebe897f52c291d567c2b5d73af8ab5dc8cb270d142ec43371b2d3d570d9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../591a1c5e/smoke-run.md",
+          "resolved_path": "dev/active/591a1c5e/smoke-run.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4d40491d78a2524a2fefe03eb1cd60522bd1953a0cc35d7ab0cc5665e2794e2b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../4e732b56/findings.md",
+          "resolved_path": "dev/active/4e732b56/findings.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "90fc52cc3921abf304019f4cfec6b52199795916042795915365da950abaac92",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../4e732b56/workload-selection.md",
+          "resolved_path": "dev/active/4e732b56/workload-selection.md"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/4e732b56/",
+          "resolved_path": "dev/bench_results/4e732b56"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "290ba073f0205e0e4b0337d25d4157d5880d84e2e37ab1520931ce5398715280",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../d1b4f85e/run.sh",
+          "resolved_path": "dev/active/d1b4f85e/run.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e8cfea52e20fc1d562ea22ea3936b5a1ebd709b51b446b03184e749ef36b8e1a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dba4d021bf5243cc12d8cb58142a765aa3ba9115cce56234687234340221d195",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md",
+          "resolved_path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/88ca7d2f/",
+          "resolved_path": "dev/bench_results/88ca7d2f"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "753d63266085c6067008b8d582623267323c863d30bedef41219946bda4d2a13",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "tests/test_render_receipt.py",
+          "resolved_path": "dev/active/fd9d5416/tests/test_render_receipt.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Receipt protocol",
+      "path": "dev/active/fd9d5416/receipt-protocol.md"
+    }
+  ],
   "first_ready_at": "2026-10-01T11:01:00.699226534Z",
   "gates_required": [
     "doc-review",
@@ -26,5 +116,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
-  "updated_at": "2026-10-01T11:17:08.023814774Z"
+  "updated_at": "2026-10-01T11:43:17.750434226Z"
 }
