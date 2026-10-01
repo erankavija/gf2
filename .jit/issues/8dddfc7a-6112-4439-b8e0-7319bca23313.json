@@ -66,6 +66,13 @@
       "doc_type": "design",
       "label": "External wiring",
       "path": "dev/active/fa787f85-documentation-overhaul/external-wiring.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Gate 2 pre-check",
+      "path": "dev/active/fa787f85-documentation-overhaul/plan-precheck-gate2.md"
     }
   ],
   "first_ready_at": "2026-10-01T10:37:17.124171866Z",
@@ -88,5 +95,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T13:24:10.813050452Z"
+  "updated_at": "2026-10-01T13:53:23.202422217Z"
 }

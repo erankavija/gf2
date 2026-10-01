@@ -14108,3 +14108,5 @@
 {"fields":["documents"],"id":"9c28b6f3-baff-43f2-8a28-bc74da52b504","issue_id":"0b0714e0-da08-4053-b18c-61d635fb7fc0","timestamp":"2026-10-01T13:50:45.287111453Z","type":"issue_updated","updated_by":"doc-add"}
 {"id":"34810522-8271-4485-8a26-38eb9a36ae38","issue_id":"17746400-34ff-4b15-8c60-3080b79237b2","priority":"normal","timestamp":"2026-10-01T13:50:46.131601456Z","title":"Converge the two Rician fading channel models","type":"issue_created"}
 {"fields":["dependencies"],"id":"fd241f62-5ecd-46ab-a71f-8e4d515d6028","issue_id":"cffc15dd-b761-4c26-b5ef-8894f6433a2a","timestamp":"2026-10-01T13:51:15.007394902Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["documents"],"id":"e94e2675-44c6-4dfb-a6ce-3729ec2c25df","issue_id":"9b2886a7-35af-45cc-9200-dddea1c0323a","timestamp":"2026-10-01T13:53:22.744785181Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"0637eb99-f556-482c-8800-afb430e22439","issue_id":"8dddfc7a-6112-4439-b8e0-7319bca23313","timestamp":"2026-10-01T13:53:23.202422217Z","type":"issue_updated","updated_by":"doc-add"}

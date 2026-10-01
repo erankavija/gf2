@@ -6,7 +6,15 @@
     "3f29e945-8b12-4862-82c8-f2ec6573287c"
   ],
   "description": "Register the permanent-documentation invariants for audience, placement and tone, so the rewrite of the permanent documentation is reviewed against them.\n\n## Background\n\nThe documentation overhaul targets researchers evaluating or adopting gf2, organizes permanent documentation under an adapted Diátaxis layout (`docs/tutorials/`, `docs/how-to/`, `docs/concepts/`, `docs/reference/`), and excludes marketing language. These rules govern permanent-page authoring and are registered alongside that work rather than with the general documentation contract.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked draft proposes one-sentence texts and IDs for the researcher-audience, adapted-Diátaxis-placement and no-marketing invariants.\n- [hard] REQ-02: Every invariant text is approved by the user, with the approval recorded as a decision on this issue, before it is registered.\n- [hard] REQ-03: The approved invariants are in the registry and the `AGENTS.md` projection region is regenerated deterministically, with content outside the region byte-identical.\n- [hard] REQ-04: `jit invariant check`, `jit validate` and the documentation mechanical checks report no new findings.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Invariant draft",
+      "path": "dev/active/fa787f85-documentation-overhaul/9b2886a7-invariant-draft.md"
+    }
+  ],
   "first_ready_at": "2026-10-01T10:03:53.582895640Z",
   "gates_required": [
     "repo-validate",
@@ -24,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-01T10:04:17.822125537Z"
+  "updated_at": "2026-10-01T13:53:22.744785181Z"
 }
