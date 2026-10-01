@@ -10,12 +10,24 @@
   ],
   "description": "Migrate the gf2-sim campaign binaries and tests consuming legacy BCH constructors to the canonical model, per the investigation inventory. The GPU byte-identity suite for BCH syndromes is owned by the HIP equivalence task and stays out of scope here.\n\n## Success Criteria\n\n- [hard] REQ-01: Each gf2-sim consumer in this task's inventory builds and passes on the canonical model with unchanged observable campaign behavior.\n- [hard] REQ-02: Campaign checkpoint and protocol tests keep their recorded behavioral identity or re-pin fixtures explicitly in the same change.\n",
   "documents": [],
+  "done_at": "2026-10-01T09:07:32.323788609Z",
   "first_ready_at": "2026-10-01T07:46:11.401639046Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-01T09:03:12.142201866Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-01T09:07:16.982562626Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "0c21cb1e-e08a-4232-a1bc-4b7aef095c9e",
   "labels": [
     "type:task",
@@ -24,7 +36,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Migrate gf2-sim BCH consumers",
-  "updated_at": "2026-10-01T07:46:28.841188267Z"
+  "updated_at": "2026-10-01T09:07:32.323788609Z"
 }
