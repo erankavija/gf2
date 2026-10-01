@@ -43,16 +43,25 @@
 //!
 //! Beyond BCH, the cases run over every other implementor of the canonical
 //! interfaces in this crate: [`LinearBlockCode`], the repetition code, the
-//! three transformations, the cache wrapper, and [`LayoutView`] over every
-//! matrix row, which is what
+//! three transformations, the cache wrapper, [`LayoutView`] over every matrix
+//! row, [`ExtendedBchComponent`] through its own encoder implementation, and
+//! the production DVB-T2 code ([`dvb_t2_bch_code`]'s shortened code and its
+//! [`DvbT2MotherCode`] under the standard's layout), which is what
 //! `@/invariant/shared-test-contracts` asks of a shared interface. The
+//! product component implements only the encoder capability, so it runs the
+//! encoder cases and no matrix case. The DVB-T2 code is too large for the
+//! cell-quadratic cases, so it runs the encoder cases, plus the scale-gated
+//! variant of the matrix cases (a seeded sample of basis rows, and
+//! orthogonality in the systematic-pair form); the short-frame rate-1/2 configuration runs its encoder cases in the
+//! fast tier, and every short-frame configuration runs its matrix cases in the
+//! slow tier. The
 //! version-1 binary compatibility boundary is checked against the canonical
 //! packed path wherever a packed code runs.
 //!
 //! # Tiers
 //!
 //! Everything runs in the fast tier except the DVB-T2 mother row's matrix
-//! work. Its generator is $65343 \times 65535$, four orders of magnitude past
+//! work and the production DVB-T2 matrix cases. Its generator is $65343 \times 65535$, four orders of magnitude past
 //! every other row: half a gigabyte per materialization and $4.3 \times 10^9$
 //! cells in the identity-block walk, which leaves the case no margin against
 //! the fast tier's per-test kill and no room beside the test binaries the tier
@@ -88,6 +97,7 @@
 //! decoding laws of the pre-cutover binary type in its own module. None of
 //! those assert a law this suite asserts, so none is folded in here.
 
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2MotherCode, FrameSize};
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::spec::{
     BchCode, BchLength, BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent,
@@ -95,6 +105,7 @@ use gf2_coding::bch::spec::{
 };
 use gf2_coding::bch::{CachedMatrices, LayoutView, MatrixFill, SystematicLayout};
 use gf2_coding::error::CodeError;
+use gf2_coding::product::ExtendedBchComponent;
 use gf2_coding::test_support::{
     self, bch_construction_contract, bch_corpus_dense_twin, bch_corpus_distance,
     bch_corpus_element, bch_corpus_length, bch_corpus_message_sequences, bch_encoding_contract,
@@ -109,7 +120,7 @@ use gf2_coding::traits::block::{
     SymbolSequence,
 };
 use gf2_coding::transform::{Extended, Punctured, Shortened, ShortenedDerivation};
-use gf2_coding::LinearBlockCode;
+use gf2_coding::{CodeRate, LinearBlockCode};
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity};
 use gf2_core::field::matrix::FieldMatrix;
 use gf2_core::field::modulus_select::select_modulus;
@@ -708,24 +719,37 @@ impl BchCorpusVisitor for DeferredMatrixCases {
         // $i$. Walking all 65343 rows is 65343 encodes of a 65535-symbol
         // codeword; a seeded sample carries the same statement at a size this
         // row admits, and every other corpus row runs the full walk.
-        let generator = code.generator_matrix().expect("the generator materializes");
-        let zero = code.symbol_zero();
-        let one = zero.one_like();
-        let mut rng = StdRng::seed_from_u64(SEED);
-        for _ in 0..SAMPLED_GENERATOR_ROWS {
-            let index = rng.gen_range(0..code.k());
-            let mut basis = S::zeroed(code.k(), &zero);
-            basis
-                .set(index, one.clone())
-                .expect("an index below the dimension");
-            let encoded = code.encode(&basis).expect("a basis message encodes");
-            for col in 0..code.n() {
-                assert_eq!(
-                    SymbolSequence::get(&encoded, col),
-                    generator.get(index, col),
-                    "generator row {index} is the encoding of its basis vector"
-                );
-            }
+        sampled_generator_rows_encode_basis(code);
+    }
+}
+
+/// Asserts, for a seeded sample of [`SAMPLED_GENERATOR_ROWS`] generator rows,
+/// that row $i$ is the encoding of message basis vector $i$.
+///
+/// This is the sampled form of
+/// [`conformance::generator_rows_encode_basis`] for codes whose $k$ encodes of
+/// $n$ symbols exceed the fast tier.
+fn sampled_generator_rows_encode_basis<C>(code: &C)
+where
+    C: BlockEncoder + GeneratorMatrixAccess,
+{
+    let generator = code.generator_matrix().expect("the generator materializes");
+    let zero = code.symbol_zero();
+    let one = zero.one_like();
+    let mut rng = StdRng::seed_from_u64(SEED);
+    for _ in 0..SAMPLED_GENERATOR_ROWS {
+        let index = rng.gen_range(0..code.k());
+        let mut basis = C::Symbols::zeroed(code.k(), &zero);
+        basis
+            .set(index, one.clone())
+            .expect("an index below the dimension");
+        let encoded = code.encode(&basis).expect("a basis message encodes");
+        for col in 0..code.n() {
+            assert_eq!(
+                SymbolSequence::get(&encoded, col),
+                generator.get(index, col),
+                "generator row {index} is the encoding of its basis vector"
+            );
         }
     }
 }
@@ -911,6 +935,96 @@ where
 }
 
 // ---------------------------------------------------------------------------
+// Production-scale implementors
+// ---------------------------------------------------------------------------
+
+/// The encoder cases a production-scale implementor runs in the fast tier:
+/// the encoder contract, linearity, and membership of every codeword in the
+/// code the parity-check matrix defines.
+///
+/// A parity check has $n - k$ rows, so reading it stays within the fast tier
+/// where the $k \times n$ generator does not.
+fn production_encoder_cases<C>(code: &C, messages: &[C::Symbols])
+where
+    C: BlockEncoder + ParityCheckMatrixAccess,
+{
+    let zero = code.symbol_zero();
+    for message in messages {
+        conformance::block_encoder_contract(code, message);
+        let codeword = code.encode(message).expect("a message encodes");
+        test_support::assert_is_codeword(code, &codeword);
+    }
+    if messages.len() >= 2 {
+        code_linearity_contract(code, &messages[0], &messages[1], &nontrivial_scalar(&zero));
+    }
+}
+
+/// The matrix cases a production-scale implementor runs in the slow tier.
+///
+/// These are the cases of [`full_capability_cases`] except the three whose
+/// cost is superlinear in the generator's cell count: the basis-row walk runs
+/// on a seeded sample ([`sampled_generator_rows_encode_basis`]), the direct
+/// $O(kn^2)$ orthogonality loop runs in the systematic-pair form whose cost is
+/// $O(k(n-k))$, and the generator rank follows from that form's identity
+/// block. The code must report the canonical layout.
+fn production_matrix_cases<C>(code: &C)
+where
+    C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,
+    C::GeneratorMatrix: Send + Sync,
+    C::ParityCheckMatrix: Send + Sync,
+{
+    assert!(
+        reports_canonical_layout(code),
+        "a production-scale code reports the canonical [message | parity] layout"
+    );
+    conformance::generator_matrix_contract(code);
+    conformance::parity_check_matrix_contract(code);
+    systematic_pair_contract(code);
+    matrix_shape_rejection_contract(code);
+    parity_check_has_full_row_rank(code);
+    cached_matrices_contract(code.clone());
+    sampled_generator_rows_encode_basis(code);
+}
+
+/// Runs the production-scale cases on one production DVB-T2 configuration:
+/// the shortened code `dvb_t2_bch_code` returns and the [`DvbT2MotherCode`]
+/// under `DVB_T2_LAYOUT` it shortens, which carry distinct encoders and matrix
+/// writers. The matrix cases run on the shortened code when
+/// `shortened_matrices` is set and on the mother when `mother_matrices` is set;
+/// the mother depends on the frame size and correction radius alone, so a sweep
+/// over rates asks for it once.
+fn dvb_t2_production_cases(
+    frame_size: FrameSize,
+    rate: CodeRate,
+    shortened_matrices: bool,
+    mother_matrices: bool,
+) {
+    let code = dvb_t2_bch_code(frame_size, rate).expect("a DVB-T2 configuration builds");
+    let mother: &DvbT2MotherCode = code.mother();
+    let mut rng = StdRng::seed_from_u64(SEED);
+    let messages: Vec<BitVec> = (0..2)
+        .map(|_| seeded_symbols(&code, code.k(), &mut rng))
+        .collect();
+    let mother_messages: Vec<BitVec> = (0..2)
+        .map(|_| seeded_symbols(mother, mother.k(), &mut rng))
+        .collect();
+    production_encoder_cases(&code, &messages);
+    production_encoder_cases(mother, &mother_messages);
+    for message in &messages {
+        conformance::binary_v1_encoder_agrees(&code, message);
+    }
+    for message in &mother_messages {
+        conformance::binary_v1_encoder_agrees(mother, message);
+    }
+    if shortened_matrices {
+        production_matrix_cases(&code);
+    }
+    if mother_matrices {
+        production_matrix_cases(mother);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // The rest of the implementor roster
 // ---------------------------------------------------------------------------
 
@@ -949,6 +1063,45 @@ fn every_canonical_implementor_runs_the_capability_cases() {
     conformance::generator_parity_orthogonality(&ebch);
     extension_row_is_all_ones(&ebch);
 
+    // The product component implements only the encoder capability: it holds
+    // its parity check privately for the product decoder and reports no
+    // matrix, so it runs the encoder cases and agrees with the `Extended`
+    // value it wraps, which carries the matrix capabilities above.
+    for component in [
+        ExtendedBchComponent::ebch_16_11(),
+        ExtendedBchComponent::ebch_16_7(),
+        ExtendedBchComponent::ebch_32_26(),
+        ExtendedBchComponent::ebch_64_57(),
+    ] {
+        let component_messages: Vec<BitVec> = (0..2)
+            .map(|_| seeded_symbols(&component, component.k(), &mut rng))
+            .collect();
+        for message in &component_messages {
+            conformance::block_encoder_contract(&component, message);
+            conformance::binary_v1_encoder_agrees(&component, message);
+        }
+        code_linearity_contract(
+            &component,
+            &component_messages[0],
+            &component_messages[1],
+            &Fp::<2>::new(1),
+        );
+    }
+    let component = ExtendedBchComponent::ebch_16_11();
+    for message in &ebch_messages {
+        assert_eq!(
+            component.encode(message).expect("a message encodes"),
+            ebch.encode(message).expect("a message encodes"),
+            "the component encodes as the extension it wraps"
+        );
+    }
+
+    // Production DVB-T2: the short-frame rate-1/2 shortened code and its
+    // mother run the encoder cases in the fast tier. Their matrix cases need
+    // a generator of 5e7 cells (1.6e8 for the mother), which leaves the fast
+    // tier, so they run in the slow tier below.
+    dvb_t2_production_cases(FrameSize::Short, CodeRate::Rate1_2, false, false);
+
     // The cache wrapper is itself an implementor of both matrix capabilities.
     let cached = CachedMatrices::new(hamming.clone());
     conformance::generator_matrix_contract(&cached);
@@ -962,6 +1115,21 @@ fn every_canonical_implementor_runs_the_capability_cases() {
         hamming.is_systematic().expect("the code reports a layout"),
         "the cache wrapper reports the wrapped layout"
     );
+}
+
+#[test]
+#[ignore = "slow: the production DVB-T2 shortened codes and mothers materialize generators up to 65343 x 65535 for every matrix case"]
+fn dvb_t2_production_codes_run_the_matrix_cases() {
+    for rate in [
+        CodeRate::Rate1_2,
+        CodeRate::Rate3_5,
+        CodeRate::Rate2_3,
+        CodeRate::Rate3_4,
+        CodeRate::Rate4_5,
+        CodeRate::Rate5_6,
+    ] {
+        dvb_t2_production_cases(FrameSize::Short, rate, true, rate == CodeRate::Rate1_2);
+    }
 }
 
 // ---------------------------------------------------------------------------
