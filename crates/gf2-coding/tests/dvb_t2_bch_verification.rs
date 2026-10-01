@@ -1,18 +1,27 @@
 //! DVB-T2 BCH Verification Tests
 //!
-//! These tests verify BCH encoding and decoding against official DVB-T2 test vectors.
-//! Tests are marked with #[ignore] and only run when test vectors are available.
+//! These tests verify the production DVB-T2 outer BCH code and its decoder
+//! against the ETSI VV001-CR35 test-point streams (TP04 BBFRAMEs, TP05 BCH
+//! codewords). Each test returns early when the streams are absent at
+//! `$DVB_TEST_VECTORS_PATH` (default `~/dvb_test_vectors`).
 
 mod test_vectors;
 
-use gf2_coding::bch::{BchCode, BchDecoder, BchEncoder};
-use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
-use rand::Rng;
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder};
+use gf2_coding::bch::BchDecodeOutcome;
+use gf2_coding::traits::block::{BlockCode, BlockEncoder};
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
+
+/// The production code for the stream set's frame size and code rate.
+fn stream_code(vectors: &TestVectorSet) -> DvbT2BchCode {
+    dvb_t2_bch_code(vectors.config.frame_size.to_bch(), vectors.config.code_rate)
+        .expect("a standard DVB-T2 configuration")
+}
 
 /// Verify BCH encoding: TP04 → TP05
 #[test]
-#[ignore]
 fn test_bch_encoding_tp04_to_tp05() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -22,8 +31,7 @@ fn test_bch_encoding_tp04_to_tp05() {
     let vectors = TestVectorSet::load(&test_vectors_path(), "VV001-CR35")
         .expect("Failed to load test vectors");
 
-    let bch = BchCode::dvb_t2(vectors.config.frame_size.to_bch(), vectors.config.code_rate);
-    let encoder = BchEncoder::new(bch);
+    let bch = stream_code(&vectors);
 
     let tp04 = vectors.tp04.as_ref().expect("TP04 not found");
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
@@ -36,7 +44,9 @@ fn test_bch_encoding_tp04_to_tp05() {
         let expected_output = &tp05.frame(0)[block_idx];
 
         // Encode
-        let encoded = encoder.encode(&input_block.data);
+        let encoded = bch
+            .encode(&input_block.data)
+            .expect("a K_bch-bit BBFRAME encodes");
 
         // Compare
         if encoded == expected_output.data {
@@ -84,7 +94,6 @@ fn test_bch_encoding_tp04_to_tp05() {
 
 /// Verify BCH decoding: TP05 → TP04 (error-free)
 #[test]
-#[ignore]
 fn test_bch_decoding_tp05_to_tp04_error_free() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -94,8 +103,8 @@ fn test_bch_decoding_tp05_to_tp04_error_free() {
     let vectors = TestVectorSet::load(&test_vectors_path(), "VV001-CR35")
         .expect("Failed to load test vectors");
 
-    let bch = BchCode::dvb_t2(vectors.config.frame_size.to_bch(), vectors.config.code_rate);
-    let decoder = BchDecoder::new(bch);
+    let bch = stream_code(&vectors);
+    let decoder = DvbT2BchDecoder::new(&bch);
 
     let tp04 = vectors.tp04.as_ref().expect("TP04 not found");
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
@@ -108,10 +117,12 @@ fn test_bch_decoding_tp05_to_tp04_error_free() {
         let expected_message = &tp04.frame(0)[block_idx];
 
         // Decode
-        let decoded = decoder.decode(&codeword.data);
+        let (outcome, decoded) = decoder
+            .decode(&codeword.data)
+            .expect("an N_bch-bit word decodes");
 
         // Compare
-        if decoded == expected_message.data {
+        if outcome == BchDecodeOutcome::NoErrors && decoded == expected_message.data {
             successes += 1;
         } else {
             failures += 1;
@@ -137,7 +148,7 @@ fn test_bch_decoding_tp05_to_tp04_error_free() {
 
 /// Verify BCH error correction capability with injected errors
 #[test]
-#[ignore]
+#[ignore = "slow: 600 seeded decodes of VV001-CR35 normal-frame words, 16 s on the reference host"]
 fn test_bch_error_correction() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -147,16 +158,16 @@ fn test_bch_error_correction() {
     let vectors = TestVectorSet::load(&test_vectors_path(), "VV001-CR35")
         .expect("Failed to load test vectors");
 
-    let bch = BchCode::dvb_t2(vectors.config.frame_size.to_bch(), vectors.config.code_rate);
-    let decoder = BchDecoder::new(bch.clone());
+    let bch = stream_code(&vectors);
+    let decoder = DvbT2BchDecoder::new(&bch);
 
     let tp04 = vectors.tp04.as_ref().expect("TP04 not found");
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
 
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
 
     // Test correction capability (t=12 for DVB-T2)
-    let max_errors = bch.t();
+    let max_errors = decoder.correction_radius();
     println!("Testing error correction up to t={} errors", max_errors);
 
     let num_test_blocks = 10.min(tp05.frame(0).len());
@@ -184,10 +195,14 @@ fn test_bch_error_correction() {
                 }
 
                 // Decode
-                let decoded = decoder.decode(&corrupted);
+                let (outcome, decoded) = decoder
+                    .decode(&corrupted)
+                    .expect("an N_bch-bit word decodes");
 
                 // Check if corrected
-                if decoded == expected_message.data {
+                if outcome == (BchDecodeOutcome::Corrected { count: num_errors })
+                    && decoded == expected_message.data
+                {
                     successes += 1;
                 } else {
                     failures += 1;
@@ -214,7 +229,6 @@ fn test_bch_error_correction() {
 
 /// Verify BCH codeword structure: systematic encoding
 #[test]
-#[ignore]
 fn test_bch_systematic_property() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -224,7 +238,7 @@ fn test_bch_systematic_property() {
     let vectors = TestVectorSet::load(&test_vectors_path(), "VV001-CR35")
         .expect("Failed to load test vectors");
 
-    let bch = BchCode::dvb_t2(vectors.config.frame_size.to_bch(), vectors.config.code_rate);
+    let bch = stream_code(&vectors);
 
     let tp04 = vectors.tp04.as_ref().expect("TP04 not found");
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
@@ -263,7 +277,6 @@ fn test_bch_systematic_property() {
 
 /// Test BCH encoding on a sample of blocks to verify consistency
 #[test]
-#[ignore]
 fn test_bch_encoding_sample() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -273,8 +286,7 @@ fn test_bch_encoding_sample() {
     let vectors = TestVectorSet::load(&test_vectors_path(), "VV001-CR35")
         .expect("Failed to load test vectors");
 
-    let bch = BchCode::dvb_t2(vectors.config.frame_size.to_bch(), vectors.config.code_rate);
-    let encoder = BchEncoder::new(bch);
+    let bch = stream_code(&vectors);
 
     let tp04 = vectors.tp04.as_ref().expect("TP04 not found");
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
@@ -291,7 +303,9 @@ fn test_bch_encoding_sample() {
         for &block_idx in &test_indices {
             let message = &frame_tp04[block_idx];
             let expected_cw = &frame_tp05[block_idx];
-            let encoded = encoder.encode(&message.data);
+            let encoded = bch
+                .encode(&message.data)
+                .expect("a K_bch-bit BBFRAME encodes");
 
             assert_eq!(
                 encoded,
