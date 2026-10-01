@@ -11,10 +11,11 @@
   "id": "cbd1eb28-dff0-4dce-848c-49782ab6c804",
   "labels": [
     "type:task",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "epic:general-bch"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Decode user-layout words with the canonical binary BCH decoder",
-  "updated_at": "2026-10-01T08:57:01.730850885Z"
+  "updated_at": "2026-10-01T13:47:08.709427982Z"
 }
