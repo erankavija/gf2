@@ -16,7 +16,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-01T09:57:54.789876217Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T10:01:48.719840568Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512",
   "labels": [
     "type:task",
@@ -27,5 +38,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Extend Criterion benchmarks to the selected workloads",
-  "updated_at": "2026-10-01T08:54:26.006375360Z"
+  "updated_at": "2026-10-01T10:01:48.719840568Z"
 }

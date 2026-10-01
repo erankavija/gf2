@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T10:03:43.702262411Z",
+  "dependencies": [
+    "3f29e945-8b12-4862-82c8-f2ec6573287c"
+  ],
+  "description": "Define the manifest that classifies every pre-overhaul documentation artifact and a transient checker that reports migration progress against it.\n\n## Background\n\nThe documentation overhaul archives completed work by terminal epic, moves unassociated history to `dev/archive/legacy/<original-relative-path>`, and rewrites permanent pages from current behavior. Each artifact's disposition must be recorded and verified. The checker is transient: lasting enforcement comes from invariants and review gates, and the checker is removed after the final migration check.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed schema defines one manifest row per artifact with its path, owning issue or association evidence, bundle relationships, disposition (JIT container archive, legacy archive, retained operational asset, deletion, or rewritten topic), destination, and execution status.\n- [hard] REQ-02: The checker validates the manifest against the schema and the working tree, and reports per-disposition completeness and every row whose source or destination assertion fails.\n- [hard] REQ-03: Self-tests cover a complete manifest, an incomplete one, a schema violation, and a failed source or destination assertion.\n- [hard] REQ-04: The checker's location and the removal condition stated in its header make clear it is a migration tool with a tracked removal, not permanent policy enforcement.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T10:03:43.702262411Z",
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "a24b2af7-81ce-4442-9ee3-6ce096c36537",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-13",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Define the documentation migration manifest and progress checker",
+  "updated_at": "2026-10-01T10:04:07.784790157Z"
+}

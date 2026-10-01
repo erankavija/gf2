@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T10:03:02.131857309Z",
+  "dependencies": [],
+  "description": "Add the project's documentation rules to the JIT invariant registry so they are addressable, projected into `AGENTS.md`, and citable by review gates.\n\n## Background\n\nThe registry (`.jit/invariants.toml`) already holds `present-tense-prose`, `single-source-prose` and `benchmark-backed-performance`, and `[projection.invariants]` renders all invariants into the delimited region of the root `AGENTS.md`. The comment rule (non-obvious content only, shortest form, module orientation at most one short paragraph) exists only as hand-written `AGENTS.md` prose. Rules on current-state scope, rustdoc examples, active-document layout and `AGENTS.md` scope are not registered.\n\n## Success Criteria\n\n- [hard] REQ-01: `@/inv/<id>` resolution and the `enforces` namespace are verified working for invariants, with the verification commands and output recorded in the linked draft document.\n- [hard] REQ-02: A linked draft document proposes one-sentence texts and IDs for three rule groups: (a) comments and rustdoc carry only non-obvious content in the shortest form, with a module orientation of at most one short paragraph and no duplication; (b) documentation states current behavior and limits only, with no speculation, future promises, non-goals or deferrals; (c) rustdoc examples are non-trivial, active development documents live under `dev/active/<epic-short-id>-<slug>/` linked to their owning issues, and every `AGENTS.md` respects its recursive scope and 200-line limit.\n- [hard] REQ-03: Every invariant text is approved by the user, with the approval recorded as a decision on this issue, before it is registered.\n- [hard] REQ-04: The approved invariants are in the registry, the `AGENTS.md` projection region is regenerated deterministically, and content outside the region is byte-identical.\n- [hard] REQ-05: Hand-written `AGENTS.md` prose that the new invariants supersede is removed, so each rule has one source, and `AGENTS.md` stays at or below 200 lines.\n- [hard] REQ-06: `jit invariant check` and `jit validate` report no new findings.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T10:03:02.131857309Z",
+  "gates_required": [
+    "repo-validate",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "495807a3-caeb-4680-8429-13d7da4a590d",
+  "labels": [
+    "epic:documentation-overhaul",
+    "story:documentation-contract",
+    "component:docs",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-03",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Register and project the documentation invariants",
+  "updated_at": "2026-10-01T10:03:02.131857309Z"
+}

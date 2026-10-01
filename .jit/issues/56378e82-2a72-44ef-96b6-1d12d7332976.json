@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T10:03:24.895658257Z",
+  "dependencies": [
+    "495807a3-caeb-4680-8429-13d7da4a590d"
+  ],
+  "description": "Make the root `AGENTS.md` the single agent guide and state how crate-local guides refine it.\n\n## Background\n\n`CLAUDE.md` is a short pointer file telling agents to read `AGENTS.md`. The root `AGENTS.md` does not state that its rules apply recursively or how a crate-local `AGENTS.md` may add constraints.\n\n## Success Criteria\n\n- [hard] REQ-01: `CLAUDE.md` is a repository symlink to `AGENTS.md`.\n- [hard] REQ-02: The root `AGENTS.md` states that its rules apply recursively, that a crate-local `AGENTS.md` adds only crate-specific constraints without restating root policy, and that every `AGENTS.md` stays at or below 200 lines.\n- [hard] REQ-03: The root `AGENTS.md` remains at or below 200 lines.\n- [hard] REQ-04: Tooling that reads `CLAUDE.md` or the old pointer text (gate prompts, hooks, scripts) still works, verified by a repository search recorded in the commit message.",
+  "documents": [],
+  "first_ready_at": "2026-10-01T10:03:24.895658257Z",
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "56378e82-2a72-44ef-96b6-1d12d7332976",
+  "labels": [
+    "epic:documentation-overhaul",
+    "story:documentation-contract",
+    "component:docs",
+    "satisfies:REQ-04",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Make CLAUDE.md a symlink and define AGENTS.md scope",
+  "updated_at": "2026-10-01T10:03:34.606687406Z"
+}
