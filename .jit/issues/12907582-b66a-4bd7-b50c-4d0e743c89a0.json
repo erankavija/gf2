@@ -34,10 +34,11 @@
   "labels": [
     "type:task",
     "component:docs",
-    "epic:documentation-overhaul"
+    "epic:documentation-overhaul",
+    "satisfies:REQ-17"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-01T09:51:42.583411489Z"
+  "updated_at": "2026-10-01T13:19:13.198515039Z"
 }

@@ -18,10 +18,11 @@
   "labels": [
     "epic:documentation-overhaul",
     "component:docs",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-07"
   ],
   "priority": "low",
   "state": "backlog",
   "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
-  "updated_at": "2026-10-01T12:58:49.749313739Z"
+  "updated_at": "2026-10-01T13:18:56.233272624Z"
 }

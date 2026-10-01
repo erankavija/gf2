@@ -68,9 +68,9 @@
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-10-01T10:36:11.786309896Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-10-01T13:18:12.643614990Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8dddfc7a-6112-4439-b8e0-7319bca23313",
@@ -82,5 +82,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T11:42:15.969314095Z"
+  "updated_at": "2026-10-01T13:18:12.643614990Z"
 }

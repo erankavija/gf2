@@ -23,10 +23,12 @@
     "epic:documentation-overhaul",
     "component:docs",
     "type:story",
-    "story:documentation-contract"
+    "story:documentation-contract",
+    "satisfies:REQ-01",
+    "satisfies:REQ-16"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Define documentation contract and enforcement baseline",
-  "updated_at": "2026-10-01T11:41:04.009870133Z"
+  "updated_at": "2026-10-01T13:19:03.114197618Z"
 }
