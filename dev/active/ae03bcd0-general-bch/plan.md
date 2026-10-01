@@ -115,7 +115,8 @@ produce is a blocking finding, not a recordable gap): SageMath
 `codes.BCHCode` and GAP with GUAVA `BCHCode(n, b, delta, F)` — both
 documented for general finite base fields with $\gcd(n, q) = 1$; exact oracle
 versions are recorded in `oracle-provenance.md` at fixture generation.
-Authoritative vectors: the in-tree DVB-T2 verification vectors. For rows with
+Authoritative vectors: the external ETSI DVB-T2 verification streams, located
+through the resolver recorded in `oracle-provenance.md`. For rows with
 a $\mathrm{GF}(p^r)$ base (N3, N4), the provenance pins the explicit
 base-field isomorphism and coefficient canonicalization used to compare
 serialized coefficients across SageMath, GUAVA, and gf2 — equal field size
