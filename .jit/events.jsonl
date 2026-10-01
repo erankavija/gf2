@@ -14384,3 +14384,5 @@
 {"id":"c50be1d7-eda0-4bcf-bc13-f8bd90c7806d","issue_id":"f023b88b-b44f-440f-852c-7f2ce25b1b54","priority":"normal","timestamp":"2026-10-01T15:39:40.385472954Z","title":"Migrate satisfies labels to the container-qualified form","type":"issue_created"}
 {"fields":["dependencies"],"id":"87153b1b-48df-4e5b-a3c5-167ab4fc36ea","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-10-01T15:39:52.527446014Z","type":"issue_updated","updated_by":"dependency-add"}
 {"assignee":"agent:jit-execution-lead","id":"0d69ddec-d0c8-4a71-8b00-24a7ec12580f","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-01T19:20:45.383233800Z","type":"issue_claimed"}
+{"assignee":"agent:jit-execution-lead","id":"5484b940-866f-4263-bf64-6d40da062eb0","issue_id":"495807a3-caeb-4680-8429-13d7da4a590d","timestamp":"2026-10-01T19:21:13.052993082Z","type":"issue_claimed"}
+{"gate_key":"repo-validate","id":"f9889ff0-8732-41e9-82b9-e24cdf7c667a","issue_id":"495807a3-caeb-4680-8429-13d7da4a590d","timestamp":"2026-10-01T19:21:19.061205973Z","type":"gate_passed","updated_by":"auto:executor"}
