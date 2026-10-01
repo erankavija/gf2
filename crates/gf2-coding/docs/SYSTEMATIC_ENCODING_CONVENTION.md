@@ -64,18 +64,13 @@ Misuse (buffer length, field identity, coordinate range) reports typed
 `CodeError` values; panics are reserved for violated internal invariants. The
 `traits::compat::binary_v1` boundary keeps its documented panic behavior.
 
-## Legacy binary BCH surface (`bch::core`)
+### Decoding
 
-- **Encoding**: `BchEncoder::encode()` produces `[message | parity]`
-  codewords with bit position 0 holding the highest polynomial coefficient
-  (the DVB-T2 transmission order — the same convention the canonical surface
-  expresses as `MessageParityDescending`).
-- **Decoding**: `BchDecoder::decode()` expects that layout; the hardened
-  `BinaryBchDecoder` consumes the canonical construction model's ascending
-  coordinates.
-- **Generator Matrix**: `BchCode::generator_matrix()` produces systematic
-  generators.
-- **DVB-T2**: compliant with ETSI EN 302 755.
+`bch::BinaryBchDecoder` corrects words in the internal coordinates. The
+default `MessageParityAscending` layout is a cyclic rotation of them, so its
+codewords decode in place as well. `bch::dvb_t2::DvbT2BchDecoder` decodes a
+DVB-T2 word in its declared layout through the mother code; the DVB-T2 outer
+code is checked against ETSI EN 302 755.
 
 ## Linear Codes (`src/linear.rs`)
 

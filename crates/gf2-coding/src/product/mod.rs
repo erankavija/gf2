@@ -333,27 +333,6 @@ impl ProductComponent for ExtendedBchComponent {
     }
 }
 
-// Keep the version-1 component adapter as a named migration boundary until
-// the legacy eBCH removal sweep. No migrated product path constructs this
-// legacy type.
-impl ProductComponent for crate::bch::extended::ExtendedBchCode {
-    fn comp_n(&self) -> usize {
-        self.n()
-    }
-
-    fn comp_k(&self) -> usize {
-        self.k()
-    }
-
-    fn comp_is_even(&self) -> bool {
-        self.is_even()
-    }
-
-    fn comp_parity_check(&self) -> &BitMatrix {
-        self.parity_check()
-    }
-}
-
 impl ProductComponent for crate::crc::CrcCode {
     fn comp_n(&self) -> usize {
         self.n()
@@ -1488,6 +1467,50 @@ mod tests {
     use crate::crc::CrcCode;
     use crate::product::ExtendedBchComponent;
     use crate::traits::BlockEncoder;
+
+    // =====================================================================
+    // Extended BCH component minimum distances
+    // =====================================================================
+
+    /// Whether some `size` columns of `columns`, starting at `from`, sum with
+    /// `partial` to zero.
+    fn has_zero_sum(columns: &[u64], from: usize, size: usize, partial: u64) -> bool {
+        if size == 0 {
+            return partial == 0;
+        }
+        (from..columns.len())
+            .any(|index| has_zero_sum(columns, index + 1, size - 1, partial ^ columns[index]))
+    }
+
+    /// The minimum distance of the code `parity_check` defines, searched up
+    /// to `limit`: the fewest columns summing to zero.
+    fn minimum_distance(parity_check: &BitMatrix, limit: usize) -> Option<usize> {
+        assert!(parity_check.rows() <= 64, "a column fits one word");
+        let columns: Vec<u64> = (0..parity_check.cols())
+            .map(|column| {
+                (0..parity_check.rows())
+                    .filter(|&row| parity_check.get(row, column))
+                    .fold(0u64, |mask, row| mask | (1 << row))
+            })
+            .collect();
+        (1..=limit).find(|&size| has_zero_sum(&columns, 0, size, 0))
+    }
+
+    #[test]
+    fn every_extended_bch_component_has_its_designed_distance_plus_one() {
+        for (name, component, distance) in [
+            ("eBCH(16,11)", ExtendedBchComponent::ebch_16_11(), 4),
+            ("eBCH(16,7)", ExtendedBchComponent::ebch_16_7(), 6),
+            ("eBCH(32,26)", ExtendedBchComponent::ebch_32_26(), 4),
+            ("eBCH(64,57)", ExtendedBchComponent::ebch_64_57(), 4),
+        ] {
+            assert_eq!(
+                minimum_distance(component.comp_parity_check(), distance),
+                Some(distance),
+                "{name}"
+            );
+        }
+    }
 
     // =====================================================================
     // ProductCode construction tests
