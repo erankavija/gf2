@@ -4,11 +4,10 @@
 //! channel transmission, and decoding pipelines produce valid results
 //! without running full Monte Carlo simulations.
 
-use gf2_coding::bch::extended::ExtendedBchCode;
 use gf2_coding::drm::DrmCode;
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder;
 use gf2_coding::ldpc::QuasiCyclicLdpc;
-use gf2_coding::product::{ProductCode, TurboDecoder, TurboDecoderConfig};
+use gf2_coding::product::{ExtendedBchComponent, ProductCode, TurboDecoder, TurboDecoderConfig};
 use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationRunner};
 use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::BitVec;
@@ -24,7 +23,7 @@ use std::path::PathBuf;
 
 #[test]
 fn test_fig3_ebch_product_code_construction() {
-    let component = ExtendedBchCode::ebch_16_11();
+    let component = ExtendedBchComponent::ebch_16_11();
     let product = ProductCode::new(component);
     assert_eq!(product.n(), 256);
     assert_eq!(product.k(), 121);
@@ -32,7 +31,7 @@ fn test_fig3_ebch_product_code_construction() {
 
 #[test]
 fn test_fig3_ebch_product_encode_decode() {
-    let component = ExtendedBchCode::ebch_16_11();
+    let component = ExtendedBchComponent::ebch_16_11();
     let product = ProductCode::new(component.clone());
 
     let turbo_config = TurboDecoderConfig {
