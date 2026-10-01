@@ -10,10 +10,10 @@
 //! compile-time wiring; this module owns the values.
 
 /// Calibrated bit-backend threshold (`simd_min_words = 4`) recorded in
-/// `dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md`. The exact measured
-/// format-2 core owner is
-/// `crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json`
-/// with SHA-256 `0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a`.
+/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`.
+/// The exact measured format-2 core owner is
+/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
+/// with SHA-256 `c81c372b0cbd51e0433f2dcaed180cc7c82d6858d019bdfc17deac2f6724bbf2`.
 pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
@@ -28,25 +28,35 @@ pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 /// Baked value for `gemm.row_tile`, mirroring
 /// `crate::field::matrix::GEMM_ROW_TILE`.
 ///
-/// The field is an extent, not a threshold, so it is non-sweepable
-/// (`dev/active/7d824b2f/design.md` §5.2). Its value is the core section's
-/// conservative declaration.
+/// The extent calibration recorded in
+/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+/// selects the row and column tiles jointly over the full pair grid
+/// (`dev/active/a83583e0/premeasurement-protocol.md` §5). Its non-monotone
+/// pair curve retains the conservative pair, which the measured core owner
+/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
+/// states under that campaign's provenance. The unconditional conservative
+/// declaration is `crate::field::matrix::GEMM_ROW_TILE_DEFAULT`.
 pub(crate) const GEMM_ROW_TILE: usize = 32;
 
 /// Baked value for `gemm.col_tile`, mirroring
 /// `crate::field::matrix::GEMM_COL_TILE`.
 ///
-/// See `GEMM_ROW_TILE` for the tiling rationale; the value is the conservative
-/// default for the same reason.
+/// Selected jointly with [`GEMM_ROW_TILE`], whose documentation cites the
+/// receipt and measured owner. The unconditional conservative declaration is
+/// `crate::field::matrix::GEMM_COL_TILE_DEFAULT`.
 pub(crate) const GEMM_COL_TILE: usize = 64;
 
 /// Baked value for `field_vec.dot_chunk_len`, mirroring
 /// `crate::field::vec::DOT_CHUNK_LEN`.
 ///
 /// The field sizes `try_simd_dot_product`'s stack scratch buffers, so only
-/// the bake mechanism can carry it (`dev/active/7d824b2f/design.md` §3.8);
-/// as an extent it is also non-sweepable (§5.2). Its value is the core
-/// section's conservative declaration.
+/// the bake mechanism can carry it (`dev/active/7d824b2f/design.md` §3.8).
+/// The extent calibration recorded in
+/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+/// finds no resolved unique minimum over the declared chunk grid and retains
+/// the conservative chunk, which the measured core owner
+/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
+/// states under that campaign's provenance.
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
 
 /// Baked value for `prime_route.f32_min_prime`, mirroring
@@ -87,7 +97,7 @@ mod tests {
     use sha2::{Digest, Sha256};
 
     const MEASURED_FORMAT2: &[u8] =
-        include_bytes!("../../data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json");
+        include_bytes!("../../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
 
     #[test]
     fn default_constant_matches_conservative_table() {
@@ -101,13 +111,12 @@ mod tests {
     fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
             format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
-            "0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a"
+            "c81c372b0cbd51e0433f2dcaed180cc7c82d6858d019bdfc17deac2f6724bbf2"
         );
     }
 
     #[cfg(feature = "tuning-profile")]
-    #[test]
-    fn baked_simd_threshold_matches_the_strict_measured_owner() {
+    fn measured_owner_section() -> CoreTuning {
         let registry = ProfileRegistryBuilder::new()
             .register::<CoreTuning, CoreTuningCodec>()
             .unwrap()
@@ -116,11 +125,39 @@ mod tests {
         let owner = registry
             .from_json(std::str::from_utf8(MEASURED_FORMAT2).unwrap())
             .unwrap();
-        let measured = owner.section::<CoreTuning>().unwrap().unwrap();
+        owner
+            .section::<CoreTuning>()
+            .unwrap()
+            .unwrap()
+            .section
+            .clone()
+    }
 
+    #[cfg(feature = "tuning-profile")]
+    #[test]
+    fn baked_simd_threshold_matches_the_strict_measured_owner() {
         assert_eq!(
             SIMD_MIN_WORDS,
-            measured.section.bit_backend().simd_min_words()
+            measured_owner_section().bit_backend().simd_min_words()
+        );
+    }
+
+    #[cfg(feature = "tuning-profile")]
+    #[test]
+    fn baked_gemm_tile_pair_matches_the_strict_measured_owner() {
+        let measured = measured_owner_section();
+        assert_eq!(
+            (GEMM_ROW_TILE, GEMM_COL_TILE),
+            (measured.gemm().row_tile(), measured.gemm().col_tile())
+        );
+    }
+
+    #[cfg(feature = "tuning-profile")]
+    #[test]
+    fn baked_dot_chunk_matches_the_strict_measured_owner() {
+        assert_eq!(
+            DOT_CHUNK_LEN,
+            measured_owner_section().field_vec().dot_chunk_len()
         );
     }
 
@@ -135,30 +172,6 @@ mod tests {
             CoreTuning::CONSERVATIVE
                 .bit_matrix()
                 .matvec_simd_min_words() as u64,
-        );
-    }
-
-    #[test]
-    fn gemm_row_tile_matches_conservative_section() {
-        assert_matches_conservative(
-            GEMM_ROW_TILE as u64,
-            CoreTuning::CONSERVATIVE.gemm().row_tile() as u64,
-        );
-    }
-
-    #[test]
-    fn gemm_col_tile_matches_conservative_section() {
-        assert_matches_conservative(
-            GEMM_COL_TILE as u64,
-            CoreTuning::CONSERVATIVE.gemm().col_tile() as u64,
-        );
-    }
-
-    #[test]
-    fn dot_chunk_len_matches_conservative_section() {
-        assert_matches_conservative(
-            DOT_CHUNK_LEN as u64,
-            CoreTuning::CONSERVATIVE.field_vec().dot_chunk_len() as u64,
         );
     }
 

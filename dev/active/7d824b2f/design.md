@@ -1037,3 +1037,26 @@ remain unchanged under either cfg. Behavior identity includes the neutral
 driver, campaign/statistics/transport/journal support, launcher, and validator;
 protocol prose retains its separate identity. Amendment A9's selector semantics
 and retained-threshold remeasurement requirements remain binding.
+
+## Amendment A11 (2026-10-01, measured issue `a83583e0`)
+
+The campaign declared by
+[`a83583e0/premeasurement-protocol.md`](../a83583e0/premeasurement-protocol.md)
+is executed and published as
+[`gf2-a83583e0-20260930t230000z-2728298.md`](../../benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md),
+with the core owner
+`crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`,
+the algebra owner
+`crates/gf2-algebra/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`,
+and the composed complete envelope
+`dev/reference_data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`.
+These are the current readers. The core codec accepts only
+`tuning-calibration-v4`; the eaae and 389 owners, complete envelopes, and
+receipts remain immutable historical evidence at their committed paths and are
+not current-codec fixtures.
+
+Both baked extent families cite this campaign. The joint GEMM pair analysis
+finds a non-monotone curve and the dot chunk analysis an unresolved minimum,
+so each retains its conservative value (row/column tiles 32/64, chunk 256)
+under this campaign's measured provenance, as Amendment A9 requires. The
+unconditional conservative declarations are unchanged under either cfg.

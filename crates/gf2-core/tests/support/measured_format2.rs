@@ -4,12 +4,14 @@ use gf2_core::tuning::{
 };
 
 const MEASURED_OWNER: &str =
-    include_str!("../../data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json");
-const MEASURED_PROFILE_ID: &str = "gf2-eaae1b56-20260904-215231-898522";
-const MEASURED_RECEIPT: &str = "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md";
+    include_str!("../../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
+const MEASURED_PROFILE_ID: &str = "gf2-a83583e0-20260930t230000z-2728298";
+const MEASURED_RECEIPT: &str =
+    "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md";
 
-/// Strictly reopens the measured owner and verifies codec-known omitted fields.
-pub(crate) fn omitted_fields_section(family: &str, fields: &[&str]) -> CoreTuning {
+/// Strictly reopens the measured owner and verifies which codec-known fields
+/// of `family` it states and which it omits.
+pub(crate) fn measured_section(family: &str, stated: &[&str], omitted: &[&str]) -> CoreTuning {
     let registry = ProfileRegistryBuilder::new()
         .register::<CoreTuning, CoreTuningCodec>()
         .expect("core codec registers once")
@@ -28,10 +30,12 @@ pub(crate) fn omitted_fields_section(family: &str, fields: &[&str]) -> CoreTunin
         .expect("core section has the registered Rust type")
         .expect("measured owner states its core section");
     match measured.measurement {
-        MeasurementProvenance::Calibrated { receipt, .. } => {
-            // Strict registry reopen above validates the committed owner's
-            // harness token through the named `PREPUBLICATION_HARNESS_SCHEMA`
-            // boundary (jit:a83583e0; premeasurement protocol §9).
+        MeasurementProvenance::Calibrated {
+            harness_schema,
+            receipt,
+            ..
+        } => {
+            assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
             assert_eq!(receipt.as_str(), MEASURED_RECEIPT);
         }
         MeasurementProvenance::Inherited => panic!("measured core section is not inherited"),
@@ -48,16 +52,22 @@ pub(crate) fn omitted_fields_section(family: &str, fields: &[&str]) -> CoreTunin
     let known_fields = inventory[family]
         .as_object()
         .unwrap_or_else(|| panic!("core codec has no selector family {family}"));
-    assert!(!fields.is_empty(), "omission witness must name its fields");
-    for field in fields {
-        assert!(
-            known_fields.contains_key(*field),
-            "core codec has no selector {family}.{field}"
-        );
-        assert!(
-            !family_fields.contains_key(*field),
-            "measured owner unexpectedly states omitted selector {family}.{field}"
-        );
+    assert!(
+        !stated.is_empty() || !omitted.is_empty(),
+        "measured-owner witness must name its fields"
+    );
+    for (fields, expect_stated) in [(stated, true), (omitted, false)] {
+        for field in fields {
+            assert!(
+                known_fields.contains_key(*field),
+                "core codec has no selector {family}.{field}"
+            );
+            assert_eq!(
+                family_fields.contains_key(*field),
+                expect_stated,
+                "measured owner statement of {family}.{field}"
+            );
+        }
     }
     measured.section.clone()
 }

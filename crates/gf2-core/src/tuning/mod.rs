@@ -1476,12 +1476,6 @@ impl CorePresence {
 
 #[cfg(feature = "tuning-profile")]
 const CORE_HARNESS_SCHEMA: &str = "tuning-calibration-v4";
-// Named `PREPUBLICATION_HARNESS_SCHEMA` boundary (jit:a83583e0): the codec
-// accepts `tuning-calibration-v3` alongside the current v4 harness and
-// rejects every other token. Tracked removal condition: premeasurement
-// protocol §9 (dev/active/a83583e0/premeasurement-protocol.md).
-#[cfg(feature = "tuning-profile")]
-const PREPUBLICATION_HARNESS_SCHEMA: &str = "tuning-calibration-v3";
 
 /// Format-2 owner codec for [`CoreTuning`].
 #[cfg(feature = "tuning-profile")]
@@ -1501,8 +1495,7 @@ impl SectionCodec<CoreTuning> for CoreTuningCodec {
         match value {
             MeasurementProvenance::Inherited => Ok(()),
             MeasurementProvenance::Calibrated { harness_schema, .. }
-                if harness_schema.as_str() == CORE_HARNESS_SCHEMA
-                    || harness_schema.as_str() == PREPUBLICATION_HARNESS_SCHEMA =>
+                if harness_schema.as_str() == CORE_HARNESS_SCHEMA =>
             {
                 Ok(())
             }
