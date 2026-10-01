@@ -11,11 +11,14 @@
 #   3. bch_genmatrix.rs (workload W2), CCX1 pin, GF2_BENCH=1.
 #
 # Every BCH benchmark appends its dispatch path to <out-dir>/dispatch.jsonl
-# (GF2_BCH_DISPATCH_RECORD; format in crates/gf2-coding/benches/bch_workloads.rs).
+# (GF2_BCH_DISPATCH_RECORD; format in the d1b4f85e amendment of
+# dev/active/4e732b56/workload-selection.md).
 # After the runs, the Criterion estimates.json, sample.json and benchmark.json
 # of every benchmark this run wrote are copied to <out-dir>/samples/, and the
-# run fails if a recorded ID has no fresh Criterion output or a W1 record saw
-# a parallel pool other than six threads.
+# run fails if a recorded ID has no fresh Criterion output, a W1 or W2 record
+# lacks a required field, a W1 record saw a parallel pool other than six
+# threads, or two paths of one row (and W1 batch) disagree on their output
+# digest.
 #
 # Usage (from the repository root, with GF2_BENCH_WINDOW=1 exported by the
 # window runner):
@@ -152,9 +155,23 @@ if len(ids) != len(set(ids)):
 missing = [i for i in ids if i not in fresh]
 if missing:
     sys.exit("ERROR: no fresh Criterion output for: " + ", ".join(missing))
-narrow = [l["id"] for l in lines if l.get("workload") == "W1" and l.get("rayon_pool_width") != workers]
+workload = [l for l in lines if l.get("workload") in ("W1", "W2", "W2-parity-check")]
+required = ("workers", "rayon_pool_width", "output_fnv1a", "cache", "entry")
+incomplete = [l["id"] for l in workload if any(f not in l for f in required)]
+if incomplete:
+    sys.exit("ERROR: records missing a required field: " + ", ".join(incomplete))
+narrow = [l["id"] for l in workload if l["workload"] == "W1" and l["rayon_pool_width"] != workers]
 if narrow:
     sys.exit(f"ERROR: W1 cells ran on a pool other than {workers} threads: " + ", ".join(narrow))
+# Every path of one W1 row and batch, and of one W2 group and row, writes the
+# same output.
+digests = {}
+for l in workload:
+    key = (l["id"].split("/")[0], l["row"], l.get("batch"))
+    digests.setdefault(key, set()).add(l["output_fnv1a"])
+split = [str(k) for k, v in digests.items() if len(v) != 1]
+if split:
+    sys.exit("ERROR: paths disagree on their output digest at: " + ", ".join(split))
 
 for full_id, source in sorted(fresh.items()):
     dest = samples / full_id.replace("/", "__")
