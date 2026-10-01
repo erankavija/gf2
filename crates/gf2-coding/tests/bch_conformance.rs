@@ -43,7 +43,8 @@
 //!
 //! Beyond BCH, the cases run over every other implementor of the canonical
 //! interfaces in this crate: [`LinearBlockCode`], the repetition code, the
-//! three transformations, and the cache wrapper, which is what
+//! three transformations, the cache wrapper, and [`LayoutView`] over every
+//! matrix row, which is what
 //! `@/invariant/shared-test-contracts` asks of a shared interface. The
 //! version-1 binary compatibility boundary is checked against the canonical
 //! packed path wherever a packed code runs.
@@ -92,7 +93,7 @@ use gf2_coding::bch::spec::{
     BchCode, BchLength, BchSpec, BinaryBchCode, DenseBchCode, DesignedDistance, RootExponent,
     RootSelection,
 };
-use gf2_coding::bch::{CachedMatrices, MatrixFill};
+use gf2_coding::bch::{CachedMatrices, LayoutView, MatrixFill, SystematicLayout};
 use gf2_coding::error::CodeError;
 use gf2_coding::test_support::{
     self, bch_construction_contract, bch_corpus_dense_twin, bch_corpus_distance,
@@ -558,6 +559,23 @@ impl BchCorpusVisitor for MatrixCases {
             "{} parity check equals the basis-vector oracle",
             row.id
         );
+
+        for layout in [
+            SystematicLayout::MessageParityAscending,
+            SystematicLayout::MessageParityDescending,
+        ] {
+            let view = LayoutView::new(code.clone(), layout);
+            full_capability_cases(&view, &messages);
+            for message in &messages {
+                assert_eq!(
+                    view.encode(message).expect("a corpus message encodes"),
+                    code.encode_systematic(message, layout)
+                        .expect("a corpus message encodes"),
+                    "{} view encodes under {layout:?}",
+                    row.id
+                );
+            }
+        }
 
         let twin = bch_corpus_dense_twin(row, code);
         let twin_messages = bch_corpus_message_sequences(&twin);

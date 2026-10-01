@@ -71,10 +71,11 @@
 //! assert_eq!(decoded, msg);
 //! ```
 
-use crate::bch::dvb_t2::{generators, DvbBchParams, FrameSize};
+use crate::bch::dvb_t2::{dvb_t2_bch_code, FrameSize};
 use crate::bch::error::BchError;
 use crate::bch::spec::BinaryBchCode;
 use crate::error::CodeError;
+use crate::traits::block::BlockCode as CanonicalBlockCode;
 use crate::traits::{BlockEncoder, HardDecisionDecoder};
 use gf2_core::field::extension::FieldExtension;
 use gf2_core::field::{FieldPoly, FiniteField, FiniteFieldExt};
@@ -222,8 +223,11 @@ impl BchCode {
 
     /// Creates DVB-T2 BCH code for specified frame size and rate.
     ///
-    /// Uses explicit generator polynomials from ETSI EN 302 755.
-    /// The generator is the product of g_1(x) × g_2(x) × ... × g_t(x).
+    /// The value carries the parameters and generator of
+    /// [`dvb_t2_bch_code`]: the shortened length and dimension, the mother's
+    /// correction radius, and the mother's generator over GF(2) lifted into
+    /// the splitting field, which is the product g_1(x) × ... × g_t(x) of
+    /// ETSI EN 302 755.
     ///
     /// # Arguments
     ///
@@ -245,22 +249,34 @@ impl BchCode {
     ///
     /// # Panics
     ///
-    /// Panics if the generator polynomial cannot be constructed for the
-    /// specified parameters (should not happen for valid DVB-T2 configs).
+    /// Panics if [`dvb_t2_bch_code`] rejects the configuration, which it does
+    /// for none of the standard's frame sizes and rates.
     pub fn dvb_t2(frame_size: FrameSize, rate: CodeRate) -> Self {
-        let params = DvbBchParams::for_code(frame_size, rate);
-        let field = Gf2mField::new(params.field_m, params.primitive_poly).with_tables();
-
-        // Get appropriate generator polynomials for frame size
-        let generators = match frame_size {
-            FrameSize::Short => generators::SHORT_GENERATORS,
-            FrameSize::Normal => generators::NORMAL_GENERATORS,
-        };
-
-        // Compute g(x) = g_1(x) × g_2(x) × ... × g_t(x)
-        let generator = generators::product_of_generators(&field, generators, params.t);
-
-        Self::from_generator(params.n, params.k, params.t, field, generator)
+        let code = dvb_t2_bch_code(frame_size, rate)
+            .expect("ETSI EN 302 755 defines every frame size and code rate");
+        let mother = code.mother().code();
+        let field = mother.extension().field().clone();
+        let (zero, one) = (field.zero(), field.one());
+        let generator = Gf2mPoly::new(
+            (0..=CanonicalBlockCode::redundancy(mother))
+                .map(|degree| {
+                    if mother.generator().coeff(degree).is_one() {
+                        one.clone()
+                    } else {
+                        zero.clone()
+                    }
+                })
+                .collect(),
+        );
+        let t = mother.correction_radius();
+        Self {
+            n: CanonicalBlockCode::n(&code),
+            k: CanonicalBlockCode::k(&code),
+            t,
+            field,
+            generator,
+            designed_distance: 2 * t + 1,
+        }
     }
 
     /// Constructs generator polynomial from consecutive roots.
@@ -2247,7 +2263,7 @@ mod tests {
 #[cfg(test)]
 mod dvb_t2_tests {
     use super::*;
-    use crate::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchDecoder};
+    use crate::bch::dvb_t2::{dvb_t2_bch_code, generators, DvbBchParams, DvbT2BchDecoder};
     use crate::traits::block::BlockEncoder as CanonicalBlockEncoder;
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
@@ -2351,6 +2367,33 @@ mod dvb_t2_tests {
         let decoded = decoder.decode(&cw);
 
         assert_eq!(decoded, msg);
+    }
+
+    #[test]
+    fn the_dvb_t2_generator_is_the_standard_product() {
+        for (frame_size, rate) in dvb_configurations() {
+            let params = DvbBchParams::for_code(frame_size, rate);
+            let code = BchCode::dvb_t2(frame_size, rate);
+            let table = match frame_size {
+                FrameSize::Short => generators::SHORT_GENERATORS,
+                FrameSize::Normal => generators::NORMAL_GENERATORS,
+            };
+            let expected = generators::product_of_generators(code.field(), table, params.t);
+            let degree = expected.degree().expect("a nonzero generator product");
+            assert_eq!(
+                code.generator().degree(),
+                Some(degree),
+                "generator degree for {frame_size:?} {rate:?}"
+            );
+            let zero = code.field().zero();
+            for index in 0..=degree {
+                assert_eq!(
+                    code.generator().coeff_or_zero(index, &zero),
+                    expected.coeff_or_zero(index, &zero),
+                    "generator coefficient {index} for {frame_size:?} {rate:?}"
+                );
+            }
+        }
     }
 
     #[test]

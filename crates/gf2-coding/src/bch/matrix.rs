@@ -11,12 +11,15 @@
 //! parity-check matrix is $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$: it has full
 //! row rank $n - k$ and satisfies $G H^{\mathsf T} = 0$.
 //!
-//! That layout is the matrix contract rather than a per-call option.
-//! [`MessageParityDescending`](crate::bch::encode::SystematicLayout::MessageParityDescending)
-//! selects a transmission order for an encode call, and no matrix is
-//! materialized under it; a consumer needing another coordinate order composes
-//! these matrices with
-//! [`SystematicPlan::to_coordinate_map`](crate::bch::encode::SystematicPlan::to_coordinate_map).
+//! That layout is the matrix contract of [`BchCode`] rather than a per-call
+//! option. A code declaring another layout is a
+//! [`LayoutView`]: its matrices are these with the rows and columns permuted
+//! by the correspondence $\sigma$ from the declared layout's coordinates to
+//! the default layout's coordinates that carry the same internal coordinate.
+//! Entry $(i, c)$ of the view's generator is entry $(\sigma(i), \sigma(c))$ of
+//! the default one, and entry $(j, c)$ of its parity check is entry
+//! $(\sigma(k + j) - k, \sigma(c))$, so the view keeps both block forms:
+//! $\sigma$ maps the message coordinates onto themselves.
 //!
 //! Materialization holds no implicit cache. [`CachedMatrices`] is the explicit
 //! opt-in cache for callers that reuse these matrices. It caches successful
@@ -97,6 +100,7 @@ use gf2_core::field::{FieldPoly, FiniteField};
 use gf2_core::gfp::Fp;
 use gf2_core::BitMatrix;
 
+use crate::bch::encode::LayoutView;
 #[cfg(any(test, feature = "test-support"))]
 use crate::bch::encode::SystematicKernel;
 use crate::bch::spec::BchCode;
@@ -680,6 +684,142 @@ where
     }
 }
 
+impl<X, S, M> GeneratorMatrixAccess for LayoutView<X, S, M>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: MatrixFill<X::Base>,
+{
+    type GeneratorMatrix = M;
+
+    /// Writes $G = [\,I_k \mid P\,]$ under the declared layout.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::ShapeMismatch`] when `out` is not $k \times n$.
+    ///
+    /// # Complexity
+    ///
+    /// The default-layout materialization plus one in-place permutation of
+    /// the output, with no second buffer. Each cycle of the layout
+    /// correspondence is walked once per member to find its leader, so a
+    /// correspondence whose cycles have length at most two, as for every
+    /// [`SystematicLayout`](crate::bch::encode::SystematicLayout) variant,
+    /// costs $O(kn)$ cell moves.
+    fn generator_matrix_into(&self, out: &mut Self::GeneratorMatrix) -> Result<(), CodeError> {
+        write_generator(self.code(), out)?;
+        let sigma = self.default_correspondence();
+        permute_matrix(out, &sigma, &sigma);
+        Ok(())
+    }
+
+    /// Reports `true` without materializing anything.
+    ///
+    /// The layout correspondence maps the message coordinates onto
+    /// themselves, so the identity block of the default layout stays in
+    /// columns $0$ to $k - 1$.
+    fn is_systematic(&self) -> Result<bool, CodeError> {
+        Ok(true)
+    }
+}
+
+impl<X, S, M> ParityCheckMatrixAccess for LayoutView<X, S, M>
+where
+    X: FieldExtension,
+    S: SymbolSequence<X::Base>,
+    M: MatrixFill<X::Base>,
+{
+    type ParityCheckMatrix = M;
+
+    /// Writes $H = [\,-P^{\mathsf T} \mid I_{n-k}\,]$ under the declared
+    /// layout, for the parity block $P$ of the view's generator.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CodeError::ShapeMismatch`] when `out` is not
+    /// $(n - k) \times n$.
+    ///
+    /// # Complexity
+    ///
+    /// That of [`generator_matrix_into`](GeneratorMatrixAccess::generator_matrix_into)
+    /// over the $(n - k) \times n$ output.
+    fn parity_check_matrix_into(&self, out: &mut Self::ParityCheckMatrix) -> Result<(), CodeError> {
+        write_parity_check(self.code(), out)?;
+        let dimension = self.k();
+        let sigma = self.default_correspondence();
+        permute_matrix(out, |row| sigma(dimension + row) - dimension, &sigma);
+        Ok(())
+    }
+}
+
+/// Rewrites `matrix` in place so that entry $(i, c)$ becomes the former entry
+/// $(\mathrm{row\_source}(i), \mathrm{col\_source}(c))$.
+///
+/// Both sources must be permutations of the row and column index ranges.
+fn permute_matrix<F, M>(
+    matrix: &mut M,
+    row_source: impl Fn(usize) -> usize,
+    col_source: impl Fn(usize) -> usize,
+) where
+    F: FieldIdentity,
+    M: SymbolMatrix<F>,
+{
+    let rows = matrix.rows();
+    let cols = matrix.cols();
+    for col in 0..cols {
+        gather_in_place(matrix, rows, &row_source, |row| (row, col));
+    }
+    for row in 0..rows {
+        gather_in_place(matrix, cols, &col_source, |col| (row, col));
+    }
+}
+
+/// Applies the gather $a_i \leftarrow a_{\mathrm{source}(i)}$ to the `len`
+/// cells `cell` addresses, following each cycle of `source` from its least
+/// member.
+fn gather_in_place<F, M>(
+    matrix: &mut M,
+    len: usize,
+    source: &impl Fn(usize) -> usize,
+    cell: impl Fn(usize) -> (usize, usize),
+) where
+    F: FieldIdentity,
+    M: SymbolMatrix<F>,
+{
+    for start in 0..len {
+        if source(start) == start || !leads_its_cycle(start, source) {
+            continue;
+        }
+        let (row, col) = cell(start);
+        let held = matrix.get(row, col).expect(IN_RANGE);
+        let mut at = start;
+        loop {
+            let next = source(at);
+            let (row, col) = cell(at);
+            if next == start {
+                matrix.set(row, col, held).expect(IN_RANGE);
+                break;
+            }
+            let (next_row, next_col) = cell(next);
+            let value = matrix.get(next_row, next_col).expect(IN_RANGE);
+            matrix.set(row, col, value).expect(IN_RANGE);
+            at = next;
+        }
+    }
+}
+
+/// Decides whether `start` is the least member of its cycle under `source`.
+fn leads_its_cycle(start: usize, source: &impl Fn(usize) -> usize) -> bool {
+    let mut at = source(start);
+    while at != start {
+        if at < start {
+            return false;
+        }
+        at = source(at);
+    }
+    true
+}
+
 /// Explicit opt-in caching for a code's generator and parity-check matrices.
 ///
 /// The wrapped code is never modified and does not gain a cache. Each
@@ -830,6 +970,27 @@ mod tests {
 
     fn binary_extension() -> BinaryPrimeExt {
         BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).expect("a valid binary extension")
+    }
+
+    #[test]
+    fn the_in_place_permutation_gathers_every_cycle() {
+        // Row cycles (0 2 1)(3)(4); column cycles (0 3 1 5)(2 4)(6).
+        let row_source = |row: usize| [2, 0, 1, 3, 4][row];
+        let col_source = |col: usize| [3, 5, 4, 1, 2, 0, 6][col];
+        let original = BitMatrix::random_seeded(5, 7, 0xAE03_BCD0);
+
+        let mut permuted = original.clone();
+        permute_matrix::<Fp<2>, _>(&mut permuted, row_source, col_source);
+
+        for row in 0..5 {
+            for col in 0..7 {
+                assert_eq!(
+                    permuted.get(row, col),
+                    original.get(row_source(row), col_source(col)),
+                    "entry ({row}, {col})"
+                );
+            }
+        }
     }
 
     fn binary_code() -> BinaryBchCode {

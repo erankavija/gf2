@@ -11,10 +11,12 @@
 //! - [`spec`]: the construction model, its validating pipeline, and the
 //!   canonical code type over any supported base field
 //! - [`encode`]: systematic encoding over any supported base field, with the
-//!   explicit user-layout contract and the profile-driven dispatch among
-//!   equivalent batch-encoding algorithm families
+//!   explicit user-layout contract, the layout-declaring view, and the
+//!   profile-driven dispatch among equivalent batch-encoding algorithm
+//!   families
 //! - [`matrix`]: generator and parity-check materialization in the default
-//!   user layout, with caller buffers and explicit opt-in caching
+//!   user layout and under a declared one, with caller buffers and explicit
+//!   opt-in caching
 //! - [`error`]: the BCH construction and decoding error surface
 //! - [`extended`]: extended BCH codes
 //! - [`dvb_t2`]: DVB-T2 standard BCH outer codes
@@ -53,7 +55,7 @@ pub mod error;
 pub mod extended;
 pub mod matrix;
 pub mod spec;
-pub use encode::SystematicLayout;
+pub use encode::{LayoutView, SystematicLayout};
 
 pub use core::{
     BchCode, BchDecodeOutcome, BchDecodeReport, BchDecodeWorkspace, BchDecoder, BchEncoder,

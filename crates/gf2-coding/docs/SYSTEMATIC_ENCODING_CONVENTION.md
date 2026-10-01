@@ -53,7 +53,10 @@ The surface is generic over the code symbol field and representation: packed
 `BitVec` for binary codes and `FieldVec` for the field-generic path. Entry
 points are `bch::spec::BchCode::{encode_systematic, encode_systematic_into,
 systematic_message}` and the canonical `traits::block::BlockEncoder`
-implementation.
+implementation. `bch::encode::LayoutView` presents a whole code under one
+declared layout, so its encoder and its generator and parity-check matrices
+all follow that layout; the DVB-T2 outer code shortens that view under
+`MessageParityDescending`.
 
 ### Errors
 
