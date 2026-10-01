@@ -2,7 +2,7 @@
 //! checkpointed protocol.
 //!
 //! The executable owns only the domain binding: the named
-//! [`ExtendedBchCode::ebch_128_64`] factory, the BI-AWGN/BPSK channel, the
+//! [`ebch_128_64`] construction, the BI-AWGN/BPSK channel, the
 //! order-2 target and order-1 control cells, and each sampled block's outcome.
 //! Cell identity, deterministic seed derivation, bounded stopping, checkpoint
 //! validation, BER/BLER intervals, receipt schema, and resume history remain in
@@ -49,11 +49,16 @@ use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use gf2_coding::bch::extended::ExtendedBchCode;
+use gf2_coding::bch::encode::SystematicLayout;
+use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
+use gf2_coding::bch::LayoutView;
 use gf2_coding::osd::{GeneratorMatrixOsdDecoder, OsdConfig};
 use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel};
-use gf2_coding::traits::BlockEncoder;
-use gf2_core::BitVec;
+use gf2_coding::traits::block::{BlockCode, BlockEncoder};
+use gf2_coding::transform::Extended;
+use gf2_core::field::extension::BinaryPrimeExt;
+use gf2_core::gf2m::Gf2mField;
+use gf2_core::{BitMatrix, BitVec};
 use rand08::Rng;
 use rand_chacha08::ChaCha20Rng;
 use sha2::{Digest, Sha256};
@@ -126,6 +131,30 @@ fn main() -> ExitCode {
     }
 }
 
+/// The pinned eBCH(128,64,22) code: the binary BCH(127,64) code with designed
+/// distance 21 over GF(2^7) with primitive polynomial `x^7 + x + 1` (`0x83`),
+/// presented as `[message | parity]` with both blocks in descending degree
+/// order, extended by one overall parity coordinate. The descending layout is
+/// the convention of the recorded reference generator in
+/// `crates/gf2-coding/tests/data/ebch_128_64_reference.json`.
+type Ebch128 = Extended<LayoutView<BinaryPrimeExt, BitVec, BitMatrix>>;
+
+/// Builds the pinned code on the canonical construction model.
+fn ebch_128_64() -> Ebch128 {
+    let extension = BinaryPrimeExt::new(Gf2mField::new(7, 0b10000011).with_tables())
+        .expect("x^7 + x + 1 presents GF(2^7)");
+    let designed_distance = DesignedDistance::try_from(21).expect("a positive designed distance");
+    let base = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+        extension,
+        designed_distance,
+    })
+    .expect("the pinned BCH(127,64) construction is valid");
+    let mother = LayoutView::new(base, SystematicLayout::MessageParityDescending);
+    let code = Extended::new(mother).expect("an extended BCH code fits in memory");
+    assert_eq!((code.n(), code.k()), (128, 64), "pinned eBCH(128,64) shape");
+    code
+}
+
 fn run() -> Result<(), String> {
     let Some(args) = parse_args()? else {
         println!("{USAGE}");
@@ -134,7 +163,7 @@ fn run() -> Result<(), String> {
     let provenance = campaign_provenance(args.invocation)?;
     let campaign = pinned_campaign(args.seed, args.target_block_errors, provenance)
         .map_err(|error| error.to_string())?;
-    let code = ExtendedBchCode::ebch_128_64();
+    let code = ebch_128_64();
     let receipt = gf2_sim::osd_campaign::run_osd_campaign(
         &args.checkpoint,
         &campaign,
@@ -312,7 +341,7 @@ fn pinned_campaign(
 /// to its own reserved region, so an evaluator carries no state from one block
 /// to the next and two evaluators agree on any block they both see.
 struct CellEvaluator<'a> {
-    code: &'a ExtendedBchCode,
+    code: &'a Ebch128,
     channel: BpskAwgnChannel,
     binding: Option<CellBinding>,
 }
@@ -320,12 +349,12 @@ struct CellEvaluator<'a> {
 /// The decoder and random stream bound to the cell a worker is sampling.
 struct CellBinding {
     cell_id: OsdCellId,
-    decoder: GeneratorMatrixOsdDecoder<ExtendedBchCode>,
+    decoder: GeneratorMatrixOsdDecoder<Ebch128>,
     stream: OsdBlockStream,
 }
 
 impl<'a> CellEvaluator<'a> {
-    fn new(code: &'a ExtendedBchCode) -> Self {
+    fn new(code: &'a Ebch128) -> Self {
         Self {
             code,
             channel: BpskAwgnChannel,
@@ -375,8 +404,8 @@ struct FrameResult {
 }
 
 fn simulate_frame(
-    code: &ExtendedBchCode,
-    decoder: &GeneratorMatrixOsdDecoder<ExtendedBchCode>,
+    code: &Ebch128,
+    decoder: &GeneratorMatrixOsdDecoder<Ebch128>,
     channel: &BpskAwgnChannel,
     eb_n0_db: f64,
     rng: &mut ChaCha20Rng,
@@ -385,7 +414,9 @@ fn simulate_frame(
     for bit in 0..code.k() {
         message.set(bit, rng.gen());
     }
-    let codeword = code.encode(&message);
+    let codeword = code
+        .encode(&message)
+        .expect("a k-bit message encodes under the pinned code");
     let llrs = channel.transmit_and_demodulate(
         &codeword,
         eb_n0_db,

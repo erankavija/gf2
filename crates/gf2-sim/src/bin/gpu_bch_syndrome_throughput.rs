@@ -1,25 +1,28 @@
 //! GPU BCH syndrome-evaluation throughput benchmark (issue `9012f8a0`,
 //! design doc §11).
 //!
-//! Measures **syndrome-evaluation** frames/second for the DVB-T2 Normal Rate
-//! 1/2 BCH code (n = 32400, GF(2^16), 2t = 24 — the design workload), decode
-//! sub-step vs decode sub-step: the GPU
-//! [`compute_syndromes_batch_gpu`](gf2_coding::bch::BchDecoder::compute_syndromes_batch_gpu)
+//! Measures **syndrome-evaluation** frames/second for the canonical DVB-T2
+//! Normal Rate 1/2 BCH mother code (n = 65535, GF(2^16), t = 12, 2t = 24 — the
+//! design workload's field and radius), decode sub-step vs decode sub-step: the
+//! GPU
+//! [`compute_syndromes_batch_gpu`](gf2_coding::bch::BinaryBchDecoder::compute_syndromes_batch_gpu)
 //! path (H2D of packed coeff streams + Horner kernel + D2H of syndromes) against
-//! the CPU [`compute_syndromes`](gf2_coding::bch::BchDecoder::compute_syndromes)
-//! measured **in isolation** (NO Berlekamp-Massey / Chien), at 1 thread and at
-//! the full rayon pool. The honest **best existing production CPU path is
-//! single-thread**: the rayon-24T `compute_syndromes` is anomalously *slower*
-//! than 1T due to `Arc<FieldParams>` refcount contention (see the receipt), so
-//! 1T is the gate divisor, not 24T.
+//! the CPU syndrome evaluation measured **in isolation** (NO Berlekamp-Massey /
+//! Chien), at 1 thread and at the full rayon pool. The canonical decoder
+//! exposes CPU syndrome evaluation as the first step of
+//! [`correct_in_place`](gf2_coding::bch::BinaryBchDecoder::correct_in_place),
+//! which returns right after it on a codeword, so the CPU arms time
+//! `correct_in_place` over error-free codewords. The shortened DVB-T2 frame
+//! (n = 32400) decodes through this mother, so the mother's length is the
+//! length a device syndrome evaluation covers.
 //!
 //! The `[hard]` gate is GPU syndrome throughput >= 5x the best existing CPU
-//! path (single-thread); both 1T and 24T are reported. This follows the
+//! path (single-thread); both 1T and the full pool are reported. This follows the
 //! `a930be7f` decode-vs-decode precedent (avoid GPU-vs-serial category
 //! confusion).
 //!
 //! Also reports a batch-size sweep (64 / 256 / 1024 / 4096 by default) and a
-//! coarse host-side phase split (coeff repack+H2D vs kernel+D2H), plus the
+//! coarse host-side phase split (coefficient staging vs device transfer and kernel), plus the
 //! hardware / ROCm metadata recorded in the receipt.
 //!
 //! Manually invoked (not a nextest test). Without `--features hip` it prints a
@@ -51,9 +54,9 @@ fn main() {
 mod imp {
     use std::time::Instant;
 
-    use gf2_coding::bch::dvb_t2::FrameSize;
-    use gf2_coding::bch::{BchCode, BchDecoder, BchEncoder};
-    use gf2_coding::traits::BlockEncoder;
+    use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, FrameSize};
+    use gf2_coding::bch::{BchDecodeOutcome, BinaryBchCode, BinaryBchDecoder};
+    use gf2_coding::traits::block::BlockEncoder;
     use gf2_coding::CodeRate;
     use gf2_core::BitVec;
     use gf2_kernels_hip::host::device_mem_info;
@@ -81,7 +84,7 @@ mod imp {
 
     /// A mixed frame population (valid + correctable + uncorrectable errors).
     fn population(
-        encoder: &BchEncoder,
+        code: &BinaryBchCode,
         k: usize,
         n: usize,
         t: usize,
@@ -96,7 +99,7 @@ mod imp {
                     msg.set(i, true);
                 }
             }
-            let mut cw = encoder.encode(&msg);
+            let mut cw = code.encode(&msg).expect("a k-bit message encodes");
             let errors = match f % 3 {
                 0 => 0,
                 1 => 1 + rng.below(t),
@@ -146,16 +149,19 @@ mod imp {
         }
 
         // Design workload: DVB-T2 Normal Rate 1/2 BCH.
-        let code = BchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2);
+        // The DVB-T2 outer code decodes through its mother code, which is the
+        // code the device syndrome evaluation covers.
+        let dvb_t2 = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2)
+            .expect("the DVB-T2 Normal r1/2 outer code");
+        let code = dvb_t2.mother().code();
         let n = code.n();
         let k = code.k();
-        let t = code.t();
+        let t = code.correction_radius();
         let two_t = 2 * t;
-        let encoder = BchEncoder::new(code.clone());
-        let decoder = BchDecoder::new(code);
+        let decoder = BinaryBchDecoder::new(code);
 
         let threads = rayon::current_num_threads();
-        println!("# GPU BCH syndrome throughput — DVB-T2 Normal r1/2");
+        println!("# GPU BCH syndrome throughput — DVB-T2 Normal r1/2 mother code");
         println!("# n={n} k={k} t={t} 2t={two_t} field=GF(2^16)");
         println!("# rayon threads = {threads}");
         println!("# frames={frames} repeats={repeats} sweep={sweep:?}");
@@ -163,7 +169,29 @@ mod imp {
 
         // Build the largest population once; sub-slice for the sweep.
         let max_frames = *sweep.iter().max().unwrap().max(&frames);
-        let frames_all = population(&encoder, k, n, t, max_frames);
+        let frames_all = population(code, k, n, t, max_frames);
+        // The CPU arms time `correct_in_place` over error-free codewords (every
+        // third population frame), which returns right after the syndrome
+        // evaluation. Syndrome cost is independent of the error pattern, so the
+        // clean pool is cycled to the population size.
+        let mut clean_all: Vec<BitVec> = frames_all
+            .iter()
+            .step_by(3)
+            .cycle()
+            .take(max_frames)
+            .cloned()
+            .collect();
+        {
+            let mut workspace = decoder.workspace();
+            let mut probe = clean_all[0].clone();
+            assert_eq!(
+                decoder
+                    .correct_in_place(&mut probe, &mut workspace)
+                    .unwrap(),
+                BchDecodeOutcome::NoErrors,
+                "the encoder's codewords are codewords of the decoder's code"
+            );
+        }
 
         // --- Main operating point (the gate) -------------------------------
         let pop = &frames_all[..frames];
@@ -185,46 +213,55 @@ mod imp {
             frames as f64 / best
         };
 
-        // CPU 1-thread: compute_syndromes in isolation. fps is a rate, so this
-        // is measured on a smaller subset (single-thread n=32400 syndrome eval
-        // is ~ms/frame; the full batch would take minutes) and reported as fps.
-        // This IS the gate divisor: 1T is the honest best existing production CPU
-        // path, because the rayon-24T path is anomalously slower (Arc contention).
+        // CPU 1-thread: syndrome evaluation in isolation. fps is a rate, so
+        // this is measured on a smaller subset (a single-thread syndrome
+        // evaluation is ~ms/frame; the full batch would take minutes) and
+        // reported as fps. This IS the gate divisor: 1T is the reference
+        // production CPU path.
         let cpu1_count = frames.min(64);
         let cpu1_fps = {
-            let sub = &frames_all[..cpu1_count];
-            for f in sub {
-                std::hint::black_box(decoder.compute_syndromes(f));
+            let sub = &mut clean_all[..cpu1_count];
+            let mut workspace = decoder.workspace();
+            for f in sub.iter_mut() {
+                std::hint::black_box(decoder.correct_in_place(f, &mut workspace).unwrap());
             }
             let mut best = f64::INFINITY;
             for _ in 0..repeats {
                 let t0 = Instant::now();
-                let mut acc = 0u64;
-                for f in sub {
-                    let s = decoder.compute_syndromes(f);
-                    acc = acc.wrapping_add(s[0].value());
+                let mut clean = 0usize;
+                for f in sub.iter_mut() {
+                    let outcome = decoder.correct_in_place(f, &mut workspace).unwrap();
+                    clean += usize::from(outcome == BchDecodeOutcome::NoErrors);
                 }
-                std::hint::black_box(acc);
+                std::hint::black_box(clean);
                 best = best.min(t0.elapsed().as_secs_f64());
             }
             cpu1_count as f64 / best
         };
 
-        // CPU rayon pool: compute_syndromes in isolation (context only — slower
-        // than 1T due to Arc<FieldParams> refcount contention; see the receipt).
+        // CPU rayon pool: the same isolated syndrome evaluation, one workspace
+        // per worker (context only).
         let cpu24_fps = {
-            let _: Vec<_> = pop
-                .par_iter()
-                .map(|f| decoder.compute_syndromes(f))
-                .collect();
+            let run_pool = |words: &mut [BitVec]| {
+                words
+                    .par_iter_mut()
+                    .map_init(
+                        || decoder.workspace(),
+                        |workspace, f| {
+                            usize::from(
+                                decoder.correct_in_place(f, workspace).unwrap()
+                                    == BchDecodeOutcome::NoErrors,
+                            )
+                        },
+                    )
+                    .sum::<usize>()
+            };
+            run_pool(&mut clean_all[..frames]);
             let mut best = f64::INFINITY;
             for _ in 0..repeats {
                 let t0 = Instant::now();
-                let v: Vec<u64> = pop
-                    .par_iter()
-                    .map(|f| decoder.compute_syndromes(f)[0].value())
-                    .collect();
-                std::hint::black_box(&v);
+                let v = run_pool(&mut clean_all[..frames]);
+                std::hint::black_box(v);
                 best = best.min(t0.elapsed().as_secs_f64());
             }
             frames as f64 / best
@@ -236,7 +273,7 @@ mod imp {
         println!("## Operating point (frames = {frames})");
         println!("GPU  syndrome fps : {gpu_fps:>14.1}");
         println!("CPU  1T  fps      : {cpu1_fps:>14.1}   (measured on {cpu1_count} frames; best existing CPU path)");
-        println!("CPU {threads}T  fps      : {cpu24_fps:>14.1}   (context only — slower than 1T, Arc contention)");
+        println!("CPU {threads}T  fps      : {cpu24_fps:>14.1}   (context only)");
         println!("speedup vs 1T     : {speedup_vs_1t:>14.2}x   <-- [hard] gate (>= 5x vs best existing CPU path)");
         println!("speedup vs {threads}T     : {speedup_vs_24t:>14.2}x   (context only)");
         println!(
@@ -265,14 +302,23 @@ mod imp {
                 gbest = gbest.min(t0.elapsed().as_secs_f64());
             }
             let g = b as f64 / gbest;
+            let csub = &mut clean_all[..b];
             let mut cbest = f64::INFINITY;
             for _ in 0..repeats {
                 let t0 = Instant::now();
-                let v: Vec<u64> = sub
-                    .par_iter()
-                    .map(|f| decoder.compute_syndromes(f)[0].value())
-                    .collect();
-                std::hint::black_box(&v);
+                let v: usize = csub
+                    .par_iter_mut()
+                    .map_init(
+                        || decoder.workspace(),
+                        |workspace, f| {
+                            usize::from(
+                                decoder.correct_in_place(f, workspace).unwrap()
+                                    == BchDecodeOutcome::NoErrors,
+                            )
+                        },
+                    )
+                    .sum();
+                std::hint::black_box(v);
                 cbest = cbest.min(t0.elapsed().as_secs_f64());
             }
             let c = b as f64 / cbest;
@@ -281,36 +327,37 @@ mod imp {
         println!();
 
         // --- Coarse phase split --------------------------------------------
-        // Host-side repack cost (build the packed coeff streams) measured in
+        // Host-side staging cost (build the packed coeff streams) measured in
         // isolation, vs the full GPU call; the remainder is H2D + kernel + D2H +
         // rehydrate. A finer H2D/kernel/D2H split would need wrapper-level
         // instrumentation; this coarse split is the "where practical" §11 ask.
         {
             let pop = &frames_all[..frames];
-            let mut repack_best = f64::INFINITY;
+            let mut stage_best = f64::INFINITY;
             for _ in 0..repeats {
                 let t0 = Instant::now();
-                // Use the SAME packer as the production hook (SSOT) so the
-                // measured repack cost matches the real path exactly.
+                // A canonical word is already the device coefficient stream
+                // (coordinate i is the coefficient of x^i), so staging is the
+                // concatenation of the packed words.
                 let wpf = n.div_ceil(64);
                 let mut streams: Vec<u64> = Vec::with_capacity(frames * wpf);
                 for frame in pop {
-                    streams.extend_from_slice(&decoder.pack_coeff_stream(frame));
+                    streams.extend_from_slice(&frame.words()[..wpf]);
                 }
                 std::hint::black_box(&streams);
-                repack_best = repack_best.min(t0.elapsed().as_secs_f64());
+                stage_best = stage_best.min(t0.elapsed().as_secs_f64());
             }
             let full_best = frames as f64 / gpu_fps;
-            let repack_frac = repack_best / full_best * 100.0;
+            let stage_frac = stage_best / full_best * 100.0;
             println!("## Coarse phase split (frames = {frames})");
             println!(
-                "host coeff repack : {:>10.3} ms  ({repack_frac:.1}% of full call)",
-                repack_best * 1e3
+                "host coeff staging: {:>10.3} ms  ({stage_frac:.1}% of full call)",
+                stage_best * 1e3
             );
             println!(
                 "device+xfer       : {:>10.3} ms  ({:.1}% of full call)",
-                (full_best - repack_best) * 1e3,
-                100.0 - repack_frac
+                (full_best - stage_best) * 1e3,
+                100.0 - stage_frac
             );
         }
     }
