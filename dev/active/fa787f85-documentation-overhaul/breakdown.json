@@ -242,7 +242,7 @@
   {
     "key": "inventory-active-zen3-early",
     "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-    "description": "Each tracked artifact in the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `00dd43c3`, `04b85d10`, `07ca8585`, `12fdeb5b`, `19513245`, `1a379447-zen3-cpu-performance`, `1c602857`, `1d0da41f`, `1d4fd63d`, `2037941f-profile-and-optimize-mid-range-buffer-operations`, `26465e6c`, `3be770d5`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 12fdeb5b, 2037941f-profile-and-optimize-mid-range-buffer-operations, 26465e6c, 04b85d10, 1d4fd63d and 1c602857; `1a379447-zen3-cpu-performance/measurement-contract.md` is pinned by `CONTRACT_PATH` and rule P-02.\n",
+    "description": "Each tracked artifact in the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `00dd43c3`, `04b85d10`, `07ca8585`, `12fdeb5b`, `19513245`, `1a379447-zen3-cpu-performance`, `1c602857`, `1d0da41f`, `1d4fd63d`, `2037941f-profile-and-optimize-mid-range-buffer-operations`, `26465e6c`, `3be770d5`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 12fdeb5b, 2037941f-profile-and-optimize-mid-range-buffer-operations, 26465e6c, 04b85d10, 07ca8585, 1c602857, 1d0da41f, 1d4fd63d and 3be770d5; `1a379447-zen3-cpu-performance/measurement-contract.md` is pinned by `CONTRACT_PATH` and rule P-02.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -291,7 +291,7 @@
   {
     "key": "inventory-active-zen3-late",
     "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
-    "description": "Each tracked artifact in the twenty-three zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twenty-three zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `428f2f6b`, `4c1e441f`, `50f0bd42`, `53c5a8c0`, `5cbb6545`, `613574db`, `6c6b09b1`, `6fb89a3c`, `9f0e385e`, `a1ad6d4e`, `a203a23c`, `ad2a6a58`, `bc091474`, `bdc507a3`, `c04dd4ac-zen3-shifts-and-permutations`, `c077a88b`, `c7113c5a`, `c73ffa25`, `eda07788`, `f547c394`, `f63a2464`, `f8dd4dde`, `fcb04d66`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: f547c394, eda07788, 5cbb6545, c7113c5a, 6fb89a3c and 53c5a8c0.\n",
+    "description": "Each tracked artifact in the twenty-three zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twenty-three zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `428f2f6b`, `4c1e441f`, `50f0bd42`, `53c5a8c0`, `5cbb6545`, `613574db`, `6c6b09b1`, `6fb89a3c`, `9f0e385e`, `a1ad6d4e`, `a203a23c`, `ad2a6a58`, `bc091474`, `bdc507a3`, `c04dd4ac-zen3-shifts-and-permutations`, `c077a88b`, `c7113c5a`, `c73ffa25`, `eda07788`, `f547c394`, `f63a2464`, `f8dd4dde`, `fcb04d66`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: f547c394, eda07788, 5cbb6545, c7113c5a, 6fb89a3c, 53c5a8c0, 4c1e441f, 6c6b09b1, ad2a6a58, c077a88b and f63a2464.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -389,7 +389,7 @@
   {
     "key": "inventory-active-open-epics",
     "title": "Inventory the other open-epic dev/active entries",
-    "description": "Each tracked artifact in the nineteen open-epic `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (the remaining class (a) rows) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the nineteen open-epic `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `02b8137c`, `0b0714e0`, `0de41c82`, `150d7d79`, `3d522ba0`, `3f664839`, `41c3d91d`, `4e732b56`, `591a1c5e`, `64fd3afd`, `8b3fe657`, `aabc528a`, `ae03bcd0-general-bch`, `aed96ef9-finite-blocklength-bounds`, `b4b4b9ee-tech-debt-2026-06-30`, `b8206228-permanent-statistics`, `d1b4f85e`, `fa787f85-documentation-overhaul`, `fd9d5416`. `0b0714e0` belongs to epic cffc15dd and `fd9d5416` to epic ae03bcd0; both postdate the investigation survey and predate the freeze. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 02b8137c, 3f664839, d1b4f85e and 591a1c5e.\n",
+    "description": "Each tracked artifact in the nineteen open-epic `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (the remaining class (a) rows) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the nineteen open-epic `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `02b8137c`, `0b0714e0`, `0de41c82`, `150d7d79`, `3d522ba0`, `3f664839`, `41c3d91d`, `4e732b56`, `591a1c5e`, `64fd3afd`, `8b3fe657`, `aabc528a`, `ae03bcd0-general-bch`, `aed96ef9-finite-blocklength-bounds`, `b4b4b9ee-tech-debt-2026-06-30`, `b8206228-permanent-statistics`, `d1b4f85e`, `fa787f85-documentation-overhaul`, `fd9d5416`. `0b0714e0` belongs to epic cffc15dd and `fd9d5416` to epic ae03bcd0; both postdate the investigation survey and predate the freeze. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 02b8137c, 3f664839, d1b4f85e, 591a1c5e and fd9d5416.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2658,14 +2658,14 @@
     }
   },
   {
-    "key": "code-pinned-entry-plan",
-    "title": "File tolerance and move tasks for code-pinned dev/active entries",
-    "description": "Frozen `dev/active/` entries whose paths code, tests, scripts or relative Cargo dependencies check cannot move by plain regrouping. Each one gets a tolerance task, which makes its consumer accept the recorded historical path, and a move task.\n\n## Background\n\nThe code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) identifies code-pinned entries beyond f547c394, 02b8137c and 3f664839, including tuning-campaign declarations and fixtures, smoke-run records read by a receipt-rendering test, and survey harness crates whose Cargo path dependency on `dev/tools/tuning-campaign-support` is relative to the crate's depth.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked record lists every frozen entry the inventory marks code-pinned, with its consumers, and states for each either the filed tolerance and move tasks or a recorded reason it stays in place (for example, a pinned file already inside its epic's directory).\n- [hard] REQ-02: Each filed tolerance task requires the consumer to accept the recorded historical path, with the consumer's verdicts or test results over committed artifacts identical before and after, recorded against a baseline.\n- [hard] REQ-03: Each filed move task depends on its tolerance task, keeps digest-pinned inputs byte-identical, and moves nothing while the entry's owning issue is in progress.\n- [hard] REQ-04: Each filed task has standalone success criteria and sits in this epic's dependency subtree, so the epic cannot close before it.\n- [hard] REQ-05: Entries already covered by existing overhaul tasks (f547c394, 02b8137c and 3f664839) are recorded as covered, not refiled.\n",
+    "key": "tuning-extent-declaration-tolerance",
+    "title": "Accept historical declaration paths in the tuning-extent campaign tooling",
+    "description": "The tuning-extent campaign driver, its validator and its launcher derive each campaign declaration's path as `dev/active/<issue>/campaign-declaration.json` and check it against each producing manifest's lifecycle sources. They accept a recorded historical path, so committed campaigns stay valid when their entries relocate.\n\n## Background\n\nConsumers: `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:273-283,3142,3147` (derived path), `dev/scripts/validate-tuning-extent-campaign.py:427,4127` (lifecycle-source identity), `dev/scripts/tuning-extent-campaign.sh:30`, and `dev/tools/tuning-campaign-support/tests/driver_launcher.rs:23-29,75,241`.\n\n## Success Criteria\n\n- [hard] REQ-01: The driver, the launcher script and the validator resolve a campaign's declaration from its current location and accept the recorded historical path in a producing manifest's lifecycle sources; any other path is still rejected.\n- [hard] REQ-02: Before the change, a linked baseline record lists the validator's verdict for every committed tuning-extent campaign (including a83583e0 and dbd8787d), with the exact command and commit; after the change, the same run yields identical verdicts.\n- [hard] REQ-03: The driver-launcher test covers a relocated declaration on the historical list and confirms an unlisted path is rejected.\n- [hard] REQ-04: No committed declaration, producing manifest or receipt changes, and the Rust CI gate passes.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
       "epic:documentation-overhaul",
-      "component:docs",
+      "component:tooling",
       "satisfies:REQ-11"
     ],
     "gates": [
@@ -2673,19 +2673,10 @@
       "code-review",
       "doc-review"
     ],
-    "depends_on": [
-      "inventory-active-zen3-early",
-      "inventory-active-zen3-late",
-      "inventory-active-field-dispatch",
-      "inventory-active-open-epics",
-      "inventory-active-terminal-ownerless"
-    ],
+    "depends_on": [],
     "planning": {
-      "outcome": "Each frozen code-pinned dev/active entry has filed tolerance and move tasks or a recorded reason it stays",
-      "contract_refs": [
-        "active-layout",
-        "migration-manifest"
-      ],
+      "outcome": "Tuning-extent tooling accepts recorded historical declaration paths with verdicts unchanged",
+      "contract_refs": [],
       "source_refs": [
         "REQ-11",
         "D-53",
@@ -2693,65 +2684,19 @@
         "INV-§6"
       ],
       "terminal": {
-        "consumer_family": "overhaul execution lead",
-        "test_boundary": "linked code-pinned entry record",
-        "worker_sized_reason": "About twenty entries, each one tracker filing from inventory rows",
+        "consumer_family": "tuning-extent campaign operators",
+        "test_boundary": "committed campaign verdict comparison",
+        "worker_sized_reason": "One derived path in three tools and one test, plus one recorded run",
         "footprint": {
           "creates": [
-            "dev/active/fa787f85-documentation-overhaul/code-pinned-entries.md"
-          ]
-        }
-      }
-    }
-  },
-  {
-    "key": "regroup-active-zen3",
-    "title": "Regroup flat zen3 dev/active entries under their epic dir",
-    "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447). Code-pinned entries are excluded: f547c394, 12fdeb5b, eda07788, 2037941f-profile-and-optimize-mid-range-buffer-operations, c7113c5a, 6fb89a3c, 04b85d10, 1d4fd63d, 53c5a8c0, 1c602857, 26465e6c and 5cbb6545. Rustdoc in several crates and `dev/scripts/receipt-input-omissions.json` cite these paths. Receipts quote them as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
-    "type": "task",
-    "priority": "normal",
-    "labels": [
-      "epic:documentation-overhaul",
-      "component:docs",
-      "satisfies:REQ-11"
-    ],
-    "gates": [
-      "cargo-ci",
-      "code-review",
-      "doc-review"
-    ],
-    "depends_on": [
-      "link-owned-artifacts",
-      "tersification-sweep"
-    ],
-    "planning": {
-      "outcome": "Flat zen3 entries live under the zen3 epic dir with relinked references",
-      "contract_refs": [
-        "active-layout",
-        "relocation-protocol",
-        "migration-manifest"
-      ],
-      "source_refs": [
-        "REQ-11",
-        "D-22",
-        "D-23",
-        "PD-03",
-        "INV-A",
-        "INV-§6"
-      ],
-      "terminal": {
-        "consumer_family": "zen3 epic contributors",
-        "test_boundary": "link scan of moved entries",
-        "worker_sized_reason": "Scripted moves and relinks for one epic's entries with a fixed rule",
-        "footprint": {
-          "touches": [
-            "crates",
-            "dev/scripts/receipt-input-omissions.json",
-            "dev/active",
-            "dev/active/1a379447-zen3-cpu-performance",
-            ".jit/issues"
+            "dev/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md"
           ],
-          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+          "touches": [
+            "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs",
+            "dev/scripts/validate-tuning-extent-campaign.py",
+            "dev/scripts/tuning-extent-campaign.sh",
+            "dev/tools/tuning-campaign-support/tests/driver_launcher.rs"
+          ]
         }
       }
     }
@@ -2807,9 +2752,301 @@
     }
   },
   {
+    "key": "move-a83583e0-declaration",
+    "title": "Move the a83583e0 campaign declaration entry under its epic dir",
+    "description": "The flat `dev/active/a83583e0/` entry holds a tuning-extent campaign declaration and producing manifest that the campaign tooling reads. It moves under the field capability dispatch epic's directory together with the tooling's current path. Its owning issue is done.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (a83583e0) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The entry's files live under the canonical directory of epic 6dc81018.\n- [hard] REQ-03: The tooling's current declaration location names the new path in the same commit, and the old path stays on the historical list.\n- [hard] REQ-04: The validator run recorded in the tuning-extent verdict baseline, repeated after the move, yields identical verdicts; the repeat run is appended to that record.\n- [hard] REQ-05: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "tuning-extent-declaration-tolerance",
+      "regroup-active-field-dispatch"
+    ],
+    "planning": {
+      "outcome": "The a83583e0 declaration lives under its epic dir with campaign verdicts unchanged",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-53",
+        "CC-§1",
+        "INV-A"
+      ],
+      "terminal": {
+        "consumer_family": "tuning-extent campaign operators",
+        "test_boundary": "committed campaign verdict comparison",
+        "worker_sized_reason": "One small entry and one tooling path switch",
+        "footprint": {
+          "touches": [
+            "dev/active/a83583e0",
+            "dev/active/6dc81018-field-capability-dispatch",
+            "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs",
+            "dev/scripts/validate-tuning-extent-campaign.py",
+            "dev/scripts/tuning-extent-campaign.sh",
+            "dev/tools/tuning-campaign-support/tests/driver_launcher.rs",
+            "dev/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "move-dbd8787d-declaration",
+    "title": "Move the dbd8787d campaign declaration entry under its epic dir",
+    "description": "The flat `dev/active/dbd8787d/` entry holds a tuning-extent campaign declaration and producing manifest that the campaign tooling reads. It moves under the field capability dispatch epic's directory together with the tooling's current path. Its owning issue is in progress at planning time.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (dbd8787d) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The entry's files live under the canonical directory of epic 6dc81018.\n- [hard] REQ-03: The tooling's current declaration location names the new path in the same commit, and the old path stays on the historical list.\n- [hard] REQ-04: The validator run recorded in the tuning-extent verdict baseline, repeated after the move, yields identical verdicts; the repeat run is appended to that record.\n- [hard] REQ-05: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "tuning-extent-declaration-tolerance",
+      "regroup-active-field-dispatch"
+    ],
+    "planning": {
+      "outcome": "The dbd8787d declaration lives under its epic dir with campaign verdicts unchanged",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-53",
+        "CC-§1",
+        "INV-A"
+      ],
+      "terminal": {
+        "consumer_family": "tuning-extent campaign operators",
+        "test_boundary": "committed campaign verdict comparison",
+        "worker_sized_reason": "One small entry and one tooling path switch",
+        "footprint": {
+          "touches": [
+            "dev/active/dbd8787d",
+            "dev/active/6dc81018-field-capability-dispatch",
+            "dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs",
+            "dev/scripts/validate-tuning-extent-campaign.py",
+            "dev/scripts/tuning-extent-campaign.sh",
+            "dev/tools/tuning-campaign-support/tests/driver_launcher.rs",
+            "dev/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "addendum-fixture-path-tolerance",
+    "title": "Route the addendum schema-version test fixtures through one relocatable path table",
+    "description": "The addendum schema-version test reads versioned addendum fixtures at literal paths inside three zen3 `dev/active/` entries. It resolves each fixture through one path table that accepts the recorded historical location, so the fixtures can relocate without changing the test's results.\n\n## Background\n\nConsumer: `dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs:40,48,52` reads `dev/active/26465e6c/superseded/v1/addendum-popcount.json`, `dev/active/eda07788/addendum-dvb-t2-bit-interleave-v3-confirmation.json` and `dev/active/5cbb6545/addendum-popcount-v4-confirmation.json`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each versioned fixture resolves through one path table that accepts its current location or its recorded historical location.\n- [hard] REQ-02: A linked record states whether rule P-02 or any receipt pin covers these fixture paths, with evidence; any pin found is handled as a recorded historical path.\n- [hard] REQ-03: Before the change, a linked baseline record lists the test's per-fixture results with the exact command and commit; after the change, the results are identical.\n- [hard] REQ-04: No fixture or committed receipt changes, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:tooling",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Addendum fixtures resolve through one relocatable path table with test results unchanged",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-11",
+        "D-53",
+        "CC-§1"
+      ],
+      "terminal": {
+        "consumer_family": "addendum schema maintainers",
+        "test_boundary": "addendum fixture result comparison",
+        "worker_sized_reason": "One test's fixture table and one recorded run",
+        "footprint": {
+          "creates": [
+            "dev/active/fa787f85-documentation-overhaul/addendum-fixture-baseline.md"
+          ],
+          "touches": [
+            "dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "regroup-active-zen3",
+    "title": "Regroup flat zen3 dev/active entries under their epic dir",
+    "description": "About 34 flat `dev/active/` entries belong to the Zen 3 CPU performance epic (1a379447), some shared with the competitive-benchmarking epic (d77176e5). They move under that epic's canonical directory so the epic archives as one container.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic is 1a379447). Code-pinned entries are excluded: f547c394, the addendum fixture entries 26465e6c, eda07788 and 5cbb6545, and the survey-harness entries 04b85d10, 07ca8585, 12fdeb5b, 1c602857, 1d0da41f, 1d4fd63d, 2037941f-profile-and-optimize-mid-range-buffer-operations, 3be770d5, 4c1e441f, 53c5a8c0, 6c6b09b1, 6fb89a3c, ad2a6a58, c077a88b, c7113c5a and f63a2464. Rustdoc in several crates and `dev/scripts/receipt-input-omissions.json` cite these paths. Receipts quote them as provenance strings; the strings stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "link-owned-artifacts",
+      "tersification-sweep"
+    ],
+    "planning": {
+      "outcome": "Flat zen3 entries live under the zen3 epic dir with relinked references",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-22",
+        "D-23",
+        "PD-03",
+        "INV-A",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "zen3 epic contributors",
+        "test_boundary": "link scan of moved entries",
+        "worker_sized_reason": "Scripted moves and relinks for one epic's entries with a fixed rule",
+        "footprint": {
+          "touches": [
+            "crates",
+            "dev/scripts/receipt-input-omissions.json",
+            "dev/active",
+            "dev/active/1a379447-zen3-cpu-performance",
+            ".jit/issues"
+          ],
+          "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "move-addendum-fixture-entries",
+    "title": "Move the addendum fixture entries under the zen3 epic dir",
+    "description": "The flat `dev/active/` entries 26465e6c, eda07788 and 5cbb6545 hold versioned addendum fixtures and survey harness crates. They move under the Zen 3 CPU performance epic's directory together with the fixture path table.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (26465e6c, eda07788, 5cbb6545) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The three entries live under the canonical directory of epic 1a379447, and the fixture path table names their new locations, with the old locations on the historical list.\n- [hard] REQ-03: The addendum fixture test results recorded in the baseline, repeated after the move, are identical; the repeat run is appended to that record.\n- [hard] REQ-04: Each survey harness crate in a moved entry builds after the move with its `tuning-campaign-support` path dependency resolving. A Cargo manifest whose digest a committed receipt pins keeps its bytes, and its dependency resolves by a recorded mechanism that leaves it unedited; other manifests change only in that dependency line.\n- [hard] REQ-05: Scripts inside a moved entry that name the entry's own directory by repository-relative literal are updated to the new path.\n- [hard] REQ-06: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-07: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "addendum-fixture-path-tolerance",
+      "regroup-active-zen3"
+    ],
+    "planning": {
+      "outcome": "Three addendum fixture entries live under the zen3 epic dir with fixture results unchanged",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-53",
+        "CC-§1",
+        "INV-A",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "addendum schema maintainers",
+        "test_boundary": "addendum fixture result comparison",
+        "worker_sized_reason": "Three entries with about 165 files and five harness crates",
+        "footprint": {
+          "touches": [
+            "dev/active/26465e6c",
+            "dev/active/eda07788",
+            "dev/active/5cbb6545",
+            "dev/active/1a379447-zen3-cpu-performance",
+            "dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs",
+            "dev/active/fa787f85-documentation-overhaul/addendum-fixture-baseline.md",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "smoke-run-path-tolerance",
+    "title": "Accept historical smoke-run paths in the BCH receipt renderer",
+    "description": "The BCH receipt renderer and its test read smoke-run ID lists from `dev/active/d1b4f85e/smoke-run.md` and `dev/active/591a1c5e/smoke-run.md`. They resolve those inputs through one path table that accepts the recorded historical location, so the entries can relocate without changing rendered output.\n\n## Background\n\nConsumers: `dev/active/fd9d5416/tests/test_render_receipt.py:63-64` and the defaults in `dev/active/fd9d5416/render_receipt.py`.\n\n## Success Criteria\n\n- [hard] REQ-01: No edit lands while issue fd9d5416, which owns the renderer, is in progress; the worker checks this against the tracker and records it in the commit message.\n- [hard] REQ-02: The renderer's defaults and its test resolve each smoke-run input through one path table that accepts its current or recorded historical location.\n- [hard] REQ-03: Before the change, a linked baseline record holds the renderer test's output on its synthetic run, with the exact command and commit; after the change, the output is identical.\n- [hard] REQ-04: No smoke-run record or committed receipt changes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:gf2-coding",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "The BCH receipt renderer resolves smoke-run inputs relocatably with output unchanged",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-11",
+        "D-53",
+        "CC-§1"
+      ],
+      "terminal": {
+        "consumer_family": "BCH benchmark receipt maintainers",
+        "test_boundary": "renderer output comparison",
+        "worker_sized_reason": "One script's input table and its test, plus one recorded run",
+        "footprint": {
+          "creates": [
+            "dev/active/fa787f85-documentation-overhaul/smoke-run-render-baseline.md"
+          ],
+          "touches": [
+            "dev/active/fd9d5416/render_receipt.py",
+            "dev/active/fd9d5416/tests/test_render_receipt.py"
+          ]
+        }
+      }
+    }
+  },
+  {
     "key": "regroup-active-remaining",
     "title": "Regroup the remaining flat dev/active entries under epic dirs",
-    "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. Those without a non-comment code consumer move under their owning epics' canonical directories; `02b8137c` and `3f664839`, whose paths gf2-sim code checks, are excluded.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window. Code-pinned entries d1b4f85e and 591a1c5e are excluded, along with 02b8137c and 3f664839.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
+    "description": "The remaining flat `dev/active/` entries belong to epics b8206228, 86b9c719, ae03bcd0, b4b4b9ee and d77176e5. Those without a non-comment code consumer move under their owning epics' canonical directories; `02b8137c` and `3f664839`, whose paths gf2-sim code checks, are excluded.\n\n## Background\n\nThe entry list is in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A. Epic ae03bcd0 has workers editing its directory concurrently, so its entries move in a quiet window. Code-pinned entries d1b4f85e, 591a1c5e and fd9d5416 are excluded, along with 02b8137c and 3f664839.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for its own tolerance-then-move work. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -2852,6 +3089,167 @@
             ".jit/issues"
           ],
           "uncertainty": "exact crate files are those whose comments cite a moved path, found by the task's citation scan"
+        }
+      }
+    }
+  },
+  {
+    "key": "move-bch-receipt-entries",
+    "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
+    "description": "The flat `dev/active/` entries d1b4f85e and 591a1c5e hold smoke-run records that the BCH receipt renderer in `dev/active/fd9d5416/` reads. The three entries move together under the general BCH epic's directory, with the renderer's paths updated.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (d1b4f85e, 591a1c5e, fd9d5416) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The move runs in a window with no in-flight edits to the general BCH epic's `dev/active` directory.\n- [hard] REQ-03: The three entries live under the canonical directory of epic ae03bcd0, and the renderer's path table names the new smoke-run locations, with the old ones on the historical list.\n- [hard] REQ-04: The renderer test output recorded in the baseline, repeated after the move, is identical; the repeat run is appended to that record.\n- [hard] REQ-05: Scripts inside a moved entry that name the entry's own directory by repository-relative literal are updated to the new path.\n- [hard] REQ-06: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-07: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "smoke-run-path-tolerance",
+      "regroup-active-remaining"
+    ],
+    "planning": {
+      "outcome": "The BCH smoke-run and renderer entries live under their epic dir with renderer output unchanged",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-53",
+        "CC-§1",
+        "INV-§3.14"
+      ],
+      "terminal": {
+        "consumer_family": "BCH benchmark receipt maintainers",
+        "test_boundary": "renderer output comparison",
+        "worker_sized_reason": "Three small entries and one script path table",
+        "footprint": {
+          "touches": [
+            "dev/active/d1b4f85e",
+            "dev/active/591a1c5e",
+            "dev/active/fd9d5416",
+            "dev/active/ae03bcd0-general-bch",
+            "dev/active/fa787f85-documentation-overhaul/smoke-run-render-baseline.md",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "move-zen3-harness-entries-early",
+    "title": "Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir",
+    "description": "Flat zen3 `dev/active/` entries `04b85d10`, `07ca8585`, `12fdeb5b`, `1c602857`, `1d0da41f`, `1d4fd63d`, `2037941f-profile-and-optimize-mid-range-buffer-operations`, `3be770d5` contain survey harness crates whose Cargo path dependency on `dev/tools/tuning-campaign-support` is relative to the crate's depth, so moving an entry one level deeper breaks its build. They move under the Zen 3 CPU performance epic's directory with each crate's dependency kept resolvable.\n\n## Background\n\nThe code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`, CC-§1) found harness crates with five-level relative paths. A repository search finds four-level variants in further entries, which this task includes; it covers 10 crates in total.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (04b85d10, 07ca8585, 12fdeb5b, 1c602857, 1d0da41f, 1d4fd63d, 2037941f, 3be770d5) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The listed entries live under the canonical directory of epic 1a379447.\n- [hard] REQ-03: Each survey harness crate in a moved entry builds after the move with its `tuning-campaign-support` path dependency resolving. A Cargo manifest whose digest a committed receipt pins keeps its bytes, and its dependency resolves by a recorded mechanism that leaves it unedited; other manifests change only in that dependency line.\n- [hard] REQ-04: Scripts inside a moved entry that name the entry's own directory by repository-relative literal are updated to the new path.\n- [hard] REQ-05: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "regroup-active-zen3"
+    ],
+    "planning": {
+      "outcome": "Listed zen3 harness entries live under the epic dir and each harness crate builds",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-53",
+        "CC-§1",
+        "INV-A",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "zen3 survey harness users",
+        "test_boundary": "harness crate builds",
+        "worker_sized_reason": "Eight entries with about 410 files and 10 harness crates",
+        "footprint": {
+          "touches": [
+            "dev/active/04b85d10",
+            "dev/active/07ca8585",
+            "dev/active/12fdeb5b",
+            "dev/active/1c602857",
+            "dev/active/1d0da41f",
+            "dev/active/1d4fd63d",
+            "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations",
+            "dev/active/3be770d5",
+            "dev/active/1a379447-zen3-cpu-performance",
+            ".jit/issues"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "move-zen3-harness-entries-late",
+    "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
+    "description": "Flat zen3 `dev/active/` entries `4c1e441f`, `53c5a8c0`, `6c6b09b1`, `6fb89a3c`, `ad2a6a58`, `c077a88b`, `c7113c5a`, `f63a2464` contain survey harness crates whose Cargo path dependency on `dev/tools/tuning-campaign-support` is relative to the crate's depth, so moving an entry one level deeper breaks its build. They move under the Zen 3 CPU performance epic's directory with each crate's dependency kept resolvable.\n\n## Background\n\nThe code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`, CC-§1) found harness crates with five-level relative paths. A repository search finds four-level variants in further entries, which this task includes; it covers 9 crates in total.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (4c1e441f, 53c5a8c0, 6c6b09b1, 6fb89a3c, ad2a6a58, c077a88b, c7113c5a, f63a2464) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The listed entries live under the canonical directory of epic 1a379447.\n- [hard] REQ-03: Each survey harness crate in a moved entry builds after the move with its `tuning-campaign-support` path dependency resolving. A Cargo manifest whose digest a committed receipt pins keeps its bytes, and its dependency resolves by a recorded mechanism that leaves it unedited; other manifests change only in that dependency line.\n- [hard] REQ-04: Scripts inside a moved entry that name the entry's own directory by repository-relative literal are updated to the new path.\n- [hard] REQ-05: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:documentation-overhaul",
+      "component:docs",
+      "satisfies:REQ-11"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "regroup-active-zen3"
+    ],
+    "planning": {
+      "outcome": "Listed zen3 harness entries live under the epic dir and each harness crate builds",
+      "contract_refs": [
+        "active-layout",
+        "relocation-protocol",
+        "migration-manifest"
+      ],
+      "source_refs": [
+        "REQ-11",
+        "D-23",
+        "D-53",
+        "CC-§1",
+        "INV-A",
+        "INV-§6"
+      ],
+      "terminal": {
+        "consumer_family": "zen3 survey harness users",
+        "test_boundary": "harness crate builds",
+        "worker_sized_reason": "Eight entries with about 300 files and 9 harness crates",
+        "footprint": {
+          "touches": [
+            "dev/active/4c1e441f",
+            "dev/active/53c5a8c0",
+            "dev/active/6c6b09b1",
+            "dev/active/6fb89a3c",
+            "dev/active/ad2a6a58",
+            "dev/active/c077a88b",
+            "dev/active/c7113c5a",
+            "dev/active/f63a2464",
+            "dev/active/1a379447-zen3-cpu-performance",
+            ".jit/issues"
+          ]
         }
       }
     }
@@ -3263,8 +3661,12 @@
     ],
     "depends_on": [
       "resolve-dev-strays",
-      "code-pinned-entry-plan",
-      "regroup-active-field-dispatch",
+      "move-a83583e0-declaration",
+      "move-dbd8787d-declaration",
+      "move-addendum-fixture-entries",
+      "move-bch-receipt-entries",
+      "move-zen3-harness-entries-early",
+      "move-zen3-harness-entries-late",
       "move-f547c394-inputs",
       "move-3f664839-design",
       "move-02b8137c-journal",

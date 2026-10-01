@@ -24,7 +24,7 @@ its scope finding k, and `INV-A/B/C` its appendices.
 | REQ-08 | Retroactive mapping of the three deleted roadmaps (D-47), split by file and, for the root roadmap, by section group. | INV-§3.9 |
 | REQ-09 | Decks move by `git mv` into their owners' archive dirs, and every link target is repaired (D-51); the figure example stops writing under `docs/`. | INV-§3.4, INV-§0.1 |
 | REQ-10 | The previews are done ([archive preview results](archive-preview-results.md)). Five re-archive tasks, grouped by artifact count, collect 217 terminal-story artifacts into ten existing epic archives. A separate task resolves b7157be6's unmarked hand archive and then archives it through JIT. The six terminal stories under open epics are not archived now (D-22). | ARCH-§1..§3; INV-§0.7 |
-| REQ-11 | The migration universe is frozen at commit `7641561a9`: the five inventory shards list exactly its 77 `dev/active` entries by name. Later entries are outside the migration; `@/inv/active-document-layout` governs them at creation. Generic regroup tasks move only entries without code consumers; the scan's code-pinned entries are excluded by name. f547c394, 02b8137c and 3f664839 have tolerance and move tasks here (D-52, D-53). `code-pinned-entry-plan` files the tolerance and move pairs for the remaining frozen code-pinned entries under this epic, and husks are cleared after it. | INV-A, INV-§0.6, CC-§1 |
+| REQ-11 | The migration universe is frozen at commit `7641561a9`: the five inventory shards list exactly its 77 `dev/active` entries by name. Later entries are outside the migration; `@/inv/active-document-layout` governs them at creation. Generic regroup tasks move only entries without code consumers; code-pinned entries are excluded by name. Each code-pinned group has an explicit task in the manifest under D-52/D-53: f547c394, 02b8137c, 3f664839, the tuning-extent declarations, the addendum fixtures, the BCH smoke-run and renderer entries, and two survey-harness groups. Husks are cleared after every move. | INV-A, INV-§0.6, CC-§1 |
 | REQ-12 | Admissible-evidence rule (D-24) in the inventory; ownerless material and mined guides move to the legacy mirror by `git mv`. | INV-§0.3: no legacy primitive |
 | REQ-13 | a24b2af7 defines the schema and checker; seven inventory shards populate it (five for `dev/active`, frozen at commit `7641561a9`, plus one each for the other dev buckets and the permanent-path sources); `dev/active` entries created after the freeze are outside the migration; the checker retires after the final check. Tooling Markdown under `.agents/`, `contrib/`, `packages/` and `.jit/` is not documentation and is excluded. | INV-A, INV-B |
 | REQ-14 | `plans`, `presentations` and `sessions` are eliminated (D-28); `bench_results`, `simulation_results` and `studies` keep consumed files and lose loose narrative Markdown (D-49); `tools` stays as a workspace member (D-27, INV-§0.5); `dev/index.md` is rewritten. | INV-§3.1, INV-§0.4, INV-§0.5 |
@@ -158,10 +158,18 @@ algebra, which the second tutorial uses. Producer:
 | rearchive-bb85c68a-6efb756b | Re-archive epics bb85c68a, 6efb756b to collect their terminal stories | task | Terminal-story artifacts of bb85c68a, 6efb756b sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 7, uncertain | — | link-owned-artifacts, tersification-sweep |
 | rearchive-small-epics | Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories | task | Terminal-story artifacts of e095a100, 806eb14e, 2928ccce, d4851c3d sit in their epic archive with verified bytes | archive-execution-protocol, relocation-protocol, migration-manifest | REQ-10, REQ-19, D-21, D-22, PD-01, PD-02, INV-§0.2, INV-§4, ARCH-§1, ARCH-§2 | touches 9, uncertain | — | link-owned-artifacts, tersification-sweep |
 | resolve-dev-strays | Resolve stray and ownerless dev entries | task | Stray and ownerless dev entries sit with their owners or in the legacy mirror | relocation-protocol, migration-manifest | REQ-12, REQ-11, D-24, D-25, PD-02, PD-03, INV-§1.1, INV-A, INV-B | creates 1, touches 2 | — | rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics |
-| code-pinned-entry-plan | File tolerance and move tasks for code-pinned dev/active entries | task | Each frozen code-pinned dev/active entry has filed tolerance and move tasks or a recorded reason it stays | active-layout, migration-manifest | REQ-11, D-53, CC-§1, INV-§6 | creates 1 | — | inventory-active-zen3-early, inventory-active-zen3-late, inventory-active-field-dispatch, inventory-active-open-epics, inventory-active-terminal-ownerless |
-| regroup-active-zen3 | Regroup flat zen3 dev/active entries under their epic dir | task | Flat zen3 entries live under the zen3 epic dir with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-22, D-23, PD-03, INV-A, INV-§6 | touches 5, uncertain | — | link-owned-artifacts, tersification-sweep |
+| tuning-extent-declaration-tolerance | Accept historical declaration paths in the tuning-extent campaign tooling | task | Tuning-extent tooling accepts recorded historical declaration paths with verdicts unchanged | — | REQ-11, D-53, CC-§1, INV-§6 | creates 1, touches 4 | — | — |
 | regroup-active-field-dispatch | Regroup flat field-dispatch dev/active entries under their epic dir | task | Flat field-dispatch entries live under their epic dir with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, PD-03, INV-A | touches 5, uncertain | — | link-owned-artifacts, tersification-sweep |
+| move-a83583e0-declaration | Move the a83583e0 campaign declaration entry under its epic dir | task | The a83583e0 declaration lives under its epic dir with campaign verdicts unchanged | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, CC-§1, INV-A | touches 8 | — | tuning-extent-declaration-tolerance, regroup-active-field-dispatch |
+| move-dbd8787d-declaration | Move the dbd8787d campaign declaration entry under its epic dir | task | The dbd8787d declaration lives under its epic dir with campaign verdicts unchanged | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, CC-§1, INV-A | touches 8 | — | tuning-extent-declaration-tolerance, regroup-active-field-dispatch |
+| addendum-fixture-path-tolerance | Route the addendum schema-version test fixtures through one relocatable path table | task | Addendum fixtures resolve through one relocatable path table with test results unchanged | — | REQ-11, D-53, CC-§1 | creates 1, touches 1 | — | — |
+| regroup-active-zen3 | Regroup flat zen3 dev/active entries under their epic dir | task | Flat zen3 entries live under the zen3 epic dir with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-22, D-23, PD-03, INV-A, INV-§6 | touches 5, uncertain | — | link-owned-artifacts, tersification-sweep |
+| move-addendum-fixture-entries | Move the addendum fixture entries under the zen3 epic dir | task | Three addendum fixture entries live under the zen3 epic dir with fixture results unchanged | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, CC-§1, INV-A, INV-§6 | touches 7 | — | addendum-fixture-path-tolerance, regroup-active-zen3 |
+| smoke-run-path-tolerance | Accept historical smoke-run paths in the BCH receipt renderer | task | The BCH receipt renderer resolves smoke-run inputs relocatably with output unchanged | — | REQ-11, D-53, CC-§1 | creates 1, touches 2 | — | — |
 | regroup-active-remaining | Regroup the remaining flat dev/active entries under epic dirs | task | Remaining flat entries live under their epic dirs with relinked references | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, PD-03, INV-A, INV-§3.14 | touches 4, uncertain | — | link-owned-artifacts, tersification-sweep |
+| move-bch-receipt-entries | Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir | task | The BCH smoke-run and renderer entries live under their epic dir with renderer output unchanged | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, CC-§1, INV-§3.14 | touches 6 | — | smoke-run-path-tolerance, regroup-active-remaining |
+| move-zen3-harness-entries-early | Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir | task | Listed zen3 harness entries live under the epic dir and each harness crate builds | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, CC-§1, INV-A, INV-§6 | touches 10 | — | regroup-active-zen3 |
+| move-zen3-harness-entries-late | Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir | task | Listed zen3 harness entries live under the epic dir and each harness crate builds | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, CC-§1, INV-A, INV-§6 | touches 10 | — | regroup-active-zen3 |
 | receipt-pin-path-tolerance | Accept historical protocol pin paths in receipt verification | task | Receipt verification accepts recorded historical pin paths, keeping committed receipts valid across relocation | — | REQ-11, D-52, INV-§6, INV-§3.1 | creates 1, touches 3 | — | — |
 | move-f547c394-inputs | Move the f547c394 protocol inputs under their epic dir | task | f547c394 lives under its epic dir and its CI and tooling readers use the new path | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-52, D-53, PD-03, INV-§3.1, INV-§6 | touches 11 | — | receipt-pin-path-tolerance, regroup-active-zen3 |
 | rare-event-design-path-tolerance | Accept the historical design path in rare-event artifact validation | task | Rare-event artifact validation accepts the recorded historical design path with verdicts unchanged | — | REQ-11, D-53, INV-§6 | creates 1, touches 2 | — | — |
@@ -170,7 +178,7 @@ algebra, which the second tutorial uses. Producer:
 | move-02b8137c-journal | Move the 02b8137c validation journal under its epic dir | task | The 02b8137c journal lives under its epic dir and validation reads it there | active-layout, relocation-protocol, migration-manifest | REQ-11, D-23, D-53, PD-03, INV-A, INV-§6 | touches 6 | — | campaign-validation-path-tolerance, regroup-active-remaining |
 | relocate-bench-narrative | Relocate loose narrative reports out of dev/bench_results | task | dev/bench_results keeps only operational receipts and data | relocation-protocol, migration-manifest, active-layout | REQ-14, D-49, PD-02, INV-§3.1, INV-§3.10, INV-§6, INV-§0.4 | touches 3 | — | rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics, regroup-active-zen3 |
 | relocate-sim-studies-narrative | Relocate loose narrative Markdown out of simulation_results and studies | task | simulation_results and studies keep only consumed operational files | relocation-protocol, migration-manifest, active-layout | REQ-14, D-49, PD-02, INV-§3.1, INV-§0.4 | touches 3 | — | repair-osd-archive, regroup-active-remaining |
-| remove-active-husks | Clear empty leftover dirs under dev/active | task | dev/active holds only directories with tracked content | migration-manifest | REQ-11, PD-03, INV-A, INV-§0.6 | touches 1 | — | resolve-dev-strays, code-pinned-entry-plan, regroup-active-field-dispatch, move-f547c394-inputs, move-3f664839-design, move-02b8137c-journal, relocate-bench-narrative, relocate-sim-studies-narrative |
+| remove-active-husks | Clear empty leftover dirs under dev/active | task | dev/active holds only directories with tracked content | migration-manifest | REQ-11, PD-03, INV-A, INV-§0.6 | touches 1 | — | resolve-dev-strays, move-a83583e0-declaration, move-dbd8787d-declaration, move-addendum-fixture-entries, move-bch-receipt-entries, move-zen3-harness-entries-early, move-zen3-harness-entries-late, move-f547c394-inputs, move-3f664839-design, move-02b8137c-journal, relocate-bench-narrative, relocate-sim-studies-narrative |
 | eliminate-dev-plans | Empty dev/plans through archival or legacy moves | task | dev/plans is gone and no citation of its paths dangles | relocation-protocol, migration-manifest | REQ-14, REQ-12, D-28, PD-02, INV-§3.1, INV-§1.1, INV-§6 | touches 6 | — | rearchive-97bf0879, rearchive-026fc832, rearchive-babcf05e-f9717e7e, rearchive-bb85c68a-6efb756b, rearchive-small-epics |
 | eliminate-dev-sessions | Empty dev/sessions into owner dirs or the legacy mirror | task | dev/sessions is gone and its notes sit with owners or in the legacy mirror | relocation-protocol, migration-manifest | REQ-14, D-28, D-25, INV-§3.1 | touches 2 | — | link-owned-artifacts |
 | eliminate-dev-presentations | Empty dev/presentations of leftover theme files | task | dev/presentations is gone with its stylesheets resolved against their owners | relocation-protocol, migration-manifest | REQ-14, D-28, INV-§3.1, INV-§6 | touches 2 | — | link-owned-artifacts |
@@ -256,52 +264,60 @@ flowchart LR
     N46["rearchive-bb85c68a-6efb756b: Re-archive epics bb85c68a, 6efb756b to collect their terminal stories"]
     N47["rearchive-small-epics: Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories"]
     N48["resolve-dev-strays: Resolve stray and ownerless dev entries"]
-    N49["code-pinned-entry-plan: File tolerance and move tasks for code-pinned dev/active entries"]
-    N50["regroup-active-zen3: Regroup flat zen3 dev/active entries under their epic dir"]
-    N51["regroup-active-field-dispatch: Regroup flat field-dispatch dev/active entries under their epic dir"]
-    N52["regroup-active-remaining: Regroup the remaining flat dev/active entries under epic dirs"]
-    N53["receipt-pin-path-tolerance: Accept historical protocol pin paths in receipt verification"]
-    N54["move-f547c394-inputs: Move the f547c394 protocol inputs under their epic dir"]
-    N55["rare-event-design-path-tolerance: Accept the historical design path in rare-event artifact validation"]
-    N56["move-3f664839-design: Move the 3f664839 design entry under its epic dir"]
-    N57["campaign-validation-path-tolerance: Accept historical frozen-evidence paths in campaign validation"]
-    N58["move-02b8137c-journal: Move the 02b8137c validation journal under its epic dir"]
-    N59["relocate-bench-narrative: Relocate loose narrative reports out of dev/bench_results"]
-    N60["relocate-sim-studies-narrative: Relocate loose narrative Markdown out of simulation_results and studies"]
-    N61["remove-active-husks: Clear empty leftover dirs under dev/active"]
-    N62["eliminate-dev-plans: Empty dev/plans through archival or legacy moves"]
-    N63["eliminate-dev-sessions: Empty dev/sessions into owner dirs or the legacy mirror"]
-    N64["eliminate-dev-presentations: Empty dev/presentations of leftover theme files"]
-    N65["move-presentation-decks: Move presentation decks into their epics' archive dirs"]
-    N66["retarget-figure-generator: Point the presentation figure example at a caller-chosen output dir"]
-    N67["docs-scaffold-index: Create the docs index and quadrant layout"]
-    N68["entry-page-gf2-core: Rewrite the gf2-core README as its entry page"]
-    N69["entry-page-gf2-coding: Rewrite the gf2-coding README as its entry page"]
-    N70["entry-page-gf2-algebra: Rewrite the gf2-algebra README as its entry page"]
-    N71["entry-page-gf2-sim: Write the gf2-sim README as its entry page"]
-    N72["concept-acceleration-architecture: Write the acceleration architecture concepts page"]
-    N73["backend-crate-readmes: Rewrite the SIMD kernel and statistics crate READMEs"]
-    N74["concept-field-arithmetic: Write the finite-field arithmetic concepts page"]
-    N75["reference-performance-evidence: Write the performance evidence reference page"]
-    N76["howto-select-acceleration: Write the acceleration selection how-to"]
-    N77["howto-reproduce-evidence: Write the evidence reproduction how-to"]
-    N78["howto-run-campaigns: Write the simulation campaign how-to"]
-    N79["howto-formal-verification: Write the formal verification how-to"]
-    N80["reference-standards-conformance: Write the standards conformance reference page"]
-    N81["reference-supported-configurations: Write the supported configurations reference page"]
-    N82["tutorial-link-simulation: Write the coded-modulation link simulation tutorial"]
-    N83["fieldmatrix-example-program: Add a FieldMatrix linear-algebra example program to gf2-core"]
-    N84["tutorial-linear-algebra: Write the finite-field linear algebra at scale tutorial"]
-    N85["readme-landing-page: Rewrite README for research adoption"]
-    N86["archive-lean-pipeline-doc: Move the Lean pipeline guide into its epic's archive dir"]
-    N87["legacy-move-gf2-core-guides: Move gf2-core crate guides into the legacy mirror"]
-    N88["legacy-move-gf2-coding-guides: Move gf2-coding crate guides into the legacy mirror"]
-    N89["verify-rustdoc-examples: Record the final Rustdoc example census and doctest timing"]
-    N90["audit-permanent-content: Audit the permanent surface against the docs invariants"]
-    N91["rewrite-dev-index: Rewrite dev/index.md for the final dev layout"]
-    N92["finalize-docs-policy: Narrow the docs policy to post-overhaul paths"]
-    N93["verify-final-links: Verify links across the permanent surface and executed archives"]
-    N94["retire-migration-checker: Retire the transient progress checker after the final check"]
+    N49["tuning-extent-declaration-tolerance: Accept historical declaration paths in the tuning-extent campaign tooling"]
+    N50["regroup-active-field-dispatch: Regroup flat field-dispatch dev/active entries under their epic dir"]
+    N51["move-a83583e0-declaration: Move the a83583e0 campaign declaration entry under its epic dir"]
+    N52["move-dbd8787d-declaration: Move the dbd8787d campaign declaration entry under its epic dir"]
+    N53["addendum-fixture-path-tolerance: Route the addendum schema-version test fixtures through one relocatable path table"]
+    N54["regroup-active-zen3: Regroup flat zen3 dev/active entries under their epic dir"]
+    N55["move-addendum-fixture-entries: Move the addendum fixture entries under the zen3 epic dir"]
+    N56["smoke-run-path-tolerance: Accept historical smoke-run paths in the BCH receipt renderer"]
+    N57["regroup-active-remaining: Regroup the remaining flat dev/active entries under epic dirs"]
+    N58["move-bch-receipt-entries: Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir"]
+    N59["move-zen3-harness-entries-early: Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir"]
+    N60["move-zen3-harness-entries-late: Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir"]
+    N61["receipt-pin-path-tolerance: Accept historical protocol pin paths in receipt verification"]
+    N62["move-f547c394-inputs: Move the f547c394 protocol inputs under their epic dir"]
+    N63["rare-event-design-path-tolerance: Accept the historical design path in rare-event artifact validation"]
+    N64["move-3f664839-design: Move the 3f664839 design entry under its epic dir"]
+    N65["campaign-validation-path-tolerance: Accept historical frozen-evidence paths in campaign validation"]
+    N66["move-02b8137c-journal: Move the 02b8137c validation journal under its epic dir"]
+    N67["relocate-bench-narrative: Relocate loose narrative reports out of dev/bench_results"]
+    N68["relocate-sim-studies-narrative: Relocate loose narrative Markdown out of simulation_results and studies"]
+    N69["remove-active-husks: Clear empty leftover dirs under dev/active"]
+    N70["eliminate-dev-plans: Empty dev/plans through archival or legacy moves"]
+    N71["eliminate-dev-sessions: Empty dev/sessions into owner dirs or the legacy mirror"]
+    N72["eliminate-dev-presentations: Empty dev/presentations of leftover theme files"]
+    N73["move-presentation-decks: Move presentation decks into their epics' archive dirs"]
+    N74["retarget-figure-generator: Point the presentation figure example at a caller-chosen output dir"]
+    N75["docs-scaffold-index: Create the docs index and quadrant layout"]
+    N76["entry-page-gf2-core: Rewrite the gf2-core README as its entry page"]
+    N77["entry-page-gf2-coding: Rewrite the gf2-coding README as its entry page"]
+    N78["entry-page-gf2-algebra: Rewrite the gf2-algebra README as its entry page"]
+    N79["entry-page-gf2-sim: Write the gf2-sim README as its entry page"]
+    N80["concept-acceleration-architecture: Write the acceleration architecture concepts page"]
+    N81["backend-crate-readmes: Rewrite the SIMD kernel and statistics crate READMEs"]
+    N82["concept-field-arithmetic: Write the finite-field arithmetic concepts page"]
+    N83["reference-performance-evidence: Write the performance evidence reference page"]
+    N84["howto-select-acceleration: Write the acceleration selection how-to"]
+    N85["howto-reproduce-evidence: Write the evidence reproduction how-to"]
+    N86["howto-run-campaigns: Write the simulation campaign how-to"]
+    N87["howto-formal-verification: Write the formal verification how-to"]
+    N88["reference-standards-conformance: Write the standards conformance reference page"]
+    N89["reference-supported-configurations: Write the supported configurations reference page"]
+    N90["tutorial-link-simulation: Write the coded-modulation link simulation tutorial"]
+    N91["fieldmatrix-example-program: Add a FieldMatrix linear-algebra example program to gf2-core"]
+    N92["tutorial-linear-algebra: Write the finite-field linear algebra at scale tutorial"]
+    N93["readme-landing-page: Rewrite README for research adoption"]
+    N94["archive-lean-pipeline-doc: Move the Lean pipeline guide into its epic's archive dir"]
+    N95["legacy-move-gf2-core-guides: Move gf2-core crate guides into the legacy mirror"]
+    N96["legacy-move-gf2-coding-guides: Move gf2-coding crate guides into the legacy mirror"]
+    N97["verify-rustdoc-examples: Record the final Rustdoc example census and doctest timing"]
+    N98["audit-permanent-content: Audit the permanent surface against the docs invariants"]
+    N99["rewrite-dev-index: Rewrite dev/index.md for the final dev layout"]
+    N100["finalize-docs-policy: Narrow the docs policy to post-overhaul paths"]
+    N101["verify-final-links: Verify links across the permanent surface and executed archives"]
+    N102["retire-migration-checker: Retire the transient progress checker after the final check"]
     N6 --> N13
     N7 --> N13
     N8 --> N13
@@ -376,111 +392,120 @@ flowchart LR
     N45 --> N48
     N46 --> N48
     N47 --> N48
-    N6 --> N49
-    N7 --> N49
-    N8 --> N49
-    N9 --> N49
-    N10 --> N49
     N14 --> N50
     N41 --> N50
-    N14 --> N51
-    N41 --> N51
-    N14 --> N52
-    N41 --> N52
-    N53 --> N54
-    N50 --> N54
-    N55 --> N56
-    N52 --> N56
+    N49 --> N51
+    N50 --> N51
+    N49 --> N52
+    N50 --> N52
+    N14 --> N54
+    N41 --> N54
+    N53 --> N55
+    N54 --> N55
+    N14 --> N57
+    N41 --> N57
+    N56 --> N58
     N57 --> N58
-    N52 --> N58
-    N43 --> N59
-    N44 --> N59
-    N45 --> N59
-    N46 --> N59
-    N47 --> N59
-    N50 --> N59
-    N42 --> N60
-    N52 --> N60
-    N48 --> N61
-    N49 --> N61
-    N51 --> N61
-    N54 --> N61
-    N56 --> N61
-    N58 --> N61
-    N59 --> N61
-    N60 --> N61
-    N43 --> N62
-    N44 --> N62
-    N45 --> N62
-    N46 --> N62
-    N47 --> N62
-    N14 --> N63
-    N14 --> N64
-    N12 --> N65
+    N54 --> N59
+    N54 --> N60
+    N61 --> N62
+    N54 --> N62
+    N63 --> N64
+    N57 --> N64
     N65 --> N66
-    N41 --> N66
-    N67 --> N68
+    N57 --> N66
+    N43 --> N67
+    N44 --> N67
+    N45 --> N67
+    N46 --> N67
+    N47 --> N67
+    N54 --> N67
+    N42 --> N68
+    N57 --> N68
+    N48 --> N69
+    N51 --> N69
+    N52 --> N69
+    N55 --> N69
+    N58 --> N69
+    N59 --> N69
+    N60 --> N69
+    N62 --> N69
+    N64 --> N69
+    N66 --> N69
     N67 --> N69
-    N67 --> N70
-    N67 --> N71
-    N67 --> N72
-    N72 --> N73
-    N67 --> N74
-    N67 --> N75
-    N72 --> N76
+    N68 --> N69
+    N43 --> N70
+    N44 --> N70
+    N45 --> N70
+    N46 --> N70
+    N47 --> N70
+    N14 --> N71
+    N14 --> N72
+    N12 --> N73
+    N73 --> N74
+    N41 --> N74
     N75 --> N76
     N75 --> N77
-    N67 --> N78
-    N67 --> N79
-    N67 --> N80
-    N67 --> N81
-    N80 --> N82
-    N78 --> N82
+    N75 --> N78
+    N75 --> N79
+    N75 --> N80
+    N80 --> N81
+    N75 --> N82
+    N75 --> N83
+    N80 --> N84
     N83 --> N84
-    N67 --> N84
-    N82 --> N85
-    N84 --> N85
-    N5 --> N85
-    N43 --> N85
-    N44 --> N85
-    N45 --> N85
-    N46 --> N85
-    N47 --> N85
-    N79 --> N86
-    N12 --> N86
-    N68 --> N87
-    N74 --> N87
-    N76 --> N87
-    N77 --> N87
-    N84 --> N87
-    N12 --> N87
-    N41 --> N87
-    N69 --> N88
-    N82 --> N88
-    N76 --> N88
-    N12 --> N88
-    N41 --> N89
-    N70 --> N90
-    N71 --> N90
-    N73 --> N90
-    N81 --> N90
-    N87 --> N90
+    N83 --> N85
+    N75 --> N86
+    N75 --> N87
+    N75 --> N88
+    N75 --> N89
     N88 --> N90
     N86 --> N90
-    N85 --> N90
-    N66 --> N90
-    N62 --> N91
-    N63 --> N91
-    N64 --> N91
-    N59 --> N91
-    N60 --> N91
-    N48 --> N91
     N91 --> N92
-    N61 --> N92
-    N90 --> N92
+    N75 --> N92
+    N90 --> N93
     N92 --> N93
-    N89 --> N93
-    N93 --> N94
+    N5 --> N93
+    N43 --> N93
+    N44 --> N93
+    N45 --> N93
+    N46 --> N93
+    N47 --> N93
+    N87 --> N94
+    N12 --> N94
+    N76 --> N95
+    N82 --> N95
+    N84 --> N95
+    N85 --> N95
+    N92 --> N95
+    N12 --> N95
+    N41 --> N95
+    N77 --> N96
+    N90 --> N96
+    N84 --> N96
+    N12 --> N96
+    N41 --> N97
+    N78 --> N98
+    N79 --> N98
+    N81 --> N98
+    N89 --> N98
+    N95 --> N98
+    N96 --> N98
+    N94 --> N98
+    N93 --> N98
+    N74 --> N98
+    N70 --> N99
+    N71 --> N99
+    N72 --> N99
+    N67 --> N99
+    N68 --> N99
+    N48 --> N99
+    N99 --> N100
+    N69 --> N100
+    N98 --> N100
+    N100 --> N101
+    N97 --> N101
+    N101 --> N102
 ```
 <!-- jit:breakdown-overview:end -->
 
@@ -498,7 +523,9 @@ flowchart LR
 | D-50 entry pages | Owner-confirmed: crate `README.md` files are the four entry pages. Rejected: separate `docs/reference/crates/*` pages. gf2-stats and the SIMD crate get concise READMEs; HIP is covered by the acceleration pages (D-18). |
 | D-51 decks | Owner decision: link targets inside moved decks are repaired so every link resolves, including links broken before the move; prose and claims stay unedited (REQ-09). Rejected: recording broken links instead of repairing them, because REQ-19 requires resolved links. |
 | D-52 f547c394 | Owner decision: the entry moves under its epic dir. First, rule P-02 is changed to accept recorded historical pin paths. The baseline is benchmark-acceptance verdicts and findings over every committed `zen3-benchmark-receipt-v1` `receipt.json` outside `inputs/`, recorded in `receipt-verdict-baseline.md`; verdicts must be identical after the change and again after the move. CI does not run this check. The move then switches the tooling, runner, tests and CI scripts to the new path. Rejected: keeping it as an operational exception. |
-| D-53 other code-pinned entries | Owner decision: 3f664839 (rare-event design, pinned by `permanent_rare_event/artifact.rs`) and 02b8137c (frozen validation journal, pinned by `permanent_campaign/validation.rs`) follow the D-52 pattern. Each has its own validator verdict baseline record. The 02b8137c move starts only after issue 02b8137c is done or rejected, checked against the tracker at execution (no edge, for the coverage reason in the external-wiring row). For the other frozen code-pinned entries (CC-§1), `code-pinned-entry-plan` files the per-entry tolerance and move pairs under this epic; this keeps the graph bounded. Rejected: keeping code-pinned entries in place. |
+| D-53 code-pinned entries | Owner decision: each code-pinned entry moves only after its consumer accepts the recorded historical path. A recorded baseline of verdicts, test results or rendered output must be identical after the tolerance change and again after the move. Digest-pinned inputs keep their bytes. An owner outside this epic gates the move through a hard precondition criterion (done or rejected, checked against the tracker), never an edge. Groups: 3f664839 (`permanent_rare_event/artifact.rs`); 02b8137c (`permanent_campaign/validation.rs`); a83583e0 and dbd8787d (tuning-extent driver, validator, launcher); 26465e6c, eda07788 and 5cbb6545 (addendum fixture test); d1b4f85e, 591a1c5e and fd9d5416 (BCH receipt renderer). The 16 survey-harness entries need no consumer tolerance and move in two tasks that keep every crate's relative Cargo path resolving and every crate building. `1a379447-zen3-cpu-performance/measurement-contract.md` (`CONTRACT_PATH`, P-02) is already in epic layout, and this epic does not move it. Rejected: keeping code-pinned entries in place. |
+| Gate-run limit override | Owner override, 2026-10-01: after the third plan-review failure, the owner chose to enumerate the code-pinned tolerance and move tasks in the manifest and authorized a fourth gate run, overriding the three-failure escalation limit. |
+| Harness Cargo manifests | Risk: some survey-harness Cargo manifests are digest-pinned producing inputs of committed receipts, yet their relative dependency path breaks one level deeper. The harness move tasks keep pinned manifests byte-identical and record the resolution mechanism. The code scan listed 13 crates; a repository search finds 24 crates in 19 entries, all assigned to the harness or addendum move tasks. |
 | OD-08 gates | 3f29e945 DEC-01..DEC-06 hold. Manifest gates use only registered keys (D-35): leaves get `cargo-ci`, `code-review` and `doc-review`; the story adds `repo-validate` and `holistic-review`. Once 8f61d6de registers `docs-mechanical`, the execution lead adds it to every open overhaul issue. |
 | PD-01 archive scope | Owner-supplied previews of all 72 terminal unarchived containers bound the work: ten archived epics are re-archived to collect their terminal stories (ARCH-§1), b7157be6 is repaired from its destination conflict (ARCH-§3), and the six open-epic stories wait for their epics (ARCH-§2, D-22). Each task re-previews before execution because ownership linking adds documents. |
 | PD-02 non-JIT moves | Default: JIT archival rewrites only `documents[]`, never leaves `dev/` and cannot target the legacy mirror, so legacy, deck and Lean-guide moves follow `relocation-protocol`. |
@@ -509,7 +536,7 @@ flowchart LR
 | PD-09 story criterion IDs | Coverage credit is transitive, so story-level criteria use ID ranges that do not collide with the epic's REQ-01..REQ-20: contract story 3f29e945 uses REQ-31..REQ-40 and the sweep story REQ-21..REQ-27. The sweep story itself carries `satisfies:REQ-17`. |
 | PD-10 index ownership | Default: each page task, including the gf2-sim entry page, adds its own `docs/index.md` row; the scaffold links only pages that exist. |
 | PD-11 dev orientation | Default: `dev/index.md` is rewritten for the final layout; `dev/authoring-conventions.md` stays as operational guidance. |
-| External wiring | [external-wiring.json](external-wiring.json) is authoritative, and the breakdown step applies it verbatim: edges from manifest keys to existing issues, the f357b3dc and 44c98235 supersessions (each rejected `resolution:obsolete` once its replacement exists; the replacement carries its criteria), and the external `satisfies` labels, which are already present on the live issues. Every `from_key` exists in the manifest, and no edge closes a cycle. Every `to_issue` is an overhaul issue outside other epics' closures; the only foreign issue reached transitively is 0b45a5fa, a done task with no `satisfies` label and no dependencies. No edge targets another epic's issue (for example 02b8137c or ae03bcd0), because coverage credit is transitive. The three tolerance tasks are code changes that need no documentation contract, so they are spine sources with no external edge. |
+| External wiring | [external-wiring.json](external-wiring.json) is authoritative, and the breakdown step applies it verbatim: edges from manifest keys to existing issues, the f357b3dc and 44c98235 supersessions (each rejected `resolution:obsolete` once its replacement exists; the replacement carries its criteria), and the external `satisfies` labels, which are already present on the live issues. Every `from_key` exists in the manifest, and no edge closes a cycle. Every `to_issue` is an overhaul issue outside other epics' closures; the only foreign issue reached transitively is 0b45a5fa, a done task with no `satisfies` label and no dependencies. No edge targets another epic's issue (for example 02b8137c or ae03bcd0), because coverage credit is transitive. The six tolerance tasks are code changes that need no documentation contract, so they are spine sources with no external edge. |
 | Ordering the graph cannot encode | Two preconditions. `regroup-active-remaining` (ae03bcd0 entries) and `sweep-coding-bch` run in a window with no in-flight ae03bcd0 edits to its `dev/active` dir or to gf2-coding `bch/` and `transform/` (INV-§3.14). `move-02b8137c-journal` moves nothing until issue 02b8137c is done or rejected; this is a hard criterion of the task, verified against the tracker. An edge into either epic would pull its work and labels into this subtree. |
 | README ordering | `readme-landing-page` runs after the re-archive tasks, the only other tasks that edit `README.md`. Regroup and archive tasks declare `crates`, because their citation scans determine the exact files; expect rebases. |
 | Concurrent edits | `contrib/gates/doc-review-prompt.md` is being edited in another session and is outside this plan's footprints. |

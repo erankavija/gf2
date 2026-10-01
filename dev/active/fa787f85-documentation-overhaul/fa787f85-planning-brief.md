@@ -88,6 +88,8 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-51: Link targets inside moved historical decks are repaired so every link resolves, including links broken before the move; deck prose and claims are not edited. Rejected: recording pre-existing broken links instead of repairing them.
 - D-52: `dev/active/f547c394` moves under its epic directory together with a change to the tuning-campaign tooling that pins its path, verified by every committed receipt still verifying. Rejected: retaining it as an operational exception to the active-document layout.
 - D-53: Every `dev/active` entry whose path production code or measurement tooling checks (for example `dev/active/02b8137c` and `dev/active/3f664839` in `gf2-sim`) moves the way D-52 moves `f547c394`: a change first makes the consumer accept the recorded historical path, then the entry moves with its digest-pinned inputs byte-identical, and an entry never moves while its owning issue is in progress. Rejected: keeping code-pinned entries in place as operational exceptions.
+- D-54: Moving a survey-harness entry may edit only the relative-path line of its live `Cargo.toml` that points at `dev/tools/tuning-campaign-support`, even where that manifest is a digest-pinned producing input; committed receipts keep verifying through their byte-identical snapshot copies, and each move records the edit and re-verifies receipt verdicts. Rejected: keeping harness entries in place, and a symlink shim at the old depth.
+- D-55: Moving a historical entry also updates the path literals in its scripts that name the entry's own directory, changing path text only, and records each update. Rejected: leaving them stale.
 
 ## Target Structure
 
