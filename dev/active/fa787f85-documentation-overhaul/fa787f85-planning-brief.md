@@ -77,6 +77,16 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-40: The prerequisite story registers three invariant groups: comment concision, current-capability-only scope, and examples plus document layout. Researcher-audience, Diátaxis-placement and no-marketing invariants are registered with the permanent-documentation rewrite (`9b2886a7`). Story decisions DEC-01 to DEC-06 on `3f29e945` record the details.
 - D-41: The migration-manifest schema and progress checker are epic migration work (`a24b2af7`), gated on the prerequisite story.
 - D-42: A workspace-wide source documentation tersification sweep (`f357b3dc`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
+- D-43: Documentation issues outside the epic are triaged case by case: an issue whose requirement overlaps the sweep or rewrite has that requirement preserved in an overhaul child and is then rejected as subsumed; item-level API documentation fixes stay in their epics with an `epic:documentation-overhaul` filter label. Rejected: absorbing every issue (bloats the epic with unrelated item fixes) and leaving every issue (leaves REQ-18 unmet).
+- D-44: The tersification sweep is broken down inside this epic's plan into worker-sized module units. Rejected: separate later planning.
+- D-45: The permanent corpus has exactly two tutorials: a standards-based coded-modulation link simulation with `gf2-sim`, and finite-field linear algebra at scale with `gf2-core`. The second needs a new runnable FieldMatrix example in the library crate first. Rejected: short-code benchmarking and algebra/permanent workflows.
+- D-46: Crate-local guides under `crates/gf2-core/docs` and `crates/gf2-coding/docs` serve as fact sources for rewrite work and then move to `dev/archive/legacy/<original path>`. Rejected: deletion (loses provenance) and keeping them in place (duplicates `docs/`).
+- D-47: The roadmaps deleted before planning are checked retroactively: each planned item maps to a JIT issue or current code, and genuine gaps are filed. Rejected: accepting the deletion as complete.
+- D-48: Performance claims live only on a `docs/reference/` evidence page; the README carries none. Rejected: a README summary and receipts-only evidence.
+- D-49: `dev/bench_results`, `dev/simulation_results` and `dev/studies` are operational directories and remain; only their loose narrative Markdown is archived or relocated. Rejected: relocation with code and CI path changes.
+- D-50: Crate `README.md` files are the four crate entry pages. Rejected: separate pages under `docs/reference/crates/`.
+- D-51: Link targets inside moved historical decks are repaired so every link resolves, including links broken before the move; deck prose and claims are not edited. Rejected: recording pre-existing broken links instead of repairing them.
+- D-52: `dev/active/f547c394` moves under its epic directory together with a change to the tuning-campaign tooling that pins its path, verified by every committed receipt still verifying. Rejected: retaining it as an operational exception to the active-document layout.
 
 ## Target Structure
 
