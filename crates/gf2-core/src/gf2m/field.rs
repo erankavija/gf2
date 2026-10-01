@@ -4073,8 +4073,8 @@ mod poly_construction_tests {
 
 #[test]
 fn test_matches_gf2_coding_workaround() {
-    // This test verifies that from_bitvec_reversed produces the same result
-    // as the manual workaround in gf2-coding/tests/bch_tests.rs
+    // from_bitvec_reversed equals building the polynomial by hand from the
+    // parity bits, then the message bits, each highest coefficient first.
     let field = Gf2mField::new(4, 0b10011);
     let k = 3;
     let r = 2;
@@ -4088,10 +4088,10 @@ fn test_matches_gf2_coding_workaround() {
     codeword.push_bit(false); // parity bit 0
     codeword.push_bit(true); // parity bit 1
 
-    // Method 1: Using new from_bitvec_reversed
+    // Method 1: from_bitvec_reversed
     let poly_new = Gf2mPoly_::from_bitvec_reversed(&codeword, &field);
 
-    // Method 2: Manual workaround (as in gf2-coding)
+    // Method 2: manual reordering
     let mut coeffs_manual = Vec::new();
 
     // Parity polynomial p(x): degrees 0..r-1
