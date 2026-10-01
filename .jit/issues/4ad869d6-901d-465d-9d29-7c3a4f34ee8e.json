@@ -10,6 +10,7 @@
   ],
   "description": "Write the researcher-facing documentation: crate-level rustdoc and runnable examples covering concise primitive binary construction, fully explicit nonbinary general construction, systematic encoding, matrix materialization and saving, coordinate conventions, error contracts, complexity, and performance-path selection.\n\n## Background\n\nThe designed distance is documented as a guaranteed lower bound, never the minimum distance unless independently established. Examples compile as doctests or example binaries under the fast-tier budget.\n\n## Success Criteria\n\n- [hard] REQ-01: Runnable examples cover the concise binary case and the fully explicit nonbinary case end to end, including matrix saving through the canonical format.\n- [hard] REQ-02: Rustdoc covers coordinate conventions, error contracts, decoder guarantees, complexity, and performance-path selection, with the distance-bound terminology observed throughout.\n",
   "documents": [],
+  "first_ready_at": "2026-10-01T10:23:18.137193457Z",
   "gates_required": [
     "cargo-ci",
     "doc-review"
@@ -23,7 +24,7 @@
     "satisfies:REQ-15"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Researcher-oriented rustdoc and runnable examples",
-  "updated_at": "2026-08-28T22:50:47.339714882Z"
+  "updated_at": "2026-10-01T10:23:18.137193457Z"
 }
