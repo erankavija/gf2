@@ -1,27 +1,42 @@
 # Link-label qualification record (`f023b88b`, `0dc52df8`)
 
-Planner: `dev/scripts/migrate-link-labels.py` (read-only over `.jit/`). Update
-script: [`migrate-labels.sh`](migrate-labels.sh), generated at `95c60ccf`.
-Coverage and validation results come from a scratch clone at `95c60ccf` with
-`migrate-labels.sh` applied.
+Planner: `dev/scripts/migrate-link-labels.py` (read-only over `.jit/`).
+[`migrate-labels.sh`](migrate-labels.sh) is generated at `95c60ccf`;
+[`migrate-labels-2.sh`](migrate-labels-2.sh) is generated at `358b19f0`, after
+the first script, with `--drop-orphans`. Tables below cover both scripts
+together, planned from the `95c60ccf` labels; coverage and validation come from
+a scratch clone of `358b19f0` with `migrate-labels-2.sh` applied.
 
 ```sh
-python3 dev/scripts/migrate-link-labels.py \
-  --script dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels.sh
-bash dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels.sh
-python3 dev/scripts/migrate-link-labels.py --verify <migrated-copy>  # coverage tables
+python3 dev/scripts/migrate-link-labels.py --drop-orphans \
+  --script dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels-2.sh
+bash dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels-2.sh
+python3 dev/scripts/migrate-link-labels.py --root <pre-migration-copy> \
+  --items-from <migrated-copy> --verify <migrated-copy>  # coverage tables
 ```
+
+## Ownership rules
+
+| Case | Owner | Decided by |
+|---|---|---|
+| Containers reaching the labelled issue declare the id | Nearest (fewest dependency edges) | `f023b88b` REQ-01 |
+| A declaring container is named by a membership label of the labelled issue | Nearest such member, outranking nearer non-members | Owner decision |
+| Tie at the nearest distance | Label unchanged and listed | `f023b88b` REQ-02 |
+| No reaching container declares the id | Label removed | Owner decision |
+
+Containers are `milestone`, `epic` and `story` issues; the coverage walk never
+enters `planning` or `breakdown` issues.
 
 ## Label counts
 
-| Namespace | Labels | Rewritten | Ambiguous | Orphan / unregistered |
-|---|---|---|---|---|
-| satisfies | 736 | 646 | 1 | 89 |
-| cites | 177 | 177 | 0 | 0 |
+| Namespace | Unqualified | Rewritten | Requalified | Ambiguous | Orphan / unregistered |
+|---|---|---|---|---|---|
+| satisfies | 736 | 647 | 0 | 0 | 89 |
+| cites | 177 | 177 | 0 | 0 | 0 |
 
-Owner distance of rewritten `satisfies` labels: 1 edge(s): 75, 2 edge(s): 236, 3 edge(s): 86, 4 edge(s): 84, 5 edge(s): 64, 6 edge(s): 60, 7 edge(s): 17, 8 edge(s): 20, 9 edge(s): 2, 10 edge(s): 1, 11 edge(s): 1.
+Owner distance of rewritten `satisfies` labels: 1 edge(s): 73, 2 edge(s): 237, 3 edge(s): 85, 4 edge(s): 84, 5 edge(s): 66, 6 edge(s): 61, 7 edge(s): 17, 8 edge(s): 20, 9 edge(s): 2, 10 edge(s): 1, 11 edge(s): 1.
 
-## Unqualified satisfies labels
+## Removed satisfies labels
 
 | Issue | State | Label | Kind | Reason |
 |---|---|---|---|---|
@@ -113,36 +128,41 @@ Owner distance of rewritten `satisfies` labels: 1 edge(s): 75, 2 edge(s): 236, 3
 | c9cf13ee | rejected | `satisfies:REQ-04` | orphan | no reaching container declares the id |
 | c9cf13ee | rejected | `satisfies:REQ-05` | orphan | no reaching container declares the id |
 | c9cf13ee | rejected | `satisfies:REQ-06` | orphan | no reaching container declares the id |
-| d45aff82 | done | `satisfies:REQ-01` | ambiguous | tie at distance 2: 1a379447, ed3d490e |
 | ef18c60b | done | `satisfies:REQ-03` | orphan | no reaching container declares the id |
 
 ## Owners outside the labelled issue's membership
 
-The DAG decides the owner; each row's labelled issue carries a different membership label.
+Rewritten labels whose owner carries no membership label of the labelled issue while the issue is a member of another container of that type.
 
-| Issue | Label | Owner | Owner membership | Issue membership | Declaring containers @distance |
-|---|---|---|---|---|---|
-| 377a7a62 | `satisfies:REQ-01` | cce5da8c | epic:qldpc-decoding | epic:osd | cce5da8c@5, b7157be6@6 |
-| 3f29e945 | `satisfies:REQ-01` | f357b3dc | story:doc-tersification-sweep | story:documentation-contract | f357b3dc@1, fa787f85@2, 2caf738d@3 |
-| 583ec31c | `satisfies:REQ-03` | cce5da8c | epic:qldpc-decoding | epic:osd | cce5da8c@1, b7157be6@2 |
-| 5dd3539f | `satisfies:REQ-01` | cce5da8c | epic:qldpc-decoding | epic:osd | cce5da8c@4, b7157be6@5 |
-| 6beaf008 | `satisfies:REQ-01` | cce5da8c | epic:qldpc-decoding | epic:osd | cce5da8c@4, b7157be6@5 |
-| abd48d99 | `satisfies:REQ-01` | cce5da8c | epic:qldpc-decoding | epic:osd | cce5da8c@3, b7157be6@4 |
-| c077a88b | `satisfies:REQ-01` | d77176e5 | epic:competitive-benchmarking | epic:zen3-cpu-performance | d77176e5@2, 2caf738d@3, ed3d490e@4, 1a379447@5 |
-| c97b2961 | `satisfies:REQ-01` | cce5da8c | epic:qldpc-decoding | epic:osd | cce5da8c@2, b7157be6@3 |
-| f547c394 | `satisfies:REQ-01` | d77176e5 | epic:competitive-benchmarking | epic:zen3-cpu-performance | d77176e5@3, 1a379447@4, 2caf738d@4, ed3d490e@5 |
+None.
 
 ## Unregistered cites labels
 
 None.
+
+## Labels requalified by `migrate-labels-2.sh`
+
+Qualified by `migrate-labels.sh` to the plain nearest owner; moved to the membership owner. The same script qualifies `d45aff82 satisfies:REQ-01`, tied at distance 2 between `1a379447` and `ed3d490e`, to its membership owner `1a379447`, and removes the 89 labels listed above.
+
+| Issue | Label | Membership owner | Declaring containers @distance |
+|---|---|---|---|
+| 377a7a62 | `satisfies:cce5da8c/REQ-01` | b7157be6 | cce5da8c@5, b7157be6@6 |
+| 3f29e945 | `satisfies:f357b3dc/REQ-01` | fa787f85 | f357b3dc@1, fa787f85@2, 2caf738d@3 |
+| 583ec31c | `satisfies:cce5da8c/REQ-03` | b7157be6 | cce5da8c@1, b7157be6@2 |
+| 5dd3539f | `satisfies:cce5da8c/REQ-01` | b7157be6 | cce5da8c@4, b7157be6@5 |
+| 6beaf008 | `satisfies:cce5da8c/REQ-01` | b7157be6 | cce5da8c@4, b7157be6@5 |
+| abd48d99 | `satisfies:cce5da8c/REQ-01` | b7157be6 | cce5da8c@3, b7157be6@4 |
+| c077a88b | `satisfies:d77176e5/REQ-01` | 1a379447 | d77176e5@2, 2caf738d@3, ed3d490e@4, 1a379447@5 |
+| c97b2961 | `satisfies:cce5da8c/REQ-01` | b7157be6 | cce5da8c@2, b7157be6@3 |
+| f547c394 | `satisfies:d77176e5/REQ-01` | 1a379447 | d77176e5@3, 1a379447@4, 2caf738d@4, ed3d490e@5 |
 
 ## Coverage before and after
 
 | Measure | Before (unqualified) | After (qualified) |
 |---|---|---|
 | Hard requirements | 187 | 187 |
-| Credited | 106 | 102 |
-| Fully covered containers | 17 | 13 |
+| Credited | 106 | 100 |
+| Fully covered containers | 17 | 14 |
 
 Rule-evaluated: an epic (`hard-criteria-covered`) or a container named by a `brackets:` label (`coverage-preview`).
 
@@ -153,7 +173,6 @@ Rule-evaluated: an epic (`hard-criteria-covered`) or a container named by a `bra
 | 2caf738d | no | covered | uncovered |
 | 3931ac6f | no | covered | uncovered |
 | 86b9c719 | yes | covered | uncovered |
-| b7157be6 | yes | covered | uncovered |
 
 ### Requirement credit changes
 
@@ -161,16 +180,18 @@ Each row lists where the labels that credited the requirement before now resolve
 
 | Container | Rule-evaluated | Requirement | Before | After | Former crediting labels |
 |---|---|---|---|---|---|
-| 2caf738d | no | REQ-01 | credited | uncredited | 1a379447 ×12, 2037941f ×9, 6dc81018 ×1, ae03bcd0 ×4, ambiguous ×1, b4b4b9ee ×14, c04dd4ac ×4, d77176e5 ×3, ed3d490e ×1, f357b3dc ×1, fa787f85 ×3 |
+| 2caf738d | no | REQ-01 | credited | uncredited | 1a379447 ×15, 2037941f ×9, 6dc81018 ×1, ae03bcd0 ×4, b4b4b9ee ×14, c04dd4ac ×4, d77176e5 ×1, ed3d490e ×1, fa787f85 ×4 |
 | 3931ac6f | no | REQ-01 | credited | uncredited | ae03bcd0 ×4, b4b4b9ee ×1 |
 | 86b9c719 | yes | REQ-01 | credited | uncredited | 6dc81018 ×1, ae03bcd0 ×4, b4b4b9ee ×14 |
-| b7157be6 | yes | REQ-01 | credited | uncredited | cce5da8c ×5 |
+| cce5da8c | yes | REQ-01 | credited | uncredited | b7157be6 ×5 |
+| cce5da8c | yes | REQ-03 | credited | uncredited | b7157be6 ×1 |
+| f357b3dc | no | REQ-01 | credited | uncredited | fa787f85 ×1 |
 
 ## Validation after migration
 
-| Rule | Errors | Subject |
-|---|---|---|
-| `dangling-item-link` | 90 | The unqualified `satisfies` labels listed above; no `cites` label |
-| `hard-criteria-covered` | 1 | `b7157be6` REQ-01 |
-| `coverage-preview` | 1 | `b7157be6` REQ-01 |
-| derived-state drift | 1 | `.jit/.gitignore` absent |
+| Rule | Errors |
+|---|---|
+| `dangling-item-link` | 0 |
+| `hard-criteria-covered` | 0 |
+| `coverage-preview` | 0 |
+| derived-state drift | 1 (`.jit/.gitignore` absent) |
