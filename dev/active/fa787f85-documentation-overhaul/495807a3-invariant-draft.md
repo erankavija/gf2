@@ -1,6 +1,7 @@
-# Documentation invariant draft for 495807a3
+# Documentation invariants for 495807a3
 
-Draft texts for user approval (REQ-03, DEC-03). Nothing here is registered.
+The five texts below are approved (DEC-01 on issue 495807a3) and registered in
+`.jit/invariants.toml`; `AGENTS.md` projects them.
 
 ## REQ-01: resolution and `enforces` namespace
 
@@ -46,11 +47,11 @@ Values in namespace 'enforces':
 Total: 5
 ```
 
-## Proposed invariants
+## Registered invariants
 
 Group (c) is split into three invariants: rustdoc examples, active-document
 layout and `AGENTS.md` scope share no subject, and one sentence carrying all
-three reads as a list. Five invariants result.
+three reads as a list.
 
 | Group | ID | Kind | Enforced by |
 |---|---|---|---|
@@ -59,9 +60,6 @@ three reads as a list. Five invariants result.
 | c1 | `teaching-rustdoc-examples` | enforced | `@/gate/code-review` |
 | c2 | `active-document-layout` | enforced | `@/gate/doc-review` |
 | c3 | `agents-md-scope` | enforced | `@/gate/doc-review` |
-
-`docs-mechanical` (8f61d6de) can take over `agents-md-scope` and
-`active-document-layout` enforcement once it exists.
 
 ### (a) `non-obvious-comments`
 
@@ -83,32 +81,27 @@ three reads as a list. Five invariants result.
 
 > Every `AGENTS.md` governs its directory subtree, overrides less specific guidance only within that subtree, states nothing that belongs to a broader or narrower scope, and stays at or below 200 lines.
 
-## Superseded AGENTS.md prose and line budget
+## Removed AGENTS.md prose and line budget
 
 The projection renders one line per invariant (`style = "id-anchor"`), so five
-invariants add five lines inside the region. Line numbers refer to `AGENTS.md`
-at 199 lines.
+invariants add five lines inside the region. The baseline is 199 lines.
 
-| Invariant | Superseded lines | Replacement outside region | Removed | Added |
+| Invariant | Removed prose | Replacement outside region | Removed | Added |
 |---|---|---|---|---|
-| `non-obvious-comments` | 101–104 (comment bullet) | none | 4 | 0 |
+| `non-obvious-comments` | comment bullet, 4 lines | none | 4 | 0 |
 | `current-state-scope` | none; the rule has no hand-written source | none | 0 | 0 |
-| `teaching-rustdoc-examples` | 95–100 (rustdoc bullet) | `- Public APIs need rustdoc stating purpose, panics, safety conditions, and`<br>`  non-obvious complexity.` | 6 | 2 |
-| `active-document-layout` | 127–131 (placement paragraph) | `Keep permanent documentation under README.md, crate-level rustdoc, or`<br>`docs/. Prefer citations or generated projections over copied facts. See`<br>`@/inv/single-source-prose.` | 5 | 3 |
-| `agents-md-scope` | 3–6 (last sentence, lines 5–6) | lines 3–5 keep the first two sentences | 4 | 3 |
+| `teaching-rustdoc-examples` | rustdoc bullet, 6 lines | `- Public APIs need rustdoc stating purpose, panics, safety conditions, and`<br>`  non-obvious complexity.` | 6 | 2 |
+| `active-document-layout` | placement paragraph, 5 lines | `Keep permanent documentation under README.md, crate-level rustdoc, or`<br>`docs/. Prefer citations or generated projections over copied facts. See`<br>`@/inv/single-source-prose.` | 5 | 3 |
+| `agents-md-scope` | last preamble sentence, 4 lines | the preamble keeps its first two sentences | 4 | 3 |
 | Projection region | — | five new lines | 0 | 5 |
 
 Net: 199 − 19 + 13 = **193 lines**.
-
-If the owner keeps lines 5–6 so the hand-written preamble still defines
-recursive scope for REQ-34 of 3f29e945, the total is 194 lines. The budget
-holds in both variants.
 
 Unchanged: the `dev/active` area itself stays registered in `.jit/config.toml`
 (`managed_paths`, `issue_scoped_areas`); the invariant states the layout
 inside it.
 
-## Wording alternatives
+## Rejected alternatives
 
 - (a) ID `minimal-comments` or `comment-economy` instead of `non-obvious-comments`.
 - (a) Drop the "without restating …" clause and rely on `single-source-prose` for duplication.
@@ -121,4 +114,4 @@ inside it.
 - (c2) Add "and leave it when the owning issue completes" to state the lifecycle.
 - (c3) Short form: "Every `AGENTS.md` governs only its subtree and stays at or below 200 lines."
 - (c) Single sentence for all three: "Rustdoc examples teach a workflow or material contract, active development documents live under `dev/active/<epic-short-id>-<slug>/` linked to their owning issues, and every `AGENTS.md` governs only its subtree within 200 lines."
-- Enforcement: `advisory` kind for `teaching-rustdoc-examples` if the owner wants existing trivial examples to stay non-blocking until the rustdoc audit lands.
+- Enforcement: `advisory` kind for `teaching-rustdoc-examples`.
