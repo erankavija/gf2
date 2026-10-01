@@ -21,7 +21,7 @@
 //!    inner product `⟨v, A^k · u⟩` decomposes into `k` independent
 //!    base-field scalar sequences `s_j[k] = ⟨v.c0, (A^k · u).cj⟩`.
 //! 3. Run base-field Berlekamp-Massey
-//!    ([`crate::field::charpoly::berlekamp_massey`]) on each base sequence.
+//!    (`crate::field::charpoly::berlekamp_massey`) on each base sequence.
 //!    Each output `p_j` is a base-field divisor of the minimal polynomial;
 //!    the LCM `lcm(p_0, …, p_{k-1})` is itself a base-field polynomial.
 //! 4. **Coefficient-descent guard (SC#4).** Before returning, run an
@@ -36,7 +36,7 @@
 //!    A failed descent returns `None` so the dispatcher falls back to
 //!    `multi_seed_wiedemann_minpoly` inside `cyclic_lcm_minpoly`.
 //! 5. Verify the descended polynomial annihilates `A` over the base
-//!    field via [`p_annihilates_a`] — a Las-Vegas verifier with
+//!    field via `p_annihilates_a` — a Las-Vegas verifier with
 //!    **zero false-accept probability**: degree-`n` candidates pass by
 //!    a divisibility argument; strict-divisor candidates are checked
 //!    by an exhaustive standard-basis sweep. Return `None` on miss.
@@ -484,7 +484,7 @@ fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, seed: u
 ///    base-field embedding of the extension (zero α / α² components
 ///    after lifting via `QuadraticExt::new` / `CubicExt::new`).
 /// 4. The descended polynomial annihilates `A` over the base field
-///    ([`p_annihilates_a`] — Las-Vegas verification with zero false
+///    (`p_annihilates_a` — Las-Vegas verification with zero false
 ///    accepts; degree-`n` fast-path or exhaustive standard-basis
 ///    sweep).
 ///

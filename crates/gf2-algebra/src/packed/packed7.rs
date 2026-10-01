@@ -843,7 +843,7 @@ impl PackedField<Fp<7>> for Packed7 {
 /// # Mask-tail invariant
 ///
 /// Padding nibbles beyond `len_lanes` in the last word must always be zero.
-/// Every mutating operation calls [`Packed7Vec::mask_tail`] to enforce this
+/// Every mutating operation calls `Packed7Vec::mask_tail` to enforce this
 /// invariant. This is the most critical correctness invariant in this
 /// codebase (CLAUDE.md §Key design invariants #1).
 ///

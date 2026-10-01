@@ -309,7 +309,7 @@ pub struct OrbGrandResult {
     /// possible noise realisation. For even codes, the noise parity is
     /// constrained to match `hard_parity`, so the reachable mass is
     /// `log P(parity(Z) = hard_parity | |L|)` (see
-    /// [`log_prob_parity`]). The untested mass after `Q` queries is
+    /// `log_prob_parity`). The untested mass after `Q` queries is
     /// therefore `exp(log_parity_cap) − exp(cumulative_log_probability)`
     /// rather than `1 − exp(cumulative_log_probability)`.
     pub log_parity_cap: f64,

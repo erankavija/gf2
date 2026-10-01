@@ -591,7 +591,7 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 ///    merge pairs bottom-up on the subproduct tree using the recurrence
 ///    `L_{left+right}(x) = L_left(x) · M_right(x) + L_right(x) · M_left(x)`
 ///    where `M_left`, `M_right` are the subproduct-tree nodes. The tree
-///    itself is built via [`build_subproduct_tree`][crate::field::poly::build_subproduct_tree]
+///    itself is built via [`build_subproduct_tree`]
 ///    so both `batch_evaluate` and `interpolate_fast` share one
 ///    construction.
 ///

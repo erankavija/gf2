@@ -3,25 +3,25 @@
 //! This module implements Dumas–Pernet §2.1 algorithms 2.1–2.4 as
 //! **reductions to `gemm`** on top of the existing classical
 //! [`gemm`](crate::field::matrix::gemm) (issue `91c06222`) and the dense
-//! view types [`MatView`](crate::field::matrix::MatView) /
-//! [`MatViewMut`](crate::field::matrix::MatViewMut). All routines operate
+//! view types [`MatView`] /
+//! [`MatViewMut`]. All routines operate
 //! **in place** on the supplied views.
 //!
 //! The `B ← B − A · X` and `B ← B + A · X` updates that drive `trsm` and
 //! `trmm` are dispatched through the shared
-//! [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view)
+//! `gemm_axpy_into_view`
 //! kernel in [`crate::field::matrix`], which writes the result into a
 //! caller-supplied `MatViewMut` and inherits the same blocked,
 //! delayed-reduction structure as T1's classical
 //! [`gemm`](crate::field::matrix::gemm) — its inner kernel is
-//! [`crate::field::vec::dot_product_slices`] with the standard
+//! `crate::field::vec::dot_product_slices` with the standard
 //! `F::max_unreduced_additions()` chunking, so the `Wide` accumulator
 //! never overflows even at large inner dimensions. The `trtri` and
 //! `trtrm` recursions go through
-//! [`gemm_into_view`](crate::field::matrix::gemm_into_view) (no β·C term
+//! `gemm_into_view` (no β·C term
 //! needed). The `trtrm` `A12 = U12 · L22` step (where `L22` is unit-
 //! lower-triangular with implicit diagonal) goes through
-//! [`gemm_axpy_into_view_diag`](crate::field::matrix::gemm_axpy_into_view_diag)
+//! `gemm_axpy_into_view_diag`
 //! — the unit-diagonal-aware sibling of `gemm_axpy_into_view` introduced
 //! by R4 to fold the implicit-`1` diagonal into the same per-cell
 //! generic kernel, eliminating the previous bespoke per-cell multiply
@@ -38,7 +38,7 @@
 //! per invocation, which on a `MatView` materialises one owned
 //! transposed matrix via `MatView::to_owned` followed by
 //! `FieldMatrix::transpose` — both are direct-struct constructors but
-//! both bump the [`crate::field::matrix::fieldmatrix_new_count`]
+//! both bump the `crate::field::matrix::fieldmatrix_new_count`
 //! test-only counter, mirroring their real heap cost.) The trtri /
 //! trtrm primitives need exactly **one** extra scratch
 //! matrix of size `h × h` per recursion level for the
@@ -117,18 +117,18 @@
 //! "zero extra allocation" contract is scoped to "zero per-recursion-
 //! level scratch matrices managed by the triangular primitives
 //! themselves". The shared blocked-gemm kernels
-//! [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view) /
-//! [`gemm_into_view`](crate::field::matrix::gemm_into_view) intrinsically
+//! `gemm_axpy_into_view` /
+//! `gemm_into_view` intrinsically
 //! materialise one transposed `B` operand per call — mirroring T1's
 //! classical [`gemm`](crate::field::matrix::gemm) — and trsm/trmm/
 //! trtri/trtrm inherit that 1-allocation-per-gemm-call cost because
 //! the §2.1 algorithms reduce to gemm. The unit-diagonal kernel
-//! [`gemm_axpy_into_view_diag`](crate::field::matrix::gemm_axpy_into_view_diag)
+//! `gemm_axpy_into_view_diag`
 //! is the exception: it walks `b` cell-wise and never materialises a
 //! transpose, so it adds **0** allocations.
 //!
 //! Empirical post-R5 budgets (counted via the `#[cfg(test)]`
-//! [`crate::field::matrix::fieldmatrix_new_count`] thread-local
+//! `crate::field::matrix::fieldmatrix_new_count` thread-local
 //! counter, which bumps once per `FieldMatrix::new` call AND once per
 //! direct-struct materialisation in `MatView::to_owned` /
 //! `FieldMatrix::transpose`):
@@ -139,21 +139,21 @@
 //!   bumps. Eight internal-recursion gemm calls × 2 bumps per gemm
 //!   (`MatView::transpose` = `to_owned` + `FieldMatrix::transpose`).
 //!   Pinned in
-//!   [`tests::test_trsm_zero_allocation`](self::tests::test_trsm_zero_allocation)
+//!   `tests::test_trsm_zero_allocation`
 //!   and
-//!   [`tests::test_trmm_zero_allocation`](self::tests::test_trmm_zero_allocation).
+//!   `tests::test_trmm_zero_allocation`.
 //!   The trsm/trmm recursive paths themselves allocate **nothing** —
 //!   the count is entirely the gemm kernel's intrinsic B-transpose.
 //! - `trtri_*` at the base-case boundary (`m = 8`): **1**
 //!   counter bump — the `m × m` `inv` staging buffer. The column-by-
 //!   column back-substitution writes scalars in place into `inv` and
 //!   needs no per-iteration scratch. Pinned in
-//!   [`tests::test_trtri_at_threshold_one_allocation`](self::tests::test_trtri_at_threshold_one_allocation).
+//!   `tests::test_trtri_at_threshold_one_allocation`.
 //! - `trtri_*` at `m = 64`: **43** counter bumps.
 //!   Breakdown: 8 base-case `inv` buffers (one per leaf at `m=8`) +
 //!   7 non-leaf levels × (1 chain scratch + 2 gemm_into_view × 2
 //!   transpose bumps) = 8 + 35 = 43. Pinned in
-//!   [`tests::test_trtri_allocation_budget`](self::tests::test_trtri_allocation_budget).
+//!   `tests::test_trtri_allocation_budget`.
 //!   The base-case `inv` buffers and the per-level chain scratch are
 //!   the **architectural exceptions** (matrix multiply is not
 //!   associative in-place) recorded as the R5 amendment; the remaining
@@ -168,7 +168,7 @@
 //!   each `m=8` leaf allocates 0 (`trtrm_base` walks `l` cell-wise).
 //!   Total counter bumps: seven levels times five allocs per level
 //!   gives 35. Pinned in
-//!   [`tests::test_trtrm_allocation_budget`](self::tests::test_trtrm_allocation_budget).
+//!   `tests::test_trtrm_allocation_budget`.
 //!
 //! Geometrically these scratch allocations sum to `O(m²)` cells over
 //! the full recursion tree, the same asymptotic budget as the
@@ -183,7 +183,8 @@
 //!
 //! # Bit-exact correctness
 //!
-//! Because every off-diagonal step delegates to the classical [`gemm`] and
+//! Because every off-diagonal step delegates to the classical
+//! [`gemm`](crate::field::matrix::gemm) and
 //! the base-case loops use only field add/sub/mul/div, the output is
 //! **bit-exact** equal to the equivalent `gemm`-of-dense expansion at
 //! every recursion depth. The proptests in this module exercise the four
@@ -227,7 +228,7 @@
 //! `192 × 64 × 1 = 12288 ≥ 4096`, comfortably above the SIMD threshold.
 //!
 //! The blocked variants are dispatched by
-//! [`crate::field::inverse::FieldMatrix::solve_batch`] when
+//! [`crate::field::matrix::FieldMatrix::solve_batch`] when
 //! `F::has_simd_gemm_classical()` returns `true` and the matrix is large
 //! enough to benefit; the recursive variants remain for all other fields.
 
@@ -338,7 +339,7 @@ pub enum TriangularRoute {
 /// The comparison uses the active `triangular.base_case_max_dim()` profile
 /// field. Dimensions at or below it take the direct base case; larger
 /// dimensions recurse. The conservative default is
-/// [`TRI_BASE_MAX_DIM_DEFAULT`].
+/// `TRI_BASE_MAX_DIM_DEFAULT`.
 #[must_use]
 pub fn triangular_route(m: usize) -> TriangularRoute {
     triangular_route_resolved(tuning::active().triangular().base_case_max_dim(), m)
@@ -987,7 +988,7 @@ pub fn trtri_lower<F: FiniteField>(a: MatViewMut<'_, F>) {
 ///
 /// **Storage convention for the strict-upper region of `L`.** The unit-
 /// diagonal `L21·L22` step is dispatched through
-/// [`gemm_axpy_into_view_diag`](crate::field::matrix::gemm_axpy_into_view_diag);
+/// `gemm_axpy_into_view_diag`;
 /// that kernel reads the entire `L22` block (not just the strict-lower
 /// triangle) and substitutes `F::one()` only on the diagonal positions,
 /// so callers **must zero the strict-upper region of `L`** before calling

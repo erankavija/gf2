@@ -807,7 +807,7 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// elements.
     ///
     /// For each batch index `i`, computes `self[i] * other[i]` using the same
-    /// six-product formula as [`CubicExt::mul`], but over coefficient lanes in
+    /// six-product formula as `CubicExt::mul`, but over coefficient lanes in
     /// Structure-of-Arrays order. For `Fp<P>` bases the six independent
     /// products and the surrounding adds/subs route through the shared
     /// [`crate::gfp::SimdVecOps`] hooks when they are available; otherwise the
@@ -1127,7 +1127,7 @@ pub trait SimdKaratsubaHook: ConstField {
     ///
     /// Returns `None` when no SIMD kernel is available for `Self`, at
     /// which point the caller falls back to
-    /// [`scalar_karatsuba`](super::batch::scalar_karatsuba) (which is
+    /// `scalar_karatsuba` (which is
     /// purely internal; its semantics are folded into
     /// [`BatchExtField::batch_mul_quadratic`]).
     ///

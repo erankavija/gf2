@@ -3,8 +3,9 @@ set -euo pipefail
 
 # Cargo CI gate wrapper for jit.
 #
-# Runs the full Rust CI pipeline (check, test, clippy, fmt) and produces
-# concise output: one-line summaries on success, full diagnostics on failure.
+# Runs the full Rust CI pipeline (check, test, clippy, fmt, doc, doctest) and
+# produces concise output: one-line summaries on success, full diagnostics on
+# failure.
 #
 # Exit codes:
 #   0 — all steps passed
@@ -179,7 +180,7 @@ summarize_fail() {
       plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
       plain "$LOGDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
       ;;
-    clippy)
+    clippy|doc)
       echo "--- $name diagnostics ---"
       # Show warning/error lines with context
       plain "$LOGDIR/$name.out" | grep -E "^(warning|error)" || true
@@ -249,6 +250,13 @@ run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --profile ci-te
 # this reaches both owner codecs without pulling in the excluded ROCm crate.
 run_step clippy "$BUDGET" cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
 run_step fmt    "$BUDGET" cargo fmt --all -- --check
+
+# Fixed rather than host-dependent: matches the doc and doctest steps of
+# .github/workflows/ci.yml.
+DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand,llr-f64"
+run_step doc     env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
+run_step doctest "$BUDGET" cargo test --doc --workspace --release $DOC_FEAT_FLAGS
+
 # Baked selector fields (DEC-G, and the follow-on families of
 # dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
 # feature, so --all-features never builds it; this scoped step executes the

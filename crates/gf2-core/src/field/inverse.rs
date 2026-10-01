@@ -23,15 +23,15 @@
 //!   Returns the field zero on rank-deficient input.
 //!
 //! All matrix–matrix multiplications go through
-//! [`gemm_into_view`](crate::field::matrix::gemm_into_view); all
+//! `gemm_into_view`; all
 //! triangular solves through
-//! [`trsm_lower`](crate::field::triangular::trsm_lower) /
-//! [`trsm_upper`](crate::field::triangular::trsm_upper); all triangular
+//! [`trsm_lower`] /
+//! [`trsm_upper`]; all triangular
 //! inversions through
-//! [`trtri_lower`](crate::field::triangular::trtri_lower) /
-//! [`trtri_upper`](crate::field::triangular::trtri_upper); the final
+//! [`trtri_lower`] /
+//! [`trtri_upper`]; the final
 //! upper-times-unit-lower product through
-//! [`trtrm`](crate::field::triangular::trtrm). No bespoke kernels.
+//! [`trtrm`]. No bespoke kernels.
 //!
 //! # Allocation budget
 //!
@@ -57,7 +57,7 @@
 //! non-square `self`. The pseudo-inverse for rectangular / rank-
 //! deficient matrices is intentionally out of scope; callers needing
 //! that should use [`crate::field::ple`]'s row-echelon form together
-//! with [`crate::field::ple::FieldMatrix::nullspace`] to assemble the
+//! with [`crate::field::matrix::FieldMatrix::nullspace`] to assemble the
 //! Moore–Penrose pseudo-inverse manually.
 
 use crate::field::matrix::FieldMatrix;
@@ -100,7 +100,7 @@ pub(crate) const BLOCKED_INVERT_THRESHOLD: usize = 16;
 pub enum InvRoute {
     /// Use the scalar-pivot PLE + `trtri` + `trtrm` driver.
     ScalarPle,
-    /// Use the panelized blocked-invert driver ([`blocked_inv_panelized`]).
+    /// Use the panelized blocked-invert driver (`blocked_inv_panelized`).
     BlockedPanelized,
 }
 
@@ -133,10 +133,10 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// composition variant (issue `d1a5fea8`). Computes the PLE
     /// decomposition `P · L · E = self`. If `rank < n`, returns `None`.
     /// Otherwise inverts each triangular factor in place
-    /// ([`trtri_lower`](crate::field::triangular::trtri_lower) on `L`,
-    /// [`trtri_upper`](crate::field::triangular::trtri_upper) on `E`),
+    /// ([`trtri_lower`] on `L`,
+    /// [`trtri_upper`] on `E`),
     /// then composes `M = E⁻¹ · L⁻¹` **in place into `L⁻¹`'s storage**
-    /// via [`trtrm`](crate::field::triangular::trtrm) (the upper-times-
+    /// via [`trtrm`] (the upper-times-
     /// unit-lower product kernel that exploits `L⁻¹`'s unit-lower
     /// structure to halve the dense work versus a generic `gemm`).
     /// Finally applies `Pᵀ` on the right by column-permuting `M` into
@@ -280,9 +280,9 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// Callers needing least-squares or pseudo-inverse semantics over
     /// rank-deficient compatible systems should compose
-    /// [`row_echelon`](crate::field::ple::FieldMatrix::row_echelon)
+    /// [`row_echelon`](crate::field::matrix::FieldMatrix::row_echelon)
     /// and
-    /// [`nullspace`](crate::field::ple::FieldMatrix::nullspace) from
+    /// [`nullspace`](crate::field::matrix::FieldMatrix::nullspace) from
     /// the PLE module directly; the Moore–Penrose pseudo-inverse is
     /// out of scope here (see "Non-square inputs" in the module docs).
     ///
@@ -380,9 +380,9 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// 2. If `r < n`, return `None`.
     /// 3. `Y = Pᵀ · B` (row-permute `B` by `perm`).
     /// 4. `L · Y' = Y` solved in place via
-    ///    [`trsm_lower`](crate::field::triangular::trsm_lower).
+    ///    [`trsm_lower`].
     /// 5. `E · X = Y'` solved in place via
-    ///    [`trsm_upper`](crate::field::triangular::trsm_upper).
+    ///    [`trsm_upper`].
     ///
     /// # Arguments
     ///

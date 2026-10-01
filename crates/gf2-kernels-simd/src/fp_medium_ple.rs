@@ -2,13 +2,13 @@
 //! (251, 65536)`), issue `68db401b`, design `2e8c5a29` § 9.
 //!
 //! This is the safe wrapper layer; the unsafe AVX2 intrinsics live in
-//! [`crate::x86::fp_medium_ple`]. The kernel is the u16-lane analogue
+//! `crate::x86::fp_medium_ple`. The kernel is the u16-lane analogue
 //! of the byte-lane [`crate::fp_small_ple`] panel-base kernel — same
 //! column-by-column Gaussian elimination as the scalar
 //! `ple_base_direct`, but with a row-major axpy-style Schur update
 //! that processes 8 × u32 lanes per inner step via SSOT-reused
 //! `_mm256_mullo_epi32` + Barrett reduction
-//! ([`crate::x86::fp_small::barrett_reduce_lane32`], SSOT issued by
+//! (`crate::x86::fp_small::barrett_reduce_lane32`, SSOT issued by
 //! `e8a0c47a`).
 //!
 //! # Algorithm summary

@@ -27,9 +27,9 @@
 //! | [`packed7`]    | F_7 scalar word ops + AVX2 batch entry points + `F7AvxFns` detection bundle (R2 Candidate A). |
 //!
 //! The actual AVX2 batch entry points live in
-//! [`crate::x86::bipedal_avx2`] (F_3, generic over `BipedalLikeConfig`),
-//! [`crate::x86::bipedal_avx2_packed5`] (F_5, dedicated 3-plane shape), and
-//! [`crate::x86::bipedal_avx2_packed7`] (F_7, dedicated 1-plane LUT shape).
+//! `crate::x86::bipedal_avx2` (F_3, generic over `BipedalLikeConfig`),
+//! `crate::x86::bipedal_avx2_packed5` (F_5, dedicated 3-plane shape), and
+//! `crate::x86::bipedal_avx2_packed7` (F_7, dedicated 1-plane LUT shape).
 //! The F_3 module also owns the four-matrix single-word permanent Gray walk.
 //! All three trigger the asm-artefact-present gate on source changes.
 //!
@@ -45,7 +45,7 @@
 //! backends each contribute a new lane impl). Supply `PRIME`,
 //! `U64_PER_LANE_PAIR`, and the lane-level `add_lane / sub_lane /
 //! mul_lane / neg_lane` formulas. The generic AVX2 entry points in
-//! [`crate::x86::bipedal_avx2`] then monomorphise over the new config;
+//! `crate::x86::bipedal_avx2` then monomorphise over the new config;
 //! no kernel code changes are required.
 //!
 //! **(b) Encoding does not fit the framework — e.g. F_5's R1 Candidate D
@@ -75,7 +75,7 @@ pub use lanes::Avx2Lane;
 /// AVX2 batch entry points for the F_3 instantiation.
 ///
 /// The four functions in this module are thin `Config3`-monomorphised
-/// shims over the generic [`crate::x86::bipedal_avx2::run_add_batch`]
+/// shims over the generic `crate::x86::bipedal_avx2::run_add_batch`
 /// (and its `sub` / `mul` / `neg` siblings). The generic entry points
 /// are already `#[target_feature(enable = "avx2")]`; this module gives
 /// F_3 callers a stable, non-generic path that does not depend on the
@@ -83,7 +83,7 @@ pub use lanes::Avx2Lane;
 /// invoking these functions.
 ///
 /// To target a different prime in the future, call the generic entry
-/// point in [`crate::x86::bipedal_avx2`] directly with the appropriate
+/// point in `crate::x86::bipedal_avx2` directly with the appropriate
 /// `BipedalLikeConfig` — no per-prime shim module is required.
 ///
 /// # Examples
@@ -110,7 +110,7 @@ pub mod avx2 {
     use crate::bipedal::Config3;
 
     /// `Config3`-monomorphised wrapper over
-    /// [`crate::x86::bipedal_avx2::run_add_batch`].
+    /// `crate::x86::bipedal_avx2::run_add_batch`.
     ///
     /// # Safety
     ///
@@ -135,7 +135,7 @@ pub mod avx2 {
     }
 
     /// `Config3`-monomorphised wrapper over
-    /// [`crate::x86::bipedal_avx2::run_sub_batch`].
+    /// `crate::x86::bipedal_avx2::run_sub_batch`.
     ///
     /// # Safety
     ///
@@ -160,7 +160,7 @@ pub mod avx2 {
     }
 
     /// `Config3`-monomorphised wrapper over
-    /// [`crate::x86::bipedal_avx2::run_mul_batch`].
+    /// `crate::x86::bipedal_avx2::run_mul_batch`.
     ///
     /// # Safety
     ///
@@ -185,7 +185,7 @@ pub mod avx2 {
     }
 
     /// `Config3`-monomorphised wrapper over
-    /// [`crate::x86::bipedal_avx2::run_neg_batch`].
+    /// `crate::x86::bipedal_avx2::run_neg_batch`.
     ///
     /// # Safety
     ///

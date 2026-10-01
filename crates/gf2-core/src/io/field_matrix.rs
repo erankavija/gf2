@@ -1,6 +1,6 @@
 //! Canonical, identity-carrying serialization for [`FieldMatrix`].
 //!
-//! The format is deliberately independent of the legacy [`BitMatrix`] `.gf2`
+//! The format is deliberately independent of the [`BitMatrix`](crate::BitMatrix) `.gf2`
 //! format. It stores algebraic field identity and element representation, so
 //! a byte stream is meaningful only when the caller supplies an equivalent
 //! field witness while loading.

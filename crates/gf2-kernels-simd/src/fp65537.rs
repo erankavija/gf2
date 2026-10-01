@@ -145,7 +145,7 @@ pub struct Fp65537Fns {
     pub batch_sub_fn: Fp65537BatchSubFn,
     /// Fused Karatsuba combine for `GF(p²) / Fp<65537>`. This is the
     /// hot-loop entry point used by
-    /// [`gf2_core::gfpn::BatchExtField::batch_mul_quadratic`] — keeping
+    /// `gf2_core::gfpn::BatchExtField::batch_mul_quadratic` — keeping
     /// all intermediates in AVX2 registers avoids the nine heap
     /// allocations that a pass-per-op composition would otherwise need,
     /// and is the main source of the measured throughput win.

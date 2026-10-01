@@ -1,7 +1,7 @@
 //! Residual bit-shift funnel kernels.
 //!
 //! This module owns the funnel a bit shift by a non-multiple of 64 needs: the
-//! capability-gated kernels isolated in [`crate::x86::shift_funnel`] and the one
+//! capability-gated kernels isolated in `crate::x86::shift_funnel` and the one
 //! detection that publishes them to callers. It is its own detected bundle with
 //! its own processor feature, so a host that has that feature without AVX2 still
 //! reaches the kernels.

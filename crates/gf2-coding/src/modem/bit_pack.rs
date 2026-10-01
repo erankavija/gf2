@@ -92,7 +92,7 @@ pub(crate) fn bit_at_msb_first(label: u16, bit_idx: u8, bits_per_symbol: u8) -> 
 /// Explodes a `u16` label into an MSB-first `Vec<bool>` of length `m`.
 ///
 /// Used by tests and examples to construct synthetic bit inputs for
-/// `BatchMapper` implementations. Inverse of [`pack_label_msb_first`].
+/// `BatchMapper` implementations. Inverse of `pack_label_msb_first`.
 ///
 /// This is a testing/utility helper — not a core part of the public
 /// modem surface — and is re-exported from `gf2_coding::modem` as a

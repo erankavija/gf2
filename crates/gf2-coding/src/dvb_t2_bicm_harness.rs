@@ -162,7 +162,8 @@ pub fn mod_str(m: DvbT2Modulation) -> &'static str {
 /// [`BlockEncoder`] adapter for [`DvbT2Concat`].
 ///
 /// Wraps the concatenated BCH+LDPC codec so it can be passed to
-/// [`SimulationRunner::run_with_decoder`] as a `&dyn BlockEncoder`.
+/// [`SimulationRunner::run_with_decoder`](crate::simulation::SimulationRunner::run_with_decoder)
+/// as a `&dyn BlockEncoder`.
 ///
 /// - `k()` returns `k_bch` (BBFRAME bit count).
 /// - `n()` returns `n_ldpc` (FECFRAME bit count).
