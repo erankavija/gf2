@@ -103,6 +103,38 @@
       "doc_type": "implementation",
       "label": "Producing build-input manifest",
       "path": "dev/active/a83583e0/producing-build-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Extent campaign receipt",
+      "path": "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "8accbd51b273329b5fa41e9f54ae3b43848464db31262627348bd8ada7315ab1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "gf2-a83583e0-20260930t230000z-2728298.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b21e92ebe5fa1291401ee14dd55838d076e0624682e9eb51cafc8e56f63de0e8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "gf2-a83583e0-20260930t230000z-2728298.sha256",
+          "resolved_path": "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.sha256"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Receipt evidence index",
+      "path": "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298-evidence.md"
     }
   ],
   "first_ready_at": "2026-08-22T21:27:08.444306766Z",
@@ -114,17 +146,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-09-29T19:40:14.049928658Z",
+      "updated_at": "2026-10-01T03:18:11.765306600Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-09-30T20:59:17.399966805Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T03:21:59.279458270Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "passed",
-      "updated_at": "2026-09-28T13:06:51.118146862Z",
+      "status": "failed",
+      "updated_at": "2026-10-01T03:25:43.080348867Z",
       "updated_by": "auto:executor"
     }
   },
@@ -139,5 +171,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-09-30T20:59:17.399966805Z"
+  "updated_at": "2026-10-01T03:26:48.986625223Z"
 }
