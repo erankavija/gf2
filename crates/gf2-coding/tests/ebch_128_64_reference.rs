@@ -1,9 +1,25 @@
 //! Conformance tests for the named eBCH(128,64,22) reference construction.
+//!
+//! The reference code is the one-symbol extension of the primitive
+//! narrow-sense BCH(127, 64) code over $\mathrm{GF}(2^7) =
+//! \mathrm{GF}(2)\[x\]/(x^7 + x + 1)$ with designed distance 21, presented in
+//! the systematic layout [`SystematicLayout::MessageParityDescending`]. The
+//! fixture's generator and parity-check rows are that presentation's
+//! canonical matrices.
 
-use gf2_coding::bch::extended::ExtendedBchCode;
-use gf2_coding::traits::{BlockEncoder, GeneratorMatrixAccess};
+use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
+use gf2_coding::bch::{LayoutView, SystematicLayout};
+use gf2_coding::traits::block::{
+    BlockCode, BlockEncoder, GeneratorMatrixAccess, ParityCheckMatrixAccess,
+};
+use gf2_coding::transform::Extended;
+use gf2_core::field::extension::BinaryPrimeExt;
+use gf2_core::gf2m::Gf2mField;
 use gf2_core::{BitMatrix, BitVec};
 use serde::Deserialize;
+
+/// The eBCH(128,64,22) reference code over the base code's declared layout.
+type ReferenceCode = Extended<LayoutView<BinaryPrimeExt, BitVec, BitMatrix>>;
 
 const FIXTURE_TEXT: &str = include_str!("data/ebch_128_64_reference.json");
 
@@ -56,6 +72,27 @@ struct Serialization {
 
 fn fixture() -> ReferenceFixture {
     serde_json::from_str(FIXTURE_TEXT).expect("reference fixture must be valid JSON")
+}
+
+/// Builds the reference code from its fixture-recorded field and base radius.
+fn reference_code() -> ReferenceCode {
+    let extension = BinaryPrimeExt::new(Gf2mField::new(7, 0b10000011).with_tables())
+        .expect("x^7 + x + 1 presents GF(128)");
+    let base = BinaryBchCode::primitive_narrow_sense(
+        extension,
+        DesignedDistance::try_from(21).expect("a positive designed distance"),
+    )
+    .expect("the primitive narrow-sense BCH(127, 64) code");
+    Extended::new(LayoutView::new(
+        base,
+        SystematicLayout::MessageParityDescending,
+    ))
+    .expect("the one-symbol extension of BCH(127, 64)")
+}
+
+/// Returns the base code's correction radius.
+fn base_radius(code: &ReferenceCode) -> usize {
+    code.mother().code().correction_radius()
 }
 
 fn canonical_rows(matrix: &BitMatrix) -> Vec<String> {
@@ -111,29 +148,38 @@ fn ebch_128_64_matches_canonical_fixture() {
         "two lowercase 16-digit hex words, columns 0..63 first"
     );
 
-    let code = ExtendedBchCode::ebch_128_64();
+    let code = reference_code();
     assert_eq!(code.n(), fixture.identity.n);
     assert_eq!(code.k(), fixture.identity.k);
-    assert_eq!(code.base_t(), fixture.identity.base_t);
+    assert_eq!(code.mother().n(), fixture.identity.base_n);
+    assert_eq!(base_radius(&code), fixture.identity.base_t);
     assert_eq!(
-        canonical_rows(&code.generator_matrix()),
+        canonical_rows(&code.generator_matrix().expect("the generator materializes")),
         fixture.generator_rows
     );
     assert_eq!(
-        canonical_rows(code.parity_check()),
+        canonical_rows(
+            &code
+                .parity_check_matrix()
+                .expect("the parity check materializes")
+        ),
         fixture.parity_check_rows
     );
 }
 
 #[test]
 fn ebch_128_64_matrices_are_systematic_orthogonal_and_even() {
-    let code = ExtendedBchCode::ebch_128_64();
-    let generator = code.generator_matrix();
-    let parity_check = code.parity_check();
+    let code = reference_code();
+    let generator = code.generator_matrix().expect("the generator materializes");
+    let parity_check = code
+        .parity_check_matrix()
+        .expect("the parity check materializes");
 
     assert_eq!((generator.rows(), generator.cols()), (64, 128));
     assert_eq!((parity_check.rows(), parity_check.cols()), (64, 128));
-    assert!(code.is_systematic());
+    assert!(code
+        .is_systematic()
+        .expect("systematic status is decidable"));
 
     for row in 0..generator.rows() {
         for column in 0..code.k() {
@@ -155,12 +201,12 @@ fn ebch_128_64_matrices_are_systematic_orthogonal_and_even() {
 
 #[test]
 fn ebch_128_64_encoding_preserves_messages_and_extension_parity() {
-    let code = ExtendedBchCode::ebch_128_64();
+    let code = reference_code();
 
     for bit in 0..code.k() {
         let mut message = BitVec::zeros(code.k());
         message.set(bit, true);
-        let codeword = code.encode(&message);
+        let codeword = code.encode(&message).expect("a 64-bit message encodes");
 
         assert_eq!(codeword.len(), 128);
         for message_bit in 0..code.k() {
