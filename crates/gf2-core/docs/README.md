@@ -113,7 +113,6 @@ Documentation related to testing and quality:
 1. [KERNEL_OPTIMIZATION.md](KERNEL_OPTIMIZATION.md) - Understand kernel architecture
 2. [RREF_DESIGN_PLAN.md](RREF_DESIGN_PLAN.md), [POLAR_IMPLEMENTATION_PLAN.md](POLAR_IMPLEMENTATION_PLAN.md) - Algorithm designs
 3. [DOCUMENTATION_AUDIT_PLAN.md](DOCUMENTATION_AUDIT_PLAN.md) - Current documentation goals
-4. [../ROADMAP.md](../ROADMAP.md) - Future development plans
 
 ## Maintenance
 

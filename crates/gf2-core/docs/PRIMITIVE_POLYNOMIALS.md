@@ -623,4 +623,3 @@ impl DvbBchParams {
 - **Phase 3**: Performance optimization (parallel search, SIMD, GPU)
 - **Phase 4**: State-of-the-art algorithms for large degrees (m > 64)
 
-See main [ROADMAP.md](../../ROADMAP.md) for timeline and priorities.

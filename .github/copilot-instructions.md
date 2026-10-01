@@ -280,7 +280,7 @@ Before suggesting code, ensure:
 ## Additional Resources
 
 - See `README.md` for API overview and examples
-- See `ROADMAP.md` for planned features and performance phases
+- Planned and in-progress work is tracked in JIT (`.jit/`; `jit query available`)
 - Run `cargo test` for full test suite
 - Run `cargo bench` for performance benchmarks
 - Run `cargo doc --no-deps --open` for full API documentation

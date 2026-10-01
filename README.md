@@ -188,7 +188,7 @@ Test-suite wall-clock budget is 60 seconds. If it takes longer, something is wro
 - Crate guides: [gf2-core](crates/gf2-core/README.md), [gf2-coding](crates/gf2-coding/README.md), [proofs/](proofs/README.md)
 - Deep dives under `crates/*/docs/` (benchmarks, kernel optimization, DVB-T2, SIMD, parallelization, SDR integration, systematic encoding)
 - Full API docs: `cargo doc --no-deps --open`
-- Strategic roadmap: [ROADMAP.md](ROADMAP.md) (subproject roadmaps under each crate)
+- Planned and in-progress work: the JIT issue tracker in `.jit/` (`jit query available`, `jit graph tree <id>`)
 
 ## Contributing
 

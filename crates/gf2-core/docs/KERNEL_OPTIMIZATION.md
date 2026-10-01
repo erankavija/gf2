@@ -627,7 +627,6 @@ When optimizing an operation:
 
 ### Internal Documentation
 - `README.md` - User-facing API documentation
-- `ROADMAP.md` - Overall project roadmap
 - This document - Kernel implementation details
 
 ### External Resources
