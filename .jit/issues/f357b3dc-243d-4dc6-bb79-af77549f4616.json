@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T09:51:14.382632759Z",
+  "dependencies": [
+    "3f29e945-8b12-4862-82c8-f2ec6573287c"
+  ],
+  "description": "Bring every comment and rustdoc block in the workspace's Rust sources to the documentation contract: current state only, non-obvious content only, shortest form. This aligns existing source documentation with the contract so new work starts from a clean baseline.\n\n## Background\n\nAGENTS.md states that comments and rustdoc carry only what the code leaves non-obvious (the contract, an invariant, the reason behind a choice, or a pointer to evidence), that history belongs in git and jit, and that a module-level orientation is at most one short paragraph. The `present-tense-prose` invariant puts change-relative narration in commit messages and issue history. Planned, deferred and excluded scope is work-tracking content and belongs in jit issues rather than in module docs.\n\nExisting sources drift from this contract. Comment lines make up 17–45% of each crate's Rust lines. About 570 comment lines carry narration or scope markers (non-goals, out of scope, deferred to, phase or wave designators, task and story references, legacy and migration language), and about 530 embed jit short IDs as provenance. Example: the `gf2-sim` channels module listed multipath fading, phase noise and GPU fading as out of scope; that work is now tracked as jit issues instead.\n\n## Success Criteria\n\n- [hard] REQ-01: Every Rust file under `crates/` (sources, tests, benches, examples and build scripts) meets the AGENTS.md comment rule: no comment restates the adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment or rustdoc narrates history or process: commit, task, story, phase, wave or session designators, old/new contrasts, legacy or migration language, and design-history provenance are absent.\n- [hard] REQ-03: No comment or rustdoc states planned, deferred, excluded or out-of-scope work. Where such a statement described a current limitation, the limitation is restated in the present tense (for example as a panic or supported-domain condition), and the planned work exists as a jit issue.\n- [hard] REQ-04: A case-insensitive grep of `crates/` comment lines for the pattern below returns only lines listed, each with a one-line justification, in the story's linked completion record.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-05: Public API rustdoc still states purpose, panics, safety conditions and non-obvious complexity; `cargo doc --workspace --no-deps` builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-06: The change contains only comment, rustdoc and whitespace edits, verified by an `--ignore-all-space` diff review of every hunk.\n- [hard] REQ-07: The linked completion record reports each crate's comment-line share before and after the sweep, and lists every jit issue created or matched under REQ-03.\n\n## Notes\n\nGenerated data tables (for example LDPC parity-check constants) keep their provenance headers. Comments that cite an external standard, paper or committed receipt are evidence pointers and remain, in shortened form. Breakdown into per-crate tasks follows once the documentation contract story is complete.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-01T09:51:14.382632759Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "f357b3dc-243d-4dc6-bb79-af77549f4616",
+  "labels": [
+    "epic:documentation-overhaul",
+    "story:doc-tersification-sweep",
+    "component:docs",
+    "type:story"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Workspace documentation tersification sweep",
+  "updated_at": "2026-10-01T09:51:37.609493807Z"
+}
