@@ -19,6 +19,13 @@
       "format": "markdown",
       "label": "Planning brief: interview decisions not in the epic contract",
       "path": "dev/plans/ae03bcd0-general-bch/planning-brief.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Session 11 handoff",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-8.md"
     }
   ],
   "first_ready_at": "2026-08-28T21:14:59.928863085Z",
@@ -41,5 +48,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-08-31T19:55:55.933119803Z"
+  "updated_at": "2026-10-01T11:44:07.544369024Z"
 }
