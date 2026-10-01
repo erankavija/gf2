@@ -26,6 +26,8 @@ Determine whether attributable behavior changes require updates to any of:
 - issue-linked designs, benchmark protocols, proof notes, or operational documents;
 - examples or commands that users rely on.
 
+Archived documents (any path with an `archive` directory segment, such as `docs/archive/`, `crates/*/docs/archive/`, or `dev/archive/`) are immutable historical records outside this review's scope: never require edits to them and raise no finding about their content.
+
 Check the current tree, not only the patch. Documentation is sufficient when it explains the observable contract at the narrowest authoritative location and does not duplicate another source of truth. A code-only change with genuinely no documentation impact may pass when the report explains why. Stale, contradictory, missing, or duplicated issue-attributable documentation is blocking. Useful unrelated pre-existing debt is advisory.
 
 Verify every hard criterion that concerns documentation and consume the latest executable-gate evidence from the context. Do not fail merely because another judgment gate is pending.
