@@ -137,6 +137,7 @@
       "path": "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298-evidence.md"
     }
   ],
+  "done_at": "2026-10-01T03:37:20.618543106Z",
   "first_ready_at": "2026-08-22T21:27:08.444306766Z",
   "gates_required": [
     "cargo-ci",
@@ -146,17 +147,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-01T03:18:11.765306600Z",
+      "updated_at": "2026-10-01T03:32:46.714708724Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-01T03:21:59.279458270Z",
+      "updated_at": "2026-10-01T03:37:13.897133715Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T03:29:49.921450513Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T03:31:59.861548244Z",
       "updated_by": "auto:executor"
     }
   },
@@ -169,7 +170,7 @@
     "component:gf2-algebra"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-10-01T03:29:49.921450513Z"
+  "updated_at": "2026-10-01T03:37:20.618543106Z"
 }

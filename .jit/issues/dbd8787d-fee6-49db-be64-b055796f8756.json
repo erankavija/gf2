@@ -41,7 +41,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Extend the calibration sweep to the seam threshold fields",
-  "updated_at": "2026-10-01T02:56:11.195313264Z"
+  "updated_at": "2026-10-01T03:37:20.789193484Z"
 }

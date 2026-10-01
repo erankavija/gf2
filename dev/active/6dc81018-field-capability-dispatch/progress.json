@@ -1,8 +1,8 @@
 {
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
-  "current_wave": 27,
-  "wave_notes": "Wave 27 executes a83583e0. Session 15 (2026-09-30): 2026-09-29 window campaign measured all phases then failed at core emit-owner on an uppercase run ID (not a ProfileId). Fixed (1b30a5f29), publication step added and bulk evidence moved to a git-ignored host-local archive with a 1 MiB committed-file limit (47da059e7, 9cf955df8), seven driver/validator mismatches fixed (9cf955df8), REQ-03 amended with invoker approval (7982d2c6f), prose fix (21790510c). code-review now fails only on the not-yet-executed campaign. Fresh campaign queued; worktree agent-a83583e0-run at 21790510c; timer gf2-bench-window-20261001 at 2026-09-30T23:00Z.",
+  "current_wave": 28,
+  "wave_notes": "Wave 28 executes dbd8787d. Session 16 (2026-10-01): a83583e0 campaign gf2-a83583e0-20260930t230000z-2728298 completed and published; cutover e100821df, evidence index + doc fixes; all gates passed at ad30c52ad; a83583e0 done. dbd8787d REQ-02 amended (120989525, invoker approval). Plan: extend the a835 retained-threshold phase with the three seam fields, re-measure the full core section under a gf2-dbd8787d-* ID, import the a835 algebra owner by digest, keep tuning-calibration-v4, publish-campaign emits the evidence index.",
   "open_escalations": [],
   "waves": [
     {
@@ -463,7 +463,7 @@
           "title": "Design and implement the extent-sweep protocol",
           "classification": "implementation",
           "model": "opus; session 15: claude-opus workers, claude-sonnet prose fix",
-          "status": "awaiting-window-measurement",
+          "status": "done",
           "notes": "tuning_calibration.rs \u2014 schedule after 389aa4de lands (same bench file)"
         },
         {
@@ -595,7 +595,7 @@
           "title": "Extend the calibration sweep to the seam threshold fields",
           "classification": "implementation",
           "model": "opus",
-          "status": "planned",
+          "status": "in_progress",
           "notes": "Seam U10. Benchmark-mode measured run \u2014 serialized, quiet host."
         }
       ]
@@ -775,7 +775,7 @@
           "title": "Design and implement the extent-sweep protocol",
           "classification": "implementation",
           "model": "gpt-5.6-sol xhigh; gpt-5.6-terra high review/rework; session 15: claude-opus workers, claude-sonnet prose fix",
-          "status": "awaiting-window-measurement",
+          "status": "done",
           "notes": "Claimed by the execution lead after eaae1b56 closed. The exact premeasurement protocol passed independent review and is committed at 07090b4b. Premeasurement tooling is committed at ecd85315. Rework 1 closed a driver/validator canonical staging-path mismatch and passed independent re-review. The invoker selected option C: static host-admission policy binding is sufficient; protocol section 7 must be amended before gates or measurement. Sol implementation and Terra read-only audit dispatches were interrupted immediately on the invoker's handoff-and-stop direction and made no file changes. The user prohibited Astra-class subagents; current and future dispatch uses Sol/Terra/Luna tiers only."
         }
       ],
@@ -789,8 +789,8 @@
           "short_id": "dbd8787d",
           "title": "Extend the calibration sweep to the seam threshold fields",
           "classification": "implementation",
-          "model": "gpt-5.6-sol xhigh",
-          "status": "pending"
+          "model": "opus",
+          "status": "in_progress"
         }
       ],
       "note": "Serialized measurement wave; starts only after the preceding issue is done."
