@@ -82,8 +82,9 @@
 //!      **max-log** demap;
 //!   5. bit-deinterleave LLRs → FECFRAME order;
 //!   6. GPU [`GpuLdpcBp`](gf2_sim::gpu::ldpc_bp::GpuLdpcBp) BP decode → n-bit
-//!      codeword → extract first k_ldpc bits → CPU [`BchDecoder`] outer decode
-//!      (the same `BchCode::dvb_t2` SSOT `DvbT2Concat::new` builds internally);
+//!      codeword → extract first k_ldpc bits → CPU [`DvbT2BchDecoder`] outer
+//!      decode (the same `dvb_t2_bch_code` SSOT `DvbT2Concat::new` builds
+//!      internally);
 //!   7. frame-error verdict vs the TX message.
 //!
 //! # MAX-LOG on BOTH sides (apples-to-apples)
@@ -124,7 +125,7 @@
 #![cfg(feature = "hip")]
 
 use gf2_coding::bch::dvb_t2::FrameSize as BchFrameSize;
-use gf2_coding::bch::{BchCode, BchDecoder};
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchDecoder};
 use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
@@ -136,7 +137,6 @@ use gf2_coding::modem::{
     BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, ModemSpec,
 };
 use gf2_coding::simulation::count_bit_errors;
-use gf2_coding::traits::HardDecisionDecoder;
 use gf2_coding::{CodeRate, Llr};
 use gf2_core::BitVec;
 use gf2_kernels_hip::host::device_mem_info;
@@ -481,22 +481,26 @@ fn run_config(cfg: &Config) -> (Counters, Counters) {
     let gpu_iter_sum: u64 = gpu_iters.iter().map(|&i| u64::from(i)).sum();
 
     // BCH outer decode (CPU) per frame, across rayon. Uses the SAME
-    // `BchCode::dvb_t2` SSOT `DvbT2Concat::new` constructs internally (Normal
+    // `dvb_t2_bch_code` SSOT `DvbT2Concat::new` constructs internally (Normal
     // frame, same rate) — the identical public building block, not a
     // reimplementation; BCH has no GPU kernel so it is CPU on both arms.
+    let bch_code = dvb_t2_bch_code(BchFrameSize::Normal, cfg.rate)
+        .expect("the DVB-T2 Normal outer code for this rate");
+    let bch_decoder = DvbT2BchDecoder::new(&bch_code);
     let gpu_results: Vec<Verdict> = gpu_hard
         .frames
         .par_iter()
         .zip(frames.par_iter())
         .map(|(gpu_codeword, frame)| {
-            let bch_decoder = BchDecoder::new(BchCode::dvb_t2(BchFrameSize::Normal, cfg.rate));
             // Extract systematic BCH codeword (positions 0..k_ldpc), same
             // convention as `DvbT2Concat::decode_soft_counted`.
             let mut bch_codeword = BitVec::with_capacity(k_ldpc);
             for i in 0..k_ldpc {
                 bch_codeword.push_bit(gpu_codeword.get(i));
             }
-            let bbframe = bch_decoder.decode(&bch_codeword);
+            let (_outcome, bbframe) = bch_decoder
+                .decode(&bch_codeword)
+                .expect("a BCH codeword of the extracted length decodes");
             let bit_errors = count_bit_errors(&frame.message, &bbframe) as u64;
             Verdict {
                 errored: bit_errors > 0,
