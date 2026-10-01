@@ -179,6 +179,206 @@ impl HostAdmissionPolicy {
         }
     }
 }
+/// Schema of a committed campaign declaration.
+const DECLARATION_SCHEMA: &str = "tuning-campaign-declaration-v1";
+/// The two owners a complete envelope composes, by declaration name.
+const OWNER_NAMES: [(&str, &str); 2] = [("core", "gf2-core"), ("algebra", "gf2-algebra")];
+
+/// A repository-relative file pinned by its SHA-256.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RepositoryArtifact {
+    path: String,
+    sha256: Sha256Digest,
+}
+impl RepositoryArtifact {
+    /// Reads the file below `root` and requires its declared digest.
+    fn read(&self, root: &Path) -> io::Result<Vec<u8>> {
+        repository_relative(&self.path)?;
+        let bytes = fs::read(root.join(&self.path))?;
+        if Sha256Digest::of(&bytes) != self.sha256 {
+            return Err(invalid(format!(
+                "{} differs from its declared SHA-256",
+                self.path
+            )));
+        }
+        Ok(bytes)
+    }
+}
+/// Rejects an absolute, traversing or unnormalized repository path.
+fn repository_relative(path: &str) -> io::Result<()> {
+    let candidate = Path::new(path);
+    if path.is_empty()
+        || !candidate
+            .components()
+            .all(|part| matches!(part, std::path::Component::Normal(_)))
+        || candidate.components().collect::<PathBuf>().as_os_str() != candidate.as_os_str()
+    {
+        return Err(invalid("declared path must be repository-relative"));
+    }
+    Ok(())
+}
+/// An owner the campaign measures, with its declared cell count.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MeasuredOwner {
+    owner: Token,
+    name: Token,
+    cells: u64,
+}
+/// An owner the campaign takes from a committed envelope without measuring
+/// it. `complete` is the committed complete envelope whose `section` wrapper
+/// the campaign's complete envelope must reproduce byte for byte.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ImportedOwner {
+    owner: Token,
+    name: Token,
+    section: String,
+    envelope: RepositoryArtifact,
+    complete: RepositoryArtifact,
+}
+/// The committed declaration of one campaign: its issue, which also forms the
+/// run-ID prefix `gf2-<issue>-`, protocol, producing-input manifest, measured
+/// owners with their cell counts, imported owners, and whether publication
+/// emits an evidence index. The launcher, this driver and the independent
+/// validator all read it from `dev/active/<issue>/campaign-declaration.json`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CampaignDeclaration {
+    schema: String,
+    issue: String,
+    protocol: String,
+    producing_manifest: String,
+    measured_owners: Vec<MeasuredOwner>,
+    imported_owners: Vec<ImportedOwner>,
+    evidence_index: bool,
+}
+impl CampaignDeclaration {
+    /// The issue named by `gf2-<issue>-...`; eight lowercase hex digits.
+    fn issue_of(campaign_id: &str) -> io::Result<&str> {
+        campaign_id
+            .strip_prefix("gf2-")
+            .and_then(|rest| rest.split_once('-'))
+            .map(|(issue, _)| issue)
+            .filter(|issue| {
+                issue.len() == 8
+                    && issue
+                        .bytes()
+                        .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+            })
+            .ok_or_else(|| invalid("campaign ID lacks a gf2-<issue>- prefix"))
+    }
+    fn relative_path(issue: &str) -> String {
+        format!("dev/active/{issue}/campaign-declaration.json")
+    }
+    /// Reads and validates the declaration that `campaign_id` names below `root`.
+    fn for_campaign(root: &Path, campaign_id: &str) -> io::Result<Self> {
+        let issue = Self::issue_of(campaign_id)?;
+        let declaration: Self =
+            serde_json::from_slice(&fs::read(root.join(Self::relative_path(issue)))?)
+                .map_err(invalid)?;
+        declaration.validate(issue)?;
+        Ok(declaration)
+    }
+    fn path(&self) -> String {
+        Self::relative_path(&self.issue)
+    }
+    fn prefix(&self) -> String {
+        format!("gf2-{}-", self.issue)
+    }
+    /// Requires the schema and issue, normalized paths, the core owner
+    /// measured first, and every complete-envelope owner exactly once as
+    /// measured or imported.
+    fn validate(&self, issue: &str) -> io::Result<()> {
+        if self.schema != DECLARATION_SCHEMA || self.issue != issue {
+            return Err(invalid("campaign declaration schema/issue mismatch"));
+        }
+        repository_relative(&self.protocol)?;
+        repository_relative(&self.producing_manifest)?;
+        let mut names: Vec<(&str, &str)> = self
+            .measured_owners
+            .iter()
+            .map(|owner| (owner.name.as_str(), owner.owner.as_str()))
+            .chain(
+                self.imported_owners
+                    .iter()
+                    .map(|owner| (owner.name.as_str(), owner.owner.as_str())),
+            )
+            .collect();
+        names.sort_unstable();
+        let mut expected = OWNER_NAMES.to_vec();
+        expected.sort_unstable();
+        if names != expected
+            || self
+                .measured_owners
+                .first()
+                .map(|owner| owner.name.as_str())
+                != Some("core")
+            || self.measured_owners.iter().any(|owner| owner.cells == 0)
+        {
+            return Err(invalid(
+                "campaign declaration must measure core first and cover each owner once",
+            ));
+        }
+        for imported in &self.imported_owners {
+            repository_relative(&imported.envelope.path)?;
+            repository_relative(&imported.complete.path)?;
+            if imported.section != format!("{}/permanent", imported.owner.as_str()) {
+                return Err(invalid("imported owner section mismatch"));
+            }
+        }
+        Ok(())
+    }
+    fn total_cells(&self) -> u64 {
+        self.measured_owners.iter().map(|owner| owner.cells).sum()
+    }
+    fn imported(&self, name: &str) -> Option<&ImportedOwner> {
+        self.imported_owners
+            .iter()
+            .find(|owner| owner.name.as_str() == name)
+    }
+    /// Staged process identifiers with their fixed arguments: each measured
+    /// owner's producer in declaration order, then the composer and driver.
+    fn processes(&self) -> Vec<(String, Vec<String>)> {
+        self.measured_owners
+            .iter()
+            .map(|owner| {
+                let arguments = if owner.name.as_str() == "core" {
+                    "--fresh-tuning-process-child"
+                } else {
+                    "--fresh-child"
+                };
+                (
+                    format!("{}-producer", owner.name.as_str()),
+                    vec![arguments.to_owned()],
+                )
+            })
+            .chain([
+                ("composer".to_owned(), vec![]),
+                ("driver".to_owned(), vec![]),
+            ])
+            .collect()
+    }
+    /// The staged executable names, sorted.
+    fn executables(&self) -> Vec<String> {
+        let mut names: Vec<String> = self.processes().into_iter().map(|(id, _)| id).collect();
+        names.sort();
+        names
+    }
+}
+/// Evidence that an imported owner is the declared committed envelope, staged
+/// byte for byte, and strictly reopens through the staged composer's
+/// owner-only codec before any timed child.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ImportedOwnerEvidence {
+    owner: Token,
+    source: RepositoryArtifact,
+    staged: ArtifactIdentity,
+    reopen: ArtifactIdentity,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CampaignConfig {
@@ -198,6 +398,8 @@ struct CampaignConfig {
     build_inputs: BTreeMap<String, String>,
     preflight_reports: BTreeMap<String, ArtifactIdentity>,
     host_admission_policy: HostAdmissionPolicy,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    imported_owners: Vec<ImportedOwnerEvidence>,
 }
 fn process(config: &CampaignConfig, id: &str) -> io::Result<ProcessDescriptor> {
     config
@@ -355,31 +557,39 @@ fn source_state() -> io::Result<(String, String)> {
         command_text("git", &["rev-parse", "HEAD^{tree}"])?,
     ))
 }
-const PRODUCING_MANIFEST: &str = "dev/active/a83583e0/producing-build-inputs.json";
-fn behavior_sources() -> io::Result<BTreeMap<String, String>> {
-    let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+fn behavior_sources(declaration: &CampaignDeclaration) -> io::Result<BTreeMap<String, String>> {
+    let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
     ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)
 }
 fn verify_config(config: &CampaignConfig) -> io::Result<()> {
-    if config.schema != "tuning-extent-campaign-v1" || config.manifests.len() != 2 {
+    let declaration =
+        CampaignDeclaration::for_campaign(Path::new("."), config.campaign_id.as_str())?;
+    if config.schema != "tuning-extent-campaign-v1"
+        || config.manifests.len() != declaration.measured_owners.len()
+    {
         return Err(invalid("campaign schema/owner mismatch"));
     }
     config.channels.validate()?;
     require_affinity(&config.affinity, &CpuAffinity::observe()?)?;
     let (revision, tree) = source_state()?;
-    let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+    let producing_manifest = declaration.producing_manifest.as_str();
+    let producing = ProducingInputs::read_at(Path::new("."), producing_manifest)?;
     let staging: StagingManifest = read_json(&config.channels.stage.join("staging-manifest.json"))?;
     let (source_before, source_after) =
         validate_build_source_observations(&config.channels.stage, &staging)?;
     if revision != config.identity.source_revision
         || tree != config.source_tree
         || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
-        || behavior_sources()? != config.identity.behavior_sha256
-        || ProducingInputs::capture(Path::new("."), PRODUCING_MANIFEST)?.lifecycle_sha256()?
+        || behavior_sources(&declaration)? != config.identity.behavior_sha256
+        || !config
+            .identity
+            .behavior_sha256
+            .contains_key(&declaration.path())
+        || ProducingInputs::capture(Path::new("."), producing_manifest)?.lifecycle_sha256()?
             != config.identity.lifecycle_behavior_sha256
         || ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?
             != config.build_inputs
-        || artifact(Path::new(PRODUCING_MANIFEST))? != config.producing_manifest
+        || artifact(Path::new(producing_manifest))? != config.producing_manifest
         || source_before.source_revision != revision
         || source_before.source_tree != tree
         || source_after.source_revision != revision
@@ -403,15 +613,18 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
         ));
     }
 
-    for m in &config.manifests {
+    for (m, declared) in config.manifests.iter().zip(&declaration.measured_owners) {
         m.validate()?;
         if m.campaign_id != config.campaign_id
+            || m.owner != declared.owner
+            || m.counts != DeclaredCounts::for_cells(declared.cells)?
             || m.processes.len() != 1
             || !config.processes.contains(&m.processes[0])
         {
-            return Err(invalid("owner manifest campaign/process mismatch"));
+            return Err(invalid("owner manifest campaign/process/count mismatch"));
         }
     }
+    verify_imported_owners(config, &declaration)?;
     let ordered = Sha256Digest::of(&encoded(
         &config
             .manifests
@@ -434,10 +647,8 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
             "campaign immutable identity disagrees with manifests/processes",
         ));
     }
-    if config.manifests[0].counts != DeclaredCounts::for_cells(702)?
-        || config.manifests[1].counts != DeclaredCounts::for_cells(15)?
-    {
-        return Err(invalid("campaign cell accounting changed"));
+    if config.protocol.path != fs::canonicalize(&declaration.protocol)? {
+        return Err(invalid("campaign protocol differs from the declaration"));
     }
     if artifact(&config.protocol.path)? != config.protocol
         || artifact(&config.validator.path)? != config.validator
@@ -449,7 +660,11 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
             "host admission policy differs from the declaration",
         ));
     }
-    validate_preflight_identities(&config.channels.stage, &config.preflight_reports)?;
+    validate_preflight_identities(
+        &config.channels.stage,
+        &config.preflight_reports,
+        &declaration,
+    )?;
     for (name, saved) in &config.preflight_reports {
         if artifact(&saved.path)? != *saved {
             return Err(invalid("saved staged CLI preflight changed"));
@@ -460,11 +675,187 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     Ok(())
 }
 
+/// Requires each declared imported owner's evidence: the committed envelope
+/// still has its declared digest, the staged copy is byte-identical at its
+/// canonical stage path, and the strict-reopen record is unchanged.
+fn verify_imported_owners(
+    config: &CampaignConfig,
+    declaration: &CampaignDeclaration,
+) -> io::Result<()> {
+    if config.imported_owners.len() != declaration.imported_owners.len() {
+        return Err(invalid(
+            "imported owner evidence differs from the declaration",
+        ));
+    }
+    for (evidence, declared) in config
+        .imported_owners
+        .iter()
+        .zip(&declaration.imported_owners)
+    {
+        let bytes = declared.envelope.read(Path::new("."))?;
+        let staged = config
+            .channels
+            .stage
+            .join(format!("{}-owner.json", declared.name.as_str()));
+        if evidence.owner != declared.owner
+            || evidence.source != declared.envelope
+            || evidence.staged.path != staged
+            || artifact(&staged)? != evidence.staged
+            || evidence.staged.sha256 != Sha256Digest::of(&bytes)
+            || artifact(&evidence.reopen.path)? != evidence.reopen
+        {
+            return Err(invalid("imported owner evidence changed"));
+        }
+    }
+    Ok(())
+}
+
+/// The canonical section wrapper `section` of an envelope document.
+fn section_wrapper(document: &[u8], section: &str) -> io::Result<Value> {
+    let envelope: Value = serde_json::from_slice(document).map_err(invalid)?;
+    envelope
+        .get("sections")
+        .and_then(|sections| sections.get(section))
+        .cloned()
+        .ok_or_else(|| invalid(format!("envelope lacks section {section}")))
+}
+
+/// Verifies and stages one declared imported owner before any timed child.
+///
+/// The committed envelope must have its declared digest and carry the same
+/// section wrapper as its declared committed complete envelope. Its bytes are
+/// staged as `<name>-owner.json`, the composition input, and the staged
+/// composer then strictly reopens the staged copy with the owner-only codec
+/// by composing it with a conservative core probe. Both composer runs are
+/// journaled verification actions; their outputs are evidence only.
+fn import_owner(
+    root: &Path,
+    channels: &SessionChannels,
+    campaign_id: &Token,
+    revision: &str,
+    composer: &ProcessDescriptor,
+    imported: &ImportedOwner,
+    log: &mut ExecutionLog,
+) -> io::Result<ImportedOwnerEvidence> {
+    let stage = &channels.stage;
+    let bytes = imported.envelope.read(root)?;
+    let reference = imported.complete.read(root)?;
+    let wrapper = section_wrapper(&bytes, &imported.section)?;
+    if wrapper != section_wrapper(&reference, &imported.section)? {
+        return Err(invalid(
+            "imported owner wrapper differs from its committed complete envelope",
+        ));
+    }
+    let staged = publish_artifact(
+        stage,
+        &stage.join(format!("{}-owner.json", imported.name.as_str())),
+        &bytes,
+    )?;
+    let root = stage.join("imported");
+    fs::create_dir_all(&root)?;
+    File::open(stage)?.sync_all()?;
+    let directory = root.join(format!(
+        "{}-{}-{}",
+        imported.name.as_str(),
+        log.session_id(),
+        log.next_sequence()
+    ));
+    fs::create_dir(&directory)?;
+    File::open(&root)?.sync_all()?;
+    let probe_core = directory.join("probe-core.json");
+    let probe_complete = directory.join("probe-complete.json");
+    let path_text = |path: &Path| -> io::Result<String> {
+        path.to_str()
+            .map(str::to_owned)
+            .ok_or_else(|| invalid("non-UTF-8 stage path"))
+    };
+    let tail = vec![
+        campaign_id.as_str().to_owned(),
+        utc()?,
+        revision.to_owned(),
+        "false".to_owned(),
+        composer.executable_sha256.as_str().to_owned(),
+    ];
+    let mut core_args = vec!["core-owner".to_owned(), path_text(&probe_core)?];
+    core_args.extend(tail.iter().cloned());
+    let mut complete_args = vec![
+        "complete".to_owned(),
+        path_text(&probe_core)?,
+        path_text(&staged.path)?,
+        path_text(&probe_complete)?,
+    ];
+    complete_args.extend(tail);
+    let mut runs = Vec::new();
+    for (index, args) in [core_args, complete_args].into_iter().enumerate() {
+        let request = save(
+            &directory.join(format!("request-{index}.json")),
+            &json!({"schema":"tuning-campaign-imported-owner-request-v1","process":composer,"args":args}),
+        )?;
+        record_budget(log, "before-launch", composer.id.as_str(), None)?;
+        log.append(
+            JournalEvent::OrchestrationStart,
+            None,
+            json!({"kind":"orchestration-start","process":"composer","request":request}),
+        )?;
+        let result = run_process(
+            composer.command(&args)?,
+            b"",
+            Duration::from_secs(CHILD_TIMEOUT_SECONDS),
+            Duration::from_secs(CHILD_KILL_GRACE_SECONDS),
+            |_| Ok(()),
+            |_| Ok(()),
+        )?;
+        let exit = save(
+            &directory.join(format!("exit-{index}.json")),
+            &json!({"outcome":result.outcome,"stdout":result.stdout,"stderr":result.stderr}),
+        )?;
+        log.append(
+            JournalEvent::OrchestrationExit,
+            None,
+            json!({"kind":"orchestration-exit","process":"composer","exit":exit,"outcome":result.outcome}),
+        )?;
+        record_budget(log, "after-result", composer.id.as_str(), None)?;
+        if !result.outcome.accepts_result()? || result.callback_error.is_some() {
+            return Err(invalid(
+                "imported owner failed the composer's strict owner-only reopen",
+            ));
+        }
+        runs.push(json!({"request":request,"exit":exit}));
+    }
+    File::open(&directory)?.sync_all()?;
+    if section_wrapper(&fs::read(&probe_complete)?, &imported.section)? != wrapper {
+        return Err(invalid("strict reopen changed the imported owner wrapper"));
+    }
+    let reopen = save(
+        &directory.join("reopen.json"),
+        &json!({
+            "schema":"tuning-campaign-imported-owner-v1",
+            "owner":imported.owner,
+            "section":imported.section,
+            "source":imported.envelope,
+            "reference":imported.complete,
+            "staged":staged,
+            "wrapper_sha256":Sha256Digest::of(&encoded(&wrapper)?),
+            "probe_core":artifact(&probe_core)?,
+            "probe_complete":artifact(&probe_complete)?,
+            "runs":runs,
+        }),
+    )?;
+    Ok(ImportedOwnerEvidence {
+        owner: imported.owner.clone(),
+        source: imported.envelope.clone(),
+        staged,
+        reopen,
+    })
+}
+
 fn session_descriptor(
     config: &CampaignConfig,
     session_id: &str,
     lock: &Path,
 ) -> io::Result<SessionDescriptor> {
+    let declaration =
+        CampaignDeclaration::for_campaign(Path::new("."), config.campaign_id.as_str())?;
     Ok(SessionDescriptor {
         schema: LIFECYCLE_SCHEMA.into(),
         campaign_id: config.campaign_id.clone(),
@@ -472,7 +863,7 @@ fn session_descriptor(
         preparer: ProcessIdentity::current()?,
         channels: config.channels.clone(),
         identity: config.identity.clone(),
-        counts: DeclaredCounts::for_cells(717)?,
+        counts: DeclaredCounts::for_cells(declaration.total_cells())?,
         lock_path: fs::canonicalize(lock)?,
     })
 }
@@ -549,12 +940,14 @@ fn validate_build_source_observations(
 fn validate_preflight_identities(
     stage: &Path,
     reports: &BTreeMap<String, ArtifactIdentity>,
+    declaration: &CampaignDeclaration,
 ) -> io::Result<()> {
-    let expected_reports: std::collections::BTreeSet<_> = ["core", "algebra"]
-        .into_iter()
+    let expected_reports: std::collections::BTreeSet<_> = declaration
+        .measured_owners
+        .iter()
         .flat_map(|owner| {
             ["self-check", "list-grid", "capability-report"]
-                .map(move |mode| format!("{owner}-{mode}"))
+                .map(move |mode| format!("{}-{mode}", owner.name.as_str()))
         })
         .collect();
     if reports
@@ -575,7 +968,11 @@ fn validate_preflight_identities(
     }
     Ok(())
 }
-fn stage_executables(stage: &Path, input: &Path) -> io::Result<()> {
+fn stage_executables(
+    stage: &Path,
+    input: &Path,
+    declaration: &CampaignDeclaration,
+) -> io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
     let staging: StagingManifest = read_json(input)?;
     if staging.schema != "tuning-campaign-staging-v1"
@@ -584,7 +981,7 @@ fn stage_executables(stage: &Path, input: &Path) -> io::Result<()> {
             .keys()
             .map(Token::as_str)
             .collect::<Vec<_>>()
-            != ["algebra-producer", "composer", "core-producer", "driver"]
+            != declaration.executables()
     {
         return Err(invalid("staging executable identity mismatch"));
     }
@@ -624,6 +1021,7 @@ struct BootstrapInputs {
 fn bootstrap_inputs(
     channels: &SessionChannels,
     campaign_id: &Token,
+    declaration: &CampaignDeclaration,
 ) -> io::Result<BootstrapInputs> {
     let (revision, tree) = source_state()?;
     let staging: StagingManifest = read_json(&channels.stage.join("staging-manifest.json"))?;
@@ -638,20 +1036,15 @@ fn bootstrap_inputs(
             "build source identity differs from preparation source",
         ));
     }
-    let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+    let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
     let behavior = ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)?;
     let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
     let runtime = host_runtime(&receipt)?;
     let affinity = CpuAffinity::observe()?;
     let repository = fs::canonicalize(".")?;
     let mut processes = Vec::new();
-    for (id, args) in [
-        ("core-producer", vec!["--fresh-tuning-process-child".into()]),
-        ("algebra-producer", vec!["--fresh-child".into()]),
-        ("composer", vec![]),
-        ("driver", vec![]),
-    ] {
-        let binary = artifact(&channels.stage.join("bin").join(id))?;
+    for (id, args) in declaration.processes() {
+        let binary = artifact(&channels.stage.join("bin").join(&id))?;
         processes.push(ProcessDescriptor {
             id: Token::new(id)?,
             executable: binary.path,
@@ -668,19 +1061,23 @@ fn bootstrap_inputs(
         receipt,
         runtime,
         processes,
-        protocol: artifact(&repository.join("dev/active/a83583e0/premeasurement-protocol.md"))?,
+        protocol: artifact(&repository.join(&declaration.protocol))?,
         validator: artifact(&repository.join("dev/scripts/validate-tuning-extent-campaign.py"))?,
         affinity,
         staging: artifact(&channels.stage.join("staging-manifest.json"))?,
-        producing_manifest: artifact(Path::new(PRODUCING_MANIFEST))?,
+        producing_manifest: artifact(Path::new(&declaration.producing_manifest))?,
         build_inputs: ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?,
         host_admission_policy: HostAdmissionPolicy::declared(),
     })
 }
 
-fn validate_campaign_stage(stage: &Path, campaign_id: &str) -> io::Result<()> {
+fn validate_campaign_stage(
+    stage: &Path,
+    campaign_id: &str,
+    declaration: &CampaignDeclaration,
+) -> io::Result<()> {
     let suffix = campaign_id
-        .strip_prefix("gf2-a83583e0-")
+        .strip_prefix(&declaration.prefix())
         .ok_or_else(|| invalid("campaign ID has the wrong issue prefix"))?;
     let (stamp, pid) = suffix
         .rsplit_once('-')
@@ -715,14 +1112,15 @@ fn prepare(
     lock: &Path,
     staging: Option<&Path>,
 ) -> io::Result<()> {
-    validate_campaign_stage(stage, campaign_id)?;
+    let declaration = CampaignDeclaration::for_campaign(Path::new("."), campaign_id)?;
+    validate_campaign_stage(stage, campaign_id, &declaration)?;
     if !stage.exists() {
         fs::create_dir(stage)?;
         File::open("/tmp")?.sync_all()?;
     }
     let channels = SessionChannels::for_stage(stage)?;
     if let Some(input) = staging {
-        stage_executables(&channels.stage, input)?;
+        stage_executables(&channels.stage, input, &declaration)?;
     }
     if channels.stage.join("campaign.json").exists() {
         verify_config(&read_json::<CampaignConfig>(
@@ -757,7 +1155,7 @@ fn prepare(
             "campaign is complete; publish-campaign finishes its repository publication",
         ));
     }
-    let inputs = bootstrap_inputs(&channels, &campaign_id)?;
+    let inputs = bootstrap_inputs(&channels, &campaign_id, &declaration)?;
     let preparation = PreparationStore::begin(
         channels.clone(),
         campaign_id.clone(),
@@ -801,7 +1199,8 @@ fn prepare(
         };
         let mut manifests = Vec::new();
         let mut preflight_reports = BTreeMap::new();
-        for (i, name) in [(0, "core"), (1, "algebra")] {
+        for (i, owner) in declaration.measured_owners.iter().enumerate() {
+            let name = owner.name.as_str();
             request.processes = vec![processes[i].clone()];
             for label in ["self-check", "list-grid", "capability-report"] {
                 let response = report_cli(&processes[i], label, Some(&mut log))?;
@@ -827,9 +1226,28 @@ fn prepare(
             )?;
             manifests.push(*manifest);
         }
-        let producing = ProducingInputs::read_at(Path::new("."), PRODUCING_MANIFEST)?;
+        let composer = processes
+            .iter()
+            .find(|process| process.id.as_str() == "composer")
+            .ok_or_else(|| invalid("composer is not staged"))?;
+        let imported_owners = declaration
+            .imported_owners
+            .iter()
+            .map(|imported| {
+                import_owner(
+                    Path::new("."),
+                    &channels,
+                    &campaign_id,
+                    &revision,
+                    composer,
+                    imported,
+                    &mut log,
+                )
+            })
+            .collect::<io::Result<Vec<_>>>()?;
+        let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
         let build_inputs = ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?;
-        let producing_manifest = artifact(Path::new(PRODUCING_MANIFEST))?;
+        let producing_manifest = artifact(Path::new(&declaration.producing_manifest))?;
         let lifecycle_behavior =
             ProducingInputs::hashes_at(Path::new("."), &producing.lifecycle_sources)?;
         let identity = ResumeIdentity {
@@ -875,6 +1293,7 @@ fn prepare(
             build_inputs,
             preflight_reports,
             host_admission_policy: HostAdmissionPolicy::declared(),
+            imported_owners,
         };
 
         verify_config(&config)?;
@@ -1104,6 +1523,7 @@ fn derive(
 }
 fn make_receipt(
     config: &CampaignConfig,
+    declaration: &CampaignDeclaration,
     bundles: &[AcceptedResultsBundle],
     responses: &[OwnerResponse],
 ) -> io::Result<()> {
@@ -1145,28 +1565,12 @@ fn make_receipt(
         .and_then(Value::as_u64)
         .ok_or_else(|| invalid("receipt session count missing"))?;
     save(&stage.join("receipt-projection.json"), &projection)?;
-    let facts = ReceiptFacts {
-        campaign_id: config.campaign_id.as_str(),
-        protocol: &config.protocol,
-        source_revision: &config.identity.source_revision,
-        affinity: format!("{:?}", config.affinity.cpus()),
-        owners: config
-            .manifests
-            .iter()
-            .map(|manifest| {
-                [
-                    manifest.owner.as_str().to_owned(),
-                    manifest.owner_protocol.as_str().to_owned(),
-                    manifest.behavior_token.as_str().to_owned(),
-                    manifest.processes[0].executable_sha256.as_str().to_owned(),
-                ]
-            })
-            .collect(),
+    let facts = ReceiptFacts::new(
+        config,
+        declaration,
         counts,
-        attempts,
-        orchestration,
-        sessions,
-    };
+        [attempts, orchestration, sessions],
+    )?;
     publish_receipt_documents(
         stage,
         &facts,
@@ -1188,7 +1592,7 @@ fn publish_receipt_documents<'a>(
     publish_artifact(stage, &stage.join(RAW_RESULT_INDEX), index.as_bytes())?;
     let decisions = encoded(&responses)?;
     publish_artifact(stage, &stage.join(OWNER_DECISIONS), &decisions)?;
-    let receipt = render_receipt(facts, responses, index.as_bytes(), &decisions)?;
+    let receipt = render_receipt(facts, stage, responses, index.as_bytes(), &decisions)?;
     publish_artifact(stage, &stage.join("receipt.md"), receipt.as_bytes())?;
     Ok(())
 }
@@ -1215,8 +1619,13 @@ fn summarize_samples(value: &mut Value) {
     }
 }
 /// The owner responses as the receipt shows them: each embedded decisions
-/// document with its raw window arrays summarized.
-fn receipt_decisions(responses: &[OwnerResponse]) -> io::Result<Vec<Value>> {
+/// document with its raw window arrays summarized, and each artifact named by
+/// its archived path instead of its stage path.
+fn receipt_decisions(
+    responses: &[OwnerResponse],
+    stage: &Path,
+    layout: &RepositoryLayout,
+) -> io::Result<Vec<Value>> {
     responses
         .iter()
         .map(|response| {
@@ -1230,6 +1639,18 @@ fn receipt_decisions(responses: &[OwnerResponse]) -> io::Result<Vec<Value>> {
                 .map_err(invalid)?;
                 summarize_samples(&mut parsed);
                 *decisions = Value::String(serde_json::to_string(&parsed).map_err(invalid)?);
+            }
+            if let Some(path) = value.pointer_mut("/artifact/path") {
+                let relative = Path::new(
+                    path.as_str()
+                        .ok_or_else(|| invalid("owner artifact path is not text"))?,
+                )
+                .strip_prefix(stage)
+                .map_err(|_| invalid("owner artifact lies outside the stage"))?
+                .to_str()
+                .ok_or_else(|| invalid("non-UTF-8 owner artifact path"))?
+                .to_owned();
+                *path = Value::String(format!("{}/{relative}", layout.archive()));
             }
             Ok(value)
         })
@@ -1250,30 +1671,170 @@ fn raw_result_index<'a>(units: impl Iterator<Item = &'a LaunchUnit>) -> String {
     }
     index
 }
+/// Stage files the receipt and the evidence index cite, with their labels, in
+/// citation order. Every one is immutable once the receipt is rendered.
+fn cited_sources(
+    declaration: &CampaignDeclaration,
+    imported: &[ImportedOwnerEvidence],
+    stage: &Path,
+) -> io::Result<Vec<(String, String)>> {
+    let mut sources = vec![("Campaign record".to_owned(), "campaign.json".to_owned())];
+    for owner in &declaration.measured_owners {
+        sources.push((
+            format!("{} owner manifest", owner.owner.as_str()),
+            format!("{}-manifest.json", owner.name.as_str()),
+        ));
+    }
+    sources.push((
+        "gf2-core resolved owner manifest".to_owned(),
+        "core-resolved-manifest.json".to_owned(),
+    ));
+    for owner in &declaration.measured_owners {
+        sources.push((
+            format!("{} owner response", owner.owner.as_str()),
+            format!("{}-owner-response.json", owner.name.as_str()),
+        ));
+    }
+    for evidence in imported {
+        let relative = evidence
+            .reopen
+            .path
+            .strip_prefix(stage)
+            .map_err(|_| invalid("imported-owner record lies outside the stage"))?
+            .to_str()
+            .ok_or_else(|| invalid("non-UTF-8 imported-owner record path"))?
+            .to_owned();
+        sources.push((
+            format!("{} imported-owner reopen record", evidence.owner.as_str()),
+            relative,
+        ));
+    }
+    for (label, source) in [
+        ("Composition record", "composition.json"),
+        ("Checkpoint manifest", "checkpoints/manifest.json"),
+        ("Receipt projection", "receipt-projection.json"),
+        ("Raw result index", RAW_RESULT_INDEX),
+        ("Owner decisions", OWNER_DECISIONS),
+    ] {
+        sources.push((label.to_owned(), source.to_owned()));
+    }
+    Ok(sources)
+}
+/// The `| label | path | SHA-256 |` rows of cited stage files, each at its
+/// publication destination.
+fn cited_rows(
+    stage: &Path,
+    layout: &RepositoryLayout,
+    declaration: &CampaignDeclaration,
+    sources: &[(String, String)],
+) -> io::Result<String> {
+    let mut rows = String::new();
+    for (label, source) in sources {
+        let destination = destination_for(layout, declaration, source)
+            .ok_or_else(|| invalid("a cited stage file has no publication destination"))?;
+        rows.push_str(&format!(
+            "| {label} | `{destination}` | `{}` |\n",
+            Sha256Digest::of(&fs::read(stage.join(source))?).as_str()
+        ));
+    }
+    Ok(rows)
+}
 /// Journal-derived and configuration facts the receipt states.
-struct ReceiptFacts<'a> {
-    campaign_id: &'a str,
-    protocol: &'a ArtifactIdentity,
-    source_revision: &'a str,
+struct ReceiptFacts {
+    campaign_id: String,
+    declaration: CampaignDeclaration,
+    declaration_sha256: Sha256Digest,
+    protocol_sha256: Sha256Digest,
+    source_revision: String,
     affinity: String,
     /// Owner, owner protocol, behavior token and executable digest.
     owners: Vec<[String; 4]>,
+    /// Cited stage files: label and stage-relative source.
+    cited: Vec<(String, String)>,
     counts: DeclaredCounts,
     attempts: u64,
     orchestration: u64,
     sessions: u64,
 }
+impl ReceiptFacts {
+    fn new(
+        config: &CampaignConfig,
+        declaration: &CampaignDeclaration,
+        counts: DeclaredCounts,
+        [attempts, orchestration, sessions]: [u64; 3],
+    ) -> io::Result<Self> {
+        Ok(Self {
+            campaign_id: config.campaign_id.as_str().to_owned(),
+            declaration: declaration.clone(),
+            declaration_sha256: Sha256Digest::new(
+                config
+                    .identity
+                    .behavior_sha256
+                    .get(&declaration.path())
+                    .ok_or_else(|| invalid("behavior identity omits the declaration"))?
+                    .clone(),
+            )?,
+            protocol_sha256: config.protocol.sha256.clone(),
+            source_revision: config.identity.source_revision.clone(),
+            affinity: format!("{:?}", config.affinity.cpus()),
+            owners: config
+                .manifests
+                .iter()
+                .map(|manifest| {
+                    [
+                        manifest.owner.as_str().to_owned(),
+                        manifest.owner_protocol.as_str().to_owned(),
+                        manifest.behavior_token.as_str().to_owned(),
+                        manifest.processes[0].executable_sha256.as_str().to_owned(),
+                    ]
+                })
+                .collect(),
+            cited: cited_sources(declaration, &config.imported_owners, &config.channels.stage)?,
+            counts,
+            attempts,
+            orchestration,
+            sessions,
+        })
+    }
+}
 /// The receipt: fixed sections, the owner decisions with raw windows
 /// summarized, and the digests of the archived raw result index and complete
 /// owner decisions. Its size is bounded by the declared grid, not by the
-/// accepted-result or timing-window count.
+/// accepted-result or timing-window count. It names files only by
+/// repository-relative committed paths or archived paths with their SHA-256.
 fn render_receipt(
     facts: &ReceiptFacts,
+    stage: &Path,
     responses: &[OwnerResponse],
     index: &[u8],
     decisions: &[u8],
 ) -> io::Result<String> {
-    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n",facts.campaign_id,facts.protocol.path.display(),facts.protocol.sha256.as_str(),facts.source_revision,serde_json::to_string_pretty(&receipt_decisions(responses)?).map_err(invalid)?);
+    let layout = RepositoryLayout {
+        id: &facts.campaign_id,
+    };
+    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Declaration: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nThe campaign record, owner responses and composition record listed under cited evidence hold the runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests listed under cited evidence contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal, pinned by its row in the committed checksum manifest `{}`, and the checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through the receipt projection's raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n",facts.campaign_id,facts.declaration.protocol,facts.protocol_sha256.as_str(),facts.declaration.path(),facts.declaration_sha256.as_str(),facts.source_revision,layout.checksum(),serde_json::to_string_pretty(&receipt_decisions(responses, stage, &layout)?).map_err(invalid)?);
+    if !facts.declaration.imported_owners.is_empty() {
+        receipt.push_str("## Imported owners\n\n");
+        for imported in &facts.declaration.imported_owners {
+            receipt.push_str(&format!(
+                "Owner `{}` is imported unmeasured from `{}` (SHA-256 `{}`). The complete envelope carries its `{}` section wrapper unchanged; the committed complete envelope `{}` (SHA-256 `{}`) holds the same wrapper.\n\n",
+                imported.owner.as_str(),
+                imported.envelope.path,
+                imported.envelope.sha256.as_str(),
+                imported.section,
+                imported.complete.path,
+                imported.complete.sha256.as_str(),
+            ));
+        }
+    }
+    receipt.push_str("## Cited evidence\n\nArchived paths lie in the host-local evidence archive that the committed checksum manifest pins.\n\n| Evidence | Path | SHA-256 |\n|---|---|---|\n");
+    receipt.push_str(&cited_rows(
+        stage,
+        &layout,
+        &facts.declaration,
+        &facts.cited,
+    )?);
+    receipt.push_str("\n## Raw result index\n\n");
     receipt.push_str(&format!("Preparation CPU affinity: `{}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n",facts.affinity));
     for [owner, protocol, behavior, executable] in &facts.owners {
         receipt.push_str(&format!(
@@ -1283,14 +1844,96 @@ fn render_receipt(
     let counts = &facts.counts;
     receipt.push_str(&format!("Accepted accounting: {} cells, {} probes, {} timed children, {} accepted results, {} raw windows, {} timing progress records. Observed {} attempts, {} orchestration actions, {} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n",counts.cells,counts.probes,counts.timed_children,counts.accepted_results,counts.windows,counts.progress_records,facts.attempts,facts.orchestration,facts.sessions));
     receipt.push_str(&format!(
-        "The archived `{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{}`.\n",
+        "The archived `{}/{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{}`.\n",
+        layout.archive(),
         Sha256Digest::of(index).as_str()
     ));
     receipt.push_str(&format!(
-        "The archived `{OWNER_DECISIONS}` holds the complete owner decisions, every raw timing window included; SHA-256 `{}`. The decisions above replace each raw `samples` array with its `sample_count`.\n",
+        "The archived `{}/{OWNER_DECISIONS}` holds the complete owner decisions, every raw timing window included; SHA-256 `{}`. The decisions above replace each raw `samples` array with its `sample_count`.\n",
+        layout.archive(),
         Sha256Digest::of(decisions).as_str()
     ));
     Ok(receipt)
+}
+/// The campaign identities the evidence index states.
+struct EvidenceIdentity<'a> {
+    campaign_id: &'a str,
+    protocol_sha256: &'a Sha256Digest,
+    source_revision: &'a str,
+    declaration_sha256: &'a str,
+    imported: &'a [ImportedOwnerEvidence],
+}
+impl<'a> EvidenceIdentity<'a> {
+    fn of(config: &'a CampaignConfig, declaration: &CampaignDeclaration) -> io::Result<Self> {
+        Ok(Self {
+            campaign_id: config.campaign_id.as_str(),
+            protocol_sha256: &config.protocol.sha256,
+            source_revision: &config.identity.source_revision,
+            declaration_sha256: config
+                .identity
+                .behavior_sha256
+                .get(&declaration.path())
+                .ok_or_else(|| invalid("behavior identity omits the declaration"))?,
+            imported: &config.imported_owners,
+        })
+    }
+}
+/// The evidence index committed beside the receipt: every cited stage file,
+/// the execution journal and every published or imported envelope, each at
+/// its repository path with its SHA-256.
+fn render_evidence_index(
+    stage: &Path,
+    identity: &EvidenceIdentity,
+    declaration: &CampaignDeclaration,
+) -> io::Result<String> {
+    let id = identity.campaign_id;
+    let layout = RepositoryLayout { id };
+    let mut text = format!(
+        "# Evidence index for {id}\n\nThe receipt [`{id}.md`]({id}.md) is checksum-pinned by [`{id}.sha256`]({id}.sha256). This index resolves the evidence the receipt cites, the execution journal and every envelope to its repository path and SHA-256.\n\nArchived paths live under `{}/`, which is host-local and git-ignored. The committed checksum manifest pins the archive through its `SHA256SUMS` and `execution.log` rows; `SHA256SUMS` lists every archived file.\n\n| Evidence | Path | SHA-256 |\n|---|---|---|\n| Protocol | `{}` at commit `{}` | `{}` |\n| Declaration | `{}` | `{}` |\n",
+        layout.archive(),
+        declaration.protocol,
+        identity.source_revision,
+        identity.protocol_sha256.as_str(),
+        declaration.path(),
+        identity.declaration_sha256,
+    );
+    text.push_str(&cited_rows(
+        stage,
+        &layout,
+        declaration,
+        &cited_sources(declaration, identity.imported, stage)?,
+    )?);
+    text.push_str(&format!(
+        "| Execution journal | `{}` | `{}` |\n",
+        layout.execution_log(),
+        Sha256Digest::of(&fs::read(stage.join("execution.log"))?).as_str()
+    ));
+    for owner in &declaration.measured_owners {
+        let source = format!("{}-owner.json", owner.name.as_str());
+        text.push_str(&format!(
+            "| {} owner envelope | `{}` | `{}` |\n",
+            owner.owner.as_str(),
+            destination_for(&layout, declaration, &source)
+                .ok_or_else(|| invalid("owner envelope has no destination"))?,
+            Sha256Digest::of(&fs::read(stage.join(&source))?).as_str()
+        ));
+    }
+    for imported in &declaration.imported_owners {
+        text.push_str(&format!(
+            "| {} owner envelope (imported) | `{}` | `{}` |\n",
+            imported.owner.as_str(),
+            imported.envelope.path,
+            imported.envelope.sha256.as_str()
+        ));
+    }
+    text.push_str(&format!(
+        "| Complete envelope | `{}` | `{}` |\n| Receipt | `{}` | `{}` |\n\nRe-validation on the producing host: `python3 dev/scripts/validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n",
+        layout.complete(),
+        Sha256Digest::of(&fs::read(stage.join("complete.json"))?).as_str(),
+        layout.receipt(),
+        Sha256Digest::of(&fs::read(stage.join("receipt.md"))?).as_str()
+    ));
+    Ok(text)
 }
 fn candidate_directory(
     stage: &Path,
@@ -1329,8 +1972,11 @@ fn emit(
     start: Instant,
 ) -> io::Result<SessionOutcome> {
     let stage = &config.channels.stage;
+    let declaration =
+        CampaignDeclaration::for_campaign(Path::new("."), config.campaign_id.as_str())?;
     let mut responses = Vec::new();
-    for (i, name) in [(0, "core"), (1, "algebra")] {
+    for (i, owner) in declaration.measured_owners.iter().enumerate() {
+        let name = owner.name.as_str();
         if !may_launch_child(ns(start)) {
             return Ok(SessionOutcome::BudgetExhausted);
         }
@@ -1487,7 +2133,7 @@ fn emit(
         None,
         json!({"candidate":candidate,"artifact":canonical}),
     )?;
-    make_receipt(config, bundles, &responses)?;
+    make_receipt(config, &declaration, bundles, &responses)?;
     if ns(start) > SESSION_BUDGET_SECONDS * 1_000_000_000 {
         return Ok(SessionOutcome::BudgetExhausted);
     }
@@ -2138,6 +2784,9 @@ impl RepositoryLayout<'_> {
     fn receipt(&self) -> String {
         format!("{TUNING_EVIDENCE}/{}.md", self.id)
     }
+    fn evidence_index(&self) -> String {
+        format!("{TUNING_EVIDENCE}/{}-evidence.md", self.id)
+    }
     fn checksum(&self) -> String {
         format!("{TUNING_EVIDENCE}/{}.sha256", self.id)
     }
@@ -2151,15 +2800,40 @@ impl RepositoryLayout<'_> {
         format!("{}/execution.log", self.archive())
     }
 }
-/// Maps every published stage file to its protocol §9 destination: the
-/// envelopes and receipt to their committed rows, the declared small records
-/// and the validation record to the committed session record, and every other
-/// stage file to the same relative path in the archive. Staged executables
-/// under `bin/` are pinned by digest in the staging manifest and are not
-/// copied.
+/// Stage path of the evidence index rendered at publication.
+const EVIDENCE_INDEX: &str = "repository-publication/evidence-index.md";
+/// The protocol §9 destination of one published stage file: the measured
+/// envelopes and receipt to their committed rows, the declared small records,
+/// validation record and evidence index to committed paths, and every other
+/// stage file, an imported owner's staged copy included, to the same relative
+/// path in the archive. Staged executables under `bin/` are pinned by digest
+/// in the staging manifest and have no destination.
+fn destination_for(
+    layout: &RepositoryLayout,
+    declaration: &CampaignDeclaration,
+    source: &str,
+) -> Option<String> {
+    Some(match source {
+        "core-owner.json" => layout.core_owner(),
+        "algebra-owner.json" if declaration.imported("algebra").is_none() => layout.algebra_owner(),
+        "complete.json" => layout.complete(),
+        "receipt.md" => layout.receipt(),
+        "repository-publication/validation.json" => {
+            format!("{}/validation.json", layout.session())
+        }
+        EVIDENCE_INDEX => layout.evidence_index(),
+        other if other.starts_with("bin/") => return None,
+        other if COMMITTED_SESSION_RECORDS.contains(&other) => {
+            format!("{}/{other}", layout.session())
+        }
+        other => format!("{}/{other}", layout.archive()),
+    })
+}
+/// Maps every published stage file to its [`destination_for`].
 fn repository_mapping(
     stage: &Path,
     layout: &RepositoryLayout,
+    declaration: &CampaignDeclaration,
 ) -> io::Result<BTreeMap<String, String>> {
     let mut files = checksum_boundary(stage)?;
     stage_files(&stage.join("sessions"), &[], &mut files)?;
@@ -2169,6 +2843,9 @@ fn repository_mapping(
             .join(REPOSITORY_PUBLICATION_DIR)
             .join("validation.json"),
     );
+    if declaration.evidence_index {
+        files.push(stage.join(EVIDENCE_INDEX));
+    }
     let mut mapping = BTreeMap::new();
     for path in files {
         let source = path
@@ -2177,31 +2854,26 @@ fn repository_mapping(
             .to_str()
             .ok_or_else(|| invalid("non-UTF-8 stage path"))?
             .to_owned();
-        let destination = match source.as_str() {
-            "core-owner.json" => layout.core_owner(),
-            "algebra-owner.json" => layout.algebra_owner(),
-            "complete.json" => layout.complete(),
-            "receipt.md" => layout.receipt(),
-            "repository-publication/validation.json" => {
-                format!("{}/validation.json", layout.session())
-            }
-            other if other.starts_with("bin/") => continue,
-            other if COMMITTED_SESSION_RECORDS.contains(&other) => {
-                format!("{}/{other}", layout.session())
-            }
-            other => format!("{}/{other}", layout.archive()),
+        let Some(destination) = destination_for(layout, declaration, &source) else {
+            continue;
         };
         if mapping.insert(destination, source).is_some() {
             return Err(invalid("two stage files map to one repository destination"));
         }
     }
-    for required in [
+    let mut required = vec![
         layout.core_owner(),
-        layout.algebra_owner(),
         layout.complete(),
         layout.receipt(),
         layout.execution_log(),
-    ] {
+    ];
+    if declaration.imported("algebra").is_none() {
+        required.push(layout.algebra_owner());
+    }
+    if declaration.evidence_index {
+        required.push(layout.evidence_index());
+    }
+    for required in required {
         if !mapping.contains_key(&required) {
             return Err(invalid(format!("stage lacks the source of {required}")));
         }
@@ -2232,14 +2904,15 @@ fn reopen_published(
     stage: &Path,
     repository: &Path,
     layout: &RepositoryLayout,
+    declaration: &CampaignDeclaration,
     composer: &ProcessDescriptor,
     profile_arguments: &[String],
 ) -> io::Result<Vec<u8>> {
-    let published = [
-        layout.core_owner(),
-        layout.algebra_owner(),
-        layout.complete(),
-    ];
+    let algebra = declaration.imported("algebra").map_or_else(
+        || layout.algebra_owner(),
+        |imported| imported.envelope.path.clone(),
+    );
+    let published = [layout.core_owner(), algebra, layout.complete()];
     let identities = published
         .iter()
         .map(|path| {
@@ -2305,11 +2978,14 @@ fn reopen_published(
 /// protocol §9 destinations, copies them through the durable publication
 /// journal, strictly reopens the published envelopes, has the independent
 /// validator check the publication, then writes the checksum manifest.
+#[allow(clippy::too_many_arguments)]
 fn publish_to_repository(
     stage: &Path,
     repository: &Path,
     campaign_id: &Token,
+    declaration: &CampaignDeclaration,
     validation: &[u8],
+    evidence_index: Option<&[u8]>,
     composer: &ProcessDescriptor,
     validator: &Path,
 ) -> io::Result<ArtifactIdentity> {
@@ -2317,6 +2993,17 @@ fn publish_to_repository(
     fs::create_dir_all(&journal)?;
     File::open(stage)?.sync_all()?;
     publish_artifact(stage, &journal.join("validation.json"), validation)?;
+    match (declaration.evidence_index, evidence_index) {
+        (true, Some(index)) => {
+            publish_artifact(stage, &stage.join(EVIDENCE_INDEX), index)?;
+        }
+        (false, None) => {}
+        _ => {
+            return Err(invalid(
+                "evidence index presence differs from the declaration",
+            ))
+        }
+    }
     let layout = RepositoryLayout {
         id: campaign_id.as_str(),
     };
@@ -2324,7 +3011,7 @@ fn publish_to_repository(
     let plan = RepositoryPlan::new(
         stage,
         campaign_id.clone(),
-        repository_mapping(stage, &layout)?,
+        repository_mapping(stage, &layout, declaration)?,
         vec![layout.session()],
         layout.archive(),
         vec![layout.execution_log()],
@@ -2332,7 +3019,14 @@ fn publish_to_repository(
         layout.checksum(),
     )?;
     publish_repository(stage, repository, &plan, |repository| {
-        let evidence = reopen_published(stage, repository, &layout, composer, &profile_arguments)?;
+        let evidence = reopen_published(
+            stage,
+            repository,
+            &layout,
+            declaration,
+            composer,
+            &profile_arguments,
+        )?;
         run_validator(
             validator,
             stage,
@@ -2346,7 +3040,12 @@ fn publish_to_repository(
 /// complete. Idempotent: a retry after any interruption finishes the rest.
 fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
     let config: CampaignConfig = read_json(&stage.join("campaign.json"))?;
-    validate_campaign_stage(stage, config.campaign_id.as_str())?;
+    let composer = process(&config, "composer")?;
+    let declaration = CampaignDeclaration::for_campaign(
+        &composer.working_directory,
+        config.campaign_id.as_str(),
+    )?;
+    validate_campaign_stage(stage, config.campaign_id.as_str(), &declaration)?;
     if config.channels.stage != stage {
         return Err(invalid("campaign channels name another stage"));
     }
@@ -2367,12 +3066,23 @@ fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
     {
         return Err(invalid("validation record is not this complete campaign"));
     }
-    let composer = process(&config, "composer")?;
+    let evidence_index = declaration
+        .evidence_index
+        .then(|| {
+            render_evidence_index(
+                stage,
+                &EvidenceIdentity::of(&config, &declaration)?,
+                &declaration,
+            )
+        })
+        .transpose()?;
     publish_to_repository(
         stage,
         &composer.working_directory,
         &config.campaign_id,
+        &declaration,
         validation,
+        evidence_index.as_deref().map(str::as_bytes),
         &composer,
         &config.validator.path,
     )
@@ -2420,6 +3130,23 @@ fn main() {
 mod tests {
     use super::*;
     use tuning_campaign_support::scratch::{scratch, Scratch};
+
+    fn repository_root() -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../..")
+            .canonicalize()
+            .unwrap()
+    }
+    /// The committed declaration of the published extent campaign.
+    fn extent_declaration() -> CampaignDeclaration {
+        CampaignDeclaration::for_campaign(&repository_root(), "gf2-a83583e0-19700101t000000z-1")
+            .unwrap()
+    }
+    /// The committed declaration of the seam calibration campaign.
+    fn seam_declaration() -> CampaignDeclaration {
+        CampaignDeclaration::for_campaign(&repository_root(), "gf2-dbd8787d-19700101t000000z-1")
+            .unwrap()
+    }
 
     #[test]
     fn staged_process_receives_only_the_declared_measurement_environment() {
@@ -2548,7 +3275,7 @@ mod tests {
             &fs::read(&source.path).unwrap(),
         )
         .unwrap();
-        stage_executables(&stage, &input).unwrap();
+        stage_executables(&stage, &input, &extent_declaration()).unwrap();
         assert!(!stage.join("campaign.json").exists());
         for name in staging.executables.keys() {
             assert_eq!(
@@ -2558,9 +3285,13 @@ mod tests {
                 source.sha256
             );
         }
-        stage_executables(&stage, &input).unwrap();
+        stage_executables(&stage, &input, &extent_declaration()).unwrap();
+        assert!(
+            stage_executables(&stage, &input, &seam_declaration()).is_err(),
+            "the seam campaign stages no algebra producer"
+        );
         fs::write(&source.path, b"changed producer").unwrap();
-        assert!(stage_executables(&stage, &input).is_err());
+        assert!(stage_executables(&stage, &input, &extent_declaration()).is_err());
     }
 
     #[test]
@@ -2599,7 +3330,7 @@ mod tests {
         fs::write(&relocated, b"{}").unwrap();
         reports.insert("core-list-grid".into(), artifact(&relocated).unwrap());
 
-        assert!(validate_preflight_identities(&stage, &reports).is_err());
+        assert!(validate_preflight_identities(&stage, &reports, &extent_declaration()).is_err());
         assert!(!stage.join("execution.log").exists());
         assert!(!stage.join("active-session.json").exists());
     }
@@ -2709,6 +3440,7 @@ mod tests {
             build_inputs: BTreeMap::new(),
             preflight_reports: BTreeMap::new(),
             host_admission_policy: HostAdmissionPolicy::declared(),
+            imported_owners: vec![],
         };
         let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "first-session").unwrap();
         log.append(JournalEvent::CampaignStart, None, json!({}))
@@ -3052,18 +3784,33 @@ mod tests {
 
     #[test]
     fn campaign_stage_policy_rejects_non_tmp_and_mismatched_paths() {
-        let campaign = format!("gf2-a83583e0-20260905t000000z-{}", std::process::id());
+        let declaration = seam_declaration();
+        let campaign = format!("gf2-dbd8787d-20261001t000000z-{}", std::process::id());
         let expected = Path::new("/tmp").join(&campaign);
-        assert!(validate_campaign_stage(&expected, &campaign).is_ok());
-        assert!(validate_campaign_stage(Path::new("/tmp/other"), &campaign).is_err());
-        assert!(validate_campaign_stage(&expected, "gf2-a83583e0-20260905-000000-1").is_err());
+        assert!(validate_campaign_stage(&expected, &campaign, &declaration).is_ok());
+        assert!(validate_campaign_stage(Path::new("/tmp/other"), &campaign, &declaration).is_err());
+        assert!(
+            validate_campaign_stage(&expected, "gf2-dbd8787d-20261001-000000-1", &declaration)
+                .is_err()
+        );
         assert!(validate_campaign_stage(
-            Path::new("/home/example/gf2-a83583e0-20260905t000000z-1"),
-            "gf2-a83583e0-20260905t000000z-1"
+            Path::new("/home/example/gf2-dbd8787d-20261001t000000z-1"),
+            "gf2-dbd8787d-20261001t000000z-1",
+            &declaration
         )
         .is_err());
-        let uppercase = format!("gf2-a83583e0-20260905T000000Z-{}", std::process::id());
-        assert!(validate_campaign_stage(&Path::new("/tmp").join(&uppercase), &uppercase).is_err());
+        let uppercase = format!("gf2-dbd8787d-20261001T000000Z-{}", std::process::id());
+        assert!(validate_campaign_stage(
+            &Path::new("/tmp").join(&uppercase),
+            &uppercase,
+            &declaration
+        )
+        .is_err());
+        let other = format!("gf2-a83583e0-20261001t000000z-{}", std::process::id());
+        assert!(
+            validate_campaign_stage(&Path::new("/tmp").join(&other), &other, &declaration).is_err(),
+            "a run ID of another declaration's issue was accepted"
+        );
     }
 
     #[test]
@@ -3077,47 +3824,108 @@ mod tests {
             .lines()
             .find_map(|line| {
                 line.trim()
-                    .strip_prefix("campaign=gf2-a83583e0-$(date -u ")?
+                    .strip_prefix("campaign=gf2-$issue-$(date -u ")?
                     .strip_suffix(")-$$")
             })
             .expect("launcher mints its campaign ID from one date format");
         let stamp = Command::new("date").args(["-u", format]).output().unwrap();
         assert!(stamp.status.success());
+        let declaration = seam_declaration();
         let campaign = format!(
-            "gf2-a83583e0-{}-{}",
+            "{}{}-{}",
+            declaration.prefix(),
             String::from_utf8(stamp.stdout).unwrap().trim_end(),
             std::process::id()
         );
         let stage = fs::canonicalize("/tmp").unwrap().join(&campaign);
-        validate_campaign_stage(&stage, &campaign).unwrap();
+        validate_campaign_stage(&stage, &campaign, &declaration).unwrap();
+    }
+
+    #[test]
+    fn declarations_select_owners_counts_imports_and_publication() {
+        let root = repository_root();
+        let extent = extent_declaration();
+        assert_eq!(extent.prefix(), "gf2-a83583e0-");
+        assert_eq!(extent.total_cells(), 717);
+        assert_eq!(
+            extent.executables(),
+            ["algebra-producer", "composer", "core-producer", "driver"]
+        );
+        assert!(extent.imported_owners.is_empty() && !extent.evidence_index);
+        let seam = seam_declaration();
+        assert_eq!(seam.prefix(), "gf2-dbd8787d-");
+        assert_eq!(seam.total_cells(), 756);
+        assert_eq!(seam.executables(), ["composer", "core-producer", "driver"]);
+        assert!(seam.evidence_index);
+        let imported = seam.imported("algebra").unwrap();
+        let envelope = imported.envelope.read(&root).unwrap();
+        let complete = imported.complete.read(&root).unwrap();
+        assert_eq!(
+            section_wrapper(&envelope, &imported.section).unwrap(),
+            section_wrapper(&complete, &imported.section).unwrap()
+        );
+        for (mutate, what) in [
+            (
+                (|d: &mut CampaignDeclaration| d.imported_owners.clear())
+                    as fn(&mut CampaignDeclaration),
+                "an uncovered owner",
+            ),
+            (|d| d.issue = "a83583e0".into(), "another issue"),
+            (|d| d.measured_owners[0].cells = 0, "an empty owner"),
+            (
+                |d| d.protocol = "/abs/protocol.md".into(),
+                "an absolute protocol",
+            ),
+            (
+                |d| d.imported_owners[0].section = "gf2-core/selectors".into(),
+                "a foreign imported section",
+            ),
+        ] {
+            let mut changed = seam.clone();
+            mutate(&mut changed);
+            assert!(changed.validate("dbd8787d").is_err(), "accepted {what}");
+        }
+        let mut changed = imported.envelope.clone();
+        changed.sha256 = Sha256Digest::of(b"other");
+        assert!(changed.read(&root).is_err());
+        for invalid_id in ["gf2-DBD8787D-1", "gf2-dbd8787-1", "dbd8787d-1"] {
+            assert!(
+                CampaignDeclaration::issue_of(invalid_id).is_err(),
+                "{invalid_id}"
+            );
+        }
     }
 
     #[test]
     fn producing_input_manifest_rejects_authority_and_path_mutations() {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../..")
-            .canonicalize()
+        let root = repository_root();
+        for declaration in [extent_declaration(), seam_declaration()] {
+            let manifest: ProducingInputs = serde_json::from_slice(
+                &fs::read(root.join(&declaration.producing_manifest)).unwrap(),
+            )
             .unwrap();
-        let manifest: ProducingInputs =
-            serde_json::from_slice(&fs::read(root.join(PRODUCING_MANIFEST)).unwrap()).unwrap();
-        manifest.validate_at(&root).unwrap();
-        let mut changed = manifest.clone();
-        changed.schema = "unknown".into();
-        assert!(changed.validate_at(&root).is_err());
+            manifest.validate_at(&root).unwrap();
+            let mut changed = manifest.clone();
+            changed.schema = "unknown".into();
+            assert!(changed.validate_at(&root).is_err());
 
-        let mut changed = manifest.clone();
-        changed.behavior_sources.swap(0, 1);
-        assert!(changed.validate_at(&root).is_err());
+            let mut changed = manifest.clone();
+            changed.behavior_sources.swap(0, 1);
+            assert!(changed.validate_at(&root).is_err());
 
-        let mut changed = manifest.clone();
-        changed.lifecycle_sources.push("not/in/behavior.rs".into());
-        changed.lifecycle_sources.sort();
-        assert!(changed.validate_at(&root).is_err());
+            let mut changed = manifest.clone();
+            changed.lifecycle_sources.push("not/in/behavior.rs".into());
+            changed.lifecycle_sources.sort();
+            assert!(changed.validate_at(&root).is_err());
 
-        let mut changed = manifest;
-        changed.build_inputs[0] = "crates/*/Cargo.toml".into();
-        changed.build_inputs.sort();
-        assert!(changed.validate_at(&root).is_err());
+            let mut changed = manifest;
+            changed.build_inputs[0] = "crates/*/Cargo.toml".into();
+            changed.build_inputs.sort();
+            assert!(changed.validate_at(&root).is_err());
+        }
+        let seam = seam_declaration();
+        let manifest = ProducingInputs::read_at(&root, &seam.producing_manifest).unwrap();
+        assert!(manifest.lifecycle_sources.contains(&seam.path()));
     }
 
     #[test]
@@ -3187,39 +3995,89 @@ mod tests {
         root: PathBuf,
         stage: PathBuf,
         campaign: Token,
+        declaration: CampaignDeclaration,
         composer: ProcessDescriptor,
         validator: PathBuf,
+        evidence_index: Option<Vec<u8>>,
     }
     impl PublicationFixture {
         fn new() -> Self {
+            Self::with(extent_declaration())
+        }
+        fn with(declaration: CampaignDeclaration) -> Self {
             use std::os::unix::fs::PermissionsExt;
             let scratch_root = scratch("gf2-driver-publication");
             let root = fs::canonicalize(scratch_root.path()).unwrap();
-            let campaign = Token::new("gf2-a83583e0-19700101t000000z-1").unwrap();
+            let campaign =
+                Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
             let stage = root.join("stage");
-            let files: [(&str, &[u8]); 14] = [
-                ("core-owner.json", b"{\"owner\":\"core\"}"),
-                ("algebra-owner.json", b"{\"owner\":\"algebra\"}"),
+            let imported = declaration.imported("algebra").cloned();
+            let algebra = imported.as_ref().map_or_else(
+                || b"{\"owner\":\"algebra\"}".to_vec(),
+                |imported| imported.envelope.read(&repository_root()).unwrap(),
+            );
+            let mut files: Vec<(String, Vec<u8>)> = [
+                ("core-owner.json", &b"{\"owner\":\"core\"}"[..]),
                 ("complete.json", b"{\"owners\":2}"),
                 ("receipt.md", b"# receipt\n"),
                 ("execution.log", b"{\"sequence\":0}\n"),
-                (
-                    "campaign.json",
-                    b"{\"campaign_id\":\"gf2-a83583e0-19700101t000000z-1\"}",
-                ),
                 ("checkpoints/manifest.json", b"{}"),
                 ("checkpoints/units/unit.json", b"{\"unit\":1}"),
                 ("raw-attempts/attempt.stdout", b"GF2_TUNING_RESULT={}"),
                 ("core-accepted.json", b"{\"accepted\":1}"),
-                ("algebra-accepted.json", b"{\"accepted\":2}"),
                 ("bin/driver", b"staged executable"),
                 ("sessions/s1/checksum.json", b"{\"checksum\":1}"),
                 ("build/source-before.json", b"{\"phase\":\"before-build\"}"),
-            ];
-            for (relative, content) in files {
+                ("core-manifest.json", b"{\"manifest\":\"core\"}"),
+                (
+                    "core-resolved-manifest.json",
+                    b"{\"manifest\":\"resolved\"}",
+                ),
+                ("core-owner-response.json", b"{\"response\":\"core\"}"),
+                ("receipt-projection.json", b"{\"projection\":1}"),
+                (RAW_RESULT_INDEX, b"# Raw result index\n"),
+                (OWNER_DECISIONS, b"[]"),
+            ]
+            .into_iter()
+            .map(|(name, content)| (name.to_owned(), content.to_vec()))
+            .collect();
+            files.push(("algebra-owner.json".into(), algebra));
+            let mut imported_evidence = Vec::new();
+            if let Some(imported) = &imported {
+                let reopen = "imported/algebra-session-1/reopen.json";
+                files.push((reopen.into(), b"{\"reopen\":\"algebra\"}".to_vec()));
+                imported_evidence.push((imported.clone(), reopen));
+            } else {
+                files.push(("algebra-accepted.json".into(), b"{\"accepted\":2}".to_vec()));
+            }
+            for (relative, content) in &files {
                 fs::create_dir_all(stage.join(relative).parent().unwrap()).unwrap();
                 fs::write(stage.join(relative), content).unwrap();
             }
+            let imported_owners: Vec<ImportedOwnerEvidence> = imported_evidence
+                .into_iter()
+                .map(|(imported, reopen)| ImportedOwnerEvidence {
+                    owner: imported.owner.clone(),
+                    source: imported.envelope.clone(),
+                    staged: artifact(&stage.join("algebra-owner.json")).unwrap(),
+                    reopen: artifact(&stage.join(reopen)).unwrap(),
+                })
+                .collect();
+            let protocol = Sha256Digest::of(b"protocol");
+            let declaration_sha = Sha256Digest::of(b"declaration");
+            let revision = "0".repeat(40);
+            fs::write(
+                stage.join("campaign.json"),
+                encoded(&json!({
+                    "campaign_id": campaign,
+                    "protocol": {"path": "/repository/protocol.md", "sha256": protocol},
+                    "identity": {"source_revision": revision,
+                                 "behavior_sha256": {declaration.path(): declaration_sha}},
+                    "imported_owners": imported_owners,
+                }))
+                .unwrap(),
+            )
+            .unwrap();
             let digest =
                 |relative: &str| Sha256Digest::of(&fs::read(stage.join(relative)).unwrap());
             let tail = [
@@ -3267,18 +4125,42 @@ mod tests {
                     .join("../../scripts/validate-tuning-extent-campaign.py"),
             )
             .unwrap();
+            let evidence_index = declaration.evidence_index.then(|| {
+                render_evidence_index(
+                    &stage,
+                    &EvidenceIdentity {
+                        campaign_id: campaign.as_str(),
+                        protocol_sha256: &protocol,
+                        source_revision: &revision,
+                        declaration_sha256: declaration_sha.as_str(),
+                        imported: &imported_owners,
+                    },
+                    &declaration,
+                )
+                .unwrap()
+                .into_bytes()
+            });
             Self {
                 _root: scratch_root,
                 root,
                 stage,
                 campaign,
+                declaration,
                 composer,
                 validator,
+                evidence_index,
             }
         }
+        /// An empty checkout holding only the committed envelopes the
+        /// campaign imports.
         fn repository(&self, name: &str) -> PathBuf {
             let repository = self.root.join(name);
             fs::create_dir(&repository).unwrap();
+            for imported in &self.declaration.imported_owners {
+                let target = repository.join(&imported.envelope.path);
+                fs::create_dir_all(target.parent().unwrap()).unwrap();
+                fs::write(target, imported.envelope.read(&repository_root()).unwrap()).unwrap();
+            }
             repository
         }
         fn publish(&self, repository: &Path) -> io::Result<ArtifactIdentity> {
@@ -3286,7 +4168,9 @@ mod tests {
                 &self.stage,
                 repository,
                 &self.campaign,
+                &self.declaration,
                 b"{\"status\":\"complete-valid\"}",
+                self.evidence_index.as_deref(),
                 &self.composer,
                 &self.validator,
             )
@@ -3404,6 +4288,76 @@ mod tests {
     }
 
     #[test]
+    fn seam_publication_keeps_the_imported_owner_and_commits_its_evidence_index() {
+        let fixture = PublicationFixture::with(seam_declaration());
+        let layout = RepositoryLayout {
+            id: fixture.campaign.as_str(),
+        };
+        let imported = fixture.declaration.imported("algebra").unwrap().clone();
+
+        // A checkout whose committed import differs fails the strict reopen
+        // before the checksum manifest marks the publication complete.
+        let drifted = fixture.repository("drifted");
+        fs::write(drifted.join(&imported.envelope.path), b"{}").unwrap();
+        let refused = fixture.publish(&drifted).unwrap_err().to_string();
+        assert!(refused.contains("strict reopen"), "{refused}");
+        assert!(!drifted.join(layout.checksum()).exists());
+
+        let repository = fixture.repository("repository");
+        let manifest = fixture.publish(&repository).unwrap();
+        assert!(
+            !repository.join(layout.algebra_owner()).exists(),
+            "an imported owner must not publish a run-named algebra envelope"
+        );
+        let archive = |relative: &str| format!("{}/{relative}", layout.archive());
+        assert_eq!(
+            fs::read(repository.join(archive("algebra-owner.json"))).unwrap(),
+            imported.envelope.read(&repository_root()).unwrap()
+        );
+        let index = fs::read(repository.join(layout.evidence_index())).unwrap();
+        assert_eq!(Some(&index), fixture.evidence_index.as_ref());
+        let index = String::from_utf8(index).unwrap();
+        assert!(index.contains(&format!("`{}`", imported.envelope.path)));
+        assert!(index.contains(&format!("`{}`", archive("receipt-projection.json"))));
+        assert!(!index.contains("/tmp/") && !index.contains(fixture.stage.to_str().unwrap()));
+        let committed = fs::read_to_string(&manifest.path).unwrap();
+        assert!(committed.contains(&layout.evidence_index()));
+        let reopen: Value = serde_json::from_slice(
+            &fs::read(repository.join(format!("{}/repository-reopen.json", layout.session())))
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            reopen["algebra"],
+            json!({"path": imported.envelope.path, "sha256": imported.envelope.sha256})
+        );
+        assert_eq!(fixture.publish(&repository).unwrap(), manifest);
+    }
+
+    #[test]
+    fn evidence_index_presence_and_content_follow_the_declaration() {
+        let mut fixture = PublicationFixture::with(seam_declaration());
+        let mut forged = fixture.evidence_index.clone().unwrap();
+        forged.extend_from_slice(b"| Forged | `x` | `y` |\n");
+        let correct = fixture.evidence_index.replace(forged);
+        let repository = fixture.repository("forged");
+        let refused = fixture.publish(&repository).unwrap_err().to_string();
+        assert!(
+            refused.contains("independent validation failed"),
+            "{refused}"
+        );
+        fixture.evidence_index = None;
+        assert!(fixture.publish(&fixture.repository("absent")).is_err());
+        fixture.evidence_index = correct;
+        let extent = PublicationFixture::new();
+        let mut unexpected = extent;
+        unexpected.evidence_index = Some(b"# index\n".to_vec());
+        assert!(unexpected
+            .publish(&unexpected.repository("unexpected"))
+            .is_err());
+    }
+
+    #[test]
     fn oversized_committed_destination_fails_before_the_plan_is_journaled() {
         let fixture = PublicationFixture::new();
         let layout = RepositoryLayout {
@@ -3476,15 +4430,15 @@ mod tests {
         assert!(fixture.publish(&repository).is_err());
     }
 
-    /// Worst-case full-scale receipt: 4,302 accepted units and owner decisions
-    /// carrying every one of the 7,650 retained-threshold timing windows at
+    /// Worst-case full-scale receipt: 4,536 accepted units and owner decisions
+    /// carrying every one of the 9,000 retained-threshold timing windows at
     /// the widest values the protocol admits (2^32 calls, the 120 s child
     /// limit), plus the one-factor, GEMM and joint decisions at twice the
     /// 30,947 bytes measured on the 2026-09-28 stage.
     #[test]
     fn full_scale_receipt_stays_within_a_quarter_of_the_committed_limit() {
-        let campaign = Token::new("gf2-a83583e0-19700101t000000z-1").unwrap();
-        let units: Vec<LaunchUnit> = (0..4302u64)
+        let campaign = Token::new("gf2-dbd8787d-19700101t000000z-1").unwrap();
+        let units: Vec<LaunchUnit> = (0..4536u64)
             .map(|ordinal| {
                 let task = match ordinal % 6 {
                     0 => Task::Probe,
@@ -3513,11 +4467,11 @@ mod tests {
         let index = raw_result_index(units.iter());
         assert_eq!(
             index.lines().filter(|line| line.starts_with("- `")).count(),
-            4302
+            4536
         );
         let window = json!({"execution":4,"repetition":4,"calls":1u64 << 32,"elapsed_ns":120_000_000_000u64});
         let samples = vec![window; 25];
-        let points: Vec<_> = (0..153)
+        let points: Vec<_> = (0..180)
             .map(|size| json!({"size":size,"conservative":{"median":1.0e9,"spread":0.5,"samples":samples},"asymptotic":{"median":1.0e9,"spread":0.5,"samples":samples}}))
             .collect();
         let decisions = json!({
@@ -3539,23 +4493,29 @@ mod tests {
                 decisions: CanonicalJson::from_serializable(&json!({"selected":65536})).unwrap(),
             },
         ];
-        let protocol = ArtifactIdentity {
-            path: PathBuf::from("/repository/dev/active/a83583e0/premeasurement-protocol.md"),
-            sha256: Sha256Digest::of(b"protocol"),
-        };
         let facts = ReceiptFacts {
-            campaign_id: campaign.as_str(),
-            protocol: &protocol,
-            source_revision: "0000000000000000000000000000000000000000",
+            campaign_id: campaign.as_str().to_owned(),
+            declaration: seam_declaration(),
+            declaration_sha256: Sha256Digest::of(b"declaration"),
+            protocol_sha256: Sha256Digest::of(b"protocol"),
+            source_revision: "0000000000000000000000000000000000000000".to_owned(),
             affinity: format!("{:?}", (0..64).collect::<Vec<u32>>()),
             owners: vec![["gf2-core".into(), "p".into(), "b".into(), "0".repeat(64)]; 2],
-            counts: DeclaredCounts::for_cells(717).unwrap(),
+            cited: vec![],
+            counts: DeclaredCounts::for_cells(756).unwrap(),
             attempts: u64::MAX,
             orchestration: u64::MAX,
             sessions: u64::MAX,
         };
         let decisions = encoded(&responses).unwrap();
-        let receipt = render_receipt(&facts, &responses, index.as_bytes(), &decisions).unwrap();
+        let receipt = render_receipt(
+            &facts,
+            Path::new("/tmp"),
+            &responses,
+            index.as_bytes(),
+            &decisions,
+        )
+        .unwrap();
         assert!(receipt.contains(Sha256Digest::of(&decisions).as_str()));
         assert!(!receipt.contains("elapsed_ns"));
         assert!(receipt.contains("sample_count"));
@@ -3581,11 +4541,12 @@ mod tests {
     fn rendered_receipt_documents_pass_the_validator_receipt_checks() {
         let scratch_root = scratch("gf2-driver-receipt-check");
         let stage = fs::canonicalize(scratch_root.path()).unwrap();
-        let campaign = Token::new("gf2-a83583e0-19700101t000000z-1").unwrap();
+        let declaration = seam_declaration();
+        let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
         let fields = [
             "gemm.tiles",
             "field_vec.dot_chunk_len",
-            "triangular.trsm_panel_rows",
+            "gemm.winograd_min_dim",
         ];
         let units: Vec<LaunchUnit> = (0..18u64)
             .map(|ordinal| {
@@ -3613,62 +4574,69 @@ mod tests {
                 .unwrap()
             })
             .collect();
-        let (core_units, algebra_units) = units.split_at(12);
-        let bundle = |units: &[LaunchUnit]| json!({"accepted": units.iter().map(|unit| json!({"unit": unit})).collect::<Vec<_>>()});
+        let bundle =
+            json!({"accepted": units.iter().map(|unit| json!({"unit": unit})).collect::<Vec<_>>()});
         let arm = json!({"median":2.5,"spread":0.125,"samples":[{"execution":0,"repetition":0,"calls":7,"elapsed_ns":250_000_001u64}]});
-        let responses = [
-            OwnerResponse::EmitOwner {
-                artifact: ArtifactIdentity {
-                    path: stage.join("core-owner.json"),
-                    sha256: Sha256Digest::of(b"core"),
-                },
-                decisions: CanonicalJson::from_serializable(&json!({"schema":"core-tuning-campaign-v4","retained_thresholds":[{"points":[{"size":8,"conservative":arm}]}],"gemm":{"selected":[32,64],"reason":"structural-schedule-tie"}})).unwrap(),
+        fs::create_dir_all(stage.join("candidates/core-producer-s-9")).unwrap();
+        fs::write(
+            stage.join("candidates/core-producer-s-9/output.json"),
+            b"core",
+        )
+        .unwrap();
+        let responses = [OwnerResponse::EmitOwner {
+            artifact: ArtifactIdentity {
+                path: stage.join("candidates/core-producer-s-9/output.json"),
+                sha256: Sha256Digest::of(b"core"),
             },
-            OwnerResponse::EmitOwner {
-                artifact: ArtifactIdentity {
-                    path: stage.join("algebra-owner.json"),
-                    sha256: Sha256Digest::of(b"algebra"),
-                },
-                decisions: CanonicalJson::from_serializable(&json!({"schema":"algebra-tuning-analysis-v1","selected":65536})).unwrap(),
-            },
-        ];
+            decisions: CanonicalJson::from_serializable(&json!({"schema":"core-tuning-campaign-v4","retained_thresholds":[{"points":[{"size":8,"conservative":arm}]}],"gemm":{"selected":[32,64],"reason":"structural-schedule-tie"}})).unwrap(),
+        }];
         let protocol = ArtifactIdentity {
-            path: PathBuf::from("/repository/dev/active/a83583e0/premeasurement-protocol.md"),
+            path: PathBuf::from("/repository/dev/active/dbd8787d/premeasurement-protocol.md"),
             sha256: Sha256Digest::of(b"protocol"),
         };
         let affinity: Vec<u32> = vec![0, 2, 4, 6];
-        let owners = [
-            [
-                "gf2-core",
-                "core-tuning-campaign-v4",
-                "tuning-calibration-v4",
-            ],
-            [
-                "gf2-algebra",
-                "algebra-tuning-campaign-v1",
-                "algebra-tuning-calibration-v1",
-            ],
-        ];
         let executable = "e".repeat(64);
-        let counts = DeclaredCounts::for_cells(717).unwrap();
+        let counts = DeclaredCounts::for_cells(756).unwrap();
+        let declaration_sha = Sha256Digest::of(b"declaration");
+        for (relative, content) in [
+            ("core-manifest.json", "{\"manifest\":1}"),
+            ("core-resolved-manifest.json", "{\"manifest\":2}"),
+            ("core-owner-response.json", "{\"response\":1}"),
+            ("composition.json", "{\"composition\":1}"),
+            ("checkpoints/manifest.json", "{\"checkpoints\":1}"),
+            ("imported/algebra-s-1/reopen.json", "{\"reopen\":1}"),
+        ] {
+            fs::create_dir_all(stage.join(relative).parent().unwrap()).unwrap();
+            fs::write(stage.join(relative), content).unwrap();
+        }
+        let imported = vec![ImportedOwnerEvidence {
+            owner: Token::new("gf2-algebra").unwrap(),
+            source: declaration.imported_owners[0].envelope.clone(),
+            staged: ArtifactIdentity {
+                path: stage.join("algebra-owner.json"),
+                sha256: declaration.imported_owners[0].envelope.sha256.clone(),
+            },
+            reopen: artifact(&stage.join("imported/algebra-s-1/reopen.json")).unwrap(),
+        }];
         let files = [
             (
                 "campaign.json",
                 json!({
                     "campaign_id": campaign,
                     "protocol": protocol,
-                    "identity": {"source_revision": "0".repeat(40)},
+                    "identity": {"source_revision": "0".repeat(40),
+                                 "behavior_sha256": {declaration.path(): declaration_sha}},
                     "affinity": affinity,
-                    "manifests": owners.iter().map(|[owner, protocol, behavior]| json!({
-                        "owner": owner,
-                        "owner_protocol": protocol,
-                        "behavior_token": behavior,
+                    "manifests": [json!({
+                        "owner": "gf2-core",
+                        "owner_protocol": "core-tuning-campaign-v4",
+                        "behavior_token": "tuning-calibration-v4",
                         "processes": [{"executable_sha256": executable}],
-                    })).collect::<Vec<_>>(),
+                    })],
+                    "imported_owners": imported,
                 }),
             ),
-            ("core-accepted.json", bundle(core_units)),
-            ("algebra-accepted.json", bundle(algebra_units)),
+            ("core-accepted.json", bundle),
             (
                 "receipt-projection.json",
                 json!({"owners": responses, "counts": counts, "attempts": 4401, "orchestration": 9, "sessions": 2}),
@@ -3678,27 +4646,36 @@ mod tests {
             fs::write(stage.join(name), encoded(value).unwrap()).unwrap();
         }
         let facts = ReceiptFacts {
-            campaign_id: campaign.as_str(),
-            protocol: &protocol,
-            source_revision: &"0".repeat(40),
+            campaign_id: campaign.as_str().to_owned(),
+            declaration: declaration.clone(),
+            declaration_sha256: declaration_sha,
+            protocol_sha256: protocol.sha256.clone(),
+            source_revision: "0".repeat(40),
             affinity: format!("{affinity:?}"),
-            owners: owners
-                .iter()
-                .map(|[owner, protocol, behavior]| {
-                    [
-                        (*owner).to_owned(),
-                        (*protocol).to_owned(),
-                        (*behavior).to_owned(),
-                        executable.clone(),
-                    ]
-                })
-                .collect(),
+            owners: vec![[
+                "gf2-core".to_owned(),
+                "core-tuning-campaign-v4".to_owned(),
+                "tuning-calibration-v4".to_owned(),
+                executable.clone(),
+            ]],
+            cited: cited_sources(&declaration, &imported, &stage).unwrap(),
             counts,
             attempts: 4401,
             orchestration: 9,
             sessions: 2,
         };
         publish_receipt_documents(&stage, &facts, units.iter(), &responses).unwrap();
+        let receipt = stage.join("receipt.md");
+        let text = fs::read_to_string(&receipt).unwrap();
+        // Every cited file is named by its archived or committed repository
+        // path, never by an absolute or stage-relative one.
+        assert!(!text.contains(stage.to_str().unwrap()) && !text.contains("/repository/"));
+        assert!(text.contains(".agents/campaign-evidence/gf2-dbd8787d-19700101t000000z-1/candidates/core-producer-s-9/output.json"));
+        assert!(text.contains("`dev/benchmarks/tuning_profiles/gf2-dbd8787d-19700101t000000z-1-session/composition.json`"));
+        assert!(text.contains(&format!(
+            "`{}`",
+            declaration.imported_owners[0].envelope.path
+        )));
         let validator = fs::canonicalize(
             Path::new(env!("CARGO_MANIFEST_DIR"))
                 .join("../../scripts/validate-tuning-extent-campaign.py"),
@@ -3719,12 +4696,136 @@ mod tests {
             "{}",
             String::from_utf8_lossy(&output.stderr)
         );
-        let receipt = stage.join("receipt.md");
-        let text = fs::read_to_string(&receipt).unwrap();
         fs::write(&receipt, text.replace("sample_count", "samples_count")).unwrap();
         let output = check();
         assert!(!output.status.success());
         assert!(String::from_utf8_lossy(&output.stderr).contains("receipt"));
+        fs::write(&receipt, &text).unwrap();
+        fs::write(stage.join("composition.json"), "{\"composition\":2}").unwrap();
+        let output = check();
+        assert!(
+            !output.status.success(),
+            "a cited file changed after rendering was accepted"
+        );
+    }
+
+    /// Imports the declared algebra owner with a stand-in composer that
+    /// accepts only the staged committed bytes, then has the validator check
+    /// the staged copy, reopen record and journaled composer runs.
+    #[test]
+    fn imported_owner_is_staged_reopened_journaled_and_independently_validated() {
+        use std::os::unix::fs::PermissionsExt;
+        let scratch_root = scratch("gf2-driver-import");
+        let root = fs::canonicalize(scratch_root.path()).unwrap();
+        let stage = root.join("stage");
+        fs::create_dir(&stage).unwrap();
+        let declaration = seam_declaration();
+        let imported = declaration.imported("algebra").unwrap().clone();
+        let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
+        let reference = repository_root().join(&imported.complete.path);
+        let composer_path = root.join("composer");
+        fs::write(
+            &composer_path,
+            format!(
+                "#!/bin/sh\nPATH=/usr/bin:/bin\nset -C\ncase \"$1\" in\n  core-owner) printf '{{}}' > \"$2\" ;;\n  complete) test \"$(sha256sum < \"$3\" | cut -d' ' -f1)\" = {algebra} || exit 5; test -e {root}/reject && exit 3; cat {reference} > \"$4\" ;;\n  *) exit 2 ;;\nesac\n",
+                algebra = imported.envelope.sha256.as_str(),
+                root = root.display(),
+                reference = reference.display(),
+            ),
+        )
+        .unwrap();
+        fs::set_permissions(&composer_path, fs::Permissions::from_mode(0o755)).unwrap();
+        let executable = artifact(&composer_path).unwrap();
+        let composer = ProcessDescriptor {
+            id: Token::new("composer").unwrap(),
+            executable: executable.path,
+            executable_sha256: executable.sha256,
+            arguments: vec![],
+            environment: measurement_environment(),
+            working_directory: root.clone(),
+        };
+        let channels = SessionChannels::for_stage(&stage).unwrap();
+        let mut log = ExecutionLog::create_new(&stage, campaign.as_str(), "session-1").unwrap();
+        log.append(JournalEvent::CampaignStart, None, json!({}))
+            .unwrap();
+        let revision = "0".repeat(40);
+        fs::write(root.join("reject"), b"").unwrap();
+        let refused = import_owner(
+            &repository_root(),
+            &channels,
+            &campaign,
+            &revision,
+            &composer,
+            &imported,
+            &mut log,
+        )
+        .unwrap_err();
+        assert!(
+            refused.to_string().contains("strict owner-only reopen"),
+            "{refused}"
+        );
+        fs::remove_file(root.join("reject")).unwrap();
+        let evidence = import_owner(
+            &repository_root(),
+            &channels,
+            &campaign,
+            &revision,
+            &composer,
+            &imported,
+            &mut log,
+        )
+        .unwrap();
+        assert_eq!(evidence.staged.path, stage.join("algebra-owner.json"));
+        assert_eq!(evidence.staged.sha256, imported.envelope.sha256);
+        assert_eq!(evidence.source, imported.envelope);
+        let mut drifted = imported.clone();
+        drifted.envelope.sha256 = Sha256Digest::of(b"other");
+        assert!(import_owner(
+            &repository_root(),
+            &channels,
+            &campaign,
+            &revision,
+            &composer,
+            &drifted,
+            &mut log,
+        )
+        .is_err());
+        fs::write(
+            stage.join("campaign.json"),
+            encoded(&json!({
+                "campaign_id": campaign,
+                "identity": {"source_revision": revision},
+                "processes": [composer],
+                "imported_owners": [evidence],
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let validator = fs::canonicalize(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../scripts/validate-tuning-extent-campaign.py"),
+        )
+        .unwrap();
+        let check = || {
+            Command::new("python3")
+                .arg(&validator)
+                .arg("--stage")
+                .arg(&stage)
+                .arg("--imported-owner-check")
+                .output()
+                .unwrap()
+        };
+        let output = check();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        fs::write(stage.join("algebra-owner.json"), b"{}").unwrap();
+        assert!(
+            !check().status.success(),
+            "a changed staged import was accepted"
+        );
     }
 
     /// The validator reconstructs the typed encodings the driver and children

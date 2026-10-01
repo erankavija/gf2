@@ -1,0 +1,12 @@
+{
+  "schema": "tuning-campaign-declaration-v1",
+  "issue": "a83583e0",
+  "protocol": "dev/active/a83583e0/premeasurement-protocol.md",
+  "producing_manifest": "dev/active/a83583e0/producing-build-inputs.json",
+  "measured_owners": [
+    {"owner": "gf2-core", "name": "core", "cells": 702},
+    {"owner": "gf2-algebra", "name": "algebra", "cells": 15}
+  ],
+  "imported_owners": [],
+  "evidence_index": false
+}

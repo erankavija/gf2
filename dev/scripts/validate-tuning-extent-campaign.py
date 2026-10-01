@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Independent, read-only validator for the a83583e0 tuning campaign.
+"""Independent, read-only validator for the extent and seam tuning campaigns.
 
 The validator deliberately does not import the campaign driver or trust its
 summary counters.  It reconstructs the accepted protocol from sealed owner
 manifests, immutable checkpoint bytes, the append-only journal, raw windows,
-owner decisions, and composed profile wrappers.
+owner decisions, and composed profile wrappers.  The committed campaign
+declaration `dev/active/<issue>/campaign-declaration.json` that a run ID names
+selects the protocol, producing manifest, owner counts, imported owners and
+publication layout.
 """
 
 from __future__ import annotations
@@ -42,37 +45,12 @@ ENVIRONMENT = {
     "RAYON_NUM_THREADS": "4",
     "RUSTUP_TOOLCHAIN": "1.95.0",
 }
-COUNTS = {
-    "cells": 717,
-    "probes": 717,
-    "timed_children": 3585,
-    "accepted_results": 4302,
-    "windows": 17925,
-    "progress_records": 21510,
-}
 SESSION_BUDGET_SECONDS = 10_800
 CHILD_TIMEOUT_SECONDS = 120
 CHILD_KILL_GRACE_SECONDS = 5
-OWNER_COUNTS = {
-    "gf2-core": {
-        "cells": 702,
-        "probes": 702,
-        "timed_children": 3510,
-        "accepted_results": 4212,
-        "windows": 17550,
-        "progress_records": 21060,
-    },
-    "gf2-algebra": {
-        "cells": 15,
-        "probes": 15,
-        "timed_children": 75,
-        "accepted_results": 90,
-        "windows": 375,
-        "progress_records": 450,
-    },
-}
 SHA = re.compile(r"[0-9a-f]{64}\Z")
-RUN_ID = re.compile(r"gf2-a83583e0-[0-9]{8}t[0-9]{6}z-[1-9][0-9]*\Z")
+# A run ID names its declaration's issue: gf2-<issue>-<UTC stamp>-<launcher pid>.
+RUN_ID = re.compile(r"gf2-([0-9a-f]{8})-[0-9]{8}t[0-9]{6}z-[1-9][0-9]*\Z")
 # Mirrors gf2_core::tuning::ProfileId::parse; the run ID names emitted profiles.
 PROFILE_ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/+-]*\Z")
@@ -93,7 +71,9 @@ ALGEBRA_PROTOCOL = "algebra-tuning-campaign-v1"
 CORE_BEHAVIOR = "tuning-calibration-v4"
 ALGEBRA_BEHAVIOR = "algebra-tuning-calibration-v1"
 PRODUCING_INPUTS_SCHEMA = "tuning-campaign-producing-inputs-v1"
-PRODUCING_MANIFEST = "dev/active/a83583e0/producing-build-inputs.json"
+DECLARATION_SCHEMA = "tuning-campaign-declaration-v1"
+# The two owners a complete envelope composes, by declaration name.
+OWNER_NAMES = {"core": "gf2-core", "algebra": "gf2-algebra"}
 # Protocol §7: the full-host outer lock admits a session; the held-lock host
 # observation is descriptive and gates nothing.
 HOST_ADMISSION_POLICY = {
@@ -112,6 +92,8 @@ REPOSITORY_PUBLICATION_DIR = "repository-publication"
 RAW_RESULT_INDEX = "raw-result-index.md"
 # Archived complete owner responses, raw timing windows included.
 OWNER_DECISIONS = "owner-decisions.json"
+# Stage path of the evidence index publication renders when declared.
+EVIDENCE_INDEX = "repository-publication/evidence-index.md"
 REPOSITORY_PLAN_SCHEMA = "tuning-campaign-repository-plan-v2"
 REPOSITORY_REOPEN_SCHEMA = "tuning-campaign-repository-reopen-v1"
 TUNING_EVIDENCE = "dev/benchmarks/tuning_profiles"
@@ -219,7 +201,26 @@ THRESHOLD_GRIDS = {
     "ple.blocked_back_sub_min_dim": [16, 32, 64, 96, 127, 128, 129, 192, 256],
     "gemm.axpy_fast_path_min_volume": [64, 512, 1728, 3375, 4096, 4913, 8000, 13824, 32768],
     "polynomial.interpolate_fast_min_points": [2, 4, 8, 15, 16, 17, 32, 64, 128],
+    "gemm.winograd_min_dim": [32, 64, 96, 127, 128, 129, 192, 256, 512],
+    "triangular.base_case_max_dim": [2, 4, 6, 7, 8, 9, 12, 16, 32],
+    "ple.scalar_base_max_cols": [2, 3, 4, 6, 8, 12, 16, 24, 32],
 }
+# Seed tags: the retained thresholds take their declaration order, the three
+# seam thresholds take 28-30 after the extent tags 16-27.
+THRESHOLD_TAGS = {field: tag for tag, field in enumerate(list(THRESHOLD_GRIDS)[:16])} | {
+    "gemm.winograd_min_dim": 28,
+    "triangular.base_case_max_dim": 29,
+    "ple.scalar_base_max_cols": 30,
+}
+# Each `_max_` threshold's codec floor; absent fields are lower-bound thresholds.
+THRESHOLD_UPPER_FLOORS = {
+    "polynomial.karatsuba_max_out_len": 0,
+    "bit_matrix.transpose_simple_max_blocks": 0,
+    "ple.panel_base_max_cols": 1,
+    "triangular.base_case_max_dim": 1,
+    "ple.scalar_base_max_cols": 1,
+}
+M31 = (1 << 31) - 1
 THRESHOLD_ENUMS = {
     "bit_backend.simd_min_words": "simd_min_words",
     "polynomial.karatsuba_min_degree": "karatsuba_min_degree",
@@ -237,6 +238,9 @@ THRESHOLD_ENUMS = {
     "ple.blocked_back_sub_min_dim": "ple_blocked_back_sub_min_dim",
     "gemm.axpy_fast_path_min_volume": "gemm_axpy_fast_path_min_volume",
     "polynomial.interpolate_fast_min_points": "interpolate_fast_min_points",
+    "gemm.winograd_min_dim": "winograd_min_dim",
+    "triangular.base_case_max_dim": "triangular_base_case_max_dim",
+    "ple.scalar_base_max_cols": "ple_scalar_base_max_cols",
 }
 THRESHOLD_DEFAULTS = {
     "bit_backend.simd_min_words": 8,
@@ -255,6 +259,9 @@ THRESHOLD_DEFAULTS = {
     "ple.blocked_back_sub_min_dim": 128,
     "gemm.axpy_fast_path_min_volume": 4096,
     "polynomial.interpolate_fast_min_points": 16,
+    "gemm.winograd_min_dim": 128,
+    "triangular.base_case_max_dim": 8,
+    "ple.scalar_base_max_cols": 1,
 }
 
 
@@ -269,6 +276,8 @@ def expected_core_retained_grid() -> list[dict[str, Any]]:
         "ple.panel_base_max_cols": "ple_panel_base_max_cols",
         "ple.blocked_back_sub_min_dim": "ple_blocked_back_sub_min_dim",
         "gemm.axpy_fast_path_min_volume": "gemm_axpy_fast_path_min_volume",
+        "triangular.base_case_max_dim": "triangular_base_case_max_dim",
+        "ple.scalar_base_max_cols": "ple_scalar_base_max_cols",
     }
     result = []
     for path, grid in THRESHOLD_GRIDS.items():
@@ -278,7 +287,7 @@ def expected_core_retained_grid() -> list[dict[str, Any]]:
         for variant in variants:
             result.append({"field": field, "variant": variant, "grid": grid,
                            "default": THRESHOLD_DEFAULTS[path]})
-    require(len(result) == 17, "internal retained report grid count changed")
+    require(len(result) == 20, "internal retained report grid count changed")
     return result
 
 
@@ -401,8 +410,95 @@ def counts(cells: int) -> dict[str, int]:
             "progress_records": 30 * cells}
 
 
-def producing_inputs(root: Path, revision: str | None = None) -> dict[str, Any]:
-    value = load_json(root / PRODUCING_MANIFEST, canonical=False)
+def repository_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def relative_path(value: Any, where: str) -> str:
+    require(isinstance(value, str) and value, f"{where} must be a repository path")
+    path = Path(value)
+    require(not path.is_absolute() and path.parts and path.as_posix() == value
+            and all(part not in {"", ".", ".."} for part in path.parts),
+            f"{where} is not a normalized repository-relative path")
+    return value
+
+
+def declaration_path(issue: str) -> str:
+    return f"dev/active/{issue}/campaign-declaration.json"
+
+
+def load_declaration(campaign: str, root: Path | None = None) -> dict[str, Any]:
+    """The committed declaration the run ID names, checked in full."""
+    match = RUN_ID.fullmatch(campaign) if isinstance(campaign, str) else None
+    require(match is not None, f"campaign ID {campaign!r} is not gf2-<issue>-<stamp>-<pid>")
+    issue = match.group(1)
+    root = root or repository_root()
+    value = load_json(root / declaration_path(issue), canonical=False)
+    require_keys(value, ["schema", "issue", "protocol", "producing_manifest",
+                         "measured_owners", "imported_owners", "evidence_index"],
+                 "campaign declaration")
+    require(set(value) == {"schema", "issue", "protocol", "producing_manifest",
+                           "measured_owners", "imported_owners", "evidence_index"}
+            and value["schema"] == DECLARATION_SCHEMA and value["issue"] == issue
+            and isinstance(value["evidence_index"], bool),
+            "campaign declaration schema/issue mismatch")
+    relative_path(value["protocol"], "declared protocol")
+    relative_path(value["producing_manifest"], "declared producing manifest")
+    measured, imported = value["measured_owners"], value["imported_owners"]
+    require(isinstance(measured, list) and isinstance(imported, list),
+            "declared owners must be lists")
+    names = []
+    for owner in measured:
+        require(set(owner) == {"owner", "name", "cells"} and type(owner["cells"]) is int
+                and owner["cells"] > 0, "declared measured owner is malformed")
+        names.append((owner["name"], owner["owner"]))
+    for owner in imported:
+        require(set(owner) == {"owner", "name", "section", "envelope", "complete"}
+                and owner["section"] == f"{owner['owner']}/permanent",
+                "declared imported owner is malformed")
+        for artifact_name in ["envelope", "complete"]:
+            entry = owner[artifact_name]
+            require(set(entry) == {"path", "sha256"}, "declared imported artifact is malformed")
+            relative_path(entry["path"], "declared imported artifact")
+            require_sha(entry["sha256"], "declared imported artifact digest")
+        names.append((owner["name"], owner["owner"]))
+    require(sorted(names) == sorted(OWNER_NAMES.items())
+            and measured and measured[0]["name"] == "core",
+            "campaign declaration must measure core first and cover each owner once")
+    return value
+
+
+def declaration_for_config(config: Any) -> dict[str, Any]:
+    return load_declaration(config["campaign_id"])
+
+
+def declared_counts(declaration: Any) -> dict[str, int]:
+    return counts(sum(owner["cells"] for owner in declaration["measured_owners"]))
+
+
+def owner_counts(declaration: Any, owner: str) -> dict[str, int]:
+    return counts(next(item["cells"] for item in declaration["measured_owners"]
+                       if item["owner"] == owner))
+
+
+def measured_names(declaration: Any) -> list[str]:
+    return [owner["name"] for owner in declaration["measured_owners"]]
+
+
+def imported_owner(declaration: Any, name: str) -> dict[str, Any] | None:
+    return next((owner for owner in declaration["imported_owners"] if owner["name"] == name),
+                None)
+
+
+def declared_processes(declaration: Any) -> list[tuple[str, list[str]]]:
+    return ([(f"{name}-producer", ["--fresh-tuning-process-child" if name == "core"
+                                   else "--fresh-child"])
+             for name in measured_names(declaration)]
+            + [("composer", []), ("driver", [])])
+
+
+def producing_inputs(root: Path, manifest: str, revision: str | None = None) -> dict[str, Any]:
+    value = load_json(root / manifest, canonical=False)
     require_keys(value, ["schema", "behavior_sources", "lifecycle_sources",
                          "build_inputs"], "producing input manifest")
     require(value["schema"] == PRODUCING_INPUTS_SCHEMA,
@@ -523,9 +619,9 @@ def validate_manifest(manifest: Any, owner: str, stage: Path,
     require(manifest["owner"] == owner and manifest["owner_protocol"] == protocol
             and manifest["behavior_token"] == behavior,
             f"{owner} manifest identity mismatch")
-    protocol_path = Path(__file__).resolve().parents[1] / "active/a83583e0/premeasurement-protocol.md"
-    protocol_sha = digest(protocol_path.read_bytes())
-    require(manifest["counts"] == OWNER_COUNTS[owner], f"{owner} counts mismatch")
+    declaration = load_declaration(manifest["campaign_id"])
+    protocol_sha = digest((repository_root() / declaration["protocol"]).read_bytes())
+    require(manifest["counts"] == owner_counts(declaration, owner), f"{owner} counts mismatch")
     phases = ["retained-thresholds", "core-extents", "m4rm-joint"] if owner == "gf2-core" else ["algebra-extent"]
     require(manifest["phases"] == phases, f"{owner} phases mismatch")
     require(len(manifest["processes"]) == 1, f"{owner} must have one process")
@@ -547,8 +643,8 @@ def validate_manifest(manifest: Any, owner: str, stage: Path,
         for execution in range(5):
             for candidate in rotated(base, execution):
                 expected_order.append((phase, field, stratum, candidate, execution + 1))
-    require(len(units) == OWNER_COUNTS[owner]["accepted_results"] == len(expected_order),
-            f"{owner} unit count mismatch")
+    require(len(units) == owner_counts(declaration, owner)["accepted_results"]
+            == len(expected_order), f"{owner} unit count mismatch")
     seen = set()
     for ordinal, (unit, expected) in enumerate(zip(units, expected_order)):
         require_keys(unit, ["ordinal", "identity", "key", "process", "case",
@@ -648,7 +744,7 @@ def validate_seed_inventory(seeds: Any, field: str, shape: int) -> None:
 def validate_retained_seeds(seeds: Any, field: str, size: int) -> None:
     require_keys(seeds, ["schema", "derivation", "seed_root", "field", "field_tag",
                          "size", "streams"], "retained seed inventory")
-    tag = list(THRESHOLD_GRIDS).index(field)
+    tag = THRESHOLD_TAGS[field]
     require(seeds["schema"] == "fixture-seeds-v2"
             and seeds["derivation"] == "gf2-calibration-seed-v1"
             and seeds["seed_root"] == 0x5ECC9BF800000000
@@ -688,6 +784,10 @@ def validate_retained_seeds(seeds: Any, field: str, size: int) -> None:
             "gemm.axpy_fast_path_min_volume": [("lhs", 0x900), ("rhs", 0x901)],
             "polynomial.interpolate_fast_min_points": [("coefficients", 0xA00),
                                                          ("point_offset", 0xA01)],
+            "gemm.winograd_min_dim": [("lhs", 0xD00), ("rhs", 0xD01)],
+            "triangular.base_case_max_dim": [("unit_lower", 0xE00), ("unit_upper", 0xE01),
+                                             ("rhs", 0xE02)],
+            "ple.scalar_base_max_cols": [("unit_lower", 0xF00), ("unit_upper", 0xF01)],
         }[field]
         expected_streams = [(f"{name}[{bank}]", role + (bank << 16))
                             for bank in range(8) for name, role in roles]
@@ -733,18 +833,21 @@ def threshold_forcing(case: Any) -> list[dict[str, Any]]:
         value = size
     elif field == "polynomial.karatsuba_min_degree":
         value = MAX_U64 if conservative else size
-    elif field in {"polynomial.karatsuba_max_out_len",
-                   "bit_matrix.transpose_simple_max_blocks", "ple.panel_base_max_cols"}:
+    elif field in THRESHOLD_UPPER_FLOORS:
         value = size - int(not conservative)
     changes = [(family, leaf, value)]
     companions = {
-        "soa_batch.parallel_min_len": ("soa_batch", "parallel_chunk_len", 16384),
-        "m4rm.wide_tier_min_stride_words": ("m4rm", "tiled_min_stride_words", MAX_U64),
-        "triangular.trsm_blocked_min_dim": ("triangular", "trsm_panel_rows", 64),
-        "ple.panel_base_max_cols": ("ple", "panel_byte_lane_max_cols", 256),
+        "soa_batch.parallel_min_len": [("soa_batch", "parallel_chunk_len", 16384)],
+        "m4rm.wide_tier_min_stride_words": [("m4rm", "tiled_min_stride_words", MAX_U64)],
+        "triangular.trsm_blocked_min_dim": [("triangular", "trsm_panel_rows", 64)],
+        "ple.panel_base_max_cols": [("ple", "panel_byte_lane_max_cols", 256)],
+        # Winograd's classical leaves call `gemm`; its GEMM companions stay
+        # conservative and are read back explicitly.
+        "gemm.winograd_min_dim": [("gemm", "axpy_fast_path_min_volume", 4096),
+                                  ("gemm", "row_tile", 32), ("gemm", "col_tile", 64)],
+        "triangular.base_case_max_dim": [("triangular", "trsm_blocked_min_dim", MAX_U64)],
     }
-    if field in companions:
-        changes.append(companions[field])
+    changes.extend(companions.get(field, []))
     return [{"family": a, "field": b, "value": c} for a, b, c in changes]
 
 
@@ -834,54 +937,82 @@ def threshold_shape(field: str, size: int) -> str:
     if field == "gemm.axpy_fast_path_min_volume":
         size = round(size ** (1 / 3))
         return f"{size}x{size} * {size}x{size}"
-    if field == "triangular.trsm_blocked_min_dim":
+    if field in {"triangular.trsm_blocked_min_dim", "gemm.winograd_min_dim",
+                 "triangular.base_case_max_dim"}:
         return f"{size}x{size} * {size}x{size}"
     return f"{size}x{size}"
 
 
+THRESHOLD_ROUTES = {
+    "bit_backend.simd_min_words": ("scalar", "simd"),
+    "polynomial.karatsuba_min_degree": ("schoolbook", "karatsuba"),
+    "polynomial.karatsuba_max_out_len": ("karatsuba", "mul_ntt"),
+    "polynomial.div_rem_fast_min_len": ("div_rem", "div_rem_fast"),
+    "polynomial.subproduct_min_len": ("eval_batch", "subproduct_auto"),
+    "bit_matrix.transpose_simple_max_blocks": ("simple", "macro_tiled"),
+    "soa_batch.parallel_min_len": ("sequential", "parallel"),
+    "m4rm.wide_tier_min_stride_words": ("small_n", "wide"),
+    "m4rm.tiled_min_stride_words": ("row_wise", "register_tiled"),
+    "dense_inverse.m4ri_min_dim": ("scalar", "m4ri"),
+    "dense_inverse.blocked_min_dim": ("scalar_ple", "blocked_panelized"),
+    "triangular.trsm_blocked_min_dim": ("recursive", "blocked"),
+    "ple.panel_base_max_cols": ("panel_base", "sub_panel_recursion"),
+    "ple.blocked_back_sub_min_dim": ("scalar", "blocked"),
+    "gemm.axpy_fast_path_min_volume": ("per_cell", "whole_gemm"),
+    "polynomial.interpolate_fast_min_points": ("barycentric", "subproduct_tree"),
+    "gemm.winograd_min_dim": ("classical", "winograd"),
+    "triangular.base_case_max_dim": ("base_case", "recursive"),
+    "ple.scalar_base_max_cols": ("scalar_base", "block_recursive"),
+}
+
+
 def validate_threshold_route(case: Any, outcome: Any) -> None:
     field = case["identity"]["field"]
-    index = list(THRESHOLD_GRIDS).index(field)
     arm = case["kind"]["spec"]["arm"] == "asymptotic"
     size = case["kind"]["spec"]["size"]
-    conservative = ["scalar", "schoolbook", "karatsuba", "div_rem", "eval_batch", "simple",
-                    "sequential", "small_n", "row_wise", "scalar", "scalar_ple", "recursive",
-                    "panel_base", "scalar", "per_cell", "barycentric"]
-    asymptotic = ["simd", "karatsuba", "mul_ntt", "div_rem_fast", "subproduct_auto", "macro_tiled",
-                  "parallel", "wide", "register_tiled", "m4ri", "blocked_panelized", "blocked",
-                  "sub_panel_recursion", "blocked", "whole_gemm", "subproduct_tree"]
-    route = (asymptotic if arm else conservative)[index]
+    route = THRESHOLD_ROUTES[field][int(arm)]
     effective, capability = "not_required", "not_required"
-    if index == 0:
+    if field == "bit_backend.simd_min_words":
         effective = "baked_selector_direct_backend"
         capability = outcome["capability_observation"] if arm else "scalar_backend"
         require(not arm or capability == "simd_backend=avx2",
                 "unknown concrete SIMD capability")
-    elif index in {1, 2, 3, 4}:
+    elif field in {"polynomial.karatsuba_min_degree", "polynomial.karatsuba_max_out_len",
+                   "polynomial.div_rem_fast_min_len", "polynomial.subproduct_min_len"}:
         effective = "production_dispatch"
-    elif index == 6:
+    elif field == "soa_batch.parallel_min_len":
         effective = "parallel_chunk=16384" if arm else "sequential_no_chunk"
         capability = "dedicated_pool_width=4"
-    elif index == 7:
+    elif field == "m4rm.wide_tier_min_stride_words":
         schedule, _ = m4rm_schedule(expected_forced_selectors(case)["m4rm"], 512, 64 * size)
         effective = f"panel_width={schedule['panel_width']}"
-    elif index == 8:
+    elif field == "m4rm.tiled_min_stride_words":
         effective, capability = ("RegisterTiled" if arm else "RowWise"), "simd_tile8xn=resolved"
-    elif index == 11:
+    elif field == "triangular.trsm_blocked_min_dim":
         effective = "panel_rows=Some(64)" if arm else "panel_rows=None"
         capability = "fp251_whole_gemm_available=true"
-    elif index == 12:
+    elif field == "ple.panel_base_max_cols":
         effective = f"max_panel_cols={size-int(arm)}"
         capability = "carrier_lane=byte panel_byte_lane_max_cols=256"
-    elif index == 13:
+    elif field == "ple.blocked_back_sub_min_dim":
         effective = f"rank={size//2} free_cols={size-size//2}"
-    elif index == 14:
+    elif field == "gemm.axpy_fast_path_min_volume":
         effective, capability = ("WholeGemm" if arm else "PerCell"), "fp251_whole_gemm_available=true"
-    elif index == 15:
+    elif field == "polynomial.interpolate_fast_min_points":
         # The owner reports the variant's display spelling (`generic`,
         # `two_adic`); the case carries its serialized enum name.
         effective = {"generic_interpolation": "generic",
                      "two_adic_interpolation": "two_adic"}[case["kind"]["spec"]["variant"]]
+    elif field == "gemm.winograd_min_dim":
+        effective = f"dispatch={'Winograd' if arm else 'Classical'} base=whole_gemm"
+        capability = "m31_whole_gemm_available=true"
+    elif field == "triangular.base_case_max_dim":
+        effective = (f"triangular_route=({size-int(arm)}, {'Recursive' if arm else 'BaseCase'})"
+                     " trsm_panel_rows=None")
+    elif field == "ple.scalar_base_max_cols":
+        effective = (f"ple_base_route=({size-int(arm)}, "
+                     f"{'BlockRecursive' if arm else 'ScalarBase'}) panel_cols=None")
+        capability = "carrier_lane=None"
     require(outcome["requested_route"] == outcome["observed_route"] == route
             and outcome["effective_observation"] == effective
             and outcome["capability_observation"] == capability,
@@ -955,7 +1086,7 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
                                 u64(n) + u64(bank) + u64(0xC00) + u64(n*n) + data))
         return tuple_hash(b'gf2-a83583e0-operands-v1\0', parts)
     if retained:
-        tag, key = list(THRESHOLD_GRIDS).index(field), shape
+        tag, key = THRESHOLD_TAGS[field], shape
         m = k = n = shape
         if tag == 5:
             m = k = n = shape * 64
@@ -990,7 +1121,15 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
         bit = lambda rows,cols,role: values_hash(b'gf2-calibration-bit-matrix-v1',[rows,cols],bit_words(rows,cols,seed(role,bank)))
         prime_domain = b'gf2-calibration-fp251-matrix-v1' if retained else b'gf2-extent-prime-matrix-v1'
         prime = lambda rows,cols,values,p=251: values_hash(prime_domain,([rows,cols] if retained else [p,rows,cols]),values)
-        if field.startswith('bit_matrix.'):
+        m31 = lambda values: values_hash(b'gf2-calibration-m31-matrix-v1',[m,m],values)
+        if retained and tag == 28:
+            parts.extend(m31(random_values(seed(role,bank),m*m,M31)) for role in [0xD00,0xD01])
+        elif retained and tag == 29:
+            parts.append(m31(lu_product(m,seed(0xE00,bank),seed(0xE01,bank),M31)))
+            parts.append(m31(random_values(seed(0xE02,bank),m*m,M31)))
+        elif retained and tag == 30:
+            parts.append(m31(lu_product(m,seed(0xF00,bank),seed(0xF01,bank),M31)))
+        elif field.startswith('bit_matrix.'):
             parts.append(bit(m,n,0x100))
         elif field.startswith('soa_batch.'):
             for degree,role in [(2,0x200),(2,0x201),(3,0x202),(3,0x203)]:
@@ -1043,7 +1182,8 @@ def operand_identity(owner: str, field: str, shape: int, retained: bool = False)
     if not retained:
         domain=b'gf2-extent-operands-bank-role-tuple-v1'
     else:
-        domain={5:b'unary-bit',6:b'soa',7:b'binary-bit',8:b'binary-bit',9:b'unary-bit',10:b'unary-fp251',11:b'binary-fp251',12:b'unary-fp251',13:b'unary-fp251',14:b'binary-fp251',15:b'interpolation'}[tag]
+        domain={5:b'unary-bit',6:b'soa',7:b'binary-bit',8:b'binary-bit',9:b'unary-bit',10:b'unary-fp251',11:b'binary-fp251',12:b'unary-fp251',13:b'unary-fp251',14:b'binary-fp251',15:b'interpolation',
+                28:b'winograd-m31',29:b'solve-m31',30:b'ple-m31'}[tag]
         domain=b'gf2-calibration-'+domain+b'-banks-v1'
     return tuple_hash(domain,parts)
 
@@ -1533,7 +1673,8 @@ def validate_checkpoints(stage: Path, campaign: str, identity: Any) -> dict[str,
     require(pending.is_dir() and not any(pending.iterdir()), "checkpoint pending directory is not empty")
     units_dir = root / "units"
     files = list(units_dir.iterdir())
-    require(len(files) == 4302, f"checkpoint unit count is {len(files)}, expected 4302")
+    expected = declared_counts(load_declaration(campaign))["accepted_results"]
+    require(len(files) == expected, f"checkpoint unit count is {len(files)}, expected {expected}")
     result = {}
     for path in files:
         require(path.is_file() and not path.is_symlink() and path.suffix == ".json",
@@ -1915,7 +2056,9 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
             and after_units == before_units,
             "child launch/result budget observations do not cover exact attempted order")
     empty_sha = digest(b"")
-    for owner in ["core", "algebra"]:
+    declaration = declaration_for_config(campaign_config)
+    expected_accepted = declared_counts(declaration)["accepted_results"]
+    for owner in measured_names(declaration):
         process_id = f"{owner}-producer"
         for mode in ["self-check", "list-grid", "capability-report"]:
             expected_start = {"kind": "orchestration-start", "process": process_id,
@@ -1938,11 +2081,11 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
                         digest(expected_stdout), digest(expected_stdout + b"\n")}
                     and details.get("stderr_sha256") == digest(bytes(details.get("stderr", []))),
                     f"staged {owner} --{mode} preflight streams differ from saved response")
-    require(set(accepted) == set(checkpoint_files) and len(accepted) == 4302,
+    require(set(accepted) == set(checkpoint_files) and len(accepted) == expected_accepted,
             "journal/checkpoint acceptance universe mismatch")
     accepted_attempts = {checkpoint["result"]["attempt"]
                          for checkpoint, _ in checkpoint_files.values()}
-    require(len(accepted_attempts) == 4302 and accepted_attempts <= set(raw_streams),
+    require(len(accepted_attempts) == expected_accepted and accepted_attempts <= set(raw_streams),
             "completed child attempts differ from exact accepted attempt identities")
     require(set(raw_streams) == set(child_exits),
             "durable raw completion and repaired child-exit attempts differ")
@@ -2097,7 +2240,8 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
                                    "calls": sample["calls"], "elapsed_ns": sample["elapsed_ns"]},
                         "progress/result window mismatch")
     require(sum(len(progress_by_attempt[checkpoint["result"]["attempt"]])
-                for checkpoint, _ in checkpoint_files.values()) == COUNTS["progress_records"],
+                for checkpoint, _ in checkpoint_files.values())
+            == declared_counts(declaration)["progress_records"],
             "accepted journal progress accounting mismatch")
     terminal = records[-1]["event"]
     if preterminal:
@@ -2379,7 +2523,8 @@ def validate_threshold_decisions(core_index: Any, core_decisions: Any) -> None:
     selectors = conservative_core_selectors()
     actual = {(item["field"], item["variant"]): item
               for item in core_decisions["retained_thresholds"]}
-    require(len(actual) == 18, "owner threshold decision count mismatch")
+    # One decision per sweep, plus the reconciled shared interpolation value.
+    require(len(actual) == len(THRESHOLD_GRIDS) + 2, "owner threshold decision count mismatch")
     computed: dict[tuple[str, str], dict[str, Any]] = {}
     for field, grid in THRESHOLD_GRIDS.items():
         variants = [("generic", "generic_interpolation"),
@@ -2387,9 +2532,7 @@ def validate_threshold_decisions(core_index: Any, core_decisions: Any) -> None:
                         "interpolate_fast_min_points") else [("standard", "standard")]
         family, leaf = field.split(".", 1)
         default = selectors[family][leaf]
-        upper_floor = (1 if field == "ple.panel_base_max_cols" else 0
-                       if field in {"polynomial.karatsuba_max_out_len",
-                                    "bit_matrix.transpose_simple_max_blocks"} else None)
+        upper_floor = THRESHOLD_UPPER_FLOORS.get(field)
         for stratum_variant, enum_variant in variants:
             points = []
             for size in grid:
@@ -2511,33 +2654,27 @@ def build_extent_series(index: dict[tuple[str, str, str, int], dict[str, Any]],
     return result
 
 
-def validate_decisions(core_bundle: Any, algebra_bundle: Any,
-                       core_response: Any, algebra_response: Any) -> dict[str, Any]:
+def validate_decisions(core_bundle: Any, algebra_bundle: Any | None,
+                       core_response: Any, algebra_response: Any | None,
+                       declaration: Any) -> dict[str, Any]:
+    """Recomputes every measured owner's decisions; an imported algebra owner
+    passes `None` for its bundle and response and has no decisions here."""
     require_keys(core_response, ["operation", "artifact", "decisions"], "core owner response")
-    require_keys(algebra_response, ["operation", "artifact", "decisions"],
-                 "algebra owner response")
-    require(core_response["operation"] == "emit-owner" and
-            algebra_response["operation"] == "emit-owner", "owner responses are not emit-owner")
+    require(core_response["operation"] == "emit-owner", "owner responses are not emit-owner")
     core_decisions = embedded(core_response["decisions"], "core decisions")
-    algebra_decisions = embedded(algebra_response["decisions"], "algebra decisions")
     require_keys(core_decisions, ["schema", "retained_thresholds", "extents", "gemm",
                                   "proposed_m4rm", "joint_m4rm", "measured", "omitted",
                                   "counts"], "core decisions")
-    require_keys(algebra_decisions, ["schema", "field", "selected", "decision",
-                                     "accepted_result_count"], "algebra decisions")
     require(core_decisions["schema"] == CORE_PROTOCOL
-            and core_decisions["counts"] == OWNER_COUNTS["gf2-core"],
+            and core_decisions["counts"] == owner_counts(declaration, "gf2-core"),
             "core decision schema/count mismatch")
-    require(algebra_decisions["schema"] == "algebra-tuning-analysis-v1"
-            and algebra_decisions["field"] == "permanent.gray_chunk_subsets",
-            "algebra decision schema/field mismatch")
     measured = set(THRESHOLD_GRIDS) | (set(EXTENT_GRIDS) - {"gemm.tiles"}) | {
         "gemm.row_tile", "gemm.col_tile"}
     selectors = conservative_core_selectors()
     all_leaves = {f"{family}.{leaf}" for family, values in selectors.items()
                   for leaf in values}
     require(core_decisions["measured"] == sorted(measured)
-            and len(core_decisions["omitted"]) == 10
+            and len(core_decisions["omitted"]) == len(all_leaves - measured)
             and set(core_decisions["omitted"]) == all_leaves - measured
             and measured | set(core_decisions["omitted"]) == all_leaves,
             "core measured/omitted selector complement mismatch")
@@ -2608,7 +2745,22 @@ def validate_decisions(core_bundle: Any, algebra_bundle: Any,
     } and joint_series[1]["candidate"] == proposed, "derived M4RM vectors mismatch")
     joint_expected = analyze_joint(joint_series[0], joint_series[1])
     close_numeric(joint_expected, core_decisions["joint_m4rm"], "joint M4RM decision")
-
+    recomputed_decisions = {"core": recomputed, "gemm": gemm_expected, "joint": joint_expected,
+                            "core_decisions": core_decisions}
+    require((algebra_bundle is None) == (algebra_response is None)
+            == (imported_owner(declaration, "algebra") is not None),
+            "algebra decisions do not follow the declaration")
+    if algebra_response is None:
+        return recomputed_decisions
+    require_keys(algebra_response, ["operation", "artifact", "decisions"],
+                 "algebra owner response")
+    require(algebra_response["operation"] == "emit-owner", "owner responses are not emit-owner")
+    algebra_decisions = embedded(algebra_response["decisions"], "algebra decisions")
+    require_keys(algebra_decisions, ["schema", "field", "selected", "decision",
+                                     "accepted_result_count"], "algebra decisions")
+    require(algebra_decisions["schema"] == "algebra-tuning-analysis-v1"
+            and algebra_decisions["field"] == "permanent.gray_chunk_subsets",
+            "algebra decision schema/field mismatch")
     algebra_index = result_index(algebra_bundle)
     series = []
     for candidate in ALGEBRA_CANDIDATES:
@@ -2636,11 +2788,11 @@ def validate_decisions(core_bundle: Any, algebra_bundle: Any,
     algebra_expected = analyze_extent(series, 65536)
     close_numeric(algebra_expected, algebra_decisions["decision"], "algebra decision")
     require(algebra_decisions["selected"] == algebra_expected["selected"]
-            and algebra_decisions["accepted_result_count"] == 90,
+            and algebra_decisions["accepted_result_count"]
+                == owner_counts(declaration, "gf2-algebra")["accepted_results"],
             "algebra selected/count mismatch")
-    return {"core": recomputed, "gemm": gemm_expected, "joint": joint_expected,
-            "algebra": algebra_expected,
-            "core_decisions": core_decisions, "algebra_decisions": algebra_decisions}
+    return {**recomputed_decisions, "algebra": algebra_expected,
+            "algebra_decisions": algebra_decisions}
 
 
 def identity_for(path: Path) -> dict[str, str]:
@@ -2659,7 +2811,8 @@ def byte_artifact(value: Any, where: str, stage: Path) -> tuple[Path, bytes]:
 
 
 def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
-    expected_names = [f"{owner}-{mode}" for owner in ["algebra", "core"]
+    declaration = declaration_for_config(campaign_config)
+    expected_names = [f"{owner}-{mode}" for owner in sorted(measured_names(declaration))
                       for mode in ["capability-report", "list-grid", "self-check"]]
     reports = campaign_config["preflight_reports"]
     require(isinstance(reports, dict) and list(reports) == expected_names,
@@ -2689,7 +2842,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                     and evidence["raw_sample_schema"] == "raw-timing-samples-v3"
                     and {key: evidence[key] for key in
                          ["cells", "accepted_results", "windows"]} ==
-                        {key: OWNER_COUNTS["gf2-algebra"][key] for key in
+                        {key: owner_counts(declaration, "gf2-algebra")[key] for key in
                          ["cells", "accepted_results", "windows"]}
                     and isinstance(evidence["details"], list)
                     and all(isinstance(item, str) for item in evidence["details"]),
@@ -2729,7 +2882,7 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                     and evidence["behavior_token"] == CORE_BEHAVIOR
                     and evidence["raw_schema"] == "raw-timing-samples-v3"
                     and evidence["measured"] == measured
-                    and evidence["counts"] == OWNER_COUNTS["gf2-core"]
+                    and evidence["counts"] == owner_counts(declaration, "gf2-core")
                     and evidence["reserved_joint_cells"] == 24
                     and evidence["retained"] == expected_core_retained_grid()
                     and evidence["extents"] == expected_core_extent_grid(),
@@ -2741,7 +2894,8 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                         "core --self-check and --list-grid inventories differ")
         else:
             require_keys(evidence, ["scope", "full_grid_probes", "timed_children",
-                                    "fp251_whole_gemm", "simd_backend",
+                                    "fp251_whole_gemm", "m31_whole_gemm",
+                                    "m31_ple_panel_lane", "simd_backend",
                                     "dedicated_pool_width", "representative_dot_length", "dot",
                                     "ordinary_companions", "cpu_features", "required_features",
                                     "required_threads"], f"{name} core capability evidence")
@@ -2749,6 +2903,8 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                     and evidence["full_grid_probes"] is False
                     and evidence["timed_children"] == 0
                     and evidence["fp251_whole_gemm"] is True
+                    and evidence["m31_whole_gemm"] is True
+                    and evidence["m31_ple_panel_lane"] is None
                     and evidence["simd_backend"] in {"avx2", "avx512", "neon"}
                     and evidence["dedicated_pool_width"] == 4
                     and evidence["representative_dot_length"] ==
@@ -2775,11 +2931,18 @@ def validate_preflight_reports(stage: Path, campaign_config: Any) -> None:
                         "core dot capability did not exercise the requested chunk")
 
 
-def validate_staging(stage: Path, campaign_config: Any) -> Any:
+# The staged executables of a campaign that measures both owners.
+FOUR_EXECUTABLES = ["algebra-producer", "composer", "core-producer", "driver"]
+
+
+def validate_staging(stage: Path, campaign_config: Any,
+                     expected_ids: list[str] | None = None) -> Any:
     staging = load_json(stage / "staging-manifest.json")
     require_keys(staging, ["schema", "source_before", "source_after", "executables"],
                  "staging manifest")
-    expected_ids = ["algebra-producer", "composer", "core-producer", "driver"]
+    if expected_ids is None:
+        expected_ids = sorted(process for process, _ in
+                              declared_processes(declaration_for_config(campaign_config)))
     require(staging["schema"] == "tuning-campaign-staging-v1"
             and list(staging["executables"]) == expected_ids,
             "staging manifest schema/executable inventory mismatch")
@@ -3009,15 +3172,129 @@ def validate_owner_publication(stage: Path, campaign: str, name: str, owner: str
     return canonical_path, candidate
 
 
+def section_of(document: bytes, section: str) -> Any:
+    envelope = load_json_bytes(document, "envelope", canonical=False)
+    require(isinstance(envelope, dict) and isinstance(envelope.get("sections"), dict)
+            and section in envelope["sections"], f"envelope lacks section {section}")
+    return envelope["sections"][section]
+
+
+def validate_imported_owners(stage: Path, config: Any, declaration: Any,
+                             records: list[dict[str, Any]]) -> None:
+    """Each imported owner is the declared committed envelope, staged byte for
+    byte, and strictly reopened by two journaled composer runs before any
+    timed child."""
+    root = repository_root()
+    evidence = config.get("imported_owners", [])
+    require(isinstance(evidence, list)
+            and len(evidence) == len(declaration["imported_owners"]),
+            "imported owner evidence differs from the declaration")
+    composer = next((item for item in config["processes"] if item["id"] == "composer"), None)
+    require(composer is not None, "missing composer descriptor")
+    first_child = next((record["sequence"] for record in records
+                        if record["event"] == "cell-start"), len(records))
+    for entry, declared in zip(evidence, declaration["imported_owners"]):
+        require(set(entry) == {"owner", "source", "staged", "reopen"}
+                and entry["owner"] == declared["owner"]
+                and entry["source"] == declared["envelope"],
+                "imported owner evidence identity mismatch")
+        source = (root / declared["envelope"]["path"]).read_bytes()
+        reference = (root / declared["complete"]["path"]).read_bytes()
+        require(digest(source) == declared["envelope"]["sha256"]
+                and digest(reference) == declared["complete"]["sha256"],
+                "committed imported envelope differs from its declared SHA-256")
+        staged_path, staged = byte_artifact(entry["staged"], "staged imported owner", stage)
+        require(staged_path == stage / f"{declared['name']}-owner.json" and staged == source,
+                "staged imported owner is not the committed envelope")
+        wrapper = section_of(source, declared["section"])
+        require(compact(wrapper) == compact(section_of(reference, declared["section"])),
+                "imported owner wrapper differs from its committed complete envelope")
+        record_path, record = artifact(entry["reopen"], "imported-owner reopen record", stage)
+        directory = record_path.parent
+        require(record_path.name == "reopen.json" and directory.parent == stage / "imported"
+                and directory.name.startswith(f"{declared['name']}-"),
+                "imported-owner reopen record path mismatch")
+        require_keys(record, ["schema", "owner", "section", "source", "reference", "staged",
+                              "wrapper_sha256", "probe_core", "probe_complete", "runs"],
+                     "imported-owner reopen record")
+        require(set(record) == {"schema", "owner", "section", "source", "reference", "staged",
+                                "wrapper_sha256", "probe_core", "probe_complete", "runs"}
+                and record["schema"] == "tuning-campaign-imported-owner-v1"
+                and record["owner"] == declared["owner"]
+                and record["section"] == declared["section"]
+                and record["source"] == declared["envelope"]
+                and record["reference"] == declared["complete"]
+                and record["staged"] == entry["staged"]
+                # The driver hashes the wrapper as a sorted-key JSON value.
+                and record["wrapper_sha256"] == digest(compact(sorted_json(wrapper))),
+                "imported-owner reopen record differs from the declaration")
+        probe_core, _ = byte_artifact(record["probe_core"], "imported reopen core probe", stage)
+        probe_complete, complete_bytes = byte_artifact(record["probe_complete"],
+                                                       "imported reopen complete probe", stage)
+        require(probe_core == directory / "probe-core.json"
+                and probe_complete == directory / "probe-complete.json"
+                and compact(section_of(complete_bytes, declared["section"])) == compact(wrapper),
+                "strict reopen changed the imported owner wrapper")
+        runs = record["runs"]
+        require(isinstance(runs, list) and len(runs) == 2, "imported reopen run count mismatch")
+        stamps = []
+        for index, run in enumerate(runs):
+            require(set(run) == {"request", "exit"}, "imported reopen run is malformed")
+            request_path, request = artifact(run["request"], "imported reopen request", stage)
+            exit_path, exit_evidence = artifact(run["exit"], "imported reopen exit", stage)
+            require(request_path == directory / f"request-{index}.json"
+                    and exit_path == directory / f"exit-{index}.json"
+                    and set(request) == {"schema", "process", "args"}
+                    and request["schema"] == "tuning-campaign-imported-owner-request-v1"
+                    and request["process"] == composer,
+                    "imported reopen request identity mismatch")
+            args = request["args"]
+            prefix = (["core-owner", str(probe_core)] if index == 0 else
+                      ["complete", str(probe_core), str(staged_path), str(probe_complete)])
+            require(isinstance(args, list) and args[:len(prefix)] == prefix
+                    and len(args) == len(prefix) + 5
+                    and args[len(prefix)] == config["campaign_id"]
+                    and args[len(prefix) + 2:] == [config["identity"]["source_revision"],
+                                                   "false", composer["executable_sha256"]],
+                    "imported reopen composer arguments differ from the declared form")
+            stamps.append(args[len(prefix) + 1])
+            require_keys(exit_evidence, ["outcome", "stdout", "stderr"], "imported reopen exit")
+            clean_process_outcome(exit_evidence["outcome"], "imported reopen outcome")
+            starts = [record for record in records if record["event"] == "orchestration-start"
+                      and record["details"] == {"kind": "orchestration-start",
+                                                 "process": "composer",
+                                                 "request": run["request"]}]
+            exits = [record for record in records if record["event"] == "orchestration-exit"
+                     and record["details"] == {"kind": "orchestration-exit",
+                                                "process": "composer", "exit": run["exit"],
+                                                "outcome": exit_evidence["outcome"]}]
+            require(len(starts) == len(exits) == 1
+                    and starts[0]["sequence"] < exits[0]["sequence"] < first_child,
+                    "imported reopen orchestration journal evidence mismatch")
+            validate_budget_diagnostic(records[starts[0]["sequence"] - 1], "composer",
+                                       "before-launch")
+            validate_budget_diagnostic(records[exits[0]["sequence"] + 1], "composer",
+                                       "after-result")
+        require(stamps[0] == stamps[1] and isinstance(stamps[0], str) and stamps[0].endswith("Z"),
+                "imported reopen runs carry different assembly instants")
+
+
 def validate_envelopes(stage: Path, campaign: str, core_response: Any,
-                       algebra_response: Any, decisions: Any, core_manifest: Any,
-                       algebra_manifest: Any, config: Any,
+                       algebra_response: Any | None, decisions: Any, core_manifest: Any,
+                       algebra_manifest: Any | None, config: Any,
                        records: list[dict[str, Any]]) -> None:
+    declaration = declaration_for_config(config)
+    imported = imported_owner(declaration, "algebra")
     core_path, core = validate_owner_publication(
         stage, campaign, "core", "gf2-core", core_response, core_manifest, config, records)
-    algebra_path, algebra = validate_owner_publication(
-        stage, campaign, "algebra", "gf2-algebra", algebra_response, algebra_manifest,
-        config, records)
+    if imported is None:
+        algebra_path, algebra = validate_owner_publication(
+            stage, campaign, "algebra", "gf2-algebra", algebra_response, algebra_manifest,
+            config, records)
+    else:
+        validate_imported_owners(stage, config, declaration, records)
+        algebra_path = stage / "algebra-owner.json"
+        algebra = load_json(algebra_path, canonical=False)
     composition = load_json(stage / "composition.json")
     require_keys(composition, ["schema", "args", "source_revision", "source_dirty",
                                "tool_sha256", "core", "algebra", "candidate", "request",
@@ -3096,12 +3373,13 @@ def validate_envelopes(stage: Path, campaign: str, core_response: Any,
                        "artifact": composition["output"]}
     require(reopens and all(record["details"] == expected_reopen for record in reopens),
             "composition promotion/reopen evidence mismatch")
-    for envelope, ids in [(core, {"gf2-core/selectors"}),
-                          (algebra, {"gf2-algebra/permanent"}),
-                          (complete, {"gf2-core/selectors", "gf2-algebra/permanent"}),
-                          (candidate_complete,
-                           {"gf2-core/selectors", "gf2-algebra/permanent"})]:
-        require(envelope.get("profile_format_version") == 2 and envelope.get("profile_id") == campaign
+    for envelope, ids, profile in [
+            (core, {"gf2-core/selectors"}, campaign),
+            (algebra, {"gf2-algebra/permanent"},
+             campaign if imported is None else algebra.get("profile_id")),
+            (complete, {"gf2-core/selectors", "gf2-algebra/permanent"}, campaign),
+            (candidate_complete, {"gf2-core/selectors", "gf2-algebra/permanent"}, campaign)]:
+        require(envelope.get("profile_format_version") == 2 and envelope.get("profile_id") == profile
                 and set(envelope.get("sections", {})) == ids, "profile envelope identity mismatch")
     require(complete["sections"]["gf2-core/selectors"] == core["sections"]["gf2-core/selectors"]
             and complete["sections"]["gf2-algebra/permanent"] == algebra["sections"]["gf2-algebra/permanent"],
@@ -3112,14 +3390,22 @@ def validate_envelopes(stage: Path, campaign: str, core_response: Any,
     require(core_section["measurement"]["harness_schema"] == CORE_BEHAVIOR
             and core_section["measurement"]["receipt"] == expected_receipt,
             "core calibrated provenance/citation mismatch")
+    if imported is not None:
+        reference = section_of((repository_root() / imported["complete"]["path"]).read_bytes(),
+                               imported["section"])
+        require(compact(complete["sections"][imported["section"]]) == compact(reference),
+                "complete envelope changed the imported algebra wrapper")
     require(algebra_section["measurement"]["harness_schema"] == ALGEBRA_BEHAVIOR
-            and algebra_section["measurement"]["receipt"] == core_section["measurement"]["receipt"],
+            and (imported is not None
+                 or algebra_section["measurement"]["receipt"]
+                     == core_section["measurement"]["receipt"]),
             "algebra calibrated provenance/citation mismatch")
     for envelope in [core, algebra, complete, candidate_complete]:
         validate_envelope_hashes(envelope)
     require(core_section["selectors"] == expected_published_selectors(decisions),
             "complete core selector section differs from all decisions and omission complement")
-    require(algebra_section["selectors"] == {"permanent":{"gray_chunk_subsets":decisions["algebra_decisions"]["selected"]}},
+    require(imported is not None
+            or algebra_section["selectors"] == {"permanent":{"gray_chunk_subsets":decisions["algebra_decisions"]["selected"]}},
             "complete algebra selector section differs from decision")
     require(complete["assembly"] == {"kind":"assembled","assembled_at":args[5],
                 "source_revision":args[6],"source_dirty":False,"tool":"dev/tools/tuning-profile-compose",
@@ -3134,7 +3420,8 @@ def validate_envelopes(stage: Path, campaign: str, core_response: Any,
             and dot["kind"] == "scalar"
             and selected["field_vec"]["dot_chunk_len"] == dot["value"],
             "GEMM/dot owner publication differs from measured decisions")
-    require(algebra_section["selectors"]["permanent"]["gray_chunk_subsets"] ==
+    require(imported is not None
+            or algebra_section["selectors"]["permanent"]["gray_chunk_subsets"] ==
             decisions["algebra_decisions"]["selected"], "algebra publication differs from decision")
 
 
@@ -3152,7 +3439,7 @@ def validate_derivation(stage: Path, original: Any, resolved: Any, decisions: An
     input_path, partial = artifact(request["accepted_inputs"], "M4RM derivation input", stage)
     expected_partial = {"schema": INPUT_SCHEMA,
                         "manifest_sha256": original["manifest_sha256"],
-                        "accepted": core_bundle["accepted"][:4068]}
+                        "accepted": core_bundle["accepted"][:len(core_bundle["accepted"]) - 144]}
     require(input_path == stage / "core-derivation-input.json" and partial == expected_partial,
             "M4RM derivation input is not the exact one-factor prefix")
     require(derived["original_manifest_sha256"] == original["manifest_sha256"]
@@ -3229,7 +3516,7 @@ def validate_sessions(stage: Path, log_data: bytes, records: list[dict[str, Any]
                 and descriptor["session_id"] == directory.name
                 and descriptor["channels"] == campaign_config["channels"]
                 and descriptor["identity"] == campaign_config["identity"]
-                and descriptor["counts"] == COUNTS
+                and descriptor["counts"] == declared_counts(declaration_for_config(campaign_config))
                 and type(preparer["pid"]) is int and preparer["pid"] > 0
                 and type(preparer["start_time_ticks"]) is int
                 and preparer["start_time_ticks"] > 0
@@ -3430,31 +3717,117 @@ def validate_sessions(stage: Path, log_data: bytes, records: list[dict[str, Any]
                 "active session claim differs from final session descriptor")
 
 
-RECEIPT_TEMPLATE = '# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nSee `campaign.json`, owner responses and `composition.json` for runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal and checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through `receipt-projection.json` raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n## Raw result index\n\n'
+RECEIPT_TEMPLATE = '# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Declaration: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nThe campaign record, owner responses and composition record listed under cited evidence hold the runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests listed under cited evidence contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal, pinned by its row in the committed checksum manifest `{}`, and the checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through the receipt projection\'s raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n'
+
+
+def destination_for(layout: dict[str, str], declaration: Any, source: str) -> str | None:
+    """The protocol publication destination of one stage file (driver mirror)."""
+    if source == "core-owner.json":
+        return layout["core-owner.json"]
+    if source == "algebra-owner.json" and imported_owner(declaration, "algebra") is None:
+        return layout["algebra-owner.json"]
+    if source in {"complete.json", "receipt.md"}:
+        return layout[source]
+    if source == f"{REPOSITORY_PUBLICATION_DIR}/validation.json":
+        return f"{layout['session']}/validation.json"
+    if source == EVIDENCE_INDEX:
+        return layout["evidence-index"]
+    if source.startswith("bin/"):
+        return None
+    if source in COMMITTED_SESSION_RECORDS:
+        return f"{layout['session']}/{source}"
+    return f"{layout['archive']}/{source}"
+
+
+def cited_sources(declaration: Any, config: Any, stage: Path) -> list[tuple[str, str]]:
+    """Stage files the receipt and evidence index cite, in citation order."""
+    sources = [("Campaign record", "campaign.json")]
+    owners = declaration["measured_owners"]
+    sources += [(f"{owner['owner']} owner manifest", f"{owner['name']}-manifest.json")
+                for owner in owners]
+    sources.append(("gf2-core resolved owner manifest", "core-resolved-manifest.json"))
+    sources += [(f"{owner['owner']} owner response", f"{owner['name']}-owner-response.json")
+                for owner in owners]
+    for evidence in config.get("imported_owners", []):
+        path = Path(evidence["reopen"]["path"])
+        require(path.is_relative_to(stage), "imported-owner record lies outside the stage")
+        sources.append((f"{evidence['owner']} imported-owner reopen record",
+                        path.relative_to(stage).as_posix()))
+    sources += [("Composition record", "composition.json"),
+                ("Checkpoint manifest", "checkpoints/manifest.json"),
+                ("Receipt projection", "receipt-projection.json"),
+                ("Raw result index", RAW_RESULT_INDEX), ("Owner decisions", OWNER_DECISIONS)]
+    return sources
+
+
+def cited_rows(stage: Path, layout: dict[str, str], declaration: Any,
+               sources: list[tuple[str, str]]) -> str:
+    rows = ""
+    for label, source in sources:
+        destination = destination_for(layout, declaration, source)
+        require(destination is not None, f"cited stage file {source} has no destination")
+        path = stage / source
+        require(path.is_file() and not path.is_symlink(), f"cited stage file {source} is missing")
+        rows += f"| {label} | `{destination}` | `{digest(path.read_bytes())}` |\n"
+    return rows
+
+
+def imported_receipt_section(declaration: Any) -> str:
+    if not declaration["imported_owners"]:
+        return ""
+    text = "## Imported owners\n\n"
+    for owner in declaration["imported_owners"]:
+        text += (f"Owner `{owner['owner']}` is imported unmeasured from "
+                 f"`{owner['envelope']['path']}` (SHA-256 `{owner['envelope']['sha256']}`). "
+                 f"The complete envelope carries its `{owner['section']}` section wrapper "
+                 f"unchanged; the committed complete envelope `{owner['complete']['path']}` "
+                 f"(SHA-256 `{owner['complete']['sha256']}`) holds the same wrapper.\n\n")
+    return text
+
 
 def validate_receipt_text(text: str, projection: Any, config: Any, bundles: list[Any],
-                          decisions_sha: str) -> None:
+                          decisions_sha: str, stage: Path) -> None:
     """Bind every visible byte, numerical claim and raw row to checked evidence."""
+    declaration = declaration_for_config(config)
+    layout = publication_layout(config['campaign_id'])
     match=re.search(r'```json\n(.*?)\n```',text,re.S)
     require(match is not None,'receipt decision block missing')
     decisions=load_json_bytes(match.group(1).encode(),'receipt decision block',canonical=False)
+
+    def archived_artifact(owner: Any) -> Any:
+        path = Path(owner['artifact']['path'])
+        require(path.is_relative_to(stage), 'owner artifact lies outside the stage')
+        return {'path': f"{layout['archive']}/{path.relative_to(stage).as_posix()}",
+                'sha256': owner['artifact']['sha256']}
     require(isinstance(decisions,list) and len(decisions)==len(projection['owners'])
             and all(isinstance(shown,dict) and shown.keys()==owner.keys()
-                    and all(shown[key]==owner[key] for key in owner if key!='decisions')
+                    and all(shown[key]==owner[key] for key in owner
+                            if key not in {'decisions', 'artifact'})
+                    and shown['artifact']==archived_artifact(owner)
                     and embedded(shown['decisions'],'receipt decisions')
                         ==summarize_samples(embedded(owner['decisions'],'owner decisions'))
                     for shown,owner in zip(decisions,projection['owners'])),
             'receipt decisions differ from the summarized owner decisions')
-    prefix=RECEIPT_TEMPLATE.format(config['campaign_id'],config['protocol']['path'],
-                                   config['protocol']['sha256'],config['identity']['source_revision'],
-                                   match.group(1))
-    expected=prefix+f"Preparation CPU affinity: `{config['affinity']}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n"
+    expected=RECEIPT_TEMPLATE.format(config['campaign_id'],declaration['protocol'],
+                                     config['protocol']['sha256'],
+                                     declaration_path(declaration['issue']),
+                                     config['identity']['behavior_sha256'][
+                                         declaration_path(declaration['issue'])],
+                                     config['identity']['source_revision'],layout['checksum'],
+                                     match.group(1))
+    expected+=imported_receipt_section(declaration)
+    expected+=("## Cited evidence\n\nArchived paths lie in the host-local evidence archive "
+               "that the committed checksum manifest pins.\n\n"
+               "| Evidence | Path | SHA-256 |\n|---|---|---|\n")
+    expected+=cited_rows(stage,layout,declaration,cited_sources(declaration,config,stage))
+    expected+="\n## Raw result index\n\n"
+    expected+=f"Preparation CPU affinity: `{config['affinity']}`. Held-lock observations are recorded in each session journal and must equal this set.\n\n"
     for manifest in config['manifests']:
         expected+=f"Owner `{manifest['owner']}` uses protocol `{manifest['owner_protocol']}` and behavior `{manifest['behavior_token']}`; executable `{manifest['processes'][0]['executable_sha256']}`.\n\n"
     c=projection['counts']
     expected+=f"Accepted accounting: {c['cells']} cells, {c['probes']} probes, {c['timed_children']} timed children, {c['accepted_results']} accepted results, {c['windows']} raw windows, {c['progress_records']} timing progress records. Observed {projection['attempts']} attempts, {projection['orchestration']} orchestration actions, {projection['sessions']} sessions at the receipt projection journal_sequence. Later finalization and resume events remain in the authoritative journal.\n\n"
-    expected+=f"The archived `{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{digest(raw_result_index(bundles).encode())}`.\n"
-    expected+=f"The archived `{OWNER_DECISIONS}` holds the complete owner decisions, every raw timing window included; SHA-256 `{decisions_sha}`. The decisions above replace each raw `samples` array with its `sample_count`.\n"
+    expected+=f"The archived `{layout['archive']}/{RAW_RESULT_INDEX}` lists every accepted raw key with its field, stratum, candidate and task; SHA-256 `{digest(raw_result_index(bundles).encode())}`.\n"
+    expected+=f"The archived `{layout['archive']}/{OWNER_DECISIONS}` holds the complete owner decisions, every raw timing window included; SHA-256 `{decisions_sha}`. The decisions above replace each raw `samples` array with its `sample_count`.\n"
     require(text==expected,'receipt text/numerical row differs from deterministic evidence projection')
 
 
@@ -3481,8 +3854,8 @@ def raw_result_index(bundles: list[Any]) -> str:
     return index
 
 
-def validate_receipt(stage: Path, campaign: str, core_bundle: Any, algebra_bundle: Any,
-                     campaign_config: Any, core_response: Any, algebra_response: Any,
+def validate_receipt(stage: Path, campaign: str, bundles: list[Any],
+                     campaign_config: Any, responses: list[Any],
                      records: list[dict[str, Any]], checkpoint_files: dict[str, Any]) -> None:
     affinity = validate_affinity(campaign_config["affinity"], "campaign affinity")
     projection = load_json(stage / "receipt-projection.json")
@@ -3491,7 +3864,7 @@ def validate_receipt(stage: Path, campaign: str, core_bundle: Any, algebra_bundl
                               "owners", "counts", "attempts", "orchestration", "sessions",
                               "raw_artifacts", "journal_sequence", "raw_keys"],
                  "receipt projection")
-    expected_keys = [entry["unit"]["key"] for bundle in (core_bundle, algebra_bundle)
+    expected_keys = [entry["unit"]["key"] for bundle in bundles
                      for entry in bundle["accepted"]]
     expected_artifacts = []
     for key in expected_keys:
@@ -3516,32 +3889,39 @@ def validate_receipt(stage: Path, campaign: str, core_bundle: Any, algebra_bundl
             and projection["identity"] == campaign_config["identity"]
             and projection["runtime"] == campaign_config["runtime"]
             and projection["affinity"] == affinity
-            and projection["owners"] == [core_response, algebra_response]
-            and projection["counts"] == COUNTS
+            and projection["owners"] == responses
+            and projection["counts"] == declared_counts(declaration_for_config(campaign_config))
             and projection["attempts"] == attempts
             and projection["orchestration"] == orchestration
             and projection["sessions"] == sessions
             and projection["raw_artifacts"] == expected_artifacts
             and projection["raw_keys"] == expected_keys,
             "receipt projection differs from immutable campaign evidence")
-    validate_receipt_documents(stage, campaign, core_bundle, algebra_bundle, campaign_config,
-                               projection)
+    validate_receipt_documents(stage, campaign, bundles, campaign_config, projection)
 
 
-def validate_receipt_documents(stage: Path, campaign: str, core_bundle: Any,
-                               algebra_bundle: Any, campaign_config: Any,
-                               projection: Any) -> None:
+def validate_receipt_documents(stage: Path, campaign: str, bundles: list[Any],
+                               campaign_config: Any, projection: Any) -> None:
     """Checks the receipt, raw result index and owner decisions the driver renders.
 
-    `projection["owners"]` holds the accepted owner responses; the full stage
-    validation binds them to the owner emissions and the journal first.
+    `bundles` and `projection["owners"]` hold each measured owner's accepted
+    results and response, core first; the full stage validation binds them to
+    the owner emissions and the journal first.
     """
+    declaration = declaration_for_config(campaign_config)
+    counts_of = declared_counts(declaration)
     receipt = stage / "receipt.md"
     require(receipt.is_file() and not receipt.is_symlink(), "missing staged receipt.md")
     text = receipt.read_text(encoding="utf-8")
-    for witness in [campaign, "a83583e0", "GEMM", "dot", "4302", "17925", "21510",
-                    CORE_PROTOCOL, ALGEBRA_PROTOCOL, CORE_BEHAVIOR, ALGEBRA_BEHAVIOR]:
+    witnesses = [campaign, declaration["issue"], "GEMM", "dot",
+                 str(counts_of["accepted_results"]), str(counts_of["windows"]),
+                 str(counts_of["progress_records"]), CORE_PROTOCOL, CORE_BEHAVIOR]
+    if "algebra" in measured_names(declaration):
+        witnesses += [ALGEBRA_PROTOCOL, ALGEBRA_BEHAVIOR]
+    for witness in witnesses:
         require(witness in text, f"receipt lacks required witness {witness!r}")
+    require(str(stage) not in text and "/tmp/" not in text,
+            "receipt names an absolute stage path")
     affinity = validate_affinity(campaign_config["affinity"], "campaign affinity")
     require(f"Preparation CPU affinity: `{affinity}`" in text,
             "receipt lacks the exact preparation CPU affinity")
@@ -3553,20 +3933,19 @@ def validate_receipt_documents(stage: Path, campaign: str, core_bundle: Any,
     # archived index; require both publication-critical families.
     index_path = stage / RAW_RESULT_INDEX
     require(index_path.is_file() and not index_path.is_symlink()
-            and index_path.read_text(encoding="utf-8")
-                == raw_result_index([core_bundle, algebra_bundle]),
+            and index_path.read_text(encoding="utf-8") == raw_result_index(bundles),
             "raw result index differs from the accepted bundles")
-    keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]}
+    keys = {entry["unit"]["key"] for entry in bundles[0]["accepted"]}
     cited = {token for token in re.findall(r"[0-9a-f]{64}", index_path.read_text())
              if token in keys}
-    gemm_keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]
+    gemm_keys = {entry["unit"]["key"] for entry in bundles[0]["accepted"]
                  if entry["unit"]["identity"]["field"] == "gemm.tiles"}
-    dot_keys = {entry["unit"]["key"] for entry in core_bundle["accepted"]
+    dot_keys = {entry["unit"]["key"] for entry in bundles[0]["accepted"]
                 if entry["unit"]["identity"]["field"] == "field_vec.dot_chunk_len"}
     require(cited & gemm_keys and cited & dot_keys,
             "raw result index lacks resolvable GEMM/dot raw keys")
-    validate_receipt_text(text, projection, campaign_config, [core_bundle, algebra_bundle],
-                          digest(decisions_path.read_bytes()))
+    validate_receipt_text(text, projection, campaign_config, bundles,
+                          digest(decisions_path.read_bytes()), stage)
 
 
 def check_encodings(fixture_arg: str) -> dict[str, Any]:
@@ -3598,10 +3977,48 @@ def check_encodings(fixture_arg: str) -> dict[str, Any]:
     return {"schema": "tuning-extent-campaign-encoding-check-v1", "status": "encodings-valid"}
 
 
+def check_operands(fixture_arg: str) -> dict[str, Any]:
+    """`--operand-check`: this validator's operand reconstructions.
+
+    Each fixture row holds the operand digest an owner computed from its own
+    fixture for one field and grid point; the independent reconstruction from
+    the declared seeds must equal it.
+    """
+    fixture = load_json_bytes(Path(fixture_arg).read_bytes(), "operand fixture",
+                              canonical=False)
+    rows = fixture["operands"]
+    require(isinstance(rows, list) and rows, "operand fixture is empty")
+    for row in rows:
+        require(set(row) == {"owner", "field", "size", "retained", "sha256"},
+                "operand fixture row is malformed")
+        require(operand_identity(row["owner"], row["field"], row["size"], row["retained"])
+                == row["sha256"],
+                f"reconstructed operands of {row['field']}/{row['size']} differ from the owner's")
+    return {"schema": "tuning-extent-campaign-operand-check-v1", "status": "operands-valid",
+            "rows": len(rows)}
+
+
+def check_imported_owners(stage_arg: str) -> dict[str, Any]:
+    """`--imported-owner-check`: the imported-owner checks on a prepared stage.
+
+    Reads `campaign.json` and the execution journal and runs exactly the
+    checks the full validation applies to each declared imported owner.
+    """
+    stage = Path(stage_arg)
+    require(stage.is_absolute() and stage.is_dir() and stage.resolve() == stage,
+            "--stage must be a canonical directory")
+    config = load_json(stage / "campaign.json")
+    records, _, _ = parse_journal(stage, config["campaign_id"])
+    validate_imported_owners(stage, config, declaration_for_config(config), records)
+    return {"schema": "tuning-extent-campaign-imported-owner-check-v1",
+            "campaign_id": config["campaign_id"], "status": "imported-owners-valid"}
+
+
 def check_receipt_documents(stage_arg: str) -> dict[str, Any]:
     """`--receipt-check`: the receipt-document checks on a driver-rendered stage.
 
-    Reads `campaign.json`, both accepted bundles and `receipt-projection.json`
+    Reads `campaign.json`, each measured owner's accepted bundle and
+    `receipt-projection.json`
     and runs exactly the checks the full validation applies to the receipt, the
     raw result index and the archived owner decisions, so the driver's
     rendering and these expectations are tested against each other.
@@ -3611,9 +4028,9 @@ def check_receipt_documents(stage_arg: str) -> dict[str, Any]:
             "--stage must be a canonical directory")
     config = load_json(stage / "campaign.json")
     projection = load_json(stage / "receipt-projection.json")
-    validate_receipt_documents(stage, config["campaign_id"],
-                               load_json(stage / "core-accepted.json"),
-                               load_json(stage / "algebra-accepted.json"), config, projection)
+    bundles = [load_json(stage / f"{name}-accepted.json")
+               for name in measured_names(declaration_for_config(config))]
+    validate_receipt_documents(stage, config["campaign_id"], bundles, config, projection)
     return {"schema": "tuning-extent-campaign-receipt-check-v1",
             "campaign_id": config["campaign_id"], "status": "receipt-valid"}
 
@@ -3634,6 +4051,14 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     campaign = campaign_config.get("campaign_id")
     require(isinstance(campaign, str) and RUN_ID.fullmatch(campaign) is not None
             and stage.name == campaign, "campaign ID/stage name mismatch")
+    declaration = load_declaration(campaign)
+    require(set(campaign_config) - {"imported_owners"} == {
+                "schema", "campaign_id", "channels", "identity", "manifests", "processes",
+                "runtime", "protocol", "validator", "receipt", "affinity", "source_tree",
+                "producing_manifest", "build_inputs", "preflight_reports",
+                "host_admission_policy"}
+            and ("imported_owners" in campaign_config) == bool(declaration["imported_owners"]),
+            "campaign index fields differ from the declaration")
     identity = campaign_config.get("identity")
     require_keys(identity, ["protocol_digest", "source_revision", "source_sha256",
                             "ordered_work_manifest_sha256", "process_descriptors_sha256",
@@ -3653,12 +4078,12 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
                 ";cpus=" + compact(affinity).decode())
             and identity["host_identity"].split(";cpus=", 1)[0],
             "source or host identity is malformed")
-    root = Path(__file__).resolve().parents[2]
+    root = repository_root()
     tree = git_output(root, "rev-parse", f"{identity['source_revision']}^{{tree}}")
     require(campaign_config["source_tree"] == tree
             and digest(tree.encode()) == identity["source_sha256"],
             "producing revision/tree identity mismatch")
-    protocol = Path(__file__).resolve().parents[1] / "active/a83583e0/premeasurement-protocol.md"
+    protocol = root / declaration["protocol"]
     require(digest(protocol.read_bytes()) == identity["protocol_digest"],
             "runtime protocol digest differs from reviewed declaration")
     require(campaign_config["protocol"] == {"path": str(protocol), "sha256": identity["protocol_digest"]},
@@ -3688,8 +4113,8 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(channels == {"stage": str(stage), "execution_log": str(stage / "execution.log"),
                          "checkpoints": str(stage / "checkpoints")},
             "campaign channels mismatch")
-    inputs = producing_inputs(root, identity["source_revision"])
-    producing_path = (root / PRODUCING_MANIFEST).resolve()
+    inputs = producing_inputs(root, declaration["producing_manifest"], identity["source_revision"])
+    producing_path = (root / declaration["producing_manifest"]).resolve()
     require(campaign_config["producing_manifest"] == {
                 "path": str(producing_path), "sha256": digest(producing_path.read_bytes())},
             "campaign producing-input manifest identity mismatch")
@@ -3700,11 +4125,11 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
             "build-input inventory/digests differ from the producing manifest")
     require(identity["behavior_sha256"].get("dev/scripts/validate-tuning-extent-campaign.py") ==
             digest(validator.read_bytes()), "behavior manifest omits this validator")
+    require(declaration_path(declaration["issue"]) in inputs["lifecycle_sources"],
+            "lifecycle manifest omits the campaign declaration")
     require(identity["process_descriptors_sha256"] == digest(compact(campaign_config["processes"])),
             "process descriptor digest mismatch")
-    expected_processes = [("core-producer", ["--fresh-tuning-process-child"]),
-                          ("algebra-producer", ["--fresh-child"]),
-                          ("composer", []), ("driver", [])]
+    expected_processes = declared_processes(declaration)
     require([(item.get("id"), item.get("arguments")) for item in campaign_config["processes"]]
             == expected_processes, "campaign process order/entry points mismatch")
     for item, (process_id, arguments) in zip(campaign_config["processes"], expected_processes):
@@ -3719,16 +4144,19 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(campaign_config["host_admission_policy"] == HOST_ADMISSION_POLICY,
             "host-admission policy differs from the reviewed declaration")
 
-    core_manifest = load_json(stage / "core-manifest.json")
-    algebra_manifest = load_json(stage / "algebra-manifest.json")
+    names = measured_names(declaration)
+    manifests = {name: load_json(stage / f"{name}-manifest.json") for name in names}
+    core_manifest = manifests["core"]
+    algebra_manifest = manifests.get("algebra")
     core_resolved = load_json(stage / "core-resolved-manifest.json")
-    require(campaign_config.get("manifests") == [core_manifest, algebra_manifest],
+    require(campaign_config.get("manifests") == [manifests[name] for name in names],
             "campaign index manifests differ from sealed originals")
-    work_projection = [core_manifest["ordered_units"], algebra_manifest["ordered_units"]]
+    work_projection = [manifests[name]["ordered_units"] for name in names]
     require(identity["ordered_work_manifest_sha256"] == digest(compact(work_projection)),
             "ordered-work identity digest mismatch")
     validate_manifest(core_manifest, "gf2-core", stage, False)
-    validate_manifest(algebra_manifest, "gf2-algebra", stage, True)
+    if algebra_manifest is not None:
+        validate_manifest(algebra_manifest, "gf2-algebra", stage, True)
     validate_manifest(core_resolved, "gf2-core", stage, True)
     require(core_resolved["ordered_units"][:-144] == core_manifest["ordered_units"][:-144]
             and [u["identity"] for u in core_resolved["ordered_units"][-144:]] ==
@@ -3736,32 +4164,33 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
             "M4RM derivation changed fixed slots")
 
     checkpoint_files = validate_checkpoints(stage, campaign, identity)
-    core_bundle = load_json(stage / "core-accepted.json")
-    algebra_bundle = load_json(stage / "algebra-accepted.json")
-    validate_bundle(core_bundle, core_resolved, checkpoint_files)
-    validate_bundle(algebra_bundle, algebra_manifest, checkpoint_files)
-    require(set(checkpoint_files) == {u["key"] for u in core_resolved["ordered_units"]}
-            | {u["key"] for u in algebra_manifest["ordered_units"]},
-            "checkpoint universe differs from both resolved manifests")
+    resolved = {**manifests, "core": core_resolved}
+    bundles = {name: load_json(stage / f"{name}-accepted.json") for name in names}
+    for name in names:
+        validate_bundle(bundles[name], resolved[name], checkpoint_files)
+    require(set(checkpoint_files) == {u["key"] for name in names
+                                      for u in resolved[name]["ordered_units"]},
+            "checkpoint universe differs from the resolved manifests")
 
     records, log_data, record_ends = parse_journal(stage, campaign)
     validate_journal(records, log_data, record_ends, checkpoint_files, campaign_config,
                      preterminal)
-    core_response = load_json(stage / "core-owner-response.json")
-    algebra_response = load_json(stage / "algebra-owner-response.json")
-    decisions = validate_decisions(core_bundle, algebra_bundle, core_response, algebra_response)
-    validate_derivation(stage, core_manifest, core_resolved, decisions, core_bundle)
-    validate_envelopes(stage, campaign, core_response, algebra_response, decisions,
+    responses = {name: load_json(stage / f"{name}-owner-response.json") for name in names}
+    decisions = validate_decisions(bundles["core"], bundles.get("algebra"), responses["core"],
+                                   responses.get("algebra"), declaration)
+    validate_derivation(stage, core_manifest, core_resolved, decisions, bundles["core"])
+    validate_envelopes(stage, campaign, responses["core"], responses.get("algebra"), decisions,
                        core_resolved, algebra_manifest, campaign_config, records)
-    validate_receipt(stage, campaign, core_bundle, algebra_bundle, campaign_config,
-                     core_response, algebra_response, records, checkpoint_files)
+    validate_receipt(stage, campaign, [bundles[name] for name in names], campaign_config,
+                     [responses[name] for name in names], records, checkpoint_files)
     validate_sessions(stage, log_data, records, record_ends, campaign_config, preterminal)
+    counts_of = declared_counts(declaration)
     return {"schema": "tuning-extent-campaign-validation-v1", "campaign_id": campaign,
             "status": "preterminal-valid" if preterminal else "complete-valid",
-            "cells": 717, "accepted_results": 4302, "windows": 17925,
+            "cells": counts_of["cells"], "accepted_results": counts_of["accepted_results"],
+            "windows": counts_of["windows"],
             "execution_log_sha256": digest((stage / "execution.log").read_bytes()),
-            "core_manifest_sha256": core_resolved["manifest_sha256"],
-            "algebra_manifest_sha256": algebra_manifest["manifest_sha256"]}
+            **{f"{name}_manifest_sha256": resolved[name]["manifest_sha256"] for name in names}}
 
 
 def publication_layout(campaign: str) -> dict[str, str]:
@@ -3772,6 +4201,7 @@ def publication_layout(campaign: str) -> dict[str, str]:
         "algebra-owner.json": f"crates/gf2-algebra/data/tuning-profiles/{campaign}.json",
         "complete.json": f"dev/reference_data/tuning-profiles/{campaign}.json",
         "receipt.md": f"{TUNING_EVIDENCE}/{campaign}.md",
+        "evidence-index": f"{TUNING_EVIDENCE}/{campaign}-evidence.md",
         "checksum": f"{TUNING_EVIDENCE}/{campaign}.sha256",
         "session": f"{TUNING_EVIDENCE}/{campaign}-session",
         "execution.log": f"{archive}/execution.log",
@@ -3783,12 +4213,14 @@ def publication_layout(campaign: str) -> dict[str, str]:
 def expected_publication(stage: Path, campaign: str) -> dict[str, str]:
     """Independently maps every published stage file to its destination.
 
-    Envelopes and receipt take their committed rows; the declared small
-    records and the validation record form the committed session record;
-    every other stage file keeps its relative path in the evidence archive.
-    Staged executables are pinned by digest in the staging manifest and are
-    not published.
+    Measured envelopes and receipt take their committed rows; the declared
+    small records, the validation record and a declared evidence index form
+    committed records; every other stage file, an imported owner's staged
+    copy included, keeps its relative path in the evidence archive. Staged
+    executables are pinned by digest in the staging manifest and are not
+    published.
     """
+    declaration = load_declaration(campaign)
     layout = publication_layout(campaign)
     files = set(checksum_artifact_boundary(stage))
     for path in (stage / "sessions").rglob("*"):
@@ -3797,26 +4229,62 @@ def expected_publication(stage: Path, campaign: str) -> dict[str, str]:
             require(path.is_file(), "non-file in staged session state")
             files.add(path)
     files |= {stage / "execution.log", stage / REPOSITORY_PUBLICATION_DIR / "validation.json"}
+    if declaration["evidence_index"]:
+        files.add(stage / EVIDENCE_INDEX)
     mapping: dict[str, str] = {}
     for path in files:
         source = path.relative_to(stage).as_posix()
-        if source in {"core-owner.json", "algebra-owner.json", "complete.json", "receipt.md"}:
-            destination = layout[source]
-        elif source == f"{REPOSITORY_PUBLICATION_DIR}/validation.json":
-            destination = f"{layout['session']}/validation.json"
-        elif source.startswith("bin/"):
+        destination = destination_for(layout, declaration, source)
+        if destination is None:
             continue
-        elif source in COMMITTED_SESSION_RECORDS:
-            destination = f"{layout['session']}/{source}"
-        else:
-            destination = f"{layout['archive']}/{source}"
         require(destination not in mapping, f"two stage files publish to {destination}")
         mapping[destination] = source
-    require(all(layout[role] in mapping for role in
-                ["core-owner.json", "algebra-owner.json", "complete.json", "receipt.md",
-                 "execution.log"]),
-            "stage lacks an owner, complete, receipt or execution-log publication source")
+    required = ["core-owner.json", "complete.json", "receipt.md", "execution.log"]
+    if imported_owner(declaration, "algebra") is None:
+        required.append("algebra-owner.json")
+    if declaration["evidence_index"]:
+        required.append("evidence-index")
+    require(all(layout[role] in mapping for role in required),
+            "stage lacks an owner, complete, receipt, evidence-index or execution-log "
+            "publication source")
     return mapping
+
+
+def expected_evidence_index(stage: Path, declaration: Any) -> str:
+    """The evidence index the driver renders at publication (driver mirror)."""
+    config = load_json(stage / "campaign.json", canonical=False)
+    campaign = config["campaign_id"]
+    layout = publication_layout(campaign)
+    path = declaration_path(declaration["issue"])
+    text = (f"# Evidence index for {campaign}\n\nThe receipt [`{campaign}.md`]({campaign}.md) "
+            f"is checksum-pinned by [`{campaign}.sha256`]({campaign}.sha256). This index "
+            "resolves the evidence the receipt cites, the execution journal and every envelope "
+            "to its repository path and SHA-256.\n\n"
+            f"Archived paths live under `{layout['archive']}/`, which is host-local and "
+            "git-ignored. The committed checksum manifest pins the archive through its "
+            "`SHA256SUMS` and `execution.log` rows; `SHA256SUMS` lists every archived file.\n\n"
+            "| Evidence | Path | SHA-256 |\n|---|---|---|\n"
+            f"| Protocol | `{declaration['protocol']}` at commit "
+            f"`{config['identity']['source_revision']}` | `{config['protocol']['sha256']}` |\n"
+            f"| Declaration | `{path}` | `{config['identity']['behavior_sha256'][path]}` |\n")
+    text += cited_rows(stage, layout, declaration, cited_sources(declaration, config, stage))
+    text += (f"| Execution journal | `{layout['execution.log']}` | "
+             f"`{digest((stage / 'execution.log').read_bytes())}` |\n")
+    for owner in declaration["measured_owners"]:
+        source = f"{owner['name']}-owner.json"
+        text += (f"| {owner['owner']} owner envelope | "
+                 f"`{destination_for(layout, declaration, source)}` | "
+                 f"`{digest((stage / source).read_bytes())}` |\n")
+    for owner in declaration["imported_owners"]:
+        text += (f"| {owner['owner']} owner envelope (imported) | `{owner['envelope']['path']}` | "
+                 f"`{owner['envelope']['sha256']}` |\n")
+    text += (f"| Complete envelope | `{layout['complete.json']}` | "
+             f"`{digest((stage / 'complete.json').read_bytes())}` |\n"
+             f"| Receipt | `{layout['receipt.md']}` | "
+             f"`{digest((stage / 'receipt.md').read_bytes())}` |\n\n"
+             "Re-validation on the producing host: `python3 dev/scripts/"
+             "validate-tuning-extent-campaign.py --stage <stage> --publication <checkout>`.\n")
+    return text
 
 
 def checksum_rows(rows: list[tuple[str, str]]) -> bytes:
@@ -3848,6 +4316,8 @@ def validate_publication(stage_arg: str, repository_arg: str) -> dict[str, Any]:
     campaign = load_json(stage / "campaign.json")["campaign_id"]
     require(isinstance(campaign, str) and RUN_ID.fullmatch(campaign) is not None,
             "publication campaign ID is malformed")
+    declaration = load_declaration(campaign)
+    imported = imported_owner(declaration, "algebra")
     layout = publication_layout(campaign)
     archive = repository / layout["archive"]
     require(archive.is_dir() and not archive.is_symlink(),
@@ -3886,6 +4356,20 @@ def validate_publication(stage_arg: str, repository_arg: str) -> dict[str, Any]:
     record_path = repository / record
     require(record_path.is_file() and record_path.read_bytes() == staged_plan.read_bytes(),
             "archived plan record differs from the staged plan")
+    if declaration["evidence_index"]:
+        require((stage / EVIDENCE_INDEX).read_text(encoding="utf-8")
+                == expected_evidence_index(stage, declaration),
+                "evidence index differs from the cited stage evidence")
+        index_text = (stage / EVIDENCE_INDEX).read_text(encoding="utf-8")
+        require(str(stage) not in index_text and "/tmp/" not in index_text,
+                "evidence index names an absolute stage path")
+    if imported is not None:
+        committed_import = repository / imported["envelope"]["path"]
+        require(committed_import.is_file()
+                and digest(committed_import.read_bytes()) == imported["envelope"]["sha256"]
+                and committed_import.read_bytes()
+                    == (stage / "algebra-owner.json").read_bytes(),
+                "committed imported owner differs from its declaration or staged copy")
     archive_manifest = repository / layout["archive-manifest"]
     archive_text = checksum_rows(
         [(entry["destination"], entry["sha256"]) for entry in entries
@@ -3912,8 +4396,11 @@ def validate_publication(stage_arg: str, repository_arg: str) -> dict[str, Any]:
         composition = load_json(stage / "composition.json")
         envelope = lambda role: {"path": layout[role],
                                  "sha256": digest((repository / layout[role]).read_bytes())}
+        algebra = (envelope("algebra-owner.json") if imported is None else
+                   {"path": imported["envelope"]["path"],
+                    "sha256": imported["envelope"]["sha256"]})
         require(evidence == {
-                    "algebra": envelope("algebra-owner.json"),
+                    "algebra": algebra,
                     "complete": envelope("complete.json"),
                     "composer_sha256": composition["tool_sha256"],
                     "core": envelope("core-owner.json"),
@@ -4080,20 +4567,25 @@ def reconstruction_self_test() -> None:
 
 
 def launcher_run_id_self_test() -> None:
-    """A run ID minted by the launcher's own format is a valid RUN_ID and ProfileId."""
+    """A run ID minted by the launcher's own format is a valid RUN_ID and ProfileId
+    and names a committed declaration."""
     launcher = Path(__file__).resolve().parent / "tuning-extent-campaign.sh"
-    formats = re.findall(r"^\s*campaign=gf2-a83583e0-\$\(date -u (\+\S+)\)-\$\$$",
+    formats = re.findall(r"^\s*campaign=gf2-\$issue-\$\(date -u (\+\S+)\)-\$\$$",
                          launcher.read_text(), re.MULTILINE)
     require(len(formats) == 1, "launcher must mint its run ID from one date format")
     stamp = subprocess.run(["date", "-u", formats[0]], check=True, capture_output=True,
                            text=True).stdout.strip()
-    minted = f"gf2-a83583e0-{stamp}-4242"
-    require(RUN_ID.fullmatch(minted) is not None, f"launcher-minted {minted} fails RUN_ID")
-    require(PROFILE_ID.fullmatch(minted) is not None,
-            f"launcher-minted {minted} is not a ProfileId")
-    uppercase = f"gf2-a83583e0-{stamp.upper()}-4242"
-    require(RUN_ID.fullmatch(uppercase) is None and PROFILE_ID.fullmatch(uppercase) is None,
-            "uppercase run ID stamp mutation was accepted")
+    for issue in ["a83583e0", "dbd8787d"]:
+        minted = f"gf2-{issue}-{stamp}-4242"
+        require(RUN_ID.fullmatch(minted) is not None, f"launcher-minted {minted} fails RUN_ID")
+        require(PROFILE_ID.fullmatch(minted) is not None,
+                f"launcher-minted {minted} is not a ProfileId")
+        require(load_declaration(minted)["issue"] == issue,
+                f"launcher-minted {minted} names no declaration")
+        uppercase = f"gf2-{issue}-{stamp.upper()}-4242"
+        require(RUN_ID.fullmatch(uppercase) is None and PROFILE_ID.fullmatch(uppercase) is None,
+                "uppercase run ID stamp mutation was accepted")
+    must_reject(lambda: load_declaration(f"gf2-0badc0de-{stamp}-1"), "undeclared issue")
 
 
 def float_encoding_self_test() -> None:
@@ -4123,15 +4615,21 @@ def receipt_summary_self_test() -> None:
 
 
 def publication_self_test() -> None:
-    """The layout is the protocol's table; the publication check rejects drift."""
-    protocol = Path(__file__).resolve().parents[1] / "active/a83583e0/premeasurement-protocol.md"
-    table = protocol.read_text().split("Repository destinations are derived", 1)[1]
-    declared = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|$", table.split("\n\n", 2)[1],
-                              re.MULTILINE))
-    layout = publication_layout("<run-id>")
-    require(declared == {value + "/" if role in {"archive", "session"} else value
-                         for role, value in layout.items()},
-            "publication layout differs from the protocol destination table")
+    """Each declared layout is its protocol's table; the publication check rejects drift."""
+    for issue in ["a83583e0", "dbd8787d"]:
+        declaration = load_declaration(f"gf2-{issue}-19700101t000000z-1")
+        protocol = repository_root() / declaration["protocol"]
+        table = protocol.read_text().split("Repository destinations are derived", 1)[1]
+        declared = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|$", table.split("\n\n", 2)[1],
+                                  re.MULTILINE))
+        layout = publication_layout("<run-id>")
+        if not declaration["evidence_index"]:
+            del layout["evidence-index"]
+        if imported_owner(declaration, "algebra") is not None:
+            del layout["algebra-owner.json"]
+        require(declared == {value + "/" if role in {"archive", "session"} else value
+                             for role, value in layout.items()},
+                f"publication layout differs from the {issue} protocol destination table")
     campaign = "gf2-a83583e0-19700101t000000z-1"
     layout = publication_layout(campaign)
     with tempfile.TemporaryDirectory(prefix="gf2-validator-publication-", dir="/tmp") as temporary:
@@ -4292,13 +4790,16 @@ def self_test() -> None:
     else:
         fail("duplicate CPU affinity mutation was accepted")
     repository = Path(__file__).resolve().parents[2]
-    actual_inputs = producing_inputs(repository)
-    require(len(actual_inputs["behavior_sources"]) > len(actual_inputs["lifecycle_sources"])
-            and len(actual_inputs["build_inputs"]) > len(actual_inputs["behavior_sources"]),
-            "real producing-input manifest does not distinguish its three boundaries")
+    for issue in ["a83583e0", "dbd8787d"]:
+        declaration = load_declaration(f"gf2-{issue}-19700101t000000z-1")
+        actual_inputs = producing_inputs(repository, declaration["producing_manifest"])
+        require(len(actual_inputs["behavior_sources"]) > len(actual_inputs["lifecycle_sources"])
+                and len(actual_inputs["build_inputs"]) > len(actual_inputs["behavior_sources"]),
+                "real producing-input manifest does not distinguish its three boundaries")
     with tempfile.TemporaryDirectory(prefix="gf2-validator-inputs-", dir="/tmp") as temporary:
         root = Path(temporary)
-        manifest_path = root / PRODUCING_MANIFEST
+        manifest_relative = "dev/active/00000000/producing-build-inputs.json"
+        manifest_path = root / manifest_relative
         manifest_path.parent.mkdir(parents=True)
         for relative in ["behavior.rs", "lifecycle.rs", "build.rs"]:
             (root / relative).write_text(relative, encoding="utf-8")
@@ -4307,15 +4808,15 @@ def self_test() -> None:
                         "lifecycle_sources": ["lifecycle.rs"],
                         "build_inputs": ["behavior.rs", "build.rs", "lifecycle.rs"]}
         manifest_path.write_bytes(compact(valid_inputs))
-        producing_inputs(root)
+        producing_inputs(root, manifest_relative)
         mutated_inputs = copy.deepcopy(valid_inputs)
         mutated_inputs["behavior_sources"].append("absent.rs")
         manifest_path.write_bytes(compact(mutated_inputs))
-        must_reject(lambda: producing_inputs(root), "absent producing input")
+        must_reject(lambda: producing_inputs(root, manifest_relative), "absent producing input")
         mutated_inputs = copy.deepcopy(valid_inputs)
         mutated_inputs["lifecycle_sources"] = ["build.rs"]
         manifest_path.write_bytes(compact(mutated_inputs))
-        must_reject(lambda: producing_inputs(root), "lifecycle subset")
+        must_reject(lambda: producing_inputs(root, manifest_relative), "lifecycle subset")
     with tempfile.TemporaryDirectory(prefix="gf2-validator-staging-", dir="/tmp") as temporary:
         root = Path(temporary)
         stage = root / "stage"
@@ -4356,7 +4857,7 @@ def self_test() -> None:
         source_directory.rmdir()
         staging_config = {"identity": {"source_revision": revision}, "source_tree": tree,
                           "processes": processes}
-        validate_staging(stage, staging_config)
+        validate_staging(stage, staging_config, FOUR_EXECUTABLES)
         source_after = build_directory / "source-after.json"
         after = load_json(source_after)
         after["source_tree"] = "3" * 40
@@ -4364,7 +4865,7 @@ def self_test() -> None:
         manifest = load_json(stage / "staging-manifest.json")
         manifest["source_after"] = identity_for(source_after)
         (stage / "staging-manifest.json").write_bytes(compact(manifest))
-        must_reject(lambda: validate_staging(stage, staging_config),
+        must_reject(lambda: validate_staging(stage, staging_config, FOUR_EXECUTABLES),
                     "changed post-build source")
         after["source_tree"] = tree
         source_after.write_bytes(compact(after))
@@ -4372,7 +4873,7 @@ def self_test() -> None:
         (stage / "staging-manifest.json").write_bytes(compact(manifest))
         (binary_directory / "driver").write_bytes(b"mutated")
         try:
-            validate_staging(stage, staging_config)
+            validate_staging(stage, staging_config, FOUR_EXECUTABLES)
         except ValidationError:
             pass
         else:
@@ -4400,24 +4901,36 @@ def main() -> int:
     group.add_argument("--self-test", action="store_true")
     group.add_argument("--encoding-check", metavar="FIXTURE",
                        help="check Rust-encoding reconstructions against a fixture")
+    group.add_argument("--operand-check", metavar="FIXTURE",
+                       help="check operand reconstructions against owner digests")
     parser.add_argument("--preterminal", action="store_true",
                         help="validate immediately before Complete/checksum publication")
     parser.add_argument("--receipt-check", action="store_true",
                         help="check only the receipt documents a driver rendered into --stage")
+    parser.add_argument("--imported-owner-check", action="store_true",
+                        help="check only the imported owners a driver staged into --stage")
     parser.add_argument("--publication", metavar="REPOSITORY",
                         help="check the repository publication of a fully validated stage")
     args = parser.parse_args()
     try:
         if args.self_test:
             require(not args.preterminal and args.publication is None
-                    and not args.receipt_check,
-                    "--preterminal, --publication and --receipt-check require --stage")
+                    and not args.receipt_check and not args.imported_owner_check,
+                    "--preterminal, --publication and the --*-check modes require --stage")
             self_test()
             output = {"schema": "tuning-extent-campaign-validator-self-test-v1", "status": "pass"}
         elif args.encoding_check is not None:
             require(args.stage is None and not args.preterminal and args.publication is None,
                     "--encoding-check takes only its fixture")
             output = check_encodings(args.encoding_check)
+        elif args.operand_check is not None:
+            require(not args.preterminal and args.publication is None and not args.receipt_check,
+                    "--operand-check takes only its fixture")
+            output = check_operands(args.operand_check)
+        elif args.imported_owner_check:
+            require(not args.preterminal and args.publication is None and not args.receipt_check,
+                    "--imported-owner-check checks only the imported owners")
+            output = check_imported_owners(args.stage)
         elif args.receipt_check:
             require(not args.preterminal and args.publication is None,
                     "--receipt-check checks only the receipt documents")

@@ -10,7 +10,8 @@ use gf2_core::field::matrix::{
     reset_last_gemm_axpy_dispatch_route, FieldMatrix, GemmAxpyRoute, GemmTileSite,
 };
 use gf2_core::field::ple::{
-    max_effective_panel_dispatch_cols, reset_max_effective_panel_dispatch_cols,
+    last_effective_ple_base_route, max_effective_panel_dispatch_cols,
+    reset_last_effective_ple_base_route, reset_max_effective_panel_dispatch_cols, PleBaseRoute,
 };
 use gf2_core::field::triangular::{
     last_effective_triangular_route, last_effective_trsm_panel_rows,
@@ -45,6 +46,7 @@ support::fresh_tuning_test!(quiet_solve_matches_recorded_blocked_solve, {
     reset_last_effective_triangular_route();
     reset_last_effective_trsm_panel_rows();
     reset_max_effective_panel_dispatch_cols();
+    reset_last_effective_ple_base_route();
     let recorded = a
         .solve_batch(&b)
         .expect("identity coefficient matrix is invertible");
@@ -53,6 +55,11 @@ support::fresh_tuning_test!(quiet_solve_matches_recorded_blocked_solve, {
         last_effective_triangular_route(),
         Some((2, TriangularRoute::Recursive)),
         "the recorded solve must publish its completed top-level triangular route"
+    );
+    assert_eq!(
+        last_effective_ple_base_route(),
+        Some((1, PleBaseRoute::BlockRecursive)),
+        "the recorded solve must publish its PLE preparation's top-level base route"
     );
     if <Fp<251> as FiniteField>::has_simd_gemm_classical() {
         assert_eq!(
@@ -97,6 +104,7 @@ support::fresh_tuning_test!(quiet_solve_matches_recorded_blocked_solve, {
     reset_last_effective_triangular_route();
     reset_last_effective_trsm_panel_rows();
     reset_max_effective_panel_dispatch_cols();
+    reset_last_effective_ple_base_route();
     let quiet = a
         .solve_batch_quiet_for_test(&b)
         .expect("quiet specialization preserves invertibility");
@@ -106,5 +114,25 @@ support::fresh_tuning_test!(quiet_solve_matches_recorded_blocked_solve, {
     assert_eq!(last_gemm_axpy_dispatch_route(), None);
     assert_eq!(last_effective_triangular_route(), None);
     assert_eq!(last_effective_trsm_panel_rows(), None);
+    assert_eq!(max_effective_panel_dispatch_cols(), None);
+    assert_eq!(last_effective_ple_base_route(), None);
+
+    reset_last_effective_ple_base_route();
+    let recorded_ple = b.ple();
+    assert_eq!(
+        last_effective_ple_base_route(),
+        Some((1, PleBaseRoute::BlockRecursive))
+    );
+    reset_last_effective_ple_base_route();
+    reset_gemm_tile_observations();
+    reset_last_gemm_axpy_dispatch_route();
+    reset_last_effective_triangular_route();
+    reset_max_effective_panel_dispatch_cols();
+    let quiet_ple = b.ple_quiet_for_test();
+    assert_eq!(quiet_ple, recorded_ple);
+    assert_eq!(last_effective_ple_base_route(), None);
+    assert!(gemm_tile_observations().is_empty());
+    assert_eq!(last_gemm_axpy_dispatch_route(), None);
+    assert_eq!(last_effective_triangular_route(), None);
     assert_eq!(max_effective_panel_dispatch_cols(), None);
 });

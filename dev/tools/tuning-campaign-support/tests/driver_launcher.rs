@@ -17,6 +17,17 @@ fn executable(path: &Path, content: &str) {
     fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
 }
 
+/// Copies the committed campaign declaration of `issue` into a stand-in
+/// checkout, where the launcher reads it before selecting an identity.
+fn declare(repo: &Path, issue: &str) {
+    let relative = format!("dev/active/{issue}/campaign-declaration.json");
+    let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../..")
+        .join(&relative);
+    fs::create_dir_all(repo.join(&relative).parent().unwrap()).unwrap();
+    fs::copy(source, repo.join(relative)).unwrap();
+}
+
 fn launcher_replays_preparation(complete_temporary: bool) {
     let root = scratch("gf2-launcher-discovery");
     let campaign = format!(
@@ -61,6 +72,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
     }
     let repo = root.join("repo");
     fs::create_dir_all(repo.join("scripts")).unwrap();
+    declare(&repo, "a83583e0");
     executable(
         &repo.join("scripts/cargo-budget.sh"),
         "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
@@ -125,6 +137,58 @@ fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_
     launcher_replays_preparation(true);
 }
 
+/// A new campaign names its issue; the launcher refuses an issue without a
+/// committed declaration before it creates a stage or builds anything.
+#[test]
+fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
+    let root = scratch("gf2-launcher-declaration");
+    let launcher = root.join("launcher.sh");
+    fs::write(
+        &launcher,
+        include_str!("../../../scripts/tuning-extent-campaign.sh"),
+    )
+    .unwrap();
+    let path_bin = root.join("path-bin");
+    fs::create_dir(&path_bin).unwrap();
+    executable(
+        &path_bin.join("git"),
+        "#!/bin/sh\nprintf '%s\\n' \"$TEST_REPO\"\n",
+    );
+    let repo = root.join("repo");
+    fs::create_dir(&repo).unwrap();
+    fs::create_dir(repo.join("scripts")).unwrap();
+    let build_capture = root.join("build-called");
+    executable(
+        &repo.join("scripts/cargo-budget.sh"),
+        "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
+    );
+    for argument in ["0badc0de", "gf2-0badc0de-19700101t000000z-1"] {
+        let result = Command::new("bash")
+            .arg(&launcher)
+            .arg(argument)
+            .env(
+                "PATH",
+                format!("{}:{}", path_bin.display(), std::env::var("PATH").unwrap()),
+            )
+            .env("GF2_CCX1_LOCK", root.join("host.lock"))
+            .env("TEST_REPO", &repo)
+            .env("TEST_BUILD_CAPTURE", &build_capture)
+            .output()
+            .unwrap();
+        assert!(!result.status.success(), "{argument}");
+        assert!(!build_capture.exists());
+        assert!(!Path::new("/tmp/gf2-0badc0de-19700101t000000z-1").exists());
+    }
+    for argument in ["", "DBD8787D", "gf2-dbd8787d-19700101T000000Z-1", "a b"] {
+        let result = Command::new("bash")
+            .arg(&launcher)
+            .arg(argument)
+            .output()
+            .unwrap();
+        assert_eq!(result.status.code(), Some(2), "{argument:?}");
+    }
+}
+
 #[test]
 fn launcher_rejects_arbitrary_stage_paths_before_creating_them() {
     let root = scratch("gf2-launcher-stage-policy");
@@ -174,6 +238,7 @@ fn launcher_resumes_publication_before_preparing_another_session() {
         );
         let repo = root.join("repo");
         fs::create_dir(&repo).unwrap();
+        declare(&repo, "a83583e0");
         let launcher = root.join("launcher.sh");
         fs::write(
             &launcher,

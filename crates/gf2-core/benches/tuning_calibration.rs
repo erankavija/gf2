@@ -7,7 +7,8 @@
 //! install tuning. Owner reporting, validation, analysis, and emission never do.
 //!
 //! The exact experiment is declared in
-//! `dev/active/a83583e0/premeasurement-protocol.md`, including its cumulative
+//! `dev/active/dbd8787d/premeasurement-protocol.md`, which amends
+//! `dev/active/a83583e0/premeasurement-protocol.md` and its cumulative
 //! reference to the immutable retained threshold protocol. `--owner-operation`
 //! accepts one canonical neutral request on stdin and emits one framed response.
 //! The reporting flags perform no measurement or artifact publication.
@@ -38,7 +39,8 @@ use gf2_core::field::matrix::{
 use gf2_core::field::matrix::{last_gemm_axpy_dispatch_route, reset_last_gemm_axpy_dispatch_route};
 use gf2_core::field::ple::{back_sub_route, ple_panel_route, BackSubRoute, PlePanelRoute};
 use gf2_core::field::ple::{
-    max_effective_panel_dispatch_cols, reset_max_effective_panel_dispatch_cols,
+    last_effective_ple_base_route, max_effective_panel_dispatch_cols, ple_base_route,
+    reset_last_effective_ple_base_route, reset_max_effective_panel_dispatch_cols, PleBaseRoute,
 };
 use gf2_core::field::poly::{
     batch_evaluate_auto_route, div_rem_auto_route, mul_fast, mul_fast_route, mul_route,
@@ -48,9 +50,16 @@ use gf2_core::field::poly_interpolate::{
     interpolate_auto, interpolate_auto_two_adic, interpolate_route, InterpolateRoute,
 };
 use gf2_core::field::triangular::{
+    last_effective_triangular_route, triangular_route, TriangularRoute,
+};
+use gf2_core::field::triangular::{
     last_effective_trsm_panel_rows, reset_last_effective_trsm_panel_rows,
 };
 use gf2_core::field::triangular::{trsm_route, TrsmRoute};
+use gf2_core::field::winograd::{
+    gemm_winograd, last_winograd_dispatch_route, reset_last_winograd_dispatch_route,
+    winograd_route, WinogradRoute,
+};
 use gf2_core::field::{FiniteField, PlePanelLane};
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{BatchExtField, ExtConfig};
@@ -214,26 +223,26 @@ const DEFAULT_REPETITIONS: u64 = tuning_campaign_support::timing::WINDOWS;
 const DEFAULT_TARGET_MS: u64 = tuning_campaign_support::timing::TARGET.as_millis() as u64;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_MEASURED_FIELDS: usize = 16;
+const EXPECTED_MEASURED_FIELDS: usize = 19;
 const EXPECTED_CORE_SCHEMA_FIELDS: usize = 37;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_OMITTED_FIELDS: usize = 21;
+const EXPECTED_OMITTED_FIELDS: usize = 18;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_GRID_ARM_CELLS: usize = 306;
+const EXPECTED_GRID_ARM_CELLS: usize = 360;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_PROBE_CHILDREN: usize = 306;
+const EXPECTED_PROBE_CHILDREN: usize = 360;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_TIMED_CHILDREN: usize = 1_530;
+const EXPECTED_TIMED_CHILDREN: usize = 1_800;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_FRESH_CHILDREN: usize = 1_836;
+const EXPECTED_FRESH_CHILDREN: usize = 2_160;
 #[cfg(test)]
 #[allow(dead_code)]
-const EXPECTED_RAW_WINDOWS: usize = 7_650;
+const EXPECTED_RAW_WINDOWS: usize = 9_000;
 /// Upper bound on the calibrated call count of one timed window.
 const MAX_CALLS: u64 = tuning_campaign_support::timing::MAX_CALLS;
 /// Fixture bank depth for the bit-backend arms, matching the sibling harness.
@@ -303,6 +312,18 @@ const FOLLOW_ON_ROLES: &[(CalibratedField, &[(&str, u64)])] = &[
         CalibratedField::InterpolateFastMinPoints,
         &[("coefficients", 0xa00), ("point_offset", 0xa01)],
     ),
+    (
+        CalibratedField::WinogradMinDim,
+        &[("lhs", 0xd00), ("rhs", 0xd01)],
+    ),
+    (
+        CalibratedField::TriangularBaseCaseMaxDim,
+        &[("unit_lower", 0xe00), ("unit_upper", 0xe01), ("rhs", 0xe02)],
+    ),
+    (
+        CalibratedField::PleScalarBaseMaxCols,
+        &[("unit_lower", 0xf00), ("unit_upper", 0xf01)],
+    ),
 ];
 #[cfg(test)]
 #[allow(dead_code)]
@@ -326,11 +347,22 @@ const FORCED_ARM_PROFILE_ID: &str = "calibration-forced-arm";
 /// arithmetic.
 type F = Fp<65537>;
 
+/// The Mersenne-31 prime of the seam threshold fields' recorded provenance.
+const MERSENNE_31: u64 = 2_147_483_647;
+
+/// The field the three seam threshold fields are measured over.
+///
+/// It is the carrier of their conservative defaults' recorded sweeps. Its
+/// whole-GEMM kernel accepts every non-degenerate shape, so each classical
+/// GEMM leaf takes one capability-selected route, and it registers no PLE
+/// panel lane, so the two panel-lane selectors stay unreachable.
+type M31 = Fp<MERSENNE_31>;
+
 // ---------------------------------------------------------------------
 // Calibrated fields and their grids
 // ---------------------------------------------------------------------
 
-/// The sixteen selector fields this sweep measures.
+/// The retained threshold selector fields this sweep measures.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 enum CalibratedField {
@@ -350,10 +382,13 @@ enum CalibratedField {
     PleBlockedBackSubMinDim,
     GemmAxpyFastPathMinVolume,
     InterpolateFastMinPoints,
+    WinogradMinDim,
+    TriangularBaseCaseMaxDim,
+    PleScalarBaseMaxCols,
 }
 
 impl CalibratedField {
-    const ALL: [Self; 16] = [
+    const ALL: [Self; 19] = [
         Self::SimdMinWords,
         Self::KaratsubaMinDegree,
         Self::KaratsubaMaxOutLen,
@@ -370,6 +405,9 @@ impl CalibratedField {
         Self::PleBlockedBackSubMinDim,
         Self::GemmAxpyFastPathMinVolume,
         Self::InterpolateFastMinPoints,
+        Self::WinogradMinDim,
+        Self::TriangularBaseCaseMaxDim,
+        Self::PleScalarBaseMaxCols,
     ];
 
     /// Stable input to [`seed_for`], independent of enum declaration order.
@@ -394,6 +432,9 @@ impl CalibratedField {
             Self::PleBlockedBackSubMinDim => 13,
             Self::GemmAxpyFastPathMinVolume => 14,
             Self::InterpolateFastMinPoints => 15,
+            Self::WinogradMinDim => 28,
+            Self::TriangularBaseCaseMaxDim => 29,
+            Self::PleScalarBaseMaxCols => 30,
         }
     }
 
@@ -409,9 +450,11 @@ impl CalibratedField {
             Self::SoaParallelMinLen => "soa_batch",
             Self::M4rmWideTierMinStrideWords | Self::M4rmTiledMinStrideWords => "m4rm",
             Self::DenseInverseM4riMinDim | Self::DenseInverseBlockedMinDim => "dense_inverse",
-            Self::TrsmBlockedMinDim => "triangular",
-            Self::PlePanelBaseMaxCols | Self::PleBlockedBackSubMinDim => "ple",
-            Self::GemmAxpyFastPathMinVolume => "gemm",
+            Self::TrsmBlockedMinDim | Self::TriangularBaseCaseMaxDim => "triangular",
+            Self::PlePanelBaseMaxCols
+            | Self::PleBlockedBackSubMinDim
+            | Self::PleScalarBaseMaxCols => "ple",
+            Self::GemmAxpyFastPathMinVolume | Self::WinogradMinDim => "gemm",
         }
     }
 
@@ -425,19 +468,28 @@ impl CalibratedField {
 
     /// Whether the field bounds its conservative arm from above.
     ///
-    /// `karatsuba_max_out_len` gates `out_len <= t` to the Karatsuba arm, so
-    /// its value is the largest grid point below the crossover. Every other
-    /// field gates `size >= t` to the asymptotic arm, so its value is the
-    /// crossover itself.
+    /// Each `_max_` field gates `size <= t` to its conservative arm, so its
+    /// value is the largest grid point below the crossover. Every other field
+    /// gates `size >= t` to the asymptotic arm, so its value is the crossover
+    /// itself.
     fn is_upper_bound(self) -> bool {
         matches!(
             self,
-            Self::KaratsubaMaxOutLen | Self::TransposeSimpleMaxBlocks | Self::PlePanelBaseMaxCols
+            Self::KaratsubaMaxOutLen
+                | Self::TransposeSimpleMaxBlocks
+                | Self::PlePanelBaseMaxCols
+                | Self::TriangularBaseCaseMaxDim
+                | Self::PleScalarBaseMaxCols
         )
     }
 
+    /// The codec's lower range bound of an upper-bound field: its value when
+    /// the asymptotic arm already wins at the first grid point.
     fn upper_bound_floor(self) -> usize {
-        if self == Self::PlePanelBaseMaxCols {
+        if matches!(
+            self,
+            Self::PlePanelBaseMaxCols | Self::TriangularBaseCaseMaxDim | Self::PleScalarBaseMaxCols
+        ) {
             1
         } else {
             0
@@ -464,6 +516,9 @@ impl CalibratedField {
             Self::PleBlockedBackSubMinDim => profile.ple().blocked_back_sub_min_dim(),
             Self::GemmAxpyFastPathMinVolume => profile.gemm().axpy_fast_path_min_volume(),
             Self::InterpolateFastMinPoints => profile.polynomial().interpolate_fast_min_points(),
+            Self::WinogradMinDim => profile.gemm().winograd_min_dim(),
+            Self::TriangularBaseCaseMaxDim => profile.triangular().base_case_max_dim(),
+            Self::PleScalarBaseMaxCols => profile.ple().scalar_base_max_cols(),
         }
     }
 
@@ -485,6 +540,9 @@ impl CalibratedField {
             Self::PleBlockedBackSubMinDim => "scalar",
             Self::GemmAxpyFastPathMinVolume => "per_cell",
             Self::InterpolateFastMinPoints => "barycentric",
+            Self::WinogradMinDim => "classical",
+            Self::TriangularBaseCaseMaxDim => "base_case",
+            Self::PleScalarBaseMaxCols => "scalar_base",
         }
     }
 
@@ -506,6 +564,9 @@ impl CalibratedField {
             Self::PleBlockedBackSubMinDim => "blocked",
             Self::GemmAxpyFastPathMinVolume => "whole_gemm",
             Self::InterpolateFastMinPoints => "subproduct_tree",
+            Self::WinogradMinDim => "winograd",
+            Self::TriangularBaseCaseMaxDim => "recursive",
+            Self::PleScalarBaseMaxCols => "block_recursive",
         }
     }
 
@@ -545,7 +606,10 @@ impl CalibratedField {
             | Self::DenseInverseBlockedMinDim
             | Self::TrsmBlockedMinDim
             | Self::PlePanelBaseMaxCols
-            | Self::PleBlockedBackSubMinDim => "matrix dimension",
+            | Self::PleBlockedBackSubMinDim
+            | Self::WinogradMinDim
+            | Self::TriangularBaseCaseMaxDim => "matrix dimension",
+            Self::PleScalarBaseMaxCols => "matrix columns",
             Self::GemmAxpyFastPathMinVolume => "matrix volume",
             Self::InterpolateFastMinPoints => "points",
         }
@@ -569,6 +633,12 @@ impl CalibratedField {
     /// default than the small-operand ones, because their conservative arms are
     /// quadratic and a crossover several octaves below the default is the
     /// ordinary case for them rather than a surprise.
+    ///
+    /// The three seam grids are preregistered in
+    /// `dev/active/dbd8787d/premeasurement-protocol.md` §2. Their `_max_`
+    /// grids begin at two, so the asymptotic arm's `t = s - 1` stays inside
+    /// the codec's floor of one; the scalar-base default of one is the value
+    /// that floor selects.
     fn grid(self) -> Vec<usize> {
         match self {
             Self::SimdMinWords | Self::DenseInverseM4riMinDim => {
@@ -598,6 +668,9 @@ impl CalibratedField {
             Self::GemmAxpyFastPathMinVolume => {
                 vec![64, 512, 1728, 3375, 4096, 4913, 8000, 13_824, 32_768]
             }
+            Self::WinogradMinDim => vec![32, 64, 96, 127, 128, 129, 192, 256, 512],
+            Self::TriangularBaseCaseMaxDim => vec![2, 4, 6, 7, 8, 9, 12, 16, 32],
+            Self::PleScalarBaseMaxCols => vec![2, 3, 4, 6, 8, 12, 16, 24, 32],
         }
     }
 
@@ -632,6 +705,9 @@ impl fmt::Display for CalibratedField {
             Self::PleBlockedBackSubMinDim => "blocked_back_sub_min_dim",
             Self::GemmAxpyFastPathMinVolume => "axpy_fast_path_min_volume",
             Self::InterpolateFastMinPoints => "interpolate_fast_min_points",
+            Self::WinogradMinDim => "winograd_min_dim",
+            Self::TriangularBaseCaseMaxDim => "base_case_max_dim",
+            Self::PleScalarBaseMaxCols => "scalar_base_max_cols",
         })
     }
 }
@@ -1473,6 +1549,13 @@ enum FollowOnFixture {
     PleBackSub(Vec<FieldMatrix<Fp251>>),
     Gemm(Vec<(FieldMatrix<Fp251>, FieldMatrix<Fp251>)>),
     Interpolation(Vec<Vec<(F, F)>>),
+    /// Square Mersenne-31 left and right GEMM operands.
+    Winograd(Vec<(FieldMatrix<M31>, FieldMatrix<M31>)>),
+    /// An invertible Mersenne-31 coefficient matrix `L * U` and a dense
+    /// right-hand side.
+    TriangularBase(Vec<(FieldMatrix<M31>, FieldMatrix<M31>)>),
+    /// A full-rank Mersenne-31 matrix `L * U`.
+    PleScalarBase(Vec<FieldMatrix<M31>>),
 }
 
 fn bank_seed(field: CalibratedField, size: usize, role: u64, bank: usize) -> u64 {
@@ -1575,18 +1658,28 @@ fn field_lu_parts(
     lower_seed: u64,
     upper_seed: u64,
 ) -> (FieldMatrix<Fp251>, FieldMatrix<Fp251>) {
+    fp_lu_parts::<251>(size, lower_seed, upper_seed)
+}
+
+/// Unit-lower and unit-upper triangular factors whose strict triangles are
+/// row-major `draw % P` cells from their two streams.
+fn fp_lu_parts<const P: u64>(
+    size: usize,
+    lower_seed: u64,
+    upper_seed: u64,
+) -> (FieldMatrix<Fp<P>>, FieldMatrix<Fp<P>>) {
     let mut lower_rng = Lcg::new(lower_seed);
     let mut upper_rng = Lcg::new(upper_seed);
-    let mut lower = FieldMatrix::<Fp251>::identity(size);
-    let mut upper = FieldMatrix::<Fp251>::identity(size);
+    let mut lower = FieldMatrix::<Fp<P>>::identity(size);
+    let mut upper = FieldMatrix::<Fp<P>>::identity(size);
     for row in 0..size {
         for col in 0..row {
-            lower.set(row, col, Fp251::new(lower_rng.next_u64() % 251));
+            lower.set(row, col, Fp::<P>::new(lower_rng.next_u64() % P));
         }
     }
     for row in 0..size {
         for col in (row + 1)..size {
-            upper.set(row, col, Fp251::new(upper_rng.next_u64() % 251));
+            upper.set(row, col, Fp::<P>::new(upper_rng.next_u64() % P));
         }
     }
     (lower, upper)
@@ -1610,14 +1703,34 @@ fn scalar_field_matmul<const P: u64>(
 }
 
 fn filled_field_matrix(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp251> {
+    filled_fp_matrix::<251>(rows, cols, seed)
+}
+
+/// A dense row-major matrix of `draw % P` cells.
+fn filled_fp_matrix<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
     let mut rng = Lcg::new(seed);
-    let mut matrix = FieldMatrix::<Fp251>::zeros(rows, cols);
+    let mut matrix = FieldMatrix::<Fp<P>>::zeros(rows, cols);
     for row in 0..rows {
         for col in 0..cols {
-            matrix.set(row, col, Fp251::new(rng.next_u64() % 251));
+            matrix.set(row, col, Fp::<P>::new(rng.next_u64() % P));
         }
     }
     matrix
+}
+
+/// Full-rank `L * U` over Mersenne-31 from one field's two factor streams.
+fn m31_lu_product(
+    size: usize,
+    field: CalibratedField,
+    roles: (u64, u64),
+    bank: usize,
+) -> FieldMatrix<M31> {
+    let (lower, upper) = fp_lu_parts::<MERSENNE_31>(
+        size,
+        bank_seed(field, size, roles.0, bank),
+        bank_seed(field, size, roles.1, bank),
+    );
+    scalar_field_matmul(&lower, &upper)
 }
 
 fn exact_back_sub_fixture(size: usize, field: CalibratedField, bank: usize) -> FieldMatrix<Fp251> {
@@ -1822,6 +1935,43 @@ fn build_follow_on_fixture(field: CalibratedField, size: usize) -> Result<Follow
                 .map(|bank| interpolation_fixture(size, field, bank))
                 .collect(),
         ),
+        CalibratedField::WinogradMinDim => FollowOnFixture::Winograd(
+            banks
+                .map(|bank| {
+                    (
+                        filled_fp_matrix::<MERSENNE_31>(
+                            size,
+                            size,
+                            bank_seed(field, size, 0xd00, bank),
+                        ),
+                        filled_fp_matrix::<MERSENNE_31>(
+                            size,
+                            size,
+                            bank_seed(field, size, 0xd01, bank),
+                        ),
+                    )
+                })
+                .collect(),
+        ),
+        CalibratedField::TriangularBaseCaseMaxDim => FollowOnFixture::TriangularBase(
+            banks
+                .map(|bank| {
+                    (
+                        m31_lu_product(size, field, (0xe00, 0xe01), bank),
+                        filled_fp_matrix::<MERSENNE_31>(
+                            size,
+                            size,
+                            bank_seed(field, size, 0xe02, bank),
+                        ),
+                    )
+                })
+                .collect(),
+        ),
+        CalibratedField::PleScalarBaseMaxCols => FollowOnFixture::PleScalarBase(
+            banks
+                .map(|bank| m31_lu_product(size, field, (0xf00, 0xf01), bank))
+                .collect(),
+        ),
         _ => return Err(format!("{field} is a direct fixture, not a follow-on")),
     })
 }
@@ -1862,6 +2012,19 @@ fn digest_bit_matrix(matrix: &BitMatrix) -> String {
 fn digest_field_matrix(matrix: &FieldMatrix<Fp251>) -> String {
     let mut digest = Sha256Hasher::new();
     digest.update(b"gf2-calibration-fp251-matrix-v1");
+    digest.update(matrix.rows().to_le_bytes());
+    digest.update(matrix.cols().to_le_bytes());
+    for row in 0..matrix.rows() {
+        for col in 0..matrix.cols() {
+            digest.update(matrix.get(row, col).value().to_le_bytes());
+        }
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn digest_m31_matrix(matrix: &FieldMatrix<M31>) -> String {
+    let mut digest = Sha256Hasher::new();
+    digest.update(b"gf2-calibration-m31-matrix-v1");
     digest.update(matrix.rows().to_le_bytes());
     digest.update(matrix.cols().to_le_bytes());
     for row in 0..matrix.rows() {
@@ -1960,6 +2123,22 @@ fn follow_on_operand_digest(fixture: &FollowOnFixture) -> String {
             b"gf2-calibration-interpolation-banks-v1",
             banks.iter().map(|points| digest_points(points)),
         ),
+        FollowOnFixture::Winograd(banks) => digest_tuple(
+            b"gf2-calibration-winograd-m31-banks-v1",
+            banks
+                .iter()
+                .flat_map(|(lhs, rhs)| [digest_m31_matrix(lhs), digest_m31_matrix(rhs)]),
+        ),
+        FollowOnFixture::TriangularBase(banks) => digest_tuple(
+            b"gf2-calibration-solve-m31-banks-v1",
+            banks
+                .iter()
+                .flat_map(|(a, rhs)| [digest_m31_matrix(a), digest_m31_matrix(rhs)]),
+        ),
+        FollowOnFixture::PleScalarBase(banks) => digest_tuple(
+            b"gf2-calibration-ple-m31-banks-v1",
+            banks.iter().map(digest_m31_matrix),
+        ),
     }
 }
 
@@ -1973,8 +2152,11 @@ fn follow_on_shape(field: CalibratedField, size: usize) -> Result<String, String
         CalibratedField::DenseInverseM4riMinDim
         | CalibratedField::DenseInverseBlockedMinDim
         | CalibratedField::PlePanelBaseMaxCols
-        | CalibratedField::PleBlockedBackSubMinDim => format!("{size}x{size}"),
-        CalibratedField::TrsmBlockedMinDim => format!("{size}x{size} * {size}x{size}"),
+        | CalibratedField::PleBlockedBackSubMinDim
+        | CalibratedField::PleScalarBaseMaxCols => format!("{size}x{size}"),
+        CalibratedField::TrsmBlockedMinDim
+        | CalibratedField::WinogradMinDim
+        | CalibratedField::TriangularBaseCaseMaxDim => format!("{size}x{size} * {size}x{size}"),
         CalibratedField::GemmAxpyFastPathMinVolume => {
             let d = cube_dim(size)?;
             format!("{d}x{d} * {d}x{d}")
@@ -2076,7 +2258,48 @@ fn expected_observation_contract(spec: ChildSpec) -> Result<(String, String), St
         CalibratedField::InterpolateFastMinPoints => {
             (spec.variant.to_string(), "not_required".to_owned())
         }
+        CalibratedField::WinogradMinDim => (
+            format!(
+                "dispatch={:?} base=whole_gemm",
+                match spec.arm {
+                    Arm::Conservative => WinogradRoute::Classical,
+                    Arm::Asymptotic => WinogradRoute::Winograd,
+                }
+            ),
+            "m31_whole_gemm_available=true".to_owned(),
+        ),
+        CalibratedField::TriangularBaseCaseMaxDim => (
+            format!(
+                "triangular_route=({}, {:?}) trsm_panel_rows=None",
+                forced_seam_threshold(spec),
+                match spec.arm {
+                    Arm::Conservative => TriangularRoute::BaseCase,
+                    Arm::Asymptotic => TriangularRoute::Recursive,
+                }
+            ),
+            "not_required".to_owned(),
+        ),
+        CalibratedField::PleScalarBaseMaxCols => (
+            format!(
+                "ple_base_route=({}, {:?}) panel_cols=None",
+                forced_seam_threshold(spec),
+                match spec.arm {
+                    Arm::Conservative => PleBaseRoute::ScalarBase,
+                    Arm::Asymptotic => PleBaseRoute::BlockRecursive,
+                }
+            ),
+            "carrier_lane=None".to_owned(),
+        ),
     })
+}
+
+/// The installed value of a seam `_max_` field at `spec`: the grid point on
+/// the conservative side and one below it on the asymptotic side.
+fn forced_seam_threshold(spec: ChildSpec) -> usize {
+    match spec.arm {
+        Arm::Conservative => spec.size,
+        Arm::Asymptotic => spec.size - 1,
+    }
 }
 
 fn digest_f_values(domain: &[u8], values: &[F]) -> String {
@@ -2634,6 +2857,139 @@ fn execute_follow_on(
             observation.effective_observation = spec.variant.to_string();
             digest_poly(&result)
         }
+        (CalibratedField::WinogradMinDim, FollowOnFixture::Winograd(banks)) => {
+            if !<M31 as FiniteField>::has_simd_gemm_classical() {
+                observation.observed_route = "unavailable_before_dispatch".to_owned();
+                observation.effective_observation = "unavailable".to_owned();
+                observation.capability_observation = "m31_whole_gemm_available=false".to_owned();
+                observation.availability = ChildAvailability::Unavailable {
+                    omission: CapabilityOmission::M31WholeGemmUnavailable,
+                };
+                return Ok(observation);
+            }
+            let d = spec.size;
+            observation.observed_route = match winograd_route(d, d, d) {
+                WinogradRoute::Classical => "classical",
+                WinogradRoute::Winograd => "winograd",
+            }
+            .to_owned();
+            let (lhs, rhs) = (&banks[bank].0, &banks[paired_bank(bank)].1);
+            reset_last_winograd_dispatch_route();
+            gf2_core::field::matrix::reset_gemm_tile_observations();
+            let result = gemm_winograd(lhs, rhs);
+            let dispatch = last_winograd_dispatch_route();
+            let tiles = gf2_core::field::matrix::gemm_tile_observations();
+            if result != scalar_field_matmul(lhs, rhs) {
+                return Err("Winograd result differs from the scalar product".to_owned());
+            }
+            let expected = match spec.arm {
+                Arm::Conservative => WinogradRoute::Classical,
+                Arm::Asymptotic => WinogradRoute::Winograd,
+            };
+            // Every classical leaf takes the whole-GEMM kernel; a per-cell
+            // leaf would publish its blocked-loop tile site.
+            if dispatch != Some(expected) || !tiles.is_empty() {
+                return Err(format!(
+                    "Winograd dispatch/leaf observation {dispatch:?}/{tiles:?}, expected {expected:?} with whole-GEMM leaves"
+                ));
+            }
+            observation.effective_observation = format!("dispatch={expected:?} base=whole_gemm");
+            observation.capability_observation = "m31_whole_gemm_available=true".to_owned();
+            digest_m31_matrix(&result)
+        }
+        (CalibratedField::TriangularBaseCaseMaxDim, FollowOnFixture::TriangularBase(banks)) => {
+            observation.observed_route = match triangular_route(spec.size) {
+                TriangularRoute::BaseCase => "base_case",
+                TriangularRoute::Recursive => "recursive",
+            }
+            .to_owned();
+            let (a, b) = (&banks[bank].0, &banks[paired_bank(bank)].1);
+            campaign_owner::reset_solve_observations();
+            let result = a
+                .solve_batch(b)
+                .ok_or("generated Mersenne-31 solve matrix is singular")?;
+            let threshold = forced_seam_threshold(spec);
+            let expected = match spec.arm {
+                Arm::Conservative => TriangularRoute::BaseCase,
+                Arm::Asymptotic => TriangularRoute::Recursive,
+            };
+            let effective = last_effective_triangular_route();
+            let panel_rows = last_effective_trsm_panel_rows();
+            if effective != Some((threshold, expected)) || panel_rows.is_some() {
+                return Err(format!(
+                    "triangular observation {effective:?}/{panel_rows:?}, expected ({threshold}, {expected:?}) on recursive TRSM"
+                ));
+            }
+            if scalar_field_matmul(a, &result) != *b {
+                return Err("Mersenne-31 solve failed A*X=B".to_owned());
+            }
+            campaign_owner::reset_solve_observations();
+            let quiet = a
+                .solve_batch_quiet_for_test(b)
+                .ok_or("quiet Mersenne-31 solve fixture became singular")?;
+            if quiet != result || !campaign_owner::quiet_solve_observations_empty() {
+                return Err(
+                    "quiet solve changed semantics or published subtree observations".to_owned(),
+                );
+            }
+            observation.effective_observation =
+                format!("triangular_route=({threshold}, {expected:?}) trsm_panel_rows=None");
+            observation.capability_observation = "not_required".to_owned();
+            digest_m31_matrix(&result)
+        }
+        (CalibratedField::PleScalarBaseMaxCols, FollowOnFixture::PleScalarBase(banks)) => {
+            let lane = <M31 as FiniteField>::simd_ple_panel_lane();
+            if lane.is_some() {
+                return Err(format!(
+                    "Mersenne-31 registers PLE panel lane {lane:?}; the panel selectors must stay unreachable"
+                ));
+            }
+            observation.observed_route = match ple_base_route(spec.size) {
+                PleBaseRoute::ScalarBase => "scalar_base",
+                PleBaseRoute::BlockRecursive => "block_recursive",
+            }
+            .to_owned();
+            campaign_owner::reset_solve_observations();
+            let (p, l, e, rank) = banks[bank].ple();
+            let threshold = forced_seam_threshold(spec);
+            let expected = match spec.arm {
+                Arm::Conservative => PleBaseRoute::ScalarBase,
+                Arm::Asymptotic => PleBaseRoute::BlockRecursive,
+            };
+            let effective = last_effective_ple_base_route();
+            let panel_cols = max_effective_panel_dispatch_cols();
+            if effective != Some((threshold, expected)) || panel_cols.is_some() {
+                return Err(format!(
+                    "PLE base observation {effective:?}/{panel_cols:?}, expected ({threshold}, {expected:?}) without a panel dispatch"
+                ));
+            }
+            if p.apply(&scalar_field_matmul(&l, &e)) != banks[bank] || rank != spec.size {
+                return Err("Mersenne-31 PLE failed P*(L*E)=A or full-rank contract".to_owned());
+            }
+            campaign_owner::reset_solve_observations();
+            let quiet = banks[bank].ple_quiet_for_test();
+            if quiet.0 != p
+                || quiet.1 != l
+                || quiet.2 != e
+                || quiet.3 != rank
+                || !campaign_owner::quiet_solve_observations_empty()
+            {
+                return Err(
+                    "quiet PLE changed semantics or published subtree observations".to_owned(),
+                );
+            }
+            observation.effective_observation =
+                format!("ple_base_route=({threshold}, {expected:?}) panel_cols=None");
+            observation.capability_observation = "carrier_lane=None".to_owned();
+            digest_tuple(
+                b"gf2-calibration-m31-ple-result-v1",
+                p.indices().iter().map(|value| value.to_string()).chain([
+                    digest_m31_matrix(&l),
+                    digest_m31_matrix(&e),
+                    rank.to_string(),
+                ]),
+            )
+        }
         _ => return Err(format!("fixture does not match {}", spec.field)),
     };
     observation.result_digest = result_digest.clone();
@@ -2730,6 +3086,20 @@ fn execute_follow_on_timed(spec: ChildSpec, fixture: &FollowOnFixture, logical_i
             }
             .expect("preflight proved interpolation fixture valid");
             black_box(result);
+        }
+        (CalibratedField::WinogradMinDim, FollowOnFixture::Winograd(banks)) => {
+            black_box(gemm_winograd(&banks[bank].0, &banks[paired_bank(bank)].1));
+        }
+        (CalibratedField::TriangularBaseCaseMaxDim, FollowOnFixture::TriangularBase(banks)) => {
+            black_box(
+                banks[bank]
+                    .0
+                    .solve_batch_quiet_for_test(&banks[paired_bank(bank)].1)
+                    .expect("preflight proved the solve fixture invertible"),
+            );
+        }
+        (CalibratedField::PleScalarBaseMaxCols, FollowOnFixture::PleScalarBase(banks)) => {
+            black_box(banks[bank].ple_quiet_for_test());
         }
         _ => panic!("timed fixture does not match {}", spec.field),
     }
@@ -2896,6 +3266,7 @@ enum CapabilityOmission {
     Fp251WholeGemmUnavailable,
     TrsmBlockedCalleeDeclined,
     GemmWholeKernelDeclined,
+    M31WholeGemmUnavailable,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -3235,6 +3606,47 @@ fn forced_profile_for(spec: ChildSpec) -> Result<(PreparedEnvelope, Vec<ForcedVa
                 GemmSelectors::try_new(p.row_tile(), p.col_tile(), value, p.winograd_min_dim())
                     .map_err(|error| error.to_string())?;
             values.push(ForcedValue::new("gemm", "axpy_fast_path_min_volume", value));
+        }
+        CalibratedField::WinogradMinDim => {
+            // Each classical leaf calls `gemm`, whose route is capability-
+            // selected; the GEMM companions stay at their conservative values
+            // and are read back explicitly.
+            let value = forced(spec.size + 1, spec.size);
+            let p = &selectors.gemm;
+            let (row_tile, col_tile, axpy) =
+                (p.row_tile(), p.col_tile(), p.axpy_fast_path_min_volume());
+            selectors.gemm = GemmSelectors::try_new(row_tile, col_tile, axpy, value)
+                .map_err(|error| error.to_string())?;
+            values.push(ForcedValue::new("gemm", "winograd_min_dim", value));
+            values.push(ForcedValue::new("gemm", "axpy_fast_path_min_volume", axpy));
+            values.push(ForcedValue::new("gemm", "row_tile", row_tile));
+            values.push(ForcedValue::new("gemm", "col_tile", col_tile));
+        }
+        CalibratedField::TriangularBaseCaseMaxDim => {
+            let value = forced(spec.size, spec.size - 1);
+            let p = &selectors.triangular;
+            selectors.triangular =
+                TriangularSelectors::try_new(usize::MAX, p.trsm_panel_rows(), value)
+                    .map_err(|error| error.to_string())?;
+            values.push(ForcedValue::new("triangular", "base_case_max_dim", value));
+            values.push(ForcedValue::new(
+                "triangular",
+                "trsm_blocked_min_dim",
+                usize::MAX,
+            ));
+        }
+        CalibratedField::PleScalarBaseMaxCols => {
+            let value = forced(spec.size, spec.size - 1);
+            let p = &selectors.ple;
+            selectors.ple = PleSelectors::try_new(
+                p.panel_base_max_cols(),
+                p.blocked_back_sub_min_dim(),
+                value,
+                p.panel_byte_lane_max_cols(),
+                p.panel_u16_lane_max_cols(),
+            )
+            .map_err(|error| error.to_string())?;
+            values.push(ForcedValue::new("ple", "scalar_base_max_cols", value));
         }
     }
     let id = ProfileId::parse(FORCED_ARM_PROFILE_ID)
@@ -3887,7 +4299,8 @@ fn expected_omission_effective(omission: &CapabilityOmission) -> &'static str {
         CapabilityOmission::SimdBackendUnavailable
         | CapabilityOmission::SoaPoolWidth { .. }
         | CapabilityOmission::PleByteLaneUnavailable
-        | CapabilityOmission::Fp251WholeGemmUnavailable => "unavailable",
+        | CapabilityOmission::Fp251WholeGemmUnavailable
+        | CapabilityOmission::M31WholeGemmUnavailable => "unavailable",
     }
 }
 
@@ -3906,7 +4319,8 @@ fn verify_unavailable_routes(
         CapabilityOmission::SimdBackendUnavailable
         | CapabilityOmission::SoaPoolWidth { .. }
         | CapabilityOmission::PleByteLaneUnavailable
-        | CapabilityOmission::Fp251WholeGemmUnavailable => "unavailable_before_dispatch",
+        | CapabilityOmission::Fp251WholeGemmUnavailable
+        | CapabilityOmission::M31WholeGemmUnavailable => "unavailable_before_dispatch",
     };
     if requested != expected || observed != expected_observed {
         return Err(format!(
@@ -3998,6 +4412,10 @@ fn verify_capability_omission(
             spec.field == CalibratedField::TrsmBlockedMinDim
                 && spec.arm == Arm::Asymptotic
                 && capability == "fp251_whole_gemm_available=true"
+        }
+        CapabilityOmission::M31WholeGemmUnavailable => {
+            spec.field == CalibratedField::WinogradMinDim
+                && capability == "m31_whole_gemm_available=false"
         }
     };
     if !valid {
@@ -4393,7 +4811,7 @@ fn interpolation_reconciliation_line(
     .map_err(|error| format!("cannot encode interpolation reconciliation: {error}"))
 }
 
-/// The sixteen swept values, named one per field.
+/// The swept retained threshold values, named one per field.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct SelectedValues {
     simd_min_words: usize,
@@ -4412,6 +4830,9 @@ struct SelectedValues {
     ple_blocked_back_sub_min_dim: usize,
     gemm_axpy_fast_path_min_volume: usize,
     interpolate_fast_min_points: usize,
+    winograd_min_dim: usize,
+    triangular_base_case_max_dim: usize,
+    ple_scalar_base_max_cols: usize,
 }
 
 impl SelectedValues {
@@ -4442,6 +4863,9 @@ impl SelectedValues {
             ple_blocked_back_sub_min_dim: value_of(CalibratedField::PleBlockedBackSubMinDim),
             gemm_axpy_fast_path_min_volume: value_of(CalibratedField::GemmAxpyFastPathMinVolume),
             interpolate_fast_min_points: value_of(CalibratedField::InterpolateFastMinPoints),
+            winograd_min_dim: value_of(CalibratedField::WinogradMinDim),
+            triangular_base_case_max_dim: value_of(CalibratedField::TriangularBaseCaseMaxDim),
+            ple_scalar_base_max_cols: value_of(CalibratedField::PleScalarBaseMaxCols),
         }
     }
 }
@@ -4506,13 +4930,13 @@ fn build_profile(
     let triangular = TriangularSelectors::try_new(
         selected.trsm_blocked_min_dim,
         conservative.triangular().trsm_panel_rows(),
-        conservative.triangular().base_case_max_dim(),
+        selected.triangular_base_case_max_dim,
     )
     .map_err(|error| error.to_string())?;
     let ple = PleSelectors::try_new(
         selected.ple_panel_base_max_cols,
         selected.ple_blocked_back_sub_min_dim,
-        conservative.ple().scalar_base_max_cols(),
+        selected.ple_scalar_base_max_cols,
         conservative.ple().panel_byte_lane_max_cols(),
         conservative.ple().panel_u16_lane_max_cols(),
     )
@@ -4521,7 +4945,7 @@ fn build_profile(
         conservative.gemm().row_tile(),
         conservative.gemm().col_tile(),
         selected.gemm_axpy_fast_path_min_volume,
-        conservative.gemm().winograd_min_dim(),
+        selected.winograd_min_dim,
     )
     .map_err(|error| error.to_string())?;
     let assembly = match &measurement {
@@ -4975,7 +5399,7 @@ struct CampaignCoverage {
 }
 
 /// Rejects publication unless the codec-derived inventory is exactly the
-/// campaign's sixteen measured fields and its 21-of-37 omission complement.
+/// campaign's preregistered measured retained fields and their omission complement.
 #[cfg(test)]
 #[allow(dead_code)]
 fn validate_campaign_coverage(
@@ -4991,7 +5415,7 @@ fn validate_campaign_coverage(
         .collect();
     if measured != expected_measured {
         return Err(format!(
-            "the run measured {measured:?}, not all sixteen preregistered campaign fields"
+            "the run measured {measured:?}, not every preregistered retained campaign field"
         ));
     }
     if schema.len() != EXPECTED_CORE_SCHEMA_FIELDS
@@ -5162,6 +5586,9 @@ mod tests {
         ple_blocked_back_sub_min_dim: 128,
         gemm_axpy_fast_path_min_volume: 4096,
         interpolate_fast_min_points: 16,
+        winograd_min_dim: 96,
+        triangular_base_case_max_dim: 6,
+        ple_scalar_base_max_cols: 3,
     };
 
     #[allow(dead_code)]
@@ -5551,22 +5978,22 @@ mod tests {
     }
 
     #[test]
-    fn campaign_publication_requires_16_measured_and_21_of_37_omitted() {
+    fn campaign_publication_requires_19_measured_and_18_of_37_omitted() {
         let document = profile_from(&DISTINCT).to_json();
         let sweeps = measured_sweeps();
         let omitted = omitted_fields(&document, &sweeps).unwrap();
         assert_eq!(
             validate_campaign_coverage(&document, &sweeps, &omitted),
             Ok(CampaignCoverage {
-                measured: 16,
-                omitted: 21,
+                measured: 19,
+                omitted: 18,
                 total: 37,
             })
         );
     }
 
     #[test]
-    fn a_fifteen_field_run_cannot_publish_a_22_field_omission_set() {
+    fn an_eighteen_field_run_cannot_publish_a_19_field_omission_set() {
         let document = profile_from(&DISTINCT).to_json();
         let mut sweeps = measured_sweeps();
         sweeps.retain(|sweep| sweep.field != CalibratedField::SimdMinWords);
@@ -5575,8 +6002,8 @@ mod tests {
             Fallback::NoComparableGridPoint,
         ));
         let omitted = omitted_fields(&document, &sweeps).unwrap();
-        assert_eq!(measured_fields(&sweeps).len(), 15);
-        assert_eq!(omitted.len(), 22);
+        assert_eq!(measured_fields(&sweeps).len(), 18);
+        assert_eq!(omitted.len(), 19);
         assert!(validate_campaign_coverage(&document, &sweeps, &omitted).is_err());
     }
 
@@ -5811,11 +6238,26 @@ mod tests {
             SweepVariant::TwoAdicInterpolation,
             &[2, 4, 8, 15, 16, 17, 32, 64, 128],
         ),
+        (
+            CalibratedField::WinogradMinDim,
+            SweepVariant::Standard,
+            &[32, 64, 96, 127, 128, 129, 192, 256, 512],
+        ),
+        (
+            CalibratedField::TriangularBaseCaseMaxDim,
+            SweepVariant::Standard,
+            &[2, 4, 6, 7, 8, 9, 12, 16, 32],
+        ),
+        (
+            CalibratedField::PleScalarBaseMaxCols,
+            SweepVariant::Standard,
+            &[2, 3, 4, 6, 8, 12, 16, 24, 32],
+        ),
     ];
 
     #[test]
-    fn canonical_manifest_pins_all_16_fields_17_sweeps_and_306_cells() {
-        assert_eq!(SWEEP_MANIFEST.len(), 17);
+    fn canonical_manifest_pins_all_19_fields_20_sweeps_and_360_cells() {
+        assert_eq!(SWEEP_MANIFEST.len(), 20);
         for field in CalibratedField::ALL {
             let rows: Vec<_> = SWEEP_MANIFEST
                 .iter()
@@ -5832,9 +6274,9 @@ mod tests {
             .map(|(_, _, grid)| grid.len() * Arm::BOTH.len())
             .sum();
         let grid_points: usize = SWEEP_MANIFEST.iter().map(|(_, _, grid)| grid.len()).sum();
-        assert_eq!(CalibratedField::ALL.len(), 16);
-        assert_eq!(grid_points, 153);
-        assert_eq!(arm_cells, 306);
+        assert_eq!(CalibratedField::ALL.len(), 19);
+        assert_eq!(grid_points, 180);
+        assert_eq!(arm_cells, 360);
         let protocol = Protocol {
             executions: 5,
             repetitions: 5,
@@ -5843,14 +6285,14 @@ mod tests {
         assert_eq!(
             planned_campaign_accounting(&protocol),
             CampaignAccounting {
-                cells: 306,
-                probes: 306,
-                timed: 1530,
-                launches: 1836,
-                windows: 7650,
+                cells: 360,
+                probes: 360,
+                timed: 1800,
+                launches: 2160,
+                windows: 9000,
             }
         );
-        assert_eq!(7650_u64 * protocol.target_ms, 1_912_500);
+        assert_eq!(9000_u64 * protocol.target_ms, 2_250_000);
     }
 
     #[allow(dead_code)]
@@ -5928,6 +6370,19 @@ mod tests {
             }
             CalibratedField::GemmAxpyFastPathMinVolume => {
                 vec![ForcedValue::new("gemm", "axpy_fast_path_min_volume", lower)]
+            }
+            CalibratedField::WinogradMinDim => vec![
+                ForcedValue::new("gemm", "winograd_min_dim", lower),
+                ForcedValue::new("gemm", "axpy_fast_path_min_volume", 4096),
+                ForcedValue::new("gemm", "row_tile", 32),
+                ForcedValue::new("gemm", "col_tile", 64),
+            ],
+            CalibratedField::TriangularBaseCaseMaxDim => vec![
+                ForcedValue::new("triangular", "base_case_max_dim", upper),
+                ForcedValue::new("triangular", "trsm_blocked_min_dim", usize::MAX),
+            ],
+            CalibratedField::PleScalarBaseMaxCols => {
+                vec![ForcedValue::new("ple", "scalar_base_max_cols", upper)]
             }
         }
     }
@@ -6024,6 +6479,15 @@ mod tests {
     }
 
     #[test]
+    fn seam_forcing_and_codec_are_exact_at_every_grid_arm() {
+        assert_forcing_and_codec(&[
+            CalibratedField::WinogradMinDim,
+            CalibratedField::TriangularBaseCaseMaxDim,
+            CalibratedField::PleScalarBaseMaxCols,
+        ]);
+    }
+
+    #[test]
     fn every_grid_straddles_or_starts_at_its_boundary_default() {
         for field in CalibratedField::ALL {
             let grid = field.grid();
@@ -6033,6 +6497,12 @@ mod tests {
                     grid.first(),
                     Some(&default),
                     "{field} must start at its codec-enforced boundary default"
+                );
+            } else if field.is_upper_bound() && default == field.upper_bound_floor() {
+                assert_eq!(
+                    grid.first(),
+                    Some(&(default + 1)),
+                    "{field} must start where its asymptotic arm forces the codec floor"
                 );
             } else {
                 assert!(
@@ -6387,6 +6857,11 @@ mod tests {
                     .conservative_default(),
                 interpolate_fast_min_points: CalibratedField::InterpolateFastMinPoints
                     .conservative_default(),
+                winograd_min_dim: CalibratedField::WinogradMinDim.conservative_default(),
+                triangular_base_case_max_dim: CalibratedField::TriangularBaseCaseMaxDim
+                    .conservative_default(),
+                ple_scalar_base_max_cols: CalibratedField::PleScalarBaseMaxCols
+                    .conservative_default(),
             }
         );
     }
@@ -6479,7 +6954,7 @@ mod tests {
     fn seed_tags_and_streams_are_stable_and_explicit() {
         assert_eq!(
             CalibratedField::ALL.map(CalibratedField::seed_tag),
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 28, 29, 30]
         );
         for (field, size, role, expected) in [
             (
@@ -6567,6 +7042,13 @@ mod tests {
             CalibratedField::InterpolateFastMinPoints => {
                 &[("coefficients", 0xa00), ("point_offset", 0xa01)]
             }
+            CalibratedField::WinogradMinDim => &[("lhs", 0xd00), ("rhs", 0xd01)],
+            CalibratedField::TriangularBaseCaseMaxDim => {
+                &[("unit_lower", 0xe00), ("unit_upper", 0xe01), ("rhs", 0xe02)]
+            }
+            CalibratedField::PleScalarBaseMaxCols => {
+                &[("unit_lower", 0xf00), ("unit_upper", 0xf01)]
+            }
             _ => unreachable!("direct fields have separate seed roles"),
         }
     }
@@ -6596,6 +7078,50 @@ mod tests {
                 }
             }
         }
+    }
+
+    /// The independent validator reconstructs each seam field's operand
+    /// digest from the declared seeds; a drift on either side would fail a
+    /// complete campaign's validation after its measurement.
+    #[test]
+    fn validator_reconstructs_the_seam_threshold_operands() {
+        let mut rows = Vec::new();
+        for field in [
+            CalibratedField::WinogradMinDim,
+            CalibratedField::TriangularBaseCaseMaxDim,
+            CalibratedField::PleScalarBaseMaxCols,
+            CalibratedField::TrsmBlockedMinDim,
+        ] {
+            for size in field.grid().into_iter().take(2) {
+                rows.push(serde_json::json!({
+                    "owner": "gf2-core",
+                    "field": field.schema_field().to_string(),
+                    "size": size,
+                    "retained": true,
+                    "sha256": expected_operand_digest(field, size).unwrap(),
+                }));
+            }
+        }
+        let directory = scratch("gf2-core-operand-check");
+        let fixture = directory.path().join("operands.json");
+        fs::write(
+            &fixture,
+            serde_json::to_vec(&serde_json::json!({ "operands": rows })).unwrap(),
+        )
+        .unwrap();
+        let validator = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../dev/scripts/validate-tuning-extent-campaign.py");
+        let output = Command::new("python3")
+            .arg(validator)
+            .arg("--operand-check")
+            .arg(&fixture)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     #[test]
@@ -7355,6 +7881,9 @@ mod tests {
         fresh_pair_back_sub: PleBlockedBackSubMinDim,
         fresh_pair_gemm: GemmAxpyFastPathMinVolume,
         fresh_pair_interpolation_variants: InterpolateFastMinPoints,
+        fresh_pair_winograd: WinogradMinDim,
+        fresh_pair_triangular_base: TriangularBaseCaseMaxDim,
+        fresh_pair_ple_scalar_base: PleScalarBaseMaxCols,
     }
 
     #[test]
@@ -7490,8 +8019,11 @@ mod campaign_owner {
     const OWNER_PROTOCOL: &str = "core-tuning-campaign-v4";
     const EXTENT_SEEDS: &str = "fixture-seeds-v3";
     const RAW_WINDOWS: &str = "raw-timing-samples-v3";
-    const CORE_CELLS: usize = 702;
-    const CORE_FIELDS: usize = 27;
+    const CORE_CELLS: usize = 756;
+    const CORE_FIELDS: usize = 30;
+    /// Core codec leaves outside the measured set; derived from the codec
+    /// complement and asserted, not a second schema registry.
+    const CORE_OMITTED_FIELDS: usize = 7;
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
     #[serde(rename_all = "snake_case")]
@@ -8402,6 +8934,7 @@ mod campaign_owner {
         gf2_core::field::triangular::reset_last_effective_triangular_route();
         reset_last_effective_trsm_panel_rows();
         reset_max_effective_panel_dispatch_cols();
+        reset_last_effective_ple_base_route();
     }
     pub(super) fn quiet_solve_observations_empty() -> bool {
         gf2_core::field::matrix::gemm_tile_observations().is_empty()
@@ -8409,6 +8942,7 @@ mod campaign_owner {
             && gf2_core::field::triangular::last_effective_triangular_route().is_none()
             && last_effective_trsm_panel_rows().is_none()
             && max_effective_panel_dispatch_cols().is_none()
+            && last_effective_ple_base_route().is_none()
     }
     fn extent_oracle_digest(cell: &ExtentCell, fixture: &ExtentFixture) -> String {
         let mut outputs = Vec::new();
@@ -9946,7 +10480,7 @@ mod campaign_owner {
                 omitted.push(path);
             }
         }
-        if omitted.len() != 10 {
+        if omitted.len() != CORE_OMITTED_FIELDS {
             return Err("core omission complement mismatch".to_owned());
         }
         let section = CoreTuningCodec::decode_body(CanonicalValue::serialize(&body).map_err(err)?)
@@ -10188,6 +10722,11 @@ mod campaign_owner {
         full_grid_probes: bool,
         timed_children: u64,
         fp251_whole_gemm: bool,
+        /// The whole-GEMM kernel every Winograd classical leaf takes.
+        m31_whole_gemm: bool,
+        /// Mersenne-31's PLE panel lane; absent, so the panel selectors stay
+        /// unreachable in the scalar-base experiment.
+        m31_ple_panel_lane: Option<String>,
         simd_backend: Option<String>,
         dedicated_pool_width: usize,
         representative_dot_length: usize,
@@ -10201,6 +10740,12 @@ mod campaign_owner {
         fn validate(&self) -> Result<(), String> {
             if !self.fp251_whole_gemm {
                 return Err("required Fp251 whole-GEMM capability unavailable".to_owned());
+            }
+            if !self.m31_whole_gemm {
+                return Err("required Mersenne-31 whole-GEMM capability unavailable".to_owned());
+            }
+            if self.m31_ple_panel_lane.is_some() {
+                return Err("Mersenne-31 must register no PLE panel lane".to_owned());
             }
             if !matches!(
                 self.simd_backend.as_deref(),
@@ -10268,6 +10813,9 @@ mod campaign_owner {
             full_grid_probes: false,
             timed_children: 0,
             fp251_whole_gemm: <Fp251 as FiniteField>::has_simd_gemm_classical(),
+            m31_whole_gemm: <M31 as FiniteField>::has_simd_gemm_classical(),
+            m31_ple_panel_lane: <M31 as FiniteField>::simd_ple_panel_lane()
+                .map(|lane| format!("{lane:?}")),
             simd_backend: simd_backend().map(|backend| backend.name().to_owned()),
             dedicated_pool_width,
             representative_dot_length: length,
@@ -10332,9 +10880,10 @@ mod campaign_owner {
         #[allow(unused_imports)] // custom bench compilation omits test entry points
         use super::*;
 
-        /// A campaign ID in the exact form the extent-campaign launcher mints.
+        /// A campaign ID in the exact form the extent-campaign launcher mints
+        /// for the seam calibration declaration.
         #[allow(dead_code)]
-        const LAUNCHER_CAMPAIGN_ID: &str = "gf2-a83583e0-20260905t000000z-1";
+        const LAUNCHER_CAMPAIGN_ID: &str = "gf2-dbd8787d-20261001t000000z-1";
 
         #[allow(dead_code)]
         fn request() -> neutral::ManifestRequest {
@@ -10696,10 +11245,26 @@ mod campaign_owner {
         #[test]
         fn campaign_manifest_rejects_an_id_the_profile_loader_rejects() {
             let mut uppercase = request();
-            uppercase.campaign_id = token("gf2-a83583e0-20260905T000000Z-1").unwrap();
+            uppercase.campaign_id = token("gf2-dbd8787d-20261001T000000Z-1").unwrap();
             let error = manifest(&uppercase).unwrap_err();
             assert!(error.contains("tuning profile ID"), "{error}");
             assert!(manifest(&request()).is_ok());
+        }
+        #[test]
+        fn seam_campaign_ids_minted_by_the_launcher_are_profile_ids() {
+            for id in [
+                LAUNCHER_CAMPAIGN_ID,
+                "gf2-dbd8787d-20261231t235959z-4194304",
+                "gf2-a83583e0-20260930t230000z-2728298",
+            ] {
+                assert_eq!(ProfileId::parse(id).unwrap().as_str(), id);
+            }
+            for id in [
+                "gf2-dbd8787d-20261001T000000Z-1",
+                "GF2-dbd8787d-20261001t000000z-1",
+            ] {
+                assert!(ProfileId::parse(id).is_err(), "{id}");
+            }
         }
         #[test]
         fn owner_emission_publishes_the_launcher_named_profile_and_strictly_reopens_it() {
@@ -10835,6 +11400,8 @@ mod campaign_owner {
             let original = serde_json::to_value(&report).unwrap();
             for (pointer, value) in [
                 ("/fp251_whole_gemm", serde_json::json!(false)),
+                ("/m31_whole_gemm", serde_json::json!(false)),
+                ("/m31_ple_panel_lane", serde_json::json!("Byte")),
                 ("/simd_backend", serde_json::Value::Null),
                 ("/dedicated_pool_width", serde_json::json!(1)),
                 (
@@ -10897,7 +11464,7 @@ mod campaign_owner {
         }
 
         #[test]
-        fn accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves() {
+        fn accepted_complete_experiment_measures_defaults_and_reopens_only_its_30_leaves() {
             if simd_backend().is_none() {
                 return;
             }
@@ -10937,8 +11504,8 @@ mod campaign_owner {
             .unwrap();
             let (section, decisions) = decide_owner(&input).unwrap();
             assert_eq!(section.selectors(), CoreTuning::CONSERVATIVE.selectors());
-            assert_eq!(decisions.measured.len(), 27);
-            assert_eq!(decisions.omitted.len(), 10);
+            assert_eq!(decisions.measured.len(), CORE_FIELDS);
+            assert_eq!(decisions.omitted.len(), CORE_OMITTED_FIELDS);
             assert_eq!(
                 decisions.joint_m4rm.reason,
                 statistics::JointVectorReason::ConservativeVector
@@ -10957,7 +11524,7 @@ mod campaign_owner {
                 serde_json::to_value(CoreTuningCodec::encode_body(&reopened.section).unwrap())
                     .unwrap();
             let present = flatten_selectors(&encoded).unwrap();
-            assert_eq!(present.len(), 27);
+            assert_eq!(present.len(), CORE_FIELDS);
             assert!(present.iter().all(|leaf| decisions
                 .measured
                 .contains(&format!("{}.{}", leaf.family, leaf.field))));
@@ -11022,7 +11589,7 @@ mod campaign_owner {
             assert_eq!(OwnerManifest::decode(&encoded).unwrap(), manifest);
             assert_eq!(
                 manifest.counts,
-                neutral::DeclaredCounts::for_cells(702).unwrap()
+                neutral::DeclaredCounts::for_cells(756).unwrap()
             );
             let cases: Vec<OwnerCase> = manifest
                 .ordered_units
@@ -11060,7 +11627,7 @@ mod campaign_owner {
                 })
                 .collect();
             assert_eq!(retained, expected);
-            assert_eq!(retained.len(), 306 * 6);
+            assert_eq!(retained.len(), 360 * 6);
             let transpose:Vec<_>=cases.iter().filter(|case|matches!(&case.kind,OwnerCaseKind::Extent{cell} if cell.field==ExtentField::Transpose&&cell.shape_index==0)).collect();
             let values: Vec<_> = transpose
                 .iter()
@@ -11262,7 +11829,7 @@ mod campaign_owner {
                     .iter()
                     .filter(|v| !measured.contains(&format!("{}.{}", v.family, v.field)))
                     .count(),
-                10
+                CORE_OMITTED_FIELDS
             );
             for field in ExtentField::ALL {
                 assert!(field.candidates().contains(&field.default_candidate()));

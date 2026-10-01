@@ -1,27 +1,47 @@
 #!/usr/bin/env bash
 # Build/stage outside the mutex; the Rust driver owns all campaign mechanics.
-# Usage: tuning-extent-campaign.sh [campaign-id]
-# With no argument a fresh run ID and its exact /tmp stage are created. Passing
-# an ID resumes that already-created stage; arbitrary destinations are invalid.
-# The ID becomes the emitted profiles' ProfileId, so it stays lowercase kebab case.
-# A complete campaign ends by publishing its stage into this checkout; resuming
-# a complete campaign only finishes that publication.
+# Usage: tuning-extent-campaign.sh <issue> | <campaign-id>
+# An issue (eight lowercase hex digits) selects its committed declaration
+# dev/active/<issue>/campaign-declaration.json and creates a fresh run ID
+# gf2-<issue>-<yyyymmddthhmmssz UTC>-<launcher-pid> with its exact /tmp stage.
+# Passing a run ID resumes that already-created stage; arbitrary destinations
+# are invalid. The ID becomes the emitted profiles' ProfileId, so it stays
+# lowercase kebab case. A complete campaign ends by publishing its stage into
+# this checkout; resuming a complete campaign only finishes that publication.
 set -euo pipefail
-if [[ $# -gt 1 ]]; then
-  echo 'usage: tuning-extent-campaign.sh [campaign-id]' >&2
+usage='usage: tuning-extent-campaign.sh <issue> | <campaign-id>'
+if [[ $# -ne 1 ]]; then
+  echo "$usage" >&2
+  exit 2
+fi
+argument=$1
+requested_campaign=
+if [[ $argument =~ ^[0-9a-f]{8}$ ]]; then
+  issue=$argument
+elif [[ $argument =~ ^gf2-([0-9a-f]{8})-[0-9]{8}t[0-9]{6}z-[1-9][0-9]*$ ]]; then
+  issue=${BASH_REMATCH[1]}
+  requested_campaign=$argument
+else
+  echo "$usage; a run ID has the form gf2-<issue>-<yyyymmddthhmmssz UTC>-<launcher-pid>" >&2
   exit 2
 fi
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
-requested_campaign=${1:-}
+declaration=dev/active/$issue/campaign-declaration.json
+# The declaration names the issue, owners and staged executables; the driver
+# and validator read the same file and verify it in full.
+producers=$(python3 - "$declaration" "$issue" <<'PY_DECLARATION'
+import json,sys
+declaration=json.load(open(sys.argv[1]))
+if declaration.get('schema')!='tuning-campaign-declaration-v1' or declaration.get('issue')!=sys.argv[2]:
+    raise SystemExit('campaign declaration schema/issue mismatch')
+print(' '.join(owner['name'] for owner in declaration['measured_owners']))
+PY_DECLARATION
+)
 if [[ -n $requested_campaign ]]; then
-  if [[ ! $requested_campaign =~ ^gf2-a83583e0-[0-9]{8}t[0-9]{6}z-[1-9][0-9]*$ ]]; then
-    echo 'campaign ID must match gf2-a83583e0-<yyyymmddthhmmssz UTC>-<launcher-pid>' >&2
-    exit 2
-  fi
   campaign=$requested_campaign
 else
-  campaign=gf2-a83583e0-$(date -u +%Y%m%dt%H%M%Sz)-$$
+  campaign=gf2-$issue-$(date -u +%Y%m%dt%H%M%Sz)-$$
 fi
 stage=/tmp/$campaign
 stage_preexisted=false
@@ -105,8 +125,9 @@ with path.open('x') as output:
     output.flush(); os.fsync(output.fileno())
 PY_SOURCE_BEFORE
   ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p tuning-campaign-support --bin tuning-extent-campaign-driver --message-format=json >"$stage/build/driver.jsonl" 2>>"$stage/build/build.log"
-  ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p gf2-core --bench tuning_calibration --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/core.jsonl" 2>>"$stage/build/build.log"
-  ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p gf2-algebra --bench tuning_calibration --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/algebra.jsonl" 2>>"$stage/build/build.log"
+  for owner in $producers; do
+    ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p "gf2-$owner" --bench tuning_calibration --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/$owner.jsonl" 2>>"$stage/build/build.log"
+  done
   ./scripts/cargo-budget.sh cargo +1.95.0 build --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml --message-format=json >"$stage/build/composer.jsonl" 2>>"$stage/build/build.log"
   after_head=$(git rev-parse HEAD)
   after_tree=$(git rev-parse 'HEAD^{tree}')
@@ -123,11 +144,14 @@ with path.open('x') as output:
     output.write(json.dumps(value,separators=(',',':')))
     output.flush(); os.fsync(output.fileno())
 PY_SOURCE_AFTER
-  driver_executable=$(python3 - "$stage" <<'PY_BUILD'
+  driver_executable=$(python3 - "$stage" $producers <<'PY_BUILD'
 import hashlib, json, os, pathlib, sys
 stage=pathlib.Path(sys.argv[1])
 executables={}
-for source,dest,target in [('driver','driver','tuning-extent-campaign-driver'),('core','core-producer','tuning_calibration'),('algebra','algebra-producer','tuning_calibration'),('composer','composer','tuning-profile-compose')]:
+builds=[('driver','driver','tuning-extent-campaign-driver')]
+builds+=[(owner,f'{owner}-producer','tuning_calibration') for owner in sys.argv[2:]]
+builds+=[('composer','composer','tuning-profile-compose')]
+for source,dest,target in builds:
     rows=[json.loads(line) for line in (stage/'build'/f'{source}.jsonl').read_text().splitlines()]
     bins={row['executable'] for row in rows if row.get('reason')=='compiler-artifact' and row.get('target',{}).get('name')==target and row.get('executable')}
     if len(bins)!=1: raise SystemExit(f'expected one executable for {source}: {bins}')

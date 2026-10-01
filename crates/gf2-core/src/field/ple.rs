@@ -681,7 +681,12 @@ fn ple_in_place<F: FiniteField, O: ObservationPolicy>(
 ) -> usize {
     let n = a.cols();
     let widths = PleWidths::resolve::<F>();
-    ple_in_place_window::<F, O>(a.reborrow(), 0, n, perm, pivot_cols, widths)
+    let rank = ple_in_place_window::<F, O>(a.reborrow(), 0, n, perm, pivot_cols, widths);
+    O::ple_base_route(
+        widths.scalar_base_max_cols,
+        ple_base_route_code(ple_base_route_resolved(widths.scalar_base_max_cols, n)),
+    );
+    rank
 }
 
 /// Conservative default for `ple.panel_base_max_cols()` in the active
@@ -731,6 +736,62 @@ fn ple_base_route_resolved(scalar_base_max_cols: usize, win: usize) -> PleBaseRo
     } else {
         PleBaseRoute::BlockRecursive
     }
+}
+
+#[inline(always)]
+const fn ple_base_route_code(route: PleBaseRoute) -> usize {
+    match route {
+        PleBaseRoute::ScalarBase => 1,
+        PleBaseRoute::BlockRecursive => 2,
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+static LAST_EFFECTIVE_PLE_BASE_MAX_COLS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+static LAST_EFFECTIVE_PLE_BASE_ROUTE: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn record_ple_base_route(scalar_base_max_cols: usize, route: usize) {
+    LAST_EFFECTIVE_PLE_BASE_MAX_COLS
+        .store(scalar_base_max_cols, std::sync::atomic::Ordering::SeqCst);
+    LAST_EFFECTIVE_PLE_BASE_ROUTE.store(route, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// Clears [`last_effective_ple_base_route`].
+///
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+pub fn reset_last_effective_ple_base_route() {
+    LAST_EFFECTIVE_PLE_BASE_ROUTE.store(0, std::sync::atomic::Ordering::SeqCst);
+    LAST_EFFECTIVE_PLE_BASE_MAX_COLS.store(0, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// Returns the resolved `ple.scalar_base_max_cols()` and the top-level
+/// [`PleBaseRoute`] of the most recent [`FieldMatrix::ple`] decomposition
+/// since the last reset.
+///
+/// The decomposition publishes once at its resolve point, after the whole
+/// column window completes, so recursive windows add no
+/// candidate-dependent writes. [`ple_base_route`] alone publishes nothing.
+/// Exists only under `cfg(test)` or the `test-support` feature.
+#[cfg(any(test, feature = "test-support"))]
+#[must_use]
+pub fn last_effective_ple_base_route() -> Option<(usize, PleBaseRoute)> {
+    let scalar_base_max_cols =
+        LAST_EFFECTIVE_PLE_BASE_MAX_COLS.load(std::sync::atomic::Ordering::SeqCst);
+    if scalar_base_max_cols == 0 {
+        return None;
+    }
+    let route = match LAST_EFFECTIVE_PLE_BASE_ROUTE.load(std::sync::atomic::Ordering::SeqCst) {
+        1 => PleBaseRoute::ScalarBase,
+        2 => PleBaseRoute::BlockRecursive,
+        _ => return None,
+    };
+    Some((scalar_base_max_cols, route))
 }
 
 /// The selected arm of the [`FieldMatrix::ple`] panel dispatcher for one
@@ -1431,6 +1492,22 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// ```
     pub fn ple(&self) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
         self.ple_with_policy::<RecordObservations>()
+    }
+
+    /// Runs the complete [`ple`](Self::ple) body without test-support
+    /// observation writes.
+    ///
+    /// Development calibration resolves this function before timing. It
+    /// shares every profile read, recursion, TRSM, GEMM and panel dispatch
+    /// with [`ple`](Self::ple); its zero-sized compile-time policy emits no
+    /// route, panel or GEMM observations.
+    ///
+    /// # Complexity
+    ///
+    /// Identical to [`ple`](Self::ple).
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn ple_quiet_for_test(&self) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
+        self.ple_with_policy::<crate::field::matrix::QuietObservations>()
     }
 
     pub(crate) fn ple_with_policy<O: ObservationPolicy>(

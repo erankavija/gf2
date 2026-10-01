@@ -8,7 +8,10 @@
 mod support;
 
 use gf2_core::field::matrix::gemm;
-use gf2_core::field::ple::{ple_base_route, PleBaseRoute};
+use gf2_core::field::ple::{
+    last_effective_ple_base_route, ple_base_route, reset_last_effective_ple_base_route,
+    PleBaseRoute,
+};
 use gf2_core::field::test_random_matrix::random_fp;
 use gf2_core::tuning::{self, CoreTuning};
 
@@ -59,8 +62,28 @@ support::fresh_tuning_test!(installed_ple_profile_widens_the_scalar_base_window,
     //
     // Mersenne-31 registers no panel kernel on any host, so every window of
     // eight columns or fewer is eliminated directly by the scalar base.
+    // Route reporting alone publishes no executed observation.
+    reset_last_effective_ple_base_route();
+    let _ = ple_base_route(48);
+    assert_eq!(last_effective_ple_base_route(), None);
+
+    // Each decomposition publishes its top-level route once, on both sides of
+    // the installed boundary.
+    let narrow = random_fp::<MERSENNE_31>(8, 8, 0xA700);
+    let (np, nl, ne, _) = narrow.ple();
+    assert_eq!(np.apply(&gemm(&nl, &ne)), narrow);
+    assert_eq!(
+        last_effective_ple_base_route(),
+        Some((8, PleBaseRoute::ScalarBase))
+    );
+
     let a = random_fp::<MERSENNE_31>(48, 48, 0xA701);
+    reset_last_effective_ple_base_route();
     let (p, l, e, rank) = a.ple();
+    assert_eq!(
+        last_effective_ple_base_route(),
+        Some((8, PleBaseRoute::BlockRecursive))
+    );
     assert_eq!(l.cols(), rank);
     assert_eq!(e.rows(), rank);
     assert_eq!(p.apply(&gemm(&l, &e)), a, "P · L · E != A");
