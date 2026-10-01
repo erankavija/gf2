@@ -15,10 +15,12 @@
 //! ```
 
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchDecoder, FrameSize};
+use gf2_coding::bch::BchDecodeOutcome;
 use gf2_coding::traits::block::{BlockCode, BlockEncoder};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
-use rand::Rng;
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -49,7 +51,6 @@ fn main() -> Result<()> {
 fn demo_configuration(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
     println!("Configuration: {:?} Frame, Rate {:?}", frame_size, rate);
 
-    // Create BCH code
     let code = dvb_t2_bch_code(frame_size, rate)?;
     let decoder = DvbT2BchDecoder::new(&code);
 
@@ -65,10 +66,8 @@ fn demo_configuration(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
         decoder.correction_radius()
     );
 
-    // Create decoder
-
     // Test: Simple roundtrip without errors
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
     let message = BitVec::random(code.k(), &mut rng);
     let codeword = code.encode(&message)?;
     let (_, decoded) = decoder.decode(&codeword)?;
@@ -93,7 +92,7 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
     println!("  Can correct up to {} bit errors\n", t);
 
     // Create a random message
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
     let message = BitVec::random(code.k(), &mut rng);
 
     // Encode
@@ -162,22 +161,37 @@ fn demo_error_correction(frame_size: FrameSize, rate: CodeRate) -> Result<()> {
 
     println!("    Error positions: {:?}", error_positions);
 
-    let (_, decoded) = decoder.decode(&corrupted)?;
+    let (outcome, decoded) = decoder.decode(&corrupted)?;
 
-    if decoded == message {
-        println!(
-            "    ⚠️  Unexpectedly corrected {} errors (beyond t={})",
-            num_errors, t
-        );
-    } else {
-        println!("    ✓ Correctly failed to decode (too many errors)");
-        println!("    Note: BCH codes can detect but not correct > t errors");
+    match outcome {
+        BchDecodeOutcome::Uncorrectable => {
+            println!("    ✓ Decoder reported the word uncorrectable (too many errors)");
+        }
+        BchDecodeOutcome::Corrected { count } if decoded != message => {
+            println!(
+                "    ⚠️  Miscorrected: decoder flipped {} bit(s) to a different codeword (beyond t={})",
+                count, t
+            );
+        }
+        BchDecodeOutcome::Corrected { count } => {
+            println!(
+                "    ⚠️  Corrected {} bit(s) back to the transmitted message (beyond t={})",
+                count, t
+            );
+        }
+        BchDecodeOutcome::NoErrors => {
+            println!(
+                "    ⚠️  Decoder saw a codeword although {} bits were flipped",
+                num_errors
+            );
+        }
     }
+    println!("    Note: BCH decoding guarantees correction only up to t errors");
 
     println!("\n  📊 Summary:");
     println!("     - ✓ DVB-T2 BCH decoder working correctly!");
     println!("     - ✓ Short frames: 0, 6, and 12 errors corrected successfully");
-    println!("     - ✓ Error detection: Correctly detects when too many errors present");
+    println!("     - ✓ Beyond t errors the decoder reports its outcome, as shown above");
     println!("     - ✓ Ready for use in DVB-T2 outer coding");
     Ok(())
 }
