@@ -9,12 +9,24 @@
   ],
   "description": "Migrate the gf2-coding integration tests consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each test in this task's inventory passes on the canonical model with its assertions preserved, or re-pins fixtures explicitly in the same change.\n",
   "documents": [],
+  "done_at": "2026-10-01T09:02:28.375321917Z",
   "first_ready_at": "2026-10-01T07:46:11.855797639Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-01T08:58:06.757831980Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-01T09:02:18.926321424Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "227ac5c8-b286-4483-9a49-f876f02daa96",
   "labels": [
     "type:task",
@@ -23,7 +35,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Migrate gf2-coding integration tests",
-  "updated_at": "2026-10-01T07:46:29.201388236Z"
+  "updated_at": "2026-10-01T09:02:28.375321917Z"
 }

@@ -13946,3 +13946,7 @@
 {"from":"ready","id":"616d0664-74dc-464c-a816-ba58cfea3aa3","issue_id":"d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512","timestamp":"2026-10-01T08:54:26.006375360Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"cef88f93-2c68-4f41-9700-0afed806c242","issue_id":"d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512","timestamp":"2026-10-01T08:54:26.006375360Z","type":"issue_claimed"}
 {"id":"09426bdb-ceb5-4ac1-a464-84b6eb31bae3","issue_id":"cbd1eb28-dff0-4dce-848c-49782ab6c804","priority":"normal","timestamp":"2026-10-01T08:57:01.730850885Z","title":"Decode user-layout words with the canonical binary BCH decoder","type":"issue_created"}
+{"gate_key":"cargo-ci","id":"892655a4-a1ff-4f52-896c-9f04fb226ec7","issue_id":"227ac5c8-b286-4483-9a49-f876f02daa96","timestamp":"2026-10-01T08:58:06.757831980Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"dd5897e4-c175-4d88-83c6-0ab31b4daf14","issue_id":"227ac5c8-b286-4483-9a49-f876f02daa96","timestamp":"2026-10-01T09:02:18.926321424Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"ea6369f9-99bf-425a-81ef-00df513e120e","issue_id":"227ac5c8-b286-4483-9a49-f876f02daa96","timestamp":"2026-10-01T09:02:28.375321917Z","to":"done","type":"issue_state_changed"}
+{"id":"64aa5527-35a3-4b5e-8a5c-c9db945d961e","issue_id":"227ac5c8-b286-4483-9a49-f876f02daa96","timestamp":"2026-10-01T09:02:28.375321917Z","type":"issue_completed"}
