@@ -3,7 +3,6 @@
 This document provides strategic direction for the gf2 workspace. For detailed implementation plans, see:
 
 - **[crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md)** - Performance primitives and optimization phases
-- **[crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md)** - Coding theory algorithms and DVB-T2 FEC
 - **[dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md](dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md)** - gf2-algebra-permanent epic: bipedal F_3/F_5/F_7 permanents, SIMD/GPU acceleration, Lean verification
 
 ## Vision
@@ -206,4 +205,4 @@ See subproject roadmaps for detailed tasks.
 
 ---
 
-*For implementation details, see [crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md), [crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md), and [dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md](dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md).*
+*For implementation details, see [crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md) and [dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md](dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md).*

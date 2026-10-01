@@ -23,7 +23,6 @@ This directory contains technical documentation for the `gf2-coding` crate.
 ## Quick Links
 
 **Getting Started**: See [../README.md](../README.md) for API overview and examples  
-**Contributing**: See [../ROADMAP.md](../ROADMAP.md) for planned features  
 **Test Vectors**: Set `DVB_TEST_VECTORS_PATH` environment variable
 
 ## Document Organization
