@@ -1,0 +1,32 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "62f0d0e6-0d54-44a6-a5d7-31b09c33976d"
+  ],
+  "description": "Bring the comments and Rustdoc in the remaining gf2-sim source files to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-sim/src/` top-level files and `src/parallel/`, `src/channels/` and `src/checkpoint/`, plus `crates/gf2-sim/build.rs`, about 3,700 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "f22ec590-b185-4444-903b-e9623a183213",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:gf2-sim",
+    "story:source-tersification-sweep",
+    "satisfies:REQ-21",
+    "satisfies:REQ-22",
+    "satisfies:REQ-23",
+    "satisfies:REQ-25",
+    "satisfies:REQ-26"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Tersify comments in the remaining gf2-sim source files",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
+  ],
+  "description": "gf2 implements codes from DVB-T2 and 5G NR. Researchers relying on them need the supported configurations, conventions and verification evidence in one place.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/reference/` states the supported DVB-T2 and 5G NR code configurations, the systematic encoding convention, test-vector provenance and the conformance tests that verify them, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-coding/docs/DVB_T2.md`, `LDPC_VERIFICATION_TESTS.md` and `SYSTEMATIC_ENCODING_CONVENTION.md` are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: Provenance files kept beside data (for example `crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md`) are linked, not copied.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "5625a423-3ccc-4d11-b839-52c8fd311601",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-05"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Write the standards conformance reference page",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

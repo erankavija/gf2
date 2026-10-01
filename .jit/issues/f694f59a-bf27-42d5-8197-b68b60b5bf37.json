@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "616e1d7c-1e65-45f0-91d4-2eb194746882",
+    "8bd873f7-4758-44cd-91aa-03db3a7a533b"
+  ],
+  "description": "The flat `dev/active/a83583e0/` entry holds a tuning-extent campaign declaration and producing manifest that the campaign tooling reads. Once the tooling no longer hard-codes its path, it moves under the field capability dispatch epic's directory. Its owning issue is done.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (a83583e0) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The entry's files live under the canonical directory of epic 6dc81018.\n- [hard] REQ-03: The move commit changes no consumer code: the extent driver, validator and launcher locate the declaration by content identity or through the configured repository root.\n- [hard] REQ-04: The validator run recorded in the tuning-extent verdict baseline, repeated after the move, yields identical verdicts; the repeat run is appended to that record.\n- [hard] REQ-05: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n- [hard] REQ-06: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-07: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "f694f59a-bf27-42d5-8197-b68b60b5bf37",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Move the a83583e0 campaign declaration entry under its epic dir",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "67048b47-ed17-4672-822a-829a796420c2",
+    "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
+  ],
+  "description": "About 18 flat `dev/active/` entries belong to the field capability dispatch epic (6dc81018), several shared with epic 86b9c719. They move under the owning epic's canonical directory.\n\n## Background\n\nThe entry list, owners and multi-epic cases are in `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A (rows whose top epic includes 6dc81018). Code-pinned entries a83583e0 and dbd8787d are excluded.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-04: Each listed entry has no non-comment code, test, script or config consumer in the manifest; an entry found to have one stays in place and is reported for decoupling under the `no-dev-path-coupling` invariant before it moves. The Rust CI gate passes.\n- [hard] REQ-05: The manifest records each moved row as complete.\n- [hard] REQ-06: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

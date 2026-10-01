@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "52fb615b-0294-4452-bf34-2d7a178029b0",
+    "698fa793-8c74-4019-a605-9d078f023cbc",
+    "8a9156fc-3015-47c7-8a7f-2e549962252d",
+    "cdba4e71-4444-41e0-b34e-904f3fb20ab4"
+  ],
+  "description": "The gf2-coding crate guides served as fact sources for the permanent pages. Once mined, they leave the crate and are preserved in the legacy mirror.\n\n## Background\n\nInbound citations include the crate README and several `dev/active/` documents (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5).\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-coding/docs/` live under `dev/archive/legacy/<original-relative-path>`, moved with history preserved, and the original paths no longer exist.\n- [hard] REQ-02: Each inbound citation outside the mirror points to the permanent page covering the topic, to the mirror path, or is removed as design-history provenance.\n- [hard] REQ-03: A link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "eb2a833d-75b4-45b7-89ea-b8aafcd36cb1",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-12"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Move gf2-coding crate guides into the legacy mirror",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

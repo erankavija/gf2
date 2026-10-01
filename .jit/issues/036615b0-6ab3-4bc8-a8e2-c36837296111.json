@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "10fdde24-ece4-4b9b-9379-81de68d0024c",
+    "a24b2af7-81ce-4442-9ee3-6ce096c36537"
+  ],
+  "description": "Each tracked artifact in the five terminal-owned or ownerless `dev/active/` entries listed below, plus the empty untracked leftover directories listed in the investigation's Appendix A (recorded with the deletion disposition) present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (classes (b), (b-empty) and (c)) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the five terminal-owned or ownerless `dev/active/` entries listed below, plus the empty untracked leftover directories listed in the investigation's Appendix A (recorded with the deletion disposition) present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `37e0b235`, `babcf05e-gf2-core-ppc-spiral`, `charon-patch-backup-2026-05-15`, `DOCUMENTATION_AUDIT.md`, `e095a100-gfpm-arithmetic`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-01T14:43:15.466350554Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "036615b0-6ab3-4bc8-a8e2-c36837296111",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-13",
+    "satisfies:REQ-12"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Inventory terminal, ownerless and empty dev/active entries",
+  "updated_at": "2026-10-01T14:43:33.437411954Z"
+}

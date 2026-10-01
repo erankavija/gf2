@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "10fdde24-ece4-4b9b-9379-81de68d0024c",
+    "3f29e945-8b12-4862-82c8-f2ec6573287c"
+  ],
+  "description": "Root `AGENTS.md` is the authoritative operational guide. `CONTRIBUTING.md` duplicates it except for a Code of Conduct link and pull-request content guidance, so the file is retired and its unique guidance gets one home.\n\n## Background\n\nConsumers and overlap are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.6; the only live consumer is a link in the root README. Root `AGENTS.md` sits close to its 200-line limit.\n\n## Success Criteria\n\n- [hard] REQ-01: `CONTRIBUTING.md` is absent from the tree.\n- [hard] REQ-02: The Code of Conduct link and pull-request content guidance appear in root `AGENTS.md`, or are dropped with the reason recorded in the commit message.\n- [hard] REQ-03: No live file links to `CONTRIBUTING.md`; mentions inside archived or historical records are unchanged.\n- [hard] REQ-04: Root `AGENTS.md` stays at or below 200 lines.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-01T14:43:15.466350554Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-02"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
+  "updated_at": "2026-10-01T14:43:31.926099502Z"
+}

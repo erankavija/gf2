@@ -20,10 +20,11 @@
     "epic:documentation-overhaul",
     "story:doc-tersification-sweep",
     "component:docs",
-    "type:story"
+    "type:story",
+    "resolution:obsolete"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Workspace documentation tersification sweep",
-  "updated_at": "2026-10-01T09:51:37.609493807Z"
+  "updated_at": "2026-10-01T14:43:46.860767259Z"
 }

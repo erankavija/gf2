@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "9451498f-62f6-4e28-bd93-dffc836fdf02",
+    "b959ffe8-5a4a-406c-91fa-acc6a01a3167",
+    "fca578b1-2593-4bc4-8f08-8a425f3b237f"
+  ],
+  "description": "The documentation policy was widened temporarily for archival. It ends with only the post-overhaul managed and permanent paths, and the mechanical documentation check covers the final permanent surface.\n\n## Success Criteria\n\n- [hard] REQ-01: Managed paths, permanent paths and issue-scoped areas in `.jit/config.toml` name only existing directories that hold active or permanent material; temporary entries and the `dev/plans`, `dev/presentations` and `dev/sessions` entries are gone.\n- [hard] REQ-02: The mechanical documentation check's configured footprint covers the root README, `AGENTS.md`, `CLAUDE.md`, `docs/`, crate READMEs, `dev/active/` Markdown and repository-relative links in Rustdoc, and excludes `dev/archive/`.\n- [hard] REQ-03: Repository validation, documentation review and the mechanical documentation check pass on the final policy.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "d6ebc4ec-aa63-4c1d-bd0a-7ef4c33e9db6",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-15",
+    "satisfies:REQ-16"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Narrow the docs policy to post-overhaul paths",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

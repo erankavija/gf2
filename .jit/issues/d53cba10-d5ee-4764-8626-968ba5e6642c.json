@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "871b401d-59f7-4fa4-86b6-9c067795ff06"
+  ],
+  "description": "The addendum schema-version test reads versioned fixtures and schemas at literal paths inside zen3 `dev/active/` entries. It locates them through one runtime-resolved repository root or by content identity.\n\n## Background\n\nReader: `dev/tools/tuning-campaign-support/tests/addendum_schema_versions.rs:35-52`, covering fixtures in 26465e6c, eda07788 and 5cbb6545 and schemas in f547c394.\n\n## Success Criteria\n\n- [hard] REQ-01: The test locates each fixture and schema without a literal `dev/active/` path.\n- [hard] REQ-02: Before the change, a linked baseline record lists the test's per-fixture results with the exact command and commit; after the change, the results are identical.\n- [hard] REQ-03: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n- [hard] REQ-04: No fixture or committed receipt changes, and the Rust CI gate passes.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "d53cba10-d5ee-4764-8626-968ba5e6642c",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Locate addendum schema test inputs through the configured repository root",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

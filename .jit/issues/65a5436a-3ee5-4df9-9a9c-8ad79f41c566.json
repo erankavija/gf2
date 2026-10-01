@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "871b401d-59f7-4fa4-86b6-9c067795ff06"
+  ],
+  "description": "The campaign producing-closure check and the addendum schema-version check read inputs from literal `dev/active/f547c394/` paths. They locate those inputs through one repository root resolved at runtime and identify them by content.\n\n## Background\n\nReaders: `dev/scripts/check-campaign-producing-closure.py:33` and `dev/scripts/check-addendum-schema-versions.py:53,56`, both run by `scripts/cargo-ci.sh`.\n\n## Success Criteria\n\n- [hard] REQ-01: Both scripts locate the producing closure, addendum schemas and versions table without a literal `dev/active/` path, through one configured repository root or a content-identity lookup.\n- [hard] REQ-02: Before the change, a linked record holds both checks' output on the current tree, with the exact command and commit; after the change, the output is identical.\n- [hard] REQ-03: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n- [hard] REQ-04: The Rust CI gate passes, including both checks.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Resolve campaign CI check inputs through the configured repository root",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

@@ -33,10 +33,11 @@
   "labels": [
     "type:task",
     "component:docs",
-    "epic:documentation-overhaul"
+    "epic:documentation-overhaul",
+    "resolution:obsolete"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Rewrite README for research adoption",
-  "updated_at": "2026-10-01T11:15:02.220782823Z"
+  "updated_at": "2026-10-01T14:43:47.166734614Z"
 }

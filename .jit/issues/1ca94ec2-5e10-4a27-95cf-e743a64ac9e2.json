@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "67048b47-ed17-4672-822a-829a796420c2",
+    "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
+  ],
+  "description": "Terminal stories under the archived epics e095a100, 806eb14e, 2928ccce, d4851c3d still hold 21 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-10",
+    "satisfies:REQ-19"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

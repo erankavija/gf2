@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "7bac1303-eed8-443a-a504-593a87710cb4"
+  ],
+  "description": "The remaining fourteen survey harness crates under `dev/active/` still depend on `dev/tools/tuning-campaign-support` through depth-counting relative paths. They adopt the depth-independent form recorded for the first harness crates.\n\n## Background\n\nCrates (under `dev/active/`): `4c1e441f/survey/gemm-arm`, `53c5a8c0/survey/arms`, `6c6b09b1/survey/analysis`, `6c6b09b1/survey/arm-common`, `6fb89a3c/survey/gf2-side`, `ad2a6a58/survey/axpy-arm`, `c077a88b/survey/harness`, `c7113c5a/survey/gf2-side`, `f63a2464/survey/arms`, `26465e6c/survey/gf2-side`, `5cbb6545/survey/gf2-side`, `eda07788/survey/analysis`, `eda07788/survey/gf2-side`, `eda07788/survey/nr-derate`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each changed crate builds from its current location and from a copy one directory level deeper.\n- [hard] REQ-02: Each harness `Cargo.toml` changes only in that dependency declaration, once; the commit records each edit.\n- [hard] REQ-03: Before the change, the benchmark-acceptance verdicts for every committed `zen3-benchmark-receipt-v1` receipt are recorded, and after the change they are identical, so committed receipts keep verifying through their byte-identical snapshot copies.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n- [hard] REQ-05: Each of the fourteen crates uses the dependency form recorded in the harness dependency-form record.\n\n## Notes\n\nA digest-pinned harness manifest may change once, to the depth-independent form.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "c84ac71a-b9e8-4b10-9ebb-b433f7077dae",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Apply the depth-independent tool dependency to the remaining harness crates",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

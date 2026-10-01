@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa"
+  ],
+  "description": "Container archival follows tracker document references. Artifacts whose owner is established by an identifier or commit provenance but which carry no document reference are linked at their current path.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest row whose owner is established by identifier or commit provenance has a tracker document reference on that owner at the artifact's current path.\n- [hard] REQ-02: Multi-owner rows are linked to every recorded owner; rows without admissible evidence receive no link.\n- [hard] REQ-03: Tracker validation and document conformance report no new findings.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "67048b47-ed17-4672-822a-829a796420c2",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-12",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Link unlinked owned artifacts to their issues",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

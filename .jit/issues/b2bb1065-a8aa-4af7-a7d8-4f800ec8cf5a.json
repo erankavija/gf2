@@ -1,0 +1,32 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
+    "3759f995-edc4-4061-8b45-0ec30078a691",
+    "42037c91-71ad-431b-b27a-e9826e5354a9",
+    "4f161183-869b-4369-83e9-46dc023720d5",
+    "83f9ce69-6d18-4767-ac9c-6b2f00485581",
+    "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b"
+  ],
+  "description": "`dev/bench_results/` is an operational receipt store read by CI with hard-coded prefixes. Its receipt directories stay; its loose narrative Markdown reports move to their owners or the legacy mirror.\n\n## Background\n\nCI consumers and receipt structure are in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1, §3.10 and §6.\n\n## Success Criteria\n\n- [hard] REQ-01: No loose narrative Markdown file remains at the top level of `dev/bench_results/`; receipt directories and files read by scripts or tests are unchanged.\n- [hard] REQ-02: Reports owned by terminal epics live in those epics' archive directories; reports owned by open epics live under their epic's `dev/active/` directory and are linked; unowned reports live in the legacy mirror.\n- [hard] REQ-03: Citations of moved reports are repointed, a link scan of the touched files reports no unresolved local link, and the receipt checks in the Rust CI gate pass.\n- [hard] REQ-04: The manifest records each row as complete.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-14"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Relocate loose narrative reports out of dev/bench_results",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

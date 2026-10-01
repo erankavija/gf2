@@ -1,0 +1,34 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
+    "3759f995-edc4-4061-8b45-0ec30078a691",
+    "42037c91-71ad-431b-b27a-e9826e5354a9",
+    "6c314026-6f34-490d-9403-39b7ecc89ea5",
+    "83f9ce69-6d18-4767-ac9c-6b2f00485581",
+    "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
+    "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
+    "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b"
+  ],
+  "description": "Rewrite the root README as gf2's concise entry point for researchers evaluating or adopting the library. The page presents only supported current behavior and directs readers to canonical crate, workflow, reference and performance material.\n\n## Background\n\nThe current README omits gf2-sim from its layout table, contains an API tour, marketing wording, future-facing contributor notes, and links to crate-local guides and the contributor guide (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5, §3.6 and finding 9).\n\n## Success Criteria\n\n- [hard] REQ-01: `README.md` briefly states what gf2 strives to provide for research-grade finite-field computing and coding theory without marketing superlatives or future promises.\n- [hard] REQ-02: The workspace capability map accurately includes `gf2-core`, `gf2-coding`, `gf2-algebra` and `gf2-sim`; SIMD and HIP crates are described as implementation backends through their supported integration paths.\n- [hard] REQ-03: Acceleration and feature claims are verified against current manifests and code, including correct ownership of GPU LDPC belief propagation and default features.\n- [hard] REQ-04: Installation instructions describe only mechanisms available in the current tree and identify material toolchain or hardware constraints.\n- [hard] REQ-05: The README carries no performance claims or result figures; readers reach performance evidence through the permanent documentation index.\n- [hard] REQ-06: The README links to the permanent documentation index and the research tutorials without embedding elementary API tutorials or duplicating Rustdoc.\n- [hard] REQ-07: All README links, commands, crate names and feature names pass the documentation and Rust CI gates.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "fdb998ec-6042-4112-8bf9-1f179128d62b",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-03"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Rewrite README for research adoption",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

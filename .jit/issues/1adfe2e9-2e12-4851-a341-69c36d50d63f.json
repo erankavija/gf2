@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "fb209a81-59cf-4bb1-86c9-597637a4bba2",
+    "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
+  ],
+  "description": "The gf2-coding example that renders presentation figures writes into `docs/presentations/figures/`, a permanent path that holds no decks. It writes to a caller-chosen directory instead.\n\n## Background\n\nWriter: `crates/gf2-coding/examples/gen_presentation_figures.rs:12-18,39`.\n\n## Success Criteria\n\n- [hard] REQ-01: The example writes only to an output directory the caller supplies, defaulting to a path under `target/`.\n- [hard] REQ-02: Running the example writes nothing under `docs/`.\n- [hard] REQ-03: The example's header states its purpose and output location in one short paragraph.\n- [hard] REQ-04: The Rust CI gate passes.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "1adfe2e9-2e12-4851-a341-69c36d50d63f",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:gf2-coding",
+    "satisfies:REQ-09"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Point the presentation figure example at a caller-chosen output dir",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

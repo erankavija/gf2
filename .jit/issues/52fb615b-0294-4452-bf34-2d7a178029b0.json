@@ -1,0 +1,30 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "10fdde24-ece4-4b9b-9379-81de68d0024c",
+    "a24b2af7-81ce-4442-9ee3-6ce096c36537"
+  ],
+  "description": "Every pre-overhaul artifact outside `dev/` that the overhaul rewrites, relocates or retires receives one manifest row naming its disposition and destination.\n\n## Background\n\nJIT container archival never moves files outside `dev/`, so these sources move by explicit relocation. Topic targets, inbound references and deck ownership are analysed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.4, §3.5 and §1.1.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked root Markdown file, file under `docs/`, crate README, file under `crates/*/docs/`, Markdown file under `crates/gf2-core/benches/`, `benchmarks/` and `proofs/`, and other crate-embedded Markdown.\n- [hard] REQ-02: Each rewritten-topic row names its target page under the `docs/` quadrant layout or a crate README; each legacy row names `dev/archive/legacy/<original-relative-path>`.\n- [hard] REQ-03: Each presentation deck and figure row names its owning archived epic and destination inside that epic's archive directory, and the example program that writes presentation figures is recorded as a consumer.\n- [hard] REQ-04: Each row records inbound references found outside its own directory.\n- [hard] REQ-05: The progress checker reports the rows schema-valid.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-01T14:43:15.466350554Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "52fb615b-0294-4452-bf34-2d7a178029b0",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-13",
+    "satisfies:REQ-12"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Populate the migration manifest for permanent-path sources",
+  "updated_at": "2026-10-01T14:43:33.866007862Z"
+}

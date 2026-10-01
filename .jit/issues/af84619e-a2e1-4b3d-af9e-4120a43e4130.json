@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "c852d9b2-3251-44c2-917f-00be035bbd07"
+  ],
+  "description": "The progress checker is a migration tool. After a final complete check it leaves the tree; lasting enforcement comes from invariants and review gates.\n\n## Success Criteria\n\n- [hard] REQ-01: The checker reports every manifest row in a terminal disposition with every source and destination assertion passing, and that final report is linked to the epic's records.\n- [hard] REQ-02: The checker script and its self-tests are absent from the tree, and no CI step, gate or script references them.\n- [hard] REQ-03: The completed manifest stays in the epic's records.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "af84619e-a2e1-4b3d-af9e-4120a43e4130",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-13"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Retire the transient progress checker after the final check",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

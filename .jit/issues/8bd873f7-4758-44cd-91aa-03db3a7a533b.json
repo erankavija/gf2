@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "871b401d-59f7-4fa4-86b6-9c067795ff06"
+  ],
+  "description": "The tuning-extent campaign driver, its validator and its launcher derive each declaration's path as `dev/active/<issue>/campaign-declaration.json` and check it against each producing manifest's lifecycle sources. They locate declarations by content identity or through one configured repository root.\n\n## Background\n\nReaders: `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:273-283,3142,3147`, `dev/scripts/validate-tuning-extent-campaign.py:427,4127`, `dev/scripts/tuning-extent-campaign.sh:30` and `dev/tools/tuning-campaign-support/tests/driver_launcher.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: The driver, the validator and the launcher locate each campaign declaration without deriving a `dev/active/<issue>/` path, and the lifecycle-source check matches by content identity.\n- [hard] REQ-02: Before the change, a linked baseline record lists the validator's verdict for every committed tuning-extent campaign (including a83583e0 and dbd8787d), with the exact command and commit; after the change, the same run yields identical verdicts, so existing campaigns stay valid.\n- [hard] REQ-03: The driver-launcher test covers a declaration located away from its original directory.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "8bd873f7-4758-44cd-91aa-03db3a7a533b",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Locate tuning-extent campaign declarations without derived dev paths",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

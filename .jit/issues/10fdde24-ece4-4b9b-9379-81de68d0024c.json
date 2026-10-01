@@ -1,12 +1,20 @@
 {
-  "assignee": null,
+  "assignee": "agent:planning-lead",
+  "claimed_at": "2026-10-01T14:43:08.132998402Z",
   "context": {},
   "created_at": "2026-10-01T10:36:11.786309896Z",
   "dependencies": [
     "8dddfc7a-6112-4439-b8e0-7319bca23313"
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Overhaul documentation for research adoption (fa787f85) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "label": "Manifest key to issue map",
+      "path": "dev/active/fa787f85-documentation-overhaul/breakdown-keymap.json"
+    }
+  ],
   "first_ready_at": "2026-10-01T14:42:48.847123065Z",
   "gates_required": [
     "coverage-preview",
@@ -32,7 +40,7 @@
     "brackets:fa787f85"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "breakdown: Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T14:42:48.847123065Z"
+  "updated_at": "2026-10-01T14:44:27.467270522Z"
 }

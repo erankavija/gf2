@@ -1,0 +1,52 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "13dfe1a5-a770-4910-b6b3-36e4b2a91cca",
+    "290b8716-2442-42af-9383-08f9d629219d",
+    "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
+    "3da13f39-225c-4615-9f68-f1daa76af90b",
+    "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
+    "57436474-9b84-4d68-804f-070c10b673d9",
+    "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
+    "67b5d1d8-b6e2-4687-ae5f-fd36bcee334a",
+    "72768e37-a609-427c-a3e6-8a4efcf4c8b8",
+    "7bfad039-1fd6-4738-a845-b9c738458968",
+    "8a9db61a-115b-4f07-9baf-97e6545525a5",
+    "8f451167-c774-42d0-b8e6-346a6df8ee7a",
+    "93aed46a-441a-488e-8d25-651abc1897a0",
+    "9dda3958-4e62-4bb2-89e4-a1999e000a09",
+    "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
+    "aa0558c1-8143-44b9-a2ca-27282d1cf015",
+    "bfb37a21-1608-4ed9-a016-c60d0c87b4c9",
+    "c6aa0e84-072e-4671-9c50-0c8e9d0d4f66",
+    "cafb463c-59ea-4dd5-8bc4-c7cc4521c00f",
+    "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
+    "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
+    "f2064e90-ad75-4253-8402-41d63d38af41",
+    "f22ec590-b185-4444-903b-e9623a183213",
+    "f46046f0-3672-4bec-8d57-83bc77a6043b"
+  ],
+  "description": "The source-comment sweep closes with a record comparing each crate's comment share before and after, listing every justified pattern match, and naming the tracked issues that now hold removed planned-work statements.\n\n## Success Criteria\n\n- [hard] REQ-01: The completion record states each crate's comment share after the sweep by the same command as the baseline, beside the baseline figures.\n- [hard] REQ-02: A case-insensitive grep of `crates/` comment lines for the sweep pattern below returns only lines that the record lists, each with a one-line justification.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-03: The record lists every tracked issue created or matched for a removed planned, deferred or out-of-scope statement.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "030496bd-633a-4ed0-81dd-77cdea296b01",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "story:source-tersification-sweep",
+    "satisfies:REQ-24",
+    "satisfies:REQ-27"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Close the sweep with the after census and justification list",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

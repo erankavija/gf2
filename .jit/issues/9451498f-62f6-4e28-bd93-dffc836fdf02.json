@@ -1,0 +1,38 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "0a0ece44-5efc-46ca-bbf5-5fb2674c570f",
+    "0c5aa3b7-4846-4ec8-a578-14e6b35e78dd",
+    "198aafa3-0553-4a93-8dab-6e971fe3048b",
+    "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
+    "602652bf-0388-4604-882b-f874efff83c2",
+    "7039d680-06da-481e-b000-5f9bba44e9ee",
+    "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
+    "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
+    "e1f262a7-668d-421f-9bea-13f80fdb81e0",
+    "f6148d1e-d151-4c21-8507-7efd39044548",
+    "f694f59a-bf27-42d5-8197-b68b60b5bf37",
+    "f79bcba3-ec86-49c2-82a1-1689a67e6015"
+  ],
+  "description": "Executed archives and the overhaul's own moves leave empty untracked directories under `dev/active/`, and two survey directories hold untracked `__pycache__` output. They obscure which entries hold live work.\n\n## Background\n\n`dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A lists 43 empty leftovers and the two cache directories.\n\n## Success Criteria\n\n- [hard] REQ-01: No empty or cache-only untracked directory remains under `dev/active/`.\n- [hard] REQ-02: No tracked file changes.\n- [hard] REQ-03: The manifest's deletion rows for these directories record completion.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "9451498f-62f6-4e28-bd93-dffc836fdf02",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "satisfies:REQ-11"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Clear empty leftover dirs under dev/active",
+  "updated_at": "2026-10-01T14:43:15.466350554Z"
+}

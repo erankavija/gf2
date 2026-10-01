@@ -1,0 +1,31 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-01T14:43:15.466350554Z",
+  "dependencies": [
+    "10fdde24-ece4-4b9b-9379-81de68d0024c",
+    "12907582-b66a-4bd7-b50c-4d0e743c89a0",
+    "153297cf-7687-4599-be56-23e038efee3d"
+  ],
+  "description": "The source-comment sweep reports each crate's comment-line share before and after. The baseline is measured once, before any sweep edit, by a reproducible method.\n\n## Background\n\n`dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix C gives a 2026-10-01 count and its method.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked completion record states, per crate under `crates/`, the comment-line count, non-blank Rust line count and comment share, with the exact counting command.\n- [hard] REQ-02: The record states, per crate, the number of comment lines matching the sweep pattern below.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-03: The record names the commit measured.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-01T14:43:15.466350554Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "62f0d0e6-0d54-44a6-a5d7-31b09c33976d",
+  "labels": [
+    "type:task",
+    "epic:documentation-overhaul",
+    "component:docs",
+    "story:source-tersification-sweep",
+    "satisfies:REQ-27"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Record the pre-sweep comment census",
+  "updated_at": "2026-10-01T14:43:34.518274058Z"
+}
