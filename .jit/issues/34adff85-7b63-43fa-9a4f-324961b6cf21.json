@@ -16,11 +16,11 @@
     "epic:documentation-overhaul",
     "story:documentation-contract",
     "component:tooling",
-    "satisfies:REQ-08",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-38"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Build rustdoc and run doctests in the Rust CI gate",
-  "updated_at": "2026-10-01T10:03:24.345444243Z"
+  "updated_at": "2026-10-01T11:41:05.796503259Z"
 }

@@ -17,13 +17,13 @@
     "epic:documentation-overhaul",
     "story:documentation-contract",
     "component:docs",
-    "satisfies:REQ-01",
-    "satisfies:REQ-02",
-    "satisfies:REQ-03",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-31",
+    "satisfies:REQ-32",
+    "satisfies:REQ-33"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Register and project the documentation invariants",
-  "updated_at": "2026-10-01T10:03:02.131857309Z"
+  "updated_at": "2026-10-01T11:41:04.397375354Z"
 }

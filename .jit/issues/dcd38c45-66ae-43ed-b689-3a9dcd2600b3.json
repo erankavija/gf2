@@ -18,11 +18,11 @@
     "epic:documentation-overhaul",
     "story:documentation-contract",
     "component:tooling",
-    "satisfies:REQ-05",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-35"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Ground the doc-review gate in the documentation invariants",
-  "updated_at": "2026-10-01T10:03:33.611284979Z"
+  "updated_at": "2026-10-01T11:41:04.866005082Z"
 }

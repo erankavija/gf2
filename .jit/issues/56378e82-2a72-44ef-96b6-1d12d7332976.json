@@ -18,11 +18,11 @@
     "epic:documentation-overhaul",
     "story:documentation-contract",
     "component:docs",
-    "satisfies:REQ-04",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-34"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Make CLAUDE.md a symlink and define AGENTS.md scope",
-  "updated_at": "2026-10-01T10:03:34.606687406Z"
+  "updated_at": "2026-10-01T11:41:06.260770962Z"
 }

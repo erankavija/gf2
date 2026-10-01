@@ -19,13 +19,13 @@
     "epic:documentation-overhaul",
     "story:documentation-contract",
     "component:tooling",
-    "satisfies:REQ-06",
-    "satisfies:REQ-07",
-    "satisfies:REQ-10",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-36",
+    "satisfies:REQ-37",
+    "satisfies:REQ-40"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Add the docs-mechanical gate with self-tests",
-  "updated_at": "2026-10-01T10:03:34.128992323Z"
+  "updated_at": "2026-10-01T11:41:05.334728870Z"
 }
