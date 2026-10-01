@@ -134,7 +134,7 @@ fn test_gpu_bch15_horner_fixture_matches_cpu_and_hand() {
     let pts = eval_points(&field, two_t);
     let n = 15usize;
 
-    // Coefficient vector in the design-doc §3.1 order. We choose a non-trivial
+    // Coefficient vector, index d the coefficient of x^d. We choose a non-trivial
     // pattern of binary coefficients: coeff index d set for d in {0, 1, 4, 7,
     // 14}. coeffs[0] is the constant term; coeffs[14] the leading term.
     let set_indices = [0usize, 1, 4, 7, 14];

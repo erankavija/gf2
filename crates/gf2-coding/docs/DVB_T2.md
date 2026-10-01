@@ -39,14 +39,11 @@ Complete implementation of DVB-T2 LDPC and BCH forward error correction codes, f
 TP04 (38,688 bits) → BCH → TP05 (38,880 bits) → LDPC → TP06 (64,800 bits)
 ```
 
-**TP07a boundary note** (updated 2026-05-28 after the parity-interleaver fix in
-issue 548a8563): TP07a in the published ETSI DVB-T2 CSP test vectors IS the
-output of the full §6.1.3 bit interleaver — parity interleaving followed by
-column-twist interleaving.  The earlier "multi-stage" finding (issue 4cdaf1c5
-session 2026-05-27) was an artefact of `DvbT2BitInterleaver` then implementing
-only the column-twist sub-stage; once the parity-interleaver sub-stage was
-added per §6.1.3 of EN 302 755 v1.4.1, the §6.1.3 output matches TP07a bit-
-exact on VV020 (16-QAM Rate 1/2), VV009 (64-QAM Rate 2/3), and VV014
+**TP07a boundary note**: TP07a in the published ETSI DVB-T2 CSP test vectors is
+the output of the full §6.1.3 bit interleaver, parity interleaving followed by
+column-twist interleaving.  `DvbT2BitInterleaver` implements both sub-stages
+per §6.1.3 of EN 302 755 v1.4.1, and its output matches TP07a bit-exact on
+VV020 (16-QAM Rate 1/2), VV009 (64-QAM Rate 2/3), and VV014
 (64-QAM Rate 3/4).  See `tests/dvb_t2_chain_tp07a.rs`.
 
 For QPSK, §6.1.3 is explicitly excluded by the spec ("for 16-QAM, 64-QAM and
@@ -75,7 +72,21 @@ cargo test --test 'dvb_t2_*' -- --ignored --nocapture
 
 ---
 
+## BCH Outer Code API
+
+`gf2_coding::bch::dvb_t2::dvb_t2_bch_code(FrameSize, CodeRate)` builds the
+outer code of one FECFRAME configuration as a shortened primitive narrow-sense
+BCH code over the canonical construction model. The result carries the
+standard's coordinate layout (`DVB_T2_LAYOUT`, highest-degree coefficient
+first in the message and parity blocks) and the canonical block-code,
+encoding, and matrix capabilities. `DvbT2BchDecoder` decodes a shortened word
+through the mother code's `BinaryBchDecoder`. The module rustdoc of
+`gf2_coding::bch::dvb_t2` holds the contract and a runnable example.
+
 ## BCH Polynomials
+
+The construction is checked against the standard's explicit minimal
+polynomials below.
 
 ### Normal Frames (n=16)
 
