@@ -92,6 +92,9 @@ These counts are audit evidence, not permanent product facts. They belong in thi
 - D-36: The epic has high priority. It is release-significant but does not displace correctness work assigned critical priority.
 - D-37: The prerequisite story defines, projects, tests, and obtains approval for the documentation contract before rewrite and archival tasks become available.
 - D-38: The full implementation breakdown is deferred until this epic and prerequisite contract story exist. Breakdown must cover every epic requirement and preserve the story-as-checkpoint dependency shape.
+- D-39: The prerequisite story registers three invariant groups: comment concision, current-capability-only scope, and examples plus document layout. Researcher-audience, Diátaxis-placement and no-marketing invariants are registered with the permanent-documentation rewrite (`9b2886a7`). Story decisions DEC-01 to DEC-06 on `3f29e945` record the details.
+- D-40: The migration-manifest schema and progress checker are epic migration work (`a24b2af7`), gated on the prerequisite story.
+- D-41: A workspace-wide source documentation tersification sweep (`f357b3dc`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
 - D-39: This planning brief is a linked epic artifact and records the full outcome of the investigation and interview.
 
 ## Target Structure
