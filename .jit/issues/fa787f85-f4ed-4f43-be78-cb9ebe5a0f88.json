@@ -28,6 +28,13 @@
       "format": "markdown",
       "label": "REQ-18 pre-triage",
       "path": "dev/active/fa787f85-documentation-overhaul/req18-pretriage.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Roadmap pre-map",
+      "path": "dev/active/fa787f85-documentation-overhaul/roadmap-premap.md"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -48,5 +55,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T13:50:22.157203041Z"
+  "updated_at": "2026-10-01T13:56:50.535676463Z"
 }
