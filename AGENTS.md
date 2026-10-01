@@ -2,8 +2,7 @@
 
 This is the canonical repository-wide guidance for human and automated
 contributors. Tool-specific files may add local operating notes, but they must
-point here and must not restate or weaken this contract. More specific
-`AGENTS.md` files, if present below the repository root, govern their subtree.
+point here and must not restate or weaken this contract.
 
 ## Mission
 
@@ -93,15 +92,7 @@ contract is mathematical or implemented by several backends.
   Seeded work remains deterministic across supported worker counts, scheduling,
   checkpoint/resume, and fallbacks.
 - Public APIs need rustdoc stating purpose, panics, safety conditions, and
-  non-obvious complexity. Add a runnable example where it teaches a workflow or
-  clarifies a material contract that prose and focused tests leave unclear;
-  prefer one type- or module-level walkthrough over per-method repetition.
-  Repetitive examples for accessors, constants, constructors, predicates, and
-  direct field mappings are documentation and doctest burden.
-- Comments and rustdoc carry only what the code leaves non-obvious: the
-  contract, an invariant, the reason behind a choice, or a pointer to evidence.
-  Use the shortest form that conveys it. History belongs in git and jit; a
-  module-level orientation is at most one short paragraph.
+  non-obvious complexity.
 
 The ordinary fast tier has an eight-second per-test kill and a sixty-second
 suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
@@ -124,11 +115,9 @@ A committed receipt carries every input file it pins by digest, so a fresh
 checkout reproduces its acceptance verdict; CI enforces it through
 `dev/scripts/check-receipt-input-snapshots.py`.
 
-Keep permanent documentation under `README.md`, crate-level rustdoc, or `docs/`.
-Keep active designs, experiments, plans, presentations, and benchmark receipts
-in the development areas registered in `.jit/config.toml`; link issue-scoped
-material with `jit doc`. Prefer citations or generated projections over copied
-facts. See `@/inv/single-source-prose`.
+Keep permanent documentation under `README.md`, crate-level rustdoc, or
+`docs/`. Prefer citations or generated projections over copied facts. See
+`@/inv/single-source-prose`.
 
 ## Planning, proof, and change discipline
 
@@ -186,6 +175,11 @@ facts. See `@/inv/single-source-prose`.
 - **behavioral-evidence-validity** — Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable. Git commit IDs and repository-wide clean/dirty status are informational only; acceptance, invalidation, and checkpoint/resume depend on the content identities of producing code, executables, configuration, and inputs, so unrelated commits and parallel-session edits do not invalidate evidence.
 - **runtime-observed-provenance** — Measurement-tool source and emitted preambles state only runtime-observed facts, the tool's own protocol constants, and identity-based citations of committed derivation records; a hand-written figure, file inventory, or prior-run narrative embedded in a tool is a staleness defect.
 - **caller-trusted-fast-paths** — API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security.
+- **non-obvious-comments** — Comments and rustdoc carry only what the code leaves non-obvious — a contract, an invariant, the reason for a choice, or a pointer to evidence — in the shortest form that conveys it and without restating code, signatures, or other documentation; a module-level orientation is at most one short paragraph.
+- **current-state-scope** — Documentation states the current behavior and limits of the system only; speculation, future promises, non-goals, and deferrals are omitted, and planned work lives in JIT issues.
+- **teaching-rustdoc-examples** — A rustdoc example teaches a workflow or clarifies a material contract that prose and focused tests leave unclear; examples for accessors, constants, constructors, predicates, and direct field mappings are a defect.
+- **active-document-layout** — Active development documents live under `dev/active/<epic-short-id>-<slug>/` and are linked to their owning issues with `jit doc`.
+- **agents-md-scope** — Every `AGENTS.md` governs its directory subtree, overrides less specific guidance only within that subtree, states nothing that belongs to a broader or narrower scope, and stays at or below 200 lines.
 <!-- jit:invariants:end -->
 
 ## JIT workflow
