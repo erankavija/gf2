@@ -13945,3 +13945,4 @@
 {"from":"backlog","id":"ec159717-aa73-40e6-aa0c-502e355d1adf","issue_id":"d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512","timestamp":"2026-10-01T08:54:05.749726542Z","to":"ready","type":"issue_state_changed"}
 {"from":"ready","id":"616d0664-74dc-464c-a816-ba58cfea3aa3","issue_id":"d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512","timestamp":"2026-10-01T08:54:26.006375360Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"cef88f93-2c68-4f41-9700-0afed806c242","issue_id":"d1b4f85e-acb7-4a73-bf4f-7bc10ac5d512","timestamp":"2026-10-01T08:54:26.006375360Z","type":"issue_claimed"}
+{"id":"09426bdb-ceb5-4ac1-a464-84b6eb31bae3","issue_id":"cbd1eb28-dff0-4dce-848c-49782ab6c804","priority":"normal","timestamp":"2026-10-01T08:57:01.730850885Z","title":"Decode user-layout words with the canonical binary BCH decoder","type":"issue_created"}
