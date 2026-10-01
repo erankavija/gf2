@@ -1,87 +1,9 @@
 /-
-  Gf2Core.Proofs.BchSystematicEncoding — obligation O-5 of the algebraic-foundations
-  proof sketch (issue 94597a51): systematic encoding preserves the message and produces a
-  multiple of the generator polynomial.
-
-  Binding mode: abstract model plus refinement, with no extraction anchor. `gf2-coding`
-  appears in no Charon invocation of `scripts/verify-lean.sh`, so no lemma here is a
-  statement about extracted code. The model is stated over Mathlib: a field `B`, a monic
-  generator `g : B[X]` of degree `ρ`, a length `n ≥ ρ` and the dimension `k = n - ρ`. The
-  field-generic loop, the declared layouts and the packed binary loop are modelled
-  statement for statement, so every model lemma is about the same arithmetic the
-  production path performs; Section 6 instantiates the model at O-4's generator from
-  `Gf2Core.Proofs.BchGenerator`.
-
-  The production path is `crates/gf2-coding/src/bch/encode.rs`: the entry points
-  `BchCode::encode_systematic_into` (`:2090`), `BchCode::encode_systematic` (`:2111`),
-  `BlockEncoder::encode_into` (`:2751`) and `BchCode::systematic_message` (`:2494`); the
-  plan `SystematicPlan` (`:371`) with its layout maps `internal_at` (`:492`), `user_at`
-  (`:508`) and `message_at` (`:523`); the field-generic recurrence
-  `SystematicKernel for FieldVec<F>` (`:1320`, loop `:1360-1385`); and the packed
-  recurrence `SystematicKernel for BitVec` (`:1390`) through `packed_serial_reduce`
-  (`:1744`), `packed_step` (`:1638`), `packed_tail_mask` (`:1622`) and
-  `packed_write_codeword` (`:2024`).
-
-  Every model lemma names its refinement anchor: an executable Rust check in the
-  production module's own test module that decides the same statement on that path.
-  `binary_encoding_agrees_with_the_legacy_encoder` (`crates/gf2-coding/src/bch/encode.rs:3136`)
-  and `the_packed_path_agrees_with_the_field_generic_reference` (`:3158`) are differentials
-  against independent implementations.
-
-  Scope: the model is the reference family, `EncodeFamily::PolyRemainderScalar`, which every
-  single-message entry point runs, `LayoutView`'s `encode_into`
-  (`crates/gf2-coding/src/bch/encode.rs:2909`) included. The workspace and batch entry points
-  `encode_systematic_with` (`crates/gf2-coding/src/bch/encode.rs:2182`), `encode_batch_into`
-  (`:2224`), `encode_batch` (`:2321`), `encode_batch_parallel_into` (`:2368`) and
-  `encode_batch_parallel` (`:2412`) are bound to the allocating path symbol for symbol by
-  `assert_every_path_agrees` (`:3493`), which `prop_every_binary_path_writes_one_codeword`
-  (`:3571`), `prop_every_prime_base_path_writes_one_codeword` (`:3584`) and
-  `the_extension_base_paths_write_one_codeword` (`:3600`) drive. The batch families
-  `TableRemainder`, `BitsliceInterleaved` and `ClmulFold` are not modelled; they are bound to
-  the reference by bit-identity differentials,
-  `the_kernel_families_hold_at_the_word_boundaries`
-  (`crates/gf2-coding/src/bch/encode.rs:3658`) and the family corpus of
-  `crates/gf2-coding/tests/bch_encode_dispatch.rs`, so a statement proven here reaches them
-  only through those tests. Buffer shapes and symbol identities are decided outside the
-  model by `SystematicPlan::validate_lengths` (`crates/gf2-coding/src/bch/encode.rs:455`) and
-  `validate_symbol_field` (`:2713`), the sketch's register row A-11: the model's message is
-  `k` coefficients over `B` by typing. The packed path's low-coefficient words are taken in
-  the form `reset_registers` (`crates/gf2-coding/src/bch/encode.rs:1394`) writes them, as the
-  hypothesis `Packed.LowSpec`.
-
-  Assumptions: the sketch's register rows A-01 (refinement by named anchor), A-11, A-12
-  (the hypothesis `Packed.LowSpec`), A-13 (only the reference family is modelled), A-04 and
-  A-05. The model is generic over a Mathlib `Field` and is never instantiated at the
-  extracted `FpVal` carrier, so it does not rest on any link between the extracted
-  `FpVal.mul'`/`FpVal.add'` and the ring operations of `Gf2Core.Proofs.FpField`.
-
-  Axiom footprint: this module declares no axiom and contains no `sorry`. Every declaration
-  rests on `propext`, `Classical.choice` and `Quot.sound` alone, and several on fewer. The
-  dependency on `Gf2Core.Proofs.BchGenerator` reaches only its Mathlib-level model.
-
-  Every lemma statement is the sketch's. Three steps are reached by a different route than
-  the sketch's proof strategy names:
-
-  * L5.3 — the sketch represents the register as `Fin ρ → B` or a `List B` and lifts one
-    step with `List.foldr`. `regRun` is a recursion on the iteration count over coefficient
-    functions `ℕ → B`, mirroring `for degree in (0..k).rev()`, and `coeff_step` reaches the
-    closed form through `Polynomial.modByMonic_eq_of_dvd_sub` by subtracting
-    `fb * g` and reading the coefficients, rather than by substituting
-    `X ^ ρ ≡ -∑ g_i X ^ i`.
-  * L5.4 — the sketch names `Fin n` arithmetic. The maps are stated on `ℕ` in the
-    production's branch form with explicit range hypotheses, `internalAt_ascending_eq_mod`
-    gives the sketch's rotation, and `Layout.equiv` packages each layout as a permutation
-    of `Fin n`.
-  * L5.6 — the sketch reads the packed register through
-    `i ↦ (reg[i / 64] >> (i mod 64)) & 1`. `Packed.bit` reads the same bit with
-    `BitVec.getLsbD`, and `Packed.readBit_eq` proves that the production's
-    `(x >> s) & 1 == 1` is that read. Because the feedback is a single-bit read, the
-    readout lemma holds on the bits below `ρ` without the mask; the mask's own effect, that
-    the register stays clear from degree `ρ` on in both branches of `packed_tail_mask`, is
-    the separate invariant `Packed.clean_step`.
-
-  The line citations here are the ones that hold at this revision; the sketch's O-5 section
-  carries the same lines.
+  Gf2Core.Proofs.BchSystematicEncoding — obligation O-5 (issue 94597a51): systematic BCH
+  encoding, field-generic and packed binary, writes under every declared layout a codeword
+  that is a multiple of the generator and carries the message in its first `k` coordinates.
+  Production path, refinement anchors, assumptions (A-11, A-12, A-13) and proof-route notes:
+  `dev/active/64fd3afd/proof-sketch.md`, section O-5.
 -/
 import Mathlib.Algebra.Polynomial.Div
 import Gf2Core.Proofs.BchGenerator
@@ -111,9 +33,7 @@ theorem degree_eq_redundancy {g : B[X]} (hg : g.Monic) : g.degree = (g.natDegree
 
 /-- **L5.1 (parity degree).** `deg p < ρ`.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`),
-which reads the codeword back through `internal_polynomial` (`:3045`); by L5.2 its two checks
-determine the parity. -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem degree_parity_lt {g : B[X]} (hg : g.Monic) (m : B[X]) :
     (parity g m).degree < g.degree := by
   rw [parity, degree_neg]
@@ -127,10 +47,7 @@ theorem codeword_eq_mul (g m : B[X]) : codeword g m = g * ((X ^ g.natDegree * m)
 
 /-- **L5.1 (divisibility).** `g ∣ c`.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`),
-the `div_rem` remainder check, driven by `prop_binary_encoding_produces_codewords` (`:3097`),
-`prop_prime_base_encoding_produces_codewords` (`:3110`) and
-`prop_extension_base_encoding_produces_codewords` (`:3123`) under both layouts. -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem dvd_codeword (g m : B[X]) : g ∣ codeword g m :=
   ⟨_, codeword_eq_mul g m⟩
 
@@ -148,9 +65,7 @@ theorem coeff_parity_of_le {g : B[X]} (hg : g.Monic) (m : B[X]) {d : ℕ}
 
 /-- **L5.1 (codeword degree).** `deg c < n`, given `deg m < k`.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`),
-which asserts the codeword has `n` coordinates and rebuilds it as a polynomial of `n`
-coefficients. -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem degree_codeword_lt {g : B[X]} (hg : g.Monic) {n : ℕ} (hρn : g.natDegree ≤ n) {m : B[X]}
     (hm : m.degree < ((n - g.natDegree : ℕ) : WithBot ℕ)) : (codeword g m).degree < n := by
   rw [degree_lt_iff_coeff_zero] at hm ⊢
@@ -161,9 +76,7 @@ theorem degree_codeword_lt {g : B[X]} (hg : g.Monic) {n : ℕ} (hρn : g.natDegr
 /-- **L5.2 (uniqueness).** `p` is the only polynomial of degree below `ρ` with
 `g ∣ X ^ ρ * m + p`.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`):
-this lemma is why its divisibility and survival checks pin the parity, so no parity-specific
-test is needed. -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem parity_unique {g : B[X]} (hg : g.Monic) (m : B[X]) {p : B[X]}
     (hp : p.degree < g.degree) (hdvd : g ∣ X ^ g.natDegree * m + p) : p = parity g m := by
   have hsub : g ∣ p - parity g m := by
@@ -176,8 +89,7 @@ theorem parity_unique {g : B[X]} (hg : g.Monic) (m : B[X]) {p : B[X]}
 /-- **L5.2, the codeword is determined.** A polynomial of degree below `n` that `g` divides and
 that carries the message at degrees `ρ` to `n - 1` is the systematic codeword.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`),
-whose two checks are exactly the hypotheses `hdvd` and `hmsg`. -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem eq_codeword {g : B[X]} (hg : g.Monic) {n : ℕ} (hρn : g.natDegree ≤ n) {m : B[X]}
     (hm : m.degree < ((n - g.natDegree : ℕ) : WithBot ℕ)) {c : B[X]} (hc : c.degree < n)
     (hdvd : g ∣ c) (hmsg : ∀ i < n - g.natDegree, c.coeff (g.natDegree + i) = m.coeff i) :
@@ -241,12 +153,8 @@ theorem rem_self (g m : B[X]) (k : ℕ) : rem g m k k = 0 := by
 
 /-- **L5.3 (the recurrence).** `s_j = (X * s_{j+1} + X ^ ρ * m_j) mod g`.
 
-Production path: the loop `for degree in (0..plan.dimension()).rev()`
-(`crates/gf2-coding/src/bch/encode.rs:1365`).
-
-Refinement anchors: the three codeword property tests (`:3097`, `:3110`, `:3123`) and
-`binary_encoding_agrees_with_the_legacy_encoder` (`:3136`), a bit-identity differential against
-the independent `LegacyBchEncoder` at six pinned parameter points. -/
+Anchor: `binary_encoding_agrees_with_the_legacy_encoder`
+(`crates/gf2-coding/src/bch/encode.rs:3136`). -/
 theorem rem_succ {g : B[X]} (hg : g.Monic) (m : B[X]) {k j : ℕ} (hj : j < k) :
     rem g m k j = (X * rem g m k (j + 1) + X ^ g.natDegree * C (m.coeff j)) %ₘ g := by
   rw [rem, rem]
@@ -274,10 +182,8 @@ def stepReg (g : B[X]) (R : ℕ → B) (a : B) : ℕ → B := fun i =>
 /-- **L5.3 (the closed-form step).** Reducing `X * s + X ^ ρ * a` modulo a monic `g` of degree
 `ρ ≥ 1` is the production update on the coefficients of `s`.
 
-Production path: the loop body (`crates/gf2-coding/src/bch/encode.rs:1366-1371`).
-
-Refinement anchors: the three codeword property tests (`:3097`, `:3110`, `:3123`) and
-`binary_encoding_agrees_with_the_legacy_encoder` (`:3136`). -/
+Anchor: `binary_encoding_agrees_with_the_legacy_encoder`
+(`crates/gf2-coding/src/bch/encode.rs:3136`). -/
 theorem coeff_step {g : B[X]} (hg : g.Monic) (hρ : 0 < g.natDegree) {s : B[X]}
     (hs : s.degree < g.degree) (a : B) :
     ((X * s + X ^ g.natDegree * C a) %ₘ g).coeff = stepReg g s.coeff a := by
@@ -333,9 +239,8 @@ theorem regRun_congr (g : B[X]) {msg msg' : ℕ → B} {k : ℕ} (h : ∀ d < k,
 
 /-- **L5.3 (the loop invariant).** After `t` iterations the register holds `s_{k-t}`.
 
-Refinement anchors: the three codeword property tests
-(`crates/gf2-coding/src/bch/encode.rs:3097`, `:3110`, `:3123`) and
-`binary_encoding_agrees_with_the_legacy_encoder` (`:3136`). -/
+Anchor: `binary_encoding_agrees_with_the_legacy_encoder`
+(`crates/gf2-coding/src/bch/encode.rs:3136`). -/
 theorem regRun_eq_rem {g : B[X]} (hg : g.Monic) (hρ : 0 < g.natDegree) (m : B[X]) (k : ℕ) :
     ∀ t ≤ k, regRun g m.coeff k t = (rem g m k (k - t)).coeff
   | 0, _ => by
@@ -350,9 +255,8 @@ theorem regRun_eq_rem {g : B[X]} (hg : g.Monic) (hρ : 0 < g.natDegree) (m : B[X
 /-- **L5.3, the register after the loop.** The register holds `X ^ ρ * m mod g`, so the written
 parity symbol `-R_i` is the coefficient of `X ^ i` in `p`.
 
-Refinement anchors: the three codeword property tests
-(`crates/gf2-coding/src/bch/encode.rs:3097`, `:3110`, `:3123`) and
-`binary_encoding_agrees_with_the_legacy_encoder` (`:3136`). -/
+Anchor: `binary_encoding_agrees_with_the_legacy_encoder`
+(`crates/gf2-coding/src/bch/encode.rs:3136`). -/
 theorem regRun_full {g : B[X]} (hg : g.Monic) (hρ : 0 < g.natDegree) {m : B[X]} {k : ℕ}
     (hm : m.degree < (k : WithBot ℕ)) :
     regRun g m.coeff k k = ((X ^ g.natDegree * m) %ₘ g).coeff := by
@@ -399,9 +303,8 @@ variable {L n k}
 
 /-- **L5.4.** The ascending branch form is the sketch's rotation `(u + ρ) mod n`.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem internalAt_ascending_eq_mod {u : ℕ} (hu : u < n) :
     internalAt messageParityAscending n k u = (u + (n - k)) % n := by
   simp only [internalAt]
@@ -411,9 +314,8 @@ theorem internalAt_ascending_eq_mod {u : ℕ} (hu : u < n) :
 
 /-- **L5.4.** The ascending inverse is the rotation `(i + k) mod n`.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem userAt_ascending_eq_mod {i : ℕ} (hk : k ≤ n) (hi : i < n) :
     userAt messageParityAscending n k i = (i + k) % n := by
   simp only [userAt]
@@ -421,36 +323,32 @@ theorem userAt_ascending_eq_mod {i : ℕ} (hk : k ≤ n) (hi : i < n) :
   · rw [Nat.mod_eq_sub_mod h, Nat.mod_eq_of_lt (by omega)]
   · rw [Nat.mod_eq_of_lt (by omega)]
 
-/-- **L5.4.** `internal_at` stays in range
+/-- **L5.4.** `internal_at` stays in range.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem internalAt_lt {u : ℕ} (hk : k ≤ n) (hu : u < n) : internalAt L n k u < n := by
   cases L <;> simp only [internalAt] <;> (try split_ifs) <;> omega
 
-/-- **L5.4.** `user_at` stays in range
+/-- **L5.4.** `user_at` stays in range.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem userAt_lt {i : ℕ} (hk : k ≤ n) (hi : i < n) : userAt L n k i < n := by
   cases L <;> simp only [userAt] <;> (try split_ifs) <;> omega
 
-/-- **L5.4.** `user_at` inverts `internal_at`
+/-- **L5.4.** `user_at` inverts `internal_at`.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem userAt_internalAt {u : ℕ} (hk : k ≤ n) (hu : u < n) :
     userAt L n k (internalAt L n k u) = u := by
   cases L <;> simp only [internalAt, userAt] <;> (try split_ifs) <;> omega
 
-/-- **L5.4.** `internal_at` inverts `user_at`
+/-- **L5.4.** `internal_at` inverts `user_at`.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem internalAt_userAt {i : ℕ} (hk : k ≤ n) (hi : i < n) :
     internalAt L n k (userAt L n k i) = i := by
   cases L <;> simp only [internalAt, userAt] <;> (try split_ifs) <;> omega
@@ -458,47 +356,42 @@ theorem internalAt_userAt {i : ℕ} (hk : k ≤ n) (hi : i < n) :
 /-- **L5.4, the systematic property.** User coordinate `u` carries a message degree, at least
 `ρ`, exactly when `u < k`.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 theorem lt_dimension_iff {u : ℕ} (hk : k ≤ n) (hu : u < n) :
     u < k ↔ n - k ≤ internalAt L n k u := by
   cases L <;> simp only [internalAt] <;> (try split_ifs) <;> omega
 
-/-- **L5.4.** Each declared layout is a permutation of the `n` coordinates
+/-- **L5.4.** Each declared layout is a permutation of the `n` coordinates.
 
-Refinement anchors: `the_layout_mapping_is_a_bijection_placing_the_message_first`
-(`crates/gf2-coding/src/bch/encode.rs:3226`), `the_layout_materializes_as_a_coordinate_map`
-(`:3258`) and `out_of_range_coordinates_are_typed_errors` (`:3246`). -/
+Anchor: `the_layout_mapping_is_a_bijection_placing_the_message_first`
+(`crates/gf2-coding/src/bch/encode.rs:3226`). -/
 def equiv (L : Layout) {n k : ℕ} (hk : k ≤ n) : Fin n ≃ Fin n where
   toFun u := ⟨internalAt L n k u, internalAt_lt hk u.2⟩
   invFun i := ⟨userAt L n k i, userAt_lt hk i.2⟩
   left_inv u := Fin.ext (userAt_internalAt hk u.2)
   right_inv i := Fin.ext (internalAt_userAt hk i.2)
 
-/-- **L5.5.** The message symbol of degree `d < k` sits at a user coordinate below `k`
+/-- **L5.5.** The message symbol of degree `d < k` sits at a user coordinate below `k`.
 
-Refinement anchors: `every_declared_layout_round_trips_over_each_base_field`
-(`crates/gf2-coding/src/bch/encode.rs:3315`) and
-`the_declared_layouts_present_one_internal_codeword` (`:3276`). -/
+Anchor: `every_declared_layout_round_trips_over_each_base_field`
+(`crates/gf2-coding/src/bch/encode.rs:3315`). -/
 theorem messageAt_lt {d : ℕ} (hk : k ≤ n) (hd : d < k) : messageAt L n k d < k := by
   rw [messageAt, lt_dimension_iff hk (userAt_lt hk (by omega)), internalAt_userAt hk (by omega)]
   omega
 
-/-- **L5.5.** The coordinate `message_at d` presents the internal degree `ρ + d`
+/-- **L5.5.** The coordinate `message_at d` presents the internal degree `ρ + d`.
 
-Refinement anchors: `every_declared_layout_round_trips_over_each_base_field`
-(`crates/gf2-coding/src/bch/encode.rs:3315`) and
-`the_declared_layouts_present_one_internal_codeword` (`:3276`). -/
+Anchor: `every_declared_layout_round_trips_over_each_base_field`
+(`crates/gf2-coding/src/bch/encode.rs:3315`). -/
 theorem internalAt_messageAt {d : ℕ} (hk : k ≤ n) (hd : d < k) :
     internalAt L n k (messageAt L n k d) = n - k + d :=
   internalAt_userAt hk (by omega)
 
-/-- **L5.5.** User coordinate `u < k` is `message_at` of the degree it carries
+/-- **L5.5.** User coordinate `u < k` is `message_at` of the degree it carries.
 
-Refinement anchors: `every_declared_layout_round_trips_over_each_base_field`
-(`crates/gf2-coding/src/bch/encode.rs:3315`) and
-`the_declared_layouts_present_one_internal_codeword` (`:3276`). -/
+Anchor: `every_declared_layout_round_trips_over_each_base_field`
+(`crates/gf2-coding/src/bch/encode.rs:3315`). -/
 theorem messageAt_internalAt {u : ℕ} (hk : k ≤ n) (hu : u < k) :
     messageAt L n k (internalAt L n k u - (n - k)) = u := by
   have h := (lt_dimension_iff (L := L) hk (by omega : u < n)).1 hu
@@ -541,9 +434,8 @@ def encodeUser (g : B[X]) (L : Layout) (n : ℕ) (msg : ℕ → B) (u : ℕ) : B
 /-- **L5.5, message survival.** The first `k` user coordinates are the message, which is what
 `systematic_message` (`crates/gf2-coding/src/bch/encode.rs:2494`) copies back.
 
-Refinement anchors: `every_declared_layout_round_trips_over_each_base_field`
-(`crates/gf2-coding/src/bch/encode.rs:3315`) and
-`the_declared_layouts_present_one_internal_codeword` (`:3276`). -/
+Anchor: `every_declared_layout_round_trips_over_each_base_field`
+(`crates/gf2-coding/src/bch/encode.rs:3315`). -/
 theorem encodeUser_message (g : B[X]) (L : Layout) (n : ℕ) (msg : ℕ → B) {u : ℕ}
     (hu : u < n - g.natDegree) : encodeUser g L n msg u = msg u := by
   rw [encodeUser, if_pos hu]
@@ -552,10 +444,7 @@ theorem encodeUser_message (g : B[X]) (L : Layout) (n : ℕ) (msg : ℕ → B) {
 writes presents, through the layout, the coefficient of the systematic codeword `c` of
 L5.1 at the degree the layout assigns it.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`),
-which rebuilds the internal polynomial through `internal_coordinate` and decides divisibility
-and message survival, under both layouts and over the binary, GF(5)-base and GF(9)-base
-codes of the three property tests (`:3097`, `:3110`, `:3123`). -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem encodeUser_eq_coeff_codeword {g : B[X]} (hg : g.Monic) (L : Layout) {n : ℕ}
     (hρn : g.natDegree ≤ n) (msg : ℕ → B) {u : ℕ} (hu : u < n) :
     encodeUser g L n msg u =
@@ -589,8 +478,7 @@ theorem encodeUser_eq_coeff_codeword {g : B[X]} (hg : g.Monic) (L : Layout) {n :
 the encoder writes presents a multiple of `g` of degree below `n` and carries the message in its
 first `k` coordinates.
 
-Refinement anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`)
-through the three codeword property tests (`:3097`, `:3110`, `:3123`). -/
+Anchor: `assert_encodes_a_codeword` (`crates/gf2-coding/src/bch/encode.rs:3067`). -/
 theorem encodeUser_presents_codeword {g : B[X]} (hg : g.Monic) (L : Layout) {n : ℕ}
     (hρn : g.natDegree ≤ n) (msg : ℕ → B) :
     ∃ c : B[X], g ∣ c ∧ c.degree < n ∧
@@ -606,10 +494,7 @@ theorem encodeUser_presents_codeword {g : B[X]} (hg : g.Monic) (L : Layout) {n :
 /-- **L5.7, `ρ = 0`.** A monic generator of degree zero is `1`, the parity vanishes and the
 codeword is the message.
 
-Production path: the `if redundancy > 0` guards (`crates/gf2-coding/src/bch/encode.rs:1360`,
-`:1432`).
-
-Refinement anchor: `the_full_space_code_encodes_the_identity_under_the_default_layout`
+Anchor: `the_full_space_code_encodes_the_identity_under_the_default_layout`
 (`crates/gf2-coding/src/bch/encode.rs:3337`). -/
 theorem codeword_of_natDegree_eq_zero {g : B[X]} (hg : g.Monic) (h0 : g.natDegree = 0)
     (m : B[X]) : codeword g m = m := by
@@ -619,10 +504,7 @@ theorem codeword_of_natDegree_eq_zero {g : B[X]} (hg : g.Monic) (h0 : g.natDegre
 
 /-- **L5.7, `ρ = 0`.** The full-space code writes the message unchanged.
 
-Production path: the `if redundancy > 0` guards (`crates/gf2-coding/src/bch/encode.rs:1360`,
-`:1432`).
-
-Refinement anchor: `the_full_space_code_encodes_the_identity_under_the_default_layout`
+Anchor: `the_full_space_code_encodes_the_identity_under_the_default_layout`
 (`crates/gf2-coding/src/bch/encode.rs:3337`). -/
 theorem encodeUser_of_natDegree_eq_zero (g : B[X]) (L : Layout) {n : ℕ} (h0 : g.natDegree = 0)
     (msg : ℕ → B) {u : ℕ} (hu : u < n) : encodeUser g L n msg u = msg u :=
@@ -630,9 +512,8 @@ theorem encodeUser_of_natDegree_eq_zero (g : B[X]) (L : Layout) {n : ℕ} (h0 : 
 
 /-- **L5.7, `k = 0`.** The empty message encodes to the zero codeword.
 
-Refinement anchor: `the_zero_dimensional_code_rejects_a_nonempty_message`
-(`crates/gf2-coding/src/bch/encode.rs:3353`), which encodes the empty message to the zero
-word. -/
+Anchor: `the_zero_dimensional_code_rejects_a_nonempty_message`
+(`crates/gf2-coding/src/bch/encode.rs:3353`). -/
 theorem codeword_of_dimension_zero {g : B[X]} (L : Layout) {n : ℕ}
     (h0 : n - g.natDegree = 0) (msg : ℕ → B) :
     codeword g (msgPoly L n (n - g.natDegree) msg) = 0 := by
@@ -683,9 +564,8 @@ theorem getLsbD_low_mask {r : ℕ} (hr : r < 64) (j : ℕ) :
 /-- Bit `j` of the top word survives the mask exactly when its degree is below `ρ`, in both
 branches of `packed_tail_mask`, the `ρ mod 64 = 0` branch included.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_holds_at_the_word_boundaries`
+(`crates/gf2-coding/src/bch/encode.rs:3190`). -/
 theorem getLsbD_tailMask {ρ : ℕ} (hρ : 0 < ρ) {j : ℕ} (hj : j < 64) :
     (tailMask ρ).getLsbD j = decide (64 * ((ρ + 63) / 64 - 1) + j < ρ) := by
   unfold tailMask
@@ -759,9 +639,8 @@ theorem bit_shift {W : ℕ} (reg : ℕ → BitVec 64) {i : ℕ} (hi : i < 64 * W
 /-- Bit `i < 64 W` of a packed step: the shifted bit, cleared from degree `ρ` on by the mask,
 plus the feedback times the low-coefficient bit.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_holds_at_the_word_boundaries`
+(`crates/gf2-coding/src/bch/encode.rs:3190`). -/
 theorem bit_step {ρ : ℕ} (hρ : 0 < ρ) (reg low : ℕ → BitVec 64) (sym : Bool) {i : ℕ}
     (hi : i < 64 * ((ρ + 63) / 64)) :
     bit (step ((ρ + 63) / 64) reg low (ρ - 1) (tailMask ρ) sym) i =
@@ -788,9 +667,8 @@ theorem bit_step {ρ : ℕ} (hρ : 0 < ρ) (reg low : ℕ → BitVec 64) (sym : 
 /-- **L5.6, the mask's invariant.** A packed step keeps the register clear from degree `ρ` on,
 in both branches of `packed_tail_mask`.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_holds_at_the_word_boundaries`
+(`crates/gf2-coding/src/bch/encode.rs:3190`). -/
 theorem clean_step (g : (ZMod 2)[X]) (hρ : 0 < g.natDegree) {reg low : ℕ → BitVec 64}
     (hlow : LowSpec g ((g.natDegree + 63) / 64) low) (sym : Bool) :
     Clean g.natDegree ((g.natDegree + 63) / 64)
@@ -802,9 +680,8 @@ theorem clean_step (g : (ZMod 2)[X]) (hρ : 0 < g.natDegree) {reg low : ℕ → 
 /-- **L5.6, one step.** On the coefficients below `ρ`, the packed word update is the
 field-generic update `stepReg` over `𝔽₂`: negation is the identity and subtraction is XOR.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_agrees_with_the_field_generic_reference`
+(`crates/gf2-coding/src/bch/encode.rs:3158`). -/
 theorem readout_step (g : (ZMod 2)[X]) (hρ : 0 < g.natDegree) (reg : ℕ → BitVec 64)
     {low : ℕ → BitVec 64} (hlow : LowSpec g ((g.natDegree + 63) / 64) low) (sym : Bool) :
     readout g.natDegree
@@ -835,9 +712,8 @@ def run (g : (ZMod 2)[X]) (low : ℕ → BitVec 64) (msg : ℕ → Bool) (k : �
 /-- **L5.6, the loop.** The packed register's coefficients after `t` iterations are the
 field-generic register's, and the register stays clear from degree `ρ` on.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_agrees_with_the_field_generic_reference`
+(`crates/gf2-coding/src/bch/encode.rs:3158`). -/
 theorem readout_run (g : (ZMod 2)[X]) (hρ : 0 < g.natDegree) {low : ℕ → BitVec 64}
     (hlow : LowSpec g ((g.natDegree + 63) / 64) low) (msg : ℕ → Bool) (k : ℕ) :
     ∀ t, readout g.natDegree (run g low msg k t) = regRun g (fun d => toZ (msg d)) k t ∧
@@ -865,9 +741,8 @@ def encodeUser (g : (ZMod 2)[X]) (low : ℕ → BitVec 64) (L : Layout) (n : ℕ
 /-- **L5.6, the packed path agrees.** Every user coordinate the packed encoder writes is, read
 in `𝔽₂`, the symbol the field-generic encoder writes.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_agrees_with_the_field_generic_reference`
+(`crates/gf2-coding/src/bch/encode.rs:3158`). -/
 theorem toZ_encodeUser (g : (ZMod 2)[X]) {low : ℕ → BitVec 64}
     (hlow : LowSpec g ((g.natDegree + 63) / 64) low) (L : Layout) {n : ℕ}
     (hρn : g.natDegree ≤ n) (msg : ℕ → Bool) {u : ℕ} (hu : u < n) :
@@ -893,9 +768,8 @@ theorem toZ_encodeUser (g : (ZMod 2)[X]) {low : ℕ → BitVec 64}
 output, read in `𝔽₂`, presents a multiple of `g` of degree below `n` and carries the message in
 its first `k` coordinates.
 
-Refinement anchors: `the_packed_path_agrees_with_the_field_generic_reference`
-(`crates/gf2-coding/src/bch/encode.rs:3158`) and
-`the_packed_path_holds_at_the_word_boundaries` (`:3190`), redundancies 0, 1, 63, 64 and 65. -/
+Anchor: `the_packed_path_agrees_with_the_field_generic_reference`
+(`crates/gf2-coding/src/bch/encode.rs:3158`). -/
 theorem encodeUser_presents_codeword {g : (ZMod 2)[X]} (hg : g.Monic) {low : ℕ → BitVec 64}
     (hlow : LowSpec g ((g.natDegree + 63) / 64) low) (L : Layout) {n : ℕ}
     (hρn : g.natDegree ≤ n) (msg : ℕ → Bool) :
@@ -921,8 +795,7 @@ variable {E : Type*} [Field E] [Algebra B E] [Finite E] {n : ℕ} [NeZero n] {α
 
 /-- The O-4 generator has degree at most `n`, so the dimension `k = n - ρ` is exact.
 
-Refinement anchor: `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1929`), the `k must be n - deg(g)` assertion. -/
+Anchor: `assert_construction_is_consistent` (`crates/gf2-coding/src/bch/spec.rs:1929`). -/
 theorem natDegree_generator_le (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
     {T : Finset (ZMod n)} (hclosed : ∀ j ∈ T, CyclotomicClosure.mu (Nat.card B) j ∈ T) :
     (generator B hq α T).natDegree ≤ n := by
@@ -934,14 +807,8 @@ constructs writes, under every declared layout, a user codeword that presents a 
 generator of degree below `n`, carries the message in its first `k` coordinates, and vanishes at
 `α ^ j` for every exponent `j` of the defining set.
 
-Production path: `BchCode::systematic_plan` (`crates/gf2-coding/src/bch/encode.rs:2057`),
-which borrows the constructed code's generator, so the plan cannot disagree with the code.
-
-Refinement anchors: the three codeword property tests
-(`crates/gf2-coding/src/bch/encode.rs:3097`, `:3110`, `:3123`), which encode under codes
-`BchCode::construct` builds, and, for the roots,
-`the_generator_vanishes_at_every_defining_set_root` (`crates/gf2-coding/src/bch/spec.rs:2129`)
-composed with divisibility. -/
+Anchor: `the_generator_vanishes_at_every_defining_set_root`
+(`crates/gf2-coding/src/bch/spec.rs:2129`) with the codeword property tests. -/
 theorem encodeUser_generator (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
     {T : Finset (ZMod n)} (hclosed : ∀ j ∈ T, CyclotomicClosure.mu (Nat.card B) j ∈ T)
     (L : Layout) (msg : ℕ → B) :
