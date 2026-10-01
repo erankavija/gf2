@@ -302,3 +302,49 @@ $32208 \times 32400$ as the W2 cells for the two DVB-T2 rows, at the shortened
 lengths § 2 fixes, on the presentation `97410c80` supplies. This subsection
 names where one consumer's improvement evidence is taken and adds no cell to
 § 4.
+
+### Amendment, 2026-10-01 (`d1b4f85e`) — Criterion cells for W1 and W2
+
+`bench-extension` registers the Criterion cells `perf-receipts` (`fd9d5416`)
+consumes. The witnesses are `crates/gf2-coding/benches/bch_encode_w1.rs` (W1)
+and `crates/gf2-coding/benches/bch_genmatrix.rs` (W2), which share the § 2
+row table through `crates/gf2-coding/benches/bch_workloads.rs`; the window
+runner is `dev/active/d1b4f85e/run.sh`. The cells this subsection adds beyond
+§§ 2–6:
+
+* **Nonbinary rows.** The evidence protocol's corpus rows N1–N4
+  ([plan.md](../ae03bcd0-general-bch/plan.md) § `evidence-protocol`), built by
+  `gf2_coding::test_support::visit_bch_corpus` and measured in the
+  field-generic representation on both workloads. § 1 defines W1 and W2 over
+  binary codes; on these rows the throughput unit counts base-field symbols:
+  information symbols per second for W1, matrix symbols per second for W2.
+  No external baseline of § 8 covers them.
+* **The DVB-T2 rows at both lengths in W1.** T2S and T2N run at the shortened
+  lengths § 2 fixes through `dvb_t2_bch_code`, which is
+  `Shortened<DvbT2MotherCode>` under the systematic-restriction derivation
+  (`ShortenedDerivation::SystematicRestriction`,
+  `crates/gf2-coding/src/transform/mod.rs`): each encode writes the message
+  into a mother-length buffer, encodes it through the mother one message at
+  a time, and drops the removed coordinates. That route has no batch entry
+  point and therefore no family seam, so the per-family cells of these two
+  rows run on `T2S-mother` and `T2N-mother`, the mother codes the `177bdc85`
+  amendment fixes for the differential evidence.
+* **The DVB-T2 rows at the shortened lengths in W2.** The same presentation's
+  generator follows the systematic-restriction derivation: it materializes
+  the mother's generator and copies the kept rows and columns out of it, so
+  the T2S and T2N W2 cells measure the mother's materialization plus an
+  $O(kn)$ restriction. The `bd0edfa2` amendment's second bullet describes
+  this generator as rank-derived; the derivation stated here is the one
+  `Shortened::derivation` reports for both rows, and the bench asserts it.
+* **Per-family and per-kernel-arm cells.** At $W = 1$ in `warm-reuse`, every
+  family the row's representation makes available is measured by name, and
+  each family that runs the `gf2_kernels_simd::bch_encode` bundle on both its
+  detected and its portable arm. The `fresh-alloc` cells and the $W = 6$
+  cells measure the family the active profile selects, because the parallel
+  entry points select their family from the profile and take no family
+  argument; under the conservative profile that is the reference.
+
+Every cell names its dispatch path in its Criterion ID and in the line it
+appends to the dispatch record that `bch_workloads.rs` documents, together
+with its worker count, cache state, observed parallel pool width, and an
+output digest that is equal across every path of one row and batch.
