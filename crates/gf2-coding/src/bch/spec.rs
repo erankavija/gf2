@@ -1577,7 +1577,6 @@ fn witness_longest_run(defining_set: &[RootExponent], length: usize) -> BchDista
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bch::BchCode as LegacyBchCode;
     use gf2_core::field::modulus_select::select_modulus;
     use gf2_core::field::ConstField;
     use gf2_core::gf2m::{Gf2mElement, Gf2mField};
@@ -1587,7 +1586,7 @@ mod tests {
 
     /// The binary parameter points the existing suite pins, as
     /// `(m, primitive polynomial, n, k, t)`.
-    const LEGACY_BINARY_POINTS: &[(usize, u64, usize, usize, usize)] = &[
+    const BINARY_POINTS: &[(usize, u64, usize, usize, usize)] = &[
         (3, 0b1011, 7, 4, 1),
         (4, 0b10011, 15, 11, 1),
         (4, 0b10011, 15, 7, 2),
@@ -2003,12 +2002,25 @@ mod tests {
         }
     }
 
-    // -- REQ-02: agreement with the current binary implementation ----------
+    // -- REQ-02: the generator is the LCM of the run's minimal polynomials --
+
+    /// The binary narrow-sense generator `lcm(m_1, ..., m_{2t})`, where `m_i`
+    /// is the minimal polynomial of `α^i` for the field's primitive element,
+    /// taken element by element instead of through cyclotomic cosets.
+    fn minimal_polynomial_lcm(field: &Gf2mField, t: usize) -> gf2_core::gf2m::Gf2mPoly {
+        let alpha = field.primitive_element().expect("a field with tables");
+        let mut power = alpha.clone();
+        let mut generator = power.minimal_polynomial();
+        for _ in 2..=2 * t {
+            power = &power * &alpha;
+            generator = gf2_core::gf2m::Gf2mPoly::lcm(&generator, &power.minimal_polynomial());
+        }
+        generator
+    }
 
     #[test]
-    fn primitive_narrow_sense_agrees_with_the_current_binary_generators() {
-        for &(m, modulus, n, k, t) in LEGACY_BINARY_POINTS {
-            let legacy = LegacyBchCode::new(n, k, t, Gf2mField::new(m, modulus));
+    fn primitive_narrow_sense_generator_is_the_minimal_polynomial_lcm() {
+        for &(m, modulus, n, k, t) in BINARY_POINTS {
             let code = binary_narrow_sense(m, modulus, 2 * t as u64 + 1);
 
             assert_eq!(code.n(), n, "length for BCH({n}, {k}, {t})");
@@ -2016,21 +2028,21 @@ mod tests {
             assert_eq!(code.correction_radius(), t, "radius for BCH({n}, {k}, {t})");
             assert_eq!(
                 code.distance_bound().minimum_distance_lower_bound(),
-                legacy.designed_distance(),
+                2 * t + 1,
                 "bound for BCH({n}, {k}, {t})"
             );
 
-            let legacy_generator = legacy.generator();
+            let expected = minimal_polynomial_lcm(&Gf2mField::new(m, modulus).with_tables(), t);
             let degree = code.generator().degree().expect("a nonzero generator");
             assert_eq!(
-                legacy_generator.degree(),
+                expected.degree(),
                 Some(degree),
                 "generator degree for BCH({n}, {k}, {t})"
             );
             for index in 0..=degree {
                 assert_eq!(
                     code.generator().coeff(index).is_one(),
-                    legacy_generator.coeff(index).is_one(),
+                    expected.coeff(index).is_one(),
                     "generator coefficient {index} for BCH({n}, {k}, {t})"
                 );
             }
@@ -2039,7 +2051,7 @@ mod tests {
 
     #[test]
     fn binary_generators_divide_the_cyclic_polynomial() {
-        for &(m, modulus, _, _, t) in LEGACY_BINARY_POINTS {
+        for &(m, modulus, _, _, t) in BINARY_POINTS {
             let code = binary_narrow_sense(m, modulus, 2 * t as u64 + 1);
             assert!(generator_divides_cyclic_polynomial(&code));
         }

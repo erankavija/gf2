@@ -45,17 +45,15 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use gf2_coding::bch::dvb_t2::generators::{product_of_generators, NORMAL_GENERATORS};
-use gf2_coding::bch::dvb_t2::{DvbBchParams, FrameSize};
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbBchParams, FrameSize};
 use gf2_coding::bch::encode::{SystematicKernel, SystematicLayout};
 use gf2_coding::bch::spec::{BchCode, BchSpec, BinaryBchCode, RootExponent, RootSelection};
-use gf2_coding::bch::{BchCode as LegacyBchCode, BchEncoder};
 use gf2_coding::test_support::{
     bch_corpus_decode_symbols, bch_corpus_distance, bch_corpus_element, bch_corpus_encode_symbols,
     bch_corpus_index, bch_corpus_length, bch_corpus_messages, visit_bch_corpus, BchCorpusRow,
     BchCorpusVisitor,
 };
-use gf2_coding::traits::block::{BlockCode, SymbolMatrix};
-use gf2_coding::traits::BlockEncoder;
+use gf2_coding::traits::block::{BlockCode, BlockEncoder, SymbolMatrix};
 use gf2_coding::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
 use gf2_core::field::modulus_select::SelectExtension;
@@ -979,7 +977,8 @@ fn both_oracles_reproduce_the_etsi_generator_product() {
 fn the_shortened_dvb_t2_parity_matches_the_mother_code() {
     let params = dvb_normal_params();
     let mother = dvb_mother_code();
-    let legacy = BchEncoder::new(LegacyBchCode::dvb_t2(FrameSize::Normal, CodeRate::Rate1_2));
+    let standard =
+        dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2).expect("a standard configuration");
     let shortening = mother.k() - params.k;
 
     for index in 0..DVB_PAYLOADS {
@@ -989,7 +988,9 @@ fn the_shortened_dvb_t2_parity_matches_the_mother_code() {
             padded.set(shortening + position, payload.get(position));
         }
 
-        let shortened = legacy.encode(&payload);
+        let shortened = standard
+            .encode(&payload)
+            .expect("a K_bch-bit payload encodes");
         let full = mother
             .encode_systematic(&padded, SystematicLayout::MessageParityDescending)
             .expect("a validated message encodes");
@@ -1000,7 +1001,7 @@ fn the_shortened_dvb_t2_parity_matches_the_mother_code() {
                 shortened.get(params.k + parity),
                 full.get(mother.k() + parity),
                 "payload {index} parity bit {parity} differs between the shortened \
-                 ETSI generator and the canonical mother code"
+                 DVB-T2 code and the canonical mother code"
             );
         }
     }
