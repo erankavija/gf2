@@ -14,6 +14,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/495807a3-invariant-draft.md"
     }
   ],
+  "done_at": "2026-10-01T19:32:34.885422470Z",
   "first_ready_at": "2026-10-01T10:03:02.131857309Z",
   "gates_required": [
     "repo-validate",
@@ -22,13 +23,13 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T19:24:41.066871989Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T19:32:24.271855292Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T19:27:13.114524025Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T19:30:38.047665414Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -48,7 +49,7 @@
     "satisfies:REQ-33"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Register and project the documentation invariants",
-  "updated_at": "2026-10-01T19:27:13.114524025Z"
+  "updated_at": "2026-10-01T19:32:34.885422470Z"
 }
