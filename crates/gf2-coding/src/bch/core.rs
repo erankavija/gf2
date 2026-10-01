@@ -1938,7 +1938,10 @@ mod canonical_decoder_tests {
         /// A batch's syndromes in the row-major layout the device pass returns,
         /// evaluated on the CPU: the device multiply is the CPU multiply, so
         /// the bookkeeping sees the same rows either way.
-        fn host_syndromes(decoder: &BinaryBchDecoder<'_>, frames: &[BitVec]) -> Vec<gf2_core::gf2m::Gf2mElement> {
+        fn host_syndromes(
+            decoder: &BinaryBchDecoder<'_>,
+            frames: &[BitVec],
+        ) -> Vec<gf2_core::gf2m::Gf2mElement> {
             let mut row = vec![decoder.zero.clone(); decoder.syndrome_points.len()];
             let mut evaluated = Vec::with_capacity(frames.len() * row.len());
             for frame in frames {
