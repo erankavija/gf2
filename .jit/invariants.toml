@@ -162,3 +162,33 @@ enforced-by = "@/gate/code-review"
 id = "caller-trusted-fast-paths"
 kind = "enforced"
 statement = "API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "non-obvious-comments"
+kind = "enforced"
+statement = "Comments and rustdoc carry only what the code leaves non-obvious — a contract, an invariant, the reason for a choice, or a pointer to evidence — in the shortest form that conveys it and without restating code, signatures, or other documentation; a module-level orientation is at most one short paragraph."
+
+[[invariants]]
+enforced-by = "@/gate/doc-review"
+id = "current-state-scope"
+kind = "enforced"
+statement = "Documentation states the current behavior and limits of the system only; speculation, future promises, non-goals, and deferrals are omitted, and planned work lives in JIT issues."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "teaching-rustdoc-examples"
+kind = "enforced"
+statement = "A rustdoc example teaches a workflow or clarifies a material contract that prose and focused tests leave unclear; examples for accessors, constants, constructors, predicates, and direct field mappings are a defect."
+
+[[invariants]]
+enforced-by = "@/gate/doc-review"
+id = "active-document-layout"
+kind = "enforced"
+statement = "Active development documents live under `dev/active/<epic-short-id>-<slug>/` and are linked to their owning issues with `jit doc`."
+
+[[invariants]]
+enforced-by = "@/gate/doc-review"
+id = "agents-md-scope"
+kind = "enforced"
+statement = "Every `AGENTS.md` governs its directory subtree, overrides less specific guidance only within that subtree, states nothing that belongs to a broader or narrower scope, and stays at or below 200 lines."
