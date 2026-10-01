@@ -142,18 +142,6 @@ fn decode_message(code: &BinaryBchCode, received: &BitVec) -> BitVec {
         .expect("a word within the correction radius decodes")
 }
 
-/// Helper: Convert systematic BCH codeword [message | parity] to polynomial c(x) = x^r·m(x) + p(x)
-/// Uses DVB-T2 convention: bit 0 is highest polynomial coefficient
-#[cfg(test)]
-fn systematic_codeword_to_poly(
-    codeword: &BitVec,
-    _k: usize,
-    _n: usize,
-    field: &Gf2mField,
-) -> Gf2mPoly {
-    Gf2mPoly::from_bitvec_reversed(codeword, field)
-}
-
 mod bch_construction_tests {
     use super::*;
 
@@ -254,34 +242,29 @@ mod dvb_t2_parameter_tests {
 
 mod encoding_tests {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
 
     #[test]
     fn test_encoder_creates_valid_codeword_length() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
             msg.set(i, i % 2 == 0);
         }
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
         assert_eq!(cw.len(), 15);
     }
 
     #[test]
     fn test_systematic_encoding_preserves_message() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
             msg.set(i, (i / 2) % 2 == 0);
         }
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
         // In systematic form [message | parity], message appears in first k positions
         for i in 0..11 {
@@ -297,35 +280,36 @@ mod encoding_tests {
 
     #[test]
     fn test_zero_message_encodes_to_zero() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code);
+        let code = gf16_code(1);
 
         let msg = BitVec::zeros(11);
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
         assert_eq!(cw, BitVec::zeros(15));
     }
 
+    /// A message of the wrong length is a typed buffer error naming the
+    /// expected and supplied lengths.
     #[test]
-    #[should_panic(expected = "Message must have length k")]
     fn test_encoder_rejects_wrong_message_length() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code);
+        let code = gf16_code(1);
 
         let msg = BitVec::zeros(10); // Wrong length
-        encoder.encode(&msg);
+        assert_eq!(
+            code.encode(&msg),
+            Err(CodeError::BufferLengthMismatch {
+                expected: 11,
+                actual: 10
+            })
+        );
     }
 
     #[test]
     fn test_all_ones_message() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code);
+        let code = gf16_code(1);
 
         let msg = BitVec::ones(11);
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
         assert_eq!(cw.len(), 15);
         // Message part should be all ones
@@ -336,17 +320,13 @@ mod encoding_tests {
 
     #[test]
     fn test_encoded_codeword_is_valid() {
-        let field = Gf2mField::new(4, 0b10011).with_tables();
-        let code = BchCode::new(15, 11, 1, field.clone());
-        let encoder = BchEncoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::from_bytes_le(&[0b10101010, 0b101]);
         msg.resize(11, false); // Trim to exactly 11 bits
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
-        // Convert systematic codeword to polynomial
-        let cw_poly = systematic_codeword_to_poly(&cw, code.k(), code.n(), &field);
-        let (_, remainder) = cw_poly.div_rem(code.generator());
+        let (_, remainder) = codeword_polynomial(&code, &cw).div_rem(code.generator());
 
         assert!(
             remainder.is_zero(),
@@ -880,21 +860,18 @@ mod error_correction_limits {
 
 mod systematic_encoding_validation {
     use super::*;
-    use gf2_coding::traits::BlockEncoder as _;
 
     /// Verify systematic form: message appears in first k positions
     #[test]
     fn test_systematic_form() {
-        let field = Gf2mField::new(4, 0b10011);
-        let code = BchCode::new(15, 11, 1, field);
-        let encoder = BchEncoder::new(code.clone());
+        let code = gf16_code(1);
 
         let mut msg = BitVec::zeros(11);
         for i in 0..11 {
             msg.set(i, i % 2 == 1);
         }
 
-        let cw = encoder.encode(&msg);
+        let cw = encode(&code, &msg);
 
         // Message should appear in positions [0, k) - systematic [message | parity] format
         for i in 0..11 {
@@ -910,9 +887,7 @@ mod systematic_encoding_validation {
     /// Verify codeword is divisible by generator polynomial
     #[test]
     fn test_codeword_divisibility() {
-        let field = Gf2mField::new(4, 0b10011).with_tables();
-        let code = BchCode::new(15, 7, 2, field.clone());
-        let encoder = BchEncoder::new(code.clone());
+        let code = gf16_code(2);
 
         // Test multiple messages
         for pattern in [0b0000000, 0b1111111, 0b1010101, 0b0110011] {
@@ -921,13 +896,10 @@ mod systematic_encoding_validation {
                 msg.set(i, (pattern >> i) & 1 == 1);
             }
 
-            let cw = encoder.encode(&msg);
-
-            // Convert systematic codeword to polynomial
-            let cw_poly = systematic_codeword_to_poly(&cw, code.k(), code.n(), &field);
+            let cw = encode(&code, &msg);
 
             // Should be divisible by generator
-            let (_, remainder) = cw_poly.div_rem(code.generator());
+            let (_, remainder) = codeword_polynomial(&code, &cw).div_rem(code.generator());
             assert!(
                 remainder.is_zero(),
                 "Codeword not divisible by generator for message pattern {:07b}",
