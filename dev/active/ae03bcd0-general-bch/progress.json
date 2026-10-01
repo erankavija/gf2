@@ -750,6 +750,21 @@
       "source": "0c21cb1e worker (session 11)",
       "finding": "gpu_bch_syndrome_throughput now measures the DVB-T2 normal mother (n=65535) syndrome evaluation, not the shortened 32400 frame; CPU arms time correct_in_place on error-free words; smoke 24-thread pool slower than 1 thread (15 vs 53.6 fps), uninvestigated",
       "disposition": "documented in the bin; any 9012f8a0 re-receipt states the workload"
+    },
+    {
+      "source": "d1b4f85e worker (session 11)",
+      "finding": "no calibrated gf2-coding encode profile (tuning-profile-compose covers core+algebra only), so every selected=/W6 cell measures poly-remainder-scalar; no family-explicit parallel batch entry point",
+      "disposition": "fd9d5416 decides: calibrate a coding owner or report W6 as reference-family only"
+    },
+    {
+      "source": "d1b4f85e worker (session 11)",
+      "finding": "88ca7d2f has no comparable DVB-T2 encode cell; pre-cutover T2S/T2N W1 numbers exist only in the 4e732b56 survey receipt (different harness)",
+      "disposition": "fd9d5416 chooses and states the REQ-13 comparison basis"
+    },
+    {
+      "source": "d1b4f85e worker (session 11)",
+      "finding": "Shortened::generator_matrix_into copies bit by bit (~2 s/iter T2S, ~1 min/iter T2N)",
+      "disposition": "follow-up candidate beside a33fda32; fd9d5416 reports it"
     }
   ],
   "coordination": {
