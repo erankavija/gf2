@@ -1,48 +1,9 @@
-//! Workload W1: large-batch systematic BCH encoding.
-//!
-//! The cells are the workload-selection contract's
-//! (`dev/active/4e732b56/workload-selection.md`) W1 workload on the canonical
-//! construction model, over its § 3 batch sizes, § 5 cache states, and § 6
-//! worker counts, with the cell set its d1b4f85e amendment names:
-//!
-//! - the binary rows of `bch_workloads::BINARY_ROWS` in the packed
-//!   representation, the two DVB-T2 rows at their mother lengths;
-//! - the DVB-T2 rows `T2S` and `T2N` at the shortened lengths § 2 fixes,
-//!   through `dvb_t2_bch_code`'s `Shortened` systematic restriction;
-//! - the nonbinary rows of the evidence protocol's corpus (`N1`–`N4`) in the
-//!   field-generic representation.
-//!
-//! Throughput is reported per message symbol, so the elements-per-second
-//! figure Criterion prints is § 1's information bits per second on the binary
-//! rows and information symbols per second on the nonbinary ones.
-//!
-//! # Benchmark IDs
-//!
-//! `bch_encode_w1/<path>/W<workers>/<cache>/<row>/B=<batch>`, where `<path>`
-//! names the dispatch path the measured call takes:
-//!
-//! - `family=<name>[<kernel>]` — `encode_batch_family_into` with one
-//!   workspace, under the named family. Every family the row's
-//!   representation makes available is measured. The bracket names the
-//!   kernel bundle for the families that run one; each such family is
-//!   measured on the detected bundle and, on a host whose detected bundle is
-//!   accelerated, again on the portable `scalar` bundle.
-//! - `selected=<name>[<kernel>]` — the batch entry points that select the
-//!   family from the active tuning profile: `encode_batch` (`W1`,
-//!   `fresh-alloc`), `encode_batch_parallel_into` (`W6`, `warm-reuse`), and
-//!   `encode_batch_parallel` (`W6`, `fresh-alloc`). The name is the family
-//!   `selected_encode_family` reports for the cell's batch length.
-//! - `route=shortened-restriction` — the DVB-T2 rows' `BlockEncoder`, one
-//!   message at a time: `encode` per message (`fresh-alloc`) and
-//!   `encode_into` into reused codeword buffers (`warm-reuse`).
-//!
-//! Every cell of one row and batch writes the same codewords; the bench
-//! asserts it from the output digest before measuring. `bch_workloads`
-//! documents the dispatch record each cell appends.
-//!
-//! The `W6` cells need the `parallel` feature and a pool of six threads
-//! (`RAYON_NUM_THREADS=6`); the record carries the pool width observed at
-//! run time.
+//! Workload W1, large-batch systematic BCH encoding, over every encode path
+//! the canonical model exposes. The cells, their IDs, and the dispatch record
+//! are the d1b4f85e amendment of `dev/active/4e732b56/workload-selection.md`.
+//! Every path of a row and batch is checked to write the same codewords
+//! before it is timed; the `W6` cells need the `parallel` feature and
+//! `RAYON_NUM_THREADS=6`.
 
 mod bch_workloads;
 
