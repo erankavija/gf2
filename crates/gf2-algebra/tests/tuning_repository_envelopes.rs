@@ -2,8 +2,8 @@
 
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
 use gf2_core::tuning::{
-    CompiledProfileProvenance, CoreTuning, CoreTuningCodec, PreparedEnvelope, ProfileRegistry,
-    ProfileRegistryBuilder, TuningSection,
+    CompiledProfileProvenance, CoreTuning, CoreTuningCodec, MeasurementProvenance,
+    PreparedEnvelope, ProfileRegistry, ProfileRegistryBuilder, TuningSection,
 };
 
 const CORE_OWNER: &str = include_str!("../../gf2-core/data/tuning-profiles/conservative.json");
@@ -11,10 +11,14 @@ const ALGEBRA_OWNER: &str = include_str!("../data/tuning-profiles/conservative.j
 const COMPLETE: &str =
     include_str!("../../../dev/reference_data/tuning-profiles/conservative.json");
 const MEASURED_CORE_OWNER: &str =
-    include_str!("../../gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json");
+    include_str!("../../gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
+const MEASURED_ALGEBRA_OWNER: &str =
+    include_str!("../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
 const MEASURED_COMPLETE: &str = include_str!(
-    "../../../dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
+    "../../../dev/reference_data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json"
 );
+const MEASURED_RECEIPT: &str =
+    "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md";
 
 fn core_registry() -> ProfileRegistry {
     ProfileRegistryBuilder::new()
@@ -148,14 +152,50 @@ fn committed_algebra_owner_is_the_complete_programmatic_conservative_section() {
 }
 
 #[test]
+fn committed_measured_algebra_owner_is_canonical_and_cites_the_campaign() {
+    let registry = algebra_registry();
+    let prepared = registry.from_json(MEASURED_ALGEBRA_OWNER).unwrap();
+    assert_eq!(
+        prepared.section_ids().collect::<Vec<_>>(),
+        [AlgebraTuning::ID.as_str()]
+    );
+    assert!(core_registry().from_json(MEASURED_ALGEBRA_OWNER).is_err());
+    let measured = prepared.section::<AlgebraTuning>().unwrap().unwrap();
+    match measured.measurement {
+        MeasurementProvenance::Calibrated {
+            harness_schema,
+            receipt,
+            ..
+        } => {
+            assert_eq!(harness_schema.as_str(), AlgebraTuningCodec::HARNESS_SCHEMA);
+            assert_eq!(receipt.as_str(), MEASURED_RECEIPT);
+        }
+        MeasurementProvenance::Inherited => panic!("measured algebra owner is not inherited"),
+    }
+
+    let assembly = prepared.verified_assembly().unwrap().provenance.clone();
+    assert_eq!(
+        registry.to_json(&prepared, &assembly).unwrap(),
+        MEASURED_ALGEBRA_OWNER
+    );
+}
+
+#[test]
 fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
     let core = core_registry().from_json(MEASURED_CORE_OWNER).unwrap();
-    let algebra = algebra_registry().from_json(ALGEBRA_OWNER).unwrap();
+    let algebra = algebra_registry()
+        .from_json(MEASURED_ALGEBRA_OWNER)
+        .unwrap();
     let complete = complete_registry().from_json(MEASURED_COMPLETE).unwrap();
 
     assert_eq!(
         core.section_ids().collect::<Vec<_>>(),
         [CoreTuning::ID.as_str()]
+    );
+    assert_eq!(complete.profile_id().as_str(), core.profile_id().as_str());
+    assert_eq!(
+        complete.profile_id().as_str(),
+        algebra.profile_id().as_str()
     );
     assert_eq!(
         complete.section_ids().collect::<Vec<_>>(),
@@ -166,16 +206,8 @@ fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
         raw_section_wrapper(MEASURED_COMPLETE, CoreTuning::ID.as_str())
     );
     assert_eq!(
-        raw_section_wrapper(ALGEBRA_OWNER, AlgebraTuning::ID.as_str()),
+        raw_section_wrapper(MEASURED_ALGEBRA_OWNER, AlgebraTuning::ID.as_str()),
         raw_section_wrapper(MEASURED_COMPLETE, AlgebraTuning::ID.as_str())
-    );
-    assert_eq!(
-        complete
-            .section::<AlgebraTuning>()
-            .unwrap()
-            .unwrap()
-            .section,
-        &AlgebraTuning::CONSERVATIVE
     );
 
     let core = core.section::<CoreTuning>().unwrap().unwrap();
@@ -184,6 +216,9 @@ fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
     assert_eq!(complete_core.measurement, core.measurement);
 
     let algebra = algebra.section::<AlgebraTuning>().unwrap().unwrap();
+    let complete_algebra = complete.section::<AlgebraTuning>().unwrap().unwrap();
+    assert_eq!(complete_algebra.section, algebra.section);
+    assert_eq!(complete_algebra.measurement, algebra.measurement);
     let id = complete.profile_id().clone();
     let composed =
         PreparedEnvelope::compiled(id.clone(), CompiledProfileProvenance { artifact_id: id })
