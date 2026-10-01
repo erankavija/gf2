@@ -14,7 +14,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-01T08:45:06.925054843Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T08:48:42.608729917Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ef8ff9c4-94e2-4e83-8167-f786a1e02906",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate gf2-coding binaries and examples",
-  "updated_at": "2026-10-01T07:46:28.486570329Z"
+  "updated_at": "2026-10-01T08:48:42.608729917Z"
 }

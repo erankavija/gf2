@@ -8,7 +8,15 @@
     "97410c80-aba2-420f-870c-b71a5066d5e4"
   ],
   "description": "Migrate the gf2-coding Criterion benchmarks consuming legacy BCH constructors to the canonical model, preserving benchmark IDs where the measured behavior is unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: Each bench in this task's inventory compiles and runs on the canonical model, keeping comparable benchmark IDs for the non-regression comparison.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Bench smoke run and ID mapping",
+      "path": "dev/active/591a1c5e/smoke-run.md"
+    }
+  ],
   "first_ready_at": "2026-10-01T07:46:12.085397870Z",
   "gates_required": [
     "cargo-ci",
@@ -36,5 +44,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Migrate gf2-coding benchmarks",
-  "updated_at": "2026-10-01T08:35:37.224810499Z"
+  "updated_at": "2026-10-01T08:48:57.345481700Z"
 }
