@@ -1,8 +1,9 @@
 # Project bibliography — registry for the `citation` item kind.
 #
-# Each entry is addressable as an item (`jit item show <key>`) and linkable from
-# issues via `cites:<key>` labels. `citation` is the canonical one-line reference;
-# identifier fields (arxiv / eprint / doi / url / refdb) are advisory metadata.
+# Each entry is addressable as an item (`jit item show @/citation/<key>`) and
+# linkable from issues via `cites:@/citation/<key>` labels. `citation` is the
+# canonical one-line reference; identifier fields (arxiv / eprint / doi / url /
+# refdb) are advisory metadata.
 # Citekey format: AuthorYYYY[a] matching the configured id-pattern.
 
 [[references]]

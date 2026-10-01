@@ -1,13 +1,13 @@
 {
   "record_version": 2,
   "id": "sim-research",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "compatible_jit": ">=1.0.0, <2.0.0",
   "origin": {
     "source": "directory",
     "location": "packages/sim-research"
   },
-  "package_hash": "785009500582450120440cfaf27b8bf23d887d5ad32fc286e6f51713c3f04f2b",
+  "package_hash": "150a2e0bc2700a2a623b8172ad477ee16f3ed7bee4a750a8bf5064451e95f914",
   "variables": {},
   "claims": [
     {
@@ -142,7 +142,7 @@
           }
         }
       },
-      "base_fingerprint": "d712145b6e801df6ef0964771c83c3a100fd3c64fb4144b1c792bde96d479137",
+      "base_fingerprint": "57dae6fa943145e5d3a4539507e9af4cc4e6ff345bdd21b4264b8b8721553b9c",
       "retain_if_unowned": true
     },
     {

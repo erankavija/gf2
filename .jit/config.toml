@@ -65,7 +65,7 @@ unique = false
 
 [namespaces.cites]
 description = "Literature citation link: names a bibliography entry (citekey) in .jit/references.toml that the labeled issue builds on or reproduces."
-examples = ["cites:GGK2025", "cites:Fossorier1995"]
+examples = ["cites:@/citation/GGK2025", "cites:@/citation/Fossorier1995"]
 unique = false
 
 [namespaces.epic]
@@ -89,8 +89,8 @@ examples = ["brackets:0123abcd"]
 unique = true
 
 [namespaces.satisfies]
-description = "Coverage credit: on an impl child, names a container [hard] criterion id this child CONTRIBUTES to. Several children may credit one id; the label denotes contribution, not sole delivery. Read by the label-coverage gate, which credits a criterion when any labelled child exists."
-examples = ["satisfies:REQ-01"]
+description = "Coverage credit: on an impl child, names a container [hard] criterion this child CONTRIBUTES to, qualified by the container's short id (satisfies:<container-short-id>/<id>). Several children may credit one criterion; the label denotes contribution, not sole delivery. Read by the label-coverage gate, which credits a criterion when any labelled child names it."
+examples = ["satisfies:0123abcd/REQ-01"]
 unique = false
 
 [item_kinds]
