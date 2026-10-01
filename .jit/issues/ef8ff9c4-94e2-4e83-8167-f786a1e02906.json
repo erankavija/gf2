@@ -9,6 +9,7 @@
   ],
   "description": "Migrate the gf2-coding binaries and examples consuming legacy BCH constructors to the canonical model, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each binary and example in this task's inventory builds and runs on the canonical model with unchanged observable behavior.\n",
   "documents": [],
+  "done_at": "2026-10-01T09:10:48.580696135Z",
   "first_ready_at": "2026-10-01T07:46:13.545258873Z",
   "gates_required": [
     "cargo-ci",
@@ -17,12 +18,12 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-01T08:45:06.925054843Z",
+      "updated_at": "2026-10-01T09:08:29.182617802Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T08:48:42.608729917Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T09:10:38.619901088Z",
       "updated_by": "auto:executor"
     }
   },
@@ -34,7 +35,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Migrate gf2-coding binaries and examples",
-  "updated_at": "2026-10-01T08:48:42.608729917Z"
+  "updated_at": "2026-10-01T09:10:48.580696135Z"
 }
