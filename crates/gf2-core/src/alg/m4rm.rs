@@ -529,6 +529,7 @@ fn schedule_tier(wide_tier_min_stride_words: usize, stride_words: usize) -> M4rm
 /// # Returns
 ///
 /// Block size k_block (typically 6-9 on the conservative table)
+#[cfg(any(test, feature = "test-support"))]
 fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
     m4rm_schedule_route_resolved(m4rm, k, n).panel_width
 }

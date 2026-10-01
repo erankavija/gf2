@@ -54,7 +54,7 @@ use gf2_core::SpBitMatrixDual;
 /// in the edge count and allocates; no decoding operation allocates or
 /// searches through it.
 ///
-/// See the [module documentation](self) for the edge orders and how a consumer
+/// See the module documentation for the edge orders and how a consumer
 /// stores messages against them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EdgeLayout {

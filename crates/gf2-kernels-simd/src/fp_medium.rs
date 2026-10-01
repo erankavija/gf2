@@ -7,7 +7,7 @@
 //! `Fp<P>` primes that the small-prime kernel (issue `662f7a15`) does
 //! not already cover.
 //!
-//! The unsafe AVX2 implementation lives in [`crate::x86::fp_medium`];
+//! The unsafe AVX2 implementation lives in `crate::x86::fp_medium`;
 //! this module exposes only safe function-pointer wrappers through the
 //! [`MediumPrimeFns`] table returned by [`detect`]. Callers without AVX2
 //! receive `None` and must fall back to scalar loops.

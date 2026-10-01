@@ -13,8 +13,8 @@
 //! framework — their R1 Candidate D 3-plane and R2 Candidate A LUT
 //! encodings respectively do not fit the 2-stream `(MagLane, SgnLane)`
 //! shape, so they ship via dedicated AVX2 batch entry points in
-//! [`crate::x86::bipedal_avx2_packed5`] and
-//! [`crate::x86::bipedal_avx2_packed7`] (see JIT issue `1f769232`'s
+//! `crate::x86::bipedal_avx2_packed5` and
+//! `crate::x86::bipedal_avx2_packed7` (see JIT issue `1f769232`'s
 //! `## Amendment 2026-05-14`).
 //!
 //! The `BatchedBipedalLike::{add, sub, mul, neg}` methods delegate to the
@@ -26,7 +26,7 @@
 //!
 //! All methods on this struct are `#[inline(always)]`. The `run_*_batch`
 //! entry points (defined per-instantiation, see
-//! [`crate::x86::bipedal_avx2`] for the F_3 generic monomorphisations)
+//! `crate::x86::bipedal_avx2` for the F_3 generic monomorphisations)
 //! carry `#[target_feature(enable = "avx2")]`. R4 §4.1 documents the
 //! 12-34x regression that occurs without this discipline.
 

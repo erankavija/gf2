@@ -1143,8 +1143,9 @@ use crate::simulation::ChannelModel;
 /// hand-rolled QPSK map / LLR math is replaced with framework calls.
 ///
 /// The framework demapper consumes the per-symbol complex gain
-/// `h = h_i + j h_q` directly via [`DemapInput::gain_i`] /
-/// [`DemapInput::gain_q`]; no manual `conj(h)` pre-rotation is performed
+/// `h = h_i + j h_q` directly via [`DemapInput::gain_i`](crate::modem::DemapInput::gain_i) /
+/// [`DemapInput::gain_q`](crate::modem::DemapInput::gain_q); no manual
+/// `conj(h)` pre-rotation is performed
 /// here. The MSB-first intra-symbol bit order matches the framework
 /// Gray-QAM convention (bit 0 of each pair drives the I axis, bit 1
 /// drives Q).

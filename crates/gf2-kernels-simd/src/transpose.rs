@@ -2,7 +2,7 @@
 //!
 //! This module owns the 64×64 bit-block transpose: the register-tiled scalar
 //! kernel that needs no processor feature, the AVX2 lanes isolated in
-//! [`crate::x86::transpose`], and the one dispatch that publishes a lane to
+//! `crate::x86::transpose`, and the one dispatch that publishes a lane to
 //! callers. Every lane answers the same contract, so a caller picks a lane and
 //! gets the same output words; only the instruction mix differs.
 //!
@@ -11,7 +11,7 @@
 //! A 64-row bit-block is 64 contiguous `u64` words under little-endian bit
 //! indexing: bit `c` of `input[r]` is the matrix entry $(r, c)$. A transpose
 //! writes 64 words with bit `r` of `output[c]` equal to that entry, which is
-//! $\mathrm{output}[c][r] = \mathrm{input}[r][c]$. The input and output
+//! $\mathrm{output}\[c\]\[r\] = \mathrm{input}\[r\]\[c\]$. The input and output
 //! buffers must not overlap. The buffers carry no alignment requirement: every
 //! lane reads and writes them through unaligned vector accesses.
 //!
@@ -21,7 +21,7 @@
 //! [`lane`] maps a name to the safe function pointer, or to `None` where the
 //! host lacks the processor feature the lane needs. [`detect`] resolves the
 //! production lane through [`PRODUCTION_PREFERENCE`], the measured order, and
-//! is what [`gf2_core::BitMatrix::transpose`] and
+//! is what `gf2_core::BitMatrix::transpose` and
 //! [`crate::bch_encode`]'s bit-slicing reach. There is no second dispatch and
 //! no private copy of a lane: a caller that wants a specific implementation
 //! names it through [`TransposeLane`].
@@ -41,7 +41,7 @@
 //! # PPC-spiral context
 //!
 //! Issue `1c1c4242` (kernel B1 in `dev/plans/gf2_core_ppc_spiral.md`) drives
-//! the PPC spiral for [`gf2_core::BitMatrix::transpose`]: **V0** is the
+//! the PPC spiral for `gf2_core::BitMatrix::transpose`: **V0** is the
 //! criterion baseline of `crates/gf2-core/benches/matrix_transpose.rs`, **V4**
 //! is [`TransposeLane::Scalar`], **V3a** and **V3b** are
 //! [`TransposeLane::Avx2Pshufb`] and [`TransposeLane::Avx2BitTwiddle`], and

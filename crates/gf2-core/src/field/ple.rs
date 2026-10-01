@@ -20,7 +20,7 @@
 //! matrix; sub-blocks are passed as [`MatView`] / [`MatViewMut`]. Each
 //! recursive level pays for two intrinsic gemm-kernel B-transposes (one
 //! from [`trsm_lower`] on the rank-deficient branch, one from
-//! [`gemm_axpy_into_view`] for the Schur complement update). To bridge
+//! `gemm_axpy_into_view` for the Schur complement update). To bridge
 //! the row-major layout's lack of a safe `split_cols_mut`, the read-side
 //! operands `L1` (the unit-lower-triangular leading block) and `L1_bot`
 //! (its strict-lower extension) are materialised into owned buffers per
@@ -57,7 +57,7 @@
 //! Block-recursive (Dumas–Pernet §2.2 alg. 2.5), splitting on columns, with
 //! a direct-elimination base case selected by the active profile's
 //! `ple.scalar_base_max_cols()`, whose conservative default
-//! [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`] is the single-column leaf, and
+//! `PLE_SCALAR_BASE_MAX_COLS_DEFAULT` is the single-column leaf, and
 //! reported by [`ple_base_route`]:
 //!
 //! ```text
@@ -722,7 +722,7 @@ pub enum PleBaseRoute {
 ///
 /// The comparison uses the active `ple.scalar_base_max_cols()` profile value:
 /// a window at or below it is eliminated directly. The conservative default is
-/// [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`].
+/// `PLE_SCALAR_BASE_MAX_COLS_DEFAULT`.
 #[must_use]
 pub fn ple_base_route(win: usize) -> PleBaseRoute {
     ple_base_route_resolved(tuning::active().ple().scalar_base_max_cols(), win)
@@ -1458,7 +1458,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// block-recursive split, dispatching to
     /// [`crate::field::triangular::trsm_lower`] for the off-diagonal
     /// solves and to
-    /// [`gemm_axpy_into_view`](crate::field::matrix::gemm_axpy_into_view)
+    /// `gemm_axpy_into_view`
     /// for the rank-update.
     ///
     /// # Arguments
@@ -1547,7 +1547,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// Computes `(X, E)` where `X · self = E` and `E` is in row-echelon
     /// form. Implements Dumas–Pernet §2.2 algorithm 2.6 by composing
-    /// PLE with one [`trsm_lower`](crate::field::triangular::trsm_lower)
+    /// PLE with one [`trsm_lower`]
     /// solve to invert `L`'s effect.
     ///
     /// `X` is an `m × m` matrix equal to `L_full⁻¹ · Pᵀ`, where `L_full`

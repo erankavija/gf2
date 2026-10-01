@@ -20,14 +20,14 @@
 //! 4 × u64) processes 4 independent 64-lane word units simultaneously, giving
 //! 256 F_5 lanes per register. Binary ops require 3 registers per operand
 //! (one per plane), so the batch entry points use a 6-input / 3-output stream
-//! API. Custom AVX2 entry points live in [`crate::x86::bipedal_avx2_packed5`].
+//! API. Custom AVX2 entry points live in `crate::x86::bipedal_avx2_packed5`.
 //!
 //! # No `BipedalLikeConfig` integration
 //!
 //! The generic [`super::framework::BipedalLikeConfig`] trait imposes a 2-stream
 //! `(mag, sgn)` shape per operand, which cannot losslessly represent F_5
 //! value 4 (which needs `b2 = 1`). F_5 therefore ships *only* via the
-//! dedicated 3-plane AVX2 entry points in [`crate::x86::bipedal_avx2_packed5`],
+//! dedicated 3-plane AVX2 entry points in `crate::x86::bipedal_avx2_packed5`,
 //! the runtime-detection bundle [`F5AvxFns`], and the scalar fallbacks below.
 //! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!

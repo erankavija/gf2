@@ -786,7 +786,7 @@ impl PackedField<Fp<5>> for Packed5 {
 /// # Mask-tail invariant
 ///
 /// Bits beyond `len_lanes` in the last word of all three planes must always
-/// be zero. Every mutating operation calls [`Packed5Vec::mask_tail`] to
+/// be zero. Every mutating operation calls `Packed5Vec::mask_tail` to
 /// enforce this invariant — it is the most critical correctness invariant
 /// in this codebase (CLAUDE.md §Key design invariants #1).
 ///

@@ -4,7 +4,7 @@
 //! [`TuningSection`] values. Installation and first access race through one
 //! process-wide authority: installation wins once, while access before install
 //! permanently resolves missing sections to their owner defaults. With the
-//! `tuning-profile` feature, an explicit [`ProfileRegistry`] strictly decodes
+//! `tuning-profile` feature, an explicit `ProfileRegistry` strictly decodes
 //! or encodes canonical format-2 envelopes.
 //!
 //! ```
@@ -569,7 +569,7 @@ impl BitBackendSelectors {
 
     /// Returns the profile's minimum word count for the SIMD backend.
     ///
-    /// [`CoreTuningCodec`] encodes this field in the core section, and
+    /// `CoreTuningCodec` encodes this field in the core section, and
     /// [`active`] exposes its installed or conservative value. The bit-backend
     /// routing boundary uses a compile-time constant instead, per DEC-G in
     /// `dev/active/220cab0b/design.md`.

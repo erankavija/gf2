@@ -39,7 +39,7 @@
 //! `P` inside the trait impl itself. We therefore provide concrete impls
 //! only for the Proth primes currently used in the workspace; see the
 //! *workaround* note below for the per-prime helper that extracts
-//! `TWO_ADICITY` from [`classify`](crate::gfp::specialized::classify).
+//! `TWO_ADICITY` from [`classify`].
 //!
 //! ## Not implemented for `Gf2mElement`
 //!

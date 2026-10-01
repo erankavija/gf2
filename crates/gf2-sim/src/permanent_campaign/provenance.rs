@@ -5,7 +5,7 @@
 //! the executable identity named by the frozen manifest and refuses when that
 //! manifest differs from its committed content. [`verify_dataset`] decides,
 //! later and from the published bytes alone, whether the dataset still matches its
-//! [`INTEGRITY_FILE`](super::schema::INTEGRITY_FILE) and whether the revision it
+//! [`INTEGRITY_FILE`] and whether the revision it
 //! names still exists.
 //!
 //! Emission protects the identity of the executable and the frozen manifest,
@@ -986,7 +986,7 @@ impl From<SchemaError> for IntegrityError {
 /// Renders the integrity file covering exactly the raw data present in `root`.
 ///
 /// The returned text is what finalization writes to
-/// [`INTEGRITY_FILE`](super::schema::INTEGRITY_FILE). Coverage is the raw-data
+/// [`INTEGRITY_FILE`]. Coverage is the raw-data
 /// half of [`DatasetLayout::from_manifest`]: the root manifest, every executed
 /// shard record, every field summary, and the pooled summary. Derived artefacts
 /// and the integrity file itself are excluded, so the file can close. Shard

@@ -151,7 +151,7 @@ impl Eq for Bipedal3 {}
 impl fmt::Debug for Bipedal3 {
     /// Formats the value as a 64-element array of decoded lane values
     /// (each in `{0, 1, 2}`), matching the style of
-    /// [`ScalarPackedFp3`]'s `Debug` impl for stable `assert_eq!`
+    /// [`ScalarPackedFp3`](super::ScalarPackedFp3)'s `Debug` impl for stable `assert_eq!`
     /// messages.
     ///
     /// # Examples
@@ -1518,7 +1518,7 @@ mod tests {
 /// # Mask-tail invariant
 ///
 /// Bits beyond `len_lanes` in the last word of both `mag` and `sgn` must
-/// always be zero. Every mutating operation calls [`Bipedal3Vec::mask_tail`]
+/// always be zero. Every mutating operation calls `Bipedal3Vec::mask_tail`
 /// to enforce this invariant — it is the most critical correctness invariant
 /// in this codebase (CLAUDE.md §Key design invariants #1).
 ///
@@ -1821,7 +1821,7 @@ impl Eq for Bipedal3Vec {}
 
 impl fmt::Debug for Bipedal3Vec {
     /// Formats the value as a `Vec` of decoded lane values (each `0`, `1`,
-    /// or `2`), matching the style of [`ScalarPackedFp3Vec`]'s `Debug`
+    /// or `2`), matching the style of [`ScalarPackedFp3Vec`](super::ScalarPackedFp3Vec)'s `Debug`
     /// impl for stable `assert_eq!` messages.
     ///
     /// # Examples

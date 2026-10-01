@@ -544,8 +544,9 @@ pub fn validate_cell(
 /// route provenance; a plan cell the addendum does not declare fails before any
 /// arm runs.
 ///
-/// This entry point writes nothing. `benchmark-ab-runner smoke <plan> --stage
-/// <dir>` drives the same validation dispatches through the runner's session
+/// This entry point writes nothing.
+/// `benchmark-ab-runner smoke <plan> --stage <dir>` drives the same validation
+/// dispatches through the runner's session
 /// loop, append-only execution log and checkpoints, pausing at the plan's
 /// cells-per-session budget and resuming without repeating a completed cell;
 /// such a stage carries zero timing samples and `finalize` refuses it.

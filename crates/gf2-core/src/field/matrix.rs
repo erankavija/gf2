@@ -142,8 +142,8 @@ pub trait ChainPolyArith<F: FiniteField>: Send {
 
     /// Computes `x · chain_polys[last]` and stores the result into `buf`.
     /// `buf` is an opaque scratch buffer managed by this trait; callers
-    /// pass the same value back to [`sub_scaled_into`] and then to
-    /// [`push_buf`] or [`finish_buf`].
+    /// pass the same value back to [`sub_scaled_into`](Self::sub_scaled_into) and then to
+    /// [`push_buf`](Self::push_buf) or [`finish_buf`](Self::finish_buf).
     fn shift_x_last_into(&self, buf: &mut Vec<u8>);
 
     /// Subtracts `alpha · chain_polys[j]` from `buf` in-place.

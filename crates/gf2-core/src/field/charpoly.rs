@@ -141,7 +141,7 @@
 //!    `minpoly(A)`.
 //!
 //! All matrix–matrix multiplications route through
-//! [`gemm_into_view`](crate::field::matrix::gemm_into_view); all
+//! `gemm_into_view`; all
 //! matrix–vector products use [`FieldMatrix::matvec`]; rank-detection
 //! within the Krylov loop is done by maintaining a row-reduced "running
 //! basis" with explicit pivot bookkeeping rather than calling
@@ -157,13 +157,13 @@
 //! (triangular base case unrolls rather than dispatches through a
 //! second-tier helper). The amendment reads:
 //!
-//! > Uses [`gemm_into_view`](crate::field::matrix::gemm_into_view) for
+//! > Uses `gemm_into_view` for
 //! > matrix–matrix products, [`FieldMatrix::matvec`] for matrix–vector
 //! > products, and [`FieldMatrix::ple`] / [`FieldMatrix::rank`]
 //! > wherever a *snapshot* rank computation is needed (e.g. independent
 //! > rank cross-checks in tests). The Krylov chain itself maintains an
-//! > incremental row-reduced basis with pivot bookkeeping ([`reduce`]
-//! > / [`append_to_basis`]) because invoking [`FieldMatrix::ple`] per
+//! > incremental row-reduced basis with pivot bookkeeping (`reduce`
+//! > / `append_to_basis`) because invoking [`FieldMatrix::ple`] per
 //! > Krylov step would force an `O(n^4)` rebuild for what is
 //! > mathematically an `O(n^3)` amortised online algorithm.
 //!
@@ -171,16 +171,13 @@
 //! basis and either confirms it is independent (cost: one `O(n)`
 //! pivot-row scan) or reads off the dependency relation directly from
 //! the reduction coefficients (cost: zero — the coefficients are
-//! already accumulated by [`reduce`]). Calling [`FieldMatrix::ple`]
+//! already accumulated by `reduce`). Calling [`FieldMatrix::ple`]
 //! per step would re-decompose the entire `n × k` running matrix at
 //! cost `O(n · k · min(n, k))` per step, summing to `O(n^4)` across the
 //! whole chain. For `n = 512` the existing benches in
 //! `crates/gf2-core/benches/charpoly.rs` would slow by a factor of
 //! `~512` on Krylov-bound paths, far past the `2×` regression bar
 //! quoted in the lead's review prompt.
-//!
-//! [`reduce`]: reduce
-//! [`append_to_basis`]: append_to_basis
 //!
 //! # Public surface
 //!
@@ -198,7 +195,7 @@
 //! 2. **Divisibility**: `minpoly(A) | charpoly(A)`; in the Frobenius
 //!    form the invariant-factor chain satisfies `f_{i+1} | f_i`.
 //! 3. **Conjugation**: `P⁻¹ · A · P == F` (block companion). Verified
-//!    by composing [`FieldMatrix::inv`] and [`gemm`].
+//!    by composing [`FieldMatrix::inv`] and [`gemm`](crate::field::matrix::gemm).
 //! 4. **Rank-deficient inputs are accepted**: a singular `A` simply
 //!    yields a charpoly with `0` as a root and a Frobenius form whose
 //!    blocks reflect the reduced rank.
@@ -2370,7 +2367,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///    (`O(n²)` field operations). The result is verified via a fresh
     ///    scalar recurrence check (`O(n²)`). The dominant cost is the
     ///    `2n + 1` matvec calls (`O(n³)` total). Falls back to path 2
-    ///    after [`WIEDEMANN_MAX_RETRIES`] consecutive failures.
+    ///    after `WIEDEMANN_MAX_RETRIES` consecutive failures.
     ///
     /// 2. **Deterministic cyclic-LCM** (`O(n³)` field operations) — used
     ///    for runtime-context fields, low-cardinality fields where
@@ -2379,7 +2376,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///    cyclic decomposition of `V = F^n` under `A` and returns the
     ///    LCM of the per-block annihilator polynomials. Mathematically
     ///    valid for every finite field. The legacy quartic
-    ///    [`find_max_minpoly_generator`]-based path is no longer reached
+    ///    `find_max_minpoly_generator`-based path is no longer reached
     ///    from this `minpoly()` dispatch shim, although the function
     ///    itself remains in the crate and is still invoked by the
     ///    independent `frobenius_form()` helper at `O(n⁴)` cost.
