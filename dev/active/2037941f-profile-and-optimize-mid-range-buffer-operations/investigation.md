@@ -82,7 +82,7 @@ dispatch-hoist change without a materially different consumer contract.
   [`crates/gf2-core/src/bitvec.rs:1094-1104`](../../../crates/gf2-core/src/bitvec.rs#L1094-L1104).
   The in-tree coding use is an ownership-taking message assertion, not a
   zero-copy logical-buffer consumer
-  [`crates/gf2-coding/src/bch/extended.rs:375-383`](../../../crates/gf2-coding/src/bch/extended.rs#L375-L383).
+  [`crates/gf2-coding/src/bch/extended.rs:375-383`](../../../dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot/inputs/producing/crates/gf2-coding/src/bch/extended.rs#L375-L383).
   Therefore “adopt zero-copy BitSlice use” is **invalid as an existing
   primitive claim**; it is a possible new shared API, not an optimization that
   can be switched on in the current consumers.

@@ -55,7 +55,7 @@
 //!   sampling or statistics.
 //!
 //! The full type → crate map this crate satisfies on completion is in
-//! [`dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../../dev/plans/6e20133d/d1a_gf2_algebra_boundary.md)
+//! [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../../dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md)
 //! §2.
 //!
 //! # Module map (D1a §2)

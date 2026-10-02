@@ -7,14 +7,14 @@
 //!    contract at the `dispatch_with_fallback` boundary using the shared
 //!    injectors. The **run-level** SC1 proof (a forced OOM during a real hybrid
 //!    run yielding the same `fer`/`frames`/`errors` columns as a CPU-only run)
-//!    lives in [`tests/executor_oom_fallback_run.rs`](../executor_oom_fallback_run.rs).
+//!    lives in [`tests/executor_oom_fallback_run.rs`](./executor_oom_fallback_run.rs).
 //! 2. **Shared injectors** (SC2): `OomInjector` / `KernelErrorInjector` are
 //!    consumed via `mod common;` — no copy-paste.
 //! 3. **Hard-fail path** (SC3), function-level: fatal kernel error →
 //!    `dispatch_with_fallback` returns `Err` and writes a JSON dump to
 //!    `diagnostic_dump_dir`. The **process-exit** half of SC3 (non-zero process
 //!    exit + the `tracing::error!` event) is proven by a real subprocess in
-//!    [`tests/hard_fail_subprocess.rs`](../hard_fail_subprocess.rs) — an
+//!    [`tests/hard_fail_subprocess.rs`](./hard_fail_subprocess.rs) — an
 //!    in-process `Err` return does not prove a non-zero process exit.
 //! 4. **`strict_gpu` honored** (SC4): OOM with `strict_gpu=true` is promoted to
 //!    `FatalError::OutOfMemory` (no fallback), and a dump is written.
@@ -184,7 +184,7 @@ fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
 /// `dispatch_with_fallback` boundary. The **process-exit** half of SC3 (a forced
 /// kernel error yields a *non-zero process exit* plus the `tracing::error!`
 /// event) is proven by a real subprocess in
-/// [`tests/hard_fail_subprocess.rs`](../hard_fail_subprocess.rs) — an in-process
+/// [`tests/hard_fail_subprocess.rs`](./hard_fail_subprocess.rs) — an in-process
 /// `Err` return does NOT prove the process exits non-zero (a reasoning rejected
 /// by formal review on this project), so the exit status is asserted there by
 /// actually spawning a process and reading its status.
