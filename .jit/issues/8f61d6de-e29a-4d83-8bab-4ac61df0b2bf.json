@@ -23,6 +23,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/8f61d6de-baseline-findings.md"
     }
   ],
+  "done_at": "2026-10-02T09:38:18.152034701Z",
   "first_ready_at": "2026-10-01T10:03:23.501901317Z",
   "gates_required": [
     "code-review",
@@ -31,13 +32,13 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T09:25:14.303605442Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T09:35:04.376216066Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T09:29:18.956249387Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T09:38:08.066874008Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -57,7 +58,7 @@
     "satisfies:3f29e945/REQ-40"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Add the docs-mechanical gate with self-tests",
-  "updated_at": "2026-10-02T09:31:34.243339380Z"
+  "updated_at": "2026-10-02T09:38:18.152034701Z"
 }

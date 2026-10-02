@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:31.883606787Z",
+      "updated_by": null
+    }
+  },
   "id": "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-coding LDPC module",
-  "updated_at": "2026-10-01T22:42:02.955689278Z"
+  "updated_at": "2026-10-02T09:38:31.883606787Z"
 }

@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:26.561523175Z",
+      "updated_by": null
+    }
+  },
   "id": "875914b3-38c8-4ec2-a13f-009fc620f7d4",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Map the gf2-coding roadmap's unchecked items",
-  "updated_at": "2026-10-01T22:41:40.459490362Z"
+  "updated_at": "2026-10-02T09:38:26.561523175Z"
 }

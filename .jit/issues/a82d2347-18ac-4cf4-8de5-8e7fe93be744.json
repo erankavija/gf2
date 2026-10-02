@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:28.565137453Z",
+      "updated_by": null
+    }
+  },
   "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-  "updated_at": "2026-10-01T22:41:47.080008981Z"
+  "updated_at": "2026-10-02T09:38:28.565137453Z"
 }

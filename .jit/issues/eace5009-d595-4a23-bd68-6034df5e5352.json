@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:31.241458266Z",
+      "updated_by": null
+    }
+  },
   "id": "eace5009-d595-4a23-bd68-6034df5e5352",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Regroup the remaining flat dev/active entries under epic dirs",
-  "updated_at": "2026-10-01T22:42:01.227163049Z"
+  "updated_at": "2026-10-02T09:38:31.241458266Z"
 }

@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:27.918143755Z",
+      "updated_by": null
+    }
+  },
   "id": "9dcc0cae-ef55-4f02-9446-83a0822ec158",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the simulation campaign how-to",
-  "updated_at": "2026-10-01T22:41:45.524882159Z"
+  "updated_at": "2026-10-02T09:38:27.918143755Z"
 }

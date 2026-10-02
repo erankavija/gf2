@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:20.236207845Z",
+      "updated_by": null
+    }
+  },
   "id": "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
-  "updated_at": "2026-10-01T22:41:17.058954326Z"
+  "updated_at": "2026-10-02T09:38:20.236207845Z"
 }

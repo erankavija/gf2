@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:32.778927186Z",
+      "updated_by": null
+    }
+  },
   "id": "f6148d1e-d151-4c21-8507-7efd39044548",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the dbd8787d campaign declaration entry under its epic dir",
-  "updated_at": "2026-10-01T22:42:05.148814517Z"
+  "updated_at": "2026-10-02T09:38:32.778927186Z"
 }

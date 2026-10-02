@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:29.986176437Z",
+      "updated_by": null
+    }
+  },
   "id": "cafb463c-59ea-4dd5-8bc4-c7cc4521c00f",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules",
-  "updated_at": "2026-10-01T22:41:55.647095014Z"
+  "updated_at": "2026-10-02T09:38:29.986176437Z"
 }

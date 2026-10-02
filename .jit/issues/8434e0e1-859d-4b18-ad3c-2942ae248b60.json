@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:26.201766716Z",
+      "updated_by": null
+    }
+  },
   "id": "8434e0e1-859d-4b18-ad3c-2942ae248b60",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Inventory the other open-epic dev/active entries",
-  "updated_at": "2026-10-01T22:41:39.800289356Z"
+  "updated_at": "2026-10-02T09:38:26.201766716Z"
 }

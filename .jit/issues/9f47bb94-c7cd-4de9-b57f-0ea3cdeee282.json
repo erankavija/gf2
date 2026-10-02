@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:28.176281861Z",
+      "updated_by": null
+    }
+  },
   "id": "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-kernels-simd x86 module",
-  "updated_at": "2026-10-01T22:41:45.793818658Z"
+  "updated_at": "2026-10-02T09:38:28.176281861Z"
 }

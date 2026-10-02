@@ -12,9 +12,16 @@
     "code-review",
     "doc-review",
     "repo-validate",
-    "holistic-review"
+    "holistic-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:33.803068601Z",
+      "updated_by": null
+    }
+  },
   "id": "ffc35b8c-5f2a-4a37-8eef-905b362b615d",
   "labels": [
     "type:story",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Workspace source-comment tersification sweep",
-  "updated_at": "2026-10-01T22:42:08.048557947Z"
+  "updated_at": "2026-10-02T09:38:33.803068601Z"
 }

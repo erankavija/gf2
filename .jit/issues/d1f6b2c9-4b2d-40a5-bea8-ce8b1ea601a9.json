@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:30.243750409Z",
+      "updated_by": null
+    }
+  },
   "id": "d1f6b2c9-4b2d-40a5-bea8-ce8b1ea601a9",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Inventory the field-dispatch dev/active entries",
-  "updated_at": "2026-10-01T22:41:57.014153727Z"
+  "updated_at": "2026-10-02T09:38:30.243750409Z"
 }

@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:19.844877028Z",
+      "updated_by": null
+    }
+  },
   "id": "153297cf-7687-4599-be56-23e038efee3d",
   "labels": [
     "epic:documentation-overhaul",
@@ -24,5 +31,5 @@
   "priority": "low",
   "state": "backlog",
   "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
-  "updated_at": "2026-10-01T22:41:14.116781748Z"
+  "updated_at": "2026-10-02T09:38:19.844877028Z"
 }

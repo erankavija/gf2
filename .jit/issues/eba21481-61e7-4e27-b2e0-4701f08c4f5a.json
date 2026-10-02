@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:31.500435706Z",
+      "updated_by": null
+    }
+  },
   "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-core tests, benches and examples",
-  "updated_at": "2026-10-01T22:42:01.805277193Z"
+  "updated_at": "2026-10-02T09:38:31.500435706Z"
 }

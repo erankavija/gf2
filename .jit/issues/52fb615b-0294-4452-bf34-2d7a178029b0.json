@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:23.138654852Z",
+      "updated_by": null
+    }
+  },
   "id": "52fb615b-0294-4452-bf34-2d7a178029b0",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Populate the migration manifest for permanent-path sources",
-  "updated_at": "2026-10-01T22:41:29.760988591Z"
+  "updated_at": "2026-10-02T09:38:23.138654852Z"
 }

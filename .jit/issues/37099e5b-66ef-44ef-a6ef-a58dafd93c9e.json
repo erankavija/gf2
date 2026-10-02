@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:21.359191427Z",
+      "updated_by": null
+    }
+  },
   "id": "37099e5b-66ef-44ef-a6ef-a58dafd93c9e",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Empty dev/sessions into owner dirs or the legacy mirror",
-  "updated_at": "2026-10-01T22:41:22.779192256Z"
+  "updated_at": "2026-10-02T09:38:21.359191427Z"
 }

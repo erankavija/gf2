@@ -18,9 +18,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:33.547730921Z",
+      "updated_by": null
+    }
+  },
   "id": "fca578b1-2593-4bc4-8f08-8a425f3b237f",
   "labels": [
     "type:task",
@@ -34,5 +41,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Audit the permanent surface against the docs invariants",
-  "updated_at": "2026-10-01T22:42:07.263259738Z"
+  "updated_at": "2026-10-02T09:38:33.547730921Z"
 }

@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:25.688159370Z",
+      "updated_by": null
+    }
+  },
   "id": "7bac1303-eed8-443a-a504-593a87710cb4",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Make the first survey-harness crates' tool dependency depth-independent",
-  "updated_at": "2026-10-01T22:41:37.893118230Z"
+  "updated_at": "2026-10-02T09:38:25.688159370Z"
 }

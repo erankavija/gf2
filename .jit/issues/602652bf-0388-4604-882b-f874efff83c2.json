@@ -13,9 +13,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.012564130Z",
+      "updated_by": null
+    }
+  },
   "id": "602652bf-0388-4604-882b-f874efff83c2",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the f547c394 protocol inputs under their epic dir",
-  "updated_at": "2026-10-01T22:41:33.152750086Z"
+  "updated_at": "2026-10-02T09:38:24.012564130Z"
 }

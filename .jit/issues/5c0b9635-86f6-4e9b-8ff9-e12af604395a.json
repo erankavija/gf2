@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:23.751943641Z",
+      "updated_by": null
+    }
+  },
   "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-01T22:41:32.357870443Z"
+  "updated_at": "2026-10-02T09:38:23.751943641Z"
 }

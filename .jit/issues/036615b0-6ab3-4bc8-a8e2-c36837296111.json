@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:18.644564779Z",
+      "updated_by": null
+    }
+  },
   "id": "036615b0-6ab3-4bc8-a8e2-c36837296111",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Inventory terminal, ownerless and empty dev/active entries",
-  "updated_at": "2026-10-01T22:41:10.814621702Z"
+  "updated_at": "2026-10-02T09:38:18.644564779Z"
 }

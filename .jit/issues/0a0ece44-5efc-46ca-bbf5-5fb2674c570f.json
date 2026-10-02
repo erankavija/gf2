@@ -14,9 +14,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:18.769263982Z",
+      "updated_by": null
+    }
+  },
   "id": "0a0ece44-5efc-46ca-bbf5-5fb2674c570f",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Resolve stray and ownerless dev entries",
-  "updated_at": "2026-10-01T22:41:11.705557231Z"
+  "updated_at": "2026-10-02T09:38:18.769263982Z"
 }

@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.529811957Z",
+      "updated_by": null
+    }
+  },
   "id": "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Resolve campaign CI check inputs through the configured repository root",
-  "updated_at": "2026-10-01T22:41:33.752018868Z"
+  "updated_at": "2026-10-02T09:38:24.529811957Z"
 }

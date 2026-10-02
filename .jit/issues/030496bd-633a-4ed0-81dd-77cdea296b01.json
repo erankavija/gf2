@@ -33,9 +33,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:18.521080202Z",
+      "updated_by": null
+    }
+  },
   "id": "030496bd-633a-4ed0-81dd-77cdea296b01",
   "labels": [
     "type:task",
@@ -48,5 +55,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Close the sweep with the after census and justification list",
-  "updated_at": "2026-10-01T22:41:10.351163698Z"
+  "updated_at": "2026-10-02T09:38:18.521080202Z"
 }

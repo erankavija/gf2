@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:28.818546232Z",
+      "updated_by": null
+    }
+  },
   "id": "af84619e-a2e1-4b3d-af9e-4120a43e4130",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Retire the transient progress checker after the final check",
-  "updated_at": "2026-10-01T22:41:48.842504049Z"
+  "updated_at": "2026-10-02T09:38:28.818546232Z"
 }

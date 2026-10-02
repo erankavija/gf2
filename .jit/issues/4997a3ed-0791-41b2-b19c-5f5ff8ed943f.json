@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:22.625638849Z",
+      "updated_by": null
+    }
+  },
   "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-core bit-level structures",
-  "updated_at": "2026-10-01T22:41:27.013995542Z"
+  "updated_at": "2026-10-02T09:38:22.625638849Z"
 }

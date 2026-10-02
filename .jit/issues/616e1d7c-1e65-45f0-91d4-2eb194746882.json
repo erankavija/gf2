@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.270815537Z",
+      "updated_by": null
+    }
+  },
   "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
-  "updated_at": "2026-10-01T22:41:33.406314700Z"
+  "updated_at": "2026-10-02T09:38:24.270815537Z"
 }

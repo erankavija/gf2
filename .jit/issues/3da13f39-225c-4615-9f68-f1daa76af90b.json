@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:21.752712727Z",
+      "updated_by": null
+    }
+  },
   "id": "3da13f39-225c-4615-9f68-f1daa76af90b",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-core prime-field modules",
-  "updated_at": "2026-10-01T22:41:23.978921117Z"
+  "updated_at": "2026-10-02T09:38:21.752712727Z"
 }

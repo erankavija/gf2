@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:27.303689500Z",
+      "updated_by": null
+    }
+  },
   "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-core field trait and vector modules",
-  "updated_at": "2026-10-01T22:41:42.350549717Z"
+  "updated_at": "2026-10-02T09:38:27.303689500Z"
 }

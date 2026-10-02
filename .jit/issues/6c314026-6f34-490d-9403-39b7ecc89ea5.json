@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:25.301953492Z",
+      "updated_by": null
+    }
+  },
   "id": "6c314026-6f34-490d-9403-39b7ecc89ea5",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the finite-field linear algebra at scale tutorial",
-  "updated_at": "2026-10-01T22:41:35.139327364Z"
+  "updated_at": "2026-10-02T09:38:25.301953492Z"
 }

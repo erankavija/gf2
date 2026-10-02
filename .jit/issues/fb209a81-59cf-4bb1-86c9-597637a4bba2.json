@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:33.419434577Z",
+      "updated_by": null
+    }
+  },
   "id": "fb209a81-59cf-4bb1-86c9-597637a4bba2",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move presentation decks into their epics' archive dirs",
-  "updated_at": "2026-10-01T22:42:06.671449378Z"
+  "updated_at": "2026-10-02T09:38:33.419434577Z"
 }

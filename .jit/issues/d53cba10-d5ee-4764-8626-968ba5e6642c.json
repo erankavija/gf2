@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:30.367917960Z",
+      "updated_by": null
+    }
+  },
   "id": "d53cba10-d5ee-4764-8626-968ba5e6642c",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Locate addendum schema test inputs through the configured repository root",
-  "updated_at": "2026-10-01T22:41:57.301740970Z"
+  "updated_at": "2026-10-02T09:38:30.367917960Z"
 }

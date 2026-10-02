@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:30.115436166Z",
+      "updated_by": null
+    }
+  },
   "id": "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the coded-modulation link simulation tutorial",
-  "updated_at": "2026-10-01T22:41:56.259612649Z"
+  "updated_at": "2026-10-02T09:38:30.115436166Z"
 }

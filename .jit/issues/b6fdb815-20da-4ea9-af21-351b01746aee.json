@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:29.207269624Z",
+      "updated_by": null
+    }
+  },
   "id": "b6fdb815-20da-4ea9-af21-351b01746aee",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
-  "updated_at": "2026-10-01T22:41:51.655233514Z"
+  "updated_at": "2026-10-02T09:38:29.207269624Z"
 }

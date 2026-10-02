@@ -10,9 +10,16 @@
   "first_ready_at": "2026-10-01T10:03:43.702262411Z",
   "gates_required": [
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:28.437534554Z",
+      "updated_by": null
+    }
+  },
   "id": "a24b2af7-81ce-4442-9ee3-6ce096c36537",
   "labels": [
     "epic:documentation-overhaul",
@@ -23,5 +30,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-01T22:41:46.656481879Z"
+  "updated_at": "2026-10-02T09:38:28.437534554Z"
 }

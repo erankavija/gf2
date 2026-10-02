@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.137623166Z",
+      "updated_by": null
+    }
+  },
   "id": "60652fe4-d6dd-49e9-97f1-db99b4c73111",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Map the gf2-core roadmap's planned phases",
-  "updated_at": "2026-10-01T22:41:33.236904645Z"
+  "updated_at": "2026-10-02T09:38:24.137623166Z"
 }

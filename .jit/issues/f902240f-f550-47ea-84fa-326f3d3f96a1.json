@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:33.164663831Z",
+      "updated_by": null
+    }
+  },
   "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Bring the hand-archived OSD epic under container archival",
-  "updated_at": "2026-10-01T22:42:06.205304358Z"
+  "updated_at": "2026-10-02T09:38:33.164663831Z"
 }

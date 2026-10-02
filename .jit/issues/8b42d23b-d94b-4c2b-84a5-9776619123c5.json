@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:26.951310393Z",
+      "updated_by": null
+    }
+  },
   "id": "8b42d23b-d94b-4c2b-84a5-9776619123c5",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite the gf2-core README as its entry page",
-  "updated_at": "2026-10-01T22:41:41.475496368Z"
+  "updated_at": "2026-10-02T09:38:26.951310393Z"
 }

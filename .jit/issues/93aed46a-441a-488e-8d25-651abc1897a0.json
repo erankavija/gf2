@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:27.530935871Z",
+      "updated_by": null
+    }
+  },
   "id": "93aed46a-441a-488e-8d25-651abc1897a0",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
-  "updated_at": "2026-10-01T22:41:43.851364156Z"
+  "updated_at": "2026-10-02T09:38:27.530935871Z"
 }

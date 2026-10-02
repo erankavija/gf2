@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:26.692184831Z",
+      "updated_by": null
+    }
+  },
   "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the acceleration selection how-to",
-  "updated_at": "2026-10-01T22:41:41.051567343Z"
+  "updated_at": "2026-10-02T09:38:26.692184831Z"
 }

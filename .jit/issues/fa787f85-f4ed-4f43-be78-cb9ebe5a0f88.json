@@ -63,9 +63,16 @@
     "code-review",
     "doc-review",
     "repo-validate",
-    "holistic-review"
+    "holistic-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:33.293127475Z",
+      "updated_by": null
+    }
+  },
   "id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
   "labels": [
     "epic:documentation-overhaul",
@@ -75,5 +82,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-01T19:20:45.383233800Z"
+  "updated_at": "2026-10-02T09:38:33.293127475Z"
 }

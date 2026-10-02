@@ -16,9 +16,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:19.111420852Z",
+      "updated_by": null
+    }
+  },
   "id": "103a792a-4168-44d5-9a0f-9373e002b793",
   "labels": [
     "type:task",
@@ -29,5 +36,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move gf2-core crate guides into the legacy mirror",
-  "updated_at": "2026-10-01T22:41:13.061565833Z"
+  "updated_at": "2026-10-02T09:38:19.111420852Z"
 }

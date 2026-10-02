@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.657803329Z",
+      "updated_by": null
+    }
+  },
   "id": "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-core field polynomial and extension modules",
-  "updated_at": "2026-10-01T22:41:34.020452354Z"
+  "updated_at": "2026-10-02T09:38:24.657803329Z"
 }

@@ -15,9 +15,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:29.075675052Z",
+      "updated_by": null
+    }
+  },
   "id": "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Relocate loose narrative reports out of dev/bench_results",
-  "updated_at": "2026-10-01T22:41:49.715872339Z"
+  "updated_at": "2026-10-02T09:38:29.075675052Z"
 }

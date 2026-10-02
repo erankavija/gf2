@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:25.947014009Z",
+      "updated_by": null
+    }
+  },
   "id": "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
-  "updated_at": "2026-10-01T22:41:38.623616264Z"
+  "updated_at": "2026-10-02T09:38:25.947014009Z"
 }

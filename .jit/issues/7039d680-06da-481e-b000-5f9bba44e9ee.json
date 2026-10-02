@@ -13,9 +13,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:25.426653805Z",
+      "updated_by": null
+    }
+  },
   "id": "7039d680-06da-481e-b000-5f9bba44e9ee",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the addendum fixture entries under the zen3 epic dir",
-  "updated_at": "2026-10-01T22:41:36.221407118Z"
+  "updated_at": "2026-10-02T09:38:25.426653805Z"
 }

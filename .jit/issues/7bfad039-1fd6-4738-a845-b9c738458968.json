@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:25.819199679Z",
+      "updated_by": null
+    }
+  },
   "id": "7bfad039-1fd6-4738-a845-b9c738458968",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-sim GPU, preset, stage and graph modules",
-  "updated_at": "2026-10-01T22:41:38.035917847Z"
+  "updated_at": "2026-10-02T09:38:25.819199679Z"
 }

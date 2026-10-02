@@ -12,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:31.114940182Z",
+      "updated_by": null
+    }
+  },
   "id": "e85b8edf-f35f-49b5-bdb1-65502b7d30e1",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Map the root roadmap's planned milestones and goals",
-  "updated_at": "2026-10-01T22:42:00.420293660Z"
+  "updated_at": "2026-10-02T09:38:31.114940182Z"
 }

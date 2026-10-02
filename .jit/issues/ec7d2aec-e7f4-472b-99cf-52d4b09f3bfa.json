@@ -16,9 +16,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:31.752270576Z",
+      "updated_by": null
+    }
+  },
   "id": "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa",
   "labels": [
     "type:task",
@@ -29,5 +36,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Widen the docs policy to manage archival sources",
-  "updated_at": "2026-10-01T22:42:02.238644160Z"
+  "updated_at": "2026-10-02T09:38:31.752270576Z"
 }

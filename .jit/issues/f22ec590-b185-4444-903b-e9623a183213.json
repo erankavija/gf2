@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:32.396374688Z",
+      "updated_by": null
+    }
+  },
   "id": "f22ec590-b185-4444-903b-e9623a183213",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the remaining gf2-sim source files",
-  "updated_at": "2026-10-01T22:42:04.119370317Z"
+  "updated_at": "2026-10-02T09:38:32.396374688Z"
 }

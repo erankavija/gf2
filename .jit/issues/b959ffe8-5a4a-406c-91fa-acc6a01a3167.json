@@ -15,9 +15,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:29.337846511Z",
+      "updated_by": null
+    }
+  },
   "id": "b959ffe8-5a4a-406c-91fa-acc6a01a3167",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite dev/index.md for the final dev layout",
-  "updated_at": "2026-10-01T22:41:52.549337350Z"
+  "updated_at": "2026-10-02T09:38:29.337846511Z"
 }

@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:30.851135805Z",
+      "updated_by": null
+    }
+  },
   "id": "deda0962-2366-493d-b0fd-c65874ba7cbe",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the acceleration architecture concepts page",
-  "updated_at": "2026-10-01T22:41:59.018561044Z"
+  "updated_at": "2026-10-02T09:38:30.851135805Z"
 }

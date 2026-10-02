@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:28.944961545Z",
+      "updated_by": null
+    }
+  },
   "id": "b16d013a-c200-4e75-8c57-6638a313438e",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the gf2-sim README as its entry page",
-  "updated_at": "2026-10-01T22:41:49.411412402Z"
+  "updated_at": "2026-10-02T09:38:28.944961545Z"
 }

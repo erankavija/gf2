@@ -19,7 +19,8 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
   "gates_status": {
     "cargo-ci": {
@@ -36,6 +37,11 @@
       "status": "pending",
       "updated_at": "2026-07-14T20:40:18.333589827Z",
       "updated_by": null
+    },
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:19.462266870Z",
+      "updated_by": null
     }
   },
   "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
@@ -48,5 +54,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-01T22:41:13.361599796Z"
+  "updated_at": "2026-10-02T09:38:19.462266870Z"
 }

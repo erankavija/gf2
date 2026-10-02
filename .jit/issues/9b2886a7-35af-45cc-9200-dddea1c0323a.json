@@ -19,9 +19,16 @@
   "gates_required": [
     "repo-validate",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:27.793494602Z",
+      "updated_by": null
+    }
+  },
   "id": "9b2886a7-35af-45cc-9200-dddea1c0323a",
   "labels": [
     "epic:documentation-overhaul",
@@ -32,5 +39,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-01T22:41:45.268157857Z"
+  "updated_at": "2026-10-02T09:38:27.793494602Z"
 }

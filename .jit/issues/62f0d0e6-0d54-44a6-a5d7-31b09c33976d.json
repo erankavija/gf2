@@ -13,9 +13,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.395021767Z",
+      "updated_by": null
+    }
+  },
   "id": "62f0d0e6-0d54-44a6-a5d7-31b09c33976d",
   "labels": [
     "type:task",
@@ -27,5 +34,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Record the pre-sweep comment census",
-  "updated_at": "2026-10-01T22:41:33.490265888Z"
+  "updated_at": "2026-10-02T09:38:24.395021767Z"
 }

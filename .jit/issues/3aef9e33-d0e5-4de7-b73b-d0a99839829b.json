@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:21.624624364Z",
+      "updated_by": null
+    }
+  },
   "id": "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-algebra packed-field module",
-  "updated_at": "2026-10-01T22:41:23.539570607Z"
+  "updated_at": "2026-10-02T09:38:21.624624364Z"
 }

@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:21.009365114Z",
+      "updated_by": null
+    }
+  },
   "id": "29331bd3-e56a-4521-8db9-096152ee8482",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-  "updated_at": "2026-10-01T22:41:20.574314190Z"
+  "updated_at": "2026-10-02T09:38:21.009365114Z"
 }

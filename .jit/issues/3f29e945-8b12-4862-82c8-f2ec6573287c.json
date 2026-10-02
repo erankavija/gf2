@@ -15,9 +15,16 @@
     "code-review",
     "doc-review",
     "repo-validate",
-    "holistic-review"
+    "holistic-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:21.886258410Z",
+      "updated_by": null
+    }
+  },
   "id": "3f29e945-8b12-4862-82c8-f2ec6573287c",
   "labels": [
     "epic:documentation-overhaul",
@@ -28,7 +35,7 @@
     "satisfies:fa787f85/REQ-01"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Define documentation contract and enforcement baseline",
-  "updated_at": "2026-10-01T23:05:50.252897855Z"
+  "updated_at": "2026-10-02T09:38:21.886258410Z"
 }

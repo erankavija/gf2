@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:18.392010545Z",
+      "updated_by": null
+    }
+  },
   "id": "01c20b61-4dce-4437-baab-9c9d03d1d2c1",
   "labels": [
     "type:task",
@@ -23,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the evidence reproduction how-to",
-  "updated_at": "2026-10-01T22:41:10.203665075Z"
+  "updated_at": "2026-10-02T09:38:18.392010545Z"
 }

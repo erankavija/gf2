@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:26.820507705Z",
+      "updated_by": null
+    }
+  },
   "id": "8a9db61a-115b-4f07-9baf-97e6545525a5",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in the gf2-coding modem module",
-  "updated_at": "2026-10-01T22:41:41.200723675Z"
+  "updated_at": "2026-10-02T09:38:26.820507705Z"
 }

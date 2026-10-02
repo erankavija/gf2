@@ -14,9 +14,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:31.627512003Z",
+      "updated_by": null
+    }
+  },
   "id": "ec655592-d647-4fbc-90de-ef44ed313067",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Empty dev/plans through archival or legacy moves",
-  "updated_at": "2026-10-01T22:42:02.101942017Z"
+  "updated_at": "2026-10-02T09:38:31.627512003Z"
 }

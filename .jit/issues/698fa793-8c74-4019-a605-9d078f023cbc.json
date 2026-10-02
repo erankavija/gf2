@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:25.044675441Z",
+      "updated_by": null
+    }
+  },
   "id": "698fa793-8c74-4019-a605-9d078f023cbc",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite the gf2-coding README as its entry page",
-  "updated_at": "2026-10-01T22:41:34.537198836Z"
+  "updated_at": "2026-10-02T09:38:25.044675441Z"
 }

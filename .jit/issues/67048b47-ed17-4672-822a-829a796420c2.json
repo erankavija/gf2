@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:24.788521286Z",
+      "updated_by": null
+    }
+  },
   "id": "67048b47-ed17-4672-822a-829a796420c2",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Link unlinked owned artifacts to their issues",
-  "updated_at": "2026-10-01T22:41:34.105812711Z"
+  "updated_at": "2026-10-02T09:38:24.788521286Z"
 }

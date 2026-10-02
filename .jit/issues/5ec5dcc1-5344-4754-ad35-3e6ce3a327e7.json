@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:23.880676237Z",
+      "updated_by": null
+    }
+  },
   "id": "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the 02b8137c validation journal under its epic dir",
-  "updated_at": "2026-10-01T22:41:32.893653391Z"
+  "updated_at": "2026-10-02T09:38:23.880676237Z"
 }

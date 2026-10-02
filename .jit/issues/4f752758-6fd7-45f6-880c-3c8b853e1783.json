@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:23.013942269Z",
+      "updated_by": null
+    }
+  },
   "id": "4f752758-6fd7-45f6-880c-3c8b853e1783",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite the gf2-algebra README as its entry page",
-  "updated_at": "2026-10-01T22:41:28.552761973Z"
+  "updated_at": "2026-10-02T09:38:23.013942269Z"
 }

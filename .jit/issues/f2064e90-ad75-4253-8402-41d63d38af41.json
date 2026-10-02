@@ -10,9 +10,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:32.269482243Z",
+      "updated_by": null
+    }
+  },
   "id": "f2064e90-ad75-4253-8402-41d63d38af41",
   "labels": [
     "type:task",
@@ -28,5 +35,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Tersify comments in gf2-core dense field matrix modules",
-  "updated_at": "2026-10-01T22:42:03.971438802Z"
+  "updated_at": "2026-10-02T09:38:32.269482243Z"
 }

@@ -11,9 +11,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-02T09:38:18.983025177Z",
+      "updated_by": null
+    }
+  },
   "id": "0c5aa3b7-4846-4ec8-a578-14e6b35e78dd",
   "labels": [
     "type:task",
@@ -24,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Relocate loose narrative Markdown out of simulation_results and studies",
-  "updated_at": "2026-10-01T22:41:12.313451411Z"
+  "updated_at": "2026-10-02T09:38:18.983025177Z"
 }

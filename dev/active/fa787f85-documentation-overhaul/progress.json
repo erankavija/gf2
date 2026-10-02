@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 3,
+ "current_wave": 4,
  "waves": [
   {
    "wave_number": 1,
@@ -49,7 +49,7 @@
      "short_id": "8f61d6de",
      "title": "Add the docs-mechanical gate with self-tests",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     }
    ]
   },
@@ -939,7 +939,8 @@
  "notes": [
   "495807a3 work landed on main before this session (4133f4152); gates run by lead.",
   "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
-  "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings."
+  "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings.",
+  "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
