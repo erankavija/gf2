@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-jit issue create "Measure the table-based versus algebraic decoding crossover" --type task --priority low \
+jit issue create "Measure the table-based versus algebraic decoding crossover" --type task --priority low --orphan \
   --label component:gf2-coding \
   --description-file - <<'EOF'
 Quantify at which block length and redundancy a table-driven syndrome decoder stops being cheaper than algebraic decoding (Berlekamp-Massey with Chien search) for binary BCH codes, so the choice of decoder per code size rests on measurements.
@@ -18,7 +18,7 @@ gf2-coding offers a syndrome-table decoder for small linear block codes and an a
 - [hard] REQ-04: A committed record states the measured crossover (block length or parity-bit count) with the benchmark protocol, host, toolchain and commit identity that produced it, and the benchmark runs in release mode on an uncontended host.
 EOF
 
-jit issue create "Study compression-transform ordering against error-correction coding" --type task --priority low \
+jit issue create "Study compression-transform ordering against error-correction coding" --type task --priority low --orphan \
   --label component:gf2-coding \
   --description-file - <<'EOF'
 Measure whether applying a bit-level compression transform (run-length, delta, XOR chaining) before error-correction encoding, or after decoding, changes the redundancy needed or the residual error rate for structured bit streams.
