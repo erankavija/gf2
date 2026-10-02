@@ -49,7 +49,7 @@
      "short_id": "8f61d6de",
      "title": "Add the docs-mechanical gate with self-tests",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   },
@@ -940,5 +940,11 @@
   "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
   "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings."
  ],
- "started_at": "2026-10-01T19:40:00Z"
+ "started_at": "2026-10-01T19:40:00Z",
+ "traps": [
+  "Profile-owned files (packages/sim-research/manifest.toml declares them, e.g. contrib/gates/*-prompt.md) fail jit validate profile-ownership when edited in place: after merge run `jit profile capture --source packages/sim-research --destination packages/sim-research`, bump manifest version, `jit profile upgrade --profile path:packages/sim-research`.",
+  "jit doc dir <task> resolves dev/active/<task-id>, not the epic dir; per active-layout contract workers write under dev/active/fa787f85-documentation-overhaul/.",
+  "Worker worktree jit refuses state writes: workers cannot jit doc add or gate evaluate; lead links and gates after merge.",
+  "Gate runs dirty .jit/issues on main; commit gate state before running dispatch-worker-worktree.sh (it refuses a dirty main)."
+ ]
 }
