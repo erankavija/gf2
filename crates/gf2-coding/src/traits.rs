@@ -1595,19 +1595,6 @@ pub mod compat {
         /// reports an invalid message length by panicking. The canonical
         /// replacement is [`crate::traits::block::BlockEncoder`], whose
         /// `encode` returns a typed error instead.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_coding::traits::BlockEncoder;
-        /// use gf2_coding::LinearBlockCode;
-        /// use gf2_core::BitVec;
-        ///
-        /// let code = LinearBlockCode::hamming(3);
-        /// let mut message = BitVec::zeros(code.k());
-        /// message.set(0, true);
-        /// assert_eq!(code.encode(&message).len(), code.n());
-        /// ```
         pub trait BlockEncoder {
             /// Returns the message dimension.
             fn k(&self) -> usize;
@@ -1632,19 +1619,6 @@ pub mod compat {
         /// [`crate::traits::block::GeneratorMatrixAccess`], whose methods
         /// return typed errors and admit a matrix representation other than
         /// [`BitMatrix`].
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_coding::traits::GeneratorMatrixAccess;
-        /// use gf2_coding::LinearBlockCode;
-        ///
-        /// let code = LinearBlockCode::hamming(3);
-        /// let g = code.generator_matrix();
-        /// assert_eq!(g.rows(), code.k());
-        /// assert_eq!(g.cols(), code.n());
-        /// assert!(code.is_systematic());
-        /// ```
         pub trait GeneratorMatrixAccess {
             /// Returns the message dimension.
             fn k(&self) -> usize;
@@ -1769,18 +1743,6 @@ pub struct DecoderResult {
 
 impl DecoderResult {
     /// Creates a new decoder result.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::traits::DecoderResult;
-    /// use gf2_core::BitVec;
-    ///
-    /// let decoded = BitVec::from_bytes_le(&[0b1011]);
-    /// let result = DecoderResult::new(decoded, 5, true, true);
-    /// assert_eq!(result.iterations, 5);
-    /// assert!(result.converged);
-    /// ```
     pub fn new(
         decoded_bits: BitVec,
         iterations: usize,

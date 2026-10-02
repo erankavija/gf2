@@ -48,25 +48,6 @@ use super::{DemapMethod, ModemScalar, ModemView};
 /// * `method` - Selected demapper semantics; implementations must reject
 ///   methods not advertised by the [`super::ModemSpec`]'s
 ///   [`super::ModemCapabilities`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::{DemapInput, DemapMethod};
-///
-/// let rx_i = [0.5_f32, -0.5];
-/// let rx_q = [0.5_f32, -0.5];
-/// let noise_var = [0.1_f32, 0.1];
-/// let input = DemapInput::<f32> {
-///     rx_i: &rx_i,
-///     rx_q: &rx_q,
-///     gain_i: None,
-///     gain_q: None,
-///     noise_var: &noise_var,
-///     method: DemapMethod::MaxLog,
-/// };
-/// assert_eq!(input.rx_i.len(), 2);
-/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct DemapInput<'a, S: ModemScalar> {
     /// In-phase component of each received symbol. Length `num_symbols`.

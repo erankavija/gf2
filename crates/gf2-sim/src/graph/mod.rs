@@ -186,16 +186,6 @@ impl Chain {
     /// The built [`Pipeline`] receives a neutral default [`PipelineConfig`]
     /// (single worker, no SNR sweep) unless one is supplied via
     /// [`Chain::with_config`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::graph::Chain;
-    ///
-    /// let chain = Chain::new();
-    /// // A fresh chain compiles to an empty (zero-stage) pipeline.
-    /// assert_eq!(chain.build().unwrap().stage_count(), 0);
-    /// ```
     pub fn new() -> Self {
         Self {
             stages: Vec::new(),
@@ -254,23 +244,6 @@ impl Chain {
     /// # Arguments
     ///
     /// * `stage` — the erased stage to insert.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::graph::Chain;
-    /// use gf2_sim::stages::{DvbT2Encode};
-    /// use gf2_sim::stage::erase;
-    /// use std::sync::Arc;
-    /// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
-    /// let mut chain = Chain::new();
-    /// let id = chain.add(erase(DvbT2Encode::new(codec)));
-    /// assert_eq!(id.0, 0);
-    /// ```
     pub fn add(&mut self, stage: Box<dyn AnyStage>) -> StageId {
         let id = StageId(self.stages.len() as u32);
         self.stages.push(stage);

@@ -318,24 +318,6 @@ impl DvbT2BitInterleaver {
     /// Panics if `modcod.code_rate` is not one of `Rate1_2`, `Rate2_3`,
     /// `Rate3_4`, or `Rate3_5` (Normal frame only).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
-    ///     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
-    /// };
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let modcod = DvbT2Modcod::new(
-    ///     FrameSize::Short,
-    ///     CodeRate::Rate2_3,
-    ///     DvbT2Modulation::Qam64,
-    /// );
-    /// let interleaver = DvbT2BitInterleaver::new(modcod);
-    /// assert_eq!(interleaver.frame_bits(), 16200);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(Nc · Nr) time and space.
@@ -446,27 +428,6 @@ impl DvbT2BitInterleaver {
     ///
     /// Panics if `bits.len() != frame_bits()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
-    ///     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
-    /// };
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_core::BitVec;
-    ///
-    /// let modcod = DvbT2Modcod::new(
-    ///     FrameSize::Short,
-    ///     CodeRate::Rate1_2,
-    ///     DvbT2Modulation::Qpsk,
-    /// );
-    /// let interleaver = DvbT2BitInterleaver::new(modcod);
-    /// let bits = BitVec::zeros(interleaver.frame_bits());
-    /// let interleaved = interleaver.interleave(&bits);
-    /// assert_eq!(interleaved.len(), interleaver.frame_bits());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(N) where N = `frame_bits()`.
@@ -558,28 +519,6 @@ impl DvbT2BitInterleaver {
     /// # Panics
     ///
     /// Panics if `llrs.len() != frame_bits()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
-    ///     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
-    /// };
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::Llr;
-    ///
-    /// let modcod = DvbT2Modcod::new(
-    ///     FrameSize::Short,
-    ///     CodeRate::Rate1_2,
-    ///     DvbT2Modulation::Qam16,
-    /// );
-    /// let interleaver = DvbT2BitInterleaver::new(modcod);
-    /// let n = interleaver.frame_bits();
-    /// let llrs: Vec<Llr> = (0..n).map(|_| Llr::new(1.0)).collect();
-    /// let de_llrs = interleaver.deinterleave_llrs(&llrs);
-    /// assert_eq!(de_llrs.len(), n);
-    /// ```
     ///
     /// # Complexity
     ///

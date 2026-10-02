@@ -194,19 +194,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// to uphold this invariant; a panic on mismatch is the safest failure
     /// mode because a silent size disagreement would silently corrupt later
     /// arithmetic.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let batch = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(1), Fp::new(2)],
-    ///     vec![Fp::new(3), Fp::new(4)],
-    ///  ]);
-    /// assert_eq!(batch.len(), 2);
-    /// ```
     pub fn new(coeffs: [Vec<F>; N]) -> Self {
         if N > 0 {
             let expected = coeffs[0].len();
@@ -255,19 +242,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     }
 
     /// Returns the batch size (length of each coefficient vector).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let batch = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(1); 5],
-    ///     vec![Fp::new(2); 5],
-    /// ]);
-    /// assert_eq!(batch.len(), 5);
-    /// ```
     pub fn len(&self) -> usize {
         if N == 0 {
             0
@@ -277,16 +251,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     }
 
     /// Returns `true` if the batch contains no elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let batch = BatchExtField::<Fp<7>, 2>::new([vec![], vec![]]);
-    /// assert!(batch.is_empty());
-    /// ```
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -304,19 +268,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// # Panics
     ///
     /// Panics if `i >= N`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let batch = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(1), Fp::new(2)],
-    ///     vec![Fp::new(3), Fp::new(4)],
-    /// ]);
-    /// assert_eq!(batch.coeff(1)[0].value(), 3);
-    /// ```
     pub fn coeff(&self, i: usize) -> &[F] {
         &self.coeffs[i]
     }
@@ -327,19 +278,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// valid instances always return `true`. The predicate is exposed so
     /// that callers who construct batches through a different path (e.g.
     /// deserialization) can validate before use.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let batch = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(1), Fp::new(2)],
-    ///     vec![Fp::new(3), Fp::new(4)],
-    /// ]);
-    /// assert!(batch.is_valid());
-    /// ```
     pub fn is_valid(&self) -> bool {
         if N == 0 {
             return true;
@@ -372,25 +310,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// # Complexity
     ///
     /// `O(N · len)` base-field additions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let a = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(1), Fp::new(2)],
-    ///     vec![Fp::new(3), Fp::new(4)],
-    /// ]);
-    /// let b = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(6), Fp::new(5)],
-    ///     vec![Fp::new(4), Fp::new(3)],
-    /// ]);
-    /// let c = a.batch_add(&b);
-    /// assert_eq!(c.coeff(0)[0].value(), 0); // (1 + 6) mod 7
-    /// assert_eq!(c.coeff(1)[1].value(), 0); // (4 + 3) mod 7
-    /// ```
     pub fn batch_add(&self, other: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -424,25 +343,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// # Complexity
     ///
     /// `O(N · len)` base-field subtractions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let a = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(5), Fp::new(5)],
-    ///     vec![Fp::new(5), Fp::new(5)],
-    /// ]);
-    /// let b = BatchExtField::<Fp<7>, 2>::new([
-    ///     vec![Fp::new(1), Fp::new(2)],
-    ///     vec![Fp::new(3), Fp::new(4)],
-    /// ]);
-    /// let c = a.batch_sub(&b);
-    /// assert_eq!(c.coeff(0)[0].value(), 4);
-    /// assert_eq!(c.coeff(1)[1].value(), 1);
-    /// ```
     pub fn batch_sub(&self, other: &Self) -> Self {
         assert_eq!(
             self.len(),

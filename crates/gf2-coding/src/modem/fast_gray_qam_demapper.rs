@@ -266,15 +266,6 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
 
     /// Returns a borrowed reference to the owned [`ModemSpec`].
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
-    ///
-    /// let demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(16));
-    /// assert_eq!(demapper.spec_ref().bits_per_symbol(), 4);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).

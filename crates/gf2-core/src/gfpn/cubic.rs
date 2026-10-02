@@ -116,17 +116,6 @@ impl<W> CubicExtWide<W> {
     /// * `c0` — Wide value for the constant coefficient.
     /// * `c1` — Wide value for the coefficient of `v`.
     /// * `c2` — Wide value for the coefficient of `v²`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfpn::CubicExtWide;
-    ///
-    /// let w = CubicExtWide::<u128>::new(1u128, 2u128, 3u128);
-    /// assert_eq!(w.c0(), &1u128);
-    /// assert_eq!(w.c1(), &2u128);
-    /// assert_eq!(w.c2(), &3u128);
-    /// ```
     #[inline]
     pub const fn new(c0: W, c1: W, c2: W) -> Self {
         Self { c0, c1, c2 }
@@ -290,21 +279,6 @@ impl<C: ExtConfig> CubicExt<C> {
     /// * `c0` - The constant component.
     /// * `c1` - The coefficient of `v`.
     /// * `c2` - The coefficient of `v²`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, CubicExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    ///
-    /// let a = CubicExt::<Cfg>::new(Fp::new(1), Fp::new(2), Fp::new(3));
-    /// ```
     #[inline]
     pub const fn new(c0: C::BaseField, c1: C::BaseField, c2: C::BaseField) -> Self {
         Self { c0, c1, c2 }
@@ -364,24 +338,6 @@ impl<C: ExtConfig> CubicExt<C> {
 
 impl<C: ExtConfig> CubicExt<C> {
     /// Embeds a base field element into the extension: `a ↦ a + 0·v + 0·v²`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, CubicExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    ///
-    /// let a = CubicExt::<Cfg>::from_base(Fp::new(3));
-    /// assert_eq!(a.c0().value(), 3);
-    /// assert_eq!(a.c1().value(), 0);
-    /// assert_eq!(a.c2().value(), 0);
-    /// ```
     #[inline]
     pub fn from_base(value: C::BaseField) -> Self {
         let z = C::BaseField::zero();

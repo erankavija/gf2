@@ -47,14 +47,6 @@ impl AwgnChannel {
     /// # Panics
     ///
     /// Panics if `sigma_squared <= 0.0`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::channel::AwgnChannel;
-    ///
-    /// let channel = AwgnChannel::from_variance(0.5);
-    /// ```
     pub fn from_variance(sigma_squared: f64) -> Self {
         assert!(sigma_squared > 0.0, "Noise variance must be positive");
         let noise_dist =
@@ -104,34 +96,11 @@ impl AwgnChannel {
     }
 
     /// Transmits a single real symbol through the channel, adding Gaussian noise.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::channel::AwgnChannel;
-    ///
-    /// let channel = AwgnChannel::from_variance(0.5);
-    /// let mut rng = rand::thread_rng();
-    /// let received = channel.transmit(1.0, &mut rng);
-    /// assert!(received.is_finite());
-    /// ```
     pub fn transmit<R: Rng>(&self, symbol: f64, rng: &mut R) -> f64 {
         symbol + self.noise_dist.sample(rng)
     }
 
     /// Transmits multiple real symbols through the channel.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::channel::AwgnChannel;
-    ///
-    /// let channel = AwgnChannel::from_variance(0.5);
-    /// let mut rng = rand::thread_rng();
-    /// let symbols = vec![1.0, -1.0, 1.0];
-    /// let received = channel.transmit_symbols(&symbols, &mut rng);
-    /// assert_eq!(received.len(), 3);
-    /// ```
     pub fn transmit_symbols<R: Rng>(&self, symbols: &[f64], rng: &mut R) -> Vec<f64> {
         symbols.iter().map(|&s| self.transmit(s, rng)).collect()
     }

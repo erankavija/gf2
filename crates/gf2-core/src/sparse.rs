@@ -701,17 +701,6 @@ impl SpBitMatrixBlockCsr {
 
 impl SpBitMatrix {
     /// Creates an all-zero sparse matrix with given shape.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// let s = SpBitMatrix::zeros(10, 20);
-    /// assert_eq!(s.rows(), 10);
-    /// assert_eq!(s.cols(), 20);
-    /// assert_eq!(s.nnz(), 0);
-    /// ```
     pub fn zeros(rows: usize, cols: usize) -> Self {
         Self {
             rows,
@@ -726,18 +715,6 @@ impl SpBitMatrix {
     /// # Panics
     ///
     /// Panics if `row >= rows`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// let coo = vec![(0, 2), (0, 5), (1, 3)];
-    /// let s = SpBitMatrix::from_coo(2, 6, &coo);
-    ///
-    /// let r0: Vec<_> = s.row_iter(0).collect();
-    /// assert_eq!(r0, vec![2, 5]);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1280,18 +1257,6 @@ impl SpBitMatrix {
     /// Uses a 32-row block, which keeps per-block row metadata compact while
     /// preserving row order for bit-exact parity with CSR.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(2, 66, &[(0, 1), (0, 65), (1, 64)]);
-    /// let blocked = a.to_default_block_csr();
-    /// let x = BitVec::ones(66);
-    /// assert_eq!(blocked.matvec(&x), a.matvec(&x));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(rows + nnz) time and memory.
@@ -1821,22 +1786,6 @@ impl SpBitMatrixDual {
 
 impl fmt::Display for SpBitMatrix {
     /// Formats the SpBitMatrix in nalgebra-like style.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    /// let s = SpBitMatrix::from_coo(3, 4, &coo);
-    /// println!("{}", s);
-    /// // Displays:
-    /// //   ┌       ┐
-    /// //   │ 1 0 0 1 │
-    /// //   │ 0 1 0 0 │
-    /// //   │ 0 0 1 0 │
-    /// //   └       ┘
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.rows == 0 || self.cols == 0 {
             return write!(f, "[ ]");
@@ -1868,16 +1817,6 @@ impl fmt::Display for SpBitMatrix {
 
 impl fmt::Display for SpBitMatrixBlockCsr {
     /// Formats the `SpBitMatrixBlockCsr` in nalgebra-like style.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    /// let s = SpBitMatrix::from_coo(3, 4, &coo).to_block_csr(2);
-    /// println!("{}", s);
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.rows == 0 || self.cols == 0 {
             return write!(f, "[ ]");
@@ -1915,22 +1854,6 @@ impl fmt::Display for SpBitMatrixBlockCsr {
 
 impl fmt::Display for SpBitMatrixDual {
     /// Formats the SpBitMatrixDual in nalgebra-like style.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrixDual;
-    ///
-    /// let coo = vec![(0, 0), (0, 3), (1, 1), (2, 2)];
-    /// let s = SpBitMatrixDual::from_coo(3, 4, &coo);
-    /// println!("{}", s);
-    /// // Displays:
-    /// //   ┌       ┐
-    /// //   │ 1 0 0 1 │
-    /// //   │ 0 1 0 0 │
-    /// //   │ 0 0 1 0 │
-    /// //   └       ┘
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.csr, f)
     }

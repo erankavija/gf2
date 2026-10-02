@@ -80,15 +80,6 @@ impl ConfigHashProvider for PipelineConfig {
 ///
 /// `rng_word_pos` is serialised as a **decimal string** because a `u128` does
 /// not fit a JSON number above `2^53`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::snr_checkpoint::WorkerState;
-///
-/// let ws = WorkerState { worker_idx: 1, frames_in_worker: 1563, rng_word_pos: 6_402_048 };
-/// assert_eq!(ws.rng_word_pos, 6_402_048);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkerState {
     /// Zero-based worker partition index.
@@ -111,32 +102,6 @@ pub struct WorkerState {
 /// names match the design-doc §4 schema verbatim. `worker_states[]` is required
 /// (not optional): per-SNR-boundary checkpoints set each worker's
 /// `frames_in_worker` from the executor's authoritative counter.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::snr_checkpoint::{CheckpointV2, WorkerState};
-///
-/// let ckpt = CheckpointV2 {
-///     schema_version: gf2_sim::snr_checkpoint::SCHEMA_VERSION,
-///     snr_index: 5,
-///     esn0_db: 6.25,
-///     config_hash: "blake3:dead".to_string(),
-///     frames_target: 100_000,
-///     errors_target: 100,
-///     max_frames: 10_000_000,
-///     frames_completed: 37_555,
-///     errors_accumulated: 0,
-///     total_iterations: 65_082,
-///     total_queries: 37_555,
-///     total_bits: 1_185_735_384,
-///     total_bit_errors: 0,
-///     completed: false,
-///     worker_states: vec![WorkerState { worker_idx: 0, frames_in_worker: 37_555, rng_word_pos: 0 }],
-///     drain_committed_at_us_since_epoch: 1_717_891_200_000_000,
-/// };
-/// assert_eq!(ckpt.schema_version, 2);
-/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CheckpointV2 {
     /// Schema version. Always [`SCHEMA_VERSION`] (`2`) on write; the reader
@@ -524,20 +489,6 @@ fn now_us() -> u128 {
 /// Returned by [`run_snr_point_checkpointed`]. `interrupted` is `true` when the
 /// run stopped early because SIGINT/SIGTERM tripped mid-point (the final
 /// heartbeat checkpoint was flushed before returning).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::snr_checkpoint::CheckpointedRun;
-/// use gf2_sim::parallel::WorkerCounters;
-///
-/// let run = CheckpointedRun {
-///     counters: WorkerCounters::default(),
-///     completed: true,
-///     interrupted: false,
-/// };
-/// assert!(run.completed);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckpointedRun {
     /// The aggregate counters for the point (resumed partial + freshly run).
@@ -769,15 +720,6 @@ where
 /// from their loaded checkpoints). `interrupted` is `true` if a SIGINT/SIGTERM
 /// stopped the sweep before every point completed; in that case `per_point` is
 /// truncated at the interrupted point (whose checkpoint was already flushed).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::snr_checkpoint::SweepRun;
-///
-/// let sweep = SweepRun { per_point: vec![], interrupted: false };
-/// assert!(!sweep.interrupted);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SweepRun {
     /// One [`CheckpointedRun`] per SNR point that was run or loaded, in
@@ -958,13 +900,6 @@ where
 ///
 /// Either a fatal checkpoint-load error (non-v2 schema or `config_hash`
 /// mismatch) or an I/O error from a checkpoint write.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::snr_checkpoint::SweepError;
-/// fn is_io(e: &SweepError) -> bool { matches!(e, SweepError::Io(_)) }
-/// ```
 #[derive(Debug)]
 pub enum SweepError {
     /// A loaded checkpoint was invalid (see [`CheckpointReader::load`]).

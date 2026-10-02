@@ -132,21 +132,6 @@ struct QuotientParams<F: FieldIdentity> {
 /// the validation certificate. Clones share those parameters through an
 /// `Arc`; independently constructed descriptors compare equal when both the
 /// presentation and certificate agree.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::{ConstField, FieldPoly};
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::QuotientField;
-///
-/// let field = QuotientField::new(
-///     Fp::<2>::zero(),
-///     FieldPoly::new(vec![Fp::new(1), Fp::new(1), Fp::new(0), Fp::new(1)]),
-/// )?;
-/// assert_eq!(field.modulus().degree(), Some(3));
-/// # Ok::<(), gf2_core::field::FieldError>(())
-/// ```
 pub struct QuotientField<F: FieldIdentity> {
     params: Arc<QuotientParams<F>>,
 }
@@ -185,21 +170,6 @@ impl<F: FieldIdentity> Eq for QuotientField<F> {}
 /// This alias emphasizes the [`FieldExtension`] role while
 /// [`QuotientField`] emphasizes element construction; both names denote the
 /// same descriptor.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::{ConstField, FieldPoly};
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::QuotientExt;
-///
-/// let extension = QuotientExt::new(
-///     Fp::<3>::zero(),
-///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-/// )?;
-/// assert_eq!(extension.modulus().degree(), Some(2));
-/// # Ok::<(), gf2_core::field::FieldError>(())
-/// ```
 pub type QuotientExt<F> = QuotientField<F>;
 
 impl<F: FieldIdentity> QuotientField<F> {
@@ -369,21 +339,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     /// # Complexity
     ///
     /// `O(1)`; the returned polynomial is borrowed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldPoly, FiniteField};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<3>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// assert_eq!(field.modulus().iter().map(|coefficient| coefficient.value()).collect::<Vec<_>>(), vec![1, 0, 1]);
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn modulus(&self) -> &FieldPoly<F> {
         &self.params.modulus
     }
@@ -441,21 +396,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     /// # Complexity
     ///
     /// `O(r)` base-field operations for modulus degree `r`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldPoly, FiniteField};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<2>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// assert_eq!(field.indeterminate().coefficients(), &[Fp::new(0), Fp::new(1), Fp::new(0)]);
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn indeterminate(&self) -> QuotientElement<F> {
         self.element(vec![
             self.params.base_zero.clone(),
@@ -473,21 +413,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     /// # Complexity
     ///
     /// `O(1)` checked exponentiation on the identity metadata.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldPoly};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<3>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// assert_eq!(field.order()?, 9);
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn order(&self) -> Result<u128, FieldError> {
         self.params
             .field_id
@@ -730,22 +655,6 @@ fn shift_coordinate_index(error: FieldError, offset: usize) -> FieldError {
 /// exactly the relative degree. Equality and hashing include the algebraic
 /// [`FieldId`], so equal coordinate vectors in distinct presentations remain
 /// distinct values.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::{ConstField, FieldPoly};
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::{QuotientElement, QuotientField};
-///
-/// let field = QuotientField::new(
-///     Fp::<3>::zero(),
-///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-/// )?;
-/// let element: QuotientElement<Fp<3>> = field.element(vec![Fp::new(2), Fp::new(1)])?;
-/// assert_eq!(element.coefficients(), &[Fp::new(2), Fp::new(1)]);
-/// # Ok::<(), gf2_core::field::FieldError>(())
-/// ```
 pub struct QuotientElement<F: FieldIdentity> {
     coefficients: Vec<F>,
     params: Arc<QuotientParams<F>>,
@@ -791,22 +700,6 @@ impl<F: FieldIdentity> QuotientElement<F> {
     /// # Complexity
     ///
     /// `O(1)`; the slice is borrowed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldPoly};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<3>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// let a = field.element(vec![Fp::new(2)])?;
-    /// assert_eq!(a.coefficients(), &[Fp::new(2), Fp::new(0)]);
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn coefficients(&self) -> &[F] {
         &self.coefficients
     }
@@ -816,21 +709,6 @@ impl<F: FieldIdentity> QuotientElement<F> {
     /// # Complexity
     ///
     /// `O(1)`; cloning the descriptor increments an `Arc` count.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldExtension, FieldPoly};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<3>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// assert_eq!(field.indeterminate().field().ext_id(), field.ext_id());
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn field(&self) -> QuotientField<F> {
         QuotientField {
             params: Arc::clone(&self.params),

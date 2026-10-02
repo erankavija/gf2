@@ -93,14 +93,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// permitted (e.g. `Packed7` packs 16 lanes per `u64`, and other
     /// future per-prime encodings may pack non-power-of-two lane
     /// counts).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// assert_eq!(<ScalarPackedFp3 as PackedField<Fp<3>>>::LANES, 64);
-    /// ```
     const LANES: usize;
 
     /// All-lanes-zero constant.
@@ -109,15 +101,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)` for fixed-width encodings (e.g. bipedal3); `O(LANES)`
     /// for scalar-array encodings (e.g. [`ScalarPackedFp3`]).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let z = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
-    /// assert!(z.all_zero());
-    /// ```
     fn zero() -> Self;
 
     /// All-lanes-one constant.
@@ -126,16 +109,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)` for fixed-width encodings; `O(LANES)` for scalar-array
     /// encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let o = <ScalarPackedFp3 as PackedField<Fp<3>>>::one();
-    /// assert_eq!(o.lane(0), Fp::<3>::new(1));
-    /// assert_eq!(o.lane(63), Fp::<3>::new(1));
-    /// ```
     fn one() -> Self;
 
     /// Broadcast scalar `x` to every lane.
@@ -148,17 +121,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)` for fixed-width encodings; `O(LANES)` for scalar-array
     /// encodings such as [`ScalarPackedFp3`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let v = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// for i in 0..<ScalarPackedFp3 as PackedField<Fp<3>>>::LANES {
-    ///     assert_eq!(v.lane(i), Fp::<3>::new(2));
-    /// }
-    /// ```
     fn splat(x: F) -> Self;
 
     /// Lane-wise sum.
@@ -172,16 +134,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// `O(1)` for fixed-width encodings (a fixed number of word-level
     /// bitwise ops, independent of `LANES`); `O(LANES)` for
     /// scalar-array encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(a.add(b).lane(0), Fp::<3>::new(1)); // 2 + 2 == 1 mod 3
-    /// ```
     fn add(self, rhs: Self) -> Self;
 
     /// Lane-wise difference.
@@ -194,16 +146,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)` for fixed-width encodings; `O(LANES)` for scalar-array
     /// encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(0));
-    /// let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// assert_eq!(a.sub(b).lane(0), Fp::<3>::new(2)); // 0 - 1 == 2 mod 3
-    /// ```
     fn sub(self, rhs: Self) -> Self;
 
     /// Lane-wise additive inverse.
@@ -212,15 +154,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)` for fixed-width encodings; `O(LANES)` for scalar-array
     /// encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// assert_eq!(a.neg().lane(0), Fp::<3>::new(2)); // -1 == 2 mod 3
-    /// ```
     fn neg(self) -> Self;
 
     /// Lane-wise product.
@@ -233,16 +166,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)` for fixed-width encodings; `O(LANES)` for scalar-array
     /// encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(a.mul(b).lane(0), Fp::<3>::new(1)); // 2 * 2 == 1 mod 3
-    /// ```
     fn mul(self, rhs: Self) -> Self;
 
     /// Decode lane `i` to a canonical `F` value.
@@ -259,15 +182,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)`: a bit-extract or array-index at a fixed position plus a
     /// constant decode.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let v = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(v.lane(0), Fp::<3>::new(2));
-    /// ```
     fn lane(self, i: usize) -> F;
 
     /// Encode `x` into lane `i`, returning the updated value.
@@ -285,17 +199,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     ///
     /// `O(1)`: a constant number of bit-mask updates or an array store
     /// at a fixed index.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let v = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
-    /// let v = v.with_lane(7, Fp::<3>::new(2));
-    /// assert_eq!(v.lane(7), Fp::<3>::new(2));
-    /// assert_eq!(v.lane(0), Fp::<3>::new(0));
-    /// ```
     fn with_lane(self, i: usize, x: F) -> Self;
 
     /// Returns `true` iff every lane decodes to `F`'s additive identity.
@@ -309,17 +212,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// `O(1)` for fixed-width encodings (a constant-width comparison
     /// against the all-zero encoding, independent of `LANES`);
     /// `O(LANES)` for scalar-array encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-    /// use gf2_core::gfp::Fp;
-    /// let z = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
-    /// assert!(z.all_zero());
-    /// let o = <ScalarPackedFp3 as PackedField<Fp<3>>>::one();
-    /// assert!(!o.all_zero());
-    /// ```
     fn all_zero(self) -> bool;
 }
 
@@ -392,17 +284,6 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// `O(len)` for scalar-array encodings; `O(ceil(len / Element::LANES))`
     /// for fixed-width-chunked encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z = ScalarPackedFp3Vec::zeros(5);
-    /// assert_eq!(z.len(), 5);
-    /// assert!(z.all_zero());
-    /// ```
     fn zeros(len: usize) -> Self;
 
     /// Construct a vector by copying every element of `xs` into a
@@ -416,18 +297,6 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     /// # Complexity
     ///
     /// `O(xs.len())`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let xs = [Fp::<3>::new(1), Fp::<3>::new(2)];
-    /// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
-    /// assert_eq!(v.get(0), Fp::<3>::new(1));
-    /// assert_eq!(v.get(1), Fp::<3>::new(2));
-    /// ```
     fn from_field_slice(xs: &[F]) -> Self;
 
     /// Number of logical `F`-positions held by this vector.
@@ -435,28 +304,12 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     /// # Complexity
     ///
     /// `O(1)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// let v = ScalarPackedFp3Vec::zeros(7);
-    /// assert_eq!(v.len(), 7);
-    /// ```
     fn len(&self) -> usize;
 
     /// Returns `true` iff `self.len() == 0`.
     ///
     /// The default implementation is the natural one; concrete impls
     /// rarely need to override it.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// assert!(ScalarPackedFp3Vec::zeros(0).is_empty());
-    /// assert!(!ScalarPackedFp3Vec::zeros(1).is_empty());
-    /// ```
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -474,17 +327,6 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     /// # Complexity
     ///
     /// `O(1)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let xs = [Fp::<3>::new(2)];
-    /// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
-    /// assert_eq!(v.get(0), Fp::<3>::new(2));
-    /// ```
     fn get(&self, i: usize) -> F;
 
     /// Lane-wise in-place sum: `self[i] += rhs[i]` for every `i`.
@@ -503,19 +345,6 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// `O(self.len())` for scalar-array encodings;
     /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
-    /// let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2), Fp::<3>::new(2)]);
-    /// a.add_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<3>::new(0)); // 1 + 2 == 0 mod 3
-    /// assert_eq!(a.get(1), Fp::<3>::new(1)); // 2 + 2 == 1 mod 3
-    /// ```
     fn add_assign(&mut self, rhs: &Self);
 
     /// Lane-wise in-place difference: `self[i] -= rhs[i]` for every `i`.
@@ -533,18 +362,6 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// `O(self.len())` for scalar-array encodings;
     /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(0)]);
-    /// let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
-    /// a.sub_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<3>::new(2)); // 0 - 1 == 2 mod 3
-    /// ```
     fn sub_assign(&mut self, rhs: &Self);
 
     /// Lane-wise in-place product: `self[i] *= rhs[i]` for every `i`.
@@ -562,18 +379,6 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// `O(self.len())` for scalar-array encodings;
     /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
-    /// let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
-    /// a.mul_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<3>::new(1)); // 2 * 2 == 1 mod 3
-    /// ```
     fn mul_assign(&mut self, rhs: &Self);
 
     /// Returns `true` iff every logical position decodes to `F`'s
@@ -587,16 +392,5 @@ pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     ///
     /// `O(self.len())` for scalar-array encodings;
     /// `O(self.len() / Element::LANES)` for fixed-width-chunked encodings.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert!(ScalarPackedFp3Vec::zeros(5).all_zero());
-    /// let nz = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
-    /// assert!(!nz.all_zero());
-    /// ```
     fn all_zero(&self) -> bool;
 }

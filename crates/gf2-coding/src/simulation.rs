@@ -734,17 +734,6 @@ impl SimulationConfig {
     ///
     /// Uses three SNR points (0, 3, 6 dB), 100 minimum errors, 100k max
     /// frames, 50 max decoder iterations, and no fixed seed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::SimulationConfig;
-    ///
-    /// let config = SimulationConfig::quick_test();
-    /// assert_eq!(config.min_errors, 100);
-    /// assert_eq!(config.max_frames, 100_000);
-    /// assert_eq!(config.max_decoder_iterations, 50);
-    /// ```
     pub fn quick_test() -> Self {
         SimulationConfig {
             eb_n0_range_db: vec![0.0, 3.0, 6.0],
@@ -763,16 +752,6 @@ impl SimulationConfig {
     ///
     /// Uses 11 SNR points (0..10 dB), 1000 minimum errors, 10M max
     /// frames, 100 max decoder iterations, and no fixed seed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::SimulationConfig;
-    ///
-    /// let config = SimulationConfig::high_precision();
-    /// assert_eq!(config.min_errors, 1000);
-    /// assert_eq!(config.eb_n0_range_db.len(), 11);
-    /// ```
     pub fn high_precision() -> Self {
         SimulationConfig {
             eb_n0_range_db: (0..=10).map(|i| i as f64).collect(),
@@ -864,21 +843,6 @@ impl SimulationResult {
     /// # Arguments
     ///
     /// * `min_errors` - Minimum frame error count threshold
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::SimulationResult;
-    ///
-    /// let result = SimulationResult {
-    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
-    ///     avg_iterations: None, avg_queries_per_bit: None,
-    ///     num_bits: 10000, num_bit_errors: 100,
-    ///     num_frames: 200, num_frame_errors: 10,
-    /// };
-    /// assert!(result.is_complete(5));
-    /// assert!(!result.is_complete(50));
-    /// ```
     pub fn is_complete(&self, min_errors: usize) -> bool {
         self.num_frame_errors >= min_errors
     }

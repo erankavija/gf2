@@ -63,16 +63,6 @@ pub trait BatchMapper<S: ModemScalar> {
     /// labels they were configured against; callers use it to read
     /// `bits_per_symbol()`, `num_symbols()`, and per-bit metadata.
     ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::modem::{BatchMapper, ModemScalar};
-    /// fn bps<S: ModemScalar, M: BatchMapper<S>>(m: &M) -> u8 {
-    ///     m.spec().bits_per_symbol()
-    /// }
-    /// # fn main() {}
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).

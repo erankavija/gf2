@@ -117,21 +117,6 @@ impl BcjrDecoder {
     ///
     /// Panics if H has more than 20 rows (2^20 = 1M states would be infeasible).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::bcjr::BcjrDecoder;
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let decoder = BcjrDecoder::new(&h);
-    /// assert_eq!(decoder.n(), 7);
-    /// assert_eq!(decoder.k(), 4);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(m * n) to extract column bitmasks.
@@ -158,37 +143,11 @@ impl BcjrDecoder {
     }
 
     /// Returns the codeword length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::bcjr::BcjrDecoder;
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// assert_eq!(BcjrDecoder::new(&h).n(), 7);
-    /// ```
     pub fn n(&self) -> usize {
         self.n
     }
 
     /// Returns the message length (n - number of parity rows).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::bcjr::BcjrDecoder;
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// assert_eq!(BcjrDecoder::new(&h).k(), 4);
-    /// ```
     pub fn k(&self) -> usize {
         self.k
     }

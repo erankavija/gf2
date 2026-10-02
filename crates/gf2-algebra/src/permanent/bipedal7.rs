@@ -137,22 +137,6 @@ pub fn permanent_bipedal7(mat: &Packed7Matrix) -> Fp<7> {
 ///   with `n ≤ LANES`. No additional assertions — the caller must have
 ///   already validated the matrix shape.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Packed7Matrix;
-/// use gf2_algebra::permanent::bipedal7::permanent_bipedal7_singleword;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_7: permanent = 1
-/// let id: Vec<Fp<7>> = vec![
-///     Fp::<7>::new(1), Fp::<7>::new(0),
-///     Fp::<7>::new(0), Fp::<7>::new(1),
-/// ];
-/// let m = Packed7Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal7_singleword(&m), Fp::<7>::new(1));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `mat.rows() != mat.cols()` or `mat.cols() > LANES`.

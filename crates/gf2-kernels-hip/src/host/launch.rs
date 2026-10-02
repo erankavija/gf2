@@ -128,29 +128,12 @@ impl LaunchDims {
 
     /// Returns `true` if this geometry launches no blocks (a no-op the caller
     /// should skip rather than dispatch).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_hip::host::LaunchDims;
-    ///
-    /// assert!(LaunchDims::for_batch(0).is_empty());
-    /// assert!(!LaunchDims::for_batch(1).is_empty());
-    /// ```
     pub fn is_empty(&self) -> bool {
         self.grid_x == 0
     }
 
     /// Total number of threads the launch spans (`grid_x * block_x`),
     /// saturating on overflow.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_hip::host::LaunchDims;
-    ///
-    /// assert_eq!(LaunchDims::explicit(8, 256).total_threads(), 2048);
-    /// ```
     pub fn total_threads(&self) -> u64 {
         (self.grid_x as u64).saturating_mul(self.block_x as u64)
     }

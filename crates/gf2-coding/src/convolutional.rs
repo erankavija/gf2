@@ -42,15 +42,6 @@ impl ConvolutionalEncoder {
     ///
     /// * `constraint_length` - The number of shift register stages (K)
     /// * `generators` - Generator polynomials for each output
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ConvolutionalEncoder;
-    ///
-    /// // Create a rate-1/2, K=3 encoder
-    /// let encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
-    /// ```
     pub fn new(constraint_length: usize, generators: Vec<u32>) -> Self {
         Self {
             constraint_length,

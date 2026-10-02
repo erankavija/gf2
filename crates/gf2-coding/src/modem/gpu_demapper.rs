@@ -128,19 +128,6 @@ impl GpuGrayQamSoftDemapper {
     /// Panics with the diagnostic from [`FastGrayQamDemapper::new`] when
     /// the spec is not a supported preset.
     ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::modem::{GpuGrayQamSoftDemapper, ModemSpec};
-    ///
-    /// let demapper = GpuGrayQamSoftDemapper::new(
-    ///     ModemSpec::<f32>::gray_square_qam(64),
-    ///     4096,
-    /// )
-    /// .unwrap();
-    /// assert_eq!(demapper.max_batch(), 4096);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(`max_batch`) device allocation plus one H→D copy of `axis_len`

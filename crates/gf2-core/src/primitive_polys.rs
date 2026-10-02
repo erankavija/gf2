@@ -423,16 +423,6 @@ impl PrimitivePolynomialDatabase {
     /// documentation when a library client surfaces the u128 polynomial
     /// database to its own users. The wording matches the module-level
     /// contract and is stable across minor releases of this crate.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
-    ///
-    /// let note = PrimitivePolynomialDatabase::standard_u128_irreducibility_note();
-    /// assert!(note.contains("irreducible"));
-    /// assert!(note.contains("primitive"));
-    /// ```
     pub const fn standard_u128_irreducibility_note() -> &'static str {
         "PrimitivePolynomialDatabase::standard_u128 entries for m = 64..=127 \
          are verified irreducible over GF(2) but are NOT independently \

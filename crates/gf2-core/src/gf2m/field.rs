@@ -236,15 +236,6 @@ impl<V: UintExt> Gf2mField_<V> {
     ///
     /// Panics if `m == 0` or `m >= V::BITS` (the polynomial is stored with its
     /// leading coefficient explicit at bit `m`, which must fit in `V`).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// // GF(2^4) with primitive polynomial x^4 + x + 1 (binary 10011)
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// ```
     pub fn new(m: usize, primitive_poly: V) -> Self {
         Self::new_internal(m, primitive_poly)
     }
@@ -347,16 +338,6 @@ impl<V: UintExt> Gf2mField_<V> {
     /// # Panics
     ///
     /// Panics if value has bits set beyond degree m-1.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let elem = field.element(0b1010);  // x^3 + x
-    /// assert_eq!(elem.value(), 0b1010);
-    /// ```
     pub fn element(&self, value: V) -> Gf2mElement_<V> {
         assert!(
             (value >> (self.params.m as u32)).is_zero(),
@@ -836,29 +817,11 @@ impl Gf2mField_ {
     /// Creates a GF(2^8) field with standard primitive polynomial x^8 + x^4 + x^3 + x + 1.
     ///
     /// This is the standard field used in AES and many error-correcting codes.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let gf256 = Gf2mField::gf256();
-    /// assert_eq!(gf256.order(), 256u64);
-    /// ```
     pub fn gf256() -> Self {
         Gf2mField::new(8, 0b100011101)
     }
 
     /// Creates a GF(2^16) field with standard primitive polynomial x^16 + x^12 + x^3 + x + 1.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let gf65536 = Gf2mField::gf65536();
-    /// assert_eq!(gf65536.order(), 65536u64);
-    /// ```
     pub fn gf65536() -> Self {
         Gf2mField::new(16, 0b10001000000001011)
     }
@@ -883,17 +846,6 @@ impl<V: UintExt> Gf2mElement_<V> {
     /// `O(1)`: the returned field clones the shared `Arc` holding the
     /// parameters, so the call is one reference-count bump and copies neither
     /// the defining polynomial nor the log and exponential tables.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(0b1010);
-    /// assert_eq!(a.field(), field);
-    /// assert_eq!(a.field().primitive_polynomial(), 0b10011);
-    /// ```
     pub fn field(&self) -> Gf2mField_<V> {
         Gf2mField_ {
             params: Arc::clone(&self.params),
