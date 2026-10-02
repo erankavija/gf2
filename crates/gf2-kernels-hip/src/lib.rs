@@ -10,7 +10,11 @@
 //! # Requirements
 //!
 //! - ROCm with hipcc (tested with ROCm 7.2)
-//! - AMD GPU with gfx1030 ISA (RX 6000 series)
+//! - An AMD GPU with the gfx1030 ISA for the linked kernels, which `build.rs`
+//!   compiles for gfx1030 only. It also compiles per-arch probe blobs for
+//!   gfx1030 and, best-effort, gfx1100, gfx1200, gfx90a, gfx940, and gfx942;
+//!   [`host::GfxTarget::detect`] matches the device's `gcnArchName` against
+//!   the compiled blobs and returns [`HipError::UnsupportedArch`] otherwise.
 //!
 //! # Examples
 //!

@@ -782,11 +782,10 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// GF(241) are never affected — `route_a_selected` is scoped to `P == 251`
 /// and `select_f32_path` returns `false` for all primes < 251.
 ///
-/// **Route-A toggle (issue 68cdf4c8):** when [`set_route_a_gf251_enabled`]
-/// has been called with `true` AND `P == 251`, this function routes through
-/// route A for any n (not just n ≥ 512). This preserves backward
-/// compatibility with bench drivers that force route A unconditionally.
-/// See `dev/archive/026fc832-gf2-core-sota-stretch/active/68cdf4c8/68cdf4c8-route-a-design.md`.
+/// **Route-A toggle (issue 68cdf4c8):** when [`set_route_a_gf251_enabled`] has
+/// been called with `true` AND `P == 251`, this function routes through route A
+/// for any n (not just n ≥ 512), so bench drivers can force route A
+/// unconditionally. See `@/issue/68cdf4c8`.
 ///
 /// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
 /// per-call constants (panel-pack heap allocations + Montgomery REDC on
@@ -902,9 +901,8 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
             // blocking. Selection reaches it only through
             // `set_route_c_gf251_enabled(true)`; production dispatch is
             // unaffected (Candidate C continues to own all `p ≤ 251` cells).
-            // See
-            // `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`
-            // for the panel-dimension derivation (MR × NR × KC = 4 × 24 × 256).
+            // See `@/issue/fc182ed5` for the panel-dimension derivation (MR ×
+            // NR × KC = 4 × 24 × 256).
             #[cfg(any(test, feature = "test-support"))]
             record_executed_prime_gemm_route(PrimeGemmRoute::U8Panel);
             let Some(fns_panel) = crate::simd::maybe_fp_small_panel() else {

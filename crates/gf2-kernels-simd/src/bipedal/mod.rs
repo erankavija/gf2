@@ -11,11 +11,10 @@
 //! encoding fits naturally in 1 plane per operand. See JIT issue
 //! `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!
-//! Architectural decision recorded in
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/c7542983/r4_simd_batching_decision.md`:
-//! the generic framework wins over per-prime hand-rolled kernels by tie-break
-//! (every microbench cell within `[0.83, 1.20]` ratio; criterion-4 says generic
-//! on tie; full data in §5 of that doc).
+//! Architectural decision recorded in `@/issue/c7542983`: the generic framework
+//! wins over per-prime hand-rolled kernels by tie-break (every microbench cell
+//! within `[0.83, 1.20]` ratio; criterion-4 says generic on tie; full data in
+//! §5 of that doc).
 //!
 //! ## Module layout
 //!

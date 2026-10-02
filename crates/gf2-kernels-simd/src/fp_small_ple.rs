@@ -12,10 +12,8 @@
 //!
 //! # Algorithm summary
 //!
-//! See
-//! `dev/archive/026fc832-gf2-core-sota-stretch/active/2e8c5a29/2e8c5a29-panelized-ple-design.md`
-//! for the full design. The base-case kernel processes an `m × win` column
-//! window of canonical-byte storage in-place, performing:
+//! See `@/issue/2e8c5a29` for the full design. The base-case kernel processes
+//! an `m × win` column window of canonical-byte storage in-place, performing:
 //!   1. Linear-scan pivot search (rank-revealing, preserves the
 //!      bd9c6e13 scattered-column behaviour).
 //!   2. Full-row swap on the **panel window only** (caller propagates

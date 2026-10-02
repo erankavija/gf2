@@ -7,10 +7,8 @@
 //!
 //! # Algorithm (issue `6c926de0`)
 //!
-//! Per the binding plan in
-//! `dev/archive/97bf0879-gf2-core-sota-performance/active/d1dd266c/d1dd266c-minpoly-sota-plan.md`
-//! § 4, refined to the **decoupled-component** formulation that lets BM stay in
-//! base arithmetic:
+//! Per the binding plan in `@/issue/d1dd266c` § 4, refined to the
+//! **decoupled-component** formulation that lets BM stay in base arithmetic:
 //!
 //! 1. Embed the base-field matrix `A ∈ M_n(Fp<P>)` into the extension
 //!    `E = Fp<P>[α] / (f(α))` with `[E : Fp<P>] = k` chosen so `q^k > n`.

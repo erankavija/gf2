@@ -1,7 +1,7 @@
 //! Connectors and edges joining stages in a [`Pipeline`](crate::Pipeline).
 //!
 //! Lifts the §1 "`Connector<T>` and `Edge`" block of the Phase 0 design doc
-//! (`dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md`) into code.
+//! (`@/issue/ec530af9`) into code.
 
 use std::any::TypeId;
 use std::marker::PhantomData;
