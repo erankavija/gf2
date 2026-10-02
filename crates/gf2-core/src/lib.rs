@@ -1,14 +1,16 @@
 //! # gf2-core - High-Performance GF(2) Primitives
 //!
 //! This crate provides efficient bit string and matrix operations with a focus on GF(2)
-//! arithmetic. It powers higher-level coding theory and compression tooling provided by
-//! the companion `gf2-coding` crate.
+//! arithmetic. It powers the coding-theory tooling of the companion `gf2-coding` crate.
 //!
 //! ## Core Types
 //!
 //! - [`BitVec`]: An owning, growable bit string backed by `Vec<u64>`.
+//! - [`BitSlice`], [`BitSliceMut`]: Borrowed bit-range views.
 //! - [`BitMatrix`]: A row-major, bit-packed boolean matrix for GF(2) linear algebra.
-//! - [`SpBitMatrix`]: A sparse matrix in CSR format for low-density matrices.
+//! - [`SpBitMatrix`]: A sparse matrix in CSR format for low-density matrices, with
+//!   [`SpBitMatrixDual`], [`SpBitMatrixBlockCsr`], [`SparseBitMatrix`], and
+//!   [`RowPermutation`] in the [`sparse`] module.
 //!
 //! ## Design Invariants
 //!
@@ -332,11 +334,11 @@ pub(crate) mod simd {
     /// panelized GEMM kernel, if any.
     ///
     /// Provides **Route C** from the jit:615db3b9 Phase 1 plan
-    /// (`dev/active/615db3b9/615db3b9-finite-field-la-sota-plan.md` § Phase 1,
-    /// item 3) and the design note `dev/active/fc182ed5/fc182ed5-route-c-design.md`
-    /// — an explicit A/B panel-packed AVX2 register-blocked
-    /// `_mm256_madd_epi16`-based GEMM for canonical-byte `Fp<P>`
-    /// operands with `P ≤ 251`.
+    /// (`dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md`
+    /// § Phase 1, item 3) and the design note
+    /// `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md` — an
+    /// explicit A/B panel-packed AVX2 register-blocked `_mm256_madd_epi16`-based GEMM for
+    /// canonical-byte `Fp<P>` operands with `P ≤ 251`.
     ///
     /// **Status (per jit:fc182ed5):** the kernel is fully implemented
     /// and tested but **not currently selected at runtime**. It is

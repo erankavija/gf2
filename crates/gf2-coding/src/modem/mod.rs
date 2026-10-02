@@ -37,11 +37,9 @@
 //! assert_eq!(demapper.spec().bits_per_symbol(), 4);
 //! ```
 //!
-//! See [`modem_gray_qam_preset`] for an end-to-end example that maps a
+//! See `examples/modem_gray_qam_preset.rs` for an end-to-end example that maps a
 //! batch of random bits through `BpskAwgnChannel`-style AWGN and measures
 //! the uncoded BER.
-//!
-//! [`modem_gray_qam_preset`]: https://github.com/openamateur/gf2/blob/main/crates/gf2-coding/examples/modem_gray_qam_preset.rs
 //!
 //! # Custom constellation workflow
 //!
@@ -73,10 +71,8 @@
 //! energy by default, validates labels are a bijection, and panics with a
 //! descriptive message on any invariant violation. Any spec built this
 //! way is a first-class citizen: it plugs into every downstream path
-//! described below. [`modem_custom_constellation`] walks through a
+//! described below. `examples/modem_custom_constellation.rs` walks through a
 //! non-Gray 8-PSK example end-to-end.
-//!
-//! [`modem_custom_constellation`]: https://github.com/openamateur/gf2/blob/main/crates/gf2-coding/examples/modem_custom_constellation.rs
 //!
 //! # Shared API: `preferred_mapper` / `preferred_soft_demapper`
 //!
@@ -113,10 +109,8 @@
 //! - [`crate::fading::QpskRicianChannelModel`] is the Rician-fading
 //!   counterpart, built on the same shared mapper/demapper surface.
 //!
-//! See [`modem_simulation_harness`] for a `SimulationRunner` sweep driven
+//! See `examples/modem_simulation_harness.rs` for a `SimulationRunner` sweep driven
 //! by a Gray-QAM preset and a Rician-fading channel model.
-//!
-//! [`modem_simulation_harness`]: https://github.com/openamateur/gf2/blob/main/crates/gf2-coding/examples/modem_simulation_harness.rs
 //!
 //! # Public surface summary
 //!
@@ -159,8 +153,9 @@
 //!   `BPSK` preset for the `ChannelModel` consumers of the simulation
 //!   harness.
 //!
-//! See `dev/active/c87c5043/c87c5043-constellation-data-model-plan.md` for the
-//! locked design decisions behind this surface.
+//! See
+//! `dev/archive/d4851c3d-modem-framework/active/c87c5043/c87c5043-constellation-data-model-plan.md`
+//! for the locked design decisions behind this surface.
 //!
 //! # Noise and normalization contract
 //!

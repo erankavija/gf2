@@ -6,7 +6,10 @@
 //! ([`FieldVec`](gf2_core::field::FieldVec)/[`FieldMatrix`](gf2_core::field::matrix::FieldMatrix)),
 //! with packed binary specializations using
 //! [`BitVec`](gf2_core::BitVec) and [`BitMatrix`](gf2_core::BitMatrix).
-//! It includes both block codes and streaming (convolutional) codes.
+//! It includes block codes and streaming (convolutional) codes. Besides the
+//! families below it provides LDPC, GLDPC, product, CRC, and Reed-Muller
+//! subcodes; BCJR, GRAND, and ordered-statistics decoders; modems, channels,
+//! and Monte Carlo simulation. The module index lists each.
 
 #![deny(unsafe_code)]
 //!
@@ -33,9 +36,8 @@
 //!
 //! # Streaming Codes
 //!
-//! Convolutional codes process bits in a streaming fashion. The module provides
-//! skeleton implementations in [`ConvolutionalEncoder`] and [`ConvolutionalDecoder`]
-//! for future expansion.
+//! [`ConvolutionalEncoder`] is a feedforward shift-register encoder and
+//! [`ConvolutionalDecoder`] a hard-decision Viterbi decoder.
 //!
 //! # Soft-Decision Decoding
 //!
@@ -89,7 +91,6 @@ pub mod modem;
 pub mod osd;
 pub mod product;
 
-// SIMD detection is now handled internally in llr.rs via once_cell::Lazy
 pub mod simulation;
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support;
