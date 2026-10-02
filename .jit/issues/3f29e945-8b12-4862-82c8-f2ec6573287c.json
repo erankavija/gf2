@@ -20,10 +20,35 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T09:55:27.822774701Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T09:42:42.753055130Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T09:47:07.205012032Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:21.886258410Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T09:39:25.645075892Z",
+      "updated_by": "auto:executor"
+    },
+    "holistic-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T09:49:50.841062640Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-10-02T09:39:21.810822003Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "3f29e945-8b12-4862-82c8-f2ec6573287c",
@@ -38,5 +63,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Define documentation contract and enforcement baseline",
-  "updated_at": "2026-10-02T09:39:15.249436015Z"
+  "updated_at": "2026-10-02T09:55:27.822774701Z"
 }
