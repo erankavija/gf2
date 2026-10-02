@@ -142,6 +142,9 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or
   (`chore(jit:<id>): merge ...`), tracker state commits and salvage commits
   included. Reword a private branch before it merges; the history of `main`
   is immutable.
+- A pull request or handoff names the JIT item, behavior change, verification run,
+  and evidence links. Contributors follow the
+  [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
 
 <!-- jit:profile-sim-research-guidance:begin -->
 ## gf2 Engineering Invariants
