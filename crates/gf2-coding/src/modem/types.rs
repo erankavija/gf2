@@ -2,9 +2,9 @@
 //!
 //! These types are the fixed vocabulary consumed by every downstream modem
 //! task: point geometry, bit labels, bit-channel identity and semantics,
-//! normalization contract, demapper method, and capability advertisement.
-//! See `dev/active/c87c5043/c87c5043-constellation-data-model-plan.md` §4 for the
-//! locked surface.
+//! normalization contract, demapper method, and capability advertisement. See
+//! `dev/archive/d4851c3d-modem-framework/active/c87c5043/c87c5043-constellation-data-model-plan.md`
+//! §4 for the locked surface.
 
 use super::scalar::ModemScalar;
 

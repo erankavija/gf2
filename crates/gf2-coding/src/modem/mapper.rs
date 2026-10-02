@@ -17,8 +17,9 @@
 //! Concrete backends land in tasks `51334873` (reference path) and
 //! `52112411` (Gray-QAM fast path).
 //!
-//! See `dev/active/d4851c3d-modem-framework/d4851c3d-modem-framework-design.md` for the full design
-//! rationale, especially the "Public API draft" section.
+//! See
+//! `dev/archive/d4851c3d-modem-framework/active/d4851c3d-modem-framework-design.md`
+//! for the full design rationale, especially the "Public API draft" section.
 
 use super::{ModemScalar, ModemView};
 

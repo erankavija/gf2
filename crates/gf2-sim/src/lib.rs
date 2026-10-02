@@ -100,6 +100,7 @@
 //! | [`graph`] | graph API + `build()` (owned by `c09d3e95`) |
 //! | [`channels`] | channel stages (owned by `db9836e4`) |
 //! | [`checkpoint`] | v2 checkpoint schema (owned by `5f12e7ff`) |
+//! | [`snr_checkpoint`] | SNR-point checkpoint payload and simulation resume |
 //! | [`executor`] | hybrid CPU/GPU [`Scheduler`] + [`SimulationResults`] (Phase C `75c22fa8`) + DAG [`TopologyExecutor`] (`de160fc5`) + GPU drain-for-checkpoint / checkpointed hybrid sweep (`571c11c4`) |
 //! | [`gpu`] | HIP host dispatch (Phase B; `feature = "hip"`) |
 //!

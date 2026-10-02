@@ -26,8 +26,9 @@
 //! entry points instead (see JIT issue `1f769232` amendment).
 //!
 //! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
-//! `crate::x86::bipedal_avx2` so the asm-artefact-present gate fires on
-//! source changes — see the W4 wave plan and `dev/plans/c7542983/r4_simd_batching_decision.md`.
+//! `crate::x86::bipedal_avx2` so the asm-artefact-present gate fires on source
+//! changes — see the W4 wave plan and
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/c7542983/r4_simd_batching_decision.md`.
 
 use super::framework::BipedalLikeConfig;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -38,7 +39,7 @@ use super::lanes::BipedalLogicalLanes;
 ///
 /// The result is cached in a `OnceLock<bool>` so CPUID is queried at most
 /// once per process — matching the project's `simd::maybe_simd()` pattern
-/// from `gf2-core` (CLAUDE.md §Architecture point 3). Callers in this module
+/// from `gf2-core`. Callers in this module
 /// use this instead of bare `is_x86_feature_detected!("avx2")` to make the
 /// caching visible and auditable.
 ///

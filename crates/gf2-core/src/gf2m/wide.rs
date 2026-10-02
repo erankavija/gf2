@@ -45,7 +45,7 @@
 //! Every mutating operation on a [`Gf2mWide`] value must leave all bits at
 //! positions `>= Cfg::M` in the top word equal to zero. This is the
 //! multi-word generalisation of the project-wide tail-masking invariant
-//! documented in `CLAUDE.md` ("Key design invariants: Tail masking"). The
+//! in AGENTS.md §Correctness and test policy. The
 //! private helper `Gf2mWide::mask_tail_in_place` enforces this. In release
 //! builds of XOR-based operations the invariant is preserved automatically
 //! because XOR of two zero-tailed operands is zero-tailed; callers that
@@ -477,9 +477,9 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Zeros bits at positions `>= Cfg::M` in the top word in place.
     ///
     /// This is the multi-word analogue of the project-wide tail-masking
-    /// invariant documented in `CLAUDE.md` ("Key design invariants: Tail
-    /// masking"). Every mutating operation that can produce bits at or
-    /// above position `M` must call this helper.
+    /// invariant in AGENTS.md §Correctness and test policy. Every mutating
+    /// operation that can produce bits at or above position `M` must call this
+    /// helper.
     ///
     /// # Arguments
     ///
@@ -2442,7 +2442,7 @@ mod tests {
     // -----------------------------------------------------------------------
     // Word-boundary configs (M = 1, 63, 64, 65)
     //
-    // CLAUDE.md requires coverage of 0, 1, 63, 64, 65 bits at word
+    // AGENTS.md §Correctness and test policy requires coverage of 0, 1, 63, 64, 65 bits at word
     // boundaries. `M = 0` is ill-formed (the trait contract requires
     // `M >= 1`), but every other value in the list is covered here.
     // The existing `M = 7` (tiny), `M = 250` (cross-word, non-aligned),
@@ -2577,7 +2577,7 @@ mod tests {
     //     — word-boundary trio (N = 1 or 2)
     //
     // `ProptestConfig::with_cases(64)` keeps the full workspace test suite
-    // within the 60s budget set in `CLAUDE.md` while still giving a meaningful
+    // within the fast-tier suite budget (`@/inv/test-tier-budgets`) while still giving a meaningful
     // number of random samples per invariant.
     // -----------------------------------------------------------------------
 

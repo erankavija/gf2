@@ -337,7 +337,9 @@ impl Bipedal3 {
     // divergence between the inherent and trait paths — the inherent body
     // is a single tail call into the trait method, which Rust inlines away.
     //
-    // Per `dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md` §5, the Lean proof file
+    // Per
+    // `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md`
+    // §5, the Lean proof file
     // `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` targets these
     // inherent methods (Option A in the dispatch prompt).
     // -----------------------------------------------------------------------
@@ -1331,7 +1333,7 @@ mod tests {
 /// Bits beyond `len_lanes` in the last word of both `mag` and `sgn` must
 /// always be zero. Every mutating operation calls `Bipedal3Vec::mask_tail`
 /// to enforce this invariant — it is the most critical correctness invariant
-/// in this codebase (CLAUDE.md §Key design invariants #1).
+/// in this codebase (AGENTS.md §Correctness and test policy).
 ///
 /// # Encoding summary
 ///
@@ -1366,7 +1368,7 @@ impl Bipedal3Vec {
     ///
     /// **This invariant must hold after every mutation.** Failing to call
     /// `mask_tail` after any write violates the project's key correctness
-    /// invariant (CLAUDE.md §Key design invariants #1). Arithmetic
+    /// invariant (AGENTS.md §Correctness and test policy). Arithmetic
     /// operations use word-parallel formulas over the full word including
     /// padding bits; without masking, stray padding bits silently corrupt
     /// `all_zero`, `add_assign`, `sub_assign`, `mul_assign`, and `fold_mul`.
@@ -2634,7 +2636,7 @@ mod vec_tests {
 ///
 /// Each column is a [`Bipedal3Vec`] and inherits its mask-tail invariant:
 /// bits beyond `rows` in the last `u64` word of both `mag` and `sgn`
-/// vectors are always zero (CLAUDE.md §Key design invariants #1).
+/// vectors are always zero (AGENTS.md §Correctness and test policy).
 ///
 /// # Examples
 ///

@@ -4,8 +4,8 @@
 //! bit-identical to the CPU reference `permanent_bipedal3_singleword` on
 //! random matrices for each n ∈ {16, 24, 32, 40, 63}.
 //!
-//! All tests carry `#[ignore = "external: gfx1030 device required"]` per
-//! CLAUDE.md test-tier conventions.  Run them only on the dev host with ROCm
+//! All tests carry `#[ignore = "external: gfx1030 device required"]`.
+//! Run them only on the dev host with ROCm
 //! installed:
 //!
 //! ```text

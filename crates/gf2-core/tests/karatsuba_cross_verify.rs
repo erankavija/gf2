@@ -17,7 +17,8 @@
 //!
 //! # Coverage
 //!
-//! Per the design plan (`dev/plans/2ce2a757/karatsuba_cross_verification.md`):
+//! Per the design plan
+//! (`dev/archive/e095a100-gfpm-arithmetic/plans/2ce2a757/karatsuba_cross_verification.md`):
 //!
 //! | Extension | Base field | β     | Notes                             |
 //! |-----------|-----------|-------|-----------------------------------|

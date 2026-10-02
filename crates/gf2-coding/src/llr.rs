@@ -388,22 +388,16 @@ impl Llr {
     }
 
     /// Saturate a batch of LLRs to the range `[-max, max]`.
-    ///
-    /// **SIMD Acceleration**: Automatically uses AVX2 if available.
     pub fn saturate_batch(llrs: &[Llr], max: f32) -> Vec<Llr> {
-        // TODO: Add SIMD implementation in gf2-kernels-simd
-        // For now, use scalar
+        // Scalar; the SIMD kernel is `@/issue/NEWID-2`.
         llrs.iter().map(|llr| llr.saturate(max)).collect()
     }
 
     /// Make hard decisions for a batch of LLRs.
     ///
     /// Returns `false` (bit 0) if LLR >= 0, `true` (bit 1) if LLR < 0.
-    ///
-    /// **SIMD Acceleration**: Automatically uses AVX2 if available.
     pub fn hard_decision_batch(llrs: &[Llr]) -> Vec<bool> {
-        // TODO: Add SIMD implementation in gf2-kernels-simd
-        // For now, use scalar
+        // Scalar; the SIMD kernel is `@/issue/NEWID-2`.
         llrs.iter().map(|llr| llr.hard_decision()).collect()
     }
 

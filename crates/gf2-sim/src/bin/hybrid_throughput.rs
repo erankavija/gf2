@@ -131,7 +131,7 @@ mod imp {
         println!("# frames={frames} repeats={repeats} seed={SEED:#x} host_threads={threads}");
 
         // Host quietness diagnostic (a loaded host UNDERSTATES throughput and
-        // invalidates the receipt — see CLAUDE.md parallelism-pays gate).
+        // invalidates the receipt).
         if let Ok(la) = std::fs::read_to_string("/proc/loadavg") {
             println!("# /proc/loadavg: {}", la.trim());
         }
