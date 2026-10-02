@@ -17,6 +17,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T10:41:30.060253308Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-10-02T10:35:57.069298929Z",
@@ -43,5 +48,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register and project the no-dev-path-coupling invariant",
-  "updated_at": "2026-10-02T10:35:57.069298929Z"
+  "updated_at": "2026-10-02T10:41:30.060253308Z"
 }

@@ -24,13 +24,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T10:35:35.135107670Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T10:40:51.878549551Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-02T10:31:48.658648509Z",
+      "updated_at": "2026-10-02T10:38:13.231959659Z",
       "updated_by": "auto:executor"
     }
   },
@@ -44,5 +44,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Map the gf2-core roadmap's planned phases",
-  "updated_at": "2026-10-02T10:35:35.135107670Z"
+  "updated_at": "2026-10-02T10:40:51.878549551Z"
 }
