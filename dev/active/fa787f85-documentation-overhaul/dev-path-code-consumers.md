@@ -27,7 +27,7 @@ Mode legend:
 
 ## dev/active entries that are code-pinned
 
-Known already: `f547c394`, `02b8137c`, `3f664839`. Newly found:
+Known already: `f547c394`, `02b8137c`. Newly found:
 
 | Entry | Consumer | Construct | Mode |
 | --- | --- | --- | --- |
@@ -96,12 +96,11 @@ names `dev/studies/{047b62ed,91605d4d,6c7fcb38,b488f02c}` and
 | `crates/gf2-sim/src/permanent_campaign/validation.rs:1363` | `preregistration_identity.path != "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json"` | identity |
 | `crates/gf2-sim/tests/permanent_validation.rs:39-40,653,680,1636-1672` | literals, `fs::read`, `read_dir` | read |
 
-## dev/active/3f664839 (known)
+## dev/active/3f664839
 
-| Consumer | Construct | Mode |
-| --- | --- | --- |
-| `crates/gf2-sim/src/permanent_rare_event/artifact.rs:4246` | `design.path != "dev/active/3f664839/design.md"` | identity |
-| `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs:55` | fixture literal | identity |
+Content-identified: `validate_design`
+(`crates/gf2-sim/src/permanent_rare_event/artifact.rs:4246`) checks revision,
+blob and content SHA-256; fixtures carry the path as data.
 
 ## dev/archive
 
@@ -132,8 +131,8 @@ names `dev/studies/{047b62ed,91605d4d,6c7fcb38,b488f02c}` and
 | same | `crates/gf2-sim/tests/permanent_campaign_bin.rs:12,184,206,537` | literals | read |
 | same | `scripts/permanent_zero_fraction_analysis.py:506` | `_source_table_path()` | read |
 | `.../permanent-zero-fraction/fixtures` | `tests/test_permanent_zero_fraction_analysis.py:20` | `FIXTURES` | read |
-| `.../permanent-zero-fraction/...` | `crates/gf2-sim/tests/permanent_validation.rs:231,1105-1109,1551`; `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs:1365,2966`; `coordinator_tests.rs:161,181,247,1173,1668` | literals | read |
-| `dev/simulation_results/permanent-rare-event` | `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs:79-92,160,200,722,2713-2755,2838,2922` | fixture literals | identity (artifact_root recorded in receipts) |
+| `.../permanent-zero-fraction/...` | `crates/gf2-sim/tests/permanent_validation.rs:231,1105-1109,1551`; `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs:1385,2986`; `coordinator_tests.rs:161,181,247,1173,1668` | literals | read |
+| `dev/simulation_results/permanent-rare-event` | `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs:79-92,160,200,722,2733-2775,2858,2942` | fixture literals | identity (artifact_root recorded in receipts) |
 | `dev/simulation_results/osd-ebch-128-64/schema1/ebch_osd_awgn.json` | `crates/gf2-sim/tests/osd_campaign_protocol.rs:807` | `join` + `fs::read` | read |
 | `dev/simulation_results/{fig1,fig3}_*.csv/json`, `phase1_final/*`, `phase1_comparison_report.md` | `crates/gf2-coding/tests/grand_phase1_smoke.rs:417-434,473-476` | `is_file()`/`exists()` asserts, reads | read (asserts on presence and absence) |
 | `dev/simulation_results/fig7_*` | `dev/scripts/gen_fig7_report.sh:5-9` | vars | read/write |
