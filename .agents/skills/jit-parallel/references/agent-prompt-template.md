@@ -42,7 +42,7 @@ Cited concrete qualified addresses are resolvable project knowledge, not opaque 
    - doc_type: "implementation-plan"
    - label: "Implementation Plan"
 4. Commit the plan file (and any updated `.jit/` files) so the document has a commit hash. Use a commit message that references the issue and the plan adhering to the project's commit message conventions.
-5. Do NOT write implementation code. Return the plan path and a summary of key decisions.
+5. Do NOT write implementation code.
 6. The saved plan will be reviewed and fed into a subsequent implementation agent.
 
 ## [For review tasks] What to do
@@ -50,12 +50,9 @@ Cited concrete qualified addresses are resolvable project knowledge, not opaque 
 1. Locate the relevant code (search for key symbols from the issue description).
 2. Verify each acceptance/success criterion is met.
 3. Run testing, linting, and formatting checks per the project's coding conventions.
-4. If complete: return just a confirmation that the issue is complete and ready to close. If incomplete: return a detailed description of what is missing or incorrect, referencing specific code locations and test results.
+4. Outcome is `complete` or `incomplete`; list each unmet criterion under Deviations with its code location and failing test output.
 
-## Return
+[RETURN CONTRACT — paste `.agents/skills/jit-manage/references/return-contract.md` verbatim]
 
-Return a summary of:
-- Files modified or created
-- Tests added (names)
-- Confirmation of passing testing, linting, and formatting checks
-- Any issues encountered
+Outcome deliverables: commit SHA (implementation), plan path and commit SHA
+(planning), or the verdict (review).
