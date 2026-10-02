@@ -9,6 +9,7 @@
   ],
   "description": "Root `AGENTS.md` is the authoritative operational guide. `CONTRIBUTING.md` duplicates it except for a Code of Conduct link and pull-request content guidance, so the file is retired and its unique guidance gets one home.\n\n## Background\n\nConsumers and overlap are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.6; the only live consumer is a link in the root README. Root `AGENTS.md` sits close to its 200-line limit.\n\n## Success Criteria\n\n- [hard] REQ-01: `CONTRIBUTING.md` is absent from the tree.\n- [hard] REQ-02: The Code of Conduct link and pull-request content guidance appear in root `AGENTS.md`, or are dropped with the reason recorded in the commit message.\n- [hard] REQ-03: No live file links to `CONTRIBUTING.md`; mentions inside archived or historical records are unchanged.\n- [hard] REQ-04: Root `AGENTS.md` stays at or below 200 lines.\n",
   "documents": [],
+  "done_at": "2026-10-02T10:38:12.577473720Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "doc-review",
@@ -34,7 +35,7 @@
     "satisfies:fa787f85/REQ-02"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-  "updated_at": "2026-10-02T10:32:31.155573462Z"
+  "updated_at": "2026-10-02T10:38:12.577473720Z"
 }
