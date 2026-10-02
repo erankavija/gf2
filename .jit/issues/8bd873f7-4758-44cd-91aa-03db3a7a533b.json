@@ -12,8 +12,8 @@
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
-      "label": "Validator baseline (before)",
-      "path": "dev/active/8bd873f7/baseline.md"
+      "label": "Tuning-extent validator verdicts before and after",
+      "path": "dev/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md"
     }
   ],
   "first_ready_at": "2026-10-02T11:05:38.048629483Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T13:49:46.802113957Z"
+  "updated_at": "2026-10-02T14:00:30.762191272Z"
 }
