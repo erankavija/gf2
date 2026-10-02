@@ -25,8 +25,8 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T10:36:27.528267410Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T11:08:53.539013622Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-02T11:05:36.383868843Z"
+  "updated_at": "2026-10-02T11:08:53.539013622Z"
 }
