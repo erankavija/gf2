@@ -25,7 +25,7 @@
     "satisfies:3f29e945/REQ-40"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Add the docs-mechanical gate with self-tests",
-  "updated_at": "2026-10-01T22:41:42.643624572Z"
+  "updated_at": "2026-10-02T08:44:21.096915506Z"
 }
