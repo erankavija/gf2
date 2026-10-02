@@ -1,8 +1,8 @@
 # Engineering contract for gf2
 
-This is the canonical repository-wide guidance for human and automated
-contributors. Tool-specific files may add local operating notes, but they must
-point here and must not restate or weaken this contract.
+This is the canonical guidance for human and automated contributors. Its rules
+apply recursively under `@/inv/agents-md-scope`, and `CLAUDE.md` is a symlink to
+this file.
 
 ## Mission
 
