@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/29331bd3-baseline.md"
     }
   ],
+  "done_at": "2026-10-02T22:15:45.521143512Z",
   "first_ready_at": "2026-10-02T11:05:37.475703246Z",
   "gates_required": [
     "cargo-ci",
@@ -53,7 +54,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-  "updated_at": "2026-10-02T22:09:54.867650027Z"
+  "updated_at": "2026-10-02T22:15:45.521143512Z"
 }
