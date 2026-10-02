@@ -5,6 +5,7 @@
   "created_at": "2026-08-22T22:17:25.982526991Z",
   "dependencies": [
     "88441adb-3956-4bf2-bfe9-284e7dcc5c10",
+    "8bd873f7-4758-44cd-91aa-03db3a7a533b",
     "a83583e0-7cfb-4e65-9273-69631929e297",
     "e2744fcf-470b-45d6-8750-0413620eb151",
     "e8a727ff-44b8-48d2-9368-8dedf774777c"
@@ -94,5 +95,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Extend the calibration sweep to the seam threshold fields",
-  "updated_at": "2026-10-02T12:01:32.113319454Z"
+  "updated_at": "2026-10-02T13:15:01.751138682Z"
 }

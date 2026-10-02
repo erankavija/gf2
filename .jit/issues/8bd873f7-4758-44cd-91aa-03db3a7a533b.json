@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-10-02T13:15:01.651078578Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T11:05:38.048629483Z"
+  "updated_at": "2026-10-02T13:15:01.651078578Z"
 }
