@@ -1259,6 +1259,26 @@ fn rare_event_artifact_checksum_tamper_rejected() {
 }
 
 #[test]
+fn rare_event_design_identity_is_path_independent() {
+    let mut moved = design();
+    moved.path = "docs/research/rare-event-design.md".into();
+    let mut configuration = config(ScientificIdentityV1::target());
+    configuration.design_identity = moved.clone();
+    let bytes = canonical_bytes(&configuration).unwrap();
+    assert_eq!(decode_configuration(&bytes).unwrap(), configuration);
+
+    let mut expected = identity(ScientificIdentityV1::target());
+    expected.preregistration.design = moved;
+    expected.preregistration.configuration_sha256 = sha256_hex(&bytes);
+    let envelope = target_checkpoint(expected.clone());
+    let files = encode_artifact_files(&envelope).unwrap();
+    assert_eq!(
+        verify_artifact_files(&files.artifact_json, &files.artifact_sha256, &expected).unwrap(),
+        envelope
+    );
+}
+
+#[test]
 fn rare_event_artifact_identity_mismatch_rejected() {
     let expected = identity(ScientificIdentityV1::target());
     let envelope = target_checkpoint(expected.clone());
