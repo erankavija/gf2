@@ -24,6 +24,21 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T17:49:31.824195638Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T17:52:35.672123047Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T17:34:58.310632398Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T17:32:14.652181186Z",
@@ -40,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-  "updated_at": "2026-10-02T17:32:14.652181186Z"
+  "updated_at": "2026-10-02T17:52:35.672123047Z"
 }

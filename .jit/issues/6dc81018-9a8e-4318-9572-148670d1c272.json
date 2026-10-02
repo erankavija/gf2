@@ -146,7 +146,7 @@
     },
     "repo-validate": {
       "status": "failed",
-      "updated_at": "2026-10-02T14:49:19.716112453Z",
+      "updated_at": "2026-10-02T20:04:11.651342326Z",
       "updated_by": "auto:executor"
     }
   },
@@ -160,5 +160,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-10-02T14:55:38.269637997Z"
+  "updated_at": "2026-10-02T20:04:11.651342326Z"
 }

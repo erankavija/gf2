@@ -24,6 +24,21 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T17:42:58.423508113Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T17:46:45.992403516Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T17:34:53.661805323Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T17:32:14.617889077Z",
@@ -40,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-  "updated_at": "2026-10-02T17:32:14.617889077Z"
+  "updated_at": "2026-10-02T17:46:45.992403516Z"
 }
