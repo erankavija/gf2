@@ -85,6 +85,11 @@ benchmarks/reference/ntl_gf2pow32_smoke
 .agents/cache-pool/
 # Bulk tuning-campaign evidence; the committed <run-id>.sha256 manifests pin it.
 .agents/campaign-evidence/
+# Agent runtime state: campaign stages, bench-window queues, external checkouts, scratch.
+.agents/campaign-stages/
+.agents/bench-window/
+.agents/ext/
+.agents/scratch/
 
 # sim_runner transient progress logs (final results live in
 # .csv / .json next to them)
