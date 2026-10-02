@@ -1,10 +1,10 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-01T22:22:03.307443746Z",
   "context": {},
   "created_at": "2026-10-01T15:39:40.385472954Z",
   "dependencies": [],
-  "description": "Rewrite every unqualified `satisfies:<id>` coverage label in this repository to the container-qualified form `satisfies:<container-short-id>/<id>`, so coverage credit names the container whose criterion it satisfies and nested containers stop crediting each other's same-numbered criteria.\n\n## Background\n\nAll 736 `satisfies:` labels in the tracker use the unqualified form. JIT's `label-coverage` rule walks the whole dependency subtree, so an unqualified label credits the same criterion id in every enclosing container. The documentation-overhaul epic had to renumber its stories' criteria (REQ-21..27, REQ-31..40) to avoid false credits. JIT already supports the qualified form and is removing the unqualified one, so this repository must migrate before upgrading to a JIT version without it.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed migration script assigns each `satisfies:<id>` label to its owning container, the nearest container in the dependency DAG whose `## Success Criteria` declares that id, and rewrites it to `satisfies:<container-short-id>/<id>`.\n- [hard] REQ-02: Labels whose owning container cannot be determined uniquely (no declaring container, or several at the same distance) are listed in a linked record with the reason, and none is rewritten by guess.\n- [hard] REQ-03: After migration no unqualified `satisfies:` label remains except those listed under REQ-02, and the coverage verdict of every container is unchanged or strictly more accurate, with each change listed in the linked record.\n- [hard] REQ-04: Planning tooling and manifests that emit coverage labels in this repository emit only the qualified form.\n\n## Notes\n\nCoordinate the upgrade with the JIT change that removes the unqualified form; the migration can land before it because the qualified form is already accepted.",
+  "description": "Rewrite every unqualified `satisfies:<id>` coverage label in this repository to the container-qualified form `satisfies:<container-short-id>/<id>`, so coverage credit names the container whose criterion it satisfies and nested containers stop crediting each other's same-numbered criteria.\n\n## Background\n\nAll 736 `satisfies:` labels in the tracker use the unqualified form. JIT's `label-coverage` rule walks the whole dependency subtree, so an unqualified label credits the same criterion id in every enclosing container. The documentation-overhaul epic had to renumber its stories' criteria (REQ-21..27, REQ-31..40) to avoid false credits. JIT already supports the qualified form and is removing the unqualified one, so this repository must migrate before upgrading to a JIT version without it.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed migration script assigns each `satisfies:<id>` label to its owning container, the nearest container in the dependency DAG whose `## Success Criteria` declares that id, and rewrites it to `satisfies:<container-short-id>/<id>`.\n- [hard] REQ-02: Labels whose owning container cannot be determined uniquely (no declaring container, or several at the same distance) are listed in a linked record with the reason, and none is rewritten by guess.\n- [hard] REQ-03: After migration no unqualified `satisfies:` label remains except those listed under REQ-02, and the coverage verdict of every container is unchanged or strictly more accurate, with each change listed in the linked record.\n- [hard] REQ-04: Planning tooling and manifests that emit coverage labels in this repository emit only the qualified form.\n\n## Notes\n\nCoordinate the upgrade with the JIT change that removes the unqualified form; the migration can land before it because the qualified form is already accepted.\n\n## Decisions\n\n- DEC-01: The user decided on 2026-10-02 that when the labelled issue's membership label names a reachable container that declares the id, that container owns the label even if a non-member container is nearer, and that membership settles same-distance ties. A label still tied after this rule stays listed and unchanged.\n- DEC-02: The user decided on 2026-10-02 that orphan labels, those no reachable container declares, are removed and listed in the linked record. They credited nothing before the migration.",
   "documents": [
     {
       "assets": [
@@ -37,7 +37,18 @@
     "repo-validate",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-01T23:13:48.876756399Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-10-01T23:10:13.618961133Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "f023b88b-b44f-440f-852c-7f2ce25b1b54",
   "labels": [
     "epic:quality-documentation-tech-debt",
@@ -47,5 +58,5 @@
   "priority": "normal",
   "state": "gated",
   "title": "Migrate satisfies labels to the container-qualified form",
-  "updated_at": "2026-10-01T23:09:50.789195673Z"
+  "updated_at": "2026-10-02T08:28:33.096039298Z"
 }

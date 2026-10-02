@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "Make the Rust CI gate fail on broken rustdoc and failing doctests.\n\n## Background\n\n`scripts/cargo-ci.sh` runs build, nextest, clippy and formatting. nextest does not run doctests, and the script builds no rustdoc. GitHub CI builds rustdoc in release mode but does not deny warnings. `cargo doc` currently emits warnings in `gf2-core` and `gf2-sim`, including unresolved and private intra-doc links.\n\n## Success Criteria\n\n- [hard] REQ-01: `scripts/cargo-ci.sh` runs a release-mode `cargo doc --workspace --no-deps` with rustdoc warnings denied and a release-mode doctest run, each as its own reported step.\n- [hard] REQ-02: GitHub CI runs the same two steps with the same flags and feature set.\n- [hard] REQ-03: All current rustdoc warnings and failing doctests are fixed, and both steps pass.\n- [hard] REQ-04: The added steps keep the gate within its configured time budget, with the measured step durations recorded in the commit message or a linked record.",
   "documents": [],
+  "done_at": "2026-10-02T08:28:33.157319637Z",
   "first_ready_at": "2026-10-01T10:03:24.345444243Z",
   "gates_required": [
     "cargo-ci",
@@ -18,8 +19,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T22:40:34.364446256Z",
+      "status": "passed",
+      "updated_at": "2026-10-01T23:10:06.373662831Z",
       "updated_by": "auto:executor"
     }
   },
@@ -32,7 +33,7 @@
     "satisfies:3f29e945/REQ-38"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Build rustdoc and run doctests in the Rust CI gate",
-  "updated_at": "2026-10-01T23:06:13.193302227Z"
+  "updated_at": "2026-10-02T08:28:33.157319637Z"
 }
