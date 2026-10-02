@@ -1,4 +1,5 @@
 # Documentation migration manifest for epic fa787f85; check.py defines the row schema.
+# Inventory issues 5c0b9635, 23219502, d1f6b2c9, 8434e0e1, 036615b0, 27f0f3b1 and 52fb615b write the rows, each in a disjoint path scope.
 artifacts = [
 ]
 policy = [

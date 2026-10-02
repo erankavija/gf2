@@ -14,14 +14,16 @@ The manifest holds two arrays of inline tables, one row per line, sorted by
 their first field. `ARTIFACT_FIELDS` and `POLICY_FIELDS` define the row schema.
 Row assertions against the working tree:
 - pending artifact: `path` exists.
-- complete artifact: `destination` exists when set, and `path` is absent for
-  every move (a destination differing from `path`) and every deletion.
+- complete deletion: `path` is absent.
+- complete artifact with an empty destination or one equal to `path`: `path`
+  exists; with a differing destination: `destination` exists, `path` is absent.
 - pending policy entry: `value` is listed under the dotted `key` of
   `.jit/config.toml`; complete: it is absent.
 
 Prints `<row>: <finding>` lines, then completeness per disposition and for
 policy entries. Exit status 1 on any schema violation or failed assertion, or
-on an incomplete manifest with `--require-complete`; 0 otherwise.
+with `--require-complete` on a manifest without artifact rows or with any
+pending row; 0 otherwise.
 """
 
 from __future__ import annotations
@@ -124,9 +126,10 @@ def assert_artifact(row: dict, root: Path, out: list[str]) -> None:
         if not exists(path):
             out.append(f"{path}: pending source is missing")
         return
-    if dest and not exists(dest):
-        out.append(f"{path}: complete destination {dest} is missing")
-    if (row["disposition"] == "deletion" or (dest and dest != path)) and exists(path):
+    final = "" if row["disposition"] == "deletion" else dest or path
+    if final and not exists(final):
+        out.append(f"{path}: complete location {final} is missing")
+    if final != path and exists(path):
         out.append(f"{path}: complete source still exists")
 
 
@@ -181,7 +184,8 @@ def main() -> int:
         print(line)
     for disp, (done, total) in counts.items():
         print(f"{disp}: {done}/{total} complete")
-    incomplete = any(done < total for done, total in counts.values())
+    rows = sum(counts.get(d, [0, 0])[1] for d in DISPOSITIONS)
+    incomplete = not rows or any(done < total for done, total in counts.values())
     return 1 if findings or (args.require_complete and incomplete) else 0
 
 
