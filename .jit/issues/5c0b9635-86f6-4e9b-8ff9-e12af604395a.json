@@ -32,6 +32,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:13:59.495048409Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T14:09:24.915087060Z",
@@ -49,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-02T14:09:24.915087060Z"
+  "updated_at": "2026-10-02T14:13:59.495048409Z"
 }

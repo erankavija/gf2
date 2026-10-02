@@ -32,10 +32,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:16:03.387459434Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:20.491577125Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T14:11:27.826766034Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "23219502-6312-45e5-88cd-08f4b0f95aa8",
@@ -49,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
-  "updated_at": "2026-10-02T14:11:17.453697002Z"
+  "updated_at": "2026-10-02T14:16:03.387459434Z"
 }

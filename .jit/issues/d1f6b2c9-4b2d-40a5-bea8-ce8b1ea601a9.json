@@ -32,6 +32,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T14:13:27.486878400Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T14:09:25.360278596Z",
@@ -49,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory the field-dispatch dev/active entries",
-  "updated_at": "2026-10-02T14:09:25.360278596Z"
+  "updated_at": "2026-10-02T14:13:27.486878400Z"
 }

@@ -32,6 +32,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:13:23.655428116Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T14:09:25.083755604Z",
@@ -49,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory the other open-epic dev/active entries",
-  "updated_at": "2026-10-02T14:09:25.083755604Z"
+  "updated_at": "2026-10-02T14:13:23.655428116Z"
 }

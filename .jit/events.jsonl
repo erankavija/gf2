@@ -15338,3 +15338,10 @@
 {"from":"backlog","id":"ec8b35f7-5161-408c-b2cc-e4fafde5b5c4","issue_id":"b16d013a-c200-4e75-8c57-6638a313438e","timestamp":"2026-10-02T14:11:27.475151827Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"5e63ef20-826d-4094-8415-fbd921bb07dc","issue_id":"da120b98-4a6b-44f4-9597-a9dc55a667f9","timestamp":"2026-10-02T14:11:27.597212153Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"1ec32946-8612-4e1c-8c1e-11d0e113b44c","issue_id":"deda0962-2366-493d-b0fd-c65874ba7cbe","timestamp":"2026-10-02T14:11:27.719094868Z","to":"ready","type":"issue_state_changed"}
+{"gate_key":"docs-mechanical","id":"9f7bc5fe-98dc-48e2-979f-b0baea78f60c","issue_id":"23219502-6312-45e5-88cd-08f4b0f95aa8","timestamp":"2026-10-02T14:11:27.826766034Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"8138ae5f-05fc-4a90-a28f-d4517471166b","issue_id":"036615b0-6ab3-4bc8-a8e2-c36837296111","timestamp":"2026-10-02T14:13:07.455728501Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"62bfa425-6ee8-4aec-a3a3-d3e89e77a6e5","issue_id":"8434e0e1-859d-4b18-ad3c-2942ae248b60","timestamp":"2026-10-02T14:13:23.655428116Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"4e6a4098-e366-4f79-b5ad-d2f803814dd6","issue_id":"d1f6b2c9-4b2d-40a5-bea8-ce8b1ea601a9","timestamp":"2026-10-02T14:13:27.486878400Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"0e2a7a32-1d68-44ac-9999-3fef37d68b03","issue_id":"52fb615b-0294-4452-bf34-2d7a178029b0","timestamp":"2026-10-02T14:13:29.093448970Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"f344939d-84bd-4b55-b75e-b3bcd71840d7","issue_id":"5c0b9635-86f6-4e9b-8ff9-e12af604395a","timestamp":"2026-10-02T14:13:59.495048409Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"5d6954bc-77f2-477d-8232-ee1e60138c55","issue_id":"23219502-6312-45e5-88cd-08f4b0f95aa8","timestamp":"2026-10-02T14:16:03.387459434Z","type":"gate_passed","updated_by":"auto:executor"}

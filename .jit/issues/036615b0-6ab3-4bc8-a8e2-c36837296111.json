@@ -32,6 +32,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T14:13:07.455728501Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T14:09:25.003978552Z",
@@ -49,5 +54,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory terminal, ownerless and empty dev/active entries",
-  "updated_at": "2026-10-02T14:09:25.003978552Z"
+  "updated_at": "2026-10-02T14:13:07.455728501Z"
 }
