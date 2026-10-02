@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 4,
+ "current_wave": 5,
  "waves": [
   {
    "wave_number": 1,
@@ -61,7 +61,7 @@
      "short_id": "3f29e945",
      "title": "Define documentation contract and enforcement baseline",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     }
    ]
   },
@@ -922,7 +922,8 @@
  "rework_counts": {
   "495807a3": 1,
   "34adff85": 1,
-  "8f61d6de": 1
+  "8f61d6de": 1,
+  "3f29e945": 2
  },
  "surfaced_pitfalls": [
   {

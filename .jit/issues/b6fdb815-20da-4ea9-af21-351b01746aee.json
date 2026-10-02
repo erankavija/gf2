@@ -30,7 +30,7 @@
     "satisfies:fa787f85/REQ-04"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
-  "updated_at": "2026-10-02T09:38:29.207269624Z"
+  "updated_at": "2026-10-02T10:06:46.243451146Z"
 }

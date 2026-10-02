@@ -28,7 +28,7 @@
     "satisfies:fa787f85/REQ-13"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-02T09:38:28.437534554Z"
+  "updated_at": "2026-10-02T10:06:46.110712749Z"
 }

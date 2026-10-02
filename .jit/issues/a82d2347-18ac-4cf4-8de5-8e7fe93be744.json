@@ -28,7 +28,7 @@
     "satisfies:fa787f85/REQ-02"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-  "updated_at": "2026-10-02T09:56:22.743521754Z"
+  "updated_at": "2026-10-02T10:06:46.177563346Z"
 }

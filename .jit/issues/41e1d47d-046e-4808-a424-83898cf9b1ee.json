@@ -29,7 +29,7 @@
     "satisfies:fa787f85/REQ-20"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-02T09:56:22.672025781Z"
+  "updated_at": "2026-10-02T10:06:45.663699164Z"
 }

@@ -36,7 +36,7 @@
     "satisfies:fa787f85/REQ-07"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Remove tautological Rustdoc examples across the workspace",
-  "updated_at": "2026-10-02T09:38:28.314412589Z"
+  "updated_at": "2026-10-02T10:06:46.047512904Z"
 }

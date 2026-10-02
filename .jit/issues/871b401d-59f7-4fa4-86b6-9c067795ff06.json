@@ -30,7 +30,7 @@
     "satisfies:fa787f85/REQ-01"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Register and project the no-dev-path-coupling invariant",
-  "updated_at": "2026-10-02T09:38:26.438122739Z"
+  "updated_at": "2026-10-02T10:06:45.852841029Z"
 }

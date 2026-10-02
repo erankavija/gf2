@@ -37,7 +37,7 @@
     "satisfies:fa787f85/REQ-01"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-02T09:38:27.793494602Z"
+  "updated_at": "2026-10-02T10:06:45.979329400Z"
 }
