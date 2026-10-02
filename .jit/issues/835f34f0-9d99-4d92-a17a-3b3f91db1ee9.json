@@ -17,10 +17,11 @@
   "id": "835f34f0-9d99-4d92-a17a-3b3f91db1ee9",
   "labels": [
     "component:gf2-core",
-    "type:bug"
+    "type:bug",
+    "epic:documentation-overhaul"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Document the GF(2^8) polynomial that gf256() builds",
-  "updated_at": "2026-09-13T07:08:21.706779973Z"
+  "updated_at": "2026-10-02T11:28:23.001062730Z"
 }

@@ -5,7 +5,7 @@
   "dependencies": [
     "ae82bd73-741d-4007-811f-914dac00bae8"
   ],
-  "description": "The `gf2-algebra::permanent` module overview points to two removed `dev/plans/` paths although the authoritative design documents live under the archived gf2-algebra epic.\n\n## Success Criteria\n\n- [hard] REQ-01: The permanent module rustdoc resolves both design references to their authoritative archived artifacts without copying design facts into a second source.\n- [hard] REQ-02: `cargo doc -p gf2-algebra --all-features --no-deps` succeeds and a repository search finds no live production rustdoc reference to either removed path.",
+  "description": "The `gf2-algebra::permanent` module overview points to two removed `dev/plans/` paths although the authoritative design documents live under the archived gf2-algebra epic.\n\n## Success Criteria\n\n- [hard] REQ-01: The permanent module rustdoc resolves both design references to their authoritative archived artifacts without copying design facts into a second source.\n- [hard] REQ-02: `cargo doc -p gf2-algebra --all-features --no-deps` succeeds and a repository search finds no live production rustdoc reference to either removed path.\n\n## Resolution\n\nSubsumed by overhaul issue `ec655592` (REQ-03, REQ-04): every `dev/plans/` citation in Rustdoc points to the plan's archived path or is removed.",
   "documents": [],
   "first_ready_at": "2026-08-30T04:50:07.119094165Z",
   "gates_required": [
@@ -17,10 +17,11 @@
   "labels": [
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra",
-    "type:task"
+    "type:task",
+    "resolution:obsolete"
   ],
   "priority": "low",
-  "state": "ready",
+  "state": "rejected",
   "title": "Repair archived design links in permanent module rustdoc",
-  "updated_at": "2026-09-01T06:36:38.529795845Z"
+  "updated_at": "2026-10-02T11:28:27.512830253Z"
 }

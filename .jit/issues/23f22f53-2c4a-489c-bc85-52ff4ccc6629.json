@@ -19,10 +19,11 @@
     "component:gf2-core",
     "satisfies:b4b4b9ee/REQ-01",
     "satisfies:b4b4b9ee/REQ-03",
-    "satisfies:b4b4b9ee/REQ-04"
+    "satisfies:b4b4b9ee/REQ-04",
+    "epic:documentation-overhaul"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Complete the missing doc sections on gf2-core matrix and bit-vector APIs",
-  "updated_at": "2026-10-01T22:41:18.929706859Z"
+  "updated_at": "2026-10-02T11:28:21.960625702Z"
 }

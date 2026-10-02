@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-02-21T19:35:51.753369284Z",
   "dependencies": [],
-  "description": "Deploy README_NEW.md as README.md for the gf2-coding crate. The new README (528 lines) features a code-first approach, 19 tested Rust code blocks, difficulty-categorized examples, and a clear learning path.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Deploy new README for gf2-coding with learning path structure” with the behavior, scope, evidence, and constraints described above.\n",
+  "description": "Deploy README_NEW.md as README.md for the gf2-coding crate. The new README (528 lines) features a code-first approach, 19 tested Rust code blocks, difficulty-categorized examples, and a clear learning path.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Deploy new README for gf2-coding with learning path structure” with the behavior, scope, evidence, and constraints described above.\n\n\n## Resolution\n\nSubsumed by overhaul issue `698fa793` (REQ-02, REQ-03), which owns the gf2-coding README. `README_NEW.md` is absent, and a learning-path page with example lists contradicts the entry-page contract.",
   "documents": [],
   "first_ready_at": "2026-02-21T19:49:04.407986454Z",
   "gates_required": [
@@ -16,10 +16,11 @@
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "resolution:obsolete"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "rejected",
   "title": "Deploy new README for gf2-coding with learning path structure",
-  "updated_at": "2026-08-05T12:22:09.728215644Z"
+  "updated_at": "2026-10-02T11:28:24.507488802Z"
 }

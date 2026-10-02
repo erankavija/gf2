@@ -12,10 +12,11 @@
   "gates_status": {},
   "id": "c2663ce9-636a-416b-bb14-9d0e01b1e7ab",
   "labels": [
-    "type:bug"
+    "type:bug",
+    "epic:documentation-overhaul"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "binary_v1 is_systematic documents the canonical layout but delegates the recorded order",
-  "updated_at": "2026-09-03T04:52:47.302233349Z"
+  "updated_at": "2026-10-02T11:28:23.147697313Z"
 }

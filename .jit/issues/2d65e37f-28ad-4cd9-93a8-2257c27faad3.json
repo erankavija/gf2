@@ -14,10 +14,11 @@
   "labels": [
     "epic:quality-documentation-tech-debt",
     "component:documentation",
-    "type:bug"
+    "type:bug",
+    "epic:documentation-overhaul"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Repair public API documentation cross-references",
-  "updated_at": "2026-09-04T21:14:15.313250323Z"
+  "updated_at": "2026-10-02T11:28:21.522434224Z"
 }

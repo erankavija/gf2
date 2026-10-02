@@ -17,10 +17,11 @@
   "id": "157c305c-925a-4f5d-89e5-299c05c5a0f5",
   "labels": [
     "component:gf2-coding",
-    "type:bug"
+    "type:bug",
+    "epic:documentation-overhaul"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Document the finite NR filler LLR that de-rate-matching writes",
-  "updated_at": "2026-09-10T22:15:01.180656670Z"
+  "updated_at": "2026-10-02T11:28:22.846079420Z"
 }

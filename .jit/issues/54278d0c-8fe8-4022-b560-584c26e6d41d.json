@@ -18,10 +18,11 @@
     "epic:tech-debt-2026-06-30",
     "component:gf2-kernels-simd",
     "satisfies:b4b4b9ee/REQ-01",
-    "satisfies:b4b4b9ee/REQ-04"
+    "satisfies:b4b4b9ee/REQ-04",
+    "epic:documentation-overhaul"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Document the individual LogicalFns dispatch fields",
-  "updated_at": "2026-10-01T22:41:30.366206776Z"
+  "updated_at": "2026-10-02T11:28:22.247997715Z"
 }

@@ -39,10 +39,11 @@
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:documentation-overhaul"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Fill public-API doc-completeness gaps",
-  "updated_at": "2026-08-07T12:53:05.107429731Z"
+  "updated_at": "2026-10-02T11:28:22.399289334Z"
 }

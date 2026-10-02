@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-02-21T19:35:51.768082191Z",
   "dependencies": [],
-  "description": "Add links to relevant rustdoc sections in example file headers so readers can easily navigate from examples to API documentation.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Add rustdoc cross-references to example file headers” with the behavior, scope, evidence, and constraints described above.\n",
+  "description": "Add links to relevant rustdoc sections in example file headers so readers can easily navigate from examples to API documentation.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Add rustdoc cross-references to example file headers” with the behavior, scope, evidence, and constraints described above.\n\n\n## Resolution\n\nSubsumed by overhaul issue `13dfe1a5`, whose REQ-01 governs example file headers. `cargo doc` does not build example headers, so Rustdoc links there neither render nor get checked.",
   "documents": [],
   "first_ready_at": "2026-02-21T19:49:04.448184808Z",
   "gates_required": [
@@ -16,10 +16,11 @@
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "resolution:obsolete"
   ],
   "priority": "low",
-  "state": "ready",
+  "state": "rejected",
   "title": "Add rustdoc cross-references to example file headers",
-  "updated_at": "2026-08-05T12:25:46.149415495Z"
+  "updated_at": "2026-10-02T11:28:23.620698327Z"
 }

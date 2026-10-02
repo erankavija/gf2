@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-02-21T19:35:51.758311673Z",
   "dependencies": [],
-  "description": "Apply standardized header template (difficulty level, prerequisites, learning objectives, estimated reading time) to all existing examples. Currently only the 2 new examples have standardized headers. 12 existing examples need updating.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Add standardized headers to all existing gf2-coding examples” with the behavior, scope, evidence, and constraints described above.\n",
+  "description": "Apply standardized header template (difficulty level, prerequisites, learning objectives, estimated reading time) to all existing examples. Currently only the 2 new examples have standardized headers. 12 existing examples need updating.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Add standardized headers to all existing gf2-coding examples” with the behavior, scope, evidence, and constraints described above.\n\n\n## Resolution\n\nSubsumed by overhaul issue `13dfe1a5`, whose REQ-01 governs example file headers. Difficulty, prerequisite and reading-time headers contradict the comment contract.",
   "documents": [],
   "first_ready_at": "2026-02-21T19:49:04.421208942Z",
   "gates_required": [
@@ -16,10 +16,11 @@
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "resolution:obsolete"
   ],
   "priority": "low",
-  "state": "ready",
+  "state": "rejected",
   "title": "Add standardized headers to all existing gf2-coding examples",
-  "updated_at": "2026-08-05T12:23:08.746057682Z"
+  "updated_at": "2026-10-02T11:28:25.388010732Z"
 }

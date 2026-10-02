@@ -8,7 +8,15 @@
     "3f29e945-8b12-4862-82c8-f2ec6573287c"
   ],
   "description": "Open documentation issues in other epics overlap the overhaul's documentation contract. Each one receives an explicit disposition, so no surviving requirement is lost and no obsolete deliverable stays open.\n\n## Background\n\nThe candidate set changes as other work lands. The starting candidates and their overlap analysis are in `dev/active/fa787f85-documentation-overhaul/investigation.md` (§3.13), which also notes that one comment-trim candidate blocks a performance epic. Two dispositions apply: a requirement that overlaps overhaul scope is preserved in an overhaul work item and the original issue is rejected as subsumed; an item-level API documentation fix stays where it is and gains the filter label.\n\n## Success Criteria\n\n- [hard] REQ-01: The candidate set is derived from the live tracker when this work starts, and every open documentation issue outside the overhaul epic appears in a linked disposition record with its disposition and a one-line reason.\n- [hard] REQ-02: An issue whose requirement overlaps the source-comment sweep, the Rustdoc example policy, or the permanent-page rewrite has that requirement present in the success criteria of a named overhaul work item before the issue is rejected with `resolution:obsolete` and a comment naming that work item.\n- [hard] REQ-03: An item-level API documentation fix stays in its own epic with its existing dependency edges and carries the `epic:documentation-overhaul` filter label.\n- [hard] REQ-04: No rejection leaves a dependent issue blocked on an obligation that no open issue carries.\n- [hard] REQ-05: The epic's linked planning brief records each disposition in its inherited-issue section.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Inherited issue dispositions",
+      "path": "dev/active/fa787f85-documentation-overhaul/41e1d47d-disposition.md"
+    }
+  ],
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "doc-review",
@@ -32,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-02T10:20:21.205240648Z"
+  "updated_at": "2026-10-02T11:28:57.870433586Z"
 }

@@ -26,10 +26,11 @@
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
-    "component:gf2-kernels-simd"
+    "component:gf2-kernels-simd",
+    "epic:documentation-overhaul"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Document safety contracts and restore clippy enforcement in gf2-kernels-simd",
-  "updated_at": "2026-08-07T12:00:58.538738903Z"
+  "updated_at": "2026-10-02T11:28:22.550819523Z"
 }

@@ -20,10 +20,11 @@
     "satisfies:b4b4b9ee/REQ-01",
     "satisfies:b4b4b9ee/REQ-02",
     "satisfies:b4b4b9ee/REQ-03",
-    "satisfies:b4b4b9ee/REQ-04"
+    "satisfies:b4b4b9ee/REQ-04",
+    "epic:documentation-overhaul"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Complete doc sections and make gf2-coding examples compile",
-  "updated_at": "2026-10-01T22:41:23.837162876Z"
+  "updated_at": "2026-10-02T11:28:22.105074443Z"
 }

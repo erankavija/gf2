@@ -12,10 +12,11 @@
   "labels": [
     "type:bug",
     "epic:quality-documentation-tech-debt",
-    "component:gf2-algebra"
+    "component:gf2-algebra",
+    "epic:documentation-overhaul"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Feasibility harness backend docs claim a SIMD dispatch permanent_bipedal3 does not do",
-  "updated_at": "2026-08-20T14:23:00.012741981Z"
+  "updated_at": "2026-10-02T11:28:21.808812171Z"
 }

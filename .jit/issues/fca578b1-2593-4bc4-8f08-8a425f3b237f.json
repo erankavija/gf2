@@ -13,7 +13,7 @@
     "ee50e270-74ea-4566-a0a7-69791af66e8a",
     "fdb998ec-6042-4112-8bf9-1f179128d62b"
   ],
-  "description": "Once rewriting and relocation land, the permanent pages are audited together so that they present only supported current behavior under the registered documentation invariants.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked audit record covers the root README, `docs/`, crate READMEs, `AGENTS.md` and the crate-root `lib.rs` docs, and cites the invariant address of each finding.\n- [hard] REQ-02: Permanent text describes only supported current behavior: historical narration, migration language, superseded alternatives, speculation and future promises are absent, and each finding is fixed in the same change.\n- [hard] REQ-03: No performance figure appears outside the performance evidence reference page.\n- [hard] REQ-04: For each permanent page the record lists the prior sources mined and confirms, by comparison against them, that no explanatory prose was carried over verbatim.\n",
+  "description": "Once rewriting and relocation land, the permanent pages are audited together so that they present only supported current behavior under the registered documentation invariants.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked audit record covers the root README, `docs/`, crate READMEs, `AGENTS.md` and the crate-root `lib.rs` docs, and cites the invariant address of each finding.\n- [hard] REQ-02: Permanent text describes only supported current behavior: historical narration, migration language, superseded alternatives, speculation and future promises are absent, and each finding is fixed in the same change.\n- [hard] REQ-03: No performance figure appears outside the performance evidence reference page.\n- [hard] REQ-04: For each permanent page the record lists the prior sources mined and confirms, by comparison against them, that no explanatory prose was carried over verbatim.\n- [hard] REQ-05: Root `AGENTS.md` states `@/issue/<short-id>`, the form the mechanical documentation check resolves, as the way prose and Rustdoc reference a JIT issue, and every issue reference on the permanent surface uses that form.\n",
   "documents": [],
   "gates_required": [
     "cargo-ci",
@@ -41,5 +41,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Audit the permanent surface against the docs invariants",
-  "updated_at": "2026-10-02T09:38:33.547730921Z"
+  "updated_at": "2026-10-02T11:28:20.059698207Z"
 }

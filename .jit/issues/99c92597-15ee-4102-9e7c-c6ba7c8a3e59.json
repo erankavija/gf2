@@ -14,10 +14,11 @@
   "labels": [
     "component:gf2-core",
     "type:task",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "epic:documentation-overhaul"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Document the Frobenius exponent-overflow panic in FiniteFieldExt rustdoc",
-  "updated_at": "2026-08-19T17:44:37.397274744Z"
+  "updated_at": "2026-10-02T11:28:21.670016252Z"
 }

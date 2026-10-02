@@ -4,7 +4,7 @@
   "context": {},
   "created_at": "2026-02-21T19:35:51.748255125Z",
   "dependencies": [],
-  "description": "The current hamming_7_4.rs example is 358 lines, which is too long. Split into hamming_basic.rs (30-50 lines, beginner) and hamming_advanced.rs (150-200 lines, advanced tutorial). Update all cross-references and README.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Split hamming_7_4.rs example into basic and advanced versions” with the behavior, scope, evidence, and constraints described above.\n",
+  "description": "The current hamming_7_4.rs example is 358 lines, which is too long. Split into hamming_basic.rs (30-50 lines, beginner) and hamming_advanced.rs (150-200 lines, advanced tutorial). Update all cross-references and README.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Split hamming_7_4.rs example into basic and advanced versions” with the behavior, scope, evidence, and constraints described above.\n\n\n## Resolution\n\nSubsumed by overhaul issue `13dfe1a5`, whose REQ-01 governs example comments. `hamming_basic.rs` exists, and elementary Hamming material is outside the researcher audience.",
   "documents": [],
   "first_ready_at": "2026-02-21T19:49:04.394353176Z",
   "gates_required": [
@@ -17,10 +17,11 @@
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:quality-documentation-tech-debt"
+    "epic:quality-documentation-tech-debt",
+    "resolution:obsolete"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "rejected",
   "title": "Split hamming_7_4.rs example into basic and advanced versions",
-  "updated_at": "2026-08-17T19:37:24.318058600Z"
+  "updated_at": "2026-10-02T11:28:26.241432941Z"
 }
