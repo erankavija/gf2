@@ -54,8 +54,7 @@
 //!   sampling or statistics.
 //!
 //! The full type → crate map this crate satisfies on completion is in
-//! [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../../dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md)
-//! §2.
+//! `@/issue/6e20133d` §2.
 //!
 //! # Module map (D1a §2)
 //!
@@ -78,13 +77,13 @@
 //!
 //! # See also
 //!
-//! - Epic design: `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`.
+//! - Epic design: `@/issue/ae82bd73`.
 //! - Crate boundary decision:
-//!   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md`.
+//!   `@/issue/6e20133d`.
 //! - Trait surface decision:
-//!   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md`.
+//!   `@/issue/9fe275d3`.
 //! - Feature-gate matrix decision:
-//!   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/4fced99b/d1c_feature_matrix.md`.
+//!   `@/issue/4fced99b`.
 
 pub mod gray;
 pub mod packed;
@@ -114,9 +113,7 @@ mod tests {
     /// Verifies the crate compiles and links into a test binary.
     ///
     /// This is a placeholder; the trait + algorithm coverage is added by T2-T6
-    /// of the W1 wave per
-    /// `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md`
-    /// §5 validation checklist.
+    /// of the W1 wave per `@/issue/6e20133d` §5 validation checklist.
     #[test]
     fn test_skeleton_compiles_smoke() {
         // Intentionally empty: presence of this `#[test]` is sufficient

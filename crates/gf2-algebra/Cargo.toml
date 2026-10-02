@@ -108,9 +108,8 @@ required-features = ["simd", "test-support"]
 name = "permanent_demo"
 
 [features]
-# `f5` and `f7` are default-on per R1 §1 and
-# dev/archive/ae82bd73-gf2-algebra-permanent/plans/4fced99b/d1c_feature_matrix.md
-# §5.3, so the standard `cargo test` and `tests` gates exercise them.
+# `f5` and `f7` are default-on per R1 §1 and `@/issue/4fced99b` §5.3, so the
+# standard `cargo test` and `tests` gates exercise them.
 default = ["simd", "parallel", "f5", "f7"]
 
 # Enable runtime SIMD dispatch hooks. Mirrors gf2-coding's pattern: the
@@ -134,17 +133,13 @@ parallel = ["dep:rayon", "gf2-core/parallel"]
 # workspace `exclude`).
 hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
 
-# F_5 packed permanent. Default-on as of W4 closing edit; the W4 implementation
-# landed `packed5::Packed5` (jit:6917eb85) per R1 outcome in
-# dev/archive/ae82bd73-gf2-algebra-permanent/plans/6b3f6054/r1_f5_encoding_decision.md.
-# Opt out via `--no-default-features` (or by selecting features explicitly
+# F_5 packed permanent (`packed5::Packed5`, encoding per `@/issue/6b3f6054`),
+# default-on. Opt out via `--no-default-features` (or by selecting features explicitly
 # without `f5`) if the F_5 surface is unwanted.
 f5 = []
 
-# F_7 packed permanent. Default-on as of W4 closing edit; the W4 implementation
-# landed `packed7::Packed7` (jit:56c5dabc) per R2 outcome in
-# dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md.
-# Same opt-out semantics as `f5`.
+# F_7 packed permanent (`packed7::Packed7`, encoding per `@/issue/f10152f6`),
+# default-on. Same opt-out semantics as `f5`.
 f7 = []
 
 # Serde Serialize/Deserialize for packed types. Off by default because

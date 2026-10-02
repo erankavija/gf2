@@ -1975,13 +1975,10 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
     }
 }
 
-// NOTE: The eager `Add`/`Sub`/`Neg` operator overloads that T1 (issue
-// `91c06222`) provided here have been moved to the expression-template layer in
-// `crate::field::expr` (story `d48a3cfd/T2`, issue `7e6183bb`). See
-// `dev/archive/bb85c68a-field-linear-algebra/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md`
-// §4.5 for the migration rationale.
+// NOTE: The `Add`/`Sub`/`Neg` operator overloads live in the expression-template
+// layer `crate::field::expr`; `@/issue/cdcebf6a` §4.5 gives the rationale.
 //
-// The new impls return proxy types (`Sum`, `NegProxy`, `FusedProductPlus`,
+// They return proxy types (`Sum`, `NegProxy`, `FusedProductPlus`,
 // …) instead of `FieldMatrix<F>`, so `&a * &b + &c` fuses to a single
 // kernel call on the evaluation boundary. Call sites that need the
 // materialised matrix write `(&a + &b).into()` (or rely on type inference
@@ -3413,12 +3410,10 @@ pub(crate) fn unit_diag_view<F: FiniteField, M: MatrixLike<F> + ?Sized>(
     UnitDiagView::new(inner, one)
 }
 
-// NOTE: The eager `Mul` operator overloads that T1 (`91c06222`) provided here
-// have been moved to the expression-template layer in `crate::field::expr`. See
-// `dev/archive/bb85c68a-field-linear-algebra/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md`
-// §4.5.
+// NOTE: The `Mul` operator overloads live in the expression-template layer
+// `crate::field::expr` (`@/issue/cdcebf6a` §4.5).
 //
-// `&a * &b` now returns `Product<&M, &M>`, a lazy proxy; pipe it through
+// `&a * &b` returns `Product<&M, &M>`, a lazy proxy; pipe it through
 // `.into()` to materialise, or compose it with `+` to reach a canonical
 // fusion such as `FusedProductPlus<Product<_, _>, &M>` that dispatches one
 // `gemm_with_beta` kernel call.
@@ -3831,11 +3826,10 @@ mod tests {
 
     // Right-scalar multiplication must stay generic for runtime-context fields
     // that are deliberately **not** `ConstField`, such as `Gf2mElement`. The
-    // design note (§8 of
-    // `dev/archive/bb85c68a-field-linear-algebra/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md`)
-    // promises both `&M * F` and `M * F` for any `FiniteField`; left-scalar
-    // `F * M` is not required here because `Gf2mElement` is not a `ConstField`
-    // and the orphan rule blocks a single generic impl.
+    // design note (§8 of `@/issue/ab791e27`) promises both `&M * F` and `M * F`
+    // for any `FiniteField`; left-scalar `F * M` is not required here because
+    // `Gf2mElement` is not a `ConstField` and the orphan rule blocks a single
+    // generic impl.
     #[test]
     fn test_right_scalar_mul_gf2m_element_generic() {
         use crate::matrix_like::MatrixLike;

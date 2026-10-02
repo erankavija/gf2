@@ -2,9 +2,8 @@
 //!
 //! Times both the fast bipedal3 path and the scalar reference over a batch of
 //! random matrices and prints throughput (permanents/sec) so users can verify
-//! the headline speedup numbers from the epic design doc
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`
-//! and the S1 benchmark CSV
+//! the headline speedup numbers from the epic design doc `@/issue/ae82bd73` and
+//! the S1 benchmark CSV
 //! `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`.
 //!
 //! ## What this measures

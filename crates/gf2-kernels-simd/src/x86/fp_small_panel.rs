@@ -1,10 +1,8 @@
 //! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small
 //! `Fp<P>` with `P <= 251`.
 //!
-//! This is **Route C** from the jit:615db3b9 Phase 1 plan
-//! (`dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md`
-//! § Phase 1, item 3) and the design note
-//! `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`.
+//! This is **Route C** from the jit:615db3b9 Phase 1 plan (`@/issue/615db3b9` §
+//! Phase 1, item 3) and the design note `@/issue/fc182ed5`.
 //!
 //! The kernel processes a whole-GEMM call as a Goto/BLIS-style
 //! 3-loop structure (outer-N, KC blocking, MR/NR register-blocked
@@ -20,10 +18,9 @@
 //!
 //! # Algorithm
 //!
-//! Panel dimensions (see
-//! `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`
-//! § 2 for the derivation from Goto-vandeGeijn 2008, BLIS 2015, and the AMD Zen
-//! 3 Software Optimization Guide):
+//! Panel dimensions (see `@/issue/fc182ed5` § 2 for the derivation from
+//! Goto-vandeGeijn 2008, BLIS 2015, and the AMD Zen 3 Software Optimization
+//! Guide):
 //!
 //! - `MR = 4` rows of A per inner tile (one A pack per `m / MR` outer-M loops)
 //! - `NR = 24` columns of output per inner tile (3 × 8-lane i32 sub-tiles)
