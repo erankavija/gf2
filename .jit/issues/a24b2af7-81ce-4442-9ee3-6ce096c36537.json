@@ -6,7 +6,7 @@
   "dependencies": [
     "3f29e945-8b12-4862-82c8-f2ec6573287c"
   ],
-  "description": "Define the manifest that classifies every pre-overhaul documentation artifact and a transient checker that reports migration progress against it.\n\n## Background\n\nThe documentation overhaul archives completed work by terminal epic, moves unassociated history to `dev/archive/legacy/<original-relative-path>`, and rewrites permanent pages from current behavior. Each artifact's disposition must be recorded and verified. The checker is transient: lasting enforcement comes from invariants and review gates, and the checker is removed after the final migration check.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed schema defines one manifest row per artifact with its path, owning issue or association evidence, bundle relationships, disposition (JIT container archive, legacy archive, retained operational asset, deletion, or rewritten topic), destination, and execution status.\n- [hard] REQ-02: The checker validates the manifest against the schema and the working tree, and reports per-disposition completeness and every row whose source or destination assertion fails.\n- [hard] REQ-03: Self-tests cover a complete manifest, an incomplete one, a schema violation, and a failed source or destination assertion.\n- [hard] REQ-04: The checker's location and the removal condition stated in its header make clear it is a migration tool with a tracked removal, not permanent policy enforcement.",
+  "description": "Define the manifest that classifies every pre-overhaul documentation artifact and a transient checker that reports migration progress against it.\n\n## Background\n\nThe documentation overhaul archives completed work by terminal epic, moves unassociated history to `dev/archive/legacy/<original-relative-path>`, and rewrites permanent pages from current behavior. Each artifact's disposition must be recorded and verified. The checker is transient: lasting enforcement comes from invariants and review gates, and the checker is removed after the final migration check.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed schema defines one manifest row per artifact with its path, owning issue or association evidence, bundle relationships, disposition (JIT container archive, legacy archive, retained operational asset, deletion, or rewritten topic), destination, and execution status.\n- [hard] REQ-02: The checker validates the manifest against the schema and the working tree, and reports per-disposition completeness and every row whose source or destination assertion fails.\n- [hard] REQ-03: Self-tests cover a complete manifest, an incomplete one, a schema violation, and a failed source or destination assertion.\n- [hard] REQ-04: The checker's location and the removal condition stated in its header make clear it is a migration tool with a tracked removal, not permanent policy enforcement.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-02 that the empty manifest is the designed deliverable of this issue: it delivers the schema and checker, and the inventory tasks bound by contract `migration-manifest` write the rows and carry REQ-13 coverage. code-review finding \"the committed manifest contains zero artifact rows\" (raised three times) is overridden by this decision; every other gate and finding is closed.",
   "documents": [
     {
       "commit": null,
@@ -32,12 +32,12 @@
   "gates_status": {
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T11:41:40.804759897Z",
+      "updated_at": "2026-10-02T13:19:23.290942769Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-02T11:39:23.060988447Z",
+      "updated_at": "2026-10-02T13:22:13.062242768Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -54,7 +54,7 @@
     "satisfies:fa787f85/REQ-13"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "gated",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-02T13:16:47.259649152Z"
+  "updated_at": "2026-10-02T13:33:51.845596728Z"
 }
