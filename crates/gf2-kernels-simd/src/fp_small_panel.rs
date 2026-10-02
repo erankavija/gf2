@@ -12,8 +12,8 @@
 //!   OpenBLAS sgemm cascade. Closed; SHORTFALL at both cells.
 //! - **Route C** (this kernel, jit:fc182ed5) — pure-integer
 //!   Goto/BLIS panelized micro-kernel. See
-//!   `dev/active/fc182ed5/fc182ed5-route-c-design.md` for the panel
-//!   dimension derivation (`MR × NR × KC = 4 × 24 × 256`) and the
+//!   `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`
+//!   for the panel dimension derivation (`MR × NR × KC = 4 × 24 × 256`) and the
 //!   `_mm256_madd_epi16` inner-loop structure.
 //!
 //! Provenance: implemented from public Goto-vandeGeijn 2008 / BLIS 2015
@@ -61,13 +61,13 @@
 //! at runtime). Callers without AVX2 receive `None` and must fall
 //! back to Candidate C or scalar.
 
-/// Cache-blocking factor along the k-axis: the byte-lane panel
-/// kernel's L1d-fit blocking factor. See module docs and
-/// `dev/active/fc182ed5/fc182ed5-route-c-design.md` § 2.2 for the
-/// derivation and the route-C measurement
+/// Cache-blocking factor along the k-axis: the byte-lane panel kernel's L1d-fit
+/// blocking factor. See module docs and
+/// `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`
+/// § 2.2 for the derivation and the route-C measurement
 /// `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`;
-/// the u32 overflow bound (`KC ≤ 68 719` at p = 251) is orders of
-/// magnitude larger and not binding.
+/// the u32 overflow bound (`KC ≤ 68 719` at p = 251) is orders of magnitude
+/// larger and not binding.
 pub const KC: usize = 256;
 
 /// Whole-GEMM panelized integer kernel signature for `Fp<P>` with

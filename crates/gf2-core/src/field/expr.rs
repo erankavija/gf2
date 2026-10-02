@@ -1,10 +1,10 @@
 //! Expression-template proxy algebra over [`FieldMatrix<F>`].
 //!
 //! This module implements the expression-template layer designed in
-//! `dev/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md` (story `cdcebf6a`). It lets
-//! users write matrix algebra in idiomatic Rust and have the compiler infer
-//! a proxy tree that evaluates to exactly **one** kernel call per canonical
-//! fusion on the evaluation boundary:
+//! `dev/archive/bb85c68a-field-linear-algebra/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md`
+//! (story `cdcebf6a`). It lets users write matrix algebra in idiomatic Rust and
+//! have the compiler infer a proxy tree that evaluates to exactly **one**
+//! kernel call per canonical fusion on the evaluation boundary:
 //!
 //! ```rust
 //! # use gf2_core::field::matrix::FieldMatrix;
@@ -89,8 +89,8 @@
 //! lazy-friendly route through [`Scale`] → [`Evaluate`].
 //!
 //! This note supersedes the "bare matrix is an `Evaluate<F>`" claim in
-//! `dev/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md` §6.5 (amended at
-//! `d48a3cfd/T2`).
+//! `dev/archive/bb85c68a-field-linear-algebra/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md`
+//! §6.5 (amended at `d48a3cfd/T2`).
 
 use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};
@@ -1337,10 +1337,10 @@ where
 /// Private helper: materialise a `MatrixLike<F>` proxy as an owned
 /// [`FieldMatrix<F>`], used by proxy `MatrixLike::transpose` impls. Sources
 /// a zero witness from the expression's own `(0, 0)` cell when the shape is
-/// nonempty; for empty shapes it falls back to `F::zero_hint()`, panicking
-/// only in the degenerate runtime-context-with-empty-shape case (which
-/// matches the gemm/matvec behaviour T1 documented for runtime-context
-/// fields — see `dev/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md`).
+/// nonempty; for empty shapes it falls back to `F::zero_hint()`, panicking only
+/// in the degenerate runtime-context-with-empty-shape case (which matches the
+/// gemm/matvec behaviour T1 documented for runtime-context fields — see
+/// `dev/archive/bb85c68a-field-linear-algebra/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md`).
 fn materialise<F, E>(expr: &E) -> FieldMatrix<F>
 where
     F: FiniteField,

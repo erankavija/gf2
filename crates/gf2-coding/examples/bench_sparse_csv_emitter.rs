@@ -2,7 +2,8 @@
 //!
 //! Companion to `crates/gf2-core/examples/bench_csv_emitter.rs`. That binary
 //! emits the dense rows of the post-PPC scorecard; this one emits the sparse
-//! rows for the operations promoted in `dev/plans/sparse_benchmark_corpus.md`
+//! rows for the operations promoted in
+//! `dev/archive/026fc832-gf2-core-sota-stretch/plans/sparse_benchmark_corpus.md`
 //! § 4 (the corpus design doc owned by `jit:a3412e15`):
 //!
 //!   - `spmv`           — `y = A·x` over GF(2), GF(p), GF(2^m)
