@@ -389,7 +389,7 @@ impl Llr {
 
     /// Saturate a batch of LLRs to the range `[-max, max]`.
     pub fn saturate_batch(llrs: &[Llr], max: f32) -> Vec<Llr> {
-        // Scalar; the SIMD kernel is `@/issue/NEWID-2`.
+        // Scalar; a SIMD kernel is tracked in `@/issue/e1ff915f`.
         llrs.iter().map(|llr| llr.saturate(max)).collect()
     }
 
@@ -397,7 +397,7 @@ impl Llr {
     ///
     /// Returns `false` (bit 0) if LLR >= 0, `true` (bit 1) if LLR < 0.
     pub fn hard_decision_batch(llrs: &[Llr]) -> Vec<bool> {
-        // Scalar; the SIMD kernel is `@/issue/NEWID-2`.
+        // Scalar; a SIMD kernel is tracked in `@/issue/e1ff915f`.
         llrs.iter().map(|llr| llr.hard_decision()).collect()
     }
 
