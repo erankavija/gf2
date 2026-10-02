@@ -6,10 +6,10 @@
 //! [`permanental_rank_status`] predicate that decides permanental rank
 //! deficiency by conjunction over row submatrices, and the exact
 //! [`compressed_rank`] recurrence for the three-column case. See the epic
-//! design at `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`
-//! §6 / §7.3 / §9 for the algorithm family, and
-//! `dev/plans/9fe275d3/d1b_packed_field_api.md` for the trait surface frozen at
-//! W6.
+//! design at `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md` §6 / §7.3
+//! / §9 for the algorithm family, and
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md` for the
+//! trait surface frozen at W6.
 //!
 //! # Status
 //!
@@ -30,7 +30,7 @@
 //! permanent-grouped path `gf2_algebra::permanent::gray::gray_code_iter`
 //! that the W1-T6 contract names, while the underlying module also
 //! remains reachable as `gf2_algebra::gray` per
-//! `dev/plans/6e20133d/d1a_gf2_algebra_boundary.md` §4.2.
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md` §4.2.
 
 pub mod bipedal3;
 pub mod bipedal3_multiword;

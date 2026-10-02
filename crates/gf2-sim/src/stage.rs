@@ -1,7 +1,9 @@
 //! Stage trait shapes and the type-erasure layer.
 //!
-//! This module lifts §1 "Stage / Connector trait shapes" of the Phase 0
-//! design doc (`dev/active/ec530af9/ec530af9-pipeline-design.md`) into code:
+//! This module lifts §1 "Stage / Connector trait shapes" of the Phase 0 design
+//! doc
+//! (`dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md`)
+//! into code:
 //! [`Stage`], the [`AnyStage`] / [`TypedBatch`] / [`AnyScratch`] type-erasure
 //! layer, and the [`ExecutionClass`] / [`FallbackKind`] enums.
 

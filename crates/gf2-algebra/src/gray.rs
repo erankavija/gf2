@@ -7,11 +7,11 @@
 //! and whether the toggled bit was just added (`+1`) or removed (`-1`)
 //! from the running subset.
 //!
-//! See `dev/plans/6e20133d/d1a_gf2_algebra_boundary.md` §4.2 for why this lives
-//! in `gf2-algebra` rather than alongside the unrelated M4RM Gray table
-//! in `gf2-core::alg::m4rm`. The formula derivation is in
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`
-//! §3 and §6.
+//! See `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md` §4.2
+//! for why this lives in `gf2-algebra` rather than alongside the unrelated M4RM Gray table in
+//! `gf2-core::alg::m4rm`. The formula derivation is in
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md` §3 and
+//! §6.
 //!
 //! Re-exported as [`crate::permanent::gray`] for callers that want the
 //! permanent-grouped path.
