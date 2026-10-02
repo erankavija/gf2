@@ -940,7 +940,8 @@
   "495807a3 work landed on main before this session (4133f4152); gates run by lead.",
   "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
   "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings.",
-  "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it."
+  "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it.",
+  "User decision 2026-10-02: cargo-ci and code-review removed from purely documentation issues: 69aa6896 8b42d23b 698fa793 4f752758 b16d013a deda0962 ee50e270 44f4586d 1fca3739 8a9156fc 01c20b61 9dcc0cae da120b98 5625a423 2ff9953a cdba4e71 6c314026 fdb998ec b959ffe8 e85b8edf 4bdcd65a 60652fe4 875914b3 41e1d47d a82d2347. Re-add both if any of them touches Rust, scripts or config."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
