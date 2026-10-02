@@ -15490,3 +15490,6 @@
 {"gate_key":"docs-mechanical","id":"68a4c1eb-5435-4100-af2f-61acdea037b6","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-02T22:15:41.373013863Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"c70c0368-798b-4d7e-a7cd-cf12b5d0b9cb","issue_id":"29331bd3-e56a-4521-8db9-096152ee8482","timestamp":"2026-10-02T22:15:45.521143512Z","to":"done","type":"issue_state_changed"}
 {"id":"feaa1762-631b-428f-9f1d-58cf7894abf5","issue_id":"29331bd3-e56a-4521-8db9-096152ee8482","timestamp":"2026-10-02T22:15:45.521143512Z","type":"issue_completed"}
+{"gate_key":"doc-review","id":"67de0788-bd49-4674-a02c-c405cf47d0cc","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-02T22:19:47.254592911Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"1eec6439-1c72-46d8-bfd0-4459e0b3b845","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-02T22:31:32.337801842Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"85897dd5-d918-4ac5-9497-5611a2c8521e","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-02T22:35:38.931527003Z","type":"gate_failed","updated_by":"auto:executor"}
