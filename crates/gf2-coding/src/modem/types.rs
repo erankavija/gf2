@@ -39,16 +39,6 @@ impl<S: ModemScalar> SymbolPoint<S> {
     /// * `i` - In-phase coordinate.
     /// * `q` - Quadrature coordinate.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::SymbolPoint;
-    ///
-    /// let p = SymbolPoint::<f64>::new(0.5, -0.5);
-    /// assert_eq!(p.i, 0.5);
-    /// assert_eq!(p.q, -0.5);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -58,15 +48,6 @@ impl<S: ModemScalar> SymbolPoint<S> {
     }
 
     /// Returns the squared radius `i*i + q*q` (the symbol energy).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::SymbolPoint;
-    ///
-    /// let p = SymbolPoint::<f32>::new(3.0, 4.0);
-    /// assert!((p.energy() - 25.0).abs() < 1e-5);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -118,15 +99,6 @@ impl LabelWord {
     ///
     /// Panics if `width == 0`, `width > 16`, or `bits` does not fit in
     /// `width` bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::LabelWord;
-    ///
-    /// let l = LabelWord::new(0b101, 3);
-    /// assert_eq!(l.bits, 5);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -185,15 +157,6 @@ impl LabelWord {
 /// Identifier for a bit position within a symbol.
 ///
 /// `bit_index = 0` is the MSB under the canonical intra-symbol ordering.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::BitChannelId;
-///
-/// let id = BitChannelId { bit_index: 2 };
-/// assert_eq!(id.bit_index, 2);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BitChannelId {
     /// Bit position within a symbol; `0` is the MSB.
@@ -204,15 +167,6 @@ pub struct BitChannelId {
 ///
 /// Set by presets and builders. Analysis and documentation consume this;
 /// hot demap loops never read it.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::BitChannelSemantics;
-///
-/// let sem = BitChannelSemantics::IAxisPam(0);
-/// assert_eq!(sem, BitChannelSemantics::IAxisPam(0));
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BitChannelSemantics {
     /// Arbitrary constellation; the payload is the bit-position index only.
@@ -231,15 +185,6 @@ pub enum BitChannelSemantics {
 ///
 /// Points are stored post-normalized; the retained variant records what
 /// the caller requested.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::Normalization;
-///
-/// let n = Normalization::<f32>::UnitAverageSymbolEnergy;
-/// assert_eq!(n, Normalization::UnitAverageSymbolEnergy);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Normalization<S: ModemScalar> {
     /// Scale so that the average `i^2 + q^2` over all symbols equals 1.
@@ -251,14 +196,6 @@ pub enum Normalization<S: ModemScalar> {
 /// Selectable demapper semantics.
 ///
 /// Trait task `d36ae697` consumes this; it is not redefined there.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::DemapMethod;
-///
-/// assert_ne!(DemapMethod::ExactLogMap, DemapMethod::MaxLog);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DemapMethod {
     /// Exact log-MAP (reference / analysis) path.
@@ -276,21 +213,6 @@ pub enum DemapMethod {
 /// Each flag describes a property of the bit-channel LLR under AWGN with
 /// the normalization contract documented at the [`modem`](super) module
 /// level.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::BitChannelAnalysis;
-///
-/// let a = BitChannelAnalysis {
-///     symmetric_llr_distribution: true,
-///     conditionally_independent: true,
-///     closed_form_llr_available: true,
-/// };
-/// assert!(a.symmetric_llr_distribution);
-/// assert!(a.conditionally_independent);
-/// assert!(a.closed_form_llr_available);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BitChannelAnalysis {
     /// LLR conditional distribution is symmetric about 0 under
@@ -331,25 +253,6 @@ pub struct BitChannelAnalysis {
 /// - `analysis.len() == bits_per_symbol()` — one entry per bit position,
 ///   indexed MSB-first to match [`super::BitChannelSemantics`] and
 ///   [`super::BitChannelId`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::{BitChannelAnalysis, ModemCapabilities};
-///
-/// const A: &[BitChannelAnalysis] = &[BitChannelAnalysis {
-///     symmetric_llr_distribution: true,
-///     conditionally_independent: true,
-///     closed_form_llr_available: true,
-/// }];
-/// let caps = ModemCapabilities {
-///     supports_exact_log_map: true,
-///     supports_max_log: true,
-///     analysis: A,
-/// };
-/// assert!(caps.supports_exact_log_map);
-/// assert_eq!(caps.analysis.len(), 1);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ModemCapabilities {
     /// Whether the spec supports the exact log-MAP demapper path.

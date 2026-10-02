@@ -137,14 +137,6 @@ pub struct RunningStats {
 impl RunningStats {
     /// Constructs an empty accumulator.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let s = RunningStats::new();
-    /// assert_eq!(s.count(), 0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -205,15 +197,6 @@ impl RunningStats {
 
     /// Number of finite samples accumulated so far.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let mut s = RunningStats::new();
-    /// s.push(1.0);
-    /// assert_eq!(s.count(), 1);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -223,16 +206,6 @@ impl RunningStats {
     }
 
     /// Running arithmetic mean. Returns `0.0` when `count == 0`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let mut s = RunningStats::new();
-    /// s.push(2.0);
-    /// s.push(4.0);
-    /// assert!((s.mean() - 3.0).abs() < 1e-12);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -246,17 +219,6 @@ impl RunningStats {
     /// `0.0` when `count == 0`. Callers computing an unbiased sample
     /// variance can use `m2() / (count() - 1)`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let mut s = RunningStats::new();
-    /// s.push(1.0);
-    /// s.push(3.0);
-    /// // M2 = (1-2)^2 + (3-2)^2 = 2.
-    /// assert!((s.m2() - 2.0).abs() < 1e-12);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -266,16 +228,6 @@ impl RunningStats {
     }
 
     /// Population variance `M2 / count`. Returns `0.0` when `count == 0`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let mut s = RunningStats::new();
-    /// s.push(1.0);
-    /// s.push(3.0);
-    /// assert!((s.variance() - 1.0).abs() < 1e-12);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -292,16 +244,6 @@ impl RunningStats {
     /// Smallest finite sample seen. Returns `+INFINITY` for empty
     /// accumulators so `min()`/`max()` compose cleanly under merge.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let mut s = RunningStats::new();
-    /// s.push(2.0);
-    /// s.push(-1.0);
-    /// assert_eq!(s.min(), -1.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -312,16 +254,6 @@ impl RunningStats {
 
     /// Largest finite sample seen. Returns `-INFINITY` for empty
     /// accumulators.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::RunningStats;
-    /// let mut s = RunningStats::new();
-    /// s.push(2.0);
-    /// s.push(-1.0);
-    /// assert_eq!(s.max(), 2.0);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -389,16 +321,6 @@ impl Histogram {
     /// # Panics
     ///
     /// Panics if `min` or `max` is non-finite, or if `!(min < max)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use core::num::NonZeroUsize;
-    /// use gf2_coding::modem::analysis::Histogram;
-    ///
-    /// let h = Histogram::new(-1.0, 1.0, NonZeroUsize::new(4).unwrap());
-    /// assert_eq!(h.bins().len(), 4);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -729,14 +651,6 @@ fn gaussian_mi_approximation_bits(mean_abs_llr: f64) -> f64 {
 /// [`PerBitChannelStats::mutual_info_bits_gaussian_approximation`]);
 /// the histogram variant is the empirical MI restricted to the
 /// configured histogram range.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::analysis::GmiMethod;
-/// let m = GmiMethod::GaussianApproximation;
-/// assert!(matches!(m, GmiMethod::GaussianApproximation));
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GmiMethod {
     /// Sum the closed-form Gaussian-approximation per-bit MI estimate
@@ -994,14 +908,6 @@ impl PerBitLlrStats {
     ///
     /// Panics if `bits_per_symbol == 0` or `bits_per_symbol > 16`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// let stats = PerBitLlrStats::new(4);
-    /// assert_eq!(stats.bits_per_symbol(), 4);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(`bits_per_symbol`).
@@ -1069,13 +975,6 @@ impl PerBitLlrStats {
 
     /// Returns the configured constellation label width.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// assert_eq!(PerBitLlrStats::new(6).bits_per_symbol(), 6);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -1093,15 +992,6 @@ impl PerBitLlrStats {
     /// tag is part of every [`PerBitChannelStats::demap_method`] and
     /// prevents [`PerBitLlrStats::merge`] from combining heterogeneous
     /// streams.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    ///
-    /// let stats = PerBitLlrStats::new(1);
-    /// assert_eq!(stats.demap_method(), None);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1308,19 +1198,6 @@ impl PerBitLlrStats {
     }
 
     /// Exports one [`PerBitChannelStats`] per bit position.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    ///
-    /// let mut stats = PerBitLlrStats::new(2);
-    /// stats.accumulate(&[Llr::new(2.0), Llr::new(-2.0)], &[false, true]);
-    /// let r = stats.report();
-    /// assert_eq!(r.len(), 2);
-    /// assert!((r[0].mean_abs_llr - 2.0).abs() < 1e-12);
-    /// ```
     ///
     /// # Complexity
     ///

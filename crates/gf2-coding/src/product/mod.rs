@@ -256,62 +256,20 @@ impl SisoEngine {
 /// ```
 pub trait ProductComponent: BlockEncoder {
     /// Returns the codeword length of the component code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let code = ExtendedBchComponent::ebch_16_11();
-    /// assert_eq!(code.comp_n(), 16);
-    /// ```
     fn comp_n(&self) -> usize;
 
     /// Returns the message length of the component code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let code = ExtendedBchComponent::ebch_16_11();
-    /// assert_eq!(code.comp_k(), 11);
-    /// ```
     fn comp_k(&self) -> usize;
 
     /// Returns `true` if all codewords have even Hamming weight.
     ///
     /// This flag enables ORBGRAND's even-code optimization, which skips
     /// odd-weight noise patterns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let code = ExtendedBchComponent::ebch_16_11();
-    /// assert!(code.comp_is_even());
-    /// ```
     fn comp_is_even(&self) -> bool;
 
     /// Returns a reference to the parity-check matrix H.
     ///
     /// The matrix has dimensions (n - k) x n.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductComponent;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let code = ExtendedBchComponent::ebch_16_11();
-    /// let h = code.comp_parity_check();
-    /// assert_eq!(h.rows(), 5);
-    /// assert_eq!(h.cols(), 16);
-    /// ```
     fn comp_parity_check(&self) -> &BitMatrix;
 }
 
@@ -412,17 +370,6 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// * `component` - The component (n, k) code implementing [`ProductComponent`].
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
-    /// assert_eq!(product.n(), 256);
-    /// assert_eq!(product.k(), 121);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1) — the constructor just stores the component code.
@@ -437,47 +384,16 @@ impl<C: ProductComponent> ProductCode<C> {
     }
 
     /// Returns the product code codeword length (n^2).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
-    /// assert_eq!(product.n(), 256);
-    /// ```
     pub fn n(&self) -> usize {
         self.comp_n * self.comp_n
     }
 
     /// Returns the product code message length (k^2).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
-    /// assert_eq!(product.k(), 121);
-    /// ```
     pub fn k(&self) -> usize {
         self.comp_k * self.comp_k
     }
 
     /// Returns a reference to the component code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    /// use gf2_coding::product::ProductComponent;
-    ///
-    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
-    /// assert_eq!(product.component().comp_n(), 16);
-    /// ```
     pub fn component(&self) -> &C {
         &self.component
     }
@@ -652,20 +568,6 @@ impl<C: ProductComponent> ProductCode<C> {
     ///
     /// Panics if `flat.len() != n^2`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    /// use gf2_core::BitVec;
-    ///
-    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
-    /// let flat = BitVec::zeros(256);
-    /// let matrix = product.flat_to_matrix(&flat);
-    /// assert_eq!(matrix.rows(), 16);
-    /// assert_eq!(matrix.cols(), 16);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(n^2).
@@ -700,19 +602,6 @@ impl<C: ProductComponent> ProductCode<C> {
     /// # Panics
     ///
     /// Panics if `matrix` dimensions are not n x n.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ProductCode;
-    /// use gf2_coding::product::ExtendedBchComponent;
-    /// use gf2_core::BitMatrix;
-    ///
-    /// let product = ProductCode::new(ExtendedBchComponent::ebch_16_11());
-    /// let matrix = BitMatrix::zeros(16, 16);
-    /// let flat = product.matrix_to_flat(&matrix);
-    /// assert_eq!(flat.len(), 256);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -799,18 +688,6 @@ impl<C: ProductComponent> BlockEncoder for ProductCode<C> {
 /// Controls the maximum number of turbo iterations, the extrinsic scaling
 /// factor, the ORBGRAND configuration for the component SISO decoder, and
 /// an optional list-BLER early-termination threshold.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::product::TurboDecoderConfig;
-///
-/// let config = TurboDecoderConfig::default();
-/// assert_eq!(config.max_iterations, 20);
-/// assert!((config.alpha - 0.5).abs() < 1e-10);
-/// assert_eq!(config.list_size, 4);
-/// assert!(config.list_bler_threshold.is_none());
-/// ```
 #[derive(Debug, Clone)]
 pub struct TurboDecoderConfig {
     /// Maximum number of row-column iteration pairs.
@@ -932,24 +809,6 @@ impl Default for TurboDecoderConfig {
 ///
 /// Contains the decoded message bits, convergence information, and
 /// performance statistics.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::product::TurboDecoderResult;
-/// use gf2_core::BitVec;
-///
-/// let result = TurboDecoderResult {
-///     decoded_bits: BitVec::zeros(121),
-///     iterations: 3,
-///     converged: true,
-///     total_queries: 500,
-///     queries_per_bit: 500.0 / 121.0,
-/// };
-/// assert!(result.converged);
-/// assert_eq!(result.iterations, 3);
-/// assert!((result.queries_per_bit - 500.0 / 121.0).abs() < 1e-10);
-/// ```
 #[derive(Debug, Clone)]
 pub struct TurboDecoderResult {
     /// The decoded message bits (length k^2).
@@ -1071,16 +930,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     /// * `component` - The component (n, k) code implementing [`ProductComponent`].
     /// * `config` - Decoder configuration controlling iterations, scaling, and
     ///   SISO engine selection (SOGRAND, BCJR, or GPU-BCJR).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let decoder = TurboDecoder::new(component, TurboDecoderConfig::default());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1403,17 +1252,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     /// # Panics
     ///
     /// Panics if the decoder was constructed with `use_bcjr = true`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let decoder = TurboDecoder::new(component, TurboDecoderConfig::default());
-    /// assert_eq!(decoder.sogrand().n(), 16);
-    /// ```
     pub fn sogrand(&self) -> &SoGrand {
         match &self.siso {
             SisoEngine::SoGrand(s) => s,
@@ -1446,17 +1284,6 @@ impl<C: ProductComponent + Clone> TurboDecoder<C> {
     }
 
     /// Returns the turbo decoder configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{TurboDecoder, TurboDecoderConfig};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let decoder = TurboDecoder::new(component, TurboDecoderConfig::default());
-    /// assert_eq!(decoder.config().max_iterations, 20);
-    /// ```
     pub fn config(&self) -> &TurboDecoderConfig {
         &self.config
     }

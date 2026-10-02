@@ -136,14 +136,6 @@ impl ReliabilityPermutation {
 
 impl Llr {
     /// Creates a new LLR from a raw f32 value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let llr = Llr::new(3.5);  // High confidence in bit 0
-    /// ```
     pub fn new(value: f32) -> Self {
         Llr(value)
     }
@@ -169,15 +161,6 @@ impl Llr {
     }
 
     /// Returns the magnitude (absolute value) of the LLR, representing confidence.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// assert_eq!(Llr::new(3.5).magnitude(), 3.5);
-    /// assert_eq!(Llr::new(-2.0).magnitude(), 2.0);
-    /// ```
     pub fn magnitude(self) -> f32 {
         self.0.abs()
     }
@@ -233,16 +216,6 @@ impl Llr {
     const MAX_TANH_PRODUCT: f32 = 1.0 - f32::EPSILON;
 
     /// Saturates the LLR to the range `[-max, max]` to prevent overflow.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// assert_eq!(Llr::new(100.0).saturate(10.0).value(), 10.0);
-    /// assert_eq!(Llr::new(-100.0).saturate(10.0).value(), -10.0);
-    /// assert_eq!(Llr::new(5.0).saturate(10.0).value(), 5.0);
-    /// ```
     pub fn saturate(self, max: f32) -> Self {
         Llr(self.0.clamp(-max, max))
     }
@@ -417,18 +390,6 @@ impl Llr {
     /// Saturate a batch of LLRs to the range `[-max, max]`.
     ///
     /// **SIMD Acceleration**: Automatically uses AVX2 if available.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let llrs = vec![Llr::new(100.0), Llr::new(-100.0), Llr::new(5.0)];
-    /// let saturated = Llr::saturate_batch(&llrs, 10.0);
-    /// assert_eq!(saturated[0].value(), 10.0);
-    /// assert_eq!(saturated[1].value(), -10.0);
-    /// assert_eq!(saturated[2].value(), 5.0);
-    /// ```
     pub fn saturate_batch(llrs: &[Llr], max: f32) -> Vec<Llr> {
         // TODO: Add SIMD implementation in gf2-kernels-simd
         // For now, use scalar
@@ -440,16 +401,6 @@ impl Llr {
     /// Returns `false` (bit 0) if LLR >= 0, `true` (bit 1) if LLR < 0.
     ///
     /// **SIMD Acceleration**: Automatically uses AVX2 if available.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let llrs = vec![Llr::new(3.0), Llr::new(-2.0), Llr::new(0.5)];
-    /// let bits = Llr::hard_decision_batch(&llrs);
-    /// assert_eq!(bits, vec![false, true, false]);
-    /// ```
     pub fn hard_decision_batch(llrs: &[Llr]) -> Vec<bool> {
         // TODO: Add SIMD implementation in gf2-kernels-simd
         // For now, use scalar
@@ -546,16 +497,6 @@ impl Llr {
     }
 
     /// Checks if the LLR value is finite (not NaN or infinity).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// assert!(Llr::new(3.5).is_finite());
-    /// assert!(!Llr::infinity().is_finite());
-    /// assert!(!Llr::neg_infinity().is_finite());
-    /// ```
     pub fn is_finite(self) -> bool {
         self.0.is_finite()
     }

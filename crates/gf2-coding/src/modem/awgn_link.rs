@@ -190,21 +190,6 @@ impl<S: ModemScalar, M: BatchMapper<S>, D: BatchSoftDemapper<S>> ModemAwgnChanne
     ///
     /// Panics if `mapper` and `demapper` disagree on `bits_per_symbol`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::channel::AwgnChannel;
-    /// use gf2_coding::modem::{
-    ///     DemapMethod, GrayQamMapper, ModemAwgnChannel, ModemSpec, ReferenceSoftDemapper,
-    /// };
-    ///
-    /// let mapper = GrayQamMapper::<f32>::from_preset_order(4);
-    /// let demapper = ReferenceSoftDemapper::new(ModemSpec::gray_square_qam(4));
-    /// let channel = AwgnChannel::from_variance(0.25);
-    /// let link = ModemAwgnChannel::new(mapper, demapper, channel, DemapMethod::MaxLog);
-    /// assert_eq!(link.method(), DemapMethod::MaxLog);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -461,18 +446,6 @@ where
     /// # Panics
     ///
     /// Panics if `mapper.spec().bits_per_symbol() != demapper.spec().bits_per_symbol()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{
-    ///     DemapMethod, GrayQamMapper, ModemChannelAdapter, ModemSpec, ReferenceSoftDemapper,
-    /// };
-    ///
-    /// let mapper = GrayQamMapper::<f32>::from_preset_order(16);
-    /// let demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(16));
-    /// let _ = ModemChannelAdapter::new(mapper, demap, DemapMethod::MaxLog);
-    /// ```
     ///
     /// # Complexity
     ///

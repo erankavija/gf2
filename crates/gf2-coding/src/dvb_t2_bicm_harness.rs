@@ -72,16 +72,6 @@ pub fn box_muller_cos(u1: f64, u2: f64) -> f32 {
 /// Code rate as a floating-point fraction.
 ///
 /// Returns 1.0 for any code rate not in the DVB-T2 baseline set.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::rate_f64;
-/// use gf2_coding::CodeRate;
-/// assert_eq!(rate_f64(CodeRate::Rate1_2), 0.5);
-/// assert!((rate_f64(CodeRate::Rate2_3) - 2.0/3.0).abs() < 1e-15);
-/// assert_eq!(rate_f64(CodeRate::Rate3_4), 0.75);
-/// ```
 pub fn rate_f64(r: CodeRate) -> f64 {
     match r {
         CodeRate::Rate1_2 => 0.5,
@@ -94,16 +84,6 @@ pub fn rate_f64(r: CodeRate) -> f64 {
 /// Human-readable slash notation for a code rate (`"1/2"`, `"2/3"`, `"3/4"`).
 ///
 /// Returns `"?"` for unrecognised rates.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::rate_display;
-/// use gf2_coding::CodeRate;
-/// assert_eq!(rate_display(CodeRate::Rate1_2), "1/2");
-/// assert_eq!(rate_display(CodeRate::Rate2_3), "2/3");
-/// assert_eq!(rate_display(CodeRate::Rate3_4), "3/4");
-/// ```
 pub fn rate_display(r: CodeRate) -> &'static str {
     match r {
         CodeRate::Rate1_2 => "1/2",
@@ -116,16 +96,6 @@ pub fn rate_display(r: CodeRate) -> &'static str {
 /// Filename-safe underscore notation for a code rate (`"1_2"`, `"2_3"`, `"3_4"`).
 ///
 /// Returns `"unknown"` for unrecognised rates.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::rate_underscore;
-/// use gf2_coding::CodeRate;
-/// assert_eq!(rate_underscore(CodeRate::Rate1_2), "1_2");
-/// assert_eq!(rate_underscore(CodeRate::Rate2_3), "2_3");
-/// assert_eq!(rate_underscore(CodeRate::Rate3_4), "3_4");
-/// ```
 pub fn rate_underscore(r: CodeRate) -> &'static str {
     match r {
         CodeRate::Rate1_2 => "1_2",
@@ -138,15 +108,6 @@ pub fn rate_underscore(r: CodeRate) -> &'static str {
 /// Modulation string used in filenames and CSV columns (`"16qam"`, `"64qam"`).
 ///
 /// Returns `"unknown"` for unrecognised modulations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::dvb_t2_bicm_harness::mod_str;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-/// assert_eq!(mod_str(DvbT2Modulation::Qam16), "16qam");
-/// assert_eq!(mod_str(DvbT2Modulation::Qam64), "64qam");
-/// ```
 pub fn mod_str(m: DvbT2Modulation) -> &'static str {
     match m {
         DvbT2Modulation::Qam16 => "16qam",

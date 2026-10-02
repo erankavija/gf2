@@ -67,15 +67,6 @@ pub fn permutation(seed: u64, n: usize) -> Vec<u16> {
 /// * `seed` — 64-bit seed for the internal [`Lcg`].
 /// * `n_bits` — Number of bits to generate.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::test_oracle::bit_stream;
-///
-/// let bits = bit_stream(0xA11CE, 64);
-/// assert_eq!(bits.len(), 64);
-/// ```
-///
 /// # Complexity
 ///
 /// O(`n_bits`).

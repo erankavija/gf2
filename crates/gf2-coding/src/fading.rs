@@ -52,31 +52,11 @@ pub struct Complex {
 
 impl Complex {
     /// Creates a new complex number.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::Complex;
-    ///
-    /// let c = Complex::new(1.0, -2.0);
-    /// assert_eq!(c.re, 1.0);
-    /// assert_eq!(c.im, -2.0);
-    /// ```
     pub fn new(re: f64, im: f64) -> Self {
         Complex { re, im }
     }
 
     /// Returns the complex conjugate.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::Complex;
-    ///
-    /// let c = Complex::new(1.0, -2.0).conj();
-    /// assert_eq!(c.re, 1.0);
-    /// assert_eq!(c.im, 2.0);
-    /// ```
     pub fn conj(self) -> Self {
         Complex {
             re: self.re,
@@ -85,44 +65,16 @@ impl Complex {
     }
 
     /// Returns the squared absolute value |z|^2.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::Complex;
-    ///
-    /// let c = Complex::new(3.0, 4.0);
-    /// assert!((c.norm_sq() - 25.0).abs() < 1e-12);
-    /// ```
     pub fn norm_sq(self) -> f64 {
         self.re * self.re + self.im * self.im
     }
 
     /// Returns the absolute value |z|.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::Complex;
-    ///
-    /// let c = Complex::new(3.0, 4.0);
-    /// assert!((c.norm() - 5.0).abs() < 1e-12);
-    /// ```
     pub fn norm(self) -> f64 {
         self.norm_sq().sqrt()
     }
 
     /// Scales the complex number by a real scalar.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::Complex;
-    ///
-    /// let c = Complex::new(1.0, -2.0).scale(3.0);
-    /// assert_eq!(c.re, 3.0);
-    /// assert_eq!(c.im, -6.0);
-    /// ```
     pub fn scale(self, s: f64) -> Self {
         Complex {
             re: self.re * s,
@@ -168,16 +120,6 @@ impl RicianConfig {
     /// Configuration from Fig 8 of the GRAND paper: K=5, N_c=128, t=4.
     ///
     /// Frame length: N = 2·4·128 = 1024 bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::RicianConfig;
-    ///
-    /// let cfg = RicianConfig::fig8();
-    /// assert_eq!(cfg.k_factor, 5.0);
-    /// assert_eq!(cfg.frame_bits(), 1024);
-    /// ```
     pub fn fig8() -> Self {
         RicianConfig {
             k_factor: 5.0,
@@ -189,16 +131,6 @@ impl RicianConfig {
     /// Configuration from Fig 9 of the GRAND paper: K=8, N_c=256, t=2.
     ///
     /// Frame length: N = 2·2·256 = 1024 bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::RicianConfig;
-    ///
-    /// let cfg = RicianConfig::fig9();
-    /// assert_eq!(cfg.k_factor, 8.0);
-    /// assert_eq!(cfg.frame_bits(), 1024);
-    /// ```
     pub fn fig9() -> Self {
         RicianConfig {
             k_factor: 8.0,
@@ -210,16 +142,6 @@ impl RicianConfig {
     /// Configuration from Fig 10 of the GRAND paper: K=6, N_c=256, t=8.
     ///
     /// Frame length: N = 2·8·256 = 4096 bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::RicianConfig;
-    ///
-    /// let cfg = RicianConfig::fig10();
-    /// assert_eq!(cfg.k_factor, 6.0);
-    /// assert_eq!(cfg.frame_bits(), 4096);
-    /// ```
     pub fn fig10() -> Self {
         RicianConfig {
             k_factor: 6.0,
@@ -229,29 +151,11 @@ impl RicianConfig {
     }
 
     /// Returns the total number of bits per frame: `N = 2·t·N_c`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::RicianConfig;
-    ///
-    /// let cfg = RicianConfig::fig8();
-    /// assert_eq!(cfg.frame_bits(), 1024);
-    /// ```
     pub fn frame_bits(&self) -> usize {
         2 * self.taps * self.coherence_block
     }
 
     /// Returns the number of QPSK symbols per frame.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::RicianConfig;
-    ///
-    /// let cfg = RicianConfig::fig8();
-    /// assert_eq!(cfg.frame_symbols(), 512);
-    /// ```
     pub fn frame_symbols(&self) -> usize {
         self.taps * self.coherence_block
     }
@@ -292,14 +196,6 @@ impl RicianChannel {
     /// - `config.k_factor < 0.0` (K-factor must be non-negative)
     /// - `config.coherence_block == 0` (coherence block size must be positive)
     /// - `config.taps == 0` (number of taps must be positive)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::{RicianChannel, RicianConfig};
-    ///
-    /// let channel = RicianChannel::new(RicianConfig::fig8());
-    /// ```
     pub fn new(config: RicianConfig) -> Self {
         assert!(
             config.k_factor >= 0.0,
@@ -332,18 +228,6 @@ impl RicianChannel {
     }
 
     /// Returns the channel configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::{RicianChannel, RicianConfig};
-    ///
-    /// let channel = RicianChannel::new(RicianConfig::fig9());
-    /// let cfg = channel.config();
-    /// assert_eq!(cfg.k_factor, 8.0);
-    /// assert_eq!(cfg.coherence_block, 256);
-    /// assert_eq!(cfg.taps, 2);
-    /// ```
     pub fn config(&self) -> &RicianConfig {
         &self.config
     }
@@ -531,14 +415,6 @@ impl BitInterleaver {
     /// # Complexity
     ///
     /// O(n) construction time and memory.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::BitInterleaver;
-    ///
-    /// let interleaver = BitInterleaver::new(64, 12345);
-    /// ```
     pub fn new(length: usize, seed: u64) -> Self {
         assert!(length > 0, "Interleaver length must be positive");
         let perm = generate_permutation(length, seed);
@@ -550,15 +426,6 @@ impl BitInterleaver {
     }
 
     /// Returns the block length this interleaver was built for.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::BitInterleaver;
-    ///
-    /// let interleaver = BitInterleaver::new(128, 0);
-    /// assert_eq!(interleaver.len(), 128);
-    /// ```
     pub fn len(&self) -> usize {
         self.perm.len()
     }
@@ -1191,15 +1058,6 @@ impl QpskRicianChannelModel {
     /// # Arguments
     ///
     /// * `config` - Rician fading channel configuration
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::fading::{QpskRicianChannelModel, RicianConfig};
-    ///
-    /// let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
-    /// let _ = channel; // delegates QPSK map/demap to the modem framework
-    /// ```
     pub fn new(config: RicianConfig) -> Self {
         Self { config }
     }

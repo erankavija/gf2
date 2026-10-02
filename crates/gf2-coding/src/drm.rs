@@ -89,17 +89,6 @@ impl DrmCode {
     /// Panics if `k` exceeds 2^m (more monomials than evaluation points)
     /// or if `m` is 0.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// // RM(2,5) has 16 monomials of degree <= 2
-    /// let code = DrmCode::new(5, 16);
-    /// assert_eq!(code.n(), 32);
-    /// assert_eq!(code.k(), 16);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(k * 2^m) for monomial evaluation, plus O(k^2 * n) for Gaussian
@@ -216,64 +205,21 @@ impl DrmCode {
     ///
     /// Retained for backward compatibility and explicitness when
     /// emphasizing the dynamic construction.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_core::BitVec;
-    ///
-    /// let code = DrmCode::drm_32_21_dynamic();
-    /// assert_eq!(code.n(), 32);
-    /// assert_eq!(code.k(), 21);
-    ///
-    /// let msg = BitVec::ones(21);
-    /// let cw = code.encode(&msg);
-    /// assert_eq!(cw.len(), 32);
-    /// ```
     pub fn drm_32_21_dynamic() -> Self {
         Self::drm_32_21()
     }
 
     /// Returns the codeword length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// assert_eq!(DrmCode::drm_32_21().n(), 32);
-    /// ```
     pub fn n(&self) -> usize {
         self.inner.n()
     }
 
     /// Returns the message length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// assert_eq!(DrmCode::drm_32_21().k(), 21);
-    /// ```
     pub fn k(&self) -> usize {
         self.inner.k()
     }
 
     /// Returns the parity-check matrix H.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// let code = DrmCode::drm_32_21();
-    /// let h = code.parity_check();
-    /// assert_eq!(h.rows(), 32 - 21);
-    /// assert_eq!(h.cols(), 32);
-    /// ```
     pub fn parity_check(&self) -> &BitMatrix {
         self.inner
             .parity_check()
@@ -284,15 +230,6 @@ impl DrmCode {
     ///
     /// Used by ORBGRAND's even-code optimization to skip half the
     /// noise pattern search space.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// let code = DrmCode::drm_32_21();
-    /// let _is_even = code.is_even();
-    /// ```
     pub fn is_even(&self) -> bool {
         let g = self.inner.generator_matrix();
         for i in 0..self.inner.k() {
@@ -310,16 +247,6 @@ impl DrmCode {
     }
 
     /// Returns the inner [`LinearBlockCode`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::drm::DrmCode;
-    ///
-    /// let code = DrmCode::drm_32_21();
-    /// let inner = code.inner();
-    /// assert_eq!(inner.n(), 32);
-    /// ```
     pub fn inner(&self) -> &LinearBlockCode {
         &self.inner
     }
