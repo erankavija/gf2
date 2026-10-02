@@ -3916,7 +3916,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------
-    // Proptests (tight budgets per CLAUDE.md 60s rule)
+    // Proptests (tight budgets per `@/inv/test-tier-budgets`)
     // -----------------------------------------------------------------
 
     /// Strategy: generate a random `FieldPoly<Fp<7>>` with up to 5

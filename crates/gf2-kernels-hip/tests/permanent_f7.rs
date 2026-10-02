@@ -5,8 +5,8 @@
 //! n ∈ {8, 12} (success criterion 2 of 5c0505b2), and that the GPU
 //! `__constant__` MUL_LUT is byte-identical to the host static const (criterion 3).
 //!
-//! All tests carry `#[ignore = "external: gfx1030 device required"]` per
-//! CLAUDE.md test-tier conventions.  Run them only on the dev host with ROCm
+//! All tests carry `#[ignore = "external: gfx1030 device required"]`.
+//! Run them only on the dev host with ROCm
 //! installed:
 //!
 //! ```text

@@ -59,7 +59,7 @@
 //! permanent_gf5_batch_dispatch, permanent_gf7_batch_dispatch}`, which are
 //! safe Rust functions that encapsulate the unsafe FFI internally. This
 //! preserves the workspace invariant that `unsafe` lives only in the kernel
-//! crates (CLAUDE.md §Architecture, point 3).
+//! crates (`@/inv/unsafe-kernel-isolation`).
 
 #[cfg(feature = "f7")]
 use std::sync::OnceLock;
