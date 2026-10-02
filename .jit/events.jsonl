@@ -15207,3 +15207,17 @@
 {"from":"backlog","id":"3f2fd709-22b5-4ef2-8040-c89c852ca4a0","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:31:50.093647827Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"b7df498b-bef8-4609-be75-b96ef354a02c","issue_id":"ec5b6c8f-6053-4a7b-8fe2-e569cd323ce5","timestamp":"2026-10-02T11:31:50.188372418Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"1b9d7ec9-89f1-421a-bd69-c4ccbfa8d99c","issue_id":"edcd4c9c-9d6c-4221-9b6c-685d5d28755d","timestamp":"2026-10-02T11:31:50.280137443Z","to":"ready","type":"issue_state_changed"}
+{"gate_key":"doc-review","id":"89e32843-84ac-45c9-b8e4-edde4bec13c3","issue_id":"a24b2af7-81ce-4442-9ee3-6ce096c36537","timestamp":"2026-10-02T11:32:05.365985487Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"260b7f26-660d-489c-8b1d-cd9c26b544a3","issue_id":"a0a29512-ce14-4110-a541-65ef6612278d","timestamp":"2026-10-02T11:33:11.625638810Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"d2200984-8853-40af-ad8b-588c6605ed1c","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:33:42.534470538Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"4eb2cdc4-2bff-4c16-ad7d-79b8aab41550","issue_id":"e85b8edf-f35f-49b5-bdb1-65502b7d30e1","timestamp":"2026-10-02T11:34:07.766885741Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"b66acafc-e869-4ec3-bcc1-4886eaeb9f1e","issue_id":"9b2886a7-35af-45cc-9200-dddea1c0323a","timestamp":"2026-10-02T11:34:23.606131807Z","type":"gate_passed","updated_by":"auto:executor"}
+{"id":"719bdf07-d18c-4938-8bbb-0128c8ab0d78","issue_id":"f258468e-a973-4b07-a663-99b18e1e8713","priority":"normal","timestamp":"2026-10-02T11:34:25.802029166Z","title":"Hoist the Barrett reducer out of scalar Gf2mWide multiply","type":"issue_created"}
+{"from":"ready","id":"f5c12280-8e9c-480a-b839-4fc1aa20747e","issue_id":"f258468e-a973-4b07-a663-99b18e1e8713","timestamp":"2026-10-02T11:34:39.773644995Z","to":"backlog","type":"issue_state_changed"}
+{"gate_key":"doc-review","id":"bc5d23d6-b8bc-42b5-98c8-9b5f8695689c","issue_id":"875914b3-38c8-4ec2-a13f-009fc620f7d4","timestamp":"2026-10-02T11:35:00.452084068Z","type":"gate_failed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"0ef47cb7-d9c5-4b97-8d64-0f399c884439","issue_id":"9b2886a7-35af-45cc-9200-dddea1c0323a","timestamp":"2026-10-02T11:35:05.108578420Z","to":"done","type":"issue_state_changed"}
+{"id":"3e1ff28a-1882-49a8-b1d2-812d07e47a84","issue_id":"9b2886a7-35af-45cc-9200-dddea1c0323a","timestamp":"2026-10-02T11:35:05.108578420Z","type":"issue_completed"}
+{"from":"backlog","id":"d4dbbd43-1eb3-44d4-be5e-aa288320effb","issue_id":"69aa6896-4c6e-42bb-90b6-d7237a31dc14","timestamp":"2026-10-02T11:35:05.281204638Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"560c923c-6a92-449d-9df1-b4f9c96cfae7","issue_id":"f258468e-a973-4b07-a663-99b18e1e8713","timestamp":"2026-10-02T11:35:05.392499083Z","to":"ready","type":"issue_state_changed"}
+{"from":"in_progress","id":"a8023b4a-710f-4a7a-b806-a88835c12c39","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:35:05.534067107Z","to":"done","type":"issue_state_changed"}
+{"id":"4a78d0cf-af1b-4deb-87dd-3851d0a03917","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:35:05.534067107Z","type":"issue_completed"}

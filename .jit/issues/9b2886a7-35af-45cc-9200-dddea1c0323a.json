@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/9b2886a7-invariant-draft.md"
     }
   ],
+  "done_at": "2026-10-02T11:35:05.108578420Z",
   "first_ready_at": "2026-10-01T10:03:53.582895640Z",
   "gates_required": [
     "repo-validate",
@@ -30,8 +31,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T11:30:38.755517953Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T11:34:23.606131807Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -53,7 +54,7 @@
     "satisfies:fa787f85/REQ-01"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-02T11:30:38.755517953Z"
+  "updated_at": "2026-10-02T11:35:05.108578420Z"
 }

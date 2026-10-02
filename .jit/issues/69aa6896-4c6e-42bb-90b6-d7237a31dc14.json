@@ -28,7 +28,7 @@
     "satisfies:fa787f85/REQ-04"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Create the docs index and quadrant layout",
-  "updated_at": "2026-10-02T09:56:21.029648514Z"
+  "updated_at": "2026-10-02T11:35:05.281204638Z"
 }

@@ -17,12 +17,18 @@
       "path": "dev/active/fa787f85-documentation-overhaul/41e1d47d-disposition.md"
     }
   ],
+  "done_at": "2026-10-02T11:35:05.534067107Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T11:33:42.534470538Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T11:29:31.781685174Z",
@@ -38,7 +44,7 @@
     "satisfies:fa787f85/REQ-20"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-02T11:29:31.781685174Z"
+  "updated_at": "2026-10-02T11:35:05.534067107Z"
 }

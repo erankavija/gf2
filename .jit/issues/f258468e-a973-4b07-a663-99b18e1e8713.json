@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T11:34:25.802029166Z",
+  "dependencies": [],
+  "description": "Remove the per-multiply reducer lookup and allocation from scalar `Gf2mWide` multiplication.\n\n## Background\n\n`Gf2mWide::mul_ref` fetches its Barrett reducer through `get_reducer` (`crates/gf2-core/src/gf2m/wide.rs`), which locks a global `HashMap` keyed by `(TypeId, N)` and clones a heap-allocated reducer on every scalar multiply. A perf profile of `FieldMatrix` PLE, inverse and solve over `Gf2mWide<1, _>` attributes about 45% of samples to hashing, allocation and free, and makes those operations 50–70 times slower than over `Fp` at the same dimension; `gemm` is unaffected.\n\n## Success Criteria\n\n- [hard] REQ-01: Scalar `Gf2mWide` multiplication performs no heap allocation and no global-map lookup per call, verified by a test or allocation counter over repeated multiplies.\n- [hard] REQ-02: The shared field-law suite and existing `Gf2mWide` tests pass unchanged.\n- [hard] REQ-03: A committed benchmark receipt from a prepared host reports `FieldMatrix` PLE time over a `Gf2mWide<1, _>` field before and after the change.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-02T11:34:25.802029166Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "f258468e-a973-4b07-a663-99b18e1e8713",
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Hoist the Barrett reducer out of scalar Gf2mWide multiply",
+  "updated_at": "2026-10-02T11:35:05.392499083Z"
+}
