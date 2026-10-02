@@ -109,8 +109,8 @@ pub struct RareEventConfigurationV1 {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DesignIdentityV1 {
-    /// Repository-relative preregistration path when recorded; validation
-    /// identifies the design by revision and blob, not by this path.
+    /// Repository-relative preregistration path at recording, informational;
+    /// validation identifies the design by revision and blob.
     pub path: String,
     /// Full producing Git revision.
     pub git_revision: String,
