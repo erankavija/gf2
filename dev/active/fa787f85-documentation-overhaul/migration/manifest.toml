@@ -1,5 +1,5 @@
-# Documentation migration manifest for epic fa787f85; check.py defines the row schema.
-# Rows come from the inventory tasks bound by contract migration-manifest in ../plan.md; each owns a disjoint path scope.
+# Documentation migration manifest for epic fa787f85. Issue a24b2af7 delivers the row schema and checker (check.py);
+# the inventory tasks bound by contract migration-manifest in ../plan.md write the rows, each in a disjoint path scope.
 artifacts = [
 ]
 policy = [
