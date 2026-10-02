@@ -15221,3 +15221,10 @@
 {"from":"backlog","id":"560c923c-6a92-449d-9df1-b4f9c96cfae7","issue_id":"f258468e-a973-4b07-a663-99b18e1e8713","timestamp":"2026-10-02T11:35:05.392499083Z","to":"ready","type":"issue_state_changed"}
 {"from":"in_progress","id":"a8023b4a-710f-4a7a-b806-a88835c12c39","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:35:05.534067107Z","to":"done","type":"issue_state_changed"}
 {"id":"4a78d0cf-af1b-4deb-87dd-3851d0a03917","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:35:05.534067107Z","type":"issue_completed"}
+{"gate_key":"code-review","id":"44b2df3b-8bbe-4fb7-bf6b-657c483c8423","issue_id":"a24b2af7-81ce-4442-9ee3-6ce096c36537","timestamp":"2026-10-02T11:35:46.703058076Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"ad4ff074-3df5-4084-b0de-9ba94d436f99","issue_id":"a0a29512-ce14-4110-a541-65ef6612278d","timestamp":"2026-10-02T11:37:40.256517380Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["description"],"id":"e4a2e6e8-6097-4d0c-82fb-1d0f80b7e40a","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:37:53.847467529Z","type":"issue_updated","updated_by":"issue-update"}
+{"from":"ready","id":"835abb3a-92bb-40c0-8f36-0220e8df4179","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:37:54.031478581Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"71c3b91e-9c4e-4602-9e3f-1dd484f495cc","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:37:54.031478581Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"a952ae20-e544-4096-b622-0d634187cad9","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:38:04.348279944Z","type":"issue_updated","updated_by":"dependency-remove"}
+{"from":"backlog","id":"c82ca732-bd82-4aa7-811b-f382953dc574","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:38:04.348279944Z","to":"ready","type":"issue_state_changed"}

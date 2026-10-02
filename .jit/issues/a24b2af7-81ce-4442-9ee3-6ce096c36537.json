@@ -32,7 +32,7 @@
   "gates_status": {
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T10:39:00.598766582Z",
+      "updated_at": "2026-10-02T11:35:46.703058076Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -56,5 +56,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-02T11:32:05.365985487Z"
+  "updated_at": "2026-10-02T11:35:46.703058076Z"
 }
