@@ -30,7 +30,7 @@
      "short_id": "56378e82",
      "title": "Make CLAUDE.md a symlink and define AGENTS.md scope",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "dcd38c45-66ae-43ed-b689-3a9dcd2600b3",
@@ -928,6 +928,11 @@
    "issue": "34adff85",
    "finding": "cargo-ci cold run measured 875 s against the 900 s gate timeout; release doctest step ~215 s (thin-LTO link). Warm run 359 s.",
    "disposition": "monitor; REQ-01 requires release mode"
+  },
+  {
+   "issue": "56378e82",
+   "finding": "~40 source comments and crate docs cite 'CLAUDE.md \u00a7<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
+   "disposition": "subject of REQ-17/12907582 and the tersification sweep; verify closed before story/epic gates"
   }
  ],
  "notes": [

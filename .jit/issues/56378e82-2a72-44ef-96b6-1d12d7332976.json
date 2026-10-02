@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:worker",
+  "assignee": "agent:jit-execution-lead",
   "claimed_at": "2026-10-02T08:28:42.794746427Z",
   "context": {},
   "created_at": "2026-10-01T10:03:24.895658257Z",
@@ -8,12 +8,24 @@
   ],
   "description": "Make the root `AGENTS.md` the single agent guide and state how crate-local guides refine it.\n\n## Background\n\n`CLAUDE.md` is a short pointer file telling agents to read `AGENTS.md`. The root `AGENTS.md` does not state that its rules apply recursively or how a crate-local `AGENTS.md` may add constraints.\n\n## Success Criteria\n\n- [hard] REQ-01: `CLAUDE.md` is a repository symlink to `AGENTS.md`.\n- [hard] REQ-02: The root `AGENTS.md` states that its rules apply recursively, that a crate-local `AGENTS.md` adds only crate-specific constraints without restating root policy, and that every `AGENTS.md` stays at or below 200 lines.\n- [hard] REQ-03: The root `AGENTS.md` remains at or below 200 lines.\n- [hard] REQ-04: Tooling that reads `CLAUDE.md` or the old pointer text (gate prompts, hooks, scripts) still works, verified by a repository search recorded in the commit message.",
   "documents": [],
+  "done_at": "2026-10-02T08:33:40.396145695Z",
   "first_ready_at": "2026-10-01T10:03:24.895658257Z",
   "gates_required": [
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T08:32:09.426799459Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T08:33:30.398253556Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "56378e82-2a72-44ef-96b6-1d12d7332976",
   "labels": [
     "epic:documentation-overhaul",
@@ -23,7 +35,7 @@
     "satisfies:3f29e945/REQ-34"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Make CLAUDE.md a symlink and define AGENTS.md scope",
-  "updated_at": "2026-10-02T08:28:42.794746427Z"
+  "updated_at": "2026-10-02T08:33:40.396145695Z"
 }
