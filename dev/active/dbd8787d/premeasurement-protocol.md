@@ -172,9 +172,10 @@ Repository destinations are derived from the run ID:
 declaration of this campaign: issue (and so the run-ID prefix), protocol,
 producing manifest, measured owners with their cell counts, imported owners
 with their digests, and whether publication renders an evidence index. The
-launcher, driver and validator all read the declaration that a run ID's issue
-names, at `dev/active/<issue>/campaign-declaration.json`; the a835
-declaration describes the published a835 campaign. The launcher takes an issue
+launcher, driver and validator each locate the one `campaign-declaration.json`
+in the checkout whose `issue` is the run ID's issue, wherever it lies, and
+identify it in a campaign's recorded behavior and lifecycle sources by its
+digest; the a835 declaration describes the published a835 campaign. The launcher takes an issue
 to start a run (`dev/scripts/tuning-extent-campaign.sh dbd8787d`) or a run ID
 to resume one, and builds only the declared producers.
 

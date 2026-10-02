@@ -7,9 +7,12 @@
 //! ends. Everything else the tests write lives under `temp_dir()`.
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
-use tuning_campaign_support::campaign::{CanonicalJson, PreparationStore, SessionChannels, Token};
+use tuning_campaign_support::campaign::{
+    locate_campaign_declaration, CanonicalJson, PreparationStore, SessionChannels, Token,
+    DECLARATION_FILE,
+};
 use tuning_campaign_support::scratch::{scratch, ScratchPath};
 
 fn executable(path: &Path, content: &str) {
@@ -17,15 +20,43 @@ fn executable(path: &Path, content: &str) {
     fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
 }
 
-/// Copies the committed campaign declaration of `issue` into a stand-in
-/// checkout, where the launcher reads it before selecting an identity.
-fn declare(repo: &Path, issue: &str) {
-    let relative = format!("dev/active/{issue}/campaign-declaration.json");
-    let source = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../..")
-        .join(&relative);
-    fs::create_dir_all(repo.join(&relative).parent().unwrap()).unwrap();
-    fs::copy(source, repo.join(relative)).unwrap();
+fn git(directory: &Path, arguments: &[&str]) -> String {
+    let output = Command::new("git")
+        .args(arguments)
+        .current_dir(directory)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "git {arguments:?}");
+    String::from_utf8(output.stdout)
+        .unwrap()
+        .trim_end()
+        .to_owned()
+}
+
+/// An empty git checkout below `root` in which the launcher runs.
+fn checkout(root: &Path) -> PathBuf {
+    let repo = root.join("repo");
+    fs::create_dir_all(repo.join("scripts")).unwrap();
+    git(&repo, &["init", "-q"]);
+    repo
+}
+
+/// Copies the committed campaign declaration of `issue` into the stand-in
+/// checkout under `directory`, away from its committed location; the launcher
+/// locates it by its issue before selecting an identity.
+fn declare(repo: &Path, issue: &str, directory: &str) {
+    let committed = PathBuf::from(git(
+        Path::new(env!("CARGO_MANIFEST_DIR")),
+        &["rev-parse", "--show-toplevel"],
+    ));
+    let source = committed.join(locate_campaign_declaration(&committed, issue).unwrap());
+    let target = repo.join(directory).join(DECLARATION_FILE);
+    assert_ne!(
+        source.parent().unwrap().strip_prefix(&committed).unwrap(),
+        Path::new(directory)
+    );
+    fs::create_dir_all(target.parent().unwrap()).unwrap();
+    fs::copy(source, target).unwrap();
 }
 
 fn launcher_replays_preparation(complete_temporary: bool) {
@@ -70,18 +101,11 @@ fn launcher_replays_preparation(complete_temporary: bool) {
         )
         .unwrap();
     }
-    let repo = root.join("repo");
-    fs::create_dir_all(repo.join("scripts")).unwrap();
-    declare(&repo, "a83583e0");
+    let repo = checkout(&root);
+    declare(&repo, "a83583e0", "relocated/extent");
     executable(
         &repo.join("scripts/cargo-budget.sh"),
         "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
-    );
-    let path_bin = root.join("path-bin");
-    fs::create_dir(&path_bin).unwrap();
-    executable(
-        &path_bin.join("git"),
-        "#!/bin/sh\nprintf '%s\\n' \"$TEST_REPO\"\n",
     );
     fs::create_dir(stage.join("bin")).unwrap();
     executable(
@@ -99,12 +123,8 @@ fn launcher_replays_preparation(complete_temporary: bool) {
     let result = Command::new("bash")
         .arg(&launcher)
         .arg(&campaign)
-        .env(
-            "PATH",
-            format!("{}:{}", path_bin.display(), std::env::var("PATH").unwrap()),
-        )
+        .current_dir(&repo)
         .env("GF2_CCX1_LOCK", root.join("host.lock"))
-        .env("TEST_REPO", &repo)
         .env(
             "TEST_REAL_DRIVER",
             env!("CARGO_BIN_EXE_tuning-extent-campaign-driver"),
@@ -137,8 +157,8 @@ fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_
     launcher_replays_preparation(true);
 }
 
-/// A new campaign names its issue; the launcher refuses an issue without a
-/// committed declaration before it creates a stage or builds anything.
+/// A new campaign names its issue; the launcher refuses an issue without
+/// exactly one declaration before it creates a stage or builds anything.
 #[test]
 fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
     let root = scratch("gf2-launcher-declaration");
@@ -148,36 +168,38 @@ fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
         include_str!("../../../scripts/tuning-extent-campaign.sh"),
     )
     .unwrap();
-    let path_bin = root.join("path-bin");
-    fs::create_dir(&path_bin).unwrap();
-    executable(
-        &path_bin.join("git"),
-        "#!/bin/sh\nprintf '%s\\n' \"$TEST_REPO\"\n",
-    );
-    let repo = root.join("repo");
-    fs::create_dir(&repo).unwrap();
-    fs::create_dir(repo.join("scripts")).unwrap();
+    let repo = checkout(&root);
+    for directory in ["first", "second"] {
+        fs::create_dir(repo.join(directory)).unwrap();
+        fs::write(
+            repo.join(directory).join(DECLARATION_FILE),
+            "{\"schema\":\"tuning-campaign-declaration-v1\",\"issue\":\"0badbeef\"}",
+        )
+        .unwrap();
+    }
     let build_capture = root.join("build-called");
     executable(
         &repo.join("scripts/cargo-budget.sh"),
         "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
     );
-    for argument in ["0badc0de", "gf2-0badc0de-19700101t000000z-1"] {
+    for argument in [
+        "0badc0de",
+        "gf2-0badc0de-19700101t000000z-1",
+        "0badbeef",
+        "gf2-0badbeef-19700101t000000z-1",
+    ] {
         let result = Command::new("bash")
             .arg(&launcher)
             .arg(argument)
-            .env(
-                "PATH",
-                format!("{}:{}", path_bin.display(), std::env::var("PATH").unwrap()),
-            )
+            .current_dir(&repo)
             .env("GF2_CCX1_LOCK", root.join("host.lock"))
-            .env("TEST_REPO", &repo)
             .env("TEST_BUILD_CAPTURE", &build_capture)
             .output()
             .unwrap();
         assert!(!result.status.success(), "{argument}");
         assert!(!build_capture.exists());
         assert!(!Path::new("/tmp/gf2-0badc0de-19700101t000000z-1").exists());
+        assert!(!Path::new("/tmp/gf2-0badbeef-19700101t000000z-1").exists());
     }
     for argument in ["", "DBD8787D", "gf2-dbd8787d-19700101T000000Z-1", "a b"] {
         let result = Command::new("bash")
@@ -230,15 +252,8 @@ fn launcher_resumes_publication_before_preparing_another_session() {
             &stage.join("bin/driver"),
             "#!/usr/bin/env python3\nimport os,sys\nif sys.argv[1]=='publish-campaign':\n    open(os.environ['TEST_PUBLISH_CAPTURE'],'w').write(sys.argv[2])\n    sys.exit(int(os.environ['TEST_PUBLISH_EXIT']))\nif sys.argv[1]=='discover-preparation':\n    print('null'); sys.exit(0)\nif sys.argv[1]=='prepare-session':\n    open(os.environ['TEST_PREPARE_CAPTURE'],'w').write('prepared')\n    sys.exit(73)\nsys.exit(92)\n",
         );
-        let path_bin = root.join("path-bin");
-        fs::create_dir(&path_bin).unwrap();
-        executable(
-            &path_bin.join("git"),
-            "#!/bin/sh\nprintf '%s\\n' \"$TEST_REPO\"\n",
-        );
-        let repo = root.join("repo");
-        fs::create_dir(&repo).unwrap();
-        declare(&repo, "a83583e0");
+        let repo = checkout(&root);
+        declare(&repo, "a83583e0", "relocated/extent");
         let launcher = root.join("launcher.sh");
         fs::write(
             &launcher,
@@ -250,12 +265,8 @@ fn launcher_resumes_publication_before_preparing_another_session() {
         let result = Command::new("bash")
             .arg(&launcher)
             .arg(&campaign)
-            .env(
-                "PATH",
-                format!("{}:{}", path_bin.display(), std::env::var("PATH").unwrap()),
-            )
+            .current_dir(&repo)
             .env("GF2_CCX1_LOCK", root.join("host.lock"))
-            .env("TEST_REPO", &repo)
             .env("TEST_PUBLISH_EXIT", publish_exit.to_string())
             .env("TEST_PUBLISH_CAPTURE", &publish_capture)
             .env("TEST_PREPARE_CAPTURE", &prepare_capture)

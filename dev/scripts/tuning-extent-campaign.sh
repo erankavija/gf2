@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build/stage outside the mutex; the Rust driver owns all campaign mechanics.
 # Usage: tuning-extent-campaign.sh <issue> | <campaign-id>
-# An issue (eight lowercase hex digits) selects its committed declaration
-# dev/active/<issue>/campaign-declaration.json and creates a fresh run ID
+# An issue (eight lowercase hex digits) selects the one campaign-declaration.json
+# in this checkout whose issue field names it and creates a fresh run ID
 # gf2-<issue>-<yyyymmddthhmmssz UTC>-<launcher-pid> with its exact /tmp stage.
 # Passing a run ID resumes that already-created stage; arbitrary destinations
 # are invalid. The ID becomes the emitted profiles' ProfileId, so it stays
@@ -27,14 +27,18 @@ else
 fi
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
-declaration=dev/active/$issue/campaign-declaration.json
 # The declaration names the issue, owners and staged executables; the driver
-# and validator read the same file and verify it in full.
-producers=$(python3 - "$declaration" "$issue" <<'PY_DECLARATION'
-import json,sys
-declaration=json.load(open(sys.argv[1]))
-if declaration.get('schema')!='tuning-campaign-declaration-v1' or declaration.get('issue')!=sys.argv[2]:
-    raise SystemExit('campaign declaration schema/issue mismatch')
+# and validator locate it by the same rule and verify it in full.
+producers=$(python3 - "$issue" <<'PY_DECLARATION'
+import json,os,subprocess,sys
+listing=subprocess.run(['git','ls-files','-z','--cached','--others','--exclude-standard','--',':(glob)**/campaign-declaration.json'],check=True,capture_output=True).stdout.decode()
+candidates=[path for path in listing.split('\0') if path and os.path.isfile(path)]
+matches=[declaration for declaration in (json.load(open(path)) for path in candidates) if declaration.get('issue')==sys.argv[1]]
+if len(matches)!=1:
+    raise SystemExit(f'{len(matches)} campaign declarations name issue {sys.argv[1]}; exactly one must')
+declaration=matches[0]
+if declaration.get('schema')!='tuning-campaign-declaration-v1':
+    raise SystemExit('campaign declaration schema mismatch')
 print(' '.join(owner['name'] for owner in declaration['measured_owners']))
 PY_DECLARATION
 )

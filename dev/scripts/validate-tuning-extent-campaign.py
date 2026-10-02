@@ -5,9 +5,10 @@ The validator deliberately does not import the campaign driver or trust its
 summary counters.  It reconstructs the accepted protocol from sealed owner
 manifests, immutable checkpoint bytes, the append-only journal, raw windows,
 owner decisions, and composed profile wrappers.  The committed campaign
-declaration `dev/active/<issue>/campaign-declaration.json` that a run ID names
-selects the protocol, producing manifest, owner counts, imported owners and
-publication layout.
+declaration whose `issue` the run ID names, located anywhere in the repository
+by `locate_declaration`, selects the protocol, producing manifest, owner
+counts, imported owners and publication layout; the campaign's recorded
+identities name it by digest.
 """
 
 from __future__ import annotations
@@ -72,6 +73,7 @@ CORE_BEHAVIOR = "tuning-calibration-v4"
 ALGEBRA_BEHAVIOR = "algebra-tuning-calibration-v1"
 PRODUCING_INPUTS_SCHEMA = "tuning-campaign-producing-inputs-v1"
 DECLARATION_SCHEMA = "tuning-campaign-declaration-v1"
+DECLARATION_FILE = "campaign-declaration.json"
 # The two owners a complete envelope composes, by declaration name.
 OWNER_NAMES = {"core": "gf2-core", "algebra": "gf2-algebra"}
 # Protocol §7: the full-host outer lock admits a session; the held-lock host
@@ -422,8 +424,9 @@ def counts(cells: int) -> dict[str, int]:
             "progress_records": 30 * cells}
 
 
+@functools.cache
 def repository_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(git_output(Path(__file__).resolve().parent, "rev-parse", "--show-toplevel"))
 
 
 def relative_path(value: Any, where: str) -> str:
@@ -435,8 +438,30 @@ def relative_path(value: Any, where: str) -> str:
     return value
 
 
-def declaration_path(issue: str) -> str:
-    return f"dev/active/{issue}/campaign-declaration.json"
+def locate_declaration(issue: str, root: Path) -> str:
+    """The `root`-relative path of the one `DECLARATION_FILE` naming `issue`.
+
+    Candidates are the files git lists as tracked or untracked and not ignored;
+    the driver's `locate_campaign_declaration` applies the same rule.
+    """
+    listing = git_output(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+                         "--", f":(glob)**/{DECLARATION_FILE}")
+    matches = sorted({candidate for candidate in listing.split("\0") if candidate
+                      and (root / candidate).is_file()
+                      and load_json(root / candidate, canonical=False).get("issue") == issue})
+    require(len(matches) == 1,
+            f"{len(matches)} campaign declarations name issue {issue}; exactly one must")
+    return matches[0]
+
+
+def recorded_declaration(declaration: Any, identities: Any, where: str) -> tuple[str, str]:
+    """The one `(path, digest)` entry of `identities` whose digest is the located
+    declaration's, which names the declaration as the campaign recorded it."""
+    root = repository_root()
+    sha = digest((root / locate_declaration(declaration["issue"], root)).read_bytes())
+    entries = [(path, value) for path, value in identities.items() if value == sha]
+    require(len(entries) == 1, f"{where} does not name the campaign declaration exactly once")
+    return entries[0]
 
 
 def load_declaration(campaign: str, root: Path | None = None) -> dict[str, Any]:
@@ -445,7 +470,7 @@ def load_declaration(campaign: str, root: Path | None = None) -> dict[str, Any]:
     require(match is not None, f"campaign ID {campaign!r} is not gf2-<issue>-<stamp>-<pid>")
     issue = match.group(1)
     root = root or repository_root()
-    value = load_json(root / declaration_path(issue), canonical=False)
+    value = load_json(root / locate_declaration(issue, root), canonical=False)
     require_keys(value, ["schema", "issue", "protocol", "producing_manifest",
                          "measured_owners", "imported_owners", "evidence_index"],
                  "campaign declaration")
@@ -2547,7 +2572,7 @@ def threshold_selection(points: list[dict[str, Any]], default: int,
 
 
 def conservative_core_selectors() -> dict[str, Any]:
-    root = Path(__file__).resolve().parents[2]
+    root = repository_root()
     envelope = load_json(root / "crates/gf2-core/data/tuning-profiles/conservative.json",
                          canonical=False)
     return envelope["sections"]["gf2-core/selectors"]["selectors"]
@@ -3022,7 +3047,7 @@ def validate_staging(stage: Path, campaign_config: Any,
 
 
 def expected_bootstrap_inputs(stage: Path, campaign_config: Any) -> dict[str, Any]:
-    root = Path(__file__).resolve().parents[2]
+    root = repository_root()
     revision = campaign_config["identity"]["source_revision"]
     return {
         "revision": revision,
@@ -3844,9 +3869,9 @@ def validate_receipt_text(text: str, projection: Any, config: Any, bundles: list
             'receipt decisions differ from the summarized owner decisions')
     expected=RECEIPT_TEMPLATE.format(config['campaign_id'],declaration['protocol'],
                                      config['protocol']['sha256'],
-                                     declaration_path(declaration['issue']),
-                                     config['identity']['behavior_sha256'][
-                                         declaration_path(declaration['issue'])],
+                                     *recorded_declaration(declaration,
+                                                           config['identity']['behavior_sha256'],
+                                                           'behavior identity'),
                                      config['identity']['source_revision'],layout['checksum'],
                                      match.group(1))
     expected+=imported_receipt_section(declaration)
@@ -4167,8 +4192,8 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(campaign_config["build_inputs"] ==
             source_hashes(root, inputs["build_inputs"], revision),
             "build-input inventory/digests differ from the producing manifest")
-    require(declaration_path(declaration["issue"]) in inputs["lifecycle_sources"],
-            "lifecycle manifest omits the campaign declaration")
+    recorded_declaration(declaration, source_hashes(root, inputs["lifecycle_sources"], revision),
+                         "lifecycle manifest")
     require(identity["process_descriptors_sha256"] == digest(compact(campaign_config["processes"])),
             "process descriptor digest mismatch")
     expected_processes = declared_processes(declaration)
@@ -4297,7 +4322,8 @@ def expected_evidence_index(stage: Path, declaration: Any) -> str:
     config = load_json(stage / "campaign.json", canonical=False)
     campaign = config["campaign_id"]
     layout = publication_layout(campaign)
-    path = declaration_path(declaration["issue"])
+    path, sha = recorded_declaration(declaration, config["identity"]["behavior_sha256"],
+                                     "behavior identity")
     text = (f"# Evidence index for {campaign}\n\nThe receipt [`{campaign}.md`]({campaign}.md) "
             f"is checksum-pinned by [`{campaign}.sha256`]({campaign}.sha256). This index "
             "resolves the evidence the receipt cites, the execution journal and every envelope "
@@ -4308,7 +4334,7 @@ def expected_evidence_index(stage: Path, declaration: Any) -> str:
             "| Evidence | Path | SHA-256 |\n|---|---|---|\n"
             f"| Protocol | `{declaration['protocol']}` at commit "
             f"`{config['identity']['source_revision']}` | `{config['protocol']['sha256']}` |\n"
-            f"| Declaration | `{path}` | `{config['identity']['behavior_sha256'][path]}` |\n")
+            f"| Declaration | `{path}` | `{sha}` |\n")
     text += cited_rows(stage, layout, declaration, cited_sources(declaration, config, stage))
     text += (f"| Execution journal | `{layout['execution.log']}` | "
              f"`{digest((stage / 'execution.log').read_bytes())}` |\n")
@@ -4546,7 +4572,7 @@ def reconstruction_self_test() -> None:
     require(extent_dimensions('m4rm.joint',11)==[64,2048,960],'joint last shape boundary')
     require(extent_dimensions('m4rm.wide_table_bytes',0)==[64,512,4096],'wide band shape boundary')
     require(extent_dimensions('gemm.tiles',2)==[193,192,385],'GEMM shape boundary')
-    core_path=Path(__file__).resolve().parents[2]/'crates/gf2-core/data/tuning-profiles/conservative.json'
+    core_path=repository_root()/'crates/gf2-core/data/tuning-profiles/conservative.json'
     conservative=load_json(core_path,canonical=False)
     require(envelope_content(conservative['profile_id'],conservative['sections'])==conservative['assembly']['content_sha256'],
             'canonical format-2 content golden receipt')
@@ -4628,6 +4654,30 @@ def launcher_run_id_self_test() -> None:
         require(RUN_ID.fullmatch(uppercase) is None and PROFILE_ID.fullmatch(uppercase) is None,
                 "uppercase run ID stamp mutation was accepted")
     must_reject(lambda: load_declaration(f"gf2-0badc0de-{stamp}-1"), "undeclared issue")
+
+
+def declaration_location_self_test() -> None:
+    """A declaration is found wherever it lies; an issue needs exactly one."""
+    with tempfile.TemporaryDirectory(prefix="gf2-validator-declaration-", dir="/tmp") as temporary:
+        root = Path(temporary)
+        git_output(root, "init", "-q")
+        (root / ".gitignore").write_text("ignored/\n", encoding="utf-8")
+        for directory, issue in [("relocated/x", "0badc0de"), ("ignored", "0badc0de"),
+                                 ("a", "12345678"), ("b", "12345678")]:
+            (root / directory).mkdir(parents=True)
+            (root / directory / DECLARATION_FILE).write_text(json.dumps({"issue": issue}),
+                                                             encoding="utf-8")
+        require(locate_declaration("0badc0de", root) == f"relocated/x/{DECLARATION_FILE}",
+                "relocated declaration was not located")
+        must_reject(lambda: locate_declaration("12345678", root), "ambiguous declaration")
+        must_reject(lambda: locate_declaration("feedface", root), "absent declaration")
+    declaration = load_declaration("gf2-dbd8787d-19700101t000000z-1")
+    sha = digest((repository_root() / locate_declaration("dbd8787d", repository_root()))
+                 .read_bytes())
+    require(recorded_declaration(declaration, {"moved/x.json": sha, "other": "0" * 64}, "test")
+            == ("moved/x.json", sha), "declaration not matched by content")
+    must_reject(lambda: recorded_declaration(declaration, {"x": "0" * 64}, "test"),
+                "declaration absent from identities")
 
 
 def float_encoding_self_test() -> None:
@@ -4776,6 +4826,7 @@ def publication_self_test() -> None:
 def self_test() -> None:
     reconstruction_self_test()
     launcher_run_id_self_test()
+    declaration_location_self_test()
     publication_self_test()
     receipt_summary_self_test()
     float_encoding_self_test()
@@ -4831,7 +4882,7 @@ def self_test() -> None:
         pass
     else:
         fail("duplicate CPU affinity mutation was accepted")
-    repository = Path(__file__).resolve().parents[2]
+    repository = repository_root()
     for issue in ["a83583e0", "dbd8787d"]:
         declaration = load_declaration(f"gf2-{issue}-19700101t000000z-1")
         actual_inputs = producing_inputs(repository, declaration["producing_manifest"])
@@ -4840,7 +4891,7 @@ def self_test() -> None:
                 "real producing-input manifest does not distinguish its three boundaries")
     with tempfile.TemporaryDirectory(prefix="gf2-validator-inputs-", dir="/tmp") as temporary:
         root = Path(temporary)
-        manifest_relative = "dev/active/00000000/producing-build-inputs.json"
+        manifest_relative = "inputs/producing-build-inputs.json"
         manifest_path = root / manifest_relative
         manifest_path.parent.mkdir(parents=True)
         for relative in ["behavior.rs", "lifecycle.rs", "build.rs"]:
