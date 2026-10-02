@@ -16,11 +16,11 @@ Current-state prose: fail [F1, F2, F3]
 Evidence: pass []  
 Example value: pass []  
 
-1. **F1 — blocking, issue-impact, high:** [495807a3-invariant-draft.md:3](dev/active/fa787f85-documentation-overhaul/495807a3-invariant-draft.md:3) says the texts are awaiting approval under nonexistent `DEC-03` and that nothing is registered, while the current registry and `AGENTS.md` projection contain all five approved invariants and the issue records approval in DEC-01. The later “Proposed invariants” framing has the same stale state. This violates `@/inv/current-state-scope` and `@/inv/single-source-prose`.
+1. **F1 — blocking, issue-impact, high:** `495807a3-invariant-draft.md:3` says the texts are awaiting approval under nonexistent `DEC-03` and that nothing is registered, while the current registry and `AGENTS.md` projection contain all five approved invariants and the issue records approval in DEC-01. The later “Proposed invariants” framing has the same stale state. This violates `@/inv/current-state-scope` and `@/inv/single-source-prose`.
 
-2. **F2 — blocking, issue-impact, medium:** [495807a3-invariant-draft.md:63](dev/active/fa787f85-documentation-overhaul/495807a3-invariant-draft.md:63) retains a future enforcement handoff to a nonexistent `docs-mechanical` item, and [line 103](dev/active/fa787f85-documentation-overhaul/495807a3-invariant-draft.md:103) retains a counterfactual in which the removed subtree-scope prose remains. These are speculative, unnecessary branches contrary to DEC-02 and `@/inv/current-state-scope`.
+2. **F2 — blocking, issue-impact, medium:** `495807a3-invariant-draft.md:63` retains a future enforcement handoff to a nonexistent `docs-mechanical` item, and `495807a3-invariant-draft.md:103` retains a counterfactual in which the removed subtree-scope prose remains. These are speculative, unnecessary branches contrary to DEC-02 and `@/inv/current-state-scope`.
 
-3. **F3 — blocking, issue-impact, medium:** [495807a3-invariant-draft.md:86](dev/active/fa787f85-documentation-overhaul/495807a3-invariant-draft.md:86) presents historical “superseded” line locations and a 199-line snapshot rather than the current 193-line `AGENTS.md`. Replace the change-history framing with the current registered/projection state, as required by `@/inv/current-state-scope` and `@/inv/present-tense-prose`.
+3. **F3 — blocking, issue-impact, medium:** `495807a3-invariant-draft.md:86` presents historical “superseded” line locations and a 199-line snapshot rather than the current 193-line `AGENTS.md`. Replace the change-history framing with the current registered/projection state, as required by `@/inv/current-state-scope` and `@/inv/present-tense-prose`.
 
 Total findings: 3
 
