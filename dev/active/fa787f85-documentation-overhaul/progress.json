@@ -80,42 +80,42 @@
      "short_id": "41e1d47d",
      "title": "Reconcile open docs-remediation issues outside the overhaul",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "4bdcd65a-e338-488b-b42e-19bee4a875a9",
      "short_id": "4bdcd65a",
      "title": "Map the root roadmap's open questions and publication items",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "60652fe4-d6dd-49e9-97f1-db99b4c73111",
      "short_id": "60652fe4",
      "title": "Map the gf2-core roadmap's planned phases",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "871b401d-59f7-4fa4-86b6-9c067795ff06",
      "short_id": "871b401d",
      "title": "Register and project the no-dev-path-coupling invariant",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "875914b3-38c8-4ec2-a13f-009fc620f7d4",
      "short_id": "875914b3",
      "title": "Map the gf2-coding roadmap's unchecked items",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "9b2886a7-35af-45cc-9200-dddea1c0323a",
      "short_id": "9b2886a7",
      "title": "Register audience, placement and tone documentation invariants",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "a0a29512-ce14-4110-a541-65ef6612278d",
@@ -136,7 +136,7 @@
      "short_id": "a82d2347",
      "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "b6fdb815-20da-4ea9-af21-351b01746aee",
@@ -150,7 +150,7 @@
      "short_id": "e85b8edf",
      "title": "Map the root roadmap's planned milestones and goals",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     }
    ]
   },
@@ -916,14 +916,66 @@
    "title": "Migrate cites labels to the qualified citation form",
    "epic": "86b9c719",
    "reason": "jit 1.0 rejects unqualified cites labels; blocked every repo-validate gate"
+  },
+  {
+   "id": "d09a610b",
+   "reason": "roadmap gap (4bdcd65a)"
+  },
+  {
+   "id": "158ba129",
+   "reason": "roadmap gap (4bdcd65a)"
+  },
+  {
+   "id": "12a3c312",
+   "reason": "roadmap gap (60652fe4)"
+  },
+  {
+   "id": "edcd4c9c",
+   "reason": "roadmap gap (875914b3)"
+  },
+  {
+   "id": "a76ce44f",
+   "reason": "roadmap gap (875914b3)"
+  },
+  {
+   "id": "50201002",
+   "reason": "dev/tools sweep unit for ffc35b8c REQ-28 (41e1d47d)"
+  },
+  {
+   "id": "ec5b6c8f",
+   "reason": "gf2-kernels-hip broken intra-doc links (found by a0a29512)"
+  },
+  {
+   "id": "f258468e",
+   "reason": "slow scalar Gf2mWide multiply (found by b6fdb815)"
   }
  ],
- "escalations": [],
+ "escalations": [
+  {
+   "issue": "9b2886a7",
+   "question": "72-char lane merge subject; reword unpushed main?",
+   "resolution": "Owner approved rewording local main (rebase -r); merge now chore(jit:a82d2347) with no jit tags in body."
+  },
+  {
+   "issue": "41e1d47d",
+   "question": "Criteria additions fca578b1 REQ-05, ffc35b8c REQ-28 + sweep unit",
+   "resolution": "Owner approved both; 50201002 filed."
+  },
+  {
+   "issue": "a24b2af7",
+   "question": "Rework limit hit; reviewers contradicted on manifest header",
+   "resolution": "Owner approved attempt 3 citing plan contract."
+  }
+ ],
  "rework_counts": {
   "495807a3": 1,
   "34adff85": 1,
   "8f61d6de": 1,
-  "3f29e945": 2
+  "3f29e945": 2,
+  "60652fe4": 1,
+  "a24b2af7": 3,
+  "e85b8edf": 2,
+  "875914b3": 1
  },
  "surfaced_pitfalls": [
   {
@@ -950,6 +1002,13 @@
   "Profile-owned files (packages/sim-research/manifest.toml declares them, e.g. contrib/gates/*-prompt.md) fail jit validate profile-ownership when edited in place: after merge run `jit profile capture --source packages/sim-research --destination packages/sim-research`, bump manifest version, `jit profile upgrade --profile path:packages/sim-research`.",
   "jit doc dir <task> resolves dev/active/<task-id>, not the epic dir; per active-layout contract workers write under dev/active/fa787f85-documentation-overhaul/.",
   "Worker worktree jit refuses state writes: workers cannot jit doc add or gate evaluate; lead links and gates after merge.",
-  "Gate runs dirty .jit/issues on main; commit gate state before running dispatch-worker-worktree.sh (it refuses a dirty main)."
+  "Gate runs dirty .jit/issues on main; commit gate state before running dispatch-worker-worktree.sh (it refuses a dirty main).",
+  "Count merge subjects with a script before committing; a 72-char lane merge forced a main rewrite. Tag a multi-issue merge with the issue that owns its out-of-region edits and keep other jit:<id> tags out of the body; reviewers attribute every commit whose message contains jit:<id>.",
+  "Run cargo-ci before code-review on Rust issues; code-review fails REQ evidence while cargo-ci is pending.",
+  "Delete worker branches that fast-forwarded old main after any main rewrite; reviewers found the stale commit through them.",
+  "Worktree .jit is a dispatch-time snapshot: workers must read live tracker state from the main checkout (read-only).",
+  "Cache-pool seeding copies target/ with absolute paths of other worktrees baked in; tests reading CARGO_MANIFEST_DIR and cargo doc search.index fail. Fix: cargo clean -p <crate> and rm target/doc in the worktree, CARGO_CI_NO_SCCACHE=1.",
+  "jit issue create for orphan tasks needs --orphan; filed roadmap issues default to ready, set backlog explicitly.",
+  "Do not add a dependency from a new task onto a story: deps define containment."
  ]
 }
