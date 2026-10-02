@@ -11,10 +11,11 @@
   "id": "edcd4c9c-9d6c-4221-9b6c-685d5d28755d",
   "labels": [
     "component:gf2-coding",
-    "type:task"
+    "type:task",
+    "epic:decoder-algorithmic-improvements"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Measure the table-based versus algebraic decoding crossover",
-  "updated_at": "2026-10-02T11:31:50.280137443Z"
+  "updated_at": "2026-10-02T20:35:25.413739282Z"
 }

@@ -11,10 +11,11 @@
   "id": "158ba129-ebc1-4ddf-995f-9f32d493a09f",
   "labels": [
     "component:gf2-coding",
-    "type:task"
+    "type:task",
+    "milestone:end-to-end-dvb-t2-fec-bicm-simulation"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Measure the DVB-T2 receive-chain stage latency budget",
-  "updated_at": "2026-10-02T10:37:10.949595801Z"
+  "updated_at": "2026-10-02T20:35:25.572825021Z"
 }

@@ -11,10 +11,11 @@
   "id": "e1ff915f-c119-45a1-a177-a80bc3782869",
   "labels": [
     "component:gf2-coding",
-    "type:task"
+    "type:task",
+    "epic:tech-debt-2026-06-30"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Add SIMD kernels for LLR batch saturation and hard decision",
-  "updated_at": "2026-10-02T17:32:17.278116769Z"
+  "updated_at": "2026-10-02T20:35:26.540247729Z"
 }

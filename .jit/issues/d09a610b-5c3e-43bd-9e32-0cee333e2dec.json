@@ -11,10 +11,11 @@
   "id": "d09a610b-5c3e-43bd-9e32-0cee333e2dec",
   "labels": [
     "component:gf2-coding",
-    "type:task"
+    "type:task",
+    "epic:decoder-algorithmic-improvements"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Compare ORBGRAND with OSD and algebraic decoding on short codes",
-  "updated_at": "2026-10-02T10:37:11.022977404Z"
+  "updated_at": "2026-10-02T20:35:25.254646852Z"
 }

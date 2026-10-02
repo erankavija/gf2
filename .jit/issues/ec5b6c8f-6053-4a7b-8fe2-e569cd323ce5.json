@@ -11,10 +11,11 @@
   "id": "ec5b6c8f-6053-4a7b-8fe2-e569cd323ce5",
   "labels": [
     "component:gf2-kernels-hip",
-    "type:task"
+    "type:task",
+    "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Repair broken intra-doc links in gf2-kernels-hip",
-  "updated_at": "2026-10-02T11:31:50.188372418Z"
+  "updated_at": "2026-10-02T20:35:26.056965928Z"
 }

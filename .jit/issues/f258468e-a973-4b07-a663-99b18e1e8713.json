@@ -11,10 +11,11 @@
   "id": "f258468e-a973-4b07-a663-99b18e1e8713",
   "labels": [
     "component:gf2-core",
-    "type:task"
+    "type:task",
+    "epic:tech-debt-2026-06-30"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Hoist the Barrett reducer out of scalar Gf2mWide multiply",
-  "updated_at": "2026-10-02T11:35:05.392499083Z"
+  "updated_at": "2026-10-02T20:35:26.218565181Z"
 }

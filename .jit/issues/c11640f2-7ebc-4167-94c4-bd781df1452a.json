@@ -11,10 +11,11 @@
   "id": "c11640f2-7ebc-4167-94c4-bd781df1452a",
   "labels": [
     "component:gf2-core",
-    "type:task"
+    "type:task",
+    "epic:tech-debt-2026-06-30"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Parallelize CpuBackend matmul under the parallel feature",
-  "updated_at": "2026-10-02T17:32:17.231371331Z"
+  "updated_at": "2026-10-02T20:35:26.377069587Z"
 }

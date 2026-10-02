@@ -11,10 +11,11 @@
   "id": "a76ce44f-3d04-4c46-8ef2-bf1c03011bcf",
   "labels": [
     "component:gf2-coding",
-    "type:task"
+    "type:task",
+    "story:explore-bit-level-compression-transforms"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Study compression-transform ordering against error-correction coding",
-  "updated_at": "2026-10-02T11:38:04.348279944Z"
+  "updated_at": "2026-10-02T20:35:25.734476165Z"
 }

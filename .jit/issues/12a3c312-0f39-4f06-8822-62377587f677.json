@@ -11,10 +11,11 @@
   "id": "12a3c312-0f39-4f06-8822-62377587f677",
   "labels": [
     "component:gf2-core",
-    "type:task"
+    "type:task",
+    "epic:competitive-benchmarking"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Factor polynomials over finite fields",
-  "updated_at": "2026-10-02T10:37:10.875137931Z"
+  "updated_at": "2026-10-02T20:35:25.897027623Z"
 }

@@ -8,8 +8,10 @@
     "6ed3c78b-9d54-4764-babb-753351767aa0",
     "9d67f21d-fc8d-4dc1-ad39-b09d0b10c68e",
     "c3ea6855-9c42-4412-ae98-7a172ec9be28",
+    "d09a610b-5c3e-43bd-9e32-0cee333e2dec",
     "d69b964e-5226-44c6-a604-b22b2ee29373",
-    "e15041f8-3acb-4a4b-b459-897d030c2a9f"
+    "e15041f8-3acb-4a4b-b459-897d030c2a9f",
+    "edcd4c9c-9d6c-4221-9b6c-685d5d28755d"
   ],
   "description": "Algorithmic improvements to FEC decoders: normalized/offset min-sum LDPC, quantized LLR, irregular LDPC construction, SOVA, spatially-coupled LDPC, and bit-level compression transforms.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Decoder algorithmic improvements” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
@@ -28,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Decoder algorithmic improvements",
-  "updated_at": "2026-08-18T18:49:44.309696741Z"
+  "updated_at": "2026-10-02T20:35:25.352595454Z"
 }
