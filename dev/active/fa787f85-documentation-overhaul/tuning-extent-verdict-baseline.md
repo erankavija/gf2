@@ -16,7 +16,7 @@ exit=0
 
 ## After the change
 
-The changed validator, run against the same checkout and stages; verdicts are identical.
+The changed validator (`2399b5cc7`) checks the same `/tmp` stages and the main checkout at `c711a1fff`, which holds the same published destinations and archives as `66524029` (the intervening commits touch neither); verdicts and entry counts are identical.
 
 ```
 validator=.agents/worktrees/agent-8bd873f7/dev/scripts/validate-tuning-extent-campaign.py at 2399b5cc7326580d37960f9323bd55dad344ad55; checkout=c711a1fffba082e7b4d913189b43f76f06c093ff
