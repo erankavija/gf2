@@ -76,7 +76,7 @@ The authoritative criteria are the `[hard]` REQs on `fa787f85`.
 - D-39: This planning brief is a linked epic artifact and records the full outcome of the investigation and interview.
 - D-40: The prerequisite story registers three invariant groups: comment concision, current-capability-only scope, and examples plus document layout. Researcher-audience, Diátaxis-placement and no-marketing invariants are registered with the permanent-documentation rewrite (`9b2886a7`). Story decisions DEC-01 to DEC-06 on `3f29e945` record the details.
 - D-41: The migration-manifest schema and progress checker are epic migration work (`a24b2af7`), gated on the prerequisite story.
-- D-42: A workspace-wide source documentation tersification sweep (`f357b3dc`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
+- D-42: A workspace-wide source documentation tersification sweep (`ffc35b8c`) runs after the prerequisite story and takes over narration and designator removal from `12907582`.
 - D-43: Documentation issues outside the epic are triaged case by case: an issue whose requirement overlaps the sweep or rewrite has that requirement preserved in an overhaul child and is then rejected as subsumed; item-level API documentation fixes stay in their epics with an `epic:documentation-overhaul` filter label. Rejected: absorbing every issue (bloats the epic with unrelated item fixes) and leaving every issue (leaves REQ-18 unmet).
 - D-44: The tersification sweep is broken down inside this epic's plan into worker-sized module units. Rejected: separate later planning.
 - D-45: The permanent corpus has exactly two tutorials: a standards-based coded-modulation link simulation with `gf2-sim`, and finite-field linear algebra at scale with `gf2-core`. The second needs a new runnable FieldMatrix example in the library crate first. Rejected: short-code benchmarking and algebra/permanent workflows.
@@ -161,7 +161,7 @@ The inherited tasks retain their technical-debt grouping and also carry `epic:do
 
 ## Implementation Steps
 
-1. Complete prerequisite story `3f29e945`: configure item kinds, author and approve invariants, project them into root `AGENTS.md`, establish the symlink, replace the documentation-review placeholder, create mechanical checks and self-tests, and define the migration manifest plus transient progress checker.
+1. Complete prerequisite story `3f29e945`: configure item kinds, author and approve invariants, project them into root `AGENTS.md`, establish the symlink, replace the documentation-review placeholder, and create mechanical checks and self-tests.
 2. Run a full artifact inventory and populate the migration manifest with ownership evidence, bundle relationships, current links, disposition, and execution status.
 3. Expand JIT documentation policy only as needed to manage legacy source roots. Link unlinked but unambiguously owned artifacts to their issues.
 4. Preview every terminal epic candidate. Resolve ownership, unsupported artifacts, shared references, collisions, and broken links before execution.
