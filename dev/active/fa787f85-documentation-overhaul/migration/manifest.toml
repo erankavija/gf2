@@ -1,6 +1,13 @@
 # Documentation migration manifest for epic fa787f85. Issue a24b2af7 delivers the row schema and checker (check.py);
 # the inventory tasks bound by contract migration-manifest in ../plan.md write the rows, each in a disjoint path scope.
 artifacts = [
+  { path = "crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "legacy-archive", destination = "dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
+  { path = "crates/gf2-core/benches/field_matrix_fusion_results.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "legacy-archive", destination = "dev/archive/legacy/crates/gf2-core/benches/field_matrix_fusion_results.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
+  { path = "crates/gf2-core/docs/KERNEL_OPTIMIZATION.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "legacy-archive", destination = "dev/archive/legacy/crates/gf2-core/docs/KERNEL_OPTIMIZATION.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
+  { path = "crates/gf2-core/docs/POLAR_IMPLEMENTATION_PLAN.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "legacy-archive", destination = "dev/archive/legacy/crates/gf2-core/docs/POLAR_IMPLEMENTATION_PLAN.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
+  { path = "crates/gf2-core/docs/QUALITY_AUDIT_REPORT.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "legacy-archive", destination = "dev/archive/legacy/crates/gf2-core/docs/QUALITY_AUDIT_REPORT.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
+  { path = "crates/gf2-core/docs/archive/PHASE11_IMPLEMENTATION_PLAN.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "legacy-archive", destination = "dev/archive/legacy/crates/gf2-core/docs/archive/PHASE11_IMPLEMENTATION_PLAN.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
+  { path = "crates/gf2-kernels-simd/README.md", evidence = "none", citation = "", owners = [], epic = "", bundle = "", disposition = "rewritten-topic", destination = "crates/gf2-kernels-simd/README.md", digest_pinned = false, consumers = [], inbound = [], status = "pending" },
 ]
 policy = [
 ]
