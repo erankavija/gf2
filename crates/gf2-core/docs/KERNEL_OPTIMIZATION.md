@@ -204,14 +204,10 @@ The committed host-calibration receipt at
 [`dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`](../../../dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md)
 records a selected value of **8** for `bit_backend.simd_min_words`: its
 crossover curve is non-monotone (first win at four words, later loss at
-seven), so the conservative default is retained. This contradicts the
-four-word value selected by the earlier receipts
-[`gf2-a83583e0-20260930t230000z-2728298.md`](../../../dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md) and
-`2026-09-01-eaae1b56.md`, which remeasure the same retained threshold
-experiment. The latter's
+seven), so the conservative default is retained. The
 [**SIMD scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md#simd-scope)
-defines the evidence boundary for the experiment and the Criterion result
-summarized here.
+of `2026-09-01-eaae1b56.md` defines the evidence boundary for the Phase 4
+Criterion result summarized here.
 
 **Phase 5 Completed:**
 - ✅ Migrated 5 core operations in `bitvec.rs` to use `kernels::ops`
