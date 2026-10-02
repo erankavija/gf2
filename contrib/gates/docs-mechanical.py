@@ -33,6 +33,7 @@ INLINE_LINK = re.compile(r"!?\[(?:[^\[\]]|\[[^\]]*\])*\]\(\s*<?([^()\s<>]+)>?(?:
 REF_DEFINITION = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?")
 CODE_SPAN = re.compile(r"`([^`\n]+)`")
 CITATION = re.compile(r"[\w.\-]+(?:/[\w.\-]+)+/?")
+BARE_FILE = re.compile(r"[\w-][\w.-]*\.[a-z][a-z0-9]{0,4}")
 ITEM_REF = re.compile(r"(?<![\w.@])@[a-z0-9-]*/[a-z]+/[A-Za-z0-9][\w.-]*(?:/[a-z]+/[A-Za-z0-9][\w.-]*)?")
 SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$")
@@ -96,6 +97,7 @@ class Checker:
         self.missing: list[tuple[Path, int, str, str, str]] = []
         self.references: dict[str, list[tuple[Path, int]]] = {}
         self.anchor_cache: dict[Path, set[str]] = {}
+        self.names: set[str] | None = None
         self.top_level = {entry.name for entry in root.iterdir()} - {".git"}
 
     def report(self, path: Path, line: int, kind: str, target: str):
@@ -154,6 +156,8 @@ class Checker:
                 if CITATION.fullmatch(cited) and segments[0] in self.top_level and "..." not in segments:
                     if not (self.root / cited).exists():
                         self.missing.append((path, number, "missing-citation", span.strip(), cited))
+                elif BARE_FILE.fullmatch(cited) and cited not in self.file_names():
+                    self.report(path, number, "missing-citation", span.strip())
 
     def check_rustdoc(self, path: Path):
         """Checks file-relative links; intra-doc paths and rustdoc page links are rustdoc's own check."""
@@ -173,6 +177,12 @@ class Checker:
         if result.returncode not in ok:
             raise EnvironmentFailure(f"git {arguments[0]} failed ({failure_text(result)})")
         return result.stdout
+
+    def file_names(self) -> set[str]:
+        """Bare file names cite a file by name, so they resolve against every unignored file's name."""
+        if self.names is None:
+            self.names = {relative.rsplit("/", 1)[-1] for relative in self.unignored_files(".")}
+        return self.names
 
     def unignored_files(self, directory: str) -> list[str]:
         return self.git("ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", directory).split("\0")[:-1]
@@ -225,9 +235,9 @@ class Checker:
             for target in targets:
                 if not (copy / target).is_file():
                     raise EnvironmentFailure(f"jit project render produced no {target}")
-                rendered = (copy / target).read_text(encoding="utf-8").splitlines()
+                rendered = (copy / target).read_bytes().splitlines(keepends=True)
                 current_path = self.root / target
-                current = current_path.read_text(encoding="utf-8").splitlines() if current_path.is_file() else []
+                current = current_path.read_bytes().splitlines(keepends=True) if current_path.is_file() else []
                 if current != rendered:
                     line = next((i for i, (a, b) in enumerate(zip(current, rendered), 1) if a != b),
                                 min(len(current), len(rendered)) + 1)
