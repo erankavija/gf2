@@ -55,8 +55,8 @@
 
 #![deny(unsafe_op_in_unsafe_fn)]
 // SAFETY note: this is a standalone `dev/research/` prototype (not a
-// workspace member). Per the gf2 CLAUDE.md exemption for non-workspace
-// research stubs, `unsafe` is permitted with a top-of-function safety
+// workspace member) outside `@/inv/unsafe-kernel-isolation`, which governs
+// production crates; `unsafe` is permitted with a top-of-function safety
 // comment on each `pub unsafe fn`. The only unsafe entries here are the
 // `extern "C"` declarations for the CBLAS FFI surface.
 
