@@ -33,9 +33,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:23.138654852Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T14:09:44.345612572Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "52fb615b-0294-4452-bf34-2d7a178029b0",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for permanent-path sources",
-  "updated_at": "2026-10-02T14:09:34.426483922Z"
+  "updated_at": "2026-10-02T14:09:44.345612572Z"
 }

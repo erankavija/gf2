@@ -16,8 +16,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T14:00:54.849503796Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T14:10:45.986928557Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -36,5 +36,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Create the docs index and quadrant layout",
-  "updated_at": "2026-10-02T14:08:25.247564870Z"
+  "updated_at": "2026-10-02T14:10:45.986928557Z"
 }
