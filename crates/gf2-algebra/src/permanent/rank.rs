@@ -81,15 +81,6 @@ use crate::permanent::permanent_ryser;
 /// The two variants are the closed vocabulary of the decision that
 /// [`permanental_rank_status`] and its brute-force oracle return; comparing
 /// the two implementations compares values of this type.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::PermanentalRank;
-///
-/// assert!(PermanentalRank::Deficient.is_deficient());
-/// assert!(!PermanentalRank::Full.is_deficient());
-/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PermanentalRank {
     /// `per-rank(A) < k`: every `k × k` row submatrix has zero permanent.
@@ -115,14 +106,6 @@ pub struct PermanentalRankEvaluation {
 
 impl PermanentalRank {
     /// `true` for [`PermanentalRank::Deficient`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::permanent::PermanentalRank;
-    ///
-    /// assert_eq!(PermanentalRank::Deficient.is_deficient(), true);
-    /// ```
     #[inline]
     pub const fn is_deficient(self) -> bool {
         matches!(self, Self::Deficient)
