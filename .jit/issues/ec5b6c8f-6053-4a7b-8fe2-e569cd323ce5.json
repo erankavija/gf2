@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T11:30:00.672267982Z",
+  "dependencies": [],
+  "description": "Repair the broken intra-doc links in the `gf2-kernels-hip` crate documentation.\n\n## Background\n\n`gf2-kernels-hip` sits outside the default Cargo workspace, so the workspace documentation build and the intra-doc link repair in `2d65e37f` do not reach it. `cargo doc --manifest-path crates/gf2-kernels-hip/Cargo.toml` reports unresolved links, among them `arch`, `HipStream`, `rand_chacha::ChaCha20Rng` and `gf2_coding::modem::FastGrayQamDemapper`.\n\n## Success Criteria\n\n- [hard] REQ-01: `cargo doc --manifest-path crates/gf2-kernels-hip/Cargo.toml --no-deps` on Rust 1.95 reports no unresolved, private-target or redundant intra-doc link diagnostics on a host where the crate builds.\n- [hard] REQ-02: Each repaired link resolves to the item the surrounding prose names, or the link markup is removed where no such item exists.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-02T11:30:00.672267982Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "ec5b6c8f-6053-4a7b-8fe2-e569cd323ce5",
+  "labels": [
+    "component:gf2-kernels-hip",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Repair broken intra-doc links in gf2-kernels-hip",
+  "updated_at": "2026-10-02T11:30:19.177597304Z"
+}

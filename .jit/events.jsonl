@@ -15189,3 +15189,6 @@
 {"from":"ready","id":"e056a531-3c67-4fd2-9024-884b6c445d20","issue_id":"049a89af-abcb-493b-9be6-fde9f287347a","timestamp":"2026-10-02T11:28:27.396066268Z","to":"rejected","type":"issue_state_changed"}
 {"fields":["documents"],"id":"661980a7-c8bf-4da0-becc-04f6cea438bf","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:28:57.870433586Z","type":"issue_updated","updated_by":"doc-add"}
 {"gate_key":"docs-mechanical","id":"6014a122-3289-479c-a793-d833473cbf2c","issue_id":"41e1d47d-046e-4808-a424-83898cf9b1ee","timestamp":"2026-10-02T11:29:31.781685174Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"df5f72b2-d2de-4d4d-9072-d37a8290b4b0","issue_id":"a0a29512-ce14-4110-a541-65ef6612278d","timestamp":"2026-10-02T11:30:00.401841165Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"a48f4479-4921-4da1-bf77-ba50533c1c0c","issue_id":"ec5b6c8f-6053-4a7b-8fe2-e569cd323ce5","priority":"normal","timestamp":"2026-10-02T11:30:00.672267982Z","title":"Repair broken intra-doc links in gf2-kernels-hip","type":"issue_created"}
+{"from":"ready","id":"bfcf50bf-635f-4521-b84b-c90913f39667","issue_id":"ec5b6c8f-6053-4a7b-8fe2-e569cd323ce5","timestamp":"2026-10-02T11:30:19.177597304Z","to":"backlog","type":"issue_state_changed"}

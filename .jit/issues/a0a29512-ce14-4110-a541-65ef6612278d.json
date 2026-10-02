@@ -14,6 +14,13 @@
       "format": "markdown",
       "label": null,
       "path": "dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-audit.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Post-removal example census",
+      "path": "dev/active/fa787f85-documentation-overhaul/a0a29512-example-census-after.md"
     }
   ],
   "first_ready_at": "2026-08-07T11:43:30.830480182Z",
@@ -39,5 +46,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove tautological Rustdoc examples across the workspace",
-  "updated_at": "2026-10-02T10:20:20.840838154Z"
+  "updated_at": "2026-10-02T11:30:00.401841165Z"
 }
