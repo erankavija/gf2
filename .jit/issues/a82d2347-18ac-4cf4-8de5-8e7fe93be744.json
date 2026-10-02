@@ -16,9 +16,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:28.565137453Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T10:30:29.915523553Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
@@ -31,5 +31,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-  "updated_at": "2026-10-02T10:20:20.727072810Z"
+  "updated_at": "2026-10-02T10:30:29.915523553Z"
 }

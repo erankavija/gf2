@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T10:31:04.293231780Z",
+  "dependencies": [],
+  "description": "Quantifies per-stage and end-to-end latency of the DVB-T2 receive chain (deinterleave, QAM demapping, LDPC, BCH) for one FEC frame, answering the roadmap latency-budget question.\n\n## Background\n\nThe unified DVB-T2 FEC chain and its BICM harness exist in `gf2-coding`, and the bit interleaver and CPU LDPC decoder have throughput profiles. Those profiles report rates, not the per-frame latency each stage contributes to a single frame.\n\n## Success Criteria\n\n- [hard] REQ-01: A benchmark reports per-frame wall-clock latency for each receive stage (deinterleave, demap, LDPC decode, BCH decode) and for the full chain, for a short and a normal DVB-T2 frame at one code rate.\n- [hard] REQ-02: The benchmark runs on a prepared benchmark host through the repository benchmark protocol, and the committed receipt records hardware, toolchain, iteration count and confidence intervals.\n- [hard] REQ-03: The committed report states each stage's share of total latency and identifies the dominant stage, with LDPC iteration count reported as a parameter.\n- [hard] REQ-04: Measured chain output equals the reference chain output for the benchmark inputs, so the timed path is the production path.",
+  "documents": [],
+  "first_ready_at": "2026-10-02T10:31:04.293231780Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "158ba129-ebc1-4ddf-995f-9f32d493a09f",
+  "labels": [
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Measure the DVB-T2 receive-chain stage latency budget",
+  "updated_at": "2026-10-02T10:31:30.429220438Z"
+}

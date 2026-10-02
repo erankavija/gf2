@@ -10,7 +10,7 @@
   "documents": [
     {
       "commit": null,
-      "doc_type": "design",
+      "doc_type": "record",
       "format": "markdown",
       "label": "Invariant draft",
       "path": "dev/active/fa787f85-documentation-overhaul/9b2886a7-invariant-draft.md"
@@ -25,9 +25,14 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:27.793494602Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T10:30:29.783196107Z",
+      "updated_by": "auto:executor"
+    },
+    "repo-validate": {
+      "status": "passed",
+      "updated_at": "2026-10-02T10:30:36.367035658Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "9b2886a7-35af-45cc-9200-dddea1c0323a",
@@ -40,5 +45,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-02T10:20:20.482174793Z"
+  "updated_at": "2026-10-02T10:31:30.673679676Z"
 }

@@ -18,9 +18,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:26.438122739Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T10:30:29.859145595Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "871b401d-59f7-4fa4-86b6-9c067795ff06",
@@ -33,5 +33,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register and project the no-dev-path-coupling invariant",
-  "updated_at": "2026-10-02T10:20:20.607200551Z"
+  "updated_at": "2026-10-02T10:30:29.859145595Z"
 }

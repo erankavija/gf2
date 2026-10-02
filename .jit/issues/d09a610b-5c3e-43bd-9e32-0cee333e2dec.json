@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T10:30:59.935846699Z",
+  "dependencies": [],
+  "description": "Measures when GRAND-family decoding outperforms ordered-statistics and algebraic decoding for short block codes, answering the roadmap question of where GRAND is faster.\n\n## Background\n\nThe workspace ships ORBGRAND and SOGRAND decoders (`gf2-coding` `grand` module), a generator-matrix OSD decoder (`osd` module) with a published eBCH OSD curve dataset, and algebraic BCH decoding. No benchmark compares the three on the same code, channel and operating point.\n\n## Success Criteria\n\n- [hard] REQ-01: A seeded AWGN campaign reports FER with sample counts and confidence intervals for ORBGRAND, OSD and the algebraic decoder on at least one extended BCH code of length 128 or shorter, at identical Eb/N0 points.\n- [hard] REQ-02: A throughput measurement per decoder at each operating point is taken on a prepared benchmark host through the repository benchmark protocol, with the committed receipt naming hardware, toolchain and seeds.\n- [hard] REQ-03: The committed result states, per operating point, which decoder has the lowest decoding time at a matched FER and records any operating region where the ranking changes.\n- [hard] REQ-04: The campaign is resumable and writes a durable execution log, and a fixed seed reproduces identical FER counts across worker counts.",
+  "documents": [],
+  "first_ready_at": "2026-10-02T10:30:59.935846699Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "d09a610b-5c3e-43bd-9e32-0cee333e2dec",
+  "labels": [
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Compare ORBGRAND with OSD and algebraic decoding on short codes",
+  "updated_at": "2026-10-02T10:31:30.205904920Z"
+}
