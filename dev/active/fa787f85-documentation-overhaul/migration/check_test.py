@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -12,11 +13,14 @@ SCRIPT = Path(__file__).with_name("check.py")
 CONFIG = '[documentation]\nmanaged_paths = ["dev/active", "dev/plans"]\n'
 
 
-def row(path, disposition, destination="", status="pending", evidence="issue-id", owner="0123abcd", bundle=""):
-    return (
-        f'{{ path = "{path}", evidence = "{evidence}", owner = "{owner}", bundle = "{bundle}", '
-        f'disposition = "{disposition}", destination = "{destination}", status = "{status}" }},'
-    )
+OWNED = {"evidence": "issue-id", "citation": "0123abcd", "owners": ["0123abcd"], "epic": "0123abcd"}
+OWNERLESS = {"evidence": "none", "citation": "", "owners": [], "epic": ""}
+
+
+def row(path, disposition, destination="", status="pending", **fields):
+    values = {"path": path, **OWNED, "bundle": "", "disposition": disposition, "destination": destination}
+    values |= {"digest_pinned": False, "consumers": [], "inbound": [], "status": status} | fields
+    return "{ " + ", ".join(f"{k} = {json.dumps(v)}" for k, v in values.items()) + " },"
 
 
 def policy(value, status):
@@ -44,10 +48,11 @@ class CheckTest(unittest.TestCase):
 
     def complete_rows(self):
         return [
-            row("dev/active/e/c.md", "retained-operational", status="complete"),
+            row("dev/active/e/c.md", "retained-operational", status="complete", evidence="commit", citation="5b91b07",
+                owners=["0123abcd", "456789ab"], digest_pinned=True, consumers=["src/a.rs:12"], inbound=["README.md:3"]),
             row("dev/active/e/d", "jit-container-archive", "dev/archive/e/d", "complete"),
             row("dev/active/e/d/x.md", "jit-container-archive", "dev/archive/e/d/x.md", "complete", bundle="dev/active/e/d"),
-            row("dev/plans/b.md", "legacy-archive", "dev/archive/legacy/dev/plans/b.md", "complete", "none", ""),
+            row("dev/plans/b.md", "legacy-archive", "dev/archive/legacy/dev/plans/b.md", "complete", **OWNERLESS),
             row("dev/sessions/gone.md", "deletion", status="complete"),
         ]
 
@@ -75,22 +80,39 @@ class CheckTest(unittest.TestCase):
         cases = {
             "disposition must be one of": [row("dev/plans/a.md", "moved")],
             "legacy-archive destination must be": [row("dev/plans/a.md", "legacy-archive", "dev/archive/legacy/a.md")],
-            "owner must be empty exactly when evidence is none": [row("dev/plans/a.md", "deletion", evidence="none")],
+            "citation, owners and epic must be empty exactly when evidence is none": [
+                row("dev/plans/a.md", "deletion", evidence="none"),
+                row("dev/plans/a.md", "deletion", epic=""),
+            ],
+            "citation must be a commit sha or one of owners": [
+                row("dev/plans/a.md", "deletion", evidence="commit", citation="xyz"),
+                row("dev/plans/a.md", "deletion", evidence="doc-ref", citation="89abcdef"),
+            ],
+            "owners and epic must be 8-hex short ids": [
+                row("dev/plans/a.md", "deletion", owners=["0123abcd", "0123"]),
+                row("dev/plans/a.md", "deletion", epic="EPIC0123"),
+            ],
+            "consumers and inbound must be file:line references": [
+                row("dev/plans/a.md", "deletion", consumers=["src/a.rs"]),
+                row("dev/plans/a.md", "deletion", inbound=["README.md:x"]),
+            ],
+            "wrong type for digest_pinned": [row("dev/plans/a.md", "deletion", digest_pinned="yes")],
+            "wrong type for owners": [row("dev/plans/a.md", "deletion", owners="0123abcd")],
             "bundle must name a head row": [row("dev/plans/a.md", "deletion", bundle="dev/plans")],
-            "rows must be unique and sorted": [row("dev/plans/a.md", "deletion"), row("dev/active/e/c.md", "deletion")],
             "fields must be exactly": ['{ path = "dev/plans/a.md" },'],
+            "destination must be repository-relative": [
+                row("dev/active/e/c.md", "jit-container-archive", "dev/archive/../c.md"),
+                row("dev/plans/../a.md", "legacy-archive", "dev/archive/legacy/dev/plans/../a.md"),
+            ],
         }
         for message, rows in cases.items():
-            with self.subTest(message):
-                code, out = self.run_check(rows)
-                self.assertEqual(code, 1)
-                self.assertIn(message, out)
-        for one in (
-            row("dev/active/e/c.md", "jit-container-archive", "dev/archive/../c.md"),
-            row("dev/plans/../a.md", "legacy-archive", "dev/archive/legacy/dev/plans/../a.md"),
-        ):
-            with self.subTest(row=one):
-                self.assertIn("destination must be repository-relative", self.run_check([one])[1])
+            for one in rows:
+                with self.subTest(message, row=one):
+                    code, out = self.run_check([one])
+                    self.assertEqual(code, 1)
+                    self.assertIn(message, out)
+        code, out = self.run_check([row("dev/plans/a.md", "deletion"), row("dev/active/e/c.md", "deletion")])
+        self.assertIn("rows must be unique and sorted", out)
 
     def test_failed_assertions_fail(self):
         cases = {
