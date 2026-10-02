@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/11964cb8-baseline.md"
     }
   ],
+  "done_at": "2026-10-02T22:06:10.503323626Z",
   "first_ready_at": "2026-10-02T11:05:37.362087835Z",
   "gates_required": [
     "cargo-ci",
@@ -30,8 +31,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T20:41:14.241824914Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T21:18:41.687758824Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -53,7 +54,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-  "updated_at": "2026-10-02T20:41:14.241824914Z"
+  "updated_at": "2026-10-02T22:06:10.503323626Z"
 }
