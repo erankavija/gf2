@@ -524,13 +524,12 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 /// `select_f32_path` compares against `F32_MIN_PRIME_SELECTED`, which is this
 /// conservative declaration in both the default and current baked builds.
 ///
-/// Set to 251 (the value of the highest in-scope small prime) based on the
-/// Phase 1 route-selection decision (issue 41096af5, 2026-05-25). Combined
-/// with the column threshold in `select_f32_path`, only the cell
-/// `P == 251 && n >= 512` reaches the F / route-A path; all other in-scope
-/// primes (GF(7), GF(31), GF(127), GF(241)) have `P < 251` and therefore
-/// `P >= F32_MIN_PRIME_SELECTED` evaluates to `false`, routing them to
-/// Candidate C. See
+/// Set to 251 (the value of the highest in-scope small prime) by the
+/// route-selection decision of `@/issue/41096af5`. Combined with the column
+/// threshold in `select_f32_path`, only the cell `P == 251 && n >= 512` reaches
+/// the F / route-A path; all other in-scope primes (GF(7), GF(31), GF(127),
+/// GF(241)) have `P < 251` and therefore `P >= F32_MIN_PRIME_SELECTED`
+/// evaluates to `false`, routing them to Candidate C. See
 /// `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
 /// for the full side-by-side evidence table and decision-rule application.
 ///
@@ -756,15 +755,15 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// **Dispatch policy (updated 2026-05-25, issue 41096af5):** Candidate C
 /// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells except the new
 /// GF(251)/n ≥ 512 production default (route A). The 5-trial criterion sweep
-/// over GF(7)–GF(251) at n ∈ {256, 1024} showed C beats F by 5–10 % at
-/// every cell except GF(251)/n=1024 where route A clears 1.5× of fflas-ffpack
-/// (ratio 0.679 > 0.667). `select_f32_path` returns `true` for `P == 251 &&
-/// n >= 512` (the pack-cost amortisation threshold determined by the Phase 1
-/// route-selection decision, `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`);
-/// the conservative `prime_route.f32_min_prime` and `prime_route.f32_min_cols`
-/// defaults (251 and 512) route exactly the cell `P == 251 && n >= 512`
-/// through route A; all other in-scope primes have `P < 251` and stay on
-/// Candidate C. [`prime_gemm_route`] reports the arm for any cell.
+/// over GF(7)–GF(251) at n ∈ {256, 1024} showed C beats F by 5–10 % at every
+/// cell except GF(251)/n=1024 where route A clears 1.5× of fflas-ffpack (ratio
+/// 0.679 > 0.667). `select_f32_path` returns `true` for `P == 251 && n >= 512`
+/// (the pack-cost amortisation threshold of the route-selection decision,
+/// `@/issue/41096af5`); the conservative `prime_route.f32_min_prime` and
+/// `prime_route.f32_min_cols` defaults (251 and 512) route exactly the cell `P
+/// == 251 && n >= 512` through route A; all other in-scope primes have `P <
+/// 251` and stay on Candidate C. [`prime_gemm_route`] reports the arm for any
+/// cell.
 ///
 /// **Route-A dispatch (issues 68cdf4c8 + 41096af5):** route A (reworked
 /// Candidate F: `from_mont_f32` lookup-table pack + vectorized AVX2 Barrett
@@ -1646,8 +1645,7 @@ const F64_MIN_COLS_SELECTED: usize = crate::tuning::baked::F64_MIN_COLS;
 #[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 const F64_MIN_COLS_SELECTED: usize = F64_MIN_COLS;
 
-/// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`,
-/// Phase 6e).
+/// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`).
 ///
 /// Returns `true` when the f64-FMA cascade is the production-preferred path
 /// for this size. The cascade has a non-trivial pack overhead (one
@@ -1891,10 +1889,9 @@ pub fn last_executed_prime_gemm_route() -> Option<PrimeGemmRoute> {
 ///
 /// # Issue
 ///
-/// jit:74ba1cdc R1 — original u16 panel kernel (closes large-n gap at
-/// ratio ≤ 1.5 for primes ≤ 32 767).
-/// jit:0749dbad — f64 cascade dispatch override for `n ≥ 512`, closes
-/// the GF(65521)/n=4096 ratio gap to ≤ 1.5×.
+/// jit:74ba1cdc — u16 panel kernel (large-n ratio ≤ 1.5 for primes ≤ 32 767).
+/// jit:0749dbad — f64 cascade dispatch override for `n ≥ 512` (GF(65521)/n=4096
+/// ratio ≤ 1.5×).
 #[cfg(feature = "simd")]
 pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     a: &[Fp<P>],
@@ -1969,10 +1966,9 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     }
 }
 
-/// f64-cascade GEMM helper for medium primes (issue `0749dbad`,
-/// Phase 6e). Pre-packs A and B^T as canonical f64 (via per-element
-/// `Fp::value()` REDC), runs the AVX2 + FMA3 dgemm micro-kernel, then
-/// re-packs the canonical-u16 output as `Fp::new(u as u64)` per cell.
+/// f64-cascade GEMM helper for medium primes (issue `0749dbad`). Pre-packs A and B^T as canonical
+/// f64 (via per-element `Fp::value()` REDC), runs the AVX2 + FMA3 dgemm micro-kernel, then re-packs
+/// the canonical-u16 output as `Fp::new(u as u64)` per cell.
 ///
 /// Returns `true` when the kernel ran (and `out` is populated); `false`
 /// when AVX2 + FMA3 is unavailable at runtime.
@@ -2139,7 +2135,7 @@ thread_local! {
 pub(crate) struct SmallPrimeTables {
     from_mont: Vec<u8>, // index = raw storage word (in [0, P)); value = canonical
     to_mont: Vec<u64>,  // index = canonical value (in [0, P)); value = raw storage
-    /// 16-bit Barrett constant `μ = ⌊2¹⁶ / P⌋` (issue 52cce970 R1).
+    /// 16-bit Barrett constant `μ = ⌊2¹⁶ / P⌋`.
     ///
     /// Cached here so callers into `fp_small`'s `sub_scaled` /
     /// `batch_mul` / `batch_sub` kernels can pass `μ` as a kernel
@@ -2874,10 +2870,10 @@ pub(crate) struct PackedFpChainPolys<const P: u64> {
     /// Stored coefficients for each chain polynomial, in canonical bytes,
     /// ascending-degree order.  `polys[j]` has length `j + 1` (degree `j`).
     polys: Vec<Vec<u8>>,
-    /// Per-prime conversion tables (issue 5a3dbd5b R5 review feedback):
-    /// `from_mont[raw]` maps a Montgomery storage word to its canonical
-    /// byte. Used in `sub_scaled_into` so `alpha`'s canonical value is
-    /// obtained via a single table lookup rather than a per-call REDC.
+    /// Per-prime conversion tables: `from_mont[raw]` maps a Montgomery storage
+    /// word to its canonical byte. Used in `sub_scaled_into` so `alpha`'s
+    /// canonical value is obtained via a single table lookup rather than a
+    /// per-call REDC.
     tables: &'static SmallPrimeTables,
 }
 
@@ -3834,13 +3830,11 @@ mod tests {
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(48))]
 
-        /// Property: the inlined/cached small-prime prepack matvec path
-        /// returns the same result as the scalar reference for any
-        /// `(m, k)` shape with each dimension in
-        /// `{0, 1, 15, 16, 17, 63, 64, 65}`. Issue `70766cb1` review
-        /// feedback (R1) explicitly required a proptest over these
-        /// boundary lengths, distinct from the deterministic
-        /// `test_small_prime_prepack_matvec_boundary_lengths` unit test.
+        /// Property: the inlined/cached small-prime prepack matvec path returns
+        /// the same result as the scalar reference for any `(m, k)` shape with
+        /// each dimension in `{0, 1, 15, 16, 17, 63, 64, 65}`, complementing
+        /// the deterministic `test_small_prime_prepack_matvec_boundary_lengths`
+        /// unit test.
         #[test]
         fn proptest_small_prime_prepack_matvec_boundary_fp251(
             m_idx in 0usize..8,

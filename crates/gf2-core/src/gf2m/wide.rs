@@ -30,16 +30,6 @@
 //! schoolbook whatever the build and host offer — a benchmark baseline, a
 //! conformance oracle — calls that function directly.
 //!
-//! Historically this file grew through five tasks of story `bdf95060`
-//! (nee `6fb4abad`): Task 1 landed the type shell and XOR operators
-//! (`9fa99685`), Task 2 landed `clmul_wide` (`e1fbf2d4`), Task 3 landed
-//! `BarrettReducerWide` (`9dd11973`), Task 4 landed `Mul` / `Inv` /
-//! `FiniteField` / `ConstField` impls (`b77768f0`), Task 5 landed the
-//! axiom-harness coverage (`a1229d72`), and Task 6 (`afac2262`) wired
-//! the SIMD fast path. Task 7 (`d013cfdf`, conditional Karatsuba-N=4)
-//! was rejected because the scalar fallback rarely executes on modern
-//! x86_64 hosts. Every one of those pieces lives in-file below.
-//!
 //! # Tail-masking invariant
 //!
 //! Every mutating operation on a [`Gf2mWide`] value must leave all bits at

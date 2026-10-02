@@ -24,11 +24,11 @@
 //!
 //! # Coverage scope
 //!
-//! Activates exclusively for `Fp<P>` with `P <= 251` and AVX2 hosts.
-//! For `P > 251` (e.g. GF(65521)) the design routes the PLE base case
-//! to the scalar `ple_base_direct` and inherits the medium-prime
-//! Schur-update speedup automatically via `gemm_axpy_into_view`'s
-//! lifted small/medium-prime fast paths (40195c09 lift + 74ba1cdc R1).
+//! Activates exclusively for `Fp<P>` with `P <= 251` and AVX2 hosts. For `P >
+//! 251` (e.g. GF(65521)) the design routes the PLE base case to the scalar
+//! `ple_base_direct` and inherits the medium-prime Schur-update speedup
+//! automatically via `gemm_axpy_into_view`'s lifted small/medium-prime fast
+//! paths (issues 40195c09 and 74ba1cdc).
 
 /// Structural scratch bound for the byte-lane PLE kernel, in columns.
 ///

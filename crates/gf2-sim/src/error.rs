@@ -1,6 +1,6 @@
 //! Error type hierarchy for the simulation pipeline.
 //!
-//! Lifts the §1 "Error type hierarchy" block of the Phase 0 design doc
+//! Lifts the §1 "Error type hierarchy" block of the design doc
 //! (`@/issue/ec530af9`) into code, including the `OutOfMemory` variants on both
 //! [`RecoverableError`] and [`FatalError`] mandated by the Q7 decision (design
 //! doc §8).
@@ -206,9 +206,9 @@ pub enum BuildError {
     ///
     /// Carries human-readable, standard-agnostic descriptors of the *actual*
     /// offending values so the error reports exactly what was requested. The
-    /// descriptors are plain strings (rather than a closed enum) so every preset
-    /// — the DVB-T2 preset today, the future 5G NR preset — can report any
-    /// rate / modulation it rejects without a lossy mapping onto a fixed set.
+    /// descriptors are plain strings (rather than a closed enum) so every
+    /// preset — DVB-T2 and 5G NR — can report any rate / modulation it rejects
+    /// without a lossy mapping onto a fixed set.
     InvalidModcod {
         /// A human-readable rendering of the requested code rate (e.g.
         /// `"Rate5_6"`).

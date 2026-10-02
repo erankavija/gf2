@@ -108,8 +108,8 @@ required-features = ["simd", "test-support"]
 name = "permanent_demo"
 
 [features]
-# `f5` and `f7` are default-on per R1 §1 and `@/issue/4fced99b` §5.3, so the
-# standard `cargo test` and `tests` gates exercise them.
+# `f5` and `f7` are default-on per `@/issue/6b3f6054` §1 and `@/issue/4fced99b`
+# §5.3, so the standard `cargo test` and `tests` gates exercise them.
 default = ["simd", "parallel", "f5", "f7"]
 
 # Enable runtime SIMD dispatch hooks. Mirrors gf2-coding's pattern: the
@@ -121,10 +121,9 @@ default = ["simd", "parallel", "f5", "f7"]
 # smaller compiled-out detection table.
 simd = ["gf2-core/simd", "dep:gf2-kernels-simd"]
 
-# Rayon-based parallel permanent. Pulls in rayon and the parallel
-# helpers in gf2-core. On by default because the headline workload
-# (permanent_bipedal3 at n=36) is a 2^36-step Gray-code walk where
-# parallel scaling is the entire point of W3.
+# Rayon-based parallel permanent. Pulls in rayon and the parallel helpers in
+# gf2-core. On by default because the headline workload (permanent_bipedal3 at
+# n=36) is a 2^36-step Gray-code walk that parallel scaling serves.
 parallel = ["dep:rayon", "gf2-core/parallel"]
 
 # HIP/ROCm GPU dispatch (gfx1030+). Off by default — matches

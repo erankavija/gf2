@@ -253,8 +253,8 @@ pub(crate) mod simd {
             .as_ref()
     }
 
-    /// Returns the medium-prime `Fp<P>` AVX2 + FMA3 f64-cascade GEMM
-    /// kernel, if any (issue `0749dbad`, Phase 6e).
+    /// Returns the medium-prime `Fp<P>` AVX2 + FMA3 f64-cascade GEMM kernel, if
+    /// any (issue `0749dbad`).
     ///
     /// Provides an in-Rust f64-FMA dgemm micro-kernel for canonical-u16
     /// `Fp<P>` operands with `P ∈ (251, 65535]`. The kernel mirrors
@@ -264,13 +264,11 @@ pub(crate) mod simd {
     /// Barrett reduction (`r = x - p · round(x · (1/p))`) at the end
     /// of the k-axis.
     ///
-    /// The 695350fd R0 post-mortem
-    /// (`dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md` § 9)
-    /// identified the f64 cascade as the structural lever required to
-    /// close GF(65521)/n=4096 — the u16-lane `_mm256_pmullw + _mm256_pmulhuw`
+    /// The f64 cascade is the structural lever for GF(65521)/n=4096
+    /// (`@/issue/695350fd`): the u16-lane `_mm256_pmullw + _mm256_pmulhuw`
     /// kernel sits at ~92 % of its arithmetic ceiling (~40 Gop/s) while
-    /// fflas-ffpack's `Modular<double>` peak (~70 Gop/s) matches Zen 3's
-    /// f64 FMA back-end exactly. This kernel reaches the same back-end.
+    /// fflas-ffpack's `Modular<double>` peak (~70 Gop/s) matches Zen 3's f64
+    /// FMA back-end exactly. This kernel reaches the same back-end.
     ///
     /// Returns `None` on hosts without AVX2 + FMA3.
     #[inline]
@@ -333,18 +331,16 @@ pub(crate) mod simd {
     /// Returns the small-prime `Fp<P>` AVX2 pure-integer Goto/BLIS-style
     /// panelized GEMM kernel, if any.
     ///
-    /// Provides **Route C** from the jit:615db3b9 Phase 1 plan
-    /// (`@/issue/615db3b9` § Phase 1, item 3) and the design note
+    /// Provides **Route C** of `@/issue/615db3b9` (item 3) and the design note
     /// `@/issue/fc182ed5` — an explicit A/B panel-packed AVX2 register-blocked
     /// `_mm256_madd_epi16`-based GEMM for canonical-byte `Fp<P>` operands with
     /// `P ≤ 251`.
     ///
-    /// **Status (per jit:fc182ed5):** the kernel is fully implemented
-    /// and tested but **not currently selected at runtime**. It is
-    /// exposed only via the GF(251)-only opt-in toggle
+    /// The kernel is not selected by automatic dispatch; it is exposed only via
+    /// the GF(251)-only opt-in toggle
     /// [`crate::gfp::simd_ops::set_route_c_gf251_enabled`]. Default
-    /// production dispatch is unchanged: Candidate C
-    /// ([`maybe_fp_small`]) owns all `p ≤ 251` cells.
+    /// production dispatch uses Candidate C ([`maybe_fp_small`]) owns all `p ≤
+    /// 251` cells.
     ///
     /// Returns `None` on non-AVX2 hardware; callers must fall back to
     /// [`maybe_fp_small`] (the production Candidate C row-panel

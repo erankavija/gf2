@@ -1,8 +1,8 @@
 //! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small
 //! `Fp<P>` with `P <= 251`.
 //!
-//! This is **Route C** from the jit:615db3b9 Phase 1 plan (`@/issue/615db3b9` §
-//! Phase 1, item 3) and the design note `@/issue/fc182ed5`.
+//! This is **Route C** of `@/issue/615db3b9` (item 3) and the design note
+//! `@/issue/fc182ed5`.
 //!
 //! The kernel processes a whole-GEMM call as a Goto/BLIS-style
 //! 3-loop structure (outer-N, KC blocking, MR/NR register-blocked

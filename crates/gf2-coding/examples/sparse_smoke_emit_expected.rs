@@ -684,9 +684,8 @@ fn emit_sparse_dense_fp<const P: u64>(field_label: &str, seed: u64) -> Cell {
     }
 }
 
-/// Emit `sparse_elim,GF(2)`. Production path:
-/// `SpBitMatrix::rref() -> SpBitMatrix` (sparse-native CSR-CSR RREF
-/// landed via `jit:0d6ca3b6`).
+/// Emit `sparse_elim,GF(2)`. Production path: `SpBitMatrix::rref() ->
+/// SpBitMatrix` (sparse-native CSR-CSR RREF).
 ///
 /// Output records `rank: u64`, then the dense RREF of the matrix as a
 /// row-major `n × n` `u64` buffer with each cell ∈ `{0, 1}`.

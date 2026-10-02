@@ -1,6 +1,6 @@
 //! Connectors and edges joining stages in a [`Pipeline`](crate::Pipeline).
 //!
-//! Lifts the §1 "`Connector<T>` and `Edge`" block of the Phase 0 design doc
+//! Lifts the §1 "`Connector<T>` and `Edge`" block of the design doc
 //! (`@/issue/ec530af9`) into code.
 
 use std::any::TypeId;

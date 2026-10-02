@@ -60,10 +60,10 @@ use crate::packed::PackedField;
 ///
 /// ## Single-word size bound
 ///
-/// `n` must satisfy `n ≤ LANES = 16`. [`Packed7`] packs exactly 16 lanes
-/// per `u64`; for `n ≤ 16` the row-count fits in one word and no
-/// multi-word path is needed. See [`crate::packed::Packed7`] for the
-/// encoding details (R2 Candidate A, 4-bit-aligned slots).
+/// `n` must satisfy `n ≤ LANES = 16`. [`Packed7`] packs exactly 16 lanes per
+/// `u64`; for `n ≤ 16` the row-count fits in one word and no multi-word path is
+/// needed. See [`crate::packed::Packed7`] for the encoding details
+/// (4-bit-aligned slots).
 ///
 /// # Arguments
 ///

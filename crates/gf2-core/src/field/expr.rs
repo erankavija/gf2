@@ -72,10 +72,10 @@
 //! `impl<T> From<T> for T` from `core` — Rust rejects this with **E0119**
 //! "conflicting implementations of trait".
 //!
-//! The resolution adopted by `d48a3cfd/T2` is to **keep the `From` blanket**
-//! (which is load-bearing for the `(&a * &b + &c).into()` idiom) and **drop
-//! the `Evaluate<F>` impls on `FieldMatrix<F>` and `&FieldMatrix<F>`**.
-//! Proxies whose operand is `&FieldMatrix<F>` (e.g.
+//! The module **keeps the `From` blanket** (which is load-bearing for the
+//! `(&a * &b + &c).into()` idiom) and **omits the `Evaluate<F>` impls on
+//! `FieldMatrix<F>` and `&FieldMatrix<F>`**. Proxies whose operand is
+//! `&FieldMatrix<F>` (e.g.
 //! [`Transposed<&FieldMatrix<F>>`](crate::field::matrix::Transposed),
 //! [`Scale<F, &FieldMatrix<F>>`], [`NegProxy<&FieldMatrix<F>>`]) invoke
 //! kernels directly without round-tripping through an
@@ -87,8 +87,8 @@
 //! `(F::one() * &a).into()` / `FieldMatrix::eval(F::one() * &a)` for the
 //! lazy-friendly route through [`Scale`] → [`Evaluate`].
 //!
-//! This note supersedes the "bare matrix is an `Evaluate<F>`" claim in
-//! `@/issue/cdcebf6a` §6.5 (amended at `d48a3cfd/T2`).
+//! This differs from the "bare matrix is an `Evaluate<F>`" statement in
+//! `@/issue/cdcebf6a` §6.5.
 
 use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};
@@ -361,7 +361,7 @@ where
 }
 
 /// Kernel `out <- A · B` over generic `MatrixLike` operands. The concrete-
-/// operand fast path routes through the T1 blocked gemm — see
+/// operand fast path routes through the blocked gemm — see
 /// [`gemm_concrete`].
 fn gemm_matrixlike<F, LA, LB>(a: &LA, b: &LB, out: &mut FieldMatrix<F>)
 where
@@ -397,9 +397,9 @@ where
     }
 }
 
-/// Concrete fast path: `out <- A · B` via the T1 blocked gemm. One
-/// allocation (the transposed `B`) inside T1's `gemm`, then a single
-/// row-by-row move into `out`. Counter is bumped once.
+/// Concrete fast path: `out <- A · B` via the blocked gemm. One allocation (the
+/// transposed `B`) inside `gemm`, then a single row-by-row move into `out`.
+/// Counter is bumped once.
 fn gemm_concrete<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>, out: &mut FieldMatrix<F>) {
     bump(&KC_GEMM);
     let (m, k1) = (
@@ -436,12 +436,12 @@ fn gemm_concrete<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>, out: &m
 
 /// Kernel `out <- A · B + β · C`. Overwrites. See design §5.1 / §5.2.
 ///
-/// Structurally mirrors T1's [`crate::field::matrix::gemm`]: transposes
-/// `B` once, then walks output tiles of `GEMM_ROW_TILE × GEMM_COL_TILE`.
-/// The inner kernel is a `dot_product_slices` call per cell — the same
-/// delayed-reduction primitive T1 uses — and the `β · C[i, j]` add is
-/// folded into the same inner write, so the whole operation is a single
-/// pass over the output with no intermediate allocation.
+/// Structurally mirrors [`crate::field::matrix::gemm`]: transposes `B` once,
+/// then walks output tiles of `GEMM_ROW_TILE × GEMM_COL_TILE`. The inner kernel
+/// is a `dot_product_slices` call per cell — the same delayed-reduction
+/// primitive `gemm` uses — and the `β · C[i, j]` add is folded into the same
+/// inner write, so the whole operation is a single pass over the output with no
+/// intermediate allocation.
 ///
 /// # Complexity
 ///
@@ -544,11 +544,10 @@ fn gemm_with_beta_concrete_tiled<
 
 /// Kernel `out <- Aᵀ · B`. Overwrites. See design §5.4.
 ///
-/// Transposes both `A` (k×m → m×k) and `B` (k×n → n×k) once, then
-/// dispatches the same blocked inner kernel as T1's `gemm`: the output
-/// traversal steps by `GEMM_ROW_TILE` × `GEMM_COL_TILE` tiles and each
-/// cell is a single `dot_product_slices` call over contiguous rows of
-/// `A_t` and `B_t`.
+/// Transposes both `A` (k×m → m×k) and `B` (k×n → n×k) once, then dispatches
+/// the same blocked inner kernel as `gemm`: the output traversal steps by
+/// `GEMM_ROW_TILE` × `GEMM_COL_TILE` tiles and each cell is a single
+/// `dot_product_slices` call over contiguous rows of `A_t` and `B_t`.
 fn gemm_trans_a_concrete<F: FiniteField>(
     a: &FieldMatrix<F>,
     b: &FieldMatrix<F>,
@@ -1337,7 +1336,7 @@ where
 /// a zero witness from the expression's own `(0, 0)` cell when the shape is
 /// nonempty; for empty shapes it falls back to `F::zero_hint()`, panicking only
 /// in the degenerate runtime-context-with-empty-shape case (which matches the
-/// gemm/matvec behaviour T1 documented for runtime-context fields — see
+/// gemm/matvec behaviour documented for runtime-context fields — see
 /// `@/issue/ab791e27`).
 fn materialise<F, E>(expr: &E) -> FieldMatrix<F>
 where
@@ -1416,10 +1415,10 @@ where
     }
 }
 
-/// Private: lets a `MatrixLike` operand optionally expose itself as a
-/// concrete `&FieldMatrix<F>` so the evaluator can route through the T1
-/// blocked gemm. Every `MatrixLike<F>` has a default impl returning `None`;
-/// `&FieldMatrix<F>` overrides to return `Some(self)`.
+/// Private: lets a `MatrixLike` operand optionally expose itself as a concrete
+/// `&FieldMatrix<F>` so the evaluator can route through the blocked gemm. Every
+/// `MatrixLike<F>` has a default impl returning `None`; `&FieldMatrix<F>`
+/// overrides to return `Some(self)`.
 #[doc(hidden)]
 pub trait ConcreteRef<F: FiniteField>: MatrixLike<F> {
     /// Returns `Some(self)` when `Self` is `&FieldMatrix<F>`, else `None`.
@@ -2076,10 +2075,9 @@ impl<F: FiniteField, A, B> Mul<F> for Product<A, B> {
 // is that these now return `Scale<F, &M>` — a proxy — rather than an eager
 // `FieldMatrix<F>`.
 
-/// Stamps out `F * &M` / `F * M` returning [`Scale`] proxies for one
-/// concrete `ConstField` type. Mirrors the `impl_left_scalar_mul!` macro
-/// in `field/matrix.rs` which T1 uses for the eager scalar multiplication
-/// path.
+/// Stamps out `F * &M` / `F * M` returning [`Scale`] proxies for one concrete
+/// `ConstField` type. Mirrors the `impl_left_scalar_mul!` macro in
+/// `field/matrix.rs` used for the eager scalar multiplication path.
 macro_rules! impl_left_scalar_mul_proxy {
     ($field_ty:ty $(, $($generics:tt)+)?) => {
         impl<'a $(, $($generics)+)?> Mul<&'a FieldMatrix<$field_ty>> for $field_ty {

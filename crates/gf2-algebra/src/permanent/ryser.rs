@@ -67,12 +67,11 @@ use crate::gray::gray_code_iter;
 ///
 /// Panics if `n > 63`. The Gray-code subset enumerator
 /// [`crate::gray::gray_code_iter`] uses a single-`u64` register and is
-/// only well-defined for `n ≤ 63` (Rust's shift-by-full-type-width
-/// `1u64 << 64` is undefined behaviour). The `n` range that this driver
-/// is intended to serve — exhaustive cross-checks for `n ≤ 16` plus
-/// up-to-`n = 32` correctness comparisons against bipedal kernels — sits
-/// well within the 63 bound; multi-word streaming for `n > 63` is the
-/// scope of W3-T14 and uses a separate driver.
+/// only well-defined for `n ≤ 63` (Rust's shift-by-full-type-width `1u64 << 64`
+/// is undefined behaviour). The `n` range that this driver is intended to serve
+/// — exhaustive cross-checks for `n ≤ 16` plus up-to-`n = 32` correctness
+/// comparisons against bipedal kernels — sits well within the 63 bound;
+/// multi-word streaming for `n > 63` uses a separate driver.
 ///
 /// Also panics when `n == 0` if `F::zero_hint()` returns `None`. All
 /// `ConstField` types (every concrete `FiniteField` impl in this
@@ -379,9 +378,8 @@ mod tests {
     /// larger `k` range (trailing_zeros up to 7). Uses one deterministic matrix;
     /// `8! = 40 320` permutations is fast in release mode.
     ///
-    /// This is the word-boundary correctness test called for in the T7 success
-    /// criteria: `permanent_ryser` for `n = 8` uses `2^8 - 1 = 255` Gray steps,
-    /// covering `trailing_zeros` values 0 through 7.
+    /// This is the word-boundary correctness test: `permanent_ryser` for `n = 8` uses `2^8 - 1 =
+    /// 255` Gray steps, covering `trailing_zeros` values 0 through 7.
     #[test]
     fn test_permanent_cross_check_n8_fp3() {
         let mat = random_matrix::<3>(8, 0xdead_beef_cafe_babe);

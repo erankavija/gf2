@@ -1,4 +1,4 @@
-//! Fixed-width and variable-length packed `F_5` encoding — Candidate D.
+//! Fixed-width and variable-length packed `F_5` encoding (`@/issue/6b3f6054`).
 //!
 //! [`Packed5`] packs exactly **64** independent `F_5` lanes into three
 //! `u64` bit-planes `(b0, b1, b2)`, carrying the canonical 3-bit value of
@@ -21,7 +21,7 @@
 //! Decoding a non-canonical codepoint maps to 0 — the encode-decode is
 //! total/well-defined.
 //!
-//! # Algorithm (R1 §5)
+//! # Algorithm (`@/issue/6b3f6054` §5)
 //!
 //! Every binary op uses a **5-way decode** of each operand into mutually-
 //! exclusive selectors `e_0..e_4` (where `e_i = 1` iff the element equals
@@ -38,11 +38,6 @@
 //! `neg` is a unary op (single-operand 1×5 remap, not a cross-product)
 //! implemented as decode → permute selectors `(e_0, e_1, e_2, e_3, e_4)`
 //! → `(e_0, e_4, e_3, e_2, e_1)` for the `(5 − x) mod 5` table → encode.
-//!
-//! # Transliteration source
-//!
-//! `dev/research/f5_packing/src/cand_d.rs` — the reference prototype. The
-//! decision doc is `@/issue/6b3f6054` (W4, T17).
 //!
 //! # Feature gating
 //!
@@ -96,7 +91,7 @@ fn encode5(r: [u64; 5]) -> (u64, u64, u64) {
     (c0, c1, c2)
 }
 
-/// F_5 addition Boolean circuit — direct transliteration of R1 §5 ADD cells.
+/// F_5 addition Boolean circuit (`@/issue/6b3f6054` §5 ADD cells).
 ///
 /// Cross-product cells (i + j) mod 5 == k for k ∈ {1,2,3,4}:
 /// - r[1]: (0,1),(1,0),(2,4),(3,3),(4,2) — 5 ANDs + 4 ORs
@@ -118,7 +113,7 @@ fn add_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
     encode5([0, r1, r2, r3, r4])
 }
 
-/// F_5 subtraction Boolean circuit — direct transliteration of R1 §5 SUB cells.
+/// F_5 subtraction Boolean circuit (`@/issue/6b3f6054` §5 SUB cells).
 ///
 /// Cross-product cells (i - j + 5) mod 5 == k for k ∈ {1,2,3,4}:
 /// - r[1]: (0,4),(1,0),(2,1),(3,2),(4,3) — 5 ANDs + 4 ORs
@@ -140,7 +135,7 @@ fn sub_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
     encode5([0, r1, r2, r3, r4])
 }
 
-/// F_5 multiplication Boolean circuit — direct transliteration of R1 §5 MUL cells.
+/// F_5 multiplication Boolean circuit (`@/issue/6b3f6054` §5 MUL cells).
 ///
 /// Cross-product cells (i * j) mod 5 == k for k ∈ {1,2,3,4}
 /// (cells with i=0 or j=0 always yield 0, so they go to r[0] which is unused):
@@ -163,9 +158,8 @@ fn mul_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
 // Packed5 — fixed-width 64-lane F_5 encoding
 // ---------------------------------------------------------------------------
 
-/// Fixed-width packed `F_5` element encoding 64 lanes in three `u64`
-/// bit-planes `(b0, b1, b2)` using the bit-sliced Boolean circuit of R1
-/// Candidate D.
+/// Fixed-width packed `F_5` element encoding 64 lanes in three `u64` bit-planes
+/// `(b0, b1, b2)` using the bit-sliced Boolean circuit of `@/issue/6b3f6054`.
 ///
 /// Each lane `i` (0 ≤ `i` < 64) stores one `F_5` element as the 3-bit
 /// canonical value across bit positions `i` of `(b0, b1, b2)`:
@@ -183,9 +177,8 @@ fn mul_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
 ///
 /// # Algorithm
 ///
-/// All binary ops use a 5-way decode-then-cross-product Boolean circuit
-/// derived from the 5×5 `F_5` truth tables (R1 §5). No LUT, no runtime
-/// tables, no `OnceLock`, no `unsafe`.
+/// All binary ops use a 5-way decode-then-cross-product Boolean circuit derived from the 5×5 `F_5`
+/// truth tables (`@/issue/6b3f6054` §5). No LUT, no runtime tables, no `OnceLock`, no `unsafe`.
 ///
 /// # Examples
 ///

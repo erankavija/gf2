@@ -1,6 +1,6 @@
-//! BLAS-backed GF(251) cascade — Phase 1 route B prototype harness.
+//! BLAS-backed GF(251) cascade — route B prototype harness.
 //!
-//! JIT issue: `91429c1c` (Phase 1 route B of plan `615db3b9`).
+//! JIT issue: `91429c1c` (route B of plan `615db3b9`).
 //!
 //! This standalone (non-workspace) prototype answers the empirical question:
 //! *does a single-threaded `sgemm`-backed cascade clear the
@@ -618,9 +618,8 @@ mod tests {
     }
 
     /// Regression guard for the `# Panics` contract on
-    /// `blas_gf251_gemm_canonical_bytes`: byte 251 must trigger an
-    /// `assert!` in release builds, not silently pack a non-canonical
-    /// f32 lane. (jit:91429c1c R1 code-review finding.)
+    /// `blas_gf251_gemm_canonical_bytes`: byte 251 must trigger an `assert!` in
+    /// release builds, not silently pack a non-canonical f32 lane.
     #[test]
     #[should_panic(expected = "out of GF(251) range")]
     fn canonical_bytes_rejects_byte_251_input() {

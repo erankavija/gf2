@@ -2314,7 +2314,7 @@ mod tests {
     // Output CSV (stderr, between BEGIN/END markers):
     //   op,phase,field,n,regime,trial,wall_ns
 
-    /// Build the same GF(251) input matrices used by the wave-7b benches.
+    /// Build the GF(251) borderline input matrices the benches use.
     fn build_borderline_input<const P: u64>(n: usize, regime: &str) -> FieldMatrix<Fp<P>> {
         let seed = P
             .wrapping_mul(0x9E37_79B9)
