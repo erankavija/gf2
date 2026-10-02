@@ -55,6 +55,19 @@
       "format": "markdown",
       "label": "Dev path code consumers (partial)",
       "path": "dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 1 handoff",
+      "path": "dev/active/fa787f85-documentation-overhaul/handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "progress",
+      "label": "Execution progress",
+      "path": "dev/active/fa787f85-documentation-overhaul/progress.json"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -82,5 +95,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-02T09:38:33.293127475Z"
+  "updated_at": "2026-10-02T10:07:45.374828895Z"
 }
