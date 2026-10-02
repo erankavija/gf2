@@ -17,10 +17,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T11:51:12.216940071Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T11:56:55.599198946Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T11:54:25.379985307Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:29.207269624Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T11:51:15.916728842Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "b6fdb815-20da-4ea9-af21-351b01746aee",
@@ -33,5 +48,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
-  "updated_at": "2026-10-02T10:20:20.963410749Z"
+  "updated_at": "2026-10-02T11:56:55.599198946Z"
 }

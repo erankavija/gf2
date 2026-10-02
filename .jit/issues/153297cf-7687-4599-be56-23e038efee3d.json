@@ -29,7 +29,7 @@
     "satisfies:fa787f85/REQ-07"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
-  "updated_at": "2026-10-02T09:38:19.844877028Z"
+  "updated_at": "2026-10-02T13:14:46.822194848Z"
 }
