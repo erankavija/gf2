@@ -73,7 +73,7 @@
      "short_id": "12907582",
      "title": "Correct surviving source-level documentation drift",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -122,14 +122,14 @@
      "short_id": "a0a29512",
      "title": "Remove tautological Rustdoc examples across the workspace",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "a24b2af7-81ce-4442-9ee3-6ce096c36537",
      "short_id": "a24b2af7",
      "title": "Define the documentation migration manifest and progress checker",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
@@ -143,7 +143,7 @@
      "short_id": "b6fdb815",
      "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "e85b8edf-f35f-49b5-bdb1-65502b7d30e1",
@@ -965,6 +965,11 @@
    "issue": "a24b2af7",
    "question": "Rework limit hit; reviewers contradicted on manifest header",
    "resolution": "Owner approved attempt 3 citing plan contract."
+  },
+  {
+   "issue": "a24b2af7",
+   "question": "Same code-review finding (empty manifest) three times",
+   "resolution": "Owner override recorded as DEC-01 on the issue; code-review then passed."
   }
  ],
  "rework_counts": {
@@ -973,7 +978,7 @@
   "8f61d6de": 1,
   "3f29e945": 2,
   "60652fe4": 1,
-  "a24b2af7": 3,
+  "a24b2af7": 4,
   "e85b8edf": 2,
   "875914b3": 1
  },

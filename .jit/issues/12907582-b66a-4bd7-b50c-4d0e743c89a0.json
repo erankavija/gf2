@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-02T13:42:49.086714428Z",
   "context": {},
   "created_at": "2026-06-30T20:12:46.239191939Z",
   "dependencies": [
@@ -53,7 +54,7 @@
     "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-02T10:06:45.596849618Z"
+  "updated_at": "2026-10-02T13:42:49.086714428Z"
 }
