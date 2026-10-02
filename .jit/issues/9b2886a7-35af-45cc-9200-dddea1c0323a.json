@@ -31,7 +31,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T11:05:36.383868843Z",
+      "updated_at": "2026-10-02T11:30:38.755517953Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-02T11:08:53.539013622Z"
+  "updated_at": "2026-10-02T11:30:38.755517953Z"
 }

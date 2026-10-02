@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T11:30:29.323115014Z",
+  "dependencies": [],
+  "description": "Quantify at which block length and redundancy a table-driven syndrome decoder stops being cheaper than algebraic decoding (Berlekamp-Massey with Chien search) for binary BCH codes, so the choice of decoder per code size rests on measurements.\n\n## Background\n\ngf2-coding offers a syndrome-table decoder for small linear block codes and an algebraic BCH decoder. Table size grows exponentially in the number of parity bits while algebraic decoding cost grows polynomially, so a crossover exists for medium block lengths. The crossover is not measured for either implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: A benchmark measures decode throughput of the syndrome-table decoder and the algebraic BCH decoder over at least four BCH parameter sets spanning small to medium block lengths, at error counts 0 through the designed correction capability t.\n- [hard] REQ-02: The benchmark reports table construction time and table memory footprint next to decode throughput for each parameter set.\n- [hard] REQ-03: Both decoders return identical corrected codewords for every sampled error pattern with weight at most t, checked within the benchmark or its companion test.\n- [hard] REQ-04: A committed record states the measured crossover (block length or parity-bit count) with the benchmark protocol, host, toolchain and commit identity that produced it, and the benchmark runs in release mode on an uncontended host.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-02T11:30:29.323115014Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "edcd4c9c-9d6c-4221-9b6c-685d5d28755d",
+  "labels": [
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Measure the table-based versus algebraic decoding crossover",
+  "updated_at": "2026-10-02T11:30:43.185592697Z"
+}

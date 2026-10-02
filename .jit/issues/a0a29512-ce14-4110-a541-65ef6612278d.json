@@ -32,9 +32,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:28.314412589Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T11:30:26.050446043Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "a0a29512-ce14-4110-a541-65ef6612278d",
@@ -46,5 +46,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Remove tautological Rustdoc examples across the workspace",
-  "updated_at": "2026-10-02T11:30:00.401841165Z"
+  "updated_at": "2026-10-02T11:30:26.050446043Z"
 }

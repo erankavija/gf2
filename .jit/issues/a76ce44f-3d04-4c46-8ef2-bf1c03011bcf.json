@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T11:30:33.327142278Z",
+  "dependencies": [],
+  "description": "Measure whether applying a bit-level compression transform (run-length, delta, XOR chaining) before error-correction encoding, or after decoding, changes the redundancy needed or the residual error rate for structured bit streams.\n\n## Background\n\nCompression removes redundancy that error-correcting codes add back in structured form, and the order of the two stages changes both burst-error exposure and overhead. The crate has BCH, LDPC and convolutional encoders plus AWGN simulation, and `BitVec` supports the transforms, but no experiment compares the orderings.\n\n## Success Criteria\n\n- [hard] REQ-01: An experiment compares two pipelines on the same structured source streams: transform then encode, and encode of the raw stream, each over an AWGN channel through a gf2-coding code at a fixed code rate.\n- [hard] REQ-02: Each result reports bit-error rate and frame-error rate per Eb/N0 point with sample count and a confidence interval, for at least two source streams of differing redundancy.\n- [hard] REQ-03: Every pipeline decodes and inverse-transforms back to the exact source stream in a noiseless round trip, verified by a test.\n- [hard] REQ-04: A committed record states the observed effect of ordering on error rates and overhead, with seeds, source identity, toolchain and hardware that produced the numbers.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-02T11:30:33.327142278Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "a76ce44f-3d04-4c46-8ef2-bf1c03011bcf",
+  "labels": [
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Study compression-transform ordering against error-correction coding",
+  "updated_at": "2026-10-02T11:30:43.863050148Z"
+}

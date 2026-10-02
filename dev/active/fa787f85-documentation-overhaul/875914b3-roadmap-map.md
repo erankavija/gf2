@@ -2,7 +2,7 @@
 
 Source revision and file: 791beb2b0^:crates/gf2-coding/ROADMAP.md. Every row cites that file at the stated line. Items marked complete in the roadmap are listed only where an open follow-up remains.
 
-Dispositions: Tracked (issue short ID), Delivered (code path or delivering issue), Obsolete (reason), Newly filed (exact issue title created by `875914b3-file-issues.sh`).
+Dispositions: Tracked (issue short ID), Delivered (code path or delivering issue), Obsolete (reason), Newly filed (issue filed by this mapping).
 
 | Item | Citation | Disposition |
 |---|---|---|
@@ -84,7 +84,7 @@ Dispositions: Tracked (issue short ID), Delivered (code path or delivering issue
 | C12.4 Python bindings via PyO3 | 791beb2b0^:crates/gf2-coding/ROADMAP.md:397 | Tracked: dd153981 |
 | Debt: consolidate expensive LDPC doctests | 791beb2b0^:crates/gf2-coding/ROADMAP.md:408 | Tracked: a0a29512 (each example is removed or retained compiling), 2596b143 (retained examples pass in the CI doctest step) |
 | Open question: data structures for extremely sparse H | 791beb2b0^:crates/gf2-coding/ROADMAP.md:411 | Delivered: crates/gf2-coding/src/ldpc/edge_layout.rs; 3a37e0f6, f1a896f0 |
-| Open question: switch from table-based to algebraic decoding | 791beb2b0^:crates/gf2-coding/ROADMAP.md:412 | Newly filed: Measure the table-based versus algebraic decoding crossover |
+| Open question: switch from table-based to algebraic decoding | 791beb2b0^:crates/gf2-coding/ROADMAP.md:412 | Newly filed: edcd4c9c |
 | Open question: GPU offload feasibility for LDPC | 791beb2b0^:crates/gf2-coding/ROADMAP.md:413 | Delivered: decision 86a363aa |
-| Open question: compression transforms vs error-correction ordering | 791beb2b0^:crates/gf2-coding/ROADMAP.md:414 | Newly filed: Study compression-transform ordering against error-correction coding |
+| Open question: compression transforms vs error-correction ordering | 791beb2b0^:crates/gf2-coding/ROADMAP.md:414 | Newly filed: a76ce44f |
 | Open question: SDR float vs fixed-point LLRs | 791beb2b0^:crates/gf2-coding/ROADMAP.md:415 | Tracked: d69b964e |
