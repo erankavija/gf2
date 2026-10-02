@@ -7,7 +7,22 @@
     "495807a3-caeb-4680-8429-13d7da4a590d"
   ],
   "description": "Rewrite the `doc-review` gate prompt so the review applies the registered documentation invariants and a fixed rubric, in addition to its current documentation-impact check.\n\n## Background\n\n`doc-review` runs `contrib/gates/ai-review.sh` with `contrib/gates/doc-review-prompt.md`. The prompt checks whether attributable changes need documentation updates and classifies findings as blocking or advisory, but it does not resolve or cite invariant addresses and has no rubric for documentation quality. The wrapper and reviewer agent stay unchanged.\n\n## Success Criteria\n\n- [hard] REQ-01: The prompt directs the reviewer to resolve every documentation invariant through `jit item` and cite the `@/inv/<id>` address of each one a finding applies.\n- [hard] REQ-02: The prompt's rubric evaluates accuracy, canonical placement, research relevance, aggregate concision, current-state prose, evidence, and example value, and the report header records a disposition for each rubric dimension.\n- [hard] REQ-03: Issue-attributable invariant violations are blocking; violations in pre-existing text the issue did not change are advisory.\n- [hard] REQ-04: The prompt derives the invariant set from the registry at review time and contains no hand-copied invariant text or list of invariant IDs.\n- [hard] REQ-05: The revised gate runs against a past issue with a known documentation defect and against one with clean documentation, and both reports are linked to this issue; the first fails citing the relevant invariant and the second passes.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "doc-review run on 495807a3 defect (FAIL)",
+      "path": "dev/active/fa787f85-documentation-overhaul/dcd38c45-review-defect.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "doc-review run on 79873126 clean (PASS)",
+      "path": "dev/active/fa787f85-documentation-overhaul/dcd38c45-review-clean.md"
+    }
+  ],
   "first_ready_at": "2026-10-01T10:03:15.373961177Z",
   "gates_required": [
     "code-review",
@@ -25,5 +40,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Ground the doc-review gate in the documentation invariants",
-  "updated_at": "2026-10-02T08:28:42.914015698Z"
+  "updated_at": "2026-10-02T08:38:49.840088618Z"
 }
