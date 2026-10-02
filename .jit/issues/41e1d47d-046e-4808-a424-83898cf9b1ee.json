@@ -24,9 +24,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:22.151816677Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T11:29:31.781685174Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-02T11:28:57.870433586Z"
+  "updated_at": "2026-10-02T11:29:31.781685174Z"
 }
