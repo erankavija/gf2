@@ -561,6 +561,17 @@ fn behavior_sources(declaration: &CampaignDeclaration) -> io::Result<BTreeMap<St
     let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
     ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)
 }
+/// The independent validator. Its recorded identity is informational: the
+/// driver runs the validator of the checkout it executes in, and behavior
+/// identity comparisons exclude it, since checking is not measurement.
+const VALIDATOR: &str = "dev/scripts/validate-tuning-extent-campaign.py";
+/// Behavior identity equality over the same inventory, ignoring [`VALIDATOR`].
+fn same_behavior(observed: &BTreeMap<String, String>, recorded: &BTreeMap<String, String>) -> bool {
+    observed.len() == recorded.len()
+        && observed
+            .iter()
+            .all(|(path, sha)| path == VALIDATOR || recorded.get(path) == Some(sha))
+}
 fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     let declaration =
         CampaignDeclaration::for_campaign(Path::new("."), config.campaign_id.as_str())?;
@@ -580,7 +591,10 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     if revision != config.identity.source_revision
         || tree != config.source_tree
         || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
-        || behavior_sources(&declaration)? != config.identity.behavior_sha256
+        || !same_behavior(
+            &behavior_sources(&declaration)?,
+            &config.identity.behavior_sha256,
+        )
         || !config
             .identity
             .behavior_sha256
@@ -650,10 +664,8 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     if config.protocol.path != fs::canonicalize(&declaration.protocol)? {
         return Err(invalid("campaign protocol differs from the declaration"));
     }
-    if artifact(&config.protocol.path)? != config.protocol
-        || artifact(&config.validator.path)? != config.validator
-    {
-        return Err(invalid("protocol or validator changed"));
+    if artifact(&config.protocol.path)? != config.protocol {
+        return Err(invalid("protocol changed"));
     }
     if config.host_admission_policy != HostAdmissionPolicy::declared() {
         return Err(invalid(
@@ -1062,7 +1074,7 @@ fn bootstrap_inputs(
         runtime,
         processes,
         protocol: artifact(&repository.join(&declaration.protocol))?,
-        validator: artifact(&repository.join("dev/scripts/validate-tuning-extent-campaign.py"))?,
+        validator: artifact(&repository.join(VALIDATOR))?,
         affinity,
         staging: artifact(&channels.stage.join("staging-manifest.json"))?,
         producing_manifest: artifact(Path::new(&declaration.producing_manifest))?,
@@ -2529,15 +2541,17 @@ fn run_validator(validator: &Path, stage: &Path, arguments: &[&OsStr]) -> io::Re
     Ok(output.stdout)
 }
 fn validator(config: &CampaignConfig, preterminal: bool) -> io::Result<()> {
-    if artifact(&config.validator.path)? != config.validator {
-        return Err(invalid("validator identity changed"));
-    }
     let arguments: &[&OsStr] = if preterminal {
         &[OsStr::new("--preterminal")]
     } else {
         &[]
     };
-    run_validator(&config.validator.path, &config.channels.stage, arguments).map(drop)
+    run_validator(
+        &fs::canonicalize(VALIDATOR)?,
+        &config.channels.stage,
+        arguments,
+    )
+    .map(drop)
 }
 fn observed_failure(records: &[tuning_campaign_support::journal::JournalRecord]) -> bool {
     records.iter().any(|record| {
@@ -3036,15 +3050,15 @@ fn publish_to_repository(
     })
 }
 /// Post-finalization publication of a complete campaign into the repository
-/// checkout it was prepared from. Returns `None` while the campaign is not
-/// complete. Idempotent: a retry after any interruption finishes the rest.
+/// checkout the driver runs in, checked by that checkout's validator. Returns
+/// `None` while the campaign is not complete. Idempotent: a retry after any
+/// interruption finishes the rest.
 fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
     let config: CampaignConfig = read_json(&stage.join("campaign.json"))?;
     let composer = process(&config, "composer")?;
-    let declaration = CampaignDeclaration::for_campaign(
-        &composer.working_directory,
-        config.campaign_id.as_str(),
-    )?;
+    let repository = fs::canonicalize(".")?;
+    let validator_path = repository.join(VALIDATOR);
+    let declaration = CampaignDeclaration::for_campaign(&repository, config.campaign_id.as_str())?;
     validate_campaign_stage(stage, config.campaign_id.as_str(), &declaration)?;
     if config.channels.stage != stage {
         return Err(invalid("campaign channels name another stage"));
@@ -3052,10 +3066,7 @@ fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
     if !campaign_complete(&config.channels, &config.campaign_id)? {
         return Ok(None);
     }
-    if artifact(&config.validator.path)? != config.validator {
-        return Err(invalid("validator identity changed"));
-    }
-    let stdout = run_validator(&config.validator.path, stage, &[])?;
+    let stdout = run_validator(&validator_path, stage, &[])?;
     let validation = stdout
         .strip_prefix(b"GF2_TUNING_VALIDATION=")
         .and_then(|line| line.strip_suffix(b"\n"))
@@ -3078,13 +3089,13 @@ fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
         .transpose()?;
     publish_to_repository(
         stage,
-        &composer.working_directory,
+        &repository,
         &config.campaign_id,
         &declaration,
         validation,
         evidence_index.as_deref().map(str::as_bytes),
         &composer,
-        &config.validator.path,
+        &validator_path,
     )
     .map(Some)
 }

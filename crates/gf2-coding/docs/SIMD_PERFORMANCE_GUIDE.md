@@ -300,7 +300,7 @@ SIMD is beneficial for large arrays. gf2-core uses a compile-time size
 threshold: eight words (64 bytes) in the default build, from the conservative
 table; below that value, use scalar; at or above it, use SIMD when available.
 A build with `RUSTFLAGS="--cfg gf2_tuning_baked"` takes the committed
-calibrated profile's four-word boundary instead.
+calibrated profile's boundary, which is also eight words.
 
 For LDPC matrices, rows are typically 100-1000 words and therefore reach
 SIMD under either compile-time threshold.

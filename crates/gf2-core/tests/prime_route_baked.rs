@@ -6,8 +6,8 @@
 //! boundaries are asserted by `prime_route_reporter.rs`.
 //!
 //! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
-//! cites `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+//! `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+//! cites `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
 //! and omits `prime_route`. These baked fields therefore retain their
 //! conservative defaults, as `dev/active/3fa7c9d0/design.md` §7.1 requires.
 //!

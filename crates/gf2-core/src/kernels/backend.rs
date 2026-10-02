@@ -93,10 +93,11 @@ const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 /// Uses a compile-time threshold to determine whether SIMD acceleration is
 /// beneficial. The default build uses the conservative table's eight-word
 /// (64-byte) value. Building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
-/// selects the four-word value measured by
-/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+/// selects the value measured by
+/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
 /// in the format-2 core owner at
-/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`.
+/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`,
+/// which retains the eight-word value.
 /// The flag is a declared cfg, not a Cargo feature, so `--all-features` builds
 /// keep the conservative threshold. Runtime profile installation does not
 /// govern this boundary; see `dev/active/220cab0b/design.md` (DEC-G).

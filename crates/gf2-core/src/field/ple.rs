@@ -164,6 +164,9 @@ use crate::tuning;
 /// because the Mersenne-31 blocked GEMM amortises its delayed `u128`
 /// reduction and the schoolbook leaf does not —
 /// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`.
+/// The seam calibration `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
+/// contradicts that regression for `FieldMatrix::ple` alone: it measures a
+/// crossover at 32 and states 24 in its measured core owner.
 /// This constant remains the compiled-in conservative default consumed by
 /// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
 /// the active profile and is reported by [`ple_base_route`].
