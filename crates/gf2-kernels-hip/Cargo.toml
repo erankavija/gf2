@@ -5,12 +5,12 @@ name = "gf2-kernels-hip"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.95"
-description = "HIP/ROCm GPU kernels for gf2 — BCJR batch decoder"
+description = "HIP/ROCm GPU kernels for gf2"
 publish = false
 
 [features]
-# Enable per-prime permanent kernels (permanent_bipedal{3,5,7}).
-# Requires hipcc and a compatible AMD GPU (gfx1030).
+# Enable the BCH syndrome and per-prime permanent kernels
+# (permanent_bipedal{3,5,7}). Requires hipcc and a gfx1030 GPU.
 hip = []
 
 [dependencies]

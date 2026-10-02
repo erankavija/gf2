@@ -27,8 +27,8 @@
 //! The [`ProductComponent`] trait abstracts over component codes. Any code that
 //! provides a parity-check matrix, n/k dimensions, an even-code flag, and a
 //! [`BlockEncoder`] implementation can be used as a component. Built-in
-//! implementations exist for [`ExtendedBchComponent`]
-//! and [`CrcCode`](crate::crc::CrcCode).
+//! implementations exist for [`ExtendedBchComponent`],
+//! [`CrcCode`](crate::crc::CrcCode), and [`DrmCode`](crate::drm::DrmCode).
 //!
 //! # Examples
 //!

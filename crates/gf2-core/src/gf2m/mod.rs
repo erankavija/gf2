@@ -1,6 +1,6 @@
 //! GF(2^m) - Binary Extension Field Arithmetic
 //!
-//! This module is re-exported from the field submodule for backward compatibility.
+//! Items are defined in the private `field` submodule and re-exported here.
 
 pub mod barrett;
 pub mod batch;

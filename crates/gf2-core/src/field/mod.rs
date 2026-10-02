@@ -40,16 +40,14 @@
 //!
 //! - [`poly`] — [`FieldPoly<F>`](poly::FieldPoly), a generic univariate
 //!   polynomial type. It is the single source of truth in `gf2-core`:
-//!   [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is now a thin `pub type`
+//!   [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is a thin `pub type`
 //!   alias for `FieldPoly<Gf2mElement_<V>>`. The module covers the
 //!   full basic algebraic surface — addition, subtraction, negation,
 //!   scalar multiplication, polynomial multiplication (schoolbook +
 //!   Karatsuba dispatch), Euclidean division and GCD, Horner
 //!   evaluation, naive per-point batch evaluation, subproduct-tree
 //!   batch evaluation, construction from roots, and products of
-//!   polynomial slices. Further algorithmic upgrades (Lagrange
-//!   interpolation, balanced product tree + batch GCD, NTT) land in
-//!   sibling tasks that build on this surface.
+//!   polynomial slices.
 
 pub mod batch_ops;
 pub mod charpoly;
