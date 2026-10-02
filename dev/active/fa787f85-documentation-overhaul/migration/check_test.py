@@ -85,8 +85,12 @@ class CheckTest(unittest.TestCase):
     def test_failed_assertions_fail(self):
         cases = {
             "pending source is missing": [row("dev/plans/missing.md", "deletion")],
-            "complete destination dev/archive/legacy/dev/plans/c.md is missing": [
+            "complete location dev/archive/legacy/dev/plans/c.md is missing": [
                 row("dev/plans/c.md", "legacy-archive", "dev/archive/legacy/dev/plans/c.md", "complete")
+            ],
+            "complete location dev/plans/c.md is missing": [
+                row("dev/plans/c.md", "retained-operational", status="complete"),
+                row("dev/plans/c.md", "rewritten-topic", "dev/plans/c.md", "complete"),
             ],
             "complete source still exists": [
                 row("dev/plans/a.md", "deletion", status="complete"),
