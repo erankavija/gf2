@@ -162,14 +162,14 @@
      "short_id": "036615b0",
      "title": "Inventory terminal, ownerless and empty dev/active entries",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "11964cb8-75c9-4413-bff8-d781d6b3e7eb",
      "short_id": "11964cb8",
      "title": "Identify the rare-event design by content in gf2-sim artifact checks",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "153297cf-7687-4599-be56-23e038efee3d",
@@ -183,21 +183,21 @@
      "short_id": "23219502",
      "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "27f0f3b1-df9b-4836-a5f6-7313d794a9be",
      "short_id": "27f0f3b1",
      "title": "Populate the migration manifest for the other dev buckets",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "29331bd3-e56a-4521-8db9-096152ee8482",
      "short_id": "29331bd3",
      "title": "Identify frozen campaign evidence by content in gf2-sim validation",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "3fd3db5e-60ea-41c1-b95a-144d9ae02e4a",
@@ -211,7 +211,7 @@
      "short_id": "52fb615b",
      "title": "Populate the migration manifest for permanent-path sources",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "5a25717c-83f4-453c-8866-cab67ecf2103",
@@ -225,7 +225,7 @@
      "short_id": "5c0b9635",
      "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
@@ -239,7 +239,7 @@
      "short_id": "69aa6896",
      "title": "Create the docs index and quadrant layout",
      "classification": "documentation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "7bac1303-eed8-443a-a504-593a87710cb4",
@@ -253,7 +253,7 @@
      "short_id": "8434e0e1",
      "title": "Inventory the other open-epic dev/active entries",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "8bd873f7-4758-44cd-91aa-03db3a7a533b",
@@ -267,14 +267,14 @@
      "short_id": "d1f6b2c9",
      "title": "Inventory the field-dispatch dev/active entries",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "d53cba10-d5ee-4764-8626-968ba5e6642c",
      "short_id": "d53cba10",
      "title": "Locate addendum schema test inputs through the configured repository root",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   },
@@ -1000,7 +1000,8 @@
   "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings.",
   "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it.",
   "User decision 2026-10-02: cargo-ci and code-review removed from purely documentation issues: 69aa6896 8b42d23b 698fa793 4f752758 b16d013a deda0962 ee50e270 44f4586d 1fca3739 8a9156fc 01c20b61 9dcc0cae da120b98 5625a423 2ff9953a cdba4e71 6c314026 fdb998ec b959ffe8 e85b8edf 4bdcd65a 60652fe4 875914b3 41e1d47d a82d2347. Re-add both if any of them touches Rust, scripts or config.",
-  "Session 2: wave 5a dispatched 2026-10-02 (AGENTS.md lane in one worktree agent-9b2886a7; 12907582 held for 5b after a0a29512 and a24b2af7)."
+  "Session 2: wave 5a dispatched 2026-10-02 (AGENTS.md lane in one worktree agent-9b2886a7; 12907582 held for 5b after a0a29512 and a24b2af7).",
+  "Wave 6a dispatched concurrently with 12907582 (no dependency between them). Held: 8bd873f7 (done by another session for dbd8787d), 3fd3db5e (fd9d5416 in progress, hard precondition), 5a25717c/65a5436a/7bac1303 (tuning-campaign tooling under concurrent edit), 153297cf (after 12907582 merges; both edit rustdoc)."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
