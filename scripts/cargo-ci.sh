@@ -23,6 +23,11 @@ set -euo pipefail
 # design and neither subsumes the other. Do not double-wrap.
 BUDGET="$(dirname "$0")/cargo-budget.sh"
 
+# BUSY_HOST_OVERRIDE=1 selects the `ci-busy` nextest profile, whose per-test
+# kill absorbs host contention beyond what the `ci` tier budget is sized for.
+NEXTEST_CI_PROFILE=ci
+[ -n "${BUSY_HOST_OVERRIDE:-}" ] && NEXTEST_CI_PROFILE=ci-busy
+
 # Resolve the real cargo binary. Some local setups place a debugging shim
 # at ~/.cargo/bin/cargo (or its rustup proxy target) that exits 0 for every
 # invocation; without this guard each cargo step below would silently
@@ -222,19 +227,19 @@ run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-defau
 #
 # `ci-test` rather than `release`: see the profile's rationale in Cargo.toml.
 # Benchmarks and receipts stay on `release`.
-run_step test-build "$BUDGET" cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile ci --no-run
-run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile ci
+run_step test-build "$BUDGET" cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 
 # The ordinary non-HIP feature set intentionally omits profile I/O, so keep the
 # format-2 authority, process lifecycle, and calibration producer unit surface
 # explicitly reachable in the fast tier. These are ordinary fast-tier tests: no
 # ignored test or benchmark/calibration action is selected.
-run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk --no-run
-run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk
-run_step tuning-algebra-calibration-build "$BUDGET" cargo nextest run -p gf2-algebra --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_calibration_harness --no-run
-run_step tuning-algebra-calibration-nextest "$BUDGET" --test cargo nextest run -p gf2-algebra --cargo-profile ci-test --profile ci --features parallel,simd,test-support,tuning-profile --test tuning_calibration_harness
-run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile ci --no-run
-run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile ci
+run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk --no-run
+run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_calibration_harness --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk
+run_step tuning-algebra-calibration-build "$BUDGET" cargo nextest run -p gf2-algebra --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_calibration_harness --no-run
+run_step tuning-algebra-calibration-nextest "$BUDGET" --test cargo nextest run -p gf2-algebra --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_calibration_harness
+run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
 run_step campaign-producing-closure-self-test python3 dev/scripts/check-campaign-producing-closure.py --self-test
 run_step campaign-producing-closure python3 dev/scripts/check-campaign-producing-closure.py
