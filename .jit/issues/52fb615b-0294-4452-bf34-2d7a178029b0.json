@@ -38,13 +38,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T14:20:18.772395207Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T14:54:05.135381999Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-02T14:22:09.419950982Z",
+      "updated_at": "2026-10-02T14:57:12.372177909Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -64,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for permanent-path sources",
-  "updated_at": "2026-10-02T14:40:11.843089559Z"
+  "updated_at": "2026-10-02T14:57:12.372177909Z"
 }

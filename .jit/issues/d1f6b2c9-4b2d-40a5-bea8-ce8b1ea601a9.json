@@ -39,12 +39,12 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T14:18:37.250452634Z",
+      "updated_at": "2026-10-02T14:55:43.034039521Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T14:21:03.613957785Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T14:50:56.063897063Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -64,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory the field-dispatch dev/active entries",
-  "updated_at": "2026-10-02T14:21:03.613957785Z"
+  "updated_at": "2026-10-02T14:55:43.034039521Z"
 }
