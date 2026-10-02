@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-02T23:49:46.971483237Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Write the supported configurations reference page",
-  "updated_at": "2026-10-02T14:11:26.576247148Z"
+  "updated_at": "2026-10-02T23:49:46.971483237Z"
 }

@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-02T23:49:47.670858750Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Write the finite-field linear algebra at scale tutorial",
-  "updated_at": "2026-10-02T14:11:27.132714370Z"
+  "updated_at": "2026-10-02T23:49:47.670858750Z"
 }
