@@ -933,12 +933,10 @@ impl SpBitMatrix {
     ///
     /// # Complexity
     ///
-    /// Same big-O as the previous straight-line algorithm (`O(r·m·w)` for
-    /// bounded row-weight `w` and rank `r`); Markowitz wins on the constant
-    /// factor by keeping fill-in low and skipping dependent rows in pivot
-    /// search. See
-    /// `dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md`
-    /// for the full design rationale.
+    /// `O(r·m·w)` for bounded row-weight `w` and rank `r`, the same big-O as
+    /// straight-line elimination; Markowitz wins on the constant factor by
+    /// keeping fill-in low and skipping dependent rows in pivot search. See
+    /// `@/issue/5ce13bae` for the full design rationale.
     ///
     /// # Examples
     ///
@@ -991,9 +989,8 @@ impl SpBitMatrix {
         // axpy. The Markowitz product `(row_nnz - 1) * (col_nnz - 1)` collapses
         // to "minimise row_nnz" once the pivot column is fixed (col_nnz is the
         // same for all candidates at that column), so we do not need to
-        // maintain col_nnz explicitly. See
-        // `dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md`
-        // § "Pivot column choice".
+        // maintain col_nnz explicitly. See `@/issue/5ce13bae` § "Pivot column
+        // choice".
         let mut row_nnz: Vec<usize> = rows.iter().map(|r| r.len()).collect();
 
         // Symmetric difference of two sorted, strictly-ascending column
@@ -1059,8 +1056,7 @@ impl SpBitMatrix {
             //
             // This produces the same pivot column set as straight-line RREF
             // (canonical) while choosing the SPARSEST row at each pivot column,
-            // which is the fill-in-minimising strategy. See
-            // `dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md`
+            // which is the fill-in-minimising strategy. See `@/issue/5ce13bae`
             // § "Pivot column choice".
             let mut pc: usize = usize::MAX;
             for i in 0..m {

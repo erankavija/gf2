@@ -10,9 +10,8 @@
 //! RUSTFLAGS="-C target-feature=+avx2,+avx512f" rustup run 1.95.0 cargo check --release
 //! ```
 //!
-//! See
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/4c534d31/d4_intrinsic_feasibility.md`
-//! for the design rationale and the prior `afac2262` lesson.
+//! See `@/issue/4c534d31` for the design rationale and the prior `afac2262`
+//! lesson.
 
 #![allow(clippy::missing_safety_doc, unused_unsafe)]
 

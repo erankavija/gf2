@@ -1,11 +1,9 @@
 //! Pipeline configuration, the v2 successor to
 //! [`gf2_coding::simulation::SimulationConfig`].
 //!
-//! Lifts the §1 "`PipelineConfig`" block and the §12 migration mapping of the
-//! Phase 0 design doc
-//! (`dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md`)
-//! into code. The [`From<&SimulationConfig>`] impl makes the `bbf6b6ee`
-//! migration mechanical.
+//! Lifts the §1 "`PipelineConfig`" block and the §12 config mapping of the
+//! Phase 0 design doc (`@/issue/ec530af9`) into code, including the
+//! [`From<&SimulationConfig>`] conversion.
 
 use std::num::NonZeroUsize;
 use std::path::PathBuf;

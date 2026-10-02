@@ -28,9 +28,7 @@
 //!
 //! [`SmallPrimeF32Fns::batch_gemm_route_a_fn`] is a reworked Candidate F
 //! variant added for the GF(251) f32/FMA cascade prototype dispatched under JIT
-//! issue `68cdf4c8` (Phase 1 route A of
-//! `dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md`).
-//! It differs from
+//! issue `68cdf4c8` (Phase 1 route A of `@/issue/615db3b9`). It differs from
 //! [`SmallPrimeF32Fns::batch_gemm_fn`] only at the **output-reduction**
 //! step: where the original kernel runs a per-cell scalar `% p` on a
 //! 96-i32 scratch tile, the route-A variant applies a 32-bit-lane AVX2
