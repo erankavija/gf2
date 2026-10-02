@@ -125,8 +125,16 @@
       "format": "markdown",
       "label": "Session 17: publication awaiting invoker",
       "path": "dev/active/6dc81018-field-capability-dispatch/handoff-17.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Completion report",
+      "path": "dev/active/6dc81018-field-capability-dispatch/completion-report.md"
     }
   ],
+  "done_at": "2026-10-02T21:05:22.063465554Z",
   "first_ready_at": "2026-08-18T18:49:20.500605671Z",
   "gates_required": [
     "repo-validate",
@@ -145,8 +153,8 @@
       "updated_by": "auto:executor"
     },
     "repo-validate": {
-      "status": "failed",
-      "updated_at": "2026-10-02T20:04:11.651342326Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T21:05:10.369322942Z",
       "updated_by": "auto:executor"
     }
   },
@@ -158,7 +166,7 @@
     "type:epic"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-10-02T20:04:11.651342326Z"
+  "updated_at": "2026-10-02T21:05:22.063465554Z"
 }
