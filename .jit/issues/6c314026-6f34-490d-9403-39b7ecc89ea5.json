@@ -8,6 +8,7 @@
   ],
   "description": "The second research tutorial takes a researcher through large-scale linear algebra over finite fields with gf2-core.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/tutorials/` walks through building large matrices over a prime and an extension field, choosing the field representation, and running multiplication, PLE-based solving and an inverse or characteristic polynomial at scale.\n- [hard] REQ-02: Its code comes from the gf2-core field linear-algebra example program and is verified by running it.\n- [hard] REQ-03: Its prose is freshly authored and contains no elementary primer, history, future promises or performance figures.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links resolve.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T14:11:27.132714370Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Write the finite-field linear algebra at scale tutorial",
-  "updated_at": "2026-10-02T09:56:22.170509498Z"
+  "updated_at": "2026-10-02T14:11:27.132714370Z"
 }

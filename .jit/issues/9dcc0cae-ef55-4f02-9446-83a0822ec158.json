@@ -7,6 +7,7 @@
   ],
   "description": "Error-rate curves come from configured simulation campaigns. Researchers need the steps to configure, run, checkpoint and resume one.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/how-to/` shows how to configure a campaign file, run it with the campaign binaries, checkpoint and resume it, and locate its output dataset, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from campaign configurations under `dev/campaigns/` and the gf2-sim binaries are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T14:11:27.357904968Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
@@ -26,7 +27,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Write the simulation campaign how-to",
-  "updated_at": "2026-10-02T09:56:21.815348938Z"
+  "updated_at": "2026-10-02T14:11:27.357904968Z"
 }

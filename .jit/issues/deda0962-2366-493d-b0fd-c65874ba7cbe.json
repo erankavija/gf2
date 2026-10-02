@@ -7,6 +7,7 @@
   ],
   "description": "gf2 dispatches hot kernels to SIMD and HIP backends and parallelizes workloads. Researchers need the architecture to reason about which path a computation takes.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/concepts/` explains kernel dispatch, the SIMD backend, the HIP GPU backend and the parallelism model, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` and the backend crates' Rustdoc are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T14:11:27.719094868Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
@@ -26,7 +27,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Write the acceleration architecture concepts page",
-  "updated_at": "2026-10-02T09:56:21.388880147Z"
+  "updated_at": "2026-10-02T14:11:27.719094868Z"
 }

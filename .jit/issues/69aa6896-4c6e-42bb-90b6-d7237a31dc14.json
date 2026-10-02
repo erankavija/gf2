@@ -9,6 +9,7 @@
   ],
   "description": "Permanent documentation uses an adapted Diátaxis layout under `docs/`. A single index routes researchers to tutorials, how-to guides, concepts, reference pages and the crate entry pages.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/index.md` has one section each for tutorials, how-to guides, concepts and reference, plus a crate section linking the existing entry pages of `gf2-core`, `gf2-coding` and `gf2-algebra`.\n- [hard] REQ-02: Each section states its quadrant's purpose in one sentence and cites the registered placement invariant by address rather than restating it.\n- [hard] REQ-03: The index links only to pages present in the tree, and its links resolve.\n- [hard] REQ-04: The index prose carries no marketing, history or future promises.\n",
   "documents": [],
+  "done_at": "2026-10-02T14:11:26.320749863Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "doc-review",
@@ -34,7 +35,7 @@
     "satisfies:fa787f85/REQ-04"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Create the docs index and quadrant layout",
-  "updated_at": "2026-10-02T14:10:45.986928557Z"
+  "updated_at": "2026-10-02T14:11:26.320749863Z"
 }

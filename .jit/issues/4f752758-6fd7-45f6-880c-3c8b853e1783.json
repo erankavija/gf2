@@ -7,6 +7,7 @@
   ],
   "description": "The `gf2-algebra` README is the crate's concise adopter-facing entry page: what the crate provides, when to choose it, and where its reference material lives.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. A crate README is the crate's entry page; the docs index links it.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-algebra/README.md` states permanent and packed-field computation, backends, feature flags, and when to choose the crate, verified against the crate's current public API and Cargo manifest.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-algebra/README.md` are limited to verified code, commands and identifiers.\n- [hard] REQ-03: It carries no performance figures, API walkthrough duplicating Rustdoc, hand-maintained example list, history, or future promises; it links to the crate's Rustdoc and to `docs/index.md`.\n- [hard] REQ-04: It links to no file under a crate-local `docs/` directory.\n- [hard] REQ-05: Its links and commands resolve, and the Rust CI gate passes.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T14:11:26.799806786Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
@@ -27,7 +28,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Rewrite the gf2-algebra README as its entry page",
-  "updated_at": "2026-10-02T09:56:21.246342104Z"
+  "updated_at": "2026-10-02T14:11:26.799806786Z"
 }
