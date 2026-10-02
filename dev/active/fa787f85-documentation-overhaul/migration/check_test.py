@@ -85,6 +85,12 @@ class CheckTest(unittest.TestCase):
                 code, out = self.run_check(rows)
                 self.assertEqual(code, 1)
                 self.assertIn(message, out)
+        for one in (
+            row("dev/active/e/c.md", "jit-container-archive", "dev/archive/../c.md"),
+            row("dev/plans/../a.md", "legacy-archive", "dev/archive/legacy/dev/plans/../a.md"),
+        ):
+            with self.subTest(row=one):
+                self.assertIn("destination must be repository-relative", self.run_check([one])[1])
 
     def test_failed_assertions_fail(self):
         cases = {
