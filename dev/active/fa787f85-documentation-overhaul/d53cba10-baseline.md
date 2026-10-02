@@ -1,6 +1,7 @@
 # d53cba10 addendum schema test baseline
 
-Command, run from the repository root at commit `ff34a202b`:
+Before (commit `ff34a202b`) and after (commit `6a1ecf0ed`) results are
+identical. Command, run from the repository root at each commit:
 
 ```sh
 ./scripts/cargo-budget.sh --test cargo nextest run -p tuning-campaign-support \
@@ -10,7 +11,8 @@ Command, run from the repository root at commit `ff34a202b`:
 Result: `each_protocol_version_validates_against_its_own_committed_schema`
 passed. The test asserts, for every pair, that the schema's `$id` equals the
 addendum's `schema` field and that validation reports no violation, so the pass
-gives these per-fixture results (paths as of the baseline commit):
+gives these per-fixture results (paths as of `ff34a202b`; at `6a1ecf0ed` the
+test locates the same files by SHA-256):
 
 | Schema | Addendum | `$id` match | Violations |
 |---|---|---|---|
