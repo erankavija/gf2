@@ -548,7 +548,7 @@ These are the actual use case matrices that motivated this optimization:
 **Key Finding**: The conservative table's 8-word default is effective for
 this host: SIMD is slower below the default because of dispatch overhead and
 3-4× faster for larger buffers. A `--cfg gf2_tuning_baked` build takes the
-committed calibrated four-word boundary instead.
+committed calibrated boundary, which is also eight words.
 
 **Peak Throughput**: Scalar ~28 GiB/s, SIMD ~97 GiB/s (3.46× improvement)
 

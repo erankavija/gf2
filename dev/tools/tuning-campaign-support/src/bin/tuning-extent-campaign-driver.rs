@@ -591,7 +591,10 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
     if revision != config.identity.source_revision
         || tree != config.source_tree
         || Sha256Digest::of(tree.as_bytes()).as_str() != config.identity.source_sha256
-        || !same_behavior(&behavior_sources(&declaration)?, &config.identity.behavior_sha256)
+        || !same_behavior(
+            &behavior_sources(&declaration)?,
+            &config.identity.behavior_sha256,
+        )
         || !config
             .identity
             .behavior_sha256
@@ -2543,7 +2546,12 @@ fn validator(config: &CampaignConfig, preterminal: bool) -> io::Result<()> {
     } else {
         &[]
     };
-    run_validator(&fs::canonicalize(VALIDATOR)?, &config.channels.stage, arguments).map(drop)
+    run_validator(
+        &fs::canonicalize(VALIDATOR)?,
+        &config.channels.stage,
+        arguments,
+    )
+    .map(drop)
 }
 fn observed_failure(records: &[tuning_campaign_support::journal::JournalRecord]) -> bool {
     records.iter().any(|record| {
@@ -3050,8 +3058,7 @@ fn publish_campaign(stage: &Path) -> io::Result<Option<ArtifactIdentity>> {
     let composer = process(&config, "composer")?;
     let repository = fs::canonicalize(".")?;
     let validator_path = repository.join(VALIDATOR);
-    let declaration =
-        CampaignDeclaration::for_campaign(&repository, config.campaign_id.as_str())?;
+    let declaration = CampaignDeclaration::for_campaign(&repository, config.campaign_id.as_str())?;
     validate_campaign_stage(stage, config.campaign_id.as_str(), &declaration)?;
     if config.channels.stage != stage {
         return Err(invalid("campaign channels name another stage"));

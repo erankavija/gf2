@@ -1,3 +1,6 @@
+#[cfg(gf2_tuning_baked)]
+#[path = "support/measured_format2.rs"]
+mod measured_format2;
 #[path = "support/core_tuning.rs"]
 mod support;
 
@@ -26,24 +29,29 @@ support::fresh_tuning_test!(
         );
         gf2_core::tuning::install(prepared).expect("profile has not been resolved");
 
+        #[cfg(not(gf2_tuning_baked))]
+        let compiled_threshold = conservative_threshold;
+        #[cfg(gf2_tuning_baked)]
+        let compiled_threshold =
+            measured_format2::measured_section("bit_backend", &["simd_min_words"], &[])
+                .bit_backend()
+                .simd_min_words();
         for words in 4..=7 {
             // DEC-G keeps the bit-backend boundary compile-time, so these words
-            // remain scalar even after installing a section with a lower value.
+            // follow it even after installing a section with a lower value.
             assert!(
                 words < conservative_threshold,
                 "{words} words sits below the conservative threshold of {conservative_threshold}"
             );
-            #[cfg(not(gf2_tuning_baked))]
+            let expected = if words < compiled_threshold {
+                "scalar"
+            } else {
+                "simd"
+            };
             assert_eq!(
                 select_backend_for_size(words).name(),
-                "scalar",
-                "{words} words remain scalar under the conservative threshold"
-            );
-            #[cfg(gf2_tuning_baked)]
-            assert_eq!(
-                select_backend_for_size(words).name(),
-                "simd",
-                "{words} words remain SIMD under the baked threshold"
+                expected,
+                "{words} words follow the compile-time threshold {compiled_threshold}"
             );
         }
         assert_eq!(

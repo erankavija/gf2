@@ -9,12 +9,13 @@
 //! keeps that module's conservative constant. Selection sites own their
 //! compile-time wiring; this module owns the values.
 
-/// Calibrated bit-backend threshold (`simd_min_words = 4`) recorded in
-/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`.
+/// Calibrated bit-backend threshold (`simd_min_words`) recorded in
+/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`.
+/// Its non-monotone crossover curve retains the conservative eight-word value.
 /// The exact measured format-2 core owner is
-/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
-/// with SHA-256 `c81c372b0cbd51e0433f2dcaed180cc7c82d6858d019bdfc17deac2f6724bbf2`.
-pub(crate) const SIMD_MIN_WORDS: usize = 4;
+/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+/// with SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`.
+pub(crate) const SIMD_MIN_WORDS: usize = 8;
 
 /// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
 /// `crate::matrix::MATVEC_SIMD_MIN_WORDS`.
@@ -29,11 +30,11 @@ pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 /// `crate::field::matrix::GEMM_ROW_TILE`.
 ///
 /// The extent calibration recorded in
-/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
 /// selects the row and column tiles jointly over the full pair grid
 /// (`dev/active/a83583e0/premeasurement-protocol.md` §5). Its non-monotone
 /// pair curve retains the conservative pair, which the measured core owner
-/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
+/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
 /// states under that campaign's provenance. The unconditional conservative
 /// declaration is `crate::field::matrix::GEMM_ROW_TILE_DEFAULT`.
 pub(crate) const GEMM_ROW_TILE: usize = 32;
@@ -52,10 +53,10 @@ pub(crate) const GEMM_COL_TILE: usize = 64;
 /// The field sizes `try_simd_dot_product`'s stack scratch buffers, so only
 /// the bake mechanism can carry it (`dev/active/7d824b2f/design.md` §3.8).
 /// The extent calibration recorded in
-/// `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
 /// finds no resolved unique minimum over the declared chunk grid and retains
 /// the conservative chunk, which the measured core owner
-/// `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
+/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
 /// states under that campaign's provenance.
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
 
@@ -97,7 +98,7 @@ mod tests {
     use sha2::{Digest, Sha256};
 
     const MEASURED_FORMAT2: &[u8] =
-        include_bytes!("../../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
+        include_bytes!("../../data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json");
 
     #[test]
     fn default_constant_matches_conservative_table() {
@@ -111,7 +112,7 @@ mod tests {
     fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
             format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
-            "c81c372b0cbd51e0433f2dcaed180cc7c82d6858d019bdfc17deac2f6724bbf2"
+            "8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa"
         );
     }
 

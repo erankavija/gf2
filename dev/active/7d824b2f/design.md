@@ -1050,7 +1050,8 @@ the algebra owner
 `crates/gf2-algebra/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`,
 and the composed complete envelope
 `dev/reference_data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`.
-These are the current readers. The core codec accepts only
+The algebra owner is the current algebra reader; Amendment A12 names the
+current core owner and complete envelope. The core codec accepts only
 `tuning-calibration-v4`; the eaae and 389 owners, complete envelopes, and
 receipts remain immutable historical evidence at their committed paths and are
 not current-codec fixtures.
@@ -1060,3 +1061,28 @@ finds a non-monotone curve and the dot chunk analysis an unresolved minimum,
 so each retains its conservative value (row/column tiles 32/64, chunk 256)
 under this campaign's measured provenance, as Amendment A9 requires. The
 unconditional conservative declarations are unchanged under either cfg.
+
+## Amendment A12 (2026-10-02, measured issue `dbd8787d`)
+
+The campaign declared by
+[`dbd8787d/premeasurement-protocol.md`](../dbd8787d/premeasurement-protocol.md)
+is executed and published as
+[`gf2-dbd8787d-20261001t230000z-2601601.md`](../../benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md).
+It re-measures the complete core section, adds the three seam thresholds of
+`7d7c647c/design.md` (Amendment A3 there), and imports the a835 algebra owner
+unchanged. The core owner
+`crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+and the complete envelope
+`dev/reference_data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+are the current core and complete readers; the algebra owner
+`crates/gf2-algebra/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
+remains the current algebra reader. The a835 core owner and complete envelope
+remain immutable historical evidence at their committed paths.
+
+Every baked core family cites this campaign. `bit_backend.simd_min_words`
+finds a non-monotone curve (first win at four words, later loss at seven) and
+retains the conservative eight words, so the baked value is eight words; this
+contradicts the four-word selection of the a835 and eaae receipts. The joint
+GEMM pair finds a non-monotone curve and the dot chunk an unresolved minimum,
+so they retain 32/64 and 256. The unconditional conservative declarations are
+unchanged under either cfg.

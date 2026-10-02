@@ -42,7 +42,7 @@ This document describes the kernel architecture in gf2-core and tracks optimizat
 - Compile-time size heuristic: below the selected threshold → Scalar, at or
   above it → SIMD when available. The default build uses the conservative
   eight-word threshold; a build with `RUSTFLAGS="--cfg gf2_tuning_baked"`
-  uses the committed calibrated value of four words. Runtime profile
+  uses the committed calibrated value, also eight words. Runtime profile
   installation does not govern this boundary. The baked routing witnesses run
   with `RUSTFLAGS="--cfg gf2_tuning_baked" ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd,tuning-profile --cargo-profile ci-test --profile ci --lib --test backend_selection_baked --test backend_selection --test backend_selection_profile --test backend_selection_tunable`;
   the frozen selector non-regression harness's self-tests assert the default
@@ -193,7 +193,7 @@ pub fn next_power_of_2(v: u64) -> u64 {
 **Phase 4 Completed:**
 - ✅ Comprehensive SIMD vs Scalar benchmarks created
 - ✅ Tested 12 different buffer sizes: 1, 2, 4, 7, 8, 16, 32, 64, 128, 256, 1024, 4096 words
-- ✅ Phase 4 Criterion run placed the crossover at the conservative eight-word default; the host calibration below supersedes it for baked builds
+- ✅ Phase 4 Criterion run placed the crossover at the conservative eight-word default; the host calibration below governs baked builds
 - ✅ Measured actual speedups: 3.4-3.6x for large buffers (≥64 words)
 - ✅ Confirmed scalar faster below the conservative default due to dispatch overhead
 - ✅ Peak SIMD throughput: 97 GiB/s vs 28 GiB/s scalar
@@ -201,12 +201,16 @@ pub fn next_power_of_2(v: u64) -> u64 {
 - ✅ Benchmark suite: `benches/simd_vs_scalar.rs`
 
 The committed host-calibration receipt at
-[`dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`](../../../dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md)
-records a selected value of **4** for
-`bit_backend.simd_min_words`. It remeasures the retained threshold experiment
-of the `2026-09-01-eaae1b56.md` receipt, whose
+[`dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`](../../../dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md)
+records a selected value of **8** for `bit_backend.simd_min_words`: its
+crossover curve is non-monotone (first win at four words, later loss at
+seven), so the conservative default is retained. This contradicts the
+four-word value selected by the earlier receipts
+[`gf2-a83583e0-20260930t230000z-2728298.md`](../../../dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md) and
+`2026-09-01-eaae1b56.md`, which remeasure the same retained threshold
+experiment. The latter's
 [**SIMD scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md#simd-scope)
-defines the evidence boundary for that value and the Criterion result
+defines the evidence boundary for the experiment and the Criterion result
 summarized here.
 
 **Phase 5 Completed:**
@@ -242,11 +246,12 @@ Backend selection is implemented by `select_backend_for_size` in
 `crates/gf2-core/src/kernels/backend.rs`. The default build compares the
 buffer's `u64` word count with the conservative compile-time threshold
 `SIMD_MIN_WORDS_DEFAULT`; building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
-substitutes the four-word value recorded by
-`dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md` in the measured
+substitutes the value recorded by
+`dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md` in the measured
 format-2 core owner
-`crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
-(SHA-256 `c81c372b0cbd51e0433f2dcaed180cc7c82d6858d019bdfc17deac2f6724bbf2`).
+`crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+(SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`),
+which retains the eight-word default.
 The selector uses SIMD when the feature is available and otherwise falls back
 to the scalar backend. The core format-2 section encodes the corresponding
 field, while this routing boundary stays compile-time (DEC-G).
@@ -261,8 +266,7 @@ field, while this routing boundary stays compile-time (DEC-G).
 **Heuristics (Validated for the conservative profile):**
 - Size below the selected compile-time threshold: Always scalar (dispatch overhead dominates)
 - Size at or above the selected compile-time threshold: Use SIMD if available (2-4x speedup expected)
-- Single-word operations: Scalar under both compile-time thresholds (the
-  conservative eight words and the baked four words)
+- Single-word operations: Scalar under both compile-time thresholds
 - Runtime fallback: If SIMD selected but unavailable, falls back to scalar
 
 ### Phase 3 - Comprehensive Testing ✅ COMPLETE
@@ -326,7 +330,7 @@ All equivalence tests added to `src/kernels/simd/mod.rs` tests module:
 - SIMD: ~97 GiB/s (3.46x improvement)
 
 **Validation:**
-- ✅ Crossover at the conservative eight-word default in this Phase 4 Criterion run (the current calibrated value is four words; see Phase 4 above)
+- ✅ Crossover at the conservative eight-word default in this Phase 4 Criterion run (the current calibrated value is also eight words; see Phase 4 above)
 - ✅ Scalar faster below the conservative default (dispatch overhead ~0.8ns)
 - ✅ SIMD 3.4-3.6x faster for large buffers
 - ✅ Predictions matched: conservative default accurate, speedups as expected
@@ -650,7 +654,7 @@ When optimizing an operation:
 **Phase 4 Complete** - Performance Benchmarking
 - ✅ Created comprehensive SIMD vs Scalar benchmark suite
 - ✅ Tested 12 buffer sizes from 1 to 4096 words
-- ✅ Crossover at the conservative eight-word default in the Phase 4 Criterion run; the calibrated baked value is four words
+- ✅ Crossover at the conservative eight-word default in the Phase 4 Criterion run; the calibrated baked value is also eight words
 - ✅ Measured 3.4-3.6x SIMD speedup for large buffers (≥64 words)
 - ✅ Confirmed scalar faster below the conservative default (0.64-0.91x)
 - ✅ Peak throughput: SIMD 97 GiB/s vs Scalar 28 GiB/s

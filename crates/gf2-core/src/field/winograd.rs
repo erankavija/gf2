@@ -114,7 +114,10 @@ use std::sync::atomic::{AtomicU8, Ordering};
 /// for the shorter recursion tree and L2-resident blocks. Both Mersenne-31
 /// and `Gf2mWide<1, Gf2m8>` cross over at ≈ 128
 /// (`crates/gf2-core/benches/strassen_threshold_results.md:56-58`). Landed
-/// by `66c4759b`.
+/// by `66c4759b`. The seam calibration
+/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
+/// finds one Winograd level slower than classical at every dimension up to
+/// 512 on Mersenne-31 and retains 128.
 pub(crate) const WINOGRAD_MIN_DIM_DEFAULT: usize = 128;
 
 /// The selected arm of the [`gemm_winograd`] dispatcher.

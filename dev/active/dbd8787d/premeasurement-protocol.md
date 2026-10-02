@@ -1,7 +1,10 @@
 # Seam threshold calibration: premeasurement protocol
 
-Status: declared; not yet executed. Issue `dbd8787d` supplies the success
-criteria.
+Status: executed. Campaign `gf2-dbd8787d-20261001t230000z-2601601` ran this
+declaration as committed at `87b5b733c` and is published; its receipt is
+[`gf2-dbd8787d-20261001t230000z-2601601.md`](../../benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md)
+with the [evidence index](../../benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601-evidence.md).
+Issue `dbd8787d` supplies the success criteria.
 
 This declaration amends the executed extent protocol
 [`a83583e0/premeasurement-protocol.md`](../a83583e0/premeasurement-protocol.md)
