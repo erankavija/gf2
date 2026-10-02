@@ -4,10 +4,10 @@ use gf2_core::tuning::{
 };
 
 const MEASURED_OWNER: &str =
-    include_str!("../../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
-const MEASURED_PROFILE_ID: &str = "gf2-a83583e0-20260930t230000z-2728298";
+    include_str!("../../data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json");
+const MEASURED_PROFILE_ID: &str = "gf2-dbd8787d-20261001t230000z-2601601";
 const MEASURED_RECEIPT: &str =
-    "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md";
+    "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md";
 
 /// Strictly reopens the measured owner and verifies which codec-known fields
 /// of `family` it states and which it omits.

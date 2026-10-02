@@ -4521,9 +4521,11 @@ pub fn campaign_complete(channels: &SessionChannels, campaign_id: &Token) -> io:
         return Ok(false);
     };
     let session = stage.join("sessions").join(&last.session_id);
-    Ok((last.event == JournalEvent::Complete || validation_rejected(&records))
-        && session.join("checksum.json").try_exists()?
-        && session.join("retired.json").try_exists()?)
+    Ok(
+        (last.event == JournalEvent::Complete || validation_rejected(&records))
+            && session.join("checksum.json").try_exists()?
+            && session.join("retired.json").try_exists()?,
+    )
 }
 
 /// Whether `records` end in a `failed` terminal whose sole cause is the

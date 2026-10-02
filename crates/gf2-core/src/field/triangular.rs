@@ -323,6 +323,9 @@ pub fn last_effective_trsm_panel_rows() -> Option<usize> {
 /// for the host and `:79-110` for the sweep tables and the selection.
 /// Recorded again at
 /// `dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-10.md:41`.
+/// The seam calibration `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
+/// measures a crossover at 16 on the same host class and states 12 in its
+/// measured core owner; that value applies only through an installed profile.
 pub(crate) const TRI_BASE_MAX_DIM_DEFAULT: usize = 8;
 
 /// The selected arm of a triangular primitive's base-case dispatcher.

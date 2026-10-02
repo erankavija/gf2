@@ -2319,14 +2319,34 @@ fn only_a_sole_validator_verdict_after_release_counts_as_validation_rejected() {
     let release = journal_record("s", "lock-release", json!({}));
     let verdict = journal_record("s", "driver-diagnostic", json!({"validation_error": "x"}));
     let failed = journal_record("s", "failed", json!({}));
-    assert!(validation_rejected(&[release.clone(), verdict.clone(), failed.clone()]));
+    assert!(validation_rejected(&[
+        release.clone(),
+        verdict.clone(),
+        failed.clone()
+    ]));
 
     let other_diagnostic = journal_record("s", "driver-diagnostic", json!({"timeout": "x"}));
-    assert!(!validation_rejected(&[release.clone(), other_diagnostic, failed.clone()]));
-    let extra = journal_record("s", "driver-diagnostic", json!({"validation_error": "x", "y": 1}));
-    assert!(!validation_rejected(&[release.clone(), extra, failed.clone()]));
+    assert!(!validation_rejected(&[
+        release.clone(),
+        other_diagnostic,
+        failed.clone()
+    ]));
+    let extra = journal_record(
+        "s",
+        "driver-diagnostic",
+        json!({"validation_error": "x", "y": 1}),
+    );
+    assert!(!validation_rejected(&[
+        release.clone(),
+        extra,
+        failed.clone()
+    ]));
     let foreign = journal_record("t", "driver-diagnostic", json!({"validation_error": "x"}));
-    assert!(!validation_rejected(&[release.clone(), foreign, failed.clone()]));
+    assert!(!validation_rejected(&[
+        release.clone(),
+        foreign,
+        failed.clone()
+    ]));
     let unreleased = journal_record("s", "work-finished", json!({}));
     assert!(!validation_rejected(&[unreleased, verdict.clone(), failed]));
     let complete = journal_record("s", "complete", json!({}));
