@@ -814,8 +814,9 @@ identify their exact field shapes; no historical result is relabeled.
 The behavior-source manifest hashes each owner harness and every extracted
 support source module it uses, including `src/campaign.rs`, the neutral driver
 entry point, progress transport, journal recovery, and coupled statistical
-analyzers, plus the shell launcher's build/lock/finalize behavior and independent
-validator. It also hashes the committed candidate production
+analyzers, plus the shell launcher's build/lock/finalize behavior. The independent validator's
+digest is recorded for information only; checking is not measurement
+behavior, so a validator change never invalidates a stage. It also hashes the committed candidate production
 bodies, dot observation correction, and shared TRSM/GEMM observation-policy
 specializations. Runtime provenance records that manifest's
 digest and each staged owner/driver/composer executable digest in the execution
@@ -952,7 +953,7 @@ published tree against its own mapping of this table, including the archive,
 whose absence is an explicit failure, and the archived journal against the
 stage journal. The repository-relative
 checksum manifest is written last and marks a complete publication. The
-destinations live in the checkout the campaign was prepared from. A retry
+destinations live in the checkout the publishing driver runs in. A retry
 under the same run ID reverifies every published file by its bytes and
 finishes the rest; a changed plan is refused. The publication journal lies
 outside the stage checksum boundary, so it never alters validated stage

@@ -4502,8 +4502,10 @@ pub fn publish_artifact(stage: &Path, path: &Path, content: &[u8]) -> io::Result
 }
 
 /// Reports whether the campaign closed `complete`: no session or preparation
-/// claim remains, and the journal ends at the `complete` terminal of a
-/// checksummed, retired session. Only such a stage is publishable.
+/// claim remains, and the journal ends at the `complete` or
+/// [`validation_rejected`] terminal of a checksummed, retired session. Only
+/// such a stage is publishable, and publication first requires the current
+/// independent validator to accept it.
 pub fn campaign_complete(channels: &SessionChannels, campaign_id: &Token) -> io::Result<bool> {
     channels.validate()?;
     let stage = &channels.stage;
@@ -4519,9 +4521,30 @@ pub fn campaign_complete(channels: &SessionChannels, campaign_id: &Token) -> io:
         return Ok(false);
     };
     let session = stage.join("sessions").join(&last.session_id);
-    Ok(last.event == JournalEvent::Complete
+    Ok((last.event == JournalEvent::Complete || validation_rejected(&records))
         && session.join("checksum.json").try_exists()?
         && session.join("retired.json").try_exists()?)
+}
+
+/// Whether `records` end in a `failed` terminal whose sole cause is the
+/// finalize-time validator verdict: that verdict's diagnostic directly
+/// follows the session's lock release. The measurement finished complete
+/// (finalize validates only a complete work finish), and the validator's
+/// identity is not measurement behavior, so a later validator may accept the
+/// stage.
+pub fn validation_rejected(records: &[JournalRecord]) -> bool {
+    let [.., release, verdict, terminal] = records else {
+        return false;
+    };
+    terminal.event == JournalEvent::Failed
+        && verdict.event == JournalEvent::DriverDiagnostic
+        && verdict
+            .details
+            .as_object()
+            .is_some_and(|details| details.len() == 1 && details.contains_key("validation_error"))
+        && release.event == JournalEvent::LockRelease
+        && release.session_id == verdict.session_id
+        && verdict.session_id == terminal.session_id
 }
 
 /// Stage directory holding the repository-publication journal. Written only

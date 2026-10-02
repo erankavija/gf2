@@ -98,7 +98,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 use tuning_campaign_support::journal::{
-    CheckpointStore, ExecutionLog, JournalEvent, ResumeIdentity,
+    CheckpointStore, ExecutionLog, JournalEvent, JournalRecord, ResumeIdentity,
 };
 use tuning_campaign_support::scratch::scratch;
 use tuning_campaign_support::timing::{
@@ -2299,4 +2299,36 @@ fn campaign_reconciliation_validates_the_complete_all_owner_universe() {
     assert_eq!(bundles[1].accepted[0].unit.identity.owner, second.owner);
     bundles[0].validate(&first, false).unwrap();
     bundles[1].validate(&second, false).unwrap();
+}
+
+fn journal_record(session: &str, event: &str, details: serde_json::Value) -> JournalRecord {
+    serde_json::from_value(json!({
+        "schema": "tuning-campaign-journal-v1",
+        "timestamp_utc": "2026-10-02T01:17:24Z",
+        "campaign_id": "gf2-test",
+        "session_id": session,
+        "sequence": 0,
+        "event": event,
+        "details": details,
+    }))
+    .unwrap()
+}
+
+#[test]
+fn only_a_sole_validator_verdict_after_release_counts_as_validation_rejected() {
+    let release = journal_record("s", "lock-release", json!({}));
+    let verdict = journal_record("s", "driver-diagnostic", json!({"validation_error": "x"}));
+    let failed = journal_record("s", "failed", json!({}));
+    assert!(validation_rejected(&[release.clone(), verdict.clone(), failed.clone()]));
+
+    let other_diagnostic = journal_record("s", "driver-diagnostic", json!({"timeout": "x"}));
+    assert!(!validation_rejected(&[release.clone(), other_diagnostic, failed.clone()]));
+    let extra = journal_record("s", "driver-diagnostic", json!({"validation_error": "x", "y": 1}));
+    assert!(!validation_rejected(&[release.clone(), extra, failed.clone()]));
+    let foreign = journal_record("t", "driver-diagnostic", json!({"validation_error": "x"}));
+    assert!(!validation_rejected(&[release.clone(), foreign, failed.clone()]));
+    let unreleased = journal_record("s", "work-finished", json!({}));
+    assert!(!validation_rejected(&[unreleased, verdict.clone(), failed]));
+    let complete = journal_record("s", "complete", json!({}));
+    assert!(!validation_rejected(&[release, verdict, complete]));
 }
