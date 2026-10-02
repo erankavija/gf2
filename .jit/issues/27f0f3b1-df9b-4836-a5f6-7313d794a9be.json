@@ -33,9 +33,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:20.752315965Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T14:16:15.848843906Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "27f0f3b1-df9b-4836-a5f6-7313d794a9be",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for the other dev buckets",
-  "updated_at": "2026-10-02T14:16:09.972172587Z"
+  "updated_at": "2026-10-02T14:16:15.848843906Z"
 }
