@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-02T10:20:21.205240648Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-20"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-02T10:06:45.663699164Z"
+  "updated_at": "2026-10-02T10:20:21.205240648Z"
 }
