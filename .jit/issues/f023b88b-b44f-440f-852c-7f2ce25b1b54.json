@@ -32,6 +32,7 @@
       "path": "dev/active/86b9c719-quality-documentation-tech-debt/label-migration.md"
     }
   ],
+  "done_at": "2026-10-02T08:33:24.343088056Z",
   "first_ready_at": "2026-10-01T15:39:40.385472954Z",
   "gates_required": [
     "repo-validate",
@@ -39,8 +40,8 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-01T23:13:48.876756399Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T08:33:01.279437901Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -56,7 +57,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "gated",
+  "state": "done",
   "title": "Migrate satisfies labels to the container-qualified form",
-  "updated_at": "2026-10-02T08:28:33.096039298Z"
+  "updated_at": "2026-10-02T08:33:24.343088056Z"
 }
