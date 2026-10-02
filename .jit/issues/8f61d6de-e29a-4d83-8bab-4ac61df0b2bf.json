@@ -7,7 +7,22 @@
     "dcd38c45-66ae-43ed-b689-3a9dcd2600b3"
   ],
   "description": "Create a mechanical documentation check, register it as the `docs-mechanical` gate, and cover it with self-tests.\n\n## Background\n\nNo mechanical check exists for documentation links, citations or projection freshness. The check is a stdlib-only Python script under `contrib/gates/`. It reads its documentation footprint from `.jit/config.toml` and delegates JIT-specific checks to the `jit` CLI (`jit item show` for addressable references, projection rendering for freshness).\n\n## Success Criteria\n\n- [hard] REQ-01: The script reports broken Markdown links, broken heading anchors, missing repository-local file citations, unresolvable `@/` item references, and stale invariant and rule/gate projections, each as a distinct failure class with file and line.\n- [hard] REQ-02: The footprint is read from configuration and covers the root and crate READMEs, `docs/`, `AGENTS.md`, `CLAUDE.md`, Markdown under `dev/active/`, and repository-relative links inside Rust doc comments; `dev/archive/` is excluded.\n- [hard] REQ-03: Fixture-based self-tests cover a clean tree, every failure class, a missing or failing `jit` binary, and projection drift; the fixtures contain no hand-maintained inventory of real product facts.\n- [hard] REQ-04: `docs-mechanical` is registered as an auto gate, and the self-tests run as part of the gate or of the Rust CI gate.\n- [hard] REQ-05: Findings in the current tree are fixed or, where their only location is material the documentation migration archives, listed in a linked record; the gate passes on the resulting tree.\n- [hard] REQ-06: `jit invariant check`, invariant projection, the documentation review, `docs-mechanical` and `jit validate` all pass together on the resulting tree.\n\n## Decisions\n\n- DEC-01: The user decided on 2026-10-02 that the missing-citation class applies to the permanent documentation surface only (root and crate READMEs, `docs/`, `AGENTS.md`, `CLAUDE.md`); links, anchors and `@/` item references are checked across the whole footprint, including `dev/active/` Markdown. Code-span paths in development records are historical text, not citations. The three deliberate quotations of unresolvable addresses in development records are listed in the temporary baseline record.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "docs-mechanical temporary baseline",
+      "path": "dev/active/fa787f85-documentation-overhaul/8f61d6de-baseline-findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "docs-mechanical check",
+      "path": "contrib/gates/docs-mechanical.py"
+    }
+  ],
   "first_ready_at": "2026-10-01T10:03:23.501901317Z",
   "gates_required": [
     "code-review",
@@ -28,5 +43,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Add the docs-mechanical gate with self-tests",
-  "updated_at": "2026-10-02T09:19:33.478763454Z"
+  "updated_at": "2026-10-02T09:20:50.364941182Z"
 }
