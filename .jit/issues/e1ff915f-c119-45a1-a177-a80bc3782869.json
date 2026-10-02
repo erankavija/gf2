@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Add SIMD kernels for LLR batch saturation and hard decision",
-  "updated_at": "2026-10-02T17:31:56.853104303Z"
+  "updated_at": "2026-10-02T17:32:17.278116769Z"
 }

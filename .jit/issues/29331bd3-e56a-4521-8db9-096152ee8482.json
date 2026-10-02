@@ -25,9 +25,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:21.009365114Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T17:32:14.652181186Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "29331bd3-e56a-4521-8db9-096152ee8482",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-  "updated_at": "2026-10-02T17:31:56.964612877Z"
+  "updated_at": "2026-10-02T17:32:14.652181186Z"
 }

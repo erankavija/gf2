@@ -48,9 +48,9 @@
       "updated_by": null
     },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:19.462266870Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T17:32:14.682644774Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
@@ -63,5 +63,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-02T17:31:56.907608424Z"
+  "updated_at": "2026-10-02T17:32:14.682644774Z"
 }

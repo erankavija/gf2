@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Parallelize CpuBackend matmul under the parallel feature",
-  "updated_at": "2026-10-02T17:31:56.784929008Z"
+  "updated_at": "2026-10-02T17:32:17.231371331Z"
 }

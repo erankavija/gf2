@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Share one repository-root resolver across tuning-campaign tooling",
-  "updated_at": "2026-10-02T15:01:49.306396161Z"
+  "updated_at": "2026-10-02T17:32:17.184598053Z"
 }

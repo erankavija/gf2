@@ -25,9 +25,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:19.334818331Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T17:32:14.617889077Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "11964cb8-75c9-4413-bff8-d781d6b3e7eb",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-  "updated_at": "2026-10-02T17:31:56.937456367Z"
+  "updated_at": "2026-10-02T17:32:14.617889077Z"
 }
