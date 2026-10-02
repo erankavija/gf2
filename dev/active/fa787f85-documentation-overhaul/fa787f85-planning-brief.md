@@ -134,7 +134,7 @@ The performance summary remains brief. Detailed measurements live in commit-pinn
 
 ## Invariant Model
 
-The prerequisite story creates addressable project invariants at stable `@/inv/<id>` addresses. The exact final IDs are approved during that story, but the registry covers at least:
+The registry holds addressable project invariants at stable `@/inv/<id>` addresses; D-40 assigns their registration. It covers at least:
 
 - researcher audience and research relevance;
 - adapted Diátaxis placement;
@@ -153,7 +153,7 @@ The registry is the source of truth. A deterministic projection renders it into 
 
 ## Inherited Issue Disposition
 
-- `44c98235` is retitled **Rewrite README for research adoption**. Its criteria now cover the complete root-README contract and it depends on the prerequisite story.
+- `44c98235` is rejected with `resolution:obsolete`; `fdb998ec` **Rewrite README for research adoption** carries the complete root-README contract.
 - `12907582` is retitled **Correct surviving source-level documentation drift**. It covers code-adjacent Rustdoc and operational comments that remain after migration; findings located only in removed or archived prose are classified rather than patched.
 - `84db2984`, which requested a correction to a presentation slide, is rejected with `resolution:obsolete`. The deck is preserved as a historical artifact, and the relevant obligation not to migrate the false API claim into current documentation is covered by this epic.
 
@@ -198,7 +198,6 @@ The inherited tasks retain their technical-debt grouping and also carry `epic:do
 - The final set of crate-local `AGENTS.md` files is not predetermined. They are created only where a local recursive constraint exists.
 - Advanced workflow selection requires a coverage review across supported algebra, coding, simulation, acceleration, standards, benchmarking, and formal-verification capabilities.
 - A before-and-after timing comparison can be noisy. The measurement protocol must control toolchain, feature set, build-cache state, and host load sufficiently to support the conclusion.
-- The full child-issue breakdown remains to be produced. It must map every epic REQ to at least one delivering child and use the prerequisite story as the shared checkpoint rather than duplicating prerequisite edges.
 
 ## Non-Goals
 

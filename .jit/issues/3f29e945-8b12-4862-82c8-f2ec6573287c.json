@@ -32,7 +32,7 @@
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T09:47:07.205012032Z",
+      "updated_at": "2026-10-02T09:59:15.338951719Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -42,7 +42,7 @@
     },
     "holistic-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T09:49:50.841062640Z",
+      "updated_at": "2026-10-02T10:01:23.219116505Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -63,5 +63,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Define documentation contract and enforcement baseline",
-  "updated_at": "2026-10-02T09:56:16.026549715Z"
+  "updated_at": "2026-10-02T10:01:23.219116505Z"
 }
