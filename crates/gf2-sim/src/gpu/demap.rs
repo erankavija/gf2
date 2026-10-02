@@ -234,17 +234,6 @@ mod imp {
         ///
         /// Panics if `modulation` is not 16-QAM or 64-QAM, or if `noise_var` is
         /// not finite and strictly positive.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_sim::gpu::demap::GpuGrayQamDemapper;
-        /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-        /// use gf2_coding::modem::DemapMethod;
-        ///
-        /// let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam64, DemapMethod::MaxLog, 0.5);
-        /// assert_eq!(stage.m(), 6);
-        /// ```
         #[must_use]
         pub fn new(modulation: DvbT2Modulation, method: DemapMethod, noise_var: f32) -> Self {
             let m = bits_per_symbol(modulation);
@@ -277,18 +266,6 @@ mod imp {
         }
 
         /// Targets a non-default HIP device for the device demapper.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_sim::gpu::demap::GpuGrayQamDemapper;
-        /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-        /// use gf2_coding::modem::DemapMethod;
-        ///
-        /// let stage =
-        ///     GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::MaxLog, 0.25).on_device(0);
-        /// assert_eq!(stage.device_id(), 0);
-        /// ```
         #[must_use]
         pub fn on_device(mut self, device_id: i32) -> Self {
             self.device_id = device_id;

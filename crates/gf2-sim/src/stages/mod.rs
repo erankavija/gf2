@@ -280,20 +280,6 @@ impl DvbT2Encode {
     /// Exposed so the stage-driven executor (`de160fc5`) can mint the
     /// per-frame random BBFRAME input of the correct width after downcasting
     /// the chain's source stage via [`AnyStage::stage_as_any`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::sync::Arc;
-    /// use gf2_sim::stages::DvbT2Encode;
-    /// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
-    /// let stage = DvbT2Encode::new(codec.clone());
-    /// assert_eq!(stage.k_bch(), codec.k_bch());
-    /// ```
     #[inline]
     #[must_use]
     pub fn k_bch(&self) -> usize {

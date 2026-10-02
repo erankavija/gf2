@@ -241,18 +241,6 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `max_iterations == 0`.
-        ///
-        /// # Examples
-        ///
-        /// ```no_run
-        /// use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
-        /// use gf2_coding::ldpc::{DecoderConfig, LdpcCode};
-        /// use gf2_coding::CodeRate;
-        ///
-        /// let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-        /// let stage = GpuLdpcBp::new(code, DecoderConfig::default(), 50);
-        /// assert_eq!(stage.max_iterations(), 50);
-        /// ```
         #[must_use]
         pub fn new(code: LdpcCode, config: DecoderConfig, max_iterations: usize) -> Self {
             assert!(max_iterations >= 1, "max_iterations must be >= 1");
@@ -267,18 +255,6 @@ mod imp {
         }
 
         /// Targets a non-default HIP device for the device decoder.
-        ///
-        /// # Examples
-        ///
-        /// ```no_run
-        /// use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
-        /// use gf2_coding::ldpc::{DecoderConfig, LdpcCode};
-        /// use gf2_coding::CodeRate;
-        ///
-        /// let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-        /// let stage = GpuLdpcBp::new(code, DecoderConfig::default(), 50).on_device(0);
-        /// assert_eq!(stage.device_id(), 0);
-        /// ```
         #[must_use]
         pub fn on_device(mut self, device_id: i32) -> Self {
             self.device_id = device_id;

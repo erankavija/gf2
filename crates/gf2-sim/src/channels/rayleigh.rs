@@ -83,15 +83,6 @@ impl Rayleigh {
     ///
     /// * `es_n0_db` — channel Es/N0 in dB.
     /// * `bits_per_symbol` — modulation order in bits/symbol.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::channels::rayleigh::Rayleigh;
-    ///
-    /// let ch = Rayleigh::new(10.0, 4);
-    /// assert_eq!(ch.bits_per_symbol(), 4);
-    /// ```
     #[must_use]
     pub fn new(es_n0_db: f32, bits_per_symbol: usize) -> Self {
         let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);

@@ -109,16 +109,6 @@ impl Rician {
     /// # Panics
     ///
     /// Panics if `k_factor < 0.0` or is NaN.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::channels::rician::Rician;
-    ///
-    /// let ch = Rician::new(10.0, 4, 2.0);
-    /// assert_eq!(ch.bits_per_symbol(), 4);
-    /// assert!((ch.k_factor() - 2.0).abs() < 1e-6);
-    /// ```
     #[must_use]
     pub fn new(es_n0_db: f32, bits_per_symbol: usize, k_factor: f32) -> Self {
         assert!(

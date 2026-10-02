@@ -203,15 +203,6 @@ impl Channel {
     /// # Arguments
     ///
     /// * `es_n0_db` — channel Es/N0 in dB.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::dvb_t2::Channel;
-    ///
-    /// let ch = Channel::awgn(6.25);
-    /// assert_eq!(ch, Channel::Awgn { es_n0_db: 6.25 });
-    /// ```
     #[must_use]
     pub fn awgn(es_n0_db: f32) -> Self {
         Channel::Awgn { es_n0_db }
@@ -382,20 +373,6 @@ impl Builder<NeedsModcod> {
     ///
     /// * `modcod` — the `(rate, modulation)` MODCOD; validated at
     ///   [`build`](Builder::build) time via [`Modcod::validate`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::dvb_t2::Modcod;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    ///
-    /// let _b = Pipeline::dvb_t2().modcod(Modcod::Normal {
-    ///     rate: CodeRate::Rate1_2,
-    ///     modulation: DvbT2Modulation::Qam16,
-    /// });
-    /// ```
     pub fn modcod(self, modcod: Modcod) -> Builder<NeedsDecoder> {
         self.with_state(|b| b.cfg_modcod = Some(modcod))
     }

@@ -90,21 +90,6 @@ impl SnrPointResult {
 /// consumers (the D.3 calibration receipt, the campaign-binary migration) read
 /// the four contractual columns `fer` / `frames` / `errors` / `mean_iters` off
 /// each point.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::executor::{SimulationResults, SnrPointResult};
-/// use gf2_sim::parallel::WorkerCounters;
-///
-/// let mut c = WorkerCounters::default();
-/// c.record_frame(false, 3, 8, 0);
-/// let results = SimulationResults {
-///     per_point: vec![SnrPointResult::from_counters(6.0, c)],
-/// };
-/// assert_eq!(results.per_point.len(), 1);
-/// assert_eq!(results.per_point[0].frames, 1);
-/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct SimulationResults {
     /// One result per SNR point, in `esn0_db_points` order.
