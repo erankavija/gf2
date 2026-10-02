@@ -24,9 +24,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:22.757041790Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T10:31:48.722361878Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "4bdcd65a-e338-488b-b42e-19bee4a875a9",
@@ -39,5 +39,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Map the root roadmap's open questions and publication items",
-  "updated_at": "2026-10-02T10:31:30.572555426Z"
+  "updated_at": "2026-10-02T10:31:48.722361878Z"
 }
