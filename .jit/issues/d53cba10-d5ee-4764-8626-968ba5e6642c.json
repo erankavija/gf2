@@ -24,10 +24,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T15:06:14.344418404Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T15:09:08.936702622Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T15:04:18.280520633Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:30.367917960Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T15:01:56.389762854Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "d53cba10-d5ee-4764-8626-968ba5e6642c",
@@ -40,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate addendum schema test inputs through the configured repository root",
-  "updated_at": "2026-10-02T15:01:35.887764067Z"
+  "updated_at": "2026-10-02T15:09:08.936702622Z"
 }

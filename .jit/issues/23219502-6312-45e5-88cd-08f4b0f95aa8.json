@@ -34,7 +34,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "failed",
-      "updated_at": "2026-10-02T14:32:01.312214942Z",
+      "updated_at": "2026-10-02T15:18:37.473090340Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -64,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
-  "updated_at": "2026-10-02T14:32:01.312214942Z"
+  "updated_at": "2026-10-02T15:18:37.473090340Z"
 }
