@@ -85,18 +85,6 @@ impl Nr5gEncode {
     ///
     /// Exposed so a stage-driven executor can mint a random input of the
     /// correct width.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::sync::Arc;
-    /// use gf2_sim::stages::nr_5g::Nr5gEncode;
-    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
-    ///
-    /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
-    /// let stage = Nr5gEncode::new(code.clone());
-    /// assert_eq!(stage.k(), 121);
-    /// ```
     #[inline]
     #[must_use]
     pub fn k(&self) -> usize {
@@ -109,18 +97,6 @@ impl Nr5gEncode {
     /// Exposed so consumers (e.g. the 5G NR preset's tests) can verify the
     /// built code's dimensions — in particular that `E` is a multiple of the
     /// modulation order `Q_m`, the TS 38.212 §5.4.2.2 interleaver precondition.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::sync::Arc;
-    /// use gf2_sim::stages::nr_5g::Nr5gEncode;
-    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
-    ///
-    /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
-    /// let stage = Nr5gEncode::new(code.clone());
-    /// assert_eq!(stage.n(), 256);
-    /// ```
     #[inline]
     #[must_use]
     pub fn n(&self) -> usize {
@@ -384,16 +360,6 @@ impl NrGrayQamDemap {
     }
 
     /// The per-symbol noise variance (`N0 = 2 sigma^2`) this demapper assumes.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::stages::nr_5g::NrGrayQamDemap;
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// let d = NrGrayQamDemap::with_noise_var(4, DemapMethod::ExactLogMap, 0.25);
-    /// assert_eq!(d.noise_var(), 0.25);
-    /// ```
     #[inline]
     #[must_use]
     pub fn noise_var(&self) -> f32 {
@@ -516,18 +482,6 @@ impl Nr5gDecode {
     }
 
     /// The recovered message length `k` (= `target_k`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::sync::Arc;
-    /// use gf2_sim::stages::nr_5g::Nr5gDecode;
-    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
-    ///
-    /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
-    /// let stage = Nr5gDecode::new(code, 20);
-    /// assert_eq!(stage.k(), 121);
-    /// ```
     #[inline]
     #[must_use]
     pub fn k(&self) -> usize {

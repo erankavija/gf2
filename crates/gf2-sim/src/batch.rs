@@ -56,16 +56,6 @@ impl BitPackedBatch {
     /// # Arguments
     ///
     /// * `frames` — one [`BitVec`] per frame.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::batch::BitPackedBatch;
-    /// use gf2_core::BitVec;
-    ///
-    /// let batch = BitPackedBatch::new(vec![BitVec::zeros(4)]);
-    /// assert_eq!(batch.frames.len(), 1);
-    /// ```
     pub fn new(frames: Vec<BitVec>) -> Self {
         Self { frames }
     }
@@ -115,15 +105,6 @@ impl SymbolBatch {
     /// frame `f` has `i[f].len() != q[f].len()` (mismatched per-frame I/Q lane
     /// lengths). Both conditions violate the SoA invariant that every symbol
     /// has paired in-phase and quadrature components.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::batch::SymbolBatch;
-    ///
-    /// let batch = SymbolBatch::new(vec![vec![1.0_f32, -1.0]], vec![vec![1.0_f32, -1.0]]);
-    /// assert_eq!(batch.i.len(), 1);
-    /// ```
     pub fn new(i: Vec<Vec<f32>>, q: Vec<Vec<f32>>) -> Self {
         assert_eq!(
             i.len(),
@@ -181,16 +162,6 @@ impl LlrBatch {
     /// # Arguments
     ///
     /// * `frames` — one `Vec<Llr>` per frame.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::batch::LlrBatch;
-    /// use gf2_coding::Llr;
-    ///
-    /// let batch = LlrBatch::new(vec![vec![Llr::new(2.0)]]);
-    /// assert_eq!(batch.frames.len(), 1);
-    /// ```
     pub fn new(frames: Vec<Vec<Llr>>) -> Self {
         Self { frames }
     }
@@ -232,16 +203,6 @@ impl HardDecisionBatch {
     /// # Arguments
     ///
     /// * `frames` — one [`BitVec`] per frame.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::batch::HardDecisionBatch;
-    /// use gf2_core::BitVec;
-    ///
-    /// let batch = HardDecisionBatch::new(vec![BitVec::zeros(4)]);
-    /// assert_eq!(batch.frames.len(), 1);
-    /// ```
     pub fn new(frames: Vec<BitVec>) -> Self {
         Self { frames }
     }

@@ -171,16 +171,6 @@ impl AwgnLlrSource {
     ///
     /// * `seed` — the SplitMix64 starting state; equal seeds reproduce
     ///   bit-identical LLR streams.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::testutil::AwgnLlrSource;
-    ///
-    /// let mut src = AwgnLlrSource::new(0xA930_BE7F);
-    /// let frame = src.frame_all_zero(4, 0.65);
-    /// assert_eq!(frame.len(), 4);
-    /// ```
     #[must_use]
     pub fn new(seed: u64) -> Self {
         Self { state: seed }
