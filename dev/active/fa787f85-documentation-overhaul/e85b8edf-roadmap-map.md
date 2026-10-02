@@ -41,7 +41,7 @@ Other root sections belong to sibling records.
 | 159 | Competitive CAS for binary field research | tracked | `d77176e5`, release `2caf738d` |
 | 160 | Publication-worthy novel constructions | tracked | `55087229` |
 | 161 | Industry-standard open FEC benchmark suite | tracked | `1362381c` |
-| 162 | Educational tool with pedagogical examples | tracked | `315f4de5` |
+| 162 | Educational tool with pedagogical examples | tracked | `cdba4e71` (research tutorial set, brief D-45); `315f4de5` (elementary examples) is rejected as obsolete (brief D-06, researcher audience) |
 
 ## Newly filed
 
