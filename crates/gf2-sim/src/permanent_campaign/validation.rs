@@ -907,7 +907,6 @@ pub fn admit_validation_run(
 ) -> Result<ValidationRunAdmission, ValidationError> {
     preregistration.validate()?;
     let runtime = observe_validation_runtime(worker_count)?;
-    create_directory_durable(state_directory)?;
     let proposed = ValidationRunStateV2 {
         schema_version: RUN_STATE_SCHEMA_VERSION,
         preregistration_identity: preregistration_identity.clone(),
@@ -921,6 +920,7 @@ pub fn admit_validation_run(
             if state_directory.join(CONTINUATION_STATE_FILE).exists() {
                 return invalid("default exact-producer resume refuses a continued journal");
             }
+            create_directory_durable(state_directory)?;
             let run_state = publish_or_adopt(&run_state_path, &proposed, |existing| {
                 existing.schema_version == proposed.schema_version
                     && existing.preregistration_identity == proposed.preregistration_identity
@@ -1142,6 +1142,15 @@ pub fn run_frozen_campaign_validation_with_mode(
     state_directory: &Path,
     mode: ValidationRunMode,
 ) -> Result<ValidationReceipt, ValidationError> {
+    let journal_relative = state_directory.strip_prefix(repository).map_err(|_| {
+        ValidationError::InvalidPlan(
+            "frozen validation journal must be inside the repository".into(),
+        )
+    })?;
+    let journal_directory = artifact_path(journal_relative)?;
+    let bundle = state_directory.parent().ok_or_else(|| {
+        ValidationError::InvalidPlan("frozen validation journal has no bundle directory".into())
+    })?;
     validate_frozen_plan(repository, preregistration)?;
     validate_frozen_toolchain(env!("GF2_BUILD_RUSTC_VERSION"))?;
     preflight_required_backends(preregistration, worker_count)?;
@@ -1165,12 +1174,7 @@ pub fn run_frozen_campaign_validation_with_mode(
         state_directory,
         mode,
     )?;
-    let journal_relative = state_directory.strip_prefix(repository).map_err(|_| {
-        ValidationError::InvalidPlan(
-            "frozen validation journal must be inside the repository".into(),
-        )
-    })?;
-    receipt.journal_directory = Some(artifact_path(journal_relative)?);
+    receipt.journal_directory = Some(journal_directory);
     let after = snapshot_frozen_campaign(repository, &frozen_root)?;
     let guard_status = if before == after {
         PhaseStatus::Passed
@@ -1184,9 +1188,6 @@ pub fn run_frozen_campaign_validation_with_mode(
     });
     receipt.overall_verdict =
         combined_verdict(&receipt.anchors, guard_status == PhaseStatus::Passed);
-    let bundle = state_directory.parent().ok_or_else(|| {
-        ValidationError::InvalidPlan("frozen validation journal has no bundle directory".into())
-    })?;
     validate_frozen_receipt(repository, bundle, &receipt)?;
     Ok(receipt)
 }

@@ -21,10 +21,10 @@ use gf2_sim::permanent_campaign::validation::{
     admit_validation_run, evaluate_validation_anchor, is_frozen_validation_toolchain,
     load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
     load_validation_preregistration, preflight_required_backends,
-    publish_validation_receipt_atomic, read_validation_receipt, run_validation,
-    verify_validation_receipt_journal, AnchorReceipt, AnchorSpec, BackendAgreementStatus,
-    DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule,
-    SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
+    publish_validation_receipt_atomic, read_validation_receipt, run_frozen_campaign_validation,
+    run_validation, verify_validation_receipt_journal, AnchorReceipt, AnchorSpec,
+    BackendAgreementStatus, DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus,
+    ReplayMode, RetryRule, SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
     ValidationPreregistration, ValidationProducerSegment, ValidationProtocol, ValidationReceipt,
     ValidationRunMode, ValidationStreamPurpose, ValidationVerdict, CONTINUATION_STATE_FILE,
     FROZEN_TOOLCHAIN_PREFIX, FROZEN_VALIDATION_RECEIPT_FILE, PREREGISTRATION_SCHEMA_VERSION,
@@ -845,6 +845,34 @@ fn relocated_frozen_evidence_is_identified_by_content() {
     )
     .expect("the relocated journal admits its authorized continuation");
     assert_eq!(admission.completed_anchor_count(), 5);
+}
+
+#[test]
+fn the_frozen_runner_refuses_a_journal_outside_the_repository_without_writing() {
+    let root = unique_directory("validation-contained-repository");
+    fs::create_dir_all(&*root).expect("the scratch repository is creatable");
+    let outside = copy_committed_validation_journal("validation-outside-journal");
+    let contents = |directory: &Path| -> BTreeMap<String, Vec<u8>> {
+        fs::read_dir(directory)
+            .expect("the outside journal reads")
+            .map(|entry| {
+                let entry = entry.expect("the outside journal entry reads");
+                (
+                    entry.file_name().to_string_lossy().into_owned(),
+                    fs::read(entry.path()).expect("the outside journal file reads"),
+                )
+            })
+            .collect()
+    };
+    let before = contents(&outside);
+    let error =
+        run_frozen_campaign_validation(&root, &focused_plan(), focused_identity(), 1, &outside)
+            .expect_err("a journal outside the repository root is refused");
+    assert!(
+        error.to_string().contains("inside the repository"),
+        "{error}"
+    );
+    assert_eq!(contents(&outside), before, "the refusal writes nothing");
 }
 
 fn current_continuation_inputs(
@@ -1848,18 +1876,16 @@ fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
         eprintln!("skipping: a 1.95.0 build would start the frozen evidence run");
         return;
     }
-    let state = unique_directory("validation-frozen-refusal");
-    let receipt = state
-        .parent()
-        .expect("the journal has a bundle directory")
-        .join(FROZEN_VALIDATION_RECEIPT_FILE);
+    let bundle = repository().join(frozen_bundle());
+    let state = bundle.join(format!("absent-journal-{}", std::process::id()));
+    let receipt = bundle.join(FROZEN_VALIDATION_RECEIPT_FILE);
     let receipt_before = fs::read(&receipt).ok();
     let output = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_validation"))
         .current_dir(repository())
         .arg("--preregistration")
         .arg(frozen_preregistration())
         .arg("--state-dir")
-        .arg(&*state)
+        .arg(&state)
         .arg("--receipt")
         .arg(&receipt)
         .output()
