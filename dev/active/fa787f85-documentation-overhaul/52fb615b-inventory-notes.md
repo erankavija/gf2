@@ -6,7 +6,7 @@
 - Destinations mirror the source path beneath the owning archive directory, so the decks' `../figures/` links keep their depth.
 - Crate READMEs rewritten in place carry their own path as destination; the root README and `proofs/README.md` stay in place (`retained-operational`).
 - `docs/lean4-verification-pipeline.md` reaches `e095a100` through task `886af072`, whose ancestors also include `bb85c68a`; the plan names `e095a100`.
-- Root `AGENTS.md` and `CLAUDE.md` inbound lists name references outside `dev/` and `.agents/`; `README.md` inbound lists its three document references.
+- Inbound lists cover every tracked file outside the row's own directory, `dev/` and `.agents/` included. Exclusions: `.jit/` (tracker state), the manifest (the record itself) and receipt `inputs/` snapshot copies (byte-pinned copies). A root-file reference is a bare name or a relative link that resolves to the root file; a bare name in a directory holding its own file of that name belongs to that file.
 - Consumers of the root files are the literal entries of `.jit/config.toml`; the `crates/*/README.md` and `docs/**/*.md` globs pin no file.
 - `table_interpretation.md` is digest-pinned by receipt snapshots; consumers are the `producing-inputs*.json` closure lists and inbound holds the receipt and log references.
 - `crates/gf2-core/benches/*_results.md` inbound lists include the bench headers beside them, which the legacy move repoints.
