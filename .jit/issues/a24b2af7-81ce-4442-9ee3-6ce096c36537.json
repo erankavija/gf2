@@ -42,7 +42,7 @@
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-02T11:41:49.919694383Z",
+      "updated_at": "2026-10-02T13:16:47.259649152Z",
       "updated_by": "auto:executor"
     }
   },
@@ -56,5 +56,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-02T11:41:49.919694383Z"
+  "updated_at": "2026-10-02T13:16:47.259649152Z"
 }

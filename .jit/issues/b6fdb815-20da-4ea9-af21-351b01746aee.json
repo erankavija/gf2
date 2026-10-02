@@ -9,6 +9,7 @@
   ],
   "description": "gf2-core has no example program for large-scale linear algebra over finite fields. A tested example in the library crate demonstrates the workflow end to end.\n\n## Background\n\nBenches cover these workloads but no example does (`dev/active/fa787f85-documentation-overhaul/investigation.md` §5.2).\n\n## Success Criteria\n\n- [hard] REQ-01: A new program under `crates/gf2-core/examples/` builds a large `FieldMatrix` over a prime field and over an extension field, multiplies, solves or ranks through PLE decomposition, and computes an inverse or characteristic polynomial.\n- [hard] REQ-02: The program checks each result against an independent identity (for example $A A^{-1} = I$ or a zero residual) and exits non-zero on a mismatch.\n- [hard] REQ-03: Matrix dimensions are command-line parameters whose defaults complete within seconds in release mode.\n- [hard] REQ-04: A test runs the program with small parameters and asserts success.\n- [hard] REQ-05: The program's header states its purpose in one short paragraph, and the Rust CI gate passes.\n",
   "documents": [],
+  "done_at": "2026-10-02T13:16:49.764685489Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "cargo-ci",
@@ -46,7 +47,7 @@
     "satisfies:fa787f85/REQ-04"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
-  "updated_at": "2026-10-02T11:56:55.599198946Z"
+  "updated_at": "2026-10-02T13:16:49.764685489Z"
 }
