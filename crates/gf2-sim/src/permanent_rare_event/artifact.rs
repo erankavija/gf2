@@ -109,7 +109,8 @@ pub struct RareEventConfigurationV1 {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DesignIdentityV1 {
-    /// Repository-relative preregistration path.
+    /// Repository-relative preregistration path when recorded; validation
+    /// identifies the design by revision and blob, not by this path.
     pub path: String,
     /// Full producing Git revision.
     pub git_revision: String,
@@ -4243,11 +4244,6 @@ fn validate_identity(identity: &RareEventDatasetIdentityV1) -> Result<(), Artifa
 }
 
 fn validate_design(design: &DesignIdentityV1) -> Result<(), ArtifactError> {
-    if design.path != "dev/active/3f664839/design.md" {
-        return Err(ArtifactError::Identity(
-            "design path is not the preregistration path".into(),
-        ));
-    }
     validate_hex(&design.git_revision, 40)?;
     validate_hex(&design.blob_id, 40)?;
     validate_digest(&design.content_sha256)
