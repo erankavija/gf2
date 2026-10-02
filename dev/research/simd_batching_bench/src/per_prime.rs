@@ -5,8 +5,7 @@
 //! Scheinerman 2024 §2.2 formulas verbatim, expressed directly in AVX2
 //! intrinsics with no abstraction layer between the formula and the silicon.
 //!
-//! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment
-//! per the amended CLAUDE.md `dev/research/<crate>/` exemption.
+//! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;

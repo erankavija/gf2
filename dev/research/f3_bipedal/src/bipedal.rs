@@ -77,7 +77,7 @@ impl Bipedal3 {
     }
 
     /// Mask used to clear bits at positions `>= len % 64` in the last word.
-    /// Mirrors the project-wide tail-mask invariant from CLAUDE.md, applied
+    /// Mirrors the tail-mask invariant of AGENTS.md §Correctness and test policy, applied
     /// after every mutating op so out-of-range slots stay canonical zero.
     fn tail_mask(len: usize) -> u64 {
         let r = len % ELEMS_PER_WORD;
