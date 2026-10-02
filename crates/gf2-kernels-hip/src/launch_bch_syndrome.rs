@@ -90,10 +90,6 @@ impl BchFieldTables {
     /// # Panics
     ///
     /// Panics if `exp.len() != 2^m - 1` or `log.len() != 2^m`.
-    ///
-    /// # Examples
-    ///
-    /// See the [type-level example](BchFieldTables).
     #[must_use]
     pub fn new(m: usize, exp: Vec<u16>, log: Vec<u16>) -> Self {
         let order = (1usize << m) - 1;
