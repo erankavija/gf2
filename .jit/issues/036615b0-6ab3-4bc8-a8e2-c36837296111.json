@@ -32,6 +32,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:17:58.519554476Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-10-02T14:17:33.225064307Z",
@@ -59,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory terminal, ownerless and empty dev/active entries",
-  "updated_at": "2026-10-02T14:17:33.225064307Z"
+  "updated_at": "2026-10-02T14:17:58.519554476Z"
 }
