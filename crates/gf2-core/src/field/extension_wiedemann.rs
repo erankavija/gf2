@@ -457,10 +457,9 @@ where
 /// Thin alias around the shared Las-Vegas verifier
 /// [`crate::field::charpoly::poly_annihilates_a_lasvegas`].
 ///
-/// The two callers (`run_quadratic_generic`, `run_cubic_generic`) keep
-/// their own naming for readability, but the implementation lives in
-/// `charpoly.rs` so the verifier stays a single source of truth (R6
-/// review fix).
+/// The two callers (`run_quadratic_generic`, `run_cubic_generic`) keep their
+/// own naming for readability, but the implementation lives in `charpoly.rs` so
+/// the verifier stays a single source of truth.
 #[inline]
 fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, seed: u64) -> bool {
     crate::field::charpoly::poly_annihilates_a_lasvegas(p, a, seed)

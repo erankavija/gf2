@@ -8,12 +8,9 @@
 //! ([`Fp<P>`](crate::gfp::Fp)), and tower extensions all compose
 //! uniformly.
 //!
-//! The legacy binary-field alias
-//! [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) /
-//! [`Gf2mPoly`](crate::gf2m::Gf2mPoly) is now a thin `pub type` alias to
-//! `FieldPoly<Gf2mElement_<V>>`, preserved only so existing BCH / DVB-T2
-//! call-sites continue to compile without churn. All algorithmic code
-//! lives here.
+//! The binary-field alias [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) /
+//! [`Gf2mPoly`](crate::gf2m::Gf2mPoly) is a thin `pub type` alias to
+//! `FieldPoly<Gf2mElement_<V>>`. All algorithmic code lives here.
 //!
 //! # The normalisation invariant
 //!
@@ -129,10 +126,7 @@
 //! [`INTERPOLATE_THRESHOLD`]: crate::field::poly_interpolate::INTERPOLATE_THRESHOLD
 //! [`formal_derivative`]: crate::field::poly_interpolate::formal_derivative
 //!
-//! # Fast-path integration status
-//!
-//! All three of the high-leverage fast paths for this module have
-//! now landed:
+//! # Fast paths
 //!
 //! - Fast polynomial division — [`FieldPoly::div_rem_fast`] (Newton
 //!   iteration on the reversed-divisor series inverse) and the
@@ -145,7 +139,7 @@
 //! - Subproduct-tree batch evaluation wired through
 //!   [`FieldPoly::div_rem_auto`] — [`batch_evaluate_subproduct_auto`]
 //!   and the [`FieldPoly::batch_evaluate_auto`] dispatcher using
-//!   `polynomial.subproduct_min_len()` (issue `046f95c1`, this task).
+//!   `polynomial.subproduct_min_len()` (issue `046f95c1`).
 //!
 //! [`FieldPoly::batch_evaluate`] (the generic dispatcher on
 //! `F: FiniteField`) keeps schoolbook [`FieldPoly::div_rem`] for the
@@ -193,9 +187,8 @@
 //!   above the active `polynomial.div_rem_fast_min_len()` value the tree reaches
 //!   `O(M(n) log k + k² log k)`).
 //!
-//! Lagrange interpolation (task `3cff65f7`) and the radix-2 NTT
-//! (task `e0b6f940`) have already landed in their respective sibling
-//! files and are wired into the tables above.
+//! Lagrange interpolation (task `3cff65f7`) and the radix-2 NTT (task
+//! `e0b6f940`) live in sibling files and are wired into the tables above.
 //!
 //! # Benchmark snapshot (criterion `--quick`, Zen 3 host)
 //!
@@ -311,11 +304,6 @@
 //! subproduct path manually by calling [`batch_evaluate_subproduct`]
 //! (generic) or [`batch_evaluate_subproduct_auto`] ([`TwoAdicField`])
 //! directly, which bypass this threshold.
-//!
-//! The fast polynomial-division primitive (`div_rem_fast` /
-//! `div_rem_auto`) landed in issue `ae0c7e1f`; the subproduct-tree
-//! integration plus the conservative subproduct default landed in issue
-//! `046f95c1`.
 //!
 //! ## `batch_mul` — left-fold vs. balanced tree
 //!
@@ -1190,11 +1178,8 @@ impl<F: FiniteField> FieldPoly<F> {
     /// NTT-backed polynomial multiplication (`M(n) = O(n log n)`) and
     /// Newton-iteration fast polynomial division — is reached by the
     /// sibling dispatcher [`FieldPoly::batch_evaluate_auto`] on
-    /// [`TwoAdicField`]. The NTT multiplication primitive landed in
-    /// task `e0b6f940`; the Newton-iteration fast division primitive
-    /// ([`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`])
-    /// landed in issue `ae0c7e1f`; the subproduct-tree wiring plus
-    /// the conservative subproduct default landed in issue `046f95c1`. On
+    /// [`TwoAdicField`], built on [`FieldPoly::mul_ntt`] and
+    /// [`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`]. On
     /// fields with cheap scalar arithmetic such as `Fp<65537>` the
     /// naive Horner baseline dominates at small and medium sizes —
     /// see the benchmark table in the module docstring — which is
@@ -2352,12 +2337,11 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// `O(n · k + k² log k)` field operations for `n = poly.len()` and
 /// `k = points.len()` when backed by schoolbook
 /// [`FieldPoly::div_rem`]. The Newton-iteration fast division
-/// primitive (landed under issue `ae0c7e1f` as
-/// [`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`]) is
-/// available on [`TwoAdicField`] and wired into the sibling entry
-/// point [`batch_evaluate_subproduct_auto`]; that variant reaches
-/// `O(M(n) log k + k log² k)` whenever the per-level reductions cross
-/// the active `polynomial.div_rem_fast_min_len()` value.
+/// primitive ([`FieldPoly::div_rem_fast`] / [`FieldPoly::div_rem_auto`]) is
+/// available on [`TwoAdicField`] and wired into the sibling entry point
+/// [`batch_evaluate_subproduct_auto`]; that variant reaches `O(M(n) log k + k
+/// log² k)` whenever the per-level reductions cross the active
+/// `polynomial.div_rem_fast_min_len()` value.
 ///
 /// This function is `pub` so both the benchmark harness
 /// (`benches/field_poly.rs`) and [`crate::field::poly_interpolate::interpolate_fast`]

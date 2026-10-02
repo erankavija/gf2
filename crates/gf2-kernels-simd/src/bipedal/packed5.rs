@@ -1,8 +1,7 @@
-//! F_5 SIMD batch kernels (R1 Candidate D 3-plane bit-sliced).
+//! F_5 SIMD batch kernels (3-plane bit-sliced encoding).
 //!
-//! The F_5 encoding follows R1 Candidate D (`@/issue/6b3f6054`): each `F_5`
-//! element is stored as a 3-bit canonical value in three parallel bit-planes
-//! `(b0, b1, b2)`:
+//! The F_5 encoding follows `@/issue/6b3f6054`: each `F_5` element is stored as
+//! a 3-bit canonical value in three parallel bit-planes `(b0, b1, b2)`:
 //!
 //! | `x` | `b2` bit | `b1` bit | `b0` bit |
 //! |-----|----------|----------|----------|
@@ -47,7 +46,7 @@
 /// A lane carries `e[i] = 1` iff that lane's canonical value equals `i`.
 /// Codepoints 5..=7 produce all-zero selectors (treated as 0).
 ///
-/// Transliterated from `gf2_algebra::packed::packed5::decode5`.
+/// Mirrors `gf2_algebra::packed::packed5::decode5`.
 ///
 /// # Complexity
 ///
@@ -76,7 +75,7 @@ pub(crate) fn decode5_word(b0: u64, b1: u64, b2: u64) -> [u64; 5] {
 /// - `c1 = r[2] | r[3]` (b1 bit set for values 2 and 3)
 /// - `c2 = r[4]`        (b2 bit set for value 4)
 ///
-/// Transliterated from `gf2_algebra::packed::packed5::encode5`.
+/// Mirrors `gf2_algebra::packed::packed5::encode5`.
 ///
 /// # Complexity
 ///

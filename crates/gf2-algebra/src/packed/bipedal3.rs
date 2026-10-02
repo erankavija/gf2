@@ -31,7 +31,7 @@
 //! # Op cost (per `Bipedal3` = 64 `F_3` elements)
 //!
 //! - **add**: 6 word-level ops (CSE: 2 temporaries).
-//! - **sub**: 6 word-level ops (direct paper §2.2 transliteration).
+//! - **sub**: 6 word-level ops (paper §2.2 formula).
 //! - **mul**: 2 word-level ops.
 //! - **neg**: 1 word-level op.
 //!
@@ -40,12 +40,6 @@
 //! [`super::ScalarPackedFp3`] is the canonical reference; the proptest
 //! suite in this module routes random inputs through both and asserts
 //! per-lane equality for all four operations.
-//!
-//! # Status
-//!
-//! W1-T3: body implemented.  `Bipedal3Vec` (T4) and `Bipedal3Matrix`
-//! (T5) will be added in subsequent issues; this module only hosts the
-//! fixed-width element.
 
 use core::fmt;
 
@@ -456,9 +450,8 @@ impl PackedField<Fp<3>> for Bipedal3 {
 
     /// Lane-wise difference: `self - rhs` pointwise mod 3.
     ///
-    /// Direct paper §2.2 / Theorem 2.1 subtraction transliteration:
-    /// `t = s1 ⊕ s2; u = m1 ∧ t; m_- = u | (m1 ⊕ m2); s_- = u ⊕ (m2 ⊕ s2)`
-    /// — 6 word-level bitwise operations.
+    /// Paper §2.2 / Theorem 2.1 subtraction: `t = s1 ⊕ s2; u = m1 ∧ t; m_- = u
+    /// | (m1 ⊕ m2); s_- = u ⊕ (m2 ⊕ s2)` — 6 word-level bitwise operations.
     ///
     /// # Arguments
     ///
@@ -2623,11 +2616,11 @@ mod vec_tests {
 ///
 /// # Column-major rationale
 ///
-/// Ryser's formula (T7) and the single-word permanent path (T9) iterate over
-/// columns in the inner loop, accumulating row-wise products. Storing each
-/// column as a contiguous [`Bipedal3Vec`] allows those algorithms to
-/// `column(j)` without scatter-gather, matching the access pattern of the R3
-/// multi-word streaming design (`@/issue/60c30e2d` §2.1).
+/// Ryser's formula and the single-word permanent path iterate over columns in
+/// the inner loop, accumulating row-wise products. Storing each column as a
+/// contiguous [`Bipedal3Vec`] allows those algorithms to `column(j)` without
+/// scatter-gather, matching the access pattern of the multi-word streaming
+/// design (`@/issue/60c30e2d` §2.1).
 ///
 /// # Mask-tail invariant
 ///
@@ -2856,9 +2849,9 @@ impl Bipedal3Matrix {
 
     /// Borrow the `j`-th column as a `&Bipedal3Vec` of length `rows`.
     ///
-    /// This is the primary access pattern for column-major algorithms
-    /// (Ryser T7, single-word permanent T9): iterating `column(j)` for
-    /// `j` in `0..cols` is zero-copy.
+    /// This is the primary access pattern for column-major algorithms (Ryser,
+    /// single-word permanent): iterating `column(j)` for `j` in `0..cols` is
+    /// zero-copy.
     ///
     /// # Arguments
     ///

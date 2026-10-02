@@ -4,12 +4,11 @@
 //! [`lanes::BipedalLogicalLanes`] lane abstraction that lets a single body
 //! serve every `(prime, ISA)` instantiation. F_3 ships via
 //! [`bipedal3::Config3`] / [`bipedal3::Bipedal3x4`] on top of the generic
-//! framework. F_5 (R1 Candidate D, 3-plane bit-sliced) and F_7 (R2
-//! Candidate A, 3-bit + 2^16 LUT) ship via **dedicated AVX2 batch entry
-//! points** instead — the framework's 2-stream `(mag, sgn)` shape cannot
-//! losslessly carry F_5 value 4 (which needs `b2 = 1`), and F_7's LUT
-//! encoding fits naturally in 1 plane per operand. See JIT issue
-//! `1f769232`'s `## Amendment 2026-05-14` for the rationale.
+//! framework. F_5 (3-plane bit-sliced, `@/issue/6b3f6054`) and F_7 (3-bit +
+//! 2^16 LUT, `@/issue/f10152f6`) ship via **dedicated AVX2 batch entry points**
+//! instead — the framework's 2-stream `(mag, sgn)` shape cannot losslessly
+//! carry F_5 value 4 (which needs `b2 = 1`), and F_7's LUT encoding fits
+//! naturally in 1 plane per operand (`@/issue/1f769232`).
 //!
 //! Architectural decision recorded in `@/issue/c7542983`: the generic framework
 //! wins over per-prime hand-rolled kernels by tie-break (every microbench cell
@@ -23,8 +22,8 @@
 //! | [`framework`]  | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct (used by F_3 only). |
 //! | [`lanes`]      | The `BipedalLogicalLanes` trait + `Avx2Lane` impl. |
 //! | [`bipedal3`]   | F_3 instantiation: `Config3` + `Bipedal3x4` type alias (uses the framework). |
-//! | [`packed5`]    | F_5 scalar word ops + AVX2 batch entry points + `F5AvxFns` detection bundle (R1 Candidate D). |
-//! | [`packed7`]    | F_7 scalar word ops + AVX2 batch entry points + `F7AvxFns` detection bundle (R2 Candidate A). |
+//! | [`packed5`]    | F_5 scalar word ops + AVX2 batch entry points + `F5AvxFns` detection bundle. |
+//! | [`packed7`]    | F_7 scalar word ops + AVX2 batch entry points + `F7AvxFns` detection bundle. |
 //!
 //! The actual AVX2 batch entry points live in
 //! `crate::x86::bipedal_avx2` (F_3, generic over `BipedalLikeConfig`),
@@ -48,14 +47,14 @@
 //! `crate::x86::bipedal_avx2` then monomorphise over the new config;
 //! no kernel code changes are required.
 //!
-//! **(b) Encoding does not fit the framework — e.g. F_5's R1 Candidate D
-//! 3-plane bit-sliced or F_7's R2 Candidate A LUT.** Add a new module
-//! under `crates/gf2-kernels-simd/src/bipedal/packed<prime>.rs` with the
-//! scalar word ops, runtime-detection bundle, and scalar fallbacks; add
-//! a dedicated AVX2 batch entry-point file under
-//! `crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed<prime>.rs` so
-//! the asm-artefact-present gate fires; commit a sibling `.asm.txt`
-//! artefact. This is how F_5 and F_7 ship today.
+//! **(b) Encoding does not fit the framework — e.g. F_5's 3-plane bit-sliced or
+//! F_7's LUT encoding.** Add a new module under
+//! `crates/gf2-kernels-simd/src/bipedal/packed<prime>.rs` with the scalar word
+//! ops, runtime-detection bundle, and scalar fallbacks; add a dedicated AVX2
+//! batch entry-point file under
+//! `crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed<prime>.rs` so the
+//! asm-artefact-present gate fires; commit a sibling `.asm.txt` artefact. This
+//! is how F_5 and F_7 ship today.
 
 pub mod bipedal3;
 pub mod framework;

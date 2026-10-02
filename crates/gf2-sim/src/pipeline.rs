@@ -1,6 +1,6 @@
 //! The [`Pipeline`] — a built, runnable graph of stages.
 //!
-//! Lifts the §1 "`Pipeline` and `BatchHandle`" block of the Phase 0 design doc
+//! Lifts the §1 "`Pipeline` and `BatchHandle`" block of the design doc
 //! (`@/issue/ec530af9`) into code.
 
 use std::collections::HashMap;
@@ -17,10 +17,6 @@ use crate::stage::AnyStage;
 /// Owns a heterogeneous list of type-erased stages ([`AnyStage`]), the edges
 /// connecting them, the registered CPU fallbacks (for GPU-OOM substitution,
 /// design doc §8), and the run configuration.
-///
-/// The build entry points and run methods are introduced by later waves; this
-/// is the Phase A owning structure that lets those waves fan out without
-/// touching each other's files.
 pub struct Pipeline {
     /// The type-erased stages, in topological order.
     stages: Vec<Box<dyn AnyStage>>,
@@ -39,12 +35,11 @@ pub struct Pipeline {
 impl Pipeline {
     /// Assembles a pipeline from its already-validated parts.
     ///
-    /// Crate-private: the only caller is [`Chain::build`](crate::graph::Chain::build)
-    /// (the graph wave `c09d3e95`), which performs the topological sort, type
-    /// re-validation, cycle/connectivity checks, and GPU-fallback extraction
-    /// before handing the ordered parts here. Keeping this out of the public API
-    /// preserves the design-doc §1 invariant that a `Pipeline` is only ever
-    /// obtained through a validating builder.
+    /// Crate-private: the only caller is [`Chain::build`](crate::graph::Chain::build) which
+    /// performs the topological sort, type re-validation, cycle/connectivity checks, and
+    /// GPU-fallback extraction before handing the ordered parts here. Keeping this out of the
+    /// public API preserves the design-doc §1 invariant that a `Pipeline` is only ever obtained
+    /// through a validating builder.
     ///
     /// # Arguments
     ///
@@ -91,10 +86,9 @@ impl Pipeline {
 
     /// Returns the type-erased stages in topological order.
     ///
-    /// The order is the linearisation [`Chain::build`](crate::graph::Chain::build)
-    /// produced; consumers (the Phase C executor `de160fc5`, and roundtrip tests
-    /// that drive the chain via [`AnyStage::process_any`])
-    /// step through the stages in this order.
+    /// The order is the linearisation [`Chain::build`](crate::graph::Chain::build) produced;
+    /// consumers (the executor `de160fc5`, and roundtrip tests that drive the chain via
+    /// [`AnyStage::process_any`]) step through the stages in this order.
     ///
     /// # Examples
     ///
@@ -314,9 +308,7 @@ impl Pipeline {
 /// `Pipeline::collect`.
 ///
 /// Carries the SoA buffer references the pipeline allocated for this batch's
-/// lifetime (design doc §1/§2). The buffer-reference machinery is introduced
-/// by the graph/parallel waves; this Phase A handle records the identifying
-/// fields only.
+/// lifetime (design doc §1/§2). The handle records the identifying fields only.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BatchHandle {
     /// The unique batch identifier.

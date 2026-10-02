@@ -101,16 +101,14 @@
 //! | [`channels`] | channel stages (owned by `db9836e4`) |
 //! | [`checkpoint`] | v2 checkpoint schema (owned by `5f12e7ff`) |
 //! | [`snr_checkpoint`] | SNR-point checkpoint payload and simulation resume |
-//! | [`executor`] | hybrid CPU/GPU [`Scheduler`] + [`SimulationResults`] (Phase C `75c22fa8`) + DAG [`TopologyExecutor`] (`de160fc5`) + GPU drain-for-checkpoint / checkpointed hybrid sweep (`571c11c4`) |
-//! | [`gpu`] | HIP host dispatch (Phase B; `feature = "hip"`) |
+//! | [`executor`] | hybrid CPU/GPU [`Scheduler`] + [`SimulationResults`] (`75c22fa8`) + DAG [`TopologyExecutor`] (`de160fc5`) + GPU drain-for-checkpoint / checkpointed hybrid sweep (`571c11c4`) |
+//! | [`gpu`] | HIP host dispatch (`feature = "hip"`) |
 //!
 //! # Design reference
 //!
 //! The trait shapes, error hierarchy, module layout, and determinism contract
-//! are specified in the Phase 0 design doc
-//! `dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md`,
-//! which is the single source of truth for this crate. It is the document
-//! linked to JIT issue `ec530af9`, archived with its epic.
+//! are specified in the design doc of `@/issue/ec530af9`, the single source of
+//! truth for this crate.
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
