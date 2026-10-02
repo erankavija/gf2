@@ -88,7 +88,9 @@ files of open owners are copied, never moved.
 
 Open-epic material lives under the directory `jit doc dir <epic> dev/active`
 resolves. An entry owned by several epics goes to the epic owning most of its
-linked documents; a tie goes to the epic whose issue ID names the entry.
+linked documents; a tie goes to the epic whose issue ID names the entry, then
+to the epic named by the entry issue's single applicable membership label;
+any remaining tie is an owner decision recorded in the decision table.
 
 ### `sweep-unit-rules` [plan-fixed] — Sweep unit rules
 
@@ -571,6 +573,7 @@ flowchart LR
 | Concurrent edits | `contrib/gates/doc-review-prompt.md` is being edited in another session and is outside this plan's footprints. |
 | Receipt and evidence integrity | Digest-pinned inputs and `dev/bench_results/` prefixes never change. Each code-pinned move follows its consumer's decoupling change and repeats the recorded verdict baseline (D-52, D-53). |
 | Shared manifest file | The seven inventory shards write one manifest file; each writes a disjoint row scope, and merges are row-level. |
+| Active-layout ties | Owner decisions, 2026-10-02: the membership-label tie-break is added to `active-layout`; `389aa4de` goes to `6dc81018` and `3be770d5` to `1a379447`, both of which carry both epics' labels. |
 | Doctest timing noise | The final census records toolchain, features, cache state and host load (REQ-07). |
 
 ## Investigation sources
