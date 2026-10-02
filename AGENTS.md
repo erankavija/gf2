@@ -94,8 +94,8 @@ contract is mathematical or implemented by several backends.
 - Public APIs need rustdoc stating purpose, panics, safety conditions, and
   non-obvious complexity.
 
-The ordinary fast tier has an eight-second per-test kill and a sixty-second
-suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
+The ordinary fast tier has a fifteen-second per-test kill (sixty under
+`BUSY_HOST_OVERRIDE=1`) and a sixty-second suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
 or `#[ignore = "sim: ..."]`; normal agent work never opts into ignored tests.
 The nightly slow tier uses
 `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only`

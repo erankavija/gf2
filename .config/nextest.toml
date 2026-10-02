@@ -70,6 +70,17 @@ slow-timeout = { period = "20s", terminate-after = 1 }
 # (120.004 s), i.e. lost to contention rather than hanging. Serializing them
 # subsumes the GPU constraint for the slow profile, so `gpu-serial` is only used
 # by [profile.ci] and the two groups never overlap on a single test.
+# `scripts/cargo-ci.sh` runs this profile when BUSY_HOST_OVERRIDE is set: a
+# host shared with other sessions' builds and tests kills fast-tier tests at
+# the `ci` cap while they pass in isolation. The catch-all override outranks
+# the inherited per-binary caps, which are all shorter.
+[profile.ci-busy]
+inherits = "ci"
+
+[[profile.ci-busy.overrides]]
+filter = 'all()'
+slow-timeout = { period = "60s", terminate-after = 1 }
+
 [test-groups]
 gpu-serial = { max-threads = 1 }
 slow-serial = { max-threads = 1 }
