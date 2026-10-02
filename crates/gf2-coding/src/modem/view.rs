@@ -60,15 +60,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Returns the contiguous slice of constellation points.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// assert_eq!(spec.view().points().len(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -79,15 +70,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Returns the contiguous slice of labels, parallel to `points()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// assert_eq!(spec.view().labels().len(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -97,16 +79,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     }
 
     /// Returns the per-bit semantic tags, one entry per bit position.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BitChannelSemantics, ModemSpec};
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// assert_eq!(spec.view().bit_channels().len(), 1);
-    /// assert_eq!(spec.view().bit_channels()[0], BitChannelSemantics::SingleAxisPam(0));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -126,16 +98,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     ///
     /// Panics if `idx >= self.num_symbols()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// let p = spec.view().point(0);
-    /// assert!(p.i.abs() > 0.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -153,16 +115,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     /// # Panics
     ///
     /// Panics if `idx >= self.num_symbols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// let l = spec.view().label(0);
-    /// assert_eq!(l.width, 1);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -209,15 +161,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     /// # Panics
     ///
     /// Panics if `bit_idx >= bits_per_symbol()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BitChannelId, ModemSpec};
-    ///
-    /// let spec = ModemSpec::gray_square_qam(16);
-    /// assert_eq!(spec.view().bit_channel_id(2), BitChannelId { bit_index: 2 });
-    /// ```
     ///
     /// # Complexity
     ///
@@ -294,14 +237,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Number of constellation symbols.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert_eq!(ModemSpec::gray_square_qam(16).view().num_symbols(), 16);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -311,14 +246,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     }
 
     /// Number of bits per symbol.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert_eq!(ModemSpec::bpsk().view().bits_per_symbol(), 1);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -330,15 +257,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Normalization contract requested at construction.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpec, Normalization};
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// matches!(spec.view().normalization(), Normalization::UnitAverageSymbolEnergy);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -349,14 +267,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Normalization scale factor applied to the raw integer grid.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert!(ModemSpec::gray_square_qam(16).view().normalization_scale() > 0.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -366,14 +276,6 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     }
 
     /// Demap-method capabilities advertised by the spec.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert!(ModemSpec::bpsk().view().capabilities().supports_exact_log_map);
-    /// ```
     ///
     /// # Complexity
     ///

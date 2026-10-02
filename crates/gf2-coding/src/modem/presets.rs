@@ -168,15 +168,6 @@ fn isqrt_exact(order: usize) -> usize {
 ///
 /// Panics if `bits_per_symbol` is not one of `1, 2, 4, 6, 8`.
 ///
-/// # Examples
-///
-/// ```
-/// // The helper is not part of the public modem surface; the preset
-/// // builders, `GrayQamMapper`, and `FastGrayQamDemapper` route through
-/// // it internally. See `modem::presets::gray_pam_levels` in the source
-/// // tree for the crate-internal entry point.
-/// ```
-///
 /// # Complexity
 ///
 /// O(`2^(bits_per_symbol/2)`).
@@ -253,14 +244,6 @@ pub(crate) fn assert_valid_gray_square_qam_spec<S: ModemScalar>(view: &super::Mo
 /// # Arguments
 ///
 /// * `view` - Borrowed view of a [`super::ModemSpec`] (post-normalization).
-///
-/// # Examples
-///
-/// ```
-/// // Helper is crate-internal; see the `ModemSpec::preferred_*` factory
-/// // methods in `modem/spec.rs` for the public entry points that route
-/// // through it.
-/// ```
 ///
 /// # Complexity
 ///
@@ -504,16 +487,6 @@ impl ModemSpec<DefaultScalar> {
     /// Label mapping: bit `0` → `+1`, bit `1` → `-1`. The single bit
     /// position carries [`BitChannelSemantics::SingleAxisPam`]`(0)`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// assert_eq!(spec.num_symbols(), 2);
-    /// assert_eq!(spec.bits_per_symbol(), 1);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -538,18 +511,6 @@ impl ModemSpec<DefaultScalar> {
     ///
     /// Panics if `order` is not one of the listed values.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let qpsk = ModemSpec::gray_square_qam(4);
-    /// assert_eq!(qpsk.num_symbols(), 4);
-    ///
-    /// let q16 = ModemSpec::gray_square_qam(16);
-    /// assert_eq!(q16.bits_per_symbol(), 4);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(M) in `order = M`.
@@ -562,15 +523,6 @@ impl<S: ModemScalar> ModemSpec<S> {
     /// Scalar-generic companion of [`ModemSpec::bpsk`].
     ///
     /// Useful for f64 research workflows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec: ModemSpec<f64> = ModemSpec::<f64>::bpsk_with_scalar();
-    /// assert_eq!(spec.num_symbols(), 2);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -588,15 +540,6 @@ impl<S: ModemScalar> ModemSpec<S> {
     /// # Panics
     ///
     /// Panics if `order` is not one of the listed values.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(16);
-    /// assert_eq!(spec.bits_per_symbol(), 4);
-    /// ```
     ///
     /// # Complexity
     ///

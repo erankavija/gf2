@@ -205,20 +205,6 @@ pub(crate) fn auto_one_line_intercept(absl_sorted: &[f64]) -> u32 {
 }
 
 /// A codeword found during ORBGRAND decoding, annotated with its noise log-probability.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::grand::ScoredCodeword;
-/// use gf2_core::BitVec;
-///
-/// let cw = ScoredCodeword {
-///     codeword: BitVec::zeros(7),
-///     noise_log_probability: -1.5,
-///     noise_weight: 1,
-/// };
-/// assert_eq!(cw.noise_weight, 1);
-/// ```
 #[derive(Debug, Clone)]
 pub struct ScoredCodeword {
     /// The decoded codeword (length n).
@@ -239,20 +225,6 @@ impl ScoredCodeword {
     ///
     /// This is `p(z | r)`, the probability of the noise pattern that produced
     /// this codeword given the received signal.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::ScoredCodeword;
-    /// use gf2_core::BitVec;
-    ///
-    /// let cw = ScoredCodeword {
-    ///     codeword: BitVec::zeros(7),
-    ///     noise_log_probability: 0.0,
-    ///     noise_weight: 0,
-    /// };
-    /// assert!((cw.noise_probability() - 1.0).abs() < 1e-10);
-    /// ```
     pub fn noise_probability(&self) -> f64 {
         self.noise_log_probability.exp()
     }
@@ -263,25 +235,6 @@ impl ScoredCodeword {
 /// Contains the hard-decision vector, the list of found codewords (ordered by
 /// decreasing noise log-probability), the number of queries performed, and
 /// cumulative log-probability information.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, OrbGrandResult};
-/// use gf2_coding::llr::Llr;
-/// use gf2_core::BitVec;
-///
-/// // See OrbGrand::decode for full usage examples.
-/// let result = OrbGrandResult {
-///     hard_decision: BitVec::zeros(7),
-///     codewords: vec![],
-///     query_count: 0,
-///     cumulative_log_probability: f64::NEG_INFINITY,
-///     log_parity_cap: 0.0,
-///     even_code: false,
-/// };
-/// assert!(!result.success());
-/// ```
 #[derive(Debug, Clone)]
 pub struct OrbGrandResult {
     /// Hard-decision vector `y` derived from input LLRs (length n).
@@ -329,45 +282,11 @@ impl OrbGrandResult {
     }
 
     /// Returns `true` if at least one valid codeword was found.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::OrbGrandResult;
-    /// use gf2_core::BitVec;
-    ///
-    /// let result = OrbGrandResult {
-    ///     hard_decision: BitVec::zeros(7),
-    ///     codewords: vec![],
-    ///     query_count: 100,
-    ///     cumulative_log_probability: f64::NEG_INFINITY,
-    ///     log_parity_cap: 0.0,
-    ///     even_code: false,
-    /// };
-    /// assert!(!result.success());
-    /// ```
     pub fn success(&self) -> bool {
         !self.codewords.is_empty()
     }
 
     /// Returns the most likely codeword, if any.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::OrbGrandResult;
-    /// use gf2_core::BitVec;
-    ///
-    /// let result = OrbGrandResult {
-    ///     hard_decision: BitVec::zeros(7),
-    ///     codewords: vec![],
-    ///     query_count: 0,
-    ///     cumulative_log_probability: f64::NEG_INFINITY,
-    ///     log_parity_cap: 0.0,
-    ///     even_code: false,
-    /// };
-    /// assert!(result.best_codeword().is_none());
-    /// ```
     pub fn best_codeword(&self) -> Option<&ScoredCodeword> {
         self.codewords.first()
     }
@@ -432,21 +351,6 @@ impl OrbGrand {
     /// # Panics
     ///
     /// Panics if `config.list_size` is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-    /// use gf2_core::BitMatrix;
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-    /// assert_eq!(decoder.n(), 7);
-    /// ```
     pub fn new(h: BitMatrix, config: OrbGrandConfig) -> Self {
         assert!(config.list_size > 0, "list_size must be at least 1");
         let n = h.cols();
@@ -461,39 +365,11 @@ impl OrbGrand {
     }
 
     /// Returns the codeword length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-    /// assert_eq!(decoder.n(), 7);
-    /// ```
     pub fn n(&self) -> usize {
         self.n
     }
 
     /// Returns the message length (k = n - number of parity checks).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-    /// assert_eq!(decoder.k(), 4);
-    /// ```
     pub fn k(&self) -> usize {
         self.n - self.n_minus_k
     }

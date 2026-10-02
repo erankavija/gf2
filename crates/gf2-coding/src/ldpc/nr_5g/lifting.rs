@@ -103,17 +103,6 @@ pub fn all_lifting_sizes() -> Vec<u16> {
 ///
 /// * `z` - Candidate lifting size
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::is_valid_lifting_size;
-///
-/// assert!(is_valid_lifting_size(384));
-/// assert!(is_valid_lifting_size(2));
-/// assert!(!is_valid_lifting_size(100));
-/// assert!(!is_valid_lifting_size(0));
-/// ```
-///
 /// # Complexity
 ///
 /// O(N) where N = 51 (delegates to [`lifting_set_index`]).

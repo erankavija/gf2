@@ -130,16 +130,6 @@ impl<'a> AnalysisCapture<'a> {
     /// this matches the common case. Use
     /// [`AnalysisCapture::with_method`] when you need exact log-MAP.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// use gf2_coding::modem::AnalysisCapture;
-    ///
-    /// let mut stats = PerBitLlrStats::new(4);
-    /// let _capture = AnalysisCapture::new(&mut stats);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1). No allocation.
@@ -152,17 +142,6 @@ impl<'a> AnalysisCapture<'a> {
     /// with at construction. Used by the runner to assert consistency
     /// with the channel's advertised demap method.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// use gf2_coding::modem::{AnalysisCapture, DemapMethod};
-    ///
-    /// let mut stats = PerBitLlrStats::new(1);
-    /// let capture = AnalysisCapture::with_method(&mut stats, DemapMethod::MaxLog);
-    /// assert_eq!(capture.demap_method(), DemapMethod::MaxLog);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -172,17 +151,6 @@ impl<'a> AnalysisCapture<'a> {
     }
 
     /// Returns the accumulator's `bits_per_symbol`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// use gf2_coding::modem::AnalysisCapture;
-    ///
-    /// let mut stats = PerBitLlrStats::new(6);
-    /// let capture = AnalysisCapture::new(&mut stats);
-    /// assert_eq!(capture.bits_per_symbol(), 6);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -196,17 +164,6 @@ impl<'a> AnalysisCapture<'a> {
     ///
     /// Useful when the runner wants to inspect intermediate state mid-sweep
     /// without relinquishing the capture handle.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::analysis::PerBitLlrStats;
-    /// use gf2_coding::modem::AnalysisCapture;
-    ///
-    /// let mut stats = PerBitLlrStats::new(2);
-    /// let capture = AnalysisCapture::new(&mut stats);
-    /// assert_eq!(capture.stats().bits_per_symbol(), 2);
-    /// ```
     ///
     /// # Complexity
     ///

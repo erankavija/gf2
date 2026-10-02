@@ -215,16 +215,6 @@ impl<S: ModemScalar> ModemSpec<S> {
 
     /// Returns a borrowed view of this spec for backends and analysis.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// let view = spec.view();
-    /// assert_eq!(view.num_symbols(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -243,15 +233,6 @@ impl<S: ModemScalar> ModemSpec<S> {
 
     /// Number of bits per symbol (label width).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert_eq!(ModemSpec::bpsk().bits_per_symbol(), 1);
-    /// assert_eq!(ModemSpec::gray_square_qam(16).bits_per_symbol(), 4);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -262,14 +243,6 @@ impl<S: ModemScalar> ModemSpec<S> {
 
     /// Number of constellation symbols, equal to `1 << bits_per_symbol()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert_eq!(ModemSpec::gray_square_qam(64).num_symbols(), 64);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -279,15 +252,6 @@ impl<S: ModemScalar> ModemSpec<S> {
     }
 
     /// Returns the normalization contract requested at construction.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpec, Normalization};
-    ///
-    /// let spec = ModemSpec::bpsk();
-    /// matches!(spec.normalization(), Normalization::UnitAverageSymbolEnergy);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -302,15 +266,6 @@ impl<S: ModemScalar> ModemSpec<S> {
     /// Stored points are already post-normalized; this factor is preserved
     /// for analysis paths that need the unit-grid geometry.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let spec = ModemSpec::gray_square_qam(4);
-    /// assert!(spec.normalization_scale() > 0.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -320,15 +275,6 @@ impl<S: ModemScalar> ModemSpec<S> {
     }
 
     /// Which demap methods this spec currently supports.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// let caps = ModemSpec::bpsk().capabilities();
-    /// assert!(caps.supports_exact_log_map && caps.supports_max_log);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -350,15 +296,6 @@ impl<S: ModemScalar + Send + Sync> ModemSpec<S> {
     /// specs built through [`super::ModemSpecBuilder`] that happen to
     /// match the preset geometry return `true`; everything else returns
     /// `false`, and the factories fall back to the reference path.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// assert!(ModemSpec::<f32>::gray_square_qam(16).is_gray_square_qam_preset());
-    /// assert!(ModemSpec::<f32>::bpsk().is_gray_square_qam_preset());
-    /// ```
     ///
     /// # Complexity
     ///

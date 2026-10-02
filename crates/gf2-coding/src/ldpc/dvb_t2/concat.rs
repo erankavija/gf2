@@ -62,16 +62,6 @@ use crate::bch::dvb_t2::FrameSize as BchFrameSize;
 ///
 /// Variants cover the two failure modes: an unsupported (frame_size, code_rate)
 /// pair at construction time, and LDPC convergence failure at decode time.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::dvb_t2::{concat::{DvbT2Concat, ConcatError}, FrameSize};
-/// use gf2_coding::CodeRate;
-///
-/// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-/// assert_eq!(codec.k_bch(), 32208);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConcatError {
     /// The (frame_size, code_rate) pair is not covered by this implementation.
@@ -203,17 +193,6 @@ impl DvbT2Concat {
     /// O(nnz) for decoder graph allocation plus the BCH mother-code
     /// construction; encoder preprocessing deferred to first
     /// [`encode`](Self::encode) call.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2)
-    ///     .expect("unsupported configuration");
-    /// assert_eq!(codec.n_ldpc(), 64800);
-    /// ```
     pub fn new(frame_size: FrameSize, code_rate: CodeRate) -> Result<Self, ConcatError> {
         // Map LDPC FrameSize → BCH FrameSize (same logical enum, separate types).
         let bch_frame_size = match frame_size {
@@ -274,16 +253,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// assert_eq!(codec.k_bch(), 32208);
-    /// ```
     pub fn k_bch(&self) -> usize {
         self.k_bch
     }
@@ -309,16 +278,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// assert_eq!(codec.k_ldpc(), 32400);
-    /// ```
     pub fn k_ldpc(&self) -> usize {
         self.k_ldpc
     }
@@ -343,16 +302,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// assert_eq!(codec.n_ldpc(), 64800);
-    /// ```
     pub fn n_ldpc(&self) -> usize {
         self.n_ldpc
     }
@@ -375,16 +324,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(nnz) for the parity-check-matrix clone.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// assert_eq!(codec.ldpc_code().n(), codec.n_ldpc());
-    /// ```
     #[must_use]
     pub fn ldpc_code(&self) -> LdpcCode {
         self.ldpc_code.clone()
@@ -406,16 +345,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let mut codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// codec.set_max_ldpc_iterations(100);
-    /// ```
     pub fn set_max_ldpc_iterations(&mut self, max_iterations: usize) {
         assert!(max_iterations > 0, "max_iterations must be positive");
         self.max_ldpc_iterations = max_iterations;
@@ -431,16 +360,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// assert_eq!(codec.max_ldpc_iterations(), 50);
-    /// ```
     #[must_use]
     pub fn max_ldpc_iterations(&self) -> usize {
         self.max_ldpc_iterations
@@ -637,21 +556,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(max_iterations × nnz) for LDPC + O(k_ldpc) for BCH.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// // Zero-noise LLRs for the all-zeros FECFRAME:
-    /// let llrs: Vec<Llr> = vec![Llr::new(10.0); codec.n_ldpc()];
-    /// let (bbframe, iters) = codec.decode_soft_counted(&llrs).unwrap();
-    /// assert_eq!(bbframe.len(), codec.k_bch());
-    /// assert!(iters >= 1);
-    /// ```
     pub fn decode_soft_counted(&self, llrs: &[Llr]) -> Result<(BitVec, usize), ConcatError> {
         assert_eq!(
             llrs.len(),

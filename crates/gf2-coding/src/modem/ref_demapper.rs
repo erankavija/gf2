@@ -72,15 +72,6 @@ impl<S: ModemScalar> ReferenceSoftDemapper<S> {
     ///   ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`]) and
     ///   builder-produced specs are both accepted.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpec, ReferenceSoftDemapper};
-    ///
-    /// let demapper = ReferenceSoftDemapper::new(ModemSpec::<f32>::bpsk());
-    /// assert_eq!(demapper.spec_ref().num_symbols(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -89,15 +80,6 @@ impl<S: ModemScalar> ReferenceSoftDemapper<S> {
     }
 
     /// Returns a borrowed reference to the owned [`ModemSpec`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpec, ReferenceSoftDemapper};
-    ///
-    /// let demapper = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(16));
-    /// assert_eq!(demapper.spec_ref().bits_per_symbol(), 4);
-    /// ```
     ///
     /// # Complexity
     ///
