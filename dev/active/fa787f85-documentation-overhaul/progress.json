@@ -80,77 +80,77 @@
      "short_id": "41e1d47d",
      "title": "Reconcile open docs-remediation issues outside the overhaul",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "4bdcd65a-e338-488b-b42e-19bee4a875a9",
      "short_id": "4bdcd65a",
      "title": "Map the root roadmap's open questions and publication items",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "60652fe4-d6dd-49e9-97f1-db99b4c73111",
      "short_id": "60652fe4",
      "title": "Map the gf2-core roadmap's planned phases",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "871b401d-59f7-4fa4-86b6-9c067795ff06",
      "short_id": "871b401d",
      "title": "Register and project the no-dev-path-coupling invariant",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "875914b3-38c8-4ec2-a13f-009fc620f7d4",
      "short_id": "875914b3",
      "title": "Map the gf2-coding roadmap's unchecked items",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "9b2886a7-35af-45cc-9200-dddea1c0323a",
      "short_id": "9b2886a7",
      "title": "Register audience, placement and tone documentation invariants",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "a0a29512-ce14-4110-a541-65ef6612278d",
      "short_id": "a0a29512",
      "title": "Remove tautological Rustdoc examples across the workspace",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "a24b2af7-81ce-4442-9ee3-6ce096c36537",
      "short_id": "a24b2af7",
      "title": "Define the documentation migration manifest and progress checker",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
      "short_id": "a82d2347",
      "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "b6fdb815-20da-4ea9-af21-351b01746aee",
      "short_id": "b6fdb815",
      "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "e85b8edf-f35f-49b5-bdb1-65502b7d30e1",
      "short_id": "e85b8edf",
      "title": "Map the root roadmap's planned milestones and goals",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   },
@@ -942,7 +942,8 @@
   "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
   "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings.",
   "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it.",
-  "User decision 2026-10-02: cargo-ci and code-review removed from purely documentation issues: 69aa6896 8b42d23b 698fa793 4f752758 b16d013a deda0962 ee50e270 44f4586d 1fca3739 8a9156fc 01c20b61 9dcc0cae da120b98 5625a423 2ff9953a cdba4e71 6c314026 fdb998ec b959ffe8 e85b8edf 4bdcd65a 60652fe4 875914b3 41e1d47d a82d2347. Re-add both if any of them touches Rust, scripts or config."
+  "User decision 2026-10-02: cargo-ci and code-review removed from purely documentation issues: 69aa6896 8b42d23b 698fa793 4f752758 b16d013a deda0962 ee50e270 44f4586d 1fca3739 8a9156fc 01c20b61 9dcc0cae da120b98 5625a423 2ff9953a cdba4e71 6c314026 fdb998ec b959ffe8 e85b8edf 4bdcd65a 60652fe4 875914b3 41e1d47d a82d2347. Re-add both if any of them touches Rust, scripts or config.",
+  "Session 2: wave 5a dispatched 2026-10-02 (AGENTS.md lane in one worktree agent-9b2886a7; 12907582 held for 5b after a0a29512 and a24b2af7)."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
