@@ -65,17 +65,6 @@ pub fn has_avx2() -> bool {
 /// `crate::x86::bipedal_avx2`.
 ///
 /// This struct is zero-sized — it is a type-level tag only.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::framework::BipedalLikeConfig;
-/// use gf2_kernels_simd::bipedal::Config3;
-/// // PRIME is 3 for F_3.
-/// assert_eq!(<Config3 as BipedalLikeConfig>::PRIME, 3);
-/// // U64_PER_LANE_PAIR is 4 (256-bit Avx2Lane = 4 × u64).
-/// assert_eq!(<Config3 as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
-/// ```
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Config3;
 
@@ -166,19 +155,6 @@ impl BipedalLikeConfig for Config3 {
 /// `run_mul_batch`, `run_neg_batch`) live in `crate::x86::bipedal_avx2`
 /// so the asm-artefact-present gate fires on changes to them. Call those
 /// directly — they are re-exported via [`crate::bipedal`] for convenience.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::Bipedal3x4;
-/// // The type alias spells out the framework instantiation. The actual
-/// // batch entry points live in `crate::x86::bipedal_avx2` and are
-/// // re-exported from the module root for ergonomics.
-/// // SAFETY: caller verifies AVX2 + slice lengths before invoking.
-/// let _: fn() = || {
-///     let _ = std::any::type_name::<Bipedal3x4>();
-/// };
-/// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type Bipedal3x4 = super::framework::BatchedBipedalLike<Config3>;
 

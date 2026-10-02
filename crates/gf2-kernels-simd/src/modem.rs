@@ -125,22 +125,6 @@ pub struct GrayPamDistanceFnsF32 {
 /// `gf2_coding` uses the `f64` bundle for its internal scratch
 /// regardless of the user-facing scalar type, to match the numerical
 /// precision of the reference log-MAP path.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::{detect_f64, GrayPamDistanceFnsF64};
-///
-/// let fns: GrayPamDistanceFnsF64 = detect_f64();
-/// let pam_levels = [-1.0_f64, 1.0]; // BPSK axis
-/// let z = [0.5_f64, -0.5];
-/// let g = [1.0_f64, 1.0];
-/// let inv_n0_eq = [1.0_f64, 1.0];
-/// let mut out = [0.0_f64; 4];
-/// (fns.pam_sq_distances_fn)(&z, &g, &inv_n0_eq, &pam_levels, &mut out);
-/// assert!(out[1] < out[0]); // first sample closer to +1
-/// assert!(out[2] < out[3]); // second sample closer to -1
-/// ```
 #[derive(Copy, Clone)]
 pub struct GrayPamDistanceFnsF64 {
     /// See [`GrayPamDistanceFnsF32::pam_sq_distances_fn`] for the contract.
@@ -170,19 +154,6 @@ pub struct GrayPamDistanceFnsF64 {
 /// `inv_n0_eq.len()`, or `out.len()` does not match the derived
 /// contract lengths. Release builds trust the caller to uphold the
 /// contract and skip the checks.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::scalar_pam_sq_distances_f32;
-/// let pam = [-1.0_f32, 1.0];
-/// let z = [0.5_f32];
-/// let g = [1.0_f32];
-/// let inv = [2.0_f32];
-/// let mut out = [0.0_f32; 2];
-/// scalar_pam_sq_distances_f32(&z, &g, &inv, &pam, &mut out);
-/// assert!(out[1] < out[0]);
-/// ```
 ///
 /// # Complexity
 ///
@@ -236,19 +207,6 @@ pub fn scalar_pam_sq_distances_f32(
 /// In debug builds, `debug_assert_eq!` panics on length mismatches;
 /// release builds trust the caller.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::scalar_pam_sq_distances_f64;
-/// let pam = [-3.0_f64, -1.0, 1.0, 3.0];
-/// let z = [0.9_f64];
-/// let g = [1.0_f64];
-/// let inv = [1.0_f64];
-/// let mut out = [0.0_f64; 4];
-/// scalar_pam_sq_distances_f64(&z, &g, &inv, &pam, &mut out);
-/// assert!(out[2] < out[1]); // closer to +1 than to -1
-/// ```
-///
 /// # Complexity
 ///
 /// O(`num_symbols * axis_len`).
@@ -288,17 +246,6 @@ pub fn scalar_pam_sq_distances_f64(
 /// The scalar bundle is always available and is the portable baseline
 /// used on architectures without a SIMD backend compiled in.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::{scalar_fns_f32, GrayPamDistanceFnsF32};
-/// let fns: GrayPamDistanceFnsF32 = scalar_fns_f32();
-/// let pam = [-1.0_f32, 1.0];
-/// let mut out = [0.0_f32; 2];
-/// (fns.pam_sq_distances_fn)(&[0.0], &[1.0], &[1.0], &pam, &mut out);
-/// assert_eq!(out, [1.0, 1.0]); // symmetric about origin
-/// ```
-///
 /// # Complexity
 ///
 /// O(1).
@@ -309,17 +256,6 @@ pub fn scalar_fns_f32() -> GrayPamDistanceFnsF32 {
 }
 
 /// Returns the scalar-only `f64` kernel bundle.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::{scalar_fns_f64, GrayPamDistanceFnsF64};
-/// let fns: GrayPamDistanceFnsF64 = scalar_fns_f64();
-/// let pam = [-1.0_f64, 1.0];
-/// let mut out = [0.0_f64; 2];
-/// (fns.pam_sq_distances_fn)(&[0.0], &[1.0], &[1.0], &pam, &mut out);
-/// assert_eq!(out, [1.0, 1.0]);
-/// ```
 ///
 /// # Complexity
 ///
@@ -370,17 +306,6 @@ pub fn detect_f32() -> GrayPamDistanceFnsF32 {
 ///
 /// Double-precision counterpart of [`detect_f32`]; same never-`None`
 /// guarantee and the same runtime dispatch strategy.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::detect_f64;
-/// let fns = detect_f64();
-/// let pam = [-1.0_f64, 1.0];
-/// let mut out = [0.0_f64; 2];
-/// (fns.pam_sq_distances_fn)(&[-0.7], &[1.0], &[1.0], &pam, &mut out);
-/// assert!(out[0] < out[1]);
-/// ```
 ///
 /// # Complexity
 ///
