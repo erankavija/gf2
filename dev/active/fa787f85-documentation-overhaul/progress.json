@@ -1015,7 +1015,8 @@
     "Session 2: wave 5a dispatched 2026-10-02 (AGENTS.md lane in one worktree agent-9b2886a7; 12907582 held for 5b after a0a29512 and a24b2af7).",
     "Wave 6a dispatched concurrently with 12907582 (no dependency between them). Held: 8bd873f7 (done by another session for dbd8787d), 3fd3db5e (fd9d5416 in progress, hard precondition), 5a25717c/65a5436a/7bac1303 (tuning-campaign tooling under concurrent edit), 153297cf (after 12907582 merges; both edit rustdoc).",
     "Owner approved parenting the 10 session-filed issues (2026-10-02); 112f23c6 joined fa787f85 with the standard four gates.",
-    "Session 3 (2026-10-03): session 2 ended without a handoff; progress reconciled against JIT. Wave 6 = remaining decoupling tasks plus the 14 page/move tasks pulled forward from wave 7 (no deps between them); 5a25717c runs after 112f23c6 (shared root resolver). 153297cf (after 12907582) and 3fd3db5e (fd9d5416 still in progress, hard REQ-01) moved to wave 7."
+    "Session 3 (2026-10-03): session 2 ended without a handoff; progress reconciled against JIT. Wave 6 = remaining decoupling tasks plus the 14 page/move tasks pulled forward from wave 7 (no deps between them); 5a25717c runs after 112f23c6 (shared root resolver). 153297cf (after 12907582) and 3fd3db5e (fd9d5416 still in progress, hard REQ-01) moved to wave 7.",
+    "Owner instruction 2026-10-03: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff after waves 6 and 7 finish, or when only owner-blocked work remains. Check workers every 30 min."
   ],
   "started_at": "2026-10-01T19:40:00Z",
   "traps": [
