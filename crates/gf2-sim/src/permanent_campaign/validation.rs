@@ -61,24 +61,9 @@ pub const RNG_VERSION: &str = "rand_chacha 0.9.0";
 pub const FROZEN_VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 /// Compiler-version prefix the frozen validation evidence must carry.
 pub const FROZEN_TOOLCHAIN_PREFIX: &str = "rustc 1.95.0 ";
-/// Frozen campaign directory whose payload and inventory must not change.
-pub const FROZEN_CAMPAIGN_DIRECTORY: &str =
-    "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829";
-/// Frozen validation journal whose immutable evidence feeds the launch receipt.
-pub const FROZEN_VALIDATION_JOURNAL_DIRECTORY: &str = "dev/active/02b8137c/validation-journal";
-/// Canonical schema-v2 frozen validation receipt.
-pub const FROZEN_VALIDATION_RECEIPT_PATH: &str =
-    "dev/active/02b8137c/pre-draw-validation-v2-receipt.json";
-/// Committed owner authorization for the sole v1-to-v2 producer boundary.
-pub const FROZEN_CONTINUATION_AUTHORIZATION_PATH: &str =
-    "dev/active/02b8137c/pre-draw-validation-v2-continuation.json";
+/// File name of the canonical schema-v2 frozen receipt, a sibling of its journal.
+pub const FROZEN_VALIDATION_RECEIPT_FILE: &str = "pre-draw-validation-v2-receipt.json";
 
-const FROZEN_PROTOCOL_PATH: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
-const FROZEN_MANIFEST_PATH: &str =
-    "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json";
-const EXACT_ANCHORS_PATH: &str = "dev/benchmarks/permanent_campaign/exact-anchors.csv";
-const BACKEND_EQUIVALENCE_PATH: &str =
-    "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv";
 const RUN_STATE_SCHEMA_VERSION: u32 = 2;
 const PHASE_START_SCHEMA_VERSION: u32 = 2;
 const AUTHORIZED_LEGACY_RUN_STATE_SCHEMA_VERSION: u32 = 1;
@@ -827,16 +812,13 @@ pub fn load_validation_preregistration(
 
 /// Loads and content-addresses a committed producer-continuation authorization.
 ///
-/// Loading proves the supplied bytes exist below `repository`; admission later
-/// rehashes every journal artifact named by the authorization before it can
-/// publish segment state or open the next address.
+/// The authorization is identified by its pinned digest wherever it lies below
+/// `repository`; admission later rehashes every journal artifact it names
+/// before it can publish segment state or open the next address.
 pub fn load_validation_continuation_authorization(
     repository: &Path,
     path: &Path,
 ) -> Result<AuthorizedValidationContinuation, ValidationError> {
-    if path != Path::new(FROZEN_CONTINUATION_AUTHORIZATION_PATH) {
-        return invalid("continuation authorization must be the committed 02b8137c authority");
-    }
     let bytes = read_bytes(&repository.join(path))?;
     if digest(&bytes).to_string() != FROZEN_CONTINUATION_AUTHORIZATION_SHA256 {
         return invalid("committed continuation authorization identity mismatch");
@@ -1119,6 +1101,9 @@ pub fn load_frozen_campaign_validation_preregistration(
     path: &Path,
 ) -> Result<(ValidationPreregistration, ArtifactIdentity), ValidationError> {
     let (plan, identity) = load_validation_preregistration(repository, path)?;
+    if identity.sha256.to_string() != AUTHORIZED_LEGACY_PREREGISTRATION_SHA256 {
+        return invalid("preregistration is not the committed frozen plan");
+    }
     validate_frozen_plan(repository, &plan)?;
     Ok((plan, identity))
 }
@@ -1128,7 +1113,9 @@ pub fn load_frozen_campaign_validation_preregistration(
 /// The generic journal executes every anchor even when an earlier anchor has a
 /// statistical failure. The frozen directory is only read. Its initial
 /// content-addressed inventory is durably adopted before any anchor, and the
-/// final receipt fails if any path or byte changes.
+/// final receipt fails if any path or byte changes. `state_directory` is the
+/// preregistered producer-0 journal, identified by its run-state digest; its
+/// parent is the evidence bundle that [`read_frozen_validation_receipt`] reads.
 pub fn run_frozen_campaign_validation(
     repository: &Path,
     preregistration: &ValidationPreregistration,
@@ -1158,11 +1145,14 @@ pub fn run_frozen_campaign_validation_with_mode(
     validate_frozen_plan(repository, preregistration)?;
     validate_frozen_toolchain(env!("GF2_BUILD_RUSTC_VERSION"))?;
     preflight_required_backends(preregistration, worker_count)?;
-    if state_directory != repository.join(FROZEN_VALIDATION_JOURNAL_DIRECTORY) {
-        return invalid("frozen validation must use its preregistered journal directory");
+    let run_state = fs::read(state_directory.join("run-state.json")).ok();
+    if run_state.map(|bytes| digest(&bytes).to_string()).as_deref()
+        != Some(AUTHORIZED_LEGACY_RUN_STATE_SHA256)
+    {
+        return invalid("frozen validation must resume its preregistered producer-0 journal");
     }
-    create_directory_durable(state_directory)?;
-    let observed_before = snapshot_frozen_campaign(repository)?;
+    let frozen_root = frozen_campaign_directory(preregistration)?;
+    let observed_before = snapshot_frozen_campaign(repository, &frozen_root)?;
     let before = publish_or_adopt(
         &state_directory.join("frozen-artifacts-start.json"),
         &observed_before,
@@ -1181,7 +1171,7 @@ pub fn run_frozen_campaign_validation_with_mode(
         )
     })?;
     receipt.journal_directory = Some(artifact_path(journal_relative)?);
-    let after = snapshot_frozen_campaign(repository)?;
+    let after = snapshot_frozen_campaign(repository, &frozen_root)?;
     let guard_status = if before == after {
         PhaseStatus::Passed
     } else {
@@ -1194,7 +1184,10 @@ pub fn run_frozen_campaign_validation_with_mode(
     });
     receipt.overall_verdict =
         combined_verdict(&receipt.anchors, guard_status == PhaseStatus::Passed);
-    validate_frozen_receipt(repository, &receipt)?;
+    let bundle = state_directory.parent().ok_or_else(|| {
+        ValidationError::InvalidPlan("frozen validation journal has no bundle directory".into())
+    })?;
+    validate_frozen_receipt(repository, bundle, &receipt)?;
     Ok(receipt)
 }
 
@@ -1250,15 +1243,19 @@ pub fn verify_validation_receipt_journal(
 }
 
 /// Reads a final receipt and rechecks its binding to the frozen committed plan.
+///
+/// The receipt's directory is its evidence bundle: the journal, preregistration,
+/// and continuation authorization it cites are read there under their recorded
+/// file names and identified by digest.
 pub fn read_frozen_validation_receipt(
     repository: &Path,
     path: &Path,
 ) -> Result<ValidationReceipt, ValidationError> {
-    if path != repository.join(FROZEN_VALIDATION_RECEIPT_PATH) {
-        return invalid("frozen validation receipt must use its canonical schema-v2 path");
-    }
     let receipt = read_validation_receipt(path)?;
-    validate_frozen_receipt(repository, &receipt)?;
+    let bundle = path.parent().ok_or_else(|| {
+        ValidationError::InvalidPlan("frozen validation receipt has no bundle directory".into())
+    })?;
+    validate_frozen_receipt(repository, bundle, &receipt)?;
     Ok(receipt)
 }
 
@@ -1337,33 +1334,17 @@ struct ValidationContinuationState {
     published_at: UnixTimestamp,
 }
 
-fn validate_run_state(
-    run_state: &ValidationRunStateV2,
-    preregistration: &ValidationPreregistration,
-    preregistration_identity: &ArtifactIdentity,
-) -> Result<(), ValidationError> {
-    if run_state.schema_version != RUN_STATE_SCHEMA_VERSION
-        || run_state.preregistration_identity != *preregistration_identity
-        || run_state.preregistration != *preregistration
-    {
-        return invalid("existing run state changes the preregistration or journal schema");
-    }
-    validate_runtime(&run_state.runtime)
-}
-
 fn validate_frozen_producer0_evidence(
     run_state: &FrozenProducer0RunStateV1Evidence,
     preregistration: &ValidationPreregistration,
     preregistration_identity: &ArtifactIdentity,
 ) -> Result<(), ValidationError> {
     if run_state.schema_version != AUTHORIZED_LEGACY_RUN_STATE_SCHEMA_VERSION
-        || run_state.preregistration_identity != *preregistration_identity
+        || run_state.preregistration_identity.sha256 != preregistration_identity.sha256
         || run_state.preregistration != *preregistration
-        || preregistration_identity.path.as_str()
-            != "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json"
         || preregistration_identity.sha256.to_string() != AUTHORIZED_LEGACY_PREREGISTRATION_SHA256
     {
-        return invalid("producer-0 schema-v1 evidence differs from the frozen 02b8137c identity");
+        return invalid("producer-0 schema-v1 evidence differs from the frozen identity");
     }
     validate_runtime(&run_state.runtime)
 }
@@ -1431,7 +1412,7 @@ fn verify_frozen_continuation_authorization_v2(
     state_directory: &Path,
 ) -> Result<(), ValidationError> {
     validate_continuation_authorization_shape(authorization)?;
-    if authorization.preregistration_identity != *preregistration_identity
+    if authorization.preregistration_identity.sha256 != preregistration_identity.sha256
         || authorization.boundary_anchor_index >= preregistration.anchors.len()
         || authorization.original_run_state.sha256 != digest(run_state_bytes)
         || authorization.next_address
@@ -1573,7 +1554,7 @@ fn continuation_states_compatible(
     existing.schema_version == proposed.schema_version
         && existing.contract == proposed.contract
         && existing.reason == proposed.reason
-        && existing.authorization_identity == proposed.authorization_identity
+        && existing.authorization_identity.sha256 == proposed.authorization_identity.sha256
         && existing.authorization == proposed.authorization
         && existing.original_run_state == proposed.original_run_state
         && existing.original_runtime == proposed.original_runtime
@@ -2492,24 +2473,18 @@ fn validate_frozen_plan(
     {
         return invalid("frozen protocol constants do not match the ten-anchor plan");
     }
-    for (identity, expected) in [
-        (&plan.authorities.protocol, FROZEN_PROTOCOL_PATH),
-        (&plan.authorities.manifest, FROZEN_MANIFEST_PATH),
-        (&plan.authorities.exact_anchors, EXACT_ANCHORS_PATH),
-        (
-            &plan.authorities.backend_equivalence,
-            BACKEND_EQUIVALENCE_PATH,
-        ),
+    for identity in [
+        &plan.authorities.protocol,
+        &plan.authorities.manifest,
+        &plan.authorities.exact_anchors,
+        &plan.authorities.backend_equivalence,
     ] {
-        if identity.path.to_string() != expected {
-            return invalid(format!("frozen authority must be {expected}"));
-        }
         verify_identity(repository, identity)?;
     }
     if plan.anchors.len() != FROZEN_ANCHOR_CELLS.len() {
         return invalid("frozen plan must contain exactly ten anchors");
     }
-    let enumerated = read_exact_anchor_authority(repository)?;
+    let enumerated = read_exact_anchor_authority(repository, &plan.authorities.exact_anchors)?;
     for (spec, &(q, n)) in plan.anchors.iter().zip(FROZEN_ANCHOR_CELLS) {
         let Some(&(zero_count, matrix_count)) = enumerated.get(&(q, n)) else {
             return invalid(format!(
@@ -2528,11 +2503,8 @@ fn validate_frozen_plan(
             return invalid("frozen anchor order, address, or authority count differs");
         }
     }
-    let manifest_path = repository.join(FROZEN_MANIFEST_PATH);
-    let manifest_root = manifest_path
-        .parent()
-        .ok_or_else(|| ValidationError::InvalidPlan("manifest has no parent".into()))?;
-    let manifest = read_manifest(manifest_root)
+    let manifest_root = repository.join(frozen_campaign_directory(plan)?.as_str());
+    let manifest = read_manifest(&manifest_root)
         .map_err(|error| ValidationError::InvalidPlan(error.to_string()))?;
     let selected = Backend::campaign_inventory()
         .iter()
@@ -2567,8 +2539,9 @@ type EnumeratedCounts = (u64, u64);
 /// count in its first four fields.
 fn read_exact_anchor_authority(
     repository: &Path,
+    authority: &ArtifactIdentity,
 ) -> Result<BTreeMap<(u8, u16), EnumeratedCounts>, ValidationError> {
-    let bytes = read_bytes(&repository.join(EXACT_ANCHORS_PATH))?;
+    let bytes = read_bytes(&repository.join(authority.path.as_str()))?;
     let text = String::from_utf8(bytes)
         .map_err(|_| ValidationError::InvalidPlan("exact-anchor evidence is not UTF-8".into()))?;
     let mut rows = BTreeMap::new();
@@ -2613,65 +2586,47 @@ fn read_exact_anchor_authority(
 
 fn validate_frozen_receipt(
     repository: &Path,
+    bundle: &Path,
     receipt: &ValidationReceipt,
 ) -> Result<(), ValidationError> {
     receipt.validate()?;
     validate_frozen_plan(repository, &receipt.preregistration)?;
-    let preregistration_path = repository.join(receipt.preregistration_identity.path.to_string());
+    let bundle = bundle.strip_prefix(repository).map_err(|_| {
+        ValidationError::InvalidPlan("frozen evidence bundle must be inside the repository".into())
+    })?;
     let (plan, identity) = load_frozen_campaign_validation_preregistration(
         repository,
-        Path::new(&receipt.preregistration_identity.path.to_string()),
+        &bundle_member(bundle, &receipt.preregistration_identity.path)?,
     )?;
-    if !preregistration_path.is_file()
-        || plan != receipt.preregistration
-        || identity != receipt.preregistration_identity
+    if plan != receipt.preregistration || identity.sha256 != receipt.preregistration_identity.sha256
     {
         return invalid("receipt is not bound to the committed frozen preregistration");
     }
     let guard = receipt.frozen_artifacts.as_ref().ok_or_else(|| {
         ValidationError::InvalidPlan("frozen receipt lacks artifact guard".into())
     })?;
-    if guard.before.root.to_string() != FROZEN_CAMPAIGN_DIRECTORY
-        || guard.after.root.to_string() != FROZEN_CAMPAIGN_DIRECTORY
-    {
+    let frozen_root = frozen_campaign_directory(&receipt.preregistration)?;
+    if guard.before.root != frozen_root || guard.after.root != frozen_root {
         return invalid("frozen artifact guard names the wrong directory");
     }
     let journal_relative = receipt.journal_directory.as_ref().ok_or_else(|| {
         ValidationError::InvalidPlan("frozen receipt lacks its journal directory".into())
     })?;
-    if journal_relative.as_str() != FROZEN_VALIDATION_JOURNAL_DIRECTORY {
-        return invalid("frozen receipt names the wrong validation journal");
-    }
-    let journal = repository.join(journal_relative.as_str());
+    let journal = repository.join(bundle_member(bundle, journal_relative)?);
     verify_validation_receipt_journal(receipt, &journal)?;
     let run_state_bytes = read_bytes(&journal.join("run-state.json"))?;
-    let historical_producer0 = if receipt.producer_segments.len() == 2 {
-        let run_state = decode_frozen_producer0_run_state_v1_evidence(&run_state_bytes)?;
-        validate_frozen_producer0_evidence(
-            &run_state,
-            &receipt.preregistration,
-            &receipt.preregistration_identity,
-        )?;
-        Some(run_state)
-    } else {
-        let run_state: ValidationRunStateV2 =
-            serde_json::from_slice(&run_state_bytes).map_err(ValidationError::Json)?;
-        validate_run_state(
-            &run_state,
-            &receipt.preregistration,
-            &receipt.preregistration_identity,
-        )?;
-        if receipt.started_at != run_state.started_at
-            || receipt.producer_segments[0].runtime != run_state.runtime
-        {
-            return invalid("receipt producer one disagrees with immutable run state");
-        }
-        None
-    };
-    if historical_producer0.as_ref().is_some_and(|run_state| {
-        receipt.started_at != run_state.started_at
-            || receipt.producer_segments[0].runtime != run_state.runtime
-    }) {
+    let producer0 = decode_frozen_producer0_run_state_v1_evidence(&run_state_bytes)?;
+    validate_frozen_producer0_evidence(
+        &producer0,
+        &receipt.preregistration,
+        &receipt.preregistration_identity,
+    )?;
+    if receipt.producer_segments.len() != 2 {
+        return invalid("frozen receipt must carry the two authorized producer segments");
+    }
+    if receipt.started_at != producer0.started_at
+        || receipt.producer_segments[0].runtime != producer0.runtime
+    {
         return invalid("receipt producer one disagrees with immutable run state");
     }
     let frozen_start: FrozenArtifactSnapshot =
@@ -2682,33 +2637,43 @@ fn validate_frozen_receipt(
     for segment in &receipt.producer_segments {
         validate_frozen_toolchain(&segment.runtime.provenance.compiler_version)?;
     }
-    if receipt.producer_segments.len() == 2 {
-        let state: ValidationContinuationState = read_json(&journal.join(CONTINUATION_STATE_FILE))?;
-        verify_identity(repository, &state.authorization_identity)?;
-        let loaded = load_validation_continuation_authorization(
-            repository,
-            Path::new(state.authorization_identity.path.as_str()),
-        )?;
-        if loaded.authorization != state.authorization
-            || loaded.identity != state.authorization_identity
-            || state.continued_runtime != receipt.producer_segments[1].runtime
-        {
-            return invalid("receipt producer two disagrees with committed authorization");
-        }
-        verify_frozen_continuation_state_v2_evidence(
-            &state,
-            &receipt.preregistration,
-            &receipt.preregistration_identity,
-            historical_producer0.as_ref().ok_or_else(|| {
-                ValidationError::InvalidPlan(
-                    "continued receipt lacks producer-0 schema-v1 evidence".into(),
-                )
-            })?,
-            &run_state_bytes,
-            &journal,
-        )?;
+    let state: ValidationContinuationState = read_json(&journal.join(CONTINUATION_STATE_FILE))?;
+    let loaded = load_validation_continuation_authorization(
+        repository,
+        &bundle_member(bundle, &state.authorization_identity.path)?,
+    )?;
+    if loaded.authorization != state.authorization
+        || loaded.identity.sha256 != state.authorization_identity.sha256
+        || state.continued_runtime != receipt.producer_segments[1].runtime
+    {
+        return invalid("receipt producer two disagrees with committed authorization");
     }
-    Ok(())
+    verify_frozen_continuation_state_v2_evidence(
+        &state,
+        &receipt.preregistration,
+        &receipt.preregistration_identity,
+        &producer0,
+        &run_state_bytes,
+        &journal,
+    )
+}
+
+/// Locates a recorded artifact by its file name inside an evidence bundle.
+fn bundle_member(bundle: &Path, recorded: &ArtifactPath) -> Result<PathBuf, ValidationError> {
+    let name = Path::new(recorded.as_str())
+        .file_name()
+        .ok_or_else(|| ValidationError::InvalidPlan("recorded artifact has no file name".into()))?;
+    Ok(bundle.join(name))
+}
+
+/// The frozen campaign directory is the one holding the plan's manifest authority.
+fn frozen_campaign_directory(
+    plan: &ValidationPreregistration,
+) -> Result<ArtifactPath, ValidationError> {
+    let parent = Path::new(plan.authorities.manifest.path.as_str())
+        .parent()
+        .ok_or_else(|| ValidationError::InvalidPlan("manifest has no parent".into()))?;
+    artifact_path(parent)
 }
 
 fn validate_frozen_toolchain(compiler_version: &str) -> Result<(), ValidationError> {
@@ -2789,18 +2754,17 @@ fn validate_runtime(runtime: &ValidationRuntime) -> Result<(), ValidationError> 
     Ok(())
 }
 
-fn snapshot_frozen_campaign(repository: &Path) -> Result<FrozenArtifactSnapshot, ValidationError> {
-    let root: ArtifactPath =
-        FROZEN_CAMPAIGN_DIRECTORY
-            .parse()
-            .map_err(|error: super::schema::ArtifactPathError| {
-                ValidationError::InvalidPlan(error.to_string())
-            })?;
-    let absolute = repository.join(FROZEN_CAMPAIGN_DIRECTORY);
+fn snapshot_frozen_campaign(
+    repository: &Path,
+    root: &ArtifactPath,
+) -> Result<FrozenArtifactSnapshot, ValidationError> {
     let mut artifacts = Vec::new();
-    visit_snapshot(repository, &absolute, &mut artifacts)?;
+    visit_snapshot(repository, &repository.join(root.as_str()), &mut artifacts)?;
     artifacts.sort_by(|left, right| left.path.cmp(&right.path));
-    Ok(FrozenArtifactSnapshot { root, artifacts })
+    Ok(FrozenArtifactSnapshot {
+        root: root.clone(),
+        artifacts,
+    })
 }
 
 fn visit_snapshot(
