@@ -56,7 +56,7 @@ modified without a matching `crates/gf2-kernels-simd/src/x86/asm/<module>.asm.tx
 (or `<module>_<fn>.asm.txt`) being regenerated in the same commit. The gate
 vacuously passes when no SIMD source changed.
 
-See `dev/plans/gf2_core_ppc_spiral.md` (sections I3 and the per-kernel
+See `dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md` (sections I3 and the per-kernel
 execution protocol) for the rationale and the list of mnemonics each Tier
 A–D kernel is expected to emit.
 
