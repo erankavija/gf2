@@ -210,3 +210,9 @@ enforced-by = "@/gate/doc-review"
 id = "no-marketing"
 kind = "enforced"
 statement = "Permanent documentation and rustdoc state capabilities and measured results in neutral technical terms; promotional adjectives, superlatives, and unquantified comparative claims are a defect."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "no-dev-path-coupling"
+kind = "enforced"
+statement = "Production code, tooling, tests, receipts, and harness crates locate development artifacts by content identity or through one configured repository root resolved at runtime; hard-coded `dev/` paths, historical-path allow-lists, and depth-dependent relative paths are a defect."
