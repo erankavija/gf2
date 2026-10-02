@@ -203,7 +203,7 @@ statement = "Permanent documentation addresses researchers evaluating or adoptin
 enforced-by = "@/gate/doc-review"
 id = "adapted-diataxis-placement"
 kind = "enforced"
-statement = "Every permanent documentation page under `docs/` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose."
+statement = "Every permanent documentation page under `docs/` other than `docs/index.md` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose."
 
 [[invariants]]
 enforced-by = "@/gate/doc-review"

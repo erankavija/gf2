@@ -18,7 +18,9 @@ D-08, D-17, D-18 and the Permanent Documentation Design section.
 
 ### `adapted-diataxis-placement`
 
-> Every permanent documentation page under `docs/` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose.
+The owner approved the `docs/index.md` exemption on 2026-10-02 (issue 69aa6896).
+
+> Every permanent documentation page under `docs/` other than `docs/index.md` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose.
 
 ### `no-marketing`
 
