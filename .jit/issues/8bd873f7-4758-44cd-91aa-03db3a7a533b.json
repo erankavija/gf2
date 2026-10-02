@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md"
     }
   ],
+  "done_at": "2026-10-02T14:44:17.268035629Z",
   "first_ready_at": "2026-10-02T11:05:38.048629483Z",
   "gates_required": [
     "cargo-ci",
@@ -25,8 +26,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-10-02T14:04:48.144104225Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T14:44:06.675362745Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -53,7 +54,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T14:09:01.376646253Z"
+  "updated_at": "2026-10-02T14:44:17.268035629Z"
 }

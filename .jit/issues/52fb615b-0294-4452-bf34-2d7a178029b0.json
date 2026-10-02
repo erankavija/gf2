@@ -32,9 +32,19 @@
     "docs-mechanical"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "failed",
-      "updated_at": "2026-10-02T14:13:29.093448970Z",
+      "updated_at": "2026-10-02T14:40:11.843089559Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T14:20:18.772395207Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:22:09.419950982Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -54,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for permanent-path sources",
-  "updated_at": "2026-10-02T14:13:29.093448970Z"
+  "updated_at": "2026-10-02T14:40:11.843089559Z"
 }

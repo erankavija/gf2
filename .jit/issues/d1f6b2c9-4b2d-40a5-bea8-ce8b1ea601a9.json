@@ -32,9 +32,19 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:20:51.327484760Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T14:18:37.250452634Z",
+      "updated_by": "auto:executor"
+    },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T14:13:27.486878400Z",
+      "updated_at": "2026-10-02T14:21:03.613957785Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -54,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory the field-dispatch dev/active entries",
-  "updated_at": "2026-10-02T14:13:27.486878400Z"
+  "updated_at": "2026-10-02T14:21:03.613957785Z"
 }

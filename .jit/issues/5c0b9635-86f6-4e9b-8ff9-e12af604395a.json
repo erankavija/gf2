@@ -24,6 +24,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/migration/manifest.toml"
     }
   ],
+  "done_at": "2026-10-02T14:47:39.739952838Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "cargo-ci",
@@ -32,6 +33,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:27:27.553682067Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-10-02T14:18:07.123100239Z",
@@ -57,7 +63,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-02T14:18:07.123100239Z"
+  "updated_at": "2026-10-02T14:47:39.739952838Z"
 }

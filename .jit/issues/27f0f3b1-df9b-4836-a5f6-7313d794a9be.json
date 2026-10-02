@@ -32,6 +32,21 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:37:13.337585530Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:24:42.657342822Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T14:20:53.927589091Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T14:16:15.848843906Z",
@@ -49,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for the other dev buckets",
-  "updated_at": "2026-10-02T14:16:15.848843906Z"
+  "updated_at": "2026-10-02T14:37:13.337585530Z"
 }
