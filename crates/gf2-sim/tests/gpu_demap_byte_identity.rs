@@ -51,7 +51,7 @@
 //! `num_symbols * m` LLR vector with no reordering on either side.
 //!
 //! Gated on GPU presence — skips cleanly with no usable GPU, like the other
-//! `gf2-sim` GPU tests. Carries `#[ignore]` per the CLAUDE.md test-tier rules
+//! `gf2-sim` GPU tests. Carries `#[ignore]` per `@/inv/test-tier-budgets`
 //! (it builds the full constellation presets + a device demapper); run command
 //! in the receipt.
 

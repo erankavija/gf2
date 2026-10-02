@@ -1,13 +1,18 @@
 #![allow(clippy::missing_safety_doc)]
-//! SIMD-accelerated logical kernels for `gf2-core`.
+//! SIMD kernels for the gf2 workspace: logical bit operations, GF(p) and
+//! GF(2^m) arithmetic, BCH encoding, LLR and modem arithmetic, and packed
+//! F_3/F_5/F_7 bipedal operations.
 //!
-//! This crate isolates unsafe and architecture-specific code. All public APIs are
-//! safe and return plain function pointers that operate on `&mut [u64]` / `&[u64]`.
-//! Runtime detection chooses the best available backend; if none match, callers
-//! should fall back to scalar loops.
+//! This crate isolates unsafe and architecture-specific code. Runtime
+//! detection entry points are safe and return function-pointer bundles, or
+//! `None` when the host lacks the required features, in which case callers
+//! fall back to scalar code. The [`bipedal`] modules also expose `unsafe fn`
+//! entry points with documented preconditions.
 //!
-//! Supported (x86_64): AVX2, AVX-512F (experimental).
-//! AArch64 NEON planned.
+//! Implemented targets: x86/x86_64 AVX2, with per-bundle use of FMA, BMI2,
+//! PCLMULQDQ, VPCLMULQDQ, SSE4.1, and POPCNT. The AVX-512F bipedal module is
+//! a compile-time stub without kernels. Other architectures get no SIMD
+//! bundle.
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86;

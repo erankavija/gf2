@@ -40,8 +40,9 @@
 //!
 //! # PPC-spiral context
 //!
-//! Issue `1c1c4242` (kernel B1 in `dev/plans/gf2_core_ppc_spiral.md`) drives
-//! the PPC spiral for `gf2_core::BitMatrix::transpose`: **V0** is the
+//! Issue `1c1c4242` (kernel B1 in
+//! `dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md`)
+//! drives the PPC spiral for `gf2_core::BitMatrix::transpose`: **V0** is the
 //! criterion baseline of `crates/gf2-core/benches/matrix_transpose.rs`, **V4**
 //! is [`TransposeLane::Scalar`], **V3a** and **V3b** are
 //! [`TransposeLane::Avx2Pshufb`] and [`TransposeLane::Avx2BitTwiddle`], and

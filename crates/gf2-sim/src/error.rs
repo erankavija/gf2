@@ -1,9 +1,9 @@
 //! Error type hierarchy for the simulation pipeline.
 //!
 //! Lifts the §1 "Error type hierarchy" block of the Phase 0 design doc
-//! (`dev/active/ec530af9/ec530af9-pipeline-design.md`) into code, including the
-//! `OutOfMemory` variants on both [`RecoverableError`] and [`FatalError`]
-//! mandated by the Q7 decision (design doc §8).
+//! (`dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md`)
+//! into code, including the `OutOfMemory` variants on both [`RecoverableError`]
+//! and [`FatalError`] mandated by the Q7 decision (design doc §8).
 
 use crate::connector::StageId;
 

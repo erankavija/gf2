@@ -19,12 +19,12 @@
 //!
 //! # LANES choice
 //!
-//! `LANES = 64` matches the bipedal3 lane count fixed in the parent
-//! epic design (`dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §7.1) and the
-//! D1b §4 stub conformance walk-through. Choosing the same width
-//! makes a 1:1 cross-check loop trivially writable: a test routes the
-//! same 64-lane input through both [`ScalarPackedFp3`] and the
-//! optimised `Bipedal3`, then compares `lane(i)` for `i` in `0..64`.
+//! `LANES = 64` matches the bipedal3 lane count fixed in the parent epic design
+//! (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`
+//! §7.1) and the D1b §4 stub conformance walk-through. Choosing the same width
+//! makes a 1:1 cross-check loop trivially writable: a test routes the same
+//! 64-lane input through both [`ScalarPackedFp3`] and the optimised `Bipedal3`,
+//! then compares `lane(i)` for `i` in `0..64`.
 //!
 //! # Boundary against optimised impls
 //!
@@ -49,9 +49,10 @@ use super::{PackedField, PackedFieldVec};
 /// check against their own scalar `Fp<5>` / `Fp<7>` per-lane oracles,
 /// not against this type.
 ///
-/// `LANES = 64` is fixed to match the `Bipedal3` lane count from the
-/// parent epic design (`dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §7.1) and
-/// the D1b §4 conformance walk-through. The choice makes per-lane
+/// `LANES = 64` is fixed to match the `Bipedal3` lane count from the parent
+/// epic design
+/// (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`
+/// §7.1) and the D1b §4 conformance walk-through. The choice makes per-lane
 /// cross-checks 1:1 with no resampling logic.
 ///
 /// # Examples
@@ -328,7 +329,7 @@ mod tests {
         }
 
         // with_lane / lane round-trip at word-boundary indices.
-        // CLAUDE.md §Testing requires {0, 1, 63, 64, 65}; for a
+        // AGENTS.md §Correctness and test policy requires {0, 1, 63, 64, 65}; for a
         // single 64-lane oracle we cover the in-range subset
         // {0, 1, 16, 31, 32, 63} and exercise out-of-range (64, 65)
         // in `test_lane_panics_out_of_range_*`. See test docstrings
@@ -459,7 +460,7 @@ mod tests {
 
     #[test]
     fn test_with_lane_word_boundary_indices() {
-        // CLAUDE.md §Testing requires word-boundary cases at
+        // AGENTS.md §Correctness and test policy requires word-boundary cases at
         // {0, 1, 63, 64, 65}. The 64-lane oracle's in-range slice is
         // {0, 1, 16, 31, 32, 63}; 64 and 65 are out-of-range and the
         // panic behaviour is verified in

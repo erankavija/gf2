@@ -19,8 +19,8 @@
 //! runs the same 200 frames across the rayon pool (per-frame independent
 //! `LdpcDecoder`s — the per-frame outcome is deterministic regardless of which
 //! thread runs it). This keeps the full 3-algorithm × 3-SNR × 200-frame sweep
-//! within the 120 s slow-tier budget. It carries `#[ignore]` per the CLAUDE.md
-//! test-tier rules; run command in the receipt.
+//! within the 120 s slow-tier budget. It carries `#[ignore]` per
+//! `@/inv/test-tier-budgets`; run command in the receipt.
 
 #![cfg(feature = "hip")]
 

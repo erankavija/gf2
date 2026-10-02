@@ -1,6 +1,9 @@
 //! HIP/ROCm GPU kernels for the gf2 workspace.
 //!
-//! This crate provides GPU-accelerated batch BCJR decoding via AMD HIP.
+//! This crate provides AMD HIP batch kernels for BCJR decoding, Gray-QAM
+//! soft demapping, LDPC belief propagation, ChaCha20 AWGN generation, and,
+//! under the `hip` feature, BCH syndrome evaluation and F_3/F_5/F_7
+//! permanents.
 //! All unsafe HIP/FFI code is isolated here, following the same pattern
 //! as `gf2-kernels-simd`.
 //!
@@ -66,9 +69,8 @@ pub mod launch_bch_syndrome;
 #[doc(inline)]
 pub use launch_bch_syndrome::{BchFieldTables, GpuBchSyndrome};
 
-/// Per-prime permanent computation kernels (placeholder scaffold).
+/// Per-prime permanent kernels (F_3, F_5, F_7).
 ///
-/// Populated by downstream issues ad55b777, b43cdf33, and 5c0505b2.
 /// Only compiled when the `hip` Cargo feature is enabled.
 #[cfg(feature = "hip")]
 pub mod permanent;

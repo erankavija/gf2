@@ -1,12 +1,4 @@
-//! x86/x86-64 CPU feature detection and SIMD kernel stubs.
-//!
-//! This module will contain optimized implementations using:
-//! - AVX2: 256-bit vector operations
-//! - AVX-512: 512-bit vector operations
-//! - PCLMULQDQ: Carry-less multiplication for GF(2) polynomial arithmetic
-//! - BMI2: Bit manipulation instructions
-//!
-//! Currently, only feature detection stubs are implemented.
+//! x86/x86-64 CPU feature detection; the kernels live in `gf2-kernels-simd`.
 
 /// Checks if AVX2 is available on the current CPU.
 #[cfg(target_arch = "x86_64")]
@@ -41,10 +33,6 @@ pub fn has_pclmulqdq() -> bool {
 pub fn has_bmi2() -> bool {
     is_x86_feature_detected!("bmi2")
 }
-
-// TODO: Implement AVX2 kernel
-// TODO: Implement AVX-512 kernel
-// TODO: Implement PCLMULQDQ-based carry-less multiplication
 
 #[cfg(test)]
 mod tests {

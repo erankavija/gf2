@@ -1244,11 +1244,12 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// pivot search automatically.
     ///
     /// Each row is materialised on demand into a sparse `Vec<(usize, F)>`
-    /// working buffer; the pivot row is scaled to a leading `1` and the
-    /// chosen column eliminated from every other row via sparse `axpy`.
-    /// `row_nnz` is maintained incrementally during each axpy — re-
-    /// scanning the matrix would destroy the speedup. See
-    /// `dev/active/5ce13bae/5ce13bae-markowitz-design.md` for the full design.
+    /// working buffer; the pivot row is scaled to a leading `1` and the chosen
+    /// column eliminated from every other row via sparse `axpy`. `row_nnz` is
+    /// maintained incrementally during each axpy — re-scanning the matrix
+    /// would destroy the speedup. See
+    /// `dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md`
+    /// for the full design.
     ///
     /// # Panics
     ///
@@ -1376,13 +1377,14 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
         }
 
         // ── Markowitz pivot bookkeeping (jit:5ce13bae) ─────────────────
-        // `row_nnz[i] = rows[i].len()` is maintained incrementally after
-        // each axpy. col_nnz would also be required for the full Markowitz
-        // product `(row_nnz - 1) * (col_nnz - 1)`, but with the canonical
-        // RREF constraint (smallest leading column first) col_nnz is
-        // identical for all candidates at a fixed pivot column, so the
-        // product collapses to "minimise row_nnz". See
-        // `dev/active/5ce13bae/5ce13bae-markowitz-design.md` § "Pivot column choice".
+        // `row_nnz[i] = rows[i].len()` is maintained incrementally after each
+        // axpy. col_nnz would also be required for the full Markowitz product
+        // `(row_nnz - 1) * (col_nnz - 1)`, but with the canonical RREF
+        // constraint (smallest leading column first) col_nnz is identical for
+        // all candidates at a fixed pivot column, so the product collapses to
+        // "minimise row_nnz". See
+        // `dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md`
+        // § "Pivot column choice".
         let mut row_nnz: Vec<usize> = rows.iter().map(|r| r.len()).collect();
 
         // `row_used[i]` is `true` once row `i` has been chosen as pivot.
@@ -1394,16 +1396,16 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
         // Outer loop: at most `min(m, n)` pivots. Each iteration picks
         // one pivot or breaks if no eligible row remains.
         for _ in 0..m.min(n) {
-            // Markowitz pivot search subject to canonical-RREF ordering.
-            // The pivot column SET of an RREF is uniquely determined
-            // (leftmost independent columns); among un-used rows we must
-            // pick the smallest column `pc` that is still the leading
-            // entry of some un-used row, then pick the row at `pc` with
-            // minimum row_nnz (the Markowitz fill-minimising choice
-            // among rows that share `pc` as leading column, since
-            // col_nnz[pc] is the same for all candidates). See
-            // `dev/active/5ce13bae/5ce13bae-markowitz-design.md` § "Pivot column
-            // choice".
+            // Markowitz pivot search subject to canonical-RREF ordering. The
+            // pivot column SET of an RREF is uniquely determined (leftmost
+            // independent columns); among un-used rows we must pick the
+            // smallest column `pc` that is still the leading entry of some
+            // un-used row, then pick the row at `pc` with minimum row_nnz (the
+            // Markowitz fill-minimising choice among rows that share `pc` as
+            // leading column, since col_nnz[pc] is the same for all
+            // candidates). See
+            // `dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md`
+            // § "Pivot column choice".
             let mut pc: usize = usize::MAX;
             for i in 0..m {
                 if row_used[i] {

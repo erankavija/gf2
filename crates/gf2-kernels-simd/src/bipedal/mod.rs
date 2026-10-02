@@ -11,10 +11,11 @@
 //! encoding fits naturally in 1 plane per operand. See JIT issue
 //! `1f769232`'s `## Amendment 2026-05-14` for the rationale.
 //!
-//! Architectural decision recorded in `dev/plans/c7542983/r4_simd_batching_decision.md`:
+//! Architectural decision recorded in
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/c7542983/r4_simd_batching_decision.md`:
 //! the generic framework wins over per-prime hand-rolled kernels by tie-break
-//! (every microbench cell within `[0.83, 1.20]` ratio; criterion-4 says
-//! generic on tie; full data in §5 of that doc).
+//! (every microbench cell within `[0.83, 1.20]` ratio; criterion-4 says generic
+//! on tie; full data in §5 of that doc).
 //!
 //! ## Module layout
 //!
@@ -41,8 +42,8 @@
 //! **(a) Encoding fits the framework — e.g. another 2-stream
 //! bipedal-like prime.** Implement [`framework::BipedalLikeConfig`] for
 //! a new zero-sized struct. Pick `MagLane` / `SgnLane` from existing
-//! lane impls (today only [`lanes::Avx2Lane`]; future AVX-512 / AArch64
-//! backends each contribute a new lane impl). Supply `PRIME`,
+//! lane impls (only [`lanes::Avx2Lane`] exists; another backend contributes
+//! its own lane impl). Supply `PRIME`,
 //! `U64_PER_LANE_PAIR`, and the lane-level `add_lane / sub_lane /
 //! mul_lane / neg_lane` formulas. The generic AVX2 entry points in
 //! `crate::x86::bipedal_avx2` then monomorphise over the new config;

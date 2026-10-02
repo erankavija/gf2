@@ -13,8 +13,8 @@
 //! ground-truth output (L2-L5 — per-op output equality).
 //!
 //! The mechanism (b) ground-truth file design is documented in
-//! `dev/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md`. The
-//! .gitignored binary lives at `benchmarks/expected/sparse_smoke_n16.bin`
+//! `dev/archive/97bf0879-gf2-core-sota-performance/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md`.
+//! The .gitignored binary lives at `benchmarks/expected/sparse_smoke_n16.bin`
 //! and is regenerated on every `benchmarks/smoke.sh` invocation.
 //!
 //! # File format (little-endian)
@@ -938,8 +938,8 @@ fn emit_sparse_matmul_gf2m<C: Gf2mWideConfig<1>>(field_label: &str, seed: u64) -
 //
 // The op tag is `smoke-spmv` for spmv, `smoke-spmm` for sparse_dense,
 // `smoke-spmatmul` for sparse_matmul (distinct from sparse_dense per
-// `dev/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md` § 6 — sparse
-// × sparse vs sparse × dense are separate ops), and `smoke-spelim`
+// `dev/archive/97bf0879-gf2-core-sota-performance/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md`
+// § 6 — sparse × sparse vs sparse × dense are separate ops), and `smoke-spelim`
 // for sparse_elim.
 
 const FIELD_XOR_M31: u64 = 0x00;

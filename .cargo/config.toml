@@ -30,5 +30,5 @@
 # included. A binary executed directly from `target/` inherits nothing from
 # here. A preregistered runner that declares RAYON_NUM_THREADS as an
 # experimental input sets it explicitly rather than depending on its launch
-# path — see the host CPU budget section of AGENTS.md.
+# path — see the commands section of AGENTS.md.
 RAYON_NUM_THREADS = "4"

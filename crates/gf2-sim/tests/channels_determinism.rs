@@ -5,8 +5,8 @@
 //! frame and the same effective §3 seek offset is **bit-identical** (f32
 //! bit-level, via `f32::to_bits()`) across worker counts `{1, 4, 24}`.
 //!
-//! These are `proptest` property tests (the project's property-test framework,
-//! per CLAUDE.md) over a randomized base seed and batch dimensions.
+//! These are `proptest` property tests (the project's property-test framework)
+//! over a randomized base seed and batch dimensions.
 //!
 //! # Mechanism
 //!

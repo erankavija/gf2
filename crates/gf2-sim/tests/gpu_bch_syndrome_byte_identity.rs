@@ -19,8 +19,8 @@
 //!   same 168- and 192-bit parity structure, over the full primitive length.
 //!
 //! Gated on GPU presence — skips cleanly when `device_mem_info().is_err()`,
-//! like the other `gf2-sim` GPU tests. Carries `#[ignore]` per the AGENTS.md
-//! test-tier rules; run command in the receipt.
+//! like the other `gf2-sim` GPU tests. Carries `#[ignore]` per
+//! `@/inv/test-tier-budgets`; run command in the receipt.
 
 #![cfg(feature = "hip")]
 

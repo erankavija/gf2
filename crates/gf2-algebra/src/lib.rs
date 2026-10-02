@@ -9,8 +9,7 @@
 //! top of [`gf2_core`] (for `FiniteField`, `Fp<P>`, `BitVec`) and stays
 //! `#![deny(unsafe_code)]` — every SIMD or GPU path it dispatches through
 //! lives in the dedicated `gf2-kernels-simd` and `gf2-kernels-hip`
-//! crates, in keeping with the project's unsafe-isolation invariant
-//! (CLAUDE.md §Architecture, point 3).
+//! crates (`@/inv/unsafe-kernel-isolation`).
 //!
 //! # Status
 //!
@@ -65,23 +64,27 @@
 //! | [`packed`]   | `PackedField` / `PackedFieldVec` traits and `Bipedal3` (F_3) / `Packed5` (F_5) / `Packed7` (F_7) impls. |
 //! | [`permanent`]| Square permanent algorithms, the rectangular `permanental_rank_status` predicate, exact small-order anchors, and canonical compressed-state propagation for three-column deficiency over F_3, F_5, and F_7. |
 //! | [`gray`]     | Gray-code subset enumerator used by Ryser's formula and the bipedal kernels.      |
+//! | [`tuning`]   | Algebra-owned permanent selectors and process-wide typed access.                  |
 //! | `parallel`   | Rayon-based work-stealing dispatch (cfg `feature = "parallel"`, default on).      |
 //! | `gpu`        | HIP/ROCm host-side dispatcher (cfg `feature = "hip"`, default off).               |
 //!
 //! # Features
 //!
 //! The crate manifest is the feature catalogue. The compatibility sweep in
-//! `scripts/check-feature-matrix.sh` covers the established 64-cell
+//! `crates/gf2-algebra/scripts/check-feature-matrix.sh` covers the established 64-cell
 //! arithmetic/backend matrix plus the non-default `tuning-profile` codec
 //! overlay in profile-only, crate-default, and complete host-supported
 //! configurations. Typed algebra selectors and active access are always built.
 //!
 //! # See also
 //!
-//! - Epic design: `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`.
-//! - Crate boundary decision: `dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`.
-//! - Trait surface decision: `dev/plans/9fe275d3/d1b_packed_field_api.md`.
-//! - Feature-gate matrix decision: `dev/plans/4fced99b/d1c_feature_matrix.md`.
+//! - Epic design: `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`.
+//! - Crate boundary decision:
+//!   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md`.
+//! - Trait surface decision:
+//!   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md`.
+//! - Feature-gate matrix decision:
+//!   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/4fced99b/d1c_feature_matrix.md`.
 
 pub mod gray;
 pub mod packed;
@@ -110,8 +113,9 @@ mod tests {
 
     /// Verifies the crate compiles and links into a test binary.
     ///
-    /// This is a placeholder; the trait + algorithm coverage is added
-    /// by T2-T6 of the W1 wave per `dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`
+    /// This is a placeholder; the trait + algorithm coverage is added by T2-T6
+    /// of the W1 wave per
+    /// `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md`
     /// §5 validation checklist.
     #[test]
     fn test_skeleton_compiles_smoke() {

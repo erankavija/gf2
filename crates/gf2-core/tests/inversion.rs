@@ -229,11 +229,11 @@ fn test_invert_property_double_inverse() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// M4RM-style invert path (jit:aaa847cf) — bit-exact correctness oracle vs.
-// the scalar Gauss–Jordan reference. Property tests cover the word-boundary
-// edge cases listed in CLAUDE.md (0, 1, 63, 64, 65 bits) plus n=127/128/129
-// to catch off-by-one at the multi-word boundary, and a range that crosses
-// the INVERT_M4RI_THRESHOLD dispatch cliff.
+// M4RM-style invert path (jit:aaa847cf) — bit-exact correctness oracle vs. the
+// scalar Gauss–Jordan reference. Property tests cover the word-boundary edge
+// cases listed in AGENTS.md §Correctness and test policy (0, 1, 63, 64, 65
+// bits) plus n=127/128/129 to catch off-by-one at the multi-word boundary, and
+// a range that crosses the INVERT_M4RI_THRESHOLD dispatch cliff.
 // ────────────────────────────────────────────────────────────────────────────
 
 fn boundary_sizes() -> Vec<usize> {

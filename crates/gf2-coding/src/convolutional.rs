@@ -1,19 +1,11 @@
-//! Convolutional codes (skeleton for future implementation).
-//!
-//! This module provides skeleton types for convolutional codes, which process
-//! bits in a streaming fashion while maintaining internal state.
+//! Convolutional codes: feedforward encoding and hard-decision Viterbi decoding.
 
 use crate::traits::{StreamingDecoder, StreamingEncoder};
 
-/// A convolutional encoder (skeleton).
+/// A feedforward convolutional encoder.
 ///
 /// Convolutional encoders maintain a shift register state and produce
 /// output symbols based on the current input and state.
-///
-/// # Note
-///
-/// This is a skeleton implementation. Full convolutional encoding will be
-/// implemented in a future update.
 ///
 /// # Examples
 ///
