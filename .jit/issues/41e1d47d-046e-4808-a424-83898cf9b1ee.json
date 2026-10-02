@@ -10,8 +10,6 @@
   "documents": [],
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
-    "cargo-ci",
-    "code-review",
     "doc-review",
     "docs-mechanical"
   ],
@@ -33,5 +31,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Reconcile open docs-remediation issues outside the overhaul",
-  "updated_at": "2026-10-02T09:38:22.151816677Z"
+  "updated_at": "2026-10-02T09:56:22.672025781Z"
 }

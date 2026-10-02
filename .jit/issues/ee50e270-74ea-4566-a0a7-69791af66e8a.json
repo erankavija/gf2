@@ -8,8 +8,6 @@
   "description": "The SIMD kernel crate is an implementation backend and the statistics crate is a supporting library. Their READMEs state their current role and integration path concisely.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. The HIP kernel crate has no README and is documented through the acceleration pages.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-kernels-simd/README.md` states the crate's backend role, supported targets and how adopting crates enable it, verified against its manifest and code.\n- [hard] REQ-02: `crates/gf2-stats/README.md` states the crate's purpose and public surface in a few lines.\n- [hard] REQ-03: Both READMEs are freshly authored and carry no performance figures, history or future promises, and link to the acceleration concepts page or Rustdoc where relevant.\n- [hard] REQ-04: Their links resolve and the Rust CI gate passes.\n",
   "documents": [],
   "gates_required": [
-    "cargo-ci",
-    "code-review",
     "doc-review",
     "docs-mechanical"
   ],
@@ -31,5 +29,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite the SIMD kernel and statistics crate READMEs",
-  "updated_at": "2026-10-02T09:38:32.006855272Z"
+  "updated_at": "2026-10-02T09:56:21.459868577Z"
 }

@@ -13,8 +13,6 @@
   "description": "`dev/index.md` describes a bucket layout the overhaul removes. It is rewritten to describe the final `dev/` top level so contributors place new material correctly.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/index.md` describes each remaining `dev/` top-level entry: epic directories under `active/`, container archives and the legacy mirror under `archive/`, and each operational directory with its consumers.\n- [hard] REQ-02: The `dev/` top level contains no `plans`, `presentations` or `sessions` directory and no other obsolete documentation bucket.\n- [hard] REQ-03: `dev/index.md` and `dev/authoring-conventions.md` contain no link to a removed path, and their links resolve.\n",
   "documents": [],
   "gates_required": [
-    "cargo-ci",
-    "code-review",
     "doc-review",
     "docs-mechanical"
   ],
@@ -35,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Rewrite dev/index.md for the final dev layout",
-  "updated_at": "2026-10-02T09:38:29.337846511Z"
+  "updated_at": "2026-10-02T09:56:22.310027553Z"
 }

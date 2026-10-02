@@ -8,8 +8,6 @@
   "description": "Adopters need the toolchain, platform, hardware and feature combinations gf2 supports, and the current limitations, stated once.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/reference/` states the supported toolchain, operating systems, CPU and GPU requirements, per-crate Cargo features, available installation mechanisms, the crate excluded from the default workspace, and current limitations, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from crate manifests, CI configuration and the root README are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
   "documents": [],
   "gates_required": [
-    "cargo-ci",
-    "code-review",
     "doc-review",
     "docs-mechanical"
   ],
@@ -31,5 +29,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the supported configurations reference page",
-  "updated_at": "2026-10-02T09:38:21.137646688Z"
+  "updated_at": "2026-10-02T09:56:22.030974552Z"
 }

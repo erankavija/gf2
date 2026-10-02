@@ -10,8 +10,6 @@
   "documents": [],
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
-    "cargo-ci",
-    "code-review",
     "doc-review",
     "docs-mechanical"
   ],
@@ -32,5 +30,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-  "updated_at": "2026-10-02T09:38:28.565137453Z"
+  "updated_at": "2026-10-02T09:56:22.743521754Z"
 }

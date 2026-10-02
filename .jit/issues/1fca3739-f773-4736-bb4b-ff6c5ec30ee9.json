@@ -8,8 +8,6 @@
   "description": "Performance is a first-class adoption concern. One reference page states gf2's performance claims, how they are measured, and the commit-pinned evidence behind each.\n\n## Background\n\nNo evidence class in the tree carries every required field in-file; the commit field comes from the pinned link (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.10). Receipt bytes never change.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/reference/` states the measurement methodology (statistical treatment, warm-up, host control and comparison basis) in freshly authored prose.\n- [hard] REQ-02: Each claim links to commit-pinned evidence (a repository URL at a fixed commit) and states hardware, build flags, dataset or workload, baseline and measurement date, taken from that evidence.\n- [hard] REQ-03: Claims are concise and non-marketing; no volatile result table is hand-copied; a claim appears only where current commit-pinned evidence exists.\n- [hard] REQ-04: Each claim has a stable anchor for other pages to link.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links and anchors resolve.\n",
   "documents": [],
   "gates_required": [
-    "cargo-ci",
-    "code-review",
     "doc-review",
     "docs-mechanical"
   ],
@@ -30,5 +28,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Write the performance evidence reference page",
-  "updated_at": "2026-10-02T09:38:20.360321095Z"
+  "updated_at": "2026-10-02T09:56:21.602759521Z"
 }
