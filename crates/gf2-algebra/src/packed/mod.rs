@@ -6,10 +6,9 @@
 //! `packed7::Packed7` (F_7, R2 Candidate A) element / vector types,
 //! and the [`scalar::ScalarPackedFp3`] correctness oracle.
 //!
-//! The trait surface is fixed by
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md`
-//! (user-approved 2026-05-09; see JIT issue `9fe275d3`'s description `##
-//! Approval` section) and frozen at the W6 `gate:api-freeze`.
+//! The trait surface is fixed by `@/issue/9fe275d3` (user-approved 2026-05-09;
+//! see JIT issue `9fe275d3`'s description `## Approval` section) and frozen at
+//! the W6 `gate:api-freeze`.
 //!
 //! # Cross-checking strategy
 //!
@@ -48,11 +47,10 @@ pub use packed7::{Packed7, Packed7Matrix, Packed7Vec};
 /// maps onto a pair of `u64`s in the bipedal3 encoding, a
 /// `LANES = 256` instance maps onto an AVX2 `__m256i` pair, and so on.
 ///
-/// The trait surface is fixed by
-/// `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md`
-/// §2.1, user-approved 2026-05-09 (JIT issue `9fe275d3`'s description `##
-/// Approval` section). The signatures are frozen at the W6 `gate:api-freeze` of
-/// the `gf2-algebra-permanent` epic; in-loop amendment is permitted only before
+/// The trait surface is fixed by `@/issue/9fe275d3` §2.1, user-approved
+/// 2026-05-09 (JIT issue `9fe275d3`'s description `## Approval` section). The
+/// signatures are frozen at the W6 `gate:api-freeze` of the
+/// `gf2-algebra-permanent` epic; in-loop amendment is permitted only before
 /// that gate fires.
 ///
 /// # Trait bounds
@@ -227,11 +225,10 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
 /// reference [`scalar::ScalarPackedFp3Vec`] does not require this hook
 /// and stores one `F` per logical position directly.
 ///
-/// The trait surface is fixed verbatim by
-/// `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md`
-/// §2.2, user-approved 2026-05-09 (JIT issue `9fe275d3`'s description `##
-/// Approval` section). The signatures are frozen at the W6 `gate:api-freeze` of
-/// the `gf2-algebra-permanent` epic; in-loop amendment is permitted only before
+/// The trait surface is fixed verbatim by `@/issue/9fe275d3` §2.2,
+/// user-approved 2026-05-09 (JIT issue `9fe275d3`'s description `## Approval`
+/// section). The signatures are frozen at the W6 `gate:api-freeze` of the
+/// `gf2-algebra-permanent` epic; in-loop amendment is permitted only before
 /// that gate fires.
 ///
 /// # Trait bounds

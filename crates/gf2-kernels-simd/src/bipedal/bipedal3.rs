@@ -27,8 +27,7 @@
 //!
 //! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
 //! `crate::x86::bipedal_avx2` so the asm-artefact-present gate fires on source
-//! changes — see the W4 wave plan and
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/c7542983/r4_simd_batching_decision.md`.
+//! changes — see the W4 wave plan and `@/issue/c7542983`.
 
 use super::framework::BipedalLikeConfig;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

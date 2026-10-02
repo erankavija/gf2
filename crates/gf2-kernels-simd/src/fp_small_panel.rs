@@ -11,9 +11,8 @@
 //! - **Route B** (`dev/research/blas_sgemm_gf251/`, jit:91429c1c) —
 //!   OpenBLAS sgemm cascade. Closed; SHORTFALL at both cells.
 //! - **Route C** (this kernel, jit:fc182ed5) — pure-integer
-//!   Goto/BLIS panelized micro-kernel. See
-//!   `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`
-//!   for the panel dimension derivation (`MR × NR × KC = 4 × 24 × 256`) and the
+//!   Goto/BLIS panelized micro-kernel. See `@/issue/fc182ed5` for the panel
+//!   dimension derivation (`MR × NR × KC = 4 × 24 × 256`) and the
 //!   `_mm256_madd_epi16` inner-loop structure.
 //!
 //! Provenance: implemented from public Goto-vandeGeijn 2008 / BLIS 2015
@@ -62,9 +61,8 @@
 //! back to Candidate C or scalar.
 
 /// Cache-blocking factor along the k-axis: the byte-lane panel kernel's L1d-fit
-/// blocking factor. See module docs and
-/// `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md`
-/// § 2.2 for the derivation and the route-C measurement
+/// blocking factor. See module docs and `@/issue/fc182ed5` § 2.2 for the
+/// derivation and the route-C measurement
 /// `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`;
 /// the u32 overflow bound (`KC ≤ 68 719` at p = 251) is orders of magnitude
 /// larger and not binding.

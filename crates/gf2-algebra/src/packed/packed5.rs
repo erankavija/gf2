@@ -42,9 +42,7 @@
 //! # Transliteration source
 //!
 //! `dev/research/f5_packing/src/cand_d.rs` — the reference prototype. The
-//! decision doc is
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6b3f6054/r1_f5_encoding_decision.md`
-//! (W4, T17).
+//! decision doc is `@/issue/6b3f6054` (W4, T17).
 //!
 //! # Feature gating
 //!
@@ -307,11 +305,9 @@ impl fmt::Debug for Packed5 {
 // divergence between the inherent and trait paths — the inherent body is a
 // single tail call into the trait method, which Rust inlines away.
 //
-// Per
-// `dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md`
-// §4, the Lean proof file `proofs/Gf2Algebra/Proofs/Packed5Correctness.lean`
-// targets these inherent methods (verbatim adaptation of the
-// `bipedal3.rs:409-467` pattern).
+// Per `@/issue/30e98ef1` §4, the Lean proof file
+// `proofs/Gf2Algebra/Proofs/Packed5Correctness.lean` targets these inherent
+// methods (verbatim adaptation of the `bipedal3.rs:409-467` pattern).
 // ---------------------------------------------------------------------------
 
 impl Packed5 {

@@ -334,11 +334,10 @@ pub(crate) mod simd {
     /// panelized GEMM kernel, if any.
     ///
     /// Provides **Route C** from the jit:615db3b9 Phase 1 plan
-    /// (`dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md`
-    /// § Phase 1, item 3) and the design note
-    /// `dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md` — an
-    /// explicit A/B panel-packed AVX2 register-blocked `_mm256_madd_epi16`-based GEMM for
-    /// canonical-byte `Fp<P>` operands with `P ≤ 251`.
+    /// (`@/issue/615db3b9` § Phase 1, item 3) and the design note
+    /// `@/issue/fc182ed5` — an explicit A/B panel-packed AVX2 register-blocked
+    /// `_mm256_madd_epi16`-based GEMM for canonical-byte `Fp<P>` operands with
+    /// `P ≤ 251`.
     ///
     /// **Status (per jit:fc182ed5):** the kernel is fully implemented
     /// and tested but **not currently selected at runtime**. It is

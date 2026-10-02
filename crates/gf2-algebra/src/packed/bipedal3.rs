@@ -337,9 +337,7 @@ impl Bipedal3 {
     // divergence between the inherent and trait paths — the inherent body
     // is a single tail call into the trait method, which Rust inlines away.
     //
-    // Per
-    // `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md`
-    // §5, the Lean proof file
+    // Per `@/issue/a0c0a45f` §5, the Lean proof file
     // `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` targets these
     // inherent methods (Option A in the dispatch prompt).
     // -----------------------------------------------------------------------
@@ -2625,12 +2623,11 @@ mod vec_tests {
 ///
 /// # Column-major rationale
 ///
-/// Ryser's formula (T7) and the single-word permanent path (T9) iterate
-/// over columns in the inner loop, accumulating row-wise products.
-/// Storing each column as a contiguous [`Bipedal3Vec`] allows those
-/// algorithms to `column(j)` without scatter-gather, matching the access
-/// pattern of the R3 multi-word streaming design
-/// (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md` §2.1).
+/// Ryser's formula (T7) and the single-word permanent path (T9) iterate over
+/// columns in the inner loop, accumulating row-wise products. Storing each
+/// column as a contiguous [`Bipedal3Vec`] allows those algorithms to
+/// `column(j)` without scatter-gather, matching the access pattern of the R3
+/// multi-word streaming design (`@/issue/60c30e2d` §2.1).
 ///
 /// # Mask-tail invariant
 ///

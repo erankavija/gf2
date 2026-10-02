@@ -13,11 +13,9 @@
 //!
 //! # Algorithm summary
 //!
-//! See
-//! `dev/archive/026fc832-gf2-core-sota-stretch/active/2e8c5a29/2e8c5a29-panelized-ple-design.md`
-//! § 9 for the design context (the original design declined a u16 base case;
-//! issue `68db401b` reverses that decision based on the R0 evidence that
-//! GF(65521) PLE cells did not close to ≤ 1.5× via the Schur path alone).
+//! See `@/issue/2e8c5a29` § 9 for the design context. Issue `68db401b` adds the
+//! u16 base case because the R0 evidence showed GF(65521) PLE cells do not
+//! close to ≤ 1.5× via the Schur path alone.
 //!
 //! The base-case kernel processes an `m × win` column window of
 //! canonical u16 storage in-place, performing:

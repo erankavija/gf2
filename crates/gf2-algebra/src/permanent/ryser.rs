@@ -3,8 +3,8 @@
 //! Implements Ryser's inclusion-exclusion formula in Gray-code subset order,
 //! giving an `O(n · 2^n)` algorithm that is exact over any `FiniteField`. The
 //! Gray-code walk reduces each subset's column-sum update to a single element
-//! add or subtract per row, matching the pseudocode in
-//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md` §6 / §7.3.
+//! add or subtract per row, matching the pseudocode in `@/issue/ae82bd73` §6 /
+//! §7.3.
 //!
 //! This module is the **correctness oracle** for the public bipedal permanents
 //! (`permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`) and their

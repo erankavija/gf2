@@ -1,12 +1,11 @@
 //! Benchmarks for [`BitMatrix::transpose`] across the PPC-spiral B1 design
 //! sizes.
 //!
-//! The B1 kernel under
-//! `dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md` §
-//! Tier B is a 64×64 bit-block transpose with an AVX2 PSHUFB lane and a
-//! Hacker's Delight scalar fallback. Per the Tier-B "PPC walk" rule, this bench
-//! exists as the V0 baseline so subsequent SIMD edits can be measured against a
-//! pinned criterion baseline (see `dev/scripts/ppc-baselines.json` entry `B1`).
+//! The B1 kernel under `@/issue/babcf05e` § Tier B is a 64×64 bit-block
+//! transpose with an AVX2 PSHUFB lane and a Hacker's Delight scalar fallback.
+//! Per the Tier-B "PPC walk" rule, this bench exists as the V0 baseline so
+//! subsequent SIMD edits can be measured against a pinned criterion baseline
+//! (see `dev/scripts/ppc-baselines.json` entry `B1`).
 //!
 //! Sizes follow the manifest's `design_size_class` (1024, 4096) and
 //! extend down to 64/256 to capture the pure register-tile regime where
