@@ -62,6 +62,7 @@
       "path": "dev/active/dbd8787d/premeasurement-protocol.md"
     }
   ],
+  "done_at": "2026-10-02T14:49:11.838596036Z",
   "first_ready_at": "2026-08-22T22:17:25.982526991Z",
   "gates_required": [
     "cargo-ci",
@@ -75,8 +76,8 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T11:52:31.785909600Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T14:49:03.244098067Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -93,7 +94,7 @@
     "satisfies:6dc81018/REQ-03"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Extend the calibration sweep to the seam threshold fields",
-  "updated_at": "2026-10-02T13:15:01.751138682Z"
+  "updated_at": "2026-10-02T14:49:11.838596036Z"
 }
