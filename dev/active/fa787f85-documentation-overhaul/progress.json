@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 2,
+ "current_wave": 3,
  "waves": [
   {
    "wave_number": 1,
@@ -37,7 +37,7 @@
      "short_id": "dcd38c45",
      "title": "Ground the doc-review gate in the documentation invariants",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     }
    ]
   },
