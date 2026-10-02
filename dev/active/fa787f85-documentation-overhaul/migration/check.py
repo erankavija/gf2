@@ -45,29 +45,41 @@ EVIDENCE = ("doc-ref", "issue-id", "commit", "none")  # D-24 admissible kinds
 STATUSES = ("pending", "complete")
 LEGACY_ROOT = "dev/archive/legacy/"
 
+# Owner, citation and epic fields are empty exactly when evidence is none; ids are 8-hex short ids.
 ARTIFACT_FIELDS = {
-    "path": "repository-relative source path of the pre-overhaul artifact",
-    "evidence": "association evidence kind from EVIDENCE",
-    "owner": "8-hex owning issue short id; empty exactly when evidence is none",
-    "bundle": "path of the bundle head row this artifact travels with; empty for a head",
-    "disposition": "one of DISPOSITIONS",
-    "destination": "target path; empty for deletion and for in-place retention",
-    "status": "one of STATUSES",
+    "path": (str, "repository-relative source file or directory (an operational or receipt directory is one row)"),
+    "evidence": (str, "association evidence kind from EVIDENCE"),
+    "citation": (str, "evidence source: an owner carrying the doc-ref or named by the path, or a commit sha"),
+    "owners": (list, "every owning issue; several for a multi-owner entry"),
+    "epic": (str, "owning top-level epic"),
+    "bundle": (str, "path of the bundle head row this artifact travels with; empty for a head"),
+    "disposition": (str, "one of DISPOSITIONS"),
+    "destination": (str, "target path, chosen by the multi-owner rule for several owners; empty for deletion and in-place retention"),
+    "digest_pinned": (bool, "the artifact is a digest-pinned machine input"),
+    "consumers": (list, "file:line of each non-comment code, CI or Cargo consumer of path; non-empty marks code-pinned"),
+    "inbound": (list, "file:line of each reference from outside the artifact's directory"),
+    "status": (str, "one of STATUSES"),
 }
 POLICY_FIELDS = {
-    "key": "dotted key into .jit/config.toml naming a string list",
-    "value": "temporary list entry",
-    "removal": "8-hex short id of the issue that removes the entry",
-    "status": "one of STATUSES; complete means the entry is removed",
+    "key": (str, "dotted key into .jit/config.toml naming a string list"),
+    "value": (str, "temporary list entry"),
+    "removal": (str, "short id of the issue that removes the entry"),
+    "status": (str, "one of STATUSES; complete means the entry is removed"),
 }
 SHORT_ID = re.compile(r"[0-9a-f]{8}")
+SHA = re.compile(r"[0-9a-f]{7,40}")
+FILE_LINE = re.compile(r"[^\s:]+:[1-9][0-9]*")
 
 
 def bad_path(p: str) -> bool:
     return not p or p.startswith("/") or ".." in Path(p).parts or p != p.strip("/")
 
 
-def schema_rows(rows: object, fields: dict[str, str], name: str, out: list[str]) -> list[dict]:
+def well_typed(value: object, kind: type) -> bool:
+    return isinstance(value, kind) and (kind is not list or all(isinstance(x, str) for x in value))
+
+
+def schema_rows(rows: object, fields: dict[str, tuple], name: str, out: list[str]) -> list[dict]:
     if not isinstance(rows, list):
         out.append(f"{name}: not an array")
         return []
@@ -76,8 +88,8 @@ def schema_rows(rows: object, fields: dict[str, str], name: str, out: list[str])
         label = f"{name}[{i}]"
         if not isinstance(row, dict) or set(row) != set(fields):
             out.append(f"{label}: fields must be exactly {', '.join(fields)}")
-        elif not all(isinstance(v, str) for v in row.values()):
-            out.append(f"{label}: every field must be a string")
+        elif bad := [k for k, (kind, _) in fields.items() if not well_typed(row[k], kind)]:
+            out.append(f"{label}: wrong type for {', '.join(bad)}")
         else:
             valid.append(row)
     keys = [r[first] for r in valid]
@@ -91,12 +103,17 @@ def check_artifact(row: dict, heads: set[str], out: list[str]) -> None:
     errs = []
     if bad_path(path):
         errs.append("path must be repository-relative")
-    if row["evidence"] not in EVIDENCE:
+    evidence, citation, owners, epic = row["evidence"], row["citation"], row["owners"], row["epic"]
+    if evidence not in EVIDENCE:
         errs.append(f"evidence must be one of {', '.join(EVIDENCE)}")
-    elif (row["evidence"] == "none") != (row["owner"] == ""):
-        errs.append("owner must be empty exactly when evidence is none")
-    if row["owner"] and not SHORT_ID.fullmatch(row["owner"]):
-        errs.append("owner must be an 8-hex short id")
+    elif any((not v) != (evidence == "none") for v in (citation, owners, epic)):
+        errs.append("citation, owners and epic must be empty exactly when evidence is none")
+    elif citation and not (SHA.fullmatch(citation) if evidence == "commit" else citation in owners):
+        errs.append("citation must be a commit sha or one of owners")
+    if not all(SHORT_ID.fullmatch(i) for i in [*owners, *filter(None, [epic])]):
+        errs.append("owners and epic must be 8-hex short ids")
+    if not all(FILE_LINE.fullmatch(r) for r in row["consumers"] + row["inbound"]):
+        errs.append("consumers and inbound must be file:line references")
     if row["bundle"] and row["bundle"] not in heads:
         errs.append("bundle must name a head row")
     if row["status"] not in STATUSES:
