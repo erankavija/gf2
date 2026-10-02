@@ -1,7 +1,7 @@
 //! SIMD backend implementation.
 //!
 //! This module wraps the `gf2-kernels-simd` crate and provides a `Backend`
-//! implementation that uses AVX2/AVX-512 (x86) or NEON (ARM) instructions.
+//! implementation that uses AVX2 instructions on x86/x86_64.
 //!
 //! The SIMD backend is optional and requires the `simd` feature flag.
 //! Runtime CPU feature detection ensures we only use instructions that are available.
@@ -9,7 +9,7 @@
 use crate::kernels::Backend;
 use std::sync::LazyLock;
 
-/// SIMD backend using AVX2/NEON instructions.
+/// SIMD backend using AVX2 instructions.
 ///
 /// This backend wraps function pointers from `gf2-kernels-simd` which uses
 /// unsafe intrinsics but exposes a safe API.
@@ -24,10 +24,7 @@ impl SimdBackend {
     ///
     /// Returns `None` if no suitable SIMD instructions are available.
     pub fn detect() -> Option<Self> {
-        gf2_kernels_simd::detect().map(|fns| SimdBackend {
-            fns,
-            name: "avx2", // TODO: Actually detect which variant
-        })
+        gf2_kernels_simd::detect().map(|fns| SimdBackend { fns, name: "avx2" })
     }
 }
 

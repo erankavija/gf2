@@ -88,8 +88,7 @@ impl ComputeBackend for CpuBackend {
     }
 
     fn matmul(&self, a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
-        // Use existing BitMatrix multiplication
-        // TODO: Add parallel version when `parallel` feature is enabled
+        // Serial in every configuration; a rayon path is `@/issue/NEWID-1`.
         a * b
     }
 
