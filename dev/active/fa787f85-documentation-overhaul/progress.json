@@ -1,1022 +1,1035 @@
 {
- "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
- "epic_short_id": "fa787f85",
- "current_wave": 5,
- "waves": [
-  {
-   "wave_number": 1,
-   "issues": [
+  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
+  "epic_short_id": "fa787f85",
+  "current_wave": 6,
+  "waves": [
     {
-     "id": "34adff85-7b63-43fa-9a4f-324961b6cf21",
-     "short_id": "34adff85",
-     "title": "Build rustdoc and run doctests in the Rust CI gate",
-     "classification": "implementation",
-     "status": "done"
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "34adff85-7b63-43fa-9a4f-324961b6cf21",
+          "short_id": "34adff85",
+          "title": "Build rustdoc and run doctests in the Rust CI gate",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "495807a3-caeb-4680-8429-13d7da4a590d",
+          "short_id": "495807a3",
+          "title": "Register and project the documentation invariants",
+          "classification": "implementation",
+          "status": "done"
+        }
+      ]
     },
     {
-     "id": "495807a3-caeb-4680-8429-13d7da4a590d",
-     "short_id": "495807a3",
-     "title": "Register and project the documentation invariants",
-     "classification": "implementation",
-     "status": "done"
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "56378e82-2a72-44ef-96b6-1d12d7332976",
+          "short_id": "56378e82",
+          "title": "Make CLAUDE.md a symlink and define AGENTS.md scope",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "dcd38c45-66ae-43ed-b689-3a9dcd2600b3",
+          "short_id": "dcd38c45",
+          "title": "Ground the doc-review gate in the documentation invariants",
+          "classification": "implementation",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "8f61d6de-e29a-4d83-8bab-4ac61df0b2bf",
+          "short_id": "8f61d6de",
+          "title": "Add the docs-mechanical gate with self-tests",
+          "classification": "implementation",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "wave_number": 4,
+      "issues": [
+        {
+          "id": "3f29e945-8b12-4862-82c8-f2ec6573287c",
+          "short_id": "3f29e945",
+          "title": "Define documentation contract and enforcement baseline",
+          "classification": "implementation",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "wave_number": 5,
+      "issues": [
+        {
+          "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
+          "short_id": "12907582",
+          "title": "Correct surviving source-level documentation drift",
+          "classification": "implementation",
+          "status": "in_progress"
+        },
+        {
+          "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
+          "short_id": "41e1d47d",
+          "title": "Reconcile open docs-remediation issues outside the overhaul",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "4bdcd65a-e338-488b-b42e-19bee4a875a9",
+          "short_id": "4bdcd65a",
+          "title": "Map the root roadmap's open questions and publication items",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "60652fe4-d6dd-49e9-97f1-db99b4c73111",
+          "short_id": "60652fe4",
+          "title": "Map the gf2-core roadmap's planned phases",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "871b401d-59f7-4fa4-86b6-9c067795ff06",
+          "short_id": "871b401d",
+          "title": "Register and project the no-dev-path-coupling invariant",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "875914b3-38c8-4ec2-a13f-009fc620f7d4",
+          "short_id": "875914b3",
+          "title": "Map the gf2-coding roadmap's unchecked items",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "9b2886a7-35af-45cc-9200-dddea1c0323a",
+          "short_id": "9b2886a7",
+          "title": "Register audience, placement and tone documentation invariants",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "a0a29512-ce14-4110-a541-65ef6612278d",
+          "short_id": "a0a29512",
+          "title": "Remove tautological Rustdoc examples across the workspace",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "a24b2af7-81ce-4442-9ee3-6ce096c36537",
+          "short_id": "a24b2af7",
+          "title": "Define the documentation migration manifest and progress checker",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
+          "short_id": "a82d2347",
+          "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "b6fdb815-20da-4ea9-af21-351b01746aee",
+          "short_id": "b6fdb815",
+          "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "e85b8edf-f35f-49b5-bdb1-65502b7d30e1",
+          "short_id": "e85b8edf",
+          "title": "Map the root roadmap's planned milestones and goals",
+          "classification": "implementation",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {
+          "id": "036615b0-6ab3-4bc8-a8e2-c36837296111",
+          "short_id": "036615b0",
+          "title": "Inventory terminal, ownerless and empty dev/active entries",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "11964cb8-75c9-4413-bff8-d781d6b3e7eb",
+          "short_id": "11964cb8",
+          "title": "Identify the rare-event design by content in gf2-sim artifact checks",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "23219502-6312-45e5-88cd-08f4b0f95aa8",
+          "short_id": "23219502",
+          "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "27f0f3b1-df9b-4836-a5f6-7313d794a9be",
+          "short_id": "27f0f3b1",
+          "title": "Populate the migration manifest for the other dev buckets",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "29331bd3-e56a-4521-8db9-096152ee8482",
+          "short_id": "29331bd3",
+          "title": "Identify frozen campaign evidence by content in gf2-sim validation",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "52fb615b-0294-4452-bf34-2d7a178029b0",
+          "short_id": "52fb615b",
+          "title": "Populate the migration manifest for permanent-path sources",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "5a25717c-83f4-453c-8866-cab67ecf2103",
+          "short_id": "5a25717c",
+          "title": "Locate receipt-pinned campaign inputs by content identity",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
+          "short_id": "5c0b9635",
+          "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
+          "short_id": "65a5436a",
+          "title": "Resolve campaign CI check inputs through the configured repository root",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "69aa6896-4c6e-42bb-90b6-d7237a31dc14",
+          "short_id": "69aa6896",
+          "title": "Create the docs index and quadrant layout",
+          "classification": "documentation",
+          "status": "done"
+        },
+        {
+          "id": "7bac1303-eed8-443a-a504-593a87710cb4",
+          "short_id": "7bac1303",
+          "title": "Make the first survey-harness crates' tool dependency depth-independent",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "8434e0e1-859d-4b18-ad3c-2942ae248b60",
+          "short_id": "8434e0e1",
+          "title": "Inventory the other open-epic dev/active entries",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "8bd873f7-4758-44cd-91aa-03db3a7a533b",
+          "short_id": "8bd873f7",
+          "title": "Locate tuning-extent campaign declarations without derived dev paths",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "d1f6b2c9-4b2d-40a5-bea8-ce8b1ea601a9",
+          "short_id": "d1f6b2c9",
+          "title": "Inventory the field-dispatch dev/active entries",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "d53cba10-d5ee-4764-8626-968ba5e6642c",
+          "short_id": "d53cba10",
+          "title": "Locate addendum schema test inputs through the configured repository root",
+          "classification": "implementation",
+          "status": "done"
+        },
+        {
+          "id": "1fca3739-f773-4736-bb4b-ff6c5ec30ee9",
+          "short_id": "1fca3739",
+          "title": "Write the performance evidence reference page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "2ff9953a-8d33-449f-80ac-f1564fefa14a",
+          "short_id": "2ff9953a",
+          "title": "Write the supported configurations reference page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "44f4586d-5d13-42a3-b6ff-1be4ae2bc18d",
+          "short_id": "44f4586d",
+          "title": "Write the finite-field arithmetic concepts page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "4f752758-6fd7-45f6-880c-3c8b853e1783",
+          "short_id": "4f752758",
+          "title": "Rewrite the gf2-algebra README as its entry page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "5625a423-3ccc-4d11-b839-52c8fd311601",
+          "short_id": "5625a423",
+          "title": "Write the standards conformance reference page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "698fa793-8c74-4019-a605-9d078f023cbc",
+          "short_id": "698fa793",
+          "title": "Rewrite the gf2-coding README as its entry page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "6c314026-6f34-490d-9403-39b7ecc89ea5",
+          "short_id": "6c314026",
+          "title": "Write the finite-field linear algebra at scale tutorial",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "8b42d23b-d94b-4c2b-84a5-9776619123c5",
+          "short_id": "8b42d23b",
+          "title": "Rewrite the gf2-core README as its entry page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "9dcc0cae-ef55-4f02-9446-83a0822ec158",
+          "short_id": "9dcc0cae",
+          "title": "Write the simulation campaign how-to",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "b16d013a-c200-4e75-8c57-6638a313438e",
+          "short_id": "b16d013a",
+          "title": "Write the gf2-sim README as its entry page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
+          "short_id": "da120b98",
+          "title": "Write the formal verification how-to",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "deda0962-2366-493d-b0fd-c65874ba7cbe",
+          "short_id": "deda0962",
+          "title": "Write the acceleration architecture concepts page",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa",
+          "short_id": "ec7d2aec",
+          "title": "Widen the docs policy to manage archival sources",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "fb209a81-59cf-4bb1-86c9-597637a4bba2",
+          "short_id": "fb209a81",
+          "title": "Move presentation decks into their epics' archive dirs",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
+          "short_id": "112f23c6",
+          "title": "Share one repository-root resolver across tuning-campaign tooling",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 7,
+      "issues": [
+        {
+          "id": "62f0d0e6-0d54-44a6-a5d7-31b09c33976d",
+          "short_id": "62f0d0e6",
+          "title": "Record the pre-sweep comment census",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "c84ac71a-b9e8-4b10-9ebb-b433f7077dae",
+          "short_id": "c84ac71a",
+          "title": "Apply the depth-independent tool dependency to the remaining harness crates",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "153297cf-7687-4599-be56-23e038efee3d",
+          "short_id": "153297cf",
+          "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "3fd3db5e-60ea-41c1-b95a-144d9ae02e4a",
+          "short_id": "3fd3db5e",
+          "title": "Locate BCH receipt-renderer inputs through the configured repository root",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 8,
+      "issues": [
+        {
+          "id": "01c20b61-4dce-4437-baab-9c9d03d1d2c1",
+          "short_id": "01c20b61",
+          "title": "Write the evidence reproduction how-to",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "130d5fd7-4540-4a29-9bd5-67d755bae78c",
+          "short_id": "130d5fd7",
+          "title": "Move the Lean pipeline guide into its epic's archive dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "13dfe1a5-a770-4910-b6b3-36e4b2a91cca",
+          "short_id": "13dfe1a5",
+          "title": "Tersify comments in gf2-coding tests, benches and examples",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "290b8716-2442-42af-9383-08f9d629219d",
+          "short_id": "290b8716",
+          "title": "Tersify comments in the remaining gf2-kernels-simd files",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
+          "short_id": "3aef9e33",
+          "title": "Tersify comments in the gf2-algebra packed-field module",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "3da13f39-225c-4615-9f68-f1daa76af90b",
+          "short_id": "3da13f39",
+          "title": "Tersify comments in the gf2-core prime-field modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
+          "short_id": "4997a3ed",
+          "title": "Tersify comments in gf2-core bit-level structures",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "57436474-9b84-4d68-804f-070c10b673d9",
+          "short_id": "57436474",
+          "title": "Tersify comments in the remaining gf2-algebra files",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
+          "short_id": "66858db0",
+          "title": "Tersify comments in gf2-core field polynomial and extension modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "67048b47-ed17-4672-822a-829a796420c2",
+          "short_id": "67048b47",
+          "title": "Link unlinked owned artifacts to their issues",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "67b5d1d8-b6e2-4687-ae5f-fd36bcee334a",
+          "short_id": "67b5d1d8",
+          "title": "Tersify comments in the gf2-core GF(2^m) module",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "72768e37-a609-427c-a3e6-8a4efcf4c8b8",
+          "short_id": "72768e37",
+          "title": "Tersify comments in gf2-sim tests, benches, binaries and examples",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "7bfad039-1fd6-4738-a845-b9c738458968",
+          "short_id": "7bfad039",
+          "title": "Tersify comments in gf2-sim GPU, preset, stage and graph modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
+          "short_id": "8a9156fc",
+          "title": "Write the acceleration selection how-to",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "8a9db61a-115b-4f07-9baf-97e6545525a5",
+          "short_id": "8a9db61a",
+          "title": "Tersify comments in the gf2-coding modem module",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
+          "short_id": "8f451167",
+          "title": "Tersify comments in gf2-core field trait and vector modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "93aed46a-441a-488e-8d25-651abc1897a0",
+          "short_id": "93aed46a",
+          "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "9dda3958-4e62-4bb2-89e4-a1999e000a09",
+          "short_id": "9dda3958",
+          "title": "Tersify comments in gf2-core field matrix algorithm modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
+          "short_id": "9f47bb94",
+          "title": "Tersify comments in the gf2-kernels-simd x86 module",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "aa0558c1-8143-44b9-a2ca-27282d1cf015",
+          "short_id": "aa0558c1",
+          "title": "Tersify comments in the remaining gf2-coding source files",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "bfb37a21-1608-4ed9-a016-c60d0c87b4c9",
+          "short_id": "bfb37a21",
+          "title": "Tersify comments in gf2-coding BCH and transform modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "c6aa0e84-072e-4671-9c50-0c8e9d0d4f66",
+          "short_id": "c6aa0e84",
+          "title": "Tersify comments in gf2-core runtime support modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "cafb463c-59ea-4dd5-8bc4-c7cc4521c00f",
+          "short_id": "cafb463c",
+          "title": "Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
+          "short_id": "cdba4e71",
+          "title": "Write the coded-modulation link simulation tutorial",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
+          "short_id": "eba21481",
+          "title": "Tersify comments in gf2-core tests, benches and examples",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
+          "short_id": "ee2b0c0c",
+          "title": "Tersify comments in the gf2-coding LDPC module",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "ee50e270-74ea-4566-a0a7-69791af66e8a",
+          "short_id": "ee50e270",
+          "title": "Rewrite the SIMD kernel and statistics crate READMEs",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "f2064e90-ad75-4253-8402-41d63d38af41",
+          "short_id": "f2064e90",
+          "title": "Tersify comments in gf2-core dense field matrix modules",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "f22ec590-b185-4444-903b-e9623a183213",
+          "short_id": "f22ec590",
+          "title": "Tersify comments in the remaining gf2-sim source files",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "f46046f0-3672-4bec-8d57-83bc77a6043b",
+          "short_id": "f46046f0",
+          "title": "Tersify comments in gf2-sim executor and campaign modules",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 9,
+      "issues": [
+        {
+          "id": "030496bd-633a-4ed0-81dd-77cdea296b01",
+          "short_id": "030496bd",
+          "title": "Close the sweep with the after census and justification list",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "37099e5b-66ef-44ef-a6ef-a58dafd93c9e",
+          "short_id": "37099e5b",
+          "title": "Empty dev/sessions into owner dirs or the legacy mirror",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "eb2a833d-75b4-45b7-89ea-b8aafcd36cb1",
+          "short_id": "eb2a833d",
+          "title": "Move gf2-coding crate guides into the legacy mirror",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f0dd63f1-e326-406b-a7b3-6f68e43d2143",
+          "short_id": "f0dd63f1",
+          "title": "Empty dev/presentations of leftover theme files",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 10,
+      "issues": [
+        {
+          "id": "ffc35b8c-5f2a-4a37-8eef-905b362b615d",
+          "short_id": "ffc35b8c",
+          "title": "Workspace source-comment tersification sweep",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 11,
+      "issues": [
+        {
+          "id": "103a792a-4168-44d5-9a0f-9373e002b793",
+          "short_id": "103a792a",
+          "title": "Move gf2-core crate guides into the legacy mirror",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "1adfe2e9-2e12-4851-a341-69c36d50d63f",
+          "short_id": "1adfe2e9",
+          "title": "Point the presentation figure example at a caller-chosen output dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
+          "short_id": "1ca94ec2",
+          "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "2596b143-9284-450b-bf60-8e6510c7032b",
+          "short_id": "2596b143",
+          "title": "Record the final Rustdoc example census and doctest timing",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "3759f995-edc4-4061-8b45-0ec30078a691",
+          "short_id": "3759f995",
+          "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "42037c91-71ad-431b-b27a-e9826e5354a9",
+          "short_id": "42037c91",
+          "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "4f161183-869b-4369-83e9-46dc023720d5",
+          "short_id": "4f161183",
+          "title": "Regroup flat zen3 dev/active entries under their epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
+          "short_id": "616e1d7c",
+          "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
+          "short_id": "83f9ce69",
+          "title": "Re-archive epic 97bf0879 to collect its terminal stories",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "eace5009-d595-4a23-bd68-6034df5e5352",
+          "short_id": "eace5009",
+          "title": "Regroup the remaining flat dev/active entries under epic dirs",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b",
+          "short_id": "f29a9225",
+          "title": "Re-archive epic 026fc832 to collect its terminal stories",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
+          "short_id": "f902240f",
+          "title": "Bring the hand-archived OSD epic under container archival",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 12,
+      "issues": [
+        {
+          "id": "0a0ece44-5efc-46ca-bbf5-5fb2674c570f",
+          "short_id": "0a0ece44",
+          "title": "Resolve stray and ownerless dev entries",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "0c5aa3b7-4846-4ec8-a578-14e6b35e78dd",
+          "short_id": "0c5aa3b7",
+          "title": "Relocate loose narrative Markdown out of simulation_results and studies",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "198aafa3-0553-4a93-8dab-6e971fe3048b",
+          "short_id": "198aafa3",
+          "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
+          "short_id": "5ec5dcc1",
+          "title": "Move the 02b8137c validation journal under its epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "602652bf-0388-4604-882b-f874efff83c2",
+          "short_id": "602652bf",
+          "title": "Move the f547c394 protocol inputs under their epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "7039d680-06da-481e-b000-5f9bba44e9ee",
+          "short_id": "7039d680",
+          "title": "Move the addendum fixture entries under the zen3 epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
+          "short_id": "7dbcde0c",
+          "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
+          "short_id": "b2bb1065",
+          "title": "Relocate loose narrative reports out of dev/bench_results",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "e1f262a7-668d-421f-9bea-13f80fdb81e0",
+          "short_id": "e1f262a7",
+          "title": "Move the 3f664839 design entry under its epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "ec655592-d647-4fbc-90de-ef44ed313067",
+          "short_id": "ec655592",
+          "title": "Empty dev/plans through archival or legacy moves",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f6148d1e-d151-4c21-8507-7efd39044548",
+          "short_id": "f6148d1e",
+          "title": "Move the dbd8787d campaign declaration entry under its epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f694f59a-bf27-42d5-8197-b68b60b5bf37",
+          "short_id": "f694f59a",
+          "title": "Move the a83583e0 campaign declaration entry under its epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "f79bcba3-ec86-49c2-82a1-1689a67e6015",
+          "short_id": "f79bcba3",
+          "title": "Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "fdb998ec-6042-4112-8bf9-1f179128d62b",
+          "short_id": "fdb998ec",
+          "title": "Rewrite README for research adoption",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 13,
+      "issues": [
+        {
+          "id": "9451498f-62f6-4e28-bd93-dffc836fdf02",
+          "short_id": "9451498f",
+          "title": "Clear empty leftover dirs under dev/active",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "b959ffe8-5a4a-406c-91fa-acc6a01a3167",
+          "short_id": "b959ffe8",
+          "title": "Rewrite dev/index.md for the final dev layout",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "fca578b1-2593-4bc4-8f08-8a425f3b237f",
+          "short_id": "fca578b1",
+          "title": "Audit the permanent surface against the docs invariants",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 14,
+      "issues": [
+        {
+          "id": "d6ebc4ec-aa63-4c1d-bd0a-7ef4c33e9db6",
+          "short_id": "d6ebc4ec",
+          "title": "Narrow the docs policy to post-overhaul paths",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 15,
+      "issues": [
+        {
+          "id": "c852d9b2-3251-44c2-917f-00be035bbd07",
+          "short_id": "c852d9b2",
+          "title": "Verify links across the permanent surface and executed archives",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 16,
+      "issues": [
+        {
+          "id": "af84619e-a2e1-4b3d-af9e-4120a43e4130",
+          "short_id": "af84619e",
+          "title": "Retire the transient progress checker after the final check",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
     }
-   ]
-  },
-  {
-   "wave_number": 2,
-   "issues": [
+  ],
+  "created_during_execution": [
     {
-     "id": "56378e82-2a72-44ef-96b6-1d12d7332976",
-     "short_id": "56378e82",
-     "title": "Make CLAUDE.md a symlink and define AGENTS.md scope",
-     "classification": "implementation",
-     "status": "done"
+      "id": "0dc52df8",
+      "title": "Migrate cites labels to the qualified citation form",
+      "epic": "86b9c719",
+      "reason": "jit 1.0 rejects unqualified cites labels; blocked every repo-validate gate"
     },
     {
-     "id": "dcd38c45-66ae-43ed-b689-3a9dcd2600b3",
-     "short_id": "dcd38c45",
-     "title": "Ground the doc-review gate in the documentation invariants",
-     "classification": "implementation",
-     "status": "done"
+      "id": "d09a610b",
+      "reason": "roadmap gap (4bdcd65a)"
+    },
+    {
+      "id": "158ba129",
+      "reason": "roadmap gap (4bdcd65a)"
+    },
+    {
+      "id": "12a3c312",
+      "reason": "roadmap gap (60652fe4)"
+    },
+    {
+      "id": "edcd4c9c",
+      "reason": "roadmap gap (875914b3)"
+    },
+    {
+      "id": "a76ce44f",
+      "reason": "roadmap gap (875914b3)"
+    },
+    {
+      "id": "50201002",
+      "reason": "dev/tools sweep unit for ffc35b8c REQ-28 (41e1d47d)"
+    },
+    {
+      "id": "ec5b6c8f",
+      "reason": "gf2-kernels-hip broken intra-doc links (found by a0a29512)"
+    },
+    {
+      "id": "f258468e",
+      "reason": "slow scalar Gf2mWide multiply (found by b6fdb815)"
     }
-   ]
-  },
-  {
-   "wave_number": 3,
-   "issues": [
+  ],
+  "escalations": [
     {
-     "id": "8f61d6de-e29a-4d83-8bab-4ac61df0b2bf",
-     "short_id": "8f61d6de",
-     "title": "Add the docs-mechanical gate with self-tests",
-     "classification": "implementation",
-     "status": "done"
+      "issue": "9b2886a7",
+      "question": "72-char lane merge subject; reword unpushed main?",
+      "resolution": "Owner approved rewording local main (rebase -r); merge now chore(jit:a82d2347) with no jit tags in body."
+    },
+    {
+      "issue": "41e1d47d",
+      "question": "Criteria additions fca578b1 REQ-05, ffc35b8c REQ-28 + sweep unit",
+      "resolution": "Owner approved both; 50201002 filed."
+    },
+    {
+      "issue": "a24b2af7",
+      "question": "Rework limit hit; reviewers contradicted on manifest header",
+      "resolution": "Owner approved attempt 3 citing plan contract."
+    },
+    {
+      "issue": "a24b2af7",
+      "question": "Same code-review finding (empty manifest) three times",
+      "resolution": "Owner override recorded as DEC-01 on the issue; code-review then passed."
+    },
+    {
+      "issue": "session-3",
+      "question": "Dirty main from .agents/skills edits; release tuning-tooling hold?",
+      "resolution": "Owner committed the skill edits (9b219e095) and released the hold (2026-10-03)."
     }
-   ]
+  ],
+  "rework_counts": {
+    "495807a3": 1,
+    "34adff85": 1,
+    "8f61d6de": 1,
+    "3f29e945": 2,
+    "60652fe4": 1,
+    "a24b2af7": 4,
+    "e85b8edf": 2,
+    "875914b3": 1
   },
-  {
-   "wave_number": 4,
-   "issues": [
+  "surfaced_pitfalls": [
     {
-     "id": "3f29e945-8b12-4862-82c8-f2ec6573287c",
-     "short_id": "3f29e945",
-     "title": "Define documentation contract and enforcement baseline",
-     "classification": "implementation",
-     "status": "done"
+      "issue": "34adff85",
+      "finding": "cargo-ci cold run measured 875 s against the 900 s gate timeout; release doctest step ~215 s (thin-LTO link). Warm run 359 s.",
+      "disposition": "monitor; REQ-01 requires release mode"
+    },
+    {
+      "issue": "56378e82",
+      "finding": "~40 source comments and crate docs cite 'CLAUDE.md \u00a7<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
+      "disposition": "subject of REQ-17/12907582 and the tersification sweep; verify closed before story/epic gates"
     }
-   ]
-  },
-  {
-   "wave_number": 5,
-   "issues": [
-    {
-     "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
-     "short_id": "12907582",
-     "title": "Correct surviving source-level documentation drift",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
-     "short_id": "41e1d47d",
-     "title": "Reconcile open docs-remediation issues outside the overhaul",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "4bdcd65a-e338-488b-b42e-19bee4a875a9",
-     "short_id": "4bdcd65a",
-     "title": "Map the root roadmap's open questions and publication items",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "60652fe4-d6dd-49e9-97f1-db99b4c73111",
-     "short_id": "60652fe4",
-     "title": "Map the gf2-core roadmap's planned phases",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "871b401d-59f7-4fa4-86b6-9c067795ff06",
-     "short_id": "871b401d",
-     "title": "Register and project the no-dev-path-coupling invariant",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "875914b3-38c8-4ec2-a13f-009fc620f7d4",
-     "short_id": "875914b3",
-     "title": "Map the gf2-coding roadmap's unchecked items",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "9b2886a7-35af-45cc-9200-dddea1c0323a",
-     "short_id": "9b2886a7",
-     "title": "Register audience, placement and tone documentation invariants",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "a0a29512-ce14-4110-a541-65ef6612278d",
-     "short_id": "a0a29512",
-     "title": "Remove tautological Rustdoc examples across the workspace",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "a24b2af7-81ce-4442-9ee3-6ce096c36537",
-     "short_id": "a24b2af7",
-     "title": "Define the documentation migration manifest and progress checker",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "a82d2347-18ac-4cf4-8de5-8e7fe93be744",
-     "short_id": "a82d2347",
-     "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "b6fdb815-20da-4ea9-af21-351b01746aee",
-     "short_id": "b6fdb815",
-     "title": "Add a FieldMatrix linear-algebra example program to gf2-core",
-     "classification": "implementation",
-     "status": "done"
-    },
-    {
-     "id": "e85b8edf-f35f-49b5-bdb1-65502b7d30e1",
-     "short_id": "e85b8edf",
-     "title": "Map the root roadmap's planned milestones and goals",
-     "classification": "implementation",
-     "status": "done"
-    }
-   ]
-  },
-  {
-   "wave_number": 6,
-   "issues": [
-    {
-     "id": "036615b0-6ab3-4bc8-a8e2-c36837296111",
-     "short_id": "036615b0",
-     "title": "Inventory terminal, ownerless and empty dev/active entries",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "11964cb8-75c9-4413-bff8-d781d6b3e7eb",
-     "short_id": "11964cb8",
-     "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "153297cf-7687-4599-be56-23e038efee3d",
-     "short_id": "153297cf",
-     "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "23219502-6312-45e5-88cd-08f4b0f95aa8",
-     "short_id": "23219502",
-     "title": "Inventory zen3 dev/active entries 428f2f6b to fcb04d66",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "27f0f3b1-df9b-4836-a5f6-7313d794a9be",
-     "short_id": "27f0f3b1",
-     "title": "Populate the migration manifest for the other dev buckets",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "29331bd3-e56a-4521-8db9-096152ee8482",
-     "short_id": "29331bd3",
-     "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "3fd3db5e-60ea-41c1-b95a-144d9ae02e4a",
-     "short_id": "3fd3db5e",
-     "title": "Locate BCH receipt-renderer inputs through the configured repository root",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "52fb615b-0294-4452-bf34-2d7a178029b0",
-     "short_id": "52fb615b",
-     "title": "Populate the migration manifest for permanent-path sources",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "5a25717c-83f4-453c-8866-cab67ecf2103",
-     "short_id": "5a25717c",
-     "title": "Locate receipt-pinned campaign inputs by content identity",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
-     "short_id": "5c0b9635",
-     "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
-     "short_id": "65a5436a",
-     "title": "Resolve campaign CI check inputs through the configured repository root",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "69aa6896-4c6e-42bb-90b6-d7237a31dc14",
-     "short_id": "69aa6896",
-     "title": "Create the docs index and quadrant layout",
-     "classification": "documentation",
-     "status": "in_progress"
-    },
-    {
-     "id": "7bac1303-eed8-443a-a504-593a87710cb4",
-     "short_id": "7bac1303",
-     "title": "Make the first survey-harness crates' tool dependency depth-independent",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "8434e0e1-859d-4b18-ad3c-2942ae248b60",
-     "short_id": "8434e0e1",
-     "title": "Inventory the other open-epic dev/active entries",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "8bd873f7-4758-44cd-91aa-03db3a7a533b",
-     "short_id": "8bd873f7",
-     "title": "Locate tuning-extent campaign declarations without derived dev paths",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "d1f6b2c9-4b2d-40a5-bea8-ce8b1ea601a9",
-     "short_id": "d1f6b2c9",
-     "title": "Inventory the field-dispatch dev/active entries",
-     "classification": "implementation",
-     "status": "in_progress"
-    },
-    {
-     "id": "d53cba10-d5ee-4764-8626-968ba5e6642c",
-     "short_id": "d53cba10",
-     "title": "Locate addendum schema test inputs through the configured repository root",
-     "classification": "implementation",
-     "status": "in_progress"
-    }
-   ]
-  },
-  {
-   "wave_number": 7,
-   "issues": [
-    {
-     "id": "1fca3739-f773-4736-bb4b-ff6c5ec30ee9",
-     "short_id": "1fca3739",
-     "title": "Write the performance evidence reference page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "2ff9953a-8d33-449f-80ac-f1564fefa14a",
-     "short_id": "2ff9953a",
-     "title": "Write the supported configurations reference page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "44f4586d-5d13-42a3-b6ff-1be4ae2bc18d",
-     "short_id": "44f4586d",
-     "title": "Write the finite-field arithmetic concepts page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "4f752758-6fd7-45f6-880c-3c8b853e1783",
-     "short_id": "4f752758",
-     "title": "Rewrite the gf2-algebra README as its entry page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "5625a423-3ccc-4d11-b839-52c8fd311601",
-     "short_id": "5625a423",
-     "title": "Write the standards conformance reference page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "62f0d0e6-0d54-44a6-a5d7-31b09c33976d",
-     "short_id": "62f0d0e6",
-     "title": "Record the pre-sweep comment census",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "698fa793-8c74-4019-a605-9d078f023cbc",
-     "short_id": "698fa793",
-     "title": "Rewrite the gf2-coding README as its entry page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "6c314026-6f34-490d-9403-39b7ecc89ea5",
-     "short_id": "6c314026",
-     "title": "Write the finite-field linear algebra at scale tutorial",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "8b42d23b-d94b-4c2b-84a5-9776619123c5",
-     "short_id": "8b42d23b",
-     "title": "Rewrite the gf2-core README as its entry page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "9dcc0cae-ef55-4f02-9446-83a0822ec158",
-     "short_id": "9dcc0cae",
-     "title": "Write the simulation campaign how-to",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "b16d013a-c200-4e75-8c57-6638a313438e",
-     "short_id": "b16d013a",
-     "title": "Write the gf2-sim README as its entry page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "c84ac71a-b9e8-4b10-9ebb-b433f7077dae",
-     "short_id": "c84ac71a",
-     "title": "Apply the depth-independent tool dependency to the remaining harness crates",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
-     "short_id": "da120b98",
-     "title": "Write the formal verification how-to",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "deda0962-2366-493d-b0fd-c65874ba7cbe",
-     "short_id": "deda0962",
-     "title": "Write the acceleration architecture concepts page",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa",
-     "short_id": "ec7d2aec",
-     "title": "Widen the docs policy to manage archival sources",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "fb209a81-59cf-4bb1-86c9-597637a4bba2",
-     "short_id": "fb209a81",
-     "title": "Move presentation decks into their epics' archive dirs",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 8,
-   "issues": [
-    {
-     "id": "01c20b61-4dce-4437-baab-9c9d03d1d2c1",
-     "short_id": "01c20b61",
-     "title": "Write the evidence reproduction how-to",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "130d5fd7-4540-4a29-9bd5-67d755bae78c",
-     "short_id": "130d5fd7",
-     "title": "Move the Lean pipeline guide into its epic's archive dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "13dfe1a5-a770-4910-b6b3-36e4b2a91cca",
-     "short_id": "13dfe1a5",
-     "title": "Tersify comments in gf2-coding tests, benches and examples",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "290b8716-2442-42af-9383-08f9d629219d",
-     "short_id": "290b8716",
-     "title": "Tersify comments in the remaining gf2-kernels-simd files",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
-     "short_id": "3aef9e33",
-     "title": "Tersify comments in the gf2-algebra packed-field module",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "3da13f39-225c-4615-9f68-f1daa76af90b",
-     "short_id": "3da13f39",
-     "title": "Tersify comments in the gf2-core prime-field modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
-     "short_id": "4997a3ed",
-     "title": "Tersify comments in gf2-core bit-level structures",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "57436474-9b84-4d68-804f-070c10b673d9",
-     "short_id": "57436474",
-     "title": "Tersify comments in the remaining gf2-algebra files",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
-     "short_id": "66858db0",
-     "title": "Tersify comments in gf2-core field polynomial and extension modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "67048b47-ed17-4672-822a-829a796420c2",
-     "short_id": "67048b47",
-     "title": "Link unlinked owned artifacts to their issues",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "67b5d1d8-b6e2-4687-ae5f-fd36bcee334a",
-     "short_id": "67b5d1d8",
-     "title": "Tersify comments in the gf2-core GF(2^m) module",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "72768e37-a609-427c-a3e6-8a4efcf4c8b8",
-     "short_id": "72768e37",
-     "title": "Tersify comments in gf2-sim tests, benches, binaries and examples",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "7bfad039-1fd6-4738-a845-b9c738458968",
-     "short_id": "7bfad039",
-     "title": "Tersify comments in gf2-sim GPU, preset, stage and graph modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
-     "short_id": "8a9156fc",
-     "title": "Write the acceleration selection how-to",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "8a9db61a-115b-4f07-9baf-97e6545525a5",
-     "short_id": "8a9db61a",
-     "title": "Tersify comments in the gf2-coding modem module",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
-     "short_id": "8f451167",
-     "title": "Tersify comments in gf2-core field trait and vector modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "93aed46a-441a-488e-8d25-651abc1897a0",
-     "short_id": "93aed46a",
-     "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "9dda3958-4e62-4bb2-89e4-a1999e000a09",
-     "short_id": "9dda3958",
-     "title": "Tersify comments in gf2-core field matrix algorithm modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
-     "short_id": "9f47bb94",
-     "title": "Tersify comments in the gf2-kernels-simd x86 module",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "aa0558c1-8143-44b9-a2ca-27282d1cf015",
-     "short_id": "aa0558c1",
-     "title": "Tersify comments in the remaining gf2-coding source files",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "bfb37a21-1608-4ed9-a016-c60d0c87b4c9",
-     "short_id": "bfb37a21",
-     "title": "Tersify comments in gf2-coding BCH and transform modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "c6aa0e84-072e-4671-9c50-0c8e9d0d4f66",
-     "short_id": "c6aa0e84",
-     "title": "Tersify comments in gf2-core runtime support modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "cafb463c-59ea-4dd5-8bc4-c7cc4521c00f",
-     "short_id": "cafb463c",
-     "title": "Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
-     "short_id": "cdba4e71",
-     "title": "Write the coded-modulation link simulation tutorial",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
-     "short_id": "eba21481",
-     "title": "Tersify comments in gf2-core tests, benches and examples",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
-     "short_id": "ee2b0c0c",
-     "title": "Tersify comments in the gf2-coding LDPC module",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "ee50e270-74ea-4566-a0a7-69791af66e8a",
-     "short_id": "ee50e270",
-     "title": "Rewrite the SIMD kernel and statistics crate READMEs",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "f2064e90-ad75-4253-8402-41d63d38af41",
-     "short_id": "f2064e90",
-     "title": "Tersify comments in gf2-core dense field matrix modules",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "f22ec590-b185-4444-903b-e9623a183213",
-     "short_id": "f22ec590",
-     "title": "Tersify comments in the remaining gf2-sim source files",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "f46046f0-3672-4bec-8d57-83bc77a6043b",
-     "short_id": "f46046f0",
-     "title": "Tersify comments in gf2-sim executor and campaign modules",
-     "classification": "documentation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 9,
-   "issues": [
-    {
-     "id": "030496bd-633a-4ed0-81dd-77cdea296b01",
-     "short_id": "030496bd",
-     "title": "Close the sweep with the after census and justification list",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "37099e5b-66ef-44ef-a6ef-a58dafd93c9e",
-     "short_id": "37099e5b",
-     "title": "Empty dev/sessions into owner dirs or the legacy mirror",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "eb2a833d-75b4-45b7-89ea-b8aafcd36cb1",
-     "short_id": "eb2a833d",
-     "title": "Move gf2-coding crate guides into the legacy mirror",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "f0dd63f1-e326-406b-a7b3-6f68e43d2143",
-     "short_id": "f0dd63f1",
-     "title": "Empty dev/presentations of leftover theme files",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 10,
-   "issues": [
-    {
-     "id": "ffc35b8c-5f2a-4a37-8eef-905b362b615d",
-     "short_id": "ffc35b8c",
-     "title": "Workspace source-comment tersification sweep",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 11,
-   "issues": [
-    {
-     "id": "103a792a-4168-44d5-9a0f-9373e002b793",
-     "short_id": "103a792a",
-     "title": "Move gf2-core crate guides into the legacy mirror",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "1adfe2e9-2e12-4851-a341-69c36d50d63f",
-     "short_id": "1adfe2e9",
-     "title": "Point the presentation figure example at a caller-chosen output dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "1ca94ec2-5e10-4a27-95cf-e743a64ac9e2",
-     "short_id": "1ca94ec2",
-     "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "2596b143-9284-450b-bf60-8e6510c7032b",
-     "short_id": "2596b143",
-     "title": "Record the final Rustdoc example census and doctest timing",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "3759f995-edc4-4061-8b45-0ec30078a691",
-     "short_id": "3759f995",
-     "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "42037c91-71ad-431b-b27a-e9826e5354a9",
-     "short_id": "42037c91",
-     "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "4f161183-869b-4369-83e9-46dc023720d5",
-     "short_id": "4f161183",
-     "title": "Regroup flat zen3 dev/active entries under their epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
-     "short_id": "616e1d7c",
-     "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
-     "short_id": "83f9ce69",
-     "title": "Re-archive epic 97bf0879 to collect its terminal stories",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "eace5009-d595-4a23-bd68-6034df5e5352",
-     "short_id": "eace5009",
-     "title": "Regroup the remaining flat dev/active entries under epic dirs",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b",
-     "short_id": "f29a9225",
-     "title": "Re-archive epic 026fc832 to collect its terminal stories",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
-     "short_id": "f902240f",
-     "title": "Bring the hand-archived OSD epic under container archival",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 12,
-   "issues": [
-    {
-     "id": "0a0ece44-5efc-46ca-bbf5-5fb2674c570f",
-     "short_id": "0a0ece44",
-     "title": "Resolve stray and ownerless dev entries",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "0c5aa3b7-4846-4ec8-a578-14e6b35e78dd",
-     "short_id": "0c5aa3b7",
-     "title": "Relocate loose narrative Markdown out of simulation_results and studies",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "198aafa3-0553-4a93-8dab-6e971fe3048b",
-     "short_id": "198aafa3",
-     "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "5ec5dcc1-5344-4754-ad35-3e6ce3a327e7",
-     "short_id": "5ec5dcc1",
-     "title": "Move the 02b8137c validation journal under its epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "602652bf-0388-4604-882b-f874efff83c2",
-     "short_id": "602652bf",
-     "title": "Move the f547c394 protocol inputs under their epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "7039d680-06da-481e-b000-5f9bba44e9ee",
-     "short_id": "7039d680",
-     "title": "Move the addendum fixture entries under the zen3 epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "7dbcde0c-3a5c-472e-8c41-e5e1e8d71bfa",
-     "short_id": "7dbcde0c",
-     "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "b2bb1065-a8aa-4af7-a7d8-4f800ec8cf5a",
-     "short_id": "b2bb1065",
-     "title": "Relocate loose narrative reports out of dev/bench_results",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "e1f262a7-668d-421f-9bea-13f80fdb81e0",
-     "short_id": "e1f262a7",
-     "title": "Move the 3f664839 design entry under its epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "ec655592-d647-4fbc-90de-ef44ed313067",
-     "short_id": "ec655592",
-     "title": "Empty dev/plans through archival or legacy moves",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "f6148d1e-d151-4c21-8507-7efd39044548",
-     "short_id": "f6148d1e",
-     "title": "Move the dbd8787d campaign declaration entry under its epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "f694f59a-bf27-42d5-8197-b68b60b5bf37",
-     "short_id": "f694f59a",
-     "title": "Move the a83583e0 campaign declaration entry under its epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "f79bcba3-ec86-49c2-82a1-1689a67e6015",
-     "short_id": "f79bcba3",
-     "title": "Move zen3 survey-harness entries 04b85d10 to 3be770d5 under the epic dir",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "fdb998ec-6042-4112-8bf9-1f179128d62b",
-     "short_id": "fdb998ec",
-     "title": "Rewrite README for research adoption",
-     "classification": "documentation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 13,
-   "issues": [
-    {
-     "id": "9451498f-62f6-4e28-bd93-dffc836fdf02",
-     "short_id": "9451498f",
-     "title": "Clear empty leftover dirs under dev/active",
-     "classification": "implementation",
-     "status": "pending"
-    },
-    {
-     "id": "b959ffe8-5a4a-406c-91fa-acc6a01a3167",
-     "short_id": "b959ffe8",
-     "title": "Rewrite dev/index.md for the final dev layout",
-     "classification": "documentation",
-     "status": "pending"
-    },
-    {
-     "id": "fca578b1-2593-4bc4-8f08-8a425f3b237f",
-     "short_id": "fca578b1",
-     "title": "Audit the permanent surface against the docs invariants",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 14,
-   "issues": [
-    {
-     "id": "d6ebc4ec-aa63-4c1d-bd0a-7ef4c33e9db6",
-     "short_id": "d6ebc4ec",
-     "title": "Narrow the docs policy to post-overhaul paths",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 15,
-   "issues": [
-    {
-     "id": "c852d9b2-3251-44c2-917f-00be035bbd07",
-     "short_id": "c852d9b2",
-     "title": "Verify links across the permanent surface and executed archives",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  },
-  {
-   "wave_number": 16,
-   "issues": [
-    {
-     "id": "af84619e-a2e1-4b3d-af9e-4120a43e4130",
-     "short_id": "af84619e",
-     "title": "Retire the transient progress checker after the final check",
-     "classification": "implementation",
-     "status": "pending"
-    }
-   ]
-  }
- ],
- "created_during_execution": [
-  {
-   "id": "0dc52df8",
-   "title": "Migrate cites labels to the qualified citation form",
-   "epic": "86b9c719",
-   "reason": "jit 1.0 rejects unqualified cites labels; blocked every repo-validate gate"
-  },
-  {
-   "id": "d09a610b",
-   "reason": "roadmap gap (4bdcd65a)"
-  },
-  {
-   "id": "158ba129",
-   "reason": "roadmap gap (4bdcd65a)"
-  },
-  {
-   "id": "12a3c312",
-   "reason": "roadmap gap (60652fe4)"
-  },
-  {
-   "id": "edcd4c9c",
-   "reason": "roadmap gap (875914b3)"
-  },
-  {
-   "id": "a76ce44f",
-   "reason": "roadmap gap (875914b3)"
-  },
-  {
-   "id": "50201002",
-   "reason": "dev/tools sweep unit for ffc35b8c REQ-28 (41e1d47d)"
-  },
-  {
-   "id": "ec5b6c8f",
-   "reason": "gf2-kernels-hip broken intra-doc links (found by a0a29512)"
-  },
-  {
-   "id": "f258468e",
-   "reason": "slow scalar Gf2mWide multiply (found by b6fdb815)"
-  }
- ],
- "escalations": [
-  {
-   "issue": "9b2886a7",
-   "question": "72-char lane merge subject; reword unpushed main?",
-   "resolution": "Owner approved rewording local main (rebase -r); merge now chore(jit:a82d2347) with no jit tags in body."
-  },
-  {
-   "issue": "41e1d47d",
-   "question": "Criteria additions fca578b1 REQ-05, ffc35b8c REQ-28 + sweep unit",
-   "resolution": "Owner approved both; 50201002 filed."
-  },
-  {
-   "issue": "a24b2af7",
-   "question": "Rework limit hit; reviewers contradicted on manifest header",
-   "resolution": "Owner approved attempt 3 citing plan contract."
-  },
-  {
-   "issue": "a24b2af7",
-   "question": "Same code-review finding (empty manifest) three times",
-   "resolution": "Owner override recorded as DEC-01 on the issue; code-review then passed."
-  }
- ],
- "rework_counts": {
-  "495807a3": 1,
-  "34adff85": 1,
-  "8f61d6de": 1,
-  "3f29e945": 2,
-  "60652fe4": 1,
-  "a24b2af7": 4,
-  "e85b8edf": 2,
-  "875914b3": 1
- },
- "surfaced_pitfalls": [
-  {
-   "issue": "34adff85",
-   "finding": "cargo-ci cold run measured 875 s against the 900 s gate timeout; release doctest step ~215 s (thin-LTO link). Warm run 359 s.",
-   "disposition": "monitor; REQ-01 requires release mode"
-  },
-  {
-   "issue": "56378e82",
-   "finding": "~40 source comments and crate docs cite 'CLAUDE.md \u00a7<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
-   "disposition": "subject of REQ-17/12907582 and the tersification sweep; verify closed before story/epic gates"
-  }
- ],
- "notes": [
-  "495807a3 work landed on main before this session (4133f4152); gates run by lead.",
-  "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
-  "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings.",
-  "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it.",
-  "User decision 2026-10-02: cargo-ci and code-review removed from purely documentation issues: 69aa6896 8b42d23b 698fa793 4f752758 b16d013a deda0962 ee50e270 44f4586d 1fca3739 8a9156fc 01c20b61 9dcc0cae da120b98 5625a423 2ff9953a cdba4e71 6c314026 fdb998ec b959ffe8 e85b8edf 4bdcd65a 60652fe4 875914b3 41e1d47d a82d2347. Re-add both if any of them touches Rust, scripts or config.",
-  "Session 2: wave 5a dispatched 2026-10-02 (AGENTS.md lane in one worktree agent-9b2886a7; 12907582 held for 5b after a0a29512 and a24b2af7).",
-  "Wave 6a dispatched concurrently with 12907582 (no dependency between them). Held: 8bd873f7 (done by another session for dbd8787d), 3fd3db5e (fd9d5416 in progress, hard precondition), 5a25717c/65a5436a/7bac1303 (tuning-campaign tooling under concurrent edit), 153297cf (after 12907582 merges; both edit rustdoc).",
-  "Owner approved parenting the 10 session-filed issues (2026-10-02); 112f23c6 joined fa787f85 with the standard four gates."
- ],
- "started_at": "2026-10-01T19:40:00Z",
- "traps": [
-  "Profile-owned files (packages/sim-research/manifest.toml declares them, e.g. contrib/gates/*-prompt.md) fail jit validate profile-ownership when edited in place: after merge run `jit profile capture --source packages/sim-research --destination packages/sim-research`, bump manifest version, `jit profile upgrade --profile path:packages/sim-research`.",
-  "jit doc dir <task> resolves dev/active/<task-id>, not the epic dir; per active-layout contract workers write under dev/active/fa787f85-documentation-overhaul/.",
-  "Worker worktree jit refuses state writes: workers cannot jit doc add or gate evaluate; lead links and gates after merge.",
-  "Gate runs dirty .jit/issues on main; commit gate state before running dispatch-worker-worktree.sh (it refuses a dirty main).",
-  "Count merge subjects with a script before committing; a 72-char lane merge forced a main rewrite. Tag a multi-issue merge with the issue that owns its out-of-region edits and keep other jit:<id> tags out of the body; reviewers attribute every commit whose message contains jit:<id>.",
-  "Run cargo-ci before code-review on Rust issues; code-review fails REQ evidence while cargo-ci is pending.",
-  "Delete worker branches that fast-forwarded old main after any main rewrite; reviewers found the stale commit through them.",
-  "Worktree .jit is a dispatch-time snapshot: workers must read live tracker state from the main checkout (read-only).",
-  "Cache-pool seeding copies target/ with absolute paths of other worktrees baked in; tests reading CARGO_MANIFEST_DIR and cargo doc search.index fail. Fix: cargo clean -p <crate> and rm target/doc in the worktree, CARGO_CI_NO_SCCACHE=1.",
-  "jit issue create for orphan tasks needs --orphan; filed roadmap issues default to ready, set backlog explicitly.",
-  "Do not add a dependency from a new task onto a story: deps define containment.",
-  "jit issue create --orphan does not satisfy repository integrity: a new issue with no dependency edge fails jit validate (isolated issue). Wire every filed issue into a container immediately; parenting into another epic needs owner approval."
- ]
+  ],
+  "notes": [
+    "495807a3 work landed on main before this session (4133f4152); gates run by lead.",
+    "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
+    "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings.",
+    "OD-08 applied: docs-mechanical gate added to all 114 open overhaul issues after 8f61d6de registered it.",
+    "User decision 2026-10-02: cargo-ci and code-review removed from purely documentation issues: 69aa6896 8b42d23b 698fa793 4f752758 b16d013a deda0962 ee50e270 44f4586d 1fca3739 8a9156fc 01c20b61 9dcc0cae da120b98 5625a423 2ff9953a cdba4e71 6c314026 fdb998ec b959ffe8 e85b8edf 4bdcd65a 60652fe4 875914b3 41e1d47d a82d2347. Re-add both if any of them touches Rust, scripts or config.",
+    "Session 2: wave 5a dispatched 2026-10-02 (AGENTS.md lane in one worktree agent-9b2886a7; 12907582 held for 5b after a0a29512 and a24b2af7).",
+    "Wave 6a dispatched concurrently with 12907582 (no dependency between them). Held: 8bd873f7 (done by another session for dbd8787d), 3fd3db5e (fd9d5416 in progress, hard precondition), 5a25717c/65a5436a/7bac1303 (tuning-campaign tooling under concurrent edit), 153297cf (after 12907582 merges; both edit rustdoc).",
+    "Owner approved parenting the 10 session-filed issues (2026-10-02); 112f23c6 joined fa787f85 with the standard four gates.",
+    "Session 3 (2026-10-03): session 2 ended without a handoff; progress reconciled against JIT. Wave 6 = remaining decoupling tasks plus the 14 page/move tasks pulled forward from wave 7 (no deps between them); 5a25717c runs after 112f23c6 (shared root resolver). 153297cf (after 12907582) and 3fd3db5e (fd9d5416 still in progress, hard REQ-01) moved to wave 7."
+  ],
+  "started_at": "2026-10-01T19:40:00Z",
+  "traps": [
+    "Profile-owned files (packages/sim-research/manifest.toml declares them, e.g. contrib/gates/*-prompt.md) fail jit validate profile-ownership when edited in place: after merge run `jit profile capture --source packages/sim-research --destination packages/sim-research`, bump manifest version, `jit profile upgrade --profile path:packages/sim-research`.",
+    "jit doc dir <task> resolves dev/active/<task-id>, not the epic dir; per active-layout contract workers write under dev/active/fa787f85-documentation-overhaul/.",
+    "Worker worktree jit refuses state writes: workers cannot jit doc add or gate evaluate; lead links and gates after merge.",
+    "Gate runs dirty .jit/issues on main; commit gate state before running dispatch-worker-worktree.sh (it refuses a dirty main).",
+    "Count merge subjects with a script before committing; a 72-char lane merge forced a main rewrite. Tag a multi-issue merge with the issue that owns its out-of-region edits and keep other jit:<id> tags out of the body; reviewers attribute every commit whose message contains jit:<id>.",
+    "Run cargo-ci before code-review on Rust issues; code-review fails REQ evidence while cargo-ci is pending.",
+    "Delete worker branches that fast-forwarded old main after any main rewrite; reviewers found the stale commit through them.",
+    "Worktree .jit is a dispatch-time snapshot: workers must read live tracker state from the main checkout (read-only).",
+    "Cache-pool seeding copies target/ with absolute paths of other worktrees baked in; tests reading CARGO_MANIFEST_DIR and cargo doc search.index fail. Fix: cargo clean -p <crate> and rm target/doc in the worktree, CARGO_CI_NO_SCCACHE=1.",
+    "jit issue create for orphan tasks needs --orphan; filed roadmap issues default to ready, set backlog explicitly.",
+    "Do not add a dependency from a new task onto a story: deps define containment.",
+    "jit issue create --orphan does not satisfy repository integrity: a new issue with no dependency edge fails jit validate (isolated issue). Wire every filed issue into a container immediately; parenting into another epic needs owner approval."
+  ]
 }
