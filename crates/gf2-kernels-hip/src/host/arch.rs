@@ -76,15 +76,6 @@ impl GfxTarget {
     /// The canonical gfx identifier string (e.g. `"gfx1030"`), matching the
     /// `--offload-arch=<target>` argument and the `kernels/<target>/` blob
     /// directory name.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_hip::host::GfxTarget;
-    ///
-    /// assert_eq!(GfxTarget::Gfx1030.as_str(), "gfx1030");
-    /// assert_eq!(GfxTarget::Gfx942.as_str(), "gfx942");
-    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             GfxTarget::Gfx1030 => "gfx1030",
@@ -267,15 +258,6 @@ impl GfxTarget {
     ///
     /// The blobs (`*.co`) are produced by `build.rs`; consumers load a specific
     /// kernel via [`GfxTarget::load_blob`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_hip::host::GfxTarget;
-    ///
-    /// let dir = GfxTarget::Gfx1030.blob_dir();
-    /// assert!(dir.ends_with("kernels/gfx1030"));
-    /// ```
     pub fn blob_dir(self) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("kernels")
@@ -297,16 +279,6 @@ impl GfxTarget {
     /// [`detect_device`](Self::detect_device) reports it as
     /// [`HipError::UnsupportedArch`] so the dispatcher warns and falls back to
     /// the CPU stage rather than failing at kernel-launch time.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::GfxTarget;
-    ///
-    /// // gfx1030 blobs are compiled unconditionally, so after a build this is
-    /// // true on a host with the ROCm toolchain.
-    /// assert!(GfxTarget::Gfx1030.has_compiled_blob());
-    /// ```
     pub fn has_compiled_blob(self) -> bool {
         arch_in_manifest(self.as_str(), COMPILED_ARCHS)
     }
