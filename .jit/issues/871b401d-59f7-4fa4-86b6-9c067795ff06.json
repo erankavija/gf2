@@ -9,6 +9,7 @@
   ],
   "description": "Code that hard-codes development-artifact paths turns every relocation into a breaking change. The owner-approved invariant `no-dev-path-coupling` makes that coupling a reviewable defect.\n\n## Success Criteria\n\n- [hard] REQ-01: The invariant registry holds `no-dev-path-coupling` with exactly this statement: \"Production code, tooling, tests, receipts, and harness crates locate development artifacts by content identity or through one configured repository root resolved at runtime; hard-coded `dev/` paths, historical-path allow-lists, and depth-dependent relative paths are a defect.\"\n- [hard] REQ-02: The invariant records the code-review gate (`@/gate/code-review`) as its enforcer.\n- [hard] REQ-03: The invariant projection region of the root `AGENTS.md` is regenerated deterministically, content outside the region is byte-identical, and `AGENTS.md` stays at or below 200 lines.\n- [hard] REQ-04: Invariant checks and tracker validation report no new findings.\n",
   "documents": [],
+  "done_at": "2026-10-02T11:05:37.225377534Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "cargo-ci",
@@ -46,7 +47,7 @@
     "satisfies:fa787f85/REQ-01"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Register and project the no-dev-path-coupling invariant",
-  "updated_at": "2026-10-02T10:41:30.060253308Z"
+  "updated_at": "2026-10-02T11:05:37.225377534Z"
 }

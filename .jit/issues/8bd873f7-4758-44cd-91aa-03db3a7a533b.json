@@ -7,6 +7,7 @@
   ],
   "description": "The tuning-extent campaign driver, its validator and its launcher derive each declaration's path as `dev/active/<issue>/campaign-declaration.json` and check it against each producing manifest's lifecycle sources. They locate declarations by content identity or through one configured repository root.\n\n## Background\n\nReaders: `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:273-283,3142,3147`, `dev/scripts/validate-tuning-extent-campaign.py:427,4127`, `dev/scripts/tuning-extent-campaign.sh:30` and `dev/tools/tuning-campaign-support/tests/driver_launcher.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: The driver, the validator and the launcher locate each campaign declaration without deriving a `dev/active/<issue>/` path, and the lifecycle-source check matches by content identity.\n- [hard] REQ-02: Before the change, a linked baseline record lists the validator's verdict for every committed tuning-extent campaign (including a83583e0 and dbd8787d), with the exact command and commit; after the change, the same run yields identical verdicts, so existing campaigns stay valid.\n- [hard] REQ-03: The driver-launcher test covers a declaration located away from its original directory.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T11:05:38.048629483Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T09:38:27.078423080Z"
+  "updated_at": "2026-10-02T11:05:38.048629483Z"
 }

@@ -7,6 +7,7 @@
   ],
   "description": "Survey harness crates under `dev/active/` depend on `dev/tools/tuning-campaign-support` through relative paths that count directory levels, so any move breaks their build. This work chooses one depth-independent dependency form and applies it to the first ten crates.\n\n## Background\n\nCrates (under `dev/active/`): `04b85d10/survey/gf2-side`, `07ca8585/survey/arms`, `12fdeb5b/survey/nr-encode`, `1c602857/arms`, `1d0da41f/survey/ymm-clmul-arm`, `1d4fd63d/arms`, `1d4fd63d/external-arms`, `2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness`, `2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness`, `3be770d5/survey/harness`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the ten crates listed below declares its `tuning-campaign-support` dependency in one depth-independent form, chosen and justified in a linked record against the alternatives (for example a repository-root Cargo configuration or a fixed-location harness workspace). Relative paths that count directory levels are not used.\n- [hard] REQ-02: Each changed crate builds from its current location and from a copy one directory level deeper.\n- [hard] REQ-03: Each harness `Cargo.toml` changes only in that dependency declaration, once; the commit records each edit.\n- [hard] REQ-04: Before the change, the benchmark-acceptance verdicts for every committed `zen3-benchmark-receipt-v1` receipt are recorded, and after the change they are identical, so committed receipts keep verifying through their byte-identical snapshot copies.\n- [hard] REQ-05: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n\n## Notes\n\nA digest-pinned harness manifest may change once, to the depth-independent form.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T11:05:37.936183508Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Make the first survey-harness crates' tool dependency depth-independent",
-  "updated_at": "2026-10-02T09:38:25.688159370Z"
+  "updated_at": "2026-10-02T11:05:37.936183508Z"
 }
