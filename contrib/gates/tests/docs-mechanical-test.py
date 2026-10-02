@@ -57,7 +57,7 @@ FIXTURE = {
         Read [the guide](docs/guide.md#usage-notes), [this page](#fixture) and
         [lines](docs/guide.md#L3-L4).
         The library lives in `crates/demo/src/lib.rs:1`; runs write `out/report.txt`.
-        It applies `@/inv/rule-a` under @/issue/abcd1234.
+        It applies `@/inv/rule-a` under @/issue/abcd1234; `GUIDE.md` holds the projection.
         """,
     "docs/guide.md": """
         # Guide
@@ -151,6 +151,10 @@ class DocsMechanicalTest(unittest.TestCase):
         line = self.append("dev/active/x/plan.md", "Inputs: `docs/inputs.md`.")
         self.assert_only_finding("dev/active/x/plan.md", line, "missing-citation")
 
+    def test_missing_bare_file_citation(self):
+        line = self.append("README.md", "History lives in `CHANGELOG.md`.")
+        self.assert_only_finding("README.md", line, "missing-citation")
+
     def test_unresolved_item_reference(self):
         line = self.append("docs/guide.md", "Applies @/inv/rule-z.")
         self.assert_only_finding("docs/guide.md", line, "unresolved-item")
@@ -162,6 +166,10 @@ class DocsMechanicalTest(unittest.TestCase):
     def test_projection_drift(self):
         (self.root / "GUIDE.md").write_text(RENDERED_GUIDE.replace("rule-a", "rule-b"))
         self.assert_only_finding("GUIDE.md", 4, "stale-projection")
+
+    def test_terminal_newline_drift(self):
+        (self.root / "GUIDE.md").write_text(RENDERED_GUIDE.rstrip("\n"))
+        self.assert_only_finding("GUIDE.md", 5, "stale-projection")
 
     def test_baseline_suppresses_only_recorded_findings(self):
         recorded = self.append("dev/active/x/plan.md", "Old [link](gone.md).")

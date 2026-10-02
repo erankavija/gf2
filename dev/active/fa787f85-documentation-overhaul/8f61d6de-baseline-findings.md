@@ -1,9 +1,8 @@
 # docs-mechanical baseline findings
 
-Temporary record: finalize-docs-policy (d6ebc4ec) removes it together with the
-`baseline` key of `[docs-mechanical]` in `.jit/config.toml`. The check
-suppresses exactly the rows below; each quotes an unresolvable address on
-purpose (8f61d6de DEC-01).
+The `baseline` key of `[docs-mechanical]` in `.jit/config.toml` names this
+record, and the check suppresses exactly its rows. Each row quotes an
+unresolvable address on purpose (8f61d6de DEC-01).
 
 | Location | Class | Target | Reason |
 |---|---|---|---|
