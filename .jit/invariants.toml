@@ -192,3 +192,27 @@ enforced-by = "@/gate/doc-review"
 id = "agents-md-scope"
 kind = "enforced"
 statement = "Every `AGENTS.md` governs its directory subtree, overrides less specific guidance only within that subtree, states nothing that belongs to a broader or narrower scope, and stays at or below 200 lines."
+
+[[invariants]]
+enforced-by = "@/gate/doc-review"
+id = "researcher-audience"
+kind = "enforced"
+statement = "Permanent documentation addresses researchers evaluating or adopting gf2: it assumes relevant technical competence, omits elementary finite-field and simplest-code primers, and limits tutorials to research-grade end-to-end workflows over advanced supported capabilities."
+
+[[invariants]]
+enforced-by = "@/gate/doc-review"
+id = "adapted-diataxis-placement"
+kind = "enforced"
+statement = "Every permanent documentation page under `docs/` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose."
+
+[[invariants]]
+enforced-by = "@/gate/doc-review"
+id = "no-marketing"
+kind = "enforced"
+statement = "Permanent documentation and rustdoc state capabilities and measured results in neutral technical terms; promotional adjectives, superlatives, and unquantified comparative claims are a defect."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "no-dev-path-coupling"
+kind = "enforced"
+statement = "Production code, tooling, tests, receipts, and harness crates locate development artifacts by content identity or through one configured repository root resolved at runtime; hard-coded `dev/` paths, historical-path allow-lists, and depth-dependent relative paths are a defect."
