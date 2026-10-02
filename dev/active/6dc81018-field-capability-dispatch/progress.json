@@ -2,7 +2,7 @@
   "epic_id": "6dc81018-9a8e-4318-9572-148670d1c272",
   "epic_short_id": "6dc81018",
   "current_wave": 28,
-  "wave_notes": "Wave 28 executes dbd8787d. Session 16 (2026-10-01): a83583e0 campaign gf2-a83583e0-20260930t230000z-2728298 completed and published; cutover e100821df, evidence index + doc fixes; all gates passed at ad30c52ad; a83583e0 done. dbd8787d REQ-02 amended (120989525, invoker approval). Plan: extend the a835 retained-threshold phase with the three seam fields, re-measure the full core section under a gf2-dbd8787d-* ID, import the a835 algebra owner by digest, keep tuning-calibration-v4, publish-campaign emits the evidence index. Premeasurement 87b5b733c; cargo-ci passed; code/doc-review fail only on not-yet-executed. Queued (6a53adc35); timer gf2-bench-window-20261002 at 2026-10-01T23:00Z; worktree agent-dbd8787d-run at 87b5b733c. Session 17 (2026-10-02): campaign gf2-dbd8787d-20261001t230000z-2601601 measured complete; finalize validator rejected on imported_owners key bug. Fix cb5708396 (branch wt/dbd8787d-publish, unmerged) with invoker-approved provenance lightening; stage validates complete-valid. publish-campaign blocked by auto-mode classifier; awaiting invoker.",
+  "wave_notes": "Wave 28 executes dbd8787d. Session 16 (2026-10-01): a83583e0 campaign gf2-a83583e0-20260930t230000z-2728298 completed and published; cutover e100821df, evidence index + doc fixes; all gates passed at ad30c52ad; a83583e0 done. dbd8787d REQ-02 amended (120989525, invoker approval). Plan: extend the a835 retained-threshold phase with the three seam fields, re-measure the full core section under a gf2-dbd8787d-* ID, import the a835 algebra owner by digest, keep tuning-calibration-v4, publish-campaign emits the evidence index. Premeasurement 87b5b733c; cargo-ci passed; code/doc-review fail only on not-yet-executed. Queued (6a53adc35); timer gf2-bench-window-20261002 at 2026-10-01T23:00Z; worktree agent-dbd8787d-run at 87b5b733c. Session 17 (2026-10-02): campaign gf2-dbd8787d-20261001t230000z-2601601 measured complete; finalize validator rejected on imported_owners key bug. Fix cb5708396 (branch wt/dbd8787d-publish, unmerged) with invoker-approved provenance lightening; stage validates complete-valid. publish-campaign blocked by auto-mode classifier; awaiting invoker. dbd8787d done (publication f6788d9cb, cutover 8cc7f42ad, locator 8bd873f7 done). ef18c60b contained. Epic gates: holistic-review and doc-review pass; repo-validate fails on 7 isolated roadmap issues from another session; invoker chose to wait.",
   "open_escalations": [],
   "waves": [
     {
@@ -595,7 +595,7 @@
           "title": "Extend the calibration sweep to the seam threshold fields",
           "classification": "implementation",
           "model": "opus",
-          "status": "in_progress",
+          "status": "done",
           "notes": "Seam U10. Benchmark-mode measured run \u2014 serialized, quiet host."
         }
       ]
@@ -790,7 +790,7 @@
           "title": "Extend the calibration sweep to the seam threshold fields",
           "classification": "implementation",
           "model": "opus",
-          "status": "in_progress"
+          "status": "done"
         }
       ],
       "note": "Serialized measurement wave; starts only after the preceding issue is done."
