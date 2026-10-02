@@ -24,6 +24,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-02T14:04:48.144104225Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-10-02T13:45:46.842208868Z",
@@ -50,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T14:00:30.762191272Z"
+  "updated_at": "2026-10-02T14:04:48.144104225Z"
 }
