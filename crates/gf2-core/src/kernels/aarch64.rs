@@ -1,10 +1,5 @@
-//! AArch64 (ARM64) CPU feature detection and SIMD kernel stubs.
-//!
-//! This module will contain optimized implementations using:
-//! - NEON: 128-bit vector operations
-//! - Cryptographic extensions for carry-less multiplication
-//!
-//! Currently, only feature detection stubs are implemented.
+//! AArch64 (ARM64) CPU feature detection. NEON and PMULL kernels are
+//! `@/issue/194b902a`.
 
 /// Checks if NEON is available on the current CPU.
 ///
@@ -18,12 +13,9 @@ pub fn has_neon() -> bool {
 /// Checks if AES/crypto extensions are available.
 #[cfg(target_arch = "aarch64")]
 pub fn has_crypto() -> bool {
-    // TODO: Add runtime detection when std::arch stabilizes aarch64 feature detection
+    // Compile-time only; runtime detection belongs to `@/issue/194b902a`.
     cfg!(target_feature = "aes")
 }
-
-// TODO: Implement NEON kernel
-// TODO: Implement crypto extension based carry-less multiplication
 
 #[cfg(test)]
 mod tests {
