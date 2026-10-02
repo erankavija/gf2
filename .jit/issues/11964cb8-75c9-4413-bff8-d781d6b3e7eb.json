@@ -31,7 +31,7 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-02T17:46:45.992403516Z",
+      "updated_at": "2026-10-02T20:41:14.241824914Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-  "updated_at": "2026-10-02T17:46:45.992403516Z"
+  "updated_at": "2026-10-02T20:41:14.241824914Z"
 }

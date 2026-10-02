@@ -7,6 +7,7 @@
   ],
   "description": "The four presentation decks under `docs/presentations/` belong to archived epics. They move, with their complete asset bundles, into those epics' archive directories and leave permanent navigation.\n\n## Background\n\nJIT archival never moves files outside `dev/`, so the decks move by explicit relocation. The shared figures directory splits by owner, relative links climbing into `dev/` change depth, and some deck links were already unresolved before the move. Details in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.4.\n\n## Success Criteria\n\n- [hard] REQ-01: Each deck bundle (talk, base stylesheet, themes and owned figures) lives under its owning epic's archive directory, and `docs/presentations/` does not exist.\n- [hard] REQ-02: Deck prose and claims are unchanged; only link targets change, and every link in each moved bundle resolves, including links that were unresolved before the move.\n- [hard] REQ-03: Each owning epic's document references name the new paths and their recorded asset bundles resolve.\n- [hard] REQ-04: No permanent page links to a deck, and inbound `dev/active/` citations are repointed.\n- [hard] REQ-05: The manifest records each row as complete.\n",
   "documents": [],
+  "first_ready_at": "2026-10-02T20:41:17.519065336Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-09"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move presentation decks into their epics' archive dirs",
-  "updated_at": "2026-10-02T09:38:33.419434577Z"
+  "updated_at": "2026-10-02T20:41:17.519065336Z"
 }

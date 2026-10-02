@@ -24,6 +24,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/migration/manifest.toml"
     }
   ],
+  "done_at": "2026-10-02T20:41:17.384965358Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "cargo-ci",
@@ -62,7 +63,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Populate the migration manifest for permanent-path sources",
-  "updated_at": "2026-10-02T20:39:50.721106682Z"
+  "updated_at": "2026-10-02T20:41:17.384965358Z"
 }
