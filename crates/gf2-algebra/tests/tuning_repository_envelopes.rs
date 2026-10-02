@@ -11,14 +11,16 @@ const ALGEBRA_OWNER: &str = include_str!("../data/tuning-profiles/conservative.j
 const COMPLETE: &str =
     include_str!("../../../dev/reference_data/tuning-profiles/conservative.json");
 const MEASURED_CORE_OWNER: &str =
-    include_str!("../../gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
+    include_str!("../../gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json");
+const MEASURED_CORE_RECEIPT: &str =
+    "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md";
 const MEASURED_ALGEBRA_OWNER: &str =
     include_str!("../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
-const MEASURED_COMPLETE: &str = include_str!(
-    "../../../dev/reference_data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json"
-);
-const MEASURED_RECEIPT: &str =
+const MEASURED_ALGEBRA_RECEIPT: &str =
     "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md";
+const MEASURED_COMPLETE: &str = include_str!(
+    "../../../dev/reference_data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json"
+);
 
 fn core_registry() -> ProfileRegistry {
     ProfileRegistryBuilder::new()
@@ -168,7 +170,7 @@ fn committed_measured_algebra_owner_is_canonical_and_cites_the_campaign() {
             ..
         } => {
             assert_eq!(harness_schema.as_str(), AlgebraTuningCodec::HARNESS_SCHEMA);
-            assert_eq!(receipt.as_str(), MEASURED_RECEIPT);
+            assert_eq!(receipt.as_str(), MEASURED_ALGEBRA_RECEIPT);
         }
         MeasurementProvenance::Inherited => panic!("measured algebra owner is not inherited"),
     }
@@ -180,6 +182,10 @@ fn committed_measured_algebra_owner_is_canonical_and_cites_the_campaign() {
     );
 }
 
+/// The complete envelope composes the core owner measured by the seam campaign
+/// with the algebra owner it imports unchanged
+/// (`dev/active/dbd8787d/premeasurement-protocol.md` §6), so its profile ID is
+/// the core owner's and each section keeps its own receipt.
 #[test]
 fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
     let core = core_registry().from_json(MEASURED_CORE_OWNER).unwrap();
@@ -193,7 +199,7 @@ fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
         [CoreTuning::ID.as_str()]
     );
     assert_eq!(complete.profile_id().as_str(), core.profile_id().as_str());
-    assert_eq!(
+    assert_ne!(
         complete.profile_id().as_str(),
         algebra.profile_id().as_str()
     );
@@ -214,6 +220,12 @@ fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
     let complete_core = complete.section::<CoreTuning>().unwrap().unwrap();
     assert_eq!(complete_core.section, core.section);
     assert_eq!(complete_core.measurement, core.measurement);
+    match &core.measurement {
+        MeasurementProvenance::Calibrated { receipt, .. } => {
+            assert_eq!(receipt.as_str(), MEASURED_CORE_RECEIPT);
+        }
+        MeasurementProvenance::Inherited => panic!("measured core owner is not inherited"),
+    }
 
     let algebra = algebra.section::<AlgebraTuning>().unwrap().unwrap();
     let complete_algebra = complete.section::<AlgebraTuning>().unwrap().unwrap();

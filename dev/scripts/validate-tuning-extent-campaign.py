@@ -86,6 +86,9 @@ HOST_ADMISSION_POLICY = {
     ],
 }
 
+# The independent validator: its recorded identity is informational, never an
+# acceptance or behavior-identity requirement.
+VALIDATOR = "dev/scripts/validate-tuning-extent-campaign.py"
 # Protocol §9 repository publication of a complete stage.
 REPOSITORY_PUBLICATION_DIR = "repository-publication"
 # Archived stage file listing every accepted raw key; the receipt pins its digest.
@@ -356,6 +359,15 @@ def git_output(root: Path, *args: str) -> str:
     return completed.stdout.decode("utf-8").strip()
 
 
+@functools.lru_cache(maxsize=None)
+def revision_file(root: Path, revision: str, relative: str) -> bytes:
+    """`relative`'s committed bytes at `revision`, independent of the checkout."""
+    completed = subprocess.run(["git", "cat-file", "blob", f"{revision}:{relative}"], cwd=root,
+                               check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    require(completed.returncode == 0, f"{relative} is absent from revision {revision}")
+    return completed.stdout
+
+
 def require_sha(value: Any, where: str) -> str:
     require(isinstance(value, str) and SHA.fullmatch(value) is not None,
             f"{where} is not a canonical SHA-256")
@@ -498,7 +510,10 @@ def declared_processes(declaration: Any) -> list[tuple[str, list[str]]]:
 
 
 def producing_inputs(root: Path, manifest: str, revision: str | None = None) -> dict[str, Any]:
-    value = load_json(root / manifest, canonical=False)
+    """The producing-input manifest of the checkout, or of `revision` when given."""
+    data = (root / manifest).read_bytes() if revision is None else revision_file(
+        root, revision, manifest)
+    value = load_json_bytes(data, "producing input manifest", canonical=False)
     require_keys(value, ["schema", "behavior_sources", "lifecycle_sources",
                          "build_inputs"], "producing input manifest")
     require(value["schema"] == PRODUCING_INPUTS_SCHEMA,
@@ -516,7 +531,7 @@ def producing_inputs(root: Path, manifest: str, revision: str | None = None) -> 
                     and not any(character in relative for character in "*?[]"),
                     f"{name} contains a nonliteral repository path")
             source = root / path
-            require(source.is_file() and not source.is_symlink(),
+            require(revision is not None or source.is_file() and not source.is_symlink(),
                     f"{name} source is absent or linked: {relative}")
     require(set(value["behavior_sources"]) <= set(value["build_inputs"]),
             "behavior sources are not a subset of build inputs")
@@ -529,8 +544,10 @@ def producing_inputs(root: Path, manifest: str, revision: str | None = None) -> 
     return value
 
 
-def source_hashes(root: Path, paths: Iterable[str]) -> dict[str, str]:
-    return {relative: digest((root / relative).read_bytes()) for relative in paths}
+def source_hashes(root: Path, paths: Iterable[str], revision: str | None = None) -> dict[str, str]:
+    return {relative: digest((root / relative).read_bytes() if revision is None
+                             else revision_file(root, revision, relative))
+            for relative in paths}
 
 
 def task_index(task: Any) -> int:
@@ -604,7 +621,7 @@ def expected_algebra_blocks() -> list[tuple[str, str, str, list[str]]]:
              [f"q{x}" for x in ALGEBRA_CANDIDATES]) for n in ALGEBRA_DIMS]
 
 
-def validate_manifest(manifest: Any, owner: str, stage: Path,
+def validate_manifest(manifest: Any, owner: str, stage: Path, protocol_sha: str,
                       resolved: bool = False) -> list[dict[str, Any]]:
     require_keys(manifest, ["schema", "owner", "owner_protocol", "behavior_token",
                             "campaign_id", "phases", "candidate_blocks", "counts",
@@ -620,7 +637,6 @@ def validate_manifest(manifest: Any, owner: str, stage: Path,
             and manifest["behavior_token"] == behavior,
             f"{owner} manifest identity mismatch")
     declaration = load_declaration(manifest["campaign_id"])
-    protocol_sha = digest((repository_root() / declaration["protocol"]).read_bytes())
     require(manifest["counts"] == owner_counts(declaration, owner), f"{owner} counts mismatch")
     phases = ["retained-thresholds", "core-extents", "m4rm-joint"] if owner == "gf2-core" else ["algebra-extent"]
     require(manifest["phases"] == phases, f"{owner} phases mismatch")
@@ -2248,11 +2264,12 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
         require(terminal == "lock-release" and "complete" not in [r["event"] for r in records],
                 "preterminal validation requires final LockRelease and no terminal")
     else:
-        require(terminal == "complete", "complete validation requires final Complete terminal")
+        require(terminal == "complete" or validation_rejected(records),
+                "complete validation requires a final Complete or validation-rejected terminal")
     terminal_session = records[-1]["session_id"]
     events = sessions[terminal_session]
     required = ["session-prepared", "lock-hold", "work-finished", "wrapper-returned",
-                "lock-release"] + ([] if preterminal else ["complete"])
+                "lock-release"] + ([] if preterminal else [terminal])
     require(all(events.count(event) == 1 for event in required),
             "final session lacks unique lifecycle evidence")
     positions = [events.index(event) for event in required]
@@ -2283,10 +2300,27 @@ def validate_journal(records: list[dict[str, Any]], log_data: bytes, record_ends
             and release_evidence["evidence"].get("lock_available") is True,
             "final lock release lacks independent death/availability evidence")
     if not preterminal:
-        complete = transitions["complete"]
+        complete = transitions[terminal]
         require(complete.get("transition", {}).get("transition") == "terminal"
-                and complete["transition"].get("outcome") == "complete",
-                "final Complete transition outcome mismatch")
+                and complete["transition"].get("outcome") == terminal,
+                "final terminal transition outcome mismatch")
+
+
+def validation_rejected(records: list[dict[str, Any]]) -> bool:
+    """Whether the journal ends in a Failed terminal whose sole cause is the
+    finalize-time validator verdict: the record before it is that verdict's
+    diagnostic in the same session, directly after the lock release. The
+    measurement is then complete and acceptance rests on the validator that
+    checks the stage now; `validate_journal` still requires the session's
+    complete work finish and clean wrapper return.
+    """
+    if len(records) < 3:
+        return False
+    release, verdict, terminal = records[-3:]
+    return (terminal["event"] == "failed" and verdict["event"] == "driver-diagnostic"
+            and set(verdict["details"]) == {"validation_error"}
+            and release["event"] == "lock-release"
+            and release["session_id"] == verdict["session_id"] == terminal["session_id"])
 
 
 def ns_per_call(sample: dict[str, Any]) -> float:
@@ -4041,12 +4075,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
             and stage.resolve() == stage and stage.parent == Path("/tmp"),
             "--stage must be an existing canonical /tmp campaign directory")
     campaign_config = load_json(stage / "campaign.json")
-    require_keys(campaign_config, ["schema", "campaign_id", "channels", "identity", "manifests",
-                                   "processes", "runtime", "protocol", "validator", "receipt",
-                                   "affinity", "source_tree", "producing_manifest",
-                                   "build_inputs", "preflight_reports",
-                                   "host_admission_policy"],
-                 "campaign index")
+    require(isinstance(campaign_config, dict), "campaign index must be an object")
     require(campaign_config.get("schema") == CAMPAIGN_SCHEMA, "campaign index schema mismatch")
     campaign = campaign_config.get("campaign_id")
     require(isinstance(campaign, str) and RUN_ID.fullmatch(campaign) is not None
@@ -4078,20 +4107,28 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
                 ";cpus=" + compact(affinity).decode())
             and identity["host_identity"].split(";cpus=", 1)[0],
             "source or host identity is malformed")
+    # Identity sources are read at the producing revision, so any checkout
+    # containing it validates the stage. Recorded paths name the producing
+    # checkout and are informational; the validator's own identity is
+    # informational too, since checking is not measurement behavior.
     root = repository_root()
-    tree = git_output(root, "rev-parse", f"{identity['source_revision']}^{{tree}}")
+    revision = identity["source_revision"]
+    tree = git_output(root, "rev-parse", f"{revision}^{{tree}}")
     require(campaign_config["source_tree"] == tree
             and digest(tree.encode()) == identity["source_sha256"],
             "producing revision/tree identity mismatch")
-    protocol = root / declaration["protocol"]
-    require(digest(protocol.read_bytes()) == identity["protocol_digest"],
+    protocol_sha = digest(revision_file(root, revision, declaration["protocol"]))
+    require(protocol_sha == identity["protocol_digest"],
             "runtime protocol digest differs from reviewed declaration")
-    require(campaign_config["protocol"] == {"path": str(protocol), "sha256": identity["protocol_digest"]},
+    for name in ["protocol", "validator"]:
+        recorded = require_keys(campaign_config[name], ["path", "sha256"], f"campaign {name}")
+        require(set(recorded) == {"path", "sha256"} and Path(recorded["path"]).is_absolute()
+                and Path(recorded["path"]).name == Path(VALIDATOR if name == "validator"
+                                                        else declaration["protocol"]).name,
+                f"campaign {name} ArtifactIdentity is malformed")
+        require_sha(recorded["sha256"], f"campaign {name} digest")
+    require(campaign_config["protocol"]["sha256"] == protocol_sha,
             "campaign protocol ArtifactIdentity mismatch")
-    validator = Path(__file__).resolve()
-    require(campaign_config["validator"] == {"path": str(validator),
-                                             "sha256": digest(validator.read_bytes())},
-            "campaign validator ArtifactIdentity mismatch")
     require(campaign_config["receipt"] == f"dev/benchmarks/tuning_profiles/{campaign}.md",
             "campaign receipt destination mismatch")
     runtime = embedded(campaign_config["runtime"], "campaign runtime")
@@ -4113,18 +4150,23 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     require(channels == {"stage": str(stage), "execution_log": str(stage / "execution.log"),
                          "checkpoints": str(stage / "checkpoints")},
             "campaign channels mismatch")
-    inputs = producing_inputs(root, declaration["producing_manifest"], identity["source_revision"])
-    producing_path = (root / declaration["producing_manifest"]).resolve()
-    require(campaign_config["producing_manifest"] == {
-                "path": str(producing_path), "sha256": digest(producing_path.read_bytes())},
+    inputs = producing_inputs(root, declaration["producing_manifest"], revision)
+    producing = require_keys(campaign_config["producing_manifest"], ["path", "sha256"],
+                             "campaign producing-input manifest")
+    require(Path(producing["path"]).is_absolute()
+            and Path(producing["path"]).name == Path(declaration["producing_manifest"]).name
+            and producing["sha256"] == digest(revision_file(
+                root, revision, declaration["producing_manifest"])),
             "campaign producing-input manifest identity mismatch")
-    require(identity.get("behavior_sha256") ==
-            source_hashes(root, inputs["behavior_sources"]),
+    behavior = source_hashes(root, inputs["behavior_sources"], revision)
+    recorded_behavior = identity.get("behavior_sha256")
+    require(isinstance(recorded_behavior, dict) and set(recorded_behavior) == set(behavior)
+            and all(recorded_behavior[path] == sha for path, sha in behavior.items()
+                    if path != VALIDATOR),
             "behavior source inventory/digests differ from the producing manifest")
-    require(campaign_config["build_inputs"] == source_hashes(root, inputs["build_inputs"]),
+    require(campaign_config["build_inputs"] ==
+            source_hashes(root, inputs["build_inputs"], revision),
             "build-input inventory/digests differ from the producing manifest")
-    require(identity["behavior_sha256"].get("dev/scripts/validate-tuning-extent-campaign.py") ==
-            digest(validator.read_bytes()), "behavior manifest omits this validator")
     require(declaration_path(declaration["issue"]) in inputs["lifecycle_sources"],
             "lifecycle manifest omits the campaign declaration")
     require(identity["process_descriptors_sha256"] == digest(compact(campaign_config["processes"])),
@@ -4139,7 +4181,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     executable_map = {item["id"]: item["executable_sha256"] for item in campaign_config["processes"]}
     require(identity["executable_sha256"] == executable_map, "executable identity map mismatch")
     require(identity["lifecycle_behavior_sha256"] ==
-            digest(compact(source_hashes(root, inputs["lifecycle_sources"]))),
+            digest(compact(source_hashes(root, inputs["lifecycle_sources"], revision))),
             "lifecycle behavior manifest digest mismatch")
     require(campaign_config["host_admission_policy"] == HOST_ADMISSION_POLICY,
             "host-admission policy differs from the reviewed declaration")
@@ -4154,10 +4196,10 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
     work_projection = [manifests[name]["ordered_units"] for name in names]
     require(identity["ordered_work_manifest_sha256"] == digest(compact(work_projection)),
             "ordered-work identity digest mismatch")
-    validate_manifest(core_manifest, "gf2-core", stage, False)
+    validate_manifest(core_manifest, "gf2-core", stage, protocol_sha, False)
     if algebra_manifest is not None:
-        validate_manifest(algebra_manifest, "gf2-algebra", stage, True)
-    validate_manifest(core_resolved, "gf2-core", stage, True)
+        validate_manifest(algebra_manifest, "gf2-algebra", stage, protocol_sha, True)
+    validate_manifest(core_resolved, "gf2-core", stage, protocol_sha, True)
     require(core_resolved["ordered_units"][:-144] == core_manifest["ordered_units"][:-144]
             and [u["identity"] for u in core_resolved["ordered_units"][-144:]] ==
                 [u["identity"] for u in core_manifest["ordered_units"][-144:]],

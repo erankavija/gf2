@@ -719,3 +719,29 @@ resulting committed trees to reproduce byte-for-byte on a second
 regeneration, and permits no other generated declaration or
 issue-attributable surface change beyond §3.3 and generator-maintained
 `Source:` metadata.
+
+## Amendment A3 (2026-10-02, measured issue `dbd8787d` / seam U10)
+
+U10 is executed as campaign `gf2-dbd8787d-20261001t230000z-2601601` under
+[`dbd8787d/premeasurement-protocol.md`](../dbd8787d/premeasurement-protocol.md);
+its receipt is
+[`gf2-dbd8787d-20261001t230000z-2601601.md`](../../benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md).
+The measured core owner
+`crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+states all three swept fields on its Ryzen 9 5900X host over `Fp<2^31 - 1>`:
+
+| Field | Conservative default | Measured value | Outcome |
+|---|---:|---:|---|
+| `gemm.winograd_min_dim` | 128 | 128 | no grid point wins; default retained |
+| `triangular.base_case_max_dim` | 8 | 12 | crossover at grid point 16 |
+| `ple.scalar_base_max_cols` | 1 | 24 | crossover at grid point 32 |
+
+The two measured crossovers contradict §4.4's provenance on this host:
+the direct base cases win up to dimension 12 and window 24, where the
+`73ec5da3` sweep selected 8 and found a regression at a scalar-base width of
+8. The Winograd sweep finds one Winograd level slower than the classical
+kernel at every grid point up to 512, against the ≈ 128 crossover of
+`strassen_threshold_results.md`; that sweep timed whole `n = 2048` products
+rather than one level at the boundary dimension. The conservative defaults
+and their §4.4 citations are unchanged; the measured values reach production
+only through an installed profile. The two panel-lane fields stay omitted.

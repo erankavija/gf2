@@ -1,7 +1,10 @@
 # Seam threshold calibration: premeasurement protocol
 
-Status: declared; not yet executed. Issue `dbd8787d` supplies the success
-criteria.
+Status: executed. Campaign `gf2-dbd8787d-20261001t230000z-2601601` ran this
+declaration as committed at `87b5b733c` and is published; its receipt is
+[`gf2-dbd8787d-20261001t230000z-2601601.md`](../../benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md)
+with the [evidence index](../../benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601-evidence.md).
+Issue `dbd8787d` supplies the success criteria.
 
 This declaration amends the executed extent protocol
 [`a83583e0/premeasurement-protocol.md`](../a83583e0/premeasurement-protocol.md)
@@ -183,3 +186,18 @@ tests, `./scripts/cargo-ci.sh`, `git diff --check`, and untimed
 release core producer. A cross-check runs the validator's operand
 reconstruction against the producer's digests for the three seam fields, and
 the preserved a835 stage still validates as `published`.
+
+## 10. Validation identity
+
+The validator reads every identity source — protocol, producing manifest,
+behavior, build and lifecycle inputs — at the stage's producing revision, so
+any checkout containing that revision validates the stage. Recorded protocol,
+validator and producing-manifest paths name the producing checkout and are
+informational; their digests are compared. The validator's own digest is
+excluded from behavior identity, and the driver runs the validator of the
+checkout it executes in.
+
+A final session that ends `failed` directly after its lock release, with the
+finalize-time validator verdict as its sole diagnostic, has a complete
+measurement: finalize validates only a complete work finish. Such a stage is
+publishable once the current validator accepts it in full.

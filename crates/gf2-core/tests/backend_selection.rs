@@ -19,7 +19,7 @@ fn test_backend_selection_small_buffers() {
 #[test]
 fn test_backend_selection_threshold() {
     // At the conservative threshold (8 words = 64 bytes), should use SIMD if
-    // available; the baked threshold is lower and therefore also selects SIMD.
+    // available; the baked threshold does not exceed it.
     let backend = select_backend_for_size(8);
 
     #[cfg(feature = "simd")]

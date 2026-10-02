@@ -1,8 +1,8 @@
 //! Production-site witnesses for the baked GEMM row and column tiles.
 //!
 //! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
-//! cites `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md`
+//! `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
+//! cites `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
 //! and states the jointly selected `gemm.row_tile` and `gemm.col_tile` pair.
 //! Every ordinary blocked loop observes that pair, whether or not it equals the
 //! conservative pair.
