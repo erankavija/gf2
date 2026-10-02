@@ -24,10 +24,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T13:45:46.842208868Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T13:49:35.053089592Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:27.078423080Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T13:49:46.802113957Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8bd873f7-4758-44cd-91aa-03db3a7a533b",
@@ -40,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T13:15:39.038518959Z"
+  "updated_at": "2026-10-02T13:49:46.802113957Z"
 }

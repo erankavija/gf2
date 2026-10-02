@@ -15296,3 +15296,6 @@
 {"assignee":"agent:worker","id":"b6fa8d1a-1e6e-432b-ba47-5a2a11fcc393","issue_id":"11964cb8-75c9-4413-bff8-d781d6b3e7eb","timestamp":"2026-10-02T13:45:30.472727057Z","type":"issue_claimed"}
 {"from":"ready","id":"6e6e6bde-8356-4655-91c9-8a48e390f18b","issue_id":"29331bd3-e56a-4521-8db9-096152ee8482","timestamp":"2026-10-02T13:45:30.709960683Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"1e8201a9-b5b6-450c-bbaa-4928a89587a1","issue_id":"29331bd3-e56a-4521-8db9-096152ee8482","timestamp":"2026-10-02T13:45:30.709960683Z","type":"issue_claimed"}
+{"gate_key":"code-review","id":"402a3016-ec97-48d9-81c8-c4fbd4134675","issue_id":"8bd873f7-4758-44cd-91aa-03db3a7a533b","timestamp":"2026-10-02T13:45:46.842208868Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"b656eb56-2879-4be5-9a3c-fb61943eddf5","issue_id":"8bd873f7-4758-44cd-91aa-03db3a7a533b","timestamp":"2026-10-02T13:49:35.053089592Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"6c092e6b-a31d-4cd9-aec4-ea8afd6c72e1","issue_id":"8bd873f7-4758-44cd-91aa-03db3a7a533b","timestamp":"2026-10-02T13:49:46.802113957Z","type":"gate_passed","updated_by":"auto:executor"}
