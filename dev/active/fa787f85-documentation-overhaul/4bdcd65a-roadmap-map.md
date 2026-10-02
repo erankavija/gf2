@@ -2,7 +2,7 @@
 
 Source: `61c3f0a6a^:ROADMAP.md` (sections "Open Research Questions", lines 128-155, and "Publication & Validation", lines 164-182). Citations below are `61c3f0a6a^:ROADMAP.md:<line>`. Issue states come from the tracker query of 2026-10-02.
 
-Dispositions: `tracked` (named issue), `delivered` (named code or evidence path), `obsolete` (reason), `newly filed` (issue title in `4bdcd65a-file-issues.sh`).
+Dispositions: `tracked` (named issue), `delivered` (named code or evidence path), `obsolete` (reason), `newly filed` (issue filed by this mapping).
 
 ## Open Research Questions
 
@@ -11,12 +11,12 @@ Dispositions: `tracked` (named issue), `delivered` (named code or evidence path)
 | 131 | GPU LDPC memory- vs compute-bound | delivered: `dev/archive/806eb14e-hip-gpu-prototype/active/806eb14e-feasibility-report.md`; issues `43fb19e2`, `24c11004`, `86a363aa` (done) |
 | 132 | FPGA feasibility of functional Rust to HDL | tracked: `adc75ba7` |
 | 133 | GPU vs multi-core CPU crossover for LDPC | delivered: `9c37ec8c` (crossover measurement), `86a363aa` (decision); kernel `crates/gf2-kernels-hip/hip/ldpc_bp.hip` |
-| 136 | GRAND vs algebraic decoding for short codes | newly filed: "Compare ORBGRAND with OSD and algebraic decoding on short codes" |
+| 136 | GRAND vs algebraic decoding for short codes | newly filed: `d09a610b` |
 | 137 | Normalized/offset min-sum gains | delivered: `crates/gf2-coding/src/ldpc/min_sum.rs`; `c3ea6855` |
 | 138 | Quantized LLRs, 3-8 bit | tracked: `d69b964e`, `f63a2464` |
 | 139 | Structured LDPC encoding without dense matrices | delivered: `crates/gf2-coding/src/ldpc/encoding/ira.rs`; `82dd7384` |
 | 140 | Neural-aided BP iteration reduction | tracked: `9a5662ff` |
-| 143 | End-to-end DVB-T2 latency budget | newly filed: "Measure the DVB-T2 receive-chain stage latency budget" |
+| 143 | End-to-end DVB-T2 latency budget | newly filed: `158ba129` |
 | 144 | Rust vs GNU Radio C++ throughput | tracked: `dfca71b8` (benchmark against GNU Radio FEC blocks) |
 | 145 | Real-signal validation vs test vectors | tracked: `dfca71b8`, `fcb09e6f` |
 | 148 | Rust+SIMD vs Magma/Sage crossover | tracked: `d77176e5`; measured parts `53c5a8c0` (done) |

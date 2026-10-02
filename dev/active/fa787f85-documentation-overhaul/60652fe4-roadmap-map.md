@@ -4,7 +4,7 @@ Source revision: `61c3f0a6a^:crates/gf2-core/ROADMAP.md`, cited below as `R:<lin
 Scope: open phases under "Planned Phases" (R:196-228), the Phase 14 next steps,
 the Phase 12 deferred items, "Future Directions" (R:232-246) and "Roadmap
 Priorities" (R:287-296). Dispositions: tracked (issue), delivered (code),
-obsolete (reason), newly filed (issue title).
+obsolete (reason), newly filed (issue).
 
 | Roadmap item | Citation | Disposition |
 |---|---|---|
@@ -21,7 +21,7 @@ obsolete (reason), newly filed (issue title).
 | Future: GPU acceleration | R:239 | Delivered: `crates/gf2-kernels-hip/`; FieldMatrix GPU offload tracked in `16283d6f` |
 | Future: batch polynomial operations | R:240 | Delivered: `crates/gf2-core/src/gf2m/batch.rs`, `crates/gf2-core/src/gfpn/batch.rs`; `a7c81834`, `bdf95060`, `2e7db385` |
 | Future: extended field degrees (m > 64) | R:241 | Delivered: `crates/gf2-core/src/gf2m/wide.rs`; `6fb4abad`, `7c954fb5` |
-| Future: state-of-the-art polynomial factorization | R:244 | Newly filed: "Factor polynomials over finite fields" (code holds only factor detection in `crates/gf2-core/src/field/irreducibility.rs`) |
+| Future: state-of-the-art polynomial factorization | R:244 | Newly filed: `12a3c312` (code holds only factor detection in `crates/gf2-core/src/field/irreducibility.rs`) |
 | Future: novel sparse matrix algorithms | R:245 | Delivered: `crates/gf2-core/src/sparse.rs`, `crates/gf2-core/src/field/sparse_matrix.rs`; `5ce13bae`, `cbf576d1`, `eb57f944` |
 | Future: hardware-optimized implementations | R:246 | Delivered: `crates/gf2-kernels-simd/`; `220cab0b` tuning profiles; SOTA epics `97bf0879`, `026fc832` (archived) |
 | Phase 12: compression support | R:272 | Obsolete: the roadmap marks it not needed; the header compression flag in `crates/gf2-core/src/io/format.rs` has no codec and no consumer requires one |
