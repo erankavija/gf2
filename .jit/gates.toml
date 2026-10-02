@@ -182,6 +182,26 @@ REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high"
 
 [[gates]]
 version = 1
+key = "docs-mechanical"
+title = "Documentation mechanical checks pass"
+description = "Check links, heading anchors, repository-local citations, addressable-item references, and projection freshness over the configured documentation footprint."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/docs-mechanical.py"
+timeout_seconds = 300
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
 key = "f3-bipedal-ci"
 title = "Bipedal F_3 prototype checks pass"
 description = "Run the standalone f3_bipedal release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."

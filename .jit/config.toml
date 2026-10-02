@@ -177,3 +177,10 @@ kind = ["rule", "gate"]
 mode = "separate-file"
 style = "full"
 target = ".jit/reference/rules-and-gates.md"
+
+[docs-mechanical]
+markdown = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md", "dev/active/**/*.md"]
+citations = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md", "dev/active/**/*.md"]
+rustdoc = ["crates/**/*.rs", "dev/tools/tuning-campaign-support/**/*.rs"]
+exclude = ["dev/archive"]
+baseline = "dev/active/fa787f85-documentation-overhaul/8f61d6de-baseline-findings.md"
