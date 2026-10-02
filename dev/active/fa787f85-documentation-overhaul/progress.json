@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 1,
+ "current_wave": 2,
  "waves": [
   {
    "wave_number": 1,
@@ -11,14 +11,14 @@
      "short_id": "34adff85",
      "title": "Build rustdoc and run doctests in the Rust CI gate",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "495807a3-caeb-4680-8429-13d7da4a590d",
      "short_id": "495807a3",
      "title": "Register and project the documentation invariants",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     }
    ]
   },
@@ -910,15 +910,30 @@
    ]
   }
  ],
- "created_during_execution": [],
+ "created_during_execution": [
+  {
+   "id": "0dc52df8",
+   "title": "Migrate cites labels to the qualified citation form",
+   "epic": "86b9c719",
+   "reason": "jit 1.0 rejects unqualified cites labels; blocked every repo-validate gate"
+  }
+ ],
  "escalations": [],
  "rework_counts": {
-  "495807a3": 1
+  "495807a3": 1,
+  "34adff85": 1
  },
- "surfaced_pitfalls": [],
+ "surfaced_pitfalls": [
+  {
+   "issue": "34adff85",
+   "finding": "cargo-ci cold run measured 875 s against the 900 s gate timeout; release doctest step ~215 s (thin-LTO link). Warm run 359 s.",
+   "disposition": "monitor; REQ-01 requires release mode"
+  }
+ ],
  "notes": [
   "495807a3 work landed on main before this session (4133f4152); gates run by lead.",
-  "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only."
+  "34adff85 redispatched on current main; stale branch worktree-agent-ab61dd5f4d07bfb81 (base f9224650a) is reference only.",
+  "Owner-approved cross-epic prerequisite: f023b88b (satisfies) and 0dc52df8 (cites) label migration; f023b88b DEC-01/DEC-02 record owner rulings."
  ],
  "started_at": "2026-10-01T19:40:00Z"
 }
