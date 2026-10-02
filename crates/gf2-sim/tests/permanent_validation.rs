@@ -27,17 +27,17 @@ use gf2_sim::permanent_campaign::validation::{
     SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
     ValidationPreregistration, ValidationProducerSegment, ValidationProtocol, ValidationReceipt,
     ValidationRunMode, ValidationStreamPurpose, ValidationVerdict, CONTINUATION_STATE_FILE,
-    FROZEN_TOOLCHAIN_PREFIX, FROZEN_VALIDATION_RECEIPT_PATH, PREREGISTRATION_SCHEMA_VERSION,
+    FROZEN_TOOLCHAIN_PREFIX, FROZEN_VALIDATION_RECEIPT_FILE, PREREGISTRATION_SCHEMA_VERSION,
     RECEIPT_SCHEMA_VERSION,
 };
 use gf2_stats::binomial::two_sided_test;
 use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
 
-/// Committed frozen plan for issue `02b8137c`, verified by this suite before
-/// the execution lead consumes it.
-const FROZEN_PREREGISTRATION: &str =
-    "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json";
-const FROZEN_CONTINUATION: &str = "dev/active/02b8137c/pre-draw-validation-v2-continuation.json";
+/// Committed frozen plan, verified by this suite before the execution lead
+/// consumes it. Its tracked file name locates the evidence bundle.
+const FROZEN_PREREGISTRATION_FILE: &str = "pre-draw-validation-v1-preregistration.json";
+const FROZEN_CONTINUATION_FILE: &str = "pre-draw-validation-v2-continuation.json";
+const FROZEN_JOURNAL_DIRECTORY: &str = "validation-journal";
 /// Established validation namespace recorded in `exact-anchors.csv`.
 const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 /// Focused draw count: large enough to exercise the exact test, small enough
@@ -54,6 +54,35 @@ fn unique_directory(label: &str) -> ScratchPath {
 fn repository() -> PathBuf {
     repository_top_level(Path::new(env!("CARGO_MANIFEST_DIR")))
         .expect("the test runs inside the repository")
+}
+
+/// Repository-relative directory of the committed frozen evidence bundle.
+fn frozen_bundle() -> PathBuf {
+    let output = std::process::Command::new("git")
+        .current_dir(repository())
+        .args(["ls-files", "-z", "--"])
+        .arg(format!(":(glob)**/{FROZEN_PREREGISTRATION_FILE}"))
+        .output()
+        .expect("git lists the tracked files");
+    let listed = String::from_utf8(output.stdout).expect("tracked paths are UTF-8");
+    let tracked: Vec<&str> = listed.split('\0').filter(|path| !path.is_empty()).collect();
+    assert_eq!(
+        tracked.len(),
+        1,
+        "exactly one frozen preregistration is tracked"
+    );
+    Path::new(tracked[0])
+        .parent()
+        .expect("the preregistration lies in a bundle directory")
+        .to_owned()
+}
+
+fn frozen_preregistration() -> PathBuf {
+    frozen_bundle().join(FROZEN_PREREGISTRATION_FILE)
+}
+
+fn frozen_continuation() -> PathBuf {
+    frozen_bundle().join(FROZEN_CONTINUATION_FILE)
 }
 
 fn digest(byte: char) -> Sha256Digest {
@@ -181,13 +210,11 @@ fn independent_zero_count<const Q: u64>(
 #[test]
 fn frozen_preregistration_binds_the_committed_protocol_and_manifest() {
     let repository = repository();
-    let (plan, identity) = load_frozen_campaign_validation_preregistration(
-        &repository,
-        Path::new(FROZEN_PREREGISTRATION),
-    )
-    .expect("the committed frozen plan is valid and content-bound");
+    let (plan, identity) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the committed frozen plan is valid and content-bound");
 
-    assert_eq!(identity.path.as_str(), FROZEN_PREREGISTRATION);
+    assert_eq!(Path::new(identity.path.as_str()), frozen_preregistration());
     assert_eq!(plan.protocol.root_seed, VALIDATION_ROOT);
     assert_eq!(
         plan.protocol.stream_purpose,
@@ -226,11 +253,11 @@ fn frozen_preregistration_binds_the_committed_protocol_and_manifest() {
 
     // The selectable inventory is the frozen manifest's backend union, in
     // schema order, rather than a hand-listed subset.
+    let manifest_root = Path::new(plan.authorities.manifest.path.as_str())
+        .parent()
+        .expect("the manifest lies in its campaign directory");
     let manifest =
-        read_manifest(&repository.join(
-            "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
-        ))
-        .expect("the frozen manifest reads");
+        read_manifest(&repository.join(manifest_root)).expect("the frozen manifest reads");
     let union: Vec<Backend> = Backend::campaign_inventory()
         .iter()
         .copied()
@@ -243,13 +270,11 @@ fn frozen_preregistration_binds_the_committed_protocol_and_manifest() {
 #[test]
 fn frozen_preregistration_anchor_counts_match_the_committed_exact_evidence() {
     let repository = repository();
-    let (plan, _) = load_frozen_campaign_validation_preregistration(
-        &repository,
-        Path::new(FROZEN_PREREGISTRATION),
-    )
-    .expect("the committed frozen plan is valid");
+    let (plan, _) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the committed frozen plan is valid");
     let evidence =
-        fs::read_to_string(repository.join("dev/benchmarks/permanent_campaign/exact-anchors.csv"))
+        fs::read_to_string(repository.join(plan.authorities.exact_anchors.path.as_str()))
             .expect("the committed exact-anchor evidence reads");
 
     for anchor in &plan.anchors {
@@ -642,15 +667,15 @@ fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, 
         .expect("the exact-failing bootstrap records current runtime without sampling");
 
     let repository = repository();
-    let (mut plan, _) = load_frozen_campaign_validation_preregistration(
-        &repository,
-        Path::new(FROZEN_PREREGISTRATION),
-    )
-    .expect("the committed frozen plan is valid");
+    let (mut plan, _) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the committed frozen plan is valid");
     plan.anchors.retain(|anchor| (anchor.q, anchor.n) == (5, 1));
 
-    let terminal_source =
-        repository.join("dev/active/02b8137c/validation-journal/q5-n01-s0.terminal.json");
+    let terminal_source = repository
+        .join(frozen_bundle())
+        .join(FROZEN_JOURNAL_DIRECTORY)
+        .join("q5-n01-s0.terminal.json");
     let terminal_bytes = fs::read(&terminal_source).expect("the committed q=5 n=1 terminal reads");
     let terminal: AnchorReceipt =
         serde_json::from_slice(&terminal_bytes).expect("the committed terminal decodes");
@@ -676,8 +701,17 @@ fn state_with_committed_q5_terminal(label: &str) -> (ValidationPreregistration, 
 
 fn copy_committed_validation_journal(label: &str) -> ScratchPath {
     let destination = unique_directory(label);
-    fs::create_dir_all(&destination).expect("the journal fixture directory is creatable");
-    let source = repository().join("dev/active/02b8137c/validation-journal");
+    copy_directory_files(
+        &repository()
+            .join(frozen_bundle())
+            .join(FROZEN_JOURNAL_DIRECTORY),
+        &destination,
+    );
+    destination
+}
+
+fn copy_directory_files(source: &Path, destination: &Path) {
+    fs::create_dir_all(destination).expect("the fixture directory is creatable");
     for entry in fs::read_dir(source).expect("the committed journal directory reads") {
         let entry = entry.expect("the committed journal entry reads");
         if entry
@@ -686,26 +720,23 @@ fn copy_committed_validation_journal(label: &str) -> ScratchPath {
             .is_file()
         {
             fs::copy(entry.path(), destination.join(entry.file_name()))
-                .expect("the immutable journal fixture copies");
+                .expect("the immutable fixture copies");
         }
     }
-    destination
 }
 
 #[test]
 fn the_current_journal_admits_an_ordered_continuation_before_q5_n2_starts() {
     let repository = repository();
-    let (plan, identity) = load_frozen_campaign_validation_preregistration(
-        &repository,
-        Path::new(FROZEN_PREREGISTRATION),
-    )
-    .expect("the committed frozen plan is valid");
+    let (plan, identity) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the committed frozen plan is valid");
     let state = copy_committed_validation_journal("validation-current-continuation");
     let preserved =
         fs::read(state.join("q5-n01-s0.terminal.json")).expect("the last old terminal reads");
 
     let authorization =
-        load_validation_continuation_authorization(&repository, Path::new(FROZEN_CONTINUATION))
+        load_validation_continuation_authorization(&repository, &frozen_continuation())
             .expect("the committed continuation authorization is valid");
     let admission = admit_validation_run(
         &plan,
@@ -752,6 +783,70 @@ fn the_current_journal_admits_an_ordered_continuation_before_q5_n2_starts() {
     }
 }
 
+#[test]
+fn relocated_frozen_evidence_is_identified_by_content() {
+    let repository = repository();
+    let (plan, _) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the committed frozen plan is valid");
+    let root = unique_directory("validation-relocated-evidence");
+    for authority in [
+        &plan.authorities.protocol,
+        &plan.authorities.manifest,
+        &plan.authorities.exact_anchors,
+        &plan.authorities.backend_equivalence,
+    ] {
+        let relative = Path::new(authority.path.as_str());
+        if authority == &plan.authorities.manifest {
+            let campaign = relative
+                .parent()
+                .expect("the manifest lies in its campaign");
+            copy_directory_files(&repository.join(campaign), &root.join(campaign));
+        } else {
+            let target = root.join(relative);
+            fs::create_dir_all(target.parent().expect("an authority has a parent"))
+                .expect("the authority directory is creatable");
+            fs::copy(repository.join(relative), target).expect("the authority copies");
+        }
+    }
+    let bundle = Path::new("relocated/evidence");
+    copy_directory_files(&repository.join(frozen_bundle()), &root.join(bundle));
+    let journal = root.join(bundle).join(FROZEN_JOURNAL_DIRECTORY);
+    copy_directory_files(
+        &repository
+            .join(frozen_bundle())
+            .join(FROZEN_JOURNAL_DIRECTORY),
+        &journal,
+    );
+
+    let (relocated_plan, identity) = load_frozen_campaign_validation_preregistration(
+        &root,
+        &bundle.join(FROZEN_PREREGISTRATION_FILE),
+    )
+    .expect("the relocated preregistration is the frozen plan by content");
+    let run_state: serde_json::Value = serde_json::from_slice(
+        &fs::read(journal.join("run-state.json")).expect("the relocated run state reads"),
+    )
+    .expect("the relocated run state decodes");
+    assert_ne!(
+        run_state["preregistration_identity"]["path"].as_str(),
+        Some(identity.path.as_str()),
+        "the recorded preregistration path names the original location"
+    );
+    let authorization =
+        load_validation_continuation_authorization(&root, &bundle.join(FROZEN_CONTINUATION_FILE))
+            .expect("the relocated continuation authorization is accepted by digest");
+    let admission = admit_validation_run(
+        &relocated_plan,
+        identity,
+        24,
+        &journal,
+        ValidationRunMode::ContinueWith(Box::new(authorization)),
+    )
+    .expect("the relocated journal admits its authorized continuation");
+    assert_eq!(admission.completed_anchor_count(), 5);
+}
+
 fn current_continuation_inputs(
     label: &str,
 ) -> (
@@ -761,13 +856,11 @@ fn current_continuation_inputs(
     gf2_sim::permanent_campaign::validation::AuthorizedValidationContinuation,
 ) {
     let repository = repository();
-    let (plan, identity) = load_frozen_campaign_validation_preregistration(
-        &repository,
-        Path::new(FROZEN_PREREGISTRATION),
-    )
-    .expect("the frozen plan is valid");
+    let (plan, identity) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the frozen plan is valid");
     let authorization =
-        load_validation_continuation_authorization(&repository, Path::new(FROZEN_CONTINUATION))
+        load_validation_continuation_authorization(&repository, &frozen_continuation())
             .expect("the continuation authorization is valid");
     (
         plan,
@@ -1100,16 +1193,11 @@ fn receipt_validation_rejects_each_mutated_field() {
     let (base, _state) = passing_receipt("validation-mutations");
     base.validate().expect("the unmutated receipt validates");
 
-    let snapshot = |byte: char| {
-        FrozenArtifactSnapshot {
-        root: "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829"
+    let snapshot = |byte: char| FrozenArtifactSnapshot {
+        root: "fixtures/frozen-campaign"
             .parse()
             .expect("the frozen root is a normalized path"),
-        artifacts: vec![identity(
-            "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
-            byte,
-        )],
-    }
+        artifacts: vec![identity("fixtures/frozen-campaign/manifest.json", byte)],
     };
 
     let mutations: Vec<Mutation<ValidationReceipt>> = vec![
@@ -1547,8 +1635,14 @@ fn a_preregistration_authority_digest_must_match_the_committed_bytes() {
 #[test]
 fn validation_writes_no_campaign_artifact_and_leaves_the_frozen_payload_intact() {
     let repository = repository();
-    let frozen = repository
-        .join("dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829");
+    let (plan, _) =
+        load_frozen_campaign_validation_preregistration(&repository, &frozen_preregistration())
+            .expect("the committed frozen plan is valid");
+    let frozen = repository.join(
+        Path::new(plan.authorities.manifest.path.as_str())
+            .parent()
+            .expect("the manifest lies in its campaign directory"),
+    );
     let inventory = |root: &Path| -> Vec<(String, String)> {
         let mut entries: Vec<(String, String)> = fs::read_dir(root)
             .expect("the frozen campaign directory reads")
@@ -1631,10 +1725,8 @@ fn the_runner_refuses_an_incomplete_invocation_and_a_missing_receipt() {
 
     let output = std::process::Command::new(binary)
         .current_dir(&repository)
-        .args([
-            "--verify-receipt",
-            "dev/active/02b8137c/absent-receipt.json",
-        ])
+        .arg("--verify-receipt")
+        .arg(frozen_bundle().join("absent-receipt.json"))
         .output()
         .expect("the runner executes");
     assert_eq!(
@@ -1645,10 +1737,8 @@ fn the_runner_refuses_an_incomplete_invocation_and_a_missing_receipt() {
 
     let output = std::process::Command::new(binary)
         .current_dir(&repository)
-        .args([
-            "--verify-receipt",
-            "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json",
-        ])
+        .arg("--verify-receipt")
+        .arg(frozen_preregistration())
         .output()
         .expect("the runner executes");
     assert_eq!(
@@ -1663,14 +1753,17 @@ fn the_runner_refuses_the_superseded_v1_receipt_path_before_journal_creation() {
     let state = unique_directory("validation-stale-receipt-path");
     let output = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_validation"))
         .current_dir(repository())
-        .args([
-            "--preregistration",
-            FROZEN_PREREGISTRATION,
-            "--state-dir",
-            state.to_str().expect("the temporary journal path is UTF-8"),
-            "--receipt",
-            "dev/active/02b8137c/pre-draw-validation-v1-receipt.json",
-        ])
+        .arg("--preregistration")
+        .arg(frozen_preregistration())
+        .arg("--state-dir")
+        .arg(&*state)
+        .arg("--receipt")
+        .arg(
+            state
+                .parent()
+                .expect("the journal has a bundle directory")
+                .join("pre-draw-validation-v1-receipt.json"),
+        )
         .output()
         .expect("the runner executes");
 
@@ -1756,18 +1849,19 @@ fn the_frozen_runner_refuses_a_wrong_toolchain_before_creating_the_journal() {
         return;
     }
     let state = unique_directory("validation-frozen-refusal");
-    let receipt = repository().join(FROZEN_VALIDATION_RECEIPT_PATH);
+    let receipt = state
+        .parent()
+        .expect("the journal has a bundle directory")
+        .join(FROZEN_VALIDATION_RECEIPT_FILE);
     let receipt_before = fs::read(&receipt).ok();
     let output = std::process::Command::new(env!("CARGO_BIN_EXE_permanent_validation"))
         .current_dir(repository())
-        .args([
-            "--preregistration",
-            FROZEN_PREREGISTRATION,
-            "--state-dir",
-            state.to_str().expect("the journal path is UTF-8"),
-            "--receipt",
-            FROZEN_VALIDATION_RECEIPT_PATH,
-        ])
+        .arg("--preregistration")
+        .arg(frozen_preregistration())
+        .arg("--state-dir")
+        .arg(&*state)
+        .arg("--receipt")
+        .arg(&receipt)
         .output()
         .expect("the runner executes");
 

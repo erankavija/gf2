@@ -10,17 +10,19 @@
 //!
 //! ```console
 //! $ permanent_validation \
-//!     --preregistration dev/active/02b8137c/pre-draw-validation-v1-preregistration.json \
-//!     --state-dir dev/active/02b8137c/validation-journal \
-//!     --receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json \
+//!     --preregistration BUNDLE/pre-draw-validation-v1-preregistration.json \
+//!     --state-dir BUNDLE/validation-journal \
+//!     --receipt BUNDLE/pre-draw-validation-v2-receipt.json \
 //!     --workers 32
 //! ```
 //!
 //! Paths are interpreted relative to the repository root, which is resolved
-//! from the working directory. The preregistration must be committed before
-//! the first validation draw: the run binds its content identity into the
-//! receipt and refuses a plan whose recorded authority digests disagree with
-//! the committed protocol, manifest, and mechanical evidence.
+//! from the working directory. `BUNDLE` is the committed evidence directory;
+//! the receipt is written beside the journal, and each frozen input is
+//! identified by its digest. The preregistration must be committed before the
+//! first validation draw: the run binds its content identity into the receipt
+//! and refuses a plan whose recorded authority digests disagree with the
+//! committed protocol, manifest, and mechanical evidence.
 //!
 //! The journal makes the run resumable and enforces the protocol's no-redraw
 //! rule. An anchor whose durable start marker exists without a terminal record
@@ -40,7 +42,7 @@
 //! opens the first address.
 //!
 //! ```console
-//! $ permanent_validation --verify-receipt dev/active/02b8137c/pre-draw-validation-v2-receipt.json
+//! $ permanent_validation --verify-receipt BUNDLE/pre-draw-validation-v2-receipt.json
 //! ```
 //!
 //! `--verify-receipt` re-reads a committed receipt, revalidates it against the
@@ -59,7 +61,7 @@ use gf2_sim::permanent_campaign::validation::{
     load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
     publish_validation_receipt_atomic, read_frozen_validation_receipt,
     run_frozen_campaign_validation_with_mode, ValidationReceipt, ValidationRunMode,
-    FROZEN_VALIDATION_RECEIPT_PATH,
+    FROZEN_VALIDATION_RECEIPT_FILE,
 };
 
 const USAGE: &str = "usage: permanent_validation --preregistration PATH --state-dir PATH --receipt PATH [--workers N] [--continue-producer-segment PATH]
@@ -68,7 +70,7 @@ const USAGE: &str = "usage: permanent_validation --preregistration PATH --state-
 
   --preregistration PATH  committed frozen ten-anchor preregistration, repository-relative
   --state-dir PATH        durable no-redraw journal directory
-  --receipt PATH          canonical immutable schema-v2 receipt destination
+  --receipt PATH          canonical immutable schema-v2 receipt beside the journal
   --workers N             worker count for production evaluation (default: 1)
   --continue-producer-segment PATH
                            committed schema-v2 owner authorization for one second producer
@@ -145,8 +147,12 @@ fn main() -> ExitCode {
     else {
         return usage("execution needs --preregistration, --state-dir, and --receipt");
     };
-    if receipt_path != Path::new(FROZEN_VALIDATION_RECEIPT_PATH) {
-        return usage("--receipt must name the canonical schema-v2 validation receipt");
+    let state_directory = repository.join(state_directory);
+    let receipt_path = repository.join(receipt_path);
+    if receipt_path.parent() != state_directory.parent()
+        || receipt_path.file_name() != Some(FROZEN_VALIDATION_RECEIPT_FILE.as_ref())
+    {
+        return usage("--receipt must name the canonical schema-v2 receipt beside the journal");
     }
 
     let (plan, identity) =
@@ -166,14 +172,13 @@ fn main() -> ExitCode {
         &plan,
         identity,
         workers,
-        &repository.join(state_directory),
+        &state_directory,
         mode,
     ) {
         Ok(receipt) => receipt,
         Err(error) => return failure(&error),
     };
-    if let Err(error) = publish_validation_receipt_atomic(&repository.join(receipt_path), &receipt)
-    {
+    if let Err(error) = publish_validation_receipt_atomic(&receipt_path, &receipt) {
         return failure(&error);
     }
     report(&receipt)
