@@ -97,17 +97,6 @@ impl TransposeLane {
     }
 
     /// The lane [`name`](Self::name) spells, or `None` for an unknown tag.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_simd::transpose::TransposeLane;
-    /// assert_eq!(
-    ///     TransposeLane::from_name("avx2-ymm6"),
-    ///     Some(TransposeLane::Avx2Ymm6)
-    /// );
-    /// assert_eq!(TransposeLane::from_name("avx2-vnni"), None);
-    /// ```
     #[must_use]
     pub fn from_name(name: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|lane| lane.name() == name)

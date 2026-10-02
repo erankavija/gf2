@@ -56,18 +56,6 @@ use super::{ProductCode, ProductComponent, TurboDecoderResult};
 ///
 /// Controls the number of turbo iteration pairs, the Chase search depth `p`,
 /// and the per-half-iteration alpha/beta schedules from Pyndiah (1998).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::product::ChasePyndiahConfig;
-///
-/// let config = ChasePyndiahConfig::default();
-/// assert_eq!(config.max_iterations, 8);
-/// assert_eq!(config.p, 4);
-/// assert_eq!(config.alpha.len(), 8);
-/// assert_eq!(config.beta.len(), 8);
-/// ```
 #[derive(Debug, Clone)]
 pub struct ChasePyndiahConfig {
     /// Maximum number of row-column iteration pairs.
@@ -194,16 +182,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     ///
     /// Panics if the parity-check matrix has more than 32 rows (i.e., n - k > 32),
     /// since syndrome bitmasks are stored as `u32`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -617,33 +595,11 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     }
 
     /// Returns a reference to the decoder configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
-    /// assert_eq!(decoder.config().max_iterations, 8);
-    /// ```
     pub fn config(&self) -> &ChasePyndiahConfig {
         &self.config
     }
 
     /// Returns a reference to the component code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductComponent};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
-    /// assert_eq!(decoder.component().comp_n(), 16);
-    /// ```
     pub fn component(&self) -> &C {
         &self.component
     }

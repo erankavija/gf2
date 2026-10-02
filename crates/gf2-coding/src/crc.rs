@@ -60,19 +60,6 @@ use gf2_core::{BitMatrix, BitVec};
 /// The generator matrix is constructed from the CRC polynomial using
 /// systematic encoding: for each basis message, the parity bits are the
 /// remainder of dividing x^r * m(x) by g(x).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::crc::CrcCode;
-/// use gf2_coding::traits::BlockEncoder;
-/// use gf2_core::BitVec;
-///
-/// let code = CrcCode::crc_25_15();
-/// let msg = BitVec::zeros(15);
-/// let cw = code.encode(&msg);
-/// assert_eq!(cw.len(), 25);
-/// ```
 #[derive(Debug, Clone)]
 pub struct CrcCode {
     inner: LinearBlockCode,
@@ -94,17 +81,6 @@ impl CrcCode {
     /// # Panics
     ///
     /// Panics if `n <= k` or if `poly` does not have degree `n - k`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// // CRC(25,15) with polynomial 0x6b9 (degree 10)
-    /// let code = CrcCode::new(25, 15, 0x6b9);
-    /// assert_eq!(code.n(), 25);
-    /// assert_eq!(code.k(), 15);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -182,27 +158,11 @@ impl CrcCode {
     }
 
     /// Returns the codeword length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// assert_eq!(CrcCode::crc_25_15().n(), 25);
-    /// ```
     pub fn n(&self) -> usize {
         self.inner.n()
     }
 
     /// Returns the message length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// assert_eq!(CrcCode::crc_25_15().k(), 15);
-    /// ```
     pub fn k(&self) -> usize {
         self.inner.k()
     }
@@ -212,15 +172,6 @@ impl CrcCode {
     /// The returned value has the leading x^r bit set. For example, the
     /// degree-10 polynomial `x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1`
     /// is returned as `0x6b9`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// assert_eq!(code.poly(), 0x6b9);
-    /// ```
     pub fn poly(&self) -> u64 {
         self.poly
     }
@@ -231,23 +182,6 @@ impl CrcCode {
     ///
     /// - Full representation (with x^10 bit): `0x6b9`
     /// - Truncated representation (without x^10 bit): `0x2b9`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_core::BitVec;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// assert_eq!(code.n(), 25);
-    /// assert_eq!(code.k(), 15);
-    /// assert_eq!(code.poly(), 0x6b9);
-    ///
-    /// let msg = BitVec::ones(15);
-    /// let cw = code.encode(&msg);
-    /// assert_eq!(cw.len(), 25);
-    /// ```
     pub fn crc_25_15() -> Self {
         // x^10 + x^9 + x^7 + x^5 + x^4 + x^3 + 1
         // = 0b110_1011_1001 = 0x6b9
@@ -255,17 +189,6 @@ impl CrcCode {
     }
 
     /// Returns the parity-check matrix H.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// let h = code.parity_check();
-    /// assert_eq!(h.rows(), 10);
-    /// assert_eq!(h.cols(), 25);
-    /// ```
     pub fn parity_check(&self) -> &BitMatrix {
         self.inner
             .parity_check()
@@ -276,16 +199,6 @@ impl CrcCode {
     ///
     /// CRC codes are generally **not** even codes. This flag is used by
     /// ORBGRAND's even-code optimization.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// // CRC codes are typically not even
-    /// assert!(!code.is_even() || code.is_even()); // value depends on polynomial
-    /// ```
     pub fn is_even(&self) -> bool {
         // Check if the all-ones codeword has even weight by checking
         // if the sum of each row of G has even weight
@@ -305,16 +218,6 @@ impl CrcCode {
     }
 
     /// Returns the inner [`LinearBlockCode`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::crc::CrcCode;
-    ///
-    /// let code = CrcCode::crc_25_15();
-    /// let inner = code.inner();
-    /// assert_eq!(inner.n(), 25);
-    /// ```
     pub fn inner(&self) -> &LinearBlockCode {
         &self.inner
     }

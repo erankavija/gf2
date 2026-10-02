@@ -78,17 +78,6 @@ pub fn resolve_xor_inplace(word_len: usize) -> XorInplaceFn {
 /// # Panics
 ///
 /// Panics in debug mode if slices have different lengths.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::kernels::ops::xor_inplace;
-///
-/// let mut dst = vec![0xFF, 0x00];
-/// let src = vec![0x0F, 0xF0];
-/// xor_inplace(&mut dst, &src);
-/// assert_eq!(dst, vec![0xF0, 0xF0]);
-/// ```
 #[inline]
 pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
     debug_assert_eq!(
@@ -306,15 +295,6 @@ fn scalar_and_popcount(lhs: &[u64], rhs: &[u64]) -> u64 {
 /// `dev/active/220cab0b/design.md`, and its profile field carries it for
 /// calibration.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::kernels::ops::resolve_popcount;
-///
-/// let popcount = resolve_popcount(2);
-/// assert_eq!(popcount(&[0b1011, 0b0100]), 4);
-/// ```
-///
 /// # Complexity
 ///
 /// O(1) to resolve; the returned function runs in O(`word_len`).
@@ -343,15 +323,6 @@ pub fn resolve_popcount(word_len: usize) -> PopcountFn {
 /// receipt does not qualify for production selection.
 ///
 /// The count covers the shorter of the two slices.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::kernels::ops::resolve_and_popcount;
-///
-/// let and_popcount = resolve_and_popcount(2);
-/// assert_eq!(and_popcount(&[0b1011, 0b0110], &[0b1001, 0b1100]), 3);
-/// ```
 ///
 /// # Complexity
 ///

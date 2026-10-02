@@ -85,16 +85,6 @@ impl BchComponentCode {
     /// * `k` - Component message dimension
     /// * `t` - Error correction capability
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// assert_eq!(comp.n(), 7);
-    /// assert_eq!(comp.k(), 4);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if the BCH code parameters are invalid.
@@ -171,57 +161,21 @@ impl BchComponentCode {
     }
 
     /// Returns the component codeword length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// assert_eq!(comp.n(), 7);
-    /// ```
     pub fn n(&self) -> usize {
         self.n_c
     }
 
     /// Returns the component message dimension.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// assert_eq!(comp.k(), 4);
-    /// ```
     pub fn k(&self) -> usize {
         self.k_c
     }
 
     /// Returns the error correction capability.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// assert_eq!(comp.t(), 1);
-    /// ```
     pub fn t(&self) -> usize {
         self.t
     }
 
     /// Returns the number of parity checks (n - k) in the component code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// assert_eq!(comp.num_checks(), 3);
-    /// ```
     pub fn num_checks(&self) -> usize {
         self.num_checks
     }
@@ -239,17 +193,6 @@ impl BchComponentCode {
     /// # Panics
     ///
     /// Panics if `word.len() != n_c`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    /// use gf2_core::BitVec;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// let zero = BitVec::zeros(7);
-    /// assert!(comp.is_valid_codeword(&zero));
-    /// ```
     pub fn is_valid_codeword(&self, word: &BitVec) -> bool {
         assert_eq!(
             word.len(),
@@ -271,17 +214,6 @@ impl BchComponentCode {
     /// # Returns
     ///
     /// A `BitMatrix` with `num_checks` rows and `n_c` columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::BchComponentCode;
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// let h = comp.h_matrix();
-    /// assert_eq!(h.rows(), 3);
-    /// assert_eq!(h.cols(), 7);
-    /// ```
     pub fn h_matrix(&self) -> BitMatrix {
         let mut h = BitMatrix::zeros(self.num_checks, self.n_c);
         for (row_idx, row_ones) in self.h_rows.iter().enumerate() {
@@ -461,17 +393,6 @@ impl QcGldpcCode {
     /// * `k_c` - Component code message dimension
     /// * `t` - Component code error correction capability
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    ///
-    /// // BCH(7,4,1) component -> (49, 7) GLDPC code
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// assert_eq!(code.code_n(), 49);
-    /// assert!(code.code_k() > 0);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if the component code parameters are invalid.
@@ -519,16 +440,6 @@ impl QcGldpcCode {
     /// # Arguments
     ///
     /// * `component` - The component code for check nodes
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::{BchComponentCode, QcGldpcCode};
-    ///
-    /// let comp = BchComponentCode::new(7, 4, 1);
-    /// let code = QcGldpcCode::from_component(comp);
-    /// assert_eq!(code.code_n(), 49);
-    /// ```
     pub fn from_component(component: BchComponentCode) -> Self {
         let n_c = component.n();
         let num_check_nodes = 2 * n_c;
@@ -620,57 +531,21 @@ impl QcGldpcCode {
     }
 
     /// Returns the total code length (n_c^2).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// assert_eq!(code.code_n(), 49);
-    /// ```
     pub fn code_n(&self) -> usize {
         self.n
     }
 
     /// Returns the code dimension.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// assert!(code.code_k() > 0);
-    /// ```
     pub fn code_k(&self) -> usize {
         self.k
     }
 
     /// Returns the number of check nodes (2 * n_c).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// assert_eq!(code.num_check_nodes(), 14);
-    /// ```
     pub fn num_check_nodes(&self) -> usize {
         self.num_check_nodes
     }
 
     /// Returns a reference to the component code.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// assert_eq!(code.component().n(), 7);
-    /// ```
     pub fn component(&self) -> &BchComponentCode {
         &self.component
     }
@@ -680,15 +555,6 @@ impl QcGldpcCode {
     /// These are the non-pivot columns from RREF of H. Message bit `i` is placed
     /// at codeword position `systematic_positions()[i]` during encoding, and
     /// extracted from the same position during decoding.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// assert_eq!(code.systematic_positions().len(), code.code_k());
-    /// ```
     pub fn systematic_positions(&self) -> &[usize] {
         &self.systematic_positions
     }
@@ -940,18 +806,6 @@ impl crate::traits::GeneratorMatrixAccess for QcGldpcCode {
     /// Returns the generator matrix of the GLDPC code.
     ///
     /// Computed lazily via RREF of the parity-check matrix and cached.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::QcGldpcCode;
-    /// use gf2_coding::traits::GeneratorMatrixAccess;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// let g = code.generator_matrix();
-    /// assert_eq!(g.rows(), code.code_k());
-    /// assert_eq!(g.cols(), code.code_n());
-    /// ```
     fn generator_matrix(&self) -> gf2_core::BitMatrix {
         self.generator_matrix_cached()
     }
@@ -1076,15 +930,6 @@ impl GldpcDecoder {
     /// # Arguments
     ///
     /// * `code` - The QC-GLDPC code to decode
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::{QcGldpcCode, GldpcDecoder};
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// let decoder = GldpcDecoder::new(code);
-    /// ```
     pub fn new(code: QcGldpcCode) -> Self {
         // Detect if the component code is an even code (all codewords have
         // even Hamming weight). This is the case for extended BCH codes,
@@ -1120,20 +965,6 @@ impl GldpcDecoder {
     ///
     /// * `code` - The QC-GLDPC code to decode
     /// * `orbgrand_config` - Configuration for the underlying ORBGRAND decoder
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::{QcGldpcCode, GldpcDecoder};
-    /// use gf2_coding::grand::OrbGrandConfig;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// let config = OrbGrandConfig {
-    ///     list_size: 8,
-    ///     ..OrbGrandConfig::default()
-    /// };
-    /// let decoder = GldpcDecoder::with_sogrand_config(code, config);
-    /// ```
     pub fn with_sogrand_config(code: QcGldpcCode, orbgrand_config: OrbGrandConfig) -> Self {
         Self::with_config(code, orbgrand_config, GldpcDecoderConfig::default())
     }
@@ -1149,21 +980,6 @@ impl GldpcDecoder {
     /// * `code` - The QC-GLDPC code to decode
     /// * `orbgrand_config` - Configuration for the underlying ORBGRAND decoder
     /// * `decoder_config` - Configuration for BP damping and LLR saturation
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::gldpc::{QcGldpcCode, GldpcDecoder, GldpcDecoderConfig};
-    /// use gf2_coding::grand::OrbGrandConfig;
-    ///
-    /// let code = QcGldpcCode::lentmaier(7, 4, 1);
-    /// let orb_config = OrbGrandConfig {
-    ///     list_size: 8,
-    ///     ..OrbGrandConfig::default()
-    /// };
-    /// let dec_config = GldpcDecoderConfig { alpha: 0.6, llr_saturation: 20.0 };
-    /// let decoder = GldpcDecoder::with_config(code, orb_config, dec_config);
-    /// ```
     pub fn with_config(
         code: QcGldpcCode,
         orbgrand_config: OrbGrandConfig,

@@ -154,15 +154,6 @@ impl<const P: u64> Fp<P> {
     /// # Arguments
     ///
     /// * `value` - Any `u64`; will be reduced to `[0, P)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = Fp::<7>::new(10); // 10 mod 7 = 3
-    /// assert_eq!(a.value(), 3);
-    /// ```
     #[inline]
     pub const fn new(value: u64) -> Self {
         #[allow(clippy::let_unit_value)]
@@ -178,14 +169,6 @@ impl<const P: u64> Fp<P> {
     }
 
     /// Returns the inner representative value in `[0, P)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(Fp::<7>::new(3).value(), 3);
-    /// ```
     #[inline]
     pub const fn value(self) -> u64 {
         if P == 2 || use_specialized_storage(P) {

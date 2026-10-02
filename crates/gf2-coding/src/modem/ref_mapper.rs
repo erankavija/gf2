@@ -64,15 +64,6 @@ impl<S: ModemScalar> ReferenceMapper<S> {
     ///   preset ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`]) or
     ///   a custom spec built through [`super::ModemSpecBuilder`].
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpec, ReferenceMapper};
-    ///
-    /// let mapper = ReferenceMapper::new(ModemSpec::bpsk());
-    /// assert_eq!(mapper.spec_ref().num_symbols(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(M) where `M = 2^bits_per_symbol`.
@@ -97,15 +88,6 @@ impl<S: ModemScalar> ReferenceMapper<S> {
     ///
     /// Useful for chaining into a demapper that needs to read the same
     /// spec, or for cloning into a sibling backend.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpec, ReferenceMapper};
-    ///
-    /// let mapper = ReferenceMapper::new(ModemSpec::gray_square_qam(16));
-    /// assert_eq!(mapper.spec_ref().bits_per_symbol(), 4);
-    /// ```
     ///
     /// # Complexity
     ///

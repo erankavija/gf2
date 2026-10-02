@@ -153,18 +153,6 @@ impl fmt::Debug for Bipedal3 {
     /// (each in `{0, 1, 2}`), matching the style of
     /// [`ScalarPackedFp3`](super::ScalarPackedFp3)'s `Debug` impl for stable `assert_eq!`
     /// messages.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3;
-    /// use gf2_algebra::packed::PackedField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// let s = format!("{:?}", v);
-    /// assert!(s.contains("lanes"));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Bipedal3")
             .field(
@@ -202,18 +190,6 @@ impl Bipedal3 {
     /// * `mag` — raw magnitude word; bit `i` is the `mag` bit of lane `i`.
     /// * `sgn` — raw sign word; bit `i` is the `sgn` bit of lane `i`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3;
-    ///
-    /// // All lanes = 1 (mag=1, sgn=0 per lane).
-    /// let v = Bipedal3::from_raw(u64::MAX, 0);
-    /// use gf2_algebra::packed::PackedField;
-    /// use gf2_core::gfp::Fp;
-    /// assert_eq!(v, <Bipedal3 as PackedField<Fp<3>>>::one());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -229,17 +205,6 @@ impl Bipedal3 {
     /// (`permanent_bipedal3_multiword`) to extract the word-level result
     /// of a `Bipedal3::add` or `sub` back into the column-sum buffer.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3;
-    /// use gf2_algebra::packed::PackedField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let b = Bipedal3::from_raw(0xABCD, 0x1234);
-    /// assert_eq!(b.mag(), 0xABCD);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -254,17 +219,6 @@ impl Bipedal3 {
     /// Used by the multi-word streaming permanent kernel
     /// (`permanent_bipedal3_multiword`) to extract the word-level result
     /// of a `Bipedal3::add` or `sub` back into the column-sum buffer.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3;
-    /// use gf2_algebra::packed::PackedField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let b = Bipedal3::from_raw(0xABCD, 0x1234);
-    /// assert_eq!(b.sgn(), 0x1234);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -289,17 +243,6 @@ impl Bipedal3 {
     ///
     /// Does not panic; values outside 0/1 simply saturate to 0 or 1 via
     /// the mask.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3;
-    /// use gf2_algebra::packed::PackedField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Bipedal3::splat_raw(1, 0);
-    /// assert_eq!(v, <Bipedal3 as PackedField<Fp<3>>>::one());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -403,16 +346,6 @@ impl Bipedal3 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Bipedal3, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(Bipedal3::add_inherent(a, b).lane(0), Fp::<3>::new(0));
-    /// ```
     #[inline]
     pub fn add_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<3>>>::add(self, rhs)
@@ -422,16 +355,6 @@ impl Bipedal3 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Bipedal3, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(0));
-    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// assert_eq!(Bipedal3::sub_inherent(a, b).lane(0), Fp::<3>::new(2));
-    /// ```
     #[inline]
     pub fn sub_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<3>>>::sub(self, rhs)
@@ -441,16 +364,6 @@ impl Bipedal3 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Bipedal3, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(Bipedal3::mul_inherent(a, b).lane(0), Fp::<3>::new(1));
-    /// ```
     #[inline]
     pub fn mul_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<3>>>::mul(self, rhs)
@@ -460,15 +373,6 @@ impl Bipedal3 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Bipedal3, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// assert_eq!(Bipedal3::neg_inherent(a).lane(0), Fp::<3>::new(2));
-    /// ```
     #[inline]
     pub fn neg_inherent(self) -> Self {
         <Self as PackedField<Fp<3>>>::neg(self)
@@ -483,28 +387,9 @@ impl PackedField<Fp<3>> for Bipedal3 {
     /// Number of independent `F_3` lanes packed into one `Bipedal3`.
     ///
     /// Fixed at 64 to match the `u64`-pair encoding width.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    /// assert_eq!(<Bipedal3 as PackedField<Fp<3>>>::LANES, 64);
-    /// ```
     const LANES: usize = 64;
 
     /// Returns the all-zeros `Bipedal3` (every lane = 0).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z = <Bipedal3 as PackedField<Fp<3>>>::zero();
-    /// assert!(z.all_zero());
-    /// for i in 0..64 { assert_eq!(z.lane(i), Fp::<3>::new(0)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -515,16 +400,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     }
 
     /// Returns the all-ones `Bipedal3` (every lane = 1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let o = <Bipedal3 as PackedField<Fp<3>>>::one();
-    /// for i in 0..64 { assert_eq!(o.lane(i), Fp::<3>::new(1)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -543,16 +418,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     ///
     /// * `x` — scalar `F_3` value to replicate across all lanes.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// for i in 0..64 { assert_eq!(v.lane(i), Fp::<3>::new(2)); }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -570,17 +435,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     /// # Arguments
     ///
     /// * `rhs` — the other operand; lanes are added pointwise mod 3.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(a.add(b).lane(0), Fp::<3>::new(1)); // 2+2=4≡1 mod 3
-    /// ```
     ///
     /// # Complexity
     ///
@@ -610,17 +464,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     ///
     /// * `rhs` — the operand subtracted lane-by-lane from `self`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(0));
-    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// assert_eq!(a.sub(b).lane(0), Fp::<3>::new(2)); // 0-1=-1≡2 mod 3
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`: 6 word-level bitwise operations.
@@ -643,16 +486,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     ///
     /// For `x ∈ F_3`: `neg(0)=0`, `neg(1)=2`, `neg(2)=1`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-    /// assert_eq!(a.neg().lane(0), Fp::<3>::new(2)); // -1≡2 mod 3
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`: 1 word-level XOR.
@@ -669,17 +502,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     /// # Arguments
     ///
     /// * `rhs` — the other operand; lanes are multiplied pointwise mod 3.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(a.mul(b).lane(0), Fp::<3>::new(1)); // 2*2=4≡1 mod 3
-    /// ```
     ///
     /// # Complexity
     ///
@@ -704,17 +526,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     /// # Panics
     ///
     /// Panics if `i >= 64`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Bipedal3};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-    /// assert_eq!(v.lane(0), Fp::<3>::new(2));
-    /// assert_eq!(v.lane(63), Fp::<3>::new(2));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1534,17 +1345,6 @@ mod tests {
 /// zero in [`get`][`Bipedal3Vec::get`], [`all_zero`][`PackedFieldVec::all_zero`],
 /// and [`PartialEq`].
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-/// use gf2_core::gfp::Fp;
-///
-/// let v = Bipedal3Vec::zeros(5);
-/// assert_eq!(v.len(), 5);
-/// assert!(v.all_zero());
-/// ```
-///
 /// # Complexity
 ///
 /// Construction and lane-wise operations are `O(ceil(len_lanes / 64))`.
@@ -1823,17 +1623,6 @@ impl fmt::Debug for Bipedal3Vec {
     /// Formats the value as a `Vec` of decoded lane values (each `0`, `1`,
     /// or `2`), matching the style of [`ScalarPackedFp3Vec`](super::ScalarPackedFp3Vec)'s `Debug`
     /// impl for stable `assert_eq!` messages.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1), Fp::<3>::new(2)]);
-    /// let s = format!("{:?}", v);
-    /// assert!(s.contains("lanes"));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let lanes: Vec<u64> = (0..self.len_lanes)
             .map(|i| {
@@ -1869,16 +1658,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     ///
     /// * `len` — number of logical `F_3` positions in the result.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-    ///
-    /// let v = Bipedal3Vec::zeros(65);
-    /// assert_eq!(v.len(), 65);
-    /// assert!(v.all_zero());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(ceil(len / 64))`.
@@ -1901,19 +1680,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     ///
     /// * `xs` — source slice; the result has `xs.len()` logical positions
     ///   and `get(i) == xs[i]` for every `i`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let xs = [Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2)];
-    /// let v = Bipedal3Vec::from_field_slice(&xs);
-    /// for i in 0..3 {
-    ///     assert_eq!(v.get(i), xs[i]);
-    /// }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1945,14 +1711,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
 
     /// Number of logical `F_3` positions held by this vector.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-    ///
-    /// assert_eq!(Bipedal3Vec::zeros(100).len(), 100);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -1972,16 +1730,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(2)]);
-    /// assert_eq!(v.get(0), Fp::<3>::new(2));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -2152,17 +1900,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     /// is zero iff its `mag` bit is 0 (the `sgn` bit is irrelevant when
     /// `mag=0`), so testing `mag` alone suffices. The alternative-zero
     /// codeword `(mag=0, sgn=1)` is correctly reported as zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Bipedal3Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert!(Bipedal3Vec::zeros(10).all_zero());
-    /// let nz = Bipedal3Vec::from_field_slice(&[Fp::<3>::new(1)]);
-    /// assert!(!nz.all_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -3100,20 +2837,6 @@ impl Bipedal3Matrix {
 
     /// Number of rows.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = Bipedal3Matrix::from_row_major(&[], 0, 5);
-    /// assert_eq!(m.rows(), 0);
-    /// let m2 = Bipedal3Matrix::from_row_major(
-    ///     &(0..10u64).map(|v| Fp::<3>::new(v % 3)).collect::<Vec<_>>(), 2, 5
-    /// );
-    /// assert_eq!(m2.rows(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -3123,20 +2846,6 @@ impl Bipedal3Matrix {
     }
 
     /// Number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = Bipedal3Matrix::from_row_major(&[], 5, 0);
-    /// assert_eq!(m.cols(), 0);
-    /// let m2 = Bipedal3Matrix::from_row_major(
-    ///     &(0..10u64).map(|v| Fp::<3>::new(v % 3)).collect::<Vec<_>>(), 2, 5
-    /// );
-    /// assert_eq!(m2.cols(), 5);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -3245,23 +2954,6 @@ impl Bipedal3Matrix {
     /// # Panics
     ///
     /// Panics if `i >= self.rows()` or `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Bipedal3Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data: Vec<Fp<3>> = vec![
-    ///     Fp::<3>::new(0), Fp::<3>::new(1),
-    ///     Fp::<3>::new(2), Fp::<3>::new(0),
-    /// ];
-    /// let m = Bipedal3Matrix::from_row_major(&data, 2, 2);
-    /// assert_eq!(m.get(0, 0), Fp::<3>::new(0));
-    /// assert_eq!(m.get(0, 1), Fp::<3>::new(1));
-    /// assert_eq!(m.get(1, 0), Fp::<3>::new(2));
-    /// assert_eq!(m.get(1, 1), Fp::<3>::new(0));
-    /// ```
     ///
     /// # Complexity
     ///

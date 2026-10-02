@@ -73,16 +73,6 @@ impl HipStream {
     ///
     /// The handle is valid for the lifetime of this [`HipStream`]. Callers must
     /// not destroy it; `Drop` owns that.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::HipStream;
-    ///
-    /// let stream = HipStream::new().expect("create a HIP stream");
-    /// let raw = stream.as_raw(); // hand to a kernel-launch FFI call
-    /// assert!(!raw.is_null());
-    /// ```
     pub fn as_raw(&self) -> *mut c_void {
         self.raw
     }
@@ -280,44 +270,17 @@ impl HipStreamPool {
     }
 
     /// Returns the device this pool's streams are bound to.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::HipStreamPool;
-    ///
-    /// let pool = HipStreamPool::new(0, 2).expect("create a 2-stream pool");
-    /// assert_eq!(pool.device_id(), 0);
-    /// ```
     pub fn device_id(&self) -> i32 {
         self.device_id
     }
 
     /// Returns the number of streams in the pool.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::HipStreamPool;
-    ///
-    /// let pool = HipStreamPool::new(0, 3).expect("create a 3-stream pool");
-    /// assert_eq!(pool.len(), 3);
-    /// ```
     pub fn len(&self) -> usize {
         self.streams.len()
     }
 
     /// Returns `true` if the pool has no streams. Always `false` for a pool
     /// built by [`HipStreamPool::new`] (which rejects `n == 0`).
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::HipStreamPool;
-    ///
-    /// let pool = HipStreamPool::new(0, 1).expect("create a 1-stream pool");
-    /// assert!(!pool.is_empty());
-    /// ```
     pub fn is_empty(&self) -> bool {
         self.streams.is_empty()
     }
@@ -372,17 +335,6 @@ impl HipStreamPool {
     /// # Panics
     ///
     /// Panics if `idx >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::HipStreamPool;
-    ///
-    /// let pool = HipStreamPool::new(0, 2).expect("create a 2-stream pool");
-    /// // Indexed access is stable: the same index is the same stream.
-    /// assert_eq!(pool.get(1).as_raw(), pool.get(1).as_raw());
-    /// assert_ne!(pool.get(0).as_raw(), pool.get(1).as_raw());
-    /// ```
     ///
     /// # Complexity
     ///

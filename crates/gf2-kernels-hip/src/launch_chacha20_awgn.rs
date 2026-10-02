@@ -409,10 +409,6 @@ impl GpuChaChaAwgn {
     /// Returns [`HipError`] if the pinned allocation fails (an OOM is the
     /// distinguished [`HipError::OutOfMemory`]).
     ///
-    /// # Examples
-    ///
-    /// See [`AwgnStreamScratch`].
-    ///
     /// # Complexity
     ///
     /// O(`capacity`) pinned host memory.

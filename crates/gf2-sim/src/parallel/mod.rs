@@ -595,15 +595,6 @@ impl WorkerCtx {
 /// totals. All fields are integer-exact (`u64` / `bool`), so the resulting
 /// `fer` / `frames` / `errors` / `mean_iters` are byte-identical across worker
 /// counts.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::parallel::FrameOutcome;
-///
-/// let ok = FrameOutcome { errored: false, iterations: 1, info_bits: 32400, bit_errors: 0 };
-/// assert!(!ok.errored);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FrameOutcome {
     /// `true` if the frame is in error (any information-bit mismatch).

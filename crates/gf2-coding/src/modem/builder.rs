@@ -126,14 +126,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     /// Constructs an empty builder with default normalization
     /// ([`Normalization::UnitAverageSymbolEnergy`]).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpecBuilder;
-    ///
-    /// let _builder = ModemSpecBuilder::<f32>::new();
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -158,14 +150,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     ///
     /// * `m` - Bits per symbol, in `[1, 16]`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpecBuilder;
-    ///
-    /// let _ = ModemSpecBuilder::<f32>::new().bits_per_symbol(2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -181,17 +165,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     ///
     /// * `points` - One [`SymbolPoint`] per constellation index, parallel
     ///   to the `labels` vector. Length must equal `2^bits_per_symbol`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpecBuilder, SymbolPoint};
-    ///
-    /// let _ = ModemSpecBuilder::<f32>::new().points(vec![
-    ///     SymbolPoint::new(1.0, 0.0),
-    ///     SymbolPoint::new(-1.0, 0.0),
-    /// ]);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -209,15 +182,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     /// * `labels` - Bit labels parallel to the `points` vector. Every
     ///   `LabelWord` must have `width == bits_per_symbol`, and together
     ///   they must form a bijection over `0..2^bits_per_symbol`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{LabelWord, ModemSpecBuilder};
-    ///
-    /// let _ = ModemSpecBuilder::<f32>::new()
-    ///     .labels(vec![LabelWord::new(0, 1), LabelWord::new(1, 1)]);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -238,15 +202,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     /// * `channels` - One [`BitChannelSemantics`] per bit position; length
     ///   must equal `bits_per_symbol`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BitChannelSemantics, ModemSpecBuilder};
-    ///
-    /// let _ = ModemSpecBuilder::<f32>::new()
-    ///     .bit_channels(vec![BitChannelSemantics::IAxisPam(0)]);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1) (moves the vector).
@@ -265,15 +220,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     /// * `norm` - Normalization contract; points are scaled to satisfy it
     ///   at build time.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemSpecBuilder, Normalization};
-    ///
-    /// let _ = ModemSpecBuilder::<f32>::new()
-    ///     .normalization(Normalization::ExplicitEs(2.0));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -291,18 +237,6 @@ impl<S: ModemScalar> ModemSpecBuilder<S> {
     /// # Arguments
     ///
     /// * `caps` - Capability flags advertised by the built spec.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{ModemCapabilities, ModemSpecBuilder};
-    ///
-    /// let _ = ModemSpecBuilder::<f32>::new().capabilities(ModemCapabilities {
-    ///     supports_exact_log_map: true,
-    ///     supports_max_log: false,
-    ///     analysis: &[],
-    /// });
-    /// ```
     ///
     /// # Complexity
     ///

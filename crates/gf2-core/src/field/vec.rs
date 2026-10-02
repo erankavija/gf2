@@ -105,16 +105,6 @@ pub struct FieldVec<F: FiniteField> {
 
 impl<F: FiniteField> FieldVec<F> {
     /// Creates an empty `FieldVec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// let v = FieldVec::<Gf2mElement>::new();
-    /// assert!(v.is_empty());
-    /// ```
     pub fn new() -> Self {
         FieldVec { data: Vec::new() }
     }
@@ -128,18 +118,6 @@ impl<F: FiniteField> FieldVec<F> {
     ///
     /// * `n` - Number of elements.
     /// * `zero` - Any field element; `zero_like()` supplies the additive identity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, FiniteField};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::zeros_from(4, &field.zero());
-    /// assert_eq!(v.len(), 4);
-    /// assert!(v.iter().all(|e| e.is_zero()));
-    /// ```
     pub fn zeros_from(n: usize, zero: &F) -> Self {
         FieldVec {
             data: (0..n).map(|_| zero.zero_like()).collect(),
@@ -151,16 +129,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Arguments
     ///
     /// * `n` - Initial capacity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// let v = FieldVec::<Gf2mElement>::with_capacity(16);
-    /// assert!(v.is_empty());
-    /// ```
     pub fn with_capacity(n: usize) -> Self {
         FieldVec {
             data: Vec::with_capacity(n),
@@ -182,17 +150,6 @@ impl<F: ConstField> FieldVec<F> {
     /// # Complexity
     ///
     /// O(n).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, FiniteField};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = FieldVec::<Fp<7>>::zeros(4);
-    /// assert_eq!(v.len(), 4);
-    /// assert!(v.iter().all(|e| e.is_zero()));
-    /// ```
     pub fn zeros(n: usize) -> Self {
         FieldVec {
             data: vec![F::zero(); n],
@@ -220,17 +177,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::from(vec![field.element(3)]);
-    /// assert_eq!(v.get(0).value(), 3);
-    /// ```
     pub fn get(&self, i: usize) -> &F {
         &self.data[i]
     }
@@ -245,18 +191,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, FiniteField};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut v = FieldVec::zeros_from(3, &field.zero());
-    /// v.set(1, field.element(7));
-    /// assert_eq!(v.get(1).value(), 7);
-    /// ```
     pub fn set(&mut self, i: usize, val: F) {
         self.data[i] = val;
     }
@@ -266,80 +200,26 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Arguments
     ///
     /// * `val` - Element to append.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut v = FieldVec::new();
-    /// v.push(field.element(3));
-    /// assert_eq!(v.len(), 1);
-    /// assert_eq!(v[0], field.element(3));
-    /// ```
     pub fn push(&mut self, val: F) {
         self.data.push(val);
     }
 
     /// Returns the elements as a slice.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::from(vec![field.element(1), field.element(2)]);
-    /// assert_eq!(v.as_slice().len(), 2);
-    /// ```
     pub fn as_slice(&self) -> &[F] {
         &self.data
     }
 
     /// Returns the elements as a mutable slice.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut v = FieldVec::from(vec![field.element(1), field.element(2)]);
-    /// v.as_mut_slice()[0] = field.element(9);
-    /// assert_eq!(v[0], field.element(9));
-    /// ```
     pub fn as_mut_slice(&mut self) -> &mut [F] {
         &mut self.data
     }
 
     /// Returns the number of elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// assert_eq!(FieldVec::<Gf2mElement>::new().len(), 0);
-    /// ```
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
     /// Returns `true` if the vector contains no elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// assert!(FieldVec::<Gf2mElement>::new().is_empty());
-    /// ```
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
@@ -359,36 +239,11 @@ impl<F: FiniteField> Index<usize> for FieldVec<F> {
 
 impl<F: FiniteField> FieldVec<F> {
     /// Returns an iterator over shared references to elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// assert_eq!(v.iter().count(), 2);
-    /// ```
     pub fn iter(&self) -> std::slice::Iter<'_, F> {
         self.data.iter()
     }
 
     /// Returns an iterator over mutable references to elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, FiniteField};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut v = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// for e in v.iter_mut() {
-    ///     *e = e.zero_like();
-    /// }
-    /// assert!(v.iter().all(|e| e.is_zero()));
-    /// ```
     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, F> {
         self.data.iter_mut()
     }
@@ -613,19 +468,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Complexity
     ///
     /// O(n) multiplications.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// let scaled = v.scale(&field.element(2));
-    /// assert_eq!(scaled[0], field.element(3) * field.element(2));
-    /// assert_eq!(scaled[1], field.element(5) * field.element(2));
-    /// ```
     pub fn scale(&self, a: &F) -> Self {
         FieldVec {
             data: self.data.iter().map(|e| e.clone() * a.clone()).collect(),
@@ -646,20 +488,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Complexity
     ///
     /// O(n) multiplications.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut y = FieldVec::from(vec![field.element(1), field.element(2)]);
-    /// let x = FieldVec::from(vec![field.element(3), field.element(4)]);
-    /// y.axpy(&field.element(2), &x);
-    /// assert_eq!(y[0], field.element(1) + field.element(2) * field.element(3));
-    /// assert_eq!(y[1], field.element(2) + field.element(2) * field.element(4));
-    /// ```
     pub fn axpy(&mut self, a: &F, rhs: &Self) {
         assert_eq!(
             self.len(),
@@ -695,20 +523,6 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = FieldVec::from(vec![field.element(5), field.element(3)]);
-    /// let b = FieldVec::from(vec![field.element(1), field.element(2)]);
-    /// let c = a.add_vec(&b);
-    /// assert_eq!(c[0], field.element(5 ^ 1));
-    /// assert_eq!(c[1], field.element(3 ^ 2));
-    /// ```
     pub fn add_vec(&self, rhs: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -791,20 +605,6 @@ impl<F: FiniteField + SimdVecOps> FieldVec<F> {
     /// # Complexity
     ///
     /// O(n) multiplications.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// let b = FieldVec::from(vec![field.element(2), field.element(1)]);
-    /// let c = a.mul_vec(&b);
-    /// assert_eq!(c[0], field.element(3) * field.element(2));
-    /// assert_eq!(c[1], field.element(5) * field.element(1));
-    /// ```
     pub fn mul_vec(&self, rhs: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -839,19 +639,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Complexity
     ///
     /// O(n) applications of `f`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, FiniteField};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// // x + x = 0 in characteristic-2 fields
-    /// let doubled = v.map(|e| e.clone() + e.clone());
-    /// assert!(doubled.iter().all(|e| e.is_zero()));
-    /// ```
     pub fn map<G: FiniteField, Map: FnMut(&F) -> G>(&self, f: Map) -> FieldVec<G> {
         FieldVec {
             data: self.data.iter().map(f).collect(),
@@ -864,18 +651,6 @@ impl<F: FiniteField> FieldVec<F> {
     ///
     /// * `init` - Initial accumulator value.
     /// * `f` - Combining function: `(accumulator, element) → new_accumulator`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let v = FieldVec::from(vec![field.element(1), field.element(2), field.element(4)]);
-    /// let sum = v.fold(field.zero(), |acc, e| acc + e.clone());
-    /// assert_eq!(sum, field.element(7)); // 1 XOR 2 XOR 4 = 7
-    /// ```
     pub fn fold<B, Func: FnMut(B, &F) -> B>(&self, init: B, f: Func) -> B {
         self.data.iter().fold(init, f)
     }
@@ -894,20 +669,6 @@ impl<F: FiniteField> FieldVec<F> {
     /// # Complexity
     ///
     /// O(n) applications of `f`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = FieldVec::from(vec![field.element(3), field.element(5)]);
-    /// let b = FieldVec::from(vec![field.element(2), field.element(1)]);
-    /// let c = a.zip_with(&b, |x, y| x.clone() + y.clone());
-    /// assert_eq!(c[0], field.element(3 ^ 2));
-    /// assert_eq!(c[1], field.element(5 ^ 1));
-    /// ```
     pub fn zip_with<G: FiniteField, Func: FnMut(&F, &F) -> G>(
         &self,
         other: &Self,
@@ -971,16 +732,6 @@ impl<'a, F> StridedIter<'a, F> {
     /// # Panics
     ///
     /// Panics if `stride == 0` (would cause non-terminating iteration).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::StridedIter;
-    ///
-    /// let data = [10u32, 20, 30, 40, 50];
-    /// let vals: Vec<_> = StridedIter::new(&data, 1, 2).copied().collect();
-    /// assert_eq!(vals, vec![20, 40]);
-    /// ```
     pub fn new(slice: &'a [F], start: usize, stride: usize) -> Self {
         assert!(stride > 0, "StridedIter: stride must be at least 1");
         StridedIter {

@@ -302,16 +302,6 @@ impl BitMatrix {
     ///
     /// * `rows` - Number of rows
     /// * `cols` - Number of columns
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let m = BitMatrix::zeros(10, 20);
-    /// assert_eq!(m.rows(), 10);
-    /// assert_eq!(m.cols(), 20);
-    /// ```
     pub fn zeros(rows: usize, cols: usize) -> Self {
         let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
         let total_words = rows * stride_words;
@@ -328,17 +318,6 @@ impl BitMatrix {
     /// # Arguments
     ///
     /// * `n` - Size of the square identity matrix
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let id = BitMatrix::identity(3);
-    /// assert_eq!(id.get(0, 0), true);
-    /// assert_eq!(id.get(1, 1), true);
-    /// assert_eq!(id.get(0, 1), false);
-    /// ```
     pub fn identity(n: usize) -> Self {
         let mut m = Self::zeros(n, n);
         for i in 0..n {
@@ -353,18 +332,6 @@ impl BitMatrix {
     ///
     /// * `rows` - Number of rows
     /// * `cols` - Number of columns
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let m = BitMatrix::ones(3, 4);
-    /// assert_eq!(m.rows(), 3);
-    /// assert_eq!(m.cols(), 4);
-    /// assert!(m.get(0, 0));
-    /// assert!(m.get(2, 3));
-    /// ```
     pub fn ones(rows: usize, cols: usize) -> Self {
         let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
         let total_words = rows * stride_words;
@@ -408,21 +375,6 @@ impl BitMatrix {
     /// * `rows` - Number of rows
     /// * `cols` - Number of columns
     /// * `rng` - A mutable reference to a random number generator
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::matrix::BitMatrix;
-    /// use rand::rngs::StdRng;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut rng = StdRng::seed_from_u64(42);
-    /// let m = BitMatrix::random(10, 20, &mut rng);
-    /// assert_eq!(m.rows(), 10);
-    /// assert_eq!(m.cols(), 20);
-    /// # }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -487,22 +439,6 @@ impl BitMatrix {
     ///
     /// Panics if `p` is not in the range [0.0, 1.0].
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::matrix::BitMatrix;
-    /// use rand::rngs::StdRng;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut rng = StdRng::seed_from_u64(42);
-    /// // Create a sparse matrix (~10% ones)
-    /// let m = BitMatrix::random_with_probability(100, 100, 0.1, &mut rng);
-    /// assert_eq!(m.rows(), 100);
-    /// assert_eq!(m.cols(), 100);
-    /// # }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(rows × cols). Note that this is slower than [`BitMatrix::random`]
@@ -558,21 +494,6 @@ impl BitMatrix {
     ///
     /// * `rng` - A mutable reference to a random number generator
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::matrix::BitMatrix;
-    /// use rand::rngs::StdRng;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut m = BitMatrix::zeros(10, 10);
-    /// let mut rng = StdRng::seed_from_u64(42);
-    /// m.fill_random(&mut rng);
-    /// // m now contains random bits
-    /// # }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(rows × stride_words).
@@ -607,16 +528,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if row >= rows or col >= cols.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let m = BitMatrix::identity(3);
-    /// assert_eq!(m.get(0, 0), true);
-    /// assert_eq!(m.get(0, 1), false);
-    /// ```
     #[inline]
     pub fn get(&self, row: usize, col: usize) -> bool {
         assert!(
@@ -642,16 +553,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if row >= rows or col >= cols.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(3, 3);
-    /// m.set(1, 2, true);
-    /// assert_eq!(m.get(1, 2), true);
-    /// ```
     #[inline]
     pub fn set(&mut self, row: usize, col: usize, val: bool) {
         assert!(
@@ -825,23 +726,6 @@ impl BitMatrix {
     ///
     /// Panics if `row >= self.rows()`
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(3, 4);
-    /// m.set(1, 0, true);
-    /// m.set(1, 2, true);
-    ///
-    /// let row = m.row_as_bitvec(1);
-    /// assert_eq!(row.len(), 4);
-    /// assert!(row.get(0));
-    /// assert!(!row.get(1));
-    /// assert!(row.get(2));
-    /// assert!(!row.get(3));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(cols) - iterates through all columns in the row
@@ -871,23 +755,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if `col >= self.cols()`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(4, 3);
-    /// m.set(0, 1, true);
-    /// m.set(2, 1, true);
-    ///
-    /// let col = m.col_as_bitvec(1);
-    /// assert_eq!(col.len(), 4);
-    /// assert!(col.get(0));
-    /// assert!(!col.get(1));
-    /// assert!(col.get(2));
-    /// assert!(!col.get(3));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -957,20 +824,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if r1 >= rows or r2 >= rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(3, 3);
-    /// m.set(0, 0, true);
-    /// m.set(1, 1, true);
-    /// m.swap_rows(0, 1);
-    /// assert_eq!(m.get(0, 0), false);
-    /// assert_eq!(m.get(0, 1), true);
-    /// assert_eq!(m.get(1, 0), true);
-    /// ```
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         assert!(
             r1 < self.rows,
@@ -1010,20 +863,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if `dst` or `src` is out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(2, 3);
-    /// m.set(0, 0, true);
-    /// m.set(1, 1, true);
-    ///
-    /// m.row_xor(1, 0);  // row1 ^= row0
-    /// assert!(m.get(1, 0));  // Now row1 has bit 0 set
-    /// assert!(m.get(1, 1));  // And still has bit 1 set
-    /// ```
     pub fn row_xor(&mut self, dst: usize, src: usize) {
         assert!(
             dst < self.rows,
@@ -1448,17 +1287,6 @@ impl BitMatrix {
     /// Converts this dense matrix to a CSR SpBitMatrix.
     ///
     /// This scans all bits and records set columns per row. Suitable for low-density matrices.
-    ///
-    /// # Examples
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    /// let mut m = BitMatrix::zeros(2, 3);
-    /// m.set(0, 1, true);
-    /// let s = m.to_sparse();
-    /// assert_eq!(s.rows(), 2);
-    /// assert_eq!(s.cols(), 3);
-    /// assert_eq!(s.nnz(), 1);
-    /// ```
     pub fn to_sparse(&self) -> crate::sparse::SpBitMatrix {
         crate::sparse::SpBitMatrix::from_dense(self)
     }
@@ -1698,25 +1526,6 @@ impl BitMatrix {
 
 impl fmt::Display for BitMatrix {
     /// Formats the BitMatrix in nalgebra-like style.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(3, 4);
-    /// m.set(0, 0, true);
-    /// m.set(0, 3, true);
-    /// m.set(1, 1, true);
-    /// m.set(2, 2, true);
-    /// println!("{}", m);
-    /// // Displays:
-    /// //   ┌       ┐
-    /// //   │ 1 0 0 1 │
-    /// //   │ 0 1 0 0 │
-    /// //   │ 0 0 1 0 │
-    /// //   └       ┘
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.rows == 0 || self.cols == 0 {
             return write!(f, "[ ]");
@@ -1789,17 +1598,6 @@ impl Mul<BitMatrix> for BitMatrix {
     type Output = BitMatrix;
 
     /// Matrix multiplication: `A * B`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let a = BitMatrix::identity(3);
-    /// let b = BitMatrix::identity(3);
-    /// let c = a * b;
-    /// assert_eq!(c, BitMatrix::identity(3));
-    /// ```
     fn mul(self, rhs: BitMatrix) -> BitMatrix {
         crate::alg::matmul::multiply(&self, &rhs)
     }

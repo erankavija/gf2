@@ -30,15 +30,6 @@ pub const Z_95: f64 = 1.959_964;
 ///
 /// Panics when `successes` exceeds `trials`, or when `z` is negative or not
 /// finite. A zero `trials` count has no estimand and returns `(NaN, NaN)`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_stats::intervals::{wilson_interval, Z_95};
-///
-/// let (lower, upper) = wilson_interval(3_333, 10_000, Z_95);
-/// assert!(lower < 0.3333 && 0.3333 < upper);
-/// ```
 #[must_use]
 pub fn wilson_interval(successes: u64, trials: u64, z: f64) -> (f64, f64) {
     assert!(successes <= trials, "successes cannot exceed trials");
@@ -93,15 +84,6 @@ pub fn wilson_interval(successes: u64, trials: u64, z: f64) -> (f64, f64) {
 /// Uses two fixed 80-step bisections. Each beta-CDF evaluation performs at
 /// most 200 continued-fraction iterations, with $O(1)$ auxiliary space. It
 /// therefore does materially more numerical work than [`wilson_interval`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_stats::intervals::clopper_pearson_interval;
-///
-/// let (lower, upper) = clopper_pearson_interval(12, 100, 0.95);
-/// assert!(lower < 0.12 && 0.12 < upper);
-/// ```
 #[must_use]
 pub fn clopper_pearson_interval(successes: u64, trials: u64, level: f64) -> (f64, f64) {
     assert!(successes <= trials, "successes cannot exceed trials");

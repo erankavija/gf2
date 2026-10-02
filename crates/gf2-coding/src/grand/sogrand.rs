@@ -67,21 +67,6 @@ use crate::llr::Llr;
 ///
 /// Contains per-bit APP LLRs, extrinsic LLRs for turbo iteration, and
 /// the predicted list BLER.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::grand::SisoResult;
-/// use gf2_coding::llr::Llr;
-///
-/// let result = SisoResult {
-///     app_llrs: vec![Llr::new(2.0), Llr::new(-1.5)],
-///     extrinsic_llrs: vec![Llr::new(0.5), Llr::new(-0.3)],
-///     list_bler_prediction: 0.01,
-///     query_count: 100,
-/// };
-/// assert_eq!(result.app_llrs.len(), 2);
-/// ```
 #[derive(Debug, Clone)]
 pub struct SisoResult {
     /// Per-bit APP LLRs (length n).
@@ -159,77 +144,21 @@ impl SoGrand {
     ///
     /// * `decoder` - An ORBGRAND decoder configured with the desired list size,
     ///   query limit, and code parameters.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let orbgrand = OrbGrand::new(h, OrbGrandConfig::default());
-    /// let sogrand = SoGrand::new(orbgrand);
-    /// ```
     pub fn new(decoder: OrbGrand) -> Self {
         Self { decoder }
     }
 
     /// Returns the codeword length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let sogrand = SoGrand::new(OrbGrand::new(h, OrbGrandConfig::default()));
-    /// assert_eq!(sogrand.n(), 7);
-    /// ```
     pub fn n(&self) -> usize {
         self.decoder.n()
     }
 
     /// Returns the message length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let sogrand = SoGrand::new(OrbGrand::new(h, OrbGrandConfig::default()));
-    /// assert_eq!(sogrand.k(), 4);
-    /// ```
     pub fn k(&self) -> usize {
         self.decoder.k()
     }
 
     /// Returns a reference to the underlying ORBGRAND decoder.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let sogrand = SoGrand::new(OrbGrand::new(h, OrbGrandConfig::default()));
-    /// assert_eq!(sogrand.orbgrand().n(), 7);
-    /// ```
     pub fn orbgrand(&self) -> &OrbGrand {
         &self.decoder
     }

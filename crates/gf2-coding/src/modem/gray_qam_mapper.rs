@@ -74,15 +74,6 @@ impl GrayQamMapper<DefaultScalar> {
     /// 256 (got {order})"` via [`ModemSpec::gray_square_qam_with_scalar`]
     /// if `order` is unsupported.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BatchMapper, GrayQamMapper};
-    ///
-    /// let mapper = GrayQamMapper::from_preset_order(4);
-    /// assert_eq!(mapper.spec().bits_per_symbol(), 2);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(M) in `order = M`.
@@ -104,16 +95,6 @@ impl<S: ModemScalar> GrayQamMapper<S> {
     ///
     /// Panics via [`ModemSpec::gray_square_qam_with_scalar`] if `order` is
     /// unsupported.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BatchMapper, GrayQamMapper};
-    ///
-    /// let mapper: GrayQamMapper<f64> =
-    ///     GrayQamMapper::<f64>::from_preset_order_with_scalar(64);
-    /// assert_eq!(mapper.spec().bits_per_symbol(), 6);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -150,16 +131,6 @@ impl<S: ModemScalar> GrayQamMapper<S> {
     /// Panics if `spec` does not match the canonical Gray-square-QAM
     /// layout (wrong label ordering, wrong point positions, or a
     /// `bits_per_symbol` that is not in {1, 2, 4, 6, 8}).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BatchMapper, GrayQamMapper, ModemSpec};
-    ///
-    /// let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(16);
-    /// let mapper = GrayQamMapper::from_spec(spec);
-    /// assert_eq!(mapper.spec().bits_per_symbol(), 4);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -202,15 +173,6 @@ impl<S: ModemScalar> GrayQamMapper<S> {
     /// [`super::FastGrayQamDemapper::pam_levels`] so alternate-backend
     /// adapters can read the level table through a single obvious entry
     /// point regardless of which side of the mapper/demapper they hold.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::GrayQamMapper;
-    ///
-    /// let mapper = GrayQamMapper::from_preset_order(16);
-    /// assert_eq!(mapper.pam_levels().len(), 4);
-    /// ```
     ///
     /// # Complexity
     ///

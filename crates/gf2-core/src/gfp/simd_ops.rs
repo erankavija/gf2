@@ -2863,14 +2863,6 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 /// per-call scratch broadcast-fill, the intermediate-product write,
 /// and the copy-back step.
 ///
-/// # Examples
-///
-/// ```
-/// // PackedFpChainPolys is a crate-internal type; external callers interact
-/// // only through the `ChainPolyArith` trait returned by
-/// // `FiniteField::try_make_chain_poly_arith`.
-/// ```
-///
 /// # Complexity
 ///
 /// Each `sub_scaled_into` call costs `O(d)` byte-lane AVX2 muls + subs

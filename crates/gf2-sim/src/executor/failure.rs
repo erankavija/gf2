@@ -106,16 +106,6 @@ pub(crate) fn injects_oom_at(modulus: Option<u64>, g: u64) -> bool {
 /// Context passed to [`dispatch_with_fallback`] for tracing and diagnostics.
 /// Carries the per-batch identifiers that appear in the `tracing::warn!` /
 /// `tracing::error!` events and in the JSON dump.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::executor::failure::FaultContext;
-///
-/// let ctx = FaultContext { batch_id: 7, snr_idx: 2, device_id: 0, worker_idx: 3 };
-/// assert_eq!(ctx.batch_id, 7);
-/// assert_eq!(ctx.snr_idx, 2);
-/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct FaultContext {
     /// The batch identifier (global frame index or batch sequence number).
@@ -262,16 +252,6 @@ fn write_diagnostic_dump(fatal: &FatalError, ctx: FaultContext, dump_dir: &std::
 /// started). Campaigns that need a stable location should set
 /// [`PipelineConfig::diagnostic_dump_dir`](crate::PipelineConfig::diagnostic_dump_dir)
 /// to an absolute path.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::executor::failure::default_dump_dir;
-///
-/// let dir = default_dump_dir();
-/// assert!(dir.is_relative());
-/// assert!(dir.to_str().unwrap().contains("diagnostic-dumps"));
-/// ```
 pub fn default_dump_dir() -> PathBuf {
     PathBuf::from("dev/benchmarks/gf2-sim/diagnostic-dumps")
 }

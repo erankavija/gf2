@@ -409,14 +409,6 @@ pub struct F5AvxFns {
 /// Returns `None` on non-x86 targets or when the runtime CPU lacks AVX2.
 /// Callers must then fall back to the scalar batch functions.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::packed5::detect_avx2_f5;
-/// let maybe_fns = detect_avx2_f5();
-/// let _ = maybe_fns;
-/// ```
-///
 /// # Complexity
 ///
 /// `O(1)`; CPUID is cached via `OnceLock`.

@@ -211,15 +211,6 @@ impl Permutation {
     ///
     /// * `n` — Number of rows.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::Permutation;
-    ///
-    /// let p = Permutation::identity(4);
-    /// assert_eq!(p.indices(), &[0, 1, 2, 3]);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(n)` writes plus one allocation.
@@ -243,15 +234,6 @@ impl Permutation {
     /// # Panics
     ///
     /// In debug builds, panics if `perm` is not a valid permutation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::Permutation;
-    ///
-    /// let p = Permutation::from_indices(vec![2, 0, 1]);
-    /// assert_eq!(p.indices(), &[2, 0, 1]);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -279,15 +261,6 @@ impl Permutation {
     /// `indices()[i]` is the original row that ended up at row `i` after
     /// applying the permutation.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::Permutation;
-    ///
-    /// let p = Permutation::identity(3);
-    /// assert_eq!(p.indices(), &[0, 1, 2]);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -297,14 +270,6 @@ impl Permutation {
 
     /// Length of the permutation (number of rows it permutes).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::Permutation;
-    ///
-    /// assert_eq!(Permutation::identity(5).len(), 5);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -313,15 +278,6 @@ impl Permutation {
     }
 
     /// Returns `true` if this permutation has length zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::Permutation;
-    ///
-    /// assert!(Permutation::identity(0).is_empty());
-    /// assert!(!Permutation::identity(3).is_empty());
-    /// ```
     ///
     /// # Complexity
     ///

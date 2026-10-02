@@ -951,10 +951,6 @@ impl TopologyExecutor {
     ///
     /// `O(stages + edges)` bookkeeping plus the stages' own work; independent
     /// stages within a wave run in parallel across the scheduler's workers.
-    ///
-    /// # Examples
-    ///
-    /// See [`DagOutputs`] for a complete compiled-and-run example.
     pub fn run(
         pipeline: &Pipeline,
         scheduler: &Scheduler,

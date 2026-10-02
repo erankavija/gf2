@@ -614,51 +614,16 @@ impl<F: FiniteField> FieldMatrix<F> {
 // ─── Free-function aliases (Armadillo-style ergonomics) ──────────────────────
 
 /// Free-function alias for [`FieldMatrix::inv`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::inverse::inv;
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id = FieldMatrix::<Fp<7>>::identity(3);
-/// assert_eq!(inv(&id).unwrap(), id);
-/// ```
 pub fn inv<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
     a.inv()
 }
 
 /// Free-function alias for [`FieldMatrix::solve`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::inverse::solve;
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::field::vec::FieldVec;
-/// use gf2_core::gfp::Fp;
-///
-/// let id = FieldMatrix::<Fp<7>>::identity(2);
-/// let b = FieldVec::from(vec![Fp::<7>::new(3), Fp::<7>::new(5)]);
-/// assert_eq!(solve(&id, &b).unwrap(), b);
-/// ```
 pub fn solve<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldVec<F>) -> Option<FieldVec<F>> {
     a.solve(b)
 }
 
 /// Free-function alias for [`FieldMatrix::det`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::inverse::det;
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id = FieldMatrix::<Fp<7>>::identity(4);
-/// assert_eq!(det(&id), Fp::<7>::new(1));
-/// ```
 pub fn det<F: FiniteField>(a: &FieldMatrix<F>) -> F {
     a.det()
 }

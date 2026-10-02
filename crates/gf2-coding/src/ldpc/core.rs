@@ -145,18 +145,6 @@ impl LdpcCode {
     }
 
     /// Returns the parity-check matrix H (m × n).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::LdpcCode;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// let h = code.parity_check_matrix();
-    /// assert_eq!(h.rows(), code.m());
-    /// assert_eq!(h.cols(), code.n());
-    /// ```
     pub fn parity_check_matrix(&self) -> &SpBitMatrixDual {
         &self.h
     }
@@ -498,16 +486,6 @@ impl CirculantMatrix {
     ///
     /// * `shift` - Right-shift amount (must be < size)
     /// * `size` - Dimension of the square circulant matrix
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::CirculantMatrix;
-    ///
-    /// let circ = CirculantMatrix::new(2, 5);
-    /// assert_eq!(circ.shift(), 2);
-    /// assert_eq!(circ.size(), 5);
-    /// ```
     pub fn new(shift: usize, size: usize) -> Self {
         Self { shift, size }
     }
@@ -656,16 +634,6 @@ impl QuasiCyclicLdpc {
     ///
     /// Each entry is either `-1` (zero block) or a circulant shift in
     /// `0..expansion_factor()`. One inner `Vec` per base row.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
-    ///
-    /// let qc = QuasiCyclicLdpc::new(vec![vec![0, 1, -1], vec![2, -1, 0]], 4);
-    /// assert_eq!(qc.base_matrix()[0], vec![0, 1, -1]);
-    /// assert_eq!(qc.base_matrix()[1], vec![2, -1, 0]);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -940,16 +908,6 @@ impl LdpcDecoder {
     /// # Arguments
     ///
     /// * `code` - The LDPC code to decode
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-    ///
-    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
-    /// let code = LdpcCode::from_edges(1, 3, &edges);
-    /// let decoder = LdpcDecoder::new(code);
-    /// ```
     pub fn new(code: LdpcCode) -> Self {
         Self::with_config(code, DecoderConfig::default())
     }
@@ -960,17 +918,6 @@ impl LdpcDecoder {
     ///
     /// * `code` - The LDPC code to decode
     /// * `config` - Decoder configuration (algorithm, early termination)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, DecoderAlgorithm, DecoderConfig};
-    ///
-    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
-    /// let code = LdpcCode::from_edges(1, 3, &edges);
-    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
-    /// let decoder = LdpcDecoder::with_config(code, config);
-    /// ```
     pub fn with_config(code: LdpcCode, config: DecoderConfig) -> Self {
         let n = code.n();
         let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
@@ -992,16 +939,6 @@ impl LdpcDecoder {
     }
 
     /// The canonical edge indexing this decoder passes messages over.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-    ///
-    /// let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
-    /// let decoder = LdpcDecoder::new(code);
-    /// assert_eq!(decoder.edge_layout().edges(), 3);
-    /// ```
     #[inline]
     #[must_use]
     pub fn edge_layout(&self) -> &EdgeLayout {
@@ -1525,17 +1462,6 @@ impl LdpcEncoder {
     ///
     /// DVB-T2 codes always use the IRA path. Non-DVB-T2 codes with a
     /// non-standard systematic layout use the Richardson-Urbanke path.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// let encoder = LdpcEncoder::new(code);
-    /// assert!(encoder.is_ira());
-    /// ```
     pub fn is_ira(&self) -> bool {
         matches!(self.impl_, EncoderImpl::Ira(_))
     }

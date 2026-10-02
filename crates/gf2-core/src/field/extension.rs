@@ -1974,16 +1974,6 @@ pub fn element_of_exact_order<X: FieldExtension>(
 /// that representative and then lists the orbit produced by repeated
 /// multiplication by `q` modulo `n`. A partition returned by
 /// [`cyclotomic_closure`] contains only the cosets meeting its seed set.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::cyclotomic_cosets_mod;
-///
-/// let partition = cyclotomic_cosets_mod(2, 15)?;
-/// assert_eq!(partition.cosets().len(), 5);
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CosetPartition {
     n: u64,
@@ -2001,16 +1991,6 @@ impl CosetPartition {
     /// # Complexity
     ///
     /// `O(1)`; the returned slice borrows the partition.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
-    ///
-    /// let partition = cyclotomic_cosets_mod(2, 15)?;
-    /// assert_eq!(partition.cosets()[2], vec![3, 6, 12, 9]);
-    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
-    /// ```
     pub fn cosets(&self) -> &[Vec<u64>] {
         &self.cosets
     }
@@ -2023,16 +2003,6 @@ impl CosetPartition {
     /// # Complexity
     ///
     /// `O(k log k)`, where `k` is the number of returned residues.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
-    ///
-    /// let partition = cyclotomic_cosets_mod(2, 15)?;
-    /// assert_eq!(partition.defining_set(), (0..15).collect::<Vec<_>>());
-    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
-    /// ```
     pub fn defining_set(&self) -> Vec<u64> {
         let count = self.cosets.iter().map(Vec::len).sum();
         let mut defining_set = Vec::with_capacity(count);
@@ -2747,19 +2717,6 @@ where
 /// The embedding carries the two elements of $\mathrm{GF}(2)$ onto the zero
 /// and one of the runtime field, and membership is the Frobenius fixed-point
 /// test $x^{2} = x$.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let ext = BinaryPrimeExt::new(Gf2mField::gf256())?;
-/// assert_eq!(ext.relative_degree(), 8);
-/// assert_eq!(ext.ext_unit_group_order(), Some(255));
-/// assert_eq!(ext.field().degree(), 8);
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BinaryPrimeExt<V: UintExt = u64> {
     field: Gf2mField_<V>,

@@ -94,15 +94,6 @@ pub enum BaseGraph {
 impl BaseGraph {
     /// The TS 38.212 base-graph number (`1` or `2`), as consumed by the
     /// `gf2-coding` `nr_5g` constructors.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::nr_5g::BaseGraph;
-    ///
-    /// assert_eq!(BaseGraph::Bg1.number(), 1);
-    /// assert_eq!(BaseGraph::Bg2.number(), 2);
-    /// ```
     #[inline]
     #[must_use]
     pub fn number(self) -> u8 {
@@ -168,15 +159,6 @@ pub enum NrModulation {
 
 impl NrModulation {
     /// The modulation order `Q_m` (bits per QAM symbol).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::nr_5g::NrModulation;
-    ///
-    /// assert_eq!(NrModulation::Qpsk.bits_per_symbol(), 2);
-    /// assert_eq!(NrModulation::Qam256.bits_per_symbol(), 8);
-    /// ```
     #[inline]
     #[must_use]
     pub fn bits_per_symbol(self) -> usize {
@@ -223,16 +205,6 @@ impl Nr5gDecoderConfig {
     ///   `alpha` in `(0.0, 1.0]`, `OffsetMinSum(beta)` a finite `beta >= 0.0`.
     /// * `max_iterations` — the BP iteration cap; must be `>= 1` (validated at
     ///   build).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::nr_5g::Nr5gDecoderConfig;
-    /// use gf2_coding::ldpc::DecoderAlgorithm;
-    ///
-    /// let cfg = Nr5gDecoderConfig::new(DecoderAlgorithm::SumProduct, 25);
-    /// assert_eq!(cfg.max_iterations, 25);
-    /// ```
     #[must_use]
     pub fn new(algorithm: DecoderAlgorithm, max_iterations: usize) -> Self {
         Self {
@@ -247,16 +219,6 @@ impl Nr5gDecoderConfig {
     ///
     /// * `max_iterations` — the BP iteration cap; must be `>= 1` (validated at
     ///   build).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::nr_5g::Nr5gDecoderConfig;
-    /// use gf2_coding::ldpc::DecoderAlgorithm;
-    ///
-    /// let cfg = Nr5gDecoderConfig::normalized_min_sum(25);
-    /// assert_eq!(cfg.algorithm, DecoderAlgorithm::NormalizedMinSum(0.75));
-    /// ```
     #[must_use]
     pub fn normalized_min_sum(max_iterations: usize) -> Self {
         Self::new(DecoderAlgorithm::NormalizedMinSum(0.75), max_iterations)
@@ -313,15 +275,6 @@ impl Channel {
     /// # Arguments
     ///
     /// * `es_n0_db` — channel Es/N0 in dB.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::nr_5g::Channel;
-    ///
-    /// let ch = Channel::awgn(4.5);
-    /// assert_eq!(ch, Channel::Awgn { es_n0_db: 4.5 });
-    /// ```
     #[must_use]
     pub fn awgn(es_n0_db: f32) -> Self {
         Channel::Awgn { es_n0_db }

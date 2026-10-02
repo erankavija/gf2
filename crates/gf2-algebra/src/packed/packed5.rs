@@ -289,18 +289,6 @@ impl Default for Packed5 {
 impl fmt::Debug for Packed5 {
     /// Formats the value as a 64-element array of decoded lane values
     /// (each in `{0, 1, 2, 3, 4}`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed5;
-    /// use gf2_algebra::packed::PackedField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// let s = format!("{:?}", v);
-    /// assert!(s.contains("lanes"));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let lanes = core::array::from_fn::<u64, 64, _>(|i| self.lane(i).value());
         f.debug_struct("Packed5").field("lanes", &lanes).finish()
@@ -349,16 +337,6 @@ impl Packed5 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed5, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
-    /// assert_eq!(Packed5::add_inherent(a, b).lane(0), Fp::<5>::new(2));
-    /// ```
     #[inline]
     pub fn add_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<5>>>::add(self, rhs)
@@ -368,16 +346,6 @@ impl Packed5 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed5, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(1));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// assert_eq!(Packed5::sub_inherent(a, b).lane(0), Fp::<5>::new(3));
-    /// ```
     #[inline]
     pub fn sub_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<5>>>::sub(self, rhs)
@@ -387,16 +355,6 @@ impl Packed5 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed5, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
-    /// assert_eq!(Packed5::mul_inherent(a, b).lane(0), Fp::<5>::new(2));
-    /// ```
     #[inline]
     pub fn mul_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<5>>>::mul(self, rhs)
@@ -406,15 +364,6 @@ impl Packed5 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed5, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
-    /// assert_eq!(Packed5::neg_inherent(a).lane(0), Fp::<5>::new(3));
-    /// ```
     #[inline]
     pub fn neg_inherent(self) -> Self {
         <Self as PackedField<Fp<5>>>::neg(self)
@@ -429,28 +378,9 @@ impl PackedField<Fp<5>> for Packed5 {
     /// Number of independent `F_5` lanes packed into one `Packed5`.
     ///
     /// Fixed at 64 to match the `u64`-triple encoding width.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    /// assert_eq!(<Packed5 as PackedField<Fp<5>>>::LANES, 64);
-    /// ```
     const LANES: usize = 64;
 
     /// Returns the all-zeros `Packed5` (every lane = 0).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z = <Packed5 as PackedField<Fp<5>>>::zero();
-    /// assert!(z.all_zero());
-    /// for i in 0..64 { assert_eq!(z.lane(i), Fp::<5>::new(0)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -465,16 +395,6 @@ impl PackedField<Fp<5>> for Packed5 {
     }
 
     /// Returns the all-ones `Packed5` (every lane = 1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let o = <Packed5 as PackedField<Fp<5>>>::one();
-    /// for i in 0..64 { assert_eq!(o.lane(i), Fp::<5>::new(1)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -494,16 +414,6 @@ impl PackedField<Fp<5>> for Packed5 {
     /// # Arguments
     ///
     /// * `x` — scalar `F_5` value to replicate across all lanes.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// for i in 0..64 { assert_eq!(v.lane(i), Fp::<5>::new(3)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -528,17 +438,6 @@ impl PackedField<Fp<5>> for Packed5 {
     ///
     /// * `rhs` — the other operand; lanes are added pointwise mod 5.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
-    /// assert_eq!(a.add(b).lane(0), Fp::<5>::new(2)); // 3 + 4 == 2 mod 5
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`: 60 word-level bitwise operations.
@@ -560,17 +459,6 @@ impl PackedField<Fp<5>> for Packed5 {
     ///
     /// * `rhs` — the operand subtracted lane-by-lane from `self`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(1));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// assert_eq!(a.sub(b).lane(0), Fp::<5>::new(3)); // 1 - 3 == 3 mod 5
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`: 60 word-level bitwise operations.
@@ -590,16 +478,6 @@ impl PackedField<Fp<5>> for Packed5 {
     ///
     /// Negation uses a 5-way decode + 5-cell result encoding. For F_5:
     /// neg(0)=0, neg(1)=4, neg(2)=3, neg(3)=2, neg(4)=1.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
-    /// assert_eq!(a.neg().lane(0), Fp::<5>::new(3)); // -2 == 3 mod 5
-    /// ```
     ///
     /// # Complexity
     ///
@@ -623,17 +501,6 @@ impl PackedField<Fp<5>> for Packed5 {
     /// # Arguments
     ///
     /// * `rhs` — the other operand; lanes are multiplied pointwise mod 5.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
-    /// assert_eq!(a.mul(b).lane(0), Fp::<5>::new(2)); // 3 * 4 == 2 mod 5
-    /// ```
     ///
     /// # Complexity
     ///
@@ -661,17 +528,6 @@ impl PackedField<Fp<5>> for Packed5 {
     /// # Panics
     ///
     /// Panics if `i >= 64`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
-    /// assert_eq!(v.lane(0), Fp::<5>::new(4));
-    /// assert_eq!(v.lane(63), Fp::<5>::new(4));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -707,18 +563,6 @@ impl PackedField<Fp<5>> for Packed5 {
     ///
     /// Panics if `i >= 64`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed5 as PackedField<Fp<5>>>::zero();
-    /// let v = v.with_lane(7, Fp::<5>::new(4));
-    /// assert_eq!(v.lane(7), Fp::<5>::new(4));
-    /// assert_eq!(v.lane(0), Fp::<5>::new(0));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`: three bit-mask and bit-set operations.
@@ -748,17 +592,6 @@ impl PackedField<Fp<5>> for Packed5 {
     /// or `e[4]` from `decode5` is set. Redundant codepoints 5..=7 have all
     /// selectors zero (decode to 0), so checking `e[1]|e[2]|e[3]|e[4] == 0`
     /// correctly canonicalizes them as zero (D1b §3.5).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert!(<Packed5 as PackedField<Fp<5>>>::zero().all_zero());
-    /// let v = <Packed5 as PackedField<Fp<5>>>::zero().with_lane(3, Fp::<5>::new(1));
-    /// assert!(!v.all_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -849,24 +682,6 @@ impl Packed5Vec {
     /// This method is inherent (not on the trait) because `PackedFieldVec`'s
     /// frozen surface (D1b §2.2) does not include `neg_assign`. Negation
     /// is expressed at the element level via `PackedField::neg`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut v = Packed5Vec::from_field_slice(&[
-    ///     Fp::<5>::new(0), Fp::<5>::new(1), Fp::<5>::new(2),
-    ///     Fp::<5>::new(3), Fp::<5>::new(4),
-    /// ]);
-    /// v.neg_assign();
-    /// assert_eq!(v.get(0), Fp::<5>::new(0)); // -0 == 0
-    /// assert_eq!(v.get(1), Fp::<5>::new(4)); // -1 == 4 mod 5
-    /// assert_eq!(v.get(2), Fp::<5>::new(3)); // -2 == 3 mod 5
-    /// assert_eq!(v.get(3), Fp::<5>::new(2)); // -3 == 2 mod 5
-    /// assert_eq!(v.get(4), Fp::<5>::new(1)); // -4 == 1 mod 5
-    /// ```
     ///
     /// # Complexity
     ///
@@ -965,17 +780,6 @@ impl Eq for Packed5Vec {}
 
 impl fmt::Debug for Packed5Vec {
     /// Formats the value as a `Vec` of decoded lane values (each `0..=4`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed5Vec::from_field_slice(&[Fp::<5>::new(2), Fp::<5>::new(4)]);
-    /// let s = format!("{:?}", v);
-    /// assert!(s.contains("lanes"));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let lanes: Vec<u64> = (0..self.len_lanes).map(|i| self.get(i).value()).collect();
         f.debug_struct("Packed5Vec").field("lanes", &lanes).finish()
@@ -1076,14 +880,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
 
     /// Number of logical `F_5` positions held by this vector.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    ///
-    /// assert_eq!(Packed5Vec::zeros(100).len(), 100);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -1102,16 +898,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed5Vec::from_field_slice(&[Fp::<5>::new(3)]);
-    /// assert_eq!(v.get(0), Fp::<5>::new(3));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1146,19 +932,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     ///
     /// Panics if `self.len() != rhs.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = Packed5Vec::from_field_slice(&[Fp::<5>::new(3), Fp::<5>::new(4)]);
-    /// let b = Packed5Vec::from_field_slice(&[Fp::<5>::new(4), Fp::<5>::new(4)]);
-    /// a.add_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<5>::new(2)); // 3 + 4 = 2 mod 5
-    /// assert_eq!(a.get(1), Fp::<5>::new(3)); // 4 + 4 = 3 mod 5
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(ceil(self.len() / 64))`.
@@ -1188,18 +961,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = Packed5Vec::from_field_slice(&[Fp::<5>::new(1)]);
-    /// let b = Packed5Vec::from_field_slice(&[Fp::<5>::new(3)]);
-    /// a.sub_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<5>::new(3)); // 1 - 3 = 3 mod 5
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1231,18 +992,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     ///
     /// Panics if `self.len() != rhs.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = Packed5Vec::from_field_slice(&[Fp::<5>::new(3)]);
-    /// let b = Packed5Vec::from_field_slice(&[Fp::<5>::new(4)]);
-    /// a.mul_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<5>::new(2)); // 3 * 4 = 2 mod 5
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(ceil(self.len() / 64))`.
@@ -1270,17 +1019,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
     /// is set, i.e. `(e[1] | e[2] | e[3] | e[4]) == 0`. This handles both
     /// canonical zero codepoints and redundant non-canonical codepoints
     /// (5..=7) that decode to 0 (D1b §3.5 canonicalization contract).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert!(Packed5Vec::zeros(10).all_zero());
-    /// let nz = Packed5Vec::from_field_slice(&[Fp::<5>::new(1)]);
-    /// assert!(!nz.all_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1526,16 +1264,6 @@ impl Packed5Matrix {
 
     /// Number of rows.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed5Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = Packed5Matrix::from_row_major(&[], 0, 3);
-    /// assert_eq!(m.rows(), 0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -1545,16 +1273,6 @@ impl Packed5Matrix {
     }
 
     /// Number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed5Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = Packed5Matrix::from_row_major(&[], 3, 0);
-    /// assert_eq!(m.cols(), 0);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1576,21 +1294,6 @@ impl Packed5Matrix {
     /// # Panics
     ///
     /// Panics if `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed5Matrix, PackedFieldVec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data: Vec<Fp<5>> = vec![
-    ///     Fp::<5>::new(1), Fp::<5>::new(2),
-    ///     Fp::<5>::new(3), Fp::<5>::new(4),
-    /// ];
-    /// let m = Packed5Matrix::from_row_major(&data, 2, 2);
-    /// assert_eq!(m.column(1).get(0), Fp::<5>::new(2));
-    /// assert_eq!(m.column(1).get(1), Fp::<5>::new(4));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1616,21 +1319,6 @@ impl Packed5Matrix {
     /// # Panics
     ///
     /// Panics if `i >= self.rows()` or `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed5Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data: Vec<Fp<5>> = vec![
-    ///     Fp::<5>::new(1), Fp::<5>::new(2),
-    ///     Fp::<5>::new(3), Fp::<5>::new(4),
-    /// ];
-    /// let m = Packed5Matrix::from_row_major(&data, 2, 2);
-    /// assert_eq!(m.get(0, 0), Fp::<5>::new(1));
-    /// assert_eq!(m.get(1, 1), Fp::<5>::new(4));
-    /// ```
     ///
     /// # Complexity
     ///

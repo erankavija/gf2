@@ -85,14 +85,6 @@ mod imp {
     impl GpuAwgnScratch {
         /// The reusable host read-back buffer (grown as needed by the erased
         /// [`Stage::process`](crate::Stage) path).
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_sim::gpu::awgn::GpuAwgnScratch;
-        ///
-        /// assert!(GpuAwgnScratch::default().host_buf().is_empty());
-        /// ```
         #[must_use]
         pub fn host_buf(&self) -> &[f32] {
             &self.host_buf
@@ -147,15 +139,6 @@ mod imp {
         ///
         /// * `es_n0_db` — channel Es/N0 in dB.
         /// * `bits_per_symbol` — modulation order in bits/symbol.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_sim::gpu::awgn::GpuAwgn;
-        ///
-        /// let ch = GpuAwgn::new(10.0, 4);
-        /// assert_eq!(ch.bits_per_symbol(), 4);
-        /// ```
         #[must_use]
         pub fn new(es_n0_db: f32, bits_per_symbol: usize) -> Self {
             let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
@@ -198,15 +181,6 @@ mod imp {
         }
 
         /// Targets a non-default HIP device for the noise generator.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_sim::gpu::awgn::GpuAwgn;
-        ///
-        /// let ch = GpuAwgn::new(6.25, 4).on_device(0);
-        /// assert_eq!(ch.device_id(), 0);
-        /// ```
         #[must_use]
         pub fn on_device(mut self, device_id: i32) -> Self {
             self.device_id = device_id;

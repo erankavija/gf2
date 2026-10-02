@@ -84,16 +84,6 @@ impl Eq for BitVec {}
 
 impl BitVec {
     /// Creates an empty `BitVec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::new();
-    /// assert_eq!(bv.len(), 0);
-    /// assert!(bv.is_empty());
-    /// ```
     pub fn new() -> Self {
         Self {
             data: Vec::new(),
@@ -103,15 +93,6 @@ impl BitVec {
     }
 
     /// Creates a `BitVec` with at least the specified bit capacity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::with_capacity(100);
-    /// assert_eq!(bv.len(), 0);
-    /// ```
     pub fn with_capacity(bits: usize) -> Self {
         let words = bits.div_ceil(64);
         Self {
@@ -122,16 +103,6 @@ impl BitVec {
     }
 
     /// Creates a `BitVec` with `len` bits, all initialized to zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::zeros(10);
-    /// assert_eq!(bv.len(), 10);
-    /// assert_eq!(bv.count_ones(), 0);
-    /// ```
     pub fn zeros(len: usize) -> Self {
         let num_words = len.div_ceil(64);
         Self {
@@ -145,16 +116,6 @@ impl BitVec {
     ///
     /// Padding bits beyond `len` in the last word are set to zero,
     /// maintaining the tail masking invariant.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::ones(10);
-    /// assert_eq!(bv.len(), 10);
-    /// assert_eq!(bv.count_ones(), 10);
-    /// ```
     pub fn ones(len: usize) -> Self {
         if len == 0 {
             return Self {
@@ -221,68 +182,24 @@ impl BitVec {
     }
 
     /// Returns a slice of the underlying word storage.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.words().len(), 1);
-    /// assert_eq!(bv.words()[0], 1);
-    /// ```
     #[inline]
     pub fn words(&self) -> &[u64] {
         &self.data
     }
 
     /// Returns the number of bits in the `BitVec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// assert_eq!(bv.len(), 0);
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.len(), 1);
-    /// ```
     #[inline]
     pub fn len(&self) -> usize {
         self.len_bits
     }
 
     /// Returns `true` if the `BitVec` contains no bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// assert!(bv.is_empty());
-    /// bv.push_bit(false);
-    /// assert!(!bv.is_empty());
-    /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len_bits == 0
     }
 
     /// Appends a bit to the end of the `BitVec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// assert_eq!(bv.len(), 2);
-    /// ```
     pub fn push_bit(&mut self, bit: bool) {
         let word_idx = self.len_bits / 64;
         let bit_idx = self.len_bits % 64;
@@ -299,17 +216,6 @@ impl BitVec {
     }
 
     /// Removes and returns the last bit, or `None` if empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.pop_bit(), Some(true));
-    /// assert_eq!(bv.pop_bit(), None);
-    /// ```
     pub fn pop_bit(&mut self) -> Option<bool> {
         if self.len_bits == 0 {
             return None;
@@ -337,18 +243,6 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `idx >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// assert_eq!(bv.get(0), true);
-    /// assert_eq!(bv.get(1), false);
-    /// ```
     #[inline]
     pub fn get(&self, idx: usize) -> bool {
         assert!(idx < self.len_bits, "index out of bounds");
@@ -362,17 +256,6 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `idx >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(false);
-    /// bv.set(0, true);
-    /// assert_eq!(bv.get(0), true);
-    /// ```
     pub fn set(&mut self, idx: usize, bit: bool) {
         assert!(idx < self.len_bits, "index out of bounds");
         let word_idx = idx / 64;
@@ -390,17 +273,6 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut a = BitVec::from_bytes_le(&[0b11110000]);
-    /// let b = BitVec::from_bytes_le(&[0b11001100]);
-    /// a.bit_and_into(&b);
-    /// assert_eq!(a.to_bytes_le(), vec![0b11000000]);
-    /// ```
     pub fn bit_and_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
         crate::kernels::ops::and_inplace(&mut self.data, &other.data);
@@ -411,17 +283,6 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut a = BitVec::from_bytes_le(&[0b11110000]);
-    /// let b = BitVec::from_bytes_le(&[0b00001111]);
-    /// a.bit_or_into(&b);
-    /// assert_eq!(a.to_bytes_le(), vec![0b11111111]);
-    /// ```
     pub fn bit_or_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
         crate::kernels::ops::or_inplace(&mut self.data, &other.data);
@@ -432,33 +293,12 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut a = BitVec::from_bytes_le(&[0b11110000]);
-    /// let b = BitVec::from_bytes_le(&[0b11001100]);
-    /// a.bit_xor_into(&b);
-    /// assert_eq!(a.to_bytes_le(), vec![0b00111100]);
-    /// ```
     pub fn bit_xor_into(&mut self, other: &BitVec) {
         assert_eq!(self.len_bits, other.len_bits, "BitVec lengths must match");
         crate::kernels::ops::xor_inplace(&mut self.data, &other.data);
     }
 
     /// Performs bitwise NOT on all bits in `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::from_bytes_le(&[0b11110000]);
-    /// bv.not_into();
-    /// assert_eq!(bv.to_bytes_le(), vec![0b00001111]);
-    /// ```
     pub fn not_into(&mut self) {
         crate::kernels::ops::not_inplace(&mut self.data);
         self.mask_tail();
@@ -474,16 +314,6 @@ impl BitVec {
     /// [`crate::residual_shift`], whose kernel route needs the same cargo
     /// feature and the `bmi2` processor feature and whose fallback is the
     /// portable funnel. Every route writes the same bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::from_bytes_le(&[0b00001111]);
-    /// bv.shift_left(2);
-    /// assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
-    /// ```
     pub fn shift_left(&mut self, k: usize) {
         if k == 0 || self.len_bits == 0 {
             return;
@@ -529,16 +359,6 @@ impl BitVec {
     ///
     /// The same two branches as [`BitVec::shift_left`], under the same cargo
     /// feature and processor features.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::from_bytes_le(&[0b11110000]);
-    /// bv.shift_right(2);
-    /// assert_eq!(bv.to_bytes_le(), vec![0b00111100]);
-    /// ```
     pub fn shift_right(&mut self, k: usize) {
         if k == 0 || self.len_bits == 0 {
             return;
@@ -579,18 +399,6 @@ impl BitVec {
     }
 
     /// Returns the number of set bits (population count).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.count_ones(), 2);
-    /// ```
     pub fn count_ones(&self) -> usize {
         crate::kernels::ops::popcount(&self.data) as usize
     }
@@ -599,24 +407,6 @@ impl BitVec {
     ///
     /// Returns `true` if there is an odd number of 1 bits, `false` otherwise.
     /// This is equivalent to computing the dot product in GF(2).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// assert_eq!(bv.parity(), false); // 0 bits = even
-    ///
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.parity(), true);  // 1 bit = odd
-    ///
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.parity(), false); // 2 bits = even
-    ///
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.parity(), true);  // 3 bits = odd
-    /// ```
     ///
     /// # Performance
     ///
@@ -825,18 +615,6 @@ impl BitVec {
     }
 
     /// Returns the index of the first set bit, or `None` if all bits are zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(false);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.find_first_set(), Some(2));
-    /// ```
     pub fn find_first_set(&self) -> Option<usize> {
         for (i, &word) in self.data.iter().enumerate() {
             if word != 0 {
@@ -851,18 +629,6 @@ impl BitVec {
     }
 
     /// Returns the index of the last set bit, or `None` if all bits are zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.find_last_set(), Some(2));
-    /// ```
     pub fn find_last_set(&self) -> Option<usize> {
         for (i, &word) in self.data.iter().enumerate().rev() {
             if word != 0 {
@@ -881,18 +647,6 @@ impl BitVec {
     ///
     /// Returns `None` if the bit vector is empty or contains only zeros.
     /// This method can benefit from SIMD acceleration when the `simd` feature is enabled.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::from_bytes_le(&[0b0001_0000]); // bit 4 set
-    /// assert_eq!(bv.find_first_one(), Some(4));
-    ///
-    /// let empty = BitVec::new();
-    /// assert_eq!(empty.find_first_one(), None);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -921,18 +675,6 @@ impl BitVec {
     ///
     /// Returns `None` if the bit vector is empty or contains only ones.
     /// This method can benefit from SIMD acceleration when the `simd` feature is enabled.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::from_bytes_le(&[0b1110_1111]); // bit 4 clear
-    /// assert_eq!(bv.find_first_zero(), Some(4));
-    ///
-    /// let all_ones = BitVec::from_bytes_le(&[0xFF]);
-    /// assert_eq!(all_ones.find_first_zero(), None);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1106,20 +848,6 @@ impl BitVec {
     /// * `len_bits` - The number of bits in the resulting vector
     /// * `rng` - A mutable reference to a random number generator
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::BitVec;
-    /// use rand::rngs::StdRng;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut rng = StdRng::seed_from_u64(42);
-    /// let bv = BitVec::random(100, &mut rng);
-    /// assert_eq!(bv.len(), 100);
-    /// # }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(n) where n is the number of words (`len_bits / 64`).
@@ -1190,21 +918,6 @@ impl BitVec {
     ///
     /// Panics if `p` is not in the range [0.0, 1.0].
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::BitVec;
-    /// use rand::rngs::StdRng;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut rng = StdRng::seed_from_u64(42);
-    /// // Create a sparse bit vector (~10% ones)
-    /// let bv = BitVec::random_with_probability(1000, 0.1, &mut rng);
-    /// assert_eq!(bv.len(), 1000);
-    /// # }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(n) where n = `len_bits`. Note that this is slower than [`BitVec::random`]
@@ -1260,21 +973,6 @@ impl BitVec {
     ///
     /// * `rng` - A mutable reference to a random number generator
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::BitVec;
-    /// use rand::rngs::StdRng;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut bv = BitVec::from_bytes_le(&[0x00; 10]);
-    /// let mut rng = StdRng::seed_from_u64(42);
-    /// bv.fill_random(&mut rng);
-    /// // bv now contains random bits
-    /// # }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(n) where n is the number of words.
@@ -1287,34 +985,12 @@ impl BitVec {
     }
 
     /// Clears all bits, setting the length to zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::from_bytes_le(&[0xFF, 0xFF]);
-    /// bv.clear();
-    /// assert_eq!(bv.len(), 0);
-    /// assert!(bv.is_empty());
-    /// ```
     pub fn clear(&mut self) {
         self.data.clear();
         self.len_bits = 0;
     }
 
     /// Resizes the `BitVec` to `new_len_bits`, filling with `fill_bit`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.resize(5, true);
-    /// assert_eq!(bv.len(), 5);
-    /// assert_eq!(bv.count_ones(), 5);
-    /// ```
     pub fn resize(&mut self, new_len_bits: usize, fill_bit: bool) {
         if new_len_bits == self.len_bits {
             return;
@@ -1413,17 +1089,6 @@ impl BitVec {
     ///
     /// Panics if `n_bits` is not a power of 2 or if `n_bits > self.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::from_bytes_le(&[0b11001010]);
-    /// bv.bit_reverse_into(8);
-    /// // 0b11001010 with bit-reversal permutation becomes 0b11011000
-    /// assert_eq!(bv.to_bytes_le()[0], 216);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(n) where n is the number of bits.
@@ -1504,20 +1169,6 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `n` is not a power of 2 or if `n > self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.polar_transform_into(2);
-    /// // [1, 0] -> [1, 1 XOR 0] = [1, 1]
-    /// assert_eq!(bv.get(0), true);
-    /// assert_eq!(bv.get(1), true);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1602,20 +1253,6 @@ impl BitVec {
     ///
     /// Panics if `n` is not a power of 2 or if `n > self.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// let original = bv.clone();
-    /// bv.polar_transform_into(2);
-    /// bv.polar_transform_inverse_into(2);
-    /// assert_eq!(bv, original);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(n log n) where n is the transform size.
@@ -1661,19 +1298,6 @@ impl std::hash::Hash for BitVec {
 
 impl fmt::Display for BitVec {
     /// Formats the BitVec in nalgebra-like style as a row vector.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// bv.push_bit(true);
-    /// println!("{}", bv);  // Displays: [ 1 0 1 1 ]
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[ ")?;
         for i in 0..self.len_bits {

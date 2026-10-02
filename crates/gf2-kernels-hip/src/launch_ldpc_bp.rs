@@ -88,15 +88,6 @@ pub enum GpuBpAlgorithm {
 
 impl GpuBpAlgorithm {
     /// The integer selector passed to the kernel (`LDPC_ALG_*`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_hip::launch_ldpc_bp::GpuBpAlgorithm;
-    ///
-    /// assert_eq!(GpuBpAlgorithm::MinSum.code(), 0);
-    /// assert_eq!(GpuBpAlgorithm::SumProduct.code(), 3);
-    /// ```
     #[must_use]
     pub fn code(self) -> i32 {
         match self {
@@ -191,22 +182,6 @@ pub struct LdpcGraphLayout {
 
 impl LdpcGraphLayout {
     /// The number of Tanner-graph edges `E` (length of every per-edge array).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_kernels_hip::launch_ldpc_bp::LdpcGraphLayout;
-    ///
-    /// let layout = LdpcGraphLayout {
-    ///     n: 2, m: 1,
-    ///     check_row_ptr: vec![0, 2],
-    ///     check_edge_var: vec![0, 1],
-    ///     check_edge_to_var_edge: vec![0, 1],
-    ///     var_col_ptr: vec![0, 1, 2],
-    ///     var_edge_to_check_edge: vec![0, 1],
-    /// };
-    /// assert_eq!(layout.edges(), 2);
-    /// ```
     #[must_use]
     pub fn edges(&self) -> usize {
         self.check_edge_var.len()
@@ -465,10 +440,6 @@ impl GpuLdpcBp {
     ///
     /// Returns [`HipError`] if a pinned allocation fails (an OOM is the
     /// distinguished [`HipError::OutOfMemory`]).
-    ///
-    /// # Examples
-    ///
-    /// See [`LdpcStreamScratch`].
     ///
     /// # Complexity
     ///

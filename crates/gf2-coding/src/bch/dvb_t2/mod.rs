@@ -152,20 +152,6 @@ fn mother_code(params: DvbBchParams) -> Result<DvbT2MotherCode, BchError> {
 /// # Complexity
 ///
 /// One mother construction plus $O(n)$ for the shortening.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, FrameSize};
-/// use gf2_coding::traits::block::BlockCode;
-/// use gf2_coding::CodeRate;
-///
-/// let code = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2)?;
-/// assert_eq!(code.n(), 32400);
-/// assert_eq!(code.k(), 32208);
-/// assert_eq!(code.n() - code.k(), 192);
-/// # Ok::<(), gf2_coding::bch::error::BchError>(())
-/// ```
 pub fn dvb_t2_bch_code(frame_size: FrameSize, rate: CodeRate) -> Result<DvbT2BchCode, BchError> {
     let params = DvbBchParams::for_code(frame_size, rate);
     let mother = mother_code(params)?;

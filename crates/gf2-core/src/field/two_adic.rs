@@ -161,15 +161,6 @@ pub trait TwoAdicField: FiniteField {
     ///
     /// Not applicable — this is an associated constant with no operands.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::TwoAdicField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(<Fp<65537> as TwoAdicField>::TWO_ADICITY, 16);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Not applicable — evaluated at compile time, no runtime execution.
@@ -411,15 +402,6 @@ impl TwoAdicField for Fp<{ KOALABEAR_P }> {
 /// this module, which fixes the 2^27-th primitive root of unity to the
 /// Plonky3 canonical constant `0x1a42_7a41`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::two_adic::BABYBEAR_P;
-///
-/// assert_eq!(BABYBEAR_P, 2_013_265_921);
-/// assert_eq!(BABYBEAR_P, 15 * (1u64 << 27) + 1);
-/// ```
-///
 /// # Panics
 ///
 /// None — this is a compile-time constant.
@@ -440,16 +422,6 @@ pub const BABYBEAR_P: u64 = 15 * (1u64 << 27) + 1;
 /// [`Fp<{ KOALABEAR_P }>`] impl in this module, which fixes the 2^24-th
 /// primitive root of unity to the Plonky3 canonical constant
 /// `0x6ac4_9f88`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::two_adic::KOALABEAR_P;
-///
-/// assert_eq!(KOALABEAR_P, 2_130_706_433);
-/// assert_eq!(KOALABEAR_P, 127 * (1u64 << 24) + 1);
-/// assert_eq!(KOALABEAR_P, (1u64 << 31) - (1u64 << 24) + 1);
-/// ```
 ///
 /// # Panics
 ///

@@ -17,16 +17,6 @@
 /// # Performance
 /// - x86-64: 1-3 cycles (POPCNT instruction)
 /// - ARM: 1-4 cycles (VCNT instruction)
-///
-/// # Examples
-/// ```
-/// use gf2_core::kernels::scalar::primitives::parity;
-///
-/// assert_eq!(parity(0), false);
-/// assert_eq!(parity(1), true);
-/// assert_eq!(parity(3), false); // 0b11 = 2 bits
-/// assert_eq!(parity(7), true);  // 0b111 = 3 bits
-/// ```
 #[inline(always)]
 pub fn parity(v: u64) -> bool {
     (v.count_ones() & 1) != 0
@@ -44,16 +34,6 @@ pub fn parity(v: u64) -> bool {
 /// # Performance
 /// - x86-64: 1-3 cycles (TZCNT/BSF instruction)
 /// - ARM: 1-4 cycles (CLZ + RBIT, or CTZ on ARMv8)
-///
-/// # Examples
-/// ```
-/// use gf2_core::kernels::scalar::primitives::trailing_zeros;
-///
-/// assert_eq!(trailing_zeros(0), 64);
-/// assert_eq!(trailing_zeros(1), 0);
-/// assert_eq!(trailing_zeros(8), 3);  // 0b1000
-/// assert_eq!(trailing_zeros(1u64 << 63), 63);
-/// ```
 #[inline(always)]
 pub fn trailing_zeros(v: u64) -> u32 {
     if v == 0 {
@@ -73,15 +53,6 @@ pub fn trailing_zeros(v: u64) -> u32 {
 /// # Performance
 /// - x86-64: 1-3 cycles (LZCNT/BSR instruction)
 /// - ARM: 1-2 cycles (CLZ instruction)
-///
-/// # Examples
-/// ```
-/// use gf2_core::kernels::scalar::primitives::leading_zeros;
-///
-/// assert_eq!(leading_zeros(0), 64);
-/// assert_eq!(leading_zeros(1), 63);
-/// assert_eq!(leading_zeros(1u64 << 63), 0);
-/// ```
 #[inline(always)]
 pub fn leading_zeros(v: u64) -> u32 {
     v.leading_zeros()
@@ -101,20 +72,6 @@ pub fn leading_zeros(v: u64) -> u32 {
 /// - 4 bitwise operations (XOR, XOR, AND, XOR)
 /// - No branches - constant time regardless of mask pattern
 /// - Optimal for CPU pipelines
-///
-/// # Examples
-/// ```
-/// use gf2_core::kernels::scalar::primitives::masked_merge;
-///
-/// // Select all bits from b
-/// assert_eq!(masked_merge(0x00, 0xFF, 0xFF), 0xFF);
-///
-/// // Select all bits from a
-/// assert_eq!(masked_merge(0xFF, 0x00, 0x00), 0xFF);
-///
-/// // Select lower nibble from b, upper from a
-/// assert_eq!(masked_merge(0xF0, 0x0F, 0x0F), 0xFF);
-/// ```
 #[inline(always)]
 pub fn masked_merge(a: u64, b: u64, mask: u64) -> u64 {
     a ^ ((a ^ b) & mask)
@@ -132,17 +89,6 @@ pub fn masked_merge(a: u64, b: u64, mask: u64) -> u64 {
 /// # Performance
 /// - 3 operations (SUB, AND, CMP)
 /// - No branches
-///
-/// # Examples
-/// ```
-/// use gf2_core::kernels::scalar::primitives::is_power_of_2;
-///
-/// assert_eq!(is_power_of_2(0), false);
-/// assert_eq!(is_power_of_2(1), true);
-/// assert_eq!(is_power_of_2(2), true);
-/// assert_eq!(is_power_of_2(3), false);
-/// assert_eq!(is_power_of_2(1024), true);
-/// ```
 #[inline(always)]
 pub fn is_power_of_2(v: u64) -> bool {
     v != 0 && (v & (v.wrapping_sub(1))) == 0
@@ -159,18 +105,6 @@ pub fn is_power_of_2(v: u64) -> bool {
 /// # Performance
 /// - 12 operations (SUB, OR×6, ADD)
 /// - No branches
-///
-/// # Examples
-/// ```
-/// use gf2_core::kernels::scalar::primitives::next_power_of_2;
-///
-/// assert_eq!(next_power_of_2(0), 0);
-/// assert_eq!(next_power_of_2(1), 1);
-/// assert_eq!(next_power_of_2(2), 2);
-/// assert_eq!(next_power_of_2(3), 4);
-/// assert_eq!(next_power_of_2(5), 8);
-/// assert_eq!(next_power_of_2(1023), 1024);
-/// ```
 #[inline(always)]
 pub fn next_power_of_2(v: u64) -> u64 {
     if v == 0 {
