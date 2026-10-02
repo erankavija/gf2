@@ -183,6 +183,10 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or
 - **teaching-rustdoc-examples** — A rustdoc example teaches a workflow or clarifies a material contract that prose and focused tests leave unclear; examples for accessors, constants, constructors, predicates, and direct field mappings are a defect.
 - **active-document-layout** — Active development documents live under `dev/active/<epic-short-id>-<slug>/` and are linked to their owning issues with `jit doc`.
 - **agents-md-scope** — Every `AGENTS.md` governs its directory subtree, overrides less specific guidance only within that subtree, states nothing that belongs to a broader or narrower scope, and stays at or below 200 lines.
+- **researcher-audience** — Permanent documentation addresses researchers evaluating or adopting gf2: it assumes relevant technical competence, omits elementary finite-field and simplest-code primers, and limits tutorials to research-grade end-to-end workflows over advanced supported capabilities.
+- **adapted-diataxis-placement** — Every permanent documentation page under `docs/` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose.
+- **no-marketing** — Permanent documentation and rustdoc state capabilities and measured results in neutral technical terms; promotional adjectives, superlatives, and unquantified comparative claims are a defect.
+- **no-dev-path-coupling** — Production code, tooling, tests, receipts, and harness crates locate development artifacts by content identity or through one configured repository root resolved at runtime; hard-coded `dev/` paths, historical-path allow-lists, and depth-dependent relative paths are a defect.
 <!-- jit:invariants:end -->
 
 ## JIT workflow
