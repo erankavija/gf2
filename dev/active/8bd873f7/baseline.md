@@ -1,0 +1,15 @@
+# Validator baseline before the declaration-locator change
+
+Each committed tuning-extent campaign, validated in publication mode against the main checkout.
+
+```
+commit=6652402912ede6f5e20399438edb1d1dd253b2e0
+## gf2-a83583e0-20260930t230000z-2728298
+$ python3 dev/scripts/validate-tuning-extent-campaign.py --stage /tmp/gf2-a83583e0-20260930t230000z-2728298 --publication /home/vkaskivuo/Projects/gf2
+GF2_TUNING_VALIDATION={"schema":"tuning-extent-campaign-publication-v1","campaign_id":"gf2-a83583e0-20260930t230000z-2728298","status":"published","entries":12970}
+exit=0
+## gf2-dbd8787d-20261001t230000z-2601601
+$ python3 dev/scripts/validate-tuning-extent-campaign.py --stage /tmp/gf2-dbd8787d-20261001t230000z-2601601 --publication /home/vkaskivuo/Projects/gf2
+GF2_TUNING_VALIDATION={"schema":"tuning-extent-campaign-publication-v1","campaign_id":"gf2-dbd8787d-20261001t230000z-2601601","status":"published","entries":13669}
+exit=0
+```
