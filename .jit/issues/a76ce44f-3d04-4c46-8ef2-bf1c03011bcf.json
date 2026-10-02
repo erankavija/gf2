@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Study compression-transform ordering against error-correction coding",
-  "updated_at": "2026-10-02T11:30:43.863050148Z"
+  "updated_at": "2026-10-02T11:31:50.093647827Z"
 }

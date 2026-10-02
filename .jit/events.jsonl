@@ -15200,3 +15200,10 @@
 {"from":"ready","id":"1bcd8421-d4ae-4faa-b994-23b498656b1b","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:30:43.863050148Z","to":"backlog","type":"issue_state_changed"}
 {"fields":["documents"],"id":"3d8f1fb5-91c4-4f46-9af7-4983242261d5","issue_id":"875914b3-38c8-4ec2-a13f-009fc620f7d4","timestamp":"2026-10-02T11:30:57.500252216Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"e0b6f166-3500-45fd-a8ab-2d1d484222c9","issue_id":"e85b8edf-f35f-49b5-bdb1-65502b7d30e1","timestamp":"2026-10-02T11:30:57.661943953Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"docs-mechanical","id":"e3b35617-627b-4789-839e-c2e543034b89","issue_id":"e85b8edf-f35f-49b5-bdb1-65502b7d30e1","timestamp":"2026-10-02T11:31:01.680043096Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"274711c1-4586-4146-b6ab-c30a3513746b","issue_id":"875914b3-38c8-4ec2-a13f-009fc620f7d4","timestamp":"2026-10-02T11:31:01.747480514Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"8328c76d-3140-4953-9e16-c4bca3d13045","issue_id":"60652fe4-d6dd-49e9-97f1-db99b4c73111","timestamp":"2026-10-02T11:31:49.966961647Z","to":"done","type":"issue_state_changed"}
+{"id":"431698b5-7efc-4779-ab53-2575847824fb","issue_id":"60652fe4-d6dd-49e9-97f1-db99b4c73111","timestamp":"2026-10-02T11:31:49.966961647Z","type":"issue_completed"}
+{"from":"backlog","id":"3f2fd709-22b5-4ef2-8040-c89c852ca4a0","issue_id":"a76ce44f-3d04-4c46-8ef2-bf1c03011bcf","timestamp":"2026-10-02T11:31:50.093647827Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"b7df498b-bef8-4609-be75-b96ef354a02c","issue_id":"ec5b6c8f-6053-4a7b-8fe2-e569cd323ce5","timestamp":"2026-10-02T11:31:50.188372418Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"1b9d7ec9-89f1-421a-bd69-c4ccbfa8d99c","issue_id":"edcd4c9c-9d6c-4221-9b6c-685d5d28755d","timestamp":"2026-10-02T11:31:50.280137443Z","to":"ready","type":"issue_state_changed"}

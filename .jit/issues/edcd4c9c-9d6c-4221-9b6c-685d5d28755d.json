@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Measure the table-based versus algebraic decoding crossover",
-  "updated_at": "2026-10-02T11:30:43.185592697Z"
+  "updated_at": "2026-10-02T11:31:50.280137443Z"
 }

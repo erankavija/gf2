@@ -24,9 +24,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:26.561523175Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T11:31:01.747480514Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "875914b3-38c8-4ec2-a13f-009fc620f7d4",
@@ -39,5 +39,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Map the gf2-coding roadmap's unchecked items",
-  "updated_at": "2026-10-02T11:30:57.500252216Z"
+  "updated_at": "2026-10-02T11:31:01.747480514Z"
 }

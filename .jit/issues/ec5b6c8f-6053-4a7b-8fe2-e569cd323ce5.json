@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Repair broken intra-doc links in gf2-kernels-hip",
-  "updated_at": "2026-10-02T11:30:19.177597304Z"
+  "updated_at": "2026-10-02T11:31:50.188372418Z"
 }
