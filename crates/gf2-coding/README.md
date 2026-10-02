@@ -167,7 +167,7 @@ Always use `--release`: debug mode is 10–100× slower on LDPC and simulation c
 
 ## Contributing
 
-Follow TDD. Add property tests for algebraic invariants, standards test vectors where the code claims standards compliance, and benchmarks for anything performance-sensitive. See the workspace guide in [`../../CLAUDE.md`](../../CLAUDE.md) and [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md).
+Follow TDD. Add property tests for algebraic invariants, standards test vectors where the code claims standards compliance, and benchmarks for anything performance-sensitive. See the workspace guide in [`../../AGENTS.md`](../../AGENTS.md).
 
 ## License
 
