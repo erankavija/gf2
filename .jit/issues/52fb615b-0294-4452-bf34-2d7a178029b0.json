@@ -33,8 +33,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-10-02T15:13:55.064703337Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T20:39:50.721106682Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -64,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for permanent-path sources",
-  "updated_at": "2026-10-02T15:13:55.064703337Z"
+  "updated_at": "2026-10-02T20:39:50.721106682Z"
 }
