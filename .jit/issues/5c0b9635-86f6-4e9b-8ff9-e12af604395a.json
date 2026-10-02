@@ -33,9 +33,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:23.751943641Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-02T14:09:24.915087060Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-02T14:09:18.693993530Z"
+  "updated_at": "2026-10-02T14:09:24.915087060Z"
 }
