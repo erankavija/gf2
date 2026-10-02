@@ -67,6 +67,10 @@ class CheckTest(unittest.TestCase):
         code, _ = self.run_check(rows, policies, "--require-complete")
         self.assertEqual(code, 1)
 
+    def test_empty_manifest_fails_required_completeness(self):
+        self.assertEqual(self.run_check([])[0], 0)
+        self.assertEqual(self.run_check([], (), "--require-complete")[0], 1)
+
     def test_schema_violations_fail(self):
         cases = {
             "disposition must be one of": [row("dev/plans/a.md", "moved")],

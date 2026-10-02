@@ -22,7 +22,8 @@ Row assertions against the working tree:
 
 Prints `<row>: <finding>` lines, then completeness per disposition and for
 policy entries. Exit status 1 on any schema violation or failed assertion, or
-on an incomplete manifest with `--require-complete`; 0 otherwise.
+with `--require-complete` on a manifest without artifact rows or with any
+pending row; 0 otherwise.
 """
 
 from __future__ import annotations
@@ -183,7 +184,8 @@ def main() -> int:
         print(line)
     for disp, (done, total) in counts.items():
         print(f"{disp}: {done}/{total} complete")
-    incomplete = any(done < total for done, total in counts.values())
+    rows = sum(counts.get(d, [0, 0])[1] for d in DISPOSITIONS)
+    incomplete = not rows or any(done < total for done, total in counts.values())
     return 1 if findings or (args.require_complete and incomplete) else 0
 
 
