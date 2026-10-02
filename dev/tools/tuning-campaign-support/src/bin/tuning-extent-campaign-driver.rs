@@ -242,7 +242,8 @@ struct ImportedOwner {
 /// run-ID prefix `gf2-<issue>-`, protocol, producing-input manifest, measured
 /// owners with their cell counts, imported owners, and whether publication
 /// emits an evidence index. The launcher, this driver and the independent
-/// validator all read it from `dev/active/<issue>/campaign-declaration.json`.
+/// validator locate it with [`locate_campaign_declaration`] and identify the
+/// recorded declaration by its digest.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CampaignDeclaration {
@@ -253,6 +254,9 @@ struct CampaignDeclaration {
     measured_owners: Vec<MeasuredOwner>,
     imported_owners: Vec<ImportedOwner>,
     evidence_index: bool,
+    /// SHA-256 of the located declaration file.
+    #[serde(skip)]
+    sha256: Option<Sha256Digest>,
 }
 impl CampaignDeclaration {
     /// The issue named by `gf2-<issue>-...`; eight lowercase hex digits.
@@ -269,20 +273,35 @@ impl CampaignDeclaration {
             })
             .ok_or_else(|| invalid("campaign ID lacks a gf2-<issue>- prefix"))
     }
-    fn relative_path(issue: &str) -> String {
-        format!("dev/active/{issue}/campaign-declaration.json")
-    }
-    /// Reads and validates the declaration that `campaign_id` names below `root`.
+    /// Locates, reads and validates the declaration that `campaign_id` names
+    /// below `root`.
     fn for_campaign(root: &Path, campaign_id: &str) -> io::Result<Self> {
         let issue = Self::issue_of(campaign_id)?;
-        let declaration: Self =
-            serde_json::from_slice(&fs::read(root.join(Self::relative_path(issue)))?)
-                .map_err(invalid)?;
+        let bytes = fs::read(root.join(locate_campaign_declaration(root, issue)?))?;
+        let mut declaration: Self = serde_json::from_slice(&bytes).map_err(invalid)?;
         declaration.validate(issue)?;
+        declaration.sha256 = Some(Sha256Digest::of(&bytes));
         Ok(declaration)
     }
-    fn path(&self) -> String {
-        Self::relative_path(&self.issue)
+    /// The one `(path, digest)` entry of `identities` whose digest is this
+    /// declaration's, which names the declaration as the campaign recorded it.
+    fn recorded_in<'a>(
+        &self,
+        identities: &'a BTreeMap<String, String>,
+    ) -> io::Result<(&'a str, &'a str)> {
+        let sha256 = self
+            .sha256
+            .as_ref()
+            .ok_or_else(|| invalid("campaign declaration was not located"))?;
+        let mut entries = identities
+            .iter()
+            .filter(|(_, digest)| digest.as_str() == sha256.as_str());
+        match (entries.next(), entries.next()) {
+            (Some((path, digest)), None) => Ok((path, digest)),
+            _ => Err(invalid(
+                "behavior identity does not name the campaign declaration exactly once",
+            )),
+        }
     }
     fn prefix(&self) -> String {
         format!("gf2-{}-", self.issue)
@@ -595,10 +614,9 @@ fn verify_config(config: &CampaignConfig) -> io::Result<()> {
             &behavior_sources(&declaration)?,
             &config.identity.behavior_sha256,
         )
-        || !config
-            .identity
-            .behavior_sha256
-            .contains_key(&declaration.path())
+        || declaration
+            .recorded_in(&config.identity.behavior_sha256)
+            .is_err()
         || ProducingInputs::capture(Path::new("."), producing_manifest)?.lifecycle_sha256()?
             != config.identity.lifecycle_behavior_sha256
         || ProducingInputs::hashes_at(Path::new("."), &producing.build_inputs)?
@@ -1755,6 +1773,7 @@ fn cited_rows(
 struct ReceiptFacts {
     campaign_id: String,
     declaration: CampaignDeclaration,
+    declaration_path: String,
     declaration_sha256: Sha256Digest,
     protocol_sha256: Sha256Digest,
     source_revision: String,
@@ -1775,17 +1794,13 @@ impl ReceiptFacts {
         counts: DeclaredCounts,
         [attempts, orchestration, sessions]: [u64; 3],
     ) -> io::Result<Self> {
+        let (declaration_path, declaration_sha256) =
+            declaration.recorded_in(&config.identity.behavior_sha256)?;
         Ok(Self {
             campaign_id: config.campaign_id.as_str().to_owned(),
             declaration: declaration.clone(),
-            declaration_sha256: Sha256Digest::new(
-                config
-                    .identity
-                    .behavior_sha256
-                    .get(&declaration.path())
-                    .ok_or_else(|| invalid("behavior identity omits the declaration"))?
-                    .clone(),
-            )?,
+            declaration_path: declaration_path.to_owned(),
+            declaration_sha256: Sha256Digest::new(declaration_sha256)?,
             protocol_sha256: config.protocol.sha256.clone(),
             source_revision: config.identity.source_revision.clone(),
             affinity: format!("{:?}", config.affinity.cpus()),
@@ -1824,7 +1839,7 @@ fn render_receipt(
     let layout = RepositoryLayout {
         id: &facts.campaign_id,
     };
-    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Declaration: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nThe campaign record, owner responses and composition record listed under cited evidence hold the runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests listed under cited evidence contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal, pinned by its row in the committed checksum manifest `{}`, and the checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through the receipt projection's raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n",facts.campaign_id,facts.declaration.protocol,facts.protocol_sha256.as_str(),facts.declaration.path(),facts.declaration_sha256.as_str(),facts.source_revision,layout.checksum(),serde_json::to_string_pretty(&receipt_decisions(responses, stage, &layout)?).map_err(invalid)?);
+    let mut receipt=format!("# Extent calibration {}\n\n## Campaign identity and protocol\n\nProtocol: `{}`; SHA-256 `{}`. Declaration: `{}`; SHA-256 `{}`. Producing commit: `{}`.\n\n## Section-specific provenance and assembly\n\nThe campaign record, owner responses and composition record listed under cited evidence hold the runtime observations, executable and behavior identities, and strict codec evidence.\n\n## Grids, controls, and seed allocation\n\nThe immutable owner manifests listed under cited evidence contain every acquisition slot and opaque owner case. Each accepted payload contains its full seed, fixture, route and semantic witness.\n\n## Coverage, accounting, and resume history\n\nThe execution journal, pinned by its row in the committed checksum manifest `{}`, and the checkpoint manifest are authoritative for attempts, accepted results, sessions, lock observations, censored intervals, and orchestration.\n\n## Effective routes and semantic witnesses\n\nEach accepted raw payload resolves through the archived raw result index.\n\n## Raw samples and uncertainty\n\nEvery raw key resolves through the receipt projection's raw_artifacts; five timing windows, calls and elapsed nanoseconds remain in each timed record.\n\n## Argmin and threshold decisions\n\nGEMM row/column decisions are joint; dot chunk decisions cite this campaign. Owner projections preserve ties, schedule plateaus, cross-stratum conflicts, conditional M4RM decisions and fallbacks:\n\n```json\n{}\n```\n\n## Owner and complete validation\n\nOwner responses record strict owner-only reopen. Composition preserves each complete section wrapper. Independent validation recomputes the estimators and evidence accounting.\n\n## Limitations\n\nMeasured choices are conditional on this host, declared grid, controls, and protocol. Unmeasured leaves remain omissions. Timing intervals are empirical measurements, not Monte Carlo probability estimates.\n\n",facts.campaign_id,facts.declaration.protocol,facts.protocol_sha256.as_str(),facts.declaration_path,facts.declaration_sha256.as_str(),facts.source_revision,layout.checksum(),serde_json::to_string_pretty(&receipt_decisions(responses, stage, &layout)?).map_err(invalid)?);
     if !facts.declaration.imported_owners.is_empty() {
         receipt.push_str("## Imported owners\n\n");
         for imported in &facts.declaration.imported_owners {
@@ -1872,20 +1887,20 @@ struct EvidenceIdentity<'a> {
     campaign_id: &'a str,
     protocol_sha256: &'a Sha256Digest,
     source_revision: &'a str,
+    declaration_path: &'a str,
     declaration_sha256: &'a str,
     imported: &'a [ImportedOwnerEvidence],
 }
 impl<'a> EvidenceIdentity<'a> {
     fn of(config: &'a CampaignConfig, declaration: &CampaignDeclaration) -> io::Result<Self> {
+        let (declaration_path, declaration_sha256) =
+            declaration.recorded_in(&config.identity.behavior_sha256)?;
         Ok(Self {
             campaign_id: config.campaign_id.as_str(),
             protocol_sha256: &config.protocol.sha256,
             source_revision: &config.identity.source_revision,
-            declaration_sha256: config
-                .identity
-                .behavior_sha256
-                .get(&declaration.path())
-                .ok_or_else(|| invalid("behavior identity omits the declaration"))?,
+            declaration_path,
+            declaration_sha256,
             imported: &config.imported_owners,
         })
     }
@@ -1906,7 +1921,7 @@ fn render_evidence_index(
         declaration.protocol,
         identity.source_revision,
         identity.protocol_sha256.as_str(),
-        declaration.path(),
+        identity.declaration_path,
         identity.declaration_sha256,
     );
     text.push_str(&cited_rows(
@@ -3142,11 +3157,18 @@ mod tests {
     use super::*;
     use tuning_campaign_support::scratch::{scratch, Scratch};
 
+    /// A recorded declaration path distinct from the located one: receipts
+    /// and evidence indexes name the declaration as the campaign recorded it.
+    const RECORDED_DECLARATION: &str = "recorded/campaign-declaration.json";
+
     fn repository_root() -> PathBuf {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../..")
-            .canonicalize()
-            .unwrap()
+        let output = Command::new("git")
+            .args(["rev-parse", "--show-toplevel"])
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        PathBuf::from(String::from_utf8(output.stdout).unwrap().trim_end())
     }
     /// The committed declaration of the published extent campaign.
     fn extent_declaration() -> CampaignDeclaration {
@@ -3936,7 +3958,8 @@ mod tests {
         }
         let seam = seam_declaration();
         let manifest = ProducingInputs::read_at(&root, &seam.producing_manifest).unwrap();
-        assert!(manifest.lifecycle_sources.contains(&seam.path()));
+        let lifecycle = ProducingInputs::hashes_at(&root, &manifest.lifecycle_sources).unwrap();
+        assert!(seam.recorded_in(&lifecycle).is_ok());
     }
 
     #[test]
@@ -4075,7 +4098,7 @@ mod tests {
                 })
                 .collect();
             let protocol = Sha256Digest::of(b"protocol");
-            let declaration_sha = Sha256Digest::of(b"declaration");
+            let declaration_sha = declaration.sha256.clone().unwrap();
             let revision = "0".repeat(40);
             fs::write(
                 stage.join("campaign.json"),
@@ -4083,7 +4106,7 @@ mod tests {
                     "campaign_id": campaign,
                     "protocol": {"path": "/repository/protocol.md", "sha256": protocol},
                     "identity": {"source_revision": revision,
-                                 "behavior_sha256": {declaration.path(): declaration_sha}},
+                                 "behavior_sha256": {RECORDED_DECLARATION: declaration_sha}},
                     "imported_owners": imported_owners,
                 }))
                 .unwrap(),
@@ -4143,6 +4166,7 @@ mod tests {
                         campaign_id: campaign.as_str(),
                         protocol_sha256: &protocol,
                         source_revision: &revision,
+                        declaration_path: RECORDED_DECLARATION,
                         declaration_sha256: declaration_sha.as_str(),
                         imported: &imported_owners,
                     },
@@ -4507,6 +4531,7 @@ mod tests {
         let facts = ReceiptFacts {
             campaign_id: campaign.as_str().to_owned(),
             declaration: seam_declaration(),
+            declaration_path: RECORDED_DECLARATION.to_owned(),
             declaration_sha256: Sha256Digest::of(b"declaration"),
             protocol_sha256: Sha256Digest::of(b"protocol"),
             source_revision: "0000000000000000000000000000000000000000".to_owned(),
@@ -4608,7 +4633,7 @@ mod tests {
         let affinity: Vec<u32> = vec![0, 2, 4, 6];
         let executable = "e".repeat(64);
         let counts = DeclaredCounts::for_cells(756).unwrap();
-        let declaration_sha = Sha256Digest::of(b"declaration");
+        let declaration_sha = declaration.sha256.clone().unwrap();
         for (relative, content) in [
             ("core-manifest.json", "{\"manifest\":1}"),
             ("core-resolved-manifest.json", "{\"manifest\":2}"),
@@ -4636,7 +4661,7 @@ mod tests {
                     "campaign_id": campaign,
                     "protocol": protocol,
                     "identity": {"source_revision": "0".repeat(40),
-                                 "behavior_sha256": {declaration.path(): declaration_sha}},
+                                 "behavior_sha256": {RECORDED_DECLARATION: declaration_sha}},
                     "affinity": affinity,
                     "manifests": [json!({
                         "owner": "gf2-core",
@@ -4659,6 +4684,7 @@ mod tests {
         let facts = ReceiptFacts {
             campaign_id: campaign.as_str().to_owned(),
             declaration: declaration.clone(),
+            declaration_path: RECORDED_DECLARATION.to_owned(),
             declaration_sha256: declaration_sha,
             protocol_sha256: protocol.sha256.clone(),
             source_revision: "0".repeat(40),
