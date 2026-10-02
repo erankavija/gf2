@@ -111,7 +111,7 @@ def check_artifact(row: dict, heads: set[str], out: list[str]) -> None:
         errs.append("jit-container-archive destination must be under dev/archive/")
     elif disp == "rewritten-topic" and not dest:
         errs.append("rewritten-topic needs a destination")
-    elif dest and bad_path(dest):
+    if dest and bad_path(dest):
         errs.append("destination must be repository-relative")
     out.extend(f"{path}: {e}" for e in errs)
 
