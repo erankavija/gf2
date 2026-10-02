@@ -8,7 +8,22 @@
     "a24b2af7-81ce-4442-9ee3-6ce096c36537"
   ],
   "description": "Every artifact under the non-active `dev/` buckets receives one manifest row, so bucket elimination and narrative relocation act on recorded ownership and consumers.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. Consumer evidence for each directory is in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and Appendix B. Receipt directories carry content digests, so their bytes never change.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file under `dev/plans/`, `dev/presentations/`, `dev/sessions/`, the unmarked contents of `dev/archive/`, and the loose top-level files of `dev/`, with evidence and disposition.\n- [hard] REQ-02: Each operational directory (`benchmarks`, `bench_results`, `campaigns`, `reference_data`, `research`, `scripts`, `simulation_results`, `studies`, `tools`) has a retained-operational-asset row naming its code, CI or Cargo consumers.\n- [hard] REQ-03: Each loose narrative Markdown file inside an operational directory has its own row with an archive or relocation disposition; receipt directories appear as single opaque rows.\n- [hard] REQ-04: Every ownership claim cites an admissible evidence class.\n- [hard] REQ-05: The progress checker reports the rows schema-valid with every source assertion passing.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Inventory notes",
+      "path": "dev/active/fa787f85-documentation-overhaul/27f0f3b1-inventory-notes.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Migration manifest",
+      "path": "dev/active/fa787f85-documentation-overhaul/migration/manifest.toml"
+    }
+  ],
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "cargo-ci",
@@ -34,5 +49,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Populate the migration manifest for the other dev buckets",
-  "updated_at": "2026-10-02T13:45:28.800451620Z"
+  "updated_at": "2026-10-02T14:16:09.972172587Z"
 }
