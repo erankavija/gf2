@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T17:31:35.990999854Z",
+  "dependencies": [],
+  "description": "`CpuBackend::matmul` runs the serial `BitMatrix` product in every\nconfiguration, while its batch matvec methods use rayon when the `parallel`\nfeature is enabled. The source comment in `crates/gf2-core/src/compute/cpu.rs`\ncites this issue.\n\n## Success Criteria\n\n- [hard] REQ-01: With the `parallel` feature, `CpuBackend::matmul` distributes the product across rayon workers above a selection threshold and runs the serial product below it.\n- [hard] REQ-02: The rayon and serial paths return identical matrices across one shared behavioral suite, including row and column counts 0, 1, 63, 64, and 65 and results independent of the worker count.\n- [hard] REQ-03: The selection threshold cites a committed benchmark receipt from an uncontended host.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-02T17:31:35.990999854Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "c11640f2-7ebc-4167-94c4-bd781df1452a",
+  "labels": [
+    "component:gf2-core",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Parallelize CpuBackend matmul under the parallel feature",
+  "updated_at": "2026-10-02T17:31:56.784929008Z"
+}

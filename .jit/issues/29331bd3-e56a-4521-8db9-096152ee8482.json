@@ -7,7 +7,15 @@
     "871b401d-59f7-4fa4-86b6-9c067795ff06"
   ],
   "description": "gf2-sim permanent-campaign validation pins the frozen validation journal, receipt, continuation authorization and producer-0 preregistration to paths under `dev/active/02b8137c/`. It locates them through one runtime-resolved repository root and identifies them by digest.\n\n## Background\n\nReaders: `crates/gf2-sim/src/permanent_campaign/validation.rs:68-74,1359-1367` and `crates/gf2-sim/tests/permanent_validation.rs`. The worker on the in-progress pre-draw validation task (02b8137c) also edits `validation.rs`; this change is coordinated with that worker.\n\n## Success Criteria\n\n- [hard] REQ-01: Validation locates the frozen evidence through one repository root resolved at runtime, and identity checks compare digests rather than recorded path strings; every digest check, including the authorized legacy preregistration digest, is unchanged.\n- [hard] REQ-02: Before the change, a linked baseline record lists the validation verdict for every committed frozen-evidence bundle and snapshot copy, with the exact command and commit; after the change, the same run yields identical verdicts, so existing evidence stays valid.\n- [hard] REQ-03: A test validates evidence located away from its original directory.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n- [hard] REQ-05: The Rust CI gate passes.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Verdict baseline",
+      "path": "dev/active/fa787f85-documentation-overhaul/29331bd3-baseline.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T11:05:37.475703246Z",
   "gates_required": [
     "cargo-ci",
@@ -32,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify frozen campaign evidence by content in gf2-sim validation",
-  "updated_at": "2026-10-02T13:45:30.709960683Z"
+  "updated_at": "2026-10-02T17:31:56.964612877Z"
 }

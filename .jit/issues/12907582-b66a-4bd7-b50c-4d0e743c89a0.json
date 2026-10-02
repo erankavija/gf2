@@ -15,6 +15,13 @@
       "format": "markdown",
       "label": "Drift pre-audit",
       "path": "dev/active/fa787f85-documentation-overhaul/12907582-drift-preaudit.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Drift record",
+      "path": "dev/active/fa787f85-documentation-overhaul/12907582-drift-record.md"
     }
   ],
   "first_ready_at": "2026-10-02T10:06:45.596849618Z",
@@ -56,5 +63,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-02T13:42:49.086714428Z"
+  "updated_at": "2026-10-02T17:31:56.907608424Z"
 }

@@ -7,7 +7,15 @@
     "871b401d-59f7-4fa4-86b6-9c067795ff06"
   ],
   "description": "gf2-sim rare-event artifact validation rejects any design identity whose path is not `dev/active/3f664839/design.md`. It identifies the design by its recorded revision and blob identity instead of the path string.\n\n## Background\n\nReaders: `crates/gf2-sim/src/permanent_rare_event/artifact.rs:4245-4250` and `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs:55`.\n\n## Success Criteria\n\n- [hard] REQ-01: Design-identity validation checks the recorded revision and blob identity and no longer compares the recorded path to a literal; the revision and blob checks are unchanged.\n- [hard] REQ-02: Before the change, a linked baseline record lists the artifact-validation verdict for every committed rare-event artifact and snapshot copy, with the exact command and commit; after the change, the same run yields identical verdicts, so existing artifacts stay valid.\n- [hard] REQ-03: A test validates an artifact whose design identity names a different path with the same content identity.\n- [hard] REQ-04: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n- [hard] REQ-05: The Rust CI gate passes.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Verdict baseline",
+      "path": "dev/active/fa787f85-documentation-overhaul/11964cb8-baseline.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T11:05:37.362087835Z",
   "gates_required": [
     "cargo-ci",
@@ -32,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Identify the rare-event design by content in gf2-sim artifact checks",
-  "updated_at": "2026-10-02T13:45:30.472727057Z"
+  "updated_at": "2026-10-02T17:31:56.937456367Z"
 }

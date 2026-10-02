@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-02T17:31:39.405010582Z",
+  "dependencies": [],
+  "description": "`Llr::saturate_batch` and `Llr::hard_decision_batch` in\n`crates/gf2-coding/src/llr.rs` are scalar loops, while other LLR batch\noperations dispatch to `gf2-kernels-simd`. The source comments cite this issue.\n\n## Success Criteria\n\n- [hard] REQ-01: `Llr::saturate_batch` and `Llr::hard_decision_batch` dispatch to runtime-detected AVX2 kernels in `gf2-kernels-simd` and fall back to the scalar loops when AVX2 is unavailable.\n- [hard] REQ-02: The SIMD and scalar paths return identical results across one shared behavioral suite, covering lengths 0, 1, and one below, at, and above the vector width, and the values ±0, ±infinity, and NaN.\n- [hard] REQ-03: Any speedup claim cites a committed benchmark receipt from an uncontended host.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-02T17:31:39.405010582Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "e1ff915f-c119-45a1-a177-a80bc3782869",
+  "labels": [
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Add SIMD kernels for LLR batch saturation and hard decision",
+  "updated_at": "2026-10-02T17:31:56.853104303Z"
+}

@@ -88,7 +88,7 @@ impl ComputeBackend for CpuBackend {
     }
 
     fn matmul(&self, a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
-        // Serial in every configuration; a rayon path is `@/issue/NEWID-1`.
+        // Serial in every configuration; a rayon path is tracked in `@/issue/c11640f2`.
         a * b
     }
 
