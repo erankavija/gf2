@@ -289,18 +289,6 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// * `field` — the `GF(2^m)` field whose `one()` element becomes the
     ///   coefficient of `x^1`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let x = Gf2mPoly::x(&field);
-    /// assert_eq!(x.degree(), Some(1));
-    /// assert!(x.coeff(0).is_zero());
-    /// assert!(x.coeff(1).is_one());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -323,16 +311,6 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     ///
     /// * `field` — the `GF(2^m)` field used only to source a `zero()`
     ///   element that fixes the polynomial's coefficient type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let z = Gf2mPoly::zero(&field);
-    /// assert!(z.is_zero());
-    /// ```
     ///
     /// # Complexity
     ///

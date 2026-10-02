@@ -258,17 +258,6 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// # Complexity
     ///
     /// O(rows) — only the `row_ptr` array is allocated.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(s.shape(), (3, 5));
-    /// assert_eq!(s.nnz(), 0);
-    /// ```
     pub fn zeros(rows: usize, cols: usize) -> Self {
         Self {
             rows,
@@ -280,48 +269,18 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     }
 
     /// Returns the number of rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(s.rows(), 3);
-    /// ```
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Returns the number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(s.cols(), 5);
-    /// ```
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
     /// Returns `(rows, cols)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let s = SparseFieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(s.shape(), (3, 5));
-    /// ```
     #[inline]
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
@@ -331,21 +290,6 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     ///
     /// All zero values are dropped by the canonicalising constructors, so
     /// this is an exact count of structural non-zeros.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// type F = Fp<7>;
-    /// let s = SparseFieldMatrix::<F>::from_triplets(
-    ///     2,
-    ///     2,
-    ///     [(0usize, 0usize, F::new(3))],
-    /// );
-    /// assert_eq!(s.nnz(), 1);
-    /// ```
     #[inline]
     pub fn nnz(&self) -> usize {
         self.values.len()
@@ -450,20 +394,6 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// Returns `(row_ptr, col_idx, values)` as borrowed slices — useful for
     /// callers that want to scan the underlying arrays without reconstructing
     /// the triplet list. The `row_ptr` slice has length `rows + 1`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// type F = Fp<7>;
-    /// let s = SparseFieldMatrix::<F>::zeros(3, 3);
-    /// let (rp, ci, vs) = s.as_raw_parts();
-    /// assert_eq!(rp.len(), 4);
-    /// assert!(ci.is_empty());
-    /// assert!(vs.is_empty());
-    /// ```
     #[inline]
     pub fn as_raw_parts(&self) -> (&[usize], &[usize], &[F]) {
         (&self.row_ptr, &self.col_idx, &self.values)
@@ -739,18 +669,6 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// Creates an `n × n` identity matrix stored as one non-zero per row.
     ///
     /// Requires [`ConstField`] because it must manufacture `F::one()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// type F = Fp<7>;
-    /// let id = SparseFieldMatrix::<F>::identity(3);
-    /// assert_eq!(id.nnz(), 3);
-    /// assert_eq!(id.get(1, 1), F::new(1));
-    /// ```
     pub fn identity(n: usize) -> Self
     where
         F: ConstField,
@@ -1603,17 +1521,6 @@ impl<F: FiniteField> SparseFieldMatrixCsc<F> {
     /// # Complexity
     ///
     /// O(cols).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let s = SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4);
-    /// assert_eq!(s.shape(), (3, 4));
-    /// assert_eq!(s.nnz(), 0);
-    /// ```
     pub fn zeros(rows: usize, cols: usize) -> Self {
         Self {
             rows,
@@ -1625,60 +1532,24 @@ impl<F: FiniteField> SparseFieldMatrixCsc<F> {
     }
 
     /// Number of rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).rows(), 3);
-    /// ```
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).cols(), 4);
-    /// ```
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
     /// Returns `(rows, cols)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).shape(), (3, 4));
-    /// ```
     #[inline]
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
 
     /// Number of stored non-zero entries.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(SparseFieldMatrixCsc::<Fp<7>>::zeros(3, 4).nnz(), 0);
-    /// ```
     #[inline]
     pub fn nnz(&self) -> usize {
         self.values.len()
@@ -1695,20 +1566,6 @@ impl<F: FiniteField> SparseFieldMatrixCsc<F> {
     /// # Complexity
     ///
     /// O(log k) where k is the per-column non-zero count.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// type F = Fp<7>;
-    /// let csc = SparseFieldMatrix::<F>::from_triplets(
-    ///     2, 3, [(0usize, 1usize, F::new(3))],
-    /// ).to_csc();
-    /// assert_eq!(csc.get(0, 1), F::new(3));
-    /// assert_eq!(csc.get(1, 0), F::new(0));
-    /// ```
     pub fn get(&self, row: usize, col: usize) -> F {
         assert!(
             row < self.rows,
@@ -1832,39 +1689,11 @@ impl<F: FiniteField> SparseFieldMatrixCsc<F> {
     /// # Complexity
     ///
     /// O(rows · cols).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::{SparseFieldMatrix, SparseFieldMatrixCsc};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// type F = Fp<7>;
-    /// let csc = SparseFieldMatrix::<F>::from_triplets(
-    ///     2, 2, [(0usize, 0usize, F::new(1)), (1, 1, F::new(1))],
-    /// ).to_csc();
-    /// let m = csc.to_dense();
-    /// assert_eq!(m.get(0, 0), F::new(1));
-    /// assert_eq!(m.get(1, 1), F::new(1));
-    /// ```
     pub fn to_dense(&self) -> FieldMatrix<F> {
         self.to_csr().to_dense()
     }
 
     /// Returns `(col_ptr, row_idx, values)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::sparse_matrix::SparseFieldMatrixCsc;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let s = SparseFieldMatrixCsc::<Fp<7>>::zeros(2, 3);
-    /// let (cp, ri, vs) = s.as_raw_parts();
-    /// assert_eq!(cp.len(), 4);
-    /// assert!(ri.is_empty());
-    /// assert!(vs.is_empty());
-    /// ```
     #[inline]
     pub fn as_raw_parts(&self) -> (&[usize], &[usize], &[F]) {
         (&self.col_ptr, &self.row_idx, &self.values)

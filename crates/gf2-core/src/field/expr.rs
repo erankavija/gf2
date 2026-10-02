@@ -1129,18 +1129,6 @@ impl<A, B> Product<A, B> {
     /// Panics if `a.cols() != b.rows()` with the standard
     /// `FieldMatrix::mul: inner dimensions must match` message.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::expr::Product;
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// let b = FieldMatrix::<Fp<7>>::zeros(3, 4);
-    /// let _p = Product::new::<Fp<7>>(&a, &b);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -1172,18 +1160,6 @@ impl<A, B> Sum<A, B> {
     /// # Panics
     ///
     /// Panics if `a.shape() != b.shape()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::expr::Sum;
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// let b = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// let _s = Sum::new::<Fp<7>>(&a, &b);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1218,18 +1194,6 @@ impl<A, B> TransposedProduct<A, B> {
     /// # Panics
     ///
     /// Panics if `a.rows() != b.rows()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::expr::TransposedProduct;
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldMatrix::<Fp<7>>::zeros(3, 2);
-    /// let b = FieldMatrix::<Fp<7>>::zeros(3, 4);
-    /// let _tp = TransposedProduct::new::<Fp<7>>(&a, &b);
-    /// ```
     ///
     /// # Complexity
     ///

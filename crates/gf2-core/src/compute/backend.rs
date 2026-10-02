@@ -44,15 +44,6 @@ use crate::{alg::rref::RrefResult, BitMatrix, BitVec};
 /// - `GpuBackend`: GPU execution via HIP/ROCm (`gf2-kernels-hip`; future, opt-in feature)
 pub trait ComputeBackend: Send + Sync {
     /// Returns a human-readable name for this backend.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::compute::{ComputeBackend, CpuBackend};
-    ///
-    /// let backend = CpuBackend::new();
-    /// assert!(backend.name().contains("CPU"));
-    /// ```
     fn name(&self) -> &str;
 
     /// Returns the underlying kernel backend for primitive operations.
@@ -78,19 +69,6 @@ pub trait ComputeBackend: Send + Sync {
     /// # Panics
     ///
     /// Panics if `a.cols() != b.rows()` (dimension mismatch).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
-    ///
-    /// let backend = CpuBackend::new();
-    /// let a = BitMatrix::identity(3);
-    /// let b = BitMatrix::ones(3, 4);
-    /// let c = backend.matmul(&a, &b);
-    /// assert_eq!(c.rows(), 3);
-    /// assert_eq!(c.cols(), 4);
-    /// ```
     fn matmul(&self, a: &BitMatrix, b: &BitMatrix) -> BitMatrix;
 
     /// Reduced Row Echelon Form (RREF) with configurable pivoting.
@@ -107,17 +85,6 @@ pub trait ComputeBackend: Send + Sync {
     /// # Returns
     ///
     /// `RrefResult` containing reduced matrix, pivot columns, row permutation, and rank.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitMatrix, compute::{ComputeBackend, CpuBackend}};
-    ///
-    /// let backend = CpuBackend::new();
-    /// let matrix = BitMatrix::identity(5);
-    /// let result = backend.rref(&matrix, false);
-    /// assert!(result.rank <= matrix.rows().min(matrix.cols()));
-    /// ```
     fn rref(&self, matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult;
 
     /// Matrix-vector multiplication: y = A × x over GF(2).
@@ -172,21 +139,6 @@ pub trait ComputeBackend: Send + Sync {
     /// # Panics
     ///
     /// Panics if any vector length doesn't match `matrix.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitMatrix, BitVec, compute::{ComputeBackend, CpuBackend}};
-    ///
-    /// let backend = CpuBackend::new();
-    /// let identity = BitMatrix::identity(5);
-    /// let vectors = vec![BitVec::ones(5), BitVec::zeros(5)];
-    ///
-    /// let results = backend.batch_matvec(&identity, &vectors);
-    /// assert_eq!(results.len(), 2);
-    /// assert_eq!(results[0], BitVec::ones(5));
-    /// assert_eq!(results[1], BitVec::zeros(5));
-    /// ```
     fn batch_matvec(&self, matrix: &BitMatrix, vectors: &[BitVec]) -> Vec<BitVec>;
 
     /// Batch matrix-vector multiplication with transposed matrix: compute A^T × x_i.

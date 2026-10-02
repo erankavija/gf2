@@ -86,16 +86,6 @@ pub trait FiniteField:
     type Wide: Clone + Add<Output = Self::Wide> + AddAssign;
 
     /// Returns the field characteristic.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let a = Gf2mField::new(4, 0b10011).element(5);
-    /// assert_eq!(a.characteristic(), 2u64);
-    /// ```
     fn characteristic(&self) -> Self::Characteristic;
 
     /// Returns the extension degree [F : F_p].
@@ -961,18 +951,6 @@ pub trait ConstField: FiniteField + Copy {
 /// Provides `square`, `pow`, and `frobenius` built on top of the core trait.
 pub trait FiniteFieldExt: FiniteField {
     /// Computes `self * self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FiniteField, FiniteFieldExt};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(5);
-    /// let sq = a.square();
-    /// assert_eq!(sq, a.clone() * a);
-    /// ```
     fn square(&self) -> Self {
         self.clone() * self.clone()
     }

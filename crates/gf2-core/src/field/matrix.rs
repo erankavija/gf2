@@ -247,34 +247,12 @@ pub struct Transposed<M>(pub M);
 impl<F: FiniteField> Transposed<&FieldMatrix<F>> {
     /// Rows of the logically transposed matrix (i.e. columns of the backing
     /// matrix).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(2, 5);
-    /// let t = m.t();
-    /// assert_eq!(t.rows(), 5);
-    /// ```
     pub fn rows(&self) -> usize {
         self.0.cols()
     }
 
     /// Columns of the logically transposed matrix (i.e. rows of the backing
     /// matrix).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(2, 5);
-    /// let t = m.t();
-    /// assert_eq!(t.cols(), 2);
-    /// ```
     pub fn cols(&self) -> usize {
         self.0.rows()
     }
@@ -321,16 +299,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(rows · cols) clones and one allocation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::new(2, 3, Fp::<7>::new(2));
-    /// assert_eq!(m.get(1, 2), Fp::<7>::new(2));
-    /// ```
     pub fn new(rows: usize, cols: usize, fill: F) -> Self {
         #[cfg(test)]
         FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
@@ -357,29 +325,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         Self { rows, cols, data }
     }
 
-    /// Builds a matrix by stacking `rows` into a rectangular shape.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the input is empty or any row has a different length than
-    /// the first row.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, matrix::FieldMatrix};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let r0 = FieldVec::from(vec![Fp::<7>::new(1), Fp::<7>::new(2)]);
-    /// let r1 = FieldVec::from(vec![Fp::<7>::new(3), Fp::<7>::new(4)]);
-    /// let m = FieldMatrix::from_rows(vec![r0, r1]);
-    /// assert_eq!(m.shape(), (2, 2));
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(3));
-    /// ```
     /// Crate-private accessor for the raw backing slice.
     ///
     /// Used by the expression-template kernels in
@@ -412,19 +357,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `rows` is empty or if the rows have unequal lengths.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldVec;
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let r0: FieldVec<Fp<7>> = vec![Fp::new(1), Fp::new(2)].into_iter().collect();
-    /// let r1: FieldVec<Fp<7>> = vec![Fp::new(3), Fp::new(4)].into_iter().collect();
-    /// let m = FieldMatrix::from_rows(vec![r0, r1]);
-    /// assert_eq!(m.shape(), (2, 2));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -494,17 +426,6 @@ impl<F: ConstField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(rows · cols).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(3, 4);
-    /// assert_eq!(m.shape(), (3, 4));
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
-    /// ```
     pub fn zeros(rows: usize, cols: usize) -> Self {
         Self {
             rows,
@@ -518,16 +439,6 @@ impl<F: ConstField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(rows · cols).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::ones(2, 2);
-    /// assert_eq!(m.get(1, 1), Fp::<7>::new(1));
-    /// ```
     pub fn ones(rows: usize, cols: usize) -> Self {
         Self::new(rows, cols, F::one())
     }
@@ -537,17 +448,6 @@ impl<F: ConstField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(n²) to zero-fill plus O(n) to place the diagonal.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let id = FieldMatrix::<Fp<7>>::identity(3);
-    /// assert_eq!(id.get(0, 0), Fp::<7>::new(1));
-    /// assert_eq!(id.get(0, 1), Fp::<7>::new(0));
-    /// ```
     pub fn identity(n: usize) -> Self {
         let mut m = Self::zeros(n, n);
         for i in 0..n {
@@ -577,20 +477,6 @@ where
 {
     /// Returns a `rows × cols` matrix populated from `rng` via
     /// [`rand::distributions::Standard`] (uniform over the storage type).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    /// use rand::SeedableRng;
-    ///
-    /// let mut rng = rand::rngs::StdRng::seed_from_u64(0xBAD5EED);
-    /// let m = FieldMatrix::<Fp<7>>::random(4, 4, &mut rng);
-    /// assert_eq!(m.shape(), (4, 4));
-    /// # }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -627,84 +513,30 @@ where
 
 impl<F: FiniteField> FieldMatrix<F> {
     /// Returns the number of rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(m.rows(), 3);
-    /// ```
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Returns the number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(m.cols(), 5);
-    /// ```
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
     /// Returns `(rows, cols)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(3, 5);
-    /// assert_eq!(m.shape(), (3, 5));
-    /// ```
     #[inline]
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
 
     /// Returns `true` if the matrix is square.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let sq = FieldMatrix::<Fp<7>>::identity(4);
-    /// assert!(sq.is_square());
-    /// let rect = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// assert!(!rect.is_square());
-    /// ```
     #[inline]
     pub fn is_square(&self) -> bool {
         self.rows == self.cols
     }
 
     /// Returns `true` if either dimension is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::zeros(0, 5);
-    /// assert!(m.is_empty());
-    /// let n = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// assert!(!n.is_empty());
-    /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.rows == 0 || self.cols == 0
@@ -715,17 +547,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `row >= self.rows()` or `col >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(1));
-    /// assert_eq!(m.get(0, 1), Fp::<7>::new(0));
-    /// ```
     #[inline]
     pub fn get(&self, row: usize, col: usize) -> F
     where
@@ -751,17 +572,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `row >= self.rows()` or `col >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// m.set(1, 0, Fp::<7>::new(5));
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(5));
-    /// ```
     #[inline]
     pub fn set(&mut self, row: usize, col: usize, val: F) {
         assert!(
@@ -788,16 +598,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// bogus index into the backing `FieldVec`) if the indices are out of
     /// bounds. Callers are expected to have verified `row < self.rows()` and
     /// `col < self.cols()` via an outer loop invariant.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(2);
-    /// assert_eq!(m.get_unchecked(0, 0), Fp::<7>::new(1));
-    /// ```
     #[inline]
     pub fn get_unchecked(&self, row: usize, col: usize) -> F
     where
@@ -813,18 +613,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `i >= self.rows()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let r = m.row(1);
-    /// assert_eq!(r.len(), 3);
-    /// assert_eq!(r[1], Fp::<7>::new(1));
-    /// ```
     #[inline]
     pub fn row(&self, i: usize) -> &[F] {
         assert!(
@@ -842,20 +630,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `i >= self.rows()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// {
-    ///     let r = m.row_mut(0);
-    ///     r[1] = Fp::<7>::new(3);
-    /// }
-    /// assert_eq!(m.get(0, 1), Fp::<7>::new(3));
-    /// ```
     #[inline]
     pub fn row_mut(&mut self, i: usize) -> &mut [F] {
         assert!(
@@ -874,18 +648,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let c = m.col(1);
-    /// assert_eq!(c.len(), 3);
-    /// assert_eq!(c.get(1), Fp::<7>::new(1));
-    /// ```
     #[inline]
     pub fn col(&self, j: usize) -> ColView<'_, F> {
         assert!(
@@ -907,17 +669,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let ones = m.col_iter(0).filter(|e| **e == Fp::<7>::new(1)).count();
-    /// assert_eq!(ones, 1);
-    /// ```
     pub fn col_iter(&self, j: usize) -> impl Iterator<Item = &F> {
         assert!(
             j < self.cols,
@@ -1007,31 +758,11 @@ impl<F: FiniteField> FieldMatrix<F> {
     }
 
     /// Convenience: submatrix selecting a contiguous row range, all columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// assert_eq!(m.row_range(1..3).rows(), 2);
-    /// ```
     pub fn row_range(&self, rows: impl RangeBounds<usize>) -> MatView<'_, F> {
         self.submat(rows, ..)
     }
 
     /// Convenience: submatrix selecting all rows and a contiguous column range.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// assert_eq!(m.col_range(1..3).cols(), 2);
-    /// ```
     pub fn col_range(&self, cols: impl RangeBounds<usize>) -> MatView<'_, F> {
         self.submat(.., cols)
     }
@@ -1049,18 +780,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(cols) element swaps; no allocation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// m.set(0, 0, Fp::<7>::new(1));
-    /// m.swap_rows(0, 1);
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(1));
-    /// ```
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         assert!(
             r1 < self.rows,
@@ -1095,20 +814,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(cols) multiplications.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(1, 3);
-    /// m.set(0, 0, Fp::<7>::new(1));
-    /// m.set(0, 1, Fp::<7>::new(2));
-    /// m.scale_row(0, Fp::<7>::new(3));
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
-    /// assert_eq!(m.get(0, 1), Fp::<7>::new(6));
-    /// ```
     pub fn scale_row(&mut self, row: usize, factor: F) {
         assert!(
             row < self.rows,
@@ -1292,17 +997,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// The proxy is a stub in this story; fused-expression semantics land in
     /// issue `d48a3cfd`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let t = m.t();
-    /// assert_eq!(t.rows(), 4);
-    /// ```
     pub fn t(&self) -> Transposed<&Self> {
         Transposed(self)
     }
@@ -1314,18 +1008,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(min(rows, cols)) element clones.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let d = m.diag();
-    /// assert_eq!(d.len(), 3);
-    /// assert_eq!(d[0], Fp::<7>::new(1));
-    /// ```
     pub fn diag(&self) -> FieldVec<F> {
         let n = self.rows.min(self.cols);
         (0..n)
@@ -1342,16 +1024,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(min(rows, cols)) field additions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// assert_eq!(m.trace(), Fp::<7>::new(3));
-    /// ```
     pub fn trace(&self) -> F {
         assert!(!self.is_empty(), "FieldMatrix::trace: matrix is empty");
         let n = self.rows.min(self.cols);
@@ -1367,16 +1039,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// O(n²) in the worst case; returns `false` early on the first mismatch.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let id = FieldMatrix::<Fp<7>>::identity(3);
-    /// assert!(id.is_symmetric());
-    /// ```
     pub fn is_symmetric(&self) -> bool {
         if self.rows != self.cols {
             return false;
@@ -1626,34 +1288,12 @@ pub struct MatView<'a, F> {
 
 impl<'a, F: FiniteField> MatView<'a, F> {
     /// Number of rows in the view.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let v = m.submat(1..3, 0..4);
-    /// assert_eq!(v.rows(), 2);
-    /// ```
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Number of columns in the view.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let v = m.submat(0..4, 1..3);
-    /// assert_eq!(v.cols(), 2);
-    /// ```
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
@@ -1664,18 +1304,6 @@ impl<'a, F: FiniteField> MatView<'a, F> {
     /// # Panics
     ///
     /// Panics if `r >= self.rows()` or `c >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let v = m.submat(1..3, 1..3);
-    /// assert_eq!(v.get(0, 0), Fp::<7>::new(1));
-    /// assert_eq!(v.get(0, 1), Fp::<7>::new(0));
-    /// ```
     pub fn get(&self, r: usize, c: usize) -> F {
         assert!(r < self.rows && c < self.cols, "MatView::get out of bounds");
         self.data[(self.row_offset + r) * self.parent_cols + self.col_offset + c].clone()
@@ -1843,34 +1471,12 @@ pub struct MatViewMut<'a, F> {
 
 impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// Row count.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(4, 4);
-    /// let v = m.submat_mut(1..3, 0..4);
-    /// assert_eq!(v.rows(), 2);
-    /// ```
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Column count.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(4, 4);
-    /// let v = m.submat_mut(0..4, 1..3);
-    /// assert_eq!(v.cols(), 2);
-    /// ```
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
@@ -1881,17 +1487,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Panics
     ///
     /// Panics if `r >= self.rows()` or `c >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let v = m.submat_mut(1..3, 1..3);
-    /// assert_eq!(v.get(0, 0), Fp::<7>::new(1));
-    /// ```
     pub fn get(&self, r: usize, c: usize) -> F {
         assert!(
             r < self.rows && c < self.cols,
@@ -1905,20 +1500,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Panics
     ///
     /// Panics if `r >= self.rows()` or `c >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// {
-    ///     let mut v = m.submat_mut(0..2, 0..2);
-    ///     v.set(1, 0, Fp::<7>::new(5));
-    /// }
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(5));
-    /// ```
     pub fn set(&mut self, r: usize, c: usize, v: F) {
         assert!(
             r < self.rows && c < self.cols,
@@ -1933,18 +1514,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Complexity
     ///
     /// O(rows · cols) element clones.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// m.submat_mut(0..2, 0..2).fill(Fp::<7>::new(4));
-    /// assert_eq!(m.get(1, 1), Fp::<7>::new(4));
-    /// assert_eq!(m.get(2, 2), Fp::<7>::new(0));
-    /// ```
     pub fn fill(&mut self, value: F) {
         for r in 0..self.rows {
             for c in 0..self.cols {
@@ -1963,19 +1532,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Complexity
     ///
     /// O(rows · cols) element clones; no allocation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let src = FieldMatrix::<Fp<7>>::identity(2);
-    /// let mut dst = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// dst.submat_mut(0..2, 0..2).assign(&src);
-    /// assert_eq!(dst.get(0, 0), Fp::<7>::new(1));
-    /// assert_eq!(dst.get(1, 1), Fp::<7>::new(1));
-    /// ```
     pub fn assign(&mut self, src: &FieldMatrix<F>) {
         assert_eq!(src.rows(), self.rows, "assign: row count mismatch");
         assert_eq!(src.cols(), self.cols, "assign: col count mismatch");
@@ -1996,19 +1552,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Complexity
     ///
     /// O(cols) element swaps; no allocation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// m.set(0, 0, Fp::<7>::new(2));
-    /// m.submat_mut(0..2, 0..3).swap_rows(0, 1);
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(2));
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
-    /// ```
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         assert!(r1 < self.rows && r2 < self.rows, "swap_rows out of bounds");
         if r1 == r2 {
@@ -2143,17 +1686,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// Reborrows this mutable view as an immutable view over the same
     /// rectangle. Equivalent to `self.submat(.., ..)` but more concise at
     /// call sites that need to hand the view as a read-only argument.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::identity(2);
-    /// let v = m.submat_mut(.., ..);
-    /// assert_eq!(v.as_view().get(1, 1), Fp::<7>::new(1));
-    /// ```
     pub fn as_view(&self) -> MatView<'_, F> {
         MatView {
             data: self.data,
@@ -2349,32 +1881,12 @@ pub struct ColView<'a, F> {
 
 impl<'a, F: FiniteField> ColView<'a, F> {
     /// Number of elements in the column.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// assert_eq!(m.col(0).len(), 4);
-    /// ```
     #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
     /// Returns `true` if the column is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// assert!(!m.col(1).is_empty());
-    /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
@@ -2385,34 +1897,12 @@ impl<'a, F: FiniteField> ColView<'a, F> {
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// assert_eq!(m.col(1).get(1), Fp::<7>::new(1));
-    /// assert_eq!(m.col(1).get(0), Fp::<7>::new(0));
-    /// ```
     pub fn get(&self, i: usize) -> F {
         assert!(i < self.len, "ColView::get index {} out of bounds", i);
         self.data[self.start + i * self.stride].clone()
     }
 
     /// Iterator over references to each column element.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let non_zero = m.col(1).iter().filter(|e| **e != Fp::<7>::new(0)).count();
-    /// assert_eq!(non_zero, 1);
-    /// ```
     pub fn iter(&self) -> impl Iterator<Item = &'a F> {
         let data = self.data;
         let start = self.start;

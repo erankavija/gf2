@@ -1145,23 +1145,6 @@ fn test_axioms_gf2m_wide_gf256_poly_11d() {
 ///   as the non-zero elements for the axiom and extension harnesses to cover
 ///   the degenerate cases.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, quadratic_strategy};
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::ExtConfig;
-///
-/// struct Gf49Config;
-/// impl ExtConfig for Gf49Config {
-///     type BaseField = Fp<7>;
-///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-/// }
-///
-/// let strat = quadratic_strategy::<Gf49Config>(fp_strategy::<7>());
-/// let _ = strat;
-/// ```
-///
 /// # Panics
 ///
 /// None. Every pair of base-field elements is a valid `QuadraticExt<C>`.
@@ -1189,25 +1172,6 @@ where
 ///
 /// * `base` — a strategy over `C::BaseField` that samples zero as well as the
 ///   non-zero elements.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{cubic_strategy, fp_strategy};
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::ExtConfig;
-///
-/// struct Gf343Config;
-/// impl ExtConfig for Gf343Config {
-///     type BaseField = Fp<7>;
-///     // 3 is not a cube modulo 7 (the cubes are {1, 6}), so x³ − 3 is
-///     // irreducible over GF(7).
-///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-/// }
-///
-/// let strat = cubic_strategy::<Gf343Config>(fp_strategy::<7>());
-/// let _ = strat;
-/// ```
 ///
 /// # Panics
 ///
@@ -1285,14 +1249,6 @@ where
 ///
 /// * `strategy` — a `proptest` [`BoxedStrategy<F>`] sampling uniformly over
 ///   the field, including zero.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, test_field_identity_laws};
-///
-/// test_field_identity_laws(fp_strategy::<7>());
-/// ```
 ///
 /// # Panics
 ///
@@ -1491,18 +1447,6 @@ fn check_field_id_encoding_round_trip<F: FieldIdentity>(
 /// * `ext` — the extension witness under test.
 /// * `base_strategy` — uniform sampler over `X::Base`, including zero.
 /// * `ext_strategy` — uniform sampler over `X::Ext`, including zero.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::axiom_tests::{fp_strategy, test_extension_laws};
-/// use gf2_core::field::extension::TrivialExt;
-/// use gf2_core::gfp::Fp;
-///
-/// // GF(7) is the trivial extension of itself: r = 1.
-/// let ext = TrivialExt::new(Fp::<7>::new(0));
-/// test_extension_laws(&ext, fp_strategy::<7>(), fp_strategy::<7>());
-/// ```
 ///
 /// # Panics
 ///

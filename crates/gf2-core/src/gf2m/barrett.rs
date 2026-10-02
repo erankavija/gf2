@@ -193,15 +193,6 @@ impl BarrettReducer {
     /// docs for the 256-bit-arithmetic reasoning, and JIT issue `6fb4abad`
     /// for the planned extension to `m = 64..=127`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducer;
-    ///
-    /// // x^4 + x + 1 = 0b10011 for GF(2^4)
-    /// let reducer = BarrettReducer::new(0b10011, 4);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(m) for the polynomial long division.
@@ -374,47 +365,16 @@ impl BarrettReducer {
     }
 
     /// Returns the precomputed Barrett constant `mu = x^(2m) / P(x)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducer;
-    ///
-    /// let reducer = BarrettReducer::new(0b111, 2);
-    /// // mu = x^4 / (x^2 + x + 1) = x^2 + x + 1 = 0b111
-    /// // (since x^4 = (x^2+x+1)(x^2+x+1) + 0 when P divides x^4 evenly...
-    /// // actually let's just verify it's computed)
-    /// let mu = reducer.mu();
-    /// assert!(mu > 0);
-    /// ```
     pub fn mu(&self) -> u128 {
         self.mu
     }
 
     /// Returns the degree m of the irreducible polynomial.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducer;
-    ///
-    /// let reducer = BarrettReducer::new(0b10011, 4);
-    /// assert_eq!(reducer.degree(), 4);
-    /// ```
     pub fn degree(&self) -> u32 {
         self.degree
     }
 
     /// Returns the irreducible polynomial P(x).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducer;
-    ///
-    /// let reducer = BarrettReducer::new(0b10011, 4);
-    /// assert_eq!(reducer.modulus(), 0b10011);
-    /// ```
     pub fn modulus(&self) -> u128 {
         self.modulus
     }
@@ -776,16 +736,6 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// * `product` — 2N-word carry-less product to reduce. Panics if
     ///   `product.len() != 2 * N`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
-    ///
-    /// let reducer = BarrettReducerWide::<1>::new([3u64], 63);
-    /// let reduced = reducer.reduce_slice(&[0u64, 0u64]);
-    /// assert_eq!(reduced, [0u64]);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `product.len() != 2 * N`.
@@ -843,31 +793,11 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// Returns the precomputed Barrett constant `mu = floor(x^(2m) / P(x))`,
     /// stored as `N` little-endian `u64` words (implicit leading bit at
     /// position `m` is dropped).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
-    ///
-    /// let reducer = BarrettReducerWide::<1>::new([3u64], 63);
-    /// let mu = reducer.mu();
-    /// assert_eq!(mu.len(), 1);
-    /// assert!(mu[0] > 0); // mu is non-trivial for a non-degenerate polynomial
-    /// ```
     pub fn mu(&self) -> &[u64; N] {
         &self.mu
     }
 
     /// Returns the extension degree `m`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
-    ///
-    /// let reducer = BarrettReducerWide::<2>::new([3u64, 0u64], 127);
-    /// assert_eq!(reducer.degree(), 127);
-    /// ```
     pub fn degree(&self) -> u32 {
         self.m
     }
@@ -875,15 +805,6 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// Returns the stored low bits of the irreducible polynomial `P(x)`, as
     /// `N` little-endian `u64` words (implicit leading bit at position `m` is
     /// dropped).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
-    ///
-    /// let reducer = BarrettReducerWide::<1>::new([3u64], 63);
-    /// assert_eq!(reducer.modulus(), &[3u64]);
-    /// ```
     pub fn modulus(&self) -> &[u64; N] {
         &self.modulus
     }

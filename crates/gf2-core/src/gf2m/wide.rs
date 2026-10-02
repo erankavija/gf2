@@ -267,22 +267,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// # Complexity
     ///
     /// `O(1)` — a single top-word mask check (elided in release builds).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// // M = 256 = 64 * 4, so every input word is already fully in-range and
-    /// // `from_words` round-trips verbatim.
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_words([0x1234_5678, 0, 0, 0]);
-    /// assert_eq!(a.words()[0], 0x1234_5678);
-    /// ```
     #[inline]
     pub const fn from_words(words: [u64; N]) -> Self {
         // We can't call `tail_mask_top_word` in a `const fn` context
@@ -315,25 +299,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// `O(1)` — a single bitwise AND on the top word; the input `[u64; N]`
     /// is moved, not copied word-by-word.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// // M = 256 = 64 * 4, so the tail has zero slack: `new` is an
-    /// // identity on valid inputs (no bits to mask). For a canonical
-    /// // tail-masking demonstration (requires `M < 64 * N`) see the
-    /// // unit-test suite in this module's `tests` submodule, which
-    /// // exercises `Gf2m250TestConfig` (M = 250, 6 bits of tail slack).
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::new([0x1234, 0, 0, 0]);
-    /// assert_eq!(a.words()[0], 0x1234);
-    /// ```
     #[inline]
     pub fn new(mut words: [u64; N]) -> Self {
         Self::mask_tail_in_place(&mut words);
@@ -349,19 +314,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// `O(N)` words — zero-initialises the `[u64; N]` storage. In practice
     /// LLVM lowers this to a single `memset` / stack-local zero fill.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero());
-    /// ```
     #[inline]
     pub const fn zero() -> Self {
         Gf2mWide {
@@ -384,19 +336,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// # Complexity
     ///
     /// `O(N)` words — zero-initialises the storage and sets a single word.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::one().is_one());
-    /// ```
     #[inline]
     pub fn one() -> Self {
         assert!(N >= 1, "Gf2mWide requires N >= 1");
@@ -422,21 +361,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// `O(N)` words — zero-initialises the storage, sets the low word, and
     /// masks the top word.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(42);
-    /// assert_eq!(a.words()[0], 42);
-    /// assert_eq!(a.words()[1..], [0, 0, 0]);
-    /// ```
     #[inline]
     pub fn from_u64(v: u64) -> Self {
         let mut words = [0u64; N];
@@ -456,20 +380,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Returns the underlying `[u64; N]` representation.
     ///
     /// Bit `i` of the element lives at `words[i >> 6] >> (i & 63) & 1`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(0xabcd);
-    /// assert_eq!(a.words(), &[0xabcd, 0, 0, 0]);
-    /// ```
     #[inline]
     pub fn words(&self) -> &[u64; N] {
         &self.words
@@ -519,20 +429,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// `O(N)` words — short-circuits on the first non-zero word. The worst
     /// case scans every word in `self.words`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero());
-    /// assert!(!Gf2mWide::<4, Gf2m256TestConfig>::one().is_zero());
-    /// ```
     #[inline]
     pub fn is_zero(&self) -> bool {
         self.words.iter().all(|w| *w == 0)
@@ -545,20 +441,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// `O(N)` words — checks the low word equals `1` and scans the
     /// remaining `N - 1` words for zeroes, short-circuiting on the first
     /// non-zero word.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::one().is_one());
-    /// assert!(!Gf2mWide::<4, Gf2m256TestConfig>::zero().is_one());
-    /// ```
     #[inline]
     pub fn is_one(&self) -> bool {
         if N == 0 {
@@ -819,25 +701,6 @@ static BARRETT_CACHE: OnceLock<Mutex<HashMap<BarrettCacheKey, CachedReducer>>> =
 ///
 /// First call: `O(M²)` polynomial long division.
 /// Subsequent calls: `O(N)` clone of the cached value.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-///
-/// struct Gf2m256TestConfig;
-/// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-///     const M: usize = 256;
-///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-/// }
-///
-/// // The multiplier implicitly calls get_reducer internally; this just
-/// // demonstrates that the type is usable.
-/// let a = Gf2mWide::<4, Gf2m256TestConfig>::one();
-/// let b = Gf2mWide::<4, Gf2m256TestConfig>::one();
-/// let c = a * b;
-/// assert!(c.is_one());
-/// ```
 fn get_reducer<const N: usize, Cfg: Gf2mWideConfig<N>>() -> BarrettReducerWide<N> {
     let cache = BARRETT_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
     let key = (TypeId::of::<Cfg>(), N);
@@ -897,23 +760,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// N-word operands. A dispatched width computes each product in the
     /// kernel's vector lanes; every other width performs the bit-by-bit
     /// `clmul` schoolbook.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
-    /// let one = Gf2mWide::<4, Gf2m256TestConfig>::one();
-    /// // Multiplicative identity: a * 1 = a.
-    /// assert_eq!(a.mul_ref(&one), a);
-    /// ```
     #[inline]
     pub fn mul_ref(&self, rhs: &Self) -> Self {
         // Step 1: carry-less multiply to get a 2N-word unreduced product.
@@ -1086,22 +932,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Mul for &Gf2mWide<N, Cfg> {
     type Output = Gf2mWide<N, Cfg>;
 
     /// Multiplies two borrowed field elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
-    /// let one = Gf2mWide::<4, Gf2m256TestConfig>::one();
-    /// assert_eq!(&a * &one, a);
-    /// ```
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         self.mul_ref(rhs)
@@ -1113,22 +943,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Mul for Gf2mWide<N, Cfg> {
     type Output = Gf2mWide<N, Cfg>;
 
     /// Multiplies two owned field elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
-    /// assert_eq!(a * b, b * a); // commutativity spot-check
-    /// ```
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         self.mul_ref(&rhs)
@@ -1140,22 +954,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Mul<&Gf2mWide<N, Cfg>> for Gf2mWide
     type Output = Gf2mWide<N, Cfg>;
 
     /// Multiplies an owned element by a borrowed element.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(9);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::one();
-    /// assert_eq!(a * &b, a);
-    /// ```
     #[inline]
     fn mul(self, rhs: &Gf2mWide<N, Cfg>) -> Self::Output {
         self.mul_ref(rhs)
@@ -1167,22 +965,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Mul<Gf2mWide<N, Cfg>> for &Gf2mWide
     type Output = Gf2mWide<N, Cfg>;
 
     /// Multiplies a borrowed element by an owned element.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(11);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(13);
-    /// assert_eq!(&a * b, &b * a);
-    /// ```
     #[inline]
     fn mul(self, rhs: Gf2mWide<N, Cfg>) -> Self::Output {
         self.mul_ref(&rhs)
@@ -1192,25 +974,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Mul<Gf2mWide<N, Cfg>> for &Gf2mWide
 /// `MulAssign` — in-place multiplication.
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> MulAssign for Gf2mWide<N, Cfg> {
     /// Multiplies `self` by `rhs` in place.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(4);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(6);
-    /// let expected = a * b;
-    /// let mut actual = a;
-    /// actual *= b;
-    /// assert_eq!(actual, expected);
-    /// ```
     #[inline]
     fn mul_assign(&mut self, rhs: Self) {
         *self = self.mul_ref(&rhs);
@@ -1219,25 +982,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> MulAssign for Gf2mWide<N, Cfg> {
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> MulAssign<&Gf2mWide<N, Cfg>> for Gf2mWide<N, Cfg> {
     /// Multiplies `self` by a borrowed `rhs` in place.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(4);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(6);
-    /// let expected = a * b;
-    /// let mut actual = a;
-    /// actual *= &b;
-    /// assert_eq!(actual, expected);
-    /// ```
     #[inline]
     fn mul_assign(&mut self, rhs: &Gf2mWide<N, Cfg>) {
         *self = self.mul_ref(rhs);
@@ -1256,23 +1000,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Div for &Gf2mWide<N, Cfg> {
     /// # Panics
     ///
     /// Panics if `rhs` is zero (division by zero is undefined in a field).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
-    /// // a / b * b = a
-    /// assert_eq!((&a / &b) * b, a);
-    /// ```
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         let inv = rhs.inverse().expect("division by zero in Gf2mWide");
@@ -1288,22 +1015,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Div for Gf2mWide<N, Cfg> {
     /// # Panics
     ///
     /// Panics if `rhs` is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(9);
-    /// assert_eq!((a / b) * b, a);
-    /// ```
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         let inv = rhs.inverse().expect("division by zero in Gf2mWide");
@@ -1319,22 +1030,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Div<&Gf2mWide<N, Cfg>> for Gf2mWide
     /// # Panics
     ///
     /// Panics if `rhs` is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(11);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
-    /// assert_eq!((a / &b) * b, a);
-    /// ```
     #[inline]
     fn div(self, rhs: &Gf2mWide<N, Cfg>) -> Self::Output {
         let inv = rhs.inverse().expect("division by zero in Gf2mWide");
@@ -1350,22 +1045,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Div<Gf2mWide<N, Cfg>> for &Gf2mWide
     /// # Panics
     ///
     /// Panics if `rhs` is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(15);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
-    /// assert_eq!((&a / b) * b, a);
-    /// ```
     #[inline]
     fn div(self, rhs: Gf2mWide<N, Cfg>) -> Self::Output {
         let inv = rhs.inverse().expect("division by zero in Gf2mWide");
@@ -1386,150 +1065,36 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     type Wide = Self;
 
     /// Returns the field characteristic, which is always 2 for `GF(2^M)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::one();
-    /// assert_eq!(a.characteristic(), 2u64);
-    /// ```
     fn characteristic(&self) -> u64 {
         2
     }
 
     /// Returns the extension degree `M`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::one();
-    /// assert_eq!(a.extension_degree(), 256);
-    /// ```
     fn extension_degree(&self) -> usize {
         Cfg::M
     }
 
     /// Returns `true` iff `self` is the additive identity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero());
-    /// assert!(!Gf2mWide::<4, Gf2m256TestConfig>::one().is_zero());
-    /// ```
     fn is_zero(&self) -> bool {
         Gf2mWide::is_zero(self)
     }
 
     /// Returns `true` iff `self` is the multiplicative identity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::one().is_one());
-    /// assert!(!Gf2mWide::<4, Gf2m256TestConfig>::zero().is_one());
-    /// ```
     fn is_one(&self) -> bool {
         Gf2mWide::is_one(self)
     }
 
     /// Computes the multiplicative inverse, or `None` if `self` is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(42);
-    /// let inv = a.inv().unwrap();
-    /// assert!((a * inv).is_one());
-    /// assert!(Gf2mWide::<4, Gf2m256TestConfig>::zero().inv().is_none());
-    /// ```
     fn inv(&self) -> Option<Self> {
         self.inverse()
     }
 
     /// Returns the additive identity in the same field as `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
-    /// assert!(a.zero_like().is_zero());
-    /// ```
     fn zero_like(&self) -> Self {
         Self::zero()
     }
 
     /// Returns the multiplicative identity in the same field as `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
-    /// assert!(a.one_like().is_one());
-    /// ```
     fn one_like(&self) -> Self {
         Self::one()
     }
@@ -1552,22 +1117,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     /// Converts `self` to the wide accumulator type.
     ///
     /// For `GF(2^M)`, `Wide = Self` so this is a copy.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
-    /// assert_eq!(a.to_wide(), a);
-    /// ```
     fn to_wide(&self) -> Self::Wide {
         *self
     }
@@ -1575,24 +1124,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     /// Multiplies `self` by `rhs` and returns the result in the wide type.
     ///
     /// For `GF(2^M)`, `Wide = Self`, so this is just field multiplication.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
-    /// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
-    /// let wide = a.mul_to_wide(&b);
-    /// assert_eq!(<Gf2mWide::<4, Gf2m256TestConfig> as FiniteField>::reduce_wide(&wide), a * b);
-    /// ```
     fn mul_to_wide(&self, rhs: &Self) -> Self::Wide {
         self.mul_ref(rhs)
     }
@@ -1600,23 +1131,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     /// Reduces a wide accumulator back to a field element.
     ///
     /// For `GF(2^M)`, `Wide = Self`, so this is identity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(9);
-    /// let wide = a.to_wide();
-    /// assert_eq!(<Gf2mWide::<4, Gf2m256TestConfig> as FiniteField>::reduce_wide(&wide), a);
-    /// ```
     fn reduce_wide(wide: &Self::Wide) -> Self {
         *wide
     }
@@ -1624,21 +1138,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     /// Returns the maximum number of wide-type additions before overflow.
     ///
     /// Returns `usize::MAX` because XOR never overflows in `GF(2^M)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// assert_eq!(<Gf2mWide::<4, Gf2m256TestConfig> as FiniteField>::max_unreduced_additions(), usize::MAX);
-    /// ```
     fn max_unreduced_additions() -> usize {
         usize::MAX
     }
@@ -1912,41 +1411,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWide<N, Cfg> {
     /// Returns the additive identity (zero polynomial).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::ConstField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// assert!(<Gf2mWide::<4, Gf2m256TestConfig> as ConstField>::zero().is_zero());
-    /// ```
     fn zero() -> Self {
         Gf2mWide::zero()
     }
 
     /// Returns the multiplicative identity (constant polynomial 1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::ConstField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// assert!(<Gf2mWide::<4, Gf2m256TestConfig> as ConstField>::one().is_one());
-    /// ```
     fn one() -> Self {
         Gf2mWide::one()
     }

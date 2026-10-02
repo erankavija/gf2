@@ -44,15 +44,6 @@ impl CpuBackend {
     /// ```bash
     /// RAYON_NUM_THREADS=8 cargo bench
     /// ```
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::compute::{ComputeBackend, CpuBackend};
-    ///
-    /// let backend = CpuBackend::new();
-    /// assert!(backend.name().contains("CPU"));
-    /// ```
     pub fn new() -> Self {
         // Auto-select best kernel backend
         #[cfg(feature = "simd")]

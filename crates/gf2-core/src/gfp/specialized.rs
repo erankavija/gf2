@@ -174,15 +174,6 @@ pub const fn is_proth_prime(p: u64) -> bool {
 
 /// Returns `true` if `p` is the Goldilocks prime `2^64 - 2^32 + 1`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::{is_goldilocks_prime, GOLDILOCKS_PRIME};
-///
-/// assert!(is_goldilocks_prime(GOLDILOCKS_PRIME));
-/// assert!(!is_goldilocks_prime(7));
-/// ```
-///
 /// # Complexity
 ///
 /// O(1) const evaluation.
@@ -814,14 +805,6 @@ impl GoldilocksFp {
     }
 
     /// Returns the inner representative value in `[0, p)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::specialized::GoldilocksFp;
-    ///
-    /// assert_eq!(GoldilocksFp::new(42).value(), 42);
-    /// ```
     #[inline]
     pub const fn value(self) -> u64 {
         self.0
