@@ -35,8 +35,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T13:49:35.053089592Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T14:09:01.376646253Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T14:04:48.144104225Z"
+  "updated_at": "2026-10-02T14:09:01.376646253Z"
 }

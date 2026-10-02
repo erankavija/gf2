@@ -8,7 +8,22 @@
     "a24b2af7-81ce-4442-9ee3-6ce096c36537"
   ],
   "description": "Each tracked artifact in the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9` receives one manifest row with ownership evidence, code consumers and a disposition, so regrouping and archival act only on defensible ownership.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`. `dev/active/fa787f85-documentation-overhaul/investigation.md` Appendix A gives the 2026-10-01 entry classification (rows whose top epic includes 1a379447) and the method used to derive it.\n\n## Success Criteria\n\n- [hard] REQ-01: The manifest holds one row per tracked file in the frozen entry list below (the twelve zen3 `dev/active/` entries listed below present at commit `7641561a9`), with owner or association evidence, owning top-level epic, bundle relationships and disposition.\n- [hard] REQ-02: Every ownership claim cites an admissible evidence class; rows without admissible evidence carry the legacy-archive disposition.\n- [hard] REQ-03: Entries shared by several epics record every owner and the destination chosen by the multi-owner rule.\n- [hard] REQ-04: Each entry whose path a non-comment consumer reads or checks (production code, tests, scripts, measurement tooling, relative Cargo paths or configuration) is marked code-pinned and records every such consumer by file and line, and each digest-pinned machine input in the entry is marked.\n- [hard] REQ-05: The progress checker reports the shard's rows schema-valid with every source assertion passing.\n\n## Notes\n\nFrozen entry list: `00dd43c3`, `04b85d10`, `07ca8585`, `12fdeb5b`, `19513245`, `1a379447-zen3-cpu-performance`, `1c602857`, `1d0da41f`, `1d4fd63d`, `2037941f-profile-and-optimize-mid-range-buffer-operations`, `26465e6c`, `3be770d5`. Entries created after commit `7641561a9` are outside this migration; the `@/inv/active-document-layout` invariant governs them at creation. The code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`) already identifies these entries as code-pinned: 12fdeb5b, 2037941f-profile-and-optimize-mid-range-buffer-operations, 26465e6c, 04b85d10, 07ca8585, 1c602857, 1d0da41f, 1d4fd63d and 3be770d5; `1a379447-zen3-cpu-performance/measurement-contract.md` is pinned by `CONTRACT_PATH` and rule P-02.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Inventory notes",
+      "path": "dev/active/fa787f85-documentation-overhaul/5c0b9635-inventory-notes.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "record",
+      "format": "markdown",
+      "label": "Migration manifest",
+      "path": "dev/active/fa787f85-documentation-overhaul/migration/manifest.toml"
+    }
+  ],
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "cargo-ci",
@@ -34,5 +49,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-02T13:45:29.286189624Z"
+  "updated_at": "2026-10-02T14:09:18.693993530Z"
 }
