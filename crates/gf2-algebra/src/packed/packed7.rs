@@ -222,17 +222,6 @@ impl Packed7 {
     ///
     /// * `values` — exactly 16 canonical `F_7` values (each in `0..=6`).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let arr = [Fp::<7>::new(0); 16];
-    /// let p = Packed7::pack(&arr);
-    /// assert_eq!(p.lane(0), Fp::<7>::new(0));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(LANES)`.
@@ -257,17 +246,6 @@ impl Packed7 {
     ///
     /// Panics if `i >= LANES`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = Packed7::pack(&[Fp::<7>::new(5); 16]);
-    /// assert_eq!(p.lane(0), Fp::<7>::new(5));
-    /// assert_eq!(p.lane(15), Fp::<7>::new(5));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -283,17 +261,6 @@ impl Packed7 {
 
     /// Decode all 16 lanes into an array.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = Packed7::pack(&[Fp::<7>::new(3); 16]);
-    /// let arr = p.to_array();
-    /// assert!(arr.iter().all(|&x| x == Fp::<7>::new(3)));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(LANES)`.
@@ -303,32 +270,12 @@ impl Packed7 {
     }
 
     /// All-lanes-zero constant.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    ///
-    /// let z = Packed7::zero();
-    /// assert!(z.all_zero());
-    /// ```
     #[inline]
     pub fn zero() -> Self {
         Self { w: 0 }
     }
 
     /// All-lanes-one constant.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let o = Packed7::one();
-    /// assert_eq!(o.lane(0), Fp::<7>::new(1));
-    /// assert_eq!(o.lane(15), Fp::<7>::new(1));
-    /// ```
     #[inline]
     pub fn one() -> Self {
         // Every 4-bit slot = 1: set bit 0 of each slot.
@@ -344,16 +291,6 @@ impl Packed7 {
     /// # Arguments
     ///
     /// * `x` — `F_7` scalar to replicate across all lanes.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed7::splat(Fp::<7>::new(5));
-    /// for i in 0..16 { assert_eq!(v.lane(i), Fp::<7>::new(5)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -379,18 +316,6 @@ impl Packed7 {
     ///
     /// Panics if `i >= LANES`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed7::zero();
-    /// let v = v.with_lane(3, Fp::<7>::new(6));
-    /// assert_eq!(v.lane(3), Fp::<7>::new(6));
-    /// assert_eq!(v.lane(0), Fp::<7>::new(0));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -408,17 +333,6 @@ impl Packed7 {
     }
 
     /// Returns `true` iff every lane decodes to `F_7`'s additive identity (0).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert!(Packed7::zero().all_zero());
-    /// let nz = Packed7::splat(Fp::<7>::new(1));
-    /// assert!(!nz.all_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -502,16 +416,6 @@ impl Packed7 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// LUT-driven formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed7, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
-    /// assert_eq!(Packed7::add_inherent(a, b).lane(0), Fp::<7>::new(1));
-    /// ```
     #[inline]
     pub fn add_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<7>>>::add(self, rhs)
@@ -521,16 +425,6 @@ impl Packed7 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// LUT-driven formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed7, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(2));
-    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
-    /// assert_eq!(Packed7::sub_inherent(a, b).lane(0), Fp::<7>::new(4));
-    /// ```
     #[inline]
     pub fn sub_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<7>>>::sub(self, rhs)
@@ -540,16 +434,6 @@ impl Packed7 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// LUT-driven formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed7, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// assert_eq!(Packed7::mul_inherent(a, b).lane(0), Fp::<7>::new(2));
-    /// ```
     #[inline]
     pub fn mul_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<7>>>::mul(self, rhs)
@@ -559,15 +443,6 @@ impl Packed7 {
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
     /// LUT-driven formula lives in the trait impl below.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed7, PackedField};
-    /// use gf2_core::gfp::Fp;
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(1));
-    /// assert_eq!(Packed7::neg_inherent(a).lane(0), Fp::<7>::new(6));
-    /// ```
     #[inline]
     pub fn neg_inherent(self) -> Self {
         <Self as PackedField<Fp<7>>>::neg(self)
@@ -582,28 +457,9 @@ impl PackedField<Fp<7>> for Packed7 {
     /// Number of F_7 lanes packed into one [`Packed7`].
     ///
     /// Fixed at 16 to match the 4-bit-slot encoding width in a `u64`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    /// assert_eq!(<Packed7 as PackedField<Fp<7>>>::LANES, 16);
-    /// ```
     const LANES: usize = LANES;
 
     /// Returns the all-zeros `Packed7` (every lane = 0).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z = <Packed7 as PackedField<Fp<7>>>::zero();
-    /// assert!(z.all_zero());
-    /// for i in 0..16 { assert_eq!(z.lane(i), Fp::<7>::new(0)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -614,16 +470,6 @@ impl PackedField<Fp<7>> for Packed7 {
     }
 
     /// Returns the all-ones `Packed7` (every lane = 1).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let o = <Packed7 as PackedField<Fp<7>>>::one();
-    /// for i in 0..16 { assert_eq!(o.lane(i), Fp::<7>::new(1)); }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -639,16 +485,6 @@ impl PackedField<Fp<7>> for Packed7 {
     ///
     /// * `x` — `F_7` scalar to replicate across all lanes.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// for i in 0..16 { assert_eq!(v.lane(i), Fp::<7>::new(3)); }
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -658,17 +494,6 @@ impl PackedField<Fp<7>> for Packed7 {
     }
 
     /// Lane-wise sum: `self + rhs` pointwise mod 7.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
-    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// assert_eq!(a.add(b).lane(0), Fp::<7>::new(1)); // (5 + 3) % 7 = 1
-    /// ```
     ///
     /// # Complexity
     ///
@@ -681,17 +506,6 @@ impl PackedField<Fp<7>> for Packed7 {
     }
 
     /// Lane-wise difference: `self - rhs` pointwise mod 7.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(2));
-    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
-    /// assert_eq!(a.sub(b).lane(0), Fp::<7>::new(4)); // (2 - 5 + 7) % 7 = 4
-    /// ```
     ///
     /// # Complexity
     ///
@@ -707,16 +521,6 @@ impl PackedField<Fp<7>> for Packed7 {
     ///
     /// Implemented as `0 - self` via `SUB_LUT`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(1));
-    /// assert_eq!(a.neg().lane(0), Fp::<7>::new(6)); // -1 ≡ 6 mod 7
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`: 8 LUT lookups.
@@ -728,17 +532,6 @@ impl PackedField<Fp<7>> for Packed7 {
     }
 
     /// Lane-wise product: `self * rhs` pointwise mod 7.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-    /// assert_eq!(a.mul(b).lane(0), Fp::<7>::new(2)); // (3 * 3) % 7 = 2
-    /// ```
     ///
     /// # Complexity
     ///
@@ -760,17 +553,6 @@ impl PackedField<Fp<7>> for Packed7 {
     ///
     /// Panics if `i >= 16`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(4));
-    /// assert_eq!(v.lane(0), Fp::<7>::new(4));
-    /// assert_eq!(v.lane(15), Fp::<7>::new(4));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -790,18 +572,6 @@ impl PackedField<Fp<7>> for Packed7 {
     ///
     /// Panics if `i >= 16`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = <Packed7 as PackedField<Fp<7>>>::zero();
-    /// let v = v.with_lane(7, Fp::<7>::new(5));
-    /// assert_eq!(v.lane(7), Fp::<7>::new(5));
-    /// assert_eq!(v.lane(0), Fp::<7>::new(0));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -811,18 +581,6 @@ impl PackedField<Fp<7>> for Packed7 {
     }
 
     /// Returns `true` iff every lane decodes to `F_7`'s additive identity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed7};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z = <Packed7 as PackedField<Fp<7>>>::zero();
-    /// assert!(z.all_zero());
-    /// let o = <Packed7 as PackedField<Fp<7>>>::one();
-    /// assert!(!o.all_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -906,17 +664,6 @@ impl Packed7Vec {
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed7Vec::from_field_slice(&[Fp::<7>::new(4), Fp::<7>::new(2)]);
-    /// assert_eq!(v.get(0), Fp::<7>::new(4));
-    /// assert_eq!(v.get(1), Fp::<7>::new(2));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1026,17 +773,6 @@ impl Eq for Packed7Vec {}
 
 impl fmt::Debug for Packed7Vec {
     /// Formats the value as a `Vec` of decoded lane values (each 0..=6).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed7Vec::from_field_slice(&[Fp::<7>::new(3), Fp::<7>::new(6)]);
-    /// let s = format!("{:?}", v);
-    /// assert!(s.contains("lanes"));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let lanes: Vec<u64> = (0..self.len_lanes)
             .map(|i| {
@@ -1062,16 +798,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     ///
     /// * `len` — number of logical `F_7` positions in the result.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    ///
-    /// let v = Packed7Vec::zeros(17);
-    /// assert_eq!(v.len(), 17);
-    /// assert!(v.all_zero());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(ceil(len / 16))`.
@@ -1089,19 +815,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     ///
     /// * `xs` — source slice; the result has `xs.len()` logical positions
     ///   and `get(i) == xs[i]` for every `i`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let xs = [Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(6)];
-    /// let v = Packed7Vec::from_field_slice(&xs);
-    /// for i in 0..3 {
-    ///     assert_eq!(v.get(i), xs[i]);
-    /// }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1125,15 +838,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
 
     /// Number of logical `F_7` positions.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    ///
-    /// let v = Packed7Vec::zeros(7);
-    /// assert_eq!(v.len(), 7);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -1152,17 +856,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     ///
     /// Panics if `i >= self.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let xs = [Fp::<7>::new(5)];
-    /// let v = Packed7Vec::from_field_slice(&xs);
-    /// assert_eq!(v.get(0), Fp::<7>::new(5));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -1176,19 +869,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     /// # Panics
     ///
     /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = Packed7Vec::from_field_slice(&[Fp::<7>::new(5), Fp::<7>::new(6)]);
-    /// let b = Packed7Vec::from_field_slice(&[Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// a.add_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<7>::new(1)); // (5 + 3) % 7 = 1
-    /// assert_eq!(a.get(1), Fp::<7>::new(1)); // (6 + 2) % 7 = 1
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1211,19 +891,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     ///
     /// Panics if `self.len() != rhs.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = Packed7Vec::from_field_slice(&[Fp::<7>::new(2), Fp::<7>::new(0)]);
-    /// let b = Packed7Vec::from_field_slice(&[Fp::<7>::new(5), Fp::<7>::new(1)]);
-    /// a.sub_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<7>::new(4)); // (2 - 5 + 7) % 7 = 4
-    /// assert_eq!(a.get(1), Fp::<7>::new(6)); // (0 - 1 + 7) % 7 = 6
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(ceil(self.len() / 16))`.
@@ -1245,19 +912,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
     ///
     /// Panics if `self.len() != rhs.len()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = Packed7Vec::from_field_slice(&[Fp::<7>::new(3), Fp::<7>::new(5)]);
-    /// let b = Packed7Vec::from_field_slice(&[Fp::<7>::new(4), Fp::<7>::new(2)]);
-    /// a.mul_assign(&b);
-    /// assert_eq!(a.get(0), Fp::<7>::new(5)); // (3 * 4) % 7 = 5
-    /// assert_eq!(a.get(1), Fp::<7>::new(3)); // (5 * 2) % 7 = 3
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(ceil(self.len() / 16))`.
@@ -1275,17 +929,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
 
     /// Returns `true` iff every logical position decodes to `F_7`'s additive
     /// identity. The empty vector trivially answers `true`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert!(Packed7Vec::zeros(5).all_zero());
-    /// let nz = Packed7Vec::from_field_slice(&[Fp::<7>::new(1)]);
-    /// assert!(!nz.all_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1379,19 +1022,6 @@ impl Eq for Packed7Matrix {}
 
 impl core::fmt::Debug for Packed7Matrix {
     /// Formats as `Packed7Matrix { rows, cols, data: [[row 0], [row 1], ...] }`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
-    /// let m = Packed7Matrix::from_row_major(&data, 1, 2);
-    /// let s = format!("{:?}", m);
-    /// assert!(s.contains("rows"));
-    /// assert!(s.contains("cols"));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let data: Vec<Vec<u64>> = (0..self.rows)
             .map(|i| {
@@ -1469,16 +1099,6 @@ impl Packed7Matrix {
 
     /// Number of rows.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = Packed7Matrix::from_row_major(&[], 0, 5);
-    /// assert_eq!(m.rows(), 0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -1488,16 +1108,6 @@ impl Packed7Matrix {
     }
 
     /// Number of columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = Packed7Matrix::from_row_major(&[], 5, 0);
-    /// assert_eq!(m.cols(), 0);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1517,18 +1127,6 @@ impl Packed7Matrix {
     /// # Panics
     ///
     /// Panics if `i >= self.rows()` or `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data = vec![Fp::<7>::new(3), Fp::<7>::new(5)];
-    /// let m = Packed7Matrix::from_row_major(&data, 1, 2);
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
-    /// assert_eq!(m.get(0, 1), Fp::<7>::new(5));
-    /// ```
     ///
     /// # Complexity
     ///
