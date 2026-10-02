@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-02T13:45:30.238451337Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Locate addendum schema test inputs through the configured repository root",
-  "updated_at": "2026-10-02T11:05:38.184296688Z"
+  "updated_at": "2026-10-02T13:45:30.238451337Z"
 }
