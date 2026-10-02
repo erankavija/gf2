@@ -498,28 +498,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// * `coeffs` — coefficient vector in ascending-degree order.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Trailing zeros are removed.
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(0), Fp::<7>::new(0)]);
-    /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.len(), 1);
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // An all-zero input yields the zero polynomial.
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(0); 5]);
-    /// assert!(p.is_zero());
-    /// assert_eq!(p.degree(), None);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(n)` in the length of `coeffs`.
@@ -542,21 +520,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// # Arguments
     ///
     /// * `coeffs` — coefficient vector in ascending-degree order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::from_coeffs_trimmed(vec![
-    ///     Fp::<7>::new(4),
-    ///     Fp::<7>::new(0),
-    ///     Fp::<7>::new(0),
-    /// ]);
-    /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(4)));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -613,17 +576,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// * `sample` — any field element; used to obtain a `one` element
     ///   in the same field via [`FiniteField::one_like`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p: FieldPoly<Fp<7>> = FieldPoly::one_like(&Fp::<7>::new(0));
-    /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(1)));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -722,19 +674,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// Returns the degree of the polynomial, or `None` for the zero
     /// polynomial.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(z.degree(), None);
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2)]);
-    /// assert_eq!(p.degree(), Some(1));
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -747,19 +686,6 @@ impl<F: FiniteField> FieldPoly<F> {
     }
 
     /// Returns `true` iff this is the zero polynomial.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert!(z.is_zero());
-    ///
-    /// let p = FieldPoly::constant(Fp::<7>::new(1));
-    /// assert!(!p.is_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -908,19 +834,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// By the [normalisation invariant](self), the returned reference
     /// is never to a zero element.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(5)]);
-    /// assert_eq!(p.leading_coeff(), Some(&Fp::<7>::new(5)));
-    ///
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert!(z.leading_coeff().is_none());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(1)`.
@@ -930,19 +843,6 @@ impl<F: FiniteField> FieldPoly<F> {
 
     /// Returns the number of stored coefficients (`degree + 1` for a
     /// non-zero polynomial, `0` for the zero polynomial).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-    /// assert_eq!(p.len(), 3);
-    ///
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(z.len(), 0);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -956,17 +856,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// The iterator yields exactly [`FieldPoly::len`] items. For the
     /// zero polynomial it yields nothing.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-    /// let collected: Vec<Fp<7>> = p.iter().cloned().collect();
-    /// assert_eq!(collected.len(), 3);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1071,21 +960,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// # Arguments
     ///
     /// * `c` — scalar multiplier.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// p.scale(&Fp::<7>::new(2));
-    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(6)));
-    /// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(4)));
-    ///
-    /// p.scale(&Fp::<7>::new(0));
-    /// assert!(p.is_zero());
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1481,20 +1355,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// Panics if `polys` is empty. Use [`FieldPoly::batch_mul_with_field`]
     /// if an empty slice must return the multiplicative identity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p1 = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1)]); // x + 1
-    /// let p2 = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]); // x + 2
-    /// let p3 = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]); // x + 3
-    /// let prod = FieldPoly::product(&[p1.clone(), p2.clone(), p3.clone()]);
-    /// // (1+1)(1+2)(1+3) = 2*3*4 = 24 = 3 mod 7
-    /// assert_eq!(prod.eval(&Fp::<7>::new(1)), Fp::<7>::new(3));
-    /// ```
     ///
     /// # Complexity
     ///

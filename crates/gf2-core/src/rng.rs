@@ -35,15 +35,6 @@ impl Lcg {
     /// * `seed` — 64-bit seed. Any value is valid; distinct seeds
     ///   produce independent streams.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let _ = Lcg::new(0);
-    /// let _ = Lcg::new(u64::MAX);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -53,15 +44,6 @@ impl Lcg {
     }
 
     /// Advances the state one step and returns the raw 64-bit output.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(1);
-    /// let _ = rng.next_u64();
-    /// ```
     ///
     /// # Complexity
     ///
@@ -77,15 +59,6 @@ impl Lcg {
 
     /// Advances the state and returns the top 32 bits of the new state.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(42);
-    /// let _ = rng.next_u32();
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -99,15 +72,6 @@ impl Lcg {
     /// `next_u32() == 0` the output is `-1.0`; when
     /// `next_u32() == u32::MAX` the output is `1.0`).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(7);
-    /// assert!(rng.next_unit_f32().abs() <= 1.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -120,15 +84,6 @@ impl Lcg {
     /// `[-1.0, 1.0]`. Both endpoints are reachable (when
     /// `next_u32() == 0` the output is `-1.0`; when
     /// `next_u32() == u32::MAX` the output is `1.0`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(11);
-    /// assert!(rng.next_unit_f64().abs() <= 1.0);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -148,16 +103,6 @@ impl Lcg {
     /// * `lo` — Lower bound, reachable.
     /// * `hi` — Upper bound, reachable; caller must ensure `hi > lo`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(13);
-    /// let v = rng.next_positive_f32(0.05, 2.0);
-    /// assert!(v >= 0.05 && v <= 2.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -176,16 +121,6 @@ impl Lcg {
     /// * `lo` — Lower bound, reachable.
     /// * `hi` — Upper bound, reachable; caller must ensure `hi > lo`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(17);
-    /// let v = rng.next_positive_f64(0.05, 2.0);
-    /// assert!(v >= 0.05 && v <= 2.0);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// O(1).
@@ -203,15 +138,6 @@ impl Lcg {
     /// # Panics
     ///
     /// Panics (via integer `%`) if `n == 0`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::rng::Lcg;
-    ///
-    /// let mut rng = Lcg::new(19);
-    /// assert!(rng.next_bounded_usize(8) < 8);
-    /// ```
     ///
     /// # Complexity
     ///

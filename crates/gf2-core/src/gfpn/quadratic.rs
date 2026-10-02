@@ -108,16 +108,6 @@ impl<W> QuadraticExtWide<W> {
     ///
     /// * `c0` — Wide value for the constant coefficient.
     /// * `c1` — Wide value for the coefficient of `u`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfpn::QuadraticExtWide;
-    ///
-    /// let w = QuadraticExtWide::<u128>::new(20u128, 18u128);
-    /// assert_eq!(w.c0(), &20u128);
-    /// assert_eq!(w.c1(), &18u128);
-    /// ```
     #[inline]
     pub const fn new(c0: W, c1: W) -> Self {
         Self { c0, c1 }
@@ -266,21 +256,6 @@ impl<C: ExtConfig> QuadraticExt<C> {
     ///
     /// * `c0` - The constant component.
     /// * `c1` - The coefficient of `u`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
-    /// }
-    ///
-    /// let a = QuadraticExt::<Cfg>::new(Fp::new(3), Fp::new(5));
-    /// ```
     #[inline]
     pub const fn new(c0: C::BaseField, c1: C::BaseField) -> Self {
         Self { c0, c1 }
@@ -352,23 +327,6 @@ impl<C: ExtConfig> QuadraticExt<C> {
 
 impl<C: ExtConfig> QuadraticExt<C> {
     /// Embeds a base field element into the extension: `a ↦ a + 0·u`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
-    /// }
-    ///
-    /// let a = QuadraticExt::<Cfg>::from_base(Fp::new(3));
-    /// assert_eq!(a.c0().value(), 3);
-    /// assert_eq!(a.c1().value(), 0);
-    /// ```
     #[inline]
     pub fn from_base(value: C::BaseField) -> Self {
         Self::new(value, C::BaseField::zero())

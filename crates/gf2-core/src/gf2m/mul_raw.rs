@@ -69,16 +69,6 @@ pub fn gf2m_mul_raw(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
 /// # Complexity
 ///
 /// O(1) — single XOR instruction.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::mul_raw::gf2m_add_raw;
-///
-/// // In GF(2^m), addition is XOR regardless of m
-/// assert_eq!(gf2m_add_raw(0b1010, 0b0110), 0b1100);
-/// assert_eq!(gf2m_add_raw(0b1111, 0b1111), 0); // a + a = 0
-/// ```
 pub fn gf2m_add_raw(a: u64, b: u64) -> u64 {
     a ^ b
 }

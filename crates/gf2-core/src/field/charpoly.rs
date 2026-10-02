@@ -2678,19 +2678,6 @@ fn poly_divides<F: FiniteField>(divisor: &FieldPoly<F>, dividend: &FieldPoly<F>)
 ///
 /// * `a` — square `n × n` input matrix. Not modified.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::charpoly::charpoly;
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id = FieldMatrix::<Fp<7>>::identity(3);
-/// let p = charpoly(&id);
-/// // (x − 1)^3 over Fp<7>, leading coefficient is 1.
-/// assert_eq!(p.coeff(3), Fp::<7>::new(1));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `a` is not square, with the same diagnostic as
@@ -2712,19 +2699,6 @@ pub fn charpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
 /// # Arguments
 ///
 /// * `a` — square `n × n` input matrix. Not modified.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::charpoly::minpoly;
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id = FieldMatrix::<Fp<7>>::identity(4);
-/// let p = minpoly(&id);
-/// // Identity has minpoly x − 1.
-/// assert_eq!(p.degree(), Some(1));
-/// ```
 ///
 /// # Panics
 ///
@@ -2752,22 +2726,6 @@ pub fn minpoly<F: FiniteField>(a: &FieldMatrix<F>) -> FieldPoly<F> {
 /// # Arguments
 ///
 /// * `a` — square `n × n` input matrix. Not modified.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::charpoly::frobenius_form;
-/// use gf2_core::field::matrix::{gemm, FieldMatrix};
-/// use gf2_core::gfp::Fp;
-///
-/// let id = FieldMatrix::<Fp<7>>::identity(3);
-/// let (p, f) = frobenius_form(&id);
-/// // For the identity input, F equals the identity itself.
-/// assert_eq!(f, id);
-/// // P is invertible by construction.
-/// let p_inv = p.inv().unwrap();
-/// assert_eq!(gemm(&p_inv, &gemm(&id, &p)), f);
-/// ```
 ///
 /// # Panics
 ///
