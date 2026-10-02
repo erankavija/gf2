@@ -71,7 +71,7 @@ Dispositions: Tracked (issue short ID), Delivered (code path or delivering issue
 | C10.7 live DVB-T2 reception demo with SDR hardware | 791beb2b0^:crates/gf2-coding/ROADMAP.md:354 | Tracked: fcb09e6f |
 | C13 unified error handling, Result types | 791beb2b0^:crates/gf2-coding/ROADMAP.md:359 | Tracked: 1b929ce5 |
 | C13 streaming vs batch trait unification | 791beb2b0^:crates/gf2-coding/ROADMAP.md:360 | Tracked: 3931ac6f |
-| C13 doc examples with syndrome and decoding traces | 791beb2b0^:crates/gf2-coding/ROADMAP.md:361 | Tracked: 315f4de5 |
+| C13 doc examples with syndrome and decoding traces | 791beb2b0^:crates/gf2-coding/ROADMAP.md:361 | Obsolete: elementary decoder-trace examples fall outside the researcher audience; the research tutorial set is carried by cdba4e71 |
 | C12.1 C FFI layer (LDPC, BCH, Viterbi, safety wrappers, header, C test) | 791beb2b0^:crates/gf2-coding/ROADMAP.md:369-375 | Tracked: 56467231 |
 | C12.2 GNU Radio OOT module (blocks, GRC, flowgraphs, tests, docs) | 791beb2b0^:crates/gf2-coding/ROADMAP.md:378-385 | Tracked: b8baca8a, 21922c59 |
 | C12.3 DVB-T2 conformance test vectors | 791beb2b0^:crates/gf2-coding/ROADMAP.md:388 | Delivered: crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs; 4cdaf1c5 |
@@ -82,7 +82,7 @@ Dispositions: Tracked (issue short ID), Delivered (code path or delivering issue
 | C12.4 SDRangel plugin | 791beb2b0^:crates/gf2-coding/ROADMAP.md:395 | Tracked: dd153981 |
 | C12.4 gr-satellites contributions | 791beb2b0^:crates/gf2-coding/ROADMAP.md:396 | Tracked: dd153981 (description names gr-satellites) |
 | C12.4 Python bindings via PyO3 | 791beb2b0^:crates/gf2-coding/ROADMAP.md:397 | Tracked: dd153981 |
-| Debt: consolidate expensive LDPC doctests | 791beb2b0^:crates/gf2-coding/ROADMAP.md:408 | Tracked: 9b3452e9 |
+| Debt: consolidate expensive LDPC doctests | 791beb2b0^:crates/gf2-coding/ROADMAP.md:408 | Tracked: a0a29512 (each example is removed or retained compiling), 2596b143 (retained examples pass in the CI doctest step) |
 | Open question: data structures for extremely sparse H | 791beb2b0^:crates/gf2-coding/ROADMAP.md:411 | Delivered: crates/gf2-coding/src/ldpc/edge_layout.rs; 3a37e0f6, f1a896f0 |
 | Open question: switch from table-based to algebraic decoding | 791beb2b0^:crates/gf2-coding/ROADMAP.md:412 | Newly filed: Measure the table-based versus algebraic decoding crossover |
 | Open question: GPU offload feasibility for LDPC | 791beb2b0^:crates/gf2-coding/ROADMAP.md:413 | Delivered: decision 86a363aa |
