@@ -23,6 +23,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T10:35:35.135107670Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T10:31:48.658648509Z",
@@ -39,5 +44,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Map the gf2-core roadmap's planned phases",
-  "updated_at": "2026-10-02T10:31:48.658648509Z"
+  "updated_at": "2026-10-02T10:35:35.135107670Z"
 }

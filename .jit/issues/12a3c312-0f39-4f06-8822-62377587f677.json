@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Factor polynomials over finite fields",
-  "updated_at": "2026-10-02T10:31:30.517979998Z"
+  "updated_at": "2026-10-02T10:37:10.875137931Z"
 }

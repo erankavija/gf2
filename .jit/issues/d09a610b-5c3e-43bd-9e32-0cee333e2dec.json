@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Compare ORBGRAND with OSD and algebraic decoding on short codes",
-  "updated_at": "2026-10-02T10:31:30.205904920Z"
+  "updated_at": "2026-10-02T10:37:11.022977404Z"
 }

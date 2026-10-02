@@ -14,7 +14,7 @@
     "type:task"
   ],
   "priority": "low",
-  "state": "backlog",
+  "state": "ready",
   "title": "Measure the DVB-T2 receive-chain stage latency budget",
-  "updated_at": "2026-10-02T10:31:30.429220438Z"
+  "updated_at": "2026-10-02T10:37:10.949595801Z"
 }

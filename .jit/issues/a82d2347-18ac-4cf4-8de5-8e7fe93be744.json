@@ -15,6 +15,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T10:32:31.155573462Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T10:30:29.915523553Z",
@@ -31,5 +36,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Retire CONTRIBUTING.md in favor of AGENTS.md",
-  "updated_at": "2026-10-02T10:30:29.915523553Z"
+  "updated_at": "2026-10-02T10:32:31.155573462Z"
 }

@@ -24,6 +24,16 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T10:36:27.528267410Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-02T10:32:57.146346246Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T10:30:29.783196107Z",
@@ -45,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register audience, placement and tone documentation invariants",
-  "updated_at": "2026-10-02T10:31:30.673679676Z"
+  "updated_at": "2026-10-02T10:36:27.528267410Z"
 }

@@ -17,12 +17,18 @@
       "path": "dev/active/fa787f85-documentation-overhaul/4bdcd65a-roadmap-map.md"
     }
   ],
+  "done_at": "2026-10-02T10:37:10.776608596Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-02T10:34:49.415477346Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-02T10:31:48.722361878Z",
@@ -37,7 +43,7 @@
     "satisfies:fa787f85/REQ-08"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Map the root roadmap's open questions and publication items",
-  "updated_at": "2026-10-02T10:31:48.722361878Z"
+  "updated_at": "2026-10-02T10:37:10.776608596Z"
 }
