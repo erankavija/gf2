@@ -14876,3 +14876,5 @@
 {"gate_key":"repo-validate","id":"cf5a2d0c-d4b2-4b0f-b774-3a5b829a1b6f","issue_id":"8f61d6de-e29a-4d83-8bab-4ac61df0b2bf","timestamp":"2026-10-02T09:21:01.535009955Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"83bff754-b2d9-408e-ae88-762d02a2a447","issue_id":"8f61d6de-e29a-4d83-8bab-4ac61df0b2bf","timestamp":"2026-10-02T09:25:14.303605442Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"a3faa21c-1a16-4d65-8547-0a98e79e3534","issue_id":"8f61d6de-e29a-4d83-8bab-4ac61df0b2bf","timestamp":"2026-10-02T09:29:18.956249387Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"855152bf-b285-40ab-a303-02e767d2b9df","issue_id":"8f61d6de-e29a-4d83-8bab-4ac61df0b2bf","timestamp":"2026-10-02T09:31:34.057412504Z","type":"issue_updated","updated_by":"doc-remove"}
+{"fields":["documents"],"id":"ab281a47-2942-4865-a305-12c9999558a1","issue_id":"8f61d6de-e29a-4d83-8bab-4ac61df0b2bf","timestamp":"2026-10-02T09:31:34.243339380Z","type":"issue_updated","updated_by":"doc-add"}
