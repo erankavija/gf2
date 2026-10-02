@@ -24,8 +24,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T11:35:00.452084068Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T11:42:07.916192328Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -44,5 +44,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Map the gf2-coding roadmap's unchecked items",
-  "updated_at": "2026-10-02T11:35:00.452084068Z"
+  "updated_at": "2026-10-02T11:42:07.916192328Z"
 }
