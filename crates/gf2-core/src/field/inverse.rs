@@ -1551,7 +1551,7 @@ mod tests {
 
     // ── Property-based tests (proptest) ──────────────────────────────────────
     //
-    // Per `CLAUDE.md` testing convention: TDD plus property-based
+    // Per AGENTS.md §Correctness and test policy: TDD plus property-based
     // tests for mathematical invariants. The block below sweeps many
     // seeds at small bounded sizes (`n ∈ 1..=6`) so each case stays
     // well under the 5 s per-test wall-clock cap, and the per-block

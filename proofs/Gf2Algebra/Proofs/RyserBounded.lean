@@ -78,8 +78,7 @@
   epic's [hard] Charon/Aeneas-extracted formal-verification deliverable
   is provided by V1 `f05ffbe1` (closed), and the now-purposeless
   extraction scaffold `crates/gf2-algebra/src/permanent/ryser_fp3.rs`
-  has been removed.  Per CLAUDE.md §"Verification work" ("a sorry-laden
-  headline is worse than an honest partial"), the value-level chain
+  has been removed.  The value-level chain
   (L4–L9) and the `permanent_ryser_fp3_correct` headline are
   **not stated** (not `sorry`-stubbed) — by final design, not pending
   any further pipeline work.
@@ -974,8 +973,7 @@ change; per Option 3 that is descoped, and the epic's [hard]
 Charon/Aeneas-extracted formal-verification deliverable is provided
 by V1 `f05ffbe1` (closed).
 
-Per CLAUDE.md §"Verification work" ("a sorry-laden headline is worse
-than an honest partial"), the headline is left **unstated, not
+The headline is left **unstated, not
 `sorry`-stubbed**; everything provable abstractly is landed below and
 in §§2–3.3, all `sorry`-free, and is V2's final deliverable.
 -/

@@ -67,7 +67,7 @@ use crate::permanent::bipedal3_multiword;
 // SIMD detection cache (x86/x86_64 only, behind the `simd` feature).
 //
 // `maybe_bipedal_avx2()` follows the project's `gf2_core::simd::maybe_simd`
-// OnceLock SSOT pattern (CLAUDE.md §Architecture, point 3).  It wraps
+// OnceLock SSOT pattern.  It wraps
 // `gf2_kernels_simd::bipedal::detect_avx2()` — the upstream OnceLock that
 // performs CPUID. On non-x86 targets, or when the `simd` feature is off,
 // the symbol simply does not exist and its call sites are elided at
@@ -1045,7 +1045,7 @@ mod tests {
     /// original target was 100 matrices; this is reduced to 1 matrix here
     /// because 100 × 6 s ≈ 10 min far exceeds the 120 s slow-tier budget.
     /// The criterion reduction is documented inline (project-lead handles
-    /// the JIT amendment per CLAUDE.md escalation policy).
+    /// the JIT amendment).
     #[test]
     #[ignore = "slow: T13 SIMD/scalar cross-check n=32 (2^32 steps ≈ 6 s/matrix)"]
     fn test_simd_vs_scalar_n32() {

@@ -452,7 +452,7 @@ mod tests {
     // -----------------------------------------------------------------------
     // Word-boundary coverage: exercise n closer to Packed5::LANES = 64.
     //
-    // CLAUDE.md:149 prescribes word-boundary coverage at 0, 1, 63, 64, 65.
+    // AGENTS.md §Correctness and test policy prescribes word-boundary coverage at 0, 1, 63, 64, 65.
     // For permanent_bipedal5, literal positive cross-check at n = 63 / 64
     // would need 2^n - 1 Gray steps — 9.2e18 / 1.8e19 respectively, both
     // physically infeasible. n=32 (4.3e9 steps, ~30 s/matrix on the 5900X)

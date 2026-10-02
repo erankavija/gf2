@@ -16,7 +16,7 @@
 //! codegen regresses by 12-34x (R4 §4.1; verified during the R4 microbench).
 //!
 //! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment
-//! per CLAUDE.md §Key design invariants 3.
+//! per `@/inv/unsafe-kernel-isolation`.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;

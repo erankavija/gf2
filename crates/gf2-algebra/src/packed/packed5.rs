@@ -41,8 +41,10 @@
 //!
 //! # Transliteration source
 //!
-//! `dev/research/f5_packing/src/cand_d.rs` — the reference prototype.
-//! The decision doc is `dev/plans/6b3f6054/r1_f5_encoding_decision.md` (W4, T17).
+//! `dev/research/f5_packing/src/cand_d.rs` — the reference prototype. The
+//! decision doc is
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6b3f6054/r1_f5_encoding_decision.md`
+//! (W4, T17).
 //!
 //! # Feature gating
 //!
@@ -305,10 +307,11 @@ impl fmt::Debug for Packed5 {
 // divergence between the inherent and trait paths — the inherent body is a
 // single tail call into the trait method, which Rust inlines away.
 //
-// Per `dev/plans/30e98ef1/d5_lean_packed5_sketch.md` §4, the Lean proof file
-// `proofs/Gf2Algebra/Proofs/Packed5Correctness.lean` targets these
-// inherent methods (verbatim adaptation of the `bipedal3.rs:409-467`
-// pattern).
+// Per
+// `dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md`
+// §4, the Lean proof file `proofs/Gf2Algebra/Proofs/Packed5Correctness.lean`
+// targets these inherent methods (verbatim adaptation of the
+// `bipedal3.rs:409-467` pattern).
 // ---------------------------------------------------------------------------
 
 impl Packed5 {
@@ -621,7 +624,7 @@ impl PackedField<Fp<5>> for Packed5 {
 /// Bits beyond `len_lanes` in the last word of all three planes must always
 /// be zero. Every mutating operation calls `Packed5Vec::mask_tail` to
 /// enforce this invariant — it is the most critical correctness invariant
-/// in this codebase (CLAUDE.md §Key design invariants #1).
+/// in this codebase (AGENTS.md §Correctness and test policy).
 ///
 /// # Examples
 ///
@@ -656,7 +659,7 @@ impl Packed5Vec {
     ///
     /// **This invariant must hold after every mutation.** Failing to call
     /// `mask_tail` after any write violates the project's key correctness
-    /// invariant (CLAUDE.md §Key design invariants #1).
+    /// invariant (AGENTS.md §Correctness and test policy).
     ///
     /// # Complexity
     ///
