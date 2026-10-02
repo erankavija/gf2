@@ -31,7 +31,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Inventory the field-dispatch dev/active entries",
-  "updated_at": "2026-10-02T09:38:30.243750409Z"
+  "updated_at": "2026-10-02T13:37:15.090089833Z"
 }

@@ -31,7 +31,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Inventory the other open-epic dev/active entries",
-  "updated_at": "2026-10-02T09:38:26.201766716Z"
+  "updated_at": "2026-10-02T13:37:15.044335770Z"
 }

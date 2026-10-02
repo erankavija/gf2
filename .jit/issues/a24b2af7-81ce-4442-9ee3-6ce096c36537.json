@@ -23,6 +23,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/migration/check.py"
     }
   ],
+  "done_at": "2026-10-02T13:37:14.699967330Z",
   "first_ready_at": "2026-10-01T10:03:43.702262411Z",
   "gates_required": [
     "code-review",
@@ -31,8 +32,8 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-02T13:19:23.290942769Z",
+      "status": "passed",
+      "updated_at": "2026-10-02T13:37:07.945078841Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -54,7 +55,7 @@
     "satisfies:fa787f85/REQ-13"
   ],
   "priority": "high",
-  "state": "gated",
+  "state": "done",
   "title": "Define the documentation migration manifest and progress checker",
-  "updated_at": "2026-10-02T13:33:51.845596728Z"
+  "updated_at": "2026-10-02T13:37:14.699967330Z"
 }

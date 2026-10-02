@@ -31,7 +31,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Inventory zen3 dev/active entries 00dd43c3 to 3be770d5",
-  "updated_at": "2026-10-02T09:38:23.751943641Z"
+  "updated_at": "2026-10-02T13:37:14.993720159Z"
 }

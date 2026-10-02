@@ -31,7 +31,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Inventory terminal, ownerless and empty dev/active entries",
-  "updated_at": "2026-10-02T09:38:18.644564779Z"
+  "updated_at": "2026-10-02T13:37:14.779215520Z"
 }
