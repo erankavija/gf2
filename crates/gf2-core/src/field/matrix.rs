@@ -328,7 +328,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// Crate-private accessor for the raw backing slice.
     ///
     /// Used by the expression-template kernels in
-    /// [`crate::field::expr`] (story `d48a3cfd/T2`) so they can feed the
+    /// [`crate::field::expr`] so they can feed the
     /// existing `dot_product_slices` helper without reaching through the
     /// `MatrixLike::get` interface element-by-element. This is strictly
     /// row-major over `rows * cols` cells.
@@ -340,9 +340,9 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// Crate-private mutable counterpart to [`Self::as_data_slice`].
     ///
     /// Used by the blocked fused-gemm kernels in
-    /// [`crate::field::expr`] (story `d48a3cfd/T2` R3) to write into the
-    /// output matrix row-block directly, matching T1's `gemm` inner loop
-    /// shape while folding `β·C` into the same store.
+    /// [`crate::field::expr`] to write into the
+    /// output matrix row-block directly, matching the `gemm` inner loop shape
+    /// while folding `β·C` into the same store.
     #[doc(hidden)]
     pub(crate) fn as_data_mut_slice(&mut self) -> &mut [F] {
         self.data.as_mut_slice()
@@ -5688,7 +5688,6 @@ mod tests {
         /// Property: `gemm_axpy_into_view` at random `Fp<7>`
         /// matrices with random `(α, β)` matches the scalar oracle
         /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
-        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
         #[test]
         fn prop_gemm_axpy_into_view_fp7_matches_oracle(
             seed in 0u64..256,
@@ -5728,7 +5727,6 @@ mod tests {
         /// Property: `gemm_axpy_into_view` at random `Fp<31>`
         /// matrices with random `(α, β)` matches the scalar oracle
         /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
-        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
         #[test]
         fn prop_gemm_axpy_into_view_fp31_matches_oracle(
             seed in 0u64..256,
@@ -5768,7 +5766,6 @@ mod tests {
         /// Property: `gemm_axpy_into_view` at random `Fp<127>`
         /// matrices with random `(α, β)` matches the scalar oracle
         /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
-        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
         #[test]
         fn prop_gemm_axpy_into_view_fp127_matches_oracle(
             seed in 0u64..256,
@@ -5808,7 +5805,6 @@ mod tests {
         /// Property: `gemm_axpy_into_view` at random `Fp<241>`
         /// matrices with random `(α, β)` matches the scalar oracle
         /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
-        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
         #[test]
         fn prop_gemm_axpy_into_view_fp241_matches_oracle(
             seed in 0u64..256,
@@ -5845,10 +5841,9 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<65521>`
-        /// matrices with random `(α, β)` matches the scalar oracle
-        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
-        /// R1 addition to satisfy SC#3 six-prime proptest sweep (medium-prime path).
+        /// Property: `gemm_axpy_into_view` at random `Fp<65521>` matrices with
+        /// random `(α, β)` matches the scalar oracle bit-exactly. Covers
+        /// boundary-length grid {1, 15, 16, 17, 63, 64, 65}. Medium-prime path.
         #[test]
         fn prop_gemm_axpy_into_view_fp65521_matches_oracle(
             seed in 0u64..256,

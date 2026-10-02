@@ -21,13 +21,13 @@
 //! [`super::lanes::Avx2Lane`]); the per-prime config selects this via the
 //! `MagLane` / `SgnLane` associated types on
 //! [`super::framework::BipedalLikeConfig`]. F_5 and F_7 do not use this
-//! framework — their R1 / R2 encodings do not fit the 2-stream
-//! `(MagLane, SgnLane)` shape, and they ship via dedicated AVX2 batch
-//! entry points instead (see JIT issue `1f769232` amendment).
+//! framework — their encodings do not fit the 2-stream `(MagLane, SgnLane)`
+//! shape, and they ship via dedicated AVX2 batch entry points instead
+//! (`@/issue/1f769232`).
 //!
 //! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
 //! `crate::x86::bipedal_avx2` so the asm-artefact-present gate fires on source
-//! changes — see the W4 wave plan and `@/issue/c7542983`.
+//! changes — see `@/issue/c7542983`.
 
 use super::framework::BipedalLikeConfig;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

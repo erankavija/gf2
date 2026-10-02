@@ -14,8 +14,8 @@
 //! # Algorithm summary
 //!
 //! See `@/issue/2e8c5a29` § 9 for the design context. Issue `68db401b` adds the
-//! u16 base case because the R0 evidence showed GF(65521) PLE cells do not
-//! close to ≤ 1.5× via the Schur path alone.
+//! u16 base case because GF(65521) PLE cells do not close to ≤ 1.5× via the
+//! Schur path alone.
 //!
 //! The base-case kernel processes an `m × win` column window of
 //! canonical u16 storage in-place, performing:

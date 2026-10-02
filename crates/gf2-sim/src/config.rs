@@ -2,7 +2,7 @@
 //! [`gf2_coding::simulation::SimulationConfig`].
 //!
 //! Lifts the §1 "`PipelineConfig`" block and the §12 config mapping of the
-//! Phase 0 design doc (`@/issue/ec530af9`) into code, including the
+//! design doc (`@/issue/ec530af9`) into code, including the
 //! [`From<&SimulationConfig>`] conversion.
 
 use std::num::NonZeroUsize;
@@ -13,7 +13,7 @@ use gf2_coding::simulation::SimulationConfig;
 /// Configuration for a [`Pipeline`](crate::Pipeline) run.
 ///
 /// Mirrors the run-control fields of
-/// [`gf2_coding::simulation::SimulationConfig`] and adds the Phase 0 pipeline
+/// [`gf2_coding::simulation::SimulationConfig`] and adds the pipeline
 /// knobs (`parallelism`, `strict_gpu`, `diagnostic_dump_dir`). A
 /// [`From<&SimulationConfig>`] impl is provided so existing campaign configs
 /// convert directly.
@@ -64,8 +64,8 @@ pub struct PipelineConfig {
     /// When set, the hybrid executor offloads the heavy GPU-bound stages (LDPC
     /// belief-propagation decode, and max-log demap) to the HIP device,
     /// overlapping device execution of one batch with CPU preparation of the
-    /// next (Phase C scheduler `75c22fa8`). When unset (the default), every
-    /// stage runs on the CPU.
+    /// next (scheduler `75c22fa8`). When unset (the default), every stage runs
+    /// on the CPU.
     ///
     /// Without the `hip` Cargo feature this flag has no effect: a pipeline built
     /// with it set degrades gracefully to the CPU path after a `tracing::warn!`

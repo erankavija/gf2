@@ -7,15 +7,11 @@
 //! deficiency by conjunction over row submatrices, and the exact
 //! [`compressed_rank`] recurrence for the three-column case. See the epic
 //! design at `@/issue/ae82bd73` §6 / §7.3 / §9 for the algorithm family, and
-//! `@/issue/9fe275d3` for the trait surface frozen at W6.
+//! `@/issue/9fe275d3` for the trait surface.
 //!
-//! # Status
-//!
-//! W2 complete — T7 (Ryser driver), T8 (mod-3 reference port), and T9
-//! (bipedal3 single-word fast path) all landed in W2. W4 F_5/F_7
-//! analogues — [`permanent_bipedal5`] and [`permanent_bipedal7`] —
-//! landed in W4-T18/T20 (single-word path; F_5 covers `n ≤ Packed5::LANES = 64`,
-//! F_7 covers `n ≤ Packed7::LANES = 16`).
+//! The F_5/F_7 analogues [`permanent_bipedal5`] and [`permanent_bipedal7`] are
+//! single-word paths: F_5 covers `n ≤ Packed5::LANES = 64`, F_7 covers `n ≤
+//! Packed7::LANES = 16`.
 //!
 //! The square surface is joined by [`rank`], whose
 //! [`permanental_rank_status`] decides `per-rank(A) < k` for a rectangular
@@ -25,9 +21,8 @@
 //! # Re-exports
 //!
 //! [`gray`] is re-exported from [`crate::gray`] so callers can use the
-//! permanent-grouped path `gf2_algebra::permanent::gray::gray_code_iter` that
-//! the W1-T6 contract names, while the underlying module also remains reachable
-//! as `gf2_algebra::gray` per `@/issue/6e20133d` §4.2.
+//! permanent-grouped path `gf2_algebra::permanent::gray::gray_code_iter`, while the underlying
+//! module also remains reachable as `gf2_algebra::gray` per `@/issue/6e20133d` §4.2.
 
 pub mod bipedal3;
 pub mod bipedal3_multiword;
@@ -66,7 +61,7 @@ pub use ryser::permanent_ryser;
 /// layout; [`crate::tuning::CHUNK_SUBSETS`] re-exports it for tuning clients.
 pub const CHUNK_SUBSETS: usize = 1 << 16;
 
-/// Re-export of [`crate::gray`] so the canonical W1-T6 API
+/// Re-export of [`crate::gray`] so
 /// `gf2_algebra::permanent::gray::gray_code_iter` resolves.
 pub use crate::gray;
 

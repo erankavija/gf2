@@ -2,7 +2,7 @@
 //!
 //! This module supplies the four concrete batch newtypes that the DVB-T2 BICM
 //! [`stages`](crate::stages) move between, per §1 ("batch types") and §2 ("SoA
-//! layout") of the Phase 0 design doc (`@/issue/ec530af9`).
+//! layout") of the design doc (`@/issue/ec530af9`).
 //!
 //! Each type implements the scaffolding [`BatchSize`] trait;
 //! the blanket [`TypedBatch`](crate::TypedBatch) impl in

@@ -1,22 +1,15 @@
 //! AVX2 + FMA3 (`_mm256_fmadd_ps`) f32-cascade GEMM kernel for small
 //! `Fp<P>` with `P <= 251`.
 //!
-//! This is **Candidate F** from `dev/plans/small_prime_kernel_strategy.md`
-//! § 4.5 / § 5.5 — the in-Rust f32-FMA cascade. The Wave-6B § 6.1
-//! amendment originally selected F as the FMA3-host primary path on
-//! structural Zen-3 micro-architecture grounds. The post-2026-05-06
-//! 5-trial empirical sweep falsified that prediction (see the empirical
-//! note below): Candidate C (`crate::fp_small`) measures 5–10 % faster
-//! than F at every in-scope cell on this host except GF(251)/n ≥ 512,
-//! where the reworked F variant (route A, [`SmallPrimeF32Fns::batch_gemm_route_a_fn`])
-//! clears 1.5× of fflas-ffpack (ratio 0.683) once the pack cost amortises.
-//! Production therefore routes GF(251)/n ≥ 512 through route A and routes
-//! every other `P ≤ 251` cell through Candidate C (`N_THRESH_PRIME = 251`
-//! combined with `n ≥ 512` in
-//! `crates/gf2-core/src/gfp/simd_ops.rs::select_f32_path`, issue 41096af5).
-//! The legacy `batch_gemm_fn` body is compiled in but no longer selected
-//! at runtime; it retains forward-compat value for future hosts
-//! (Zen-4+/AVX-VNNI/AVX-512) where the f32-FMA cascade may pull ahead.
+//! This is **Candidate F**, the in-Rust f32-FMA cascade. Candidate C
+//! (`crate::fp_small`) measures 5–10 % faster than F at every in-scope cell
+//! except GF(251)/n ≥ 512, where the route-A variant
+//! ([`SmallPrimeF32Fns::batch_gemm_route_a_fn`]) clears 1.5× of fflas-ffpack
+//! (ratio 0.683) once the pack cost amortises. Production routes GF(251)/n ≥
+//! 512 through route A and every other `P ≤ 251` cell through Candidate C
+//! (`N_THRESH_PRIME = 251` combined with `n ≥ 512` in
+//! `crates/gf2-core/src/gfp/simd_ops.rs::select_f32_path`, issue 41096af5). The
+//! `batch_gemm_fn` body is compiled in but not selected at runtime.
 //!
 //! All unsafe intrinsics are isolated in `x86/fp_small_f32.rs`; this
 //! module exposes only safe function-pointer wrappers through the
@@ -28,7 +21,7 @@
 //!
 //! [`SmallPrimeF32Fns::batch_gemm_route_a_fn`] is a reworked Candidate F
 //! variant added for the GF(251) f32/FMA cascade prototype dispatched under JIT
-//! issue `68cdf4c8` (Phase 1 route A of `@/issue/615db3b9`). It differs from
+//! issue `68cdf4c8` (route A of `@/issue/615db3b9`). It differs from
 //! [`SmallPrimeF32Fns::batch_gemm_fn`] only at the **output-reduction**
 //! step: where the original kernel runs a per-cell scalar `% p` on a
 //! 96-i32 scratch tile, the route-A variant applies a 32-bit-lane AVX2
@@ -36,16 +29,13 @@
 //! packs to u8 via two in-lane `vpackusdw + vpackuswb` passes. The inner
 //! FMA loop is byte-identical.
 //!
-//! The lookup-table pack (replacing the per-element `value()` REDC
-//! chain in the caller) lives in `crates/gf2-core/src/gfp/simd_ops.rs`
-//! alongside the existing `SmallPrimeTables` cache, gated on the safe
-//! `AtomicBool` runtime debug switch (`set_route_a_gf251_enabled` /
-//! `route_a_gf251_enabled`; see jit:68cdf4c8 R1 commit `4bad2e72` —
-//! the original env-var toggle was retired in favor of a safe setter
-//! to satisfy SC#3 unsafe-isolation). Both paths return
-//! bit-identical bytes for every input pair on every `p ≤ 251`; see
-//! `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs::tests` for the
-//! parity proptest battery.
+//! The lookup-table pack (replacing the per-element `value()` REDC chain in the
+//! caller) lives in `crates/gf2-core/src/gfp/simd_ops.rs` alongside the
+//! existing `SmallPrimeTables` cache, gated on the safe `AtomicBool` runtime
+//! debug switch (`set_route_a_gf251_enabled` / `route_a_gf251_enabled`). Both
+//! paths return bit-identical bytes for every input pair on every `p ≤ 251`;
+//! see `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs::tests` for the parity
+//! proptest battery.
 //!
 //! # Algorithm
 //!

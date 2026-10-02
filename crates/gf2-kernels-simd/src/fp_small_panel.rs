@@ -1,6 +1,5 @@
-//! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small
-//! `Fp<P>` with `P <= 251` — **Route C** of the jit:615db3b9 Phase 1
-//! plan.
+//! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small `Fp<P>`
+//! with `P <= 251` — **Route C** of `@/issue/615db3b9`.
 //!
 //! This is the safe wrapper layer; the unsafe AVX2 intrinsics live in
 //! `crate::x86::fp_small_panel`. The kernel is one of three prototype

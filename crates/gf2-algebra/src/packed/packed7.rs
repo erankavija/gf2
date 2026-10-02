@@ -1,13 +1,13 @@
-//! Packed `F_7` element / vector encoding — Candidate A (R2 decision).
+//! Packed `F_7` element / vector encoding, chosen in `@/issue/f10152f6`.
 //!
-//! # Encoding (R2 §1 / §5)
+//! # Encoding
 //!
 //! Each `u64` packs **16 elements** at 4-bit-aligned slots. Slot `i`
 //! occupies bits `[4i .. 4i+4)`. Canonical values are `0..=6`; the high
 //! bit of each slot (bit `4i+3`) is reserved and always zero for canonical
 //! packings (since `6 = 0b0110 < 8`, the high bit is never set).
 //!
-//! # Binary operations (R2 §5)
+//! # Binary operations
 //!
 //! Binary ops use a 64 KiB lookup table keyed by a packed 16-bit
 //! `(a_byte | (b_byte << 8))` index, where each input byte holds two
@@ -28,11 +28,6 @@
 //!
 //! Non-canonical nibble inputs (nibble value ≥ 7) produce a LUT result of 0
 //! (safe but undefined; canonical packings never produce them).
-//!
-//! # Status
-//!
-//! W4 — F_7 packed type + ops per R2 Candidate A decision (`@/issue/f10152f6`).
-//! Transliterated from `dev/research/f7_packing/src/cand_a.rs`.
 
 use core::fmt;
 

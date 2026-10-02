@@ -1,7 +1,7 @@
 //! Stage trait shapes and the type-erasure layer.
 //!
-//! This module lifts §1 "Stage / Connector trait shapes" of the Phase 0 design
-//! doc (`@/issue/ec530af9`) into code:
+//! This module lifts §1 "Stage / Connector trait shapes" of the design doc
+//! (`@/issue/ec530af9`) into code:
 //! [`Stage`], the [`AnyStage`] / [`TypedBatch`] / [`AnyScratch`] type-erasure
 //! layer, and the [`ExecutionClass`] / [`FallbackKind`] enums.
 
@@ -190,15 +190,13 @@ impl<T: std::any::Any + Send> AnyScratch for T {
 ///
 /// # Realisation of the design doc's "blanket impl"
 ///
-/// The Phase 0 design doc (§1) describes `AnyStage` as "implemented for every
-/// `Stage<I, O>` via a blanket impl". A literal
-/// `impl<I, O, S: Stage<I, O>> AnyStage for S` does **not** compile: the type
-/// parameters `I` and `O` are unconstrained by the `Self` type (`S`), which
-/// Rust rejects with E0207. The [`ErasedStage`] wrapper threads `I`/`O`
-/// through a `PhantomData` field so the impl's `Self` type does constrain
-/// them, achieving the same effect. The intent — that no later task ever has
-/// to reopen this file to make a stage usable in a pipeline — is preserved:
-/// any `Stage` becomes an `AnyStage` through [`erase`].
+/// The design doc (`@/issue/ec530af9` §1) describes `AnyStage` as "implemented for every `Stage<I,
+/// O>` via a blanket impl". A literal `impl<I, O, S: Stage<I, O>> AnyStage for S` does **not**
+/// compile: the type parameters `I` and `O` are unconstrained by the `Self` type (`S`), which Rust
+/// rejects with E0207. The [`ErasedStage`] wrapper threads `I`/`O` through a `PhantomData` field so
+/// the impl's `Self` type does constrain them, achieving the same effect. The intent — that no
+/// later task ever has to reopen this file to make a stage usable in a pipeline — is preserved: any
+/// `Stage` becomes an `AnyStage` through [`erase`].
 pub trait AnyStage: Send + Sync {
     /// The [`TypeId`] of the input batch type.
     fn input_type(&self) -> TypeId;
@@ -466,8 +464,7 @@ where
 ///
 /// Convenience constructor wrapping [`ErasedStage::new`] so callers never name
 /// the `ErasedStage<I, O, S>` generics by hand. This is the single entry point
-/// by which any stage becomes pipeline-ready, so no later wave needs to reopen
-/// this module to make a new stage usable.
+/// by which any stage becomes pipeline-ready.
 ///
 /// # Examples
 ///

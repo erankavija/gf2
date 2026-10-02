@@ -10,10 +10,10 @@
 //! ## Inlining contract
 //!
 //! Every method on this trait must be `#[inline(always)]`. The framework's
-//! kernel entry points carry `#[target_feature(enable = "avx2")]`; without
-//! the always-inline annotation here, rustc cannot inline an AVX2-emitting
-//! trait method into a target-feature-enabled function and the resulting
-//! codegen regresses by 12-34x (R4 §4.1; verified during the R4 microbench).
+//! kernel entry points carry `#[target_feature(enable = "avx2")]`; without the
+//! always-inline annotation here, rustc cannot inline an AVX2-emitting trait
+//! method into a target-feature-enabled function and the resulting codegen
+//! regresses by 12-34x (`@/issue/c7542983` §4.1).
 //!
 //! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment
 //! per `@/inv/unsafe-kernel-isolation`.

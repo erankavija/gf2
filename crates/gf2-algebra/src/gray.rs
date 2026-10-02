@@ -64,19 +64,15 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// # Arguments
 ///
 /// * `n` — universe size; the iterator yields `2^n - 1` items. Must
-///   satisfy `n <= 63` (per the 2026-05-15 user-approved CPU/GPU
-///   consistency narrowing). Internally the iterator widens to `u128` so
-///   the bound `(1u128 << n)` is well-defined; the historical u128 is
-///   retained because the same widening shape is used downstream. The
-///   permanent inner loop targets `n <= 16` exhaustively per W1-T6
-///   success criteria, but larger `n` works correctly up to `n = 63`;
-///   iteration cost is `O(2^n)` so callers will rarely exceed `n = 36`
-///   in practice (epic doc §7.3). For `n >= 64` use the multi-word path
-///   (`permanent_bipedal3_multiword`) which carries its own 256-bit
-///   counter. The narrowing from the prior `n <= 64` to `n <= 63` is
-///   wallclock-driven: 2^64 Gray steps is computationally infeasible on
-///   either CPU or GPU; the contract was always implicitly bounded by
-///   feasibility, and is now bounded explicitly.
+///   satisfy `n <= 63`, the bound shared with the GPU kernels. Internally the
+///   iterator widens to `u128` so the bound `(1u128 << n)` is well-defined; the
+///   same widening shape is used downstream. Iteration cost is `O(2^n)`, so
+///   practical callers stay at or below `n = 36` (`@/issue/ae82bd73` §7.3). For
+///   `n >= 64` use the multi-word path (`permanent_bipedal3_multiword`) which
+///   carries its own 256-bit counter. The narrowing from the prior `n <= 64` to
+///   `n <= 63` is wallclock-driven: 2^64 Gray steps is computationally
+///   infeasible on either CPU or GPU; the contract was always implicitly
+///   bounded by feasibility, and is now bounded explicitly.
 ///
 /// # Examples
 ///

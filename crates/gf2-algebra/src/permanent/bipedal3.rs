@@ -32,10 +32,9 @@
 //!
 //! ## Multi-word path (`n > 63`)
 //!
-//! For `n > 63` the column-sum spans `W = ceil(n / 64)` words per leg.
-//! The multi-word streaming path lives in `super::bipedal3_multiword` and
-//! implements the R3 cache-blocking design
-//! (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`).
+//! For `n > 63` the column-sum spans `W = ceil(n / 64)` words per leg. The
+//! multi-word streaming path lives in `super::bipedal3_multiword` and
+//! implements the cache-blocking design of `@/issue/60c30e2d`.
 //!
 //! ## Dispatcher
 //!
@@ -169,9 +168,8 @@ std::thread_local! {
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
-/// Panics if `mat.cols() > bipedal3_multiword::N_MAX_MULTIWORD` (`n` must
-/// be `≤ N_MAX_MULTIWORD = 255`; above that, use the W3-T15 rayon parallel
-/// path or W5 GPU path).
+/// Panics if `mat.cols() > bipedal3_multiword::N_MAX_MULTIWORD` (`n` must be `≤
+/// N_MAX_MULTIWORD = 255`).
 ///
 /// # Complexity
 ///
@@ -496,12 +494,12 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
 /// buffer (one AVX2 lane).
 ///
 /// The algorithm is semantically identical to the scalar path — only the
-/// add/sub step is delegated to the SIMD kernel.  At W=1 the kernel
-/// processes 4 `u64` words of which 3 carry no data (always zero); for
-/// production throughput the batched multi-matrix path (T16) is the
-/// intended SIMD consumer. This direct function remains available to exercise
-/// and cross-check the single-matrix kernel; the public single-matrix
-/// dispatcher selects the measured-faster scalar kernel.
+/// add/sub step is delegated to the SIMD kernel.  At W=1 the kernel processes 4
+/// `u64` words of which 3 carry no data (always zero); for production
+/// throughput the batched multi-matrix path is the intended SIMD consumer. This
+/// direct function remains available to exercise and cross-check the
+/// single-matrix kernel; the public single-matrix dispatcher selects the
+/// measured-faster scalar kernel.
 ///
 /// # Arguments
 ///
@@ -996,7 +994,7 @@ mod tests {
         }
     }
 
-    /// T13 SIMD-vs-scalar cross-check for n=8: 100 random matrices.
+    /// SIMD-vs-scalar cross-check for n=8: 100 random matrices.
     ///
     /// Fast tier: 2^8 = 256 Gray steps per matrix; trivially fast.
     #[test]
@@ -1004,48 +1002,42 @@ mod tests {
         simd_vs_scalar_cross_check(8, 100, 0x686e_e1b5_0000_0008_u64);
     }
 
-    /// T13 SIMD-vs-scalar cross-check for n=16: 100 random matrices.
+    /// SIMD-vs-scalar cross-check for n=16: 100 random matrices.
     ///
-    /// Fast tier: 2^16 = 65536 Gray steps per matrix; well under 5 s.
+    /// Fast tier: 2^16 = 65536 Gray steps per matrix; well within budget.
     #[test]
     fn test_simd_vs_scalar_n16() {
         simd_vs_scalar_cross_check(16, 100, 0x686e_e1b5_0000_0010_u64);
     }
 
-    /// T13 SIMD-vs-scalar cross-check for n=24: 3 random matrices (fast
-    /// tier).
+    /// SIMD-vs-scalar cross-check for n=24: 3 random matrices (fast tier).
     ///
-    /// Fast tier: 2^24 ~16M steps × 3 matrices × 2 passes (SIMD + scalar).
-    /// On a developer machine with AVX2 this is ~0.15 s, but on shared CI
-    /// runners (where the "SIMD" pass may fall back to scalar and cores are
-    /// throttled) 10 matrices exceeded the 5 s per-test budget — so the
-    /// fast-tier smoke check uses 3 matrices. The full 100-matrix run is
-    /// covered by `test_simd_vs_scalar_n24_slow`.
+    /// Fast tier: 2^24 ~16M steps × 3 matrices × 2 passes (SIMD + scalar). On a
+    /// developer machine with AVX2 this is ~0.15 s, but on shared CI runners
+    /// (where the "SIMD" pass may fall back to scalar and cores are throttled)
+    /// 10 matrices exceed the per-test budget — so the fast-tier smoke check
+    /// uses 3 matrices. The full 100-matrix run is covered by
+    /// `test_simd_vs_scalar_n24_slow`.
     #[test]
     fn test_simd_vs_scalar_n24() {
         simd_vs_scalar_cross_check(24, 3, 0x686e_e1b5_0000_0018_u64);
     }
 
-    /// T13 SIMD-vs-scalar cross-check for n=24: 100 random matrices (slow
-    /// tier).
+    /// SIMD-vs-scalar cross-check for n=24: 100 random matrices (slow tier).
     ///
-    /// Slow tier: 2^24 ~16M steps × 100 matrices × 2 passes ≈ 5 s total;
-    /// fits the 120 s slow-tier budget. Covers the remaining 90 matrices
-    /// beyond the 10-matrix fast-tier subset.
+    /// Slow tier: 2^24 ~16M steps × 100 matrices × 2 passes ≈ 5 s total; fits
+    /// the slow-tier budget.
     #[test]
     #[ignore = "sim: T13 SIMD/scalar cross-check n=24, 100 matrices (≈ 5 s)"]
     fn test_simd_vs_scalar_n24_slow() {
         simd_vs_scalar_cross_check(24, 100, 0x686e_e1b5_1000_0018_u64);
     }
 
-    /// T13 SIMD-vs-scalar cross-check for n=32: 1 matrix (slow tier).
+    /// SIMD-vs-scalar cross-check for n=32: 1 matrix (slow tier).
     ///
     /// 2^32 ~4B steps at ~6 word-ops each ≈ 6 s/matrix in release mode,
-    /// exceeding the 5 s fast-tier budget.  Per T13 criterion 3, the
-    /// original target was 100 matrices; this is reduced to 1 matrix here
-    /// because 100 × 6 s ≈ 10 min far exceeds the 120 s slow-tier budget.
-    /// The criterion reduction is documented inline (project-lead handles
-    /// the JIT amendment).
+    /// exceeding the fast-tier per-test budget. One matrix keeps the test
+    /// within the slow-tier budget; 100 would take ≈ 10 min.
     #[test]
     #[ignore = "slow: T13 SIMD/scalar cross-check n=32 (2^32 steps ≈ 6 s/matrix)"]
     fn test_simd_vs_scalar_n32() {
@@ -1133,8 +1125,8 @@ mod tests {
     /// `n > N_MAX_MULTIWORD` panics.
     ///
     /// The dispatcher caps at `N_MAX_MULTIWORD = 255`; above that the
-    /// multi-word streaming path's `[u64; 4]` Gray counter cannot represent
-    /// the iteration range (W3-T15 / W5 for parallel + GPU paths).
+    /// multi-word streaming path's `[u64; 4]` Gray counter cannot represent the
+    /// iteration range.
     #[test]
     #[should_panic(expected = "n must satisfy n <=")]
     fn test_permanent_bipedal3_panics_on_n_exceeding_n_max() {
