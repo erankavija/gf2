@@ -260,7 +260,7 @@ mod tests {
         let gen = PrimitiveGenerator::new(2).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 1);
-        assert_eq!(all[0], 0b111); // x^2 + x + 1
+        assert_eq!(all[0], 0b111);
     }
 
     #[test]
@@ -268,8 +268,8 @@ mod tests {
         let gen = PrimitiveGenerator::new(3).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 2);
-        assert!(all.contains(&0b1011)); // x^3 + x + 1
-        assert!(all.contains(&0b1101)); // x^3 + x^2 + 1
+        assert!(all.contains(&0b1011));
+        assert!(all.contains(&0b1101));
     }
 
     #[test]
@@ -277,8 +277,8 @@ mod tests {
         let gen = PrimitiveGenerator::new(4).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 2);
-        assert!(all.contains(&0b10011)); // x^4 + x + 1
-        assert!(all.contains(&0b11001)); // x^4 + x^3 + 1
+        assert!(all.contains(&0b10011));
+        assert!(all.contains(&0b11001));
     }
 
     #[test]

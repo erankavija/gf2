@@ -582,8 +582,6 @@ pub(crate) fn reference_reduce_wide<const N: usize, const M: usize>(
     const { assert!(M == 2 * N, "reference_reduce_wide: M must equal 2 * N") }
     let mut r = *product;
 
-    // For each set bit from 2m-1 down to m, XOR in P shifted so its degree-m
-    // term aligns with it.
     let max_bit = 2 * m as usize;
     for bit in (m as usize..max_bit).rev() {
         let w = bit / 64;
@@ -636,11 +634,8 @@ mod tests {
 
     #[test]
     fn test_clmul_known_products() {
-        // (x+1)*(x+1) = x^2 + 2x + 1 = x^2 + 1 (in GF(2), 2x = 0)
         assert_eq!(clmul(0b11, 0b11), 0b101);
-        // x * x = x^2
         assert_eq!(clmul(0b10, 0b10), 0b100);
-        // (x^2+1)*(x+1) = x^3 + x^2 + x + 1
         assert_eq!(clmul(0b101, 0b11), 0b1111);
     }
 
@@ -651,7 +646,6 @@ mod tests {
 
     #[test]
     fn test_barrett_new_gf2_4() {
-        // P(x) = x^4 + x + 1 = 0b10011
         let reducer = BarrettReducer::new(0b10011, 4);
         assert_eq!(reducer.degree(), 4);
         assert_eq!(reducer.modulus(), 0b10011);
@@ -683,7 +677,7 @@ mod tests {
         let m = 4;
         let reducer = BarrettReducer::new(poly, m);
 
-        // Test all possible products in GF(2^4): product degree ≤ 2*(4-1) = 6, so up to 7 bits
+        // Product degree ≤ 2*(4-1) = 6, so 7 bits.
         for product in 0u128..(1 << (2 * m - 1)) {
             let barrett = reducer.reduce(product);
             let naive = naive_reduce(product, poly, m);
@@ -696,15 +690,12 @@ mod tests {
 
     #[test]
     fn test_reduce_gf2_8_aes() {
-        // x^8 + x^4 + x^3 + x + 1 = 0x11B
         let poly: u128 = 0x11B;
         let m = 8;
         let reducer = BarrettReducer::new(poly, m);
 
         let test_cases: Vec<u128> = vec![
-            0, 1, 0xFF, 0x100,  // x^8
-            0x1FE,  // near-max for single element
-            0x3FFF, // max degree 13 (< 2*8-1=15)
+            0, 1, 0xFF, 0x100, 0x1FE, 0x3FFF, // max degree 13 (< 2*8-1=15)
             0x5A5A, 0xAAAA,
         ];
         for product in test_cases {
@@ -724,11 +715,11 @@ mod tests {
         let m = 8;
         let reducer = BarrettReducer::new(poly, m);
 
-        let max_product: u128 = (1u128 << 15) - 1; // 0x7FFF
+        let max_product: u128 = (1u128 << 15) - 1;
         let barrett = reducer.reduce(max_product);
         let naive = naive_reduce(max_product, poly, m);
         assert_eq!(barrett, naive);
-        assert!(barrett < 256); // must fit in 8 bits
+        assert!(barrett < 256);
     }
 
     #[test]
@@ -739,9 +730,9 @@ mod tests {
 
             let max_product_deg = 2 * m - 2;
             let num_tests = if max_product_deg <= 12 {
-                1u128 << (max_product_deg + 1) // exhaustive for small fields
+                1u128 << (max_product_deg + 1)
             } else {
-                4096 // sample for larger fields
+                4096
             };
 
             for product in 0..num_tests {
@@ -786,11 +777,8 @@ mod tests {
 
     #[test]
     fn test_naive_reduce_basic() {
-        // x^4 mod (x^4 + x + 1) = x + 1 = 0b11
         assert_eq!(naive_reduce(0b10000, 0b10011, 4), 0b0011);
 
-        // x^5 mod (x^4 + x + 1):
-        // x^5 = x * x^4 = x * (x+1) = x^2 + x = 0b110
         assert_eq!(naive_reduce(0b100000, 0b10011, 4), 0b0110);
     }
 
@@ -802,7 +790,6 @@ mod tests {
 
         #[test]
         fn test_clmul_distributive_prop(a in 0u64..=0xFF, b in 0u64..=0xFF, c in 0u64..=0xFF) {
-            // a * (b XOR c) = (a * b) XOR (a * c)
             let lhs = clmul(a, b ^ c);
             let rhs = clmul(a, b) ^ clmul(a, c);
             prop_assert_eq!(lhs, rhs);
@@ -820,7 +807,7 @@ mod tests {
 
         #[test]
         fn test_barrett_matches_naive_gf2_16_prop(product in 0u128..0x80000000u128) {
-            let poly: u128 = 0b10000000000101101; // x^16 + x^5 + x^3 + x^2 + 1
+            let poly: u128 = 0b10000000000101101;
             let m: u32 = 16;
             let reducer = BarrettReducer::new(poly, m);
             let masked = product & ((1u128 << (2 * m - 1)) - 1);
@@ -841,7 +828,7 @@ mod tests {
 
         #[test]
         fn test_barrett_clmul_reduce_matches_naive_gf2_8(a in 0u64..256, b in 0u64..256) {
-            let poly: u128 = 0x11B; // x^8 + x^4 + x^3 + x + 1
+            let poly: u128 = 0x11B;
             let m: u32 = 8;
             let reducer = BarrettReducer::new(poly, m);
             let product = clmul(a, b);
@@ -852,7 +839,7 @@ mod tests {
 
         #[test]
         fn test_barrett_clmul_reduce_matches_naive_gf2_16(a in 0u64..65536, b in 0u64..65536) {
-            let poly: u128 = 0b10000000000101101; // x^16 + x^5 + x^3 + x^2 + 1
+            let poly: u128 = 0b10000000000101101;
             let m: u32 = 16;
             let reducer = BarrettReducer::new(poly, m);
             let product = clmul(a, b);
@@ -863,7 +850,6 @@ mod tests {
 
         #[test]
         fn test_barrett_mul_associative_gf2_4(a in 1u64..16, b in 1u64..16, c in 1u64..16) {
-            // (a*b)*c == a*(b*c) in GF(2^4)
             let poly: u128 = 0b10011;
             let m: u32 = 4;
             let reducer = BarrettReducer::new(poly, m);
@@ -881,7 +867,6 @@ mod tests {
     /// m = 63 is the largest degree whose dividend x^(2m) fits in a `u128`.
     #[test]
     fn test_reduce_at_m_equals_63_boundary() {
-        // x^63 + x + 1 is a primitive trinomial for GF(2^63).
         let poly: u128 = (1u128 << 63) | 0b11;
         let m: u32 = 63;
         let reducer = BarrettReducer::new(poly, m);
@@ -909,11 +894,9 @@ mod tests {
         }
     }
 
-    /// Pins the `degree <= 63` bound of [`BarrettReducer::new`] by its panic message.
     #[test]
     #[should_panic(expected = "degree must be in 1..=63")]
     fn test_new_rejects_degree_64_today() {
-        // GF(2^64) standard polynomial.
         let poly: u128 = (1u128 << 64) | 0b11011;
         let _ = BarrettReducer::new(poly, 64);
     }
@@ -926,9 +909,9 @@ mod tests {
 
             let max_product_deg = 2 * m - 2;
             let num_tests = if max_product_deg <= 12 {
-                1u128 << (max_product_deg + 1) // exhaustive for small fields
+                1u128 << (max_product_deg + 1)
             } else {
-                4096 // sample for larger fields
+                4096
             };
 
             for product in 0..num_tests {
@@ -961,7 +944,6 @@ mod tests {
 
     #[test]
     fn test_wide_n1_m63_cross_check_against_barrett_reducer() {
-        // P(x) = x^63 + x + 1; low bits = 0b11 = 3.
         let poly_u128: u128 = (1u128 << 63) | 0b11;
         let poly_u64: u64 = 0b11; // low 63 bits (implicit leading bit dropped)
         let m: u32 = 63;
