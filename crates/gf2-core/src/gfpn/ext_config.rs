@@ -94,10 +94,6 @@ mod tests {
     use crate::field::FiniteField;
     use crate::gfp::Fp;
 
-    // -----------------------------------------------------------------------
-    // Test configs
-    // -----------------------------------------------------------------------
-
     /// Config for GF(7²) with β = −1 (= 6 mod 7), giving x² + 1.
     struct Fq2NegOneConfig;
 
@@ -117,7 +113,6 @@ mod tests {
     impl ExtConfig for Fq2Beta3Config {
         type BaseField = Fp<7>;
         const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-        // Uses default mul_by_non_residue (generic multiplication).
     }
 
     /// Config for GF(13²) with β = 2 (a quadratic non-residue mod 13).
@@ -127,10 +122,6 @@ mod tests {
         type BaseField = Fp<13>;
         const NON_RESIDUE: Fp<13> = Fp::<13>::new(2);
     }
-
-    // -----------------------------------------------------------------------
-    // Tests: basic compilation and const non-residue access
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_config_compiles_and_returns_correct_non_residue() {
@@ -149,18 +140,12 @@ mod tests {
 
     #[test]
     fn test_non_residue_is_const() {
-        // Verify the non-residue can be used in a const context.
         const BETA: Fp<7> = Fq2NegOneConfig::NON_RESIDUE;
         assert_eq!(BETA.value(), 6);
     }
 
-    // -----------------------------------------------------------------------
-    // Tests: mul_by_non_residue correctness
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_mul_by_non_residue_default_matches_manual() {
-        // Default impl: x * β. Verify for all elements of GF(7).
         for i in 0..7u64 {
             let x = Fp::<7>::new(i);
             let expected = x * Fq2Beta3Config::NON_RESIDUE;
@@ -175,7 +160,6 @@ mod tests {
 
     #[test]
     fn test_mul_by_non_residue_override_matches_manual() {
-        // Override impl (-x for β = −1). Verify for all elements of GF(7).
         for i in 0..7u64 {
             let x = Fp::<7>::new(i);
             let expected = x * Fq2NegOneConfig::NON_RESIDUE; // generic: x * 6 mod 7
@@ -198,20 +182,12 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Tests: zero-sized config types (no runtime overhead)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_config_is_zero_sized() {
         assert_eq!(std::mem::size_of::<Fq2NegOneConfig>(), 0);
         assert_eq!(std::mem::size_of::<Fq2Beta3Config>(), 0);
         assert_eq!(std::mem::size_of::<Fp13Ext2Config>(), 0);
     }
-
-    // -----------------------------------------------------------------------
-    // Tests: mul_by_non_residue identity and zero behavior
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_mul_by_non_residue_zero_gives_zero() {
@@ -235,21 +211,10 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Tests: different configs produce distinct types (static dispatch)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_distinct_configs_same_base_field() {
-        // Two different configs over the same base field should produce
-        // different non-residues. This verifies that the type system
-        // distinguishes them (they would parameterize different QuadraticExt types).
         assert_ne!(Fq2NegOneConfig::NON_RESIDUE, Fq2Beta3Config::NON_RESIDUE);
     }
-
-    // -----------------------------------------------------------------------
-    // Tests: generic usage (static dispatch through type parameter)
-    // -----------------------------------------------------------------------
 
     fn generic_mul_by_non_residue<C: ExtConfig>(x: C::BaseField) -> C::BaseField {
         C::mul_by_non_residue(x)

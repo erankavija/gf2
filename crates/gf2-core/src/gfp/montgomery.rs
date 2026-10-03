@@ -117,10 +117,6 @@ mod tests {
 
     const MERSENNE_61: u64 = (1u64 << 61) - 1;
 
-    // -----------------------------------------------------------------------
-    // Constants verification
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_r_mod_p_known_values() {
         // 2 ≡ -1 mod 3, so 2^64 ≡ 1 mod 3
@@ -161,7 +157,6 @@ mod tests {
 
     #[test]
     fn test_p_inv_identity() {
-        // Verify P * P_INV ≡ -1 mod 2^64 (wrapping product = u64::MAX)
         fn check<const P: u64>() {
             let product = P.wrapping_mul(MontConsts::<P>::P_INV);
             assert_eq!(product, u64::MAX, "P={P}: P * P_INV should be 2^64 - 1");
@@ -175,10 +170,6 @@ mod tests {
         check::<65537>();
         check::<MERSENNE_61>();
     }
-
-    // -----------------------------------------------------------------------
-    // REDC and conversion
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_round_trip_small_primes() {
@@ -229,10 +220,6 @@ mod tests {
             MontConsts::<MERSENNE_61>::R_MOD_P
         );
     }
-
-    // -----------------------------------------------------------------------
-    // Arithmetic
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_mont_add_exhaustive() {
@@ -300,7 +287,6 @@ mod tests {
 
     #[test]
     fn test_mod_pow_mont_fermat() {
-        // Fermat's little theorem: a^(p-1) ≡ 1 mod p for a != 0
         for a in 1..7u64 {
             let a_mont = to_mont::<7>(a);
             let result = mod_pow_mont::<7>(a_mont, 6);
@@ -310,7 +296,6 @@ mod tests {
 
     #[test]
     fn test_mod_pow_mont_inversion() {
-        // inv(a) = a^(P-2) must satisfy a * inv(a) ≡ 1
         fn check_all<const P: u64>() {
             for a in 1..P {
                 let a_mont = to_mont::<P>(a);
@@ -328,10 +313,6 @@ mod tests {
         check_all::<7>();
         check_all::<11>();
     }
-
-    // -----------------------------------------------------------------------
-    // Larger prime tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_mersenne_61_round_trip() {
@@ -369,7 +350,6 @@ mod tests {
 
     #[test]
     fn test_65537_mul_cross_check() {
-        // Cross-check a few multiplications against naive
         let pairs = [(100, 200), (65536, 65536), (1, 65536), (12345, 54321)];
         for (a, b) in pairs {
             let expected = ((a as u128 * b as u128) % 65537u128) as u64;

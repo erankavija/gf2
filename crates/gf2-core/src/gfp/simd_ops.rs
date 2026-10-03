@@ -14,31 +14,11 @@ use super::{montgomery::MontConsts, use_specialized_storage};
 use crate::field::FiniteField;
 use crate::field::PlePanelLane;
 
-// ---------------------------------------------------------------------------
-// SimdVecOps trait
-// ---------------------------------------------------------------------------
-
 /// Element-wise SIMD-dispatch hook for batched base-field arithmetic.
 ///
 /// `FieldVec::mul_vec` / `add_vec` / `sub_vec` consult the `try_simd_*`
 /// methods before their scalar loops; the default `None` selects the scalar
 /// loop.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::FieldVec;
-/// use gf2_core::gfp::{Fp, SimdVecOps};
-///
-/// // Trait satisfied by every `Fp<P>`; callers rarely reference the
-/// // method directly — `FieldVec::mul_vec` dispatches through it.
-/// let xs: Vec<Fp<65537>> = (0..4u64).map(Fp::<65537>::new).collect();
-/// let ys: Vec<Fp<65537>> = (0..4u64).map(|i| Fp::<65537>::new(i + 1)).collect();
-/// let maybe = <Fp<65537> as SimdVecOps>::try_simd_mul_vec(&xs, &ys);
-/// // `maybe` is `Some` on AVX2 hosts with the `simd` feature, `None` elsewhere.
-/// let _ = maybe;
-/// let _ = FieldVec::from(xs).mul_vec(&FieldVec::from(ys));
-/// ```
 pub trait SimdVecOps: Sized {
     /// Attempts a SIMD batch multiply of same-length slices; returns `None`
     /// to defer to the scalar element-wise path.
@@ -71,11 +51,8 @@ pub trait SimdVecOps: Sized {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Scalar-fallback impls for other base-field types exposed by the crate.
-// Each one inherits the default `None` from the trait, so `FieldVec`'s
-// element-wise ops use their scalar zip/map loop for these types.
-// ---------------------------------------------------------------------------
+// These base-field types inherit the default `None` hooks, so `FieldVec`'s
+// element-wise ops use their scalar zip/map loop for them.
 
 impl<V: crate::gf2m::UintExt> SimdVecOps for crate::gf2m::Gf2mElement_<V> {}
 
@@ -99,10 +76,6 @@ impl SimdVecOps for crate::gfp::specialized::GoldilocksFp {}
 // and `FieldMatrix::<CubicExt<C>>`.
 impl<C: crate::gfpn::ExtConfig> SimdVecOps for crate::gfpn::QuadraticExt<C> {}
 impl<C: crate::gfpn::ExtConfig> SimdVecOps for crate::gfpn::CubicExt<C> {}
-
-// ---------------------------------------------------------------------------
-// Blanket impl for Fp<P>: exact specialisations win, then generic Montgomery.
-// ---------------------------------------------------------------------------
 
 // Dispatch-order invariant: the exact-prime tests (`P == 65537`, `P == M31`)
 // precede the range tests, which precede the generic Montgomery fallback,
@@ -163,10 +136,6 @@ impl<const P: u64> SimdVecOps for Fp<P> {
         None
     }
 }
-
-// ---------------------------------------------------------------------------
-// Fp<2^31 - 1> SIMD helpers.
-// ---------------------------------------------------------------------------
 
 const M31: u64 = (1u64 << 31) - 1;
 
@@ -288,13 +257,9 @@ pub(crate) fn fp_m31_gemm_classical_available<const P: u64>() -> bool {
     false
 }
 
-// ---------------------------------------------------------------------------
-// Small-prime (P <= 251) SIMD helpers.
-//
 // The kernels take canonical bytes in `[0, P)`; `P <= 251` is
 // Montgomery-stored, so pack and unpack convert through `value()` /
 // `Fp::new`.
-// ---------------------------------------------------------------------------
 
 /// Whether the small-prime byte-lane dispatch handles `P`. `P = 2` is
 /// excluded because the byte-lane Barrett constant assumes `p ≥ 3`.
@@ -470,18 +435,6 @@ static ROUTE_A_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 /// cells `select_f32_path` admits (`n ≥ 512` at the default thresholds).
 /// The flag is a process-wide `AtomicBool`: restore `false` after use to
 /// avoid cross-test interference. Primes other than 251 ignore it.
-///
-/// # Examples
-///
-/// ```
-/// # #[cfg(feature = "simd")]
-/// # {
-/// use gf2_core::gfp::simd_ops::set_route_a_gf251_enabled;
-/// set_route_a_gf251_enabled(true);
-/// // ... run GF(251) GEMM via route A ...
-/// set_route_a_gf251_enabled(false);
-/// # }
-/// ```
 #[cfg(feature = "simd")]
 pub fn set_route_a_gf251_enabled(enabled: bool) {
     ROUTE_A_GF251_ENABLED.store(enabled, Ordering::Relaxed);
@@ -497,31 +450,19 @@ fn route_a_gf251_enabled<const P: u64>() -> bool {
 }
 
 /// Process-wide debug switch for the route-C GF(251) pure-integer
-/// Goto/BLIS-style panelized micro-kernel; set through
+/// panelized micro-kernel (`@/citation/GotoGeijn2008`); set through
 /// [`set_route_c_gf251_enabled`]. If both switches are on for `P == 251`,
 /// route A wins (the dispatch checks route A first).
 #[cfg(feature = "simd")]
 static ROUTE_C_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 
 /// Sets the runtime debug switch that opts GF(251) GEMM calls into the
-/// route-C pure-integer Goto/BLIS-style panelized micro-kernel
-/// (`crate::simd::maybe_fp_small_panel`).
+/// route-C pure-integer panelized micro-kernel
+/// (`crate::simd::maybe_fp_small_panel`, `@/citation/GotoGeijn2008`).
 ///
 /// The switch applies to the `P == 251` cells that route A's guard in
 /// `prime_gemm_select` leaves. The flag is a process-wide `AtomicBool`:
 /// restore `false` after use to avoid cross-test interference.
-///
-/// # Examples
-///
-/// ```
-/// # #[cfg(feature = "simd")]
-/// # {
-/// use gf2_core::gfp::simd_ops::set_route_c_gf251_enabled;
-/// set_route_c_gf251_enabled(true);
-/// // ... run GF(251) GEMM via route C ...
-/// set_route_c_gf251_enabled(false);
-/// # }
-/// ```
 #[cfg(feature = "simd")]
 pub fn set_route_c_gf251_enabled(enabled: bool) {
     ROUTE_C_GF251_ENABLED.store(enabled, Ordering::Relaxed);
@@ -843,10 +784,6 @@ pub(crate) fn fp_try_spmm<const P: u64>(
     false
 }
 
-// ---------------------------------------------------------------------------
-// Generic Montgomery SIMD helpers.
-// ---------------------------------------------------------------------------
-
 #[cfg(feature = "simd")]
 #[inline]
 fn fp_generic_enabled<const P: u64>() -> bool {
@@ -939,10 +876,6 @@ fn fp_generic_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Ve
     None
 }
 
-// ---------------------------------------------------------------------------
-// Fp<65537> SIMD helpers — shared with BatchExtField::batch_mul_quadratic.
-// ---------------------------------------------------------------------------
-
 /// Packs a slice of `Fp<P>` where `P == 65537` into canonical `Vec<u32>`.
 ///
 /// For `P = 65537`, Montgomery storage equals the canonical value because
@@ -1015,10 +948,6 @@ fn fp65537_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<F
     None
 }
 
-// ---------------------------------------------------------------------------
-// Fp<P> medium-prime SIMD helpers — `P ∈ (251, 65536)` (`word-fits-in-u16`).
-// ---------------------------------------------------------------------------
-//
 // The kernel operates on **canonical** u16 values. Add/sub are linear in the
 // Montgomery storage form (`aR + bR = (a+b)R`), so for those we pack/unpack
 // via raw_storage and avoid the REDC round-trip. Multiplication is not
@@ -1262,10 +1191,8 @@ const F64_MIN_COLS_SELECTED: usize = F64_MIN_COLS;
 /// Per-(P, m, k, n) f64-cascade selector for medium primes.
 ///
 /// Returns `true` when the f64-FMA cascade is the default arm for this
-/// size. The cascade's pack is one `Fp::value()` REDC per A/B^T element,
-/// where the u16 panel kernel's is a `u64 → u16` truncation, so the cascade
-/// is selected only from a column threshold up: the tuning profile's
-/// `prime_route.f64_min_cols` field through [`F64_MIN_COLS_SELECTED`].
+/// size: `n` reaches the tuning profile's `prime_route.f64_min_cols` field,
+/// read through [`F64_MIN_COLS_SELECTED`].
 #[cfg(feature = "simd")]
 #[inline]
 const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
@@ -2741,9 +2668,6 @@ mod tests {
 
     const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
 
-    /// Checks that `fp_try_prepack_matvec` + `PackedMatvec::matvec` on a
-    /// pre-packed small-prime matrix matches the scalar reference at boundary
-    /// lengths for both k and m.
     #[cfg(feature = "simd")]
     fn check_small_prime_prepack_matvec<const P: u64>(lens: &[usize]) {
         if crate::simd::maybe_fp_small().is_none() {
@@ -2767,16 +2691,13 @@ mod tests {
                     }
                     continue;
                 }
-                // Build a deterministic m×k matrix.
                 let a: Vec<Fp<P>> = (0..(m * k) as u64)
                     .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
                     .collect();
-                // Build a deterministic x vector of length k.
                 let x: Vec<Fp<P>> = (0..k as u64)
                     .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
                     .collect();
 
-                // Scalar reference: y_ref[i] = sum_j a[i*k+j] * x[j]
                 let mut y_ref = vec![Fp::<P>::new(0); m];
                 for i in 0..m {
                     let mut acc = Fp::<P>::new(0);
@@ -2786,7 +2707,6 @@ mod tests {
                     y_ref[i] = acc;
                 }
 
-                // Pre-packed path.
                 let packed = fp_try_prepack_matvec::<P>(&a, m, k)
                     .expect("fp_try_prepack_matvec returned None on AVX2 host for small prime");
                 let mut y_simd = vec![Fp::<P>::new(0); m];
@@ -2824,8 +2744,6 @@ mod tests {
         }
     }
 
-    /// Boundary-length scalar equivalence of the small-prime prepack matvec
-    /// path for both m and k.
     #[test]
     fn test_small_prime_prepack_matvec_boundary_lengths() {
         #[cfg(not(feature = "simd"))]
@@ -2840,8 +2758,6 @@ mod tests {
         }
     }
 
-    /// Scalar equivalence of `fp_small_try_gemm_classical` over `lens`,
-    /// including the thread-local scratch reuse of a repeated call.
     #[cfg(feature = "simd")]
     fn check_small_prime_gemm_dispatch<const P: u64>(lens: &[usize]) {
         if crate::simd::maybe_fp_small().is_none() {
@@ -2862,14 +2778,12 @@ mod tests {
                         assert!(!used, "zero-dim shape must return false");
                         continue;
                     }
-                    // Build deterministic matrices in Montgomery storage.
                     let a: Vec<Fp<P>> = (0..(m * k) as u64)
                         .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
                         .collect();
                     let bt: Vec<Fp<P>> = (0..(n * k) as u64)
                         .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
                         .collect();
-                    // Scalar reference: out[i*n+j] = sum_t a[i*k+t] * bt[j*k+t].
                     let mut out_ref = vec![Fp::<P>::new(0); m * n];
                     for i in 0..m {
                         for j in 0..n {
@@ -2909,8 +2823,6 @@ mod tests {
         }
     }
 
-    /// Boundary-length scalar equivalence of the small-prime GEMM dispatch
-    /// for each of m, k, n.
     #[test]
     fn test_small_prime_gemm_dispatch_boundary_lengths() {
         #[cfg(not(feature = "simd"))]
@@ -2929,9 +2841,6 @@ mod tests {
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(32))]
 
-        /// Property: `fp_small_try_gemm_classical` for GF(251) at random
-        /// `(m, k, n)` boundary shapes matches the scalar GEMM reference
-        /// bit-exactly.
         #[test]
         fn proptest_small_prime_gemm_boundary_fp251(
             m_idx in 0usize..10,
@@ -2995,9 +2904,6 @@ mod tests {
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(48))]
 
-        /// Property: the small-prime prepack matvec path returns the same result
-        /// as the scalar reference for any `(m, k)` shape with each dimension in
-        /// `{0, 1, 15, 16, 17, 63, 64, 65}`.
         #[test]
         fn proptest_small_prime_prepack_matvec_boundary_fp251(
             m_idx in 0usize..8,
@@ -3095,14 +3001,11 @@ mod tests {
         check_generic_prime::<2_305_843_009_213_693_907>();
         check_generic_prime::<9_223_372_036_854_775_783>();
 
-        // Small-prime AVX2 byte-lane kernels (P <= 251).
         check_small_prime::<7>();
         check_small_prime::<31>();
         check_small_prime::<251>();
     }
 
-    /// SIMD path matches scalar element-wise across `WORD_BOUNDARY_LENS` for
-    /// the small-prime byte-lane dispatch (`P <= 251`).
     fn check_small_prime<const P: u64>() {
         #[cfg(not(feature = "simd"))]
         {
@@ -3170,8 +3073,6 @@ mod tests {
                     assert_eq!(got_mul[i], a[i] * b[i], "mul P={P}, len={len}, i={i}");
                 }
 
-                // Dot product hook: the SIMD path is bit-exact against a
-                // canonical scalar reference at the same word-boundary lens.
                 let mut scratch_a = Vec::<u16>::new();
                 let mut scratch_b = Vec::<u16>::new();
                 let got_dot =
@@ -3235,8 +3136,6 @@ mod tests {
                 .map(|i| Fp::<P>::new(i.wrapping_mul(40_503).wrapping_add(7)))
                 .collect();
 
-            // Dispatch must reach the M31-specialised SIMD path, never
-            // the generic Montgomery AVX2 lane.
             let got = <Fp<P> as SimdVecOps>::try_simd_mul_vec(&a, &b)
                 .expect("M31 dispatch must yield Some on AVX2 host");
             assert_eq!(

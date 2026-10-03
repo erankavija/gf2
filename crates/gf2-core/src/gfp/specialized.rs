@@ -6,26 +6,11 @@
 //! prime `2^64 - 2^32 + 1`, reduced through `2^64 ≡ 2^32 - 1 (mod p)`.
 //! `Fp<P>` stores canonical values for the shapes that
 //! `use_specialized_storage` in the parent module selects.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gfp::specialized::{classify, PrimeShape};
-//!
-//! assert_eq!(classify((1u64 << 31) - 1), PrimeShape::Mersenne { n: 31 });
-//! assert_eq!(classify((1u64 << 61) - 1), PrimeShape::Mersenne { n: 61 });
-//! assert_eq!(classify(3 * (1u64 << 32) + 1), PrimeShape::Proth { k: 3, n: 32 });
-//! assert_eq!(classify(7), PrimeShape::Generic);
-//! ```
 
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use crate::field::{ConstField, FiniteField};
-
-// ---------------------------------------------------------------------------
-// Compile-time prime classification
-// ---------------------------------------------------------------------------
 
 /// Algebraic shape of a prime `P`, produced by the const [`classify`]
 /// function to drive compile-time dispatch in the generic `Fp<P>` type.
@@ -55,16 +40,6 @@ pub enum PrimeShape {
 pub const GOLDILOCKS_PRIME: u64 = 0xFFFF_FFFF_0000_0001;
 
 /// Returns `true` if `p = 2^n - 1` for some `4 ≤ n ≤ 62`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::is_mersenne_prime;
-///
-/// assert!(is_mersenne_prime((1u64 << 31) - 1));
-/// assert!(is_mersenne_prime((1u64 << 61) - 1));
-/// assert!(!is_mersenne_prime(7)); // 7 = 2^3 - 1 but P must be at least 3
-/// ```
 #[inline]
 pub const fn is_mersenne_prime(p: u64) -> bool {
     matches!(classify(p), PrimeShape::Mersenne { .. })
@@ -72,15 +47,6 @@ pub const fn is_mersenne_prime(p: u64) -> bool {
 
 /// Returns `true` if `p = k·2^n + 1` for some odd `k ≥ 1` and `n ≥ 16`,
 /// with `k < 2^n`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::is_proth_prime;
-///
-/// assert!(is_proth_prime(3 * (1u64 << 32) + 1));
-/// assert!(!is_proth_prime(7));
-/// ```
 #[inline]
 pub const fn is_proth_prime(p: u64) -> bool {
     matches!(classify(p), PrimeShape::Proth { .. })
@@ -96,16 +62,6 @@ pub const fn is_goldilocks_prime(p: u64) -> bool {
 ///
 /// `p` must be prime for correctness of the selected reduction; primality
 /// is **not** verified.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::{classify, PrimeShape};
-///
-/// assert_eq!(classify((1u64 << 61) - 1), PrimeShape::Mersenne { n: 61 });
-/// assert_eq!(classify(65537), PrimeShape::Proth { k: 1, n: 16 });
-/// assert_eq!(classify(17), PrimeShape::Generic);
-/// ```
 pub const fn classify(p: u64) -> PrimeShape {
     if p == GOLDILOCKS_PRIME {
         return PrimeShape::Goldilocks;
@@ -136,10 +92,6 @@ pub const fn classify(p: u64) -> PrimeShape {
 
     PrimeShape::Generic
 }
-
-// ---------------------------------------------------------------------------
-// Specialized reductions: 128-bit product -> canonical
-// ---------------------------------------------------------------------------
 
 /// Reduces a 128-bit product modulo a Mersenne prime `P = 2^n - 1`.
 ///
@@ -305,10 +257,6 @@ pub fn goldilocks_reduce_fast(x: u128) -> u64 {
     goldilocks_sub(acc1, hh)
 }
 
-// ---------------------------------------------------------------------------
-// Batch SIMD multiplication for M31 = 2^31 - 1
-// ---------------------------------------------------------------------------
-
 /// The Mersenne prime `M31 = 2^31 - 1`.
 pub const M31_PRIME: u64 = (1u64 << 31) - 1;
 
@@ -324,21 +272,6 @@ pub const M31_PRIME: u64 = (1u64 << 31) - 1;
 /// # Panics
 ///
 /// Panics if `a.len() != b.len()` or `a.len() != out.len()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::{batch_mul_mersenne31, M31_PRIME};
-///
-/// let a: Vec<u32> = (1..=8u32).collect();
-/// let b: Vec<u32> = (2..=9u32).collect();
-/// let mut out = vec![0u32; 8];
-/// batch_mul_mersenne31(&a, &b, &mut out);
-/// for i in 0..8 {
-///     let expected = ((a[i] as u64 * b[i] as u64) % M31_PRIME) as u32;
-///     assert_eq!(out[i], expected);
-/// }
-/// ```
 pub fn batch_mul_mersenne31(a: &[u32], b: &[u32], out: &mut [u32]) {
     assert_eq!(a.len(), b.len(), "batch_mul_mersenne31: length mismatch");
     assert_eq!(a.len(), out.len(), "batch_mul_mersenne31: output length");
@@ -365,21 +298,6 @@ pub fn batch_mul_mersenne31(a: &[u32], b: &[u32], out: &mut [u32]) {
 /// # Panics
 ///
 /// Panics if the three slices have different lengths.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::{batch_mul_add_mersenne31, M31_PRIME};
-///
-/// let a: Vec<u32> = vec![2, 3, 4, 5, 6, 7, 8, 9];
-/// let b: Vec<u32> = vec![10, 11, 12, 13, 14, 15, 16, 17];
-/// let mut acc: Vec<u32> = vec![1; 8];
-/// batch_mul_add_mersenne31(&a, &b, &mut acc);
-/// for i in 0..8 {
-///     let expected = ((1 + a[i] as u64 * b[i] as u64) % M31_PRIME) as u32;
-///     assert_eq!(acc[i], expected);
-/// }
-/// ```
 pub fn batch_mul_add_mersenne31(a: &[u32], b: &[u32], acc: &mut [u32]) {
     assert_eq!(
         a.len(),
@@ -413,18 +331,6 @@ pub fn batch_mul_add_mersenne31(a: &[u32], b: &[u32], acc: &mut [u32]) {
 /// # Panics
 ///
 /// Panics if `a.len() != b.len()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::{batch_dot_mersenne31, M31_PRIME};
-///
-/// let a: Vec<u32> = (1..=100u32).collect();
-/// let b: Vec<u32> = (1..=100u32).collect();
-/// let got = batch_dot_mersenne31(&a, &b);
-/// let expected: u64 = (1..=100u64).map(|x| x * x).sum::<u64>() % M31_PRIME;
-/// assert_eq!(got as u64, expected);
-/// ```
 pub fn batch_dot_mersenne31(a: &[u32], b: &[u32]) -> u32 {
     assert_eq!(a.len(), b.len(), "batch_dot_mersenne31: length mismatch");
 
@@ -458,10 +364,6 @@ fn scalar_m31_mul(a: u32, b: u32) -> u32 {
     (if r >= p31 { r - p31 } else { r }) as u32
 }
 
-// ---------------------------------------------------------------------------
-// Specialized modular addition / subtraction for primes up to 2^63
-// ---------------------------------------------------------------------------
-
 /// Branchless modular addition in `[0, P)` for canonical (non-Montgomery)
 /// storage. Assumes `a, b < P ≤ 2^63`.
 #[inline]
@@ -480,31 +382,12 @@ pub(super) const fn canonical_sub<const P: u64>(a: u64, b: u64) -> u64 {
     result.wrapping_add(correction)
 }
 
-// ---------------------------------------------------------------------------
-// GoldilocksFp — dedicated type (since the prime exceeds 2^63)
-// ---------------------------------------------------------------------------
-
 /// A field element in `GF(2^64 - 2^32 + 1)` (the Goldilocks prime).
 ///
 /// Unlike `Fp<P>`, this type has a fixed modulus — needed because the
 /// Goldilocks prime exceeds the `P ≤ 2^63` overflow-safety bound enforced
 /// by `Fp<P>`. Internally stores canonical values in `[0, p)` and uses the
 /// [`goldilocks_reduce_fast`] path for multiplication.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::specialized::GoldilocksFp;
-/// use gf2_core::field::{ConstField, FiniteField};
-///
-/// let a = GoldilocksFp::new(12345);
-/// let b = GoldilocksFp::new(67890);
-/// let c = a * b;
-/// assert_eq!(c.value(), (12345u128 * 67890u128 % GoldilocksFp::PRIME as u128) as u64);
-///
-/// let inv = a.inv().unwrap();
-/// assert!((a * inv).is_one());
-/// ```
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GoldilocksFp(u64);
 
@@ -513,15 +396,6 @@ impl GoldilocksFp {
     pub const PRIME: u64 = GOLDILOCKS_PRIME;
 
     /// Creates a new element from a representative value, reduced modulo the prime.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::specialized::GoldilocksFp;
-    ///
-    /// let a = GoldilocksFp::new(GoldilocksFp::PRIME); // wraps to 0
-    /// assert_eq!(a.value(), 0);
-    /// ```
     #[inline]
     pub const fn new(value: u64) -> Self {
         // PRIME > 2^63, so a single conditional subtract canonicalises.
@@ -649,7 +523,6 @@ impl AddAssign<&Self> for GoldilocksFp {
     }
 }
 
-// Reference-forwarding ops
 impl Add<&GoldilocksFp> for GoldilocksFp {
     type Output = GoldilocksFp;
     #[inline]
@@ -812,16 +685,10 @@ impl ConstField for GoldilocksFp {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use proptest::prelude::*;
-
-    // --- classify() ---
 
     #[test]
     fn classify_detects_mersenne() {
@@ -837,7 +704,7 @@ mod tests {
         // `PrimeShape::Proth { k, n }` form.
         use crate::field::two_adic::{BABYBEAR_P, KOALABEAR_P};
 
-        // BabyBear: 15 * 2^27 + 1 (prime, used in Plonky3)
+        // BabyBear: 15 * 2^27 + 1
         assert_eq!(classify(BABYBEAR_P), PrimeShape::Proth { k: 15, n: 27 });
         // 65537 = 1 * 2^16 + 1 (Fermat prime, also Proth with k=1)
         assert_eq!(classify(65537), PrimeShape::Proth { k: 1, n: 16 });
@@ -858,8 +725,6 @@ mod tests {
         assert_eq!(classify(17), PrimeShape::Generic);
         assert_eq!(classify(1_000_003), PrimeShape::Generic);
     }
-
-    // --- mersenne_reduce ---
 
     #[test]
     fn mersenne_reduce_matches_naive_small() {
@@ -891,8 +756,6 @@ mod tests {
         assert_eq!(got, expected);
     }
 
-    // --- proth_reduce ---
-
     #[test]
     fn proth_reduce_small_values() {
         // BabyBear: 15 * 2^27 + 1 (a genuine Proth prime).
@@ -920,14 +783,11 @@ mod tests {
         const K: u64 = 15;
         const N: u32 = 27;
         let p = K * (1u64 << N) + 1;
-        // 127-bit values
         let big = (1u128 << 127) - 1;
         let got = proth_reduce::<K, N>(big);
         let expected = (big % p as u128) as u64;
         assert_eq!(got, expected);
     }
-
-    // --- goldilocks_reduce_fast ---
 
     #[test]
     fn goldilocks_reduce_fast_matches_naive() {
@@ -949,15 +809,12 @@ mod tests {
         }
     }
 
-    // --- GoldilocksFp basic arithmetic ---
-
     #[test]
     fn goldilocks_add_basic() {
         let a = GoldilocksFp::new(10);
         let b = GoldilocksFp::new(20);
         assert_eq!((a + b).value(), 30);
 
-        // wrap around
         let big = GoldilocksFp::new(GoldilocksFp::PRIME - 1);
         let one = GoldilocksFp::new(1);
         assert_eq!((big + one).value(), 0);
@@ -1009,8 +866,6 @@ mod tests {
         assert!(GoldilocksFp::one().is_one());
         assert_eq!(GoldilocksFp::order(), GOLDILOCKS_PRIME as u128);
     }
-
-    // --- Proptest cross-verification ---
 
     proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(500))]
@@ -1094,7 +949,6 @@ mod tests {
     /// BabyBear Proth prime: 15 · 2^27 + 1 = 2013265921.
     const PROTH: u64 = BABYBEAR_P;
 
-    // ------------------------------------------------------------------
     // Naive Montgomery reference (standalone; independent of the main
     // gfp::montgomery module, so a bug in that module cannot paper over a
     // bug in the specialised path and vice versa).
@@ -1104,7 +958,6 @@ mod tests {
     // Preconditions: P must be an *odd* prime with `P ≤ 2^63`.
     // Goldilocks exceeds the bound and is cross-verified via the `%`
     // reference path instead (`proptest_goldilocks_mul_matches_naive`).
-    // ------------------------------------------------------------------
 
     /// `-P^{-1} mod 2^64` computed via Hensel lifting (requires odd P).
     const fn ref_mont_p_inv(p: u64) -> u64 {
@@ -1133,14 +986,12 @@ mod tests {
         }
     }
 
-    /// Convert canonical `a ∈ [0, p)` into Montgomery form via `R^2 mod p`.
     const fn ref_to_mont(a: u64, p: u64) -> u64 {
         let r_mod_p = (1u128 << 64) % p as u128;
         let r2_mod_p = ((r_mod_p * r_mod_p) % p as u128) as u64;
         ref_redc(a as u128 * r2_mod_p as u128, p)
     }
 
-    /// Convert Montgomery form back to canonical.
     const fn ref_from_mont(a: u64, p: u64) -> u64 {
         ref_redc(a as u128, p)
     }
@@ -1157,7 +1008,6 @@ mod tests {
         ref_from_mont(prod_m, p)
     }
 
-    /// Modular addition and subtraction in canonical form (for cross-check).
     fn ref_canonical_add(a: u64, b: u64, p: u64) -> u64 {
         ((a as u128 + b as u128) % p as u128) as u64
     }
@@ -1307,10 +1157,6 @@ mod tests {
 
     }
 
-    // -----------------------------------------------------------------------
-    // Batch SIMD Mersenne31 tests
-    // -----------------------------------------------------------------------
-
     #[test]
     fn batch_mul_mersenne31_matches_scalar_small() {
         let a: Vec<u32> = (0..17u32).map(|i| (i * 12345) % M31_PRIME as u32).collect();
@@ -1373,8 +1219,6 @@ mod tests {
     proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(50))]
 
-        /// SIMD batch mul must equal the scalar loop for random vectors of
-        /// length 1..100.
         #[test]
         fn proptest_batch_mul_mersenne31_matches_loop(
             len in 1usize..100,
@@ -1400,8 +1244,6 @@ mod tests {
             }
         }
 
-        /// SIMD batch dot must equal the scalar sum-of-products for random
-        /// vectors of length 1..100.
         #[test]
         fn proptest_batch_dot_mersenne31_matches_loop(
             len in 1usize..100,
@@ -1431,8 +1273,6 @@ mod tests {
     #[test]
     fn specialized_storage_flags() {
         use crate::gfp::Fp;
-        // Specialized and generic primes both round-trip through
-        // `new` / `value`, regardless of internal storage form.
         let a = Fp::<M31>::new(1234567);
         assert_eq!(a.value(), 1234567);
         let b = Fp::<PROTH>::new(1_000_000_001);

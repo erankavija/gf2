@@ -6,28 +6,6 @@
 //! of `P`. The Goldilocks prime `2^64 − 2^32 + 1` does not fit the
 //! `P ≤ 2^63` bound enforced by `Fp<P>` and is exposed via the dedicated
 //! [`specialized::GoldilocksFp`] type.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::field::{FiniteField, ConstField, FiniteFieldExt};
-//!
-//! // GF(7): integers {0, 1, 2, 3, 4, 5, 6} with arithmetic mod 7
-//! let a = Fp::<7>::new(3);
-//! let b = Fp::<7>::new(5);
-//!
-//! // Addition: (3 + 5) mod 7 = 1
-//! assert_eq!(a + b, Fp::<7>::new(1));
-//!
-//! // Multiplication: (3 * 5) mod 7 = 1, so 3 and 5 are inverses
-//! assert_eq!(a * b, Fp::<7>::new(1));
-//! assert_eq!(a.inv(), Some(b));
-//!
-//! // ConstField provides zero-argument constructors
-//! assert!(Fp::<7>::zero().is_zero());
-//! assert!(Fp::<7>::one().is_one());
-//! ```
 
 mod montgomery;
 pub mod simd_ops;
@@ -79,22 +57,6 @@ const fn use_specialized_storage(p: u64) -> bool {
 ///
 /// The type parameter `P` must be prime with `1 < P <= 2^63`; primality is not
 /// checked at compile time but is required for correctness.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::field::{FiniteField, FiniteFieldExt};
-///
-/// let a = Fp::<5>::new(3);
-/// let b = Fp::<5>::new(4);
-///
-/// // Fermat's little theorem: a^(p-1) = 1 for non-zero a
-/// assert!(a.pow(4).is_one());
-///
-/// // Additive inverse: -3 mod 5 = 2
-/// assert_eq!(-a, Fp::<5>::new(2));
-/// ```
 ///
 /// # Panics
 ///
@@ -225,10 +187,6 @@ impl<const P: u64> fmt::Display for Fp<P> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Arithmetic operators
-// ---------------------------------------------------------------------------
-
 impl<const P: u64> Add for Fp<P> {
     type Output = Self;
 
@@ -307,10 +265,6 @@ impl<const P: u64> Div for Fp<P> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// AddAssign
-// ---------------------------------------------------------------------------
-
 impl<const P: u64> AddAssign for Fp<P> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
@@ -324,10 +278,6 @@ impl<const P: u64> AddAssign<&Self> for Fp<P> {
         *self = *self + *rhs;
     }
 }
-
-// ---------------------------------------------------------------------------
-// Reference-forwarding operators (Fp is Copy, so dereference and delegate)
-// ---------------------------------------------------------------------------
 
 impl<const P: u64> Add<&Fp<P>> for Fp<P> {
     type Output = Fp<P>;
@@ -400,10 +350,6 @@ impl<const P: u64> Neg for &Fp<P> {
         -(*self)
     }
 }
-
-// ---------------------------------------------------------------------------
-// FiniteField implementation
-// ---------------------------------------------------------------------------
 
 impl<const P: u64> FiniteField for Fp<P> {
     type Characteristic = u64;
@@ -789,10 +735,6 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// ConstField implementation
-// ---------------------------------------------------------------------------
-
 impl<const P: u64> ConstField for Fp<P> {
     #[inline]
     fn zero() -> Self {
@@ -817,10 +759,6 @@ impl<const P: u64> ConstField for Fp<P> {
         P as u128
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -1014,8 +952,6 @@ mod tests {
         assert_eq!(Fp::<65537>::order(), 65537u128);
     }
 
-    // --- Cross-verification: exhaustive for small primes ---
-
     #[test]
     fn test_montgomery_cross_verify_gf3_exhaustive() {
         for a in 0..3u64 {
@@ -1067,8 +1003,6 @@ mod tests {
             }
         }
     }
-
-    // --- Cross-verification: proptest for large primes ---
 
     mod proptest_cross_verify {
         use super::*;
