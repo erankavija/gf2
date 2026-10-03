@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:06:15.154979910Z",
+  "dependencies": [],
+  "description": "The AVX2 $\\mathbb{F}_7$ packed kernels perform byte-pair LUT lookups as scalar loads per `u64` inside each AVX2 register. A gather-based lookup is an untested alternative.\n\n## Background\n\n`crates/gf2-kernels-simd/src/bipedal/packed7.rs` and `crate::x86::bipedal_avx2_packed7` hold the kernels. The module documentation named the gather form as deferred work; the source-comment sweep removed that statement, and this issue tracks it.\n\n## Success Criteria\n\n- [hard] REQ-01: A gather-based AVX2 lookup for the $\\mathbb{F}_7$ packed kernels is implemented behind the existing dispatch with the scalar-LUT path as its tested fallback, or a committed receipt records that it does not improve on the scalar-LUT path and the candidate is dropped.\n- [hard] REQ-02: Any implemented path passes the shared behavioral suite of the $\\mathbb{F}_7$ packed kernels, including the word-boundary cases.\n- [hard] REQ-03: The decision cites a committed benchmark receipt from the overnight benchmark window, per `@/inv/benchmark-backed-performance`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:06:15.154979910Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "f6ee400a-666d-4ef5-a6c7-5ce434366f4d",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Evaluate a gather-based AVX2 lookup for the F_7 packed kernels",
+  "updated_at": "2026-10-03T22:06:15.154979910Z"
+}

@@ -53,7 +53,8 @@
     "ebd26779-46fb-4103-acdf-c2197d6dd8dc",
     "f258468e-a973-4b07-a663-99b18e1e8713",
     "f556d663-e4cf-4da7-b36e-8d726286a848",
-    "f6603b37-0835-4735-97ca-2df5dcd6522b"
+    "f6603b37-0835-4735-97ca-2df5dcd6522b",
+    "f6ee400a-666d-4ef5-a6c7-5ce434366f4d"
   ],
   "description": "Remediation of technical debt surfaced by the 2026-06-30 workflow-driven assessment of the gf2 workspace. The assessment audited all six crates against the project coding ideals (AGENTS.md + @/gate/code-review) and for documentation drift, producing 71 verified findings (1 critical, 6 high, 44 medium, 20 low) across 9 dimensions: tail-masking, unsafe-isolation, bitwise-arithmetic, functional-api, doc-completeness, test-conventions, msrv, ssot-duplication, separation-of-concerns, doc-drift.\n\nThe full report is attached to this epic via `jit doc list`.\n\n## Scope\n\nThis epic covers the code-debt half of the assessment. Documentation-drift findings transferred to the documentation-overhaul epic on 2026-08-07 so that code remediation is not gated on the documentation contract; the transfer is itemised under \"Transferred scope\" below.\n\n- **Critical/high (5 code findings retained):** one task each, covering the single correctness hole (`BitVec::from_words` tail masking), the unsafe-doc isolation gap, the `polar_transform` performance regression, the CI-budget-breaking `SimulationRunner` tests, and the F_3 permanent bound stated in the gf2-kernels-hip FFI docs.\n- **Medium/low (64 findings):** filed as dimension-scoped bundles after scoping with the user; granularity and inclusion decided per dimension.\n\n## Transferred scope\n\nTracked under epic `fa787f85` (Overhaul documentation for research adoption), reconciled through its REQ-18:\n\n- `44c98235` — Rewrite README for research adoption (high, doc-drift).\n- `84db2984` — Fix `SparseFieldMatrix::from_entries` reference in FieldMatrix deck (high, doc-drift; rejected as obsolete).\n- `12907582` — Correct surviving source-level documentation drift (medium/low doc-drift bundle).\n- Rustdoc `# Examples` additions for accessor-shaped public API, split out of `aabc528a` because they are governed by the non-trivial-example policy that `3f29e945` establishes.\n\n## Success Criteria\n\n- [hard] REQ-01: All five retained critical/high code findings have dedicated task issues wired under this epic; the transferred documentation findings are tracked under `fa787f85` and itemised in \"Transferred scope\" above.\n- [hard] REQ-02: The assessment report is linked to this epic via `jit doc add`.\n- [hard] REQ-03: Every child task carries explicit, verifiable success criteria traceable to a report finding.\n- [hard] REQ-04: The epic is `done` only when all child tasks are `done` or explicitly rejected with justification.\n",
   "documents": [
@@ -79,5 +80,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Technical debt assessment remediation (2026-06-30)",
-  "updated_at": "2026-10-03T18:02:20.772992216Z"
+  "updated_at": "2026-10-03T22:06:27.780030071Z"
 }

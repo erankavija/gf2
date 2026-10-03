@@ -23,12 +23,12 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T21:36:48.563575745Z",
+      "updated_at": "2026-10-03T22:05:21.077723838Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T21:29:22.649271827Z",
+      "updated_at": "2026-10-03T22:00:23.119858509Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the remaining gf2-kernels-simd files",
-  "updated_at": "2026-10-03T21:36:48.563575745Z"
+  "updated_at": "2026-10-03T22:05:21.077723838Z"
 }
