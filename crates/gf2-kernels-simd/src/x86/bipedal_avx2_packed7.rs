@@ -1,13 +1,9 @@
 //! AVX2 batch entry points for the F_7 4-bit-packed encoding.
 //!
-//! One `u64` holds 16 F_7 elements in 4-bit slots; one iteration consumes 4
-//! words (64 elements). Each lane's words are extracted, passed through the
-//! 64 KiB scalar LUTs of [`crate::bipedal::packed7`], and reassembled. The
-//! private helpers are `#[inline(always)]` without `#[target_feature]` and
-//! inherit AVX2 from the `#[target_feature(enable = "avx2")]` entry points.
-//!
-//! All slices of one call share a length `n` with `n % 4 == 0`; `n = 0` is a
-//! no-op.
+//! One `u64` holds 16 F_7 elements in 4-bit slots, mapped through the scalar
+//! LUTs of [`crate::bipedal::packed7`]. All slices of one call share a length
+//! `n` with `n % 4 == 0`; `n = 0` is a no-op. The private helpers carry no
+//! `#[target_feature]` and are called only from the AVX2 entry points.
 
 use crate::bipedal::packed7::{binary7_op_word, neg7_word, ADD7_LUT, MUL7_LUT, SUB7_LUT};
 
@@ -15,10 +11,6 @@ use crate::bipedal::packed7::{binary7_op_word, neg7_word, ADD7_LUT, MUL7_LUT, SU
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
-
-// ---------------------------------------------------------------------------
-// Per-lane LUT application helpers
-// ---------------------------------------------------------------------------
 
 /// Apply a binary F_7 LUT op to 4 u64 words packed in one AVX2 register.
 ///
@@ -62,10 +54,6 @@ unsafe fn neg7_avx2_lane(a: __m256i) -> __m256i {
     _mm256_set_epi64x(r3, r2, r1, r0)
 }
 
-// ---------------------------------------------------------------------------
-// Load / store helpers
-// ---------------------------------------------------------------------------
-
 #[inline(always)]
 unsafe fn load256(src: &[u64], offset: usize) -> __m256i {
     // SAFETY: caller ensures offset + 4 <= src.len() and AVX2 available.
@@ -78,10 +66,6 @@ unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
     _mm256_storeu_si256(dst.as_mut_ptr().add(offset) as *mut __m256i, v)
 }
 
-// ---------------------------------------------------------------------------
-// Public batch entry points
-// ---------------------------------------------------------------------------
-
 /// Apply F_7 add over packed word streams via AVX2.
 ///
 /// Each AVX2 lane covers 4 u64 words (= 64 F_7 elements). All three slices
@@ -92,10 +76,6 @@ unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
 ///
 /// AVX2 must be available at runtime. All three slices share the same length
 /// divisible by 4. Behaviour is undefined otherwise.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 lanes processed; each lane applies 4 scalar LUT ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_add7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
@@ -122,10 +102,6 @@ pub unsafe fn run_add7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
 ///
 /// AVX2 must be available at runtime. All three slices share the same length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_sub7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
@@ -152,10 +128,6 @@ pub unsafe fn run_sub7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
 ///
 /// AVX2 must be available at runtime. All three slices share the same length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_mul7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
@@ -180,10 +152,6 @@ pub unsafe fn run_mul7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
 ///
 /// AVX2 must be available at runtime. Both slices share the same length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_neg7_batch(a: &[u64], out: &mut [u64]) {

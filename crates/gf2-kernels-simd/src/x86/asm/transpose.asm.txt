@@ -1400,28 +1400,7 @@ gf2_kernels_simd::x86::transpose::transpose_64x64_avx2_movemask:
 
 
 ;==========================================================
-; Derived annotation
-;
-; Counted from the disassembly above by
-; dev/active/1d4fd63d/survey/annotate-asm.py, which reads only these
-; bytes. See that script's module docstring for what each row counts.
-;==========================================================
-
-
-;==========================================================
-; Derived annotation
-;
-; Counted from the disassembly above by
-; dev/active/1d4fd63d/survey/annotate-asm.py, which reads only these
-; bytes. See that script's module docstring for what each row counts.
-;==========================================================
-
-
-;=== derived annotation block ===
-;==========================================================
-; Counted from the disassembly above by
-; dev/active/1d4fd63d/survey/annotate-asm.py, which reads only these
-; bytes. See that script's module docstring for what each row counts.
+; Derived annotation: counts taken from the disassembly above.
 ;==========================================================
 
 ;=== derived annotation for gf2_kernels_simd::x86::transpose::transpose_64x64_avx2 (index 0) ===

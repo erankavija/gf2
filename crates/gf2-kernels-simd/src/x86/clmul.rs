@@ -12,19 +12,6 @@
 ///
 /// Requires the PCLMULQDQ and SSE4.1 CPU features. Caller must verify
 /// availability before calling.
-///
-/// # Usage
-///
-/// This is a crate-internal function exposed through the safe `Gf2mFns` dispatch:
-///
-/// ```text
-/// let fns = gf2_kernels_simd::gf2m::detect().unwrap();
-/// let product = (fns.clmul_fn.unwrap())(a, b);
-/// ```
-///
-/// # Complexity
-///
-/// O(1) -- single hardware instruction.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
@@ -57,21 +44,6 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
 ///
 /// Requires the PCLMULQDQ and SSE4.1 CPU features. Caller must verify
 /// availability before calling.
-///
-/// # Usage
-///
-/// This is a crate-internal function exposed through the safe `Gf2mFns` dispatch:
-///
-/// ```text
-/// let fns = gf2_kernels_simd::gf2m::detect().unwrap();
-/// let batch_fn = fns.clmul_batch_fn.unwrap();
-/// let mut out = vec![0u128; a.len()];
-/// batch_fn(&a, &b, &mut out);
-/// ```
-///
-/// # Complexity
-///
-/// O(n) where n is the slice length.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_batch(a: &[u64], b: &[u64], out: &mut [u128]) {
@@ -183,8 +155,7 @@ pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128])
 /// Carry-less multiplication with Barrett reduction, all in one PCLMULQDQ pass.
 ///
 /// Performs: `a * b mod P(x)` using Barrett reduction with precomputed `mu`.
-/// All three carry-less multiplications use PCLMULQDQ, keeping values in
-/// SIMD registers to avoid function-pointer call overhead.
+/// All three carry-less multiplications use PCLMULQDQ.
 ///
 /// # Arguments
 ///
@@ -197,20 +168,6 @@ pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128])
 /// # Safety
 ///
 /// Requires the PCLMULQDQ and SSE4.1 CPU features.
-///
-/// # Usage
-///
-/// This is a crate-internal function exposed through the safe `Gf2mFns` dispatch:
-///
-/// ```text
-/// let fns = gf2_kernels_simd::gf2m::detect().unwrap();
-/// // GF(2^4) with primitive polynomial x^4 + x + 1 = 0b10011
-/// let product = (fns.clmul_reduce_fn.unwrap())(0b1010, 0b1100, mu, 0b10011, 4);
-/// ```
-///
-/// # Complexity
-///
-/// O(1) — three PCLMULQDQ instructions plus constant-time correction.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
@@ -225,7 +182,6 @@ pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree
 
     let field_mask = (1u64 << degree) - 1;
 
-    // Step 1: raw product = a clmul b
     let a_reg = _mm_set_epi64x(0, a as i64);
     let b_reg = _mm_set_epi64x(0, b as i64);
     let product_reg = _mm_clmulepi64_si128::<0x00>(a_reg, b_reg);
@@ -260,7 +216,6 @@ pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree
 
     let mut r = product ^ qp;
 
-    // Correction steps (at most two)
     if r >> degree != 0 {
         r ^= modulus as u128;
     }
@@ -301,7 +256,6 @@ mod tests {
             (0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210),
             (2, 3), // (x) * (x + 1) = x^2 + x
             (0b1011, 0b1101),
-            // Large operands
             (0x8000_0000_0000_0000, 0x8000_0000_0000_0000),
             (0x7FFF_FFFF_FFFF_FFFF, 0x7FFF_FFFF_FFFF_FFFF),
         ];
@@ -345,7 +299,6 @@ mod tests {
             return;
         }
 
-        // Exhaustive for all 8-bit pairs
         for a in 0u64..=255 {
             for b in 0u64..=255 {
                 let expected = scalar_clmul(a, b);
@@ -372,7 +325,8 @@ mod tests {
         0xFEDC_BA98_7654_3210,
     ];
 
-    /// SplitMix64, so random operands are reproducible without a dependency.
+    /// SplitMix64 (`@/citation/Steele2014`), so random operands are
+    /// reproducible without a dependency.
     fn splitmix64(state: &mut u64) -> u64 {
         *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = *state;
@@ -494,7 +448,6 @@ mod tests {
             return;
         }
 
-        // Standard primitive polynomials for m=2..16
         let polys: &[(u32, u64)] = &[
             (2, 0b111),                // x^2 + x + 1
             (3, 0b1011),               // x^3 + x + 1
@@ -514,7 +467,6 @@ mod tests {
         ];
 
         for &(m, poly) in polys {
-            // Compute Barrett constant mu = x^(2m) / P(x)
             let mut remainder: u128 = 1u128 << (2 * m);
             let mut mu: u64 = 0;
             let p = poly as u128;
@@ -528,7 +480,6 @@ mod tests {
 
             let field_mask = (1u64 << m) - 1;
             let num_elements = 1u64 << m;
-            // For small fields, test exhaustively; for larger ones, sample
             let test_count = if num_elements <= 256 {
                 num_elements
             } else {
@@ -550,7 +501,6 @@ mod tests {
 
                     let simd_result = unsafe { clmul_barrett_reduce(a, b, mu, poly, m) };
 
-                    // Scalar reference: clmul then naive reduce
                     let product = scalar_clmul(a, b);
                     let mut r = product;
                     for bit in (m..128).rev() {
