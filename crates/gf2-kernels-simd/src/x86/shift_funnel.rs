@@ -2,20 +2,12 @@
 //!
 //! Both kernels answer the funnel contract [`crate::shift_funnel`] states and
 //! are reached only through [`crate::shift_funnel::detect`], which publishes a
-//! safe wrapper once `is_x86_feature_detected!("bmi2")` holds.
-//!
-//! The expression each word is written with is the shift-and-complement pair
-//! the portable funnel already writes. Under this module's
-//! `#[target_feature(enable = "bmi2")]` scope it lowers to the variable-count
-//! shifts BMI2 adds, which is what the scope is here for: Rust 1.95 exposes no
-//! double-precision shift intrinsic, so the instruction is reachable only as an
-//! expression the backend folds. Which expression reaches which instruction at
-//! that compiler is settled by the planning-time record
-//! `dev/active/c04dd4ac-zen3-shifts-and-permutations/shift-feasibility-record.md`,
-//! and `src/x86/asm/shift_funnel.asm.txt` is this module's own emitted loop in
-//! both directions.
-//!
-//! The word pair is unrolled so the two funnel chains are independent.
+//! safe wrapper once `is_x86_feature_detected!("bmi2")` holds. Each word is
+//! written with the portable funnel's shift-and-complement expression, which
+//! the `bmi2` scope lowers to variable-count shifts; Rust 1.95 exposes no
+//! double-precision shift intrinsic. The word pair is unrolled so the two
+//! funnel chains are independent. `src/x86/asm/shift_funnel.asm.txt` holds the
+//! emitted loops.
 
 /// Residual left funnel: writes `data[word_shift + 1 ..]` descending.
 ///

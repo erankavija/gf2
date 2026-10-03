@@ -1,18 +1,10 @@
-//! Shared Barrett-reduction helpers for AVX2 + VPCLMULQDQ GF(2^m) kernels
-//! over `m in {8, 16, 32}`.
+//! Carry-less-multiply and Barrett-reduction helpers shared by the AVX2 +
+//! VPCLMULQDQ GF(2^m) kernels `gf2m_batch` and `gf2m_gemm`, `m in {8, 16, 32}`.
 //!
-//! These helpers are the single source of truth for the carry-less-multiply
-//! plus Barrett-reduce algorithm used by both `gf2m_batch` (per-element
-//! batch multiply / square) and `gf2m_gemm` (panelized broadcast-multiply
-//! GEMM). Keeping them here avoids the ~100-line copy/paste that would
-//! otherwise need to be maintained in two places.
-//!
-//! All helpers are `pub(crate)`, `unsafe`, and `#[inline(always)]`. Callers
-//! must invoke them from a `#[target_feature(enable = "avx2", enable =
-//! "vpclmulqdq", enable = "pclmulqdq", enable = "sse4.1")]` context — the
-//! intrinsics inside the helpers require those features. With
-//! `#[inline(always)]` the helpers are inlined into the caller's
-//! target-feature scope, so the compiler emits the intrinsics correctly.
+//! The intrinsic helpers are `unsafe` and `#[inline(always)]`: callers invoke
+//! them from a `#[target_feature(enable = "avx2", enable = "vpclmulqdq",
+//! enable = "pclmulqdq", enable = "sse4.1")]` context, whose feature scope the
+//! inlined intrinsics inherit.
 
 #![allow(clippy::missing_safety_doc)]
 

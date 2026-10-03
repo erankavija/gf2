@@ -6,33 +6,9 @@
 //! `is_x86_feature_detected!("avx2")` holds.
 //! [`crate::transpose::TransposeLane`] names them and
 //! [`crate::transpose::PRODUCTION_PREFERENCE`] says which one the production
-//! dispatch takes.
-//!
-//! - [`transpose_64x64_avx2`] runs the four wide stages (j ∈ {32, 16, 8, 4})
-//!   of the Hacker's Delight mask-shift-XOR recursion in YMM registers over a
-//!   stack copy of the block and the two narrow stages (j ∈ {2, 1}) in words.
-//! - [`transpose_64x64_avx2_ymm6`] runs all six stages in YMM registers and
-//!   writes the first stage straight from the caller's input into the
-//!   caller's output, so the block is never copied into a stack scratch.
-//! - [`transpose_64x64_avx2_pshufb`] transposes 8×8 byte tiles through a
-//!   `vpshufb` bit-reversal lookup and assembles them with a scalar bit loop.
-//! - [`transpose_64x64_avx2_movemask`] transposes the 64×8 byte matrix
-//!   through the SSE interleave ladder and then extracts each bit plane with
-//!   `vpmovmskb` over byte-wise doubling.
-//!
-//! # Generated code
-//!
-//! `src/x86/asm/transpose.asm.txt` is the release disassembly of all four,
-//! with a derived annotation that counts each one's stack frame, block
-//! copies, frame stores and loads, and mnemonic mix. The buffer each lane
-//! declares in its source is what settles whether that frame traffic is an
-//! intentional scratch or a compiler spill:
-//! [`transpose_64x64_avx2`]'s copy of the block and
-//! [`transpose_64x64_avx2_movemask`]'s byte-plane array are declared,
-//! and [`transpose_64x64_avx2_ymm6`] declares none.
-//!
-//! Future work (V7 cache layout, n > 8K): drive a tile-of-tiles
-//! outer loop from `gf2-core` so multiple 64×64 blocks fit in L1.
+//! dispatch takes. `src/x86/asm/transpose.asm.txt` is the release disassembly
+//! of all four, annotated with each one's stack frame, block copies and
+//! mnemonic mix.
 
 use core::arch::x86_64::*;
 
@@ -50,9 +26,8 @@ use core::arch::x86_64::*;
 /// when `is_x86_feature_detected!("avx2")` returns true.
 #[target_feature(enable = "avx2")]
 pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 64]) {
-    // Copy input into a stack scratch buffer; we mutate it in place.
-    // The buffer is naturally aligned to 8 bytes; YMM loads/stores
-    // use `loadu`/`storeu` so 32-byte alignment is not required.
+    // The buffer is aligned to 8 bytes; YMM loads/stores use
+    // `loadu`/`storeu`, so 32-byte alignment is not required.
     let mut buf: [u64; 64] = *input;
     let buf_ptr = buf.as_mut_ptr();
 
@@ -75,13 +50,9 @@ pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 
             let m = _mm256_set1_epi64x($mask as i64);
             let mut i = 0usize;
             while i < 64 {
-                // Process 4 row pairs (R_i, R_{i+j}) at i, i+1, i+2, i+3.
                 let lo = _mm256_loadu_si256(buf_ptr.add(i) as *const __m256i);
                 let hi = _mm256_loadu_si256(buf_ptr.add(i + j) as *const __m256i);
-                // t = ((lo >> j) ^ hi) & m
                 let t = _mm256_and_si256(_mm256_xor_si256(_mm256_srli_epi64(lo, $j), hi), m);
-                // lo' = lo ^ (t << j)
-                // hi' = hi ^ t
                 let lo_new = _mm256_xor_si256(lo, _mm256_slli_epi64(t, $j));
                 let hi_new = _mm256_xor_si256(hi, t);
                 _mm256_storeu_si256(buf_ptr.add(i) as *mut __m256i, lo_new);
@@ -104,13 +75,9 @@ pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 
     // Stage 4: j=4, mask=0x0F0F0F0F0F0F0F0F (low nibble of each byte).
     stage_ymm!(4, 0x0F0F_0F0F_0F0F_0F0Fu64);
 
-    // Stages 5–6: j=2, 1. Pairs are (R_r, R_{r+2}) and (R_r, R_{r+1});
-    // these no longer correspond to contiguous 4-row YMM lane pairs.
-    // Fall back to scalar word ops; the loop body is small enough
-    // that the compiler typically still emits SSE/AVX ops thanks to
-    // the surrounding `target_feature(avx2)` attribute, but we avoid
-    // hand-vectorising it because the lane shuffle math doesn't
-    // reduce instruction count past the scalar version on Zen 3.
+    // Stages 5–6: j=2, 1. Pairs are (R_r, R_{r+2}) and (R_r, R_{r+1}),
+    // which are not contiguous 4-row YMM lane pairs, so the stages run as
+    // scalar word ops.
     let masks: [(usize, u64); 2] = [(2, 0x3333_3333_3333_3333), (1, 0x5555_5555_5555_5555)];
     for &(j, m) in &masks {
         let mut i = 0usize;
@@ -196,21 +163,11 @@ pub(crate) unsafe fn transpose_64x64_avx2_pshufb(input: &[u64; 64], output: &mut
 /// AVX2 lane: 64×64 bit-block transpose with every stage in YMM registers.
 ///
 /// The algorithm is the same six-stage mask-shift-XOR recursion as
-/// [`transpose_64x64_avx2`], and it differs in two mechanical ways.
-///
-/// The wide stages (j ∈ {32, 16, 8, 4}) pair rows that are four apart or
-/// further, so each pair of operands is a contiguous run of four rows and a
-/// plain pair of YMM loads brings them into matching lanes. The first of
-/// those stages reads the caller's `input` and writes the caller's `output`,
-/// and the remaining five run in place on `output`, so the kernel copies no
-/// 512-byte block into a stack scratch and copies none back out.
-///
-/// The narrow stages (j ∈ {2, 1}) pair rows inside one four-row register.
-/// `vpermq` broadcasts the low and the high half of the register for j = 2,
-/// `vpshufd` broadcasts the low and the high quadword of each 128-bit half
-/// for j = 1, and `vpblendd` recombines the two halves of the result. So the
-/// two stages [`transpose_64x64_avx2`] leaves to word operations run four
-/// rows at a time here as well.
+/// [`transpose_64x64_avx2`]. The first stage reads the caller's `input` and
+/// writes the caller's `output` and the remaining five run in place on
+/// `output`, so no block is copied through a stack scratch; the narrow
+/// stages (j ∈ {2, 1}) run four rows at a time through `vpermq`, `vpshufd`
+/// and `vpblendd`.
 ///
 /// # Safety
 ///
@@ -330,11 +287,6 @@ pub(crate) unsafe fn transpose_64x64_avx2_ymm6(input: &[u64; 64], output: &mut [
 /// `8q + 7`, and `vpaddb` of a register with itself doubles every byte and
 /// steps the extraction down to the next column. Eight steps per byte column
 /// produce all 64 output words.
-///
-/// This is the movemask/byte-shift candidate of the lane family: it carries
-/// the tile assembly (the byte transpose) and the packing (the bit-plane
-/// extraction) that the 32×8 geometry needs in order to answer the same
-/// 64×64 contract as the other lanes.
 ///
 /// # Safety
 ///

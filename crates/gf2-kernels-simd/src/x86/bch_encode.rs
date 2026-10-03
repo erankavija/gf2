@@ -2,34 +2,6 @@
 //!
 //! Two kernels of `crate::bch_encode`'s bundle live here, each under the
 //! processor features it alone needs; the bundle's predicate is their union.
-//!
-//! `bitslice_reduce_avx2` runs the algorithm `crate::bch_encode` states: a
-//! shift register held one word per coefficient, bit `l` of a word carrying
-//! lane `l`, advanced one message degree per step across all lanes at once.
-//!
-//! The step writes coefficient slice `j` from coefficient slice `j - 1`, so
-//! four consecutive slices are one unaligned 256-bit load and one unaligned
-//! 256-bit store shifted by one word. The feedback word is the same in every
-//! slice, so it is broadcast once per step and reused across the whole
-//! register; the generator masks are a second unaligned load from a buffer the
-//! caller prepared. Both loads fold into memory operands, so the committed
-//! artefact `asm/bch_encode.asm.txt` shows the inner loop as `vpand` /
-//! `vpxor` / `vmovdqu` over four register coefficients, under one
-//! `vmovq` / `vpbroadcastq` pair per step, against four `mov`/`and`/`xor`/`mov`
-//! quadruples in the portable kernel.
-//!
-//! The store range of one iteration overlaps the load range of the same
-//! iteration and the load range of the previous one, so the loop runs from
-//! the top of the register downwards and loads before it stores. The word
-//! below coefficient zero is the register's leading pad, which the store
-//! never reaches.
-//!
-//! `fold_block_pclmul` runs the carry-less-multiply fold. Its arithmetic is
-//! `crate::bch_encode::fold_block_over`, the one definition of that step,
-//! instantiated over `crate::x86::clmul`'s PCLMULQDQ primitive rather than a
-//! second wrapper around the same instruction. The step is inlined into this
-//! function, so the artefact shows `pclmulqdq` in the loop rather than a call
-//! through a function pointer per multiply.
 
 use core::arch::x86_64::*;
 

@@ -1,89 +1,23 @@
 //! AVX2 + FMA3 (`_mm256_fmadd_pd`) f64-cascade GEMM kernel for medium
-//! `Fp<P>` with `P ∈ (251, 65536)` — the "Phase 6e f64 cascade" route
-//! filed under jit issue `0749dbad`.
+//! `Fp<P>` with `P ∈ (251, 65536)`.
 //!
-//! Mirrors the structure of `crate::x86::fp_small_f32` (Route A's f32
-//! cascade for `P ≤ 251`) at f64 lane density, sized for medium primes
-//! where the canonical residue range `[0, p)` no longer fits in a byte
-//! lane. The design rationale and post-mortem evidence live at
-//! `dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md` § 9.
+//! Inputs arrive as canonical residues, one per `f64` lane. `bt` is repacked
+//! into N-major panels of width `N_R = 12`; a register-blocked
+//! `M_R × N_R = 4 × 12` micro-kernel (12 accumulators, 3 B-tile registers,
+//! 1 broadcast) accumulates exact integer dot products with no conversion
+//! instruction in the inner loop; a vectorised f64 Barrett reduction then
+//! writes canonical `u16` cells.
 //!
-//! # Algorithm
+//! Each lane product is at most `(p-1)² ≤ 65534² < 2³²`, exactly
+//! representable in f64, and a sum of `k ≤ 2^21` of them stays within the
+//! exact-integer range `[0, 2^53]`. The k-axis is cut into chunks of
+//! `K_CHUNK_CAP` with a Barrett reduction between chunks, so every
+//! accumulator lane stays an exact integer; `barrett_reduce_pd` states the
+//! reduction's own bound.
 //!
-//! For canonical residues `a, b ∈ [0, p)` arriving as **`f64` lanes**
-//! (one residue per lane), each gemm call:
-//!
-//! 1. **Pack pass.** `bt: &[f64]` (n × k row-major) is repacked into
-//!    N-major f64 panels of width `N_R = 12` (each panel `k × N_R`
-//!    f64). `a` is consumed in place — no auxiliary `Vec<f64>` is
-//!    allocated for A pre-pack beyond the existing scratch. Inputs
-//!    arrive as f64 from the caller's outer pre-pack of `&[Fp<P>]` →
-//!    `Vec<f64>`; the kernel's inner loop performs **no cvt
-//!    instructions**, mirroring the fflas-ffpack `Modular<double>`
-//!    micro-kernel structure.
-//!
-//! 2. **Inner micro-kernel.** A BLIS-class register-blocked dgemm
-//!    micro-kernel with tile shape `m_R × n_R = 4 × 12` (12
-//!    accumulator AVX2 registers + 3 B-tile registers + 1 broadcast =
-//!    16/16 register file). Each `_mm256_fmadd_pd(b_tile_j,
-//!    a_broadcast_i, acc_ij)` issues at 0.5-cycle reciprocal
-//!    throughput on Zen-3's two FMA execution ports. Prefetch hints
-//!    (`_MM_HINT_T0`) on B-panel rows four steps ahead lift the
-//!    L1d-miss latency off the critical path on `n ≥ 1024` cells.
-//!
-//!    With `k ≤ 4096` the entire k-axis sum fits within one
-//!    exact-integer chunk: the largest possible partial sum is
-//!    `k · (p-1)² ≤ 4096 · 65520² ≈ 2^44`, well inside the f64
-//!    exact-integer range `[0, 2^53]`. We therefore use **one
-//!    k-chunk** for any `k ≤ K_CHUNK_CAP = 4096`; longer rows
-//!    trigger a vectorised f64 Barrett reduction between chunks.
-//!
-//! 3. **Reduction.** At the very end of the panel's k sweep the 12
-//!    f64 accumulators carry an exact integer in `[0, 2^53]`. We
-//!    apply a vectorised f64 Barrett reduction
-//!    (`r = x - p · round(x · (1/p))`, then a single conditional
-//!    fix-up) to bring each lane into `[0, p)`. Finally we write the
-//!    reduced lanes back to the caller's `&mut [u16]` output as
-//!    canonical u16 cells.
-//!
-//! 4. **Unpack pass.** Output canonical u16 cells are written directly
-//!    to the caller's `&mut [u16]` storage; the caller is responsible
-//!    for converting back to `Fp<P>` via `Fp::new`.
-//!
-//! # Throughput envelope
-//!
-//! Per Zen-3 micro-architecture: two FMA ports each retiring 4 f64
-//! lanes per cycle = 16 ops/cycle in the bench's `2 m k n` op-count
-//! metric. At a 4.4 GHz boost on the 5900X reference host the peak is
-//! **70.4 Gop/s**, exactly matching the fflas-ffpack `Modular<double>`
-//! peak (69.72 Gop/s observed at GF(65521)/n=4096). With the pre-pack-
-//! once + pure-f64-inner-loop structure (no cvt instructions competing
-//! with the FMA back-end), the inner kernel approaches the OpenBLAS
-//! dgemm throughput on this exact host.
-//!
-//! # Soundness for `p ∈ (251, 65536)`
-//!
-//! Inputs `a, b` are canonical in `[0, p)` with `p ≤ 65535`, so each
-//! lane product is `(p-1)² ≤ 65534² < 2³²` — exactly representable in
-//! f64. The running sum across `k ≤ 2^21` MACs stays ≤ `2^21 · 2^32 =
-//! 2^53`, still exactly representable. The k-loop therefore commits no
-//! rounding error in the inner loop.
-//!
-//! The Barrett reduction `r = x - p · round(x · (1/p))` uses one f64
-//! multiply (`x * p_inv_f64`, with `p_inv_f64 = (1/p) f64`) plus one
-//! `_mm256_round_pd<TO_NEAREST>` plus one f64 FMA (`x - q · p`). The
-//! result is in `(-p, p)`; one conditional add of `p` brings it into
-//! `[0, p)`. We never need a second iteration because `p_inv_f64` has
-//! 53 bits of precision and `x ≤ 2^53`, so `round(x · p_inv_f64) - x/p`
-//! is bounded by `1 + 2 · ε` (where ε is f64 machine epsilon ≈ 2⁻⁵²),
-//! giving `|r - x mod p| ≤ p · (1 + 2 · ε)`; a single fix-up suffices.
-//!
-//! # Safety
-//!
-//! All public functions here are `unsafe` — callers must ensure
-//! AVX2 + FMA3 are both available at runtime. Safe, dispatched entry
-//! points live in `crate::fp_medium_f64` via the `FpMediumF64Fns`
-//! table returned by `detect`.
+//! All public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
+//! available at runtime. `crate::fp_medium_f64::detect` returns the safe
+//! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -92,36 +26,21 @@ use core::arch::x86_64::*;
 
 /// Inner `m × n` register-tile dimensions. With f64 at 4 lanes per ymm,
 /// `M_R = 4` rows × `N_R = 12` columns is 12 acc + 3 b loads + 1 a
-/// broadcast = 16/16 register file. The Zen 3 FMA back-end retires
-/// 2 FMAs per cycle so 12 FMAs per inner step → 6 cycles/step steady
-/// state, 8 MACs/cycle = 70.4 Gop/s at 4.4 GHz boost.
+/// broadcast = 16/16 register file.
 const M_R: usize = 4;
 const N_R: usize = 12;
 
-/// k-axis chunk cap. With `(p-1)² ≤ 2^32` and `k · (p-1)² ≤ 2^53`
-/// (f64 exact-integer ceiling), we can absorb up to `2^53 / 2^32 =
-/// 2^21 ≈ 2 097 152` MACs per chunk without leaving the exact-integer
-/// range. Capping at 4096 keeps each B-panel slice `k · N_R · 8 byte ≤
-/// 384 KB` comfortably within Zen 3's 512 KB L2 cache, and at this size
-/// the entire k-axis of every reference bench cell (largest k=4096)
-/// fits in one chunk — so a single end-of-k Barrett reduction handles
-/// the reduction work.
+/// k-axis chunk cap. With `(p-1)² ≤ 2^32`, up to `2^53 / 2^32 = 2^21` MACs
+/// per chunk stay within the f64 exact-integer range; capping at 4096 keeps
+/// each B-panel slice at `k · N_R · 8 byte ≤ 384 KB`, inside a 512 KB L2.
 const K_CHUNK_CAP: usize = 4096;
 
-/// Outer-N panel grouping for the cache-blocked loop nest. Picks an
-/// `n_c_panels` value that keeps the active B-panel slice resident in
-/// the CCX-shared L3 (Zen 3: 32 MB per CCX) while sharing one A-pack
-/// across every panel in the group.
-///
-/// Same calibration as Route A's `n_c_panels_outer` in
-/// `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs` and the u16 medium
-/// kernel's `fp_medium_nc_panels_outer` in
-/// `crates/gf2-kernels-simd/src/x86/fp_medium.rs`: an L3 budget of
-/// 16 MB (half the 32 MB CCX-shared L3) bounds the active B slab while
-/// leaving headroom for the A-pack scratch + criterion harness state.
+/// Outer-N panel grouping for the cache-blocked loop nest: the number of
+/// B panels that fit a 16 MB L3 budget, sharing one A-pack across every
+/// panel in the group.
 #[inline]
 fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
-    // 16 MB — half of Zen 3's 32 MB CCX-shared L3, mirroring Route A.
+    // Half of Zen 3's 32 MB CCX-shared L3.
     const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k.saturating_mul(N_R).saturating_mul(8);
     if panel_bytes == 0 {
@@ -202,12 +121,8 @@ pub unsafe fn fp_medium_f64_gemm(
     // ── Outer-N cache-block size ─────────────────────────────────
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
-    // ── k-chunk ────────────────────────────────────────────────────
-    //
-    // Determine the chunk size. With p ≤ 65535 we have
-    // `k_chunk_max = floor(2^53 / (p-1)²)` which exceeds 2^21 for every
-    // medium prime; we therefore cap at K_CHUNK_CAP for L2 working-set
-    // hygiene. For k ≤ K_CHUNK_CAP the entire k-axis is one chunk.
+    // `floor(2^53 / (p-1)²)` exceeds 2^21 for every medium prime, so the
+    // chunk is capped at K_CHUNK_CAP for the L2 working set.
     let k_chunk = K_CHUNK_CAP.min(k);
 
     let p_f64 = p as f64;
@@ -364,13 +279,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
     while t_blk < k {
         let t_end = (t_blk + k_chunk).min(k);
 
-        // If we are entering the second or later chunk, the
-        // accumulators carry a value from the previous chunk that has
-        // already been Barrett-reduced to `[0, p)`. We re-accumulate on
-        // top — the new chunk adds at most k_chunk · (p-1)², and the
-        // current value is < p, so the post-chunk lane is bounded by
-        // p + k_chunk · (p-1)² ≤ 2^53.
-
         let b_panel_base = b_packed.as_ptr().add(panel_off);
         let a_pack_base = a_pack_f64.as_ptr();
 
@@ -390,18 +298,10 @@ unsafe fn run_one_panel<const M_EFF: usize>(
                 _mm_prefetch::<{ _MM_HINT_T0 }>(pf_ptr.add(64));
             }
 
-            // Three pure 4-lane f64 loads from the B-panel — no cvt
-            // instructions, matching the OpenBLAS dgemm micro-kernel
-            // structure. The B-panel is already f64; loads are
-            // contiguous within a single 96-byte row.
             let b0 = _mm256_loadu_pd(b_row_ptr);
             let b1 = _mm256_loadu_pd(b_row_ptr.add(4));
             let b2 = _mm256_loadu_pd(b_row_ptr.add(8));
 
-            // 12 FMAs per inner step (M_EFF=4 path). Each `a_i` is a
-            // 4-lane broadcast of the contiguous a_pack entry; on Zen 3
-            // `_mm256_broadcast_sd` issues a single load+broadcast µop
-            // (no scalar cvt dep chain).
             if M_EFF >= 1 {
                 let a0 = _mm256_broadcast_sd(&*a_row_ptr);
                 acc00 = _mm256_fmadd_pd(b0, a0, acc00);
@@ -428,12 +328,8 @@ unsafe fn run_one_panel<const M_EFF: usize>(
             }
         }
 
-        // If more chunks remain, apply an in-place Barrett reduction
-        // to bring each accumulator lane back into `[0, p)` before the
-        // next chunk's additions push us past 2^53. For k ≤ K_CHUNK_CAP
-        // (the common case) this branch is never taken — the
-        // accumulators carry their exact integer dot product straight
-        // to the final Barrett-and-pack step below.
+        // More chunks remain: reduce each lane back into `[0, p)` so the
+        // next chunk's additions stay within 2^53.
         if t_end < k {
             acc00 = barrett_reduce_pd(acc00, p_f64, p_inv_f64);
             acc01 = barrett_reduce_pd(acc01, p_f64, p_inv_f64);
@@ -458,7 +354,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
         t_blk = t_end;
     }
 
-    // Final Barrett reduction + canonical-u16 pack.
     store_and_reduce_tile::<M_EFF>(
         acc00, acc01, acc02, acc10, acc11, acc12, acc20, acc21, acc22, acc30, acc31, acc32, n_eff,
         p_f64, p_inv_f64, i_blk, j_blk, n, c,
@@ -486,12 +381,10 @@ unsafe fn barrett_reduce_pd(x: __m256d, p_f64: f64, p_inv_f64: f64) -> __m256d {
     let p_vec = _mm256_set1_pd(p_f64);
     let p_inv_vec = _mm256_set1_pd(p_inv_f64);
     let zero_vec = _mm256_setzero_pd();
-    // q = round(x · (1/p))  with round-to-nearest-int semantics
     let q_approx = _mm256_mul_pd(x, p_inv_vec);
     let q = _mm256_round_pd::<{ _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC }>(q_approx);
     // r = x - q · p, via one FMA: r = -(q · p) + x.
     let r = _mm256_fnmadd_pd(q, p_vec, x);
-    // If r < 0, add p once.
     let neg_mask = _mm256_cmp_pd::<{ _CMP_LT_OQ }>(r, zero_vec);
     let r_plus_p = _mm256_add_pd(r, p_vec);
     _mm256_blendv_pd(r, r_plus_p, neg_mask)
@@ -523,7 +416,6 @@ unsafe fn store_and_reduce_tile<const M_EFF: usize>(
     n: usize,
     c: &mut [u16],
 ) {
-    // Reduce every live accumulator.
     let r00 = barrett_reduce_pd(acc00, p_f64, p_inv_f64);
     let r01 = barrett_reduce_pd(acc01, p_f64, p_inv_f64);
     let r02 = barrett_reduce_pd(acc02, p_f64, p_inv_f64);
@@ -600,8 +492,6 @@ unsafe fn store_and_reduce_tile<const M_EFF: usize>(
     for i_off in 0..M_EFF {
         for j_off in 0..n_eff {
             let v = tile[i_off * N_R + j_off];
-            // v ∈ [0, p) is a non-negative exact integer; the f64→u16
-            // cast is well-defined (Rust spec: saturating cast).
             c[(i_blk + i_off) * n + (j_blk + j_off)] = v as u16;
         }
     }
@@ -763,9 +653,6 @@ mod tests {
 
     #[test]
     fn gemm_matches_scalar_boundary_lengths() {
-        // SC#3 (issue 0749dbad): proptest-style boundary-length sweep at
-        // {0, 1, 15, 16, 17, 63, 64, 65}. Exercises the deterministic
-        // panel-boundary cases requested by the success criteria.
         let avail = std::arch::is_x86_feature_detected!("avx2")
             && std::arch::is_x86_feature_detected!("fma");
         if !avail {
