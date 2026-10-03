@@ -1,24 +1,5 @@
-//! Preset [`ModemSpec`] constructors for BPSK and Gray square-QAM.
-//!
-//! This file ships the preset-side entry points. Custom constellations
-//! are constructed via the public [`super::ModemSpecBuilder`]; both
-//! paths funnel through the same validating
-//! [`super::ModemSpec::from_parts_checked`] choke point.
-//!
-//! Bit-to-symbol mapping for Gray square-QAM (locked in plan §4.5):
-//!
-//! - `m = log2(order)` total bits; for `m >= 2` the first `m/2` MSBs form
-//!   the I-axis Gray-PAM label (top-down by PAM significance) and the
-//!   remaining `m/2` LSBs form the Q-axis label.
-//! - For BPSK (`m = 1`): a single [`BitChannelSemantics::SingleAxisPam`]
-//!   bit.
-//! - Adjacent PAM levels differ in exactly one PAM-label bit.
-//! - Unit average symbol energy; for `M = 2^m`-QAM over the symmetric grid
-//!   `{±1, ±3, ..., ±(√M − 1)}` the scale factor is
-//!   `sqrt(3 / (2·(M − 1)))`.
-//!
-//! The generic `*_with_scalar` variants let f64 research workflows reuse
-//! the same presets.
+//! Preset [`ModemSpec`] constructors for BPSK and Gray square-QAM, and the
+//! layout check that admits a spec to the Gray-QAM backends.
 
 use super::scalar::{DefaultScalar, ModemScalar};
 use super::spec::{ModemSpec, ModemSpecParts};
@@ -59,13 +40,7 @@ const QAM_MULTI_BIT_AXIS_ANALYSIS: BitChannelAnalysis = BitChannelAnalysis {
     closed_form_llr_available: true,
 };
 
-/// Per-bit-channel analysis arrays for the built-in presets.
-///
-/// Indexed by bit count; the slice length equals the preset's
-/// `bits_per_symbol()`. BPSK (m=1) and QPSK (m=2) share
-/// [`BPSK_QPSK_ANALYSIS`]; 16/64/256-QAM (m=4/6/8) share
-/// [`QAM_MULTI_BIT_AXIS_ANALYSIS`] — see each constant's doc comment for
-/// the analysis-facing reasoning.
+/// Per-bit analysis slices of the presets, one per `bits_per_symbol`.
 const PRESET_ANALYSIS_M1: &[BitChannelAnalysis] = &[BPSK_QPSK_ANALYSIS; 1];
 const PRESET_ANALYSIS_M2: &[BitChannelAnalysis] = &[BPSK_QPSK_ANALYSIS; 2];
 const PRESET_ANALYSIS_M4: &[BitChannelAnalysis] = &[QAM_MULTI_BIT_AXIS_ANALYSIS; 4];
@@ -73,10 +48,6 @@ const PRESET_ANALYSIS_M6: &[BitChannelAnalysis] = &[QAM_MULTI_BIT_AXIS_ANALYSIS;
 const PRESET_ANALYSIS_M8: &[BitChannelAnalysis] = &[QAM_MULTI_BIT_AXIS_ANALYSIS; 8];
 
 /// Returns the preset analysis slice for a given `bits_per_symbol`.
-///
-/// Single source of truth shared by every preset constructor so the
-/// `bits_per_symbol` → `&'static [BitChannelAnalysis]` mapping is not
-/// duplicated per constellation order.
 const fn preset_analysis(bits_per_symbol: u8) -> &'static [BitChannelAnalysis] {
     match bits_per_symbol {
         1 => PRESET_ANALYSIS_M1,
@@ -90,8 +61,7 @@ const fn preset_analysis(bits_per_symbol: u8) -> &'static [BitChannelAnalysis] {
 
 /// Returns the inverse-Gray decoding of `g` over `width` bits.
 ///
-/// Equivalent to finding `k` such that `k ^ (k >> 1) == g`. Used by the
-/// property tests that verify the Gray code round-trip.
+/// Equivalent to finding `k` such that `k ^ (k >> 1) == g`.
 #[cfg(test)]
 #[inline]
 fn inverse_gray(g: u32, width: u8) -> u32 {
@@ -114,17 +84,15 @@ fn inverse_gray(g: u32, width: u8) -> u32 {
 ///
 /// Ordering rule: position `k = 0..2^m` enumerated from the highest PAM
 /// level (`+(2^m - 1)`) down to the lowest. The label at position `k` is
-/// the standard binary-reflected Gray code `g(k) = k ^ (k >> 1)`. Under
-/// this rule the MSB of the label is `0` for the top half (positive side)
-/// and `1` for the bottom half (negative side), matching the design
-/// expectation that the MSB is the "sign" PAM bit.
+/// the standard binary-reflected Gray code `g(k) = k ^ (k >> 1)`, so the
+/// MSB of the label is `0` on the positive side and `1` on the negative
+/// side.
 fn gray_pam_label_to_level(m: u8) -> Vec<i32> {
     let n = 1usize << m;
     let mut out = vec![0i32; n];
     for k in 0..n {
         // Gray code of k fits in m bits.
         let g = (k ^ (k >> 1)) as u32;
-        // Level at position k (0 is top, n-1 is bottom): (2^m - 1) - 2*k.
         let level = (n as i32 - 1) - 2 * (k as i32);
         out[g as usize] = level;
     }
@@ -143,40 +111,20 @@ fn isqrt_exact(order: usize) -> usize {
     r
 }
 
-/// Canonical post-normalization Gray-PAM level table for the built-in
-/// BPSK / Gray square-QAM presets.
+/// Post-normalization Gray-PAM level table of the BPSK / Gray square-QAM
+/// presets, indexed by the raw Gray-PAM axis label.
 ///
-/// Single source of truth for the Gray-PAM axis level set: every preset
-/// builder, mapper, and demapper routes its level derivation through this
-/// helper so there is exactly one place that encodes the Gray-PAM layout
-/// rule (including the `sqrt(3 / (2·(M − 1)))` unit-energy scaling) for
-/// the built-in presets.
-///
-/// # Arguments
-///
-/// * `bits_per_symbol` - Total bits per symbol. `1` selects BPSK; `2`,
-///   `4`, `6`, or `8` select Gray square-QAM of order `2^bits_per_symbol`.
-///
-/// # Returns
-///
-/// For BPSK, a length-`2` vector `[+1, -1]` (the BPSK preset has unit
-/// amplitude and no normalization scaling). For Gray square-QAM, a
-/// length-`2^(bits_per_symbol/2)` vector containing the post-normalization
-/// PAM level at index = raw Gray-PAM axis label.
+/// BPSK (`bits_per_symbol == 1`) gives `[+1, -1]`. Gray square-QAM of
+/// order `M = 2^bits_per_symbol` gives the `2^(bits_per_symbol/2)` levels
+/// of the odd-integer grid scaled by `sqrt(3 / (2·(M − 1)))` for unit
+/// average symbol energy.
 ///
 /// # Panics
 ///
 /// Panics if `bits_per_symbol` is not one of `1, 2, 4, 6, 8`.
-///
-/// # Complexity
-///
-/// O(`2^(bits_per_symbol/2)`).
 #[doc(hidden)]
 pub(crate) fn gray_pam_levels<S: ModemScalar>(bits_per_symbol: u8) -> Vec<S> {
     if bits_per_symbol == 1 {
-        // BPSK: points are (+1, 0) and (-1, 0); the preset carries no
-        // normalization scaling and the mapper/demapper expect the raw
-        // bit (0 or 1) to index the table directly.
         return vec![S::one(), -S::one()];
     }
     assert!(
@@ -195,34 +143,7 @@ pub(crate) fn gray_pam_levels<S: ModemScalar>(bits_per_symbol: u8) -> Vec<S> {
         .collect()
 }
 
-/// Asserts that `spec` matches the canonical BPSK / Gray square-QAM
-/// preset layout expected by [`super::GrayQamMapper`] and
-/// [`super::FastGrayQamDemapper`].
-///
-/// Centralises the bit-channel-semantics check, the label bijection
-/// shape check, and the post-normalization level match against
-/// [`gray_pam_levels`]. Both fast-path constructors route through this
-/// helper so the "is this a canonical Gray square-QAM spec?" question
-/// has exactly one answer in the codebase.
-///
-/// # Arguments
-///
-/// * `view` - Borrowed view of a [`ModemSpec`] (post-normalization).
-///
-/// # Panics
-///
-/// Panics with a descriptive message if:
-///
-/// - `bits_per_symbol` is not `1, 2, 4, 6, or 8`.
-/// - `num_symbols` is not `2^bits_per_symbol`.
-/// - `bit_channels` layout does not match the canonical
-///   `SingleAxisPam(0)` (BPSK) or `IAxisPam(0..m/2)` followed by
-///   `QAxisPam(0..m/2)` (QAM) sequence.
-/// - Capabilities do not advertise both exact log-MAP and max-log support.
-/// - For BPSK, labels are not `[0, 1]` or the two points do not share a
-///   common Q coordinate.
-/// - For QAM, any I-half-label or Q-half-label resolves to a coordinate
-///   inconsistent with the canonical Gray-PAM level table.
+/// Panics unless `view` passes `check_gray_square_qam_spec`.
 #[doc(hidden)]
 pub(crate) fn assert_valid_gray_square_qam_spec<S: ModemScalar>(view: &super::ModemView<'_, S>) {
     if let Err(msg) = check_gray_square_qam_spec(view) {
@@ -230,25 +151,7 @@ pub(crate) fn assert_valid_gray_square_qam_spec<S: ModemScalar>(view: &super::Mo
     }
 }
 
-/// Returns `true` iff `view` matches the canonical BPSK / Gray square-QAM
-/// preset layout accepted by [`super::GrayQamMapper`] and
-/// [`super::FastGrayQamDemapper`].
-///
-/// Non-panicking companion of [`assert_valid_gray_square_qam_spec`]: runs
-/// the exact same checks but returns a `bool` instead of panicking on
-/// mismatch. Used by the [`super::ModemSpec`] factory methods
-/// (`preferred_mapper`, `preferred_soft_demapper`) to decide whether the
-/// optimized Gray-QAM backend is safe to construct for an arbitrary
-/// user-supplied spec, without the "probe by catch_unwind" anti-pattern.
-///
-/// # Arguments
-///
-/// * `view` - Borrowed view of a [`super::ModemSpec`] (post-normalization).
-///
-/// # Complexity
-///
-/// O(`num_symbols`) in the worst case (runs the same level-set agreement
-/// sweep as the asserting variant).
+/// Returns `true` iff `view` passes `check_gray_square_qam_spec`.
 #[doc(hidden)]
 pub(crate) fn is_valid_gray_square_qam_spec<S: ModemScalar>(
     view: &super::ModemView<'_, S>,
@@ -256,14 +159,14 @@ pub(crate) fn is_valid_gray_square_qam_spec<S: ModemScalar>(
     check_gray_square_qam_spec(view).is_ok()
 }
 
-/// SSOT for the Gray-square-QAM preset validity rules. Returns `Ok(())`
-/// iff `view` matches the canonical BPSK / Gray square-QAM layout; on
-/// failure returns an `Err(String)` with a descriptive message suitable
-/// for embedding in a panic. Both [`assert_valid_gray_square_qam_spec`]
-/// (asserting wrapper, used on the fast-path construction path) and
-/// [`is_valid_gray_square_qam_spec`] (non-panicking probe, used by
-/// `ModemSpec::preferred_*` to pick a backend) route through this one
-/// function so the two cannot drift.
+/// Checks `view` against the BPSK / Gray square-QAM preset layout:
+/// `bits_per_symbol` in `{1, 2, 4, 6, 8}`, bit channels `SingleAxisPam(0)`
+/// (BPSK) or `IAxisPam(0..m/2)` then `QAxisPam(0..m/2)` (QAM), both demap
+/// methods advertised, and every point on the [`gray_pam_levels`] level of
+/// its I and Q half-labels within `1e-6`. BPSK additionally stores label
+/// `k` at index `k` and shares one Q coordinate between its two points.
+///
+/// The error string names the first failed check.
 fn check_gray_square_qam_spec<S: ModemScalar>(
     view: &super::ModemView<'_, S>,
 ) -> Result<(), String> {
@@ -319,16 +222,11 @@ fn check_gray_square_qam_spec<S: ModemScalar>(
         return Err("spec must advertise both ExactLogMap and MaxLog support".into());
     }
 
-    // Level-set agreement: every symbol's I and Q coordinate must match
-    // the canonical Gray-PAM level table at the corresponding axis
-    // label. Tolerance is chosen to accept specs whose scalar storage
-    // was `f32` (round-trip through `ModemScalar::to_f64` incurs up to
-    // ~1e-7 absolute error) without letting genuinely mismatched
-    // permutations slip through.
+    // The tolerance admits `f32`-stored points (about 1e-7 absolute error
+    // after `to_f64`) and rejects permuted levels.
     const LEVEL_TOL: f64 = 1e-6;
     let levels: Vec<f64> = gray_pam_levels::<f64>(m);
     if m == 1 {
-        // BPSK: labels must be [0, 1]; points must be (±level, shared_q).
         if view.label(0).bits != 0 {
             return Err(format!(
                 "BPSK spec must store label 0 at index 0, got {}",
@@ -388,7 +286,6 @@ fn check_gray_square_qam_spec<S: ModemScalar>(
 
 /// Core builder for a Gray-coded square-QAM preset over any [`ModemScalar`].
 fn build_gray_square_qam<S: ModemScalar>(order: usize) -> ModemSpec<S> {
-    // Accept BPSK as a special case via this preset too.
     if order == 2 {
         return build_bpsk::<S>();
     }
@@ -403,16 +300,10 @@ fn build_gray_square_qam<S: ModemScalar>(order: usize) -> ModemSpec<S> {
     let m_half = m_total / 2;
     let sqrt_m = isqrt_exact(order); // 2^(m_total/2)
 
-    // SSOT Gray-PAM level derivation lives in `gray_pam_levels`; route
-    // the builder through it so the preset, mapper, and demapper all
-    // agree by construction.
     let pam_levels: Vec<S> = gray_pam_levels::<S>(m_total);
     debug_assert_eq!(pam_levels.len(), sqrt_m);
 
-    // Scale factor for unit average symbol energy (same formula that
-    // `gray_pam_levels` applies to the raw odd-integer grid):
-    //     E_raw = 2 * (M - 1) / 3
-    //     scale = sqrt(3 / (2 * (M - 1)))
+    // Same scale as `gray_pam_levels` applies to the odd-integer grid.
     let scale_f64 = (3.0_f64 / (2.0 * (order as f64 - 1.0))).sqrt();
     let scale = S::from_f64(scale_f64);
 
@@ -430,9 +321,6 @@ fn build_gray_square_qam<S: ModemScalar>(order: usize) -> ModemSpec<S> {
         labels.push(LabelWord::new(v as u16, m_total));
     }
 
-    // Bit-channel semantics: MSBs are I-axis PAM bits (top-down), LSBs are
-    // Q-axis PAM bits (top-down). PAM-bit index 0 is the most significant
-    // PAM bit.
     let mut bit_channels = Vec::with_capacity(m_total as usize);
     for k in 0..m_half {
         bit_channels.push(BitChannelSemantics::IAxisPam(k));
@@ -486,34 +374,24 @@ impl ModemSpec<DefaultScalar> {
     ///
     /// Label mapping: bit `0` → `+1`, bit `1` → `-1`. The single bit
     /// position carries [`BitChannelSemantics::SingleAxisPam`]`(0)`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn bpsk() -> Self {
         build_bpsk::<DefaultScalar>()
     }
 
-    /// Gray-coded square-QAM preset.
+    /// Gray-coded square-QAM preset, stored post-normalized to unit average
+    /// symbol energy.
     ///
-    /// # Arguments
-    ///
-    /// * `order` - Constellation order; must be one of `2, 4, 16, 64, 256`.
-    ///   `order = 2` is equivalent to [`ModemSpec::bpsk`].
-    ///
-    /// The label layout is locked: for `order >= 4` the first `m/2` MSBs
-    /// form the I-axis Gray-PAM label (MSB = coarsest level) and the
-    /// remaining `m/2` bits form the Q-axis Gray-PAM label, matching
-    /// DVB-T2 EN 302 755 Table 14 bit-to-cell mapping. Points are stored
-    /// post-normalized to unit average symbol energy.
+    /// For `order >= 4` the first `m/2` MSBs of a label form the I-axis
+    /// Gray-PAM label (MSB = coarsest level) and the remaining `m/2` bits
+    /// the Q-axis label. `order = 2` is [`ModemSpec::bpsk`]. Each axis uses
+    /// the level mapping of `@/citation/Etsi2015` Table 14; the standard
+    /// takes the I label from the even-indexed and the Q label from the
+    /// odd-indexed cell-word bits, so labels agree with it for orders 2 and
+    /// 4 only.
     ///
     /// # Panics
     ///
-    /// Panics if `order` is not one of the listed values.
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `order = M`.
+    /// Panics if `order` is not one of `2, 4, 16, 64, 256`.
     pub fn gray_square_qam(order: usize) -> Self {
         build_gray_square_qam::<DefaultScalar>(order)
     }
@@ -521,29 +399,15 @@ impl ModemSpec<DefaultScalar> {
 
 impl<S: ModemScalar> ModemSpec<S> {
     /// Scalar-generic companion of [`ModemSpec::bpsk`].
-    ///
-    /// Useful for f64 research workflows.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn bpsk_with_scalar() -> Self {
         build_bpsk::<S>()
     }
 
     /// Scalar-generic companion of [`ModemSpec::gray_square_qam`].
     ///
-    /// # Arguments
-    ///
-    /// * `order` - Constellation order; must be one of `2, 4, 16, 64, 256`.
-    ///
     /// # Panics
     ///
-    /// Panics if `order` is not one of the listed values.
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `order = M`.
+    /// Panics if `order` is not one of `2, 4, 16, 64, 256`.
     pub fn gray_square_qam_with_scalar(order: usize) -> Self {
         build_gray_square_qam::<S>(order)
     }
@@ -572,7 +436,6 @@ mod tests {
     fn test_gray_pam_levels_adjacent_differ_by_one_bit() {
         for m in 1u8..=4 {
             let lut = gray_pam_label_to_level(m);
-            // Sort labels by level and check adjacent Hamming distance = 1.
             let mut pairs: Vec<(i32, u16)> = lut
                 .iter()
                 .enumerate()
@@ -662,9 +525,6 @@ mod tests {
 
     #[test]
     fn test_preset_gray_axis_adjacency() {
-        // For each Gray square-QAM preset, verify that adjacent I-axis
-        // levels (same Q) differ in exactly one I-label bit, and similarly
-        // for Q-axis.
         for order in [4usize, 16, 64, 256] {
             let spec = ModemSpec::gray_square_qam(order);
             let m = spec.bits_per_symbol();
@@ -672,7 +532,6 @@ mod tests {
             let mask_half = (1u16 << m_half) - 1;
             let sqrt_m = 1usize << m_half;
 
-            // Group points by Q-axis label; check adjacency on the I axis.
             for q_label in 0u16..sqrt_m as u16 {
                 let mut row: Vec<(f64, u16)> = Vec::with_capacity(sqrt_m);
                 for (idx, l) in spec.view().labels().iter().enumerate() {
@@ -712,9 +571,6 @@ mod tests {
 
     #[test]
     fn test_preset_qpsk_matches_legacy_layout() {
-        // Gray-square-QAM(4) preset has the expected ±delta × ±delta layout
-        // at delta = 1/sqrt(2) (unit average symbol energy), confirming
-        // the canonical bit-to-point mapping used by the QPSK presets.
         let spec = ModemSpec::gray_square_qam(4);
         let delta = (0.5_f64).sqrt();
         // Label layout (MSB = I-bit, LSB = Q-bit):

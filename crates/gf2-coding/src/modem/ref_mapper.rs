@@ -1,48 +1,9 @@
-//! Correctness-first, backend-agnostic reference mapper.
-//!
-//! [`ReferenceMapper`] is the arbitrary-constellation path of the modem
-//! framework. It works for any validated [`ModemSpec`] — Gray-QAM presets
-//! as well as user-defined research constellations built through
-//! [`super::ModemSpecBuilder`] — by precomputing a flat
-//! `label -> (i, q)` lookup table at construction time.
-//!
-//! The Gray square-QAM fast path lives in a sibling module (task
-//! `625f5e1b`). Callers who only need DVB-T2 Gray geometries should
-//! prefer that implementation; everyone else (custom constellations,
-//! research work, conformance tests) should use this reference mapper.
-//!
-//! Bit ordering follows the framework-wide MSB-first convention
-//! documented on [`BatchMapper`]: within each symbol, offset `0` is the
-//! most-significant bit of the [`super::LabelWord`].
+//! Reference bit-to-symbol mapper for arbitrary constellations.
 
 use super::{BatchMapper, ModemScalar, ModemSpec, ModemView};
 
-/// Correctness-first, backend-agnostic mapper for any validated
-/// [`ModemSpec`].
-///
-/// Construction scans the spec's `(label, point)` pairs once and builds a
-/// flat lookup table indexed by [`super::LabelWord::bits`]. The hot loop
-/// then performs one table load per symbol. This makes the mapper O(1)
-/// per symbol regardless of constellation geometry and gives a simple,
-/// easily audited reference path for correctness testing and research
-/// constellations.
-///
-/// For the optimized Gray square-QAM fast path, see the sibling mapper
-/// implementation.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::{BatchMapper, ModemSpec, ReferenceMapper};
-///
-/// let spec = ModemSpec::gray_square_qam(4);
-/// let mapper = ReferenceMapper::new(spec);
-/// let bits = [false, false, true, true];
-/// let mut out_i = [0.0_f32; 2];
-/// let mut out_q = [0.0_f32; 2];
-/// mapper.map_bits(&bits, &mut out_i, &mut out_q);
-/// assert_eq!(out_i.len(), 2);
-/// ```
+/// Mapper for any validated [`ModemSpec`], backed by a lookup table indexed
+/// by [`super::LabelWord::bits`] that is built once at construction.
 pub struct ReferenceMapper<S: ModemScalar> {
     spec: ModemSpec<S>,
     /// Label-integer → point lookup, indexed by `LabelWord::bits`.
@@ -53,20 +14,6 @@ pub struct ReferenceMapper<S: ModemScalar> {
 impl<S: ModemScalar> ReferenceMapper<S> {
     /// Takes ownership of a validated [`ModemSpec`] and precomputes the
     /// label → point lookup table.
-    ///
-    /// Because [`ModemSpec`] is sealed and all invariants (bijection,
-    /// label width, length) are enforced at construction, no extra
-    /// validation is required here.
-    ///
-    /// # Arguments
-    ///
-    /// * `spec` - The owned, validated modem specification. Can be a
-    ///   preset ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`]) or
-    ///   a custom spec built through [`super::ModemSpecBuilder`].
-    ///
-    /// # Complexity
-    ///
-    /// O(M) where `M = 2^bits_per_symbol`.
     pub fn new(spec: ModemSpec<S>) -> Self {
         let view = spec.view();
         let bits_per_symbol = view.bits_per_symbol();
@@ -85,13 +32,6 @@ impl<S: ModemScalar> ReferenceMapper<S> {
     }
 
     /// Returns a borrowed reference to the owned [`ModemSpec`].
-    ///
-    /// Useful for chaining into a demapper that needs to read the same
-    /// spec, or for cloning into a sibling backend.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn spec_ref(&self) -> &ModemSpec<S> {
         &self.spec
@@ -140,7 +80,6 @@ mod tests {
         let spec = ModemSpec::<f32>::gray_square_qam(16);
         let view = spec.view();
         let n = view.num_symbols();
-        // Cache expected (i, q) by label.bits before we move spec into the mapper.
         let mut expected: Vec<(f32, f32)> = vec![(0.0, 0.0); n];
         for k in 0..n {
             let l = view.label(k);
@@ -163,7 +102,6 @@ mod tests {
     /// Builds a custom 8-point constellation with an explicit,
     /// non-identity label permutation.
     fn custom_8_point() -> (ModemSpec<f32>, [(f32, f32); 8], [u16; 8]) {
-        // Arbitrary 8 points on a non-standard geometry.
         let raw: [(f32, f32); 8] = [
             (1.0, 0.5),
             (-1.0, 0.25),
@@ -195,14 +133,12 @@ mod tests {
     fn test_map_bits_custom_8_point_honors_permutation() {
         let (spec, _raw, labels_perm) = custom_8_point();
         let view = spec.view();
-        // Snapshot (post-normalization) points keyed by label.bits.
         let mut expected: Vec<(f32, f32)> = vec![(0.0, 0.0); 8];
         for k in 0..8 {
             let l = view.label(k);
             let p = view.point(k);
             expected[l.bits as usize] = (p.i, p.q);
         }
-        // Sanity: the permutation is non-identity.
         assert!(labels_perm
             .iter()
             .enumerate()
@@ -230,7 +166,6 @@ mod tests {
         }
         let mapper = ReferenceMapper::new(spec);
 
-        // Batch of 16 symbols: labels 0..16 in order.
         let mut bits: Vec<bool> = Vec::with_capacity(16 * 4);
         for v in 0..16u16 {
             bits.extend(label_to_bits(v, 4));
@@ -308,7 +243,6 @@ mod tests {
 
     #[test]
     fn test_map_bits_custom_f64_4_point() {
-        // 4 points on the axes, non-identity label permutation, f64 scalar.
         let points = vec![
             SymbolPoint::<f64>::new(1.0, 0.0),
             SymbolPoint::<f64>::new(0.0, 1.0),
@@ -337,8 +271,6 @@ mod tests {
         }
     }
 
-    // Property test: random label permutations + random bit streams
-    // round-trip correctly through the mapper.
     proptest! {
         #[test]
         fn prop_map_bits_matches_spec_for_random_permutation(
@@ -348,8 +280,6 @@ mod tests {
         ) {
             let n = 1usize << m;
 
-            // Deterministic permutation (Fisher-Yates) via the shared
-            // modem test LCG — SSOT helper in `test_oracle::Lcg`.
             let perm = permutation(seed, n);
 
             // Points on the unit circle (guarantees normalizable energy).
@@ -373,10 +303,7 @@ mod tests {
                     (view.point(k).i, view.point(k).q);
             }
 
-            // Generate a deterministic bit stream. A distinct seed mix
-            // (XOR with a constant) keeps the stream decorrelated from
-            // the permutation RNG above while still routing through the
-            // SSOT `Lcg::label_stream` helper.
+            // The XOR constant decorrelates this stream from the permutation RNG.
             let labels_stream: Vec<u16> =
                 label_stream(seed ^ 0x9E37_79B9_7F4A_7C15, batch_len, n);
             let mut bits: Vec<bool> = Vec::with_capacity(batch_len * m as usize);

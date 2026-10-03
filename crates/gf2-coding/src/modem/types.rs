@@ -1,27 +1,8 @@
-//! Value types used by the modem framework data model.
-//!
-//! These types are the fixed vocabulary consumed by every downstream modem
-//! task: point geometry, bit labels, bit-channel identity and semantics,
-//! normalization contract, demapper method, and capability advertisement. See
-//! `@/issue/c87c5043` §4 for the locked surface.
+//! Value types of the modem data model.
 
 use super::scalar::ModemScalar;
 
 /// An I/Q constellation point.
-///
-/// The coordinate scalar is generic over [`ModemScalar`]; presets default
-/// to [`super::DefaultScalar`] (`f32`).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::SymbolPoint;
-///
-/// let p = SymbolPoint::<f32>::new(1.0, -2.0);
-/// assert_eq!(p.i, 1.0);
-/// assert_eq!(p.q, -2.0);
-/// assert!((p.energy() - 5.0).abs() < 1e-6);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SymbolPoint<S: ModemScalar> {
     /// In-phase coordinate.
@@ -32,25 +13,12 @@ pub struct SymbolPoint<S: ModemScalar> {
 
 impl<S: ModemScalar> SymbolPoint<S> {
     /// Constructs a [`SymbolPoint`] from explicit coordinates.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` - In-phase coordinate.
-    /// * `q` - Quadrature coordinate.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn new(i: S, q: S) -> Self {
         Self { i, q }
     }
 
     /// Returns the squared radius `i*i + q*q` (the symbol energy).
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn energy(self) -> S {
         self.i * self.i + self.q * self.q
@@ -61,23 +29,10 @@ impl<S: ModemScalar> SymbolPoint<S> {
 ///
 /// Bit `k` of the label corresponds to LLR position `k` within the symbol
 /// under the MSB-first intra-symbol ordering: `k = 0` is the most
-/// significant bit of the `width`-bit label. See the plan §4.2 for the
-/// locked bit ordering rationale.
+/// significant bit of the `width`-bit label.
 ///
 /// `width` is the number of meaningful MSBs used. `bits` must fit in
 /// `width` bits (i.e. `bits >> width == 0`).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::LabelWord;
-///
-/// let l = LabelWord::new(0b10, 2);
-/// assert_eq!(l.bits, 0b10);
-/// assert_eq!(l.width, 2);
-/// assert!(l.bit(0));  // MSB
-/// assert!(!l.bit(1)); // LSB
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LabelWord {
     /// Raw label value; only the low `width` bits are meaningful.
@@ -89,19 +44,10 @@ pub struct LabelWord {
 impl LabelWord {
     /// Constructs a [`LabelWord`].
     ///
-    /// # Arguments
-    ///
-    /// * `bits` - Raw label bits; only the low `width` bits are meaningful.
-    /// * `width` - Number of meaningful bits, in `[1, 16]`.
-    ///
     /// # Panics
     ///
     /// Panics if `width == 0`, `width > 16`, or `bits` does not fit in
     /// `width` bits.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn new(bits: u16, width: u8) -> Self {
         assert!(
             (1..=16).contains(&width),
@@ -118,29 +64,9 @@ impl LabelWord {
 
     /// Returns bit `k` of the label, with `k = 0` being the MSB.
     ///
-    /// # Arguments
-    ///
-    /// * `k` - Bit index within the label; `0` is the MSB.
-    ///
     /// # Panics
     ///
     /// Panics if `k >= self.width`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::LabelWord;
-    ///
-    /// let l = LabelWord::new(0b1001, 4);
-    /// assert!(l.bit(0));    // MSB of 0b1001
-    /// assert!(!l.bit(1));
-    /// assert!(!l.bit(2));
-    /// assert!(l.bit(3));    // LSB
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn bit(self, k: u8) -> bool {
         assert!(
@@ -193,8 +119,6 @@ pub enum Normalization<S: ModemScalar> {
 }
 
 /// Selectable demapper semantics.
-///
-/// Trait task `d36ae697` consumes this; it is not redefined there.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DemapMethod {
     /// Exact log-MAP (reference / analysis) path.
@@ -209,9 +133,7 @@ pub enum DemapMethod {
 /// position (length `bits_per_symbol()`). Analysis, documentation, and
 /// test-vector generators consume this; hot demap loops never read it.
 ///
-/// Each flag describes a property of the bit-channel LLR under AWGN with
-/// the normalization contract documented at the [`modem`](super) module
-/// level.
+/// Each flag describes a property of the bit-channel LLR under AWGN.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BitChannelAnalysis {
     /// LLR conditional distribution is symmetric about 0 under
@@ -229,10 +151,7 @@ pub struct BitChannelAnalysis {
     /// Does **not** hold in general for Gray square-QAM with
     /// bits-per-axis > 1 (16/64/256-QAM): bits on the same axis share
     /// the same received component and their joint posterior does not
-    /// factor except at `y = 0`. Downstream analysis that needs strict
-    /// per-bit independence must therefore treat this flag as the
-    /// authoritative per-preset answer rather than inferring it from the
-    /// constellation family.
+    /// factor except at `y = 0`.
     pub conditionally_independent: bool,
     /// A closed-form analytic LLR expression exists for this bit
     /// channel (for example BPSK / QPSK `LLR = 4 y / N0`, or the
@@ -348,14 +267,12 @@ mod tests {
         assert!(a.symmetric_llr_distribution);
         assert!(!a.conditionally_independent);
         assert!(a.closed_form_llr_available);
-        // Derive checks: Copy + Eq + Hash available.
         let b = a;
         assert_eq!(a, b);
     }
 
     #[test]
     fn test_label_word_full_width_16() {
-        // width=16 path: no bits>>16 check because shift would be UB.
         let l = LabelWord::new(u16::MAX, 16);
         assert!(l.bit(0));
         assert!(l.bit(15));
