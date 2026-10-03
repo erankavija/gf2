@@ -1,47 +1,12 @@
-//! Optimized scalar Gray-QAM bit-to-symbol mapper.
-//!
-//! [`GrayQamMapper`] is the Gray-square-QAM fast path behind the
-//! [`BatchMapper`] trait. It caches a post-normalization Gray-PAM-label →
-//! level lookup table derived from the preset [`ModemSpec`] once at
-//! construction, then maps each symbol by splitting its MSB-first label
-//! into independent I/Q half-labels and indexing the table twice.
-//!
-//! Covers BPSK (order 2) and Gray square-QAM for orders 4, 16, 64, and 256,
-//! matching the DVB-T2 EN 302 755 Table 14 layout locked by the
-//! [`ModemSpec::gray_square_qam`](super::ModemSpec::gray_square_qam) preset.
-//!
-//! Future SIMD kernels replace the inner loop without touching the public
-//! surface (task `c5cee991`).
+//! Gray square-QAM bit-to-symbol mapper.
 
 use super::{BatchMapper, DefaultScalar, ModemScalar, ModemSpec, ModemView};
 
-/// Scalar Gray-QAM bit-to-symbol mapper.
+/// Bit-to-symbol mapper for BPSK and Gray square-QAM of orders 4, 16, 64
+/// and 256.
 ///
-/// Constructed from a [`ModemSpec::gray_square_qam`](super::ModemSpec::gray_square_qam)
-/// preset. Produces the same I/Q coordinates as the preset's per-label
-/// [`ModemView::point`] lookup, while avoiding per-symbol label-to-index
-/// scans by splitting labels into independent I/Q half-labels and indexing
-/// a cached PAM lookup table.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::{BatchMapper, GrayQamMapper};
-///
-/// let mapper = GrayQamMapper::from_preset_order(16);
-/// let bits = [false, false, false, false]; // label = 0
-/// let mut i = [0.0_f32; 1];
-/// let mut q = [0.0_f32; 1];
-/// mapper.map_bits(&bits, &mut i, &mut q);
-/// let expected = mapper.spec().point(0);
-/// assert!((i[0] - expected.i).abs() < 1e-6);
-/// assert!((q[0] - expected.q).abs() < 1e-6);
-/// ```
-///
-/// # Complexity
-///
-/// Construction is O(M) in `order = M`. Mapping is O(num_symbols) with a
-/// small per-symbol constant (two table indexings + a label assemble).
+/// Splits each MSB-first label into I and Q half-labels and indexes a
+/// cached Gray-PAM level table once per axis.
 #[derive(Debug, Clone)]
 pub struct GrayQamMapper<S: ModemScalar> {
     spec: ModemSpec<S>,
@@ -61,22 +26,12 @@ pub struct GrayQamMapper<S: ModemScalar> {
 }
 
 impl GrayQamMapper<DefaultScalar> {
-    /// Constructs the default-scalar (`f32`) mapper for a supported order.
-    ///
-    /// # Arguments
-    ///
-    /// * `order` - Constellation order; must be one of `2, 4, 16, 64, 256`.
-    ///   `order = 2` selects BPSK.
+    /// Constructs the default-scalar (`f32`) mapper for a supported order;
+    /// `order = 2` selects BPSK.
     ///
     /// # Panics
     ///
-    /// Panics with `"gray_square_qam: order must be one of 2, 4, 16, 64,
-    /// 256 (got {order})"` via [`ModemSpec::gray_square_qam_with_scalar`]
-    /// if `order` is unsupported.
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `order = M`.
+    /// Panics if `order` is not one of `2, 4, 16, 64, 256`.
     pub fn from_preset_order(order: usize) -> Self {
         Self::from_preset_order_with_scalar(order)
     }
@@ -85,56 +40,22 @@ impl GrayQamMapper<DefaultScalar> {
 impl<S: ModemScalar> GrayQamMapper<S> {
     /// Scalar-generic companion of [`GrayQamMapper::from_preset_order`].
     ///
-    /// Useful for `f64` research workflows.
-    ///
-    /// # Arguments
-    ///
-    /// * `order` - Constellation order; must be one of `2, 4, 16, 64, 256`.
-    ///
     /// # Panics
     ///
-    /// Panics via [`ModemSpec::gray_square_qam_with_scalar`] if `order` is
-    /// unsupported.
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `order = M`.
+    /// Panics if `order` is not one of `2, 4, 16, 64, 256`.
     pub fn from_preset_order_with_scalar(order: usize) -> Self {
         Self::from_spec(ModemSpec::<S>::gray_square_qam_with_scalar(order))
     }
 
-    /// Builds a `GrayQamMapper` from a caller-supplied [`ModemSpec`].
-    ///
-    /// The spec must already satisfy the canonical Gray-square-QAM
-    /// layout — this is checked by `presets::assert_valid_gray_square_qam_spec`,
-    /// which is the same validator used by
-    /// [`GrayQamMapper::from_preset_order_with_scalar`] and
-    /// [`super::FastGrayQamDemapper::new`], so every Gray-square-QAM
-    /// entry point agrees on what "Gray square-QAM" means.
-    ///
-    /// The caller's spec is stored verbatim. This preserves any
-    /// extension metadata (normalization, bit-channel analysis hints)
-    /// that the caller attached through [`super::ModemSpecBuilder`] —
-    /// contrast with `from_preset_order_with_scalar`, which discards
-    /// builder metadata and rebuilds a canonical preset from `order`
-    /// alone.
-    ///
-    /// # Arguments
-    ///
-    /// * `spec` — a validated Gray-square-QAM modem spec. Pass a preset
-    ///   via `ModemSpec::gray_square_qam_with_scalar(order)` or a
-    ///   builder-produced spec that matches the canonical Gray-QAM
-    ///   geometry.
+    /// Builds a mapper from a caller-supplied [`ModemSpec`], stored verbatim
+    /// so its normalization and analysis metadata reach
+    /// [`BatchMapper::spec`].
     ///
     /// # Panics
     ///
-    /// Panics if `spec` does not match the canonical Gray-square-QAM
-    /// layout (wrong label ordering, wrong point positions, or a
-    /// `bits_per_symbol` that is not in {1, 2, 4, 6, 8}).
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `M = 1 << bits_per_symbol`.
+    /// Panics if `spec` does not match the BPSK / Gray square-QAM preset
+    /// layout: `bits_per_symbol` outside `{1, 2, 4, 6, 8}`, non-preset bit
+    /// channels or capabilities, or a point off its Gray-PAM level.
     pub fn from_spec(spec: ModemSpec<S>) -> Self {
         let m_total = spec.bits_per_symbol();
         let is_bpsk = m_total == 1;
@@ -145,11 +66,6 @@ impl<S: ModemScalar> GrayQamMapper<S> {
             (m_half, (1u16 << m_half) - 1)
         };
 
-        // Cross-check the spec against the canonical Gray-square-QAM
-        // layout, then pull the PAM level table from the SSOT helper in
-        // `presets`. Both steps route through the same implementation as
-        // `FastGrayQamDemapper::new` so the mapper and demapper can
-        // never drift out of agreement on what "Gray square-QAM" means.
         super::presets::assert_valid_gray_square_qam_spec(&spec.view());
         let pam_levels: Vec<S> = super::presets::gray_pam_levels::<S>(m_total);
 
@@ -163,20 +79,9 @@ impl<S: ModemScalar> GrayQamMapper<S> {
         }
     }
 
-    /// Returns the post-normalization Gray-PAM level table shared between
-    /// the I and Q axes.
-    ///
-    /// The table is indexed by the raw Gray-PAM axis label (MSB-first
-    /// within the `m/2`-bit half-label for QAM, or the single raw bit for
-    /// BPSK) and has length `1 << (m / 2)` for QAM or exactly `2` for
-    /// BPSK. Matches the accessor exposed by
-    /// [`super::FastGrayQamDemapper::pam_levels`] so alternate-backend
-    /// adapters can read the level table through a single obvious entry
-    /// point regardless of which side of the mapper/demapper they hold.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
+    /// Post-normalization Gray-PAM level table shared by the I and Q axes,
+    /// indexed by the raw Gray-PAM axis label: `1 << (m / 2)` entries for
+    /// QAM, `2` for BPSK.
     #[inline]
     pub fn pam_levels(&self) -> &[S] {
         &self.pam_levels
@@ -378,8 +283,6 @@ mod tests {
             let view = spec.view();
             let m = view.bits_per_symbol() as usize;
 
-            // Deterministic pseudo-random bit generator seeded by `seed`,
-            // routed through the shared SSOT modem test LCG.
             let mut rng = super::super::test_oracle::Lcg::new(seed | 1);
             let mut bits = Vec::with_capacity(num_symbols * m);
             for _ in 0..(num_symbols * m) {

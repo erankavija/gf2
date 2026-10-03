@@ -1,9 +1,4 @@
 //! Scalar trait for modem I/Q coordinates and demapper arithmetic.
-//!
-//! The [`ModemScalar`] trait is a sealed abstraction over `f32` and `f64` that
-//! lets constellation storage and demapper math remain generic without opening
-//! the trait up to arbitrary external implementations. See the epic design
-//! document (`@/issue/d4851c3d`) for why it has no fixed-point flavor.
 
 mod sealed {
     /// Sealing trait preventing downstream implementations of
@@ -15,22 +10,7 @@ mod sealed {
 
 /// Scalar used for constellation I/Q coordinates and demapper math.
 ///
-/// This trait is **sealed**: only [`f32`] and [`f64`] implement it. The
-/// sealing keeps specialization tractable and preserves the option to add
-/// fixed-point or half-precision flavors later as a non-breaking change.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::ModemScalar;
-///
-/// fn midpoint<S: ModemScalar>(a: S, b: S) -> S {
-///     let half = S::one() / S::two();
-///     (a + b).mul_add(half, S::zero())
-/// }
-/// assert!((midpoint(0.0_f32, 2.0_f32) - 1.0_f32).abs() < 1e-6);
-/// assert!((midpoint(0.0_f64, 2.0_f64) - 1.0_f64).abs() < 1e-12);
-/// ```
+/// Sealed: only [`f32`] and [`f64`] implement it.
 pub trait ModemScalar:
     sealed::Sealed
     + Copy
@@ -54,10 +34,6 @@ pub trait ModemScalar:
     /// Conversion to `f32` for producing [`crate::Llr`] values.
     fn to_f32(self) -> f32;
     /// Lossless widening conversion to `f64`.
-    ///
-    /// For `f64` this is the identity; for `f32` this preserves the exact
-    /// value. Builders that compute normalization in `f64` use this to
-    /// avoid the precision loss of routing through `f32`.
     fn to_f64(self) -> f64;
     /// Square root.
     fn sqrt(self) -> Self;
@@ -76,8 +52,6 @@ pub trait ModemScalar:
 
     /// Tolerance used by [`super::ModemSpec`] when validating the
     /// post-normalization mean symbol energy equals `1`.
-    ///
-    /// Set to `1e-5` for `f32` and `1e-10` for `f64`.
     #[doc(hidden)]
     fn unit_energy_tolerance() -> Self;
 }
@@ -200,9 +174,8 @@ impl ModemScalar for f64 {
     }
 }
 
-/// Default scalar for modem presets and most downstream code.
-///
-/// Kept at [`f32`] to match [`crate::Llr`] and maximize SIMD lane density.
+/// Default scalar for modem presets; `f32` is the storage type of
+/// [`crate::Llr`].
 pub type DefaultScalar = f32;
 
 #[cfg(test)]
