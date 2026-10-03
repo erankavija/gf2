@@ -52,11 +52,18 @@ The receipt ran five fresh executions of five $250$ ms repetitions under
 `dev/scripts/ccx1-bench-flock.sh`, which holds the host benchmark mutex
 exclusively for the whole command and pins it to CPUs 6 to 11. A timed run is
 a job in the benchmark-window
-[queue](https://github.com/erankavija/gf2/blob/d3cca2e112004f28a11fa2c46a60e01bc0cf5637/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv), one tab-separated line of issue or job label, worktree
+[queue](https://github.com/erankavija/gf2/blob/456e24fe3c6df031b7b5840b9e931e78eedbe5e5/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv), one tab-separated line of issue or job label, worktree
 relative to the clone root, estimated minutes and command. The
-[window runner](https://github.com/erankavija/gf2/blob/d3cca2e112004f28a11fa2c46a60e01bc0cf5637/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh) exports `GF2_BENCH_WINDOW=1`, which the
+[window runner](https://github.com/erankavija/gf2/blob/456e24fe3c6df031b7b5840b9e931e78eedbe5e5/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh) exports `GF2_BENCH_WINDOW=1`, which the
 wrapper requires, and runs each job under `bash -c` from its worktree. It
-resolves worktrees against the clone root that its `repo` variable names.
+takes the root of the checkout that contains it from
+`git rev-parse --show-toplevel` and resolves worktrees against that root.
+`--print-root` prints the root and exits before the window opens; the printed
+path is the clone root:
+
+```sh
+"$GF2"/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh --print-root
+```
 
 Append the receipt's loop as a job. The command finds the clone root from the
 worktree, runs the clone's wrapper, and sets `CARGO_CI_NO_LOCK=1` because the
@@ -69,10 +76,38 @@ printf 'f3-repro\t.agents/worktrees/f3-receipt\t15\t%s\n' "$cmd" \
     >> "$GF2"/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv
 ```
 
-The next window runs the job and records its start and exit in the window log
-and its output in a per-job file, both under `.agents/bench-window/` in the
-clone. The receipt's protocol requires the window runner and its lock on every
-host.
+Open a window by running the runner from a shell:
+
+```sh
+"$GF2"/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh
+```
+
+The runner holds no lock; the job's wrapper takes the mutex when the job
+starts. It creates the state directory, `.agents/bench-window/` in the clone
+unless `GF2_WINDOW_STATE` names another, and appends its log there. If
+`sccache` is installed, it stops each running server that holds a lock
+descriptor or lacks `SCCACHE_IDLE_TIMEOUT=0` and starts one under that
+setting. It then runs the queue lines in file order in the foreground and
+returns after logging `window end`. A line whose worktree directory is absent
+under the clone root is logged as `missing` and skipped.
+
+A job's key is the first 16 hexadecimal digits of the SHA-256 of its label,
+worktree and command joined by tabs. The runner appends the job's output to
+`<key>.out` and, on exit status $0$, creates `<key>.done`, which makes every
+later window skip the job. The runner's own exit status carries no job status;
+the log does:
+
+```sh
+grep 'issue=f3-repro ' "$GF2"/.agents/bench-window/window.log
+```
+
+The `job start` line states the key and the `job exit` line states `rc`.
+[`follow-window.sh`](https://github.com/erankavija/gf2/blob/456e24fe3c6df031b7b5840b9e931e78eedbe5e5/dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh), run from a second shell, redraws
+each queue line's state from the same log, markers and output files until
+interrupted. Its status word is the `systemctl --user is-active` result for
+the unit that `GF2_WINDOW_UNIT` names and is independent of a runner started
+from a shell. The receipt's protocol requires the window runner and the
+wrapper's lock on every host.
 
 Before timing each size, the harness asserts that the three backends return
 equal permanents on one fixture. Each row records `git_revision`,
