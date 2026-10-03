@@ -17,6 +17,7 @@ Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 | [Run and extend the Lean 4 proofs](how-to/formal-verification.md) | Build the proofs, regenerate the Charon/Aeneas extraction, and prove a property of an extracted function |
 | [Run a simulation campaign](how-to/run-simulation-campaigns.md) | Configure, run, stop and resume error-rate sweeps, and locate their output |
 | [Reproduce a performance claim](how-to/reproduce-performance-evidence.md) | Rebuild a claim's measured revision, rerun its receipt command and compare the raw data with the receipt |
+| [Select SIMD, GPU and parallel execution](how-to/select-acceleration.md) | Enable, check and tune the SIMD, HIP and rayon paths for `gf2-core` and `gf2-coding` workloads |
 
 ## Concepts
 
