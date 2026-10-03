@@ -1,36 +1,5 @@
 //! DVB-T2 bit interleaver: parity interleaving + column-twist interleaving
 //! (`@/citation/Etsi2015` §6.1.3, Tables 9 and 10).
-//!
-//! Given an FECFRAME of `N_ldpc` coded bits (the LDPC encoder output Λ),
-//! two sequential stages produce V. Both apply to 16-QAM and 64-QAM only;
-//! for QPSK the bits pass through unchanged.
-//!
-//! **Stage 1 — parity interleaving.**
-//! The `K_ldpc` information bits pass through unchanged.  The parity
-//! bits are permuted by:
-//!
-//! ```text
-//! u_i = λ_i                                     for 0 ≤ i < K_ldpc
-//! u_{K_ldpc + 360·t + s} = λ_{K_ldpc + Q·s + t}  for 0 ≤ s < 360, 0 ≤ t < Q
-//! ```
-//!
-//! where `Q = (N_ldpc − K_ldpc) / 360`.
-//!
-//! **Stage 2 — column-twist interleaving.**
-//! The parity-interleaved bits U are serially written column-wise into
-//! a matrix of `Nc` columns × `Nr` rows (the write start position of
-//! column `c` is twisted by `tc[c]`), then read out row-wise:
-//!
-//! ```text
-//! Write: u_i → column  c_i = i / Nr,  row  r_i = (i + tc[c_i]) mod Nr
-//! Read:  v_j ← column  c_j = j mod Nc, row  r_j = j / Nc
-//! ```
-//!
-//! # Supported configurations
-//!
-//! Rates 1/2, 2/3 and 3/4 for Normal (64800 bits) and Short (16200 bits)
-//! FECFRAMEs and rate 3/5 for the Normal FECFRAME, each with QPSK, 16-QAM
-//! or 64-QAM.
 
 use crate::bch::CodeRate;
 use crate::ldpc::dvb_t2::params::{DvbParams, FrameSize};
@@ -171,26 +140,34 @@ impl InterleaverConfig {
 
 /// DVB-T2 bit interleaver (§6.1.3): parity interleaving + column-twist.
 ///
-/// Both stages of the module documentation are composed into one precomputed
-/// permutation table, so `interleave`, `deinterleave` and `deinterleave_llrs`
-/// run in O(N) with N = Nc · Nr.
+/// Given an FECFRAME of `N_ldpc` coded bits (the LDPC encoder output Λ),
+/// two sequential stages produce V. Both apply to 16-QAM and 64-QAM only;
+/// for QPSK the bits pass through unchanged.
 ///
-/// # Construction
+/// **Stage 1 — parity interleaving.**
+/// The `K_ldpc` information bits pass through unchanged.  The parity
+/// bits are permuted by:
 ///
+/// ```text
+/// u_i = λ_i                                     for 0 ≤ i < K_ldpc
+/// u_{K_ldpc + 360·t + s} = λ_{K_ldpc + Q·s + t}  for 0 ≤ s < 360, 0 ≤ t < Q
 /// ```
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
-///     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
-/// };
-/// use gf2_coding::ldpc::dvb_t2::FrameSize;
-/// use gf2_coding::CodeRate;
 ///
-/// let modcod = DvbT2Modcod::new(
-///     FrameSize::Normal,
-///     CodeRate::Rate1_2,
-///     DvbT2Modulation::Qam16,
-/// );
-/// let interleaver = DvbT2BitInterleaver::new(modcod);
+/// where `Q = (N_ldpc − K_ldpc) / 360`.
+///
+/// **Stage 2 — column-twist interleaving.**
+/// The parity-interleaved bits U are serially written column-wise into
+/// a matrix of `Nc` columns × `Nr` rows (the write start position of
+/// column `c` is twisted by `tc[c]`), then read out row-wise:
+///
+/// ```text
+/// Write: u_i → column  c_i = i / Nr,  row  r_i = (i + tc[c_i]) mod Nr
+/// Read:  v_j ← column  c_j = j mod Nc, row  r_j = j / Nc
 /// ```
+///
+/// Both stages are composed into one precomputed permutation table, so
+/// `interleave`, `deinterleave` and `deinterleave_llrs` run in O(N) with
+/// N = Nc · Nr.
 #[derive(Debug, Clone)]
 pub struct DvbT2BitInterleaver {
     config: InterleaverConfig,
@@ -313,28 +290,6 @@ impl DvbT2BitInterleaver {
     /// # Panics
     ///
     /// Panics if `bits.len() != frame_bits()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
-    ///     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
-    /// };
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_core::BitVec;
-    ///
-    /// let modcod = DvbT2Modcod::new(
-    ///     FrameSize::Short,
-    ///     CodeRate::Rate1_2,
-    ///     DvbT2Modulation::Qam16,
-    /// );
-    /// let interleaver = DvbT2BitInterleaver::new(modcod);
-    /// let bits = BitVec::zeros(interleaver.frame_bits());
-    /// let interleaved = interleaver.interleave(&bits);
-    /// let recovered = interleaver.deinterleave(&interleaved);
-    /// assert_eq!(recovered, bits);
-    /// ```
     pub fn deinterleave(&self, bits: &BitVec) -> BitVec {
         let n = self.frame_bits();
         assert_eq!(
@@ -406,8 +361,6 @@ mod tests {
         v
     }
 
-    // --- Roundtrip identity --------------------------------------------------
-
     #[test]
     fn test_roundtrip_zeros() {
         for modcod in in_scope_modcods() {
@@ -453,8 +406,6 @@ mod tests {
             );
         }
     }
-
-    // --- Specific MODCOD roundtrip (rate × mod cross product) ---------------
 
     #[test]
     fn test_roundtrip_all_in_scope_rates_normal() {
@@ -504,8 +455,6 @@ mod tests {
         }
     }
 
-    // --- Rate3_4 roundtrip ---------------------------------------------------
-
     #[test]
     fn test_roundtrip_rate3_4_normal() {
         for &modulation in &[DvbT2Modulation::Qam16, DvbT2Modulation::Qam64] {
@@ -552,22 +501,12 @@ mod tests {
         }
     }
 
-    // --- LLR-domain inverse (index-tagging test) ----------------------------
-
-    /// LLR de-interleave correctness via index tagging.
-    ///
-    /// Encodes each bit position as a distinct LLR value (position as f32),
-    /// interleaves (hard-bit path) to produce a permuted ordering, then
-    /// applies `deinterleave_llrs` to the LLRs arranged in interleaved order.
-    /// After de-interleaving, `output[i]` must equal the LLR that was
-    /// originally at position `i`.
     #[test]
     fn test_deinterleave_llrs_index_tagging() {
         for modcod in in_scope_modcods() {
             let il = DvbT2BitInterleaver::new(modcod);
             let n = il.frame_bits();
 
-            // Tag: llr[i] = i as f32 (unique per position).
             let original_llrs: Vec<Llr> = (0..n).map(|i| Llr::new(i as f32)).collect();
 
             // Build interleaved order: position `j` in interleaved space
@@ -593,8 +532,6 @@ mod tests {
         }
     }
 
-    /// Symmetric check: interleave_llrs via forward perm, then deinterleave,
-    /// gives back original LLRs.
     #[test]
     fn test_deinterleave_llrs_roundtrip() {
         for modcod in in_scope_modcods() {
@@ -603,8 +540,6 @@ mod tests {
 
             let original: Vec<Llr> = (0..n).map(|i| Llr::new((i % 127) as f32 - 63.0)).collect();
 
-            // Apply forward permutation manually (simulates what the transmitter
-            // would see after the interleaver reorders LLR indices).
             let mut interleaved = vec![Llr::zero(); n];
             for (i, &dst) in il.forward.iter().enumerate() {
                 interleaved[dst] = original[i];
@@ -620,8 +555,6 @@ mod tests {
             }
         }
     }
-
-    // --- Structural / parameter checks --------------------------------------
 
     #[test]
     fn test_frame_bits_matches_fecframe_length() {
@@ -754,8 +687,6 @@ mod tests {
         il.deinterleave_llrs(&wrong);
     }
 
-    // --- QPSK identity -------------------------------------------------------
-
     /// `@/citation/Etsi2015` §6.1.3 is titled "Bit Interleaving
     /// (for 16-QAM, 64-QAM and 256-QAM)", so QPSK passes Λ through unchanged.
     #[test]
@@ -789,8 +720,6 @@ mod tests {
         }
     }
 
-    // --- 64-QAM column-twist verification (spec Table 9/10) -----------------
-
     /// Column-twist source indices for 64-QAM Normal FECFRAME.
     ///
     /// Per `@/citation/Etsi2015` §6.1.3, for 64-QAM Normal (Nc=12, Nr=5400):
@@ -804,9 +733,9 @@ mod tests {
     fn test_64qam_normal_col_twist_spec_example() {
         let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
         let il = DvbT2BitInterleaver::new(modcod);
-        let nr = il.num_rows(); // 5400
-        let nc = il.num_columns(); // 12
-        let twist = il.twist_offsets().to_vec(); // [0,0,2,2,3,4,4,5,5,7,8,9]
+        let nr = il.num_rows();
+        let nc = il.num_columns();
+        let twist = il.twist_offsets().to_vec();
 
         assert_eq!(nc, 12, "64-QAM Normal must have Nc=12");
         assert_eq!(nr, 5400, "64-QAM Normal must have Nr=5400");
@@ -823,8 +752,6 @@ mod tests {
             );
         }
     }
-
-    // --- Word-boundary edge cases -------------------------------------------
 
     /// Roundtrip identity at word-boundary bit positions (0, 1, 63, 64, 65
     /// relative to a multiple of Nc) for QPSK, 16-QAM, 64-QAM Normal frames.

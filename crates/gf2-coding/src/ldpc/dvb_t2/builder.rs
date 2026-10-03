@@ -53,7 +53,7 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
 /// 2. Dual-diagonal parity structure:
 ///    For each parity bit p in [0, m):
 ///    - Add edge (p, k + p)              // Diagonal
-///    - Add edge (p-1, k + p) if p > 0   // Sub-diagonal (NO wrap at p=0)
+///    - Add edge (p, k + p - 1) if p > 0 // Sub-diagonal (NO wrap at p=0)
 ///
 /// # Returns
 ///

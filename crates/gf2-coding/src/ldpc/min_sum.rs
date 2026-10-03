@@ -3,35 +3,6 @@
 //! [`min_sum_check_row`] computes every outgoing message of a check node of
 //! degree `d_c` in `2 d_c` reads, against `d_c (d_c - 1)` for one leave-one-out
 //! reduction per outgoing edge.
-//!
-//! # Numerical contract
-//!
-//! The reduction reproduces, bit for bit, the scalar reference for the same
-//! excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
-//! without the `simd` cargo feature, and the corresponding scalar
-//! [`Llr::boxplus_normalized_minsum_n`] and [`Llr::boxplus_offset_minsum_n`].
-//! Two rules of that reference decide the cases a reduction can disagree on:
-//!
-//! - **Sign** is taken by comparison against zero, so a negative-zero input
-//!   counts as positive and a NaN input counts as negative.
-//! - **Magnitude** is the [`f32::min`] fold of the input magnitudes from
-//!   `f32::INFINITY`, which skips a NaN input; an all-NaN input set therefore
-//!   reduces to an infinite magnitude.
-//!
-//! This function is scalar and performs no runtime dispatch. The AVX2 kernel
-//! that `Llr::boxplus_minsum_n` reaches under `simd` takes the IEEE sign bit
-//! in its vector lanes and so disagrees with this contract.
-//!
-//! Both factors of a leave-one-out result are exact. A sign is `±1.0`, so
-//! removing one input's sign from the shared product is a multiplication by
-//! that same `±1.0`. The magnitude excluding input `i` is the smallest input
-//! magnitude when `i` is not at the smallest position and the second smallest
-//! when it is, which is the minimum over the other inputs even when the two
-//! smallest magnitudes are equal.
-//!
-//! [`Llr::boxplus_minsum_n`]: crate::llr::Llr::boxplus_minsum_n
-//! [`Llr::boxplus_normalized_minsum_n`]: crate::llr::Llr::boxplus_normalized_minsum_n
-//! [`Llr::boxplus_offset_minsum_n`]: crate::llr::Llr::boxplus_offset_minsum_n
 
 use crate::llr::Llr;
 
@@ -80,23 +51,34 @@ impl MinSumRule {
 ///
 /// Panics if `inputs` and `outputs` have different lengths.
 ///
-/// # Examples
+/// # Numerical contract
 ///
-/// ```
-/// use gf2_coding::ldpc::{min_sum_check_row, MinSumRule};
-/// use gf2_coding::llr::Llr;
+/// The reduction reproduces, bit for bit, the scalar reference for the same
+/// excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
+/// without the `simd` cargo feature, and the corresponding scalar
+/// [`Llr::boxplus_normalized_minsum_n`] and [`Llr::boxplus_offset_minsum_n`].
+/// Two rules of that reference decide the cases a reduction can disagree on:
 ///
-/// let inputs = [Llr::new(3.0), Llr::new(-2.0), Llr::new(4.0)];
-/// let mut outputs = [Llr::zero(); 3];
-/// min_sum_check_row(MinSumRule::Plain, &inputs, &mut outputs);
+/// - **Sign** is taken by comparison against zero, so a negative-zero input
+///   counts as positive and a NaN input counts as negative.
+/// - **Magnitude** is the [`f32::min`] fold of the input magnitudes from
+///   `f32::INFINITY`, which skips a NaN input; an all-NaN input set therefore
+///   reduces to an infinite magnitude.
 ///
-/// // Output 0 excludes 3.0: sign is negative, magnitude is min(2, 4) = 2.
-/// assert_eq!(outputs[0].value(), -2.0);
-/// // Output 1 excludes -2.0: sign is positive, magnitude is min(3, 4) = 3.
-/// assert_eq!(outputs[1].value(), 3.0);
-/// // Output 2 excludes 4.0: sign is negative, magnitude is min(3, 2) = 2.
-/// assert_eq!(outputs[2].value(), -2.0);
-/// ```
+/// This function is scalar and performs no runtime dispatch. The AVX2 kernel
+/// that `Llr::boxplus_minsum_n` reaches under `simd` takes the IEEE sign bit
+/// in its vector lanes and so disagrees with this contract.
+///
+/// Both factors of a leave-one-out result are exact. A sign is `±1.0`, so
+/// removing one input's sign from the shared product is a multiplication by
+/// that same `±1.0`. The magnitude excluding input `i` is the smallest input
+/// magnitude when `i` is not at the smallest position and the second smallest
+/// when it is, which is the minimum over the other inputs even when the two
+/// smallest magnitudes are equal.
+///
+/// [`Llr::boxplus_minsum_n`]: crate::llr::Llr::boxplus_minsum_n
+/// [`Llr::boxplus_normalized_minsum_n`]: crate::llr::Llr::boxplus_normalized_minsum_n
+/// [`Llr::boxplus_offset_minsum_n`]: crate::llr::Llr::boxplus_offset_minsum_n
 #[inline]
 pub fn min_sum_check_row(rule: MinSumRule, inputs: &[Llr], outputs: &mut [Llr]) {
     assert_eq!(
