@@ -168,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_bit() {
-        assert!(10u64.bit(1)); // 1010 -> bit 1 is set
+        assert!(10u64.bit(1));
         assert!(!10u64.bit(2));
         assert!(10u64.bit(3));
     }

@@ -531,7 +531,7 @@ mod tests {
 
         #[inline]
         fn mul_by_non_residue(x: Fp<7>) -> Fp<7> {
-            -x // fast path: β = −1
+            -x
         }
     }
     type Fq2 = QuadraticExt<Fq2Config>;
@@ -611,7 +611,7 @@ mod tests {
         let a = Fq2::new(Fp::new(3), Fp::new(5));
         let conj = a.conjugate();
         assert_eq!(conj.c0().value(), 3);
-        assert_eq!(conj.c1().value(), 2); // −5 mod 7 = 2
+        assert_eq!(conj.c1().value(), 2);
     }
 
     #[test]
@@ -642,7 +642,6 @@ mod tests {
 
     #[test]
     fn test_known_u_squared_is_beta() {
-        // u² = β = 6 = −1 mod 7
         let u = Fq2::new(Fp::new(0), Fp::new(1));
         let u_sq = u * u;
         assert_eq!(u_sq, Fq2::from_base(Fp::new(6)));
@@ -650,17 +649,13 @@ mod tests {
 
     #[test]
     fn test_known_conjugate_product() {
-        // (1 + u)(1 − u) = 1 − u² = 1 − (−1) = 2
         let a = Fq2::new(Fp::new(1), Fp::new(1));
-        let b = Fq2::new(Fp::new(1), Fp::new(6)); // 1 − u = 1 + 6·u
+        let b = Fq2::new(Fp::new(1), Fp::new(6));
         assert_eq!(a * b, Fq2::from_base(Fp::new(2)));
     }
 
     #[test]
     fn test_known_multiplication() {
-        // (3 + 2u)(4 + 5u) = 12 + 15u + 8u + 10u²
-        //                   = 12 + 23u + 10·(−1)
-        //                   = 2 + 23u = 2 + 2u (mod 7)
         let a = Fq2::new(Fp::new(3), Fp::new(2));
         let b = Fq2::new(Fp::new(4), Fp::new(5));
         let c = a * b;
@@ -670,8 +665,6 @@ mod tests {
 
     #[test]
     fn test_karatsuba_matches_naive_exhaustive() {
-        // Naive: (a0+a1·u)(b0+b1·u) = (a0·b0 + β·a1·b1) + (a0·b1 + a1·b0)·u
-        // with β = 6 mod 7
         for a0 in 0..7u64 {
             for a1 in 0..7u64 {
                 for b0 in 0..7u64 {
@@ -741,7 +734,7 @@ mod tests {
         let b = Fq2::new(Fp::new(2), Fp::new(4));
         a += &b;
         assert_eq!(a, Fq2::new(Fp::new(5), Fp::new(2)));
-        assert_eq!(b.c0().value(), 2); // b still valid
+        assert_eq!(b.c0().value(), 2);
     }
 
     #[test]
@@ -771,7 +764,6 @@ mod tests {
 
     #[test]
     fn test_max_unreduced_additions_finite_for_large_prime() {
-        // GF(Mersenne61²) with β = 2.
         struct MConfig;
         impl ExtConfig for MConfig {
             type BaseField = Fp<2305843009213693951>;

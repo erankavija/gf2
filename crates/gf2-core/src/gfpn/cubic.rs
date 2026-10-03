@@ -595,7 +595,7 @@ mod tests {
     struct Fq3Config;
     impl ExtConfig for Fq3Config {
         type BaseField = Fp<7>;
-        const NON_RESIDUE: Fp<7> = Fp::<7>::new(3); // β = 3
+        const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
     }
     type Fq3 = CubicExt<Fq3Config>;
 
@@ -695,7 +695,6 @@ mod tests {
 
     #[test]
     fn test_known_v_cubed_is_beta() {
-        // v³ = β = 3
         let v = Fq3::new(Fp::new(0), Fp::new(1), Fp::new(0));
         let v_cubed = v * v * v;
         assert_eq!(v_cubed, Fq3::from_base(Fp::new(3)));
@@ -703,12 +702,10 @@ mod tests {
 
     #[test]
     fn test_known_multiplication() {
-        // (1 + v)(1 + v) = 1 + 2v + v²
         let a = Fq3::new(Fp::new(1), Fp::new(1), Fp::new(0));
         let c = a * a;
         assert_eq!(c, Fq3::new(Fp::new(1), Fp::new(2), Fp::new(1)));
 
-        // (1 + v)(v²) = v² + v³ = v² + 3 = 3 + 0·v + 1·v²
         let b = Fq3::new(Fp::new(0), Fp::new(0), Fp::new(1));
         let d = a * b;
         assert_eq!(d, Fq3::new(Fp::new(3), Fp::new(0), Fp::new(1)));
@@ -750,9 +747,6 @@ mod tests {
 
     #[test]
     fn test_karatsuba_matches_naive_representative() {
-        // Naive schoolbook: c0 = a0*b0 + β*(a1*b2 + a2*b1)
-        //                   c1 = a0*b1 + a1*b0 + β*a2*b2
-        //                   c2 = a0*b2 + a1*b1 + a2*b0
         let beta = 3u64;
         for a0 in 0..7u64 {
             for a1 in 0..7u64 {
@@ -835,7 +829,7 @@ mod tests {
         let b = Fq3::new(Fp::new(1), Fp::new(4), Fp::new(6));
         a += &b;
         assert_eq!(a, Fq3::new(Fp::new(4), Fp::new(2), Fp::new(1)));
-        assert_eq!(b.c0().value(), 1); // b still valid
+        assert_eq!(b.c0().value(), 1);
     }
 
     #[test]
@@ -863,7 +857,6 @@ mod tests {
 
     #[test]
     fn test_max_unreduced_additions_finite_for_large_prime() {
-        // GF(Mersenne61³) with β = 3.
         struct MConfig;
         impl ExtConfig for MConfig {
             type BaseField = Fp<2305843009213693951>;

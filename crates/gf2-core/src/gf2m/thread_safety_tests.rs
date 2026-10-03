@@ -1,5 +1,3 @@
-//! Thread safety tests for GF(2^m) fields and elements.
-
 #[cfg(test)]
 mod tests {
     use crate::gf2m::Gf2mField;
@@ -103,7 +101,6 @@ mod tests {
 
         assert_eq!(results.len(), 100);
 
-        // Verify XOR property: a + (a ^ 0xFF) = 0xFF
         for (i, (a_val, sum_val, _)) in results.iter().enumerate() {
             let expected_a = (i + 1) as u64;
             assert_eq!(*a_val, expected_a);
@@ -154,9 +151,7 @@ mod tests {
     fn test_cross_thread_different_fields() {
         use std::thread;
 
-        // GF(2^8) with standard primitive: x^8 + x^4 + x^3 + x^2 + 1
         let field1 = Gf2mField::gf256();
-        // GF(2^8) with different primitive: x^8 + x^4 + x^3 + x + 1
         let field2 = Gf2mField::new(8, 0b100011011);
 
         let handle1 = {

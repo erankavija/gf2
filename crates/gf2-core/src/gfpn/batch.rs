@@ -5,10 +5,7 @@
 //! contiguous buffer holding coefficient `i` of every element, so
 //! extension-field arithmetic decomposes into base-field passes over
 //! contiguous slices. The quadratic and cubic products dispatch through
-//! [`SimdKaratsubaHook`]: `Fp<65537>` uses the fused AVX2 Karatsuba kernels
-//! of `gf2-kernels-simd`, other `Fp<P>` bases compose the
-//! [`crate::gfp::SimdVecOps`] add/sub/mul hooks, and any other base field,
-//! build or host takes the scalar combine.
+//! [`SimdKaratsubaHook`].
 //!
 //! # Examples
 //!
@@ -232,13 +229,9 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// out.c1 = (self.c0 + self.c1)·(other.c0 + other.c1) − v0 − v1
     /// ```
     ///
-    /// `Fp<65537>` on AVX2 hosts with the `simd` feature routes through the
-    /// fused AVX2 Karatsuba kernel `batch_karatsuba_fn` of
-    /// `gf2-kernels-simd::fp65537`; other supported `Fp<P>` bases compose
-    /// the base-field batch kernels exposed by [`crate::gfp::SimdVecOps`];
-    /// any other `F` (or unsupported runtime) takes the scalar combine. The
-    /// cost per batch element is 3 base-field multiplications, 2 additions,
-    /// 3 subtractions, and one `mul_by_non_residue`.
+    /// [`SimdKaratsubaHook`] selects the backend. The cost per batch element
+    /// is 3 base-field multiplications, 3 additions, 2 subtractions, and one
+    /// `mul_by_non_residue`.
     ///
     /// # Panics
     ///
@@ -342,12 +335,9 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     ///
     /// For each batch index `i`, computes `self[i] * other[i]` using the same
     /// six-product formula as `CubicExt::mul`, but over coefficient lanes in
-    /// Structure-of-Arrays order. For `Fp<P>` bases the six independent
-    /// products and the surrounding adds/subs route through the shared
-    /// [`crate::gfp::SimdVecOps`] hooks when they are available; otherwise the
-    /// straight-line scalar lane combine computes the same result.
-    /// The cost per batch element is 6 base-field multiplications, 6
-    /// additions, 7 subtractions, and two non-residue scales.
+    /// Structure-of-Arrays order. [`SimdKaratsubaHook`] selects the backend.
+    /// The cost per batch element is 6 base-field multiplications, 9
+    /// additions, 6 subtractions, and two non-residue scales.
     ///
     /// # Panics
     ///
@@ -586,22 +576,25 @@ where
     scalar_karatsuba::<F, C>(a0, a1, b0, b1)
 }
 
-/// SIMD-dispatch hook for the Karatsuba combine used by
-/// [`BatchExtField::batch_mul_quadratic`].
+/// SIMD dispatch hook of the [`BatchExtField`] quadratic and cubic products;
+/// a base field implements it to supply kernels.
 ///
-/// Every method returns `None` by default (scalar fallback). The impl for
-/// `Fp<P>` routes through the fused AVX2 kernels in `gf2-kernels-simd`
-/// when `P = 65537` and otherwise tries the shared
-/// [`crate::gfp::SimdVecOps`] add/sub/mul hooks. The trait is a
-/// crate-internal dispatch extension point.
+/// Every method returns `None` by default: a declined quadratic combine runs
+/// the scalar loop, a declined cubic combine composes the lane methods (the
+/// scalar loop on the parallel path), and a declined lane method runs the
+/// scalar loop. In the `Fp<P>` impl both combines at `P = 65537` use the fused
+/// AVX2 kernels of `gf2-kernels-simd` when the `simd` feature is on and the
+/// host has AVX2, and decline otherwise. At any other `P` the quadratic
+/// combine composes the [`crate::gfp::SimdVecOps`] hooks, declining when one
+/// of them declines, and the cubic combine declines. The lane methods
+/// forward to `SimdVecOps` for every `P`.
 pub trait SimdKaratsubaHook: ConstField {
     /// Attempts to compute the Karatsuba combine for a quadratic
     /// extension element-wise over this base field using a SIMD kernel.
     ///
     /// `a0`, `a1`, `b0`, `b1` are the SoA coefficient lanes of two batches
     /// and have identical length. Returns `None` when no SIMD kernel is
-    /// available for `Self`; the caller then falls back to the scalar
-    /// combine.
+    /// available for `Self`.
     #[inline]
     fn try_simd_karatsuba<C: ExtConfig<BaseField = Self>>(
         _a0: &[Self],
@@ -617,8 +610,6 @@ pub trait SimdKaratsubaHook: ConstField {
     /// Computes all three output coefficient lanes `[c0, c1, c2]` of the
     /// element-wise product in `BaseField[X] / (X^3 - C::NON_RESIDUE)` from
     /// the left lanes `a0`, `a1`, `a2` and the right lanes `b0`, `b1`, `b2`.
-    /// Returning `None` asks the generic SoA path to compose the operation
-    /// from base-field batch add, sub, and multiplication hooks instead.
     #[inline]
     #[allow(clippy::too_many_arguments)]
     fn try_simd_cubic_karatsuba<C: ExtConfig<BaseField = Self>>(
@@ -703,9 +694,7 @@ impl<const P: u64> SimdKaratsubaHook for Fp<P> {
 
 /// Generic `Fp<P>` Karatsuba composition over the shared base-field SIMD hooks.
 ///
-/// Returns `None` if any base-field add/sub/mul hook declines, preserving
-/// the scalar fallback for unsupported primes, non-AVX2 hosts, and
-/// `simd`-disabled builds.
+/// Returns `None` if any base-field add/sub/mul hook declines.
 #[inline]
 fn fp_simd_composed_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     a0: &[Fp<P>],
@@ -744,8 +733,7 @@ fn fp_simd_composed_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
 /// `P == 65537`, for which `Fp<P>::raw_storage()` equals the canonical
 /// value because `R = 2^64 ≡ 1 (mod 65537)`.
 ///
-/// Returns `None` on non-AVX2 hardware or when the `simd` feature is
-/// disabled; the caller falls back to the scalar Karatsuba path.
+/// Returns `None` on non-AVX2 hardware.
 #[cfg(feature = "simd")]
 fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     a0: &[Fp<P>],
@@ -986,10 +974,6 @@ mod tests {
 
     #[test]
     fn test_batch_mul_small_handcrafted() {
-        // (3 + 2u)·(4 + 5u) over GF(7), β = −1:
-        //   v0 = 12 = 5, v1 = 10 = 3
-        //   c0 = 5 + (−1)·3 = 2
-        //   c1 = (3+2)(4+5) − 12 − 10 = 5·9 − 22 = 45 − 22 = 23 = 2
         let a = vec![Fq2Small::new(Fp::new(3), Fp::new(2))];
         let b = vec![Fq2Small::new(Fp::new(4), Fp::new(5))];
         let ba = BatchExtField::<Fp<7>, 2>::from_quadratic::<CfgNeg1>(&a);
