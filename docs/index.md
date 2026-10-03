@@ -20,7 +20,10 @@ Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 
 Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis-placement`.
 
-- [Finite-field arithmetic](concepts/finite-field-arithmetic.md): field families, representations, multiplication strategy and defining-polynomial choice.
+| Page | Topic |
+|---|---|
+| [Finite-field arithmetic](concepts/finite-field-arithmetic.md) | Field families, representations, multiplication strategy and defining-polynomial choice |
+| [Acceleration architecture](concepts/acceleration-architecture.md) | SIMD dispatch, HIP backend, hybrid executor and parallelism model |
 
 ## Reference
 
