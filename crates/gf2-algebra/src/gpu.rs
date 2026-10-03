@@ -24,10 +24,11 @@
 //!
 //! # Host requirements
 //!
-//! The ROCm toolchain that `gf2-kernels-hip` documents and a gfx1030-class GPU must be present at both
-//! build time (hipcc on `PATH`) and runtime (device present). Without it the
-//! Rust wrapper compiles but the HIP runtime calls will fail with a non-zero
-//! error code, causing a panic per the documented panic policy below.
+//! The ROCm toolchain that `gf2-kernels-hip` documents and a GPU architecture
+//! that `gf2-kernels-hip` supports must be present at both build time (hipcc on
+//! `PATH`) and runtime (device present). Without it the Rust wrapper compiles but
+//! the HIP runtime calls will fail with a non-zero error code, causing a panic per
+//! the documented panic policy below.
 //!
 //! # F_7 LUT initialisation
 //!
