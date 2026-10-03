@@ -390,10 +390,10 @@ re-derive. Paths are repo-relative; each was opened.
 
 **Process / session context**
 
-- `dev/sessions/2026-08-07-research-frontier-handoff.md` — resume contract for
+- `dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md` — resume contract for
   b488f02c, standing decisions (`:47-58`) including the research-review gate
   model pinned to `gpt-5.6-sol` at xhigh.
-- `dev/sessions/2026-08-08-b488f02c-review-rca.md` — the RCA for that review
+- `dev/active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md` — the RCA for that review
   cycle; the failure modes a study of this shape hits at gate time.
 - `dev/studies/b488f02c/literature-search-2026-08-08.md` — external-baseline
   search record; relevant only to the sampling epic, not to kernel design.

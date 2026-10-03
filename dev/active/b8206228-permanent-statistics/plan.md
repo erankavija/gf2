@@ -334,8 +334,8 @@ superseded text are named, since the study's record stands unedited.
 - Design SSOT: `dev/studies/b488f02c/feasibility-study.md` — envelope §4.6,
   sampling plan §7.2, seeding §7.3, storage §7.4, analysis §7.5, prior-art delta
   §7.6.
-- Review cost analysis: `dev/sessions/2026-08-08-b488f02c-review-rca.md`.
-- Standing decisions: `dev/sessions/2026-08-07-research-frontier-handoff.md`.
+- Review cost analysis: `dev/active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md`.
+- Standing decisions: `dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md`.
 - Recorded literature search:
   `dev/studies/b488f02c/literature-search-2026-08-08.md`.
 
