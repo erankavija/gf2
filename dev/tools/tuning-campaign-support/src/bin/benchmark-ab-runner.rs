@@ -37,8 +37,8 @@ use tuning_campaign_support::journal::{
     TerminalState,
 };
 use tuning_campaign_support::protocol::{
-    sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan,
-    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_PATH, RUNNER_LIFECYCLE_SCHEMA,
+    sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, SharedInput,
+    RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
@@ -138,25 +138,31 @@ fn facts(
     plan: &RunnerPlan,
     plan_bytes: &[u8],
 ) -> io::Result<CampaignFacts> {
-    let protocol = ArtifactPin::capture(root, stage, PROTOCOL_PATH, "inputs/protocol.md")?;
-    let contract =
-        ArtifactPin::capture(root, stage, CONTRACT_PATH, "inputs/measurement-contract.md")?;
-    let addendum_schema = ArtifactPin::capture(
-        root,
-        stage,
-        ADDENDUM_SCHEMA_PATH,
-        "inputs/addendum.schema.json",
-    )?;
     let addendum =
         ArtifactPin::capture(root, stage, &plan.addendum, "inputs/family-addendum.json")?;
+    let family = FamilyAddendum::decode(&addendum.verify_content(stage).map_err(invalid)?)
+        .map_err(invalid)?;
+    // The protocol and schema editions are the ones the addendum names.
+    let shared = |input: SharedInput, identity: &str| {
+        ArtifactPin::capture(
+            root,
+            stage,
+            &input.locate(root, identity)?,
+            input.snapshot(),
+        )
+    };
+    let protocol = shared(
+        SharedInput::Protocol,
+        &SharedInput::protocol_identity(family.protocol.version),
+    )?;
+    let contract = shared(SharedInput::Contract, &SharedInput::contract_identity())?;
+    let addendum_schema = shared(SharedInput::AddendumSchema, &family.schema)?;
     let producing = ProducingInputs::capture_to(
         root,
-        plan.producing_manifest_path(),
+        &plan.producing_manifest_path(&protocol.path),
         &stage.join("inputs/producing"),
     )?;
     let source = source_identity(producing.clone());
-    let family = FamilyAddendum::decode(&addendum.verify_content(stage).map_err(invalid)?)
-        .map_err(invalid)?;
     let host = (family.protocol.version >= 2)
         .then(HostObservation::observe)
         .transpose()?;

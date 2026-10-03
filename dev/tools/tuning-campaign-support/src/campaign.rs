@@ -63,9 +63,8 @@ pub const SESSION_BUDGET_SECONDS: u64 = 10_800;
 pub const DECLARATION_FILE: &str = "campaign-declaration.json";
 
 /// The `root`-relative path of the one [`DECLARATION_FILE`] whose `issue`
-/// field is `issue`, wherever it lies below `root`. Candidates are the files
-/// `git ls-files` reports as tracked or untracked and not ignored, which keeps
-/// build output and nested worktrees out of the search. The launcher and the
+/// field is `issue`, wherever it lies below `root` among the files
+/// [`crate::repository::listed_files`] reports. The launcher and the
 /// independent validator apply the same rule.
 ///
 /// # Errors
@@ -73,37 +72,16 @@ pub const DECLARATION_FILE: &str = "campaign-declaration.json";
 /// Fails when git cannot list `root`, a candidate does not decode, or the
 /// number of declarations naming `issue` is not exactly one.
 pub fn locate_campaign_declaration(root: &Path, issue: &str) -> io::Result<String> {
-    let listing = std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
-        .args([
-            "ls-files",
-            "-z",
-            "--cached",
-            "--others",
-            "--exclude-standard",
-            "--",
-        ])
-        .arg(format!(":(glob)**/{DECLARATION_FILE}"))
-        .output()?;
-    if !listing.status.success() {
-        return Err(invalid("git cannot list campaign declarations"));
-    }
-    let mut matches = BTreeSet::new();
-    for candidate in listing
-        .stdout
-        .split(|&b| b == 0)
-        .filter(|path| !path.is_empty())
-    {
-        let candidate = std::str::from_utf8(candidate).map_err(wire_error)?;
-        let bytes = match fs::read(root.join(candidate)) {
+    let mut matches = Vec::new();
+    for candidate in crate::repository::listed_files(root, DECLARATION_FILE)? {
+        let bytes = match fs::read(root.join(&candidate)) {
             Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
             other => other?,
         };
         let value: Value = serde_json::from_slice(&bytes)
             .map_err(|error| invalid(format!("{candidate} does not decode: {error}")))?;
         if value.get("issue").and_then(Value::as_str) == Some(issue) {
-            matches.insert(candidate.to_owned());
+            matches.push(candidate);
         }
     }
     let mut matches = matches.into_iter();

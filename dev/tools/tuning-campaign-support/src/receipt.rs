@@ -19,8 +19,8 @@ use crate::journal::{
 use crate::protocol::{
     is_hex, sha256_hex, ArtifactPin, BuildIdentity, CacheState, CellObjective, CellRole,
     DecoderArmKind, FamilyAddendum, Normalization, Precision, ReceiptLabel, RunnerPlan, Schedule,
-    SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, ADDENDUM_SCHEMA_PATH, CONTRACT_PATH,
-    PROTOCOL_PATH, RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
+    SharedInput, SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, RECEIPT_SCHEMA_ID,
+    RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
 };
 use crate::provenance::{ProducingInputs, ProducingSnapshot};
 use crate::schema;
@@ -454,7 +454,8 @@ impl CampaignFacts {
             );
         }
         require!(
-            plan.producing_manifest_path() == self.source.producing.manifest_path,
+            plan.producing_manifest_path(&self.protocol.path)
+                == self.source.producing.manifest_path,
             "saved plan producing manifest differs from campaign-start"
         );
         let (plan_settings, plan_deviation) = plan.settings();
@@ -918,8 +919,8 @@ pub struct CellVerdict {
 /// Family-level statistics of the evaluation.
 ///
 /// Three alpha quantities coexist here under the protocol's sequential
-/// family-wise error control (`dev/active/f547c394/protocol.md`, "Families
-/// and selection"): `family_alpha` is the frozen total two-sided family-wise
+/// family-wise error control (protocol document, "Families and
+/// selection"): `family_alpha` is the frozen total two-sided family-wise
 /// error rate shared by every attempt on this family
 /// (`SharedSettings::family_alpha`, e.g. `0.05`); `attempt_alpha` is the
 /// budget this attempt spends, `alpha / [t(t+1)]` for attempt `t` recomputed
@@ -1025,31 +1026,29 @@ pub fn evaluate_version(
         );
     }
     let mut verified_pins: BTreeMap<&str, Vec<u8>> = BTreeMap::new();
-    for (rule, name, pin, expected_path) in [
-        ("P-02", "protocol", &receipt.protocol, Some(PROTOCOL_PATH)),
-        ("P-02", "contract", &receipt.contract, Some(CONTRACT_PATH)),
+    for (rule, pin, shared) in [
+        ("P-02", &receipt.protocol, Some(SharedInput::Protocol)),
+        ("P-02", &receipt.contract, Some(SharedInput::Contract)),
         (
             "P-02",
-            "addendum schema",
             &receipt.addendum_schema,
-            Some(ADDENDUM_SCHEMA_PATH),
+            Some(SharedInput::AddendumSchema),
         ),
-        ("P-03", "addendum", &receipt.addendum, None),
+        ("P-03", &receipt.addendum, None),
     ] {
+        let name = shared.map_or("addendum", SharedInput::name);
         if let Err(message) = pin.validate_shape() {
             e.error(rule, None, format!("{name} identity: {message}"));
         }
-        if let Some(expected) = expected_path {
-            if pin.path != expected {
+        match pin.verify_content(receipt_dir) {
+            Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
+            Ok(bytes) if shared.is_some_and(|input| input.identity(&bytes).is_none()) => {
                 e.error(
                     rule,
                     None,
-                    format!("{name} pin names {:?}, expected {expected:?}", pin.path),
+                    format!("{name} pin's digest identifies no {name} edition"),
                 );
             }
-        }
-        match pin.verify_content(receipt_dir) {
-            Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
             Ok(bytes) => {
                 verified_pins.insert(name, bytes);
             }
