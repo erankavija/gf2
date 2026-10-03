@@ -8,6 +8,10 @@ Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
 
 Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 
+| Page | Task |
+|---|---|
+| [Run and extend the Lean 4 proofs](how-to/formal-verification.md) | Build the proofs, regenerate the Charon/Aeneas extraction, and prove a property of an extracted function |
+
 ## Concepts
 
 Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis-placement`.
