@@ -1,0 +1,12 @@
+command: python3 -B dev/active/c077a88b/survey/snapshot-inputs.py --external target/fixture/external --evidence target/fixture/evidence
+exit: 0
+stdout:
+stderr:
+written:
+131ca4fca09d86a10a06ff58b6e567579ce11609d3f1593c7b2a4c0df7bb2a54  ./dev/active/c077a88b/survey/producing-inputs.json
+9dc602a6ec8c2f12b51831b6ffc3c290cd74d840b15570148e4f94e984940633  ./target/fixture/evidence/source-inputs/aff3ct-source.tar.gz
+37155b54a491103616098c588a24724d195e896559a2de72e7bc39b4ff8e4a56  ./target/fixture/evidence/source-inputs/oai-source.tar.gz
+a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba  ./target/fixture/evidence/source-inputs/recorded-inputs.tar.gz
+58469854ff04d33be7647762b9fc50a029a59ce5f12768c83cc08f5555085088  ./target/fixture/evidence/source-inputs/simde-source.tar.gz
+5a9e260ceba69e0feb15ebd3fc077a4aba643c18d3f2fa8daaf6d3ed39caa0d7  ./target/fixture/evidence/source-inputs/srsran-source.tar.gz
+a3859a06781e89566b8fd9155920793fa66680b66aa05c9e1fa75f78fbb3f62f  ./target/fixture/evidence/source-inputs/xdsopl-ldpc-source.tar.gz

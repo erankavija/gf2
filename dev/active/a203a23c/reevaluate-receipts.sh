@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Re-evaluates every committed benchmark receipt from committed content alone.
 #
-# Usage: dev/active/a203a23c/reevaluate-receipts.sh [<evidence-revision> [<output>]]
+# Usage: reevaluate-receipts.sh [<evidence-revision> [<output>]]
 #
 # Run from any directory of the repository; the tooling crate must have no
 # uncommitted change, so HEAD identifies the evaluating source. The evidence
@@ -12,16 +12,21 @@
 # how the record of the state before a restoration is produced. The committed
 # acceptance summaries are removed from the export, so no committed file is
 # written. Receipts are selected by their own declared `schema` field
-# (dev/active/a203a23c/select-receipts.py); a receipt of another schema is not
+# (select-receipts.py beside this script); a receipt of another schema is not
 # evaluated and is listed under the record's `skipped` section instead.
 set -euo pipefail
 
+listed=(git ls-files --cached --others --exclude-standard)
+self=$("${listed[@]}" --full-name -- "${BASH_SOURCE[0]}")
+entry=$(dirname "$self")
 root=$(git rev-parse --show-toplevel)
 cd "$root"
 head=$(git rev-parse --verify HEAD)
 evidence=$(git rev-parse --verify "${1:-HEAD}^{commit}")
-output=${2:-dev/active/a203a23c/receipt-reevaluation.json}
-crate=dev/tools/tuning-campaign-support
+output=${2:-$entry/receipt-reevaluation.json}
+files=$("${listed[@]}" -- ':(glob)**/repository_files.py')
+crate=$(python3 -B "$files" package-directory tuning-campaign-support)
+manifest=$(python3 -B "$files" shared-producing-manifest)
 git diff --quiet HEAD -- "$crate" Cargo.toml Cargo.lock .cargo || {
   echo "$crate or the workspace manifests differ from HEAD" >&2
   exit 1
@@ -38,7 +43,7 @@ cp target/release/benchmark-acceptance "$work/benchmark-acceptance"
 # Selects receipts of the exported evidence by their own declared schema: a
 # zen3-benchmark-receipt-v1 receipt is evaluated, any other schema is recorded
 # as skipped and never handed to the acceptance evaluator.
-python3 dev/active/a203a23c/select-receipts.py "$work/tree" \
+python3 "$entry/select-receipts.py" "$work/tree" \
   --selected-out "$work/selected.txt" --skipped-out "$work/skipped.tsv"
 
 # One tab-separated row per selected receipt of the evidence revision: receipt,
@@ -56,7 +61,8 @@ while IFS= read -r receipt; do
   printf '%s\t%s\n' "$receipt" "$status" >> "$work/exits.tsv"
 done < "$work/selected.txt"
 
-python3 - "$root" "$work" "$head" "$evidence" "$output" <<'EOF'
+python3 - "$root" "$work" "$head" "$evidence" "$output" "$self" "$manifest" \
+  "$(dirname "$files")/check-receipt-input-snapshots.py" <<'EOF'
 import hashlib
 import importlib.util
 import json
@@ -65,12 +71,12 @@ import sys
 from pathlib import Path
 
 root, work = Path(sys.argv[1]), Path(sys.argv[2])
-head, evidence, output = sys.argv[3], sys.argv[4], sys.argv[5]
+head, evidence, output, generator = sys.argv[3:7]
 tree = root / work / "tree"
 
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location(
-    "receipt_inputs", root / "dev/scripts/check-receipt-input-snapshots.py"
+    "receipt_inputs", root / sys.argv[8]
 )
 checker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(checker)
@@ -79,8 +85,8 @@ for finding in checker.check(root, evidence):
     absent.setdefault(finding.receipt, []).append(finding.path)
 
 # The manifest path `RunnerPlan::producing_manifest_path` substitutes for a plan
-# that names none (dev/tools/tuning-campaign-support/src/protocol.rs).
-PLAN_MANIFEST_DEFAULT = "dev/active/f547c394/producing-inputs.json"
+# that names none.
+PLAN_MANIFEST_DEFAULT = sys.argv[7]
 
 
 def verdict_of(path):
@@ -146,7 +152,7 @@ record = {
         "evaluator reads committed content alone, beside the verdict of the "
         "acceptance summary committed with it."
     ),
-    "generator": "dev/active/a203a23c/reevaluate-receipts.sh",
+    "generator": generator,
     "toolchain": subprocess.run(
         ["rustc", "--version"], capture_output=True, text=True, check=True
     ).stdout.strip(),
