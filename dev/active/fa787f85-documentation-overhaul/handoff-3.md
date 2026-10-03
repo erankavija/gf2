@@ -22,7 +22,7 @@
 - The archive of epic 6dc81018 (another session) broke `cargo-ci` through a duplicated campaign declaration; 62ce5927 fixed the lookups. It also left the migration checker failing; 96cea1b9 is filed.
 - 67048b47 linked 1,202 owned artifacts through a generated script.
 - Sweep: eleven units written in two waves, then reworked to a stricter standard after the first reviews. Closed: f46046f0, 9f47bb94, ee2b0c0c, 66858db0, bfb37a21, 7bfad039, 57436474. `git diff --shortstat` of each unit's commits gives the line counts.
-- 554c2935 registered 55 citation keys and a prose-to-key map (`554c2935-citation-map.md`).
+- 554c2935 registered citation keys for the works cited in source and a prose-to-key map (`554c2935-citation-map.md`); it stays open until the sweep removes the pointers that have no key.
 - Filed under tech-debt epic b4b4b9ee: the defects and planned-work items found by workers; `progress.json` `created_during_execution` lists them. High priority: 1ffa72fc (safe SIMD wrappers with debug-only shape checks), 6b5f4f3c (generic GF(2^m) kernel reduction above degree 33).
 - Owner approved rewording the unpushed tip merge commit to the epic scope (now `c7707f4d4`).
 
