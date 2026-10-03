@@ -1,25 +1,12 @@
 //! AVX2 byte-lane batch kernels for small `Fp<P>` with `P <= 251`.
 //!
-//! Inputs and outputs are canonical bytes (`u8`, value `< P`). The
-//! kernels lane-pack 16 elements per output pass: load 16 bytes, expand
-//! to 16-bit lanes, multiply via `_mm256_mullo_epi16`, Barrett-reduce
-//! modulo `P`, then pack back to bytes via `_mm_packus_epi16`.
+//! Inputs and outputs are canonical bytes (`u8`, value `< P`), processed 16
+//! per pass in 16-bit lanes. Barrett constant: `μ = ⌊2¹⁶ / P⌋`. For
+//! `n ∈ [0, 2¹⁶)` the bound `r = n − ⌊n·μ / 2¹⁶⌋ · P ∈ [0, 2P)` holds, so a
+//! single conditional subtract canonicalises.
 //!
-//! Barrett constant: `μ = ⌊2¹⁶ / P⌋`. For `n ∈ [0, 2¹⁶)` the bound
-//! `r = n − ⌊n·μ / 2¹⁶⌋ · P ∈ [0, 2P)` holds, so a single conditional
-//! subtract canonicalises. We compute the high half of `n·μ` via
-//! `_mm256_mulhi_epu16`.
-//!
-//! The dot-product entry point uses `_mm256_madd_epi16` to fuse the
-//! 16-bit-pair multiply and 32-bit-pair add in one cycle on Zen 3,
-//! reducing modulo `P` at the panel boundary via a single scalar
-//! horizontal sum.
-//!
-//! # Safety
-//!
-//! All public functions here are `unsafe` — callers must ensure AVX2
-//! is available at runtime. Safe, dispatched entry points live in
-//! `fp_small.rs` via the `SmallPrimeFns` table returned by `detect`.
+//! All public functions are `unsafe`: callers must ensure AVX2 is available
+//! at runtime. `crate::fp_small::detect` returns the safe dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 
@@ -51,16 +38,12 @@ pub(crate) const fn barrett_mu_u16(p: u8) -> u16 {
 
 /// Reduces 16 packed `u16` lanes (each `< 2¹⁶`) modulo `p`, returning
 /// 16 packed canonical `u16` lanes (each `< p`).
-///
-/// Implements the 16-bit Barrett reduction described in the module
-/// docs.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_mod_p_u16(n: __m256i, p: u8) -> __m256i {
     let mu = _mm256_set1_epi16(barrett_mu_u16(p) as i16);
     let p_vec = _mm256_set1_epi16(p as i16);
 
-    // q = (n * mu) >> 16 in u16 lanes (mulhi).
     let q = _mm256_mulhi_epu16(n, mu);
     // r = n - q * p, with mullo's u16-truncated product: since the
     // mathematical product q * p < 2^16 (q ≤ μ ≤ 2^16/3 and p · μ < 2^16
@@ -88,7 +71,6 @@ unsafe fn canon_after_sub(diff: __m256i, p: u8) -> __m256i {
     let p_vec = _mm256_set1_epi16(p as i16);
     // shifted = diff + p ∈ [1, 2p - 1].
     let shifted = _mm256_add_epi16(diff, p_vec);
-    // Conditional subtract to land in [0, p).
     let minus_p = _mm256_sub_epi16(shifted, p_vec);
     _mm256_min_epu16(shifted, minus_p)
 }
@@ -108,9 +90,6 @@ unsafe fn load_u8_to_u16(ptr: *const u8) -> __m256i {
 
 /// Packs a 256-bit vector of 16 canonical `u16` lanes (each `< 256`)
 /// back to 16 contiguous bytes at `ptr`.
-///
-/// Lane-shuffles via `_mm256_packus_epi16` then de-interleaves the
-/// resulting two 128-bit lanes via `_mm256_permute4x64_epi64`.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn store_u16_to_u8(v: __m256i, ptr: *mut u8) {
@@ -293,9 +272,9 @@ pub unsafe fn fp_small_batch_sub(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
 /// lanes via `_mm256_madd_epi16` (the lane-pair fused multiply-add) and
 /// reducing modulo `p` once at the panel boundary.
 ///
-/// At `P = 251` the per-lane MAC budget is `⌊2³² / (P − 1)²⌋ ≈ 6.87 ×
-/// 10⁴` before overflow; we conservatively reduce every 16 384 elements
-/// (well below that cap) so even adversarial inputs stay safe.
+/// Each 32-bit lane gains at most `2 · (P − 1)² ≤ 125 000` per vector
+/// iteration; the accumulator is drained every 16 384 iterations, below the
+/// `2³²` lane capacity.
 ///
 /// # Safety
 ///
@@ -309,12 +288,6 @@ pub unsafe fn fp_small_batch_dot(a: &[u8], b: &[u8], p: u8) -> u8 {
     assert_eq!(a.len(), b.len(), "fp_small_batch_dot: length mismatch");
     let n = a.len();
 
-    // Each 16-bit pair-product is at most (P-1)² ≤ 62500. Each
-    // _mm256_madd_epi16 lane sums two such products, so each 32-bit
-    // accumulator lane gains ≤ 125000 per vector iteration. With a
-    // u32 cap of 2^32, we have ~34000 iterations of safe-budget. We
-    // refresh the accumulator and reduce to scalar every CHUNK_VEC
-    // iterations to keep a fat margin.
     const CHUNK_VEC: usize = 16384;
     let nvec = n / 16;
     let mut total: u64 = 0;
@@ -328,22 +301,17 @@ pub unsafe fn fp_small_batch_dot(a: &[u8], b: &[u8], p: u8) -> u8 {
         let chunk_end = (vec_idx + CHUNK_VEC).min(nvec);
         let mut acc = _mm256_setzero_si256();
         for i in vec_idx..chunk_end {
-            // Load 16 u8 lanes into u16 lanes from each of a, b.
             let av_lo = _mm_loadu_si128(a_base.cast::<u8>().add(i * 16) as *const __m128i);
             let bv_lo = _mm_loadu_si128(b_base.cast::<u8>().add(i * 16) as *const __m128i);
             let av = _mm256_cvtepu8_epi16(av_lo);
             let bv = _mm256_cvtepu8_epi16(bv_lo);
-            // madd_epi16 multiplies u16 lane-pairs and sums into u32
-            // lanes: out[i] = a[2i]*b[2i] + a[2i+1]*b[2i+1].
             let mac = _mm256_madd_epi16(av, bv);
             acc = _mm256_add_epi32(acc, mac);
         }
 
-        // Horizontal sum across 8 u32 lanes.
         let lo = _mm256_castsi256_si128(acc);
         let hi = _mm256_extracti128_si256::<1>(acc);
         let s128 = _mm_add_epi32(lo, hi);
-        // s128 has 4 u32 lanes; sum them into a single u32.
         let mut tmp = [0u32; 4];
         _mm_storeu_si128(tmp.as_mut_ptr() as *mut __m128i, s128);
         let chunk_sum: u32 = tmp[0]
@@ -428,7 +396,6 @@ pub unsafe fn fp_small_gemm_row_panel(
             acc2 = _mm256_add_epi32(acc2, _mm256_madd_epi16(av, b2));
             acc3 = _mm256_add_epi32(acc3, _mm256_madd_epi16(av, b3));
         }
-        // Horizontal-sum each accumulator and reduce mod p.
         let sums = [
             horizontal_sum_u32(acc0),
             horizontal_sum_u32(acc1),
@@ -479,28 +446,6 @@ pub unsafe fn fp_small_gemm_row_panel(
 /// `buf` is mutated in place; `chain_j` is read only. `buf.len()` may
 /// exceed `chain_j.len()` (extra elements are not touched).
 ///
-/// # Why this exists
-///
-/// The closing kernel for the `52cce970` issue's GF(251)/n=256 charpoly
-/// gap. `PackedFpChainPolys::sub_scaled_into` (in `gf2-core`) was
-/// previously implemented as `tmp = batch_mul(α, chain_j); buf =
-/// batch_sub(buf, tmp)`, paying:
-///
-///   * two `[u8] → [u8]` AVX2 kernel function-pointer indirections
-///     per call,
-///   * one `cj_len` byte broadcast-fill into a scratch lane,
-///   * one `cj_len` byte intermediate write (the product),
-///   * one `cj_len` byte copy back from the scratch lane to `buf`.
-///
-/// Fusing collapses those into a single 16-lane register-resident
-/// read-modify-write loop:
-///   * `α`, the Barrett constant `μ`, and `p` stay broadcast-loaded
-///     in `ymm` registers across the whole loop (three registers).
-///   * The intermediate product never leaves register `ymm4`.
-///   * The only memory traffic per iteration is one 16-byte load
-///     from `chain_j`, one 16-byte load from `buf`, and one 16-byte
-///     store to `buf`.
-///
 /// # Algorithm
 ///
 /// Per 16-lane iteration:
@@ -517,31 +462,8 @@ pub unsafe fn fp_small_gemm_row_panel(
 /// Tail bytes (`chain_j.len() % 16`) run a scalar `(buf[i] + (p −
 /// (α · chain_j[i]) mod p)) mod p` per byte.
 ///
-/// # Why `mu` is a parameter (jit:52cce970 R1)
-///
-/// The Barrett constant `μ = ⌊2¹⁶ / p⌋` was previously recomputed at the
-/// start of every call via a 22-25 cycle integer `div` and broadcast to a
-/// `ymm` register. The reduce-path hot loop in
-/// `gf2_core::gfp::simd_ops::fp_reduce_packed` and the chain-poly
-/// bookkeeping in `PackedFpChainPolys::sub_scaled_into` jointly invoke
-/// this kernel ~32 000 times per GF(251)/n=256 charpoly call, which made
-/// the per-call `div` cost a 7-8 % wall-time tax. Hoisting `μ` out of
-/// the kernel (precomputed once per prime by
-/// `build_small_prime_tables::<P>().barrett_mu`) eliminates that tax.
-///
-/// # Why `vpmulhuw` is hand-encoded via inline `asm!` (jit:52cce970 R1)
-///
-/// LLVM 19 (rustc 1.95) compiles the natural `_mm256_mulhi_epu16(prod,
-/// mu_vec)` intrinsic into a six-instruction `vpmovzxwd` /
-/// `vextracti128` / `vpmovzxwd` / two `vpmulhuw` / `vpackusdw` /
-/// `vpermq` widen-then-pack sequence whenever one of the operands is a
-/// broadcast vector — the optimiser appears to lose track of the
-/// 16-bit-lane invariant and falls back to a 32-bit-lane intermediate.
-/// In isolation, the same intrinsic with locally constructed operands
-/// emits a single `vpmulhuw` so the issue is a per-call codegen quality
-/// problem rather than an intrinsic limitation. Forcing the single-
-/// instruction encoding via `asm!` cuts the inner loop from 21 to ~13
-/// instructions per 16-lane iteration (~35 % body speedup).
+/// `vpmulhuw` is emitted through inline `asm!` to pin the single-instruction
+/// encoding of the Barrett quotient.
 ///
 /// # Safety
 ///
@@ -566,8 +488,7 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
     // `vpmulhuw` (AVX2 packed 16-bit unsigned high-multiply) with pure
     // / nomem / nostack options so it has no side effects beyond the
     // explicit output register. Pointer arithmetic stays within the
-    // bounds asserted at function entry. `mu` is supplied by the caller
-    // (matches `⌊2¹⁶ / p⌋`) so no per-call division is required.
+    // bounds asserted at function entry.
     assert!(
         buf.len() >= chain_j.len(),
         "fp_small_sub_scaled: buf shorter than chain_j ({} < {})",
@@ -597,13 +518,7 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
         let cv = _mm256_cvtepu8_epi16(_mm_loadu_si128(c_ptr as *const __m128i));
         // 2. Lane-wise mul by α. Product fits in u16.
         let prod = _mm256_mullo_epi16(cv, alpha_vec);
-        // 3. Barrett-reduce mod p (single step, result in [0, p)). The
-        //    natural `_mm256_mulhi_epu16(prod, mu_vec)` here is compiled
-        //    into a six-instruction widen-then-pack sequence on rustc
-        //    1.95 — see the function-level rustdoc for the analysis.
-        //    Forcing the single-instruction encoding via inline `asm!`
-        //    cuts the inner loop from 21 to ~13 instructions per
-        //    16-lane iteration.
+        // 3. Barrett-reduce mod p (single step, result in [0, p)).
         let q: __m256i;
         asm!(
             "vpmulhuw {q}, {p}, {m}",
@@ -631,8 +546,7 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
         b_ptr = b_ptr.add(16);
     }
 
-    // Scalar tail (at most 15 iterations; bounds-check cost is negligible
-    // compared to the modular arithmetic).
+    // Scalar tail (at most 15 iterations).
     let tail_start = nvec * 16;
     let p_u32 = p as u32;
     let alpha_u32 = alpha as u32;
@@ -660,9 +574,7 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
 /// 16 u16 lanes, multiplies element-wise with the loaded B-row block,
 /// and accumulates into two 32-bit lane vectors. After the sparse-row
 /// sweep, the 32-bit lanes are reduced modulo `p` and packed back to
-/// bytes. The accumulator overflow bound is `nnz_r · (p-1)² < 2³²`,
-/// which holds for any realistic sparse density at `p ≤ 251` (e.g.
-/// nnz_r = 10 000 at `p = 251` gives `≈ 6.25 × 10⁸`).
+/// bytes. The 32-bit accumulators require `nnz_r · (p-1)² < 2³²`.
 ///
 /// # Safety
 ///
@@ -695,11 +607,8 @@ pub unsafe fn fp_small_spmm_row(
     let nnz = a_vals.len();
     let p_u32 = p as u32;
     let p_vec = _mm256_set1_epi32(p_u32 as i32);
-    // Use Barrett at 32-bit lane width: q = (x * mu32) >> 32, with
-    // mu32 = ⌊2³² / p⌋. The SSOT `barrett_reduce_lane32` primitive uses
-    // `_mm256_mul_epu32` internally, which only reads the low 32 bits of
-    // each 64-bit lane — broadcasting μ as `epi64x` lets the primitive
-    // skip an in-kernel `set1_epi32` rebuild on every call.
+    // `barrett_reduce_lane32` reads only the low 32 bits of each 64-bit
+    // lane of `mu_vec`, where the `epi64x` broadcast places `μ = ⌊2³² / p⌋`.
     let mu32 = ((1u64 << 32) / p_u32 as u64) as u32;
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
 
@@ -712,22 +621,17 @@ pub unsafe fn fp_small_spmm_row(
             let a_h = *a_vals.get_unchecked(h);
             let col = *a_cols.get_unchecked(h);
             let b_row_ptr = b.as_ptr().add(col * b_stride + j);
-            // Load 16 bytes from B[col, j..j+16], expand to 16 u16 lanes.
             let bv8 = _mm_loadu_si128(b_row_ptr as *const __m128i);
             let bv16 = _mm256_cvtepu8_epi16(bv8);
-            // Broadcast a_h to all 16 u16 lanes.
             let av16 = _mm256_set1_epi16(a_h as i16);
             // Element-wise u16 product (≤ 250² = 62500 fits in u16).
             let prod = _mm256_mullo_epi16(av16, bv16);
-            // Widen 16 u16 lanes → 16 u32 lanes via two unpack-with-zero.
             let zero = _mm256_setzero_si256();
             let plo = _mm256_unpacklo_epi16(prod, zero);
             let phi = _mm256_unpackhi_epi16(prod, zero);
             acc_lo = _mm256_add_epi32(acc_lo, plo);
             acc_hi = _mm256_add_epi32(acc_hi, phi);
         }
-        // Reduce each u32 lane mod p via the Phase-2 SSOT 32-bit Barrett
-        // primitive (see `barrett_reduce_lane32` below).
         let lo_red = barrett_reduce_lane32(acc_lo, mu_vec, p_vec);
         let hi_red = barrett_reduce_lane32(acc_hi, mu_vec, p_vec);
         // Per-lane mapping back to output positions:
@@ -745,25 +649,11 @@ pub unsafe fn fp_small_spmm_row(
         //   So packed16 already holds prod[0..16] in order across u16
         //   lanes 0..15 — no cross-lane permute is needed.
         let packed16 = _mm256_packus_epi32(lo_red, hi_red);
-        // Pack 16 u16 → 16 u8. _mm256_packus_epi16 is in-lane:
-        //   low half  = packus(packed16 low half, packed16 low half)
-        //             = u8 lanes [prod[0..4], prod[4..8]] repeated
-        //   high half = packus(packed16 high, packed16 high)
-        //             = u8 lanes [prod[8..12], prod[12..16]] repeated
-        // We then need 64-bit-lane permute to fuse the low halves of
-        // each 128-bit half into a single 128-bit register holding
-        // u8 lanes [prod[0..8], prod[8..16]].
+        // `packus_epi16` is in-lane too: each 128-bit half holds its 8
+        // bytes twice, so the 64-bit lanes 0 and 2 are `prod[0..8]` and
+        // `prod[8..16]`; the permute moves them into the low 128 bits.
         let packed8 = _mm256_packus_epi16(packed16, packed16);
-        // packed8 has, per 128-bit half, [prod[0..8], prod[0..8]] in
-        // low half and [prod[8..16], prod[8..16]] in high half. We
-        // want a 128-bit value [prod[0..8], prod[8..16]]. That is the
-        // 64-bit lane 0 of the low half + 64-bit lane 0 of the high
-        // half. Use permute4x64 with control (0,2,_,_) — though we
-        // only consume the low 128 bits of the result.
         let fused = _mm256_permute4x64_epi64::<0b11_01_10_00>(packed8);
-        // After 0b11_01_10_00 = (3,1,2,0) the low 128 bits of `fused`
-        // are 64-bit lane 0 (= prod[0..8]) and 64-bit lane 2 (=
-        // prod[8..16]) — exactly the output we want.
         let lower = _mm256_castsi256_si128(fused);
         _mm_storeu_si128(out.as_mut_ptr().add(j) as *mut __m128i, lower);
         j += 16;
@@ -784,21 +674,6 @@ pub unsafe fn fp_small_spmm_row(
 
 /// 32-bit-lane Barrett reduction: `r = x mod p` for `x ∈ [0, 2³²)`.
 ///
-/// The Phase-2 SSOT (issue e8a0c47a) for vectorized modular reduction:
-/// every AVX2 kernel that needs to canonicalise 8 packed u32 lanes
-/// against an odd prime modulus calls this function. Consumers
-/// (post-Phase-2):
-///
-/// 1. `fp_small.rs::fp_small_spmm_row` — sparse-times-dense small-prime
-///    row reducer (this module, same file).
-/// 2. `fp_small_f32.rs::store_and_reduce_tile_route_a` — route-A f32
-///    cascade output reducer for GF(251)/n ≥ 512.
-/// 3. `fp_small_panel.rs::fp_small_panel_gemm` — route-C integer-panel
-///    output reducer.
-/// 4. `fp_medium.rs::fp_medium_batch_mul16` — medium-prime u16 lane-wise
-///    multiply (the second non-GF(251) call site required by issue
-///    e8a0c47a SC#1).
-///
 /// # Algorithm (Granlund-Möller, one-step branchless)
 ///
 /// With `μ = ⌊2³² / p⌋`:
@@ -813,24 +688,10 @@ pub unsafe fn fp_small_spmm_row(
 ///    `r − p` underflows to a value `> r` (unsigned) and `min` keeps `r`.
 ///    Result lands in `[0, p)`.
 ///
-/// # Arguments
-///
-/// * `x` — 8 u32 lanes packed into one `__m256i`, each `< 2³²`.
-/// * `mu_vec` — broadcast Barrett constant `μ = ⌊2³² / p⌋`. Either
-///   `_mm256_set1_epi64x(μ as i64)` (preferred by route-A / SpMM, which
-///   want one builder call producing a vector ready for
-///   `_mm256_mul_epu32`) or `_mm256_set1_epi32(μ as i32)` (preferred by
-///   the medium-prime kernel, which broadcasts both `p` and `μ` as
-///   32-bit lanes for symmetry) is acceptable: `_mm256_mul_epu32` only
-///   reads the low 32 bits of each 64-bit lane and both broadcast
-///   styles place `μ` there.
-/// * `p_vec` — broadcast `p` as 8 u32 lanes
-///   (`_mm256_set1_epi32(p as i32)`). Used for the `q · p` correction
-///   and the conditional subtract.
-///
-/// # Returns
-///
-/// 8 reduced u32 lanes, each canonical in `[0, p)`.
+/// `mu_vec` is `μ = ⌊2³² / p⌋` broadcast with either
+/// `_mm256_set1_epi64x` or `_mm256_set1_epi32`: `_mm256_mul_epu32` reads
+/// only the low 32 bits of each 64-bit lane. `p_vec` is `p` broadcast as 8
+/// u32 lanes.
 ///
 /// # Safety
 ///
@@ -848,7 +709,6 @@ pub(crate) unsafe fn barrett_reduce_lane32(x: __m256i, mu_vec: __m256i, p_vec: _
     let q_even_64 = _mm256_mul_epu32(x_even, mu_vec); // even u64 results
     let q_odd_64 = _mm256_mul_epu32(x_odd, mu_vec); // odd u64 results
 
-    // q = high 32 bits of each 64-bit product
     let q_even_hi = _mm256_srli_epi64::<32>(q_even_64);
     let q_odd_hi = _mm256_srli_epi64::<32>(q_odd_64);
     // Re-interleave into u32 lanes: q_even_hi at even slots, q_odd_hi at odd slots.
@@ -859,13 +719,8 @@ pub(crate) unsafe fn barrett_reduce_lane32(x: __m256i, mu_vec: __m256i, p_vec: _
     let qp = _mm256_mullo_epi32(q, p_vec);
     let r = _mm256_sub_epi32(x, qp);
 
-    // Conditional subtract: if r >= p, r -= p. `min_epu32(r, r - p)`
-    // picks r - p when r >= p (since r - p < r as unsigned) and keeps r
-    // when r < p (since r - p underflows to a value > r as unsigned).
-    // Bound justification: with μ = ⌊2³² / p⌋ truncated, Granlund-Möller
-    // guarantees r ∈ [0, 2p) for every x < 2³². One conditional subtract
-    // is sufficient — confirmed bit-exact by the per-kernel proptest
-    // suite (10 primes × {0, 1, 15, 16, 17, 63, 64, 65} boundary lengths).
+    // r ∈ [0, 2p) for every x < 2³², so one conditional subtract
+    // suffices: `min_epu32(r, r - p)` picks `r - p` exactly when `r >= p`.
     _mm256_min_epu32(r, _mm256_sub_epi32(r, p_vec))
 }
 
@@ -1052,12 +907,10 @@ mod tests {
                 (15, 16, 1024),            // realistic SpMM cell
             ];
             for &(nnz, b_rows, n) in &cases {
-                // Build deterministic sparse row.
                 let a_vals: Vec<u8> = (0..nnz as u32)
                     .map(|h| ((h * 13 + 1) % p as u32) as u8)
                     .collect();
                 let a_cols: Vec<usize> = (0..nnz).map(|h| (h * 7) % b_rows).collect();
-                // Build dense B.
                 let b_stride = n;
                 let b: Vec<u8> = (0..(b_rows * n) as u32)
                     .map(|i| ((i * 23 + 5) % p as u32) as u8)
@@ -1107,13 +960,9 @@ mod tests {
     }
 
     /// Bit-identical scalar-equivalence test for the fused `sub_scaled`
-    /// kernel at the issue-mandated boundary lengths `{0, 1, 15, 16, 17,
-    /// 63, 64, 65, 255, 256}` across every supported small prime.
-    ///
-    /// Issue `52cce970` § "Success Criteria" requires correctness at
-    /// these exact lengths. The oracle is the same scalar computation
-    /// used by the non-AVX2 fallback. Input data is randomised per the
-    /// `seed` parameter so each proptest run exercises a fresh data set.
+    /// kernel at the boundary lengths `{0, 1, 15, 16, 17, 63, 64, 65, 255,
+    /// 256}` across every supported small prime. The oracle is the scalar
+    /// computation of the non-AVX2 fallback.
     #[allow(clippy::wildcard_imports)]
     mod proptest_sub_scaled_jit_52cce970 {
         use super::*;
@@ -1164,8 +1013,7 @@ mod tests {
         }
     }
 
-    /// Smoke test: deterministic boundary-length check retained alongside
-    /// the proptest for fast feedback during development.
+    /// Deterministic boundary-length check alongside the proptest.
     #[test]
     fn sub_scaled_matches_scalar_boundary_lengths_jit_52cce970() {
         run_for_primes(|p| {
@@ -1190,11 +1038,8 @@ mod tests {
         });
     }
 
-    /// Coverage for `buf.len() > chain_j.len()` — the kernel must
-    /// leave the trailing `buf` bytes untouched. This case matches the
-    /// `PackedFpChainPolys::sub_scaled_into` call shape where `buf`
-    /// has been resized to hold the upcoming `x · chain_{d-1}` shift
-    /// (one byte longer than the longest chain polynomial seen so far).
+    /// Coverage for `buf.len() > chain_j.len()`: the kernel leaves the
+    /// trailing `buf` bytes untouched.
     #[test]
     fn sub_scaled_preserves_buf_tail() {
         run_for_primes(|p| {
@@ -1248,9 +1093,7 @@ mod tests {
         });
     }
 
-    /// Sanity: `alpha == 0` is a no-op (the caller in `gf2-core`
-    /// short-circuits on zero alpha but the kernel itself must handle
-    /// the corner cleanly in case a future caller forgets).
+    /// `alpha == 0` is a no-op in the kernel itself.
     #[test]
     fn sub_scaled_zero_alpha_is_noop() {
         run_for_primes(|p| {
@@ -1268,12 +1111,7 @@ mod tests {
         });
     }
 
-    /// Cross-check: passing the right `mu` is required for correctness.
-    /// This is a defensive test ensuring that callers cannot get correct
-    /// answers by passing a stale `mu` left over from a different prime.
-    /// (The `debug_assert!` inside the kernel additionally catches it in
-    /// debug builds; this test belt-and-braces the release path by
-    /// pinning the contract.)
+    /// `barrett_mu_u16` matches `⌊2¹⁶ / p⌋` for every supported prime.
     #[test]
     fn sub_scaled_jit_52cce970_r1_mu_param_matches_barrett_constant() {
         for &p in &[3u8, 5, 7, 11, 13, 17, 31, 127, 251] {
