@@ -21,7 +21,6 @@ use crate::error::StageError;
 use crate::stage::{ExecutionClass, Stage};
 use crate::stages::{GrayQamDemapCore, GrayQamMapCore, DEFAULT_DEMAP_NOISE_VAR};
 
-
 /// 5G NR LDPC encode stage: `target_k` message bits → `target_n` codeword bits.
 ///
 /// Wraps [`Nr5gRateMatchedCode::encode`]. Each input frame must be exactly
@@ -90,7 +89,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Nr5gEncode {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// 5G NR §5.4.2.2 bit-interleave stage: rate-matched bits → interleaved bits.
 ///
@@ -191,7 +189,6 @@ impl Stage<LlrBatch, LlrBatch> for Nr5gLlrDeinterleave {
     }
 }
 
-
 /// Gray-QAM map stage for 5G NR: interleaved coded bits → IQ symbols.
 ///
 /// Wraps [`GrayQamMapper`](gf2_coding::modem::GrayQamMapper)`::map_bits` at
@@ -240,7 +237,6 @@ impl Stage<BitPackedBatch, SymbolBatch> for NrGrayQamMap {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// Gray-QAM soft-demap stage for 5G NR: IQ symbols → soft LLRs.
 ///
@@ -307,7 +303,6 @@ impl Stage<SymbolBatch, LlrBatch> for NrGrayQamDemap {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// Per-stage scratch for [`Nr5gDecode`]: the per-frame BP iteration counts of
 /// the most recent `process` call, in input-frame order.

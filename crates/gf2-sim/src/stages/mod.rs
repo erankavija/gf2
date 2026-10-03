@@ -173,7 +173,6 @@ impl GrayQamDemapCore {
     }
 }
 
-
 /// FEC-encode stage: BBFRAME info bits → FECFRAME coded bits.
 ///
 /// Wraps [`DvbT2Concat::encode`] (BCH outer + LDPC inner). Each frame in the
@@ -237,7 +236,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for DvbT2Encode {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// Bit-interleave stage: FECFRAME coded bits → interleaved coded bits.
 ///
@@ -348,7 +346,6 @@ impl Stage<LlrBatch, LlrBatch> for BitDeinterleave {
     }
 }
 
-
 /// Gray-QAM map stage: interleaved coded bits → IQ symbols.
 ///
 /// Wraps [`GrayQamMapper::map_bits`]. Each input frame's bit count must be a
@@ -398,7 +395,6 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// Gray-QAM soft-demap stage: IQ symbols → soft LLRs.
 ///
@@ -476,7 +472,6 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// Per-stage scratch for [`DvbT2Decode`]: the per-frame LDPC BP iteration
 /// counts of the most recent `process` call.
@@ -580,7 +575,6 @@ impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
         ExecutionClass::CpuOnly
     }
 }
-
 
 /// BCH outer-decode tail stage: LDPC hard-decision FECFRAME codewords →
 /// recovered BBFRAME bits.
