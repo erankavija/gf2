@@ -1,53 +1,42 @@
 # gf2-core
 
-Safe-Rust storage and linear algebra over GF(2), and arithmetic over binary, prime and extension fields. `gf2-core` is the lowest layer of the gf2 workspace and has no production dependency on another workspace crate except the kernel crate `gf2-kernels-simd`.
+Bit-packed storage and linear algebra over $\mathrm{GF}(2)$, and arithmetic
+and linear algebra over binary, prime and extension fields behind the
+`FiniteField` trait. `gf2-core` is the lowest library layer of the gf2
+workspace and has no production dependency on another workspace crate except
+the kernel crate [`gf2-kernels-simd`](../gf2-kernels-simd/README.md).
 
-## Contents
+## When to choose it
 
-| Area | Provides | Modules |
-|---|---|---|
-| Dense GF(2) | `BitVec`, `BitSlice`, `BitSliceMut` and the row-major `BitMatrix`; M4RM multiplication, Gauss-Jordan inversion, RREF, polar transform | crate root re-exports, `matrix`, `alg` |
-| Sparse GF(2) | `SpBitMatrix` (CSR), `SpBitMatrixDual` (row and column traversal), block-CSR and row permutations | `sparse` |
-| Binary fields | GF(2^m) generic over storage width, with Barrett, Karatsuba, table and SIMD multiplication strategies; wide-degree fields; primitive-polynomial database and generation | `gf2m`, `primitive_polys` |
-| Prime fields | `Fp<const P: u64>` with Montgomery form for generic primes, and canonical-form reduction for Mersenne and Proth primes | `gfp` |
-| Extension fields | `QuadraticExt` and `CubicExt` towers over `ExtConfig`; `QuotientField` for runtime irreducible moduli; field identity and extension witnesses | `gfpn`, `field::extension` |
-| Field linear algebra | `FieldMatrix<F>` and sparse `SparseFieldMatrix<F>` over any `FiniteField`: GEMM (classical and Strassen-Winograd), PLE, RREF, nullspace, inverse, determinant, triangular solves, characteristic polynomial; `FieldPoly`, NTT, batch inversion | `field` |
-| Execution | Runtime scalar/SIMD dispatch, Rayon batch backends, typed tuning profiles, serialization | `kernels`, `compute`, `tuning`, `io` |
+Choose `gf2-core` for dense or sparse $\mathrm{GF}(2)$ matrices, or for an
+algorithm written once over `FiniteField` and run over several field
+families. The crates above it add domain layers:
+[`gf2-coding`](../gf2-coding/README.md) for codes, modems and channels,
+[`gf2-algebra`](../gf2-algebra/README.md) for packed $\mathbb{F}_3$,
+$\mathbb{F}_5$ and $\mathbb{F}_7$ arithmetic and permanents,
+[`gf2-stats`](../gf2-stats/README.md) for seeded sampling and interval
+statistics, and [`gf2-sim`](../gf2-sim/README.md) for simulation
+orchestration.
 
-Every field implementation passes the shared field-law suite exposed as `field::axiom_tests` under `test-support`.
+## Documentation
 
-## When to choose gf2-core
+- [Documentation index](../../docs/index.md)
+- [Finite-field arithmetic](../../docs/concepts/finite-field-arithmetic.md):
+  field families, representations and the bit-indexing convention.
+- [Finite-field linear algebra at scale](../../docs/tutorials/field-linear-algebra-at-scale.md):
+  multiplication, decomposition and solving over `FieldMatrix`.
+- [Acceleration architecture](../../docs/concepts/acceleration-architecture.md)
+  and [select SIMD, GPU and parallel execution](../../docs/how-to/select-acceleration.md).
+- [Cargo features](../../docs/reference/supported-configurations.md#cargo-features),
+  defined in the `[features]` table of [`Cargo.toml`](Cargo.toml), and
+  [installation](../../docs/reference/supported-configurations.md#installation).
+- Build and test commands: [`AGENTS.md`](../../AGENTS.md#supported-toolchain-and-commands).
 
-- Dense or sparse GF(2) matrices with elimination, inversion and multiplication on bit-packed storage.
-- Generic algorithms over a `FiniteField` that must run unchanged over GF(2^m), `Fp<P>` and tower extensions.
-- A math layer with `#![deny(unsafe_code)]`; unsafe SIMD lives in `gf2-kernels-simd`.
+```bash
+./scripts/cargo-budget.sh cargo doc -p gf2-core --no-deps
+```
 
-Codes, modems and channels are in `gf2-coding`; packed F_3/F_5/F_7 arithmetic and permanents are in `gf2-algebra`.
-
-## Conventions
-
-Bit `i` lives in word `i >> 6` under mask `1u64 << (i & 63)`; padding bits past the length are zero.
-
-## Features
-
-The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.
-
-| Feature | Default | Effect |
-|---|---|---|
-| `rand` | yes | Random bit containers, matrices and field elements |
-| `io` | yes | Serde serialization of bit containers; checksummed `FieldMatrix` files |
-| `simd` | no | Enables runtime detection of the accelerated kernel bundles |
-| `parallel` | no | Rayon batch algorithms in `compute::field` |
-| `visualization` | no | `BitMatrix` export to PNG |
-| `tuning-profile` | no | Strict format-2 tuning-envelope JSON codecs |
-| `test-support` | no | Field axiom harness and test utilities for downstream crates |
-
-Dependency setup: see [installation](../../docs/reference/supported-configurations.md#installation).
-
-## Reference
-
-- [Rustdoc](../../target/doc/gf2_core/index.html), generated by `./scripts/cargo-budget.sh cargo doc -p gf2-core --no-deps`; the crate-level page source is [`src/lib.rs`](src/lib.rs).
-- Documentation index: [`docs/index.md`](../../docs/index.md).
+Rendered output: [Rustdoc](../../target/doc/gf2_core/index.html).
 
 ## License
 
