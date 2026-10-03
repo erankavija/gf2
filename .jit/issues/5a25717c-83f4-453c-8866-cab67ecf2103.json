@@ -24,6 +24,21 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-03T01:39:13.737514209Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T01:47:26.703610782Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T01:51:50.892746439Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-03T01:24:24.700852568Z",
@@ -40,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate receipt-pinned campaign inputs by content identity",
-  "updated_at": "2026-10-03T01:24:24.700852568Z"
+  "updated_at": "2026-10-03T01:51:50.892746439Z"
 }

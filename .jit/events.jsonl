@@ -15670,3 +15670,10 @@
 {"assignee":"agent:worker","id":"c81759ed-d9de-4289-a2b9-71098230b5e8","issue_id":"cdba4e71-4444-41e0-b34e-904f3fb20ab4","timestamp":"2026-10-03T01:25:20.143703201Z","type":"issue_claimed"}
 {"from":"ready","id":"b73ec329-147c-4cc6-a03a-36bc1affb879","issue_id":"ee50e270-74ea-4566-a0a7-69791af66e8a","timestamp":"2026-10-03T01:25:20.392082201Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"1cb52abb-cbe4-43b7-be1b-cc39da4902ab","issue_id":"ee50e270-74ea-4566-a0a7-69791af66e8a","timestamp":"2026-10-03T01:25:20.392082201Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"bfcd9f82-d9ff-43f9-983b-674446604985","issue_id":"5a25717c-83f4-453c-8866-cab67ecf2103","timestamp":"2026-10-03T01:39:13.737514209Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"5db8ac1a-4bd6-43b6-b658-2320cd3a6110","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-03T01:39:17.820395514Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"b1dec522-3715-4c10-ba0a-36ad3ce1b33a","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-03T01:42:58.003432281Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"5f3c127e-5f6f-4be0-b3cb-5ed9a318ad33","issue_id":"5a25717c-83f4-453c-8866-cab67ecf2103","timestamp":"2026-10-03T01:47:26.703610782Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"aa25e5b6-6b31-4c8a-8292-046bb2f37771","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-03T01:48:26.468552446Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"b3d889f0-ed53-46d1-985f-8e148ebc9e3f","issue_id":"5a25717c-83f4-453c-8866-cab67ecf2103","timestamp":"2026-10-03T01:51:50.892746439Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"81b7e152-51df-4758-9ce8-98fad4f5c55f","issue_id":"12907582-b66a-4bd7-b50c-4d0e743c89a0","timestamp":"2026-10-03T01:52:33.097555030Z","type":"gate_passed","updated_by":"auto:executor"}
