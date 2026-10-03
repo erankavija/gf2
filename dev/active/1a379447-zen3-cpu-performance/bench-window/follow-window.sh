@@ -13,15 +13,19 @@
 #
 # The layout adapts to the pane, so it stays readable in a narrow split.
 #
-# Usage: dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh [interval-seconds]
+# Usage: follow-window.sh [interval-seconds | --print-root]
 set -uo pipefail
 
-repo=/home/vkaskivuo/Projects/gf2
-here="$repo/dev/active/1a379447-zen3-cpu-performance/bench-window"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 state="${GF2_WINDOW_STATE:-$repo/.agents/bench-window}"
 log="$state/window.log"
 queue="$here/queue.tsv"
 unit="${GF2_WINDOW_UNIT:-gf2-bench-window-20260912b}"
+if [[ "${1:-}" == --print-root ]]; then
+    printf '%s\n' "$repo"
+    exit 0
+fi
 interval="${1:-10}"
 ndone_prev=0
 nfail_prev=0

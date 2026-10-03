@@ -1,0 +1,6 @@
+clone: target/18858de1-second-clone at 456e24fe3c6df031b7b5840b9e931e78eedbe5e5
+$ <clone>/dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh --print-root
+target/18858de1-second-clone
+$ <clone>/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh --print-root
+target/18858de1-second-clone
+window state created in clone: no
