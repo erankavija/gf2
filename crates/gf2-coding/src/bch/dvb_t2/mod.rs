@@ -9,9 +9,7 @@
 //! # Decoding through the mother
 //!
 //! [`DvbT2BchDecoder`] decodes a shortened word through the canonical
-//! [`BinaryBchDecoder`] of the mother code. This composition is the tracked
-//! exception `@/invariant/library-first-generality` names; generic decoding
-//! of derived codes through their coordinate maps is `@/issue/1a8f6acd`.
+//! [`BinaryBchDecoder`] of the mother code.
 //!
 //! # Examples
 //!

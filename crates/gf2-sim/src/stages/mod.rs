@@ -136,7 +136,7 @@ impl GrayQamDemapCore {
         self.bits_per_symbol
     }
 
-    /// The underlying [`FastGrayQamDemapper`] this core delegates to.
+    /// The underlying [`FastGrayQamDemapper`].
     #[cfg(feature = "hip")]
     #[inline]
     pub(crate) fn demapper(&self) -> &FastGrayQamDemapper<f32> {

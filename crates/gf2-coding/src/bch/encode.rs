@@ -429,7 +429,7 @@ pub enum EncodeFamily {
     /// step.
     ///
     /// This is the reference: every representation implements it for every
-    /// plan, and every other family is checked bit-identical against it.
+    /// plan.
     PolyRemainderScalar,
 
     /// Table-driven remainder, consuming

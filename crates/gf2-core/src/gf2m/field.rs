@@ -597,7 +597,7 @@ impl Gf2mField_ {
 
     /// Creates a GF(2^8) field with primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D).
     ///
-    /// This is not the AES polynomial (0x11B, x^8 + x^4 + x^3 + x + 1).
+    /// This is not the AES polynomial 0x11B (`@/citation/Nist2001` Section 4.2).
     pub fn gf256() -> Self {
         Gf2mField::new(8, 0b100011101)
     }
