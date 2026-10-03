@@ -370,8 +370,7 @@ where
 
 /// How a [`Shortened`] value derives its code from its mother.
 ///
-/// [`Shortened::derivation`] reports it, so which construction a value took
-/// is an observable property rather than something inferred from timing.
+/// [`Shortened::derivation`] reports it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ShortenedDerivation {
     /// The mother's code restricted to the messages that are zero on the
@@ -557,8 +556,7 @@ where
     /// Shortens the first `count` conventional systematic positions.
     ///
     /// The conventional layout is positions `0..k`; this helper is therefore
-    /// a shorthand for [`Self::new`] with the set `0..count`.  It delegates to
-    /// the coordinate-set constructor, including its validation.  Its set
+    /// a shorthand for [`Self::new`] with the set `0..count`.  Its set
     /// lies below `k` by construction, so a mother carrying its message
     /// symbols in coordinates `0..k` takes
     /// [`ShortenedDerivation::SystematicRestriction`].
@@ -570,9 +568,8 @@ where
     /// Shortens the last `count` conventional systematic positions.
     ///
     /// The conventional layout is positions `0..k`; this helper therefore
-    /// is a shorthand for [`Self::new`] with the set `k-count..k`.  It
-    /// delegates to the coordinate-set constructor, including its
-    /// validation.  Its set lies below `k` by construction, so a mother
+    /// is a shorthand for [`Self::new`] with the set `k-count..k`.  Its set
+    /// lies below `k` by construction, so a mother
     /// carrying its message symbols in coordinates `0..k` takes
     /// [`ShortenedDerivation::SystematicRestriction`].
     pub fn shorten_last(mother: C, count: usize) -> Result<Self, CodeError> {
@@ -817,8 +814,7 @@ where
     /// generator.  [`ShortenedDerivation::SystematicRestriction`] holds no
     /// generator, so it materializes the mother's `k × n` matrix into one
     /// temporary buffer of the mother's size and copies the kept rows
-    /// restricted to the kept columns out of it.  That temporary is the only
-    /// memory beyond `out`, and it is released before the call returns.
+    /// restricted to the kept columns out of it.
     ///
     /// # Errors
     ///
@@ -1102,8 +1098,7 @@ where
     /// Punctures the first `count` conventional systematic positions.
     ///
     /// The conventional layout is positions `0..k`; this helper is a
-    /// shorthand for [`Self::new`] with the set `0..count`.  It delegates to
-    /// the coordinate-set constructor, including its validation.
+    /// shorthand for [`Self::new`] with the set `0..count`.
     pub fn puncture_first(mother: C, count: usize) -> Result<Self, CodeError> {
         let coordinates = conventional_prefix(&mother, count)?;
         Self::new(mother, coordinates)
@@ -1112,8 +1107,7 @@ where
     /// Punctures the last `count` conventional systematic positions.
     ///
     /// The conventional layout is positions `0..k`; this helper is a
-    /// shorthand for [`Self::new`] with the set `k-count..k`.  It delegates
-    /// to the coordinate-set constructor, including its validation.
+    /// shorthand for [`Self::new`] with the set `k-count..k`.
     pub fn puncture_last(mother: C, count: usize) -> Result<Self, CodeError> {
         let coordinates = conventional_suffix(&mother, count)?;
         Self::new(mother, coordinates)
