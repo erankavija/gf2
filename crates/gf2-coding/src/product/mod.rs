@@ -595,7 +595,7 @@ impl From<TurboDecoderResult> for crate::traits::DecoderResult {
 ///
 /// The turbo decoder alternates between row-wise and column-wise SISO decoding
 /// of `L_Ch + L_A`, feeding `L_A = alpha * L_E` to the next step.  It
-/// terminates when the hard-decision matrix forms a valid product codeword;
+/// stops early when the hard-decision matrix forms a valid product codeword;
 /// [`TurboDecoderConfig::list_bler_threshold`] acts only inside each component
 /// ORBGRAND decode.
 pub struct TurboDecoder<C: ProductComponent> {
