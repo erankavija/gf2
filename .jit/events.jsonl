@@ -17355,3 +17355,10 @@
 {"assignee":"agent:worker","id":"c1a026b6-3c5b-4cc0-b17e-afba88e742d6","issue_id":"554c2935-f2ba-4b37-8c7d-d9288cb9a351","timestamp":"2026-10-03T18:14:14.946683284Z","type":"issue_claimed"}
 {"fields":["documents"],"id":"1444b700-e138-4cfc-a9db-2e28b1e1d76e","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:17:42.958738689Z","type":"issue_updated","updated_by":"doc-remove"}
 {"fields":["documents"],"id":"9b8b9bb1-0642-4226-b467-692551fa3020","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:17:44.693674294Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"docs-mechanical","id":"fbe0fca1-650d-4ade-9704-d074e086b03e","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:18:00.892228549Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"218da60b-f10c-497e-b4c0-6f32f6faf43f","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:20:20.632687136Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"7932c3bb-bce8-4dc8-87b3-3bd8883efdb1","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:24:28.068506730Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"32ae9532-6016-49e2-addf-87d1e4840886","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:24:39.234648390Z","to":"done","type":"issue_state_changed"}
+{"id":"d721d17f-1378-4075-8590-f7f92406e7ed","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T18:24:39.234648390Z","type":"issue_completed"}
+{"from":"backlog","id":"0e08bce9-e38c-435d-96f9-30d7356abca7","issue_id":"37099e5b-66ef-44ef-a6ef-a58dafd93c9e","timestamp":"2026-10-03T18:24:39.327626755Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"f361523b-86c5-436f-b5c2-cf57fa38020d","issue_id":"f0dd63f1-e326-406b-a7b3-6f68e43d2143","timestamp":"2026-10-03T18:24:39.399651833Z","to":"ready","type":"issue_state_changed"}

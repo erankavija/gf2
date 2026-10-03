@@ -36,6 +36,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/67048b47-linked-pairs.txt"
     }
   ],
+  "done_at": "2026-10-03T18:24:39.234648390Z",
   "first_ready_at": "2026-10-03T14:28:38.391569272Z",
   "gates_required": [
     "cargo-ci",
@@ -51,17 +52,17 @@
     },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-03T17:47:31.156796956Z",
+      "updated_at": "2026-10-03T18:24:28.068506730Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T17:44:42.595000915Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T18:20:20.632687136Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T16:39:54.259018909Z",
+      "updated_at": "2026-10-03T18:18:00.892228549Z",
       "updated_by": "auto:executor"
     }
   },
@@ -74,7 +75,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Link unlinked owned artifacts to their issues",
-  "updated_at": "2026-10-03T18:17:44.693674294Z"
+  "updated_at": "2026-10-03T18:24:39.234648390Z"
 }

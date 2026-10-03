@@ -7,6 +7,7 @@
   ],
   "description": "`dev/presentations/` holds only two stray `themes/gruvbox.css` files owned by archived epics babcf05e and f9717e7e.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/presentations/` does not exist.\n- [hard] REQ-02: Each stylesheet is in its owning epic's archive directory, or is removed as byte-identical to a stylesheet already archived there, as recorded in the manifest.\n- [hard] REQ-03: The manifest records each row as complete.\n",
   "documents": [],
+  "first_ready_at": "2026-10-03T18:24:39.399651833Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -28,7 +29,7 @@
     "satisfies:fa787f85/REQ-14"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Empty dev/presentations of leftover theme files",
-  "updated_at": "2026-10-02T09:38:32.140428215Z"
+  "updated_at": "2026-10-03T18:24:39.399651833Z"
 }
