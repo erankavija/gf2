@@ -1,0 +1,67 @@
+# gf2-sim
+
+Deterministic, resumable simulation pipelines for forward error correction, built on [`gf2-coding`](../gf2-coding/). A `Pipeline` composes typed `Stage`s joined by `Connector`s into a BICM chain whose frame loop runs across CPU workers and, under the `hip` feature, a HIP device. A fixed seed and configuration give identical results across worker counts and across checkpoint and resume.
+
+## Contents
+
+| Area | Provides | Modules |
+|---|---|---|
+| Pipelines | `Pipeline`, `Stage`, `Connector`, typed batches (`BitPackedBatch`, `SymbolBatch`, `LlrBatch`, `HardDecisionBatch`), and the `Chain` graph builder for arbitrary stage DAGs | `pipeline`, `stage`, `batch`, `connector`, `graph` |
+| Standards presets | Typestate builders `Pipeline::dvb_t2()` (ETSI EN 302 755 BCH+LDPC BICM) and `Pipeline::nr_5g()` (3GPP TS 38.212 LDPC, BG1 and BG2); an out-of-order call fails to compile | `presets`, `stages` |
+| Channels | AWGN, Rayleigh and Rician flat-fading stages | `channels` |
+| Execution | CPU/GPU `Scheduler` and sweep-level `Pipeline::run` for DVB-T2; `TopologyExecutor` for per-batch DAG execution (the NR path); per-worker ChaCha20 stream seeking | `executor`, `parallel`, `frame_sim` |
+| Checkpointing | Crash-safe `CheckpointWriter` and `CheckpointReader` over caller-defined payloads; SNR-sweep resume via `run_sweep_checkpointed` | `checkpoint`, `snr_checkpoint` |
+| Campaigns | Resumable OSD campaigns with BER and BLER intervals; permanent-zero-fraction campaigns with schemas, provenance guard, validation and dataset integrity; importance-sampling rare-event runner | `osd_campaign`, `permanent_campaign`, `permanent_rare_event` |
+| Observability | JSON-lines tracing subscriber for campaign heartbeats | `observability` |
+
+## When to choose gf2-sim
+
+- BLER/FER sweeps of the DVB-T2 or 5G NR LDPC chains with byte-reproducible results across worker counts.
+- Long campaigns that must survive interruption and resume from validated checkpoints.
+- Non-standard chains assembled from custom `Stage`s through the graph API.
+- CPU-versus-GPU comparisons with a shared determinism contract.
+
+Codes, modems, channel models and the `simulation` BER/FER harness are in `gf2-coding`.
+
+## Binaries
+
+Binaries under `src/bin` are thin drivers over the library.
+
+| Role | Binaries |
+|---|---|
+| DVB-T2 BICM AWGN campaign with `--resume` | `dvb_t2_awgn_campaign` |
+| Checkpointed SNR sweep over AWGN, Rayleigh or Rician | `checkpoint_sweep` |
+| eBCH OSD reference campaign | `ebch_osd_awgn_campaign` |
+| Permanent-zero-fraction campaign, validation, dataset inspection, rare-event cross-check | `permanent_campaign`, `permanent_validation`, `permanent_dataset`, `permanent_rare_event` |
+| External-library comparison (BLER sweep, AList export) | `ldpc_bler_sweep`, `export_alist` |
+| Throughput benchmarks | `*_throughput` |
+
+```console
+$ cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
+    --rate 1/2 --modulation 16qam --esn0-range 4.0:5.0:0.5 \
+    --max-frames 100 --target-errors 5 --output-dir /tmp/dvb_smoke --seed 42
+```
+
+Binaries with `required-features` in `Cargo.toml` need `--features test-support`.
+
+## Features
+
+| Feature | Default | Effect |
+|---|---|---|
+| `hip` | no | HIP device dispatch for LDPC belief propagation, demapping, AWGN and BCH syndromes; requires ROCm. Enables `gf2-coding/hip` and `gf2-algebra/hip` |
+| `llr-f64` | no | Selects `f64` LLRs through `gf2-coding/llr-f64` |
+| `test-support` | no | Deterministic AWGN channel-LLR source `testutil::AwgnLlrSource` for tests, benches and the comparison binaries |
+
+```toml
+[dependencies]
+gf2-sim = { path = "crates/gf2-sim", features = ["hip"] }
+```
+
+## Reference
+
+- API reference: `cargo doc -p gf2-sim --no-deps --open`; the crate-level page is [`src/lib.rs`](src/lib.rs).
+- Documentation index: [`docs/index.md`](../../docs/index.md).
+
+## License
+
+MIT, see [LICENSE-MIT](../../LICENSE-MIT).
