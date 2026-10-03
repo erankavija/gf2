@@ -1,78 +1,38 @@
 # gf2-coding
 
-Error-correcting codes, soft decoders, modems, channels, and Monte Carlo simulation over the finite-field and bit-matrix primitives of [`gf2-core`](../gf2-core/README.md).
+Error-correcting codes, soft decoders, modems, channels and Monte Carlo
+simulation over the finite-field and bit-matrix primitives of
+[`gf2-core`](../gf2-core/README.md).
 
-## Capabilities
+## When to choose it
 
-| Area | Supported | Module |
-|---|---|---|
-| Algebraic block codes | Hamming with syndrome-table decoding; BCH over GF(2), GF(p), and GF(p^r) from an independent specification of length, designed distance, and first root; binary BCH decoding (Berlekamp-Massey, Chien search); shortening | `linear`, `bch`, `transform` |
-| LDPC | Quasi-cyclic codes and sparse edge-list codes; min-sum, normalized min-sum, offset min-sum, and sum-product belief propagation; Richardson-Urbanke encoding with file-cached generators | `ldpc` |
-| Concatenated and graph codes | Product codes with Chase-Pyndiah and SO-GRAND/BCJR turbo decoding; generalized LDPC | `product`, `gldpc` |
-| Soft and universal decoders | ORBGRAND, SO-GRAND, BCJR, ordered-statistics decoding, BP-OSD | `grand`, `bcjr`, `osd` |
-| Streaming codes | Convolutional encoder with caller-supplied generator polynomials, hard-decision Viterbi decoder | `convolutional` |
-| Other component codes | CRC, Reed-Muller subcodes with polar-transform extension | `crc`, `drm` |
-| Modem | BPSK, Gray-coded square QAM presets, validated builder for custom constellations, exact log-MAP reference and Gray-QAM fast backends | `modem` |
-| Channels and simulation | AWGN, Rician fading, SNR and capacity helpers, batched BER/FER harness with checkpointed campaigns | `channel`, `fading`, `info_theory`, `simulation` |
+Choose `gf2-coding` for code constructions, decoders, modem and channel
+models, including the DVB-T2 (`@/citation/Etsi2015`) and 5G NR
+(`@/citation/ThreeGpp2017`) codes. `gf2-core` holds the field arithmetic, bit
+storage and linear algebra beneath it, and
+[`gf2-sim`](../gf2-sim/README.md) composes its components into checkpointed
+simulation pipelines and campaigns.
 
-Block-code and decoder interfaces are traits in `traits`; `llr::Llr` is the soft-value type.
+## Documentation
 
-## Standards support
-
-| Standard | Coverage | Evidence |
-|---|---|---|
-| ETSI EN 302 755 (DVB-T2), `@/citation/Etsi2015` | LDPC and outer BCH for normal and short frames at all six code rates, bit interleaver, QAM mapping, BICM concatenation | VV001 test-point streams (`@/citation/DvbVerification2010`) read from `$DVB_TEST_VECTORS_PATH`; tests return early when the streams are absent |
-| 3GPP TS 38.212 (5G NR), `@/citation/ThreeGpp2017` | LDPC base graphs BG1 and BG2 with every lifting set, rate matching | Bit-exact comparison of the shift tables against external reference tables with recorded provenance |
-
-## When to choose this crate
-
-- Coding research that needs standards-conformant DVB-T2 or 5G NR LDPC/BCH constructions inside a reproducible simulation chain.
-- Soft-decoding studies over GRAND, BCJR, OSD, and turbo product decoders sharing one LLR type and decoder trait surface.
-- Modem and bit-channel studies that swap constellations, labelings, and demapper backends behind one trait layer.
-- BCH over non-binary base fields, with explicit coordinate layouts and typed decode outcomes.
-
-Finite-field arithmetic, bit storage, and linear algebra live in `gf2-core`; large-scale orchestration lives in `gf2-sim`.
-
-## Feature flags
-
-The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.
-
-| Feature | Default | Effect |
-|---|---|---|
-| `simd` | yes | Enables `gf2-core/simd` |
-| `sim-observability` | yes | Per-SNR JSON checkpoints, signal-safe flush, JSON-lines tracing, deterministic ChaCha20 seek |
-| `parallel` | no | Rayon batch encode, decode, and simulation across frames |
-| `hip` | no | HIP/ROCm paths for batched BCJR, Gray-QAM soft demapping, and BCH syndrome evaluation (`BinaryBchDecoder::compute_syndromes_batch_gpu`, `correct_batch_gpu`) |
-| `llr-f64` | no | `f64` LLRs instead of `f32` |
-| `visualization` | no | Enables `gf2-core/visualization` |
-| `tuning-profile` | no | Format-2 codec for the coding-owned tuning section |
-| `test-support` | no | Shared test helpers |
-| `bench-csv` | no | Enables `gf2-core/test-support` for the benchmark CSV emitters |
-
-## Acceleration ownership
-
-- `gf2-core` owns runtime SIMD dispatch for bit-level and elimination operations.
-- `gf2-kernels-simd` owns the AVX2 batch BCH encoding kernels; `bch::encode` selects among registered algorithm families, all bit-identical to the scalar reference, under the process tuning profile in `tuning`.
-- `gf2-kernels-hip` owns the GPU kernels. It is outside the default workspace and needs `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/).
-- This crate owns codes, decoders, and the dispatch that selects among those backends. This crate denies `unsafe` code.
-
-## Commands
+- [Documentation index](../../docs/index.md)
+- [Standards conformance](../../docs/reference/standards-conformance.md):
+  supported DVB-T2 and 5G NR configurations, bit order and external evidence.
+- [Run a simulation campaign](../../docs/how-to/run-simulation-campaigns.md)
+  and [coded-modulation link simulation](../../docs/tutorials/coded-modulation-link-simulation.md).
+- [Acceleration architecture](../../docs/concepts/acceleration-architecture.md)
+  and [select SIMD, GPU and parallel execution](../../docs/how-to/select-acceleration.md).
+- [Cargo features](../../docs/reference/supported-configurations.md#cargo-features),
+  defined in the `[features]` table of [`Cargo.toml`](Cargo.toml), and
+  [installation](../../docs/reference/supported-configurations.md#installation).
+- Build and test commands: [`AGENTS.md`](../../AGENTS.md#supported-toolchain-and-commands).
 
 ```bash
 ./scripts/cargo-budget.sh cargo doc -p gf2-coding --no-deps
-./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding --cargo-profile ci-test --profile ci
-./scripts/cargo-budget.sh cargo run --release -p gf2-coding --bin generate_ldpc_cache all
-./scripts/cargo-budget.sh cargo run --release -p gf2-coding --bin validate_ldpc_cache
-./scripts/cargo-budget.sh cargo run --release -p gf2-coding --example <name>
 ```
 
-## Further reading
-
-- [Rustdoc](../../target/doc/gf2_coding/index.html), generated by the first command above from the crate-level documentation in [`src/lib.rs`](src/lib.rs); module documentation carries the BCH, DVB-T2, and modem guides.
-- [Installation](../../docs/reference/supported-configurations.md#installation)
-- [Documentation index](../../docs/index.md)
-- [Workspace README](../../README.md)
+Rendered output: [Rustdoc](../../target/doc/gf2_coding/index.html).
 
 ## License
 
-MIT; see [`../../LICENSE-MIT`](../../LICENSE-MIT).
+MIT, see [LICENSE-MIT](../../LICENSE-MIT).
