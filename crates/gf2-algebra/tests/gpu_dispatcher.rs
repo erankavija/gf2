@@ -1,14 +1,6 @@
 //! Batch GPU dispatcher tests for `gf2_algebra::gpu`: each
 //! `permanent_batch_bipedal{3,5,7}` result is compared with a CPU permanent on
-//! seeded random matrices. Every test requires a gfx1030 device and is ignored;
-//! to run on a host with ROCm and a supported GPU:
-//!
-//! ```text
-//! cargo nextest run -p gf2-algebra \
-//!     --release --features hip \
-//!     --run-ignored ignored-only \
-//!     -E 'test(test_permanent_batch_bipedal)'
-//! ```
+//! seeded random matrices. Every test requires a gfx1030 device and is ignored.
 
 #![cfg(feature = "hip")]
 
@@ -27,18 +19,14 @@ use gf2_algebra::packed::Packed7Matrix;
 #[cfg(feature = "f7")]
 use gf2_algebra::permanent::ryser::permanent_ryser;
 
-/// Matrix dimension for the full-size tests.
 const N: usize = 24;
 const M: usize = 1_000;
 const SEED: u64 = 0xDEAD_BEEF_u64;
 
-/// Matrix dimension for the smoke tests.
 const N_SMOKE: usize = 16;
 const M_SMOKE: usize = 100;
 const SEED_SMOKE: u64 = 0xC0DE_CAFE_BEEF_5555_u64;
 
-/// F_3 batch dispatcher against `permanent_bipedal3` on 1 000 random 24×24
-/// matrices.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn test_permanent_batch_bipedal3_matches_cpu_n24() {
@@ -72,8 +60,6 @@ fn test_permanent_batch_bipedal3_matches_cpu_n24() {
     }
 }
 
-/// F_5 batch dispatcher against `permanent_bipedal5` on 1 000 random 24×24
-/// matrices.
 #[cfg(feature = "f5")]
 #[test]
 #[ignore = "external: gfx1030 device required"]
@@ -108,9 +94,8 @@ fn test_permanent_batch_bipedal5_matches_cpu_n24() {
     }
 }
 
-/// F_7 batch dispatcher on 1 000 random 24×24 matrices. The CPU reference is
-/// `permanent_ryser::<Fp<7>>` because `permanent_bipedal7` is limited to
-/// n <= 16 = Packed7::LANES.
+/// The CPU reference is `permanent_ryser::<Fp<7>>` because
+/// `permanent_bipedal7` is limited to n <= 16 = Packed7::LANES.
 #[cfg(feature = "f7")]
 #[test]
 #[ignore = "external: gfx1030 device required"]
@@ -145,11 +130,6 @@ fn test_permanent_batch_bipedal7_matches_cpu_n24() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// End-to-end smoke tests at n=16 (100 matrices)
-// ---------------------------------------------------------------------------
-
-/// F_3 batch dispatcher smoke test: 100 random 16×16 matrices.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn test_permanent_batch_bipedal3_smoke_n16() {
@@ -177,7 +157,6 @@ fn test_permanent_batch_bipedal3_smoke_n16() {
     }
 }
 
-/// F_5 batch dispatcher smoke test: 100 random 16×16 matrices.
 #[cfg(feature = "f5")]
 #[test]
 #[ignore = "external: gfx1030 device required"]
@@ -206,8 +185,6 @@ fn test_permanent_batch_bipedal5_smoke_n16() {
     }
 }
 
-/// F_7 batch dispatcher smoke test: 100 random 16×16 matrices.
-///
 /// Uses `permanent_bipedal7` (CPU single-word, limited to n ≤ 16) as the
 /// reference because n=16 = Packed7::LANES is exactly the CPU fast-path limit.
 #[cfg(feature = "f7")]
@@ -239,8 +216,6 @@ fn test_permanent_batch_bipedal7_smoke_n16() {
         );
     }
 }
-
-// ---------------------------------------------------------------------------
 
 /// Device probe reports a usable accelerator on a gating-satisfying host.
 ///

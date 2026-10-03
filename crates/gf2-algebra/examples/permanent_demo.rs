@@ -5,10 +5,6 @@
 //! matrices each, prints permanents/sec for both, and reports whether the
 //! bipedal3 mean lies within ±5% of `S1_MEAN_US_BIPEDAL3_N24`. The matrix
 //! generator is inline, so the command needs no feature flags.
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --example permanent_demo
-//! ```
 
 #![allow(clippy::cast_precision_loss)]
 
@@ -25,7 +21,6 @@ fn demo_random_matrix(n: usize, seed: u64) -> Vec<Fp<3>> {
     let mut state = seed;
     (0..n * n)
         .map(|_| {
-            // SplitMix64 step.
             state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
             let mut z = state;
             z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -36,25 +31,13 @@ fn demo_random_matrix(n: usize, seed: u64) -> Vec<Fp<3>> {
         .collect()
 }
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-/// Matrix dimension for the bipedal3 fast path.
 const N_BIPEDAL: usize = 24;
-/// Matrix dimension for the reference scalar path.
 const N_REF: usize = 20;
-/// Number of independent matrices per batch.
 const BATCH: usize = 64;
-/// Base seed for deterministic matrix generation.
 const SEED_BASE: u64 = 0x16f0373400000000;
 
 const S1_MEAN_US_BIPEDAL3_N24: f64 = 213_970.0;
 const S1_TOLERANCE: f64 = 0.05;
-
-// ---------------------------------------------------------------------------
-// Helper: mean and std-dev of a slice of f64 timings.
-// ---------------------------------------------------------------------------
 
 fn mean(xs: &[f64]) -> f64 {
     xs.iter().sum::<f64>() / xs.len() as f64
@@ -65,21 +48,12 @@ fn stddev(xs: &[f64], mean: f64) -> f64 {
     var.sqrt()
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
 fn main() {
     println!("permanent_demo (jit:16f03734) — bipedal3 vs reference");
     println!("  n_bipedal={N_BIPEDAL}  n_ref={N_REF}  batch={BATCH}");
     println!("  seed_base: {SEED_BASE:#018x}");
     println!();
 
-    // -------------------------------------------------------------------------
-    // Build batch matrices.
-    // -------------------------------------------------------------------------
-
-    // Row-major F_3 matrices → Bipedal3Matrix (for bipedal3 path).
     let bipedal_matrices: Vec<Bipedal3Matrix> = (0..BATCH)
         .map(|i| {
             let seed = SEED_BASE ^ (N_BIPEDAL as u64).wrapping_shl(8) ^ i as u64;
@@ -88,17 +62,12 @@ fn main() {
         })
         .collect();
 
-    // Flat row-major F_3 matrices for the reference scalar path.
     let ref_matrices: Vec<Vec<Fp<3>>> = (0..BATCH)
         .map(|i| {
             let seed = SEED_BASE ^ (N_REF as u64).wrapping_shl(8) ^ i as u64;
             demo_random_matrix(N_REF, seed)
         })
         .collect();
-
-    // -------------------------------------------------------------------------
-    // Time permanent_bipedal3 at N_BIPEDAL over BATCH matrices.
-    // -------------------------------------------------------------------------
 
     println!("Timing permanent_bipedal3 (n={N_BIPEDAL}, batch={BATCH}) ...");
     eprint!("  matrix ");
@@ -126,10 +95,6 @@ fn main() {
     println!("  throughput: {bipedal_perm_per_sec:.3} permanents/sec");
     println!();
 
-    // -------------------------------------------------------------------------
-    // Time permanent_mod3_reference at N_REF over BATCH matrices.
-    // -------------------------------------------------------------------------
-
     println!("Timing permanent_mod3_reference (n={N_REF}, batch={BATCH}) ...");
     eprint!("  matrix ");
 
@@ -153,10 +118,6 @@ fn main() {
     );
     println!("  throughput: {ref_perm_per_sec:.3} permanents/sec");
     println!();
-
-    // -------------------------------------------------------------------------
-    // Summary table.
-    // -------------------------------------------------------------------------
 
     println!("=== Summary ===");
     println!(
@@ -200,7 +161,6 @@ fn main() {
     }
     println!();
 
-    // Sanity: results are deterministic — same seed → same permanent value.
     let seed0 = SEED_BASE ^ (N_BIPEDAL as u64).wrapping_shl(8);
     let mat0_row = demo_random_matrix(N_BIPEDAL, seed0);
     let mat0 = Bipedal3Matrix::from_row_major(&mat0_row, N_BIPEDAL, N_BIPEDAL);

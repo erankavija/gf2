@@ -1,21 +1,14 @@
 //! Reproduces the Table 2 scaling slope of `@/citation/Scheinerman2024` with
 //! [`permanent_mod3_reference`].
 //!
-//! Times the function over `n ∈ {8, 10, …, 24}` (the paper's table covers
+//! Times the function over `n ∈ {8, 10, …, 24}` (the cited table covers
 //! `n ∈ {24, 26, …, 36}`), fits `ln(mean_us) = a + b*n` by ordinary least
 //! squares, and exits nonzero unless `b` lies within ±10% of
 //! `ln 2 + mean(1/n)`, the slope of an `O(n·2^n)` cost over the sweep.
-//!
 //! Writes `dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-<DATE>.csv`
 //! (date overridable via `SA_DATE`) with columns `n`, `mean_us`, `std_us`,
 //! `samples` and `input_hash`: the SHA-256 over `n` and each sample's seed,
 //! index and matrix entries, identical across runs.
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features test-support --example paper_repro_slope
-//! # Override the date in the filename (e.g. for CI):
-//! SA_DATE=2026-05-11 cargo run -p gf2-algebra --release --features test-support --example paper_repro_slope
-//! ```
 
 use gf2_algebra::permanent::permanent_mod3_reference;
 use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
@@ -24,7 +17,6 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
 
-/// Number of independently seeded matrices timed per `n`.
 const SAMPLES_PER_N: usize = 5;
 
 /// Target wall-clock per timed window, in microseconds. For each sample the
@@ -44,7 +36,7 @@ const PAPER_ASYMPTOTIC_SLOPE: f64 = std::f64::consts::LN_2;
 const SLOPE_TOLERANCE: f64 = 0.10;
 
 fn main() {
-    // n=24 is the bottom of the paper's Table 2 range, so the sweep overlaps it.
+    // n=24 is the bottom of the cited Table 2 range, so the sweep overlaps it.
     let n_values: &[usize] = &[8, 10, 12, 14, 16, 18, 20, 22, 24];
 
     let date = today_yyyy_mm_dd();
@@ -187,7 +179,6 @@ fn hex_lower(bytes: &[u8]) -> String {
 mod tests {
     use super::hex_lower;
 
-    /// `hex_lower` produces the canonical lowercase-hex SHA-256 encoding.
     #[test]
     fn test_hex_lower() {
         assert_eq!(hex_lower(&[]), "");

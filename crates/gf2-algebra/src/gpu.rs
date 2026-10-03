@@ -5,25 +5,6 @@
 //! kernels in `gf2-kernels-hip::permanent` in one kernel launch, one block per
 //! matrix. The module exists only under the `hip` Cargo feature; the processor
 //! equivalent is `permanent_bipedal{3,5,7}` per matrix.
-//!
-//! # Host requirements
-//!
-//! The ROCm toolchain and a GPU architecture that `gf2-kernels-hip` supports
-//! must be present at build time (hipcc on `PATH`) and at runtime. The batch
-//! entry points panic on a failed HIP runtime call; [`has_usable_device`]
-//! probes the device without panicking.
-//!
-//! # F_7 LUT initialisation
-//!
-//! [`permanent_batch_bipedal7`] copies the three 64 KiB F_7 look-up tables
-//! (ADD, SUB, MUL) to device memory once per process through a
-//! [`std::sync::OnceLock`].
-//!
-//! # Unsafe isolation
-//!
-//! All HIP device-memory operations are safe functions of
-//! `gf2-kernels-hip::permanent` that encapsulate the FFI
-//! (`@/inv/unsafe-kernel-isolation`).
 
 #[cfg(feature = "f7")]
 use std::sync::OnceLock;
@@ -236,37 +217,6 @@ pub fn serialise_permanent_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usiz
 /// Ryser/Gray-code walk with Bipedal3 column-sum arithmetic, with one block
 /// per matrix, and returns a `Vec<Fp<3>>` of length `M`.
 ///
-/// The processor equivalent is:
-///
-/// ```rust
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal3;
-/// use gf2_core::gfp::Fp;
-///
-/// let matrices: Vec<Bipedal3Matrix> = vec![];
-/// let _results: Vec<Fp<3>> = matrices.iter().map(permanent_bipedal3).collect();
-/// ```
-///
-/// # Examples
-///
-/// ```no_run
-/// // Compiles only with the `hip` Cargo feature; never executed under
-/// // `cargo test --doc` (requires ROCm and a GPU architecture that gf2-kernels-hip supports at runtime).
-/// # #[cfg(feature = "hip")] {
-/// use gf2_algebra::gpu::permanent_batch_bipedal3;
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let mat = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// let results = permanent_batch_bipedal3(&[mat]);
-/// assert_eq!(results[0], Fp::<3>::new(1)); // 2×2 identity: perm = 1
-/// # }
-/// ```
-///
 /// # Panics
 ///
 /// * If `matrices` is empty.
@@ -321,39 +271,6 @@ pub fn permanent_batch_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
 /// Launches `gf2_kernels_hip::permanent::compute_permanent_gf5_batch`, a
 /// Ryser/Gray-code walk with byte-arithmetic F_5 column sums, with one block
 /// per matrix, and returns a `Vec<Fp<5>>` of length `M`.
-///
-/// The processor equivalent is:
-///
-/// ```rust
-/// # #[cfg(feature = "f5")] {
-/// use gf2_algebra::packed::Packed5Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal5;
-/// use gf2_core::gfp::Fp;
-///
-/// let matrices: Vec<Packed5Matrix> = vec![];
-/// let _results: Vec<Fp<5>> = matrices.iter().map(permanent_bipedal5).collect();
-/// # }
-/// ```
-///
-/// # Examples
-///
-/// ```no_run
-/// // Compiles only with the `hip` + `f5` Cargo features; never executed
-/// // under `cargo test --doc` (requires ROCm and a GPU architecture that gf2-kernels-hip supports at runtime).
-/// # #[cfg(all(feature = "hip", feature = "f5"))] {
-/// use gf2_algebra::gpu::permanent_batch_bipedal5;
-/// use gf2_algebra::packed::Packed5Matrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id: Vec<Fp<5>> = vec![
-///     Fp::<5>::new(1), Fp::<5>::new(0),
-///     Fp::<5>::new(0), Fp::<5>::new(1),
-/// ];
-/// let mat = Packed5Matrix::from_row_major(&id, 2, 2);
-/// let results = permanent_batch_bipedal5(&[mat]);
-/// assert_eq!(results[0], Fp::<5>::new(1)); // 2×2 identity: perm = 1
-/// # }
-/// ```
 ///
 /// # Panics
 ///
@@ -412,39 +329,6 @@ pub fn permanent_batch_bipedal5(matrices: &[Packed5Matrix]) -> Vec<Fp<5>> {
 ///
 /// The processor single-word path [`crate::permanent::permanent_bipedal7`]
 /// is limited to `n <= 16 = Packed7::LANES`; the GPU path supports `n <= 63`.
-///
-/// The processor equivalent is:
-///
-/// ```rust
-/// # #[cfg(feature = "f7")] {
-/// use gf2_algebra::packed::Packed7Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal7;
-/// use gf2_core::gfp::Fp;
-///
-/// let matrices: Vec<Packed7Matrix> = vec![];
-/// let _results: Vec<Fp<7>> = matrices.iter().map(permanent_bipedal7).collect();
-/// # }
-/// ```
-///
-/// # Examples
-///
-/// ```no_run
-/// // Compiles only with the `hip` + `f7` Cargo features; never executed
-/// // under `cargo test --doc` (requires ROCm and a GPU architecture that gf2-kernels-hip supports at runtime).
-/// # #[cfg(all(feature = "hip", feature = "f7"))] {
-/// use gf2_algebra::gpu::permanent_batch_bipedal7;
-/// use gf2_algebra::packed::Packed7Matrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let id: Vec<Fp<7>> = vec![
-///     Fp::<7>::new(1), Fp::<7>::new(0),
-///     Fp::<7>::new(0), Fp::<7>::new(1),
-/// ];
-/// let mat = Packed7Matrix::from_row_major(&id, 2, 2);
-/// let results = permanent_batch_bipedal7(&[mat]);
-/// assert_eq!(results[0], Fp::<7>::new(1)); // 2×2 identity: perm = 1
-/// # }
-/// ```
 ///
 /// # Panics
 ///

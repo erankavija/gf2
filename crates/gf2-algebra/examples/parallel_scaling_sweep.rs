@@ -9,11 +9,6 @@
 //! Writes `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
 //! (date overridable via `SA_DATE`) with columns `n, threads, mean_us, std_us,
 //! k_matrices, scaling_factor, scaling_ci_lo, scaling_ci_hi, fp3_result_hex`.
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features "parallel test-support" \
-//!   --example parallel_scaling_sweep
-//! ```
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel;
@@ -39,10 +34,8 @@ const SEED_BASES: &[(usize, u64)] = &[
     (36, 0x4513_209c_0000_0024),
 ];
 
-/// Rayon version recorded in the header.
 const RAYON_VERSION: &str = "1.11.0";
 
-/// Hardware fingerprint recorded in the header.
 const HW_MODEL: &str = "AMD Ryzen 9 5900X 12-Core Processor";
 const HW_PHYSICAL_CORES: usize = 12;
 const HW_SMT: &str = "2x (24 logical CPUs)";
@@ -84,7 +77,6 @@ fn main() {
     fs::create_dir_all(csv_dir).expect("create benchmarks dir");
     let mut csv = File::create(&csv_path).expect("create CSV");
 
-    // Header block: hardware fingerprint + config.
     writeln!(csv, "# S2 (jit:4513209c) parallel scaling sweep").unwrap();
     writeln!(csv, "# date: {date}").unwrap();
     writeln!(csv, "# host: {HW_MODEL}").unwrap();
@@ -155,7 +147,6 @@ fn main() {
                 timings_per_matrix[i].push(elapsed_us);
             }
 
-            // Determinism: each matrix must produce the same Fp<3> across all T.
             match ref_fp3 {
                 None => ref_fp3 = Some(fp3_this_t.clone()),
                 Some(ref refv) => {
@@ -193,7 +184,6 @@ fn main() {
 
         let mut all_pass = true;
         for (t_idx, &t) in THREAD_COUNTS.iter().enumerate() {
-            // Per-cell mean + std of raw timings (for reporting).
             let timings_at_t: Vec<f64> = timings_per_matrix.iter().map(|row| row[t_idx]).collect();
             let mean_us = timings_at_t.iter().sum::<f64>() / k as f64;
             let std_us = (timings_at_t
@@ -203,7 +193,6 @@ fn main() {
                 / df as f64)
                 .sqrt();
 
-            // Per-matrix scaling factor; aggregate to mean + 95% CI on the mean.
             let per_matrix_scaling: Vec<f64> = (0..k)
                 .map(|i| {
                     let t1 = timings_per_matrix[i][t1_idx];

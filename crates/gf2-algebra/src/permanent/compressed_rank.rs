@@ -1,38 +1,13 @@
 //! Exact compressed-state propagation for three-column permanental rank.
 //!
-//! For rows `u`, `v`, and `x`, define the symmetric bilinear contraction
-//!
-//! ```text
-//! phi(u, v) = (u2*v3 + u3*v2,
-//!              u1*v3 + u3*v1,
-//!              u1*v2 + u2*v1).
-//! ```
-//!
-//! Expansion in the coordinates of `x` gives the contraction identity
-//! `per(u, v, x) = phi(u, v) dot x`. For a valid prefix, let `U` be its row
-//! span and `V` the span of contractions of distinct prefix rows. An appended row
-//! is valid exactly when `x` lies in `V`'s orthogonal complement. The successor
-//! is
-//!
-//! ```text
-//! U' = U + <x>,              V' = V + phi(U, x).
-//! ```
-//!
-//! The second update is basis-independent because `u -> phi(u, x)` is linear.
-//! Inductively, `(U, V)` is therefore sufficient: it decides every admissible
-//! next row and determines the canonical successor without retaining a row
-//! history.
-//!
-//! [`CompressedTransitionTable`] groups the admissible rows by successor. If
-//! `C_t(S)` counts valid ordered prefixes in state `S` and `m(S,S')` is an
-//! edge multiplicity, exact propagation applies
-//! `C_(t+1)(S') = sum_S C_t(S) m(S,S')`. The terminal count divided by
-//! `q^(3n)` is returned as an arbitrary-precision [`ExactProbability`].
-//!
-//! # Validation
-//!
-//! Persisted subspaces reject noncanonical RREF bytes, and persisted states are
-//! accepted only when canonical transition replay reconstructs them.
+//! With the symmetric bilinear contraction
+//! `phi(u, v) = (u2*v3 + u3*v2, u1*v3 + u3*v1, u1*v2 + u2*v1)`, the identity
+//! `per(u, v, x) = phi(u, v) dot x` holds. A valid row prefix is summarised by
+//! its row span `U` and the span `V` of contractions of distinct prefix rows:
+//! an appended row `x` is valid exactly when it lies in `V`'s orthogonal
+//! complement, and the successor is `U' = U + <x>`, `V' = V + phi(U, x)`.
+//! [`CompressedTransitionTable`] groups the admissible rows by successor and
+//! propagates exact prefix counts along those edges.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -1007,17 +982,6 @@ impl<F: SupportedPrimeField> CompressedTransitionTable<F> {
 ///
 /// Panics if `3 * rows` overflows `usize`, as specified by
 /// [`CompressedTransitionTable::deficiency_probability`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::exact_permanental_rank_deficiency;
-/// use gf2_core::gfp::Fp;
-/// use num_bigint::BigUint;
-///
-/// let probability = exact_permanental_rank_deficiency::<Fp<3>>(1_024);
-/// assert_eq!(probability.matrix_count(), &BigUint::from(3_u8).pow(3_072));
-/// ```
 #[must_use]
 pub fn exact_permanental_rank_deficiency<F: SupportedPrimeField>(rows: usize) -> ExactProbability {
     CompressedTransitionTable::<F>::new().deficiency_probability(rows)

@@ -50,23 +50,6 @@ const _: () = {
 /// [`permanent_bipedal3_singleword`](crate::permanent::bipedal3::permanent_bipedal3_singleword).
 /// Direct calls accept any `n` in `1..=N_MAX_MULTIWORD`.
 ///
-/// Its unit tests compare it against `permanent_ryser::<Fp<3>>` at
-/// `n ≤ 24`.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::bipedal3_multiword::permanent_bipedal3_multiword;
-/// use gf2_core::gfp::Fp;
-///
-/// // 65×65 identity over F_3: permanent = 1
-/// let mut id = vec![Fp::<3>::new(0); 65 * 65];
-/// for i in 0..65 { id[i * 65 + i] = Fp::<3>::new(1); }
-/// let m = Bipedal3Matrix::from_row_major(&id, 65, 65);
-/// assert_eq!(permanent_bipedal3_multiword(&m), Fp::<3>::new(1));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
@@ -178,10 +161,6 @@ pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 256-bit Gray-code counter helpers
-// ---------------------------------------------------------------------------
-
 /// Increment a 256-bit little-endian counter stored as `[u64; 4]`.
 #[inline]
 fn inc_counter(c: &mut [u64; 4]) {
@@ -247,10 +226,6 @@ fn gray_bit_at(c: &[u64; 4], pos: usize) -> bool {
     (k_bit_pos ^ k_bit_pos_plus_1) == 1
 }
 
-// ---------------------------------------------------------------------------
-// fold_mul: sequential word reduction then per-word lane fold
-// ---------------------------------------------------------------------------
-
 /// Product of all active lanes of a `W`-word bipedal value as one `Fp<3>`.
 ///
 /// Words are first combined lane-wise with the bipedal product
@@ -283,19 +258,11 @@ fn fold_mul_words(mag: &[u64], sgn: &[u64], n: usize) -> Fp<3> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::permanent::ryser::permanent_ryser;
     use crate::testutil::random_matrix;
-
-    // -----------------------------------------------------------------------
-    // gray_bit_at unit tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_gray_bit_at_matches_scalar_for_small_k() {
@@ -414,10 +381,6 @@ mod tests {
     fn test_multiword_vs_ryser_n24_slow() {
         run_multiword_vs_ryser_at_n(24, 5, 0x0018);
     }
-
-    // -----------------------------------------------------------------------
-    // Block-diagonal cross-check: perm(A_{n0} ⊕ I_{n - n0}) = perm(A_{n0}).
-    // -----------------------------------------------------------------------
 
     /// Row-major `A_{n0} ⊕ I_{n - n0}` with a random F_3 block `A_{n0}`;
     /// returns `(full, block)`.

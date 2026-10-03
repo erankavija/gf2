@@ -5,14 +5,6 @@
 //! (date overridable via `SA_DATE`) with columns `chunk_size`, `mean_us`,
 //! `std_us`, `throughput_subsets_per_sec` (`(2^n - 1) / (mean_us * 1e-6)`) and
 //! `samples`.
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features "parallel test-support" \
-//!   --example parallel_chunk_sweep
-//! # Override the output date:
-//! SA_DATE=2026-05-11 cargo run -p gf2-algebra --release \
-//!   --features "parallel test-support" --example parallel_chunk_sweep
-//! ```
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::{
@@ -23,15 +15,12 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
 
-/// Matrix dimension for the sweep.
 const SWEEP_N: usize = 28;
 
-/// Number of independently seeded matrices timed per chunk size.
 const SAMPLES_PER_CHUNK: usize = 3;
 
 const SEED_BASE: u64 = 0x0525_0df5_0000_0000;
 
-/// Chunk sizes to sweep.
 const CHUNK_SIZES: &[usize] = &[
     1 << 7,  // 128
     1 << 10, // 1024

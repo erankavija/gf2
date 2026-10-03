@@ -2,11 +2,6 @@
 //! single-word kernel (`n ≤ 63`), and the batched entry point that evaluates
 //! up to four matrices in the lanes of one AVX2 Gray walk when AVX2 is
 //! detected. `n > 63` goes to `super::bipedal3_multiword`.
-//!
-//! The dispatcher selects the scalar kernel for a single matrix:
-//! `dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md`
-//! records scalar at 2.858539–3.354322 times the direct single-matrix AVX2
-//! rate for `n = 8, 12, 16, 20, 24, 28`.
 
 use gf2_core::gfp::Fp;
 
@@ -40,8 +35,7 @@ std::thread_local! {
 /// for `64 ≤ n ≤ N_MAX_MULTIWORD`.
 ///
 /// For `n ≤ 63` this selects the scalar [`permanent_bipedal3_singleword`]
-/// kernel even when AVX2 is available; the module documentation cites the
-/// measurement.
+/// kernel even when AVX2 is available.
 ///
 /// The permanent of an `n × n` matrix `A` over `F_3` is:
 ///
@@ -54,27 +48,6 @@ std::thread_local! {
 ///
 /// ```text
 /// perm(A) = (-1)^n * sum_{S ⊆ [n], S ≠ ∅} (-1)^|S| * prod_{i=0}^{n-1} sum_{j ∈ S} A[i,j]
-/// ```
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal3;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_3: permanent = 1
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal3(&m), Fp::<3>::new(1));
-///
-/// // 2×2 all-ones over F_3: permanent = 2! mod 3 = 2
-/// let ones: Vec<Fp<3>> = vec![Fp::<3>::new(1); 4];
-/// let m2 = Bipedal3Matrix::from_row_major(&ones, 2, 2);
-/// assert_eq!(permanent_bipedal3(&m2), Fp::<3>::new(2));
 /// ```
 ///
 /// # Panics
@@ -122,28 +95,6 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
 /// All matrices must be square and have the same dimension `n <= 63`. The
 /// `0 x 0` permanent is supported and equals one for every matrix in the
 /// batch. Results preserve input order.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::bipedal3::permanent_bipedal3_batch;
-/// use gf2_core::gfp::Fp;
-///
-/// let identity = Bipedal3Matrix::from_row_major(
-///     &[
-///         Fp::<3>::new(1), Fp::<3>::new(0),
-///         Fp::<3>::new(0), Fp::<3>::new(1),
-///     ],
-///     2,
-///     2,
-/// );
-/// let ones = Bipedal3Matrix::from_row_major(&[Fp::<3>::new(1); 4], 2, 2);
-/// assert_eq!(
-///     permanent_bipedal3_batch(&[identity, ones]),
-///     vec![Fp::<3>::new(1), Fp::<3>::new(2)],
-/// );
-/// ```
 ///
 /// # Panics
 ///
@@ -270,22 +221,6 @@ fn pack_singleword_columns(mat: &Bipedal3Matrix) -> Vec<Bipedal3> {
 /// Prefer [`permanent_bipedal3`] for the dispatching entrypoint that also
 /// handles `n > 63`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::bipedal3::permanent_bipedal3_singleword;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_3: permanent = 1
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal3_singleword(&m), Fp::<3>::new(1));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
@@ -364,10 +299,6 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// SIMD single-word path
-// ---------------------------------------------------------------------------
-
 /// Compute the permanent of an `n × n` matrix over `F_3` using the AVX2
 /// bipedal batch kernel for the per-step column-sum add/sub.
 ///
@@ -407,9 +338,7 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
 ///
 /// # Complexity
 ///
-/// `O(n · 2^n)` — same asymptotic cost as the scalar path.  Per-step
-/// overhead: one AVX2 add/sub on 4 × u64 (including buffer fill/drain)
-/// rather than 6 word ops on 1 × u64.
+/// `O(n · 2^n)` field operations.
 #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
 pub fn permanent_bipedal3_singleword_simd(
     mat: &Bipedal3Matrix,
@@ -499,10 +428,6 @@ pub fn permanent_bipedal3_singleword_simd(
         total
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -748,7 +673,7 @@ mod tests {
             .collect()
     }
 
-    /// Four-lane batches agree with the committed SageMath 10.9 vectors.
+    /// Four-lane batches agree with the committed `@/citation/SageMath2026` vectors.
     #[test]
     fn test_batched_matches_committed_cas_reference_vectors() {
         let vectors = parse_f3_cas_vectors();
@@ -841,10 +766,6 @@ mod tests {
         simd_vs_scalar_cross_check(32, 1, 0x686e_e1b5_0000_0020_u64);
     }
 
-    // -----------------------------------------------------------------------
-    // Hand-checked vectors
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_permanent_empty_matrix() {
         let m = Bipedal3Matrix::from_row_major(&[], 0, 0);
@@ -899,10 +820,6 @@ mod tests {
             );
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
 
     #[test]
     #[should_panic(expected = "matrix must be square")]
@@ -996,11 +913,6 @@ mod tests {
     cross_check_n!(test_cross_check_n14, 14, slow);
     cross_check_n!(test_cross_check_n15, 15, slow);
     cross_check_n!(test_cross_check_n16, 16, slow);
-
-    // -----------------------------------------------------------------------
-    // Cross-checks: large n (slow tier) against `permanent_mod3_reference`,
-    // whose own tests cross-check it against `permanent_ryser`.
-    // -----------------------------------------------------------------------
 
     macro_rules! large_n_cross_check {
         ($name:ident, $n:expr, $trials:expr, $seed_salt:expr) => {

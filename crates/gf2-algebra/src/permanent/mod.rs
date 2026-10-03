@@ -1,14 +1,4 @@
 //! Permanent algorithms over small prime fields.
-//!
-//! Hosts the generic [`permanent_ryser`] driver, the
-//! [`permanent_mod3_reference`] cross-check, the per-prime
-//! `permanent_bipedal{3,5,7}` paths, the rectangular
-//! [`permanental_rank_status`] predicate, which calls [`permanent_ryser`] on
-//! each `k × k` row submatrix, and the exact [`compressed_rank`] recurrence
-//! for the three-column case.
-//!
-//! [`permanent_bipedal5`] and [`permanent_bipedal7`] are single-word paths:
-//! F_5 covers `n ≤ 63`, F_7 covers `n ≤ Packed7::LANES = 16`.
 
 pub mod bipedal3;
 pub mod bipedal3_multiword;

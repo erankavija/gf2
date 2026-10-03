@@ -8,21 +8,6 @@
 /// The binary-reflected Gray code maps index `k` to the subset bitmask
 /// `g(k) = k ^ (k >> 1)`. Bit `j` set in the result means column `j` is
 /// present in the `k`-th non-empty subset visited by [`gray_code_iter`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::gray::gray_code_index_to_subset;
-///
-/// // k=1 maps to subset {0} (bit 0 set), g(1) = 1 ^ 0 = 1.
-/// assert_eq!(gray_code_index_to_subset(1), 0b001);
-/// // k=2 maps to subset {0,1} (bits 0 and 1 set), g(2) = 2 ^ 1 = 3.
-/// assert_eq!(gray_code_index_to_subset(2), 0b011);
-/// // k=3 maps to subset {1} (bit 1 set only), g(3) = 3 ^ 1 = 2.
-/// assert_eq!(gray_code_index_to_subset(3), 0b010);
-/// // k=4 maps to subset {1,2}, g(4) = 4 ^ 2 = 6.
-/// assert_eq!(gray_code_index_to_subset(4), 0b110);
-/// ```
 #[inline]
 pub fn gray_code_index_to_subset(k: u64) -> u64 {
     k ^ (k >> 1)
@@ -40,22 +25,6 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// the binary-reflected Gray code `g(1), g(2), ..., g(2^n - 1)`,
 /// visiting every non-empty subset of `[n]` exactly once. The running
 /// sum of `parity` equals the popcount of the current subset.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::gray::gray_code_iter;
-///
-/// let items: Vec<_> = gray_code_iter(3).collect();
-/// assert_eq!(items.len(), 7); // 2^3 - 1
-///
-/// // First four items trace the binary-reflected Gray code:
-/// // {} -> {0} -> {0,1} -> {1} -> {1,2}
-/// assert_eq!(items[0], (0, 1)); // add bit 0
-/// assert_eq!(items[1], (1, 1)); // add bit 1
-/// assert_eq!(items[2], (0, -1)); // remove bit 0
-/// assert_eq!(items[3], (2, 1)); // add bit 2
-/// ```
 ///
 /// # Panics
 ///
@@ -148,7 +117,6 @@ mod tests {
         assert_eq!(count_for(16), (1usize << 16) - 1);
     }
 
-    /// Asserts the walk visits every non-empty subset of `[n]` exactly once.
     fn assert_visits_every_nonempty_subset(n: usize) {
         let mut register: u64 = 0;
         let mut visited: Vec<u64> = Vec::with_capacity((1usize << n) - 1);
@@ -197,8 +165,6 @@ mod tests {
         assert_visits_every_nonempty_subset(16);
     }
 
-    /// Asserts that at every step the running sum of `parity` equals the
-    /// popcount of the subset register.
     fn assert_running_parity_matches_popcount_per_step(n: usize) {
         let mut register: u64 = 0;
         let mut parity_sum: i64 = 0;
@@ -263,25 +229,15 @@ mod tests {
     /// Hand-verified values matching the canonical BRGC formula `g(k) = k ^ (k>>1)`.
     #[test]
     fn test_gray_code_index_to_subset_hand_checked() {
-        // g(1) = 1^0 = 1 = 0b001  (subset {0})
         assert_eq!(gray_code_index_to_subset(1), 0b001);
-        // g(2) = 2^1 = 3 = 0b011  (subset {0,1})
         assert_eq!(gray_code_index_to_subset(2), 0b011);
-        // g(3) = 3^1 = 2 = 0b010  (subset {1})
         assert_eq!(gray_code_index_to_subset(3), 0b010);
-        // g(4) = 4^2 = 6 = 0b110  (subset {1,2})
         assert_eq!(gray_code_index_to_subset(4), 0b110);
-        // g(5) = 5^2 = 7 = 0b111  (subset {0,1,2})
         assert_eq!(gray_code_index_to_subset(5), 0b111);
-        // g(6) = 6^3 = 5 = 0b101  (subset {0,2})
         assert_eq!(gray_code_index_to_subset(6), 0b101);
-        // g(7) = 7^3 = 4 = 0b100  (subset {2})
         assert_eq!(gray_code_index_to_subset(7), 0b100);
     }
 
-    /// `gray_code_index_to_subset` is consistent with the cumulative XOR of
-    /// `gray_code_iter` flips: after walking `k` steps, the running subset
-    /// register equals `gray_code_index_to_subset(k)`.
     #[test]
     fn test_gray_code_index_to_subset_consistent_with_iter_n4() {
         let n = 4;

@@ -9,16 +9,11 @@ use gf2_algebra::testutil::permanental_rank_bruteforce;
 use gf2_core::field::FiniteField;
 use gf2_core::gfp::Fp;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 /// Build a flat row-major `n × k` matrix over `F_P` from residue literals.
 fn matrix<const P: u64>(values: &[u64]) -> Vec<Fp<P>> {
     values.iter().map(|&v| Fp::<P>::new(v)).collect()
 }
 
-/// Assert the predicate and the oracle agree, and that both return `expected`.
 fn assert_both<const P: u64>(
     label: &str,
     values: &[u64],
@@ -63,11 +58,9 @@ fn assert_exhaustive_agreement<const Q: u64>(n: usize, k: usize) {
             deficient += 1;
         }
 
-        // Increment the mixed-radix counter; a full wrap ends the enumeration.
         let mut position = 0;
         loop {
             if position == cells {
-                // Every matrix was visited exactly once.
                 assert_eq!(
                     examined,
                     Q.pow(cells as u32),
@@ -134,31 +127,26 @@ fn rectangular_permanent<const P: u64>(values: &[Fp<P>], n: usize, k: usize) -> 
     recurse::<P>(values, n, k, 0, &mut used, Fp::<P>::new(1))
 }
 
-/// `(q, n, k) = (3, 3, 1)`: all `3^3 = 27` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n3_k1() {
     assert_exhaustive_agreement::<3>(3, 1);
 }
 
-/// `(q, n, k) = (3, 3, 2)`: all `3^6 = 729` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n3_k2() {
     assert_exhaustive_agreement::<3>(3, 2);
 }
 
-/// `(q, n, k) = (3, 4, 2)`: all `3^8 = 6 561` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n4_k2() {
     assert_exhaustive_agreement::<3>(4, 2);
 }
 
-/// `(q, n, k) = (5, 3, 2)`: all `5^6 = 15 625` matrices.
 #[test]
 fn test_exhaustive_agreement_q5_n3_k2() {
     assert_exhaustive_agreement::<5>(3, 2);
 }
 
-/// `(q, n, k) = (7, 3, 2)`: all `7^6 = 117 649` matrices.
 #[test]
 fn test_exhaustive_agreement_q7_n3_k2() {
     assert_exhaustive_agreement::<7>(3, 2);
@@ -297,7 +285,6 @@ fn test_rectangular_permanent_vanishes_but_submatrix_does_not() {
     ];
     let a = matrix::<3>(&values);
 
-    // Quantity 1 — the scalar rectangular permanent: zero.
     let rect = rectangular_permanent::<3>(&a, 3, 2);
     assert_eq!(
         rect,
@@ -306,7 +293,6 @@ fn test_rectangular_permanent_vanishes_but_submatrix_does_not() {
     );
     assert!(rect.is_zero());
 
-    // Quantity 2 — the individual 2x2 row-submatrix permanents: all nonzero.
     for (rows, sub) in [
         ([0usize, 1usize], [1u64, 0, 0, 1]),
         ([0, 2], [1, 0, 1, 1]),

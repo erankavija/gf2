@@ -5,11 +5,6 @@
 //! n ∈ {16, 20, 24}, panics unless their `Fp<3>` results are bit-identical, and
 //! prints CSV rows to stdout. When AVX2 is not detected, the AVX2 row times the
 //! scalar path again.
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features "simd test-support" \
-//!   --example s3_scalar_vs_avx2_sanity
-//! ```
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::bipedal3::{
@@ -19,10 +14,8 @@ use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
 use std::io::Write;
 use std::time::Instant;
 
-/// Matrix dimensions for the sanity sweep.
 const N_VALUES: &[usize] = &[16, 20, 24];
 
-/// Number of timed samples per (n, impl) cell.
 const SAMPLES: usize = 5;
 
 const SEED_BASE: u64 = 0x363556e600000000;
@@ -56,7 +49,6 @@ fn main() {
         }
     }
 
-    // CSV header (to stdout; caller pipes or redirects).
     println!(
         "# S3 (jit:363556e6) direct scalar-vs-AVX2 single-word sanity sweep — fresh measurements"
     );
@@ -79,7 +71,6 @@ fn main() {
         )
         .unwrap();
 
-        // Build SAMPLES independent matrices from deterministic seeds.
         let matrices: Vec<Bipedal3Matrix> = (0..SAMPLES)
             .map(|s| {
                 let seed = SEED_BASE ^ (n as u64) ^ (s as u64);
@@ -88,7 +79,6 @@ fn main() {
             })
             .collect();
 
-        // ── Scalar path timing ──
         let mut scalar_timings_us: Vec<f64> = Vec::with_capacity(SAMPLES);
         let mut scalar_results: Vec<u64> = Vec::with_capacity(SAMPLES);
 
@@ -109,7 +99,6 @@ fn main() {
         )
         .unwrap();
 
-        // ── Direct AVX2 path timing ──
         let (avx2_mean, avx2_std) = measure_avx2(
             &matrices,
             &scalar_results,

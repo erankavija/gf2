@@ -6,19 +6,6 @@
 //! `dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv` (date
 //! overridable via `SA_DATE`) with columns
 //! `n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint`.
-//!
-//! ```bash
-//! # Criterion sweep (n=24, n=28):
-//! cargo bench -p gf2-algebra --features "simd test-support" --bench s1_n36_speedup
-//!
-//! # Offline one-shot timing for n=32 and n=36:
-//! S1_OFFLINE=1 cargo bench -p gf2-algebra --features "simd test-support" \
-//!   --bench s1_n36_speedup -- --nocapture
-//!
-//! # Offline for n=32 only (skip n=36):
-//! S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench -p gf2-algebra \
-//!   --features "simd test-support" --bench s1_n36_speedup -- --nocapture
-//! ```
 
 use criterion::{black_box, criterion_group, BenchmarkId, Criterion};
 use std::time::Duration;
@@ -27,21 +14,12 @@ use gf2_algebra::packed::Bipedal3Matrix;
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_mod3_reference};
 use gf2_algebra::testutil::random_matrix;
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const S1_SEED_BASE: u64 = 0xc98e_d603_0000_0000_u64;
 
-/// Hardware fingerprint embedded in the CSV header.
 const HW_MODEL: &str = "AMD Ryzen 9 5900X 12-Core Processor";
 const HW_ARCH: &str = "Zen 3";
 const HW_AVX2: &str = "yes";
 const HW_AVX512: &str = "no";
-
-// ---------------------------------------------------------------------------
-// Criterion benchmark groups (n ∈ {24, 28})
-// ---------------------------------------------------------------------------
 
 /// `permanent_mod3_reference` at n ∈ {24, 28}; n ∈ {32, 36} run in the offline
 /// harness.
@@ -81,10 +59,6 @@ fn s1_bench_bipedal3(c: &mut Criterion) {
 }
 
 criterion_group!(s1_benches, s1_bench_reference, s1_bench_bipedal3);
-
-// ---------------------------------------------------------------------------
-// Offline one-shot harness (n ∈ {32, 36})
-// ---------------------------------------------------------------------------
 
 /// Takes one wall-clock sample per (n, impl) cell for n ∈ {32, 36} up to
 /// `max_n` and writes CSV rows; `csv` must already have a header.
@@ -172,10 +146,6 @@ fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, dat
         .expect("write bipedal3 CSV row");
     }
 }
-
-// ---------------------------------------------------------------------------
-// Main entry point
-// ---------------------------------------------------------------------------
 
 /// With `S1_OFFLINE=1`, runs the offline harness and exits; otherwise runs the
 /// Criterion groups as `criterion_main!(s1_benches)` would.

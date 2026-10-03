@@ -58,7 +58,6 @@ fn test_hand_checked_1x1_zero() {
 /// Only the identity permutation contributes: 1 * 1 = 1.
 #[test]
 fn test_hand_checked_2x2_identity() {
-    // [[1,0],[0,1]]
     let m = vec![
         Fp::<3>::new(1),
         Fp::<3>::new(0),
@@ -82,7 +81,6 @@ fn test_hand_checked_2x2_all_ones() {
 /// Only the identity permutation contributes: 2 * 2 = 4 ≡ 1 (mod 3).
 #[test]
 fn test_hand_checked_2x2_scaled_identity() {
-    // [[2,0],[0,2]]
     let m = vec![
         Fp::<3>::new(2),
         Fp::<3>::new(0),
@@ -120,7 +118,6 @@ fn test_hand_checked_3x3_all_ones() {
 /// non-zero products: σ=(1,2,0) contributing M[0,1]*M[1,2]*M[2,0]=1*1*1=1.
 #[test]
 fn test_hand_checked_3x3_cyclic_permutation() {
-    // Row 0: [0,1,0], Row 1: [0,0,1], Row 2: [1,0,0]
     let m = vec![
         Fp::<3>::new(0),
         Fp::<3>::new(1),
@@ -148,7 +145,6 @@ fn test_hand_checked_3x3_cyclic_permutation() {
 /// Sum = 1+1+1+0+0+0 = 3 ≡ 0 (mod 3).
 #[test]
 fn test_hand_checked_3x3_paper_case() {
-    // [[1,2,0],[2,1,2],[0,2,1]]
     let m = vec![
         Fp::<3>::new(1),
         Fp::<3>::new(2),
@@ -191,7 +187,6 @@ fn test_hand_checked_4x4_all_ones() {
 /// to σ itself: M[0,1]*M[1,0]*M[2,3]*M[3,2]=1*1*1*1=1.
 #[test]
 fn test_hand_checked_4x4_pair_swap_permutation() {
-    // Rows: [0,1,0,0], [1,0,0,0], [0,0,0,1], [0,0,1,0]
     let m = vec![
         Fp::<3>::new(0),
         Fp::<3>::new(1),
@@ -228,7 +223,6 @@ fn test_hand_checked_4x4_pair_swap_permutation() {
 /// Sum = 1+1 = 2.
 #[test]
 fn test_hand_checked_4x4_band_diagonal() {
-    // Rows: [1,1,0,0], [0,1,1,0], [0,0,1,1], [1,0,0,1]
     let m = vec![
         Fp::<3>::new(1),
         Fp::<3>::new(1),
@@ -250,11 +244,6 @@ fn test_hand_checked_4x4_band_diagonal() {
     assert_all_three("4×4 band-diagonal", &m, 4, 2);
 }
 
-// ---------------------------------------------------------------------------
-// Section 2 — Random cross-check, default tier (n ∈ {4, 8, 12})
-// ---------------------------------------------------------------------------
-
-/// Random cross-check n=4, default tier: 1000 matrices, three-way agreement.
 #[test]
 fn test_cross_check_random_n4_three_way() {
     let n = 4usize;
@@ -277,7 +266,6 @@ fn test_cross_check_random_n4_three_way() {
     }
 }
 
-/// Random cross-check n=8, default tier: 1000 matrices, three-way agreement.
 #[test]
 fn test_cross_check_random_n8_three_way() {
     let n = 8usize;
@@ -300,7 +288,6 @@ fn test_cross_check_random_n8_three_way() {
     }
 }
 
-/// Random cross-check n=12, default tier: 1000 matrices, three-way agreement.
 #[test]
 fn test_cross_check_random_n12_three_way() {
     let n = 12usize;
@@ -323,11 +310,6 @@ fn test_cross_check_random_n12_three_way() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Section 3 — Random cross-check n=16, slow tier
-// ---------------------------------------------------------------------------
-
-/// Random cross-check n=16, slow tier: 1000 matrices, three-way agreement.
 #[test]
 #[ignore = "sim: 1000-matrix three-way cross-check at n=16 (slow tier)"]
 fn test_cross_check_random_n16_three_way_slow() {
@@ -351,13 +333,6 @@ fn test_cross_check_random_n16_three_way_slow() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Section 4 — Large-n cross-check, slow tier (n ∈ {20, 24})
-//
-// Oracle: `permanent_mod3_reference`. Each n is split into chunks to fit the
-// slow-tier per-test budget.
-// ---------------------------------------------------------------------------
-
 /// Cross-check `permanent_bipedal3` against `permanent_mod3_reference` on
 /// `trials` matrices of dimension `n`, seeded from `seed_salt`.
 fn cross_check_n_chunk(n: usize, seed_salt: u64, trials: u64) {
@@ -377,109 +352,90 @@ fn cross_check_n_chunk(n: usize, seed_salt: u64, trials: u64) {
     }
 }
 
-// n=20 — 5 sub-tests × 20 matrices = 100 total.
-
-/// Large-n cross-check n=20 chunk A (matrices 0–19), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=20 chunk A (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n20_chunk_a() {
     cross_check_n_chunk(20, 0, 20);
 }
 
-/// Large-n cross-check n=20 chunk B (matrices 20–39), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=20 chunk B (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n20_chunk_b() {
     cross_check_n_chunk(20, 1_000, 20);
 }
 
-/// Large-n cross-check n=20 chunk C (matrices 40–59), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=20 chunk C (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n20_chunk_c() {
     cross_check_n_chunk(20, 2_000, 20);
 }
 
-/// Large-n cross-check n=20 chunk D (matrices 60–79), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=20 chunk D (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n20_chunk_d() {
     cross_check_n_chunk(20, 3_000, 20);
 }
 
-/// Large-n cross-check n=20 chunk E (matrices 80–99), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=20 chunk E (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n20_chunk_e() {
     cross_check_n_chunk(20, 4_000, 20);
 }
 
-// n=24 — 10 sub-tests × 10 matrices = 100 total.
-
-/// Large-n cross-check n=24 chunk A (matrices 0–9), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk A (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_a() {
     cross_check_n_chunk(24, 0, 10);
 }
 
-/// Large-n cross-check n=24 chunk B (matrices 10–19), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk B (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_b() {
     cross_check_n_chunk(24, 1_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk C (matrices 20–29), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk C (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_c() {
     cross_check_n_chunk(24, 2_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk D (matrices 30–39), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk D (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_d() {
     cross_check_n_chunk(24, 3_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk E (matrices 40–49), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk E (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_e() {
     cross_check_n_chunk(24, 4_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk F (matrices 50–59), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk F (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_f() {
     cross_check_n_chunk(24, 5_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk G (matrices 60–69), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk G (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_g() {
     cross_check_n_chunk(24, 6_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk H (matrices 70–79), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk H (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_h() {
     cross_check_n_chunk(24, 7_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk I (matrices 80–89), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk I (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_i() {
     cross_check_n_chunk(24, 8_000, 10);
 }
 
-/// Large-n cross-check n=24 chunk J (matrices 90–99), slow tier.
 #[test]
 #[ignore = "sim: large-n cross-check n=24 chunk J (slow tier, T9 vs T8 oracle)"]
 fn test_cross_check_random_n24_chunk_j() {
