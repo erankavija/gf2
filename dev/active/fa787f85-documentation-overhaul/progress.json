@@ -475,7 +475,7 @@
      "short_id": "96cea1b9",
      "title": "Reconcile the migration manifest with the archived field-dispatch epic",
      "classification": "implementation",
-     "status": "pending"
+     "status": "review_failed"
     }
    ]
   },
@@ -494,28 +494,28 @@
      "short_id": "290b8716",
      "title": "Tersify comments in the remaining gf2-kernels-simd files",
      "classification": "documentation",
-     "status": "regating"
+     "status": "blocked_owner"
     },
     {
      "id": "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
      "short_id": "3aef9e33",
      "title": "Tersify comments in the gf2-algebra packed-field module",
      "classification": "documentation",
-     "status": "rework"
+     "status": "blocked_owner"
     },
     {
      "id": "3da13f39-225c-4615-9f68-f1daa76af90b",
      "short_id": "3da13f39",
      "title": "Tersify comments in the gf2-core prime-field modules",
      "classification": "documentation",
-     "status": "rework"
+     "status": "gates_passed"
     },
     {
      "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
      "short_id": "4997a3ed",
      "title": "Tersify comments in gf2-core bit-level structures",
      "classification": "documentation",
-     "status": "pending"
+     "status": "returned_unmerged"
     },
     {
      "id": "57436474-9b84-4d68-804f-070c10b673d9",
@@ -543,7 +543,7 @@
      "short_id": "67b5d1d8",
      "title": "Tersify comments in the gf2-core GF(2^m) module",
      "classification": "documentation",
-     "status": "rework"
+     "status": "gates_passed"
     },
     {
      "id": "72768e37-a609-427c-a3e6-8a4efcf4c8b8",
@@ -564,7 +564,7 @@
      "short_id": "8a9db61a",
      "title": "Tersify comments in the gf2-coding modem module",
      "classification": "documentation",
-     "status": "pending"
+     "status": "returned_unmerged"
     },
     {
      "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
@@ -578,14 +578,14 @@
      "short_id": "93aed46a",
      "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
      "classification": "documentation",
-     "status": "pending"
+     "status": "returned_unmerged"
     },
     {
      "id": "9dda3958-4e62-4bb2-89e4-a1999e000a09",
      "short_id": "9dda3958",
      "title": "Tersify comments in gf2-core field matrix algorithm modules",
      "classification": "documentation",
-     "status": "pending"
+     "status": "returned_unmerged"
     },
     {
      "id": "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
@@ -620,7 +620,7 @@
      "short_id": "cafb463c",
      "title": "Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules",
      "classification": "documentation",
-     "status": "pending"
+     "status": "returned_unmerged"
     },
     {
      "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
@@ -648,7 +648,7 @@
      "short_id": "f22ec590",
      "title": "Tersify comments in the remaining gf2-sim source files",
      "classification": "documentation",
-     "status": "pending"
+     "status": "returned_unmerged"
     },
     {
      "id": "f46046f0-3672-4bec-8d57-83bc77a6043b",
@@ -681,7 +681,7 @@
      "short_id": "37099e5b",
      "title": "Empty dev/sessions into owner dirs or the legacy mirror",
      "classification": "implementation",
-     "status": "pending"
+     "status": "gates_passed"
     },
     {
      "id": "eb2a833d-75b4-45b7-89ea-b8aafcd36cb1",
@@ -695,7 +695,7 @@
      "short_id": "f0dd63f1",
      "title": "Empty dev/presentations of leftover theme files",
      "classification": "implementation",
-     "status": "pending"
+     "status": "review_failed"
     }
    ]
   },
@@ -1209,6 +1209,11 @@
    "id": "b2520e0f",
    "epic": "b4b4b9ee",
    "reason": "found by workers in session 4: mersenne_reduce is wrong outside its tested exponents"
+  },
+  {
+   "id": "f6ee400a",
+   "epic": "b4b4b9ee",
+   "reason": "planned work removed by 290b8716 (F_7 gather-based AVX2 lookup); code-review REQ-02"
   }
  ],
  "escalations": [
@@ -1331,6 +1336,16 @@
    "issue": "290b8716",
    "question": "Fix-lane merge 796771eaf was tagged jit:290b8716 and carried eight issues' commits; reviewers attributed registry edits to 290b8716.",
    "resolution": "Owner approved rewording the unpushed tip merge commit to the epic scope (2026-10-04); tree unchanged."
+  },
+  {
+   "issue": "290b8716",
+   "question": "OPEN: doc-review failed a third time on merge attribution. It reads single-unit merge c8e6f7da6 (chore(jit:290b8716): merge comment sweep unit) by its second-parent diff (116 files); the first-parent diff is 28 in-scope files. code-review passes at 7bbaa7ef1. Options: reword c8e6f7da6 to the epic scope (rewrites unpushed main from that commit on), or record an owner override as a DEC on the issue.",
+   "resolution": null
+  },
+  {
+   "issue": "3aef9e33",
+   "question": "OPEN: rework limit reached (2 of 2). code-review F1 at 7bbaa7ef1: three truth-table header comments in crates/gf2-algebra/src/packed/bipedal3.rs:347 ('Row a, column b: a + b.' and the sub and mul forms) restate adjacent code. The fix-lane worker kept one comment per array because rustfmt collapses the array without it, which changes tokens (trailing comma) and breaks the comment-only proof. doc-review, cargo-ci and docs-mechanical pass. Approve one more rework (delete the three comments and accept the rustfmt-driven whitespace/comma change, or mark the arrays #[rustfmt::skip], which is a code edit outside REQ-05)?",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -1373,7 +1388,9 @@
   "bfb37a21": 1,
   "7bfad039": 1,
   "57436474": 1,
-  "290b8716": 1
+  "290b8716": 2,
+  "96cea1b9": 0,
+  "f0dd63f1": 0
  },
  "surfaced_pitfalls": [
   {
@@ -1489,7 +1506,14 @@
   "README rules superseded 2026-10-03: a crate README states purpose and when to choose the crate, plus links (docs/index.md, owning reference/concepts pages, generated Rustdoc link with its cargo doc command). No capability list, feature table or module inventory (R2 and R3 lapse; R1, R4, R5, R6 stand).",
   "Sweep dispatch: per-unit briefs are generated from the session scratchpad template (hard net-negative rule, token-diff proof, planned-work matching). Wave A (67b5d1d8, ee2b0c0c, f46046f0, 3aef9e33, 9f47bb94) removed about 7,750 net lines; each unit's commit body lists justified pattern lines, planned-work issue ids and added contracts. Sweep follow-ups filed under b4b4b9ee: c04d3f1c, 02ed3c51, 8342487d, ebd26779, 7c8ab1e2, bb64ee0e, bc4eb125, 1fe6e218, a44566c0, 2a9cc72c, 3464c241, a1e02780, d436dd5f, de0528d2.",
   "Sweep review standard v2 (from the first five units' blocking findings; binding for every sweep brief and rework): (1) delete every navigational comment in scope, pre-existing ones included: banners, separators, test-group labels, test inventories, assertion narration; (2) remove Rustdoc examples for accessors, constants, constructors, predicates, lookups and direct field mappings, uncompilable or never-run examples and elementary tutorials; keep workflow and contract examples untouched; (3) each module doc is one short orientation paragraph plus contracts no single item owns; (4) keep or restore one-line non-obvious complexity statements on public items; (5) no performance, timing or feasibility statement in source comments and no dev/active|plans|sessions provenance pointers; a committed digest-pinned protocol the code implements stays as one line; (6) external works cite `@/citation/<Key>` from .jit/references.toml (554c2935 registers keys and a mapping); unkeyed works are listed, never left as prose on a touched line; (7) commit body lists 'planned work: <statement> -> <id> (jit issue show <id>)', 'removed examples:', justified pattern lines, added contracts, token diff; (8) hand-written notes in non-Rust artefacts inside the scope directory (x86/asm/*.asm.txt headers) follow the same rules; (9) reviewers judge the whole scope, not the diff.",
-  "Session 4 ended by owner request (2026-10-04) with a handoff (handoff-3.md). Sweep waves: A and B written and reviewed; C (4997a3ed, 9dda3958, cafb463c, 8a9db61a, f22ec590, 93aed46a), D (8f451167, f2064e90, aa0558c1, 72768e37, c6aa0e84, 13dfe1a5) and E (eba21481, 50201002) pending. The worker brief is ffc35b8c-sweep-brief-template.md."
+  "Session 4 ended by owner request (2026-10-04) with a handoff (handoff-3.md). Sweep waves: A and B written and reviewed; C (4997a3ed, 9dda3958, cafb463c, 8a9db61a, f22ec590, 93aed46a), D (8f451167, f2064e90, aa0558c1, 72768e37, c6aa0e84, 13dfe1a5) and E (eba21481, 50201002) pending. The worker brief is ffc35b8c-sweep-brief-template.md.",
+  "Session 5 (2026-10-04): paused by owner at the session limit. Merged on main at 7bbaa7ef1: manifest lane (96cea1b9, 37099e5b, f0dd63f1; relink scripts run) and fix lane (3aef9e33, 67b5d1d8, 3da13f39, attempt 2 of 2). Gate batch started on that HEAD; logs in the session scratchpad, results in jit gate status. 290b8716: empty commit ec1103ee0 names f6ee400a for the removed gather statement; doc-review also attributed single-unit merge c8e6f7da6 by its second-parent diff (same finding class as 796771eaf; a third failure on it is an owner question). Wave C workers run in worktrees agent-{4997a3ed,9dda3958,cafb463c,8a9db61a,f22ec590,93aed46a}; 8a9db61a returned (a4b905baf, unmerged). Briefs were generated from ffc35b8c-sweep-brief-template.md with the owner citation ruling in {DOC_NOTE}. To file under b4b4b9ee from 8a9db61a: Gray-QAM preset labels differ from EN 302 755 Table 14 above order 4 (presets.rs:386, examples/modem_gray_qam_preset.rs:42); J-function fit constants and exp form unverified against the cited work (analysis.rs:310-318); vacuous test awgn_link.rs:575; unused DefaultSpec alias (spec.rs); stale pointer simulation.rs:1257. 37099e5b: no note went to the legacy mirror because all three are doc-linked; REQ-02 legacy clause has no subject.",
+  "f22ec590 returned (f347e1e33, 3093040fe, 22af859bc; +475 -2890, unmerged). Review point: osd_campaign.rs OsdBlockStream named exception lost its issue ids (c1b253cb, 90a88fa9 are in the commit body); convention-convergence asks for a tracked convergence condition. To file under b4b4b9ee: channels/{awgn,rayleigh,rician}.rs apply asserts FRAME_STRIDE - 256 against DEBUG_ASSERT_WORD_MARGIN 1024 and budgets a multi-frame batch against one frame's stride; Pipeline::run_with_decoder and run_parallel are bare aliases of run; frame_sim.rs:249 substitutes an empty BitVec on a hard decode failure before count_bit_errors.",
+  "4997a3ed returned (e63d95870, bccaeb29a; +333 -2747, unmerged). Before gating: file the unmatched planned work 'widen verify_primitive to u128 storage' (primitive_polys.rs:42-43 at the anchor) and have the commit body name it (REQ-02; a new tagged commit on the branch avoids resuming the worker). To file under b4b4b9ee: BitVec mutators never reset rank_select_index, so rank/select read a stale index after a mutation that follows a query (correctness); three bitvec.rs kani proofs re-implement the mask and never call production code; alg/gauss.rs find_block_pivot_invert/eliminate_block_full duplicate the rref helpers (convention-convergence); test_parity_xor_property and test_rref_pivot_from_right assert less than their names say.",
+  "93aed46a returned (4f2eff26f, 4fe673ed6; +593 -3427, unmerged; HIP steps ran with --features hip --offline). Before gating: file one issue for the unmatched planned work (GfxTarget::load_blob and LaunchDims have no caller; removed text at build.rs:54-57, host/arch.rs:288-291, host/launch.rs:21-26 at the anchor) and name it in a tagged commit on the branch (REQ-02). This unit needs the gf2-kernels-hip-ci gate evidence if the issue carries it; check jit gate status-all 93aed46a. To file under b4b4b9ee: host/alloc.rs:296-298 copy_{from,to}_pinned_async are safe fns relying on caller-kept buffer lifetime (soundness, unsafe-kernel-isolation); permanent/mod.rs init_permanent_gf7_from_slices is a safe fn requiring an active HIP context; launch_chacha20_awgn.rs test_host_rng_reproducible_at_seed compares an RNG with itself and no test compares the key with rand_chacha although Cargo.toml says one does. Out-of-scope narration: build.rs:173-175 string literal, Cargo.toml dev-dependency comment, banners in .hip sources.",
+  "9dda3958 returned (c43da9c76, cbb0e040b, 734378a14, 908336da2, a48c5f237; +540 -4216, unmerged). Before gating: file the unmatched planned work 'replace the Keller-Gehrig K^-1 PLE solve with a Strassen-amenable inversion, then lower the threshold' (charpoly.rs anchor lines 98-103, 290-294) and name it in a tagged commit on the branch (REQ-02). Review points: charpoly.rs:683 'not yet covered' kept as domain wording (pattern-2 hit; reviewers may read it as planned work); frobenius_form complexity restated as O(n^4) with the polynomial part unbounded; both receipt pointers on WINOGRAD_MIN_DIM_DEFAULT deleted. To file under b4b4b9ee: charpoly.rs:1477 doc promises a non-square panic but keller_gehrig_charpoly only debug_asserts; charpoly.rs:1110 minpoly Wiedemann arm for n > 32 accepts on probabilistic probes only (correctness contract); charpoly.rs:2423 test_kg_singular_matrix branch is vacuous; expr.rs gemm_matrixlike, gemm_trans_a_concrete_tiled and generic transposed-product arms return without writing out when the inner dimension is 0 (contradicts 'Overwrites'), and Sum::evaluate_into skips the out shape assert on empty operands. Narration in literals: inverse.rs:1840,1846,1882,1884,1927; winograd.rs:1002.",
+  "cafb463c returned (f6b5235e4, 26a88f4a3, 838b4e3e8; +449 -2958, unmerged). Blocking before gating: four unkeyed prose citations left byte-identical at gldpc/mod.rs:5,232,272,287 ('Lentmaier (2010)'); the citation map points them at Lentmaier2010, which the worker says is the LDPC-convolutional-codes paper, while the construction is (from the worker's memory, unverified) Lentmaier-Liva-Paolini-Fettweis 'From product codes to structured generalized LDPC codes'. Verify the work against a primary source, register a key under 554c2935 or delete the pointer per the owner ruling of 2026-10-03, then one tagged commit on the branch. To file under b4b4b9ee: gldpc/mod.rs:791 GldpcDecoder::decode_soft returns hard decisions without decoding (correctness); product/mod.rs:124,626 GPU BCJR failures panic via expect (covered by 9ff05f12? check); grand/sogrand.rs:1135 early return can skip the list-BLER ratio assertion; gldpc/mod.rs:1511 ignored diagnostic test asserts only dimensions; product/chase_pyndiah.rs:311 unreachable branch; product/mod.rs:179 has_list_bler_prediction dead code. Narration in literals: grand/orbgrand.rs:1683, grand/sogrand.rs:1054. All six wave C units have returned; none is merged.",
+  "Gate batch at 7bbaa7ef1 (2026-10-04): all gates passed for 37099e5b, 67b5d1d8, 3da13f39 (close them after the tier review). 96cea1b9 doc-review F1: 96cea1b9-archive-rows.py and .txt lack JIT document ownership; the lead links them with jit doc add and re-gates (lead omission, no worker rework). f0dd63f1 doc-review F1: f0dd63f1-doc-relink.sh hard-codes the removed dev/presentations paths; the script has run, so the fix is to remove it (37099e5b-doc-relink.sh has the same shape and passed). 3aef9e33 and 290b8716 are owner questions in escalations."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [

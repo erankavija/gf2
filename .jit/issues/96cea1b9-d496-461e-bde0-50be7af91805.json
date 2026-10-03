@@ -12,7 +12,23 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T22:20:08.157228462Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T22:15:00.673065295Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-03T22:12:41.174008275Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "96cea1b9-d496-461e-bde0-50be7af91805",
   "labels": [
     "epic:documentation-overhaul",
@@ -23,5 +39,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile the migration manifest with the archived field-dispatch epic",
-  "updated_at": "2026-10-03T21:51:08.396648599Z"
+  "updated_at": "2026-10-03T22:20:08.157228462Z"
 }

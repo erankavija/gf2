@@ -16,10 +16,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T22:18:43.161900045Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T22:15:20.757804058Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:21.359191427Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T22:12:40.164770697Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "37099e5b-66ef-44ef-a6ef-a58dafd93c9e",
@@ -32,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Empty dev/sessions into owner dirs or the legacy mirror",
-  "updated_at": "2026-10-03T21:51:08.522195466Z"
+  "updated_at": "2026-10-03T22:18:43.161900045Z"
 }
