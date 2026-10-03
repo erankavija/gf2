@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # usage: 5a25717c-verdicts.sh <outfile>
 # Runs target/ci-test/benchmark-acceptance on a scratch copy of the directory of
-# every committed zen3-benchmark-receipt-v1 receipt.json under dev/bench_results
-# outside inputs/ directories; prints each verdict line and every finding.
+# every tracked receipt.json whose schema is zen3-benchmark-receipt-v1, outside
+# inputs/ snapshot directories; prints each verdict line and every finding.
 set -u
 cd "$(git rev-parse --show-toplevel)"
 tmp=$(mktemp -d)
-git ls-files -z -- ':(glob)dev/bench_results/**/receipt.json' | tr '\0' '\n' | grep -v '/inputs/' | sort |
+git ls-files -z -- ':(glob)**/receipt.json' | tr '\0' '\n' | grep -v '/inputs/' | sort |
 while read -r f; do
   [ "$(jq -r '.schema? // empty' "$f" 2>/dev/null)" = zen3-benchmark-receipt-v1 ] || continue
   d=$(dirname "$f"); rm -rf "$tmp/c"; mkdir -p "$tmp/c"; cp -r "$d/." "$tmp/c/"
