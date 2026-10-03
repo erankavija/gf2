@@ -15714,3 +15714,7 @@
 {"id":"36afc2f4-1271-446e-880d-6307e8e0587c","issue_id":"629e0ff0-29ce-4450-83a0-f56bb1fda15b","priority":"normal","timestamp":"2026-10-03T02:14:03.115286495Z","title":"Correct gf2-coding standards-conformance doc and test drift","type":"issue_created"}
 {"fields":["dependencies"],"id":"aced95a9-ab41-4309-b111-51b06a595ef3","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-03T02:14:03.492363916Z","type":"issue_updated","updated_by":"dependency-add"}
 {"gate_key":"cargo-ci","id":"647ff0a9-3921-4019-820e-a6739be6af71","issue_id":"5a25717c-83f4-453c-8866-cab67ecf2103","timestamp":"2026-10-03T02:15:28.803460895Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"3c8ffe7e-ca24-4608-9d34-3fd0958b60ce","issue_id":"ee50e270-74ea-4566-a0a7-69791af66e8a","timestamp":"2026-10-03T02:15:47.220557955Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"06a1c81f-3c1b-459a-b139-114536025cee","issue_id":"01c20b61-4dce-4437-baab-9c9d03d1d2c1","timestamp":"2026-10-03T02:15:47.507297275Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"ace45905-fd60-4fea-93d3-5e66ee6a1490","issue_id":"01c20b61-4dce-4437-baab-9c9d03d1d2c1","timestamp":"2026-10-03T02:17:42.801188643Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"69720fd0-8bc8-49c7-bef9-ac56678517e7","issue_id":"ee50e270-74ea-4566-a0a7-69791af66e8a","timestamp":"2026-10-03T02:17:57.632047663Z","type":"gate_failed","updated_by":"auto:executor"}

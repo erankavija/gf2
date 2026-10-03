@@ -83,12 +83,12 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T02:09:15.555709149Z",
+      "updated_at": "2026-10-03T02:17:57.632047663Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T02:05:51.191552791Z",
+      "updated_at": "2026-10-03T02:15:47.220557955Z",
       "updated_by": "auto:executor"
     }
   },
@@ -103,5 +103,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Rewrite the SIMD kernel and statistics crate READMEs",
-  "updated_at": "2026-10-03T02:09:15.555709149Z"
+  "updated_at": "2026-10-03T02:17:57.632047663Z"
 }
