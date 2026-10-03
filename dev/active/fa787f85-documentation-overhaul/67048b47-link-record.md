@@ -43,7 +43,9 @@ REQ-01 holds when the check lists nothing and exits 0:
 python3 dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.py --check
 ```
 
-`67048b47-missing-before.txt` is that check's output before the script ran.
+`67048b47-missing-before.txt` is that check's output before the script ran: the
+pairs the script linked. With every selected pair linked, the generator emits a
+script without commands, which is the committed `67048b47-doc-links.sh`.
 
 ## Conformance findings
 
