@@ -2,34 +2,13 @@
 //!
 //! [`CheckpointWriter`] and [`CheckpointReader`] persist any
 //! [`CheckpointPayload`] behind a caller-supplied [`ConfigHashProvider`]. The
-//! on-disk envelope records the payload's stable identity and schema version
+//! on-disk envelope records the payload's identity and schema version
 //! alongside the configuration hash. A reader accepts a file only when all
 //! three values match its live caller contract; absence means fresh work,
 //! while a present invalid or mismatched file is a hard [`CheckpointLoadError`].
 //!
-//! # Caller contract
-//!
-//! A caller must:
-//!
-//! * implement [`CheckpointPayload`] for an owned serde payload, choosing a
-//!   stable, globally unambiguous [`CheckpointPayload::IDENTITY`] and bumping
-//!   [`CheckpointPayload::SCHEMA_VERSION`] whenever the serialized meaning is
-//!   not backward-compatible;
-//! * implement [`ConfigHashProvider`] so its hash covers every configuration
-//!   value that can affect resumed results, using a deterministic canonical
-//!   encoding and excluding only output-location values that cannot affect the
-//!   computation;
-//! * put every value needed for deterministic continuation in the payload. The
-//!   mechanism does not prescribe a resume key: absolute generator positions,
-//!   shard counters, or another caller-owned representation are all valid;
-//! * give one canonical file path to the matching writer and reader and treat
-//!   every [`CheckpointLoadError`] as a refusal to resume, never as fresh work.
-//!
-//! [`CheckpointWriter::for_payload`] creates the parent directory. Each write
-//! uses a PID-tagged temporary file, file fsync, atomic rename, and directory
-//! fsync. Concurrent writers must still be externally coordinated: PID tagging
-//! separates processes, not multiple writers in one process targeting the same
-//! file.
+//! Writers of one file are coordinated by the caller: the PID-tagged temporary
+//! file separates processes, not several writers in one process.
 
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
