@@ -73,7 +73,7 @@
      "short_id": "12907582",
      "title": "Correct surviving source-level documentation drift",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "merged_gating"
     },
     {
      "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -204,7 +204,7 @@
      "short_id": "5a25717c",
      "title": "Locate receipt-pinned campaign inputs by content identity",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "merged_gating"
     },
     {
      "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
@@ -330,7 +330,7 @@
      "short_id": "b16d013a",
      "title": "Write the gf2-sim README as its entry page",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "merged_gating"
     },
     {
      "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
@@ -351,14 +351,14 @@
      "short_id": "ec7d2aec",
      "title": "Widen the docs policy to manage archival sources",
      "classification": "implementation",
-     "status": "pending"
+     "status": "merged_gating"
     },
     {
      "id": "fb209a81-59cf-4bb1-86c9-597637a4bba2",
      "short_id": "fb209a81",
      "title": "Move presentation decks into their epics' archive dirs",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "merged_gating"
     },
     {
      "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
@@ -391,7 +391,7 @@
      "short_id": "c84ac71a",
      "title": "Apply the depth-independent tool dependency to the remaining harness crates",
      "classification": "implementation",
-     "status": "pending"
+     "status": "rejected"
     },
     {
      "id": "153297cf-7687-4599-be56-23e038efee3d",
@@ -454,14 +454,14 @@
      "short_id": "18858de1",
      "title": "Resolve the repository root at runtime in the bench-window runner",
      "classification": "implementation",
-     "status": "pending"
+     "status": "merged_gating"
     },
     {
      "id": "e3ff339a",
      "short_id": "e3ff339a",
      "title": "Reduce the gf2-core, gf2-coding and gf2-algebra READMEs to purpose and links",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "merged_gating"
     }
    ]
   },
@@ -667,7 +667,7 @@
      "short_id": "eb2a833d",
      "title": "Move gf2-coding crate guides into the legacy mirror",
      "classification": "implementation",
-     "status": "pending"
+     "status": "merged_gating"
     },
     {
      "id": "f0dd63f1-e326-406b-a7b3-6f68e43d2143",
@@ -1016,6 +1016,11 @@
    "id": "dfb8820b",
    "epic": "b4b4b9ee",
    "reason": "out-of-scope defect, owner-chosen container"
+  },
+  {
+   "id": "58a4bb51",
+   "epic": "b4b4b9ee",
+   "reason": "convergence condition of the harness-path-dependencies exception"
   }
  ],
  "escalations": [
@@ -1098,6 +1103,11 @@
    "issue": "session-3",
    "question": "OPEN: choose containers for out-of-scope defects listed in surfaced_pitfalls (disposition 'file issue: owner picks container').",
    "resolution": "Owner: file under tech-debt epic b4b4b9ee. Filed 9ff05f12, 8d5b7ad7, 33057520, 0657c9fa, dfb8820b; the window-runner path is 18858de1 in this epic (2026-10-03)."
+  },
+  {
+   "issue": "7bac1303",
+   "question": "[patch] form breaks --locked for the root lockfile and 29 of 31 tracked harness lockfiles (cargo 1.95 trials). Accept repo-wide effect, separate --config file, fixed workspace, or named exception?",
+   "resolution": "Owner chose a named, tracked exception (harness-path-dependencies): moves rewrite the paths. 7bac1303 rewritten to record the exception (DEC-02); c84ac71a rejected obsolete; f79bcba3, 198aafa3, 7039d680 criteria amended; convergence tracked by 58a4bb51 under b4b4b9ee (2026-10-03)."
   }
  ],
  "rework_counts": {
