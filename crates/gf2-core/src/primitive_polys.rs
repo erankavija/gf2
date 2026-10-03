@@ -136,7 +136,7 @@ impl PrimitivePolynomialDatabase {
             5 => Some(0b100101),             // x^5 + x^2 + 1
             6 => Some(0b1000011),            // x^6 + x + 1
             7 => Some(0b10000011),           // x^7 + x + 1
-            8 => Some(0b100011101),          // x^8 + x^4 + x^3 + x^2 + 1 (primitive trinomial)
+            8 => Some(0b100011101),          // x^8 + x^4 + x^3 + x^2 + 1 (primitive pentanomial)
             9 => Some(0b1000010001),         // x^9 + x^4 + 1
             10 => Some(0b10000001001),       // x^10 + x^3 + 1
             11 => Some(0b100000000101),      // x^11 + x^2 + 1
