@@ -1,8 +1,5 @@
-//! Strassen-family multiplication for square GF(2) matrices.
-//!
-//! The implementation is intentionally private to the high-level matrix
-//! multiplier. Recursive leaves call the existing M4RM path, preserving all
-//! scalar/SIMD fallback behaviour below the selected crossover.
+//! Strassen-family multiplication for square GF(2) matrices; recursive leaves
+//! call the M4RM path.
 
 use crate::matrix::BitMatrix;
 

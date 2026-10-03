@@ -1,16 +1,11 @@
-//! BitSlice views over a BitVec's underlying storage.
-//!
-//! Immutable and mutable views that reference a window of bits within a
-//! `&[u64]`/`&mut [u64]` backing store. Views carry a bit offset and a bit
-//! length and preserve the tail-masking invariant when converted back to
-//! `BitVec`.
+//! Immutable and mutable views of a window of bits within a `u64` word store.
 
 /// Immutable view of a bit slice.
 #[derive(Copy, Clone)]
 pub struct BitSlice<'a> {
     pub(crate) words: &'a [u64],
-    pub(crate) offset: usize,   // bit offset from the start of `words`
-    pub(crate) len_bits: usize, // number of live bits in the view
+    pub(crate) offset: usize, // bit offset from the start of `words`
+    pub(crate) len_bits: usize,
 }
 
 impl<'a> BitSlice<'a> {
