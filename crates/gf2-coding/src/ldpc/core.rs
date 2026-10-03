@@ -1192,7 +1192,7 @@ impl LdpcDecoder {
     /// message bits from systematic positions, this returns the hard-decided
     /// codeword at all n positions. Useful when the caller knows the
     /// systematic column mapping (e.g., 5G NR rate-matched codes that use
-    /// natural column ordering per `SYSTEMATIC_ENCODING_CONVENTION.md`).
+    /// natural column ordering per `docs/reference/standards-conformance.md`).
     ///
     /// # Arguments
     ///
