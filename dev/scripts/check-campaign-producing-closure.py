@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Checks that the shared producing-input closure enumerates the runner's sources.
 
-A campaign plan that names no family closure pins
-`dev/active/f547c394/producing-inputs.json` (`protocol::RunnerPlan::producing_manifest_path`),
-so that document decides which bytes the campaign's behaviour identity covers. A
+A campaign plan that names no family closure pins the path
+`protocol::RunnerPlan::producing_manifest_path` returns, so that document decides which bytes the campaign's behaviour identity covers. A
 source the runner compiles and the closure omits leaves a file that can change
 what a campaign measures outside the receipt's snapshot, which
 `@/inv/behavioral-evidence-validity` and `@/inv/runtime-observed-provenance`
@@ -11,13 +10,17 @@ forbid. The closure is maintained by hand and this check owns its completeness;
 a family closure generated from its own tree is checked by that generator's
 `--check`.
 
+The crate is the live `Cargo.toml` naming package `tuning-campaign-support`, and the
+closure is the path its `protocol.rs` declares; the check resolves both under the
+repository root git reports.
+
 The runner's sources are `src/lib.rs`, every module it declares transitively,
 and the runner binary. A module behind a cargo feature outside the crate's
 default set is absent from that build; any other `cfg` gate is unknown here and
 counts as compiled.
 
 Usage:
-  dev/scripts/check-campaign-producing-closure.py [--self-test]
+  check-campaign-producing-closure.py [--self-test]
 """
 
 from __future__ import annotations
@@ -25,13 +28,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import tempfile
 import tomllib
 from pathlib import Path
 
-CLOSURE = "dev/active/f547c394/producing-inputs.json"
-CRATE = "dev/tools/tuning-campaign-support"
+from repository_files import repository_root, tracked_files
+
+PACKAGE = "tuning-campaign-support"
 RUNNER = "src/bin/benchmark-ab-runner.rs"
 SCHEMA = "tuning-campaign-producing-inputs-v1"
 # The closure sections that select measurement-producing bytes; `lifecycle_sources`
@@ -40,7 +45,32 @@ SCHEMA = "tuning-campaign-producing-inputs-v1"
 REQUIRED_SECTIONS = ("behavior_sources", "build_inputs")
 
 MODULE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
+DEFAULT_CLOSURE = re.compile(
+    r'fn producing_manifest_path[^{]*\{\s*self\.producing_manifest\s*\.as_ref\(\)\s*'
+    r'\.map_or\(\s*"([^"]+)"'
+)
 FEATURE_GATE = re.compile(r'^\s*#\[cfg\(feature\s*=\s*"([^"]+)"\)\]\s*$')
+
+
+def locate_crate(root: Path) -> str:
+    """The root-relative directory of the one live package named `PACKAGE`."""
+    matches = []
+    for manifest in tracked_files(root, "Cargo.toml"):
+        package = tomllib.loads((root / manifest).read_text()).get("package", {})
+        if package.get("name") == PACKAGE:
+            matches.append(str(Path(manifest).parent))
+    if len(matches) != 1:
+        raise SystemExit(f"{len(matches)} live packages are named {PACKAGE}; exactly one must be")
+    return matches[0]
+
+
+def closure_path(root: Path, crate: str) -> str:
+    """The root-relative closure path the crate's runner plan defaults to."""
+    source = root / crate / "src/protocol.rs"
+    declared = DEFAULT_CLOSURE.search(source.read_text())
+    if declared is None:
+        raise SystemExit(f"{source}: no default producing manifest path found")
+    return declared.group(1)
 
 
 def default_features(manifest: Path) -> set[str]:
@@ -88,7 +118,7 @@ def declared_modules(source: Path, features: set[str]) -> list[str]:
 
 def runner_sources(root: Path) -> list[str]:
     """Every campaign-tools source the runner binary compiles, root-relative."""
-    crate = root / CRATE
+    crate = root / locate_crate(root)
     features = default_features(crate / "Cargo.toml")
     library = crate / "src/lib.rs"
     sources = [crate / RUNNER, library]
@@ -123,30 +153,42 @@ def omissions(closure: dict, sources: list[str]) -> list[str]:
 
 def check(root: Path) -> list[str]:
     """Reports every defect of the shared closure under `root`."""
+    closure_file = closure_path(root, locate_crate(root))
     try:
-        closure = json.loads((root / CLOSURE).read_text())
+        closure = json.loads((root / closure_file).read_text())
     except (OSError, json.JSONDecodeError) as error:
-        return [f"{CLOSURE}: {error}"]
+        return [f"{closure_file}: {error}"]
     if closure.get("schema") != SCHEMA:
-        return [f"{CLOSURE}: schema is not {SCHEMA}"]
+        return [f"{closure_file}: schema is not {SCHEMA}"]
     return omissions(closure, runner_sources(root))
+
+
+FIXTURE_CRATE = "fixture/crate"
+FIXTURE_CLOSURE = "fixture/closure.json"
 
 
 def write_fixture(root: Path, name_arm: bool) -> None:
     """Stages a crate whose runner compiles `arm` and a feature-gated `scratch`."""
-    crate = root / CRATE
+    subprocess.run(["git", "-C", str(root), "init", "-q"], check=True)
+    crate = root / FIXTURE_CRATE
     (crate / "src/bin").mkdir(parents=True)
-    (crate / "Cargo.toml").write_text('[features]\ntest-support = []\n')
+    (crate / "Cargo.toml").write_text(
+        f'[package]\nname = "{PACKAGE}"\n\n[features]\ntest-support = []\n'
+    )
     (crate / "src/lib.rs").write_text(
         'pub mod arm;\n\n#[cfg(feature = "test-support")]\npub mod scratch;\n'
     )
     for relative in ("src/arm.rs", "src/scratch.rs", RUNNER):
         (crate / relative).write_text("\n")
-    named = [f"{CRATE}/src/lib.rs", f"{CRATE}/{RUNNER}"]
+    (crate / "src/protocol.rs").write_text(
+        "fn producing_manifest_path(&self) -> &str {\n"
+        "    self.producing_manifest.as_ref().map_or(\n"
+        f'        "{FIXTURE_CLOSURE}",\n'
+    )
+    named = [f"{FIXTURE_CRATE}/src/lib.rs", f"{FIXTURE_CRATE}/{RUNNER}"]
     if name_arm:
-        named.append(f"{CRATE}/src/arm.rs")
-    (root / CLOSURE).parent.mkdir(parents=True)
-    (root / CLOSURE).write_text(
+        named.append(f"{FIXTURE_CRATE}/src/arm.rs")
+    (root / FIXTURE_CLOSURE).write_text(
         json.dumps(
             {
                 "schema": SCHEMA,
@@ -172,8 +214,8 @@ def self_test() -> int:
             "omitted",
             False,
             [
-                f"behavior_sources omits {CRATE}/src/arm.rs",
-                f"build_inputs omits {CRATE}/src/arm.rs",
+                f"behavior_sources omits {FIXTURE_CRATE}/src/arm.rs",
+                f"build_inputs omits {FIXTURE_CRATE}/src/arm.rs",
             ],
         ),
     )
@@ -203,16 +245,17 @@ def main() -> int:
     arguments = parser.parse_args()
     if arguments.self_test:
         return self_test()
-    root = Path(__file__).resolve().parents[2]
+    root = repository_root(Path(__file__).resolve())
+    closure_file = closure_path(root, locate_crate(root))
     findings = check(root)
     if findings:
-        print(f"{CLOSURE} does not enumerate the runner's sources:", file=sys.stderr)
+        print(f"{closure_file} does not enumerate the runner's sources:", file=sys.stderr)
         for finding in findings:
             print(f"    {finding}", file=sys.stderr)
         return 1
     sources = runner_sources(root)
     print(
-        f"check-campaign-producing-closure: {CLOSURE} names all "
+        f"check-campaign-producing-closure: {closure_file} names all "
         f"{len(sources)} runner sources"
     )
     return 0
