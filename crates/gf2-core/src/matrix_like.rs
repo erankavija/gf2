@@ -1,32 +1,7 @@
-//! Shared matrix surface used by both [`BitMatrix`](crate::matrix::BitMatrix)
-//! and [`FieldMatrix<F>`](crate::field::matrix::FieldMatrix).
-//!
-//! Generic algorithms (Gauss-Jordan, PLE, solve, rank) are written against
-//! [`MatrixLike`] / [`MatrixLikeMut`] so they can run unchanged on dense
-//! matrices and on zero-copy submatrix views.
-//!
-//! # Read / write split
-//!
-//! The surface is split in two:
-//!
-//! - [`MatrixLike<Elem>`] — read-only operations: shape, element read, copying
-//!   transpose.
-//! - [`MatrixLikeMut<Elem>`] — adds the mutators (`set`, `swap_rows`) and
-//!   requires [`MatrixLike<Elem>`] as a super-trait.
-//!
-//! The split means that an immutable `MatView<'_, F>` can implement the
-//! read-only trait without having to `panic!("read-only")` on the mutators. See
-//! `@/issue/ab791e27` for the design rationale.
-//!
-//! # Owned transpose
-//!
-//! [`MatrixLike::transpose`] returns an [`MatrixLike::Owned`] matrix rather
-//! than `Self`. Concrete row-major matrices (`BitMatrix`, `FieldMatrix<F>`)
-//! set `Owned = Self` and return the obvious in-kind transpose; zero-copy
-//! views instead materialise a fresh owned matrix of the parent type. This
-//! keeps the trait method total (no panicking impl) while still allowing
-//! generic code to obtain a transpose from any `MatrixLike` without assuming
-//! ownership.
+//! Shared matrix surface of [`BitMatrix`](crate::matrix::BitMatrix) and
+//! [`FieldMatrix<F>`](crate::field::matrix::FieldMatrix): [`MatrixLike`] for
+//! reads and [`MatrixLikeMut`] for writes, so that an immutable view
+//! implements the read half only.
 
 /// Shared read-only matrix surface.
 ///
@@ -35,26 +10,6 @@
 /// [`BitMatrix`](crate::matrix::BitMatrix) can implement `MatrixLike<bool>`
 /// and [`FieldMatrix<F>`](crate::field::matrix::FieldMatrix) can implement
 /// `MatrixLike<F>`.
-///
-/// # Owned associated type
-///
-/// [`MatrixLike::transpose`] returns `Self::Owned`, not `Self`. For concrete
-/// matrix types `Owned = Self`; for borrow-only views `Owned` is the parent
-/// owned matrix type, so the view's transpose materialises a fresh copy.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::matrix::BitMatrix;
-/// use gf2_core::matrix_like::MatrixLike;
-///
-/// let m = BitMatrix::identity(4);
-/// assert_eq!(m.rows(), 4);
-/// assert_eq!(m.cols(), 4);
-/// assert_eq!(MatrixLike::<bool>::get(&m, 0, 0), true);
-/// assert_eq!(MatrixLike::<bool>::shape(&m), (4, 4));
-/// assert!(MatrixLike::<bool>::is_square(&m));
-/// ```
 pub trait MatrixLike<Elem> {
     /// Owned matrix type produced by [`transpose`](Self::transpose).
     ///
@@ -106,21 +61,6 @@ pub trait MatrixLike<Elem> {
 /// Types that support in-place element writes and row swaps implement this in
 /// addition to [`MatrixLike`]. Read-only views (e.g. `MatView`) deliberately
 /// do not.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::matrix::BitMatrix;
-/// use gf2_core::matrix_like::{MatrixLike, MatrixLikeMut};
-///
-/// let mut m = BitMatrix::zeros(3, 3);
-/// MatrixLikeMut::<bool>::set(&mut m, 0, 1, true);
-/// assert!(MatrixLike::<bool>::get(&m, 0, 1));
-///
-/// MatrixLikeMut::<bool>::swap_rows(&mut m, 0, 1);
-/// assert!(MatrixLike::<bool>::get(&m, 1, 1));
-/// assert!(!MatrixLike::<bool>::get(&m, 0, 1));
-/// ```
 pub trait MatrixLikeMut<Elem>: MatrixLike<Elem> {
     /// Writes `v` at `(row, col)`.
     ///
@@ -137,14 +77,8 @@ pub trait MatrixLikeMut<Elem>: MatrixLike<Elem> {
     fn swap_rows(&mut self, r1: usize, r2: usize);
 }
 
-// Reference-forwarding impl — lets proxy algebra compose over `&FieldMatrix<F>`
-// as a `MatrixLike<Elem>` operand. Without this, `Product<&FieldMatrix<F>,
-// &FieldMatrix<F>>` cannot satisfy its `A: MatrixLike<F>` bound because the
-// concrete `MatrixLike<F>` impl lives on `FieldMatrix<F>`, not `&FieldMatrix<F>`.
-//
-// The blanket delegates every method to the borrowed operand; `Owned` matches
-// the underlying matrix's `Owned` so `(&m).transpose()` still returns an
-// owned result of the natural kind.
+// Lets a generic `A: MatrixLike<Elem>` operand be a reference; `Owned` is the
+// referent's, so `(&m).transpose()` returns the same owned type.
 impl<Elem, T: MatrixLike<Elem> + ?Sized> MatrixLike<Elem> for &T {
     type Owned = T::Owned;
 

@@ -6,9 +6,6 @@
 //! this module, which selects one of two routes for the funnel loop —
 //! [`ResidualShiftRoute`] names them — and owns the boundary word and the
 //! zero fill around it in either case.
-//!
-//! The route ships in order to be measured; `dev/active/f8dd4dde/retention-rule.md`
-//! states what decides whether it stays.
 
 /// Which implementation of the residual funnel loop a call takes.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
@@ -153,14 +150,7 @@ fn portable_shift_right_funnel(data: &mut [u64], word_shift: usize, bit_shift: u
     }
 }
 
-// ---------------------------------------------------------------------------
-// Lane witness and the test-only force switch
-// ---------------------------------------------------------------------------
-
 /// Records the route the most recent residual shift executed.
-///
-/// Compiled away outside `test` and `test-support` builds, where the recorder
-/// is an empty inlined function.
 #[cfg(any(test, feature = "test-support"))]
 #[inline]
 fn record_route(route: ResidualShiftRoute) {
