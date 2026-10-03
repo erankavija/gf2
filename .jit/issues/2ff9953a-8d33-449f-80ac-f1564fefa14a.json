@@ -72,10 +72,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T00:23:25.830909266Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:21.137646688Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:18:39.879968280Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "2ff9953a-8d33-449f-80ac-f1564fefa14a",
@@ -89,5 +94,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the supported configurations reference page",
-  "updated_at": "2026-10-03T00:18:28.255106363Z"
+  "updated_at": "2026-10-03T00:23:25.830909266Z"
 }

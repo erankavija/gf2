@@ -56,10 +56,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T00:22:58.409354347Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:22.407834501Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:18:52.218511911Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "44f4586d-5d13-42a3-b6ff-1be4ae2bc18d",
@@ -72,5 +77,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the finite-field arithmetic concepts page",
-  "updated_at": "2026-10-03T00:18:28.936790050Z"
+  "updated_at": "2026-10-03T00:22:58.409354347Z"
 }

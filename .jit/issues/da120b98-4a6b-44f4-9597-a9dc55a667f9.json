@@ -34,16 +34,22 @@
       "path": "docs/how-to/formal-verification.md"
     }
   ],
+  "done_at": "2026-10-03T00:26:12.887054171Z",
   "first_ready_at": "2026-10-02T14:11:27.597212153Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T00:25:41.823648560Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:30.624645937Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:23:18.496458131Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
@@ -54,7 +60,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the formal verification how-to",
-  "updated_at": "2026-10-03T00:18:30.044241377Z"
+  "updated_at": "2026-10-03T00:26:12.887054171Z"
 }

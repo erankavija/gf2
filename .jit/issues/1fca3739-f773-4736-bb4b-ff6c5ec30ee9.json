@@ -88,10 +88,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T00:23:14.620737627Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:20.360321095Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:18:46.034837297Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "1fca3739-f773-4736-bb4b-ff6c5ec30ee9",
@@ -104,5 +109,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the performance evidence reference page",
-  "updated_at": "2026-10-03T00:18:24.456218227Z"
+  "updated_at": "2026-10-03T00:23:14.620737627Z"
 }

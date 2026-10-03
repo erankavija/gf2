@@ -80,10 +80,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T00:27:58.234726462Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:28.944961545Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:26:21.536027714Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "b16d013a-c200-4e75-8c57-6638a313438e",
@@ -97,5 +102,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the gf2-sim README as its entry page",
-  "updated_at": "2026-10-03T00:18:30.324668887Z"
+  "updated_at": "2026-10-03T00:27:58.234726462Z"
 }

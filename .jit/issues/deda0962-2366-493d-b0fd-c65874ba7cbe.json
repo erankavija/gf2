@@ -82,16 +82,22 @@
       "path": "docs/concepts/acceleration-architecture.md"
     }
   ],
+  "done_at": "2026-10-03T00:26:12.608437138Z",
   "first_ready_at": "2026-10-02T14:11:27.719094868Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T00:25:36.512529793Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:30.851135805Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:23:29.709747068Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "deda0962-2366-493d-b0fd-c65874ba7cbe",
@@ -102,7 +108,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the acceleration architecture concepts page",
-  "updated_at": "2026-10-03T00:18:30.100960658Z"
+  "updated_at": "2026-10-03T00:26:12.608437138Z"
 }

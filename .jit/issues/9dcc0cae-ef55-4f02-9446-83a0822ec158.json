@@ -48,10 +48,15 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T00:26:17.656648971Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:27.918143755Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:23:02.698007401Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "9dcc0cae-ef55-4f02-9446-83a0822ec158",
@@ -64,5 +69,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the simulation campaign how-to",
-  "updated_at": "2026-10-03T00:18:29.992401912Z"
+  "updated_at": "2026-10-03T00:26:17.656648971Z"
 }

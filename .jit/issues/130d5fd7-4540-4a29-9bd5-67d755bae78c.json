@@ -8,6 +8,7 @@
   ],
   "description": "`docs/lean4-verification-pipeline.md` sits at the docs root outside the quadrant layout. It belongs to archived epic e095a100 and leaves the permanent surface once the formal-verification how-to covers its workflow.\n\n## Success Criteria\n\n- [hard] REQ-01: The file lives in epic e095a100's archive directory, moved with history, and the owning issue's document reference names the new path.\n- [hard] REQ-02: No Markdown file other than `docs/index.md` sits directly under `docs/`.\n- [hard] REQ-03: Inbound links point to the formal-verification how-to or the archive path, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: The manifest records the row as complete.\n",
   "documents": [],
+  "first_ready_at": "2026-10-03T00:26:12.979279288Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -30,7 +31,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move the Lean pipeline guide into its epic's archive dir",
-  "updated_at": "2026-10-02T09:38:19.584882302Z"
+  "updated_at": "2026-10-03T00:26:12.979279288Z"
 }

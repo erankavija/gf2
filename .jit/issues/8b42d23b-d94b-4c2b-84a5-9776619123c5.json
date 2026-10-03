@@ -66,6 +66,7 @@
       "path": "crates/gf2-core/README.md"
     }
   ],
+  "done_at": "2026-10-03T00:29:54.835471561Z",
   "first_ready_at": "2026-10-02T14:11:27.243862636Z",
   "gates_required": [
     "doc-review",
@@ -73,13 +74,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:14:17.189236412Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T00:29:12.342312053Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:08:29.376012019Z",
+      "updated_at": "2026-10-03T00:26:20.888695803Z",
       "updated_by": "auto:executor"
     }
   },
@@ -92,7 +93,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Rewrite the gf2-core README as its entry page",
-  "updated_at": "2026-10-03T00:18:30.270346819Z"
+  "updated_at": "2026-10-03T00:29:54.835471561Z"
 }
