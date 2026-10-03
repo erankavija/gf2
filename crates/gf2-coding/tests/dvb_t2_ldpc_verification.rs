@@ -1,25 +1,5 @@
-//! DVB-T2 LDPC encoding verification using reference test vectors.
-//!
-//! **Status**: Requires Richardson-Urbanke systematic encoder (Phase C10.6)
-//!
-//! **Prerequisites**:
-//! - ✅ gf2-core Phase 12 (File I/O) complete - enables pre-computed generator matrices
-//! - ⏳ Richardson-Urbanke systematic encoding implementation
-//! - ⏳ Generator matrix cache infrastructure
-//!
-//! **Performance Target**:
-//! - First-time computation: 2-3 minutes per configuration (one-time)
-//! - Cached load: <10ms using gf2-core SpBitMatrix binary format
-//! - Total speedup: 12,000×+
-//!
-//! **Usage Pattern**:
-//! ```rust,ignore
-//! let cache = EncodingCache::from_directory("data/ldpc/dvb_t2")?;
-//! let encoder = LdpcEncoder::with_cache(
-//!     LdpcCode::dvb_t2_normal(CodeRate::Rate3_5),
-//!     &cache  // Loads in <10ms
-//! );
-//! ```
+//! DVB-T2 LDPC encoding of the first 10 VV001-CR35 TP05 blocks against TP06
+//! (`@/citation/DvbVerification2010`).
 
 mod test_vectors;
 
@@ -49,7 +29,7 @@ fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder 
 }
 
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_encoding_tp05_to_tp06() {
     if !test_vectors::test_vectors_available() {
         return;
@@ -70,7 +50,6 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     let mut successes = 0;
     let mut failures = 0;
 
-    // Test first 10 blocks only (encoding is slow with iterative algorithm)
     let test_blocks = 10.min(tp05.frame(0).len());
     eprintln!("Testing LDPC encoding on {} blocks...", test_blocks);
 

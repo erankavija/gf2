@@ -3,9 +3,16 @@
 //! These tests verify the test vector parsing infrastructure works correctly.
 //! Tests marked with #[ignore] require external DVB test vectors.
 
+mod common;
 mod test_vectors;
 
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
+
+#[test]
+fn both_helper_modules_resolve_the_same_vector_tree() {
+    let path = test_vectors_path();
+    assert_eq!(common::dvb_vectors_dir(), path.is_dir().then_some(path));
+}
 
 #[test]
 fn test_parser_module_available() {
@@ -14,7 +21,7 @@ fn test_parser_module_available() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_parse_vv001_cr35_all_test_points() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -35,7 +42,7 @@ fn test_parse_vv001_cr35_all_test_points() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_tp04_structure() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -81,7 +88,7 @@ fn test_tp04_structure() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_all_test_points_consistent_structure() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -148,7 +155,7 @@ fn test_all_test_points_consistent_structure() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_bit_lengths_match_encoding_stages() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());

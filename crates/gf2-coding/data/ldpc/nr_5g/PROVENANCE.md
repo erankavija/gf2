@@ -13,7 +13,8 @@ base-graph shift tables in `crates/gf2-coding/src/ldpc/nr_5g/{bg1.rs,bg2.rs}`
 
 ## Upstream source
 
-- Project: NVIDIA Sionna (an independent, published 5G NR implementation)
+- Project: NVIDIA Sionna (`@/citation/Sionna2026`; an independent, published
+  5G NR implementation)
 - Repository: <https://github.com/NVlabs/sionna>
 - Upstream paths:
   - `src/sionna/phy/fec/ldpc/codes/5G_bg1.csv` (blob `ad2472a1b9954ffec152fff834e8edda667660a2`)

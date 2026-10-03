@@ -64,7 +64,7 @@ fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder 
 /// Validates that systematic LDPC encoding produces exact match with
 /// reference test vectors.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_encoding_tp05_to_tp06() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -152,7 +152,7 @@ fn test_ldpc_encoding_tp05_to_tp06() {
 /// Validates that hard-decision decoding of valid codewords recovers
 /// the original message bits.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_decoding_tp06_to_tp05_error_free() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -235,7 +235,7 @@ fn test_ldpc_decoding_tp06_to_tp05_error_free() {
 ///
 /// Tests the decoder's ability to correct random bit errors in codewords.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_error_correction() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -329,7 +329,7 @@ fn test_ldpc_error_correction() {
 ///
 /// Checks that the first k bits of each codeword match the message bits.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_systematic_property() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -380,7 +380,7 @@ fn test_ldpc_systematic_property() {
 ///
 /// Spot-checks encoding consistency across all frames.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_encoding_sample() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -434,7 +434,7 @@ fn test_ldpc_encoding_sample() {
 ///
 /// Ensures that the LDPC code parameters match DVB-T2 specification.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_parameter_validation() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -485,7 +485,7 @@ fn test_ldpc_parameter_validation() {
 ///
 /// Verifies that all codewords in TP06 satisfy H·c = 0.
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_parity_check() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());
@@ -530,7 +530,7 @@ fn test_ldpc_parity_check() {
 ///
 /// Full roundtrip: message → encode → decode → message
 #[test]
-#[ignore]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_roundtrip() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());

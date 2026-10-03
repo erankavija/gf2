@@ -52,23 +52,13 @@
 //!
 //! # Scope
 //!
-//! This implementation covers four LDPC code rates crossed with
-//! QPSK, 16-QAM, and 64-QAM, for both Normal (64800 bits) and
-//! Short (16200 bits) FECFRAMEs:
-//!
-//! * Rate 1/2, Rate 2/3, Rate 3/4 — original in-scope rates.
-//! * Rate 3/5 (Normal frame only) — added to support end-to-end
-//!   testing against VV001-CR35 test vectors.
-//!
-//! Short-frame Rate 3/5 is not in scope for this implementation.
-//! Note: the VV001-CR35 ETSI reference vectors use 256-QAM with
-//! cell interleaving (§6.1.4/§6.1.5), which is beyond the scope
-//! of this module (§6.1.3 only). Full chain validation will be
-//! addressed in a separate issue.
+//! Rates 1/2, 2/3 and 3/4 for Normal (64800 bits) and Short (16200 bits)
+//! FECFRAMEs and rate 3/5 for the Normal FECFRAME, each with QPSK, 16-QAM
+//! or 64-QAM.
 //!
 //! # References
 //!
-//! - ETSI EN 302 755 v1.4.1, §6.1.3, Table 9 (combined Normal+Short),
+//! - `@/citation/Etsi2015` §6.1.3, Table 9 (combined Normal+Short),
 //!   Table 10 (column twisting parameters).
 
 use crate::bch::CodeRate;
@@ -78,11 +68,6 @@ use gf2_core::BitVec;
 use crate::llr::Llr;
 
 /// Modulation order for DVB-T2 bit-interleaver parameterisation.
-///
-/// Only QAM orders that produce distinct interleaver configurations are
-/// represented (QPSK, 16-QAM, 64-QAM). 256-QAM is not in scope for
-/// the §6.1.3 bit-only interleaver; it additionally requires the
-/// cell word demux and cell interleaver stages (§6.1.4/§6.1.5).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DvbT2Modulation {
     /// QPSK: 2 bits per cell, no §6.1.3 interleaving applied.
