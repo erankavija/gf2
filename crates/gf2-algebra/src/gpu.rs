@@ -122,7 +122,7 @@ fn ensure_gf7_luts_initialised() {
     if let Err(rc) = initialise_permanent_gf7_luts() {
         panic!(
             "permanent_batch_bipedal7: init_permanent_gf7 returned HIP error code {rc}. \
-             Ensure a gfx1030-class GPU is present and ROCm is initialised."
+             Ensure a GPU architecture supported by gf2-kernels-hip is present and ROCm is initialised."
         );
     }
 }
@@ -329,7 +329,7 @@ pub fn serialise_permanent_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usiz
 ///
 /// ```no_run
 /// // Compiles only with the `hip` Cargo feature; never executed under
-/// // `cargo test --doc` (requires ROCm + gfx1030 at runtime).
+/// // `cargo test --doc` (requires ROCm and a GPU architecture that gf2-kernels-hip supports at runtime).
 /// # #[cfg(feature = "hip")] {
 /// use gf2_algebra::gpu::permanent_batch_bipedal3;
 /// use gf2_algebra::packed::Bipedal3Matrix;
@@ -427,7 +427,7 @@ pub fn permanent_batch_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
 ///
 /// ```no_run
 /// // Compiles only with the `hip` + `f5` Cargo features; never executed
-/// // under `cargo test --doc` (requires ROCm + gfx1030 at runtime).
+/// // under `cargo test --doc` (requires ROCm and a GPU architecture that gf2-kernels-hip supports at runtime).
 /// # #[cfg(all(feature = "hip", feature = "f5"))] {
 /// use gf2_algebra::gpu::permanent_batch_bipedal5;
 /// use gf2_algebra::packed::Packed5Matrix;
@@ -531,7 +531,7 @@ pub fn permanent_batch_bipedal5(matrices: &[Packed5Matrix]) -> Vec<Fp<5>> {
 ///
 /// ```no_run
 /// // Compiles only with the `hip` + `f7` Cargo features; never executed
-/// // under `cargo test --doc` (requires ROCm + gfx1030 at runtime).
+/// // under `cargo test --doc` (requires ROCm and a GPU architecture that gf2-kernels-hip supports at runtime).
 /// # #[cfg(all(feature = "hip", feature = "f7"))] {
 /// use gf2_algebra::gpu::permanent_batch_bipedal7;
 /// use gf2_algebra::packed::Packed7Matrix;
