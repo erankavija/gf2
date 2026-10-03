@@ -15,6 +15,7 @@ Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 | Page | Task |
 |---|---|
 | [Run and extend the Lean 4 proofs](how-to/formal-verification.md) | Build the proofs, regenerate the Charon/Aeneas extraction, and prove a property of an extracted function |
+| [Run a simulation campaign](how-to/run-simulation-campaigns.md) | Configure, run, stop and resume error-rate sweeps, and locate their output |
 
 ## Concepts
 
