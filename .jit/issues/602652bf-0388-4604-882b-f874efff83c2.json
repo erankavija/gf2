@@ -4,7 +4,6 @@
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
     "4f161183-869b-4369-83e9-46dc023720d5",
-    "5a25717c-83f4-453c-8866-cab67ecf2103",
     "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
     "b0b1faf5-382a-4be6-857e-146b804cf413",
     "d53cba10-d5ee-4764-8626-968ba5e6642c"
@@ -34,5 +33,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the f547c394 protocol inputs under their epic dir",
-  "updated_at": "2026-10-03T01:23:59.050071378Z"
+  "updated_at": "2026-10-03T01:24:19.248942837Z"
 }
