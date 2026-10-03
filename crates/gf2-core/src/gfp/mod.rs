@@ -789,23 +789,23 @@ mod tests {
 
     #[test]
     fn test_add_gf7() {
-        assert_eq!(Fp::<7>::new(3) + Fp::<7>::new(5), Fp::<7>::new(1)); // 8 mod 7
+        assert_eq!(Fp::<7>::new(3) + Fp::<7>::new(5), Fp::<7>::new(1));
         assert_eq!(Fp::<7>::new(0) + Fp::<7>::new(4), Fp::<7>::new(4));
-        assert_eq!(Fp::<7>::new(6) + Fp::<7>::new(6), Fp::<7>::new(5)); // 12 mod 7
+        assert_eq!(Fp::<7>::new(6) + Fp::<7>::new(6), Fp::<7>::new(5));
     }
 
     #[test]
     fn test_sub_gf7() {
         assert_eq!(Fp::<7>::new(5) - Fp::<7>::new(3), Fp::<7>::new(2));
-        assert_eq!(Fp::<7>::new(3) - Fp::<7>::new(5), Fp::<7>::new(5)); // -2 mod 7
+        assert_eq!(Fp::<7>::new(3) - Fp::<7>::new(5), Fp::<7>::new(5));
         assert_eq!(Fp::<7>::new(0) - Fp::<7>::new(1), Fp::<7>::new(6));
     }
 
     #[test]
     fn test_mul_gf7() {
-        assert_eq!(Fp::<7>::new(3) * Fp::<7>::new(5), Fp::<7>::new(1)); // 15 mod 7
+        assert_eq!(Fp::<7>::new(3) * Fp::<7>::new(5), Fp::<7>::new(1));
         assert_eq!(Fp::<7>::new(4) * Fp::<7>::new(0), Fp::<7>::new(0));
-        assert_eq!(Fp::<7>::new(6) * Fp::<7>::new(6), Fp::<7>::new(1)); // 36 mod 7
+        assert_eq!(Fp::<7>::new(6) * Fp::<7>::new(6), Fp::<7>::new(1));
     }
 
     #[test]
@@ -819,21 +819,20 @@ mod tests {
     fn test_fp2_is_gf2() {
         type F2 = Fp<2>;
         assert_eq!(F2::new(0) + F2::new(0), F2::new(0));
-        assert_eq!(F2::new(1) + F2::new(1), F2::new(0)); // 1+1=0 in char 2
+        assert_eq!(F2::new(1) + F2::new(1), F2::new(0));
         assert_eq!(F2::new(1) * F2::new(1), F2::new(1));
         assert_eq!(F2::new(1).inv(), Some(F2::new(1)));
     }
 
     #[test]
     fn test_inv_gf7() {
-        assert_eq!(Fp::<7>::new(3).inv(), Some(Fp::<7>::new(5))); // 3 * 5 = 15 ≡ 1
+        assert_eq!(Fp::<7>::new(3).inv(), Some(Fp::<7>::new(5)));
         assert_eq!(Fp::<7>::new(0).inv(), None);
         assert_eq!(Fp::<7>::new(1).inv(), Some(Fp::<7>::new(1)));
     }
 
     #[test]
     fn test_div_gf7() {
-        // 6 / 3 = 6 * inv(3) = 6 * 5 = 30 mod 7 = 2
         assert_eq!(Fp::<7>::new(6) / Fp::<7>::new(3), Fp::<7>::new(2));
     }
 
@@ -871,7 +870,7 @@ mod tests {
         let b = Fp::<7>::new(5);
         a += &b;
         assert_eq!(a, Fp::<7>::new(1));
-        assert_eq!(b.value(), 5); // b still valid
+        assert_eq!(b.value(), 5);
     }
 
     #[test]
@@ -895,8 +894,8 @@ mod tests {
         let a = Fp::<7>::new(5);
         let b = Fp::<7>::new(6);
         let wide = a.mul_to_wide(&b);
-        assert_eq!(wide, 30u128); // unreduced
-        assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(2)); // 30 mod 7
+        assert_eq!(wide, 30u128);
+        assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(2));
     }
 
     #[test]

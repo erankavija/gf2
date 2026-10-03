@@ -633,9 +633,8 @@ mod tests {
 
     #[test]
     fn test_add_lut_spot_check() {
-        // (a_lo=3, a_hi=5) + (b_lo=4, b_hi=2) → (lo=(3+4)%7=0, hi=(5+2)%7=0) → 0x00
-        let a_byte: usize = (5 << 4) | 3; // a_hi=5, a_lo=3
-        let b_byte: usize = (2 << 4) | 4; // b_hi=2, b_lo=4
+        let a_byte: usize = (5 << 4) | 3;
+        let b_byte: usize = (2 << 4) | 4;
         let key = a_byte | (b_byte << 8);
         let result = ADD_LUT[key];
         assert_eq!(result & 0xf, scalar_add(3, 4) as u8, "add low nibble");
@@ -645,7 +644,6 @@ mod tests {
             "add high nibble"
         );
 
-        // (a_lo=6, a_hi=6) + (b_lo=1, b_hi=1) → (0, 0)
         let a2: usize = (6 << 4) | 6;
         let b2: usize = (1 << 4) | 1;
         let key2 = a2 | (b2 << 8);
@@ -656,8 +654,8 @@ mod tests {
 
     #[test]
     fn test_sub_lut_spot_check() {
-        let a_byte: usize = (2 << 4) | 1; // a_hi=2, a_lo=1
-        let b_byte: usize = (5 << 4) | 4; // b_hi=5, b_lo=4
+        let a_byte: usize = (2 << 4) | 1;
+        let b_byte: usize = (5 << 4) | 4;
         let key = a_byte | (b_byte << 8);
         let result = SUB_LUT[key];
         assert_eq!(result & 0xf, scalar_sub(1, 4) as u8, "sub low nibble");
@@ -670,8 +668,8 @@ mod tests {
 
     #[test]
     fn test_mul_lut_spot_check() {
-        let a_byte: usize = (4 << 4) | 3; // a_hi=4, a_lo=3
-        let b_byte: usize = (5 << 4) | 4; // b_hi=5, b_lo=4
+        let a_byte: usize = (4 << 4) | 3;
+        let b_byte: usize = (5 << 4) | 4;
         let key = a_byte | (b_byte << 8);
         let result = MUL_LUT[key];
         assert_eq!(
@@ -740,10 +738,9 @@ mod tests {
 
     #[test]
     fn test_lut_non_canonical_yields_zero() {
-        let a_byte: usize = 7; // a_lo=7, a_hi=0
+        let a_byte: usize = 7;
         let b_byte: usize = 0;
         let key = a_byte | (b_byte << 8);
-        // The whole byte is 0 because a_lo is non-canonical (≥ 7).
         assert_eq!(ADD_LUT[key] & 0xf, 0, "non-canonical a_lo must yield 0");
     }
 
@@ -1059,10 +1056,10 @@ mod tests {
     fn test_packed_field_trait_ops() {
         let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(4));
         let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
-        assert_eq!(a.add(b).lane(0), Fp::<7>::new(2)); // (4+5)%7=2
-        assert_eq!(a.sub(b).lane(0), Fp::<7>::new(6)); // (4-5+7)%7=6
-        assert_eq!(a.mul(b).lane(0), Fp::<7>::new(6)); // (4*5)%7=6
-        assert_eq!(a.neg().lane(0), Fp::<7>::new(3)); // (7-4)%7=3
+        assert_eq!(a.add(b).lane(0), Fp::<7>::new(2));
+        assert_eq!(a.sub(b).lane(0), Fp::<7>::new(6));
+        assert_eq!(a.mul(b).lane(0), Fp::<7>::new(6));
+        assert_eq!(a.neg().lane(0), Fp::<7>::new(3));
     }
 
     #[test]
@@ -1233,7 +1230,6 @@ mod tests {
 
     #[test]
     fn test_packed7vec_raw_words_encodes_lanes() {
-        // Lane 0 = 3 (nibble 3), lane 1 = 5 (nibble 5) → first byte = 0x53
         let xs: Vec<Fp<7>> = vec![Fp::<7>::new(3), Fp::<7>::new(5)];
         let v = Packed7Vec::from_field_slice(&xs);
         let words = v.raw_words();
@@ -1345,7 +1341,7 @@ mod tests {
     #[should_panic(expected = "data.len()")]
     fn test_packed7matrix_from_row_major_length_mismatch_panic() {
         let data = vec![Fp::<7>::new(0); 5];
-        let _ = Packed7Matrix::from_row_major(&data, 2, 3); // needs 6, got 5
+        let _ = Packed7Matrix::from_row_major(&data, 2, 3);
     }
 
     #[test]
@@ -1369,7 +1365,6 @@ mod tests {
         use crate::permanent::bipedal7::permanent_bipedal7_singleword;
         use crate::permanent::ryser::permanent_ryser;
 
-        // [[1,2,3],[4,5,6],[0,1,2]] mod 7
         let data: Vec<Fp<7>> = [1u64, 2, 3, 4, 5, 6, 0, 1, 2]
             .iter()
             .map(|&v| Fp::<7>::new(v))

@@ -1317,7 +1317,6 @@ mod tests {
         out
     }
 
-    /// Deterministic test matrix with values from a linear-congruential sequence.
     fn build_test_matrix<Cfg: Gf2mWideConfig<1>>(
         rows: usize,
         cols: usize,
@@ -1357,8 +1356,6 @@ mod tests {
         b_t
     }
 
-    /// Runs the scalar panelized GEMM fallback through its test entry point,
-    /// which bypasses the SIMD branch, for every supported `m in {8, 16, 32}`.
     #[test]
     fn test_scalar_panelized_gemm_fallback_matches_naive() {
         fn check<Cfg: Gf2mWideConfig<1>>(m: usize, k: usize, n: usize, seed: u64) {
@@ -1384,7 +1381,6 @@ mod tests {
         check::<ScalarFallbackGf2m32Cfg>(7, 11, 9, 0xC3);
     }
 
-    /// All-zero operands overwrite a non-zero `out` with zeros.
     #[test]
     fn test_scalar_panelized_gemm_fallback_zero_input_zero_output() {
         type Cfg = ScalarFallbackGf2m8Cfg;
@@ -1424,7 +1420,6 @@ mod tests {
 
     impl Gf2mWideConfig<4> for Gf2m256TestConfig {
         const M: usize = 256;
-        // x^10 + x^5 + x^2 + 1 = 1024 + 32 + 4 + 1 = 1061 = 0x425
         const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
         const NAME: &'static str = "Gf2m256TestConfig";
     }
@@ -1607,8 +1602,6 @@ mod tests {
 
     #[test]
     fn test_new_tail_masking_m256_fills_top_word() {
-        // M = 256, N = 4: the top word uses all 64 bits, so `new` with
-        // all-ones input must preserve every bit.
         let a = Gf2mWide::<4, Gf2m256TestConfig>::new([u64::MAX; 4]);
         assert_eq!(a.words()[3], u64::MAX);
         // `1u64 << 64` would overflow; the constructor takes the
@@ -1619,8 +1612,6 @@ mod tests {
 
     #[test]
     fn test_new_tail_masking_m250_zeroes_top_6_bits() {
-        // M = 250, N = 4: the top word uses 58 bits (250 - 192 = 58).
-        // The top 6 bits (positions 58..=63) must be zeroed.
         let a = Gf2mWide::<4, Gf2m250TestConfig>::new([u64::MAX; 4]);
         assert_eq!(a.words()[0], u64::MAX);
         assert_eq!(a.words()[1], u64::MAX);
@@ -1665,7 +1656,7 @@ mod tests {
     fn test_copy_clone_eq_hash() {
         use std::collections::HashSet;
         let a = Gf2mWide::<4, Gf2m256TestConfig>::new([0x11, 0x22, 0x33, 0x44]);
-        let b = a; // Copy
+        let b = a;
         assert_eq!(a, b);
         #[allow(clippy::clone_on_copy)]
         let c = a.clone();
@@ -1677,24 +1668,13 @@ mod tests {
 
     #[test]
     fn test_debug_contains_name_and_degree() {
-        // Debug uses the same "GF(2^M):0x..." format as Display; the config NAME
-        // is not part of it.
         let a = Gf2mWide::<4, Gf2m256TestConfig>::one();
         let s = format!("{:?}", a);
         assert!(s.starts_with("GF(2^256):0x"), "got: {}", s);
-        // `one` has word[0] = 1, all others zero. In little-endian-limb order
-        // word[0] is first, so the hex starts with "0000000000000001".
         assert!(s.contains("0000000000000001"), "got: {}", s);
         let display = format!("{}", a);
         assert_eq!(s, display, "Debug and Display must be identical");
     }
-
-    // Covers the word-boundary bit counts 1, 63, 64 and 65; `M = 0` is
-    // ill-formed. The `M = 7`, `M = 250` and `M = 256` configs cover the
-    // remaining boundary classes.
-    //
-    // The moduli below are not necessarily irreducible; they exercise only the
-    // tail-masking and XOR paths.
 
     /// `M = 1`: the single-bit field, the low extreme of the
     /// `64 * (N - 1) < M <= 64 * N` range. `MODULUS = [0x1]` is `x + 1`.
@@ -1702,7 +1682,7 @@ mod tests {
 
     impl Gf2mWideConfig<1> for Gf2m1TestConfig {
         const M: usize = 1;
-        const MODULUS: [u64; 1] = [0x1]; // x + 1 (irreducible over GF(2))
+        const MODULUS: [u64; 1] = [0x1];
     }
 
     /// `M = 63`: top (and only) word uses 63 of 64 bits — one high bit
@@ -1745,7 +1725,7 @@ mod tests {
 
         assert!(zero.is_zero());
         assert!(one.is_one());
-        assert_eq!((one + one).words()[0], 0); // 1 + 1 = 0 in GF(2)
+        assert_eq!((one + one).words()[0], 0);
         assert_eq!((one + zero).words()[0], 1);
         assert_eq!((zero + zero).words()[0], 0);
 
@@ -1782,7 +1762,6 @@ mod tests {
         let a = Gf2mWide::<2, Gf2m65TestConfig>::new([u64::MAX; 2]);
         assert_eq!(a.words()[0], u64::MAX);
         assert_eq!(a.words()[1], 1);
-        // `from_u64` only touches the low word — word 1 stays zero.
         let b = Gf2mWide::<2, Gf2m65TestConfig>::from_u64(u64::MAX);
         assert_eq!(b.words(), &[u64::MAX, 0]);
         assert!(Gf2mWide::<2, Gf2m65TestConfig>::zero().is_zero());
@@ -1840,7 +1819,6 @@ mod tests {
 
             #[test]
             fn prop_tail_masked_after_new_m256(xs in any_4_words()) {
-                // M = 256, N = 4: top_word_mask == u64::MAX, so no bit lies above M.
                 let a = Gf2mWide::<4, Gf2m256TestConfig>::new(xs);
                 let top_mask: u64 = if 256 - 64 * 3 >= 64 {
                     u64::MAX
@@ -1882,7 +1860,6 @@ mod tests {
 
             #[test]
             fn prop_tail_masked_after_new_m250(xs in any_4_words()) {
-                // M = 250, N = 4: top word must have bits >= 58 cleared.
                 let a = Gf2mWide::<4, Gf2m250TestConfig>::new(xs);
                 let top_mask: u64 = (1u64 << (250 - 64 * 3)) - 1;
                 prop_assert_eq!(a.words()[3] & !top_mask, 0);
@@ -1932,7 +1909,6 @@ mod tests {
 
             #[test]
             fn prop_tail_masked_m64(x in any::<u64>()) {
-                // M = 64: top_word_mask == u64::MAX, no bits to clear.
                 let a = Gf2mWide::<1, Gf2m64TestConfig>::new([x]);
                 prop_assert_eq!(a.words()[0], x);
             }
@@ -1951,7 +1927,6 @@ mod tests {
             #[test]
             fn prop_tail_masked_m65(x0 in any::<u64>(), x1 in any::<u64>()) {
                 let a = Gf2mWide::<2, Gf2m65TestConfig>::new([x0, x1]);
-                // M = 65: top word uses bit 0 only.
                 prop_assert_eq!(a.words()[1] & !1u64, 0);
             }
 
@@ -1989,9 +1964,7 @@ mod tests {
 
         #[test]
         fn test_clmul_wide_x_plus_one_squared() {
-            // (x + 1) = 0b11
             let out = clmul_wide::<1, 2>(&[0b11u64], &[0b11u64]);
-            // x² + 1 = 0b101
             assert_eq!(out[0], 0b101);
             assert_eq!(out[1], 0);
         }
@@ -2001,7 +1974,6 @@ mod tests {
         fn test_clmul_wide_all_ones_squared_n1() {
             let a = [u64::MAX];
             let out = clmul_wide::<1, 2>(&a, &a);
-            // Each set bit at position k maps to position 2k in the product.
             let expected_word0: u64 = 0x5555_5555_5555_5555u64;
             let expected_word1: u64 = 0x5555_5555_5555_5555u64;
             assert_eq!(
@@ -2107,7 +2079,6 @@ mod tests {
 
     impl Gf2mWideConfig<2> for Gf2m128TestConfig {
         const M: usize = 128;
-        // x^7 + x^2 + x + 1 = 0b10000111 = 0x87
         const MODULUS: [u64; 2] = [0x87, 0];
         const NAME: &'static str = "Gf2m128TestConfig";
     }
@@ -2118,7 +2089,6 @@ mod tests {
 
     impl Gf2mWideConfig<2> for Gf2m127TestConfig {
         const M: usize = 127;
-        // x + 1 = 0b11 = 3
         const MODULUS: [u64; 2] = [3, 0];
         const NAME: &'static str = "Gf2m127TestConfig";
     }
@@ -2360,14 +2330,10 @@ mod tests {
 
     #[test]
     fn test_display_format_one_m256() {
-        // GF(2^256), one: words = [1, 0, 0, 0].
-        // Expected: GF(2^256):0x0000000000000001_0000000000000000_0000000000000000_0
         let a = Gf2mWide::<4, Gf2m256TestConfig>::one();
         let s = format!("{}", a);
         assert!(s.starts_with("GF(2^256):0x"), "got: {}", s);
-        // word[0] = 1 → "0000000000000001"
         assert!(s.contains("0000000000000001"), "got: {}", s);
-        // word[3] = 0 → "0" (top word not zero-padded)
         assert!(s.ends_with("_0"), "got: {}", s);
     }
 
@@ -2387,7 +2353,6 @@ mod tests {
 
     #[test]
     fn test_display_format_known_vector_m256() {
-        // words = [0xdead_beef_cafe_f00d, 0, 0, 0]
         let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(0xdead_beef_cafe_f00d);
         let s = format!("{}", a);
         assert!(s.contains("deadbeefcafef00d"), "got: {}", s);
@@ -2395,12 +2360,9 @@ mod tests {
 
     #[test]
     fn test_display_format_m127() {
-        // GF(2^127): M = 127, N = 2. Top word uses 63 bits (127 - 64 = 63),
-        // so the top word is not zero-padded but has at most 16 digits.
         let a = Gf2mWide::<2, Gf2m127TestConfig>::one();
         let s = format!("{}", a);
         assert!(s.starts_with("GF(2^127):0x"), "got: {}", s);
-        // word[0] = 1 → "0000000000000001"; word[1] = 0 → "0"
         assert_eq!(s, "GF(2^127):0x0000000000000001_0", "got: {}", s);
     }
 
@@ -2513,8 +2475,6 @@ mod tests {
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(100))]
 
-            /// Whichever lane `clmul_wide_dispatch` selects, `Gf2mWide::<4, _>::mul`
-            /// equals the independent reference in `scalar_reference_mul`.
             #[test]
             fn prop_simd_matches_scalar_reference_m256(
                 xs in any_4_words(),

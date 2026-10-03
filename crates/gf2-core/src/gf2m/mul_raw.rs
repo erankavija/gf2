@@ -115,10 +115,7 @@ mod tests {
 
     #[test]
     fn test_gf2m_mul_raw_gf16() {
-        // GF(2^4) with p(x) = x^4 + x + 1
-        // x * x = x^2
         assert_eq!(gf2m_mul_raw(0b0010, 0b0010, 4, 0b10011), 0b0100);
-        // x * x^3 = x^4 = x + 1 (reduced by p(x))
         assert_eq!(gf2m_mul_raw(0b0010, 0b1000, 4, 0b10011), 0b0011);
     }
 
@@ -148,28 +145,22 @@ mod tests {
 
     #[test]
     fn test_gf2m_mul_raw_gf8() {
-        // GF(2^3) with p(x) = x^3 + x + 1 = 0b1011
-        // x * x = x^2
         assert_eq!(gf2m_mul_raw(0b010, 0b010, 3, 0b1011), 0b100);
-        // x * x^2 = x^3 = x + 1
         assert_eq!(gf2m_mul_raw(0b010, 0b100, 3, 0b1011), 0b011);
-        // (x+1) * (x+1) = x^2 + 1
         assert_eq!(gf2m_mul_raw(0b011, 0b011, 3, 0b1011), 0b101);
     }
 
     #[test]
     fn test_gf2m_mul_raw_m1() {
-        // GF(2^1) = GF(2) with p(x) = x + 1 = 0b11 (m=1, word boundary)
         assert_eq!(gf2m_mul_raw(0, 0, 1, 0b11), 0);
         assert_eq!(gf2m_mul_raw(0, 1, 1, 0b11), 0);
         assert_eq!(gf2m_mul_raw(1, 0, 1, 0b11), 0);
-        assert_eq!(gf2m_mul_raw(1, 1, 1, 0b11), 1); // 1 * 1 = 1 in GF(2)
+        assert_eq!(gf2m_mul_raw(1, 1, 1, 0b11), 1);
     }
 
     #[test]
     fn test_gf2m_mul_raw_m63() {
         // m = 63 (maximum valid extension degree for u64)
-        // p(x) = x^63 + x + 1 (a known primitive polynomial)
         let poly: u64 = (1u64 << 63) | 0b11;
         assert_eq!(gf2m_mul_raw(1, 1, 63, poly), 1);
         assert_eq!(gf2m_mul_raw(2, 1, 63, poly), 2);
@@ -218,17 +209,13 @@ mod tests {
 
     #[test]
     fn test_gf2m_pow_raw_basic() {
-        // GF(2^4) with p(x) = x^4 + x + 1 = 0b10011
         let poly = 0b10011u64;
-        let alpha = 0b0010u64; // x (primitive element)
+        let alpha = 0b0010u64;
 
         assert_eq!(gf2m_pow_raw(alpha, 0, 4, poly), 1);
         assert_eq!(gf2m_pow_raw(alpha, 1, 4, poly), alpha);
-        // x^2 = 0b0100
         assert_eq!(gf2m_pow_raw(alpha, 2, 4, poly), 0b0100);
-        // x^4 = x + 1 = 0b0011 (reduced by p(x))
         assert_eq!(gf2m_pow_raw(alpha, 4, 4, poly), 0b0011);
-        // x^15 = 1 (order of GF(2^4)*)
         assert_eq!(gf2m_pow_raw(alpha, 15, 4, poly), 1);
         assert_eq!(gf2m_pow_raw(1, 42, 4, poly), 1);
         // 0^0 = 1 by convention (loop doesn't execute)
@@ -279,7 +266,6 @@ mod tests {
 
     #[test]
     fn test_gf2m_inverse_raw_gf8() {
-        // GF(2^3) with p(x) = x^3 + x + 1 = 0b1011
         let poly = 0b1011u64;
         for a in 1..8u64 {
             let inv = gf2m_inverse_raw(a, 3, poly);
@@ -293,7 +279,6 @@ mod tests {
 
     #[test]
     fn test_gf2m_inverse_raw_m1() {
-        // GF(2): only nonzero element is 1, inverse(1) = 1
         assert_eq!(gf2m_inverse_raw(1, 1, 0b11), 1);
         assert_eq!(gf2m_inverse_raw(0, 1, 0b11), 0);
     }
