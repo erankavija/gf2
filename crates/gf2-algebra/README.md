@@ -8,24 +8,16 @@ Packed arithmetic over F_3, F_5 and F_7 and matrix-permanent algorithms built on
 - Permanental rank deficiency of rectangular matrices (`permanent::rank`) and exact small-order permanent-zero probabilities (`permanent::exact`).
 - Lane-parallel F_3, F_5 and F_7 vectors through the `PackedField` traits: 64 lanes for F_3 and F_5, 16 lanes for F_7.
 
-`permanent_ryser` accepts any `FiniteField` and serves as the correctness oracle for the packed kernels.
-
 ## Computation
 
-| Capability | Entry points |
-|---|---|
-| Packed fields | `packed::{Bipedal3, Packed5, Packed7}` with `*Vec` and `*Matrix` companions |
-| Permanent, any field | `permanent::permanent_ryser`, `permanent_mod3_reference` |
-| Permanent, packed | `permanent_bipedal3` (`n <= 255`; single-word kernel through `n = 63`, multi-word above), `permanent_bipedal5`, `permanent_bipedal7` (single-word; `n` bounded by the lane count) |
-| Permanental rank | `permanental_rank_status`, `exact_permanental_rank_deficiency` |
-| Exact enumeration | `enumerate_permanent_zero_probability`, `determinant_singular_probability` |
+- `packed`: lane-parallel F_3, F_5 and F_7 vectors and matrices.
+- `permanent`: permanents over any `FiniteField` as a correctness oracle, and packed F_3, F_5 and F_7 kernels; F_3 extends to multi-word matrices.
+- `permanent::rank`: permanental rank deficiency of rectangular matrices.
+- `permanent::exact`: exact permanent-zero and determinant-singularity probabilities by enumeration.
 
 ## Backends
 
-- **Scalar**: always available and the dispatch target of `permanent_bipedal3`.
-- **AVX2** (`simd`): `permanent_bipedal3_batch` evaluates up to four F_3 matrices together and `permanent_bipedal3_singleword_simd` exposes the single-matrix kernel; both fall back to scalar when the host lacks AVX2.
-- **Rayon** (`parallel`): `permanent_bipedal3_parallel` partitions the Gray-code walk into chunks; chunk size comes from `tuning::AlgebraTuning`.
-- **HIP/ROCm** (`hip`): `gpu::permanent_batch_bipedal{3,5,7}` evaluates a batch on the device.
+Scalar is always available. `simd` adds AVX2 kernels for F_3 with scalar fallback, `parallel` adds Rayon evaluation, and `hip` adds batched GPU evaluation in `gpu`.
 
 ## Features
 
@@ -35,10 +27,10 @@ The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative. Defaults 
 |---|---|
 | `simd` | AVX2 batch and single-matrix kernels |
 | `parallel` | Rayon permanent |
-| `f5`, `f7` | `Packed5`/`Packed7` types and `permanent_bipedal5`/`permanent_bipedal7` |
+| `f5`, `f7` | F_5 and F_7 packed types and permanents |
 | `hip` | `gpu` module; requires ROCm and `hipcc` |
 | `serde` | `Serialize`/`Deserialize` on packed types |
-| `tuning-profile` | `AlgebraTuningCodec` |
+| `tuning-profile` | Tuning-profile codec |
 | `test-support` | `testutil` matrix generators and oracles |
 
 Dependency setup follows the [installation](../../docs/reference/supported-configurations.md#installation) instructions. `default-features = false` selects the scalar, F_3-only build; `hip` adds the GPU backend.
