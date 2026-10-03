@@ -1,0 +1,22 @@
+scanned dev/active/DOCUMENTATION_AUDIT.md: 0 local links
+scanned dev/active/ae03bcd0-general-bch/bch-api-design.md: 8 local links
+scanned dev/active/ae03bcd0-general-bch/handoff-7.md: 0 local links
+scanned dev/active/ae03bcd0-general-bch/investigation.md: 0 local links
+scanned dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-97410c80.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/12907582-drift-preaudit.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/12907582-drift-record.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/4bdcd65a-roadmap-map.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/investigation.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/perf-evidence-catalog.md: 0 local links
+scanned dev/active/fa787f85-documentation-overhaul/roadmap-premap.md: 0 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/DVB_T2.md: 1 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/LDPC_PERFORMANCE.md: 2 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/LDPC_VERIFICATION_TESTS.md: 1 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/PARALLELIZATION.md: 2 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/README.md: 8 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/SDR_INTEGRATION.md: 0 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md: 2 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/SYSTEMATIC_ENCODING_CONVENTION.md: 1 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_PLAN.md: 0 local links
+scanned dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md: 6 local links
+unresolved local links: 0

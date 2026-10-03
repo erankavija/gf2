@@ -40,7 +40,8 @@
 //! 1. Receive target_n LLRs from the channel.
 //! 2. Construct full-length N LLR vector:
 //!    - First 2*Z positions: LLR = 0 (no channel information)
-//!    - Filler bit positions: LLR = `FILLER_LLR` (known to be zero)
+//!    - Filler bit positions: the finite prior of
+//!      [`Nr5gRateMatchedCode::prepare_llrs`] (known to be zero)
 //!    - Transmitted positions: LLR from channel
 //!    - Remaining parity positions: LLR = 0 (punctured parity)
 //! 3. Decode with BP on the FULL mother code H.
@@ -416,8 +417,8 @@ impl QuasiCyclicLdpc {
     ///
     /// Unlike column-removal approaches, this preserves the full mother code
     /// H for BP decoding. Rate matching is handled via LLR initialization:
-    /// punctured positions get LLR=0, filler positions get the finite filler
-    /// magnitude `FILLER_LLR`.
+    /// punctured positions get LLR=0, filler positions get the finite prior
+    /// of [`Nr5gRateMatchedCode::prepare_llrs`].
     ///
     /// # Arguments
     ///
@@ -681,13 +682,8 @@ impl NrRateMatchParams {
     }
 }
 
-/// LLR value for filler (shortened) bit positions.
-///
-/// Filler bits are known to be zero, so we use a positive LLR representing
-/// high confidence. The value must be moderate enough for sum-product BP
-/// (tanh(LLR/2) must not saturate to exactly 1.0 in f32), yet large enough
-/// to provide a strong prior. Value 15.0 gives f32 tanh(7.5) ≈ 0.9999994,
-/// which avoids saturation while providing a very strong prior.
+/// Filler-position prior; [`Nr5gRateMatchedCode::prepare_llrs`] documents the
+/// value and why it is finite.
 const FILLER_LLR: f32 = 15.0;
 
 /// Encoding data for the mother code with right-pivot column mapping.
@@ -950,7 +946,7 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
 /// 1. Receive target_n channel LLRs.
 /// 2. Map to full_n LLR vector using `transmitted_cols`:
 ///    - Transmitted positions: channel LLR
-///    - Filler positions: LLR = `FILLER_LLR` (known zero)
+///    - Filler positions: the finite prior of [`Self::prepare_llrs`] (known zero)
 ///    - All other positions: LLR = 0 (no channel info)
 /// 3. BP decode on the full mother code H.
 /// 4. Extract target_k message bits.
@@ -1091,8 +1087,12 @@ impl Nr5gRateMatchedCode {
     /// natural-systematic columns as parity pivots (e.g., BG2 row 41).
     ///
     /// - Transmitted positions (from `transmitted_cols`): channel LLRs
-    /// - Filler positions: LLR = `FILLER_LLR` (known to be zero)
+    /// - Filler positions: LLR = 15.0 (known to be zero)
     /// - Punctured & untransmitted positions: LLR = 0 (no info)
+    ///
+    /// The filler prior is finite because `tanh(15.0 / 2)` stays below 1 in
+    /// `f32`, whereas the exact prior $+\infty$ gives `tanh` = 1, the argument
+    /// at which the sum-product check-node `atanh` diverges.
     ///
     /// # Arguments
     ///
