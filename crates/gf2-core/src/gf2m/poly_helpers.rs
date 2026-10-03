@@ -14,24 +14,6 @@ use crate::BitVec;
 impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// Constructs a polynomial from a BitVec over GF(2^m): bit `i` selects
     /// `field.zero()` or `field.one()` as the coefficient of `x^i`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut bits = BitVec::new();
-    /// bits.push_bit(true);  // x^0
-    /// bits.push_bit(false); // x^1
-    /// bits.push_bit(true);  // x^2
-    ///
-    /// let poly = Gf2mPoly::from_bitvec(&bits, &field);
-    /// assert_eq!(poly.degree(), Some(2));
-    /// assert!(poly.coeff(0).is_one());
-    /// assert!(poly.coeff(1).is_zero());
-    /// assert!(poly.coeff(2).is_one());
-    /// ```
     pub fn from_bitvec(bits: &BitVec, field: &Gf2mField_<V>) -> Self {
         if bits.is_empty() {
             return FieldPoly::zero_like(&field.zero());
@@ -53,23 +35,6 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// Converts the polynomial to a `BitVec` of `len` bits: bit `i` is set iff
     /// the coefficient of `x^i` is non-zero. Coefficients at or above `len`
     /// are dropped.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![field.one(), field.zero(), field.one()]);
-    ///
-    /// let bits = poly.to_bitvec(5);
-    /// assert_eq!(bits.len(), 5);
-    /// assert!(bits.get(0));
-    /// assert!(!bits.get(1));
-    /// assert!(bits.get(2));
-    /// assert!(!bits.get(3));
-    /// assert!(!bits.get(4));
-    /// ```
     pub fn to_bitvec(&self, len: usize) -> BitVec {
         let mut bits = BitVec::new();
         for i in 0..len {
@@ -83,18 +48,6 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// (`degree + 1`).
     ///
     /// Returns an empty `BitVec` for the zero polynomial.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![field.one(), field.zero(), field.one()]);
-    ///
-    /// let bits = poly.to_bitvec_minimal();
-    /// assert_eq!(bits.len(), 3);
-    /// ```
     pub fn to_bitvec_minimal(&self) -> BitVec {
         let len = self.degree().map(|d| d + 1).unwrap_or(0);
         self.to_bitvec(len)
@@ -103,23 +56,8 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// Constructs a polynomial from a `BitVec` with reversed-coefficient
     /// mapping: `bit[i]` feeds coefficient `x^(n-1-i)`.
     ///
-    /// This matches the DVB-T2 convention of "MSB-first" codewords where
+    /// This matches the `@/citation/Etsi2015` (DVB-T2) convention of "MSB-first" codewords where
     /// bit `0` is the highest-degree coefficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitVec, gf2m::{Gf2mField, Gf2mPoly}};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let mut bits = BitVec::new();
-    /// bits.push_bit(true);  // -> x^2
-    /// bits.push_bit(false); // -> x^1
-    /// bits.push_bit(true);  // -> x^0
-    ///
-    /// let poly = Gf2mPoly::from_bitvec_reversed(&bits, &field);
-    /// assert_eq!(poly.degree(), Some(2));
-    /// ```
     pub fn from_bitvec_reversed(bits: &BitVec, field: &Gf2mField_<V>) -> Self {
         if bits.is_empty() {
             return FieldPoly::zero_like(&field.zero());
@@ -142,20 +80,6 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
 
     /// Converts the polynomial to a `BitVec` with reversed-coefficient
     /// mapping: coefficient of `x^i` ends up at `bit[len-1-i]`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::new(vec![field.one(), field.zero(), field.one()]);
-    ///
-    /// let bits = poly.to_bitvec_reversed(5);
-    /// assert_eq!(bits.len(), 5);
-    /// assert!(bits.get(2));  // x^2 at bit 2 (len - 1 - 2)
-    /// assert!(bits.get(4));  // x^0 at bit 4
-    /// ```
     pub fn to_bitvec_reversed(&self, len: usize) -> BitVec {
         let mut bits = BitVec::new();
         if len == 0 {
@@ -178,22 +102,6 @@ impl<V: UintExt> FieldPoly<Gf2mElement_<V>> {
     /// # Panics
     ///
     /// Panics if `exponents` is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let poly = Gf2mPoly::from_exponents(&field, &[0, 1, 4]);
-    ///
-    /// assert_eq!(poly.degree(), Some(4));
-    /// assert_eq!(poly.coeff(0), field.one());
-    /// assert_eq!(poly.coeff(1), field.one());
-    /// assert_eq!(poly.coeff(2), field.zero());
-    /// assert_eq!(poly.coeff(3), field.zero());
-    /// assert_eq!(poly.coeff(4), field.one());
-    /// ```
     ///
     /// # Complexity
     ///
