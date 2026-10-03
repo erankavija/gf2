@@ -7,7 +7,7 @@ covers selected `gf2-core` and `gf2-algebra` arithmetic paths.
 > It is the executable definition of every extraction flag, tool pin, and
 > post-processing pass, and its header comment records why each workaround is
 > load-bearing. This page mirrors that script and
-> [`proofs/WORKAROUNDS.md`](../proofs/WORKAROUNDS.md); where this page and the
+> [`proofs/WORKAROUNDS.md`](../../../../proofs/WORKAROUNDS.md); where this page and the
 > script disagree, the script is correct and this page is the defect. Change the
 > script first, then update the mirror here in the same commit.
 
