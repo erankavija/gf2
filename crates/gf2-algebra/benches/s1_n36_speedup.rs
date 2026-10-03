@@ -1,52 +1,11 @@
-//! S1 (jit:c98ed603) — dedicated single-thread speedup benchmark.
+//! Single-thread speedup benchmark: the public `permanent_bipedal3` entry point
+//! against `permanent_mod3_reference` on identical seeded inputs.
 //!
-//! Measures the scalar-routed public `permanent_bipedal3` entry point against
-//! `permanent_mod3_reference` (T8) at `n ∈ {24, 28, 32, 36}` on the dev host
-//! (AMD Ryzen 9 5900X, Zen 3, AVX2-only).
-//!
-//! ## Structure
-//!
-//! - **Criterion cells** cover `n ∈ {24, 28}` in two benchmark groups
-//!   (`s1_permanent_mod3_reference` and
-//!   `s1_permanent_bipedal3_dispatch_scalar`).
-//!   `sample_size(10)` with a 25 s `measurement_time` keeps each cell under
-//!   the criterion-4 60 s/cell budget on the dev host.
-//!
-//! - **Offline cells** cover `n ∈ {32, 36}`.  Activated by setting
-//!   `S1_OFFLINE=1` in the environment.  Each cell takes a single wall-clock
-//!   sample (Criterion's 10-sample minimum would require ~20 min for n=32 ref
-//!   and ~100 hr for n=36 ref on this hardware).
-//!
-//! ## Usage
-//!
-//! ```bash
-//! # Criterion sweep (n=24, n=28, ~4 min total):
-//! cargo bench -p gf2-algebra --features "simd test-support" --bench s1_n36_speedup
-//!
-//! # Offline one-shot timing for n=32 (~20 min) and n=36 (~10 hr):
-//! S1_OFFLINE=1 cargo bench -p gf2-algebra --features "simd test-support" \
-//!   --bench s1_n36_speedup -- --nocapture
-//!
-//! # Offline for n=32 only (skip n=36):
-//! S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench -p gf2-algebra \
-//!   --features "simd test-support" --bench s1_n36_speedup -- --nocapture
-//! ```
-//!
-//! ## CSV output
-//!
-//! `dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv`
-//! (overridable via `SA_DATE`).  Columns:
-//!
-//! `n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint`
-//!
-//! The offline harness appends rows to the CSV if it already exists (so a
-//! Criterion run for n=24/28 can be followed by an offline run for n=32/36).
-//!
-//! ## Reproducibility
-//!
-//! All inputs come from [`gf2_algebra::testutil::random_matrix`] seeded from
-//! the JIT issue ID (`c98ed603`).  Both implementations at each `n` use the
-//! same seed so the speedup ratio is over identical inputs.
+//! Criterion cells cover `n ∈ {24, 28}`. With `S1_OFFLINE=1` the binary instead
+//! takes one wall-clock sample per cell at `n ∈ {32, 36}` and appends rows to
+//! `dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv` (date
+//! overridable via `SA_DATE`) with columns
+//! `n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint`.
 
 use criterion::{black_box, criterion_group, BenchmarkId, Criterion};
 use std::time::Duration;
@@ -55,32 +14,15 @@ use gf2_algebra::packed::Bipedal3Matrix;
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_mod3_reference};
 use gf2_algebra::testutil::random_matrix;
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/// Base seed derived from the JIT issue ID `c98ed603`.
 const S1_SEED_BASE: u64 = 0xc98e_d603_0000_0000_u64;
 
-/// Hardware fingerprint embedded in the CSV header (verified by `lscpu`).
 const HW_MODEL: &str = "AMD Ryzen 9 5900X 12-Core Processor";
 const HW_ARCH: &str = "Zen 3";
 const HW_AVX2: &str = "yes";
 const HW_AVX512: &str = "no";
 
-// ---------------------------------------------------------------------------
-// Criterion benchmark groups (n ∈ {24, 28})
-// ---------------------------------------------------------------------------
-
-/// Criterion group: `permanent_mod3_reference` at n ∈ {24, 28}.
-///
-/// n=32 and n=36 are excluded from Criterion: Criterion's minimum
-/// `sample_size` of 10 puts n=32 at ~200 min/cell and n=36 at ~100 hr/cell.
-/// Those cells are covered by the offline harness (`S1_OFFLINE=1`).
-///
-/// # Arguments
-///
-/// * `c` — Criterion context injected by the `criterion_group!` harness.
+/// `permanent_mod3_reference` at n ∈ {24, 28}; n ∈ {32, 36} run in the offline
+/// harness.
 fn s1_bench_reference(c: &mut Criterion) {
     let mut group = c.benchmark_group("s1_permanent_mod3_reference");
     group.sample_size(10); // Criterion's hard minimum.
@@ -97,15 +39,8 @@ fn s1_bench_reference(c: &mut Criterion) {
     group.finish();
 }
 
-/// Criterion group: scalar-routed public `permanent_bipedal3` at n ∈ {24, 28}.
-///
-/// Uses the same seed as the reference group (same base + n-offset) so both
-/// implementations receive bit-identical inputs and the speedup ratio is
-/// over the same matrices.
-///
-/// # Arguments
-///
-/// * `c` — Criterion context injected by the `criterion_group!` harness.
+/// Public `permanent_bipedal3` at n ∈ {24, 28} on the same seeds as the
+/// reference group.
 fn s1_bench_bipedal3(c: &mut Criterion) {
     let mut group = c.benchmark_group("s1_permanent_bipedal3_dispatch_scalar");
     group.sample_size(10);
@@ -113,7 +48,6 @@ fn s1_bench_bipedal3(c: &mut Criterion) {
     group.measurement_time(Duration::from_secs(25));
 
     for n in [24usize, 28] {
-        // Same seed as s1_bench_reference so inputs are identical.
         let seed = S1_SEED_BASE.wrapping_add(n as u64);
         let row_major = random_matrix::<3>(n, seed);
         let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
@@ -126,25 +60,13 @@ fn s1_bench_bipedal3(c: &mut Criterion) {
 
 criterion_group!(s1_benches, s1_bench_reference, s1_bench_bipedal3);
 
-// ---------------------------------------------------------------------------
-// Offline one-shot harness (n ∈ {32, 36})
-// ---------------------------------------------------------------------------
-
-/// Offline timing harness for n=32 and n=36.
-///
-/// Called from `main` when `S1_OFFLINE=1` is set.  Takes a single wall-clock
-/// sample per (n, impl) cell, writes CSV rows, and prints progress to stdout.
-///
-/// # Arguments
-///
-/// * `csv`   — open writer for the CSV file (must already have a header).
-/// * `max_n` — skip any `n` above this value (e.g. 32 to skip n=36).
-/// * `date`  — date string for progress output.
+/// Takes one wall-clock sample per (n, impl) cell for n ∈ {32, 36} up to
+/// `max_n` and writes CSV rows; `csv` must already have a header.
 ///
 /// # Panics
 ///
 /// Panics if `permanent_mod3_reference` and `permanent_bipedal3` disagree on
-/// the same input, indicating a correctness regression in the public path.
+/// the same input.
 fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, date: &str) {
     use std::time::Instant;
 
@@ -225,32 +147,8 @@ fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, dat
     }
 }
 
-// ---------------------------------------------------------------------------
-// Main entry point
-// ---------------------------------------------------------------------------
-
-/// Bench entry point.
-///
-/// When `S1_OFFLINE=1` is set: runs the offline single-sample harness for
-/// `n ∈ {32, 36}` and writes the CSV, then exits without invoking Criterion.
-///
-/// Otherwise: runs the Criterion groups for `n ∈ {24, 28}` — equivalent to
-/// the `criterion_main!(s1_benches)` expansion.
-///
-/// This manual main replaces the `criterion_main!` macro so that a single
-/// bench binary can serve both the CI Criterion path and the long-running
-/// offline timing path without a separate example binary.
-///
-/// # Examples
-///
-/// ```bash
-/// # Criterion (n=24, 28):
-/// cargo bench -p gf2-algebra --features "simd test-support" --bench s1_n36_speedup
-///
-/// # Offline (n=32, 36):
-/// S1_OFFLINE=1 cargo bench -p gf2-algebra --features "simd test-support" \
-///   --bench s1_n36_speedup -- --nocapture
-/// ```
+/// With `S1_OFFLINE=1`, runs the offline harness and exits; otherwise runs the
+/// Criterion groups as `criterion_main!(s1_benches)` would.
 fn main() {
     use gf2_algebra::testutil::today_yyyy_mm_dd;
     use std::fs::{self, File, OpenOptions};
@@ -260,10 +158,8 @@ fn main() {
 
     if offline {
         let date = today_yyyy_mm_dd();
-        // `cargo bench` sets the binary's working directory to the package
-        // directory (`crates/gf2-algebra/`), not the workspace root.
-        // Navigate to the workspace root at runtime using the compile-time
-        // CARGO_MANIFEST_DIR constant (crates/gf2-algebra → ../../ → workspace).
+        // `cargo bench` runs the binary in the package directory, so the
+        // workspace root is resolved from CARGO_MANIFEST_DIR.
         let workspace_root = {
             let manifest_dir = env!("CARGO_MANIFEST_DIR");
             std::path::Path::new(manifest_dir)
@@ -278,7 +174,6 @@ fn main() {
 
         let csv_exists = csv_path.exists();
         let mut csv: Box<dyn IoWrite> = if csv_exists {
-            // Append to an existing file created by a prior Criterion run.
             Box::new(
                 OpenOptions::new()
                     .append(true)
@@ -286,7 +181,6 @@ fn main() {
                     .expect("open CSV for append"),
             )
         } else {
-            // Fresh file: write the header block first.
             let mut f = File::create(&csv_path).expect("create CSV");
             writeln!(
                 f,
@@ -323,8 +217,7 @@ fn main() {
         return;
     }
 
-    // Normal path: run Criterion groups, then print the final summary.
-    // This replicates the `criterion_main!(s1_benches)` expansion manually.
+    // The `criterion_main!(s1_benches)` expansion.
     s1_benches();
     criterion::Criterion::default()
         .configure_from_args()

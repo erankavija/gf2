@@ -1,45 +1,5 @@
-//! Criterion benchmark suite for the permanent algorithm family
-//! (epic gf2-algebra-permanent / ae82bd73).
-//!
-//! Per-group sweep ranges per T10 (b315564a) Amendment 2026-05-11c:
-//!   permanent_mod3_reference: n in {8, 12, 16, 20}
-//!   permanent_bipedal3:       n in {8, 12, 16, 20, 24, 28}
-//!
-//! n=32 (~9.4 s/call) and n=36 (~150 s/call) were dropped from the bipedal
-//! sweep on 2026-05-11 because Criterion's hard minimum sample_size of 10
-//! would push each of those cells past the criterion-4 60 s/cell budget on
-//! the dev host (10 * 9.4 s = 94 s and 10 * 150 s = 1500 s respectively).
-//! The headline n=36 speedup measurement instead lands in S1's dedicated
-//! perf-criterion cell, which uses an iter_custom-style single-iteration
-//! timing where multi-hour wall-clock is acceptable.
-//!
-//! Inputs come from the workspace SSOT helper
-//! [`gf2_algebra::testutil::random_matrix`], which uses [`gf2_core::rng::Lcg`]
-//! seeded deterministically per cell so consecutive runs on the same hardware
-//! reproduce bit-identical inputs and stable timing. See the 2026-05-11b
-//! amendment in JIT issue `b315564a` for the rationale (committed-seed
-//! reproducibility, Charon/Aeneas extractability, dep minimalism).
-//!
-//! Per-cell wall-clock budget: criterion 4 contracts each cell under 60 s on
-//! the dev host. Criterion's linear-mode sampling at `sample_size(10)` (its
-//! hard minimum) runs `iters = [d, 2d, ..., 10d]` = 55·d total iterations per
-//! cell, where `d` is auto-chosen so 55·d·mean_iter ≈ measurement_time.
-//! Setting `warm_up_time(1 s)` + `measurement_time(25 s)` keeps every cell
-//! under 60 s on the dev host:
-//!   permanent_mod3_reference n=8/12/16: ~µs–ms mean — Criterion scales d up;
-//!                                       total ≈ 25 s.
-//!   permanent_mod3_reference n=20:      ~77 ms mean — d ≈ 6, total ≈ 25 s.
-//!   permanent_bipedal3 n=8..24:         ~ns–ms mean — Criterion scales d up;
-//!                                       total ≈ 25 s.
-//!   permanent_bipedal3 n=28:            ~0.59 s mean — d = 1, total ≈ 32.5 s.
-//!
-//! With 1 s warm-up + ~2 s Criterion overhead, every cell finishes inside the
-//! 60 s/cell criterion-4 budget.
-//!
-//! The headline `permanent_mod3_reference` n=36 (paper's reference workload)
-//! and the matching `permanent_bipedal3` n=36 50× speedup measurement land in
-//! S1's separate perf-criterion cell, which uses a single-iteration timing
-//! where multi-hour wall-clock is acceptable.
+//! Criterion benchmarks for `permanent_mod3_reference` and `permanent_bipedal3`
+//! on inputs from [`gf2_algebra::testutil::random_matrix`], seeded per cell.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::time::Duration;
@@ -48,15 +8,15 @@ use gf2_algebra::packed::Bipedal3Matrix;
 use gf2_algebra::permanent::{permanent_bipedal3, permanent_mod3_reference};
 use gf2_algebra::testutil::random_matrix;
 
-/// Workspace SSOT seed for this bench file. Distinct from test seeds so
-/// the bench fingerprint does not change when test seeds are rotated.
+/// Distinct from test seeds, so rotating those leaves the bench inputs
+/// unchanged.
 const BENCH_SEED: u64 = 0xb315_564a_0000_0000_u64;
 
 fn bench_permanent_mod3_reference(c: &mut Criterion) {
     let mut group = c.benchmark_group("permanent_mod3_reference");
     group.sample_size(10); // Criterion's hard minimum.
-    group.warm_up_time(Duration::from_secs(1)); // trimmed from the 3 s default
-    group.measurement_time(Duration::from_secs(25)); // 45 + 1 warm-up + overhead < 60 s/cell
+    group.warm_up_time(Duration::from_secs(1));
+    group.measurement_time(Duration::from_secs(25));
 
     for n in [8usize, 12, 16, 20] {
         let seed = BENCH_SEED.wrapping_add(n as u64);

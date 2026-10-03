@@ -1,41 +1,14 @@
-//! S2 (jit:4513209c): Parallel scaling sweep for `permanent_bipedal3_parallel`.
+//! Parallel scaling sweep for `permanent_bipedal3_parallel`.
 //!
-//! Measures wall-clock time of `permanent_bipedal3_parallel` across rayon thread
-//! counts T ∈ {1, 2, 4, 8, 12} and matrix dimensions n ∈ {28, 32, 36}, computing
-//! the per-matrix scaling factor `T_1[k] / (T × T_T[k])` for each independent
-//! matrix `k`, then aggregating to a mean and a two-sided 95% CI per (n, T).
+//! Times the same K seeded matrices per n at every rayon thread count in
+//! `THREAD_COUNTS`, panics unless each matrix's `Fp<3>` result is identical
+//! across thread counts, and reports the per-matrix scaling factor
+//! `T_1[k] / (T × T_T[k])` as a mean with a two-sided 95% CI per (n, T). A cell
+//! passes when the CI lower bound is ≥ 0.85.
 //!
-//! # Success criterion (verbatim from JIT 4513209c)
-//!
-//! For n ∈ {28, 32, 36} and T ∈ {2, 4, 8, 12}: scaling factor `T_1 / (T × T_T) ≥
-//! 0.85` *within 95% CI*. The harness implements this by checking that the
-//! **lower bound** of the per-cell two-sided 95% CI on the scaling factor is
-//! ≥ 0.85.
-//!
-//! # Determinism
-//!
-//! For each n we draw K matrices from a deterministic LCG seeded by the JIT
-//! issue ID. The SAME K matrices are timed at every thread count so the
-//! per-matrix `Fp<3>` output can be compared bit-for-bit across T values.
-//! The harness asserts equality at runtime and panics on mismatch.
-//!
-//! # CSV output
-//!
-//! `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
-//! (overridable via `SA_DATE`). Columns:
-//!   n, threads, mean_us, std_us, k_matrices, scaling_factor, scaling_ci_lo,
-//!   scaling_ci_hi, fp3_result_hex
-//!
-//! # Hardware fingerprint
-//!
-//! Recorded in the CSV header block.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features "parallel test-support" \
-//!   --example parallel_scaling_sweep
-//! ```
+//! Writes `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
+//! (date overridable via `SA_DATE`) with columns `n, threads, mean_us, std_us,
+//! k_matrices, scaling_factor, scaling_ci_lo, scaling_ci_hi, fp3_result_hex`.
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel;
@@ -44,31 +17,25 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
 
-/// Thread counts to sweep.
 const THREAD_COUNTS: &[usize] = &[1, 2, 4, 8, 12];
 
-/// Matrix dimensions to sweep.
 const N_VALUES: &[usize] = &[28, 32, 36];
 
 /// Number of independent matrices per (n) bucket. The same K matrices are
 /// reused at every thread count so per-matrix scaling factors stay paired.
-/// n=36 T=1 is ~150 s/matrix; K=3 keeps n=36 inside ~12 min.
 const K_N28: usize = 5;
 const K_N32: usize = 5;
 const K_N36: usize = 3;
 
 /// Fixed RNG base seed per n. Per-matrix seed is `base ^ (k as u64)`.
-/// Seeds derived from the JIT issue ID `4513209c`.
 const SEED_BASES: &[(usize, u64)] = &[
     (28, 0x4513_209c_0000_001c),
     (32, 0x4513_209c_0000_0020),
     (36, 0x4513_209c_0000_0024),
 ];
 
-/// Rayon version recorded in the header.
 const RAYON_VERSION: &str = "1.11.0";
 
-/// Hardware fingerprint (Ryzen 9 5900X, verified via lscpu before running).
 const HW_MODEL: &str = "AMD Ryzen 9 5900X 12-Core Processor";
 const HW_PHYSICAL_CORES: usize = 12;
 const HW_SMT: &str = "2x (24 logical CPUs)";
@@ -110,7 +77,6 @@ fn main() {
     fs::create_dir_all(csv_dir).expect("create benchmarks dir");
     let mut csv = File::create(&csv_path).expect("create CSV");
 
-    // Header block: hardware fingerprint + config.
     writeln!(csv, "# S2 (jit:4513209c) parallel scaling sweep").unwrap();
     writeln!(csv, "# date: {date}").unwrap();
     writeln!(csv, "# host: {HW_MODEL}").unwrap();
@@ -147,8 +113,6 @@ fn main() {
 
         println!("=== n={n}: K={k} independent matrices, base seed={base_seed:#018x} ===");
 
-        // Build K independent matrices once; the same K matrices are timed at
-        // every thread count so per-matrix scaling factors stay paired.
         let matrices: Vec<Bipedal3Matrix> = (0..k)
             .map(|i| {
                 let seed = base_seed ^ (i as u64);
@@ -183,7 +147,6 @@ fn main() {
                 timings_per_matrix[i].push(elapsed_us);
             }
 
-            // Determinism: each matrix must produce the same Fp<3> across all T.
             match ref_fp3 {
                 None => ref_fp3 = Some(fp3_this_t.clone()),
                 Some(ref refv) => {
@@ -205,7 +168,7 @@ fn main() {
         }
         println!();
 
-        // Now compute per-cell scaling factor with 95% CI using paired
+        // Per-cell scaling factor with 95% CI using paired
         // per-matrix timings: scaling[k][t_idx] = t1[k] / (t · t_t[k]).
         let df = k - 1;
         let t_crit = t_critical_95(df);
@@ -221,7 +184,6 @@ fn main() {
 
         let mut all_pass = true;
         for (t_idx, &t) in THREAD_COUNTS.iter().enumerate() {
-            // Per-cell mean + std of raw timings (for reporting).
             let timings_at_t: Vec<f64> = timings_per_matrix.iter().map(|row| row[t_idx]).collect();
             let mean_us = timings_at_t.iter().sum::<f64>() / k as f64;
             let std_us = (timings_at_t
@@ -231,7 +193,6 @@ fn main() {
                 / df as f64)
                 .sqrt();
 
-            // Per-matrix scaling factor; aggregate to mean + 95% CI on the mean.
             let per_matrix_scaling: Vec<f64> = (0..k)
                 .map(|i| {
                     let t1 = timings_per_matrix[i][t1_idx];
@@ -272,8 +233,7 @@ fn main() {
                 t, mean_us, std_us, scaling_mean, ci_lo, ci_hi, pass_str
             );
 
-            // Determine the canonical fp3 across all matrices for this n.
-            // (Already determinism-checked; we report the first matrix's value.)
+            // The first matrix's value, identical across thread counts.
             let fp3_val = ref_fp3.as_ref().unwrap()[0];
 
             writeln!(

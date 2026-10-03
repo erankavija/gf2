@@ -1,60 +1,19 @@
-//! Integration test: shared behavioural suite for the permanental-rank
-//! decision (jit issue `175972df`).
-//!
-//! Two implementations answer the same question — does an `n × k` matrix over
-//! `F_q` with `k ≤ n` satisfy `per-rank(A) < k`? — and every case below runs
-//! through both:
-//!
-//! * [`gf2_algebra::permanent::permanental_rank_status`], the production
-//!   predicate: lexicographic row-subset enumeration, `permanent_ryser` per
-//!   submatrix, early exit at the first nonzero permanent;
-//! * [`gf2_algebra::testutil::permanental_rank_bruteforce`], the oracle: a
-//!   `2^n` bitmask scan with a direct `S_k` permutation-sum permanent and no
-//!   early exit, sharing no code path with the predicate.
-//!
-//! Covers:
-//!
-//! 1. **Exhaustive agreement** — every one of the `q^(n·k)` matrices for
-//!    `(q, n, k) ∈ {(3,3,1), (3,3,2), (3,4,2), (5,3,2), (7,3,2)}` is decided by
-//!    both routines and the decisions must match. Split one test per triple so
-//!    each stays inside the fast tier's five-second per-test kill.
-//!
-//! 2. **Hand-constructed boundary vectors** — a zero row, a zero column,
-//!    `k = 1`, `k = n`, and the matrix that separates a vanishing scalar
-//!    rectangular permanent from permanental rank deficiency.
-//!
-//! # The two quantities the boundary section separates
-//!
-//! For an `n × k` matrix with `k ≤ n`, the scalar rectangular permanent is the
-//! sum over injections from the `k` columns into the `n` rows, which regroups
-//! as `sum over k-subsets S of rows of perm(A_S)`. Permanental rank
-//! deficiency asks instead whether *every* `perm(A_S)` vanishes. A sum of
-//! nonzero terms can vanish, so the two are different questions;
-//! [`rectangular_permanent`] below computes the first one so the distinction is
-//! asserted rather than described.
-//!
-//! # Integration-test boundary
-//!
-//! This file compiles as a separate Cargo integration-test crate, so it reaches
-//! the oracle through the `test-support` feature gate that exposes
-//! [`gf2_algebra::testutil`] publicly. See `crates/gf2-algebra/Cargo.toml` for
-//! the self-dev-dependency that auto-enables that feature under `cargo test`.
+//! Shared behavioural suite for the permanental-rank decision: every case runs
+//! through [`gf2_algebra::permanent::permanental_rank_status`] and the
+//! independent oracle [`gf2_algebra::testutil::permanental_rank_bruteforce`].
+//! Exhaustive agreement is split one test per `(q, n, k)` to stay inside the
+//! fast tier's per-test kill.
 
 use gf2_algebra::permanent::{permanental_rank_status, PermanentalRank};
 use gf2_algebra::testutil::permanental_rank_bruteforce;
 use gf2_core::field::FiniteField;
 use gf2_core::gfp::Fp;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 /// Build a flat row-major `n × k` matrix over `F_P` from residue literals.
 fn matrix<const P: u64>(values: &[u64]) -> Vec<Fp<P>> {
     values.iter().map(|&v| Fp::<P>::new(v)).collect()
 }
 
-/// Assert the predicate and the oracle agree, and that both return `expected`.
 fn assert_both<const P: u64>(
     label: &str,
     values: &[u64],
@@ -99,11 +58,9 @@ fn assert_exhaustive_agreement<const Q: u64>(n: usize, k: usize) {
             deficient += 1;
         }
 
-        // Increment the mixed-radix counter; a full wrap ends the enumeration.
         let mut position = 0;
         loop {
             if position == cells {
-                // Every matrix was visited exactly once.
                 assert_eq!(
                     examined,
                     Q.pow(cells as u32),
@@ -170,43 +127,30 @@ fn rectangular_permanent<const P: u64>(values: &[Fp<P>], n: usize, k: usize) -> 
     recurse::<P>(values, n, k, 0, &mut used, Fp::<P>::new(1))
 }
 
-// ---------------------------------------------------------------------------
-// Section 1 — Exhaustive agreement over every matrix (REQ-03)
-// ---------------------------------------------------------------------------
-
-/// `(q, n, k) = (3, 3, 1)`: all `3^3 = 27` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n3_k1() {
     assert_exhaustive_agreement::<3>(3, 1);
 }
 
-/// `(q, n, k) = (3, 3, 2)`: all `3^6 = 729` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n3_k2() {
     assert_exhaustive_agreement::<3>(3, 2);
 }
 
-/// `(q, n, k) = (3, 4, 2)`: all `3^8 = 6 561` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n4_k2() {
     assert_exhaustive_agreement::<3>(4, 2);
 }
 
-/// `(q, n, k) = (5, 3, 2)`: all `5^6 = 15 625` matrices.
 #[test]
 fn test_exhaustive_agreement_q5_n3_k2() {
     assert_exhaustive_agreement::<5>(3, 2);
 }
 
-/// `(q, n, k) = (7, 3, 2)`: all `7^6 = 117 649` matrices.
 #[test]
 fn test_exhaustive_agreement_q7_n3_k2() {
     assert_exhaustive_agreement::<7>(3, 2);
 }
-
-// ---------------------------------------------------------------------------
-// Section 2 — Hand-constructed boundary cases (REQ-04)
-// ---------------------------------------------------------------------------
 
 /// Zero row, `n > k`: the two submatrices that contain row 1 have permanent 0,
 /// but rows `{0, 2}` give `1 · 1 + 0 · 0 = 1`, so the rank is still full.
@@ -316,7 +260,7 @@ fn test_boundary_k_equals_n_all_ones_is_deficient() {
 }
 
 /// The scalar rectangular permanent vanishes while a `k × k` submatrix
-/// permanent does not (REQ-04, and the assertion behind REQ-05).
+/// permanent does not.
 ///
 /// Over `F_3` with
 ///
@@ -341,7 +285,6 @@ fn test_rectangular_permanent_vanishes_but_submatrix_does_not() {
     ];
     let a = matrix::<3>(&values);
 
-    // Quantity 1 — the scalar rectangular permanent: zero.
     let rect = rectangular_permanent::<3>(&a, 3, 2);
     assert_eq!(
         rect,
@@ -350,7 +293,6 @@ fn test_rectangular_permanent_vanishes_but_submatrix_does_not() {
     );
     assert!(rect.is_zero());
 
-    // Quantity 2 — the individual 2x2 row-submatrix permanents: all nonzero.
     for (rows, sub) in [
         ([0usize, 1usize], [1u64, 0, 0, 1]),
         ([0, 2], [1, 0, 1, 1]),
