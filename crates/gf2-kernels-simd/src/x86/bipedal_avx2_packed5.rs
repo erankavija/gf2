@@ -1,24 +1,14 @@
 //! AVX2 batch entry points for the F_5 bit-sliced 3-plane encoding.
 //!
 //! Each operand is three parallel `&[u64]` planes, one per bit of the 3-bit
-//! canonical encoding; one iteration consumes 4 words per plane (256 F_5
-//! elements). The decode/cross-product/encode circuit mirrors
-//! `crate::bipedal::packed5`. The private helpers are `#[inline(always)]`
-//! without `#[target_feature]` and are called only from the
-//! `#[target_feature(enable = "avx2")]` entry points.
-//!
-//! All slices of one call share a length `n` with `n % 4 == 0`; `n = 0` is a
-//! no-op.
+//! canonical encoding. All slices of one call share a length `n` with
+//! `n % 4 == 0`; `n = 0` is a no-op. The private helpers carry no
+//! `#[target_feature]` and are called only from the AVX2 entry points.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
-
-// ---------------------------------------------------------------------------
-// AVX2 decode / encode / circuit helpers
-// (no #[target_feature] — called from target_feature-enabled entry points)
-// ---------------------------------------------------------------------------
 
 /// Decode a triple of AVX2 lanes `(b0, b1, b2)` into five selector lanes.
 ///
@@ -280,10 +270,6 @@ unsafe fn neg5_avx2(b0: __m256i, b1: __m256i, b2: __m256i) -> (__m256i, __m256i,
     encode5_avx2([e[0], e[4], e[3], e[2], e[1]])
 }
 
-// ---------------------------------------------------------------------------
-// Load / store helpers
-// ---------------------------------------------------------------------------
-
 #[inline(always)]
 unsafe fn load256(src: &[u64], offset: usize) -> __m256i {
     // SAFETY: caller ensures offset + 4 <= src.len() and AVX2 available.
@@ -296,10 +282,6 @@ unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
     _mm256_storeu_si256(dst.as_mut_ptr().add(offset) as *mut __m256i, v);
 }
 
-// ---------------------------------------------------------------------------
-// Public batch entry points
-// ---------------------------------------------------------------------------
-
 /// Apply F_5 add over 3-plane `(b0a,b1a,b2a) + (b0b,b1b,b2b)` streams via AVX2.
 ///
 /// Each AVX2 lane covers 4 u64 words (= 256 F_5 lanes). All nine slices must
@@ -309,10 +291,6 @@ unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
 ///
 /// AVX2 must be available at runtime. All nine slices share the same length,
 /// which must be divisible by 4. Behaviour is undefined otherwise.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[allow(clippy::too_many_arguments)]
 #[target_feature(enable = "avx2")]
@@ -362,10 +340,6 @@ pub unsafe fn run_add5_batch(
 ///
 /// AVX2 must be available at runtime. All nine slices share the same length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[allow(clippy::too_many_arguments)]
 #[target_feature(enable = "avx2")]
@@ -415,10 +389,6 @@ pub unsafe fn run_sub5_batch(
 ///
 /// AVX2 must be available at runtime. All nine slices share the same length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[allow(clippy::too_many_arguments)]
 #[target_feature(enable = "avx2")]
@@ -466,10 +436,6 @@ pub unsafe fn run_mul5_batch(
 ///
 /// AVX2 must be available at runtime. All six slices share the same length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_neg5_batch(

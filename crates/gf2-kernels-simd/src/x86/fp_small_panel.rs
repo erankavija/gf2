@@ -1,16 +1,12 @@
-//! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small
-//! `Fp<P>` with `P <= 251`.
+//! AVX2 pure-integer panelized GEMM kernel for small `Fp<P>` with
+//! `P <= 251`, in the style of `@/citation/GotoGeijn2008` and
+//! `@/citation/VanZee2015`.
 //!
-//! A whole-GEMM call packs B into `NR`-wide panels and each `MR`-row block
-//! of A into pair-broadcast words, then runs an `MR × NR = 4 × 24`
-//! register-blocked micro-kernel: `_mm256_madd_epi16` over u16 lane pairs
-//! accumulates into 12 u32 SIMD lanes, which are reduced by
-//! [`crate::x86::fp_small::barrett_reduce_lane32`] and packed to bytes once
-//! the k axis is consumed.
-//!
-//! All public functions are `unsafe`: callers must ensure AVX2 is available
-//! at runtime, `p` is an odd prime in `[3, 251]`, and all input bytes are
-//! canonical (`< p`).
+//! B is packed into `NR`-wide panels and each `MR`-row block of A into
+//! pair-broadcast words for a `_mm256_madd_epi16` micro-kernel. All public
+//! functions are `unsafe`: callers must ensure AVX2 is available at runtime,
+//! `p` is an odd prime in `[3, 251]`, and all input bytes are canonical
+//! (`< p`).
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -65,7 +61,6 @@ pub unsafe fn fp_small_panel_gemm(
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
     let p_vec32 = _mm256_set1_epi32(p_u32 as i32);
 
-    // n-panel count (each panel covers NR output columns).
     let n_panels = n.div_ceil(NR);
 
     // Pre-pack B into NR-major panels. Layout per panel: a flat byte
@@ -429,10 +424,6 @@ unsafe fn pack_i32x8_to_u8_local(reduced: __m256i) -> [u8; 8] {
     ]
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -463,7 +454,6 @@ mod tests {
     #[test]
     fn panel_gemm_matches_scalar_at_boundary_shapes() {
         run_for_primes(|p| {
-            // Cover MR/NR/KC boundaries plus the criterion sizes.
             let cases: &[(usize, usize, usize)] = &[
                 (1, 1, 1),
                 (1, 4, 4),

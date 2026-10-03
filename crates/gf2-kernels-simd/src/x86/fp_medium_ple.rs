@@ -1,20 +1,12 @@
 //! AVX2 panelized PLE base-case kernel for medium `Fp<P>` with
 //! `P ∈ (251, 65536)`.
 //!
-//! The u16-lane analogue of [`crate::x86::fp_small_ple`]: an in-place
-//! rank-revealing PLE decomposition of a column-window panel of canonical
-//! u16 storage. Per pivot column the kernel searches rows `rank..m` for the
-//! first non-zero entry, swaps it into row `rank` (in the window and in
-//! `row_perm`), and runs a fused scale + row-major Schur update in tiles of
-//! 8 u16 lanes widened to u32 and reduced by
-//! [`crate::x86::fp_small::barrett_reduce_lane32`]. The row-major update
-//! performs the same writes as the column-major form of `ple_base_direct`
-//! (Dumas-Pernet §2.2 Alg. 2.5), each row `k > rank` being written
-//! independently.
-//!
-//! All public functions are `unsafe`. Caller must ensure AVX2 is available
-//! at runtime, `p` is an odd prime in `(251, 65536)`, and all input u16
-//! lanes are canonical (`< p`).
+//! An in-place rank-revealing PLE decomposition of a column-window panel of
+//! canonical u16 storage, with a row-major Schur update that performs the
+//! same writes as the column-major base case of
+//! `@/citation/DumasPernet2012` §2.2 Alg. 2.5. All public functions are
+//! `unsafe`: callers must ensure AVX2 is available at runtime, `p` is an odd
+//! prime in `(251, 65536)`, and all input u16 lanes are canonical (`< p`).
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -90,7 +82,6 @@ pub unsafe fn ple_panel_base_canonical_u16(
             break;
         }
 
-        // Step 1: pivot search (rows [rank..m] of column `col`).
         let mut pivot_row: Option<usize> = None;
         for i in rank..m {
             if *window.get_unchecked(i * win + col) != 0 {
@@ -100,15 +91,13 @@ pub unsafe fn ple_panel_base_canonical_u16(
         }
         let Some(piv) = pivot_row else { continue };
 
-        // Step 2: swap row `piv` into row `rank` (whole row of the
-        // window panel; the caller handles outside-window cells via
-        // `row_perm`).
+        // Swap row `piv` into row `rank` of the window panel; the caller
+        // handles outside-window cells via `row_perm`.
         if piv != rank {
             swap_panel_rows_u16(window, win, rank, piv);
             row_perm.swap(rank, piv);
         }
 
-        // Fused scale + Schur update; see `fused_scale_and_schur_u16`.
         let pivot_val = *window.get_unchecked(rank * win + col);
         debug_assert!(pivot_val != 0, "panel base: zero pivot post-search");
         let inv = *inv_table.get_unchecked(pivot_val as usize) as u32;
@@ -238,12 +227,10 @@ unsafe fn fused_scale_and_schur_u16(
 
             off += LANE_U32;
         }
-        // Scalar tail.
         while off < tail_len {
             let yc = *window.get_unchecked(y_base + off) as u32;
             let xc = pivot_slice[off] as u32;
             let prod = (mult * xc) % p_u32;
-            // y - prod (mod p) with one conditional add.
             let raw = if yc >= prod {
                 yc - prod
             } else {
@@ -254,10 +241,6 @@ unsafe fn fused_scale_and_schur_u16(
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -381,7 +364,6 @@ mod tests {
                 (128, 64),
             ];
             for &(m, win) in cases {
-                // Deterministic pseudo-random window.
                 let mut window: Vec<u16> = (0..(m * win) as u32)
                     .map(|i| ((i.wrapping_mul(17) + 1) % p as u32) as u16)
                     .collect();
@@ -456,19 +438,13 @@ mod tests {
     fn ple_panel_base_u16_rank_deficient_scattered_pivots() {
         run_for_primes(|p| {
             let inv_table = build_inv_table(p);
-            // 4×8 matrix where columns 1, 3, 6 are pivot columns and
-            // columns 0, 2, 4, 5, 7 are zero. Rank should be 3 and
-            // pivot_cols should be [1, 3, 6].
+            // Columns 1, 3, 6 are the pivot columns; the others are zero.
             let m = 4;
             let win = 8;
             let mut window = vec![0u16; m * win];
-            // row 0 has a 1 at col 1.
             window[1] = 1;
-            // row 1 has a 1 at col 3.
             window[win + 3] = 1;
-            // row 2 has a 1 at col 6.
             window[2 * win + 6] = 1;
-            // row 3 is all zero.
 
             let mut window_oracle = window.clone();
             let mut row_perm: Vec<usize> = (0..m).collect();

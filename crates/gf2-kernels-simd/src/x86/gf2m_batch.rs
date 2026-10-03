@@ -1,25 +1,11 @@
 //! AVX2 + VPCLMULQDQ batch element-wise GF(2^m) multiply/square kernels for
 //! `m ∈ {8, 16, 32}`.
 //!
-//! Each outer iteration processes 4 elements (two YMM registers × two
-//! 128-bit lanes). For `m ≤ 32` the carry-less product fits in the low 64
-//! bits of its lane, so the Barrett reduction
-//!
-//!   `c_high = product >> m`
-//!   `q_full = c_high · mu`
-//!   `q = q_full >> m`
-//!   `qp = q · modulus`
-//!   `r = product XOR qp`
-//!
-//! stays in YMM registers as byte-aligned shifts (`_mm256_srli_si256<m/8>`)
-//! and three VPCLMULQDQ instructions per pair of elements. Tail elements go
-//! through a scalar PCLMULQDQ path inlined in the same `#[target_feature]`
-//! scope.
-//!
-//! All entry points carry `#[target_feature(enable = "avx2", enable =
-//! "vpclmulqdq", enable = "pclmulqdq", enable = "sse4.1")]`;
-//! `crate::gf2m_batch::detect` publishes function pointers only when all
-//! four features are present at runtime.
+//! Each outer iteration processes 4 elements with the Barrett reduction kept
+//! in YMM registers; tail elements take a scalar PCLMULQDQ path. All entry
+//! points carry `#[target_feature(enable = "avx2", enable = "vpclmulqdq",
+//! enable = "pclmulqdq", enable = "sse4.1")]`; `crate::gf2m_batch::detect`
+//! publishes function pointers only when all four features are present.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
