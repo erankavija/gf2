@@ -2,7 +2,7 @@
 //!
 //! Validates the compiled-in 3GPP TS 38.212 base-graph shift tables (BG1
 //! Table 5.3.2-2, BG2 Table 5.3.2-3, all 8 lifting sets `i_LS` = 0..7)
-//! bit-exactly against an EXTERNAL reference: the NVIDIA Sionna base-graph
+//! bit-exactly against an EXTERNAL reference: the `@/citation/Sionna2026` base-graph
 //! CSV tables committed under `data/ldpc/nr_5g/` (Apache-2.0; provenance,
 //! upstream commit pin, and format description in
 //! `data/ldpc/nr_5g/PROVENANCE.md`). The CSV parser lives in this test —
@@ -17,8 +17,7 @@
 //!   the set (all 51 lifting sizes are swept — stronger than a single
 //!   representative Z per set, at negligible cost since `nr_5g` only builds
 //!   the base matrix).
-//! - The wrong-`i_LS` trap guard (the ~2 dB BLER trap,
-//!   `feedback_ldpc_shift_tables`): at Z=208 (`i_LS`=6), substituting any of
+//! - The wrong-`i_LS` guard: at Z=208 (`i_LS`=6), substituting any of
 //!   the 7 wrong per-set tables yields a matrix that DIFFERS from the
 //!   external reference, and all 8 raw tables are pairwise distinct — so
 //!   collapsing the per-`i_LS` tables into one fails loudly.
