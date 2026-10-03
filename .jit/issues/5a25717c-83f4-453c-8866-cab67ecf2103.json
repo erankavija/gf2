@@ -25,8 +25,8 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-10-03T01:39:13.737514209Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T02:15:28.803460895Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate receipt-pinned campaign inputs by content identity",
-  "updated_at": "2026-10-03T01:51:50.892746439Z"
+  "updated_at": "2026-10-03T02:15:28.803460895Z"
 }

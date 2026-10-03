@@ -15711,3 +15711,6 @@
 {"from":"in_progress","id":"867ee44b-71d0-4d39-833f-05dc51161001","issue_id":"cdba4e71-4444-41e0-b34e-904f3fb20ab4","timestamp":"2026-10-03T02:12:11.448929016Z","to":"done","type":"issue_state_changed"}
 {"id":"0dda667e-060a-4e26-bd75-1709b91dc1a7","issue_id":"cdba4e71-4444-41e0-b34e-904f3fb20ab4","timestamp":"2026-10-03T02:12:11.448929016Z","type":"issue_completed"}
 {"from":"backlog","id":"1a902599-6db8-41b4-ae05-88bfe8672235","issue_id":"eb2a833d-75b4-45b7-89ea-b8aafcd36cb1","timestamp":"2026-10-03T02:12:11.519541425Z","to":"ready","type":"issue_state_changed"}
+{"id":"36afc2f4-1271-446e-880d-6307e8e0587c","issue_id":"629e0ff0-29ce-4450-83a0-f56bb1fda15b","priority":"normal","timestamp":"2026-10-03T02:14:03.115286495Z","title":"Correct gf2-coding standards-conformance doc and test drift","type":"issue_created"}
+{"fields":["dependencies"],"id":"aced95a9-ab41-4309-b111-51b06a595ef3","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-03T02:14:03.492363916Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"647ff0a9-3921-4019-820e-a6739be6af71","issue_id":"5a25717c-83f4-453c-8866-cab67ecf2103","timestamp":"2026-10-03T02:15:28.803460895Z","type":"gate_passed","updated_by":"auto:executor"}
