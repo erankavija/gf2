@@ -1,27 +1,11 @@
-//! Shared MSB-first bit-label packing helpers.
-//!
-//! Used by every `BatchMapper` implementation that assembles a `u16`
-//! label from a contiguous run of `bool` bits, and by every test that
-//! explodes a `u16` label into such a run. Keeping this in one place
-//! enforces a single source of truth for the canonical MSB-first,
-//! symbol-major ordering documented at the modem trait layer.
-//!
-//! This module is crate-private (`pub(crate)`).
+//! MSB-first bit-label packing shared by the modem backends and tests.
 
 /// Length-checks a mapper batch and returns the number of symbols.
 ///
-/// All `BatchMapper` implementations for `ModemScalar` impose the same
-/// three length constraints: `bits.len()` must be a multiple of
-/// `bits_per_symbol`, and both output slices must have that many
-/// entries. Centralizing the assertion keeps the panic messages
-/// identical in shape across backends.
-///
 /// # Panics
 ///
-/// Panics with a descriptive message if any constraint is violated.
-/// `mapper_name` is embedded in the panic message (for example
-/// `"GrayQamMapper::map_bits"`) so callers can still tell which backend
-/// triggered the check.
+/// Panics, naming `mapper_name`, if `bits_len` is not a multiple of
+/// `bits_per_symbol` or an output length differs from the symbol count.
 #[inline]
 pub(crate) fn check_batch_lengths(
     mapper_name: &str,
@@ -47,19 +31,8 @@ pub(crate) fn check_batch_lengths(
     num_symbols
 }
 
-/// Assembles an MSB-first `u16` label from a slice of bits.
-///
-/// The slice must have length `bits_per_symbol`; bit at index 0 is the
-/// most significant bit of the returned label. This matches the
-/// canonical modem bit ordering (MSB-first within each symbol,
-/// symbol-major across symbols).
-///
-/// The returned `u16` has the packed label in its low `bits_per_symbol`
-/// bits; higher bits are zero.
-///
-/// # Complexity
-///
-/// O(bits_per_symbol).
+/// Assembles an MSB-first `u16` label; `symbol_bits[0]` is the most
+/// significant bit of the label.
 #[inline]
 pub(crate) fn pack_label_msb_first(symbol_bits: &[bool]) -> u16 {
     let mut label: u16 = 0;
@@ -69,39 +42,16 @@ pub(crate) fn pack_label_msb_first(symbol_bits: &[bool]) -> u16 {
     label
 }
 
-/// Extracts a single MSB-first bit of an `m`-bit label.
-///
-/// Returns bit `bit_idx` of `label` under the canonical modem MSB-first
-/// ordering, where `bit_idx = 0` is the **MSB** of the `m`-bit label and
-/// `bit_idx = m - 1` is the **LSB**. The returned `u16` is always `0` or
-/// `1`.
-///
-/// Every demapper that iterates bit positions across a `LabelWord` goes
-/// through this helper so the MSB-first rule has exactly one source of
-/// truth in the crate.
-///
-/// # Complexity
-///
-/// O(1).
+/// Returns bit `bit_idx` of a `bits_per_symbol`-bit label as `0` or `1`,
+/// where `bit_idx = 0` is the MSB.
 #[inline]
 pub(crate) fn bit_at_msb_first(label: u16, bit_idx: u8, bits_per_symbol: u8) -> u16 {
     let shift = bits_per_symbol - 1 - bit_idx;
     (label >> shift) & 1
 }
 
-/// Explodes a `u16` label into an MSB-first `Vec<bool>` of length `m`.
-///
-/// Used by tests and examples to construct synthetic bit inputs for
-/// `BatchMapper` implementations. Inverse of `pack_label_msb_first`.
-///
-/// This is a testing/utility helper — not a core part of the public
-/// modem surface — and is re-exported from `gf2_coding::modem` as a
-/// doc-hidden item so integration tests and internal property tests
-/// share a single implementation.
-///
-/// # Complexity
-///
-/// O(`m`).
+/// Explodes a `u16` label into an MSB-first `Vec<bool>` of length `m`;
+/// inverse of `pack_label_msb_first`.
 #[inline]
 pub fn unpack_label_msb_first(label: u16, m: u8) -> Vec<bool> {
     (0..m).map(|k| bit_at_msb_first(label, k, m) == 1).collect()
@@ -124,7 +74,6 @@ mod tests {
 
     #[test]
     fn test_pack_label_msb_ordering() {
-        // bit index 0 (first entry) should be the MSB.
         let bits = vec![true, false, false, false];
         assert_eq!(pack_label_msb_first(&bits), 0b1000);
     }

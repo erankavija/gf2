@@ -1,13 +1,5 @@
-//! Sealed, validated modem specification.
-//!
-//! [`ModemSpec`] is the post-validation data model consumed by every
-//! modem-facing task: trait layer, reference path, Gray-QAM fast path,
-//! analysis collectors, and simulation adapters. All fields are private;
-//! construction must go through presets or the public
-//! [`super::ModemSpecBuilder`] entry point for custom constellations.
-//!
-//! Invariants enforced at construction are listed in `@/issue/c87c5043` §5.
-//! Violations panic with a descriptive message per design decision D8.
+//! [`ModemSpec`], the validated constellation description built by the
+//! presets and by [`super::ModemSpecBuilder`].
 
 use super::builder::ModemSpecBuilder;
 use super::demapper::BatchSoftDemapper;
@@ -16,22 +8,11 @@ use super::scalar::{DefaultScalar, ModemScalar};
 use super::types::{BitChannelSemantics, LabelWord, ModemCapabilities, Normalization, SymbolPoint};
 use super::view::ModemView;
 
-/// Sealed, validated modem description.
+/// Validated modem description: constellation points, bit labels and
+/// per-bit metadata.
 ///
-/// Fields are private. All construction goes through presets (this task)
-/// or future builder entry points; invariants are established once and
-/// trusted everywhere downstream.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::ModemSpec;
-///
-/// let spec = ModemSpec::bpsk();
-/// assert_eq!(spec.bits_per_symbol(), 1);
-/// assert_eq!(spec.num_symbols(), 2);
-/// assert!(spec.capabilities().supports_exact_log_map);
-/// ```
+/// Construction goes through the presets or [`super::ModemSpecBuilder`],
+/// which establish the invariants once.
 #[derive(Debug, Clone)]
 pub struct ModemSpec<S: ModemScalar> {
     points: Vec<SymbolPoint<S>>,
@@ -44,9 +25,6 @@ pub struct ModemSpec<S: ModemScalar> {
 }
 
 /// Raw (unvalidated) field bundle used by the crate-internal constructor.
-///
-/// Not public: every consumer goes through presets or future builders,
-/// both of which funnel through [`ModemSpec::from_parts_checked`].
 pub(super) struct ModemSpecParts<S: ModemScalar> {
     pub points: Vec<SymbolPoint<S>>,
     pub labels: Vec<LabelWord>,
@@ -58,11 +36,8 @@ pub(super) struct ModemSpecParts<S: ModemScalar> {
 }
 
 impl<S: ModemScalar> ModemSpec<S> {
-    /// Crate-internal validating constructor.
-    ///
-    /// Panics on any invariant violation with a descriptive message. This
-    /// is the single choke point through which presets and future builders
-    /// create a [`ModemSpec`].
+    /// Validating constructor shared by the presets and the builder; panics
+    /// with a descriptive message on any invariant violation.
     pub(super) fn from_parts_checked(parts: ModemSpecParts<S>) -> Self {
         let ModemSpecParts {
             points,
@@ -74,7 +49,6 @@ impl<S: ModemScalar> ModemSpec<S> {
             capabilities,
         } = parts;
 
-        // Invariant 1: bits_per_symbol in [1, 16].
         assert!(
             (1..=16).contains(&bits_per_symbol),
             "ModemSpec: bits_per_symbol must be in [1, 16], got {bits_per_symbol}"
@@ -82,7 +56,6 @@ impl<S: ModemScalar> ModemSpec<S> {
 
         let expected_len = 1usize << bits_per_symbol;
 
-        // Invariant 2: points.len() == labels.len() == 1 << bits_per_symbol.
         assert!(
             points.len() == expected_len && labels.len() == expected_len,
             "ModemSpec: points/labels length mismatch: points={}, labels={}, expected={}",
@@ -91,7 +64,6 @@ impl<S: ModemScalar> ModemSpec<S> {
             expected_len
         );
 
-        // Invariant 3: bit_channels length matches bits_per_symbol.
         assert!(
             bit_channels.len() == bits_per_symbol as usize,
             "ModemSpec: bit_channels length {} does not match bits_per_symbol {}",
@@ -99,7 +71,6 @@ impl<S: ModemScalar> ModemSpec<S> {
             bits_per_symbol
         );
 
-        // Invariant 4 + 5: label width and bijection.
         let mut seen = vec![false; expected_len];
         for (idx, label) in labels.iter().enumerate() {
             assert!(
@@ -127,13 +98,11 @@ impl<S: ModemScalar> ModemSpec<S> {
             );
         }
 
-        // Invariant 7: scale factor is strictly positive.
         assert!(
             normalization_scale > S::zero(),
             "ModemSpec: normalization_scale must be strictly positive"
         );
 
-        // Invariant 6: post-normalization unit average symbol energy.
         if let Normalization::UnitAverageSymbolEnergy = normalization {
             let mut acc = S::zero();
             for p in &points {
@@ -149,18 +118,11 @@ impl<S: ModemScalar> ModemSpec<S> {
             );
         }
 
-        // Invariant 8: at least one demap method supported.
         assert!(
             capabilities.supports_exact_log_map || capabilities.supports_max_log,
             "ModemSpec: capabilities must advertise at least one demap method"
         );
 
-        // Invariant 9: per-bit-channel analysis length equals
-        // bits_per_symbol exactly. `ModemSpecBuilder::build` fills this
-        // slot from `default_analysis_slice` when callers supply
-        // capabilities via `ModemCapabilities::default()` (whose
-        // `analysis` is empty because it cannot know bits_per_symbol),
-        // so every validated `ModemSpec` carries a length-matched slice.
         assert!(
             capabilities.analysis.len() == bits_per_symbol as usize,
             "ModemSpec: capabilities.analysis length {} does not match bits_per_symbol {}",
@@ -182,41 +144,12 @@ impl<S: ModemScalar> ModemSpec<S> {
 
 impl<S: ModemScalar> ModemSpec<S> {
     /// Starts a fluent [`ModemSpecBuilder`] for a custom constellation.
-    ///
-    /// For BPSK/QPSK/16-QAM/64-QAM/256-QAM prefer the preset constructors
-    /// ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`]). Use this
-    /// entry point for research constellations and standards-specific
-    /// geometries that don't match a preset.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{LabelWord, ModemSpec, SymbolPoint};
-    ///
-    /// let spec = ModemSpec::<f32>::builder()
-    ///     .bits_per_symbol(1)
-    ///     .points(vec![
-    ///         SymbolPoint::new(1.0, 0.0),
-    ///         SymbolPoint::new(-1.0, 0.0),
-    ///     ])
-    ///     .labels(vec![LabelWord::new(0, 1), LabelWord::new(1, 1)])
-    ///     .build();
-    /// assert_eq!(spec.num_symbols(), 2);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn builder() -> ModemSpecBuilder<S> {
         ModemSpecBuilder::new()
     }
 
     /// Returns a borrowed view of this spec for backends and analysis.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn view(&self) -> ModemView<'_, S> {
         ModemView::new(
@@ -231,30 +164,18 @@ impl<S: ModemScalar> ModemSpec<S> {
     }
 
     /// Number of bits per symbol (label width).
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn bits_per_symbol(&self) -> u8 {
         self.bits_per_symbol
     }
 
     /// Number of constellation symbols, equal to `1 << bits_per_symbol()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn num_symbols(&self) -> usize {
         1usize << self.bits_per_symbol
     }
 
     /// Returns the normalization contract requested at construction.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn normalization(&self) -> Normalization<S> {
         self.normalization
@@ -264,20 +185,12 @@ impl<S: ModemScalar> ModemSpec<S> {
     ///
     /// Stored points are already post-normalized; this factor is preserved
     /// for analysis paths that need the unit-grid geometry.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn normalization_scale(&self) -> S {
         self.normalization_scale
     }
 
-    /// Which demap methods this spec currently supports.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
+    /// Which demap methods this spec supports.
     #[inline]
     pub fn capabilities(&self) -> ModemCapabilities {
         self.capabilities
@@ -285,16 +198,10 @@ impl<S: ModemScalar> ModemSpec<S> {
 }
 
 impl<S: ModemScalar + Send + Sync> ModemSpec<S> {
-    /// Returns `true` iff this spec matches the canonical Gray
-    /// square-QAM / BPSK layout accepted by the optimized
-    /// [`super::GrayQamMapper`] / [`super::FastGrayQamDemapper`] backends.
-    ///
-    /// This is the single shared-API probe the factory methods
-    /// ([`Self::preferred_mapper`], [`Self::preferred_soft_demapper`]) use
-    /// to decide whether the fast path is safe for a given spec. Custom
-    /// specs built through [`super::ModemSpecBuilder`] that happen to
-    /// match the preset geometry return `true`; everything else returns
-    /// `false`, and the factories fall back to the reference path.
+    /// Returns `true` iff this spec matches the BPSK / Gray square-QAM
+    /// layout accepted by [`super::GrayQamMapper`] and
+    /// [`super::FastGrayQamDemapper`]; a builder-built spec with the preset
+    /// geometry qualifies.
     ///
     /// # Complexity
     ///
@@ -304,78 +211,31 @@ impl<S: ModemScalar + Send + Sync> ModemSpec<S> {
         super::presets::is_valid_gray_square_qam_spec(&self.view())
     }
 
-    /// Returns the best-available [`BatchMapper`] backend for this spec.
-    ///
-    /// This is the shared-API entry point the story success criterion
-    /// points at: callers describe *what* they want (a spec) and let the
-    /// framework pick the specialized backend rather than constructing a
-    /// backend by name. For specs whose geometry matches the Gray
-    /// square-QAM layout this routes to the optimized
-    /// [`super::GrayQamMapper`]; otherwise it falls back to
-    /// [`super::ReferenceMapper`], which works for any validated spec.
-    ///
-    /// Direct construction of [`super::GrayQamMapper`] and
-    /// [`super::ReferenceMapper`] remains supported for advanced callers
-    /// that need backend-specific methods (e.g. GPU adapters); new code
-    /// that only consumes the [`BatchMapper`] trait should prefer this
-    /// factory.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BatchMapper, ModemSpec};
-    ///
-    /// let mapper = ModemSpec::<f32>::gray_square_qam(16).preferred_mapper();
-    /// assert_eq!(mapper.spec().bits_per_symbol(), 4);
-    /// ```
+    /// Returns a [`BatchMapper`] backend for this spec:
+    /// [`super::GrayQamMapper`] when [`Self::is_gray_square_qam_preset`]
+    /// holds, [`super::ReferenceMapper`] otherwise.
     ///
     /// # Complexity
     ///
-    /// Construction is O(`num_symbols`); the returned trait object's
-    /// hot path matches its concrete backend.
+    /// O(`num_symbols`).
     pub fn preferred_mapper(&self) -> Box<dyn BatchMapper<S> + Send + Sync> {
         if self.is_gray_square_qam_preset() {
-            // Safe: the is_valid check ran the same predicate that
-            // `GrayQamMapper::from_preset_order_with_scalar`'s constructor
-            // asserts, so we can construct the Gray-QAM backend without
-            // redundant panics. We go through the spec-aware path below
-            // to keep any extension metadata (label permutation, custom
-            // normalization) that `build_gray_square_qam` would discard.
+            // `from_spec` cannot panic: it asserts the predicate just
+            // checked.
             Box::new(GrayQamMapperFactory::from_spec(self.clone()))
         } else {
             Box::new(super::ReferenceMapper::new(self.clone()))
         }
     }
 
-    /// Returns the best-available [`BatchSoftDemapper`] backend for this
-    /// spec.
-    ///
-    /// For Gray square-QAM specs with `bits_per_symbol >= 2` this routes
-    /// to the optimized [`super::FastGrayQamDemapper`]. For BPSK (`m == 1`)
-    /// and every non-preset spec this returns
-    /// [`super::ReferenceSoftDemapper`]; the fast kernel is only wired
-    /// for the QAM axis-separable geometry, so BPSK intentionally falls
-    /// back to the reference path.
-    ///
-    /// This is the preferred shared-API way to obtain a soft demapper —
-    /// downstream code that accepts a [`BatchSoftDemapper`] trait object
-    /// (AWGN link adapters, simulation harnesses, bit-channel analysis
-    /// collectors) should prefer `spec.preferred_soft_demapper()` over
-    /// directly constructing a backend by name.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BatchSoftDemapper, ModemSpec};
-    ///
-    /// let dem = ModemSpec::<f32>::gray_square_qam(16).preferred_soft_demapper();
-    /// assert_eq!(dem.spec().bits_per_symbol(), 4);
-    /// ```
+    /// Returns a [`BatchSoftDemapper`] backend for this spec:
+    /// [`super::FastGrayQamDemapper`] when `bits_per_symbol >= 2` and
+    /// [`Self::is_gray_square_qam_preset`] holds,
+    /// [`super::ReferenceSoftDemapper`] otherwise, BPSK included.
     ///
     /// # Complexity
     ///
-    /// Construction is O(`num_symbols`); the returned trait object's
-    /// hot path matches its concrete backend.
+    /// O(`num_symbols`).
     pub fn preferred_soft_demapper(&self) -> Box<dyn BatchSoftDemapper<S> + Send + Sync> {
         if self.bits_per_symbol >= 2 && self.is_gray_square_qam_preset() {
             Box::new(super::FastGrayQamDemapper::new(self.clone()))
@@ -385,25 +245,15 @@ impl<S: ModemScalar + Send + Sync> ModemSpec<S> {
     }
 }
 
-/// Crate-internal factory type that constructs a [`super::GrayQamMapper`]
-/// directly from a pre-validated spec, without rebuilding the preset from
-/// an `order: usize`. Keeps `preferred_mapper` to a single spec-aware
-/// construction path so callers that have already paid for a
-/// `ModemSpec::from_parts_checked` validation don't pay for it twice.
-///
-/// Implemented as a thin `BatchMapper` forwarder that embeds a
-/// `GrayQamMapper` built from the spec's `bits_per_symbol` preset order.
+/// Wraps the [`super::GrayQamMapper`] that [`ModemSpec::preferred_mapper`] returns.
 struct GrayQamMapperFactory<S: ModemScalar> {
     inner: super::GrayQamMapper<S>,
 }
 
 impl<S: ModemScalar> GrayQamMapperFactory<S> {
     fn from_spec(spec: ModemSpec<S>) -> Self {
-        // The caller's spec has already passed `is_valid_gray_square_qam_spec`.
-        // Hand it to `GrayQamMapper::from_spec` verbatim so any extension
-        // metadata (normalization, bit-channel analysis hints) supplied
-        // through `ModemSpecBuilder` is preserved on the returned
-        // mapper's `spec()` view — no canonical-preset substitution.
+        // The spec is stored verbatim, so builder-supplied metadata reaches
+        // the mapper's `spec()` view.
         Self {
             inner: super::GrayQamMapper::<S>::from_spec(spec),
         }
@@ -422,8 +272,6 @@ impl<S: ModemScalar> BatchMapper<S> for GrayQamMapperFactory<S> {
     }
 }
 
-// Default = f32 convenience alias, kept for readability in code that
-// frequently uses the default scalar path.
 #[allow(dead_code)]
 pub(super) type DefaultSpec = ModemSpec<DefaultScalar>;
 
@@ -475,7 +323,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "bits_per_symbol must be in [1, 16]")]
     fn test_invariant_bits_per_symbol_too_large() {
-        // Construct a minimally-shaped spec to isolate the bits_per_symbol check.
         let parts = ModemSpecParts::<f32> {
             points: Vec::new(),
             labels: Vec::new(),
@@ -560,8 +407,6 @@ mod tests {
         let _ = ModemSpec::from_parts_checked(parts);
     }
 
-    // -------- preferred_* factory methods (Finding 1) -----------------
-
     fn deterministic_rx(n: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
         let mut rng = crate::modem::test_oracle::Lcg::new(seed);
         // next_unit_f32() already emits samples in [-1, 1]; no further scaling.
@@ -592,8 +437,6 @@ mod tests {
             let mut out_ref = vec![Llr::new(0.0); n * m];
             preferred.demap_llrs(input, &mut out_pref);
             reference.demap_llrs(input, &mut out_ref);
-            // Tolerance mirrors the existing reference-vs-fast parity
-            // tests in `fast_gray_qam_demapper.rs`.
             for k in 0..n * m {
                 let a = out_pref[k].value();
                 let b = out_ref[k].value();
@@ -606,18 +449,14 @@ mod tests {
         }
     }
 
-    /// Builds a non-Gray 8-point custom spec and asserts the factory
-    /// falls back to the reference path.
+    /// 8-PSK with a non-Gray label permutation: a spec that is not a preset.
     fn custom_8_point_spec() -> ModemSpec<f32> {
-        // Raw 8-PSK geometry with a non-Gray label permutation — mapping
-        // preset detection should fail, forcing the reference fallback.
         let points: Vec<SymbolPoint<f32>> = (0..8)
             .map(|k| {
                 let theta = (k as f32) * core::f32::consts::PI / 4.0;
                 SymbolPoint::new(theta.cos(), theta.sin())
             })
             .collect();
-        // Non-identity, non-Gray permutation.
         let labels_perm: [u16; 8] = [3, 1, 6, 4, 0, 7, 2, 5];
         let labels: Vec<LabelWord> = labels_perm.iter().map(|&b| LabelWord::new(b, 3)).collect();
 
@@ -662,7 +501,6 @@ mod tests {
 
     #[test]
     fn test_preferred_mapper_matches_reference_on_any_spec() {
-        // Preset path (Gray-QAM).
         for &order in &[2usize, 4, 16, 64, 256] {
             let spec = ModemSpec::<f32>::gray_square_qam(order);
             let m = spec.bits_per_symbol() as usize;
@@ -684,7 +522,6 @@ mod tests {
             }
         }
 
-        // Fallback path (custom spec).
         let spec = custom_8_point_spec();
         let m = spec.bits_per_symbol() as usize;
         let n_sym = spec.num_symbols();
@@ -710,14 +547,6 @@ mod tests {
         assert!(!custom_8_point_spec().is_gray_square_qam_preset());
     }
 
-    /// Regression: `preferred_mapper()` must hand the caller's spec to
-    /// the backing `GrayQamMapper` verbatim (via `GrayQamMapper::from_spec`),
-    /// not rebuild a canonical preset from `order` alone. This test
-    /// locks in that the returned mapper's `spec()` points / labels /
-    /// bit-channels are bit-equal to the caller's. Under the pre-fix
-    /// code the returned spec was a freshly-built preset, and while it
-    /// would carry equivalent geometry it would not share storage or
-    /// builder-attached metadata such as bit-channel analysis overrides.
     #[test]
     fn test_preferred_mapper_preserves_caller_spec() {
         let caller = ModemSpec::<f32>::gray_square_qam(16);

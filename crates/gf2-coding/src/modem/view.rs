@@ -1,9 +1,4 @@
 //! Borrowed read-only view over a [`super::ModemSpec`].
-//!
-//! Exposes both contiguous slices (for SIMD / GPU backends) and per-item
-//! accessors (for analysis, examples, and the exact log-MAP reference
-//! path). `Copy` so it can be passed through backend boundaries
-//! without lifetime plumbing.
 
 use super::scalar::ModemScalar;
 use super::types::{
@@ -12,18 +7,6 @@ use super::types::{
 };
 
 /// Borrowed read-only view over a [`super::ModemSpec`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::modem::ModemSpec;
-///
-/// let spec = ModemSpec::bpsk();
-/// let view = spec.view();
-/// assert_eq!(view.points().len(), 2);
-/// assert_eq!(view.labels().len(), 2);
-/// assert_eq!(view.num_symbols(), 2);
-/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct ModemView<'a, S: ModemScalar> {
     points: &'a [SymbolPoint<S>],
@@ -59,30 +42,18 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     }
 
     /// Returns the contiguous slice of constellation points.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn points(&self) -> &'a [SymbolPoint<S>] {
         self.points
     }
 
     /// Returns the contiguous slice of labels, parallel to `points()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn labels(&self) -> &'a [LabelWord] {
         self.labels
     }
 
     /// Returns the per-bit semantic tags, one entry per bit position.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn bit_channels(&self) -> &'a [BitChannelSemantics] {
         self.bit_channels
@@ -90,17 +61,9 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Returns the constellation point at index `idx`.
     ///
-    /// # Arguments
-    ///
-    /// * `idx` - Point index in `0..num_symbols()`.
-    ///
     /// # Panics
     ///
     /// Panics if `idx >= self.num_symbols()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn point(&self, idx: usize) -> SymbolPoint<S> {
         self.points[idx]
@@ -108,17 +71,9 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Returns the label at index `idx`.
     ///
-    /// # Arguments
-    ///
-    /// * `idx` - Label index in `0..num_symbols()`.
-    ///
     /// # Panics
     ///
     /// Panics if `idx >= self.num_symbols()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn label(&self, idx: usize) -> LabelWord {
         self.labels[idx]
@@ -126,27 +81,9 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Returns the bit-channel semantic tag for bit position `bit_idx`.
     ///
-    /// # Arguments
-    ///
-    /// * `bit_idx` - Bit index within a symbol, `0` is the MSB.
-    ///
     /// # Panics
     ///
     /// Panics if `bit_idx >= self.bits_per_symbol()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{BitChannelSemantics, ModemSpec};
-    ///
-    /// let spec = ModemSpec::gray_square_qam(4);
-    /// assert_eq!(spec.view().bit_channel(0), BitChannelSemantics::IAxisPam(0));
-    /// assert_eq!(spec.view().bit_channel(1), BitChannelSemantics::QAxisPam(0));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn bit_channel(&self, bit_idx: u8) -> BitChannelSemantics {
         self.bit_channels[bit_idx as usize]
@@ -154,17 +91,9 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
 
     /// Returns the canonical [`BitChannelId`] for a bit position.
     ///
-    /// # Arguments
-    ///
-    /// * `bit_idx` - Bit index within a symbol, `0` is the MSB.
-    ///
     /// # Panics
     ///
     /// Panics if `bit_idx >= bits_per_symbol()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn bit_channel_id(&self, bit_idx: u8) -> BitChannelId {
         assert!(
@@ -178,46 +107,9 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     /// Returns the per-bit-channel analytic metadata for bit position
     /// `bit_idx`.
     ///
-    /// Borrowed from the [`ModemCapabilities::analysis`] slice attached
-    /// to the underlying [`super::ModemSpec`]. Consumers use the flags
-    /// to specialize analysis paths (closed-form LLR, symmetric
-    /// distribution assumptions, BICM independence shortcuts).
-    ///
-    /// # Arguments
-    ///
-    /// * `bit_idx` - Bit index within a symbol, `0` is the MSB.
-    ///
     /// # Panics
     ///
-    /// Panics if `bit_idx >= bits_per_symbol()` or if the attached
-    /// capabilities do not carry a populated analysis slice (length
-    /// different from `bits_per_symbol()`). Preset- and builder-built
-    /// specs always populate the slice; the latter case can only occur
-    /// when a caller manually constructs [`ModemCapabilities`] via its
-    /// [`Default`] impl (which leaves `analysis` empty).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::ModemSpec;
-    ///
-    /// // BPSK places one bit per axis, so every analytic flag holds.
-    /// let spec = ModemSpec::<f32>::bpsk();
-    /// let a = spec.view().bit_channel_analysis(0);
-    /// assert!(a.symmetric_llr_distribution);
-    /// assert!(a.conditionally_independent);
-    /// assert!(a.closed_form_llr_available);
-    ///
-    /// // 16-QAM carries two PAM bits per axis; those are symmetric and
-    /// // closed-form but NOT conditionally independent given the received
-    /// // sample, so the flag is advertised as `false`.
-    /// let spec16 = ModemSpec::<f32>::gray_square_qam(16);
-    /// assert!(!spec16.view().bit_channel_analysis(0).conditionally_independent);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
+    /// Panics if `bit_idx >= bits_per_symbol()`.
     #[inline]
     pub fn bit_channel_analysis(&self, bit_idx: u8) -> &'static BitChannelAnalysis {
         assert!(
@@ -236,50 +128,30 @@ impl<'a, S: ModemScalar> ModemView<'a, S> {
     }
 
     /// Number of constellation symbols.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn num_symbols(&self) -> usize {
         self.points.len()
     }
 
     /// Number of bits per symbol.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn bits_per_symbol(&self) -> u8 {
         self.bits_per_symbol
     }
 
     /// Normalization contract requested at construction.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn normalization(&self) -> Normalization<S> {
         self.normalization
     }
 
     /// Normalization scale factor applied to the raw integer grid.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn normalization_scale(&self) -> S {
         self.normalization_scale
     }
 
     /// Demap-method capabilities advertised by the spec.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn capabilities(&self) -> ModemCapabilities {
         self.capabilities
@@ -350,9 +222,6 @@ mod tests {
 
     #[test]
     fn test_view_bit_channel_analysis_gray_qam_higher_order_roundtrip() {
-        // For 16/64/256-QAM the per-axis multi-bit presets advertise
-        // `conditionally_independent = false`; every entry must match the
-        // slice returned from capabilities() on each preset order.
         for order in [16usize, 64, 256] {
             let spec = ModemSpec::<f32>::gray_square_qam(order);
             let v = spec.view();
@@ -384,11 +253,6 @@ mod tests {
 
     #[test]
     fn test_reference_surfaces_expose_matching_analysis() {
-        // The reference mapper and reference soft demapper both carry a
-        // ModemSpec; the analysis metadata surfaced via their
-        // `ModemView` must match the spec's own capabilities entry for
-        // each preset. Downstream analysis tools rely on this equality
-        // to avoid re-deriving hints from the constellation geometry.
         use crate::modem::{
             BatchMapper, BatchSoftDemapper, ReferenceMapper, ReferenceSoftDemapper,
         };
