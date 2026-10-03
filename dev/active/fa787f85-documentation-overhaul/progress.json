@@ -515,7 +515,7 @@
      "short_id": "4997a3ed",
      "title": "Tersify comments in gf2-core bit-level structures",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "pending"
     },
     {
      "id": "57436474-9b84-4d68-804f-070c10b673d9",
@@ -564,7 +564,7 @@
      "short_id": "8a9db61a",
      "title": "Tersify comments in the gf2-coding modem module",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "pending"
     },
     {
      "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
@@ -578,14 +578,14 @@
      "short_id": "93aed46a",
      "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "pending"
     },
     {
      "id": "9dda3958-4e62-4bb2-89e4-a1999e000a09",
      "short_id": "9dda3958",
      "title": "Tersify comments in gf2-core field matrix algorithm modules",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "pending"
     },
     {
      "id": "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
@@ -620,7 +620,7 @@
      "short_id": "cafb463c",
      "title": "Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "pending"
     },
     {
      "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
@@ -648,7 +648,7 @@
      "short_id": "f22ec590",
      "title": "Tersify comments in the remaining gf2-sim source files",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "pending"
     },
     {
      "id": "f46046f0-3672-4bec-8d57-83bc77a6043b",
@@ -1084,6 +1084,131 @@
   {
    "id": "554c2935",
    "reason": "sweep reviews require registry keys for prose citations (external-claims-cited)"
+  },
+  {
+   "id": "c04d3f1c",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Deterministic CPU fallback for a recoverable GPU fault in a checkpointed sweep"
+  },
+  {
+   "id": "02ed3c51",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Remove producer-0 continuation admission from permanent campaign validation"
+  },
+  {
+   "id": "8342487d",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Scheduler::run and run_instrumented ignore their batch parameter"
+  },
+  {
+   "id": "ebd26779",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Tile-of-tiles outer loop for the 64x64 bit-matrix transpose kernel"
+  },
+  {
+   "id": "7c8ab1e2",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Dead extract_quad_hi helper in the GF(2^m) batch kernel"
+  },
+  {
+   "id": "bb64ee0e",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: AVX2-native nibble-LUT path for the packed F_7 bipedal kernel"
+  },
+  {
+   "id": "bc4eb125",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Undocumented limits and a duplicated helper in the small-prime panel kernels"
+  },
+  {
+   "id": "1fe6e218",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Primitive polynomial generation is unsound above degree 16 and ignores its thread count"
+  },
+  {
+   "id": "a44566c0",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: GF(2^m) constructors and constants without effect"
+  },
+  {
+   "id": "2a9cc72c",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: LdpcCode::is_systematic always returns false"
+  },
+  {
+   "id": "3464c241",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: NR rate-matched iterative decoding reads the message from the first target_k positions"
+  },
+  {
+   "id": "a1e02780",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Vacuous and misnamed tests found by the comment sweep"
+  },
+  {
+   "id": "d436dd5f",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: RuEncodingMatrices names an algorithm the encoder does not implement"
+  },
+  {
+   "id": "de0528d2",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Narration and placeholders in string literals, test names and ignore reasons"
+  },
+  {
+   "id": "10f23a84",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Converge survey-script evidence paths on runtime-resolved locations"
+  },
+  {
+   "id": "2c109c8d",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Parallel permanent for F_5 and F_7"
+  },
+  {
+   "id": "f556d663",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Permanent module contract, test and provenance defects"
+  },
+  {
+   "id": "d5afe5aa",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Runtime extension descent guard cannot reject a non-base element"
+  },
+  {
+   "id": "1ffa72fc",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Safe kernel wrappers rely on debug-only shape checks"
+  },
+  {
+   "id": "6b5f4f3c",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Generic GF(2^m) kernel reduction returns wrong products for degrees above 33"
+  },
+  {
+   "id": "bd5a401d",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Remove the LlrFns and detect compatibility aliases from the LLR kernels"
+  },
+  {
+   "id": "f6603b37",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Per-device HIP stream pools for multi-GPU simulation"
+  },
+  {
+   "id": "54a483a3",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Sweep-level Pipeline::run for the 5G NR preset"
+  },
+  {
+   "id": "cfc2e9a9",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: Row-panel matvec for the medium-prime packed kernel"
+  },
+  {
+   "id": "b2520e0f",
+   "epic": "b4b4b9ee",
+   "reason": "found by workers in session 4: mersenne_reduce is wrong outside its tested exponents"
   }
  ],
  "escalations": [
@@ -1363,7 +1488,8 @@
   "Session 4 (2026-10-03): owner interviewed on all ten open questions; rulings are in escalations. Standing rules: sweep units must be net-negative in lines per unit unless each added line is a missing panic, safety or contract statement listed in the unit's record; models: opus for Rust, scripts, permanent prose and reworks, sonnet for moves, inventories and records, no fable; the lead never pushes.",
   "README rules superseded 2026-10-03: a crate README states purpose and when to choose the crate, plus links (docs/index.md, owning reference/concepts pages, generated Rustdoc link with its cargo doc command). No capability list, feature table or module inventory (R2 and R3 lapse; R1, R4, R5, R6 stand).",
   "Sweep dispatch: per-unit briefs are generated from the session scratchpad template (hard net-negative rule, token-diff proof, planned-work matching). Wave A (67b5d1d8, ee2b0c0c, f46046f0, 3aef9e33, 9f47bb94) removed about 7,750 net lines; each unit's commit body lists justified pattern lines, planned-work issue ids and added contracts. Sweep follow-ups filed under b4b4b9ee: c04d3f1c, 02ed3c51, 8342487d, ebd26779, 7c8ab1e2, bb64ee0e, bc4eb125, 1fe6e218, a44566c0, 2a9cc72c, 3464c241, a1e02780, d436dd5f, de0528d2.",
-  "Sweep review standard v2 (from the first five units' blocking findings; binding for every sweep brief and rework): (1) delete every navigational comment in scope, pre-existing ones included: banners, separators, test-group labels, test inventories, assertion narration; (2) remove Rustdoc examples for accessors, constants, constructors, predicates, lookups and direct field mappings, uncompilable or never-run examples and elementary tutorials; keep workflow and contract examples untouched; (3) each module doc is one short orientation paragraph plus contracts no single item owns; (4) keep or restore one-line non-obvious complexity statements on public items; (5) no performance, timing or feasibility statement in source comments and no dev/active|plans|sessions provenance pointers; a committed digest-pinned protocol the code implements stays as one line; (6) external works cite `@/citation/<Key>` from .jit/references.toml (554c2935 registers keys and a mapping); unkeyed works are listed, never left as prose on a touched line; (7) commit body lists 'planned work: <statement> -> <id> (jit issue show <id>)', 'removed examples:', justified pattern lines, added contracts, token diff; (8) hand-written notes in non-Rust artefacts inside the scope directory (x86/asm/*.asm.txt headers) follow the same rules; (9) reviewers judge the whole scope, not the diff."
+  "Sweep review standard v2 (from the first five units' blocking findings; binding for every sweep brief and rework): (1) delete every navigational comment in scope, pre-existing ones included: banners, separators, test-group labels, test inventories, assertion narration; (2) remove Rustdoc examples for accessors, constants, constructors, predicates, lookups and direct field mappings, uncompilable or never-run examples and elementary tutorials; keep workflow and contract examples untouched; (3) each module doc is one short orientation paragraph plus contracts no single item owns; (4) keep or restore one-line non-obvious complexity statements on public items; (5) no performance, timing or feasibility statement in source comments and no dev/active|plans|sessions provenance pointers; a committed digest-pinned protocol the code implements stays as one line; (6) external works cite `@/citation/<Key>` from .jit/references.toml (554c2935 registers keys and a mapping); unkeyed works are listed, never left as prose on a touched line; (7) commit body lists 'planned work: <statement> -> <id> (jit issue show <id>)', 'removed examples:', justified pattern lines, added contracts, token diff; (8) hand-written notes in non-Rust artefacts inside the scope directory (x86/asm/*.asm.txt headers) follow the same rules; (9) reviewers judge the whole scope, not the diff.",
+  "Session 4 ended by owner request (2026-10-04) with a handoff (handoff-3.md). Sweep waves: A and B written and reviewed; C (4997a3ed, 9dda3958, cafb463c, 8a9db61a, f22ec590, 93aed46a), D (8f451167, f2064e90, aa0558c1, 72768e37, c6aa0e84, 13dfe1a5) and E (eba21481, 50201002) pending. The worker brief is ffc35b8c-sweep-brief-template.md."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
