@@ -36,18 +36,12 @@ use tuning_campaign_support::receipt::{
     PairRecord, Severity, SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR,
     LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
+use tuning_campaign_support::repository::repository_root;
 use tuning_campaign_support::schema;
 use tuning_campaign_support::scratch::Scratch;
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 const CAMPAIGN_SEED: u64 = 7;
-
-fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../..")
-        .canonicalize()
-        .unwrap()
-}
 
 fn scratch(name: &str) -> Scratch {
     tuning_campaign_support::scratch::scratch(&format!("gf2-f547c394-{name}"))
@@ -63,7 +57,7 @@ fn stage_repo(root: &Path) {
             ADDENDUM_SCHEMA_PATH => "dev/active/f547c394/addendum-v1.schema.json",
             _ => relative,
         };
-        fs::copy(repo_root().join(archived), target).unwrap();
+        fs::copy(repository_root().unwrap().join(archived), target).unwrap();
     }
     let source = "producer.rs";
     fs::write(root.join(source), b"fn measured_behavior() {}\n").unwrap();
@@ -83,7 +77,7 @@ fn stage_repo(root: &Path) {
 /// Copies the runner's declared producing-input closure into a scratch repo.
 fn stage_runner_producing(root: &Path) {
     const MANIFEST: &str = "dev/active/f547c394/producing-inputs.json";
-    let source_root = repo_root();
+    let source_root = repository_root().unwrap();
     let producing = ProducingInputs::read_at(&source_root, MANIFEST).unwrap();
     for relative in
         std::iter::once(MANIFEST).chain(producing.build_inputs.iter().map(String::as_str))
@@ -455,7 +449,7 @@ fn build_receipt_with_history(
             _ => None,
         };
         if let Some(inputs) = pinned {
-            let source = repo_root().join(inputs);
+            let source = repository_root().unwrap().join(inputs);
             fs::copy(source.join("protocol.md"), repo.join(PROTOCOL_PATH)).unwrap();
             fs::copy(
                 source.join("addendum.schema.json"),
@@ -464,7 +458,11 @@ fn build_receipt_with_history(
             .unwrap();
         } else {
             for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-                fs::copy(repo_root().join(relative), repo.join(relative)).unwrap();
+                fs::copy(
+                    repository_root().unwrap().join(relative),
+                    repo.join(relative),
+                )
+                .unwrap();
             }
         }
         fs::write(
@@ -1077,7 +1075,7 @@ fn outcome(summary: &tuning_campaign_support::receipt::AcceptanceSummary, id: &s
 
 #[test]
 fn addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields() {
-    let root = repo_root();
+    let root = repository_root().unwrap();
     let schema_value: Value = serde_json::from_slice(
         &fs::read(root.join("dev/active/f547c394/addendum-v1.schema.json")).unwrap(),
     )
@@ -2097,7 +2095,7 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
 
 #[test]
 fn protocol_document_pins_the_frozen_shared_settings() {
-    let text = fs::read_to_string(repo_root().join(PROTOCOL_PATH)).unwrap();
+    let text = fs::read_to_string(repository_root().unwrap().join(PROTOCOL_PATH)).unwrap();
     assert!(text.contains(&format!("`{PROTOCOL_ID}` version {PROTOCOL_VERSION}")));
     let mut found = BTreeMap::new();
     for line in text.lines() {
@@ -2124,7 +2122,9 @@ fn protocol_document_pins_the_frozen_shared_settings() {
         rules(&text),
         rules(
             &fs::read_to_string(
-                repo_root().join("dev/tools/tuning-campaign-support/src/receipt.rs")
+                repository_root()
+                    .unwrap()
+                    .join("dev/tools/tuning-campaign-support/src/receipt.rs")
             )
             .unwrap()
         ),
@@ -2237,7 +2237,7 @@ fn flagged_windows_include_the_exact_boundary_without_pooling_arms() {
 
 #[test]
 fn protocol_document_guard_includes_justifications_and_every_rule_it_declares() {
-    let text = fs::read_to_string(repo_root().join(PROTOCOL_PATH)).unwrap();
+    let text = fs::read_to_string(repository_root().unwrap().join(PROTOCOL_PATH)).unwrap();
     let rows = SHARED_SETTINGS.table();
     for (name, value, justification) in rows {
         let row = format!("| `{name}` | `{value}` | {justification} |");
@@ -2249,14 +2249,17 @@ fn protocol_document_guard_includes_justifications_and_every_rule_it_declares() 
         .filter(|digits| digits.bytes().all(|byte| byte.is_ascii_digit()))
         .map(|digits| format!("P-{digits}"))
         .collect();
-    let enforced: std::collections::BTreeSet<_> =
-        fs::read_to_string(repo_root().join("dev/tools/tuning-campaign-support/src/receipt.rs"))
+    let enforced: std::collections::BTreeSet<_> = fs::read_to_string(
+        repository_root()
             .unwrap()
-            .split("P-")
-            .filter_map(|suffix| suffix.get(..2))
-            .filter(|digits| digits.bytes().all(|byte| byte.is_ascii_digit()))
-            .map(|digits| format!("P-{digits}"))
-            .collect();
+            .join("dev/tools/tuning-campaign-support/src/receipt.rs"),
+    )
+    .unwrap()
+    .split("P-")
+    .filter_map(|suffix| suffix.get(..2))
+    .filter(|digits| digits.bytes().all(|byte| byte.is_ascii_digit()))
+    .map(|digits| format!("P-{digits}"))
+    .collect();
     assert_eq!(declared, enforced);
 }
 
@@ -2349,7 +2352,11 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
     for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-        fs::copy(repo_root().join(relative), repo.join(relative)).unwrap();
+        fs::copy(
+            repository_root().unwrap().join(relative),
+            repo.join(relative),
+        )
+        .unwrap();
     }
     family.cells[0].decoder = Some(decoder(DecoderArmKind::MatchedAlgorithm));
     family.cells[1].cache_state = CacheState::Cold;
@@ -2660,7 +2667,7 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
 #[test]
 fn v1_published_receipts_keep_their_pinned_rules_and_refuse_v2() {
     for mode in ["pilot", "confirmation"] {
-        let dir = repo_root().join(format!(
+        let dir = repository_root().unwrap().join(format!(
             "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-{mode}"
         ));
         let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(1)).unwrap();
@@ -3479,7 +3486,11 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
     family.effect.resolution_evidence = None;
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
     for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-        fs::copy(repo_root().join(relative), repo.join(relative)).unwrap();
+        fs::copy(
+            repository_root().unwrap().join(relative),
+            repo.join(relative),
+        )
+        .unwrap();
     }
     write_addendum(&repo, &family);
     git(&repo, &["init", "-q"]);
@@ -3903,7 +3914,9 @@ fn resolution_evidence_accepts_pilots_from_version_3_to_the_citing_version() {
 
 #[test]
 fn v3_receipts_keep_rejecting_a_restarted_cell_and_refuse_later_rules() {
-    let dir = repo_root().join("dev/bench_results/26465e6c/v3-and-popcnt-pilot");
+    let dir = repository_root()
+        .unwrap()
+        .join("dev/bench_results/26465e6c/v3-and-popcnt-pilot");
     let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(3)).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
@@ -4158,7 +4171,11 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     family.effect.resolution_evidence = None;
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
     for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-        fs::copy(repo_root().join(relative), repo.join(relative)).unwrap();
+        fs::copy(
+            repository_root().unwrap().join(relative),
+            repo.join(relative),
+        )
+        .unwrap();
     }
     write_addendum(&repo, &family);
     git(&repo, &["init", "-q"]);

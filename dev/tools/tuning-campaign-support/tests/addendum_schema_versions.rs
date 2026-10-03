@@ -12,9 +12,10 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 use tuning_campaign_support::campaign::Sha256Digest;
+use tuning_campaign_support::repository::repository_root;
 use tuning_campaign_support::schema;
 
 /// SHA-256 of one committed schema file and of one frozen family addendum
@@ -41,20 +42,6 @@ const VERSIONED_FIXTURES: &[(&str, &str)] = &[
         "019f7444d5fd5e9a2ef4dc2aba733997fa2dd0350b5710cd4aa0d69b3f9f8b90",
     ),
 ];
-
-fn repository_root() -> PathBuf {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(env!("CARGO_MANIFEST_DIR"))
-        .args(["rev-parse", "--show-toplevel"])
-        .output()
-        .unwrap();
-    assert!(
-        output.status.success(),
-        "git cannot resolve the repository root"
-    );
-    PathBuf::from(String::from_utf8(output.stdout).unwrap().trim_end())
-}
 
 /// Every `addendum*.json` file git reports below `root` as tracked or
 /// untracked and not ignored, keyed by SHA-256; byte-identical copies share
@@ -91,7 +78,7 @@ fn addendum_files(root: &Path) -> BTreeMap<String, (String, Vec<u8>)> {
 
 #[test]
 fn each_protocol_version_validates_against_its_own_committed_schema() {
-    let files = addendum_files(&repository_root());
+    let files = addendum_files(&repository_root().unwrap());
     let located = |sha256: &str| {
         files
             .get(sha256)
