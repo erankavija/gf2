@@ -1,48 +1,15 @@
-//! AVX2 batch multiply-reduce kernels for the Fermat prime `Fp<65537>`.
+//! AVX2 batch multiply-reduce kernels for the Fermat prime
+//! `P = 65537 = 2^16 + 1`.
 //!
-//! Targets the prime `P = 65537 = 2^16 + 1` — the fifth (and likely last)
-//! known Fermat prime. This prime admits an exceptionally tight SIMD
-//! reduction sequence on 8-lane 256-bit AVX2 because the modular
-//! reduction collapses to a single subtract once the product is split
-//! into high and low 16-bit halves.
+//! For `a, b ∈ [0, P)`, the product `a·b ≤ 2³²` splits as
+//! `hi · 2¹⁶ + lo` with `lo < 2¹⁶`, `hi ≤ 2¹⁶`, and `2¹⁶ ≡ -1 (mod P)` gives
+//! `a·b ≡ lo - hi`; adding `P` moves it into `[1, 2P - 1]` and one conditional
+//! subtract canonicalises. `_mm256_mullo_epi32` would wrap on
+//! `65536 × 65536 = 2³²`, so the kernels use `_mm256_mul_epu32` on the even
+//! and then the odd u32 lanes and recombine the two reduced vectors.
 //!
-//! # Algorithm
-//!
-//! For `a, b ∈ [0, P) = [0, 65536]`, the product `a·b` fits in 33 bits
-//! (`65536² = 2³²`). Writing
-//!
-//! ```text
-//! a·b = hi · 2¹⁶ + lo   with   lo < 2¹⁶,   hi ≤ 2¹⁶
-//! ```
-//!
-//! the identity `2¹⁶ ≡ -1 (mod 65537)` gives
-//!
-//! ```text
-//! a·b ≡ lo - hi  (mod 65537).
-//! ```
-//!
-//! Since `lo - hi ∈ [-65536, 65535]`, we add `P` to shift the sum into the
-//! non-negative range, producing a value in `[1, 2P - 1]`, then apply
-//! exactly one branchless conditional subtract of `P` to canonicalise.
-//!
-//! # Lane layout choice
-//!
-//! AVX2 lacks a native `u32 × u32 → u32` widening multiply. For inputs up
-//! to `2¹⁶`, an `_mm256_mullo_epi32` product would wrap on the single
-//! `65536 × 65536 = 2³²` boundary case, destroying correctness. We
-//! therefore follow the Mersenne31 pattern: use `_mm256_mul_epu32`, which
-//! multiplies the even-indexed u32 lanes of two 256-bit vectors to produce
-//! four packed 64-bit products, apply the reduction per pair of products,
-//! repeat for odd lanes, then blend the two 4-lane vectors back into a
-//! single 8-lane u32 result. This yields **8 canonical u32 outputs per
-//! 256-bit vector loop iteration**.
-//!
-//! # Safety
-//!
-//! All public functions here are `unsafe` — callers must ensure AVX2 is
-//! available at runtime. Safe, dispatched entry points live in the parent
-//! `fp65537.rs` module via the `Fp65537Fns` table returned by
-//! `crate::fp65537::detect`.
+//! All public functions are `unsafe`: callers must ensure AVX2 is available
+//! at runtime. `crate::fp65537::detect` returns the safe dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 
@@ -61,13 +28,9 @@ use core::arch::x86_64::*;
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_fp65537_64(p: __m256i) -> __m256i {
-    // Mask for the low 16 bits of every 64-bit lane, and `P = 65537` in
-    // the low 32 bits of every 64-bit lane.
     let mask16 = _mm256_set1_epi64x(0xFFFF);
     let p_vec = _mm256_set1_epi64x(65537);
 
-    // Split each 64-bit lane into (hi, lo) halves at the 16-bit boundary.
-    // lo = product & 0xFFFF, hi = product >> 16.
     let lo = _mm256_and_si256(p, mask16);
     let hi = _mm256_srli_epi64(p, 16);
 
@@ -76,16 +39,11 @@ unsafe fn reduce_fp65537_64(p: __m256i) -> __m256i {
     let lo_plus_p = _mm256_add_epi64(lo, p_vec);
     let r_shifted = _mm256_sub_epi64(lo_plus_p, hi);
 
-    // Conditional subtract of P when r_shifted >= P.
-    // Branchless via signed cmp: because r_shifted < 2·P < 2^17 ≪ 2^63,
-    // signed and unsigned comparisons agree. Compute r_minus_p = r - P,
-    // select r_minus_p if r >= P else r.
+    // r_shifted < 2·P < 2^17 ≪ 2^63, so the signed compare is exact.
     let r_minus_p = _mm256_sub_epi64(r_shifted, p_vec);
-    // mask = (r_shifted >= P) = NOT (P > r_shifted)
     let lt = _mm256_cmpgt_epi64(p_vec, r_shifted);
     let ones = _mm256_set1_epi64x(-1);
     let ge_mask = _mm256_xor_si256(lt, ones);
-    // Select: (r_minus_p & ge_mask) | (r_shifted & !ge_mask)
     let take_minus = _mm256_and_si256(r_minus_p, ge_mask);
     let take_orig = _mm256_andnot_si256(ge_mask, r_shifted);
     _mm256_or_si256(take_minus, take_orig)
@@ -114,11 +72,7 @@ pub unsafe fn fp65537_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
     let prod_odd = _mm256_mul_epu32(a_odd, b_odd);
     let red_odd = reduce_fp65537_64(prod_odd);
 
-    // Blend: red_even has its 32-bit results in lanes {0, 2, 4, 6};
-    // red_odd has its results in lanes {0, 2, 4, 6} of its own vector
-    // (because mul_epu32 writes into the low half of each 64-bit lane).
-    // Shift red_odd left 32 bits to populate lanes {1, 3, 5, 7} and OR
-    // with red_even.
+    // Odd results move to the high 32 bits of each 64-bit lane.
     let odd_shifted = _mm256_slli_epi64(red_odd, 32);
     _mm256_or_si256(red_even, odd_shifted)
 }
@@ -131,12 +85,6 @@ pub unsafe fn fp65537_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
 ///
 /// Computes `out[i] = a[i] * b[i] mod 65537` for all `i`.
 ///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical `Fp<65537>` values (`< 65537`).
-///   Must have the same length.
-/// * `out` — output slice (same length as `a` and `b`).
-///
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available at runtime. All input values
@@ -146,10 +94,6 @@ pub unsafe fn fp65537_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
 /// # Panics
 ///
 /// Panics if the slice lengths differ.
-///
-/// # Complexity
-///
-/// O(n) with a vectorisation factor of 8 u32 lanes per 256-bit AVX2 vector.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp65537_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
     assert_eq!(a.len(), b.len(), "fp65537_batch_mul: length mismatch");
@@ -169,7 +113,6 @@ pub unsafe fn fp65537_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
         _mm256_storeu_si256(o_ptr.add(i), rv);
     }
 
-    // Scalar tail for the remaining `n % 8` elements.
     let tail_start = nvec * 8;
     for i in tail_start..n {
         let prod = (*a.get_unchecked(i) as u64) * (*b.get_unchecked(i) as u64);
@@ -185,11 +128,6 @@ pub unsafe fn fp65537_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
 ///
 /// Computes `out[i] = (a[i] + b[i]) mod 65537`.
 ///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical `Fp<65537>` values.
-/// * `out` — output slice.
-///
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical.
@@ -197,10 +135,6 @@ pub unsafe fn fp65537_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
 /// # Panics
 ///
 /// Panics if slice lengths differ.
-///
-/// # Complexity
-///
-/// O(n) with 8-lane vectorisation.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp65537_batch_add(a: &[u32], b: &[u32], out: &mut [u32]) {
     assert_eq!(a.len(), b.len(), "fp65537_batch_add: length mismatch");
@@ -247,17 +181,10 @@ pub unsafe fn fp65537_batch_add(a: &[u32], b: &[u32], out: &mut [u32]) {
 /// out_c1[i] = cross_i - v0_i - v1_i
 /// ```
 ///
-/// The fused form reads each of the four input slices once per 8-lane
-/// chunk and writes each of the two output slices once, eliminating the
-/// nine intermediate heap buffers used by a pass-per-op composition. All
-/// intermediates live in AVX2 registers.
+/// Each 8-lane chunk reads the four input slices once and writes the two
+/// output slices once; all intermediates live in AVX2 registers.
 ///
-/// # Arguments
-///
-/// * `a0`, `a1` — left-batch coefficient slices (same length).
-/// * `b0`, `b1` — right-batch coefficient slices (same length as `a0`).
-/// * `beta` — non-residue β, canonical (< 65537).
-/// * `out_c0`, `out_c1` — output coefficient slices (same length).
+/// `beta` is the non-residue β, canonical (`< 65537`).
 ///
 /// # Safety
 ///
@@ -267,11 +194,6 @@ pub unsafe fn fp65537_batch_add(a: &[u32], b: &[u32], out: &mut [u32]) {
 /// # Panics
 ///
 /// Panics if any input/output slice length differs from `a0.len()`.
-///
-/// # Complexity
-///
-/// `O(n)` with 8-lane vectorisation. Three multiplies, two adds, two
-/// subtracts, one broadcast multiply per 8-lane chunk.
 #[target_feature(enable = "avx2")]
 #[allow(clippy::too_many_arguments)]
 pub unsafe fn fp65537_batch_karatsuba(
@@ -308,26 +230,20 @@ pub unsafe fn fp65537_batch_karatsuba(
         let b0v = _mm256_loadu_si256(b0_ptr.add(i));
         let b1v = _mm256_loadu_si256(b1_ptr.add(i));
 
-        // v0 = a0 * b0
         let v0 = fp65537_batch_mul8(a0v, b0v);
-        // v1 = a1 * b1
         let v1 = fp65537_batch_mul8(a1v, b1v);
 
-        // sum_a = a0 + a1  (canonical)
         let sum_a = {
             let s = _mm256_add_epi32(a0v, a1v);
             _mm256_min_epu32(s, _mm256_sub_epi32(s, p_vec))
         };
-        // sum_b = b0 + b1  (canonical)
         let sum_b = {
             let s = _mm256_add_epi32(b0v, b1v);
             _mm256_min_epu32(s, _mm256_sub_epi32(s, p_vec))
         };
 
-        // cross = sum_a * sum_b
         let cross = fp65537_batch_mul8(sum_a, sum_b);
 
-        // beta_v1 = β * v1
         let beta_v1 = if beta == 0 {
             _mm256_setzero_si256()
         } else if beta == 1 {
@@ -336,19 +252,16 @@ pub unsafe fn fp65537_batch_karatsuba(
             fp65537_batch_mul8(v1, beta_vec)
         };
 
-        // out_c0 = v0 + beta_v1  (canonical)
         let out_c0_v = {
             let s = _mm256_add_epi32(v0, beta_v1);
             _mm256_min_epu32(s, _mm256_sub_epi32(s, p_vec))
         };
 
-        // tmp = cross - v0  (canonical) =  cross + P - v0, then cond-sub
         let tmp = {
             let a_plus_p = _mm256_add_epi32(cross, p_vec);
             let diff = _mm256_sub_epi32(a_plus_p, v0);
             _mm256_min_epu32(diff, _mm256_sub_epi32(diff, p_vec))
         };
-        // out_c1 = tmp - v1 (canonical)
         let out_c1_v = {
             let a_plus_p = _mm256_add_epi32(tmp, p_vec);
             let diff = _mm256_sub_epi32(a_plus_p, v1);
@@ -359,7 +272,6 @@ pub unsafe fn fp65537_batch_karatsuba(
         _mm256_storeu_si256(c1_ptr.add(i), out_c1_v);
     }
 
-    // Scalar tail for `n % 8` remaining elements.
     let tail_start = nvec * 8;
     for i in tail_start..n {
         let a0i = *a0.get_unchecked(i) as u64;
@@ -464,11 +376,6 @@ unsafe fn fp65537_mul_beta8(x: __m256i, beta: u32, beta_vec: __m256i) -> __m256i
 /// # Panics
 ///
 /// Panics if any input/output slice length differs from `a0.len()`.
-///
-/// # Complexity
-///
-/// `O(n)` with 8-lane vectorisation. Six base-field multiplies and the
-/// fixed Karatsuba add/sub schedule per 8-lane chunk.
 #[target_feature(enable = "avx2")]
 #[allow(clippy::too_many_arguments)]
 pub unsafe fn fp65537_batch_cubic_karatsuba(
@@ -619,11 +526,6 @@ pub unsafe fn fp65537_batch_cubic_karatsuba(
 /// Computes `out[i] = (a[i] - b[i]) mod 65537` with the result in
 /// canonical form `[0, 65537)`.
 ///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical `Fp<65537>` values.
-/// * `out` — output slice.
-///
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available and inputs are canonical.
@@ -631,10 +533,6 @@ pub unsafe fn fp65537_batch_cubic_karatsuba(
 /// # Panics
 ///
 /// Panics if slice lengths differ.
-///
-/// # Complexity
-///
-/// O(n) with 8-lane vectorisation.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp65537_batch_sub(a: &[u32], b: &[u32], out: &mut [u32]) {
     assert_eq!(a.len(), b.len(), "fp65537_batch_sub: length mismatch");
@@ -678,9 +576,6 @@ pub unsafe fn fp65537_batch_sub(a: &[u32], b: &[u32], out: &mut [u32]) {
 mod tests {
     use super::*;
 
-    // Test-local reference implementations. Signatures differ from the
-    // module-level u64 helpers; the name shadowing is deliberate so each
-    // test expression reads naturally.
     fn scalar_mul(a: u32, b: u32) -> u32 {
         ((a as u64 * b as u64) % 65537) as u32
     }
