@@ -1,33 +1,15 @@
 //! AVX2 batch kernels for medium primes `Fp<P>` with `P < 2^16`.
 //!
 //! Residues occupy one 16-bit lane; the kernels accept any odd prime
-//! `P ∈ (251, 65535]`. Reduction is Barrett with `m = floor(2^32 / P)`:
-//! `q = (x * m) >> 32`, `r = x - q * P ∈ [0, 2P)` for `x ∈ [0, P²)`, then one
-//! conditional subtract.
-//!
-//! # Input contract per kernel
-//!
-//! All kernels accept u16 lanes in `[0, P)`.
-//!
-//! * `fp_medium_batch_add` / `fp_medium_batch_sub` accept canonical residues
-//!   or Montgomery raw storage; the result is in the input domain
-//!   (`aR + bR = (a+b)R mod P`).
-//! * `fp_medium_batch_mul` requires canonical residues: on Montgomery
-//!   storage it returns `abR² mod P`.
-//! * `fp_medium_batch_dot` computes `(Σ a[i] * b[i]) mod P` on the lanes as
-//!   given; on Montgomery storage the result carries an `R²` factor that the
-//!   caller removes with one REDC.
-//!
-//! All public functions are `unsafe`: callers must ensure AVX2 is available
-//! at runtime. `crate::fp_medium::detect` returns the safe dispatched table.
+//! `P ∈ (251, 65535]` and reduce by Barrett with `m = floor(2^32 / P)`. Each
+//! kernel's doc states whether it takes canonical residues or Montgomery
+//! raw storage. All public functions are `unsafe`: callers must ensure AVX2
+//! is available at runtime; `crate::fp_medium::detect` returns the safe
+//! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 
 use core::arch::x86_64::*;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 /// Lane-wise modular multiplication for 16 u16 values per 256-bit vector.
 ///
@@ -105,10 +87,6 @@ unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
     _mm256_packus_epi32(r_lo, r_hi)
 }
 
-// ---------------------------------------------------------------------------
-// Public batch entry points
-// ---------------------------------------------------------------------------
-
 /// Batch lane-wise multiplication for `Fp<P>` with `P < 2^16`.
 ///
 /// Computes `out[i] = (a[i] * b[i]) mod P` for all `i`, using 16-lane
@@ -122,8 +100,7 @@ unsafe fn fp_medium_sub16(a: __m256i, b: __m256i, p: __m256i) -> __m256i {
 /// Caller must ensure AVX2 is available at runtime, all input values are
 /// `< p`, and `barrett_m == floor(2^32 / p)`. Behaviour is undefined
 /// otherwise. Inputs in Montgomery raw storage are *not* an unsoundness
-/// hazard but produce a wrong-domain result — see the module-level
-/// "Input contract per kernel" section.
+/// hazard but produce a wrong-domain result.
 ///
 /// # Panics
 ///
@@ -150,7 +127,6 @@ pub unsafe fn fp_medium_batch_mul(a: &[u16], b: &[u16], p: u16, barrett_m: u32, 
         _mm256_storeu_si256(o_ptr.add(i), rv);
     }
 
-    // Scalar tail.
     let tail_start = nvec * 16;
     for i in tail_start..n {
         let prod = (*a.get_unchecked(i) as u32) * (*b.get_unchecked(i) as u32);
@@ -242,8 +218,7 @@ pub unsafe fn fp_medium_batch_sub(a: &[u16], b: &[u16], p: u16, out: &mut [u16])
 ///
 /// On canonical lanes the result is the canonical dot product. On
 /// Montgomery raw storage `aR mod p` it is `(R² · Σ aᵢbᵢ) mod p`, and one
-/// Montgomery REDC by the caller recovers `R · Σ aᵢbᵢ mod p` (see the
-/// module-level "Input contract per kernel" section).
+/// Montgomery REDC by the caller recovers `R · Σ aᵢbᵢ mod p`.
 ///
 /// # Algorithm
 ///
@@ -326,7 +301,6 @@ unsafe fn fp_medium_batch_dot_madd(a: &[u16], b: &[u16], p: u16) -> u32 {
         .wrapping_add(tmp[2])
         .wrapping_add(tmp[3]);
 
-    // Scalar tail.
     let tail_start = nvec * 16;
     for i in tail_start..n {
         total = total.wrapping_add((*a.get_unchecked(i) as u64) * (*b.get_unchecked(i) as u64));
@@ -347,7 +321,6 @@ unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
     let a_ptr = a.as_ptr() as *const __m256i;
     let b_ptr = b.as_ptr() as *const __m256i;
 
-    // Two parallel u64-lane accumulators (widened from u32 mullo outputs).
     let mut acc_lo = _mm256_setzero_si256();
     let mut acc_hi = _mm256_setzero_si256();
     let zero = _mm256_setzero_si256();
@@ -365,7 +338,6 @@ unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
         let prod_full_lo = _mm256_unpacklo_epi16(prod_lo16, prod_hi16);
         let prod_full_hi = _mm256_unpackhi_epi16(prod_lo16, prod_hi16);
 
-        // Widen 32-bit-lane products to 64-bit lanes (zero-extension).
         let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
         let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
         let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
@@ -386,7 +358,6 @@ unsafe fn fp_medium_batch_dot_mulhi(a: &[u16], b: &[u16], p: u16) -> u32 {
         .wrapping_add(tmp[2])
         .wrapping_add(tmp[3]);
 
-    // Scalar tail.
     let tail_start = nvec * 16;
     for i in tail_start..n {
         total = total.wrapping_add((*a.get_unchecked(i) as u64) * (*b.get_unchecked(i) as u64));
@@ -500,7 +471,6 @@ pub unsafe fn fp_medium_spmm_row(
         }
         j += 16;
     }
-    // Scalar tail for j ∈ [j..n).
     while j < n {
         let mut total: u64 = 0;
         for h in 0..nnz {
@@ -514,10 +484,6 @@ pub unsafe fn fp_medium_spmm_row(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Whole-GEMM panel kernel
-// ---------------------------------------------------------------------------
-
 /// MR register tile rows for the medium-prime panel kernel. The
 /// widen-to-u64 path holds 4 u64 acc ymm per row; any MR > 2 exceeds the
 /// 16-register file once the B-load, MR broadcasts and product temps are
@@ -527,13 +493,11 @@ const FP_MEDIUM_PANEL_MR: usize = 2;
 /// NR register tile cols (one ymm of u16 lanes = 16 cells).
 const FP_MEDIUM_PANEL_NR: usize = 16;
 
-/// Outer-N panel grouping (BLIS NC blocking) for the medium-prime panel
-/// kernel: the number of B panels that fit a 16 MB L3 budget, so the active
-/// B slab stays L3-resident across the full m sweep while one A-pack is
-/// shared across every panel in the group.
+/// Outer-N panel grouping (NC blocking of `@/citation/VanZee2015`) for the
+/// medium-prime panel kernel: the number of B panels that fit a 16 MB L3
+/// budget, sharing one A-pack across every panel in the group.
 #[inline]
 fn fp_medium_nc_panels_outer(n_panels: usize, k: usize) -> usize {
-    // Half of Zen 3's 32 MB CCX-shared L3.
     const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k
         .saturating_mul(FP_MEDIUM_PANEL_NR)
@@ -614,9 +578,8 @@ pub unsafe fn fp_medium_gemm_panel(
         }
     }
 
-    // BLIS NC outer cache-blocking: for each outer-N panel group, sweep
-    // every M-row block before moving on, so the B slab bounded by
-    // `fp_medium_nc_panels_outer` stays L3-resident across the m sweep.
+    // NC outer cache-blocking: for each outer-N panel group, sweep every
+    // M-row block before moving on.
     let nc_panels = fp_medium_nc_panels_outer(n_panels, k);
 
     // A-pack scratch, MR-interleaved:
@@ -764,7 +727,6 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
     let b_panel_ptr = b_packed.as_ptr().add(panel_off);
 
     for t in 0..k {
-        // 1 ymm of B (16 u16 lanes covering the panel's 16 cells).
         let bv = _mm256_loadu_si256(b_panel_ptr.add(t * FP_MEDIUM_PANEL_NR) as *const __m256i);
 
         let a_pack_t_base = a_pack_ptr.add(t * FP_MEDIUM_PANEL_MR);
@@ -774,11 +736,8 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
             let av0 = _mm256_set1_epi16(a0_val as i16);
             let prod_lo = _mm256_mullo_epi16(av0, bv);
             let prod_hi = _mm256_mulhi_epu16(av0, bv);
-            // unpacklo/unpackhi reconstruct full u32 products (per
-            // 128-bit half).
             let prod_full_lo = _mm256_unpacklo_epi16(prod_lo, prod_hi);
             let prod_full_hi = _mm256_unpackhi_epi16(prod_lo, prod_hi);
-            // Widen u32 -> u64 (4 ymm of 4 u64 lanes each).
             let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
             let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
             let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
@@ -956,10 +915,6 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -1143,9 +1098,6 @@ mod tests {
         if !std::arch::is_x86_feature_detected!("avx2") {
             return;
         }
-        // Cover P at the small/large medium boundary plus the
-        // reference 65521 prime; sweep (nnz, b_rows, n) shapes that
-        // hit the SIMD body and the scalar tail.
         for &p in &[257u16, 65521, 8191, 1009] {
             let cases = [
                 (1usize, 16usize, 8usize),
@@ -1220,8 +1172,6 @@ mod tests {
         if !std::arch::is_x86_feature_detected!("avx2") {
             return;
         }
-        // Sweep (m, k, n) shapes covering MR/NR/lane-mapping boundaries
-        // plus a few realistic sizes for the GF(65521) reference cell.
         let cases = [
             (1usize, 1usize, 1usize),
             (1, 16, 16),

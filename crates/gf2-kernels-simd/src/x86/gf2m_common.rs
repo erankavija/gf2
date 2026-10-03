@@ -13,8 +13,7 @@ use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
-/// Single-element carry-less multiply + Barrett reduce, kept inline so
-/// tail-handling in batch / GEMM kernels avoids call-pointer overhead.
+/// Single-element carry-less multiply + Barrett reduce.
 ///
 /// Inputs:
 /// - `a`, `b`: GF(2^m) elements as `u64` (high bits beyond `degree` must

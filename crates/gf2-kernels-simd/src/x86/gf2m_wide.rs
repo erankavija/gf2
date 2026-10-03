@@ -1,13 +1,10 @@
 //! AVX2 / PCLMULQDQ kernels for fixed-size schoolbook carry-less
 //! multiplication used by `Gf2mWide`.
 //!
-//! `clmul_wide4_*` (GF(2^256)) and `clmul_wide9_*` (GF(2^571), stored in 9
-//! limbs) compute the full unreduced carry-less product; the caller applies
-//! Barrett reduction. The `_ymm` lanes use VPCLMULQDQ on 256-bit registers,
-//! two 64×64 products per instruction; the `_xmm` lanes use one PCLMULQDQ
-//! per product. Every function writes the little-endian limb layout of the
-//! scalar `clmul_wide_slice_portable::<N>` helper: partial product
-//! `a[i] · b[j]` contributes its low/high halves to `out[i + j]` /
+//! `clmul_wide4_*` (GF(2^256)) and `clmul_wide9_*` (GF(2^571), 9 limbs)
+//! compute the full unreduced carry-less product in the little-endian limb
+//! layout of the scalar `clmul_wide_slice_portable::<N>` helper: partial
+//! product `a[i] · b[j]` contributes its low/high halves to `out[i + j]` /
 //! `out[i + j + 1]`.
 
 #![allow(clippy::missing_safety_doc)]
@@ -16,10 +13,6 @@
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
-
-// ---------------------------------------------------------------------------
-// XMM (PCLMULQDQ) scalar-lane fallback
-// ---------------------------------------------------------------------------
 
 /// 4×4 schoolbook carry-less multiply using 16 scalar PCLMULQDQ instructions.
 ///
@@ -49,10 +42,6 @@ pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// YMM (AVX2 + VPCLMULQDQ) primary path
-// ---------------------------------------------------------------------------
 
 /// Schoolbook carry-less multiply using VPCLMULQDQ on YMM (256-bit) lanes.
 ///
@@ -106,10 +95,6 @@ pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// GF(2^571): 9×9 multi-word kernels
-// ---------------------------------------------------------------------------
-
 /// 9×9 schoolbook carry-less multiply using 81 scalar PCLMULQDQ instructions.
 ///
 /// Computes the 18-limb carry-less product of two 9-limb operands. `out` is
@@ -143,8 +128,7 @@ pub unsafe fn clmul_wide9_xmm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
 /// Each VPCLMULQDQ-on-YMM instruction computes two independent 64×64
 /// carry-less products, one in each 128-bit lane; the odd final product is
 /// paired with a zero lane. Products are accumulated by anti-diagonal in
-/// XMM registers and folded to the 18 output limbs once at the end, reducing
-/// scalar limb traffic in the hot loop.
+/// XMM registers and folded to the 18 output limbs once at the end.
 ///
 /// # Safety
 ///

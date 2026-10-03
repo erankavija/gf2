@@ -1,23 +1,17 @@
 //! AVX2 64×64 bit-block transpose lanes.
 //!
-//! Every kernel here answers the block contract
-//! [`crate::transpose`] states and is reached only through
-//! [`crate::transpose::lane`], which publishes a safe pointer to it once
-//! `is_x86_feature_detected!("avx2")` holds.
-//! [`crate::transpose::TransposeLane`] names them and
-//! [`crate::transpose::PRODUCTION_PREFERENCE`] says which one the production
-//! dispatch takes. `src/x86/asm/transpose.asm.txt` is the release disassembly
-//! of all four, annotated with each one's stack frame, block copies and
-//! mnemonic mix.
+//! Every kernel here answers the block contract [`crate::transpose`] states
+//! and is reached only through [`crate::transpose::lane`], which publishes a
+//! safe pointer to it once `is_x86_feature_detected!("avx2")` holds.
+//! `src/x86/asm/transpose.asm.txt` is the release disassembly of all four.
 
 use core::arch::x86_64::*;
 
 /// AVX2 lane: the four wide stages in YMM registers over a stack copy.
 ///
+/// Runs the mask-shift-XOR recursion of `@/citation/Warren2012` Section 7-3.
 /// The block is copied into a 512-byte local the stages mutate in place, and
-/// copied back into the caller's output at the end. That local is the
-/// declared scratch the annotation of `src/x86/asm/transpose.asm.txt` counts;
-/// [`transpose_64x64_avx2_ymm6`] is the lane that removes it.
+/// copied back into the caller's output at the end.
 ///
 /// # Safety
 ///
@@ -66,13 +60,9 @@ pub(crate) unsafe fn transpose_64x64_avx2(input: &[u64; 64], output: &mut [u64; 
         }};
     }
 
-    // Stage 1: j=32, mask=0x00000000FFFFFFFF (low half of each word).
     stage_ymm!(32, 0x0000_0000_FFFF_FFFFu64);
-    // Stage 2: j=16, mask=0x0000FFFF0000FFFF (low 16-bit half of each 32-bit half).
     stage_ymm!(16, 0x0000_FFFF_0000_FFFFu64);
-    // Stage 3: j=8, mask=0x00FF00FF00FF00FF (low byte of each 16-bit half).
     stage_ymm!(8, 0x00FF_00FF_00FF_00FFu64);
-    // Stage 4: j=4, mask=0x0F0F0F0F0F0F0F0F (low nibble of each byte).
     stage_ymm!(4, 0x0F0F_0F0F_0F0F_0F0Fu64);
 
     // Stages 5–6: j=2, 1. Pairs are (R_r, R_{r+2}) and (R_r, R_{r+1}),

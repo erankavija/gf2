@@ -1,22 +1,11 @@
 //! AVX2 + FMA3 (`_mm256_fmadd_pd`) f64-cascade GEMM kernel for medium
 //! `Fp<P>` with `P ∈ (251, 65536)`.
 //!
-//! Inputs arrive as canonical residues, one per `f64` lane. `bt` is repacked
-//! into N-major panels of width `N_R = 12`; a register-blocked
-//! `M_R × N_R = 4 × 12` micro-kernel (12 accumulators, 3 B-tile registers,
-//! 1 broadcast) accumulates exact integer dot products with no conversion
-//! instruction in the inner loop; a vectorised f64 Barrett reduction then
-//! writes canonical `u16` cells.
-//!
-//! Each lane product is at most `(p-1)² ≤ 65534² < 2³²`, exactly
-//! representable in f64, and a sum of `k ≤ 2^21` of them stays within the
-//! exact-integer range `[0, 2^53]`. The k-axis is cut into chunks of
-//! `K_CHUNK_CAP` with a Barrett reduction between chunks, so every
-//! accumulator lane stays an exact integer; `barrett_reduce_pd` states the
-//! reduction's own bound.
-//!
-//! All public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
-//! available at runtime. `crate::fp_medium_f64::detect` returns the safe
+//! Inputs are canonical residues, one per `f64` lane; a `4 × 12`
+//! register-blocked micro-kernel accumulates exact integer dot products and
+//! a vectorised f64 Barrett reduction writes canonical `u16` cells. All
+//! public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
+//! available at runtime; `crate::fp_medium_f64::detect` returns the safe
 //! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
@@ -32,7 +21,7 @@ const N_R: usize = 12;
 
 /// k-axis chunk cap. With `(p-1)² ≤ 2^32`, up to `2^53 / 2^32 = 2^21` MACs
 /// per chunk stay within the f64 exact-integer range; capping at 4096 keeps
-/// each B-panel slice at `k · N_R · 8 byte ≤ 384 KB`, inside a 512 KB L2.
+/// each B-panel slice at `k · N_R · 8 byte ≤ 384 KB`.
 const K_CHUNK_CAP: usize = 4096;
 
 /// Outer-N panel grouping for the cache-blocked loop nest: the number of
@@ -40,7 +29,6 @@ const K_CHUNK_CAP: usize = 4096;
 /// panel in the group.
 #[inline]
 fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
-    // Half of Zen 3's 32 MB CCX-shared L3.
     const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k.saturating_mul(N_R).saturating_mul(8);
     if panel_bytes == 0 {
@@ -87,8 +75,7 @@ pub unsafe fn fp_medium_f64_gemm(
         return;
     }
 
-    // ── Pack B-transpose into N-major f64 panels of width N_R ──────
-    //
+    // Pack B-transpose into N-major f64 panels of width N_R.
     // For each n-panel `j_blk = 0, N_R, 2*N_R, ...` we need
     // `b_packed[panel_offset + t*N_R + j_off] = B[t, j_blk + j_off]
     //                                         = bt[(j_blk + j_off)*k + t]`.
@@ -111,24 +98,21 @@ pub unsafe fn fp_medium_f64_gemm(
         }
     }
 
-    // ── A-pack scratch (one M_R-row block) ────────────────────────
-    //
+    // A-pack scratch (one M_R-row block):
     // `a_pack_f64[t * M_R + i] = a[(i_blk + i) * k + t]`. The inner
     // kernel then reads each of M_EFF a-rows as a single
     // `_mm256_broadcast_sd` from a contiguous f64 address.
     let mut a_pack_f64: Vec<f64> = vec![0.0f64; M_R * k];
 
-    // ── Outer-N cache-block size ─────────────────────────────────
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
-    // `floor(2^53 / (p-1)²)` exceeds 2^21 for every medium prime, so the
-    // chunk is capped at K_CHUNK_CAP for the L2 working set.
+    // `floor(2^53 / (p-1)²)` exceeds 2^21 for every medium prime, so
+    // K_CHUNK_CAP is the binding chunk bound.
     let k_chunk = K_CHUNK_CAP.min(k);
 
     let p_f64 = p as f64;
     let p_inv_f64 = 1.0_f64 / p_f64;
 
-    // ── Inner GEMM loop (outer-N cache-blocked) ───────────────────
     let m_full = m - (m % M_R);
     let mut n_outer = 0usize;
     while n_outer < n_panels {
@@ -230,7 +214,7 @@ unsafe fn pack_a_block<const M_EFF: usize>(a: &[f64], i_blk: usize, k: usize, ds
 ///
 /// Monomorphisation on `M_EFF` deletes the dead FMA branches for
 /// `m_eff < 4`, leaving the steady-state `M_EFF = 4` body with exactly
-/// 12 FMAs per inner step (no branches inside the hot loop).
+/// 12 FMAs per inner step.
 ///
 /// `a_pack_f64` is the pre-packed A-row block: `M_R × k` f64 in
 /// interleaved row-major (`a_pack_f64[t * M_R + i] = a[(i_blk + i) * k + t]`).
@@ -289,9 +273,8 @@ unsafe fn run_one_panel<const M_EFF: usize>(
             let b_row_ptr = b_panel_base.add(t * N_R);
             let a_row_ptr = a_pack_base.add(t * M_R);
 
-            // Prefetch the B-panel rows PREFETCH_DIST steps ahead.
-            // Each B row is N_R · 8 = 96 bytes = 1.5 cache lines; nudge
-            // both lines onto the L1d miss queue.
+            // Each B row is N_R · 8 = 96 bytes = 1.5 cache lines, so two
+            // prefetches cover the row PREFETCH_DIST steps ahead.
             if t < prefetch_end {
                 let pf_ptr = b_row_ptr.add(PREFETCH_DIST * N_R) as *const i8;
                 _mm_prefetch::<{ _MM_HINT_T0 }>(pf_ptr);
@@ -497,10 +480,6 @@ unsafe fn store_and_reduce_tile<const M_EFF: usize>(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -699,7 +678,6 @@ mod tests {
         for &p in &primes {
             let p_f = p as f64;
             let p_inv = 1.0_f64 / p_f;
-            // Sample exact-integer values across the f64-exact range.
             let samples: Vec<u64> = (0u64..32)
                 .chain((0..16).map(|i| (i + 1) * p - 1))
                 .chain([
