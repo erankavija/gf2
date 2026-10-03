@@ -2,16 +2,30 @@
 
 Checks identify their inputs by file name and content among the files git
 lists, never by a literal repository path (`@/inv/no-dev-path-coupling`).
+
+Usage:
+  repository_files.py shared-producing-manifest
+  repository_files.py package-directory <name>
+
+Each command prints one root-relative path.
 """
 
 from __future__ import annotations
 
+import argparse
 import subprocess
+import sys
+import tomllib
 from pathlib import Path
 
 # Receipt input snapshots hold byte copies of tracked files beside the receipt;
 # a lookup for the live file excludes them.
 SNAPSHOT_DIRECTORY = "inputs"
+
+# `protocol::SHARED_PRODUCING_MANIFEST` and the opening `SharedInput::identity`
+# requires of a protocol document, in the campaign support crate.
+SHARED_PRODUCING_MANIFEST = "producing-inputs.json"
+PROTOCOL_OPENING = b"# Zen 3 benchmark protocol\n\nProtocol `zen3-benchmark-protocol` version "
 
 
 def repository_root(anchor: Path) -> Path:
@@ -47,3 +61,68 @@ def tracked_files(root: Path, name: str) -> list[str]:
         {path for path in listing.split("\0")
          if path and (root / path).is_file() and not is_snapshot_copy(path)}
     )
+
+
+def distinct_contents(root: Path, paths: list[str]) -> list[str]:
+    """The first of `paths` holding each distinct content, in their order."""
+    first: dict[bytes, str] = {}
+    for path in paths:
+        first.setdefault((root / path).read_bytes(), path)
+    return list(first.values())
+
+
+def shared_producing_manifest(root: Path) -> str:
+    """Root-relative path of the producing manifest beside the live protocol documents.
+
+    A protocol document is a `protocol*.md` opening with the protocol's title and
+    identity sentence. Byte-identical manifests are one, named by its
+    lexicographically first path, as `repository::locate_live` names a document.
+    """
+    beside = sorted(
+        {
+            str(Path(path).with_name(SHARED_PRODUCING_MANIFEST))
+            for path in tracked_files(root, "protocol*.md")
+            if (root / path).read_bytes().startswith(PROTOCOL_OPENING)
+        }
+    )
+    found = distinct_contents(root, [path for path in beside if (root / path).is_file()])
+    if len(found) != 1:
+        raise LookupError(
+            f"{len(found)} distinct producing manifests lie beside live protocol "
+            "documents; exactly one must"
+        )
+    return found[0]
+
+
+def package_directory(root: Path, name: str) -> str:
+    """Root-relative directory of the one live Cargo package called `name`."""
+    found = [
+        str(Path(manifest).parent)
+        for manifest in tracked_files(root, "Cargo.toml")
+        if tomllib.loads((root / manifest).read_text()).get("package", {}).get("name") == name
+    ]
+    if len(found) != 1:
+        raise LookupError(f"{len(found)} live packages are named {name}; exactly one must be")
+    return found[0]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("shared-producing-manifest")
+    commands.add_parser("package-directory").add_argument("name")
+    arguments = parser.parse_args()
+    root = repository_root(Path(__file__).resolve())
+    try:
+        if arguments.command == "package-directory":
+            print(package_directory(root, arguments.name))
+        else:
+            print(shared_producing_manifest(root))
+    except LookupError as error:
+        print(error, file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
