@@ -65,6 +65,44 @@ fn declare(repo: &Path, issue: &str, directory: &str) {
     fs::copy(source, target).unwrap();
 }
 
+/// Writes `content` as the campaign declaration under `directory` of `repo`.
+fn write_declaration(repo: &Path, directory: &str, content: &str) {
+    fs::create_dir_all(repo.join(directory)).unwrap();
+    fs::write(repo.join(directory).join(DECLARATION_FILE), content).unwrap();
+}
+
+const STAND_IN_DECLARATION: &str =
+    "{\"schema\":\"tuning-campaign-declaration-v1\",\"issue\":\"0badbeef\"}";
+
+#[test]
+fn byte_identical_declaration_copies_are_one_declaration() {
+    let root = scratch("gf2-declaration-copies");
+    let repo = checkout(&root);
+    for directory in ["live/x", "copies/of/x", "copies/again"] {
+        write_declaration(&repo, directory, STAND_IN_DECLARATION);
+    }
+    let located = locate_campaign_declaration(&repo, "0badbeef").unwrap();
+    assert_eq!(located, format!("copies/again/{DECLARATION_FILE}"));
+    assert_eq!(
+        fs::read_to_string(repo.join(located)).unwrap(),
+        STAND_IN_DECLARATION
+    );
+}
+
+#[test]
+fn declarations_of_one_issue_with_different_bytes_are_rejected() {
+    let root = scratch("gf2-declaration-conflict");
+    let repo = checkout(&root);
+    write_declaration(&repo, "first", STAND_IN_DECLARATION);
+    write_declaration(&repo, "copy", STAND_IN_DECLARATION);
+    write_declaration(&repo, "second", &format!("{STAND_IN_DECLARATION}\n"));
+    let error = locate_campaign_declaration(&repo, "0badbeef").unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "several campaign declarations name issue 0badbeef"
+    );
+}
+
 fn launcher_replays_preparation(complete_temporary: bool) {
     let root = scratch("gf2-launcher-discovery");
     let campaign = format!(
@@ -109,6 +147,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
     }
     let repo = checkout(&root);
     declare(&repo, "a83583e0", "relocated/extent");
+    declare(&repo, "a83583e0", "relocated/copy");
     executable(
         &repo.join("scripts/cargo-budget.sh"),
         "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
@@ -160,21 +199,16 @@ fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_
 }
 
 /// A new campaign names its issue; the launcher refuses an issue without
-/// exactly one declaration before it creates a stage or builds anything.
+/// exactly one declaration content before it creates a stage or builds
+/// anything.
 #[test]
 fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
     let root = scratch("gf2-launcher-declaration");
     let launcher = root.join("launcher.sh");
     install_launcher(&launcher);
     let repo = checkout(&root);
-    for directory in ["first", "second"] {
-        fs::create_dir(repo.join(directory)).unwrap();
-        fs::write(
-            repo.join(directory).join(DECLARATION_FILE),
-            "{\"schema\":\"tuning-campaign-declaration-v1\",\"issue\":\"0badbeef\"}",
-        )
-        .unwrap();
-    }
+    write_declaration(&repo, "first", STAND_IN_DECLARATION);
+    write_declaration(&repo, "second", &format!("{STAND_IN_DECLARATION}\n"));
     let build_capture = root.join("build-called");
     executable(
         &repo.join("scripts/cargo-budget.sh"),
@@ -195,6 +229,10 @@ fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
             .output()
             .unwrap();
         assert!(!result.status.success(), "{argument}");
+        assert!(
+            String::from_utf8_lossy(&result.stderr).contains("campaign declarations name issue"),
+            "{argument}"
+        );
         assert!(!build_capture.exists());
         assert!(!Path::new("/tmp/gf2-0badc0de-19700101t000000z-1").exists());
         assert!(!Path::new("/tmp/gf2-0badbeef-19700101t000000z-1").exists());

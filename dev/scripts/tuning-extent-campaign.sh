@@ -32,8 +32,8 @@ cd "$repo"
 producers=$(python3 - "$issue" <<'PY_DECLARATION'
 import json,os,subprocess,sys
 listing=subprocess.run(['git','ls-files','-z','--cached','--others','--exclude-standard','--',':(glob)**/campaign-declaration.json'],check=True,capture_output=True).stdout.decode()
-candidates=[path for path in listing.split('\0') if path and os.path.isfile(path)]
-matches=[declaration for declaration in (json.load(open(path)) for path in candidates) if declaration.get('issue')==sys.argv[1]]
+contents={open(path,'rb').read() for path in listing.split('\0') if path and os.path.isfile(path)}
+matches=[declaration for declaration in map(json.loads,sorted(contents)) if declaration.get('issue')==sys.argv[1]]
 if len(matches)!=1:
     raise SystemExit(f'{len(matches)} campaign declarations name issue {sys.argv[1]}; exactly one must')
 declaration=matches[0]

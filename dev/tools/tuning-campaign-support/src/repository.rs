@@ -74,13 +74,25 @@ pub fn is_snapshot_copy(path: &str) -> bool {
         .is_some_and(|parent| parent.iter().any(|part| part == SNAPSHOT_DIRECTORY))
 }
 
+/// The first path of each distinct content among `files`, in their order:
+/// byte-identical copies are one file wherever they lie.
+pub fn distinct_contents(files: impl IntoIterator<Item = (String, Vec<u8>)>) -> Vec<String> {
+    let mut seen = BTreeSet::new();
+    files
+        .into_iter()
+        .filter_map(|(path, bytes)| seen.insert(bytes).then_some(path))
+        .collect()
+}
+
 /// The `root`-relative path of the one live file named by the glob `name`
 /// whose bytes satisfy `identifies`; receipt input snapshots are not live.
+/// Byte-identical copies are one file, named by its lexicographically first
+/// path.
 ///
 /// # Errors
 ///
 /// Fails when git cannot list `root`, a candidate cannot be read, or the
-/// number of identified files is not exactly one.
+/// number of distinct identified contents is not exactly one.
 pub fn locate_live(
     root: &Path,
     name: &str,
@@ -96,10 +108,10 @@ pub fn locate_live(
             other => other?,
         };
         if identifies(&bytes) {
-            found.push(path);
+            found.push((path, bytes));
         }
     }
-    match <[String; 1]>::try_from(found) {
+    match <[String; 1]>::try_from(distinct_contents(found)) {
         Ok([path]) => Ok(path),
         Err(found) => Err(io::Error::new(
             io::ErrorKind::InvalidData,
