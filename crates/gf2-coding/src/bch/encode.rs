@@ -3042,8 +3042,6 @@ mod tests {
         assert_eq!(&recovered, message, "the message survives encoding");
     }
 
-    // -- Valid codewords over each base field ------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(16))]
 
@@ -3083,8 +3081,6 @@ mod tests {
             }
         }
     }
-
-    // -- The descending layout is the transmission order -------------------
 
     #[test]
     fn the_descending_layout_puts_the_highest_degree_first() {
@@ -3182,8 +3178,6 @@ mod tests {
             }
         }
     }
-
-    // -- The declared layouts and their mapping ----------------------------
 
     #[test]
     fn the_layout_mapping_is_a_bijection_placing_the_message_first() {
@@ -3417,8 +3411,6 @@ mod tests {
         BlockEncoder::encode_into(&prime, &message, &mut buffer).expect("a sized buffer accepts");
         assert_eq!(buffer, expected, "a dirty buffer is overwritten, not mixed");
     }
-
-    // -- The workspace, batch, and parallel batch paths --------------------
 
     /// The worker counts the determinism claim covers: one, two, and the
     /// widest this process supports.
@@ -3675,8 +3667,6 @@ mod tests {
         }
     }
 
-    // -- Worker counts choose a schedule, never a result -------------------
-
     #[test]
     fn a_batch_keeps_its_input_order_at_every_worker_count() {
         let code = binary_narrow_sense(6, 0b1000011, 7);
@@ -3832,8 +3822,6 @@ mod tests {
             .expect("a validated batch encodes");
         assert_eq!(codewords, messages, "k = n batches the messages unchanged");
     }
-
-    // -- An encode reaches no allocator ----------------------------------
 
     /// The address, length, and capacity of each register buffer, including
     /// the reduction tables an algorithm family reads. The code sizes them

@@ -1894,8 +1894,6 @@ mod tests {
         }
     }
 
-    // -- The generator is the LCM of the run's minimal polynomials ---------
-
     /// The binary narrow-sense generator `lcm(m_1, ..., m_{2t})`, where `m_i`
     /// is the minimal polynomial of `α^i` for the field's primitive element,
     /// taken element by element instead of through cyclotomic cosets.
@@ -1948,8 +1946,6 @@ mod tests {
             assert!(generator_divides_cyclic_polynomial(&code));
         }
     }
-
-    // -- Nonbinary construction --------------------------------------------
 
     #[test]
     fn prime_base_primitive_construction_derives_a_base_field_generator() {
