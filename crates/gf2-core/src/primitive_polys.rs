@@ -63,7 +63,7 @@ pub enum VerificationResult {
     Matches,
     /// Not in database but could be valid (needs verification)
     Unknown,
-    /// Different from database entry - WARNING!
+    /// Differs from the database entry
     Conflict,
 }
 
