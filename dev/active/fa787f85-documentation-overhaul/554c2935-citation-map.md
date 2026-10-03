@@ -48,10 +48,6 @@ The section 2 classes:
 
 - Condo et al. (2022), "Fixed Complexity Soft-Output GRAND": Crossref holds no
   work with this title and venue; the attribution rests on `Yuan2025`.
-- Knuth, MMIX: the multiplier 6364136223846793005 is attributed to Knuth's
-  MMIX generator in *The Art of Computer Programming*, volume 2, 3rd edition,
-  by Steele and Vigna (doi:10.1002/spe.3030); the table and line of that
-  volume are not checked against the volume itself.
 - Shoup §12.4: no edition of the book places linearly generated sequences in
   chapter 12.
 - "IEEE AES standard" in `crates/gf2-core/src/primitive_polys.rs`: AES is
@@ -103,6 +99,10 @@ One key identifies one edition or version.
   7-3 is "Transposing a Bit Matrix"). `HardyWright2008` and
   `CrandallPomerance2005` are the 6th and 2nd editions; the comments that
   cited them named no edition.
+- The MMIX linear-congruential multiplier 6364136223846793005 maps to
+  `Knuth1997` (volume 2, 3rd edition). Steele and Vigna (doi:10.1002/spe.3030)
+  attribute the multiplier to that volume; the entry and the map state no
+  table or line number of the volume.
 - `DumasPernet2012` section, algorithm, theorem and table numbers follow
   arXiv:1204.3735v1.
 
