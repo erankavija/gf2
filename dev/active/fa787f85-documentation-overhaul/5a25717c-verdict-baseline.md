@@ -33,3 +33,11 @@ The listings are identical; this command prints nothing:
 ```
 diff dev/active/fa787f85-documentation-overhaul/5a25717c-verdicts-before.txt dev/active/fa787f85-documentation-overhaul/5a25717c-verdicts-after.txt
 ```
+
+## Protocol text
+
+`protocol.md` keeps its bytes: committed receipts pin its digest and three
+producing manifests select it. Its P-02 row and identity paragraph state that
+pins name the canonical source paths, while the acceptance tool identifies a
+shared pin by the identity its digest-verified bytes declare. The owner
+decides that discrepancy as a protocol-version question.
