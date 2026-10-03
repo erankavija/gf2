@@ -319,7 +319,7 @@ mod tests {
     fn bipedal_with_alt_zero_strat() -> impl Strategy<Value = Bipedal3> {
         bipedal_strat().prop_flat_map(|b| {
             (any::<u64>()).prop_map(move |extra_sgn| {
-                let zero_lanes = !b.mag; // bits set where lane is 0
+                let zero_lanes = !b.mag;
                 Bipedal3 {
                     mag: b.mag,
                     sgn: b.sgn | (extra_sgn & zero_lanes),
@@ -344,9 +344,10 @@ mod tests {
     #[test]
     fn test_add_truth_table() {
         let expected: [[u64; 3]; 3] = [
-            [0, 1, 2], // 0+0, 0+1, 0+2
-            [1, 2, 0], // 1+0, 1+1, 1+2
-            [2, 0, 1], // 2+0, 2+1, 2+2
+            // Row a, column b: a + b.
+            [0, 1, 2],
+            [1, 2, 0],
+            [2, 0, 1],
         ];
         for a_v in 0u64..3 {
             for b_v in 0u64..3 {
@@ -366,9 +367,10 @@ mod tests {
     #[test]
     fn test_sub_truth_table() {
         let expected: [[u64; 3]; 3] = [
-            [0, 2, 1], // 0-0, 0-1, 0-2
-            [1, 0, 2], // 1-0, 1-1, 1-2
-            [2, 1, 0], // 2-0, 2-1, 2-2
+            // Row a, column b: a - b.
+            [0, 2, 1],
+            [1, 0, 2],
+            [2, 1, 0],
         ];
         for a_v in 0u64..3 {
             for b_v in 0u64..3 {
@@ -388,9 +390,10 @@ mod tests {
     #[test]
     fn test_mul_truth_table() {
         let expected: [[u64; 3]; 3] = [
-            [0, 0, 0], // 0*0, 0*1, 0*2
-            [0, 1, 2], // 1*0, 1*1, 1*2
-            [0, 2, 1], // 2*0, 2*1, 2*2
+            // Row a, column b: a * b.
+            [0, 0, 0],
+            [0, 1, 2],
+            [0, 2, 1],
         ];
         for a_v in 0u64..3 {
             for b_v in 0u64..3 {
@@ -409,8 +412,6 @@ mod tests {
 
     #[test]
     fn test_add_can_produce_alt_zero_from_canonical_inputs() {
-        // 2 + 1 = 0; `@/citation/Scheinerman2024` Theorem 2.1 returns the
-        // equivalent codeword (0, 1).
         let two = Bipedal3::splat(Fp::<3>::new(2));
         let one = Bipedal3::splat(Fp::<3>::new(1));
         let result = two.add(one);
@@ -422,8 +423,6 @@ mod tests {
 
     #[test]
     fn test_sub_can_produce_alt_zero_from_canonical_inputs() {
-        // 1 - 1 = 0; `@/citation/Scheinerman2024` Theorem 2.1 returns the
-        // equivalent codeword (0, 1).
         let one = Bipedal3::splat(Fp::<3>::new(1));
         let result = one.sub(one);
 
@@ -434,7 +433,6 @@ mod tests {
 
     #[test]
     fn test_mul_can_produce_alt_zero_from_canonical_inputs() {
-        // 0 * 2 = 0; the mul formula returns the equivalent codeword (0, 1).
         let zero = Bipedal3::splat(Fp::<3>::new(0));
         let two = Bipedal3::splat(Fp::<3>::new(2));
         let result = zero.mul(two);
@@ -446,7 +444,6 @@ mod tests {
 
     #[test]
     fn test_neg_truth_table() {
-        // F_3 negation: -0=0, -1=2, -2=1.
         let expected = [0u64, 2, 1];
         for v in 0u64..3 {
             let a = Bipedal3::splat(Fp::<3>::new(v));
@@ -492,7 +489,7 @@ mod tests {
     #[test]
     fn test_with_lane_canonicalises() {
         let start = Bipedal3 {
-            mag: u64::MAX, // all lanes = 1
+            mag: u64::MAX,
             sgn: 0,
         };
         let result = start.with_lane(0, Fp::<3>::new(0));
@@ -522,7 +519,6 @@ mod tests {
 
     #[test]
     fn test_all_zero_alt_zero() {
-        // mag=0, sgn=MAX — all alternative-zero codewords.
         let alt = Bipedal3 {
             mag: 0,
             sgn: u64::MAX,
@@ -562,7 +558,6 @@ mod tests {
 
     #[test]
     fn test_alt_zero_through_add() {
-        // alt_zero in all lanes: mag=0, sgn=u64::MAX.
         let alt = Bipedal3 {
             mag: 0,
             sgn: u64::MAX,
@@ -585,11 +580,9 @@ mod tests {
         };
         let two = Bipedal3::splat(Fp::<3>::new(2));
 
-        // 2 - alt_zero == 2 - 0 == 2.
         let r = two.sub(alt);
         assert_eq!(r.lane(0).value(), 2, "2 - alt_zero lane 0 must be 2");
 
-        // alt_zero - 2 == 0 - 2 == 1.
         let r2 = alt.sub(two);
         assert_eq!(r2.lane(0).value(), 1, "alt_zero - 2 lane 0 must be 1");
     }
@@ -602,11 +595,9 @@ mod tests {
         };
         let two = Bipedal3::splat(Fp::<3>::new(2));
 
-        // 2 * alt_zero == 2 * 0 == 0.
         let r = two.mul(alt);
         assert!(r.all_zero(), "2 * alt_zero must be 0");
 
-        // alt_zero * 2 == 0 * 2 == 0.
         let r2 = alt.mul(two);
         assert!(r2.all_zero(), "alt_zero * 2 must be 0");
     }
@@ -618,9 +609,6 @@ mod tests {
             sgn: u64::MAX,
         };
 
-        // neg(alt_zero) — alt_zero has mag=0 so neg formula gives:
-        //   mag' = 0, sgn' = u64::MAX ^ 0 = u64::MAX
-        // which is still alt-zero, which decodes to 0.
         let r = alt.neg();
         for i in 0..64 {
             assert_eq!(
@@ -765,7 +753,6 @@ mod tests {
         }
     }
 
-    /// All lanes equal to 2 for n=1..=8: product = 2^n mod 3 (period-2).
     #[test]
     fn test_fold_mul_first_n_all_twos() {
         for n in 1usize..=8 {
@@ -785,11 +772,10 @@ mod tests {
 
     #[test]
     fn test_fold_mul_first_n_zero_lane_kills_product() {
-        // Lane 2 = 0; all others = 1.  Product over n=4 active lanes = 0.
         let v = Bipedal3::zero()
             .with_lane(0, Fp::<3>::new(1))
             .with_lane(1, Fp::<3>::new(1))
-            .with_lane(2, Fp::<3>::new(0)) // zero lane
+            .with_lane(2, Fp::<3>::new(0))
             .with_lane(3, Fp::<3>::new(1));
         let got = v.fold_mul_first_n(4);
         assert_eq!(
@@ -831,7 +817,6 @@ mod tests {
 
     #[test]
     fn test_bipedal_mul_tree_matches_scalar_fold() {
-        // Case 1: all lanes = 2 for n=1..=8 (period-2: 2,1,2,1,...).
         for n in 1usize..=8 {
             let v = Bipedal3::from_raw((1u64 << n) - 1, (1u64 << n) - 1);
             let expected = if n % 2 == 1 {
@@ -846,7 +831,7 @@ mod tests {
             );
         }
 
-        // Case 2: n=4, pattern lane0=1, lane1=2, lane2=0, lane3=2 → product=0.
+        // Lanes 0..4 decode to 1, 2, 0, 2.
         {
             let n = 4usize;
             let v = Bipedal3::from_raw(0b1011, 0b1010);
@@ -858,7 +843,6 @@ mod tests {
             );
         }
 
-        // Case 3: n=4, all lanes = 1 (mag=all1s, sgn=0) → product=1.
         {
             let n = 4usize;
             let v = Bipedal3::from_raw((1u64 << n) - 1, 0);
@@ -1277,7 +1261,6 @@ mod vec_tests {
 
     #[test]
     fn test_add_assign_0() {
-        // len=0: both sides empty, no lanes to check, must not panic.
         let mut a = Bipedal3Vec::zeros(0);
         let b = Bipedal3Vec::zeros(0);
         a.add_assign(&b);
@@ -1380,9 +1363,9 @@ mod vec_tests {
         let mut v =
             Bipedal3Vec::from_field_slice(&[Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2)]);
         v.neg_assign();
-        assert_eq!(v.get(0), Fp::<3>::new(0)); // -0 = 0
-        assert_eq!(v.get(1), Fp::<3>::new(2)); // -1 ≡ 2 mod 3
-        assert_eq!(v.get(2), Fp::<3>::new(1)); // -2 ≡ 1 mod 3
+        assert_eq!(v.get(0), Fp::<3>::new(0));
+        assert_eq!(v.get(1), Fp::<3>::new(2));
+        assert_eq!(v.get(2), Fp::<3>::new(1));
     }
 
     macro_rules! test_neg_assign {
@@ -1412,7 +1395,6 @@ mod vec_tests {
 
     #[test]
     fn test_neg_assign_0() {
-        // len=0: must not panic.
         let mut v = Bipedal3Vec::zeros(0);
         v.neg_assign();
         assert_eq!(v.len(), 0);
@@ -1540,7 +1522,7 @@ mod vec_tests {
     fn test_eq_alt_zero_vs_canonical() {
         let canon = Bipedal3Vec::zeros(5);
         let mut alt = Bipedal3Vec::zeros(5);
-        alt.sgn[0] = 1 << 2; // inject alt-zero at lane 2
+        alt.sgn[0] = 1 << 2;
         assert_eq!(canon, alt, "canonical zero and alt-zero must compare equal");
     }
 
@@ -1582,7 +1564,6 @@ mod vec_tests {
             a_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
             b_vals in prop::collection::vec((0u64..3).prop_map(Fp::<3>::new), 0..200),
         ) {
-            // Truncate / extend to exactly `len`.
             let a_vals: Vec<Fp<3>> = a_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
             let b_vals: Vec<Fp<3>> = b_vals.into_iter().chain(core::iter::repeat(Fp::<3>::new(0))).take(len).collect();
 
@@ -1649,7 +1630,6 @@ mod vec_tests {
         }
     }
 
-    /// Decompose a `Bipedal3Vec` into per-word `(Bipedal3, used_lanes)` pairs.
     fn chunks_of(v: &Bipedal3Vec) -> Vec<(Bipedal3, usize)> {
         let n_words = v.mag.len();
         if n_words == 0 {
@@ -2106,7 +2086,6 @@ mod matrix_tests {
     #[test]
     #[should_panic(expected = "rows")]
     fn test_from_row_major_panics_on_length_mismatch() {
-        // data.len() = 5 != 2*3 = 6
         let data: Vec<Fp<3>> = (0..5u64).map(|v| Fp::<3>::new(v % 3)).collect();
         let _ = Bipedal3Matrix::from_row_major(&data, 2, 3);
     }
