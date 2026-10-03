@@ -1,17 +1,11 @@
 //! Batch-encoding kernels for binary BCH codes.
 //!
-//! Two independent reductions of $x^r m(x)$ modulo the generator $g$ live
-//! here, and one dispatch bundle carries both. The bit-sliced one advances
-//! [`BITSLICE_LANES`] frames of a batch per step and is described first; the
-//! carry-less-multiply fold reduces one frame 64 message coefficients at a
-//! time and is described under [`BchFoldBlockFn`] and [`fold_block_scalar`].
-//!
-//! A systematic BCH encode reduces $x^r m(x)$ modulo the generator $g$ with a
-//! shift register of $r$ binary coefficients, one message coefficient per
-//! step. One frame's recurrence is serial, so the parallelism a batch offers
-//! is across frames: this module holds the register **bit-sliced**, one word
-//! per register coefficient with bit $l$ carrying lane $l$'s value, and
-//! advances [`BITSLICE_LANES`] frames per step.
+//! One dispatch bundle carries two independent reductions of $x^r m(x)$
+//! modulo the generator $g$. The carry-less-multiply fold reduces one frame 64
+//! message coefficients at a time ([`BchFoldBlockFn`]). The bit-sliced
+//! reduction holds the shift register of $r$ binary coefficients one word per
+//! coefficient, bit $l$ carrying lane $l$'s value, and advances
+//! [`BITSLICE_LANES`] frames per step.
 //!
 //! The step is then pure bitwise work. With $s_j$ the slice of register
 //! coefficient $j$, $\mu_j$ the all-ones-or-zero broadcast of the generator's
@@ -24,89 +18,15 @@
 //! bit of the same word, so the whole lane group advances in $r$ word
 //! operations whatever the batch length is.
 //!
-//! # Surface
-//!
-//! [`BchEncodeFns`] bundles the primitives both reductions need, and its
-//! entries are the driver a caller runs:
-//!
-//! - [`absorb_block`](BchEncodeFns::absorb_block) takes one 64-degree window
-//!   of each lane's message, bit-slices it through a 64×64 bit-block
-//!   transpose, and advances the bit-sliced register over those degrees;
-//! - [`unpack_parity`](BchEncodeFns::unpack_parity) reads the reduced slices
-//!   back through the same transpose as one packed parity word run per lane;
-//! - [`fold_block`](BchEncodeFns::fold_block) advances one frame's packed
-//!   remainder over one 64-degree block through carry-less multiplication.
-//!
-//! The transpose is [`crate::transpose`]'s primitive rather than a second
-//! copy of it, and the fold's carry-less multiply is
-//! `crate::x86::clmul`'s PCLMULQDQ primitive or
-//! [`crate::clmul_u64_scalar`], never a third one.
-//! [`bitslice_scratch_words`] and [`bitslice_split`] fix the buffer geometry
-//! the bit-sliced methods read, and [`fold_barrett_constant`] derives the one
-//! constant the fold reads, so a caller sizes every buffer from the
-//! redundancy alone and never from the batch length. Every input is a packed
-//! `u64` word or a plain size.
-//!
-//! [`detect`] publishes the accelerated bundle and [`scalar`] the portable
-//! one. The two compute the same words, so a caller that runs the scalar
-//! bundle on a host that would admit the accelerated one gets identical
-//! output; only the instruction count differs.
-//!
 //! # Required processor features
 //!
-//! [`detect`] is one combined predicate over the complete feature set the
-//! bundle's kernels use, and it publishes the accelerated bundle only when
-//! every one of them is present. That set is
-//! `avx2 && pclmulqdq && sse4.1`:
-//!
-//! - the bit-sliced reduction emits `vpbroadcastq`, `vpand`, `vpxor`, and
-//!   unaligned 256-bit loads and stores, and the AVX2 transpose lane emits
-//!   `vpand`, `vpsllq`, `vpsrlq`, and `vpxor`, so both need `avx2`;
-//! - the fold emits `pclmulqdq` for the carry-less product and `pextrq` for
-//!   reading its halves back, so it needs `pclmulqdq` and `sse4.1`, the same
-//!   pair [`crate::gf2m`] detects for the primitive it shares.
-//!
-//! No kernel here extracts or deposits bit fields, so none needs `bmi2`. The
-//! predicate is the union rather than a per-kernel test because the bundle is
-//! published as a whole: a caller holding it may call any entry, so any
-//! feature any entry uses is a precondition of holding it at all. The
-//! `# Safety` section of every kernel under `src/x86/` that this module
-//! publishes names exactly the features that kernel needs, and the predicate
-//! is their union, so no kernel is ever reached without its own contract
-//! established.
-//!
-//! # Generated code
-//!
-//! The survey behind this module left one question open: whether a scalar
-//! per-frame encoder auto-vectorizes, which would explain why an eight-lane
-//! interleaved encoder gains 4.4× at generator degree 32 but only 1.6–2.0× at
-//! the DVB-T2 degrees 168 and 192. The committed artefact
-//! `src/x86/asm/bch_encode.asm.txt` answers it for this repository's kernels.
-//! [`bitslice_reduce_scalar`] compiles to a `mov`/`and`/`xor`/`mov` chain over
-//! general-purpose registers, one register coefficient per iteration, with no
-//! `v`-prefixed instruction and no unrolling: a recurrence whose next word
-//! reads the word one index below does not auto-vectorize, and the packed
-//! per-frame recurrence the coding crate registers as `poly-remainder-scalar`
-//! carries the same dependence through its shift-and-feedback loop. The AVX2
-//! kernel emits one `vmovq`/`vpbroadcastq` pair per step over a
-//! `vpand`/`vpxor`/`vmovdqu` inner loop advancing four register coefficients
-//! at a time. So an interleaved kernel here competes against genuinely scalar
-//! code, and the decay of its advantage at large $\deg g$ is not an
-//! auto-vectorizing competitor: it is that the reduction's word count grows
-//! with $\deg g$ while the per-frame codeword write it is amortized against
-//! does not.
-//!
-//! The same artefact carries the fold kernels, and they answer the matching
-//! question for the carry-less path. `fold_block_pclmul` shows two
-//! `pclmulqdq` instructions, one for the Barrett quotient and one in the
-//! product loop, each a `movq` in and a `pextrq` or `movq` out, with no call
-//! through a function pointer: the shared step and the primitive both inline
-//! into it. [`fold_block_scalar`] shows the same step around
-//! [`crate::clmul_u64_scalar`]'s `bsf`/`shld`/`shl`/`cmovne`/`xor` loop, one
-//! iteration per set bit of the multiplier. So the portable arm costs about
-//! as many iterations per multiply as the generator has coefficients, where
-//! the accelerated arm costs one instruction, and it is a fallback rather
-//! than a competitor.
+//! [`detect`] publishes the accelerated bundle only when
+//! `avx2 && pclmulqdq && sse4.1` holds. The predicate is the union over every
+//! kernel of the bundle, because a caller holding the bundle may call any
+//! entry: the bit-sliced reduction and the AVX2 transpose lane need `avx2`,
+//! and the fold needs `pclmulqdq` and `sse4.1`. [`scalar`] computes the same
+//! words with no processor feature. `src/x86/asm/bch_encode.asm.txt` is the
+//! committed disassembly of the kernels.
 //!
 //! # Complexity
 //!
@@ -399,10 +319,8 @@ pub fn bitslice_masks(low: &[u64], masks: &mut [u64]) {
 /// its kernels need, and `None` otherwise.
 ///
 /// The predicate is the module's
-/// [required feature set](self#required-processor-features): one combined
-/// detection of `avx2`, `pclmulqdq` and `sse4.1`, the union over every kernel
-/// the bundle carries. A caller that receives `None` runs [`scalar`], which
-/// needs no processor feature and computes the same words.
+/// [required feature set](self#required-processor-features). A caller that
+/// receives `None` runs [`scalar`], which computes the same words.
 #[must_use]
 pub fn detect() -> Option<BchEncodeFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -432,18 +350,15 @@ pub fn scalar() -> BchEncodeFns {
 fn detect_x86() -> Option<BchEncodeFns> {
     use std::arch::is_x86_feature_detected;
 
-    // One combined predicate over the union of what every kernel of the
-    // bundle uses; see the module-level section on required processor
-    // features for which kernel contributes which feature.
+    // The union of what every kernel of the bundle uses.
     if !(is_x86_feature_detected!("avx2")
         && is_x86_feature_detected!("pclmulqdq")
         && is_x86_feature_detected!("sse4.1"))
     {
         return None;
     }
-    // The transpose lane is `crate::transpose`'s own dispatch rather than a
-    // second wrapper around the same kernel, and it publishes its AVX2 lane
-    // under exactly the feature this predicate just established.
+    // `crate::transpose`'s own dispatch publishes its AVX2 lane under the
+    // feature this predicate just established.
     let transpose = crate::transpose::detect()?;
     Some(BchEncodeFns {
         transpose_lane_block: transpose.transpose_64x64,

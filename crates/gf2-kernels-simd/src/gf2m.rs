@@ -1,43 +1,17 @@
-//! SIMD-accelerated GF(2^m) field multiplication kernels.
-//!
-//! This module provides carry-less multiplication using PCLMULQDQ (x86_64)
-//! for efficient polynomial multiplication over GF(2), which is the core
-//! operation in GF(2^m) field arithmetic.
+//! GF(2^m) field multiplication kernels built on PCLMULQDQ carry-less
+//! multiplication.
 
-/// GF(2^m) field multiplication function.
-///
-/// Multiplies two field elements and reduces modulo the primitive polynomial.
-///
-/// # Arguments
-/// * `a` - First field element
-/// * `b` - Second field element
-/// * `m` - Field size (element is in GF(2^m))
-/// * `primitive_poly` - Primitive polynomial for reduction
-///
-/// # Returns
-/// Product a * b reduced modulo primitive_poly
+/// GF(2^m) field multiplication: `(a, b, m, primitive_poly)` to
+/// `a * b mod primitive_poly`.
 pub type Gf2mMulFn = fn(u64, u64, usize, u64) -> u64;
 
-/// Raw carry-less multiplication function (no reduction).
-///
-/// Computes the full 128-bit carry-less product of two 64-bit polynomials.
-///
-/// # Arguments
-/// * `a` - First polynomial (up to 64 bits)
-/// * `b` - Second polynomial (up to 64 bits)
-///
-/// # Returns
-/// The 128-bit carry-less product `a(x) * b(x)`.
+/// Raw carry-less multiplication: the full 128-bit product of two 64-bit
+/// polynomials, without reduction.
 pub type ClmulFn = fn(u64, u64) -> u128;
 
 /// Batch carry-less multiplication function (no reduction).
 ///
 /// Computes `out[i] = a[i] * b[i]` (carry-less, no reduction) for each index.
-///
-/// # Arguments
-/// * `a` - First operand slice
-/// * `b` - Second operand slice (same length as `a`)
-/// * `out` - Output slice (same length as `a`)
 ///
 /// # Panics
 /// Panics if slices have different lengths.
@@ -45,18 +19,10 @@ pub type ClmulBatchFn = fn(&[u64], &[u64], &mut [u128]);
 
 /// All-in-one carry-less multiply + Barrett reduce function.
 ///
-/// Performs `a * b mod P(x)` using three PCLMULQDQ instructions in a single
-/// `#[target_feature]` scope, avoiding function-pointer call overhead.
-///
-/// # Arguments
-/// * `a` - First field element (m bits)
-/// * `b` - Second field element (m bits)
-/// * `mu` - Barrett constant `x^(2m) / P(x)`, fits in `u64` for `m <= 63`
-/// * `modulus` - Irreducible polynomial `P(x)`, fits in `u64` for `m <= 63`
-/// * `degree` - Field degree m
-///
-/// # Returns
-/// The reduced product, fitting in m bits.
+/// `(a, b, mu, modulus, degree)` to `a * b mod P(x)`, where `a` and `b` are
+/// `m`-bit field elements, `mu = x^(2m) / P(x)` is the Barrett constant,
+/// `modulus` is the irreducible `P(x)` and `degree` is `m`. `mu` and
+/// `modulus` fit in `u64` for `m <= 63`.
 pub type ClmulBarrettFn = fn(u64, u64, u64, u64, u32) -> u64;
 
 /// Preferred raw carry-less batch implementation, subject to CPU support.
@@ -70,7 +36,7 @@ pub enum ClmulBatchLane {
 
 /// Bundle of GF(2^m) multiplication functions for different field sizes.
 pub struct Gf2mFns {
-    /// General multiplication for any m ≤ 64 (PCLMULQDQ + shift-and-XOR reduction)
+    /// General multiplication (PCLMULQDQ + shift-and-XOR reduction).
     pub mul_fn: Gf2mMulFn,
     /// Raw carry-less multiply (no reduction). Available when PCLMULQDQ is present.
     pub clmul_fn: Option<ClmulFn>,
@@ -81,16 +47,15 @@ pub struct Gf2mFns {
     /// `"avx2+vpclmulqdq-ymm"` or `"pclmulqdq-scalar-xmm"`. `Some` exactly
     /// when `clmul_batch_fn` is `Some`.
     pub clmul_batch_path: Option<&'static str>,
-    /// All-in-one carry-less multiply + Barrett reduce. Uses three PCLMULQDQ
-    /// instructions in one `#[target_feature]` scope, eliminating function-pointer
-    /// call overhead. `None` if no PCLMULQDQ.
+    /// All-in-one carry-less multiply + Barrett reduce. `None` if no
+    /// PCLMULQDQ.
     pub clmul_barrett_fn: Option<ClmulBarrettFn>,
 }
 
 /// Detect the default GF(2^m) function bundle.
 ///
-/// The raw batch retains sequential PCLMULQDQ: the frozen Zen 3 confirmation
-/// for jit:1d0da41f rejects YMM adoption (see `dev/active/1d0da41f/findings.md`).
+/// The raw batch lane is sequential PCLMULQDQ; the Zen 3 confirmation in
+/// `dev/active/1d0da41f/findings.md` rejects YMM adoption.
 /// Returns `None` without PCLMULQDQ and SSE4.1; callers use their scalar path.
 pub fn detect() -> Option<Gf2mFns> {
     detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)
@@ -141,13 +106,12 @@ fn detect_x86(preference: ClmulBatchLane) -> Option<Gf2mFns> {
     }
 }
 
-/// Safe wrapper for raw carry-less multiplication.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn clmul_u64_safe(a: u64, b: u64) -> u128 {
+    // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
     unsafe { crate::x86::clmul::clmul_u64(a, b) }
 }
 
-/// Safe wrapper for batch carry-less multiplication.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn clmul_batch_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
     // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
@@ -161,15 +125,15 @@ fn clmul_batch_ymm_safe(a: &[u64], b: &[u64], out: &mut [u128]) {
     unsafe { crate::x86::clmul::clmul_batch_vpclmul(a, b, out) }
 }
 
-/// Safe wrapper for all-in-one carry-less multiply + Barrett reduce.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn clmul_barrett_reduce_safe(a: u64, b: u64, mu: u64, modulus: u64, degree: u32) -> u64 {
+    // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
     unsafe { crate::x86::clmul::clmul_barrett_reduce(a, b, mu, modulus, degree) }
 }
 
-/// Safe wrapper for PCLMULQDQ multiplication
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn gf2m_mul_pclmul_safe(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
+    // SAFETY: detect_x86 publishes this pointer only with PCLMULQDQ + SSE4.1.
     unsafe { gf2m_mul_pclmul(a, b, m, primitive_poly) }
 }
 
@@ -189,7 +153,6 @@ unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 
         return 0;
     }
 
-    // Carry-less multiplication
     let a_reg = _mm_set_epi64x(0, a as i64);
     let b_reg = _mm_set_epi64x(0, b as i64);
     let product = _mm_clmulepi64_si128::<0x00>(a_reg, b_reg);
@@ -197,7 +160,6 @@ unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 
     let lo = _mm_extract_epi64::<0>(product) as u64;
     let hi = _mm_extract_epi64::<1>(product) as u64;
 
-    // Fast reduction for common field sizes
     match m {
         8 => reduce_gf256(lo, hi, primitive_poly),
         16 => reduce_gf65536(lo, hi, primitive_poly),
@@ -205,22 +167,19 @@ unsafe fn gf2m_mul_pclmul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 
     }
 }
 
-/// Fast reduction for GF(2^8)
+/// Reduction for GF(2^8).
 #[inline(always)]
 unsafe fn reduce_gf256(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
-    // Product is at most 14 bits (degree 7 + degree 7 = degree 14)
-    // We need to reduce modulo primitive_poly (degree 8)
+    // The product has degree at most 14.
 
     let mut result = lo;
 
-    // Reduce bits 8-14 from lo, and any bits from hi
     for bit_idx in (8..15).rev() {
         if (result >> bit_idx) & 1 == 1 {
             result ^= primitive_poly << (bit_idx - 8);
         }
     }
 
-    // Handle any contribution from hi (bits 64+)
     if hi != 0 {
         for i in 0..7 {
             if (hi >> i) & 1 == 1 {
@@ -232,20 +191,18 @@ unsafe fn reduce_gf256(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
     result & 0xFF
 }
 
-/// Fast reduction for GF(2^16)
+/// Reduction for GF(2^16).
 #[inline(always)]
 unsafe fn reduce_gf65536(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
-    // Product is at most 30 bits
+    // The product has degree at most 30.
     let mut result = lo;
 
-    // Reduce bits 16-30 from lo
     for bit_idx in (16..31).rev() {
         if (result >> bit_idx) & 1 == 1 {
             result ^= primitive_poly << (bit_idx - 16);
         }
     }
 
-    // Handle contribution from hi
     if hi != 0 {
         for i in 0..15 {
             if (hi >> i) & 1 == 1 {
@@ -257,10 +214,9 @@ unsafe fn reduce_gf65536(lo: u64, hi: u64, primitive_poly: u64) -> u64 {
     result & 0xFFFF
 }
 
-/// Generic reduction for arbitrary m
+/// Generic reduction for arbitrary `m`.
 #[inline(always)]
 unsafe fn reduce_generic(mut lo: u64, hi: u64, m: usize, primitive_poly: u64) -> u64 {
-    // Reduce high part first
     if hi != 0 {
         for i in (0..64).rev() {
             if (hi >> i) & 1 == 1 {
@@ -275,7 +231,6 @@ unsafe fn reduce_generic(mut lo: u64, hi: u64, m: usize, primitive_poly: u64) ->
         }
     }
 
-    // Reduce lo to < m bits
     for i in (m..64).rev() {
         if (lo >> i) & 1 == 1 {
             lo ^= primitive_poly << (i - m);
@@ -385,15 +340,12 @@ mod tests {
         let m = 8;
         let p = 0x11B;
 
-        // Test identity
         assert_eq!((fns.mul_fn)(1, 5, m, p), 5);
         assert_eq!((fns.mul_fn)(5, 1, m, p), 5);
 
-        // Test zero
         assert_eq!((fns.mul_fn)(0, 5, m, p), 0);
         assert_eq!((fns.mul_fn)(5, 0, m, p), 0);
 
-        // Test known value
         let a = 0x53;
         let b = 0xCA;
         let result = (fns.mul_fn)(a, b, m, p);
@@ -422,7 +374,6 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    // Reference scalar implementation
     fn scalar_mul(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
         let mut result = 0u64;
         let mut temp = a;

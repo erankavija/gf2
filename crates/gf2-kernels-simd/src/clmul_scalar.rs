@@ -1,13 +1,8 @@
-//! Scalar bit-parallel carry-less multiply — the SSOT for the
-//! software-only `clmul` used across the workspace. Production
-//! callers (e.g. `gf2_core::gf2m::barrett::clmul`) and test-only
-//! reference oracles both delegate here so the algorithm has a single
-//! definition.
+//! Scalar bit-parallel carry-less multiply: the single software `clmul`
+//! definition for production callers and test oracles in the workspace.
 
 /// Carry-less multiplication of two `u64` GF(2)-coefficient polynomials,
-/// producing a 128-bit product. Bit-parallel iteration over the set bits
-/// of `b` — O(popcount(b)) XOR-shifts. Safe, pure Rust, no CPU feature
-/// requirements.
+/// producing a 128-bit product in O(popcount(b)) XOR-shifts.
 ///
 /// # Examples
 ///

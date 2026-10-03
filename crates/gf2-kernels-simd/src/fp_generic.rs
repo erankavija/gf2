@@ -1,9 +1,8 @@
 //! Generic AVX2 batch kernels for Montgomery-stored `Fp<P>` values.
 //!
-//! The specialised Fermat and Mersenne kernels remain the fastest paths for
-//! their exact primes. This module provides a safe function-pointer bundle for
-//! all other Montgomery-form primes with `P <= 2^63`: add/sub are lane-wise
-//! modular corrections, while mul uses a 4-lane AVX2 Montgomery REDC template.
+//! A safe function-pointer bundle for Montgomery-form primes with
+//! `P <= 2^63`: add/sub are lane-wise modular corrections, and mul is a 4-lane
+//! AVX2 Montgomery REDC.
 
 /// Lane-wise batch multiply for Montgomery-form `Fp<P>` storage words.
 ///
