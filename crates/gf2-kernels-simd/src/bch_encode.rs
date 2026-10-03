@@ -5,18 +5,11 @@
 //! message coefficients at a time ([`BchFoldBlockFn`]). The bit-sliced
 //! reduction holds the shift register of $r$ binary coefficients one word per
 //! coefficient, bit $l$ carrying lane $l$'s value, and advances
-//! [`BITSLICE_LANES`] frames per step.
-//!
-//! The step is then pure bitwise work. With $s_j$ the slice of register
+//! [`BITSLICE_LANES`] frames per step: with $s_j$ the slice of register
 //! coefficient $j$, $\mu_j$ the all-ones-or-zero broadcast of the generator's
-//! coefficient of $x^j$, and $m$ the slice of the message coefficient
-//! entering the register,
-//!
-//! $$ f = s_{r-1} \oplus m, \qquad s'_j = s_{j-1} \oplus (\mu_j \wedge f), $$
-//!
-//! with $s_{-1}$ read as zero. Every lane evaluates its own $f$ in its own
-//! bit of the same word, so the whole lane group advances in $r$ word
-//! operations whatever the batch length is.
+//! coefficient of $x^j$, $m$ the slice of the entering message coefficient
+//! and $s_{-1}$ read as zero, $f = s_{r-1} \oplus m$ and
+//! $s'_j = s_{j-1} \oplus (\mu_j \wedge f)$.
 //!
 //! # Required processor features
 //!
@@ -25,8 +18,7 @@
 //! kernel of the bundle, because a caller holding the bundle may call any
 //! entry: the bit-sliced reduction and the AVX2 transpose lane need `avx2`,
 //! and the fold needs `pclmulqdq` and `sse4.1`. [`scalar`] computes the same
-//! words with no processor feature. `src/x86/asm/bch_encode.asm.txt` is the
-//! committed disassembly of the kernels.
+//! words with no processor feature.
 //!
 //! # Complexity
 //!
@@ -623,7 +615,7 @@ pub fn bitslice_reduce_scalar(register: &mut [u64], masks: &[u64], slices: &[u64
 mod tests {
     use super::*;
 
-    /// SplitMix64, the workspace's seeded generator for kernel-local fixtures.
+    /// SplitMix64 (`@/citation/Steele2014`).
     struct Seeded(u64);
 
     impl Seeded {

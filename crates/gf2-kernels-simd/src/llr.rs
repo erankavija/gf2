@@ -122,7 +122,7 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
     let sign_mask = _mm256_set1_ps(-0.0f32);
 
     let mut vec_min = _mm256_set1_ps(f32::INFINITY);
-    let mut vec_sign = _mm256_setzero_ps(); // Accumulate XOR of sign bits
+    let mut vec_sign = _mm256_setzero_ps();
 
     let chunks = n / 8;
     for i in 0..chunks {

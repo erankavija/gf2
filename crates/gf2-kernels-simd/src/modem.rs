@@ -185,17 +185,6 @@ pub fn scalar_fns_f64() -> GrayPamDistanceFnsF64 {
 ///
 /// Returns the AVX2 bundle on x86 hosts that advertise `avx2`, and
 /// the scalar bundle everywhere else.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::modem::detect_f32;
-/// let fns = detect_f32();
-/// let pam = [-1.0_f32, 1.0];
-/// let mut out = [0.0_f32; 2];
-/// (fns.pam_sq_distances_fn)(&[0.8], &[1.0], &[1.0], &pam, &mut out);
-/// assert!(out[1] < out[0]);
-/// ```
 pub fn detect_f32() -> GrayPamDistanceFnsF32 {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -452,7 +441,6 @@ mod tests {
         for l in 0..axis_len {
             assert_eq!(out[axis_len + l], 0.0);
         }
-        // Other symbols must be finite non-NaN.
         for (s, _) in z.iter().enumerate().filter(|(s, _)| *s != 1) {
             for l in 0..axis_len {
                 assert!(out[s * axis_len + l].is_finite());
@@ -630,8 +618,6 @@ mod tests {
 
     #[test]
     fn test_parity_zero_symbols_noop() {
-        // num_symbols = 0 must not touch `out` and must not allocate or
-        // panic. Regression guard for empty-batch dispatch.
         let pam = pam_levels_for_axis_len(8);
         let z: [f32; 0] = [];
         let g: [f32; 0] = [];

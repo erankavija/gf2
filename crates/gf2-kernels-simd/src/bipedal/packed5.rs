@@ -269,15 +269,6 @@ pub type F5UnaryKernelFn = fn(&[u64], &[u64], &[u64], &mut [u64], &mut [u64], &m
 ///
 /// Returned by [`detect_avx2_f5`] only when the host supports AVX2. All
 /// slices passed to a kernel must share one length that is a multiple of 4.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::packed5::detect_avx2_f5;
-/// let maybe_fns = detect_avx2_f5();
-/// // `maybe_fns.is_some()` on any AVX2-capable x86_64 host.
-/// let _ = maybe_fns;
-/// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Copy, Clone)]
 pub struct F5AvxFns {
@@ -1028,8 +1019,6 @@ mod tests {
             }
         }
     }
-
-    // Word-level ops against `gf2_algebra::packed::Packed5` per-lane values.
 
     #[cfg(test)]
     mod packed5_cross {

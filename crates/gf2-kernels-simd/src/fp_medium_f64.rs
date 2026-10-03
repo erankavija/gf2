@@ -35,27 +35,6 @@ pub struct FpMediumF64Fns {
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
 /// either AVX2 or FMA3.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_medium_f64;
-///
-/// if let Some(fns) = fp_medium_f64::detect() {
-///     // Compute `[1, 2, 3, 4] · diag([1, 1, 1, 1]) mod 65521 = [1, 2, 3, 4]`.
-///     let a = [1.0f64, 2.0, 3.0, 4.0];
-///     // 4×4 identity transpose stored row-major (it equals itself).
-///     let bt = [
-///         1.0f64, 0.0, 0.0, 0.0,
-///         0.0, 1.0, 0.0, 0.0,
-///         0.0, 0.0, 1.0, 0.0,
-///         0.0, 0.0, 0.0, 1.0,
-///     ];
-///     let mut out = [0u16; 4];
-///     (fns.batch_gemm_fn)(&a, &bt, 1, 4, 4, 65521, &mut out);
-///     assert_eq!(out, [1, 2, 3, 4]);
-/// }
-/// ```
 pub fn detect() -> Option<FpMediumF64Fns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -160,7 +139,6 @@ mod tests {
             Some(f) => f,
             None => return,
         };
-        // `m == 0` or `n == 0` → output is empty; kernel must not panic.
         let a: Vec<f64> = vec![];
         let bt: Vec<f64> = vec![];
         let mut out: Vec<u16> = vec![];

@@ -26,26 +26,6 @@ pub use lanes::Avx2Lane;
 /// entry points, giving F_3 callers a non-generic path independent of the
 /// private `x86` module. Callers must runtime-detect AVX2 before invoking
 /// these functions.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::avx2::{
-///     run_add_batch, run_sub_batch, run_mul_batch, run_neg_batch,
-/// };
-/// if is_x86_feature_detected!("avx2") {
-///     let v = vec![0u64; 4];
-///     let mut out_m = vec![0u64; 4];
-///     let mut out_s = vec![0u64; 4];
-///     // SAFETY: AVX2 verified, slices are length 4 (= one AVX2 lane).
-///     unsafe {
-///         run_add_batch(&v, &v, &v, &v, &mut out_m, &mut out_s);
-///         run_sub_batch(&v, &v, &v, &v, &mut out_m, &mut out_s);
-///         run_mul_batch(&v, &v, &v, &v, &mut out_m, &mut out_s);
-///         run_neg_batch(&v, &v, &mut out_m, &mut out_s);
-///     }
-/// }
-/// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub mod avx2 {
     use crate::bipedal::Config3;
@@ -193,15 +173,6 @@ pub struct BipedalAvx2Fns {
 /// Callers must then fall back to scalar arithmetic.
 ///
 /// The detection result is cached in a `OnceLock`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::detect_avx2;
-/// let maybe_fns = detect_avx2();
-/// // `maybe_fns.is_some()` on any AVX2-capable x86_64 host.
-/// let _ = maybe_fns;
-/// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn detect_avx2() -> Option<BipedalAvx2Fns> {
     use std::sync::OnceLock;

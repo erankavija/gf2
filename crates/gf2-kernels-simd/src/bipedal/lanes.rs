@@ -67,17 +67,6 @@ pub trait BipedalLogicalLanes: Copy {
 }
 
 /// AVX2 256-bit lane (4 × `u64`) impl of [`BipedalLogicalLanes`].
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::{Avx2Lane, BipedalLogicalLanes};
-/// if is_x86_feature_detected!("avx2") {
-///     let v = vec![0u64; 4];
-///     // SAFETY: AVX2 verified, slice is length 4 (= U64_PER_LANE).
-///     let _lane: Avx2Lane = unsafe { Avx2Lane::loadu(&v, 0) };
-/// }
-/// ```
 #[derive(Clone, Copy)]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub struct Avx2Lane(pub __m256i);

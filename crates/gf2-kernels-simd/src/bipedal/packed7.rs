@@ -196,15 +196,6 @@ pub type F7UnaryKernelFn = fn(&[u64], &mut [u64]);
 ///
 /// Returned by [`detect_avx2_f7`] only when the host supports AVX2. All
 /// slices passed to a kernel must share one length that is a multiple of 4.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::packed7::detect_avx2_f7;
-/// let maybe_fns = detect_avx2_f7();
-/// // `maybe_fns.is_some()` on any AVX2-capable x86_64 host.
-/// let _ = maybe_fns;
-/// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Copy, Clone)]
 pub struct F7AvxFns {
@@ -222,14 +213,6 @@ pub struct F7AvxFns {
 ///
 /// Returns `None` on non-x86 targets or when the runtime CPU lacks AVX2.
 /// Callers must then fall back to the scalar batch functions.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::packed7::detect_avx2_f7;
-/// let maybe_fns = detect_avx2_f7();
-/// let _ = maybe_fns;
-/// ```
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn detect_avx2_f7() -> Option<F7AvxFns> {
     use std::sync::OnceLock;

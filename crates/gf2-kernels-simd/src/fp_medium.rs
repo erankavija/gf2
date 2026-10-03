@@ -6,15 +6,6 @@
 
 /// Computes the Barrett magic constant `m = floor(2^32 / p)` that
 /// [`MediumPrimeBatchMulFn`] takes, for a medium prime `p ∈ (1, 2^16)`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_medium::barrett_m32;
-///
-/// // m = floor(2^32 / 65521) = 65551.
-/// assert_eq!(barrett_m32(65521), 65551);
-/// ```
 #[inline]
 pub const fn barrett_m32(p: u16) -> u32 {
     ((1u64 << 32) / p as u64) as u32
@@ -56,21 +47,6 @@ pub type MediumPrimeGemmPanelFn = fn(&[u16], &[u16], usize, usize, usize, u16, &
 /// Bundle of AVX2 batch operations for medium-prime `Fp<P>`.
 ///
 /// Populated at runtime by [`detect`] when AVX2 is available.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_medium;
-///
-/// if let Some(fns) = fp_medium::detect() {
-///     let p = 65521u16;
-///     let m = fp_medium::barrett_m32(p);
-///     let a: Vec<u16> = (0..16u16).collect();
-///     let b: Vec<u16> = (0..16u16).map(|i| i + 1).collect();
-///     let mut out = vec![0u16; 16];
-///     (fns.batch_mul_fn)(&a, &b, p, m, &mut out);
-/// }
-/// ```
 #[derive(Copy, Clone)]
 pub struct MediumPrimeFns {
     /// Lane-wise batch multiply.

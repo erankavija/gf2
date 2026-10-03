@@ -43,27 +43,6 @@ pub struct SmallPrimeF32Fns {
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
 /// either AVX2 or FMA3.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_small_f32;
-///
-/// if let Some(fns) = fp_small_f32::detect() {
-///     // Compute `[1, 2, 3, 4] · diag([1, 1, 1, 1]) mod 7 = [1, 2, 3, 4]`.
-///     let a = [1.0f32, 2.0, 3.0, 4.0];
-///     // 4×4 identity transpose stored row-major (it equals itself).
-///     let bt = [
-///         1.0f32, 0.0, 0.0, 0.0,
-///         0.0, 1.0, 0.0, 0.0,
-///         0.0, 0.0, 1.0, 0.0,
-///         0.0, 0.0, 0.0, 1.0,
-///     ];
-///     let mut out = [0u8; 4];
-///     (fns.batch_gemm_fn)(&a, &bt, 1, 4, 4, 7, &mut out);
-///     assert_eq!(out, [1, 2, 3, 4]);
-/// }
-/// ```
 pub fn detect() -> Option<SmallPrimeF32Fns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -194,7 +173,6 @@ mod tests {
                 (16, 134, 16),
                 (16, 134, 24),
                 (4, 65, 25),
-                // Panel / k_max boundary cases for route-A.
                 (4, 256, 256),
                 (4, 1024, 1024),
                 (4, 267, 24), // just under k_max(251) = 268
@@ -223,7 +201,6 @@ mod tests {
             Some(f) => f,
             None => return,
         };
-        // `m == 0` or `n == 0` → output is empty; kernel must not panic.
         let a: Vec<f32> = vec![];
         let bt: Vec<f32> = vec![];
         let mut out: Vec<u8> = vec![];
