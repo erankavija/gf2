@@ -4,24 +4,6 @@
 //! the coefficient of `x^i`) over any [`FiniteField`], including fields with
 //! runtime parameters; [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is an alias of
 //! `FieldPoly<Gf2mElement_<V>>`.
-//!
-//! # The normalisation invariant
-//!
-//! Every constructor and every mutating operation leaves the `coeffs` vector
-//! without trailing zero coefficients. The zero polynomial is the unique
-//! polynomial with an empty `coeffs` vector; every other polynomial's final
-//! coefficient is non-zero. Equality is structural on the normalised
-//! coefficients.
-//!
-//! # Dispatch
-//!
-//! Operations generic over `F: FiniteField` use schoolbook or Karatsuba
-//! multiplication and schoolbook division. The `F: TwoAdicField` entry points
-//! ([`mul_fast`], [`FieldPoly::div_rem_auto`],
-//! [`FieldPoly::batch_evaluate_auto`]) add the NTT and Newton-iteration paths
-//! under separate names, because the generic impls cannot be specialised.
-//! Every dispatcher compares against a value of the active
-//! [`crate::tuning::CoreTuning`] profile.
 
 use crate::field::{FiniteField, TwoAdicField};
 use crate::tuning;
@@ -34,40 +16,6 @@ use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 /// coefficient of `x^i`. The coefficient vector is **always normalised**
 /// — empty (for the zero polynomial) or non-empty with a non-zero
 /// trailing element.
-///
-/// See the [module documentation](self) for the invariant.
-///
-/// # Examples
-///
-/// Over a compile-time prime field `Fp<7>`:
-///
-/// ```
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2x + 3 over Fp<7>
-/// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-/// assert_eq!(p.degree(), Some(1));
-/// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(3)));
-/// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(2)));
-/// ```
-///
-/// Over a runtime-configured binary extension field `Gf2mElement`
-/// (e.g. GF(2^4) with reduction polynomial `x^4 + x + 1`):
-///
-/// ```
-/// use gf2_core::field::{FieldPoly, FiniteField};
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let p = FieldPoly::new(vec![field.element(5), field.element(3)]);
-/// assert_eq!(p.degree(), Some(1));
-/// // Polynomial arithmetic composes with the runtime field:
-/// let q = FieldPoly::new(vec![field.element(2), field.element(1)]);
-/// let sum = &p + &q;
-/// assert_eq!(sum.degree(), Some(1));
-/// assert_eq!(sum.try_coeff(0), Some(&(field.element(5) + field.element(2))));
-/// ```
 // `is_zero` is the emptiness predicate, so no `is_empty` exists.
 #[allow(clippy::len_without_is_empty)]
 #[derive(Clone)]
@@ -76,10 +24,6 @@ pub struct FieldPoly<F: FiniteField> {
 }
 
 impl<F: FiniteField> FieldPoly<F> {
-    // -----------------------------------------------------------------
-    // Constructors
-    // -----------------------------------------------------------------
-
     /// Creates a polynomial from a coefficient vector, trimming trailing
     /// zero coefficients.
     pub fn new(coeffs: Vec<F>) -> Self {
@@ -97,18 +41,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// Returns the zero polynomial in the same field as `sample`.
     ///
     /// `_sample` only fixes the type `F`; it is not stored.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert!(z.is_zero());
-    /// assert_eq!(z.degree(), None);
-    /// assert_eq!(z.len(), 0);
-    /// ```
     pub fn zero_like(_sample: &F) -> Self {
         FieldPoly { coeffs: Vec::new() }
     }
@@ -125,21 +57,7 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// If `c` is the zero element the result is the zero polynomial
     /// (empty `coeffs` vector), satisfying the
-    /// [normalisation invariant](self).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::constant(Fp::<7>::new(5));
-    /// assert_eq!(p.degree(), Some(0));
-    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(5)));
-    ///
-    /// let z = FieldPoly::constant(Fp::<7>::new(0));
-    /// assert!(z.is_zero());
-    /// ```
+    /// [normalisation invariant](FieldPoly).
     pub fn constant(c: F) -> Self {
         if c.is_zero() {
             FieldPoly { coeffs: Vec::new() }
@@ -152,28 +70,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// If `coeff` is the zero element the result is the zero polynomial
     /// regardless of `degree`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // 3·x^4
-    /// let p = FieldPoly::monomial(Fp::<7>::new(3), 4);
-    /// assert_eq!(p.degree(), Some(4));
-    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(0)));
-    /// assert_eq!(p.try_coeff(4), Some(&Fp::<7>::new(3)));
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // 0·x^5 = 0
-    /// let z = FieldPoly::monomial(Fp::<7>::new(0), 5);
-    /// assert!(z.is_zero());
-    /// ```
     pub fn monomial(coeff: F, degree: usize) -> Self {
         if coeff.is_zero() {
             return FieldPoly { coeffs: Vec::new() };
@@ -183,10 +79,6 @@ impl<F: FiniteField> FieldPoly<F> {
         coeffs[degree] = coeff;
         FieldPoly { coeffs }
     }
-
-    // -----------------------------------------------------------------
-    // Queries
-    // -----------------------------------------------------------------
 
     /// Returns the degree of the polynomial, or `None` for the zero
     /// polynomial.
@@ -205,24 +97,6 @@ impl<F: FiniteField> FieldPoly<F> {
 
     /// Returns a reference to the coefficient of `x^i`, or `None` if
     /// `i` is out of range (including the whole zero-polynomial case).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // 2x + 3
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// assert_eq!(p.try_coeff(0), Some(&Fp::<7>::new(3)));
-    /// assert_eq!(p.try_coeff(1), Some(&Fp::<7>::new(2)));
-    /// // Out-of-range: returns None.
-    /// assert_eq!(p.try_coeff(10), None);
-    ///
-    /// // The zero polynomial returns None for every index.
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(z.try_coeff(0), None);
-    /// ```
     pub fn try_coeff(&self, i: usize) -> Option<&F> {
         self.coeffs.get(i)
     }
@@ -235,20 +109,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// Panics on the zero polynomial, which has no coefficient to derive a
     /// zero from. [`FieldPoly::try_coeff`] and [`FieldPoly::coeff_or_zero`]
     /// are total.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // 2x + 3
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// assert_eq!(p.coeff(0), Fp::<7>::new(3));
-    /// assert_eq!(p.coeff(1), Fp::<7>::new(2));
-    /// // Out-of-range on a non-zero polynomial: the zero element.
-    /// assert_eq!(p.coeff(10), Fp::<7>::new(0));
-    /// ```
     pub fn coeff(&self, i: usize) -> F {
         if let Some(c) = self.coeffs.get(i) {
             c.clone()
@@ -265,21 +125,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// Returns the `i`-th coefficient, or a zero element built from
     /// `sample` when `i` is out of range (including the zero
     /// polynomial).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// assert_eq!(p.coeff_or_zero(0, &Fp::<7>::new(0)), Fp::<7>::new(3));
-    /// assert_eq!(p.coeff_or_zero(10, &Fp::<7>::new(0)), Fp::<7>::new(0));
-    ///
-    /// // Works on the zero polynomial too.
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(z.coeff_or_zero(0, &Fp::<7>::new(0)), Fp::<7>::new(0));
-    /// ```
     pub fn coeff_or_zero(&self, i: usize, sample: &F) -> F {
         self.try_coeff(i)
             .cloned()
@@ -289,7 +134,7 @@ impl<F: FiniteField> FieldPoly<F> {
     /// Returns a reference to the leading (highest-degree) coefficient,
     /// or `None` for the zero polynomial.
     ///
-    /// By the [normalisation invariant](self), the returned reference
+    /// By the [normalisation invariant](FieldPoly), the returned reference
     /// is never to a zero element.
     pub fn leading_coeff(&self) -> Option<&F> {
         self.coeffs.last()
@@ -307,29 +152,9 @@ impl<F: FiniteField> FieldPoly<F> {
         self.coeffs.iter()
     }
 
-    // -----------------------------------------------------------------
-    // Inherent multiplication (schoolbook / Karatsuba dispatch)
-    // -----------------------------------------------------------------
-
     /// Polynomial multiplication: schoolbook when either operand degree is
     /// below the active `polynomial.karatsuba_min_degree()` value, recursive
     /// Karatsuba otherwise. The [`core::ops::Mul`] impls delegate here.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (x + 2)(x + 3) = x^2 + 5x + 6 (mod 7)
-    /// let a = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]);
-    /// let b = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]);
-    /// let c = a.mul(&b);
-    /// assert_eq!(c.degree(), Some(2));
-    /// assert_eq!(c.coeff(0), Fp::<7>::new(6));
-    /// assert_eq!(c.coeff(1), Fp::<7>::new(5));
-    /// assert_eq!(c.coeff(2), Fp::<7>::new(1));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -340,28 +165,7 @@ impl<F: FiniteField> FieldPoly<F> {
         mul_impl(&self.coeffs, &other.coeffs)
     }
 
-    // -----------------------------------------------------------------
-    // Scalar multiplication
-    // -----------------------------------------------------------------
-
     /// Returns `self` multiplied by a scalar.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (2x + 3) * 2 = 4x + 6 over Fp<7>
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]);
-    /// let q = p.mul_scalar(&Fp::<7>::new(2));
-    /// assert_eq!(q.try_coeff(0), Some(&Fp::<7>::new(6)));
-    /// assert_eq!(q.try_coeff(1), Some(&Fp::<7>::new(4)));
-    ///
-    /// // Multiplying by zero produces the zero polynomial.
-    /// let z = p.mul_scalar(&Fp::<7>::new(0));
-    /// assert!(z.is_zero());
-    /// ```
     pub fn mul_scalar(&self, c: &F) -> Self {
         if c.is_zero() || self.is_zero() {
             return FieldPoly { coeffs: Vec::new() };
@@ -382,30 +186,9 @@ impl<F: FiniteField> FieldPoly<F> {
         self.normalise();
     }
 
-    // -----------------------------------------------------------------
-    // Evaluation
-    // -----------------------------------------------------------------
-
     /// Evaluates the polynomial at a point using Horner's method.
     ///
     /// The zero polynomial evaluates to `x.zero_like()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // p(x) = 3x² + 2x + 1 over Fp<7>
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-    /// // p(2) = 12 + 4 + 1 = 17 ≡ 3 (mod 7)
-    /// assert_eq!(p.eval(&Fp::<7>::new(2)), Fp::<7>::new(3));
-    ///
-    /// // The zero polynomial evaluates to zero in the field of `x`.
-    /// use gf2_core::field::FiniteField;
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(z.eval(&Fp::<7>::new(5)), Fp::<7>::new(5).zero_like());
-    /// ```
     pub fn eval(&self, x: &F) -> F {
         if self.coeffs.is_empty() {
             return x.zero_like();
@@ -420,17 +203,6 @@ impl<F: FiniteField> FieldPoly<F> {
 
     /// Evaluates the polynomial at every point in `points`, returning
     /// the values in the same order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2)]);
-    /// let ys = p.eval_batch(&[Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(3)]);
-    /// assert_eq!(ys, vec![Fp::<7>::new(1), Fp::<7>::new(3), Fp::<7>::new(0)]);
-    /// ```
     pub fn eval_batch(&self, points: &[F]) -> Vec<F> {
         points.iter().map(|x| self.eval(x)).collect()
     }
@@ -448,27 +220,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// `O(d · n³)` field operations for `d = self.degree()`: Horner with one
     /// [`gemm`](crate::field::matrix::gemm) per coefficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // p(x) = x² + 1 over Fp<7>; A = identity ⇒ p(A) = 2 · I.
-    /// let p = FieldPoly::new(vec![
-    ///     Fp::<7>::new(1),
-    ///     Fp::<7>::new(0),
-    ///     Fp::<7>::new(1),
-    /// ]);
-    /// let id = FieldMatrix::<Fp<7>>::identity(3);
-    /// let pa = p.eval_at_matrix(&id);
-    /// assert_eq!(pa.get(0, 0), Fp::<7>::new(2));
-    /// assert_eq!(pa.get(1, 1), Fp::<7>::new(2));
-    /// assert_eq!(pa.get(2, 2), Fp::<7>::new(2));
-    /// assert_eq!(pa.get(0, 1), Fp::<7>::new(0));
-    /// ```
     pub fn eval_at_matrix(
         &self,
         a: &crate::field::matrix::FieldMatrix<F>,
@@ -530,36 +281,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// empty or contain duplicates. [`FieldPoly::batch_evaluate_auto`] is the
     /// [`TwoAdicField`] form with [`FieldPoly::div_rem_auto`] reductions.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // p(x) = 3x² + 2x + 1 over Fp<7>
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-    /// let xs = vec![Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(4)];
-    /// let ys = p.batch_evaluate(&xs);
-    /// assert_eq!(ys, vec![Fp::<7>::new(1), Fp::<7>::new(6), Fp::<7>::new(1)]);
-    /// // Agrees with per-point Horner.
-    /// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
-    /// ```
-    ///
-    /// On the zero polynomial every result is `x.zero_like()` for the
-    /// corresponding point, matching the total [`FieldPoly::eval`]
-    /// contract:
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldPoly, FiniteField};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let z: FieldPoly<Fp<7>> = FieldPoly::zero_like(&Fp::<7>::new(0));
-    /// assert_eq!(
-    ///     z.batch_evaluate(&[Fp::<7>::new(1), Fp::<7>::new(2)]),
-    ///     vec![Fp::<7>::new(0), Fp::<7>::new(0)],
-    /// );
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(n · k + k² log k)` field operations on the subproduct path and
@@ -572,28 +293,12 @@ impl<F: FiniteField> FieldPoly<F> {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Construction from roots and products
-    // -----------------------------------------------------------------
-
     /// Builds the monic polynomial whose roots are exactly `roots`:
     /// `(x - r_0)(x - r_1) · … · (x - r_{n-1})`.
     ///
     /// # Panics
     ///
     /// Panics if `roots` is empty (no field sample available).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (x - 1)(x - 2) = x² - 3x + 2 over Fp<7>
-    /// let p = FieldPoly::from_roots(&[Fp::<7>::new(1), Fp::<7>::new(2)]);
-    /// assert_eq!(p.eval(&Fp::<7>::new(1)), Fp::<7>::new(0));
-    /// assert_eq!(p.eval(&Fp::<7>::new(2)), Fp::<7>::new(0));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -634,10 +339,6 @@ impl<F: FiniteField> FieldPoly<F> {
         FieldPoly::batch_mul(polys)
     }
 
-    // -----------------------------------------------------------------
-    // Batch product and GCD
-    // -----------------------------------------------------------------
-
     /// Computes the product of a non-empty slice of polynomials by a balanced
     /// binary product tree.
     ///
@@ -646,33 +347,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// Panics if `polys` is empty (no field sample available to construct
     /// the multiplicative identity). Use [`FieldPoly::batch_mul_with_field`]
     /// when an empty slice must return the constant-1 polynomial.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (x + 1)(x + 2)(x + 3) over Fp<7>
-    /// let polys: Vec<FieldPoly<Fp<7>>> = [1u64, 2, 3]
-    ///     .iter()
-    ///     .map(|&c| FieldPoly::new(vec![Fp::<7>::new(c), Fp::<7>::new(1)]))
-    ///     .collect();
-    /// let prod = FieldPoly::batch_mul(&polys);
-    /// // Evaluate at x = 1: (1+1)(1+2)(1+3) = 2·3·4 = 24 ≡ 3 (mod 7).
-    /// assert_eq!(prod.eval(&Fp::<7>::new(1)), Fp::<7>::new(3));
-    /// assert_eq!(prod.degree(), Some(3));
-    /// ```
-    ///
-    /// Single-element slice is the identity:
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(5), Fp::<7>::new(1)]);
-    /// assert_eq!(FieldPoly::batch_mul(std::slice::from_ref(&p)), p);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -712,26 +386,7 @@ impl<F: FiniteField> FieldPoly<F> {
     /// binary product tree, returning the constant-1 polynomial (in the
     /// same field as `sample`) when `polys` is empty.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let sample = Fp::<7>::new(0);
-    ///
-    /// // Empty slice returns the multiplicative identity.
-    /// let prod = FieldPoly::batch_mul_with_field(&sample, &[]);
-    /// assert_eq!(prod, FieldPoly::one_like(&sample));
-    ///
-    /// // Non-empty slice works identically to batch_mul.
-    /// let polys: Vec<FieldPoly<Fp<7>>> = [1u64, 2]
-    ///     .iter()
-    ///     .map(|&c| FieldPoly::new(vec![Fp::<7>::new(c), Fp::<7>::new(1)]))
-    ///     .collect();
-    /// let prod2 = FieldPoly::batch_mul_with_field(&sample, &polys);
-    /// assert_eq!(prod2, FieldPoly::batch_mul(&polys));
-    /// ```
+    /// Costs as [`FieldPoly::batch_mul`].
     pub fn batch_mul_with_field(sample: &F, polys: &[Self]) -> Self {
         if polys.is_empty() {
             return FieldPoly::one_like(sample);
@@ -749,40 +404,6 @@ impl<F: FiniteField> FieldPoly<F> {
     ///
     /// Panics if `polys` is empty (no canonical GCD identity exists on an
     /// empty set of polynomials).
-    ///
-    /// # Examples
-    ///
-    /// Shared factor:
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // d = x + 1; a = d·(x+2), b = d·(x+3), c = d·(x+4)
-    /// let d  = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1)]);
-    /// let xp2 = FieldPoly::new(vec![Fp::<7>::new(2), Fp::<7>::new(1)]);
-    /// let xp3 = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(1)]);
-    /// let xp4 = FieldPoly::new(vec![Fp::<7>::new(4), Fp::<7>::new(1)]);
-    /// let polys = vec![&d * &xp2, &d * &xp3, &d * &xp4];
-    /// let g = FieldPoly::batch_gcd(&polys);
-    /// // d divides every element, so d divides gcd([a*d, b*d, c*d]).
-    /// // Equivalently: gcd([a*d, b*d, c*d]) = d · gcd(a, b, c).
-    /// // Verify d | g (i.e. g is divisible by d):
-    /// let (_, r) = g.div_rem(&d);
-    /// assert!(r.is_zero());
-    /// ```
-    ///
-    /// Single-element slice returns a monic version of that element:
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<7>::new(3), Fp::<7>::new(2)]); // 2x + 3
-    /// let g = FieldPoly::batch_gcd(std::slice::from_ref(&p));
-    /// // gcd of a single element is the monic form of that element.
-    /// assert_eq!(g.leading_coeff(), Some(&Fp::<7>::new(1)));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -805,10 +426,6 @@ impl<F: FiniteField> FieldPoly<F> {
             .fold(first, |acc, p| FieldPoly::gcd(&acc, p))
     }
 
-    // -----------------------------------------------------------------
-    // Euclidean division and GCD
-    // -----------------------------------------------------------------
-
     /// Divides `self` by `divisor`, returning the quotient and
     /// remainder.
     ///
@@ -819,20 +436,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// # Panics
     ///
     /// Panics if `divisor` is the zero polynomial.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (x² + x + 1) / (x + 1) over Fp<7>
-    /// let dividend = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1), Fp::<7>::new(1)]);
-    /// let divisor  = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(1)]);
-    /// let (q, r) = dividend.div_rem(&divisor);
-    /// // Verify: q·divisor + r = dividend.
-    /// assert_eq!(&(&q * &divisor) + &r, dividend);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -904,22 +507,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// both inputs are zero, in which case the zero polynomial is
     /// returned.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Shared factor (x - 1): p1 = (x - 1)(x - 2), p2 = (x - 1)(x - 3).
-    /// let xm1 = FieldPoly::new(vec![-Fp::<7>::new(1), Fp::<7>::new(1)]);
-    /// let xm2 = FieldPoly::new(vec![-Fp::<7>::new(2), Fp::<7>::new(1)]);
-    /// let xm3 = FieldPoly::new(vec![-Fp::<7>::new(3), Fp::<7>::new(1)]);
-    /// let p1 = &xm1 * &xm2;
-    /// let p2 = &xm1 * &xm3;
-    /// let g = FieldPoly::gcd(&p1, &p2);
-    /// assert_eq!(g, xm1);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(n²)` field operations in the worst case, where `n` is the
@@ -960,22 +547,6 @@ impl<F: FiniteField> FieldPoly<F> {
     /// types, and any call where at least one operand is non-zero,
     /// never hit this path.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Shared factor (x - 1): p1 = (x - 1)(x - 2), p2 = (x - 1)(x - 3).
-    /// let xm1 = FieldPoly::new(vec![-Fp::<7>::new(1), Fp::<7>::new(1)]);
-    /// let xm2 = FieldPoly::new(vec![-Fp::<7>::new(2), Fp::<7>::new(1)]);
-    /// let xm3 = FieldPoly::new(vec![-Fp::<7>::new(3), Fp::<7>::new(1)]);
-    /// let p1 = &xm1 * &xm2;
-    /// let p2 = &xm1 * &xm3;
-    /// let l = FieldPoly::lcm(&p1, &p2);
-    /// assert_eq!(l, &p1 * &xm3); // (x - 1)(x - 2)(x - 3)
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(n²)` field operations in the worst case, where `n` is the
@@ -1011,10 +582,6 @@ impl<F: FiniteField> FieldPoly<F> {
         q
     }
 
-    // -----------------------------------------------------------------
-    // Internals
-    // -----------------------------------------------------------------
-
     /// Trims trailing zero coefficients so the invariant holds.
     fn normalise(&mut self) {
         while let Some(last) = self.coeffs.last() {
@@ -1027,10 +594,6 @@ impl<F: FiniteField> FieldPoly<F> {
     }
 }
 
-// ---------------------------------------------------------------------
-// Equality: structural, after normalisation
-// ---------------------------------------------------------------------
-
 impl<F: FiniteField> PartialEq for FieldPoly<F> {
     fn eq(&self, other: &Self) -> bool {
         self.coeffs == other.coeffs
@@ -1038,11 +601,6 @@ impl<F: FiniteField> PartialEq for FieldPoly<F> {
 }
 
 impl<F: FiniteField> Eq for FieldPoly<F> {}
-
-// ---------------------------------------------------------------------
-// Debug: descending-degree with non-zero terms only; "0" for the zero
-// polynomial.
-// ---------------------------------------------------------------------
 
 impl<F: FiniteField> fmt::Debug for FieldPoly<F> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1086,10 +644,6 @@ impl<F: FiniteField> fmt::Debug for FieldPoly<F> {
         Ok(())
     }
 }
-
-// ---------------------------------------------------------------------
-// Addition
-// ---------------------------------------------------------------------
 
 /// Coefficient-wise `lhs + rhs`, or `lhs − rhs` when `rhs_is_neg`, normalised.
 fn add_impl<F: FiniteField>(lhs: &[F], rhs: &[F], rhs_is_neg: bool) -> FieldPoly<F> {
@@ -1153,10 +707,6 @@ impl<'b, F: FiniteField> Add<&'b FieldPoly<F>> for &FieldPoly<F> {
     }
 }
 
-// ---------------------------------------------------------------------
-// Subtraction
-// ---------------------------------------------------------------------
-
 impl<F: FiniteField> Sub<FieldPoly<F>> for FieldPoly<F> {
     type Output = FieldPoly<F>;
 
@@ -1189,10 +739,6 @@ impl<'b, F: FiniteField> Sub<&'b FieldPoly<F>> for &FieldPoly<F> {
     }
 }
 
-// ---------------------------------------------------------------------
-// Negation
-// ---------------------------------------------------------------------
-
 impl<F: FiniteField> Neg for FieldPoly<F> {
     type Output = FieldPoly<F>;
 
@@ -1211,10 +757,6 @@ impl<F: FiniteField> Neg for &FieldPoly<F> {
         FieldPoly::new(coeffs)
     }
 }
-
-// ---------------------------------------------------------------------
-// AddAssign / SubAssign
-// ---------------------------------------------------------------------
 
 impl<F: FiniteField> AddAssign<FieldPoly<F>> for FieldPoly<F> {
     fn add_assign(&mut self, rhs: FieldPoly<F>) {
@@ -1239,10 +781,6 @@ impl<'a, F: FiniteField> SubAssign<&'a FieldPoly<F>> for FieldPoly<F> {
         *self = add_impl(&self.coeffs, &rhs.coeffs, true);
     }
 }
-
-// ---------------------------------------------------------------------
-// Multiplication — schoolbook / Karatsuba dispatch
-// ---------------------------------------------------------------------
 
 /// Conservative default for `polynomial.karatsuba_min_degree()` in the active
 /// [`crate::tuning::CoreTuning`].
@@ -1352,18 +890,6 @@ pub fn batch_evaluate_auto_route(poly_len: usize, points_len: usize) -> BatchEva
 /// `M(x) = ∏ (x - points[i])`. Odd-sized levels carry the last node up
 /// unchanged.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly::build_subproduct_tree;
-/// use gf2_core::gfp::Fp;
-///
-/// let levels = build_subproduct_tree(&[Fp::<7>::new(1), Fp::<7>::new(2)]);
-/// assert_eq!(levels.len(), 2);              // leaves + root
-/// assert_eq!(levels[0].len(), 2);           // two leaves
-/// assert_eq!(levels[1].len(), 1);           // single root
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `points` is empty.
@@ -1406,20 +932,6 @@ pub fn build_subproduct_tree<F: FiniteField>(points: &[F]) -> Vec<Vec<FieldPoly<
 /// remainder modulo its node's children, until every leaf holds the constant
 /// `poly(points[i])`. `points` may contain duplicates.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly::batch_evaluate_subproduct;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// let p = FieldPoly::new(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-/// let xs = vec![Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(4)];
-/// let ys = batch_evaluate_subproduct(&p, &xs);
-/// // Agrees with per-point Horner.
-/// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `points` is empty.
@@ -1434,19 +946,6 @@ pub fn batch_evaluate_subproduct<F: FiniteField>(poly: &FieldPoly<F>, points: &[
 
 /// [`TwoAdicField`] form of [`batch_evaluate_subproduct`]: the reductions use
 /// [`FieldPoly::div_rem_auto`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly::batch_evaluate_subproduct_auto;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// let p = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(2), Fp::<65537>::new(3)]);
-/// let xs = vec![Fp::<65537>::new(0), Fp::<65537>::new(1), Fp::<65537>::new(4)];
-/// let ys = batch_evaluate_subproduct_auto(&p, &xs);
-/// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
-/// ```
 ///
 /// # Panics
 ///
@@ -1591,35 +1090,29 @@ fn mul_karatsuba_raw<F: FiniteField>(lhs: &[F], rhs: &[F], karatsuba_min_degree:
         return padded;
     }
 
-    // Split point: midpoint of the larger operand.
     let m = (deg_lhs.max(deg_rhs) / 2) + 1;
 
-    // p_lo, p_hi  (low and high halves of lhs about x^m)
     let (p_lo_slice, p_hi_slice) = if lhs.len() > m {
         (&lhs[..m], &lhs[m..])
     } else {
         (lhs, &[] as &[F])
     };
-    // q_lo, q_hi
     let (q_lo_slice, q_hi_slice) = if rhs.len() > m {
         (&rhs[..m], &rhs[m..])
     } else {
         (rhs, &[] as &[F])
     };
 
-    // z0 = p_lo · q_lo
     let z0 = if p_lo_slice.is_empty() || q_lo_slice.is_empty() {
         Vec::new()
     } else {
         mul_karatsuba_raw(p_lo_slice, q_lo_slice, karatsuba_min_degree)
     };
-    // z2 = p_hi · q_hi
     let z2 = if p_hi_slice.is_empty() || q_hi_slice.is_empty() {
         Vec::new()
     } else {
         mul_karatsuba_raw(p_hi_slice, q_hi_slice, karatsuba_min_degree)
     };
-    // (p_lo + p_hi) · (q_lo + q_hi)
     let p_sum = slice_add(p_lo_slice, p_hi_slice);
     let q_sum = slice_add(q_lo_slice, q_hi_slice);
     let z1_full = if p_sum.is_empty() || q_sum.is_empty() {
@@ -1732,21 +1225,12 @@ impl<'b, F: FiniteField> Mul<&'b FieldPoly<F>> for &FieldPoly<F> {
     }
 }
 
-// ---------------------------------------------------------------------
-// NTT-based multiplication (TwoAdicField-specialised)
-// ---------------------------------------------------------------------
-
 /// Conservative default for `polynomial.karatsuba_max_out_len()` in the active
 /// [`crate::tuning::CoreTuning`].
 ///
 /// When the *output* length `lhs.len() + rhs.len() - 1` strictly exceeds the
 /// active profile value, [`mul_fast`] routes through [`FieldPoly::mul_ntt`];
 /// at or below it, through the schoolbook / Karatsuba dispatch.
-///
-/// The committed
-/// `dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md`
-/// §Falsification record reports `mul_fast` at 3,793 ns for `out_len` 127 on
-/// the `FieldPoly::mul` arm and 12,057 ns for `out_len` 129 on the NTT arm.
 /// [`crate::tuning::CoreTuning::CONSERVATIVE`] consumes this constant.
 pub const NTT_THRESHOLD: usize = 128;
 
@@ -1789,21 +1273,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// `N ≥ self.len() + other.len() - 1`, transformed, multiplied
     /// elementwise, transformed back and scaled by `N^{-1}`. The result equals
     /// [`FieldPoly::mul`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (x + 2)(x + 3) = x^2 + 5x + 6 over Fp<65537>
-    /// let a = FieldPoly::new(vec![Fp::<65537>::new(2), Fp::<65537>::new(1)]);
-    /// let b = FieldPoly::new(vec![Fp::<65537>::new(3), Fp::<65537>::new(1)]);
-    /// let c = a.mul_ntt(&b);
-    /// assert_eq!(c.coeff(0), Fp::<65537>::new(6));
-    /// assert_eq!(c.coeff(1), Fp::<65537>::new(5));
-    /// assert_eq!(c.coeff(2), Fp::<65537>::new(1));
-    /// ```
     ///
     /// # Panics
     ///
@@ -1868,20 +1337,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
 /// `polynomial.karatsuba_max_out_len()` profile value uses the dispatcher of
 /// [`FieldPoly::mul`]; a longer one uses [`FieldPoly::mul_ntt`].
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly::mul_fast;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// // Small operands fall through to Karatsuba / schoolbook.
-/// let a = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(2)]);
-/// let b = FieldPoly::new(vec![Fp::<65537>::new(3), Fp::<65537>::new(4)]);
-/// let c = mul_fast(&a, &b);
-/// assert_eq!(c, a.mul(&b));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if the NTT arm is selected and the transform length exceeds
@@ -1905,10 +1360,6 @@ pub fn mul_fast<F: TwoAdicField>(a: &FieldPoly<F>, b: &FieldPoly<F>) -> FieldPol
         MulFastRoute::Ntt => a.mul_ntt(b),
     }
 }
-
-// ---------------------------------------------------------------------
-// Newton-iteration fast division (TwoAdicField-specialised)
-// ---------------------------------------------------------------------
 
 /// Conservative default for `polynomial.div_rem_fast_min_len()` in the active
 /// [`crate::tuning::CoreTuning`] between schoolbook
@@ -1965,37 +1416,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// Panics if `self.coeffs[0]` is zero — the constant term must be a
     /// unit for the formal power series inverse to exist. Also panics if
     /// `self` is the zero polynomial.
-    ///
-    /// # Examples
-    ///
-    /// `(1 + x)` has inverse `1 − x + x² − x³ + … + (−x)^{k−1}` as a
-    /// formal power series. Over `Fp<65537>`, the negation of `1` is
-    /// `65_536`, so the coefficients alternate between `1` and `65_536`:
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // f(x) = 1 + x
-    /// let f = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(1)]);
-    /// let g = f.invert_series(8);
-    /// // g(x) = 1 − x + x² − x³ + x⁴ − x⁵ + x⁶ − x⁷
-    /// let minus_one = -Fp::<65537>::new(1);
-    /// let one = Fp::<65537>::new(1);
-    /// let expected = FieldPoly::new(vec![
-    ///     one,       minus_one, one,       minus_one,
-    ///     one,       minus_one, one,       minus_one,
-    /// ]);
-    /// assert_eq!(g, expected);
-    ///
-    /// // Verify f · g ≡ 1 (mod x^8): the low 8 coefficients of the product
-    /// // are [1, 0, 0, 0, 0, 0, 0, 0].
-    /// let prod = f.mul(&g);
-    /// assert_eq!(prod.coeff(0), Fp::<65537>::new(1));
-    /// for i in 1..8 {
-    ///     assert_eq!(prod.coeff(i), Fp::<65537>::new(0));
-    /// }
-    /// ```
     ///
     /// # Complexity
     ///
@@ -2085,29 +1505,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
     ///
     /// Panics if `divisor` is the zero polynomial.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // (x⁴ + 2x² + 1) / (x² + 1) = x² + 1 over Fp<65537>.
-    /// let dividend = FieldPoly::new(vec![
-    ///     Fp::<65537>::new(1),
-    ///     Fp::<65537>::new(0),
-    ///     Fp::<65537>::new(2),
-    ///     Fp::<65537>::new(0),
-    ///     Fp::<65537>::new(1),
-    /// ]);
-    /// let divisor = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(0), Fp::<65537>::new(1)]);
-    /// let (q, r) = dividend.div_rem_fast(&divisor);
-    /// // Quotient: x² + 1. Remainder: 0.
-    /// assert_eq!(q, FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(0), Fp::<65537>::new(1)]));
-    /// assert!(r.is_zero());
-    /// // Euclidean identity holds.
-    /// assert_eq!(&(&q * &divisor) + &r, dividend);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(M(n))` field operations, where `M(n) = O(n log n)` is the cost of
@@ -2152,7 +1549,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
         let rev_dividend = reverse_poly(self);
         let rev_dividend_trunc = truncate_to_len(&rev_dividend, k + 1);
 
-        // rev_quotient = (rev_dividend_trunc · rev_inv)  mod x^{k+1}.
         let prod = mul_fast(&rev_dividend_trunc, &rev_inv);
         let rev_quotient = truncate_to_len(&prod, k + 1);
 
@@ -2160,7 +1556,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
         // land at their ascending-degree positions.
         let quotient = reverse_poly_padded(&rev_quotient, k + 1);
 
-        // remainder = self − divisor · quotient.
         let dq = mul_fast(divisor, &quotient);
         let remainder = self - &dq;
 
@@ -2178,25 +1573,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
     ///
     /// Panics if `divisor` is the zero polynomial.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let dividend = FieldPoly::new(vec![
-    ///     Fp::<65537>::new(1),
-    ///     Fp::<65537>::new(1),
-    ///     Fp::<65537>::new(1),
-    /// ]);
-    /// let divisor = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(1)]);
-    /// let (q, r) = dividend.div_rem_auto(&divisor);
-    /// // Same result as the schoolbook path.
-    /// let (qs, rs) = dividend.div_rem(&divisor);
-    /// assert_eq!(q, qs);
-    /// assert_eq!(r, rs);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// Matches the dispatched arm: `O((n − m) · m)` in the schoolbook
@@ -2213,18 +1589,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
     /// subproduct-tree reductions through [`FieldPoly::div_rem_auto`]
     /// ([`batch_evaluate_subproduct_auto`]).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FieldPoly;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let p = FieldPoly::new(vec![Fp::<65537>::new(1), Fp::<65537>::new(2), Fp::<65537>::new(3)]);
-    /// let xs = vec![Fp::<65537>::new(0), Fp::<65537>::new(1), Fp::<65537>::new(4)];
-    /// let ys = p.batch_evaluate_auto(&xs);
-    /// assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
-    /// ```
-    ///
     /// # Complexity
     ///
     /// `O(n · k)` on the Horner path; `O(M(n) log k + k² log k)` field
@@ -2236,10 +1600,6 @@ impl<F: TwoAdicField> FieldPoly<F> {
         }
     }
 }
-
-// ---------------------------------------------------------------------
-// Internal helpers for invert_series / div_rem_fast.
-// ---------------------------------------------------------------------
 
 /// Returns the polynomial formed by the first `len` coefficients of
 /// `poly`, normalised.
@@ -2283,10 +1643,6 @@ fn reverse_poly_padded<F: FiniteField>(poly: &FieldPoly<F>, pad_len: usize) -> F
     FieldPoly::new(coeffs)
 }
 
-// ---------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2300,16 +1656,11 @@ mod tests {
         FP7::new(n)
     }
 
-    // -----------------------------------------------------------------
-    // Constructors
-    // -----------------------------------------------------------------
-
     #[test]
     fn test_new_trims_trailing_zeros() {
         let p = FieldPoly::new(vec![fp7(1), fp7(0), fp7(0)]);
         assert_eq!(p.degree(), Some(0));
         assert_eq!(p.len(), 1);
-        // Structural equality with `constant`.
         assert_eq!(p, FieldPoly::constant(fp7(1)));
     }
 
@@ -2389,10 +1740,6 @@ mod tests {
         assert_eq!(q.try_coeff(0), Some(&fp7(2)));
     }
 
-    // -----------------------------------------------------------------
-    // Queries
-    // -----------------------------------------------------------------
-
     #[test]
     fn test_coeff_in_range_returns_some() {
         let p = FieldPoly::new(vec![fp7(1), fp7(2)]);
@@ -2409,8 +1756,6 @@ mod tests {
 
     #[test]
     fn test_try_coeff_on_zero_poly_returns_none() {
-        // try_coeff is the total Option-returning variant; the zero
-        // polynomial returns None for every index without panicking.
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
         assert_eq!(z.try_coeff(0), None);
         assert_eq!(z.try_coeff(1), None);
@@ -2433,7 +1778,6 @@ mod tests {
 
     #[test]
     fn test_coeff_or_zero_on_zero_poly() {
-        // coeff_or_zero must be total even on the zero polynomial.
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
         assert_eq!(z.coeff_or_zero(0, &fp7(0)), fp7(0));
         assert_eq!(z.coeff_or_zero(100, &fp7(0)), fp7(0));
@@ -2441,9 +1785,6 @@ mod tests {
 
     #[test]
     fn test_coeff_or_zero_on_zero_poly_gf2m() {
-        // Same totality test for a runtime-configured field: the sample
-        // carries the field context and the returned zero lives in the
-        // correct field.
         let field = Gf2mField::new(4, 0b10011);
         let z: FieldPoly<Gf2mElement> = FieldPoly::zero_like(&field.zero());
         let out = z.coeff_or_zero(0, &field.zero());
@@ -2479,10 +1820,6 @@ mod tests {
         assert_eq!(q.degree(), Some(1));
         assert_eq!(q.len(), 2);
     }
-
-    // -----------------------------------------------------------------
-    // Add / Sub / Neg
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_add_degree_after() {
@@ -2550,7 +1887,6 @@ mod tests {
         let n = -a.clone();
         assert_eq!(n.try_coeff(0), Some(&fp7(4))); // -3 mod 7 = 4
         assert_eq!(n.try_coeff(1), Some(&fp7(2))); // -5 mod 7 = 2
-                                                   // Double-negation is identity.
         assert_eq!(-n, a);
     }
 
@@ -2560,10 +1896,6 @@ mod tests {
         let n = -z;
         assert!(n.is_zero());
     }
-
-    // -----------------------------------------------------------------
-    // AddAssign / SubAssign
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_add_assign_owned() {
@@ -2579,7 +1911,6 @@ mod tests {
         let b = FieldPoly::new(vec![fp7(3), fp7(4)]);
         a += &b;
         assert_eq!(a, FieldPoly::new(vec![fp7(4), fp7(6)]));
-        // `b` still valid after reference-based add_assign.
         assert_eq!(b.try_coeff(1), Some(&fp7(4)));
     }
 
@@ -2599,10 +1930,6 @@ mod tests {
         assert_eq!(a, FieldPoly::new(vec![fp7(4), fp7(4)]));
         assert_eq!(b.try_coeff(0), Some(&fp7(1)));
     }
-
-    // -----------------------------------------------------------------
-    // Scalar multiplication
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_mul_scalar_basic() {
@@ -2635,10 +1962,6 @@ mod tests {
         p.scale(&fp7(0));
         assert!(p.is_zero());
     }
-
-    // -----------------------------------------------------------------
-    // Schoolbook multiplication
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_mul_degree_additive() {
@@ -2680,10 +2003,6 @@ mod tests {
         assert_eq!(&a * &b, expected);
     }
 
-    // -----------------------------------------------------------------
-    // Debug impl
-    // -----------------------------------------------------------------
-
     #[test]
     fn test_debug_zero() {
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
@@ -2701,14 +2020,9 @@ mod tests {
 
     #[test]
     fn test_debug_descending_order() {
-        // 3x^2 + 1: linear term should come before constant in the
-        // Debug string.
         let p = FieldPoly::new(vec![fp7(1), fp7(0), fp7(3)]);
         let s = format!("{p:?}");
-        // Find positions of "x^2" and the final "1" constant.
         let x2_pos = s.find("x^2").expect("x^2 term missing");
-        // Locate the '+' separator — everything after must be the
-        // constant term. The invariant: x^2 term appears first.
         let plus = s.find('+').unwrap_or(usize::MAX);
         assert!(x2_pos < plus, "expected x^2 before constant in {s}");
     }
@@ -2718,14 +2032,8 @@ mod tests {
         // x^2 + x (no constant term): should contain no isolated "0".
         let p = FieldPoly::new(vec![fp7(0), fp7(1), fp7(1)]);
         let s = format!("{p:?}");
-        // Shouldn't end with "+ 0".
         assert!(!s.ends_with("0"), "unexpected zero term in {s}");
     }
-
-    // -----------------------------------------------------------------
-    // Gf2mElement smoke tests: the generic type parameter really works
-    // with runtime-configured field types.
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_gf16_mul_schoolbook() {
@@ -2774,18 +2082,11 @@ mod tests {
         assert!(r.is_zero());
     }
 
-    // -----------------------------------------------------------------
-    // Proptests (tight budgets per `@/inv/test-tier-budgets`)
-    // -----------------------------------------------------------------
-
-    /// Strategy: a random `FieldPoly<Fp<7>>` from fewer than 5 coefficients.
     fn any_fp7_poly() -> impl Strategy<Value = FieldPoly<FP7>> {
         prop::collection::vec(0u64..7, 0..5)
             .prop_map(|xs| FieldPoly::new(xs.into_iter().map(fp7).collect::<Vec<_>>()))
     }
 
-    /// Strategy: *non-zero* polynomial over `Fp<7>` with a non-zero leading
-    /// coefficient.
     fn any_nonzero_fp7_poly() -> impl Strategy<Value = FieldPoly<FP7>> {
         (1usize..=5, 1u64..7).prop_flat_map(|(n, last)| {
             (
@@ -2810,7 +2111,6 @@ mod tests {
         FIELD.with(|f| f.clone())
     }
 
-    /// Strategy: *non-zero* polynomial over `Gf2mElement` in GF(2^4).
     fn any_nonzero_gf16_poly() -> impl Strategy<Value = FieldPoly<Gf2mElement>> {
         (1usize..=5, 1u64..16).prop_flat_map(|(n, last)| {
             (
@@ -2829,10 +2129,6 @@ mod tests {
         })
     }
 
-    // -----------------------------------------------------------------
-    // Horner evaluation + batch eval + from_roots + product
-    // -----------------------------------------------------------------
-
     #[test]
     fn test_eval_horner_matches_expansion() {
         // p(x) = 3x² + 2x + 1 over Fp<7>
@@ -2847,8 +2143,6 @@ mod tests {
 
     #[test]
     fn test_eval_on_zero_polynomial_returns_zero() {
-        // eval on the zero polynomial returns x.zero_like() regardless of the
-        // evaluation point.
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
         assert_eq!(z.eval(&fp7(3)), fp7(0));
         assert_eq!(z.eval(&fp7(0)), fp7(0));
@@ -2873,24 +2167,12 @@ mod tests {
 
     #[test]
     fn test_eval_batch_empty_points_on_zero_poly_ok() {
-        // Vacuous: an empty points slice must not panic even on the zero
-        // polynomial.
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
         assert_eq!(z.eval_batch(&[]), Vec::<FP7>::new());
     }
 
-    // -----------------------------------------------------------------
-    // batch_evaluate (subproduct tree)
-    //
-    // All unit tests below deliberately exercise the fallback path
-    // (k < SUBPRODUCT_THRESHOLD or n < SUBPRODUCT_THRESHOLD) as well as
-    // the subproduct path. The agreement proptests at the bottom of the
-    // module cover the subproduct branch at scale.
-    // -----------------------------------------------------------------
-
     #[test]
     fn test_batch_evaluate_k1() {
-        // Single point: agrees with Horner eval.
         let p = FieldPoly::new(vec![fp7(1), fp7(2), fp7(3)]);
         let ys = p.batch_evaluate(&[fp7(4)]);
         assert_eq!(ys, vec![p.eval(&fp7(4))]);
@@ -2910,7 +2192,6 @@ mod tests {
         let xs = vec![fp7(2), fp7(2), fp7(5), fp7(2)];
         let ys = p.batch_evaluate(&xs);
         assert_eq!(ys, xs.iter().map(|x| p.eval(x)).collect::<Vec<_>>());
-        // Duplicates map to identical outputs.
         assert_eq!(ys[0], ys[1]);
         assert_eq!(ys[0], ys[3]);
     }
@@ -2927,7 +2208,6 @@ mod tests {
 
     #[test]
     fn test_batch_evaluate_degree_zero_polynomial() {
-        // Constant polynomial: every evaluation is the constant itself.
         let p = FieldPoly::constant(fp7(4));
         let xs = vec![fp7(0), fp7(1), fp7(6)];
         let ys = p.batch_evaluate(&xs);
@@ -2950,11 +2230,8 @@ mod tests {
 
     #[test]
     fn test_batch_evaluate_exercises_subproduct_path_fp7() {
-        // Call the raw subproduct kernel directly (bypassing the
-        // SUBPRODUCT_THRESHOLD gate at 4096, which the tiny FP7 inputs
-        // below would never cross). Verifies the tree construction +
-        // top-down reduction math on moderately-sized inputs where the
-        // algorithm's odd-tail and descent branches all fire.
+        // The raw subproduct kernel is called directly: these sizes are below
+        // the `SUBPRODUCT_THRESHOLD` gate of `batch_evaluate`.
         let n = 20;
         let k = 24;
         let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 3 + 1) % 7)).collect();
@@ -2986,11 +2263,8 @@ mod tests {
 
     #[test]
     fn test_batch_evaluate_odd_sized_point_set_fp7() {
-        // Odd k forces the odd-tail-carry branch in the bottom-up tree
-        // build and the corresponding single-child descent during the
-        // top-down reduction. Dispatches straight to the raw tree
-        // kernel so the branch fires regardless of the public
-        // `batch_evaluate` threshold policy.
+        // Odd k takes the odd-tail carry in the tree build and the
+        // single-child descent in the reduction.
         let n = 20;
         let k = 23; // deliberately odd
         let p_coeffs: Vec<FP7> = (0..=n).map(|i| fp7((i as u64 * 2 + 1) % 7)).collect();
@@ -3033,16 +2307,9 @@ mod tests {
         FieldPoly::<FP7>::product(&[]);
     }
 
-    // -----------------------------------------------------------------
-    // batch_mul / batch_mul_with_field / batch_gcd
-    // -----------------------------------------------------------------
-
-    /// Helper: build a monic degree-1 polynomial `x + c` over Fp<7>.
     fn linear_fp7(c: u64) -> FieldPoly<FP7> {
         FieldPoly::new(vec![fp7(c), fp7(1)])
     }
-
-    // --- batch_mul unit tests ---
 
     #[test]
     #[should_panic(expected = "polys cannot be empty")]
@@ -3084,8 +2351,6 @@ mod tests {
         assert_eq!(got, expected);
     }
 
-    // --- batch_mul_with_field unit tests ---
-
     #[test]
     fn test_batch_mul_with_field_empty_returns_one() {
         let sample = fp7(0);
@@ -3113,14 +2378,11 @@ mod tests {
 
     #[test]
     fn test_batch_mul_with_field_three() {
-        // Ensure the odd-tail branch is reached via with_field too.
         let polys: Vec<FieldPoly<FP7>> = (1..=3).map(linear_fp7).collect();
         let expected = FieldPoly::product(&polys);
         let got = FieldPoly::batch_mul_with_field(&fp7(0), &polys);
         assert_eq!(got, expected);
     }
-
-    // --- batch_gcd unit tests ---
 
     #[test]
     #[should_panic(expected = "polys cannot be empty")]
@@ -3130,12 +2392,9 @@ mod tests {
 
     #[test]
     fn test_batch_gcd_single_monic() {
-        // gcd of a single element is its monic form.
         let p = FieldPoly::new(vec![fp7(3), fp7(2)]); // 2x + 3 — lead = 2
         let g = FieldPoly::batch_gcd(std::slice::from_ref(&p));
-        // Leading coeff must be 1.
         assert_eq!(g.leading_coeff(), Some(&fp7(1)));
-        // And the result must divide p.
         let (_, r) = p.div_rem(&g);
         assert!(r.is_zero());
     }
@@ -3146,7 +2405,6 @@ mod tests {
         let a = &d * &linear_fp7(2); // (x+1)(x+2)
         let b = &d * &linear_fp7(3); // (x+1)(x+3)
         let g = FieldPoly::batch_gcd(&[a, b]);
-        // d is a common factor, so g must be divisible by d.
         let (_, r) = g.div_rem(&d);
         assert!(r.is_zero(), "batch_gcd result should be divisible by d");
     }
@@ -3158,12 +2416,9 @@ mod tests {
         let b = &d * &linear_fp7(2);
         let c = &d * &linear_fp7(3);
         let g = FieldPoly::batch_gcd(&[a, b, c]);
-        // d is a common factor, so g must be divisible by d.
         let (_, r) = g.div_rem(&d);
         assert!(r.is_zero(), "batch_gcd result should be divisible by d");
     }
-
-    // --- Gf2mElement unit tests ---
 
     #[test]
     fn test_batch_mul_gf16_two() {
@@ -3182,8 +2437,6 @@ mod tests {
         let prod = FieldPoly::batch_mul_with_field(&sample, &[]);
         assert_eq!(prod, FieldPoly::one_like(&sample));
     }
-
-    // --- Proptests ---
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(64))]
@@ -3230,11 +2483,9 @@ mod tests {
 
         #[test]
         fn prop_batch_gcd_divides_common_factor_fp7(
-            // a, b, c: small non-zero polynomials used as coprime cofactors
             a_cs in prop::collection::vec(1u64..7, 1..4),
             b_cs in prop::collection::vec(1u64..7, 1..4),
             c_cs in prop::collection::vec(1u64..7, 1..4),
-            // d: shared factor
             d_cs in prop::collection::vec(1u64..7, 1..4),
         ) {
             let a = FieldPoly::new(a_cs.into_iter().map(fp7).collect::<Vec<_>>());
@@ -3251,7 +2502,6 @@ mod tests {
             let g = FieldPoly::batch_gcd(&[ad, bd, cd]);
             // Mathematical invariant: d | each a*d, b*d, c*d
             //   ⇒ d | gcd(a*d, b*d, c*d).
-            // i.e. g is a multiple of d; we check g mod d = 0.
             prop_assume!(!d.is_zero());
             let (_, r) = g.div_rem(&d);
             prop_assert!(
@@ -3261,10 +2511,6 @@ mod tests {
             );
         }
     }
-
-    // -----------------------------------------------------------------
-    // Euclidean division / gcd
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_div_rem_identity() {
@@ -3337,7 +2583,6 @@ mod tests {
         let p = FieldPoly::new(vec![fp7(1), fp7(2)]);
         let z: FieldPoly<FP7> = FieldPoly::zero_like(&fp7(0));
         let g = FieldPoly::gcd(&p, &z);
-        // gcd(p, 0) is p made monic.
         // p has leading coefficient 2, so monic(p) = p * 2^(-1) = p * 4 in Fp<7>.
         let p_monic = p.mul_scalar(&fp7(2).inv().unwrap());
         assert_eq!(g, p_monic);
@@ -3357,20 +2602,16 @@ mod tests {
             FieldPoly::new(vec![fp7(5), fp7(2), fp7(1)]), // x² + 2x + 5
         ];
         let g_monic = g.mul_scalar(&g.leading_coeff().unwrap().inv().unwrap());
-        // For each pair of cofactors (c_i, c_j), gcd(g·c_i, g·c_j) must
-        // be a scalar-constant multiple of g — equality of monic forms.
         for i in 0..cofactors.len() {
             for j in (i + 1)..cofactors.len() {
                 let p1 = &g * &cofactors[i];
                 let p2 = &g * &cofactors[j];
                 let actual = FieldPoly::gcd(&p1, &p2);
-                // The gcd must at least contain g as a factor.
                 let (_, r) = actual.div_rem(&g_monic);
                 assert!(
                     r.is_zero(),
                     "gcd(p1, p2) must be divisible by the shared monic factor g"
                 );
-                // And g must divide the gcd.
                 let (_, r2) = g_monic.div_rem(&actual);
                 assert!(
                     r2.is_zero(),
@@ -3424,14 +2665,8 @@ mod tests {
         let _ = FieldPoly::lcm(&z, &z);
     }
 
-    // -----------------------------------------------------------------
-    // Karatsuba cross-check: degrees above the threshold must agree with
-    // schoolbook results.
-    // -----------------------------------------------------------------
-
     #[test]
     fn test_karatsuba_matches_schoolbook_fp7() {
-        // Construct two polynomials with degree well above KARATSUBA_THRESHOLD.
         let n = KARATSUBA_THRESHOLD + 8;
         let a_coeffs: Vec<FP7> = (0..=n).map(|i| fp7(((i as u64) * 3 + 1) % 7)).collect();
         let b_coeffs: Vec<FP7> = (0..=n).map(|i| fp7(((i as u64) * 5 + 2) % 7)).collect();
@@ -3506,7 +2741,6 @@ mod tests {
             b in any_nonzero_fp7_poly(),
         ) {
             let (q, r) = a.div_rem(&b);
-            // r.degree() < b.degree() (or r = 0)
             let db = b.degree().unwrap();
             match r.degree() {
                 None => {}
@@ -3559,7 +2793,6 @@ mod tests {
         ) {
             let a_coeffs: Vec<FP7> = a.into_iter().map(fp7).collect();
             let b_coeffs: Vec<FP7> = b.into_iter().map(fp7).collect();
-            // Force non-zero leading coefficients.
             if a_coeffs.iter().all(FiniteField::is_zero) || b_coeffs.iter().all(FiniteField::is_zero) {
                 return Ok(());
             }
@@ -3569,10 +2802,6 @@ mod tests {
             prop_assert_eq!(&a_poly * &b_poly, school);
         }
 
-        // ---------------------------------------------------------
-        // Gf2mElement proptests: div_rem identity, gcd commutativity, gcd
-        // divides both inputs, over GF(2^m).
-        // ---------------------------------------------------------
 
         #[test]
         fn prop_div_rem_identity_gf16(
@@ -3651,19 +2880,6 @@ mod tests {
             prop_assert_eq!(&a_poly * &b_poly, school);
         }
 
-        // -----------------------------------------------------------------
-        // batch_evaluate agreement with per-point Horner.
-        //
-        // Two families of proptests:
-        //   * `prop_batch_evaluate_matches_per_point_*` exercises the public
-        //     `batch_evaluate` entry-point, which dispatches to either the
-        //     subproduct tree or the naive Horner fallback depending on
-        //     `SUBPRODUCT_THRESHOLD`.
-        //   * `prop_batch_evaluate_subproduct_matches_per_point_*` calls
-        //     the internal `batch_evaluate_subproduct` helper directly so
-        //     the subproduct branch is exercised on small random inputs
-        //     regardless of the public threshold.
-        // -----------------------------------------------------------------
 
         #[test]
         fn prop_batch_evaluate_matches_per_point_fp7(
@@ -3762,10 +2978,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------
-    // invert_series / div_rem_fast / div_rem_auto (TwoAdicField path)
-    // -----------------------------------------------------------------
-
     type FP65537 = Fp<65537>;
 
     fn fp65537(n: u64) -> FP65537 {
@@ -3784,7 +2996,6 @@ mod tests {
             assert_eq!(g.coeff(i), expected, "coeff {i} mismatch");
         }
 
-        // f · g ≡ 1 (mod x^8).
         let prod = f.mul(&g);
         assert_eq!(prod.coeff(0), fp65537(1));
         for i in 1..8 {
@@ -3818,8 +3029,6 @@ mod tests {
 
     #[test]
     fn test_invert_series_roundtrip_truncated() {
-        // Proptest-lite: check that f · g ≡ 1 (mod x^k) for a few random
-        // polynomials over Fp<65537>.
         let modulus: u64 = 65537;
         for seed in 1u64..=8 {
             let n = 5 + (seed as usize);
@@ -3831,7 +3040,6 @@ mod tests {
                     fp65537(v)
                 })
                 .collect();
-            // Guarantee a non-zero constant term.
             if coeffs[0].is_zero() {
                 coeffs[0] = fp65537(1);
             }
@@ -3849,8 +3057,6 @@ mod tests {
             }
         }
     }
-
-    // --- div_rem_fast unit tests: edge cases. ---
 
     #[test]
     fn test_div_rem_fast_zero_dividend() {
@@ -3913,7 +3119,6 @@ mod tests {
 
     #[test]
     fn test_div_rem_auto_small_uses_schoolbook() {
-        // For small operands, div_rem_auto must agree with div_rem.
         let dividend = FieldPoly::new(vec![fp65537(1), fp65537(1), fp65537(1)]);
         let divisor = FieldPoly::new(vec![fp65537(1), fp65537(1)]);
         let (q, r) = dividend.div_rem_auto(&divisor);
@@ -3924,10 +3129,6 @@ mod tests {
 
     #[test]
     fn test_div_rem_auto_large_agrees_with_fast() {
-        // Construct operands above DIV_REM_THRESHOLD so the fast path is
-        // dispatched, and verify agreement with div_rem_fast itself (which
-        // in turn is cross-checked by the proptest below against
-        // schoolbook).
         let n = DIV_REM_THRESHOLD + 16;
         let m = DIV_REM_THRESHOLD;
         let mut a_coeffs: Vec<FP65537> = (0..n)
@@ -3948,30 +3149,21 @@ mod tests {
         assert_eq!(q_auto, q_fast);
         assert_eq!(r_auto, r_fast);
 
-        // Euclidean identity holds.
         assert_eq!(&(&q_auto * &b) + &r_auto, a);
     }
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(500))]
 
-        /// Agreement test: `div_rem_fast` must match the
-        /// schoolbook `div_rem` pair and satisfy the Euclidean identity
-        /// `dividend = quotient · divisor + remainder` with
-        /// `deg(remainder) < deg(divisor)`, for ≥ 500 random
-        /// `(dividend, divisor)` pairs over `Fp<65537>`.
         #[test]
         fn prop_div_rem_fast_matches_schoolbook_fp65537(
             dividend_coeffs in prop::collection::vec(0u64..65537, 1..40),
             divisor_coeffs in prop::collection::vec(0u64..65537, 1..20),
             divisor_lead in 1u64..65537,
         ) {
-            // Build normalised dividend (may be zero).
             let dividend = FieldPoly::new(
                 dividend_coeffs.into_iter().map(fp65537).collect::<Vec<_>>(),
             );
-            // Build a non-zero divisor by forcing a non-zero leading
-            // coefficient appended to the random middle section.
             let mut dc: Vec<FP65537> = divisor_coeffs.into_iter().map(fp65537).collect();
             dc.push(fp65537(divisor_lead));
             let divisor = FieldPoly::new(dc);
@@ -3982,7 +3174,6 @@ mod tests {
             prop_assert_eq!(&q_fast, &q_school);
             prop_assert_eq!(&r_fast, &r_school);
 
-            // Euclidean identity + degree bound.
             let reconstructed = &(&q_fast * &divisor) + &r_fast;
             prop_assert_eq!(reconstructed, dividend);
             let db = divisor.degree().unwrap();
@@ -3993,31 +3184,9 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------
-    // batch_evaluate_auto + batch_evaluate_subproduct_auto agreement.
-    //
-    // Two families of coverage on Fp<65537>:
-    //   1. A ≥ 500-case proptest on batch_evaluate_subproduct_auto at
-    //      small random sizes, agreeing with per-point Horner. This
-    //      exercises the subproduct-tree traversal and the
-    //      div_rem_auto reduction closure directly on every random
-    //      shape (odd / even k, duplicates, zero polynomial, etc.).
-    //   2. A deterministic test that straddles SUBPRODUCT_THRESHOLD in
-    //      both dimensions, so both branches of FieldPoly::batch_evaluate
-    //      and FieldPoly::batch_evaluate_auto (naive fallback below
-    //      threshold, subproduct tree above) are exercised against a
-    //      naive Horner reference on Fp<65537>.
-    // -----------------------------------------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(500))]
 
-        /// Agreement: `batch_evaluate_subproduct_auto` matches per-point
-        /// Horner on ≥ 500 random inputs over `Fp<65537>`. Exercises
-        /// the subproduct-tree traversal and the div_rem_auto reduction
-        /// closure on every random shape (odd / even k, duplicates,
-        /// zero polynomial, etc.) — the "below-threshold" side of the
-        /// auto dispatcher.
         #[test]
         fn prop_batch_evaluate_subproduct_auto_matches_horner_fp65537(
             poly_coeffs in prop::collection::vec(0u64..65537, 1..40),
@@ -4035,13 +3204,6 @@ mod tests {
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(500))]
 
-        /// Agreement: the public [`FieldPoly::batch_evaluate`]
-        /// dispatcher matches per-point Horner on ≥ 500 random
-        /// inputs over `Fp<65537>`, with input sizes drawn from a
-        /// set that straddles [`SUBPRODUCT_THRESHOLD`] = 4096: the
-        /// pool `{16, 1024, 4096, 8192}` guarantees coverage of
-        /// both the "below threshold" (naive Horner fallback) and
-        /// "at/above threshold" (subproduct-tree) branches.
         #[test]
         #[ignore = "slow: 500-case proptest with 4096/8192 cells exceeds 5 s on CI hardware"]
         fn prop_batch_evaluate_dispatcher_matches_horner_straddling_threshold_fp65537(
@@ -4099,21 +3261,13 @@ mod tests {
     #[test]
     #[ignore = "slow: batch polynomial evaluation at n=4096/4200 over Fp<65537>"]
     fn test_batch_evaluate_auto_straddles_subproduct_threshold_fp65537() {
-        // SUBPRODUCT_THRESHOLD = 4096 on Fp<65537>, compared against
-        // `points.len()` and the polynomial's coefficient length
-        // (len == degree + 1). We exercise cells on both sides of the
-        // threshold in both dimensions so every branch of
-        // FieldPoly::batch_evaluate / batch_evaluate_auto fires at
-        // least once:
+        // Cells against SUBPRODUCT_THRESHOLD = 4096:
         //   - (n, k) = (64, 64)       → both lengths below → naive.
         //   - (n, k) = (4095, 4095)   → both below → naive.
         //   - (n, k) = (4096, 64)     → poly at threshold, k below →
         //                               still naive (k dimension gates).
         //   - (n, k) = (4096, 4096)   → both at threshold → subproduct.
         //   - (n, k) = (4200, 4200)   → both above → subproduct.
-        // For every cell we verify agreement with a naive Horner sweep
-        // (eval_batch) and cross-check that the two dispatchers and
-        // the two raw subproduct helpers all produce identical output.
         let cells: &[(usize, usize)] = &[
             (64, 64),
             (4095, 4095),
@@ -4135,7 +3289,6 @@ mod tests {
             *p_coeffs.last_mut().unwrap() = fp65537(1);
             let poly = FieldPoly::new(p_coeffs);
 
-            // Build k distinct evaluation points.
             let points: Vec<FP65537> = (0..k)
                 .map(|i| fp65537(((i as u64).wrapping_mul(1_000_003) % (modulus - 1)) + 1))
                 .collect();

@@ -15,10 +15,6 @@ use crate::field::{FieldPoly, FiniteField, TwoAdicField};
 use crate::tuning;
 use std::fmt;
 
-// ---------------------------------------------------------------------
-// Threshold + dispatcher
-// ---------------------------------------------------------------------
-
 /// Conservative default for `polynomial.interpolate_fast_min_points()`
 /// in the active [`crate::tuning::CoreTuning`].
 ///
@@ -74,21 +70,6 @@ fn interpolate_route_resolved(
 /// `polynomial.interpolate_fast_min_points()` value and to
 /// [`interpolate_fast`] at or above it.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::interpolate_auto;
-/// use gf2_core::gfp::Fp;
-///
-/// let p = interpolate_auto(&[
-///     (Fp::<7>::new(0), Fp::<7>::new(1)),
-///     (Fp::<7>::new(1), Fp::<7>::new(3)),
-/// ])
-/// .unwrap();
-/// assert_eq!(p.eval(&Fp::<7>::new(0)), Fp::<7>::new(1));
-/// assert_eq!(p.eval(&Fp::<7>::new(1)), Fp::<7>::new(3));
-/// ```
-///
 /// # Errors
 ///
 /// Returns [`InterpolationError::DuplicatePoint`] if any two `x_i` coincide.
@@ -111,29 +92,14 @@ pub fn interpolate_auto<F: FiniteField>(
 /// Routes as [`interpolate_auto`], with [`interpolate_fast_auto`] as the
 /// subproduct-tree arm.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::interpolate_auto_two_adic;
-/// use gf2_core::gfp::Fp;
-///
-/// let p = interpolate_auto_two_adic(&[
-///     (Fp::<65537>::new(0), Fp::<65537>::new(1)),
-///     (Fp::<65537>::new(1), Fp::<65537>::new(3)),
-/// ])
-/// .unwrap();
-/// assert_eq!(p.eval(&Fp::<65537>::new(0)), Fp::<65537>::new(1));
-/// assert_eq!(p.eval(&Fp::<65537>::new(1)), Fp::<65537>::new(3));
-/// ```
-///
 /// # Errors
 ///
 /// Returns [`InterpolationError::DuplicatePoint`] if any two `x_i` coincide.
 ///
 /// # Complexity
 ///
-/// `O(n²)` field operations on the [`interpolate`] route; the cost of
-/// [`interpolate_fast_auto`] on the other.
+/// `O(n²)` field operations on the [`interpolate`] route and `O(n² log n)` on
+/// the [`interpolate_fast_auto`] route.
 pub fn interpolate_auto_two_adic<F: TwoAdicField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
@@ -143,31 +109,8 @@ pub fn interpolate_auto_two_adic<F: TwoAdicField>(
     }
 }
 
-// ---------------------------------------------------------------------
-// Error type
-// ---------------------------------------------------------------------
-
 /// Error returned by [`interpolate`] and [`interpolate_fast`] when the
 /// input is invalid.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::{interpolate, InterpolationError};
-/// use gf2_core::gfp::Fp;
-///
-/// let points = vec![
-///     (Fp::<7>::new(1), Fp::<7>::new(3)),
-///     (Fp::<7>::new(1), Fp::<7>::new(5)), // duplicate x
-/// ];
-/// match interpolate(&points) {
-///     Err(InterpolationError::DuplicatePoint { index_a, index_b }) => {
-///         assert_eq!(index_a, 0);
-///         assert_eq!(index_b, 1);
-///     }
-///     Ok(_) => panic!("expected error"),
-/// }
-/// ```
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum InterpolationError {
     /// Two input points share the same `x`-coordinate, making the interpolation
@@ -194,38 +137,10 @@ impl fmt::Display for InterpolationError {
     }
 }
 
-// ---------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------
-
 /// Computes the formal derivative `f'(x) = Σ i · a_i · x^{i-1}` of `f`.
 ///
 /// The index `i` is formed by repeated field addition of one, so terms with
 /// `i` a multiple of the characteristic vanish.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::formal_derivative;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// // d/dx (x^3 + 2x^2 + 3x + 4) = 3x^2 + 4x + 3  over Fp<7>
-/// let f = FieldPoly::new(vec![
-///     Fp::<7>::new(4),
-///     Fp::<7>::new(3),
-///     Fp::<7>::new(2),
-///     Fp::<7>::new(1),
-/// ]);
-/// let df = formal_derivative(&f);
-/// assert_eq!(df.degree(), Some(2));
-/// // coefficient of x^2 is 3*1 = 3
-/// assert_eq!(df.try_coeff(2), Some(&Fp::<7>::new(3)));
-/// // coefficient of x^1 is 2*2 = 4
-/// assert_eq!(df.try_coeff(1), Some(&Fp::<7>::new(4)));
-/// // coefficient of x^0 is 1*3 = 3
-/// assert_eq!(df.try_coeff(0), Some(&Fp::<7>::new(3)));
-/// ```
 pub fn formal_derivative<F: FiniteField>(f: &FieldPoly<F>) -> FieldPoly<F> {
     let n = f.len();
     if n <= 1 {
@@ -246,10 +161,6 @@ pub fn formal_derivative<F: FiniteField>(f: &FieldPoly<F>) -> FieldPoly<F> {
     FieldPoly::new(deriv_coeffs)
 }
 
-// ---------------------------------------------------------------------
-// Duplicate check
-// ---------------------------------------------------------------------
-
 /// Scans for the first pair of duplicate x-coordinates in O(n²).
 fn check_no_duplicate_x<F: FiniteField>(points: &[(F, F)]) -> Result<(), InterpolationError> {
     for i in 0..points.len() {
@@ -265,10 +176,6 @@ fn check_no_duplicate_x<F: FiniteField>(points: &[(F, F)]) -> Result<(), Interpo
     Ok(())
 }
 
-// ---------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------
-
 /// Lagrange interpolation via the **barycentric form** in O(n²).
 ///
 /// Given `n` distinct (x, y) pairs, returns the unique polynomial of degree
@@ -281,32 +188,6 @@ fn check_no_duplicate_x<F: FiniteField>(points: &[(F, F)]) -> Result<(), Interpo
 ///
 /// Returns [`InterpolationError::DuplicatePoint`] with the indices of the
 /// first pair sharing an `x`-coordinate.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::interpolate;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// // Interpolate through (0, 1), (1, 4), (2, 9) — that's x^2 + 1.
-/// // (But over Fp<7>: 1+0=1, 1+1=2... let's use a simpler example.)
-/// // p(x) = 3 (constant) through single point (5, 3).
-/// let points = vec![(Fp::<7>::new(5), Fp::<7>::new(3))];
-/// let p = interpolate(&points).unwrap();
-/// assert_eq!(p.eval(&Fp::<7>::new(5)), Fp::<7>::new(3));
-/// ```
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::interpolate;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// // Empty input returns zero polynomial.
-/// let points: Vec<(Fp<7>, Fp<7>)> = vec![];
-/// let p = interpolate(&points).unwrap();
-/// assert!(p.is_zero());
-/// ```
 ///
 /// # Complexity
 ///
@@ -393,24 +274,6 @@ pub fn interpolate<F: FiniteField>(points: &[(F, F)]) -> Result<FieldPoly<F>, In
 /// Returns [`InterpolationError::DuplicatePoint`] with the indices of the
 /// first pair sharing an `x`-coordinate.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::interpolate_fast;
-/// use gf2_core::field::FieldPoly;
-/// use gf2_core::gfp::Fp;
-///
-/// let points = vec![
-///     (Fp::<7>::new(0), Fp::<7>::new(2)),
-///     (Fp::<7>::new(1), Fp::<7>::new(4)),
-///     (Fp::<7>::new(2), Fp::<7>::new(0)),
-/// ];
-/// let p = interpolate_fast(&points).unwrap();
-/// for (x, y) in &points {
-///     assert_eq!(p.eval(x), *y);
-/// }
-/// ```
-///
 /// # Complexity
 ///
 /// `O(n² log n)` field operations.
@@ -430,27 +293,9 @@ pub fn interpolate_fast<F: FiniteField>(
 /// Returns [`InterpolationError::DuplicatePoint`] with the indices of the
 /// first pair sharing an `x`-coordinate.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::poly_interpolate::interpolate_fast_auto;
-/// use gf2_core::gfp::Fp;
-///
-/// let points = vec![
-///     (Fp::<65537>::new(0), Fp::<65537>::new(2)),
-///     (Fp::<65537>::new(1), Fp::<65537>::new(4)),
-///     (Fp::<65537>::new(2), Fp::<65537>::new(0)),
-/// ];
-/// let p = interpolate_fast_auto(&points).unwrap();
-/// for (x, y) in &points {
-///     assert_eq!(p.eval(x), *y);
-/// }
-/// ```
-///
 /// # Complexity
 ///
-/// That of [`interpolate_fast`], with the `M'(x_i)` evaluation at the cost of
-/// [`FieldPoly::batch_evaluate_auto`].
+/// `O(n² log n)` field operations.
 pub fn interpolate_fast_auto<F: TwoAdicField>(
     points: &[(F, F)],
 ) -> Result<FieldPoly<F>, InterpolationError> {
@@ -532,10 +377,6 @@ where
     Ok(cur_interp.into_iter().next().unwrap())
 }
 
-// ---------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -552,10 +393,6 @@ mod tests {
     fn gf16_field() -> Gf2mField {
         Gf2mField::new(4, 0b10011)
     }
-
-    // -----------------------------------------------------------------
-    // Unit tests: edge cases
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_interpolate_empty_returns_zero() {
@@ -660,7 +497,6 @@ mod tests {
 
     #[test]
     fn test_interpolate_round_trip_fp7_three_points() {
-        // Three points in Fp<7>: should give a unique degree-2 polynomial.
         let pts = vec![(fp7(0), fp7(4)), (fp7(1), fp7(2)), (fp7(3), fp7(5))];
         let p = interpolate(&pts).unwrap();
         for (x, y) in &pts {
@@ -718,23 +554,15 @@ mod tests {
         let field = gf16_field();
         let f = FieldPoly::new(vec![field.element(1), field.element(1), field.element(1)]);
         let df = formal_derivative(&f);
-        // x^2 term: coeff = 2*1 = 0 in char 2 → vanishes
-        // x^1 term: coeff = 1*1 = 1
         assert_eq!(df.degree(), Some(0));
         assert_eq!(df.try_coeff(0), Some(&field.element(1)));
     }
 
-    // -----------------------------------------------------------------
-    // Proptests: round-trip on Fp<7>
-    // -----------------------------------------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(300))]
 
-        /// Round-trip: interpolate recovers the values at all input points (Fp<7>).
         #[test]
         fn prop_interpolate_round_trip_fp7(
-            // Generate up to 6 distinct x-values from Fp<7> = {0..6}
             x_vals in prop::collection::hash_set(0u64..7, 1..7usize),
             y_vals in prop::collection::vec(0u64..7, 6..=6usize),
         ) {
@@ -749,7 +577,6 @@ mod tests {
             }
         }
 
-        /// Round-trip: interpolate_fast recovers the values at all input points (Fp<7>).
         #[test]
         fn prop_interpolate_fast_round_trip_fp7(
             x_vals in prop::collection::hash_set(0u64..7, 1..7usize),
@@ -766,7 +593,6 @@ mod tests {
             }
         }
 
-        /// Agreement: interpolate_fast == interpolate for n up to 6 on Fp<7>.
         #[test]
         fn prop_interpolate_agreement_fp7(
             x_vals in prop::collection::hash_set(0u64..7, 1..7usize),
@@ -783,14 +609,9 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Proptests: round-trip on GF(2^4) (Gf2mElement, char 2)
-    // -----------------------------------------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(200))]
 
-        /// Round-trip: interpolate on GF(16).
         #[test]
         fn prop_interpolate_round_trip_gf16(
             x_vals in prop::collection::hash_set(0u64..16, 1..9usize),
@@ -809,7 +630,6 @@ mod tests {
             }
         }
 
-        /// Round-trip: interpolate_fast on GF(16).
         #[test]
         fn prop_interpolate_fast_round_trip_gf16(
             x_vals in prop::collection::hash_set(0u64..16, 1..9usize),
@@ -828,7 +648,6 @@ mod tests {
             }
         }
 
-        /// Agreement: interpolate_fast == interpolate on GF(16) for n up to 8.
         #[test]
         fn prop_interpolate_agreement_gf16(
             x_vals in prop::collection::hash_set(0u64..16, 1..9usize),
@@ -847,14 +666,9 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Proptests: agreement on Fp<65537> up to n=32
-    // -----------------------------------------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
 
-        /// Agreement: interpolate_fast == interpolate on Fp<65537> for n up to 32.
         #[test]
         fn prop_interpolate_agreement_fp65537_n32(
             x_vals in prop::collection::hash_set(1u64..65537, 1..33usize),
@@ -872,8 +686,6 @@ mod tests {
             prop_assert_eq!(naive, fast);
         }
 
-        /// Agreement: `interpolate_fast_auto` matches [`interpolate_fast`] on
-        /// `Fp<65537>`.
         #[test]
         fn prop_interpolate_fast_auto_matches_fast_fp65537_n32(
             x_vals in prop::collection::hash_set(1u64..65537, 1..33usize),
@@ -891,8 +703,6 @@ mod tests {
             prop_assert_eq!(fast, fast_auto);
         }
 
-        /// Agreement: `interpolate_auto_two_adic` matches [`interpolate_auto`]
-        /// on `Fp<65537>`.
         #[test]
         fn prop_interpolate_auto_two_adic_matches_auto_fp65537_n32(
             x_vals in prop::collection::hash_set(1u64..65537, 1..33usize),
@@ -910,11 +720,6 @@ mod tests {
             prop_assert_eq!(auto, auto_two_adic);
         }
     }
-
-    // -----------------------------------------------------------------
-    // Deterministic test: interpolate_auto_two_adic routes through
-    // interpolate_fast_auto above INTERPOLATE_THRESHOLD.
-    // -----------------------------------------------------------------
 
     #[test]
     fn test_interpolate_auto_two_adic_routes_through_fast_auto_above_threshold() {
