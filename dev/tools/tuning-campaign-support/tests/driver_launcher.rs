@@ -13,6 +13,7 @@ use tuning_campaign_support::campaign::{
     locate_campaign_declaration, CanonicalJson, PreparationStore, SessionChannels, Token,
     DECLARATION_FILE,
 };
+use tuning_campaign_support::repository::repository_root;
 use tuning_campaign_support::scratch::{scratch, ScratchPath};
 
 fn executable(path: &Path, content: &str) {
@@ -45,10 +46,7 @@ fn checkout(root: &Path) -> PathBuf {
 /// checkout under `directory`, away from its committed location; the launcher
 /// locates it by its issue before selecting an identity.
 fn declare(repo: &Path, issue: &str, directory: &str) {
-    let committed = PathBuf::from(git(
-        Path::new(env!("CARGO_MANIFEST_DIR")),
-        &["rev-parse", "--show-toplevel"],
-    ));
+    let committed = repository_root().unwrap();
     let source = committed.join(locate_campaign_declaration(&committed, issue).unwrap());
     let target = repo.join(directory).join(DECLARATION_FILE);
     assert_ne!(
