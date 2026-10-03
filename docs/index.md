@@ -12,6 +12,10 @@ Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 
 Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis-placement`.
 
+| Page | Topic |
+|---|---|
+| [Acceleration architecture](concepts/acceleration-architecture.md) | SIMD dispatch, HIP backend, hybrid executor and parallelism model |
+
 ## Reference
 
 Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
