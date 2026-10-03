@@ -350,7 +350,7 @@ let gmi = gmi_bits(&amp;report, GmiMethod::Histogram);  // empirical from histog
   <p class="small" style="margin-top: 1em;">
     <strong>Takeaway:</strong> GPU wins above ~1k symbols for 64/256-QAM, above 4k for 16-QAM, and only at 16k for QPSK.
     GPU always loses at batch = 256.
-    <span class="muted">Full decision doc: <code>dev/active/9c37ec8c-gpu-crossover-decision.md</code></span>
+    <span class="muted">Full decision doc: <code>dev/archive/d4851c3d-modem-framework/active/9c37ec8c/9c37ec8c-gpu-crossover-decision.md</code></span>
   </p>
   <p class="small muted">
     AVX2 speedup over the scalar full demapper is only 1.04–1.20× — per-symbol validation/reduction dominates the budget, not the per-axis kernel.
@@ -465,8 +465,8 @@ let gmi = gmi_bits(&amp;report, GmiMethod::Histogram);  // empirical from histog
   <ul>
     <li><strong>Benchmarks:</strong> <code>cargo bench -p gf2-coding</code> (4 criterion suites: <code>modem_cpu</code>, <code>modem_generic_vs_fast</code>, <code>cpu_dispatch_probe</code>, <code>simulation_no_analysis_overhead</code>)</li>
     <li><strong>GPU path:</strong> <code>cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --release</code> on a ROCm host</li>
-    <li><strong>Decision doc:</strong> <code>dev/active/9c37ec8c-gpu-crossover-decision.md</code></li>
-    <li><strong>Completion report:</strong> <code>dev/active/d4851c3d-completion-report.md</code></li>
+    <li><strong>Decision doc:</strong> <code>dev/archive/d4851c3d-modem-framework/active/9c37ec8c/9c37ec8c-gpu-crossover-decision.md</code></li>
+    <li><strong>Completion report:</strong> <code>dev/archive/d4851c3d-modem-framework/active/d4851c3d-completion-report.md</code></li>
   </ul>
 </section>
 

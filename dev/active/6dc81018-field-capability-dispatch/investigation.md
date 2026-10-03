@@ -584,8 +584,8 @@ listed in the Rust/proof lists above are not repeated:
   `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent_completion.md:54`,
   and `dev/studies/0dffa759/findings.md:1022`.
 - User-facing docs and proof maintenance: `docs/lean4-verification-pipeline.md:24`,
-  `docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:65`,
-  `docs/presentations/bb85c68a-fieldmatrix/talk.html:84`,
+  `dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:65`,
+  `dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix/talk.html:84`,
   `proofs/WORKAROUNDS.md:5`, `scripts/fix-aeneas-dupes.py:4`,
   `scripts/fix-aeneas-gf2algebra.py:7`,
   `scripts/fix-aeneas-sorrys.py:244`, and

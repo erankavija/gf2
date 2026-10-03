@@ -137,7 +137,7 @@ blob and content SHA-256; fixtures carry the path as data.
 | `dev/simulation_results/{fig1,fig3}_*.csv/json`, `phase1_final/*`, `phase1_comparison_report.md` | `crates/gf2-coding/tests/grand_phase1_smoke.rs:417-434,473-476` | `is_file()`/`exists()` asserts, reads | read (asserts on presence and absence) |
 | `dev/simulation_results/fig7_*` | `dev/scripts/gen_fig7_report.sh:5-9` | vars | read/write |
 | `dev/simulation_results[/sub]` | `dev/campaigns/*.toml` (`output_dir`) | config | write |
-| `dev/simulation_results` | `docs/presentations/figures/generate_grand_comparison_plots.py:31` | `REPO / "dev" / "simulation_results"` | read |
+| `dev/simulation_results` | `dev/archive/6efb756b-grand/docs/presentations/figures/generate_grand_comparison_plots.py:31` | `REPO / "dev" / "simulation_results"` | read |
 | `dev/simulation_results/permanent-zero-fraction/` | `dev/benchmarks/permanent_campaign/accelerator_launch_costs_v1.py:22`, `determinant_cost_v5.py:45` | consts | read |
 | `dev/simulation_results/*.progress.jsonl` | `.gitignore:91` | ignore pattern | config |
 
@@ -156,7 +156,7 @@ blob and content SHA-256; fixtures carry the path as data.
 | `dev/benchmarks/permanent_campaign/*` | `dev/benchmarks/permanent_campaign/{accelerator_launch_costs_v1,determinant_cost_v5,summarize_premeasure_v1}.py` and tests | consts incl. self path digests | identity |
 | `dev/benchmarks/gf2_algebra_permanent` | `crates/gf2-algebra/benches/s1_n36_speedup.rs:275`; `examples/{parallel_chunk_sweep.rs:86,paper_repro_slope.rs:92,parallel_scaling_sweep.rs:107}`; `scripts/permanent-repro.sh:106`; `scripts/plot_permanent_benchmarks.py:520,526`; `dev/research/permanent_gpu_{crossover,speedup}` | literals, CLI defaults | write/read |
 | `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` | `crates/gf2-algebra/examples/permanent_demo.rs:233,245` | message text | text |
-| `dev/benchmarks/gf2_algebra_permanent/README.md` | `docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:124,162` | `<a href="../../../dev/benchmarks/...">` | relative link |
+| `dev/benchmarks/gf2_algebra_permanent/README.md` | `dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:124,162` | `<a href="../../../dev/benchmarks/...">` | relative link |
 | `dev/benchmarks/perm_uniformity` | `scripts/perm-uniformity-repro.sh:43`; `scripts/perm-uniformity-gpu-repro.sh:59`; `dev/research/perm_uniformity_gpu/src/main.rs:812` (`SSOT_DIR`) | consts | write |
 | `dev/benchmarks/gf2-sim/diagnostic-dumps` | `crates/gf2-sim/src/executor/failure.rs:276` (`default_dump_dir`); `.gitignore:115` | default | write |
 | `dev/benchmarks/dvb_t2_awgn/plot.py` | `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:713` | help text | text |
@@ -185,7 +185,7 @@ blob and content SHA-256; fixtures carry the path as data.
 | `dev/reference_data/tuning-profiles/{conservative,gf2-a83583e0-...}.json` | `crates/gf2-algebra/tests/tuning_repository_envelopes.rs:12,18`; `dev/tools/tuning-profile-compose/src/main.rs:545` | `include_str!` | include |
 | `dev/reference_data/tuning-profiles/{campaign}.json` | `dev/tools/.../tuning-extent-campaign-driver.rs:2782`; `dev/scripts/validate-tuning-extent-campaign.py:4202` | publication destination | derived identity |
 | `dev/reference_data/fig_gldpc_sogrand.csv`, `dev/reference_data/scripts/compare_results.py` | `dev/scripts/gen_fig7_report.sh:6,19,25` | vars, `python3 ...` | read |
-| `dev/reference_data` | `docs/presentations/figures/generate_grand_comparison_plots.py:32` | `REPO / "dev" / "reference_data"` | read |
+| `dev/reference_data` | `dev/archive/6efb756b-grand/docs/presentations/figures/generate_grand_comparison_plots.py:32` | `REPO / "dev" / "reference_data"` | read |
 
 ## dev/campaigns
 
