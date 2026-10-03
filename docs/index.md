@@ -4,6 +4,10 @@
 
 Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
 
+| Page | Workflow |
+|---|---|
+| [Finite-field linear algebra at scale](tutorials/field-linear-algebra-at-scale.md) | Verified dense multiplication, PLE solving, inversion and characteristic polynomials over a prime field and its extension |
+
 ## How-to guides
 
 Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
