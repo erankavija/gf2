@@ -1,57 +1,11 @@
 //! Cubic extension field arithmetic: elements `c0 + c1·v + c2·v²` where `v³ = β`.
 //!
-//! [`CubicExt<C>`] implements a degree-3 extension of any base field that
+//! [`CubicExt<C>`] is a degree-3 extension of any base field that
 //! implements [`ConstField`], parameterized by an [`ExtConfig`] specifying the
-//! non-residue β.
-//!
-//! # Multiplication
-//!
-//! Uses the Karatsuba-style 6-mul formula (6 base-field multiplications instead
-//! of 9 schoolbook):
-//!
-//! ```text
-//! v0 = a0·b0,  v1 = a1·b1,  v2 = a2·b2
-//! x  = (a1+a2)(b1+b2) − v1 − v2          // a1·b2 + a2·b1
-//! y  = (a0+a1)(b0+b1) − v0 − v1          // a0·b1 + a1·b0
-//! z  = (a0+a2)(b0+b2) − v0 + v1 − v2     // a0·b2 + a1·b1 + a2·b0
-//! c0 = v0 + β·x
-//! c1 = y  + β·v2
-//! c2 = z
-//! ```
-//!
-//! Reference: Devegili, O hEigeartaigh, Scott, Dahab (ePrint 2006/471).
-//!
-//! # Inversion
-//!
-//! Uses the adjugate/norm method: compute cofactors s0, s1, s2, then
-//! `a⁻¹ = (s0, s1, s2) / norm(a)` with a single base-field inversion.
-//!
-//! Reference: Beuchat et al. (ePrint 2010/354).
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::gfpn::{ExtConfig, CubicExt};
-//! use gf2_core::field::{FiniteField, ConstField};
-//!
-//! struct Fq3Config;
-//! impl ExtConfig for Fq3Config {
-//!     type BaseField = Fp<7>;
-//!     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3); // β = 3 (cubic non-residue mod 7)
-//! }
-//! type Fq3 = CubicExt<Fq3Config>;
-//!
-//! let a = Fq3::new(Fp::new(3), Fp::new(5), Fp::new(2));
-//! assert_eq!(a.c0().value(), 3);
-//! assert_eq!(a.c1().value(), 5);
-//! assert_eq!(a.c2().value(), 2);
-//!
-//! // Field axioms hold
-//! assert!(Fq3::zero().is_zero());
-//! assert!(Fq3::one().is_one());
-//! assert!((a * a.inv().unwrap()).is_one());
-//! ```
+//! non-residue β. Multiplication is the Karatsuba-style formula with 6
+//! base-field multiplications (`@/citation/Devegili2006`); inversion is the
+//! adjugate/norm method with a single base-field inversion
+//! (`@/citation/Beuchat2010`).
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -61,21 +15,12 @@ use crate::field::{ConstField, FiniteField};
 
 use super::ExtConfig;
 
-// ---------------------------------------------------------------------------
-// Wide accumulator
-// ---------------------------------------------------------------------------
-
 /// Wide accumulator for [`CubicExt`]: three base-field wide components.
 ///
-/// Stores the coefficients `(c0, c1, c2)` of a cubic-extension product using
-/// the base field's `Wide` type. Multiple products may be accumulated via
-/// `+=` before a single [`FiniteField::reduce_wide`] call reduces back into
-/// the field. The per-component limit is inherited from
+/// `W` is the base field's `Wide` type (e.g., `u128` for `Fp<P>`). Multiple
+/// products may be accumulated via `+=` before a single
+/// [`FiniteField::reduce_wide`] call; the per-component limit is
 /// [`FiniteField::max_unreduced_additions`] on the base field.
-///
-/// # Type Parameters
-///
-/// * `W` — The base field's wide type (e.g., `u128` for `Fp<P>`).
 ///
 /// # Examples
 ///
@@ -110,12 +55,6 @@ pub struct CubicExtWide<W> {
 
 impl<W> CubicExtWide<W> {
     /// Creates a new wide accumulator from three component-wise wide values.
-    ///
-    /// # Arguments
-    ///
-    /// * `c0` — Wide value for the constant coefficient.
-    /// * `c1` — Wide value for the coefficient of `v`.
-    /// * `c2` — Wide value for the coefficient of `v²`.
     #[inline]
     pub const fn new(c0: W, c1: W, c2: W) -> Self {
         Self { c0, c1, c2 }
@@ -211,31 +150,6 @@ impl<W: AddAssign> AddAssign for CubicExtWide<W> {
 ///
 /// Parameterized by a config type `C: ExtConfig` that specifies the base field
 /// and non-residue. Two extensions with different configs are distinct types.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::{ExtConfig, CubicExt};
-/// use gf2_core::field::{FiniteField, ConstField};
-///
-/// struct Fq3Config;
-/// impl ExtConfig for Fq3Config {
-///     type BaseField = Fp<7>;
-///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-/// }
-/// type Fq3 = CubicExt<Fq3Config>;
-///
-/// let a = Fq3::new(Fp::new(3), Fp::new(5), Fp::new(2));
-/// let b = Fq3::new(Fp::new(1), Fp::new(4), Fp::new(6));
-/// let c = a * b;
-///
-/// assert_eq!(a.c0().value(), 3);
-/// assert_eq!(a.c1().value(), 5);
-/// assert_eq!(a.c2().value(), 2);
-/// assert!(Fq3::zero().is_zero());
-/// assert!(Fq3::one().is_one());
-/// ```
 pub struct CubicExt<C: ExtConfig> {
     c0: C::BaseField,
     c1: C::BaseField,
@@ -273,12 +187,6 @@ impl<C: ExtConfig> Hash for CubicExt<C> {
 
 impl<C: ExtConfig> CubicExt<C> {
     /// Creates a new element `c0 + c1·v + c2·v²`.
-    ///
-    /// # Arguments
-    ///
-    /// * `c0` - The constant component.
-    /// * `c1` - The coefficient of `v`.
-    /// * `c2` - The coefficient of `v²`.
     #[inline]
     pub const fn new(c0: C::BaseField, c1: C::BaseField, c2: C::BaseField) -> Self {
         Self { c0, c1, c2 }
@@ -305,28 +213,9 @@ impl<C: ExtConfig> CubicExt<C> {
     /// Returns the field norm: `a0³ + β·a1³ + β²·a2³ − 3β·a0·a1·a2` (a base field element).
     ///
     /// The norm is multiplicative: `N(a·b) = N(a)·N(b)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, CubicExt};
-    /// use gf2_core::field::{FiniteField, ConstField};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    /// type Fq3 = CubicExt<Cfg>;
-    ///
-    /// // N(1) = 1³ + 3·0³ + 9·0³ − 0 = 1
-    /// assert_eq!(Fq3::one().norm().value(), 1);
-    /// ```
     pub fn norm(&self) -> C::BaseField {
         let (a0, a1, a2) = (self.c0, self.c1, self.c2);
 
-        // Cofactors
         let s0 = a0 * a0 - C::mul_by_non_residue(a1 * a2);
         let s1 = C::mul_by_non_residue(a2 * a2) - a0 * a1;
         let s2 = a1 * a1 - a0 * a2;
@@ -344,10 +233,6 @@ impl<C: ExtConfig> CubicExt<C> {
         Self::new(value, z, z)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Display and Debug
-// ---------------------------------------------------------------------------
 
 impl<C: ExtConfig> fmt::Display for CubicExt<C>
 where
@@ -395,18 +280,10 @@ impl<C: ExtConfig> fmt::Debug for CubicExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Arithmetic operators
-// ---------------------------------------------------------------------------
-
 impl<C: ExtConfig> Add for CubicExt<C> {
     type Output = Self;
 
     /// Component-wise addition: `(a0+b0) + (a1+b1)·v + (a2+b2)·v²`.
-    ///
-    /// # Complexity
-    ///
-    /// 3 base-field additions.
     #[inline]
     fn add(self, rhs: Self) -> Self {
         Self::new(self.c0 + rhs.c0, self.c1 + rhs.c1, self.c2 + rhs.c2)
@@ -417,10 +294,6 @@ impl<C: ExtConfig> Sub for CubicExt<C> {
     type Output = Self;
 
     /// Component-wise subtraction: `(a0−b0) + (a1−b1)·v + (a2−b2)·v²`.
-    ///
-    /// # Complexity
-    ///
-    /// 3 base-field subtractions.
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self::new(self.c0 - rhs.c0, self.c1 - rhs.c1, self.c2 - rhs.c2)
@@ -431,10 +304,6 @@ impl<C: ExtConfig> Neg for CubicExt<C> {
     type Output = Self;
 
     /// Component-wise negation: `(−a0) + (−a1)·v + (−a2)·v²`.
-    ///
-    /// # Complexity
-    ///
-    /// 3 base-field negations.
     #[inline]
     fn neg(self) -> Self {
         Self::new(-self.c0, -self.c1, -self.c2)
@@ -454,12 +323,10 @@ impl<C: ExtConfig> Mul for CubicExt<C> {
         let (a0, a1, a2) = (self.c0, self.c1, self.c2);
         let (b0, b1, b2) = (rhs.c0, rhs.c1, rhs.c2);
 
-        // Three diagonal products
         let v0 = a0 * b0;
         let v1 = a1 * b1;
         let v2 = a2 * b2;
 
-        // Three cross products via Karatsuba identity
         let x = (a1 + a2) * (b1 + b2) - v1 - v2; // a1·b2 + a2·b1
         let y = (a0 + a1) * (b0 + b1) - v0 - v1; // a0·b1 + a1·b0
         let z = (a0 + a2) * (b0 + b2) - v0 + v1 - v2; // a0·b2 + a1·b1 + a2·b0
@@ -488,10 +355,6 @@ impl<C: ExtConfig> Div for CubicExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// AddAssign
-// ---------------------------------------------------------------------------
-
 impl<C: ExtConfig> AddAssign for CubicExt<C> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
@@ -505,10 +368,6 @@ impl<C: ExtConfig> AddAssign<&Self> for CubicExt<C> {
         *self = *self + *rhs;
     }
 }
-
-// ---------------------------------------------------------------------------
-// Reference-forwarding operators (CubicExt is Copy, so dereference)
-// ---------------------------------------------------------------------------
 
 impl<C: ExtConfig> Add<&CubicExt<C>> for CubicExt<C> {
     type Output = CubicExt<C>;
@@ -582,10 +441,6 @@ impl<C: ExtConfig> Neg for &CubicExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// FiniteField implementation
-// ---------------------------------------------------------------------------
-
 impl<C: ExtConfig> FiniteField for CubicExt<C> {
     type Characteristic = <C::BaseField as FiniteField>::Characteristic;
     type Wide = CubicExtWide<<C::BaseField as FiniteField>::Wide>;
@@ -618,7 +473,6 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
     fn inv(&self) -> Option<Self> {
         let (a0, a1, a2) = (self.c0, self.c1, self.c2);
 
-        // Cofactors of the adjugate
         let s0 = a0 * a0 - C::mul_by_non_residue(a1 * a2);
         let s1 = C::mul_by_non_residue(a2 * a2) - a0 * a1;
         let s2 = a1 * a1 - a0 * a2;
@@ -664,10 +518,10 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
     }
 
     /// Karatsuba-style multiplication at the tower level followed by
-    /// component-wise widening (Option 1 of the design plan). Individual
-    /// products are fully reduced in the base field, but the result is stored
-    /// in a three-component wide accumulator so that sums of products can be
-    /// accumulated without per-product reduction.
+    /// component-wise widening. Individual products are fully reduced in the
+    /// base field, but the result is stored in a three-component wide
+    /// accumulator so that sums of products can be accumulated without
+    /// per-product reduction.
     ///
     /// # Complexity
     ///
@@ -706,10 +560,6 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// ConstField implementation
-// ---------------------------------------------------------------------------
-
 impl<C: ExtConfig> ConstField for CubicExt<C> {
     #[inline]
     fn zero() -> Self {
@@ -733,10 +583,6 @@ impl<C: ExtConfig> ConstField for CubicExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -744,11 +590,8 @@ mod tests {
     use crate::gfp::Fp;
     use proptest::prelude::*;
 
-    // -----------------------------------------------------------------------
-    // Test config: GF(7³) with β = 3 (a cubic non-residue mod 7)
     // Cubes mod 7: 0³=0, 1³=1, 2³=1, 3³=6, 4³=1, 5³=6, 6³=6 → {0,1,6}
     // So 3 is a cubic non-residue.
-    // -----------------------------------------------------------------------
 
     struct Fq3Config;
     impl ExtConfig for Fq3Config {
@@ -757,10 +600,6 @@ mod tests {
     }
     type Fq3 = CubicExt<Fq3Config>;
 
-    // -----------------------------------------------------------------------
-    // Axiom test harness (required for success)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_cubic_ext_fp7_field_axioms() {
         let strategy = (0..7u64, 0..7u64, 0..7u64)
@@ -768,10 +607,6 @@ mod tests {
             .boxed();
         test_const_field_axioms(strategy, 7);
     }
-
-    // -----------------------------------------------------------------------
-    // Construction and accessors
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_new_and_accessors() {
@@ -789,10 +624,6 @@ mod tests {
         assert!(!Fq3::one().is_zero());
     }
 
-    // -----------------------------------------------------------------------
-    // Embedding
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_embedding() {
         for k in 0..7u64 {
@@ -800,10 +631,6 @@ mod tests {
             assert_eq!(embedded, Fq3::new(Fp::new(k), Fp::new(0), Fp::new(0)));
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Display and Debug
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_display() {
@@ -852,10 +679,6 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Extension degree, order, characteristic
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_extension_degree() {
         assert_eq!(Fq3::one().extension_degree(), 3);
@@ -870,10 +693,6 @@ mod tests {
     fn test_characteristic() {
         assert_eq!(Fq3::one().characteristic(), 7u64);
     }
-
-    // -----------------------------------------------------------------------
-    // Known value tests (hand-computed for GF(7³) with β = 3)
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_known_v_cubed_is_beta() {
@@ -895,10 +714,6 @@ mod tests {
         let d = a * b;
         assert_eq!(d, Fq3::new(Fp::new(3), Fp::new(0), Fp::new(1)));
     }
-
-    // -----------------------------------------------------------------------
-    // Norm tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_norm_of_one() {
@@ -934,16 +749,11 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Exhaustive multiplication cross-check (Karatsuba vs naive)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_karatsuba_matches_naive_representative() {
         // Naive schoolbook: c0 = a0*b0 + β*(a1*b2 + a2*b1)
         //                   c1 = a0*b1 + a1*b0 + β*a2*b2
         //                   c2 = a0*b2 + a1*b1 + a2*b0
-        // Test all 343 × 343 = 117649 pairs exhaustively
         let beta = 3u64;
         for a0 in 0..7u64 {
             for a1 in 0..7u64 {
@@ -982,10 +792,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Exhaustive inversion round-trip (all 342 non-zero elements)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_inversion_roundtrip_exhaustive() {
         let one = Fq3::one();
@@ -1003,10 +809,6 @@ mod tests {
             }
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Reference operators
-    // -----------------------------------------------------------------------
 
     #[test]
     #[allow(clippy::op_ref)]
@@ -1037,20 +839,11 @@ mod tests {
         assert_eq!(b.c0().value(), 1); // b still valid
     }
 
-    // -----------------------------------------------------------------------
-    // Size: no runtime overhead
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_size_of() {
         assert_eq!(std::mem::size_of::<Fq3>(), 3 * std::mem::size_of::<Fp<7>>());
     }
 
-    // -----------------------------------------------------------------------
-    // Wide accumulator tests (issue d11b769a)
-    // -----------------------------------------------------------------------
-
-    /// Wide is a real three-component accumulator, not an alias for `Self`.
     #[test]
     fn test_wide_type_is_not_self() {
         assert_eq!(
@@ -1069,8 +862,6 @@ mod tests {
         assert_eq!(k, base);
     }
 
-    /// For a large prime the bound is finite, proving we no longer return
-    /// the `usize::MAX` sentinel that the old `Wide = Self` placeholder used.
     #[test]
     fn test_max_unreduced_additions_finite_for_large_prime() {
         // GF(Mersenne61³) with β = 3.
@@ -1088,7 +879,6 @@ mod tests {
         assert!(k >= 1);
     }
 
-    /// `reduce_wide(to_wide(a)) == a` for all 343 elements of GF(7³).
     #[test]
     fn test_wide_roundtrip_exhaustive() {
         for c0 in 0..7u64 {
@@ -1103,12 +893,10 @@ mod tests {
         }
     }
 
-    /// `reduce_wide(mul_to_wide(a, b)) == a * b` — representative subset.
     #[test]
     fn test_mul_to_wide_consistency_representative() {
-        // Full exhaustive would be 343² = 117649 pairs; that's fine but slow.
-        // Representative sweep already validates the path; the proptest below
-        // provides the randomised coverage.
+        // A subset of the 343² pairs; the proptest below adds randomised
+        // coverage.
         for a0 in 0..7u64 {
             for a1 in 0..7u64 {
                 for a2 in 0..7u64 {
@@ -1160,7 +948,6 @@ mod tests {
         );
     }
 
-    /// Dot-product accumulation over random cases.
     #[test]
     fn test_dot_product_accumulation_proptest() {
         let mut runner =
@@ -1186,7 +973,6 @@ mod tests {
             .expect("cubic dot-product accumulation must match element-wise");
     }
 
-    /// `CubicExtWide` Add and AddAssign are component-wise.
     #[test]
     fn test_wide_add_and_add_assign() {
         let w1 = <Fq3 as FiniteField>::Wide::new(1u128, 2u128, 3u128);
@@ -1203,7 +989,6 @@ mod tests {
         assert_eq!(*w.c2(), 10u128);
     }
 
-    /// `CubicExtWide` Debug output is informative and not `Self`-typed.
     #[test]
     fn test_wide_debug_format() {
         let w = <Fq3 as FiniteField>::Wide::new(1u128, 2u128, 3u128);
