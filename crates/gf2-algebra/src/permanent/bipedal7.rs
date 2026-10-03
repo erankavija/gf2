@@ -261,11 +261,6 @@ mod tests {
         let _ = permanent_bipedal7(&m);
     }
 
-    // -----------------------------------------------------------------------
-    // Cross-checks: permanent_bipedal7 vs permanent_ryser<Fp<7>>,
-    // 1000 random matrices for each n ∈ {1, …, 14}.
-    // -----------------------------------------------------------------------
-
     macro_rules! cross_check_n {
         ($name:ident, $n:expr) => {
             #[test]

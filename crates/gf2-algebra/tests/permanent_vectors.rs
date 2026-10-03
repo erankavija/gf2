@@ -32,10 +32,6 @@ fn assert_all_three(label: &str, row_major: &[Fp<3>], n: usize, expected: u64) {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Section 1 — Hand-checked vectors
-// ---------------------------------------------------------------------------
-
 /// Case 1: n=1, matrix [1]. permanent = 1 (trivial single-entry permanent).
 #[test]
 fn test_hand_checked_1x1_one() {

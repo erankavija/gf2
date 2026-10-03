@@ -268,11 +268,6 @@ mod tests {
         let _ = permanent_mod3_reference(&matrix, 2);
     }
 
-    // -----------------------------------------------------------------------
-    // Cross-check: permanent_mod3_reference vs permanent_ryser::<Fp<3>>
-    // on 1000 random matrices for each n in {1, ..., 12}.
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_reference_cross_check_random_n1() {
         run_cross_check(1, 1000);

@@ -172,7 +172,6 @@ mod tests {
         let mut total = zero;
         let mut c = vec![0usize; n]; // Heap's control vector
 
-        // The identity permutation.
         let mut term = one.clone();
         for i in 0..n {
             term = term * &matrix[i * n + perm[i]];

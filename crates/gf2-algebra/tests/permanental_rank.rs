@@ -134,10 +134,6 @@ fn rectangular_permanent<const P: u64>(values: &[Fp<P>], n: usize, k: usize) -> 
     recurse::<P>(values, n, k, 0, &mut used, Fp::<P>::new(1))
 }
 
-// ---------------------------------------------------------------------------
-// Section 1 — Exhaustive agreement over every matrix
-// ---------------------------------------------------------------------------
-
 /// `(q, n, k) = (3, 3, 1)`: all `3^3 = 27` matrices.
 #[test]
 fn test_exhaustive_agreement_q3_n3_k1() {
@@ -167,10 +163,6 @@ fn test_exhaustive_agreement_q5_n3_k2() {
 fn test_exhaustive_agreement_q7_n3_k2() {
     assert_exhaustive_agreement::<7>(3, 2);
 }
-
-// ---------------------------------------------------------------------------
-// Section 2 — Hand-constructed boundary cases
-// ---------------------------------------------------------------------------
 
 /// Zero row, `n > k`: the two submatrices that contain row 1 have permanent 0,
 /// but rows `{0, 2}` give `1 · 1 + 0 · 0 = 1`, so the rank is still full.

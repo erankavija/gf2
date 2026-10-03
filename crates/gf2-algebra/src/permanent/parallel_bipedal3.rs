@@ -510,7 +510,6 @@ mod tests {
     cross_check_parallel_n!(test_parallel_cross_check_n11, 11);
     cross_check_parallel_n!(test_parallel_cross_check_n12, 12);
 
-    // Large-n cross-checks: parallel vs serial.
     cross_check_parallel_n!(test_parallel_cross_check_n20, 20);
 
     macro_rules! large_n_parallel_cross_check {
@@ -554,10 +553,6 @@ mod tests {
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_c, 28, 5, 2_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_d, 28, 5, 3_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_e, 28, 5, 4_000);
-
-    // -----------------------------------------------------------------------
-    // Determinism: same seed at n=24 across pinned rayon thread counts.
-    // -----------------------------------------------------------------------
 
     macro_rules! determinism_test {
         ($name:ident, $num_threads:expr) => {
