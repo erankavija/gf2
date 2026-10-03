@@ -16,10 +16,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T19:58:51.289003304Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T20:19:43.892871894Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T20:21:02.141339778Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:29.463342728Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T20:06:09.960645885Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "bfb37a21-1608-4ed9-a016-c60d0c87b4c9",
@@ -37,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-coding BCH and transform modules",
-  "updated_at": "2026-10-03T17:08:59.815351133Z"
+  "updated_at": "2026-10-03T20:21:02.141339778Z"
 }

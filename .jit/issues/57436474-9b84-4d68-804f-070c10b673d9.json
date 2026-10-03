@@ -16,10 +16,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T20:03:36.740721648Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T20:28:36.822339284Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T20:28:12.833980130Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:23.489192529Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T20:06:17.358654294Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "57436474-9b84-4d68-804f-070c10b673d9",
@@ -37,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the remaining gf2-algebra files",
-  "updated_at": "2026-10-03T17:09:00.066434060Z"
+  "updated_at": "2026-10-03T20:28:36.822339284Z"
 }

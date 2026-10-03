@@ -16,10 +16,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T19:56:28.560526524Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T20:14:53.071931392Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T20:17:06.253119515Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:24.657803329Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T20:06:06.263158425Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
@@ -37,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-core field polynomial and extension modules",
-  "updated_at": "2026-10-03T17:08:59.686588017Z"
+  "updated_at": "2026-10-03T20:17:06.253119515Z"
 }
