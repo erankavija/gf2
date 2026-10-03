@@ -25,13 +25,14 @@ HTML and `data` otherwise. The label is the file name.
 
 ## Commands
 
-Run from the repository root. The generator reads the manifest, the tracker and
-the working tree of the checkout it runs in, and its output is sorted and
-deterministic for a given state.
+Run from the repository root. The generator locates the migration manifest
+through git and reads it, the tracker and the working tree of the checkout it
+runs in; its output is sorted and deterministic for a given state.
 
 ```sh
-python3 dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.py > dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.sh
-bash dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.sh
+G=$(git ls-files ':(glob)**/67048b47-doc-links.py')
+python3 "$G" > "${G%.py}.sh"
+bash "${G%.py}.sh"
 ```
 
 The script is idempotent: `jit doc add` updates an existing reference in place.
@@ -40,12 +41,13 @@ It stops at the first failure and prints each command before running it.
 REQ-01 holds when the check lists nothing and exits 0:
 
 ```sh
-python3 dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.py --check
+G=$(git ls-files ':(glob)**/67048b47-doc-links.py')
+python3 "$G" --check
 ```
 
-`67048b47-missing-before.txt` is that check's output before the script ran: the
-pairs the script linked. With every selected pair linked, the generator emits a
-script without commands, which is the committed `67048b47-doc-links.sh`.
+`67048b47-linked-pairs.txt` lists the (owner, path) pairs whose references
+this issue's script created. When every selected pair is linked, the generator
+emits a script without commands, as the committed `67048b47-doc-links.sh` shows.
 
 ## Conformance findings
 
@@ -61,8 +63,8 @@ prints nothing:
 
 ```sh
 export LC_ALL=C
-G=dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.py
-comm -23 <(comm -12 <(python3 $G --selected | sort -u) <(jit doc conformance | awk '/^  dev\//{print $1}' | sort -u)) <({ python3 $G --multi-owner; python3 $G --misplaced; } | sort -u)
+G=$(git ls-files ':(glob)**/67048b47-doc-links.py')
+comm -23 <(comm -12 <(python3 "$G" --selected | sort -u) <(jit doc conformance | awk '/^  [^ ]/{print $1}' | sort -u)) <({ python3 "$G" --multi-owner; python3 "$G" --misplaced; } | sort -u)
 ```
 
 ## Rows deliberately not linked
@@ -78,5 +80,6 @@ per line.
 | Directory | `--directory` | Tracker validation rejects a document reference to a directory; the files beneath carry their own rows. |
 
 ```sh
-python3 dev/active/fa787f85-documentation-overhaul/67048b47-doc-links.py --directory
+G=$(git ls-files ':(glob)**/67048b47-doc-links.py')
+python3 "$G" --directory
 ```
