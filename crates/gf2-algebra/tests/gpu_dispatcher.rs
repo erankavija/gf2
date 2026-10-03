@@ -8,7 +8,7 @@
 //! # Gating
 //!
 //! The entire file is `#![cfg(feature = "hip")]` and every test carries
-//! `#[ignore = "external: gfx1030 device required"]`. To run on a gfx1030 host with ROCm installed:
+//! `#[ignore = "external: gfx1030 device required"]`. To run on a host with ROCm and a supported GPU:
 //!
 //! ```text
 //! cargo nextest run -p gf2-algebra \

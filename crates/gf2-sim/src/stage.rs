@@ -126,9 +126,8 @@ pub enum FallbackKind {
 
 /// Marker trait implemented by all batch types crossing stage boundaries.
 ///
-/// Concrete impls are auto-derived for the batch types introduced by later
-/// waves (`LlrBatch`, `SymbolBatch`, `BitPackedBatch`, `HardDecisionBatch`,
-/// …). The blanket [`AnyStage`] impl downcasts through this trait at the
+/// Concrete impls are auto-derived for the pipeline batch types (`LlrBatch`,
+/// `SymbolBatch`, `BitPackedBatch`, `HardDecisionBatch`, …). The blanket [`AnyStage`] impl downcasts through this trait at the
 /// connector boundary.
 pub trait TypedBatch: std::any::Any + Send + Sync {
     /// The number of frames in this batch.
@@ -188,15 +187,14 @@ impl<T: std::any::Any + Send> AnyScratch for T {
 /// the concrete stage, and re-erases the output. This lets the pipeline own a
 /// heterogeneous `Vec<Box<dyn AnyStage>>`.
 ///
-/// # Realisation of the design doc's "blanket impl"
+/// # Blanket-impl realisation
 ///
 /// The design doc (`@/issue/ec530af9` §1) describes `AnyStage` as "implemented for every `Stage<I,
 /// O>` via a blanket impl". A literal `impl<I, O, S: Stage<I, O>> AnyStage for S` does **not**
 /// compile: the type parameters `I` and `O` are unconstrained by the `Self` type (`S`), which Rust
 /// rejects with E0207. The [`ErasedStage`] wrapper threads `I`/`O` through a `PhantomData` field so
-/// the impl's `Self` type does constrain them, achieving the same effect. The intent — that no
-/// later task ever has to reopen this file to make a stage usable in a pipeline — is preserved: any
-/// `Stage` becomes an `AnyStage` through [`erase`].
+/// the impl's `Self` type does constrain them, achieving the same effect. Any `Stage` becomes an
+/// `AnyStage` through [`erase`].
 pub trait AnyStage: Send + Sync {
     /// The [`TypeId`] of the input batch type.
     fn input_type(&self) -> TypeId;

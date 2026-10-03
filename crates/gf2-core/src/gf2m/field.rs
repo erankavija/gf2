@@ -111,7 +111,7 @@
 //! ```
 //! use gf2_core::gf2m::Gf2mField;
 //!
-//! // GF(2^8) with standard primitive polynomial x^8 + x^4 + x^3 + x + 1
+//! // GF(2^8) with primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D)
 //! let gf256 = Gf2mField::gf256();
 //!
 //! // Compute with bytes
@@ -216,9 +216,9 @@ impl<V: UintExt> Gf2mField_<V> {
     ///
     /// The polynomial must be **irreducible** over GF(2) of degree `m`.
     /// Irreducibility is sufficient for arithmetic correctness (add, sub,
-    /// mul, inv, div). If the polynomial is also **primitive** (a strictly
-    /// stronger property), log/exp tables are built for `m <= 16` enabling
-    /// faster multiplication and the primitive-element API. Callers can
+    /// mul, inv, div). [`Self::with_tables`] builds log/exp tables for
+    /// `m <= 16` from a generator found by search, so any irreducible
+    /// polynomial yields tables, primitive or not. Callers can
     /// obtain verified-primitive polynomials for `m <= 16` from
     /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard`]
     /// and verified-irreducible (but not necessarily primitive) polynomials
@@ -814,9 +814,9 @@ impl Gf2mField_ {
         Self::new(m, primitive_poly)
     }
 
-    /// Creates a GF(2^8) field with standard primitive polynomial x^8 + x^4 + x^3 + x + 1.
+    /// Creates a GF(2^8) field with primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D).
     ///
-    /// This is the standard field used in AES and many error-correcting codes.
+    /// This is not the AES polynomial (0x11B, x^8 + x^4 + x^3 + x + 1).
     pub fn gf256() -> Self {
         Gf2mField::new(8, 0b100011101)
     }

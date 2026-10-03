@@ -5,7 +5,7 @@
 //! or [`Packed5::sub`] per step, and folds via [`Packed5::fold_mul_first_n`]
 //! at each step.
 //!
-//! ## Single-word path (`n ≤ LANES = 64`)
+//! ## Single-word path (`n ≤ 63`)
 //!
 //! For `n ≤ 63` the column-sum fits in a single `Packed5` word (one
 //! `u64`-triple per bit-plane). Each Gray-code step performs an O(1)
@@ -15,18 +15,14 @@
 //!
 //! ## Multi-word path (`n > 63`)
 //!
-//! **Out of scope for this issue.** For `n > LANES = 64` a multi-word
-//! streaming path is required. Until that path lands, callers must use
-//! `permanent_ryser::<Fp<5>>` or wait for future F_5 multi-word work.
-//! `permanent_bipedal5` panics for `n > 63`.
+//! No multi-word path exists. `permanent_bipedal5` panics for `n > 63`;
+//! use `permanent_ryser::<Fp<5>>` for larger sizes.
 //!
 //! ## Matrix-size upper bound
 //!
-//! The single-word path is limited to `n ≤ Packed5::LANES = 64`. This bound
-//! is imposed by the [`Packed5`] encoding: one `u64`-triple holds exactly 64
-//! F_5 lanes, and `fold_mul_first_n` operates on the first `n` of those
-//! lanes. Matrices larger than 63 × 63 require a multi-word extension that is
-//! not yet implemented; call `permanent_ryser::<Fp<5>>` for those sizes.
+//! The single-word path is limited to `n ≤ 63` (one `u64`-triple holds
+//! `Packed5::LANES = 64` F_5 lanes; `fold_mul_first_n` operates on the first
+//! `n`). Larger matrices use `permanent_ryser::<Fp<5>>`.
 //!
 //! # Feature gating
 //!
@@ -47,9 +43,9 @@ use crate::packed::{PackedField, PackedFieldVec};
 /// followed by a horizontal fold via [`Packed5::fold_mul_first_n`] on the
 /// first `n` lanes.
 ///
-/// **Matrix-size upper bound for the single-word path:** `n ≤ Packed5::LANES = 64`.
-/// For `n > 63`, call `permanent_ryser::<Fp<5>>` or wait for future multi-word
-/// F_5 work. This function panics if `n > 63`.
+/// **Matrix-size upper bound for the single-word path:** `n ≤ 63`.
+/// For `n > 63`, call `permanent_ryser::<Fp<5>>`. This function panics if
+/// `n > 63`.
 ///
 /// The permanent of an `n × n` matrix `A` over `F_5` is:
 ///
@@ -94,7 +90,7 @@ use crate::packed::{PackedField, PackedFieldVec};
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
 /// Panics if `mat.cols() > 63` (single-word path requires `n ≤ 63`; for
-/// `n > 63` use `permanent_ryser::<Fp<5>>` or wait for future multi-word work).
+/// `n > 63` use `permanent_ryser::<Fp<5>>`).
 ///
 /// # Complexity
 ///
@@ -116,9 +112,8 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
     );
     assert!(
         n <= 63,
-        "permanent_bipedal5: single-word path requires n <= 63 (post 2026-05-15 \
-         CPU/GPU consistency narrowing; was n <= Packed5::LANES = 64); got n = {}. \
-         For n > 63 use permanent_ryser::<Fp<5>> or wait for future multi-word F_5 work.",
+        "permanent_bipedal5: single-word path requires n <= 63; got n = {}. \
+         For n > 63 use permanent_ryser::<Fp<5>>.",
         n,
     );
 
@@ -164,8 +159,7 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
 /// # Panics
 ///
 /// Panics if `mat.rows() != mat.cols()` or `mat.cols() > 63` (the
-/// single-word path was narrowed to `n <= 63` by the 2026-05-15
-/// CPU/GPU consistency change).
+/// single-word path requires `n <= 63`).
 ///
 /// # Complexity
 ///
@@ -181,8 +175,7 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
     );
     assert!(
         n <= 63,
-        "permanent_bipedal5_singleword: single-word path requires n <= 63 (post \
-         2026-05-15 CPU/GPU consistency narrowing); got n = {}",
+        "permanent_bipedal5_singleword: single-word path requires n <= 63; got n = {}",
         n
     );
 
@@ -364,8 +357,7 @@ mod tests {
         let _ = permanent_bipedal5(&m);
     }
 
-    /// `n > 63` panics (post 2026-05-15 CPU/GPU consistency narrowing;
-    /// was `n > 63`).
+    /// `n > 63` panics.
     #[test]
     #[should_panic(expected = "single-word path requires n <=")]
     fn test_permanent5_panics_on_n_64() {

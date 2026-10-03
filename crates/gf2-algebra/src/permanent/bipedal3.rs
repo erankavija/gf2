@@ -4,11 +4,8 @@
 //! ## Single-word path (`n ≤ 63`)
 //!
 //! For `n ≤ 63` the column-sum vector fits in a single Bipedal3 word (one
-//! `u64` mag + one `u64` sgn pair). The narrowing from the pre-2026-05-15
-//! `n ≤ 64` is a wallclock-driven CPU/GPU consistency choice (2^64 Gray
-//! steps takes ~600 years on either path; the contract was always
-//! implicitly bounded by feasibility, and is now bounded explicitly).
-//!  Each Gray-code step updates a single
+//! `u64` mag + one `u64` sgn pair). The bound is wallclock-driven
+//! (2^64 Gray steps takes ~600 years on CPU or GPU). Each Gray-code step updates a single
 //! `Bipedal3` column-sum in-place via `Bipedal3::add` or `Bipedal3::sub`
 //! (the canonical paper §2.2 SSOT lives once in those methods), followed by
 //! a horizontal fold via `Bipedal3::fold_mul_first_n` — the bipedal
@@ -391,8 +388,7 @@ fn pack_singleword_columns(mat: &Bipedal3Matrix) -> Vec<Bipedal3> {
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
-/// Panics if `mat.cols() > 63` (single-u64 fast path requires `n <= 63`
-/// per the 2026-05-15 CPU/GPU consistency narrowing).
+/// Panics if `mat.cols() > 63` (single-u64 fast path requires `n <= 63`).
 /// The Gray walk uses a `u128` step counter so the n=63 boundary is
 /// well-defined; column-sum state still fits one Bipedal3 word.
 ///
@@ -1139,8 +1135,7 @@ mod tests {
 
     /// `permanent_bipedal3_singleword` panics for `n = 64` (above its bound).
     ///
-    /// The single-word fast path supports `n <= 63` per the 2026-05-15
-    /// CPU/GPU consistency narrowing. At `n = 64` the column-sum state
+    /// The single-word fast path supports `n <= 63`. At `n = 64` the column-sum state
     /// still nominally fits one `(mag, sgn)` u64 pair, but the Gray walk
     /// is wallclock-infeasible (~600 years on either CPU or GPU), so the
     /// dispatcher routes to the multi-word path which uses a 256-bit
