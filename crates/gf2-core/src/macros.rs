@@ -1,41 +1,4 @@
 //! Macros for conveniently constructing BitMatrix values for GF(2).
-//!
-//! Provided macros:
-//! - `bitmatrix![ … ]`: nalgebra-like syntax where rows are separated by `;` and
-//!   elements by `,`. Elements may be `0`, `1`, `false`, or `true`.
-//!
-//!   Example:
-//!   ```
-//!   let m = gf2_core::bitmatrix![
-//!       1, 0, 1, 1;
-//!       0, 1, 0, 1;
-//!       1, 0, 0, 0;
-//!   ];
-//!
-//!   assert_eq!(m.rows(), 3);
-//!   assert_eq!(m.cols(), 4);
-//!   assert!(m.get(0, 0));
-//!   assert!(m.get(1, 3));
-//!   assert!(!m.get(2, 3));
-//!   ```
-//!
-//! - `bitmatrix_bin![ … ]`: rows as binary strings, e.g. "1011", handy for GF(2).
-//!
-//!   Example:
-//!   ```
-//!   let m = gf2_core::bitmatrix_bin![
-//!       "1011",
-//!       "0101",
-//!   ];
-//!   assert_eq!(m.rows(), 2);
-//!   assert_eq!(m.cols(), 4);
-//!   assert!(m.get(0, 0));
-//!   assert!(m.get(0, 3));
-//!   assert!(m.get(1, 1));
-//!   assert!(m.get(1, 3));
-//!   assert!(!m.get(1, 0));
-//!   assert!(!m.get(1, 2));
-//!   ```
 
 /// Internal helper: turn tokens into bool for GF(2).
 #[doc(hidden)]
@@ -64,8 +27,7 @@ macro_rules! __gf2_bit {
 ///   gf2_core::bitmatrix![ \[1,0,1\], \[0,1,0\] ];
 #[macro_export]
 macro_rules! bitmatrix {
-    // Bracketed rows: gf2_core::bitmatrix![ [1,0,1], [0,1,0] ];
-    // This must come first to match more specific pattern
+    // Bracketed rows come first: theirs is the more specific pattern.
     ( $( [ $($val:tt),+ $(,)? ] ),+ $(,)? ) => {{
         let __rows: &[&[bool]] = &[
             $(
@@ -84,13 +46,11 @@ macro_rules! bitmatrix {
                 r, row.len(), __ncols
             );
             for (c, &b) in row.iter().enumerate() {
-                // Only set true bits; zeros() initializes all to false
                 if b { __m.set(r, c, true); }
             }
         }
         __m
     }};
-    // nalgebra-like form: rows separated by `;`, elements by `,`
     ( $( $($val:tt),+ );+ $(;)? ) => {{
         let __rows: &[&[bool]] = &[
             $(
@@ -109,7 +69,6 @@ macro_rules! bitmatrix {
                 r, row.len(), __ncols
             );
             for (c, &b) in row.iter().enumerate() {
-                // Only set true bits; zeros() initializes all to false
                 if b { __m.set(r, c, true); }
             }
         }
