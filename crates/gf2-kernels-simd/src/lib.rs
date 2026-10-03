@@ -1,15 +1,14 @@
 #![allow(clippy::missing_safety_doc)]
 //! SIMD kernels for the gf2 workspace: logical bit operations, GF(p) and
 //! GF(2^m) arithmetic, BCH encoding, LLR and modem arithmetic, and packed
-//! F_3/F_5/F_7 bipedal operations.
+//! F_3/F_5/F_7 bipedal operations. This crate isolates unsafe and
+//! architecture-specific code.
 //!
-//! This crate isolates unsafe and architecture-specific code. Runtime
-//! detection entry points are safe and return function-pointer bundles, or
-//! `None` when the host lacks the required features, in which case callers
-//! fall back to scalar code. The [`bipedal`] modules also expose `unsafe fn`
-//! entry points with documented preconditions.
-//!
-//! Implemented targets: x86/x86_64 AVX2, with per-bundle use of FMA, BMI2,
+//! Runtime detection entry points are safe and return function-pointer
+//! bundles, or `None` when the host lacks the required features, in which
+//! case callers fall back to scalar code. The [`bipedal`] modules also expose
+//! `unsafe fn` entry points with documented preconditions. Implemented
+//! targets: x86/x86_64 AVX2, with per-bundle use of FMA, BMI2,
 //! PCLMULQDQ, VPCLMULQDQ, SSE4.1, and POPCNT. The AVX-512F bipedal module is
 //! a compile-time stub without kernels. Other architectures get no SIMD
 //! bundle.
@@ -47,8 +46,7 @@ pub use prefetch::prefetch_read_l1;
 /// folds: sixteen 256-bit vectors, 512 bytes.
 ///
 /// A buffer shorter than one block reaches only the carry-save kernel's
-/// per-vector remainder loop, so a tuning selector that routes to that kernel
-/// below this width can win nothing.
+/// per-vector remainder loop.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub const POPCOUNT_CSA_BLOCK_WORDS: usize = x86::popcount::CSA_BLOCK_WORDS;
 
@@ -112,26 +110,22 @@ pub struct LogicalFns {
     /// instruction when the host reports it, and with the portable
     /// `u64::count_ones` lowering otherwise.
     ///
-    /// This route holds no vector state. It is the measured scalar comparator
-    /// of the count family: no `gf2-core` route selects it, because a resolved
-    /// call to it loses to the scalar backend's portable count at the widths
-    /// where it would apply (`dev/active/5cbb6545/findings.md`). `gf2-core`'s
+    /// This route holds no vector state and is a comparator that `gf2-core`'s
+    /// automatic dispatch does not select. `gf2-core`'s
     /// `tests/popcount_routes.rs` holds it to the same counts as every other
     /// route.
     pub popcnt_scalar_fn: fn(&[u64]) -> u64,
     /// Counts set bits through a Harley-Seal carry-save loop over 512-byte
     /// blocks, counting every block remainder through the per-vector nibble
-    /// lookup \[Mula2018\].
+    /// lookup (`@/citation/Mula2018`).
     ///
-    /// This is a measured comparator and is not selected by `gf2-core`'s
-    /// automatic dispatch because its confirmation receipt does not qualify.
+    /// A comparator that `gf2-core`'s automatic dispatch does not select.
     pub popcnt_csa_fn: fn(&[u64]) -> u64,
     /// Counts the set bits of `lhs & rhs` through the same carry-save loop as
     /// [`Self::popcnt_csa_fn`], with each bit-plane ANDed from the two
     /// operands as it is loaded, so no temporary buffer exists.
     ///
-    /// This is a measured comparator and is not selected by `gf2-core`'s
-    /// automatic dispatch because its confirmation receipt does not qualify.
+    /// A comparator that `gf2-core`'s automatic dispatch does not select.
     pub and_popcnt_csa_fn: fn(&[u64], &[u64]) -> u64,
     pub find_first_one_fn: fn(&[u64]) -> Option<usize>,
     pub find_first_zero_fn: fn(&[u64]) -> Option<usize>,

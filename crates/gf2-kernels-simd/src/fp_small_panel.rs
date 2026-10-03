@@ -1,70 +1,17 @@
-//! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small `Fp<P>`
-//! with `P <= 251` — **Route C** of `@/issue/615db3b9`.
+//! AVX2 pure-integer panelized GEMM kernel for small `Fp<P>` with
+//! `P <= 251`, in the style of `@/citation/GotoGeijn2008` and
+//! `@/citation/VanZee2015`.
 //!
-//! This is the safe wrapper layer; the unsafe AVX2 intrinsics live in
-//! `crate::x86::fp_small_panel`. The kernel is one of three prototype
-//! routes the plan explores for GF(251) at n ∈ {256, 1024}:
-//!
-//! - **Route A** (`crate::fp_small_f32`, jit:68cdf4c8) — in-Rust
-//!   f32/FMA cascade. Closed; PASS at n=1024, SHORTFALL at n=256.
-//! - **Route B** (`dev/research/blas_sgemm_gf251/`, jit:91429c1c) —
-//!   OpenBLAS sgemm cascade. Closed; SHORTFALL at both cells.
-//! - **Route C** (this kernel, jit:fc182ed5) — pure-integer
-//!   Goto/BLIS panelized micro-kernel. See `@/issue/fc182ed5` for the panel
-//!   dimension derivation (`MR × NR × KC = 4 × 24 × 256`) and the
-//!   `_mm256_madd_epi16` inner-loop structure.
-//!
-//! Provenance: implemented from public Goto-vandeGeijn 2008 / BLIS 2015
-//! framework and the AMD Zen 3 Software Optimization Guide; no
-//! fflas-ffpack source, comments, or autotuning tables consulted.
-//!
-//! # Algorithm
-//!
-//! Operates on **canonical bytes** (each element in `[0, p)`), same
-//! representation as the Candidate C kernel (`crate::fp_small`). The
-//! inner kernel uses `_mm256_madd_epi16` lane-pair MAC against
-//! pre-packed A/B panels:
-//!
-//! 1. **Pack pass.** A is repacked into MR-row horizontal panels with
-//!    pair-of-bytes interleaving (one `Vec<u32>` of size
-//!    `MR · ceil(k/2)` per MR-row block). B is repacked into NR-column
-//!    vertical panels with pair-of-rows interleaving (one
-//!    `Vec<u8>` of size `n_panels · (k_padded · NR)` shared across all
-//!    MR-row blocks).
-//! 2. **Inner kernel.** 12 u32 SIMD accumulators × `kc / 2` t-pair
-//!    steps per cache chunk. Each step issues 3 b-pair loads + 4
-//!    a-pair broadcasts + 12 `_mm256_madd_epi16` + 12 `_mm256_add_epi32`.
-//! 3. **Reduction.** At panel boundary, the 12 u32 vectors are
-//!    Barrett-reduced mod p via the SSOT
-//!    `crate::x86::fp_small::barrett_reduce_lane32` reducer
-//!    (same reducer route A delegates to and Candidate C's SpMM
-//!    row reducer uses) and packed to u8 bytes via the SSOT
-//!    `_mm256_packus_epi32` + `_mm256_permute4x64_epi64` +
-//!    `_mm256_packus_epi16` sequence.
-//!
-//! # Bound for `_mm256_madd_epi16` accumulation
-//!
-//! Each `_mm256_madd_epi16` lane sums two u16 products, each
-//! `≤ (p − 1)² ≤ 250² = 62 500` at `p = 251`. Across the full k axis
-//! the lane sum is `≤ k · (p − 1)²`. For u32 lanes (`2³² ≈ 4.29 · 10⁹`)
-//! this bounds `k ≤ 2³² / (p − 1)²`; at `p = 251` the cap is
-//! `k ≤ 68 719`, far above any in-scope cell. KC = 256 is therefore
-//! L1d-fit-bound (not arithmetic-bound).
-//!
-//! # Safety contract
-//!
-//! All public functions here are safe; they dispatch to the
-//! `unsafe` AVX2 intrinsics in `crate::x86::fp_small_panel` only
-//! when [`detect`] has returned `Some(_)` (i.e. AVX2 is available
-//! at runtime). Callers without AVX2 receive `None` and must fall
-//! back to Candidate C or scalar.
+//! Safe wrapper layer over `crate::x86::fp_small_panel`, operating on
+//! canonical bytes (each element in `[0, p)`). [`detect`] returns `None`
+//! without AVX2. Implemented from `@/citation/GotoGeijn2008`,
+//! `@/citation/VanZee2015` and `@/citation/Amd2020`; no
+//! `@/citation/FflasFfpack2021` source, comments, or autotuning tables
+//! consulted.
 
-/// Cache-blocking factor along the k-axis: the byte-lane panel kernel's L1d-fit
-/// blocking factor. See module docs and `@/issue/fc182ed5` § 2.2 for the
-/// derivation and the route-C measurement
-/// `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`;
-/// the u32 overflow bound (`KC ≤ 68 719` at p = 251) is orders of magnitude
-/// larger and not binding.
+/// Cache-blocking factor along the k-axis, chosen to fit L1d. The u32
+/// accumulator bound `k ≤ 2³² / (p − 1)²` (`68 719` at `p = 251`) is not
+/// binding.
 pub const KC: usize = 256;
 
 /// Whole-GEMM panelized integer kernel signature for `Fp<P>` with
@@ -76,31 +23,22 @@ pub const KC: usize = 256;
 /// row-major transpose of B (length `n · k`, so row `j` holds
 /// column `j` of B).
 ///
-/// # Arguments
-///
-/// * `a` — left input row-major, length `m · k`, canonical bytes.
-/// * `bt` — right operand's row-major transpose, length `n · k`,
-///   canonical bytes.
-/// * `m`, `k`, `n` — matrix shapes.
-/// * `p` — odd prime in `[3, 251]`.
-/// * `c` — destination row-major, length `m · n`, canonical bytes.
+/// `p` is an odd prime in `[3, 251]`.
 ///
 /// # Panics
 ///
-/// Panics if any slice length disagrees with `m`, `k`, `n`.
+/// Panics unless `a.len() == m * k`, `bt.len() == n * k` and
+/// `c.len() == m * n`.
 pub type SmallPrimePanelGemmFn = fn(&[u8], &[u8], usize, usize, usize, u8, &mut [u8]);
 
-/// Bundle of small-prime panelized integer GEMM operations
-/// (route C, jit:fc182ed5).
+/// Bundle of small-prime panelized integer GEMM operations.
 ///
-/// Populated at runtime by [`detect`] when AVX2 is available. The
-/// function pointer takes the prime `p` as a runtime argument so
-/// one dispatch struct covers GF(7), GF(31), GF(251), and any other
-/// `P ≤ 251` consumer.
+/// Populated at runtime by [`detect`] when AVX2 is available. The prime `p`
+/// is a runtime argument.
 #[derive(Copy, Clone)]
 pub struct SmallPrimePanelFns {
-    /// Goto/BLIS-style panelized whole-GEMM kernel for canonical-byte
-    /// `Fp<P>` operands with `P ≤ 251`.
+    /// Panelized whole-GEMM kernel for canonical-byte `Fp<P>` operands with
+    /// `P ≤ 251`.
     pub batch_gemm_fn: SmallPrimePanelGemmFn,
 }
 
@@ -108,26 +46,7 @@ pub struct SmallPrimePanelFns {
 /// GEMM kernel.
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
-/// AVX2. Callers receive `None` and must fall back to
-/// [`crate::fp_small::detect`]'s row-panel kernel (Candidate C) or
-/// scalar.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_small_panel;
-///
-/// if let Some(fns) = fp_small_panel::detect() {
-///     // 4×4 identity row-major; bt = row-major transpose of identity
-///     // (which equals the identity in storage).
-///     let a = [1u8, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-///     let bt = [1u8, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-///     let mut out = [0u8; 16];
-///     (fns.batch_gemm_fn)(&a, &bt, 4, 4, 4, 7, &mut out);
-///     // out is the 4×4 identity in canonical bytes.
-///     assert_eq!(out, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-/// }
-/// ```
+/// AVX2.
 pub fn detect() -> Option<SmallPrimePanelFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {

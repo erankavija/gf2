@@ -1,34 +1,9 @@
-//! AVX2 panelized PLE base-case kernel for small `Fp<P>` (`P <= 251`),
-//! issue `6823c8a0`, design `2e8c5a29`.
+//! AVX2 panelized PLE base-case kernel for small `Fp<P>` (`P <= 251`).
 //!
-//! This is the safe wrapper layer; the unsafe AVX2 intrinsics live in
-//! `crate::x86::fp_small_ple`. The kernel implements the panel-base
-//! path of the recursive PLE algorithm — same column-by-column
-//! Gaussian elimination as the scalar `ple_base_direct`, but with a
-//! row-major axpy-style Schur update that processes 8 × u32 lanes per
-//! inner step via SSOT-reused `_mm256_madd_epi16` + Barrett reduction
-//! (`crate::x86::fp_small::barrett_reduce_lane32`, SSOT issued by
-//! `e8a0c47a`).
-//!
-//! # Algorithm summary
-//!
-//! See `@/issue/2e8c5a29` for the full design. The base-case kernel processes
-//! an `m × win` column window of canonical-byte storage in-place, performing:
-//!   1. Linear-scan pivot search (rank-revealing, preserves the
-//!      bd9c6e13 scattered-column behaviour).
-//!   2. Full-row swap on the **panel window only** (caller propagates
-//!      to cells outside the window via the returned `row_perm`).
-//!   3. L-multiplier scale (column-strided scalar, dominated by the
-//!      Schur update).
-//!   4. AVX2 row-major axpy Schur update with 8-lane reduction.
-//!
-//! # Coverage scope
-//!
-//! Activates exclusively for `Fp<P>` with `P <= 251` and AVX2 hosts. For `P >
-//! 251` (e.g. GF(65521)) the design routes the PLE base case to the scalar
-//! `ple_base_direct` and inherits the medium-prime Schur-update speedup
-//! automatically via `gemm_axpy_into_view`'s lifted small/medium-prime fast
-//! paths (issues 40195c09 and 74ba1cdc).
+//! Safe wrapper layer over `crate::x86::fp_small_ple`. The kernel decomposes
+//! an `m × win` column window of canonical-byte storage in place; row swaps
+//! touch the window only, and the caller propagates them outside it through
+//! `row_perm`.
 
 /// Structural scratch bound for the byte-lane PLE kernel, in columns.
 ///
@@ -50,11 +25,8 @@ pub const PANEL_SCRATCH_COLS: usize = 256;
 ///
 /// # Safety contract
 ///
-/// All function pointers in this struct are **safe `fn`** —
-/// internally they dispatch to AVX2 intrinsics under an `unsafe`
-/// block only after [`detect`] has confirmed AVX2 is available at
-/// runtime, exactly mirroring the [`crate::fp_small_panel`] safe
-/// wrapper pattern. Callers must still ensure `p ∈ [3, 251]`,
+/// The pointer is a safe `fn` that [`detect`] publishes only when AVX2 is
+/// available at runtime. Callers must still ensure `p ∈ [3, 251]`,
 /// `window.len() == m * win`, `inv_table.len() == p as usize`,
 /// `row_perm.len() == m`, and every byte in `window` is canonical
 /// (`< p`). These preconditions are debug-asserted by the kernel.
@@ -68,11 +40,10 @@ pub type SmallPrimePlePanelBaseFn = fn(
     pivot_cols_local: &mut Vec<usize>,
 ) -> usize;
 
-/// Bundle of small-prime panelized PLE operations (issue `6823c8a0`).
+/// Bundle of small-prime panelized PLE operations.
 ///
-/// Populated at runtime by [`detect`] when AVX2 is available. The
-/// function pointer takes the prime `p` as a runtime argument so one
-/// dispatch struct covers every small-prime consumer (`P <= 251`).
+/// Populated at runtime by [`detect`] when AVX2 is available. The prime `p`
+/// is a runtime argument.
 #[derive(Copy, Clone)]
 pub struct SmallPrimePlePanelFns {
     /// Panelized PLE base-case kernel for canonical-byte `Fp<P>` with
@@ -84,8 +55,7 @@ pub struct SmallPrimePlePanelFns {
 /// base-case kernel.
 ///
 /// Returns `None` on non-x86 targets or when the runtime CPU lacks
-/// AVX2. Callers receive `None` and must fall back to the scalar
-/// `ple_base_direct` path.
+/// AVX2.
 ///
 /// # Examples
 ///
@@ -140,11 +110,10 @@ fn ple_panel_base_safe(
     pivot_cols_local: &mut Vec<usize>,
 ) -> usize {
     // Safety: `detect_x86` only published this pointer when AVX2 is
-    // available at runtime. The unsafe pre-conditions (canonical
-    // bytes, prime in [3, 251], slice lengths) are documented on the
-    // outer `ple_panel_base_fn` contract and enforced by the
-    // gf2-core dispatch site (which packs canonical bytes via the
-    // `from_mont` table) plus the kernel's own debug_asserts.
+    // available at runtime. The other preconditions (canonical bytes,
+    // prime in [3, 251], slice lengths) are documented on
+    // `SmallPrimePlePanelBaseFn`, established by the gf2-core dispatch
+    // site and debug-asserted by the kernel.
     unsafe {
         crate::x86::fp_small_ple::ple_panel_base_canonical(
             window,

@@ -1,49 +1,15 @@
 //! F_7 SIMD batch kernels (3-bit + 2^16 LUT encoding).
 //!
-//! The F_7 encoding follows `@/issue/f10152f6`: each `u64` packs **16
-//! elements** at 4-bit-aligned slots. Slot `i` occupies bits `[4i .. 4i+4)`.
-//! Canonical values are `0..=6`; the high bit of each slot is always zero for
-//! canonical packings (since 6 = `0b0110 < 8`).
-//!
-//! Binary ops use a 64 KiB lookup table keyed by a packed 16-bit byte-pair
-//! `(a_byte | (b_byte << 8))`. Three static LUTs (add, sub, mul) are built
-//! at compile time in `gf2-algebra`; this module re-uses the same byte-pair
-//! design with scalar LUT lookups per 8-byte chunk inside the SIMD wrapper.
-//!
-//! # SIMD strategy
-//!
-//! AVX2 batch entry points live in `crate::x86::bipedal_avx2_packed7`; they
-//! batch byte-pair LUT lookups per u64 within each AVX2 register. A gather-based
-//! approach could improve throughput but is deferred; the scalar-LUT-inside-SIMD
-//! path already benefits from register-widened loop overhead reduction.
-//!
-//! # No `BipedalLikeConfig` integration
-//!
-//! The generic [`super::framework::BipedalLikeConfig`] trait imposes a 2-stream
-//! `(mag, sgn)` shape per operand. The F_7 LUT encoding fits in 1 plane per
-//! operand, so a `Config7: BipedalLikeConfig` impl that zeroed the unused `sgn`
-//! stream would be technically faithful but dead code, since the production F_7
-//! path already uses the dedicated single-plane LUT batch entry points. F_7
-//! therefore ships *only* via `crate::x86::bipedal_avx2_packed7`, the
-//! runtime-detection bundle [`F7AvxFns`], and the scalar fallbacks below.
-//! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
-//!
-//! # Runtime detection
-//!
-//! [`has_avx2_f7`] caches the CPUID result in a `OnceLock<bool>`. [`detect_avx2_f7`]
-//! returns a [`F7AvxFns`] bundle when the host supports AVX2.
+//! Each `u64` packs 16 elements; slot `i` occupies bits `[4i .. 4i+4)` and
+//! holds a canonical value `0..=6`. Binary ops look up a 64 KiB table keyed by
+//! the byte pair `a_byte | (b_byte << 8)`. The AVX2 entry points in
+//! `crate::x86::bipedal_avx2_packed7` apply the same scalar lookups to the four
+//! words of a register. The encoding uses one stream per operand, so it does
+//! not go through [`super::framework::BipedalLikeConfig`].
 
-// ---------------------------------------------------------------------------
-// Compile-time LUT construction (mirrored from gf2-algebra::packed::packed7)
-// ---------------------------------------------------------------------------
-//
-// These LUTs are identical in construction to the ones in gf2-algebra but are
-// defined here so this crate has zero runtime dependency on gf2-algebra in
-// production (gf2-algebra is a dev-dep only). The test module imports
-// gf2-algebra types for proptest cross-checks.
+// The LUTs duplicate the construction in `gf2_algebra::packed::packed7`
+// because `gf2-algebra` is a dev-dependency only.
 
-/// Build the `ADD7_LUT` at compile time.
-///
 /// `ADD7_LUT[key]` where `key = (a_byte as usize) | ((b_byte as usize) << 8)`.
 /// Low nibble of result = `(a_lo + b_lo) % 7`; high nibble = `(a_hi + b_hi) % 7`.
 /// Non-canonical nibbles (≥ 7) produce 0.
@@ -70,8 +36,6 @@ const fn build_add7_lut() -> [u8; 65536] {
     lut
 }
 
-/// Build the `SUB7_LUT` at compile time.
-///
 /// `SUB7_LUT[key]` where `key = (a_byte as usize) | ((b_byte as usize) << 8)`.
 /// Low nibble of result = `(a_lo - b_lo + 7) % 7`; high nibble = `(a_hi - b_hi + 7) % 7`.
 /// Non-canonical nibbles (≥ 7) produce 0.
@@ -98,8 +62,6 @@ const fn build_sub7_lut() -> [u8; 65536] {
     lut
 }
 
-/// Build the `MUL7_LUT` at compile time.
-///
 /// `MUL7_LUT[key]` where `key = (a_byte as usize) | ((b_byte as usize) << 8)`.
 /// Low nibble of result = `(a_lo * b_lo) % 7`; high nibble = `(a_hi * b_hi) % 7`.
 /// Non-canonical nibbles (≥ 7) produce 0.
@@ -126,40 +88,19 @@ const fn build_mul7_lut() -> [u8; 65536] {
     lut
 }
 
-/// F_7 addition LUT: 64 KiB, built at compile time.
-///
-/// Same construction as `gf2_algebra::packed::packed7::ADD_LUT`.
+/// F_7 addition LUT.
 pub(crate) static ADD7_LUT: [u8; 65536] = build_add7_lut();
 
-/// F_7 subtraction LUT: 64 KiB, built at compile time.
-///
-/// Same construction as `gf2_algebra::packed::packed7::SUB_LUT`.
+/// F_7 subtraction LUT.
 pub(crate) static SUB7_LUT: [u8; 65536] = build_sub7_lut();
 
-/// F_7 multiplication LUT: 64 KiB, built at compile time.
-///
-/// Same construction as `gf2_algebra::packed::packed7::MUL_LUT`.
+/// F_7 multiplication LUT.
 pub(crate) static MUL7_LUT: [u8; 65536] = build_mul7_lut();
-
-// ---------------------------------------------------------------------------
-// Scalar word-level helpers
-// ---------------------------------------------------------------------------
 
 /// Apply a binary LUT op to a single pair of packed-F_7 `u64` words.
 ///
 /// `lut[a_byte | (b_byte << 8)]` returns a byte whose low nibble is the
 /// result for the low element pair and high nibble for the high element pair.
-/// 8 lookups per `u64` (one per byte pair).
-///
-/// # Arguments
-///
-/// * `a` — first packed word (16 F_7 elements at 4-bit slots 0..=15).
-/// * `b` — second packed word.
-/// * `lut` — one of `ADD7_LUT`, `SUB7_LUT`, or `MUL7_LUT`.
-///
-/// # Complexity
-///
-/// `O(1)`: 8 LUT lookups + 8 shift/mask/OR ops.
 #[inline(always)]
 pub(crate) fn binary7_op_word(a: u64, b: u64, lut: &[u8; 65536]) -> u64 {
     let mut r: u64 = 0;
@@ -177,27 +118,17 @@ pub(crate) fn binary7_op_word(a: u64, b: u64, lut: &[u8; 65536]) -> u64 {
 /// Scalar F_7 neg on a single packed `u64` word.
 ///
 /// Negation = `0 - a` via `SUB7_LUT`.
-///
-/// # Complexity
-///
-/// `O(1)`: 8 LUT lookups.
 #[inline(always)]
 pub(crate) fn neg7_word(a: u64) -> u64 {
     binary7_op_word(0u64, a, &SUB7_LUT)
 }
 
-// ---------------------------------------------------------------------------
-// Scalar batch entry points (used as scalar fallback)
-// ---------------------------------------------------------------------------
-
-/// Scalar fallback batch add for F_7.
+/// Scalar fallback batch add for F_7. All three slices share one length.
 ///
-/// Processes `n_words` packed F_7 words, applying `binary7_op_word` with `ADD7_LUT`
-/// per word. All three slices must have length `n_words`.
+/// # Panics
 ///
-/// # Complexity
-///
-/// `O(n_words)`.
+/// Panics if `b` or `out` is shorter than `a`; debug builds panic on any
+/// length mismatch.
 pub fn scalar_add7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
     let n = a.len();
     debug_assert_eq!(n, b.len());
@@ -207,11 +138,7 @@ pub fn scalar_add7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
     }
 }
 
-/// Scalar fallback batch sub for F_7.
-///
-/// # Arguments / Complexity
-///
-/// Same contract as [`scalar_add7_batch`].
+/// Scalar fallback batch sub for F_7. Same contract as [`scalar_add7_batch`].
 pub fn scalar_sub7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
     let n = a.len();
     debug_assert_eq!(n, b.len());
@@ -221,11 +148,7 @@ pub fn scalar_sub7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
     }
 }
 
-/// Scalar fallback batch mul for F_7.
-///
-/// # Arguments / Complexity
-///
-/// Same contract as [`scalar_add7_batch`].
+/// Scalar fallback batch mul for F_7. Same contract as [`scalar_add7_batch`].
 pub fn scalar_mul7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
     let n = a.len();
     debug_assert_eq!(n, b.len());
@@ -235,16 +158,8 @@ pub fn scalar_mul7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
     }
 }
 
-/// Scalar fallback batch neg for F_7.
-///
-/// # Arguments
-///
-/// * `a` — input packed word slice.
-/// * `out` — output packed word slice.
-///
-/// # Complexity
-///
-/// `O(a.len())`.
+/// Scalar fallback batch neg for F_7. Both slices share one length; panics
+/// as [`scalar_add7_batch`] does.
 pub fn scalar_neg7_batch(a: &[u64], out: &mut [u64]) {
     let n = a.len();
     debug_assert_eq!(n, out.len());
@@ -253,18 +168,8 @@ pub fn scalar_neg7_batch(a: &[u64], out: &mut [u64]) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Runtime AVX2 detection for F_7
-// ---------------------------------------------------------------------------
-
-/// Returns `true` when the CPU supports AVX2, `false` otherwise.
-///
-/// Caches the CPUID result in a `OnceLock<bool>`, same pattern as
-/// [`super::bipedal3::has_avx2`].
-///
-/// # Complexity
-///
-/// `O(1)` after the first call.
+/// Returns `true` when the CPU supports AVX2; the result is cached in a
+/// `OnceLock`.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn has_avx2_f7() -> bool {
     use std::sync::OnceLock;
@@ -289,22 +194,8 @@ pub type F7UnaryKernelFn = fn(&[u64], &mut [u64]);
 
 /// Function-pointer bundle for the F_7 AVX2 batch kernels.
 ///
-/// Returned by [`detect_avx2_f7`] when the host supports AVX2. The
-/// function-pointer fields are safe to call — AVX2 availability was verified
-/// during detection.
-///
-/// All binary ops take two input word slices and one output slice; all must
-/// share the same length (multiple of 4 for the AVX2 path). `neg` takes one
-/// input and one output.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::packed7::detect_avx2_f7;
-/// let maybe_fns = detect_avx2_f7();
-/// // `maybe_fns.is_some()` on any AVX2-capable x86_64 host.
-/// let _ = maybe_fns;
-/// ```
+/// Returned by [`detect_avx2_f7`] only when the host supports AVX2. All
+/// slices passed to a kernel must share one length that is a multiple of 4.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Copy, Clone)]
 pub struct F7AvxFns {
@@ -322,18 +213,6 @@ pub struct F7AvxFns {
 ///
 /// Returns `None` on non-x86 targets or when the runtime CPU lacks AVX2.
 /// Callers must then fall back to the scalar batch functions.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::bipedal::packed7::detect_avx2_f7;
-/// let maybe_fns = detect_avx2_f7();
-/// let _ = maybe_fns;
-/// ```
-///
-/// # Complexity
-///
-/// `O(1)`; CPUID is cached via `OnceLock`.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn detect_avx2_f7() -> Option<F7AvxFns> {
     use std::sync::OnceLock;
@@ -380,16 +259,10 @@ fn neg7_safe(a: &[u64], out: &mut [u64]) {
     unsafe { crate::x86::bipedal_avx2_packed7::run_neg7_batch(a, out) }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use proptest::prelude::*;
-
-    // ------ Scalar helpers ------
 
     fn scalar_f7_add(a: u64, b: u64) -> u64 {
         (a + b) % 7
@@ -413,8 +286,6 @@ mod tests {
     fn splat_f7_word(v: u64) -> u64 {
         v.wrapping_mul(0x1111_1111_1111_1111u64)
     }
-
-    // ------ LUT spot-check ------
 
     #[test]
     fn test_add7_lut_spot_check() {
@@ -447,8 +318,6 @@ mod tests {
         let key = a_byte | (b_byte << 8);
         assert_eq!(MUL7_LUT[key] & 0xf, 5, "(3*4)%7=5");
     }
-
-    // ------ Truth-table smoke tests ------
 
     #[test]
     fn test_binary7_op_word_truth_table() {
@@ -488,8 +357,6 @@ mod tests {
         }
     }
 
-    // ------ LCG word generator ------
-
     /// Build n packed F_7 words using a deterministic LCG (canonical values only).
     fn make_f7_words(n_words: usize, seed: u64) -> Vec<u64> {
         let mut words = Vec::with_capacity(n_words);
@@ -519,8 +386,6 @@ mod tests {
         }
         words
     }
-
-    // ------ Word-boundary tests for scalar batch ops ------
 
     fn check_scalar7_add(n_words: usize) {
         let a = make_f7_words(n_words, 0x1111_DEAD_BEEF);
@@ -563,8 +428,6 @@ mod tests {
             check_scalar7_neg(n);
         }
     }
-
-    // ------ AVX2 parity tests ------
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     mod avx2_parity {
@@ -629,8 +492,6 @@ mod tests {
             scalar_neg7_batch(&a, &mut sc_out);
             assert_eq!(avx_out.as_slice(), sc_out.as_slice(), "AVX2 neg7 mismatch");
         }
-
-        // Word-boundary tests at n_words = {0, 4, 16, 64}.
 
         #[test]
         fn test_avx2_add7_matches_scalar_l0() {
@@ -760,8 +621,6 @@ mod tests {
             check_avx2_neg7(64);
         }
 
-        // -- Proptest cross-checks (1000 cases per op) vs scalar --
-
         fn f7_word_batch_strategy() -> impl Strategy<Value = (usize, u64, u64)> {
             (
                 prop_oneof![Just(0usize), Just(4), Just(8), Just(16)],
@@ -773,7 +632,6 @@ mod tests {
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(1000))]
 
-            /// Cross-check AVX2 add7 vs scalar on 1000 random packed F_7 word batches.
             #[test]
             fn test_avx2_add7_proptest((n_words, seed_a, seed_b) in f7_word_batch_strategy()) {
                 if !has_avx2_f7() {
@@ -789,7 +647,6 @@ mod tests {
                 prop_assert_eq!(avx_out, sc_out, "AVX2 add7 proptest");
             }
 
-            /// Cross-check AVX2 sub7 vs scalar on 1000 random packed F_7 word batches.
             #[test]
             fn test_avx2_sub7_proptest((n_words, seed_a, seed_b) in f7_word_batch_strategy()) {
                 if !has_avx2_f7() {
@@ -805,7 +662,6 @@ mod tests {
                 prop_assert_eq!(avx_out, sc_out, "AVX2 sub7 proptest");
             }
 
-            /// Cross-check AVX2 mul7 vs scalar on 1000 random packed F_7 word batches.
             #[test]
             fn test_avx2_mul7_proptest((n_words, seed_a, seed_b) in f7_word_batch_strategy()) {
                 if !has_avx2_f7() {
@@ -821,7 +677,6 @@ mod tests {
                 prop_assert_eq!(avx_out, sc_out, "AVX2 mul7 proptest");
             }
 
-            /// Cross-check AVX2 neg7 vs scalar on 1000 random packed F_7 word batches.
             #[test]
             fn test_avx2_neg7_proptest((n_words, seed_a, _seed_b) in f7_word_batch_strategy()) {
                 if !has_avx2_f7() {
@@ -836,8 +691,6 @@ mod tests {
                 prop_assert_eq!(avx_out, sc_out, "AVX2 neg7 proptest");
             }
         }
-
-        // -- Scalar-fallback test (runs even on non-AVX2 hosts) --
 
         /// Verify scalar batch is consistent with word-level ops on any host.
         #[test]
@@ -856,8 +709,6 @@ mod tests {
             }
         }
     }
-
-    // -- Proptest cross-check vs gf2-algebra Packed7 scalar reference --
 
     mod packed7_cross {
         use super::*;
@@ -894,7 +745,6 @@ mod tests {
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(1000))]
 
-            /// Cross-check binary7_op_word add vs Packed7::add on 1000 inputs.
             #[test]
             fn test_add7_word_vs_packed7(a in f7_word_strategy(), b in f7_word_strategy()) {
                 let pa = packed7_from_word(a);
@@ -904,7 +754,6 @@ mod tests {
                 prop_assert_eq!(got, expected, "add7 word mismatch");
             }
 
-            /// Cross-check binary7_op_word sub vs Packed7::sub on 1000 inputs.
             #[test]
             fn test_sub7_word_vs_packed7(a in f7_word_strategy(), b in f7_word_strategy()) {
                 let pa = packed7_from_word(a);
@@ -914,7 +763,6 @@ mod tests {
                 prop_assert_eq!(got, expected, "sub7 word mismatch");
             }
 
-            /// Cross-check binary7_op_word mul vs Packed7::mul on 1000 inputs.
             #[test]
             fn test_mul7_word_vs_packed7(a in f7_word_strategy(), b in f7_word_strategy()) {
                 let pa = packed7_from_word(a);
@@ -924,7 +772,6 @@ mod tests {
                 prop_assert_eq!(got, expected, "mul7 word mismatch");
             }
 
-            /// Cross-check neg7_word vs Packed7::neg on 1000 inputs.
             #[test]
             fn test_neg7_word_vs_packed7(a in f7_word_strategy()) {
                 let pa = packed7_from_word(a);

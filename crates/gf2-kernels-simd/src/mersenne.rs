@@ -1,23 +1,13 @@
 //! SIMD batch kernels for Mersenne-prime arithmetic.
 //!
-//! Currently targets the `M31 = 2^31 - 1` prime field, with AVX2 kernels
-//! that process 8 lanes of packed `u32` per 256-bit vector. The reduction
-//! identity `2^31 ≡ 1 (mod M31)` reduces each product with a single fold
-//! plus a branchless canonicalisation.
-//!
-//! All unsafe intrinsics are isolated in `x86/mersenne.rs`; this module
-//! only exposes safe function-pointer wrappers through the [`MersenneFns`]
-//! table returned by [`detect`]. Callers without AVX2 receive `None` and
-//! should fall back to scalar loops.
+//! Targets the `M31 = 2^31 - 1` prime field with AVX2 kernels over 8 lanes
+//! of packed `u32`, reducing through `2^31 ≡ 1 (mod M31)`. [`detect`] returns
+//! safe function-pointer wrappers in [`MersenneFns`], or `None` without AVX2.
 
 /// Lane-wise batch multiply for `Fp<2^31 - 1>`.
 ///
 /// Computes `out[i] = a[i] * b[i] mod (2^31 - 1)` for all `i < a.len()`.
 /// Input values must already be canonical (`< 2^31 - 1`).
-///
-/// # Arguments
-/// * `a`, `b` — input slices of canonical M31 values (same length)
-/// * `out` — output slice (same length)
 ///
 /// # Panics
 /// Panics if the slices have different lengths.
@@ -43,9 +33,7 @@ pub type M31BatchDotFn = fn(&[u32], &[u32]) -> u32;
 
 /// Bundle of Mersenne-prime SIMD batch operations.
 ///
-/// Populated at runtime by [`detect`] when AVX2 is available. All entries
-/// are plain function pointers (not trait objects) so they remain usable
-/// under a `#![deny(unsafe_code)]` regime in callers.
+/// Populated at runtime by [`detect`] when AVX2 is available.
 #[derive(Copy, Clone)]
 pub struct MersenneFns {
     /// Lane-wise batch multiply for `M31 = 2^31 - 1`.
