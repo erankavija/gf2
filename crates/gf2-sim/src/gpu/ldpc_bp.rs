@@ -1,54 +1,17 @@
-//! GPU LDPC belief-propagation decode stage (design doc §6 / §10 / §11,
-//! `feature = "hip"`).
+//! GPU LDPC belief-propagation decode stage (`feature = "hip"`).
 //!
-//! `GpuLdpcBp` is the device-accelerated counterpart of the CPU
-//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder). It runs the same
-//! flooding belief-propagation schedule (init → alternating check-node and
-//! variable-node updates with optional per-iteration syndrome
-//! early-termination) on the device LDPC BP kernel (`gf2-kernels-hip`'s
-//! `GpuLdpcBp`) and emits the hard-decision codeword (all `n` positions) per
-//! frame.
+//! `GpuLdpcBp` runs the flooding belief-propagation schedule of the CPU
+//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder) on the `gf2-kernels-hip`
+//! LDPC BP kernel and emits the `n`-bit hard-decision codeword per frame.
 //!
-//! # Byte-identity (design doc §11)
-//!
-//! The device layout is built from the canonical
-//! [`EdgeLayout`](gf2_coding::ldpc::EdgeLayout), the same edge indexing the CPU
-//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder) passes messages over, so the
-//! check-node gather order is the parity-check matrix CSR `row_iter` order and
-//! the variable-node belief sum order is the CSC `col_iter` order on both
-//! sides, and the device output matches the CPU hard decision bit-for-bit. For MinSum / NormalizedMinSum the check-node
-//! rule uses only sign / min / scalar-multiply (order-independent and exactly
-//! representable in f32); for SumProduct the `tanh` product is accumulated in
-//! the same CSR order. The hard-decision *verdict* is robust to the 1-3 ULP
-//! RDNA2 transcendental drift (design §11 rationale), so the 200-frame
-//! bit-for-bit criterion holds even though `mean_iters` may differ across paths
-//! (which is why `mean_iters` is EXCLUDED from CPU-vs-GPU byte-identity).
-//!
-//! # CPU fallback (§8)
-//!
-//! The [`Stage::CpuFallback`](crate::Stage) is the CPU
-//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder): `GpuLdpcBp::cpu_fallback`
-//! returns a decoder built from the *same* code and
-//! [`DecoderConfig`](gf2_coding::ldpc::DecoderConfig), so the Phase C executor
-//! can substitute it on a GPU out-of-memory or unsupported-arch fault.
-//!
-//! # 5G NR seam (design doc §6, Phase E `23d3525f`)
-//!
-//! The standard seam is the flat `LdpcGraphLayout` (the `gf2-kernels-hip`
-//! kernel layout type), NOT a kernel parameter: the device kernel is
-//! standard-agnostic and decodes
-//! whatever expanded Tanner-graph layout the host hands it, so the same binary
-//! is reused unchanged across DVB-T2 and 5G NR (design §6 shared binary). This
-//! stage flattens an already-expanded [`LdpcCode`](gf2_coding::ldpc::LdpcCode)
-//! parity-check matrix into that layout. DVB-T2 and 5G NR both use this
-//! representation; for 5G NR, host-side construction consumes the base graph
-//! and per-`i_LS` lifting-set shift table before the kernel sees the graph
-//! (`@/issue/23d3525f`).
-//!
-//! The module home is declared unconditionally in [`gpu`](crate::gpu); the items
-//! are gated on `feature = "hip"` so the crate builds cleanly with the feature
-//! off. The `GpuLdpcBp`-prefixed and `LdpcGraphLayout` code spans above resolve
-//! to live intra-doc links only on the `--features hip` documentation build.
+//! The device layout is the canonical
+//! [`EdgeLayout`](gf2_coding::ldpc::EdgeLayout) of an expanded
+//! [`LdpcCode`](gf2_coding::ldpc::LdpcCode) parity-check matrix, the edge
+//! indexing the CPU decoder passes messages over, so both sides gather
+//! check-node messages in CSR order and sum variable-node beliefs in CSC
+//! order. The kernel decodes any such layout; DVB-T2 and 5G NR codes are
+//! expanded on the host. Per-frame iteration counts are excluded from the
+//! CPU-vs-GPU byte-identity contract.
 
 #[cfg(feature = "hip")]
 mod imp {
@@ -64,18 +27,8 @@ mod imp {
     use crate::gpu::map_hip_error;
     use crate::stage::{ExecutionClass, Stage};
 
-    /// Builds the device CSR/CSC [`LdpcGraphLayout`] from an [`LdpcCode`],
-    /// reproducing the CPU decoder's edge orders.
-    ///
-    /// The arrays are the canonical [`EdgeLayout`] `gf2-coding` computes for the
-    /// code, widened to the `i32` the kernel consumes. That layout is the one
-    /// the CPU [`LdpcDecoder`] passes messages over, so the kernel's per-edge
-    /// gather visits messages in exactly the CPU order, which is the basis of
-    /// the hard-decision byte-identity. DVB-T2 and 5G NR reach this function as
-    /// already-expanded parity-check matrices. For 5G NR, host-side construction
-    /// consumes the base graph and per-`i_LS` lifting-set shift table before
-    /// producing the same flat arrays, so the kernel does not branch on the
-    /// standard (`@/issue/23d3525f`).
+    /// Builds the device CSR/CSC [`LdpcGraphLayout`] from the code's canonical
+    /// [`EdgeLayout`], widened to the `i32` the kernel consumes.
     fn build_layout(code: &LdpcCode) -> LdpcGraphLayout {
         let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
         let widen = |values: &[u32]| values.iter().map(|&value| value as i32).collect();
@@ -90,17 +43,12 @@ mod imp {
         }
     }
 
-    /// CPU LDPC BP decode stage wrapping [`LdpcDecoder`] — the registered
-    /// [`Stage::CpuFallback`](crate::Stage) for [`GpuLdpcBp`] (design doc §8).
+    /// CPU LDPC BP decode stage wrapping [`LdpcDecoder`]: the
+    /// [`Stage::CpuFallback`](crate::Stage) of [`GpuLdpcBp`].
     ///
-    /// The `Stage::CpuFallback` associated type must itself be a
-    /// `Stage<LlrBatch, HardDecisionBatch>`; `LdpcDecoder` lives in `gf2-coding`
-    /// and does not (and cannot, by the orphan rule) implement this `gf2-sim`
-    /// trait, so this thin wrapper carries the `Stage` impl while delegating the
-    /// actual belief-propagation to an owned `LdpcDecoder`. It produces the same
-    /// full `n`-bit hard-decision codeword as the GPU stage (via
-    /// [`LdpcDecoder::decode_to_codeword`]), so substituting it on a GPU fault is
-    /// transparent. [`decoder`](Self::decoder) exposes the underlying decoder.
+    /// The orphan rule forbids implementing [`Stage`] on the `gf2-coding`
+    /// `LdpcDecoder`, so this wrapper carries the impl. It emits the `n`-bit
+    /// hard-decision codeword of [`LdpcDecoder::decode_to_codeword`].
     pub struct CpuLdpcBp {
         code: LdpcCode,
         config: DecoderConfig,
@@ -109,8 +57,7 @@ mod imp {
     }
 
     impl CpuLdpcBp {
-        /// Builds a CPU LDPC BP stage from the same code + config as its paired
-        /// [`GpuLdpcBp`].
+        /// Builds a CPU LDPC BP stage.
         #[must_use]
         pub fn new(code: LdpcCode, config: DecoderConfig, max_iterations: usize) -> Self {
             let decoder = std::sync::Mutex::new(LdpcDecoder::with_config(code.clone(), config));
@@ -143,8 +90,7 @@ mod imp {
             self.config
         }
 
-        /// Locks and returns the owned [`LdpcDecoder`] (the underlying CPU
-        /// decoder this stage delegates to).
+        /// Locks and returns the owned [`LdpcDecoder`].
         ///
         /// # Panics
         ///
@@ -184,7 +130,6 @@ mod imp {
         }
     }
 
-    /// Maps the CPU [`DecoderAlgorithm`] onto the kernel [`GpuBpAlgorithm`].
     fn map_algorithm(alg: DecoderAlgorithm) -> GpuBpAlgorithm {
         match alg {
             DecoderAlgorithm::MinSum => GpuBpAlgorithm::MinSum,
@@ -197,46 +142,19 @@ mod imp {
     /// GPU LDPC belief-propagation decode stage: [`LlrBatch`] →
     /// [`HardDecisionBatch`] (full `n`-bit hard-decision codeword per frame).
     ///
-    /// Holds the [`LdpcCode`], the BP [`DecoderConfig`], and the maximum BP
-    /// iteration count. The device decoder is built lazily (per
-    /// [`process`](Stage::process) call) so the stage is constructible without a
-    /// GPU; the throughput path builds one per-worker device decoder via
-    /// [`build_decoder`](Self::build_decoder) and drives it with
-    /// [`decode_batch`](Self::decode_batch).
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// // Requires a real HIP device to decode; constructing the stage does not.
-    /// let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-    /// let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
-    /// let stage = GpuLdpcBp::new(code, config, 50);
-    /// assert_eq!(stage.max_iterations(), 50);
-    /// ```
+    /// Construction touches no device: [`process`](Stage::process) builds a
+    /// device decoder per call, and [`decode_batch`](Self::decode_batch) reuses
+    /// one from [`build_decoder`](Self::build_decoder).
     pub struct GpuLdpcBp {
         code: LdpcCode,
         config: DecoderConfig,
         max_iterations: usize,
         device_id: i32,
-        /// The paired CPU fallback stage (same code + config), returned by
-        /// [`cpu_fallback`](Self::cpu_fallback) (design doc §8). It wraps an
-        /// [`LdpcDecoder`] (the trait bound requires the fallback be a `Stage`,
-        /// which `LdpcDecoder` itself is not).
         fallback: CpuLdpcBp,
     }
 
     impl GpuLdpcBp {
         /// Constructs a GPU LDPC BP decode stage on device 0.
-        ///
-        /// # Arguments
-        ///
-        /// * `code` — the LDPC code to decode.
-        /// * `config` — the BP algorithm + early-termination configuration.
-        /// * `max_iterations` — the BP iteration cap (must be `>= 1`).
         ///
         /// # Panics
         ///
@@ -291,14 +209,6 @@ mod imp {
 
         /// Builds a per-worker device decoder sized for up to `max_batch` frames.
         ///
-        /// The executor / benchmark calls this once per worker and threads the
-        /// result into [`decode_batch`](Self::decode_batch), keeping the
-        /// non-`Sync` device buffers out of the `Sync`-bound scratch.
-        ///
-        /// # Arguments
-        ///
-        /// * `max_batch` — the largest per-call frame count the decoder serves.
-        ///
         /// # Errors
         ///
         /// Returns a [`StageError`] (via [`map_hip_error`](crate::gpu::map_hip_error))
@@ -312,15 +222,7 @@ mod imp {
         /// Allocates the pinned host staging the stream-ordered decode variants
         /// ([`decode_batch_on_stream`](Self::decode_batch_on_stream) /
         /// [`decode_batch_with_iters_on_stream`](Self::decode_batch_with_iters_on_stream))
-        /// require, sized for `decoder` (a per-worker decoder from
-        /// [`build_decoder`](Self::build_decoder)).
-        ///
-        /// One scratch per worker, like the decoder itself (both are
-        /// `Send`-only, owned per worker, never shared by `&`).
-        ///
-        /// # Arguments
-        ///
-        /// * `decoder` — the per-worker device decoder the scratch pairs with.
+        /// require, sized for `decoder`.
         ///
         /// # Errors
         ///
@@ -338,21 +240,13 @@ mod imp {
         /// Decodes an [`LlrBatch`] to a [`HardDecisionBatch`] using the
         /// caller-owned device decoder `decoder`.
         ///
-        /// Each frame's channel LLRs are decoded to the full `n`-bit
-        /// hard-decision codeword. The `decoder` must have been built for this
-        /// stage's code via [`build_decoder`](Self::build_decoder) with a
+        /// `decoder` must come from [`build_decoder`](Self::build_decoder) with
         /// `max_batch >= input.frames.len()`.
-        ///
-        /// # Arguments
-        ///
-        /// * `input` — the channel-LLR batch (each frame has `n` LLRs).
-        /// * `decoder` — the per-worker device decoder.
         ///
         /// # Errors
         ///
         /// Returns a [`StageError`] on a device fault (recoverable for OOM /
-        /// unsupported arch so the executor substitutes
-        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        /// unsupported arch; fatal otherwise).
         ///
         /// # Panics
         ///
@@ -367,8 +261,6 @@ mod imp {
             input: &LlrBatch,
             decoder: &KernelGpuLdpcBp,
         ) -> Result<HardDecisionBatch, StageError> {
-            // Delegate to the iteration-counting variant and drop the counts; the
-            // hard-decision output is byte-for-byte identical.
             let (hard, _iters) = self.decode_batch_with_iters(input, decoder)?;
             Ok(hard)
         }
@@ -376,28 +268,14 @@ mod imp {
         /// Like [`decode_batch`](Self::decode_batch), but also returns the
         /// per-frame BP iteration count (`iters[f]` for frame `f`).
         ///
-        /// The [`HardDecisionBatch`] is **byte-for-byte identical** to
-        /// [`decode_batch`](Self::decode_batch) (that method delegates here and
-        /// discards the counts); this is a purely additive observability API.
-        /// The counts follow the CPU `decode_to_codeword` convention (the
-        /// 1-indexed pass at which the frame's syndrome first passes, or
-        /// `max_iterations` if it never converges) — see
-        /// [`KernelGpuLdpcBp::decode_batch_with_iters`](gf2_kernels_hip::GpuLdpcBp::decode_batch_with_iters).
-        ///
-        /// Per design-doc §11 `mean_iters` is EXCLUDED from CPU-vs-GPU
-        /// byte-identity, so callers may LOG the per-frame counts but must not
-        /// ASSERT the CPU-vs-GPU diff.
-        ///
-        /// # Arguments
-        ///
-        /// * `input` — the channel-LLR batch (each frame has `n` LLRs).
-        /// * `decoder` — the per-worker device decoder.
+        /// The counts follow the convention of
+        /// [`KernelGpuLdpcBp::decode_batch_with_iters`](gf2_kernels_hip::GpuLdpcBp::decode_batch_with_iters)
+        /// and are excluded from the CPU-vs-GPU byte-identity contract.
         ///
         /// # Errors
         ///
         /// Returns a [`StageError`] on a device fault (recoverable for OOM /
-        /// unsupported arch so the executor substitutes
-        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        /// unsupported arch; fatal otherwise).
         ///
         /// # Panics
         ///
@@ -421,27 +299,15 @@ mod imp {
         }
 
         /// Like [`decode_batch`](Self::decode_batch), but with every kernel
-        /// launch **and** every H2D / D2H transfer enqueued on the caller-owned
-        /// `stream`, awaiting completion per-stream
-        /// ([`HipStream::synchronize`]) — never device-wide sync. This is the
-        /// hybrid scheduler's path (design doc §6): each worker owns one stream
-        /// plus one [`LdpcStreamScratch`], so workers' decode batches on
-        /// different streams genuinely overlap. The output is byte-identical
-        /// to [`decode_batch`](Self::decode_batch).
-        ///
-        /// # Arguments
-        ///
-        /// * `input` — the channel-LLR batch (each frame has `n` LLRs).
-        /// * `decoder` — the per-worker device decoder.
-        /// * `stream` — the worker's owned HIP stream.
-        /// * `scratch` — the worker's pinned staging (from
-        ///   [`build_stream_scratch`](Self::build_stream_scratch)).
+        /// launch and H2D / D2H transfer enqueued on the caller-owned `stream`
+        /// and awaited per stream ([`HipStream::synchronize`]). The output is
+        /// byte-identical to [`decode_batch`](Self::decode_batch). `scratch`
+        /// comes from [`build_stream_scratch`](Self::build_stream_scratch).
         ///
         /// # Errors
         ///
         /// Returns a [`StageError`] on a device fault (recoverable for OOM /
-        /// unsupported arch so the executor substitutes
-        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        /// unsupported arch; fatal otherwise).
         ///
         /// # Panics
         ///
@@ -464,20 +330,15 @@ mod imp {
         }
 
         /// Like [`decode_batch_with_iters`](Self::decode_batch_with_iters), but
-        /// stream-ordered — see
-        /// [`decode_batch_on_stream`](Self::decode_batch_on_stream) for the
-        /// stream semantics. The hard decisions and per-frame iteration counts
-        /// are byte-identical to the default-stream variant.
-        ///
-        /// # Arguments
-        ///
-        /// Same as [`decode_batch_on_stream`](Self::decode_batch_on_stream).
+        /// stream-ordered as in
+        /// [`decode_batch_on_stream`](Self::decode_batch_on_stream). The hard
+        /// decisions and per-frame iteration counts are byte-identical to the
+        /// default-stream variant.
         ///
         /// # Errors
         ///
         /// Returns a [`StageError`] on a device fault (recoverable for OOM /
-        /// unsupported arch so the executor substitutes
-        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        /// unsupported arch; fatal otherwise).
         ///
         /// # Panics
         ///
@@ -529,8 +390,6 @@ mod imp {
                 .collect()
         }
 
-        /// Packs the kernel's per-frame `Vec<bool>` hard decisions into a
-        /// [`HardDecisionBatch`] of [`BitVec`]s.
         fn to_hard_batch(&self, hard: Vec<Vec<bool>>) -> HardDecisionBatch {
             let n = self.code.n();
             let frames: Vec<BitVec> = hard
@@ -547,15 +406,7 @@ mod imp {
         }
 
         /// The CPU reference codeword for one frame's LLRs, via
-        /// [`LdpcDecoder::decode_to_codeword`] on a fresh decoder (the exact
-        /// hard-decision oracle the GPU output is byte-identical to).
-        ///
-        /// Used by the byte-identity test and the throughput benchmark's CPU
-        /// comparator. Builds a one-shot decoder so it is stateless per call.
-        ///
-        /// # Arguments
-        ///
-        /// * `llrs` — one frame's channel LLRs (length `n`).
+        /// [`LdpcDecoder::decode_to_codeword`] on a fresh decoder.
         ///
         /// # Panics
         ///
@@ -572,17 +423,13 @@ mod imp {
         type Scratch = ();
         type CpuFallback = CpuLdpcBp;
 
-        /// Decodes `input` by building a one-shot device decoder sized for the
-        /// batch and running the BP schedule. The throughput path is
-        /// [`decode_batch`](Self::decode_batch) with a caller-owned per-worker
-        /// decoder (the device buffers cannot live in the `Sync`-bound scratch).
-        /// An empty batch is a no-op (no device decoder is built).
+        /// Decodes `input` with a device decoder built per call and sized for
+        /// the batch. An empty batch builds no device decoder.
         ///
         /// # Errors
         ///
         /// Returns a [`StageError`] on a device fault (recoverable for OOM /
-        /// unsupported arch so the executor substitutes
-        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        /// unsupported arch; fatal otherwise).
         fn process(
             &self,
             input: &LlrBatch,
@@ -599,8 +446,8 @@ mod imp {
             ExecutionClass::GpuOnly
         }
 
-        /// The paired CPU [`CpuLdpcBp`] fallback (design doc §8): wraps an
-        /// [`LdpcDecoder`] built from the same code + [`DecoderConfig`].
+        /// The paired [`CpuLdpcBp`] built from the same code and
+        /// [`DecoderConfig`].
         fn cpu_fallback(&self) -> Option<&CpuLdpcBp> {
             Some(&self.fallback)
         }
@@ -611,10 +458,8 @@ mod imp {
         use super::*;
         use gf2_coding::ldpc::DecoderAlgorithm;
 
-        /// A tiny [n=6, m=3] LDPC code with degree-2 checks and degree-1/2 vars,
-        /// for layout-shape unit tests that need no GPU.
+        /// An n=6, m=3 LDPC code given as (check, var) edges.
         fn small_code() -> LdpcCode {
-            // Edges (check, var): a sparse but valid Tanner graph.
             let edges = vec![
                 (0, 0),
                 (0, 1),
@@ -636,14 +481,12 @@ mod imp {
             assert_eq!(layout.n, 6);
             assert_eq!(layout.m, 3);
             let edges = layout.edges();
-            // 9 edges in the COO list.
             assert_eq!(edges, 9);
             assert_eq!(layout.check_row_ptr.len(), 4);
             assert_eq!(layout.var_col_ptr.len(), 7);
             assert_eq!(layout.check_edge_to_var_edge.len(), edges);
             assert_eq!(layout.var_edge_to_check_edge.len(), edges);
 
-            // The cross-maps must be exact inverses over the edge set.
             for e in 0..edges {
                 let f = layout.check_edge_to_var_edge[e] as usize;
                 assert_eq!(
@@ -652,27 +495,18 @@ mod imp {
                 );
             }
 
-            // A check-edge `e` and its mapped var-edge `f` must reference the
-            // SAME Tanner edge: f lies within variable `check_edge_var[e]`'s CSC
-            // column, and the inverse map lands back on a check-edge whose
-            // variable is the same `v`. (No `var_edge_check` array is uploaded;
-            // the check identity of a var-edge is recovered through the inverse
-            // cross-map + the row that owns the check-edge, which the syndrome
-            // kernel uses via `check_edge_var`.)
             for c in 0..layout.m {
                 let cs = layout.check_row_ptr[c] as usize;
                 let ce = layout.check_row_ptr[c + 1] as usize;
                 for e in cs..ce {
                     let v = layout.check_edge_var[e] as usize;
                     let f = layout.check_edge_to_var_edge[e] as usize;
-                    // f must lie within variable v's CSC column.
                     let vs = layout.var_col_ptr[v] as usize;
                     let ve = layout.var_col_ptr[v + 1] as usize;
                     assert!(
                         f >= vs && f < ve,
                         "var-edge {f} must lie in variable {v}'s column [{vs}, {ve})"
                     );
-                    // The inverse map returns to a check-edge whose variable is v.
                     let e_back = layout.var_edge_to_check_edge[f] as usize;
                     assert_eq!(
                         layout.check_edge_var[e_back] as usize, v,
@@ -708,7 +542,6 @@ mod imp {
             let code = small_code();
             let stage = GpuLdpcBp::new(code, DecoderConfig::default(), 50);
             let fb = stage.cpu_fallback().expect("GPU stage has a CPU fallback");
-            // The fallback stage reports the same code dimensions + iteration cap.
             assert_eq!(fb.n(), 6);
             assert_eq!(fb.max_iterations(), 50);
         }
@@ -719,8 +552,6 @@ mod imp {
             assert_eq!(stage.execution_class(), ExecutionClass::GpuOnly);
         }
 
-        /// The stage must be `Send` (per-worker-owned) so the executor can move
-        /// it between rayon workers.
         #[test]
         fn test_stage_is_send() {
             fn assert_send<T: Send>() {}
