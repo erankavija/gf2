@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "SNR checkpoint config hash omits rate, modulation, decoder and demapper",
-  "updated_at": "2026-10-03T13:10:24.258289571Z"
+  "updated_at": "2026-10-03T13:16:29.173283834Z"
 }

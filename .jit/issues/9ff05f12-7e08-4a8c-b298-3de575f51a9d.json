@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "GPU decoders panic on recoverable HIP failures",
-  "updated_at": "2026-10-03T13:10:23.705823400Z"
+  "updated_at": "2026-10-03T13:16:30.597824650Z"
 }

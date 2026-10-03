@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "sim_runner ignores SIGINT and parallel product curves skip the resume cache",
-  "updated_at": "2026-10-03T13:10:23.992370028Z"
+  "updated_at": "2026-10-03T13:16:30.095091495Z"
 }

@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "PrimitivePolynomialDatabase::trinomials(8) returns a reducible polynomial",
-  "updated_at": "2026-10-03T13:10:24.523433159Z"
+  "updated_at": "2026-10-03T13:16:25.887789846Z"
 }

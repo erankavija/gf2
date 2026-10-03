@@ -75,6 +75,7 @@
       "path": "crates/gf2-stats/README.md"
     }
   ],
+  "done_at": "2026-10-03T13:16:24.886471630Z",
   "first_ready_at": "2026-10-03T00:26:12.695201896Z",
   "gates_required": [
     "doc-review",
@@ -82,8 +83,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T02:17:57.632047663Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T13:13:45.644903547Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -101,7 +102,7 @@
     "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Rewrite the SIMD kernel and statistics crate READMEs",
-  "updated_at": "2026-10-03T13:10:21.975876531Z"
+  "updated_at": "2026-10-03T13:16:24.886471630Z"
 }

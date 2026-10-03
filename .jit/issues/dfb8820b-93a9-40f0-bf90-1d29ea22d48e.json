@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "ProfileRegistry::from_json rejects committed core tuning profiles",
-  "updated_at": "2026-10-03T13:10:24.788462028Z"
+  "updated_at": "2026-10-03T13:16:31.044137280Z"
 }
