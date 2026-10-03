@@ -63,8 +63,8 @@ pub fn ntt_inplace<F: TwoAdicField>(data: &mut [F], inverse: bool) {
         F::TWO_ADICITY,
     );
 
-    // Bit-reversal permutation by reverse-increment counter (Gentleman & Sande,
-    // 1966); `i < j` swaps each pair once.
+    // Bit-reversal permutation by reverse-increment counter
+    // (`@/citation/GentlemanSande1966`); `i < j` swaps each pair once.
     let mut j = 0usize;
     for i in 1..n {
         let mut bit = n >> 1;
@@ -118,8 +118,6 @@ mod tests {
     use crate::gfp::Fp;
     use proptest::prelude::*;
 
-    // --- Length guards ---
-
     #[test]
     fn test_ntt_inplace_noop_on_empty() {
         let mut data: Vec<Fp<65537>> = Vec::new();
@@ -152,8 +150,6 @@ mod tests {
         let mut data: Vec<Fp<65537>> = vec![Fp::<65537>::new(0); n];
         ntt_inplace(&mut data, false);
     }
-
-    // --- Concrete round-trip ---
 
     fn ntt_roundtrip_recovers<F: TwoAdicField + Clone>(data: Vec<F>) {
         let original = data.clone();
@@ -203,8 +199,6 @@ mod tests {
         ntt_roundtrip_recovers(data);
     }
 
-    // --- Proptest: roundtrip recovers the input up to the 1/n scaling. ---
-
     proptest! {
         #![proptest_config(ProptestConfig { cases: 32, ..ProptestConfig::default() })]
 
@@ -222,12 +216,8 @@ mod tests {
         }
     }
 
-    // --- Agreement with Karatsuba via FieldPoly::mul_ntt / mul_fast ---
-
     #[test]
     fn test_mul_fast_agrees_with_mul_small() {
-        // A couple of hand-picked cases that exercise zero / constant /
-        // small non-trivial operands.
         let zero: FieldPoly<Fp<65537>> = FieldPoly::zero_like(&Fp::<65537>::new(0));
         let p = FieldPoly::new(vec![
             Fp::<65537>::new(1),
@@ -274,8 +264,6 @@ mod tests {
             let a = FieldPoly::new(a_coeffs);
             let b = FieldPoly::new(b_coeffs);
 
-            // `mul` uses schoolbook / Karatsuba; `mul_ntt` uses the NTT
-            // path when both sides are non-empty.
             let reference = a.mul(&b);
             let via_ntt = if a.is_zero() || b.is_zero() {
                 FieldPoly::zero_like(&Fp::<65537>::new(0))

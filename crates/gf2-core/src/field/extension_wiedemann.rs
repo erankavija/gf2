@@ -8,7 +8,6 @@
 //! base-field divisor of the minimal polynomial; their LCM is the candidate.
 //! A candidate of degree below `n` is returned only after the Las-Vegas check
 //! `crate::field::charpoly::poly_annihilates_a_lasvegas` accepts it.
-//!
 //! [`crate::field::traits::FiniteField::try_extension_wiedemann_minpoly`]
 //! dispatches here for `Fp<P>`.
 
@@ -20,8 +19,6 @@ use crate::field::FiniteField;
 use crate::gfp::Fp;
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
 
-// ─── Embedded-matrix matvec with packed base kernel ────────────────────────
-//
 // The embedded matrix has zero `α`-components, so
 // `embed(A) · (v_0 + v_1·u) = (A·v_0) + (A·v_1)·u`: an extension matvec is `k`
 // base-field matvecs on the pre-packed base matrix.
@@ -66,8 +63,6 @@ impl<'a, F: FiniteField> PackedBaseMatrix<'a, F> {
     }
 }
 
-// ─── Component-wise extension vector ────────────────────────────────────────
-
 /// Quadratic-extension state vector stored as two parallel base-field
 /// component arrays.
 struct QuadVec<F: FiniteField> {
@@ -101,8 +96,6 @@ impl<F: FiniteField> CubicVec<F> {
         }
     }
 }
-
-// ─── Wiedemann attempts over a quadratic / cubic embedded extension ────────
 
 /// Quadratic-extension Wiedemann attempt against an embedded matrix `A`.
 ///
@@ -278,8 +271,6 @@ fn gen_cubic_random_vec<F: FiniteField>(n: usize, zero: &F, one: &F, seed: u64) 
     v
 }
 
-// ─── Coefficient-descent guards ─────────────────────────────────────────────
-
 /// Lifts each coefficient of `p` into `QuadraticExt<C>` and returns `p` when
 /// every lifted α-component is zero. Returns `None` otherwise, for the zero
 /// polynomial, and when `F::zero_hint()` is `None`.
@@ -330,15 +321,11 @@ where
     Some(FieldPoly::from_coeffs_trimmed(coeffs))
 }
 
-// ─── Final base-field annihilation check ────────────────────────────────────
-
 /// [`crate::field::charpoly::poly_annihilates_a_lasvegas`] under a local name.
 #[inline]
 fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, seed: u64) -> bool {
     crate::field::charpoly::poly_annihilates_a_lasvegas(p, a, seed)
 }
-
-// ─── Public entry: Fp<P>-typed dispatch ─────────────────────────────────────
 
 /// Tries the extension-field scalar Wiedemann minpoly path for
 /// `Fp<P>` matrices.
@@ -502,8 +489,6 @@ mod tests {
     use super::*;
     use crate::gfp::Fp;
 
-    /// `Fp<7>` n=128 random matrix smoke test: the extension Wiedemann
-    /// must engage and return a polynomial that annihilates `A`.
     #[test]
     fn test_extension_wiedemann_engages_fp7_large_n() {
         let n = 128;
@@ -521,8 +506,7 @@ mod tests {
         );
     }
 
-    /// `Fp<251>` n=251 random matrix (smallest engagement size for the
-    /// 251 quadratic gate `n >= q = 251`).
+    /// n = 251 is the smallest size the `Fp<251>` gate `n >= q` admits.
     #[test]
     fn test_extension_wiedemann_engages_fp251_at_q_threshold() {
         let n = 251;
@@ -534,8 +518,6 @@ mod tests {
         assert!(p_annihilates_a(&mp, &a, 0xDEAD_BEEF));
     }
 
-    /// Below the per-prime engagement gate (`n < 7` for `Fp<7>`, `n < 251`
-    /// for `Fp<251>`) the public hook returns `None`.
     #[test]
     fn test_extension_wiedemann_below_gate_returns_none() {
         for n in [2usize, 3, 6] {
@@ -617,11 +599,7 @@ mod tests {
         );
     }
 
-    /// Randomized small-matrix cross-check for `Fp<7>`. Contract: when
-    /// the algorithm returns `Some(p)`, `p` must annihilate `A`
-    /// deterministically (full `eval_at_matrix == 0`) and divide the
-    /// dispatcher's minpoly. Bypasses the public gate so the algorithm
-    /// runs at small `n`.
+    /// Bypasses the public gate so the algorithm runs at small `n`.
     #[test]
     fn test_extension_random_cross_check_fp7() {
         for n in [2usize, 3, 5, 8, 16] {
@@ -652,7 +630,6 @@ mod tests {
         }
     }
 
-    /// Same cross-check for `Fp<251>`.
     #[test]
     fn test_extension_random_cross_check_fp251() {
         for n in [2usize, 3, 5, 8, 16] {
@@ -674,9 +651,6 @@ mod tests {
         }
     }
 
-    /// Verifies that the returned polynomial both annihilates `A`
-    /// deterministically (via `eval_at_matrix == 0`) and divides the
-    /// dispatcher's minpoly.
     fn assert_returned_poly_is_consistent_divisor<const P: u64>(
         ext_mp: &FieldPoly<Fp<P>>,
         dispatch_mp: &FieldPoly<Fp<P>>,
@@ -715,8 +689,6 @@ mod tests {
         );
     }
 
-    /// Coefficient descent: when the algorithm returns a polynomial it
-    /// must equal the dispatcher's minpoly.
     #[test]
     fn test_extension_descent_fp7_random() {
         let n = 16;
@@ -733,7 +705,6 @@ mod tests {
         }
     }
 
-    /// Same descent property for `Fp<251>`.
     #[test]
     fn test_extension_descent_fp251_random() {
         let n = 16;
@@ -769,8 +740,6 @@ mod tests {
         runtime_descent_synthetic_alpha_test();
     }
 
-    /// The per-coefficient zero-α / zero-α² predicate on synthetic extension
-    /// elements.
     fn runtime_descent_synthetic_alpha_test() {
         use crate::gfpn::{CubicExt, QuadraticExt};
 

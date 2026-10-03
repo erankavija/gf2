@@ -1,17 +1,10 @@
 //! Deterministic selection of irreducible extension-field moduli.
 //!
 //! A selected modulus is a [`FieldPoly`] whose coefficients belong to the
-//! supplied field witness.  Consequently, selecting over a prime field and
-//! selecting over a tower field produce different, relative presentations;
-//! the latter is never flattened to a polynomial over the prime field.
+//! supplied field witness: selecting over a tower field produces a relative
+//! presentation, never one flattened to the prime field.
 //!
-//! # Selection rule
-//!
-//! [`select_modulus`] first asks the built-in registry for a Conway entry and
-//! then for another entry carrying the registry's verification evidence.  A
-//! registry entry is accepted as-is: its provenance is the same kind of
-//! evidence documented by [`crate::primitive_polys`], whose `u64`/`u128`
-//! registry is the binary adapter.
+//! # Candidate order
 //!
 //! If no registry entry applies, the selector searches the complete finite
 //! candidate range in this exact order.  For a base field of order `q` and a
@@ -295,9 +288,7 @@ pub trait SelectExtension: FieldExtension + Sized {
     /// `base` witnesses and constructs the validated extension witness.
     ///
     /// The same base presentation and degree always produce the same modulus
-    /// presentation. The selection follows the Conway, verified-registry, and
-    /// deterministic verified-search rule documented at the top of this
-    /// module.
+    /// presentation, selected as by [`select_modulus`].
     ///
     /// # Errors
     ///
