@@ -1,15 +1,11 @@
 //! Configuration trait for algebraic field extensions.
 //!
 //! [`ExtConfig`] specifies the irreducible polynomial for a field extension via
-//! a non-residue element β. Extension types like `QuadraticExt<C>` (x² − β) and
-//! `CubicExt<C>` (x³ − β) are parameterized by a config type implementing this
-//! trait.
-//!
-//! # Design
-//!
-//! The config is a zero-sized marker type — no runtime state, no per-element
-//! overhead. The non-residue is an associated constant, requiring the base field
-//! to support const construction (which `Fp<P>` does via `const fn new()`).
+//! a non-residue β. Extension types like `QuadraticExt<C>` (x² − β) and
+//! `CubicExt<C>` (x³ − β) are parameterized by a zero-sized config type
+//! implementing this trait. The non-residue is an associated constant, so the
+//! base field must support const construction (which `Fp<P>` does via
+//! `const fn new()`).
 //!
 //! # Examples
 //!
@@ -41,24 +37,11 @@ use crate::field::ConstField;
 /// For cubic extensions (`CubicExt<C>`): defines β such that v³ = β,
 /// giving the irreducible polynomial x³ − β.
 ///
-/// # Type Parameters
-///
-/// Implementors are zero-sized marker types. The associated `BaseField` is the
-/// field being extended, which must implement [`ConstField`] so that extension
-/// types can themselves implement `ConstField` for nested towers.
-///
-/// # Overriding `mul_by_non_residue`
-///
-/// The default implementation uses generic multiplication, but specific configs
-/// can override for efficiency:
-/// - β = −1: just negation
-/// - β = small constant: shift-and-add
-/// - β from a lower tower level: exploit structure
-///
-/// The trait intentionally does not require a blanket `'static` supertrait
-/// bound. Extension element types only store base-field coefficients, not a
-/// value of the config type itself; code that specifically needs a static
-/// config can add that bound locally.
+/// The associated `BaseField` must implement [`ConstField`] so that extension
+/// types can themselves implement `ConstField` for nested towers. The trait
+/// has no `'static` supertrait bound: extension element types only store
+/// base-field coefficients, and code that needs a static config can add that
+/// bound locally.
 pub trait ExtConfig {
     /// The base field being extended.
     ///
@@ -90,12 +73,8 @@ pub trait ExtConfig {
 
     /// Multiply a base field element by the non-residue β.
     ///
-    /// Default implementation uses generic multiplication. Override for
-    /// efficiency when the non-residue has special structure.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - A base field element to multiply by β.
+    /// Default implementation uses generic multiplication. Override when
+    /// the non-residue has special structure (e.g. negation for β = −1).
     #[inline]
     fn mul_by_non_residue(x: Self::BaseField) -> Self::BaseField {
         #[cfg(not(verify_lean))]

@@ -19,10 +19,8 @@
 //! # The compile-time form
 //!
 //! [`ConstQuotient`] carries the same field with the presentation fixed by a
-//! [`ConstQuotientConfig`] implementor instead of by runtime values. Elements
-//! are `[B; R]` arrays, the modulus lives in the config's associated constant
-//! rather than in any element, and the arithmetic monomorphizes over it, so a
-//! compile-time element stores no descriptor and consults no certificate.
+//! [`ConstQuotientConfig`] implementor: elements are `[B; R]` arrays and the
+//! arithmetic monomorphizes over the config's modulus constant.
 //! [`ConstQuotient::extension`] decides the declared modulus and yields a
 //! [`ConstQuotientExt`] witness; [`ConstQuotient::extension_unchecked`] takes
 //! the declaration on trust.
@@ -335,10 +333,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     }
 
     /// Returns the canonical monic modulus, with its constant coefficient first.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the returned polynomial is borrowed.
     pub fn modulus(&self) -> &FieldPoly<F> {
         &self.params.modulus
     }
@@ -409,10 +403,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     /// # Errors
     ///
     /// [`FieldError::UnsupportedSize`] when the order exceeds `u128::MAX`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)` checked exponentiation on the identity metadata.
     pub fn order(&self) -> Result<u128, FieldError> {
         self.params
             .field_id
@@ -696,19 +686,11 @@ impl<F: FieldIdentity> Hash for QuotientElement<F> {
 
 impl<F: FieldIdentity> QuotientElement<F> {
     /// Returns the fixed-length base-coefficient vector, constant first.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the slice is borrowed.
     pub fn coefficients(&self) -> &[F] {
         &self.coefficients
     }
 
     /// Returns a descriptor for this element's field.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; cloning the descriptor increments an `Arc` count.
     pub fn field(&self) -> QuotientField<F> {
         QuotientField {
             params: Arc::clone(&self.params),
@@ -1235,10 +1217,6 @@ impl<const R: usize, C: ConstQuotientConfig<R>> ConstQuotient<R, C> {
     ///
     /// Fails to compile, rather than panicking, when `R` is zero: a quotient
     /// modulus has degree at least one.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the array is moved.
     pub fn new(coefficients: [C::BaseField; R]) -> Self {
         const { assert!(R > 0, "a quotient modulus has degree at least one") };
         Self { coefficients }
@@ -1259,10 +1237,6 @@ impl<const R: usize, C: ConstQuotientConfig<R>> ConstQuotient<R, C> {
     }
 
     /// Returns the fixed-length coefficient array, constant first.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the array is borrowed.
     pub fn coefficients(&self) -> &[C::BaseField; R] {
         &self.coefficients
     }

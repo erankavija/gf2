@@ -1,93 +1,14 @@
 //! Structure-of-Arrays (SoA) batch layout for GF(p^n) extension fields.
 //!
-//! This module provides [`BatchExtField<F, N>`], a storage layout that
-//! interleaves the coefficients of many independent extension-field elements
-//! by coefficient position rather than by element. Where a standard
-//! Array-of-Structures (AoS) layout stores elements as
-//!
-//! ```text
-//! [{c0, c1}, {c0, c1}, {c0, c1}, …]
-//! ```
-//!
-//! the SoA layout stores each coefficient index in its own contiguous buffer:
-//!
-//! ```text
-//! coeffs[0] = [elem0.c0, elem1.c0, elem2.c0, …]
-//! coeffs[1] = [elem0.c1, elem1.c1, elem2.c1, …]
-//! ```
-//!
-//! This gives two important properties:
-//!
-//! 1. Coefficient-level arithmetic (base-field add, sub, mul) becomes a
-//!    single pass over a contiguous `&[F]`, which is the shape that SIMD
-//!    kernels want. Cross-lane dependencies at the polynomial level are
-//!    replaced by a small number of independent vector passes.
-//! 2. Extension-field multiplication decomposes cleanly into base-field
-//!    batch operations. For `BatchExtField<Fp<P>, 2>`, Karatsuba becomes
-//!    three base-field vector multiplies plus a handful of vector
-//!    adds/subs, irrespective of batch size.
-//!
-//! # SIMD integration
-//!
-//! [`BatchExtField::batch_mul_quadratic`],
-//! [`BatchExtField::batch_square_quadratic`],
-//! [`BatchExtField::batch_mul_cubic`], and
-//! [`BatchExtField::batch_square_cubic`] dispatch through the
-//! [`SimdKaratsubaHook`] trait. For the specialised case
-//! `F = Fp<65537>` on AVX2 hosts the quadratic trait route uses the fused
-//! AVX2 Karatsuba kernel exposed by `gf2-kernels-simd::fp65537`
-//! (`batch_karatsuba_fn`): every 8-lane 256-bit vector iteration reads
-//! `a0, a1, b0, b1` once, keeps the seven Karatsuba intermediates in
-//! registers, and writes `out_c0, out_c1` once. The cubic `Fp<65537>` route
-//! uses the sibling fused AVX2 Karatsuba-3 kernel, while other supported
-//! `Fp<P>` bases compose the same base-field add/sub/mul SIMD hooks over
-//! three coefficient lanes and six independent Karatsuba products. The
-//! reduction exploits
-//! `2^16 ≡ -1 (mod 65537)` — the product splits at the 16-bit boundary
-//! and a single `lo + P - hi` fold plus one branchless canonicalisation
-//! delivers a canonical u32 per lane.
-//!
-//! For other Montgomery-stored `Fp<P>` fields supported by the generic
-//! base-field batch path, the hook composes the shared
-//! [`crate::gfp::SimdVecOps`] add/sub/mul kernels over the SoA lanes. For
-//! any other base field (or when AVX2 is unavailable, the `simd` feature
-//! is disabled, or we build on a non-x86 target) the trait's default
-//! `None` arm triggers the scalar straight-line combine, whose inner loop
-//! is branchless and cross-lane-dependency-free so LLVM's auto-vectoriser
-//! can widen it opportunistically.
-//!
-//! [`crate::field::FieldVec`] uses the same [`crate::gfp::SimdVecOps`]
-//! dispatch surface at the element-wise level — `mul_vec`, `add_vec`,
-//! and `sub_vec` transparently route supported `Fp<P>` fields through
-//! `gf2-kernels-simd` on AVX2 hosts. The pack/unpack helpers in
-//! [`crate::gfp::simd_ops`] are shared between the extension-batch and
-//! element-wise surfaces so there is a single source of truth for
-//! Montgomery-canonical fast paths.
-//!
-//! # Measured performance
-//!
-//! Benchmarked on the reference Zen 3 host (AMD Ryzen 9 5900X) via
-//! `cargo bench -p gf2-core --bench soa_batch --features simd -- --quick`
-//! at `N = 1000` GF(p²) elements over `Fp<65537>` with `β = 3`:
-//!
-//! | workload                                        | time     | vs baseline |
-//! |-------------------------------------------------|---------:|------------:|
-//! | sequential `QuadraticExt::mul` (AoS, scalar)    | 15.60 µs |   1.00× |
-//! | `BatchExtField::batch_mul_quadratic` (SoA)      |  1.97 µs |   7.91× |
-//! | SoA including AoS↔SoA transpose                 |  5.06 µs |   3.08× |
-//!
-//! Both the pure SoA path and the end-to-end AoS→SoA→AoS path beat the
-//! issue's ≥3× target. The fused AVX2 Karatsuba kernel is the source
-//! of the speedup: it replaces nine heap-allocated intermediate buffers
-//! with zero (all staging happens in AVX2 registers), and replaces
-//! thirteen scalar Montgomery multiplies per output element with three
-//! packed 8-lane 64-bit integer multiplies plus a one-step modular
-//! reduction. The AoS↔SoA transpose cost (~3 µs) dominates the
-//! end-to-end path at this size, so the `with_transpose` row
-//! converges toward the pure SoA row as `N` grows.
-//!
-//! Regenerate the table when either the base field's arithmetic or the
-//! SIMD kernels change.
+//! [`BatchExtField<F, N>`] stores the coefficients of many independent
+//! extension-field elements by coefficient position: `coeffs[i]` is a
+//! contiguous buffer holding coefficient `i` of every element, so
+//! extension-field arithmetic decomposes into base-field passes over
+//! contiguous slices. The quadratic and cubic products dispatch through
+//! [`SimdKaratsubaHook`]: `Fp<65537>` uses the fused AVX2 Karatsuba kernels
+//! of `gf2-kernels-simd`, other `Fp<P>` bases compose the
+//! [`crate::gfp::SimdVecOps`] add/sub/mul hooks, and any other base field,
+//! build or host takes the scalar combine.
 //!
 //! # Examples
 //!
@@ -146,21 +67,10 @@ fn ext_non_residue<C: ExtConfig>() -> C::BaseField {
 /// layout.
 ///
 /// `coeffs[i]` holds the `i`-th coefficient of every element in the batch.
-/// All inner vectors must have the same length; that common length is the
-/// *batch size* reported by [`BatchExtField::len`]. The constructor
-/// [`BatchExtField::new`] enforces this precondition.
-///
-/// `N` is the extension degree of the polynomial basis. For a quadratic
-/// extension `N = 2`, for cubic `N = 3`, and so on. For scalar (base-field)
-/// batches, use `N = 1`.
-///
-/// The type is generic over any [`FiniteField`] `F` so the same layout can
-/// serve prime fields, tower extensions, or binary fields.
-///
-/// # Type Parameters
-///
-/// * `F` — the coefficient (base) field type.
-/// * `N` — the number of coefficients per element (extension degree).
+/// All inner vectors have the same length, the *batch size* reported by
+/// [`BatchExtField::len`]; [`BatchExtField::new`] enforces this. `F` is the
+/// coefficient (base) field and `N` the number of coefficients per element
+/// (the extension degree; `N = 1` for base-field batches).
 ///
 /// # Examples
 ///
@@ -183,17 +93,9 @@ pub struct BatchExtField<F: FiniteField, const N: usize> {
 impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// Creates a new `BatchExtField` from `N` equal-length coefficient vectors.
     ///
-    /// # Arguments
-    ///
-    /// * `coeffs` — an array of `N` `Vec<F>`s. Every inner vector must have
-    ///   the same length.
-    ///
     /// # Panics
     ///
-    /// Panics if the inner vectors differ in length. The caller is expected
-    /// to uphold this invariant; a panic on mismatch is the safest failure
-    /// mode because a silent size disagreement would silently corrupt later
-    /// arithmetic.
+    /// Panics if the inner vectors differ in length.
     pub fn new(coeffs: [Vec<F>; N]) -> Self {
         if N > 0 {
             let expected = coeffs[0].len();
@@ -211,16 +113,9 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 
     /// Constructs a batch of `len` extension-field zeros.
     ///
-    /// The `sample` argument supplies a base-field element from which the
-    /// runtime-configured additive identity can be derived via
-    /// [`FiniteField::zero_like`]. This mirrors the API style of
-    /// [`crate::field::FieldVec::zeros_from`] and supports base fields whose
-    /// identity element depends on runtime configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `len` — the number of extension-field elements to allocate.
-    /// * `sample` — any base-field element; only `zero_like` is consulted.
+    /// `sample` is any base-field element; only its
+    /// [`FiniteField::zero_like`] is consulted, which supports base fields
+    /// whose identity element depends on runtime configuration.
     ///
     /// # Examples
     ///
@@ -255,15 +150,8 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
         self.len() == 0
     }
 
-    /// Returns a reference to the `i`-th coefficient lane as a slice.
-    ///
-    /// This is the primary entry point for code that wants to run SIMD or
-    /// auto-vectorised kernels over a single coefficient position: the
-    /// returned slice is contiguous and of length [`Self::len`].
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — coefficient index in `0..N`.
+    /// Returns the `i`-th coefficient lane, a contiguous slice of length
+    /// [`Self::len`].
     ///
     /// # Panics
     ///
@@ -274,10 +162,9 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 
     /// Returns `true` if all coefficient lanes have the same length.
     ///
-    /// The constructor [`BatchExtField::new`] maintains this invariant, so
-    /// valid instances always return `true`. The predicate is exposed so
-    /// that callers who construct batches through a different path (e.g.
-    /// deserialization) can validate before use.
+    /// [`BatchExtField::new`] maintains this invariant; the predicate serves
+    /// callers that construct batches through a different path (e.g.
+    /// deserialization).
     pub fn is_valid(&self) -> bool {
         if N == 0 {
             return true;
@@ -295,21 +182,10 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// Element-wise addition across the batch.
     ///
     /// Returns a new batch whose `i`-th element equals `self[i] + other[i]`.
-    /// Because the extension field's addition is coefficient-wise, the
-    /// operation is a lane-parallel base-field add on every coefficient
-    /// position.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` — right-hand batch. Must match `self` in batch size.
     ///
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(N · len)` base-field additions.
     pub fn batch_add(&self, other: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -332,17 +208,9 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     ///
     /// Returns a new batch whose `i`-th element equals `self[i] - other[i]`.
     ///
-    /// # Arguments
-    ///
-    /// * `other` — right-hand batch. Must match `self` in batch size.
-    ///
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(N · len)` base-field subtractions.
     pub fn batch_sub(&self, other: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -367,18 +235,8 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
 // ---------------------------------------------------------------------------
 
 impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
-    /// Converts a slice of [`QuadraticExt<C>`] elements into SoA form.
-    ///
-    /// This is the AoS→SoA transpose. Cost is `O(len)` base-field copies
-    /// and two allocations (one per coefficient lane).
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config whose base field matches `F`.
-    ///
-    /// # Arguments
-    ///
-    /// * `elements` — slice of scalar extension-field elements.
+    /// Converts a slice of [`QuadraticExt<C>`] elements into SoA form (the
+    /// AoS→SoA transpose).
     ///
     /// # Examples
     ///
@@ -414,13 +272,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     }
 
     /// Converts the SoA batch back into an AoS `Vec<QuadraticExt<C>>`.
-    ///
-    /// This is the SoA→AoS transpose. Cost is `O(len)` base-field copies
-    /// and one allocation.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config whose base field matches `F`.
     ///
     /// # Examples
     ///
@@ -469,36 +320,17 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// out.c1 = (self.c0 + self.c1)·(other.c0 + other.c1) − v0 − v1
     /// ```
     ///
-    /// For the specialised base field `Fp<65537>` on AVX2 hosts with the
-    /// `simd` feature, the implementation routes through the fused AVX2
-    /// Karatsuba kernel in `gf2-kernels-simd::fp65537::batch_karatsuba_fn`
-    /// — all seven Karatsuba intermediates stay in registers across the
-    /// 8-lane vector loop. For other supported Montgomery `Fp<P>` bases,
-    /// the implementation composes the generic base-field batch kernels
-    /// exposed by [`crate::gfp::SimdVecOps`]. [`crate::field::FieldVec`]'s
-    /// element-wise ops share that same dispatch surface. Any other `F`
-    /// (or unsupported runtime) falls back to the scalar straight-line
-    /// combine.
-    /// Total cost: 3 base-field multiplications, 2 additions, 3
-    /// subtractions, and one `mul_by_non_residue` per batch element.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config supplying the non-residue β.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` — right-hand batch. Must match `self` in batch size.
+    /// `Fp<65537>` on AVX2 hosts with the `simd` feature routes through the
+    /// fused AVX2 Karatsuba kernel `batch_karatsuba_fn` of
+    /// `gf2-kernels-simd::fp65537`; other supported `Fp<P>` bases compose
+    /// the base-field batch kernels exposed by [`crate::gfp::SimdVecOps`];
+    /// any other `F` (or unsupported runtime) takes the scalar combine. The
+    /// cost per batch element is 3 base-field multiplications, 2 additions,
+    /// 3 subtractions, and one `mul_by_non_residue`.
     ///
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(len)`: 3 base-field multiplications per lane plus a constant
-    /// number of base-field additions and one `mul_by_non_residue` per
-    /// lane.
     ///
     /// # Examples
     ///
@@ -562,17 +394,7 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     ///
     /// For each batch index `i`, computes `self[i]²` using the same SoA
     /// Karatsuba backend as [`Self::batch_mul_quadratic`], with the left
-    /// and right input lanes aliased. This keeps the square path on the
-    /// fused `Fp<65537>` AVX2 kernel and on the generic `Fp<P>` batch
-    /// composition whenever those backends are available.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config supplying the non-residue β.
-    ///
-    /// # Complexity
-    ///
-    /// `O(len)`: same asymptotic cost as batched multiplication.
+    /// and right input lanes aliased.
     ///
     /// # Examples
     ///
@@ -622,19 +444,8 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
 // ---------------------------------------------------------------------------
 
 impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
-    /// Converts a slice of [`CubicExt<C>`] elements into SoA form.
-    ///
-    /// This is the AoS→SoA transpose for cubic-extension elements. Cost is
-    /// `O(len)` base-field copies and three allocations (one per coefficient
-    /// lane).
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config whose base field matches `F`.
-    ///
-    /// # Arguments
-    ///
-    /// * `elements` — slice of scalar cubic-extension elements.
+    /// Converts a slice of [`CubicExt<C>`] elements into SoA form (the
+    /// AoS→SoA transpose).
     ///
     /// # Examples
     ///
@@ -669,13 +480,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     }
 
     /// Converts a cubic SoA batch back into an AoS `Vec<CubicExt<C>>`.
-    ///
-    /// This is the SoA→AoS transpose. Cost is `O(len)` base-field copies and
-    /// one allocation.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config whose base field matches `F`.
     ///
     /// # Examples
     ///
@@ -712,23 +516,12 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// products and the surrounding adds/subs route through the shared
     /// [`crate::gfp::SimdVecOps`] hooks when they are available; otherwise the
     /// straight-line scalar lane combine preserves the same bit-exact result.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config supplying the non-residue β.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` — right-hand batch. Must match `self` in batch size.
+    /// The cost per batch element is 6 base-field multiplications, 6
+    /// additions, 7 subtractions, and two non-residue scales.
     ///
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(len)`: 6 base-field multiplications, 6 additions, 7 subtractions,
-    /// and two non-residue scales per lane.
     ///
     /// # Examples
     ///
@@ -788,18 +581,9 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
 
     /// Element-wise squaring for batched cubic-extension elements.
     ///
-    /// Computes `self[i]²` by applying the cubic SoA Karatsuba-3 combine with
-    /// the left and right coefficient lanes aliased. This keeps the square path
-    /// on the same SIMD-composed base-field kernels as
-    /// [`Self::batch_mul_cubic`].
-    ///
-    /// # Type Parameters
-    ///
-    /// * `C` — extension config supplying the non-residue β.
-    ///
-    /// # Complexity
-    ///
-    /// `O(len)`: same asymptotic cost as batched cubic multiplication.
+    /// Computes `self[i]²` by applying the cubic SoA Karatsuba-3 combine of
+    /// [`Self::batch_mul_cubic`] with the left and right coefficient lanes
+    /// aliased.
     ///
     /// # Examples
     ///
@@ -953,11 +737,8 @@ where
 // Karatsuba back-ends: scalar (generic) and SIMD-specialised (Fp<65537>)
 // ---------------------------------------------------------------------------
 
-/// Straight-line scalar Karatsuba combine over any `F: ConstField`.
-///
-/// The loop body is deliberately branchless and carries no cross-lane
-/// dependencies so the compiler's auto-vectoriser has a chance to widen
-/// it for amenable base fields.
+/// Straight-line scalar Karatsuba combine over any `F: ConstField`. The
+/// loop body is branchless and carries no cross-lane dependencies.
 #[inline]
 fn scalar_karatsuba<F, C>(a0: &[F], a1: &[F], b0: &[F], b1: &[F]) -> (Vec<F>, Vec<F>)
 where
@@ -988,11 +769,8 @@ where
 
 /// Top-level Karatsuba combine, generic over any `F: ConstField`.
 ///
-/// Dispatches through the sealed [`SimdKaratsubaHook`] trait: `Fp<65537>`
-/// invokes the fused AVX2 kernel in `gf2-kernels-simd` when available, and
-/// other eligible `Fp<P>` fields compose the generic base-field batch
-/// kernels from [`crate::gfp::SimdVecOps`]. Other `F` and other runtime
-/// configurations fall back to [`scalar_karatsuba`].
+/// Dispatches through [`SimdKaratsubaHook`] and falls back to
+/// [`scalar_karatsuba`] when the hook declines.
 #[inline]
 fn batch_karatsuba<F, C>(a0: &[F], a1: &[F], b0: &[F], b1: &[F]) -> (Vec<F>, Vec<F>)
 where
@@ -1008,33 +786,19 @@ where
 /// SIMD-dispatch hook for the Karatsuba combine used by
 /// [`BatchExtField::batch_mul_quadratic`].
 ///
-/// Every implementation returns `None` by default (scalar fallback).
-/// `Fp<P>` provides a blanket impl that transparently routes through the
-/// fused AVX2 kernel in `gf2-kernels-simd` when `P = 65537`, otherwise
-/// tries the shared generic-Fp batch add/sub/mul hooks before returning
-/// `None`; the non-specialised path then runs the scalar straight-line
-/// Karatsuba.
-///
-/// This trait exists only to enable dispatch; it is a crate-internal
-/// extension point. External users should treat it as sealed — the
-/// default method is the contract they see — and should not write their
-/// own impls. All trait bounds on [`BatchExtField::batch_mul_quadratic`]
-/// are satisfied automatically for `Fp<P>` through the blanket impl
-/// below.
+/// Every method returns `None` by default (scalar fallback). The impl for
+/// `Fp<P>` routes through the fused AVX2 kernels in `gf2-kernels-simd`
+/// when `P = 65537` and otherwise tries the shared
+/// [`crate::gfp::SimdVecOps`] add/sub/mul hooks. The trait is a
+/// crate-internal dispatch extension point.
 pub trait SimdKaratsubaHook: ConstField {
     /// Attempts to compute the Karatsuba combine for a quadratic
     /// extension element-wise over this base field using a SIMD kernel.
     ///
-    /// Returns `None` when no SIMD kernel is available for `Self`, at
-    /// which point the caller falls back to
-    /// `scalar_karatsuba` (which is
-    /// purely internal; its semantics are folded into
-    /// [`BatchExtField::batch_mul_quadratic`]).
-    ///
-    /// # Arguments
-    ///
-    /// * `a0`, `a1`, `b0`, `b1` — SoA coefficient lanes of two batches;
-    ///   every slice must have identical length.
+    /// `a0`, `a1`, `b0`, `b1` are the SoA coefficient lanes of two batches
+    /// and have identical length. Returns `None` when no SIMD kernel is
+    /// available for `Self`; the caller then falls back to the scalar
+    /// combine.
     ///
     /// # Examples
     ///
@@ -1057,12 +821,6 @@ pub trait SimdKaratsubaHook: ConstField {
     ///     &a0, &a1, &b0, &b1,
     /// );
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` base-field operations (three multiplications, two adds,
-    /// one non-residue scale, two subtractions). When specialised, each
-    /// operation is an 8-lane AVX2 batch pass.
     #[inline]
     fn try_simd_karatsuba<C: ExtConfig<BaseField = Self>>(
         _a0: &[Self],
@@ -1075,21 +833,11 @@ pub trait SimdKaratsubaHook: ConstField {
 
     /// Attempts a fused SIMD Karatsuba-3 combine for cubic-extension batches.
     ///
-    /// Implementations may use a backend-specific kernel to compute all three
-    /// output coefficient lanes for element-wise multiplication in
-    /// `BaseField[X] / (X^3 - C::NON_RESIDUE)`. Returning `None` asks the
-    /// generic SoA path to compose the operation from base-field batch add,
-    /// sub, and multiplication hooks instead.
-    ///
-    /// # Arguments
-    ///
-    /// * `a0`, `a1`, `a2` - The three SoA coefficient lanes of the left batch.
-    /// * `b0`, `b1`, `b2` - The three SoA coefficient lanes of the right batch.
-    ///
-    /// # Returns
-    ///
-    /// `Some([c0, c1, c2])` when a specialised SIMD implementation handles the
-    /// full batch, or `None` when the caller should use the generic fallback.
+    /// Computes all three output coefficient lanes `[c0, c1, c2]` of the
+    /// element-wise product in `BaseField[X] / (X^3 - C::NON_RESIDUE)` from
+    /// the left lanes `a0`, `a1`, `a2` and the right lanes `b0`, `b1`, `b2`.
+    /// Returning `None` asks the generic SoA path to compose the operation
+    /// from base-field batch add, sub, and multiplication hooks instead.
     ///
     /// # Examples
     ///
@@ -1114,12 +862,6 @@ pub trait SimdKaratsubaHook: ConstField {
     ///     &a0, &a1, &a2, &b0, &b1, &b2,
     /// );
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` base-field operations. A fused implementation performs six
-    /// independent base-field multiplications plus the Karatsuba-3 linear
-    /// combines per element, typically in SIMD lanes.
     #[inline]
     #[allow(clippy::too_many_arguments)]
     fn try_simd_cubic_karatsuba<C: ExtConfig<BaseField = Self>>(
@@ -1152,14 +894,10 @@ pub trait SimdKaratsubaHook: ConstField {
     }
 }
 
-/// Blanket default-None impl for every `Fp<P>` except the overridden
-/// `Fp<65537>`. We cannot provide a blanket `impl<F: ConstField> SimdKaratsubaHook for F`
-/// *and* a specialised impl for `Fp<65537>` without the `specialization`
-/// feature, so the hook is only implemented for the concrete types where
-/// we need it. Callers of [`BatchExtField::batch_mul_quadratic`] restrict
-/// `F` to `ConstField + SimdKaratsubaHook`; the generic impl in this file
-/// satisfies that bound for every `Fp<P>` by virtue of the blanket impl
-/// below, which carries the default `None` unless explicitly overridden.
+/// A blanket `impl<F: ConstField> SimdKaratsubaHook for F` cannot coexist
+/// with a specialised impl for `Fp<65537>` without the `specialization`
+/// feature, so the hook is implemented for every `Fp<P>` and branches on
+/// `P`.
 impl<const P: u64> SimdKaratsubaHook for Fp<P> {
     #[inline]
     fn try_simd_karatsuba<C: ExtConfig<BaseField = Self>>(
@@ -1168,8 +906,6 @@ impl<const P: u64> SimdKaratsubaHook for Fp<P> {
         b0: &[Self],
         b1: &[Self],
     ) -> Option<(Vec<Self>, Vec<Self>)> {
-        // Compile-time branch: `P == 65537` folds to true exactly for
-        // `Fp<65537>` and the entire branch is elided for other primes.
         if P == 65537 {
             return fp65537_simd_impl::<P, C>(a0, a1, b0, b1);
         }
@@ -1210,10 +946,9 @@ impl<const P: u64> SimdKaratsubaHook for Fp<P> {
 
 /// Generic `Fp<P>` Karatsuba composition over the shared base-field SIMD hooks.
 ///
-/// This path is selected for Montgomery-stored primes covered by the C3
-/// generic batch kernels. It deliberately returns `None` if any base-field
-/// add/sub/mul hook declines, preserving the scalar fallback for unsupported
-/// primes, non-AVX2 hosts, and `simd`-disabled builds.
+/// Returns `None` if any base-field add/sub/mul hook declines, preserving
+/// the scalar fallback for unsupported primes, non-AVX2 hosts, and
+/// `simd`-disabled builds.
 #[inline]
 fn fp_simd_composed_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     a0: &[Fp<P>],
@@ -1249,10 +984,8 @@ fn fp_simd_composed_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
 /// AVX2 Karatsuba combine for `Fp<P>` specialised at `P = 65537`.
 ///
 /// The caller (the `SimdKaratsubaHook` impl for `Fp<P>`) gates on
-/// `P == 65537` at compile time. For that single monomorphisation,
-/// `Fp<P>::raw_storage()` is known to equal the canonical value
-/// because `R = 2^64 ≡ 1 (mod 65537)`, so we bypass the REDC round-trip
-/// of `.value()`.
+/// `P == 65537`, for which `Fp<P>::raw_storage()` equals the canonical
+/// value because `R = 2^64 ≡ 1 (mod 65537)`.
 ///
 /// Returns `None` on non-AVX2 hardware or when the `simd` feature is
 /// disabled; the caller falls back to the scalar Karatsuba path.
@@ -1269,26 +1002,13 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     let fns = crate::simd::maybe_fp65537()?;
     let n = a0.len();
 
-    // Pack through the shared `gfp::simd_ops::fp65537_pack` helper so that
-    // FieldVec and BatchExtField both go through one implementation. For
-    // `P = 65537`, `raw_storage()` returns the canonical value because
-    // `R = 2^64 ≡ 1 (mod P)` (Montgomery coincides with canonical).
     let a0_u32 = fp65537_pack::<P>(a0);
     let a1_u32 = fp65537_pack::<P>(a1);
     let b0_u32 = fp65537_pack::<P>(b0);
     let b1_u32 = fp65537_pack::<P>(b1);
 
-    // Single fused SIMD pass: reads each input slice once, writes each
-    // output slice once, and keeps all seven Karatsuba intermediates in
-    // AVX2 registers. This is the crucial speedup vs. a per-op
-    // composition — eliminating nine heap buffers and six extra memory
-    // round-trips. This fused pass is also the reason we keep a direct
-    // path here rather than expressing the Karatsuba combine purely in
-    // terms of `FieldVec::mul_vec`/`add_vec`/`sub_vec` calls: doing so
-    // would re-introduce the per-op intermediate buffers and lose ~5×
-    // of the measured speedup. FieldVec's element-wise ops still route
-    // through the same underlying `Fp65537Fns` table via `SimdVecOps`,
-    // so the two surfaces stay consistent.
+    // One fused SIMD pass: the Karatsuba intermediates stay in AVX2
+    // registers.
     let beta_u32 = ext_non_residue::<C>().raw_storage() as u32;
     let mut out_c0 = vec![0u32; n];
     let mut out_c1 = vec![0u32; n];
@@ -1375,10 +1095,8 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     _b0: &[Fp<P>],
     _b1: &[Fp<P>],
 ) -> Option<(Vec<Fp<P>>, Vec<Fp<P>>)> {
-    // `C` is deliberately part of this stub's signature so that callers
-    // can use the same generic parameters regardless of whether the
-    // `simd` feature is enabled; the SIMD path uses `C` to locate the
-    // `ExtConfig::NON_RESIDUE`-typed output vectors.
+    // `C` stays in this stub's signature so callers use the same generic
+    // parameters with and without the `simd` feature.
     None
 }
 
@@ -1744,7 +1462,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // CubicExt SoA batch operations (jit:33d3f5b7)
+    // CubicExt SoA batch operations
     // -----------------------------------------------------------------------
 
     #[test]
@@ -1854,7 +1572,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Proptest: Fp<65537>, β = 3 (matches the issue's success criterion)
+    // Proptest: Fp<65537>, β = 3
     // -----------------------------------------------------------------------
 
     fn fq2_big_strategy() -> impl Strategy<Value = Fq2Big> {

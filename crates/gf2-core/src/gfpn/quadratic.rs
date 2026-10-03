@@ -1,26 +1,10 @@
 //! Quadratic extension field arithmetic: elements `c0 + c1·u` where `u² = β`.
 //!
-//! [`QuadraticExt<C>`] implements a degree-2 extension of any base field that
+//! [`QuadraticExt<C>`] is a degree-2 extension of any base field that
 //! implements [`ConstField`], parameterized by an [`ExtConfig`] specifying the
-//! non-residue β.
-//!
-//! # Multiplication
-//!
-//! Uses the Karatsuba method (3 base-field multiplications instead of 4):
-//!
-//! ```text
-//! v0 = a0·b0
-//! v1 = a1·b1
-//! c0 = v0 + β·v1
-//! c1 = (a0+a1)(b0+b1) − v0 − v1
-//! ```
-//!
-//! Reference: Devegili, O hEigeartaigh, Scott, Dahab (ePrint 2006/471).
-//!
-//! # Inversion
-//!
-//! Uses the norm-based method: `a⁻¹ = conjugate(a) / norm(a)` where
-//! `norm(a) = a0² − β·a1²`.
+//! non-residue β. Multiplication is Karatsuba with 3 base-field
+//! multiplications (Devegili, O hEigeartaigh, Scott, Dahab, ePrint 2006/471);
+//! inversion is `a⁻¹ = conjugate(a) / norm(a)` with `norm(a) = a0² − β·a1²`.
 //!
 //! # Examples
 //!
@@ -60,16 +44,10 @@ use super::ExtConfig;
 
 /// Wide accumulator for [`QuadraticExt`]: two base-field wide components.
 ///
-/// Stores the two component coefficients `(c0, c1)` of a quadratic-extension
-/// product using the base field's `Wide` type. Multiple products may be
-/// accumulated via `+=` before a single [`FiniteField::reduce_wide`] call
-/// brings the accumulator back into the field. The per-component limit on the
-/// number of products is governed by
-/// [`FiniteField::max_unreduced_additions`] on the base field.
-///
-/// # Type Parameters
-///
-/// * `W` — The base field's wide type (e.g., `u128` for `Fp<P>`).
+/// `W` is the base field's `Wide` type (e.g., `u128` for `Fp<P>`). Multiple
+/// products may be accumulated via `+=` before a single
+/// [`FiniteField::reduce_wide`] call; the per-component limit on the number
+/// of products is [`FiniteField::max_unreduced_additions`] on the base field.
 ///
 /// # Examples
 ///
@@ -103,11 +81,6 @@ pub struct QuadraticExtWide<W> {
 
 impl<W> QuadraticExtWide<W> {
     /// Creates a new wide accumulator from component-wise wide values.
-    ///
-    /// # Arguments
-    ///
-    /// * `c0` — Wide value for the constant coefficient.
-    /// * `c1` — Wide value for the coefficient of `u`.
     #[inline]
     pub const fn new(c0: W, c1: W) -> Self {
         Self { c0, c1 }
@@ -251,11 +224,6 @@ impl<C: ExtConfig> Hash for QuadraticExt<C> {
 
 impl<C: ExtConfig> QuadraticExt<C> {
     /// Creates a new element `c0 + c1·u`.
-    ///
-    /// # Arguments
-    ///
-    /// * `c0` - The constant component.
-    /// * `c1` - The coefficient of `u`.
     #[inline]
     pub const fn new(c0: C::BaseField, c1: C::BaseField) -> Self {
         Self { c0, c1 }
@@ -368,10 +336,6 @@ impl<C: ExtConfig> Add for QuadraticExt<C> {
     type Output = Self;
 
     /// Component-wise addition: `(a0+b0) + (a1+b1)·u`.
-    ///
-    /// # Complexity
-    ///
-    /// 2 base-field additions.
     #[inline]
     fn add(self, rhs: Self) -> Self {
         Self::new(self.c0 + rhs.c0, self.c1 + rhs.c1)
@@ -382,10 +346,6 @@ impl<C: ExtConfig> Sub for QuadraticExt<C> {
     type Output = Self;
 
     /// Component-wise subtraction: `(a0−b0) + (a1−b1)·u`.
-    ///
-    /// # Complexity
-    ///
-    /// 2 base-field subtractions.
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self::new(self.c0 - rhs.c0, self.c1 - rhs.c1)
@@ -396,10 +356,6 @@ impl<C: ExtConfig> Neg for QuadraticExt<C> {
     type Output = Self;
 
     /// Component-wise negation: `(−a0) + (−a1)·u`.
-    ///
-    /// # Complexity
-    ///
-    /// 2 base-field negations.
     #[inline]
     fn neg(self) -> Self {
         Self::new(-self.c0, -self.c1)
@@ -610,12 +566,11 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
     /// Karatsuba multiplication at the tower level followed by component-wise
     /// widening.
     ///
-    /// This is the "practical" (Option 1) choice from the design plan: each
-    /// individual product is fully reduced at the base field, but the resulting
-    /// extension element is stored in the wide accumulator so that sums of
-    /// many such products (dot products) can be accumulated without further
-    /// per-product reduction. The accumulation budget is the base field's
-    /// [`max_unreduced_additions`](FiniteField::max_unreduced_additions).
+    /// Each individual product is fully reduced at the base field, but the
+    /// resulting extension element is stored in the wide accumulator so that
+    /// sums of many such products (dot products) can be accumulated without
+    /// further per-product reduction. The accumulation budget is the base
+    /// field's [`max_unreduced_additions`](FiniteField::max_unreduced_additions).
     ///
     /// # Complexity
     ///
@@ -703,7 +658,7 @@ mod tests {
     type Fq2 = QuadraticExt<Fq2Config>;
 
     // -----------------------------------------------------------------------
-    // Axiom test harness (required for success)
+    // Axiom test harness
     // -----------------------------------------------------------------------
 
     #[test]
@@ -961,7 +916,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Wide accumulator tests (issue d11b769a)
+    // Wide accumulator tests
     // -----------------------------------------------------------------------
 
     /// Wide is a real two-component accumulator, not an alias for `Self`.
@@ -987,9 +942,7 @@ mod tests {
     }
 
     /// For a large enough prime, `max_unreduced_additions()` is finite (not
-    /// `usize::MAX`). This proves the tower no longer returns the sentinel
-    /// `usize::MAX` placeholder that the old `Wide = Self` implementation
-    /// used to hand out.
+    /// `usize::MAX`).
     #[test]
     fn test_max_unreduced_additions_finite_for_large_prime() {
         // GF(Mersenne61²) with β = 2.
