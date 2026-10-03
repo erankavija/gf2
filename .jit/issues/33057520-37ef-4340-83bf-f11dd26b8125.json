@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:10:24.080917182Z",
+  "dependencies": [],
+  "description": "`gf2_sim::snr_checkpoint::config_hash` does not cover the code rate, modulation, decoder or demapper, so `--resume` with a different decoder reuses checkpoints of another configuration and reports their results as its own.\n\n## Background\n\nReproduced while writing the coded-modulation link simulation tutorial.\n\n## Success Criteria\n\n- [hard] REQ-01: Two configurations differing in rate, modulation, decoder or demapper have different checkpoint identities, covered by a test for each field.\n- [hard] REQ-02: Resuming with a configuration whose identity differs from the checkpoint's reuses no checkpointed point, covered by a test.\n- [hard] REQ-03: A fixed seed and configuration produce identical results with and without resume.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:10:24.080917182Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "33057520-37ef-4340-83bf-f11dd26b8125",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "SNR checkpoint config hash omits rate, modulation, decoder and demapper",
+  "updated_at": "2026-10-03T13:10:24.258289571Z"
+}

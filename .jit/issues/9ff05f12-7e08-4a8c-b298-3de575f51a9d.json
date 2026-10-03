@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:10:23.528110868Z",
+  "dependencies": [],
+  "description": "The GPU BCJR product decoder and the gf2-algebra GPU path panic when HIP initialization or a HIP call fails recoverably. `@/inv/accelerator-safe-fallback` requires a tested safe fallback for recoverable accelerator failures.\n\n## Background\n\n`crates/gf2-coding/src/product/mod.rs` calls `.expect(\"Failed to initialize GPU BCJR\")`; `gf2_algebra::gpu` panics on HIP failures. Found while writing the acceleration architecture page.\n\n## Success Criteria\n\n- [hard] REQ-01: A recoverable HIP initialization or resource failure in the GPU BCJR product decoder selects the CPU path and returns the same decoded output as the CPU decoder, covered by a test.\n- [hard] REQ-02: A recoverable HIP failure in `gf2_algebra::gpu` selects the CPU path or returns an error value; it does not panic, covered by a test.\n- [hard] REQ-03: A fatal kernel or driver failure remains an explicit error.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:10:23.528110868Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "9ff05f12-7e08-4a8c-b298-3de575f51a9d",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "GPU decoders panic on recoverable HIP failures",
+  "updated_at": "2026-10-03T13:10:23.705823400Z"
+}

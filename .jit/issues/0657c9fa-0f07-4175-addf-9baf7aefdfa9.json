@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:10:24.342770092Z",
+  "dependencies": [],
+  "description": "`PrimitivePolynomialDatabase::trinomials(8)` returns $x^8 + x^4 + 1$ as primitive. The polynomial equals $(x^4 + x^2 + 1)^2$ over $\\mathbb{F}_2$ and is reducible; a doctest asserts the wrong value.\n\n## Background\n\nFound while correcting source-level documentation drift in gf2-core.\n\n## Success Criteria\n\n- [hard] REQ-01: Every polynomial that `trinomials(m)` returns is primitive over $\\mathbb{F}_2$, checked by a test that verifies primitivity for every supported $m$.\n- [hard] REQ-02: `trinomials(8)` returns no entry, since no primitive trinomial of degree 8 exists, and the doctest states that.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:10:24.342770092Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "0657c9fa-0f07-4175-addf-9baf7aefdfa9",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "PrimitivePolynomialDatabase::trinomials(8) returns a reducible polynomial",
+  "updated_at": "2026-10-03T13:10:24.523433159Z"
+}

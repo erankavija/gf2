@@ -4,6 +4,7 @@
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
+    "18858de1-4533-413a-b768-ac09b5126854",
     "1fca3739-f773-4736-bb4b-ff6c5ec30ee9"
   ],
   "description": "A researcher checking a performance claim needs to rerun its measurement on their own host.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/how-to/` shows how to reproduce a performance claim: building the benchmark environment, running the measurement, and comparing with the pinned receipt, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `benchmarks/README.md` and the benchmark scripts are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: Its worked example reproduces one claim from the performance evidence page by anchor.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
@@ -61,5 +62,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the evidence reproduction how-to",
-  "updated_at": "2026-10-03T02:22:54.346475301Z"
+  "updated_at": "2026-10-03T13:10:23.428712254Z"
 }

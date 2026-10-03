@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:10:24.608048211Z",
+  "dependencies": [],
+  "description": "`ProfileRegistry::from_json` rejects two profiles committed under `crates/gf2-core/data/tuning-profiles/`: they use schema versions 2 and 3 while the parser accepts version 4.\n\n## Background\n\nFound while writing the acceleration selection how-to.\n\n## Success Criteria\n\n- [hard] REQ-01: Every profile committed under `crates/gf2-core/data/tuning-profiles/` loads through `ProfileRegistry::from_json`, covered by a test that enumerates the directory.\n- [hard] REQ-02: The directory holds one schema version; superseded representations are removed per `@/inv/canonical-cutover`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:10:24.608048211Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "dfb8820b-93a9-40f0-bf90-1d29ea22d48e",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "ProfileRegistry::from_json rejects committed core tuning profiles",
+  "updated_at": "2026-10-03T13:10:24.788462028Z"
+}

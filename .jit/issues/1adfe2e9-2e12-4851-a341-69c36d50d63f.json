@@ -26,10 +26,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:gf2-coding",
-    "satisfies:fa787f85/REQ-09"
+    "satisfies:fa787f85/REQ-09",
+    "resolution:duplicate"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Point the presentation figure example at a caller-chosen output dir",
-  "updated_at": "2026-10-02T09:38:20.104200090Z"
+  "updated_at": "2026-10-03T13:10:42.786707748Z"
 }

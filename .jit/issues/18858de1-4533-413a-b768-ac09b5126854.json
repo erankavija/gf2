@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:10:22.754028121Z",
+  "dependencies": [],
+  "description": "The overnight benchmark-window runner scripts name one absolute checkout path, so a queued measurement runs only from that clone. They resolve the repository root at runtime.\n\n## Background\n\nScripts: `run-window.sh` and `follow-window.sh` under `dev/active/1a379447-zen3-cpu-performance/bench-window/` set `repo=/home/vkaskivuo/Projects/gf2`. The evidence reproduction how-to under `docs/how-to/` queues its timed run through this runner.\n\n## Success Criteria\n\n- [hard] REQ-01: Neither script contains an absolute checkout path; each resolves the repository root at runtime from its own location or from git.\n- [hard] REQ-02: A dry or self-test invocation from a second clone path resolves that clone's root, shown in a linked record with the exact command and output.\n- [hard] REQ-03: The queue-line format and the window protocol the scripts implement are unchanged, shown by an ignore-whitespace diff review recorded in the commit message.\n- [hard] REQ-04: No hard-coded `dev/` path or historical-path allow-list is added; code review checks the change against `@/inv/no-dev-path-coupling`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:10:22.754028121Z",
+  "gates_required": [
+    "code-review",
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "18858de1-4533-413a-b768-ac09b5126854",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Resolve the repository root at runtime in the bench-window runner",
+  "updated_at": "2026-10-03T13:10:22.922615832Z"
+}

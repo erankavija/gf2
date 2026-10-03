@@ -12,7 +12,7 @@
     "8434e0e1-859d-4b18-ad3c-2942ae248b60",
     "d1f6b2c9-4b2d-40a5-bea8-ce8b1ea601a9"
   ],
-  "description": "JIT archival moves only sources under managed paths below `dev/`. The repository's documentation policy temporarily manages every legacy source the archival plans need, and drops entries that name absent directories.\n\n## Background\n\nThe policy lives in the `[documentation]` table of `.jit/config.toml`. Stale entries and area semantics are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and §4.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest row with a container-archive disposition has its source under a managed path of the documentation policy.\n- [hard] REQ-02: Each entry added for the overhaul is recorded in the manifest's policy notes as temporary, with the condition for its removal.\n- [hard] REQ-03: Policy entries naming absent paths are removed.\n- [hard] REQ-04: Repository validation passes with the widened policy.\n",
+  "description": "JIT archival moves only sources under managed paths below `dev/`. The repository's documentation policy temporarily manages every legacy source the archival plans need, and drops entries that name absent directories.\n\n## Background\n\nThe policy lives in the `[documentation]` table of `.jit/config.toml`. Stale entries and area semantics are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and §4.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest row with a container-archive disposition whose source lies under `development_root` has its source under a managed path of the documentation policy. Rows whose source lies under `docs/` move by explicit relocation.\n- [hard] REQ-02: Each entry added for the overhaul is recorded in the manifest's policy notes as temporary, with the condition for its removal.\n- [hard] REQ-03: Policy entries naming absent paths are removed.\n- [hard] REQ-04: Repository validation passes with the widened policy.\n\n## Decisions\n\n- DEC-01: The owner decided on 2026-10-03 that REQ-01 covers rows under `development_root` only, that the `packages/jit-default` profile is re-minted to drop the absent policy entries, and that `dev/archive` is a temporary managed path.\n",
   "documents": [],
   "first_ready_at": "2026-10-02T22:06:10.335226928Z",
   "gates_required": [
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Widen the docs policy to manage archival sources",
-  "updated_at": "2026-10-02T23:49:48.533868417Z"
+  "updated_at": "2026-10-03T13:10:21.636485708Z"
 }
