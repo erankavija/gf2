@@ -1,0 +1,272 @@
+dev/bench_results/00dd43c3/v4-r1-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/00dd43c3/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-08-04b85d10-consumers-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-10-04b85d10-count-v3-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-10-04b85d10-layout-v3-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-10-04b85d10-logical-v3-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-13-04b85d10-count-v4-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/04b85d10/2026-09-13-04b85d10-layout-v4-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-multicore-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-multicore-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-single-worker-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/07ca8585/v4-r1-post-freeze-rebuild-07ca8585-ldpc-update-checknode-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r1 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r3 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke-r4 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-12-12fdeb5b-nr-encode-smoke GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/19513245/r1-control-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/19513245/r1-control-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/19513245/r1-matrix-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/19513245/r1-matrix-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/19513245/r1-vector-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/19513245/r1-vector-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/1c602857/2026-09-13-1c602857-public-clmul-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d0da41f/2026-09-07-1d0da41f-clmul-dispatch-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=1
+  P-23 error - campaign-start freeze: saved plan producing manifest differs from campaign-start
+dev/bench_results/1d0da41f/v3-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=5
+  P-20 note raw-batch-small-8-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note raw-batch-odd-tail-65-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note raw-batch-l1-512-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note fieldvec-dot-1024-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note raw-batch-l1-512-streaming-6core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+dev/bench_results/1d0da41f/v3-pilot-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d0da41f/v3-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-external-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-selected GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-smoke GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-dense-allocated-matvec/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-dense-isolated-fused-parity/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u2-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-isolated-xor/bc091474-u4-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u2-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-public-row-xor/bc091474-u4-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/2026-09-07-26465e6c-popcount-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/2026-09-08-26465e6c-and-popcnt-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/2026-09-08-26465e6c-popcount GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/v3-and-popcnt-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/v3-and-popcnt-pilot-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/26465e6c/v3-and-popcnt-pilot GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=3
+  P-11 error and-popcnt-w4096-vs-scalar-control cell started 2 times; completed cells must not repeat
+  P-11 error and-popcnt-w4096-vs-scalar-control cell-start input differs from the saved plan
+  P-11 error and-popcnt-w4096-vs-scalar-control cell has no single cell-start record
+dev/bench_results/26465e6c/v3-popcount-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=59
+  P-20 note popcount-w4-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w4-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w4-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w4-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w4-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w8-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w8-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w8-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w8-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w8-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w12-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w12-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w12-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w12-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w12-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w60-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w60-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w60-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w60-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w60-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w128-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w128-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w128-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w128-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w128-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-off24-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-off24-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-off24-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w256-off24-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-ones-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-ones-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-ones-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-ones-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-ones-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-zeros-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-zeros-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-zeros-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-zeros-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w64-zeros-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w16384-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w16384-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w16384-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w16384-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w16384-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w1m-streaming-vs-nibble-lut bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w1m-streaming-vs-scalar-popcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w1m-streaming-vs-compiler-count-ones bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w1m-streaming-vs-libpopcnt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note popcount-w1m-streaming-vs-mula-avx2-harley-seal bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+dev/bench_results/26465e6c/v3-popcount-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-fastest-compatible-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=6
+  P-19 note dvb-t2-r12-layered-f32-w1 candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note dvb-t2-r12-layered-f32-inter-w1 candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note dvb-t2-r12-layered-i16-inter-w1 candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note nr-bg1-z384-layered-f32-w1 candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note nr-bg1-z384-layered-f32-inter-w1 candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note nr-bg1-z384-layered-i16-inter-w1 candidate FER upper bound exceeds the predeclared tolerance
+dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-multicore-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/3be770d5/v3-r1-3be770d5-ldpc-steady-single-worker-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-multicore-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/3be770d5/v4-r1-3be770d5-ldpc-steady-single-worker-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/4c1e441f/r1-dense-product-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-crossover-wire-smoke GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-sweep2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-sweep GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-sweep2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-sweep GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6c6b09b1/2026-09-08-6c6b09b1-byte-field-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/6c6b09b1/v4-r1-matrix-product-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6c6b09b1/v4-r1-pairwise-control-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6c6b09b1/v4-r1-pairwise-control-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+dev/bench_results/6c6b09b1/v4-r1-region-axpy-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-bch-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-logical-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/2026-09-08-6fb89a3c-transpose-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-remeasure GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=9
+  P-20 note logical-xor-7w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-8w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-9w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-63w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-64w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-65w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-16w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-xor-32w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note logical-parity-3src-64w-vs-isal-base bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-logical-remeasure GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=8
+  P-20 note transpose-64-canonical-vs-m4ri bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-64-canonical-vs-bitshuffle bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-consumer-63-vs-m4ri bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-consumer-64-vs-m4ri bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-consumer-65-vs-m4ri bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-consumer-64-vs-bitshuffle-adapter bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-consumer-63-vs-bitshuffle-adapter bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note transpose-consumer-65-vs-bitshuffle-adapter bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-transpose-remeasure GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/6fb89a3c/v3-r2-6fb89a3c-transpose-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/ad2a6a58/r1-axpy-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c04dd4ac/residual-shift-profile GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c077a88b/2026-09-08-c077a88b-ldpc-matched-algorithm-pilot GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=4
+  P-05 error - producing inputs: No such file or directory (os error 2)
+  P-23 error - campaign-start freeze: saved plan producing manifest differs from campaign-start
+  P-18 error dvb-t2-r12-matched-pilot decoder cell reports no BER/FER evidence
+  P-18 error nr-bg1-z384-matched-pilot decoder cell reports no BER/FER evidence
+dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-matched-algorithm-pilot GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=2
+  P-05 error - producing inputs: No such file or directory (os error 2)
+  P-23 error - campaign-start freeze: saved plan producing manifest differs from campaign-start
+dev/bench_results/c077a88b/2026-09-08-r3-c077a88b-ldpc-quality-compatible-pilot GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=3
+  P-05 error - producing inputs: No such file or directory (os error 2)
+  P-23 error - campaign-start freeze: saved plan producing manifest differs from campaign-start
+  P-19 note dvb-t2-r12-i16-inter-pilot candidate FER upper bound exceeds the predeclared tolerance
+dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-matched-algorithm-pilot GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=2
+  P-05 error - producing inputs: No such file or directory (os error 2)
+  P-23 error - campaign-start freeze: saved plan producing manifest differs from campaign-start
+dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-ldpc-quality-compatible-pilot GF2_BENCHMARK_ACCEPTANCE=Rejected qualifies=false findings=3
+  P-05 error - producing inputs: No such file or directory (os error 2)
+  P-23 error - campaign-start freeze: saved plan producing manifest differs from campaign-start
+  P-19 note dvb-t2-r12-i16-inter-pilot candidate FER upper bound exceeds the predeclared tolerance
+dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-quality-compatible-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=6
+  P-19 note dvb-t2-r12-f32-scalar-pilot candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note dvb-t2-r12-f32-inter-pilot candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note dvb-t2-r12-i16-inter-pilot candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note nr-bg1-z384-f32-scalar-pilot candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note nr-bg1-z384-f32-inter-pilot candidate FER upper bound exceeds the predeclared tolerance
+  P-19 note nr-bg1-z384-i16-inter-pilot candidate FER upper bound exceeds the predeclared tolerance
+dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c7113c5a/2026-09-07-c7113c5a-polynomial-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c7113c5a/v3-r1-baselines-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=11
+  P-20 note poly-mul-4w-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-9w-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-64w-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-256w-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-2048w-streaming-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-256w-6core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-256w-12core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-256w-24smt bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note poly-mul-4w-public-api-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note internal-clmul-batch-1024-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note internal-gf2m-dot-1024-1core bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+dev/bench_results/c7113c5a/v3-r1-baselines-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/c7113c5a/v3-r1-host-targeting-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=6
+  P-20 note dvb-t2-qam16-r12-normal-gap-native-vs-xdsopl bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note dvb-t2-qam16-r12-normal-gap-portable-vs-xdsopl bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note dvb-t2-qam16-r12-normal-control-portable-vs-native bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note dvb-t2-qam64-r12-normal-gap-native-vs-xdsopl bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note dvb-t2-qam64-r12-normal-gap-portable-vs-xdsopl bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+  P-20 note dvb-t2-qam64-r12-normal-control-portable-vs-native bootstrap endpoints lack declared numerical resolution or twenty tail replicates
+dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot-r2 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/2026-09-08-eda07788-dvb-t2-v3-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/eda07788/eda07788-dvb-t2-v3-remeasure-r1 GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/2026-09-07-f547c394-protocol-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/v2-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/v2-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/v3-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/v3-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/v3-r2-confirmation GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f547c394/v3-r2-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-multicore-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
+dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-intra-frame-single-worker-pilot GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=false findings=0
