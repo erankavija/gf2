@@ -32,8 +32,8 @@
     {
       "commit": null,
       "doc_type": "data",
-      "label": "Pairs linked",
-      "path": "dev/active/fa787f85-documentation-overhaul/67048b47-missing-before.txt"
+      "label": "Linked pairs",
+      "path": "dev/active/fa787f85-documentation-overhaul/67048b47-linked-pairs.txt"
     }
   ],
   "first_ready_at": "2026-10-03T14:28:38.391569272Z",
@@ -76,5 +76,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Link unlinked owned artifacts to their issues",
-  "updated_at": "2026-10-03T17:47:31.156796956Z"
+  "updated_at": "2026-10-03T18:17:44.693674294Z"
 }
