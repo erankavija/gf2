@@ -497,7 +497,7 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
 
     #[inline]
     fn zero_hint() -> Option<Self> {
-        // CubicExt is always ConstField; delegate to the typed zero.
+        // CubicExt is always ConstField.
         Some(<Self as ConstField>::zero())
     }
 
@@ -552,9 +552,8 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
         Self::reduce_wide(wide)
     }
 
-    /// Delegates to the base field. Because each tower coefficient accumulates
-    /// independently, the per-component limit equals
-    /// `C::BaseField::max_unreduced_additions`.
+    /// Each tower coefficient accumulates independently, so the per-component
+    /// limit equals `C::BaseField::max_unreduced_additions`.
     fn max_unreduced_additions() -> usize {
         C::BaseField::max_unreduced_additions()
     }
