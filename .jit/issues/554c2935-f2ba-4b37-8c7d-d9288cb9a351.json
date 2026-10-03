@@ -34,7 +34,23 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T18:36:21.612970318Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T18:35:41.463925829Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-03T18:32:27.068812043Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "554c2935-f2ba-4b37-8c7d-d9288cb9a351",
   "labels": [
     "epic:documentation-overhaul",
@@ -45,5 +61,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Register citation keys for external works cited in Rust sources",
-  "updated_at": "2026-10-03T18:30:49.570610275Z"
+  "updated_at": "2026-10-03T18:36:21.612970318Z"
 }
