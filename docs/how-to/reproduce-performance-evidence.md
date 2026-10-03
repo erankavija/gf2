@@ -23,51 +23,63 @@ through rustup:
 rustup toolchain install 1.95.0
 ```
 
-From a gf2 clone, check out the claim's measured source revision in a separate
-worktree:
+From the root of a gf2 clone, check out the claim's measured source revision
+in a separate worktree and enter it:
 
 ```sh
+export GF2=$PWD
 git worktree add --detach ../gf2-f3-receipt 88474a74ceee
+cd ../gf2-f3-receipt
 ```
 
-That revision commits no `Cargo.lock`, so Cargo resolves dependency versions
-at build time.
-
-Run every following command from the clone's root. Build the harness at that
-revision and run its self-check, which asserts the size set, batch width and
-fixture-seed derivation without timing anything:
+Run every following command inside this worktree: the harness takes
+`git_revision` and `source_dirty` from git queries in its working directory,
+which Cargo sets to the package root. The revision has no
+`scripts/cargo-budget.sh`, so the commands call the clone's copy through
+`$GF2`. It commits no `Cargo.lock`, so Cargo resolves dependency versions at
+build time. Build the harness and run its self-check, which asserts the size
+set, batch width and fixture-seed derivation without timing anything:
 
 ```sh
-./scripts/cargo-budget.sh cargo +1.95.0 bench \
-    --manifest-path ../gf2-f3-receipt/Cargo.toml -p gf2-algebra \
+"$GF2"/scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-algebra \
     --bench batched_f3_permanent --features simd,test-support -- --self-check
 ```
 
 ## Run the measurement
 
-The receipt ran five fresh executions of five $250$ ms repetitions under an
-exclusive host lock on CPUs 6 to 11. Choose an idle core set on your host for
-`taskset`, keep other load off the machine, and write the output outside the
-measured worktree:
+The receipt ran five fresh executions of five $250$ ms repetitions under
+`dev/scripts/ccx1-bench-flock.sh`. The wrapper runs only with
+`GF2_BENCH_WINDOW=1` set, holds the host benchmark mutex
+(`/tmp/gf2-ccx1.lock`, overridden by `GF2_CCX1_LOCK`) exclusively for the
+whole command, and runs the command pinned to CPUs 6 to 11 under a best-effort
+`nice -n -5`. Every `cargo-budget.sh` invocation in a benchmark window takes
+that mutex shared, so builds and other measurements wait for the run. The run
+therefore sets `CARGO_CI_NO_LOCK=1` for its own cargo work, and
+`CARGO_CI_NO_NICE=1` keeps `cargo-budget.sh` from lowering its priority:
 
 ```sh
-for e in 1 2 3 4 5; do
-  CARGO_CI_NO_NICE=1 taskset -c 6-11 ./scripts/cargo-budget.sh cargo +1.95.0 \
-      bench --manifest-path ../gf2-f3-receipt/Cargo.toml -p gf2-algebra \
-      --bench batched_f3_permanent --features simd,test-support -- \
-      --execution "$e" --repetitions 5 --target-ms 250 \
-      --output /tmp/f3-repro.csv --append
-done
+GF2_BENCH_WINDOW=1 "$GF2"/dev/scripts/ccx1-bench-flock.sh bash -c '
+  for e in 1 2 3 4 5; do
+    CARGO_CI_NO_LOCK=1 CARGO_CI_NO_NICE=1 "$GF2"/scripts/cargo-budget.sh \
+        cargo +1.95.0 bench -p gf2-algebra --bench batched_f3_permanent \
+        --features simd,test-support -- \
+        --execution "$e" --repetitions 5 --target-ms 250 \
+        --output /tmp/f3-repro.csv --append
+  done'
 ```
 
-`CARGO_CI_NO_NICE=1` stops `cargo-budget.sh` from lowering the run's CPU and
-I/O priority. Before timing each size, the harness asserts that the three
-backends return equal permanents on one fixture. Each row records `git_revision`,
+The mutex excludes only processes that take it. On your host, reproduce the
+receipt's conditions by keeping all other load off the machine, and if CPUs 6
+to 11 do not form one idle core cluster there, replace the wrapper with
+`taskset -c` over one that does.
+
+Before timing each size, the harness asserts that the three backends return
+equal permanents on one fixture. Each row records `git_revision`,
 `source_dirty`, `rustc`, `cpu_model`, `kernel` and the `governor` of CPU 6. The
-harness sets `source_dirty` from `git status --porcelain --untracked-files=all`
-in the measured worktree, so an output path inside it marks every row dirty.
-Check that every row records revision
-`88474a74ceee817040327db164c21f9fdd5ccf84` and `source_dirty=false`.
+harness sets `source_dirty` from `git status --porcelain --untracked-files=all`,
+so an output path inside the worktree marks every row dirty. Check that every
+row records revision `88474a74ceee817040327db164c21f9fdd5ccf84` and
+`source_dirty=false`.
 
 ## Compare with the receipt
 
@@ -84,8 +96,8 @@ sha256sum /tmp/f3-receipt.csv
 
 The claim's statistic is a ratio of pooled rates per size $n$, where a
 backend's pooled rate is its summed `matrices` over its summed `elapsed_ns`.
-This script prints the
-batched-to-scalar and scalar-to-direct ratios from both files:
+This script prints the batched-to-scalar and scalar-to-direct ratios from both
+files:
 
 ```python
 import csv, sys
