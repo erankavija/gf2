@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:28:40.882736805Z",
+  "dependencies": [],
+  "description": "Several ignored gf2-coding tests carry no reason or a prefix outside the tier vocabulary of `AGENTS.md` (`slow:` and `sim:`), so the nightly tiers cannot classify them.\n\n## Background\n\nFound while aligning the DVB-T2 conformance tests: `external:` reasons in `tests/verify_cached_generator.rs`, `bench:` reasons in `tests/ira_encoder_correctness.rs` and `tests/ldpc_cache_io.rs`, and bare `#[ignore]` attributes in `tests/nr5g_regression.rs`, `src/ldpc/core.rs` and `src/bcjr/mod.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: Every `#[ignore]` attribute under `crates/gf2-coding/` carries a descriptive reason whose prefix is in the tier vocabulary of `AGENTS.md`, or the test self-gates on required host data or benchmark mode as `AGENTS.md` describes.\n- [hard] REQ-02: No test's assertions change, and the Rust CI gate passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:28:40.882736805Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "18db6e3d-7657-4b94-8662-06e989e6deb0",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Give every ignored gf2-coding test a tier-vocabulary ignore reason",
+  "updated_at": "2026-10-03T13:28:50.040161116Z"
+}

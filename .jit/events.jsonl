@@ -15779,3 +15779,6 @@
 {"fields":["description"],"id":"e27dfcb0-f301-4239-a39f-6010265ac6e5","issue_id":"7039d680-06da-481e-b000-5f9bba44e9ee","timestamp":"2026-10-03T13:27:28.008489995Z","type":"issue_updated","updated_by":"issue-update"}
 {"from":"backlog","id":"87cacc5c-c543-41ab-b0b0-51bf358d3501","issue_id":"c84ac71a-b9e8-4b10-9ebb-b433f7077dae","timestamp":"2026-10-03T13:27:28.101809946Z","to":"rejected","type":"issue_state_changed"}
 {"fields":["description"],"id":"0a1533c0-488b-4af3-8899-61c10bb1891c","issue_id":"7039d680-06da-481e-b000-5f9bba44e9ee","timestamp":"2026-10-03T13:27:47.896637825Z","type":"issue_updated","updated_by":"issue-update"}
+{"id":"29990db8-b2f1-4276-bdae-f5ce1a0e5dd9","issue_id":"18db6e3d-7657-4b94-8662-06e989e6deb0","priority":"normal","timestamp":"2026-10-03T13:28:40.882736805Z","title":"Give every ignored gf2-coding test a tier-vocabulary ignore reason","type":"issue_created"}
+{"from":"ready","id":"8a53b7b9-bf15-4893-baca-4d9fb7f589a4","issue_id":"18db6e3d-7657-4b94-8662-06e989e6deb0","timestamp":"2026-10-03T13:28:50.040161116Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"d1f4173c-99a0-44de-abcd-2068fb5d1a15","issue_id":"b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e","timestamp":"2026-10-03T13:28:52.666924745Z","type":"issue_updated","updated_by":"dependency-add"}
