@@ -17,6 +17,7 @@
     "3d522ba0-818c-4788-a0bc-180b254e1566",
     "45a962da-b51a-4bf5-b147-9c5ffec18634",
     "58a4bb51-72ee-4cdb-92dc-a5303726b0a7",
+    "63cc5518-ecc6-40ef-b0c8-a4b6688bab37",
     "79873126-1d34-4dd9-ba67-e3f691242ed9",
     "8b3fe657-586c-4191-813e-6ab7799a28ab",
     "8d5b7ad7-fbbb-4f41-8e85-ac9cfe55aa8c",
@@ -26,6 +27,7 @@
     "c11640f2-7ebc-4167-94c4-bd781df1452a",
     "dfb8820b-93a9-40f0-bf90-1d29ea22d48e",
     "e1ff915f-c119-45a1-a177-a80bc3782869",
+    "e250b5bb-c5b7-4e9a-937d-6ffb519f1f6f",
     "f258468e-a973-4b07-a663-99b18e1e8713"
   ],
   "description": "Remediation of technical debt surfaced by the 2026-06-30 workflow-driven assessment of the gf2 workspace. The assessment audited all six crates against the project coding ideals (AGENTS.md + @/gate/code-review) and for documentation drift, producing 71 verified findings (1 critical, 6 high, 44 medium, 20 low) across 9 dimensions: tail-masking, unsafe-isolation, bitwise-arithmetic, functional-api, doc-completeness, test-conventions, msrv, ssot-duplication, separation-of-concerns, doc-drift.\n\nThe full report is attached to this epic via `jit doc list`.\n\n## Scope\n\nThis epic covers the code-debt half of the assessment. Documentation-drift findings transferred to the documentation-overhaul epic on 2026-08-07 so that code remediation is not gated on the documentation contract; the transfer is itemised under \"Transferred scope\" below.\n\n- **Critical/high (5 code findings retained):** one task each, covering the single correctness hole (`BitVec::from_words` tail masking), the unsafe-doc isolation gap, the `polar_transform` performance regression, the CI-budget-breaking `SimulationRunner` tests, and the F_3 permanent bound stated in the gf2-kernels-hip FFI docs.\n- **Medium/low (64 findings):** filed as dimension-scoped bundles after scoping with the user; granularity and inclusion decided per dimension.\n\n## Transferred scope\n\nTracked under epic `fa787f85` (Overhaul documentation for research adoption), reconciled through its REQ-18:\n\n- `44c98235` — Rewrite README for research adoption (high, doc-drift).\n- `84db2984` — Fix `SparseFieldMatrix::from_entries` reference in FieldMatrix deck (high, doc-drift; rejected as obsolete).\n- `12907582` — Correct surviving source-level documentation drift (medium/low doc-drift bundle).\n- Rustdoc `# Examples` additions for accessor-shaped public API, split out of `aabc528a` because they are governed by the non-trivial-example policy that `3f29e945` establishes.\n\n## Success Criteria\n\n- [hard] REQ-01: All five retained critical/high code findings have dedicated task issues wired under this epic; the transferred documentation findings are tracked under `fa787f85` and itemised in \"Transferred scope\" above.\n- [hard] REQ-02: The assessment report is linked to this epic via `jit doc add`.\n- [hard] REQ-03: Every child task carries explicit, verifiable success criteria traceable to a report finding.\n- [hard] REQ-04: The epic is `done` only when all child tasks are `done` or explicitly rejected with justification.\n",
@@ -52,5 +54,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Technical debt assessment remediation (2026-06-30)",
-  "updated_at": "2026-10-03T15:08:44.099246066Z"
+  "updated_at": "2026-10-03T15:29:15.515918645Z"
 }

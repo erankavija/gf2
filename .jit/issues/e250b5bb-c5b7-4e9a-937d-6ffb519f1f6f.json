@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T15:29:14.947742336Z",
+  "dependencies": [],
+  "description": "`scripts/cargo-ci.sh` exports `TMPDIR` to a scratch directory that it removes on exit. An sccache server first started inside a CI run inherits that `TMPDIR`; after the run every compile through that server fails with `sccache: error: Failed to create temp dir`, in every checkout on the host.\n\n## Success Criteria\n\n- [hard] REQ-01: An sccache server started during a `scripts/cargo-ci.sh` run keeps working after the run's scratch directory is removed, shown by a self-test or a recorded reproduction with exact commands.\n- [hard] REQ-02: Test processes still place their scratch trees under the run's scratch directory, and the fixture-leak check is unchanged.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T15:29:14.947742336Z",
+  "gates_required": [
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "e250b5bb-c5b7-4e9a-937d-6ffb519f1f6f",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:tooling",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "cargo-ci leaves an sccache server bound to its deleted scratch TMPDIR",
+  "updated_at": "2026-10-03T15:29:15.098954115Z"
+}

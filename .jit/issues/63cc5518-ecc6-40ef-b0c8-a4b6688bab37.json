@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T15:29:15.263114966Z",
+  "dependencies": [],
+  "description": "`closure_path` in `dev/scripts/check-campaign-producing-closure.py` requires the protocol documents of a campaign to lie in one directory. A byte-identical archived copy of a protocol document fails the `campaign-producing-closure` CI step, while the Rust lookups count identical copies as one file.\n\n## Success Criteria\n\n- [hard] REQ-01: The closure check counts byte-identical copies of a protocol document as one document, through the same rule as `tuning_campaign_support::repository::distinct_contents`.\n- [hard] REQ-02: Documents with the same identity and different bytes remain an error, covered by the script's self-test.\n- [hard] REQ-03: The check holds no hard-coded `dev/` path or archive-path exclusion list.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T15:29:15.263114966Z",
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "63cc5518-ecc6-40ef-b0c8-a4b6688bab37",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:tooling",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Producing-closure check requires protocol documents in one directory",
+  "updated_at": "2026-10-03T15:29:15.414926169Z"
+}
