@@ -1,9 +1,4 @@
 //! Stage trait shapes and the type-erasure layer.
-//!
-//! This module lifts §1 "Stage / Connector trait shapes" of the design doc
-//! (`@/issue/ec530af9`) into code:
-//! [`Stage`], the [`AnyStage`] / [`TypedBatch`] / [`AnyScratch`] type-erasure
-//! layer, and the [`ExecutionClass`] / [`FallbackKind`] enums.
 
 use std::any::TypeId;
 use std::marker::PhantomData;
@@ -14,65 +9,18 @@ use crate::error::StageError;
 ///
 /// Stages are the unit of composition in a [`Pipeline`](crate::Pipeline).
 /// Each stage is `Send + Sync` so the executor can run many in parallel.
-///
-/// # Associated types
-///
-/// * [`Scratch`](Stage::Scratch) — per-stage scratch storage acquired from a
-///   pool by the executor; reused across batches to amortise allocation.
-/// * [`CpuFallback`](Stage::CpuFallback) — the compile-time-bound CPU stage the
-///   executor substitutes on GPU out-of-memory (see design doc §8). A pure-CPU
-///   stage names `Self` as its own fallback.
-///
-/// # Deviation from the design doc
-///
-/// The design doc writes `type CpuFallback: Stage<I, O> = Self;` using an
-/// associated-type default. Associated-type defaults are unstable on the
-/// MSRV (Rust 1.95); the default is therefore omitted and each implementor
-/// names its fallback explicitly (`type CpuFallback = Self;` for CPU stages).
-/// The intent — a compile-bound CPU fallback per Q6 — is preserved.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stage::{ExecutionClass, Stage};
-/// use gf2_sim::error::StageError;
-///
-/// struct Identity;
-///
-/// impl Stage<u8, u8> for Identity {
-///     type Scratch = ();
-///     type CpuFallback = Self;
-///
-///     fn process(&self, input: &u8, _scratch: &mut ()) -> Result<u8, StageError> {
-///         Ok(*input)
-///     }
-///
-///     fn execution_class(&self) -> ExecutionClass {
-///         ExecutionClass::CpuOnly
-///     }
-/// }
-/// ```
 pub trait Stage<I, O>: Send + Sync {
     /// Per-stage scratch storage (acquired from a pool by the executor).
     ///
-    /// Bounded `'static` so the erasure layer ([`ErasedStage::process_any`])
-    /// can `downcast_mut` the type-erased [`AnyScratch`] back to this concrete
-    /// type via [`TypeId`]; `Any`-based downcasting requires `'static`. Scratch
-    /// is owned, pool-acquired storage, so this is not a practical restriction.
+    /// `'static` because [`ErasedStage::process_any`] downcasts the
+    /// type-erased [`AnyScratch`] through `Any`.
     type Scratch: Default + Send + Sync + 'static;
 
-    /// Compile-time-bound CPU fallback for OOM substitution (design doc §8).
-    ///
-    /// A pure-CPU stage names `Self`. GPU stages name the paired CPU stage so
-    /// the executor (`42eac5cc`) can substitute on out-of-memory.
+    /// CPU stage the executor substitutes on GPU out-of-memory. A pure-CPU
+    /// stage names `Self`.
     type CpuFallback: Stage<I, O>;
 
     /// Processes one batch, writing into the supplied `scratch` as needed.
-    ///
-    /// # Arguments
-    ///
-    /// * `input` — the input batch.
-    /// * `scratch` — reusable per-stage scratch storage.
     ///
     /// # Errors
     ///
@@ -81,7 +29,7 @@ pub trait Stage<I, O>: Send + Sync {
 
     /// Whether this stage prefers a structure-of-arrays input layout.
     ///
-    /// Defaults to `true`; SoA is the pipeline's internal layout (design doc §2).
+    /// Defaults to `true`.
     fn prefers_soa(&self) -> bool {
         true
     }
@@ -91,9 +39,8 @@ pub trait Stage<I, O>: Send + Sync {
 
     /// Returns the paired CPU fallback stage, if any.
     ///
-    /// Defaults to `None` for CPU-only stages. GPU stages MUST override and
-    /// return `Some(&fallback)` so the executor can substitute on OOM
-    /// (design doc §8).
+    /// Defaults to `None`. A GPU stage overrides it so the executor can
+    /// substitute on OOM.
     fn cpu_fallback(&self) -> Option<&Self::CpuFallback> {
         None
     }
@@ -111,8 +58,6 @@ pub enum ExecutionClass {
 }
 
 /// How a [`Stage`]'s CPU fallback is provided.
-///
-/// Consumed by the executor (design doc §8) to decide OOM substitution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FallbackKind {
     /// The stage is its own fallback (CPU stages).
@@ -124,21 +69,15 @@ pub enum FallbackKind {
     None,
 }
 
-/// Marker trait implemented by all batch types crossing stage boundaries.
+/// A batch type crossing a stage boundary.
 ///
-/// Concrete impls are auto-derived for the pipeline batch types (`LlrBatch`,
-/// `SymbolBatch`, `BitPackedBatch`, `HardDecisionBatch`, …). The blanket [`AnyStage`] impl downcasts through this trait at the
-/// connector boundary.
+/// Implemented for every [`BatchSize`] type by a blanket impl;
+/// [`ErasedStage`] downcasts through it.
 pub trait TypedBatch: std::any::Any + Send + Sync {
     /// The number of frames in this batch.
     fn batch_size(&self) -> usize;
 
     /// Returns an `&dyn Any` view of this batch for downcasting.
-    ///
-    /// `&dyn TypedBatch` cannot be coerced to `&dyn Any` directly (the latter
-    /// is not a supertrait pointer), so the erasure layer routes downcasts
-    /// through this method. Provided by the blanket impl below; implementors
-    /// never override it.
     fn as_any(&self) -> &dyn std::any::Any;
 }
 
@@ -154,20 +93,13 @@ impl<T: std::any::Any + Send + Sync + BatchSize> TypedBatch for T {
 
 /// Provides the frame count for a concrete batch type.
 ///
-/// Implement this on each batch newtype; the blanket [`TypedBatch`] impl then
-/// supplies the `as_any` downcast hook automatically. Splitting the
-/// `batch_size` requirement out of [`TypedBatch`] lets `TypedBatch` carry a
-/// blanket impl (which would otherwise conflict with manual `as_any`
-/// definitions) while keeping a single thing for batch types to implement.
+/// Implementing it supplies [`TypedBatch`] through the blanket impl.
 pub trait BatchSize {
     /// The number of frames in this batch.
     fn batch_size(&self) -> usize;
 }
 
-/// Type-erased scratch holder.
-///
-/// Concrete [`Stage::Scratch`] types implement this via the blanket impl
-/// below, letting the executor hold heterogeneous scratch behind one type.
+/// Type-erased scratch holder, implemented for every `Any + Send` type.
 pub trait AnyScratch: Send {
     /// Returns a mutable `Any` view for downcasting back to the concrete type.
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
@@ -181,20 +113,8 @@ impl<T: std::any::Any + Send> AnyScratch for T {
 
 /// Type-erased [`Stage`] handle held by a [`Pipeline`](crate::Pipeline).
 ///
-/// A concrete `Stage<I, O>` is erased to `Box<dyn AnyStage>` via the
-/// [`ErasedStage`] adapter (or the [`erase`] convenience constructor); the
-/// adapter's `process_any` downcasts the input batch via [`TypedBatch`], runs
-/// the concrete stage, and re-erases the output. This lets the pipeline own a
-/// heterogeneous `Vec<Box<dyn AnyStage>>`.
-///
-/// # Blanket-impl realisation
-///
-/// The design doc (`@/issue/ec530af9` §1) describes `AnyStage` as "implemented for every `Stage<I,
-/// O>` via a blanket impl". A literal `impl<I, O, S: Stage<I, O>> AnyStage for S` does **not**
-/// compile: the type parameters `I` and `O` are unconstrained by the `Self` type (`S`), which Rust
-/// rejects with E0207. The [`ErasedStage`] wrapper threads `I`/`O` through a `PhantomData` field so
-/// the impl's `Self` type does constrain them, achieving the same effect. Any `Stage` becomes an
-/// `AnyStage` through [`erase`].
+/// [`erase`] turns a concrete `Stage<I, O>` into a `Box<dyn AnyStage>` through
+/// the [`ErasedStage`] adapter.
 pub trait AnyStage: Send + Sync {
     /// The [`TypeId`] of the input batch type.
     fn input_type(&self) -> TypeId;
@@ -225,15 +145,7 @@ pub trait AnyStage: Send + Sync {
     /// Returns an [`Any`](std::any::Any) view of the **concrete** stage behind
     /// this erased handle, or `None` if the implementor does not expose one.
     ///
-    /// The hybrid executor routes a pipeline's stages by
-    /// [`execution_class`](AnyStage::execution_class) and must downcast the
-    /// discovered `GpuOnly` stage back to its concrete type to drive its
-    /// device-specific batch API (`Scheduler`, deliverable 3 of `75c22fa8`);
-    /// this hook is how the type-erased stage list supports that without
-    /// reopening the erasure layer per stage. The provided default returns
-    /// `None` so existing `AnyStage` implementors keep compiling;
-    /// [`ErasedStage`] — and therefore everything built via [`erase`] —
-    /// overrides it to expose the wrapped stage.
+    /// The default returns `None`; [`ErasedStage`] exposes the wrapped stage.
     fn stage_as_any(&self) -> Option<&dyn std::any::Any> {
         None
     }
@@ -241,68 +153,30 @@ pub trait AnyStage: Send + Sync {
     /// Allocates a fresh, default-initialised scratch of the concrete
     /// [`Stage::Scratch`] type behind this erased handle.
     ///
-    /// The DAG topology executor (`de160fc5`) — and any other consumer driving
-    /// erased stages via [`process_any`](AnyStage::process_any) — cannot name
-    /// the concrete scratch type, so this hook is the only way to obtain a
-    /// scratch that the stage's `process_any` downcast will accept.
-    ///
-    /// The provided default returns a unit `()` scratch so pre-existing
-    /// `AnyStage` implementors keep compiling; [`ErasedStage`] — and therefore
-    /// everything built via [`erase`] — overrides it to return
+    /// The default returns a `()` scratch; [`ErasedStage`] returns
     /// `S::Scratch::default()`.
     fn default_scratch(&self) -> Box<dyn AnyScratch> {
         Box::new(())
     }
 
     /// A human-readable name for this stage, used as the `stage_name` field of
-    /// the executor's per-stage `pipeline_stage` tracing spans (`de160fc5`).
+    /// the executor's per-stage `pipeline_stage` tracing spans.
     ///
-    /// The provided default returns `"unnamed-stage"` so pre-existing
-    /// `AnyStage` implementors keep compiling; [`ErasedStage`] — and therefore
-    /// everything built via [`erase`] — overrides it with
-    /// [`std::any::type_name`] of the wrapped concrete stage type.
+    /// The default returns `"unnamed-stage"`; [`ErasedStage`] returns
+    /// [`std::any::type_name`] of the wrapped stage type.
     fn name(&self) -> &'static str {
         "unnamed-stage"
     }
 
     /// Runs the stage's registered CPU fallback on a type-erased batch.
     ///
-    /// The OOM auto-fallback executor (`42eac5cc`) calls this when a GPU stage
-    /// returns a recoverable error: instead of calling [`process_any`] (which
-    /// would retry the same GPU path), it calls this method to invoke the
-    /// concrete [`Stage::CpuFallback`] registered on the stage.
-    ///
-    /// Returns `None` when the stage has no CPU fallback ([`cpu_fallback()`]
-    /// returns `None`). The provided default returns `None` so pre-existing
-    /// `AnyStage` implementors keep compiling; [`ErasedStage`] overrides it.
-    ///
-    /// # The `_scratch` parameter
-    ///
-    /// `_scratch` is the **faulting GPU stage's own** pooled scratch (the one
-    /// the executor holds for this stage position) — NOT the fallback's. The
-    /// fallback stage's scratch is a different concrete type, so the erased
-    /// impl cannot downcast `_scratch` for it; the parameter exists so a
-    /// future stage-specific override can thread positioned state across, and
-    /// is unused by the generic [`ErasedStage`] impl.
-    ///
-    /// # Scratch contract: `()`-scratch fallbacks only (§11)
-    ///
-    /// The generic erased impl runs the fallback with a **fresh
-    /// default-initialised scratch**. That is sound only when the fallback's
-    /// [`Stage::Scratch`] is `()` (true for the GPU LDPC BP and demap
-    /// fallbacks). A **stateful** fallback scratch — e.g. the hip-gated
-    /// `GpuAwgn`'s fallback
-    /// [`Awgn`](crate::channels::Awgn), whose
-    /// [`ChannelScratch`](crate::channels::awgn::ChannelScratch) default is a
-    /// seed-0 RNG — would make the fallback output depend on a
-    /// default-initialised RNG position instead of the §3 per-frame keying,
-    /// **silently violating the §11 byte-identity contract**. The erased impl
-    /// therefore REFUSES such fallbacks with a typed
-    /// [`BuildError::ExecutionValidation`](crate::error::BuildError::ExecutionValidation)
-    /// error naming the stage, rather than silently default-seeding.
-    ///
-    /// [`process_any`]: AnyStage::process_any
-    /// [`cpu_fallback()`]: Stage::cpu_fallback
+    /// Returns `None` when the stage has no CPU fallback; the default always
+    /// does. `_scratch` is the faulting GPU stage's scratch, which
+    /// [`ErasedStage`] ignores: it runs the fallback with a default-initialised
+    /// scratch of the fallback's own type. That is reproducible only for a
+    /// `()` scratch, so for any other fallback scratch type [`ErasedStage`]
+    /// returns
+    /// [`BuildError::ExecutionValidation`](crate::error::BuildError::ExecutionValidation).
     fn cpu_fallback_process_any(
         &self,
         _input: &dyn TypedBatch,
@@ -314,14 +188,9 @@ pub trait AnyStage: Send + Sync {
 
 /// Type-erasing adapter wrapping a concrete [`Stage<I, O>`] as an [`AnyStage`].
 ///
-/// This is how the design doc's "blanket impl on `Stage<I, O>`" is realised:
-/// a literal blanket impl is rejected by E0207 because `I`/`O` are
-/// unconstrained by the `Self` type, so the input/output types are threaded
-/// through a `PhantomData<fn(I) -> O>` field instead (which constrains them in
-/// the impl's `Self` type, and gives the correct contravariant-in-`I`,
-/// covariant-in-`O` variance without affecting drop checking or auto traits).
-///
-/// Use [`erase`] to box a stage without naming these generics by hand.
+/// `I` and `O` are carried in a `PhantomData<fn(I) -> O>` field: a blanket
+/// `impl<I, O, S: Stage<I, O>> AnyStage for S` leaves them unconstrained
+/// (E0207).
 pub struct ErasedStage<I, O, S> {
     stage: S,
     _io: PhantomData<fn(I) -> O>,
@@ -361,11 +230,8 @@ where
     }
 
     fn fallback_kind(&self) -> FallbackKind {
-        // A generic adapter cannot observe whether `S::CpuFallback == S`, so it
-        // cannot distinguish `SelfFallback` from the others. It reports
-        // `Registered` when the stage hands back a fallback and `None`
-        // otherwise. Presets that know a stage is its own fallback set
-        // `SelfFallback` when registering it with the executor (design doc §8).
+        // The adapter cannot observe whether `S::CpuFallback == S`, so it
+        // never reports `SelfFallback`.
         if self.stage.cpu_fallback().is_some() {
             FallbackKind::Registered
         } else {
@@ -416,13 +282,7 @@ where
         _scratch: &mut dyn AnyScratch,
     ) -> Option<Result<Box<dyn TypedBatch>, StageError>> {
         let fb = self.stage.cpu_fallback()?;
-        // §11 guard: the fallback runs with a FRESH default scratch below, which
-        // is reproducible only for a stateless `()` scratch (the GPU LDPC BP and
-        // demap fallbacks). A stateful fallback scratch (e.g. GpuAwgn's `Awgn`
-        // fallback with its `ChannelScratch` seed-0-RNG default) would silently
-        // replace the §3 per-frame RNG keying with a default-seeded stream,
-        // corrupting byte-identity — so it is REFUSED with a typed error
-        // instead (see the trait-method docs).
+        // A default scratch is reproducible only for a stateless `()` scratch.
         if TypeId::of::<<S::CpuFallback as Stage<I, O>>::Scratch>() != TypeId::of::<()>() {
             return Some(Err(StageError::Fatal(
                 crate::error::FatalError::BuildError(
@@ -448,8 +308,6 @@ where
                 }))
             }
         };
-        // Reaching here, the fallback's scratch is `()`: a fresh default IS the
-        // (only) correct scratch for the call.
         let mut fb_scratch = <<S::CpuFallback as Stage<I, O>>::Scratch as Default>::default();
         Some(
             fb.process(input, &mut fb_scratch)
@@ -459,10 +317,6 @@ where
 }
 
 /// Erases a concrete [`Stage<I, O>`] into a `Box<dyn AnyStage>`.
-///
-/// Convenience constructor wrapping [`ErasedStage::new`] so callers never name
-/// the `ErasedStage<I, O, S>` generics by hand. This is the single entry point
-/// by which any stage becomes pipeline-ready.
 ///
 /// # Examples
 ///
@@ -506,7 +360,6 @@ where
 mod tests {
     use super::*;
 
-    /// Tiny input batch newtype.
     #[derive(Debug, PartialEq, Eq)]
     struct InBatch(u64);
     impl BatchSize for InBatch {
@@ -515,8 +368,6 @@ mod tests {
         }
     }
 
-    /// Tiny output batch newtype (distinct type, so the output `TypeId` is
-    /// observably different from the input's).
     #[derive(Debug, PartialEq, Eq)]
     struct OutBatch(u64);
     impl BatchSize for OutBatch {
@@ -525,7 +376,6 @@ mod tests {
         }
     }
 
-    /// Trivial stage: doubles the wrapped value, recording the call in scratch.
     struct Doubler;
     impl Stage<InBatch, OutBatch> for Doubler {
         type Scratch = u32;
@@ -545,23 +395,19 @@ mod tests {
     fn test_erase_roundtrips_a_batch_through_process_any() {
         let erased: Box<dyn AnyStage> = erase(Doubler);
 
-        // Type ids reflect the concrete I/O newtypes and differ from each other.
         assert_eq!(erased.input_type(), TypeId::of::<InBatch>());
         assert_eq!(erased.output_type(), TypeId::of::<OutBatch>());
         assert_ne!(erased.input_type(), erased.output_type());
 
-        // CPU-only stage with no separate fallback registered.
         assert_eq!(erased.execution_class(), ExecutionClass::CpuOnly);
         assert_eq!(erased.fallback_kind(), FallbackKind::None);
 
-        // Round-trip one batch through the erased path.
         let input: Box<dyn TypedBatch> = Box::new(InBatch(21));
         let mut scratch: Box<dyn AnyScratch> = Box::new(0u32);
         let out = erased
             .process_any(input.as_ref(), scratch.as_mut())
             .expect("process_any should succeed");
 
-        // The erased output carries the correct concrete type and value.
         assert_eq!(out.as_any().type_id(), TypeId::of::<OutBatch>());
         let out = out
             .as_any()
@@ -569,7 +415,6 @@ mod tests {
             .expect("output downcasts to OutBatch");
         assert_eq!(*out, OutBatch(42));
 
-        // Scratch was threaded through and mutated by the concrete stage.
         // Deref the box to the `dyn AnyScratch` so `as_any_mut` dispatches to
         // the inner `u32`'s impl (not the blanket impl on `Box<dyn AnyScratch>`).
         let used = (*scratch)
@@ -581,9 +426,6 @@ mod tests {
 
     #[test]
     fn test_stage_as_any_downcasts_to_concrete_stage() {
-        // The erased handle must expose the wrapped concrete stage so the
-        // hybrid executor can downcast a class-routed stage (75c22fa8
-        // deliverable 3).
         let erased: Box<dyn AnyStage> = erase(Doubler);
         let any = erased
             .stage_as_any()
@@ -600,8 +442,6 @@ mod tests {
 
     #[test]
     fn test_default_scratch_matches_concrete_scratch_type() {
-        // The erased handle must hand back a scratch of the concrete
-        // `Stage::Scratch` type (here `u32`) that `process_any` accepts.
         let erased: Box<dyn AnyStage> = erase(Doubler);
         let mut scratch = erased.default_scratch();
         // Deref the box so `as_any_mut` dispatches to the inner scratch (the
@@ -630,7 +470,6 @@ mod tests {
     fn test_process_any_type_mismatch_on_wrong_input() {
         let erased: Box<dyn AnyStage> = erase(Doubler);
 
-        // Feed an OutBatch where an InBatch is expected.
         let wrong: Box<dyn TypedBatch> = Box::new(OutBatch(7));
         let mut scratch: Box<dyn AnyScratch> = Box::new(0u32);
         match erased.process_any(wrong.as_ref(), scratch.as_mut()) {
@@ -643,23 +482,10 @@ mod tests {
         }
     }
 
-    // ────────────────────────────────────────────────────────────────────
-    // HIGH-1 (42eac5cc r2 review): the erased fallback hook must REFUSE a
-    // fallback whose scratch is stateful, never silently default-seed it.
-    // ────────────────────────────────────────────────────────────────────
-
-    /// A GpuAwgn-shaped fallback: stateful scratch whose `Default` is a
-    /// sentinel "seed-0" position. If the erased hook ever ran this fallback
-    /// with a default scratch, the output would betray it (it returns the
-    /// scratch state, mirroring how `Awgn`'s seed-0 `ChannelScratch` default
-    /// would draw seed-0 noise).
     struct StatefulScratch(u64);
-    // `derive(Default)` would emit `StatefulScratch(Default::default())` = 0 —
-    // the same "seed 0" position. Explicit impl kept so the intent is clear.
     #[allow(clippy::derivable_impls)]
     impl Default for StatefulScratch {
         fn default() -> Self {
-            // The "seed 0" default a silent fallback would observe.
             StatefulScratch(0)
         }
     }
@@ -673,7 +499,6 @@ mod tests {
             _input: &InBatch,
             scratch: &mut StatefulScratch,
         ) -> Result<OutBatch, StageError> {
-            // Output depends on the scratch position — the §11 hazard.
             Ok(OutBatch(scratch.0))
         }
         fn execution_class(&self) -> ExecutionClass {
@@ -681,8 +506,6 @@ mod tests {
         }
     }
 
-    /// A GpuAwgn-shaped GPU stage registering `StatefulFallback` as its CPU
-    /// fallback (mirroring `GpuAwgn::CpuFallback = Awgn` with `ChannelScratch`).
     struct GpuLikeWithStatefulFallback {
         fallback: StatefulFallback,
     }
@@ -700,9 +523,6 @@ mod tests {
         }
     }
 
-    /// HIGH-1: a stateful-scratch fallback is refused with the typed
-    /// `BuildError::ExecutionValidation` — NOT silently run on a
-    /// default-initialised ("seed-0") scratch.
     #[test]
     fn test_stateful_scratch_fallback_is_refused_not_default_seeded() {
         let erased: Box<dyn AnyStage> = erase(GpuLikeWithStatefulFallback {
@@ -736,11 +556,8 @@ mod tests {
         }
     }
 
-    /// The `()`-scratch fallback contract is unchanged: stateless fallbacks
-    /// (the GPU LDPC BP / demap shape) still run through the erased hook.
     #[test]
     fn test_unit_scratch_fallback_still_runs() {
-        /// `()`-scratch fallback that maps the input through.
         struct UnitFallback;
         impl Stage<InBatch, OutBatch> for UnitFallback {
             type Scratch = ();
@@ -787,15 +604,11 @@ mod tests {
 
     #[test]
     fn test_prefers_soa_default_returns_true() {
-        // The default Stage::prefers_soa() must return true (Doubler does not
-        // override it, so this exercises the provided default).
         assert!(Doubler.prefers_soa());
     }
 
     #[test]
     fn test_anystage_default_method_impls() {
-        // A minimal AnyStage impl that does NOT override the three default methods
-        // (stage_as_any, default_scratch, name, cpu_fallback_process_any).
         struct MinimalAny;
         impl AnyStage for MinimalAny {
             fn input_type(&self) -> std::any::TypeId {
@@ -820,14 +633,10 @@ mod tests {
         }
 
         let m = MinimalAny;
-        // Default impl of stage_as_any returns None.
         assert!(m.stage_as_any().is_none());
-        // Default impl of default_scratch returns () boxed.
         let mut scratch = m.default_scratch();
         assert!((*scratch).as_any_mut().downcast_mut::<()>().is_some());
-        // Default impl of name returns "unnamed-stage".
         assert_eq!(m.name(), "unnamed-stage");
-        // Default impl of cpu_fallback_process_any returns None.
         let input: Box<dyn TypedBatch> = Box::new(InBatch(0));
         assert!(m
             .cpu_fallback_process_any(input.as_ref(), scratch.as_mut())
@@ -836,8 +645,6 @@ mod tests {
 
     #[test]
     fn test_fallback_kind_registered_for_stage_with_fallback() {
-        // Build a GPU stage whose cpu_fallback() returns Some; the erased handle
-        // must report FallbackKind::Registered (not FallbackKind::None).
         struct UnitFb2;
         impl Stage<InBatch, OutBatch> for UnitFb2 {
             type Scratch = ();
@@ -871,7 +678,6 @@ mod tests {
 
     #[test]
     fn test_process_any_scratch_type_mismatch() {
-        // Doubler expects Scratch = u32; passing u64 triggers TypeMismatch.
         let erased: Box<dyn AnyStage> = erase(Doubler);
         let input: Box<dyn TypedBatch> = Box::new(InBatch(5));
         let mut wrong_scratch: Box<dyn AnyScratch> = Box::new(0u64);
@@ -884,8 +690,6 @@ mod tests {
 
     #[test]
     fn test_cpu_fallback_process_any_type_mismatch_on_wrong_input() {
-        // A stage with a ()-scratch fallback (so the §11 guard passes), but the
-        // input type is wrong — must return TypeMismatch via the erased hook.
         struct UnitFb3;
         impl Stage<InBatch, OutBatch> for UnitFb3 {
             type Scratch = ();
@@ -914,7 +718,6 @@ mod tests {
             }
         }
         let erased: Box<dyn AnyStage> = erase(GpuWithUnitFb3 { fb: UnitFb3 });
-        // Feed OutBatch (wrong type) as input; the fallback expects InBatch.
         let wrong_input: Box<dyn TypedBatch> = Box::new(OutBatch(99));
         let mut scratch = erased.default_scratch();
         let result = erased

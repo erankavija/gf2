@@ -1,39 +1,4 @@
 //! Rayleigh flat-fading channel stage.
-//!
-//! This module provides the [`Rayleigh`] [`Stage`] impl, which
-//! models frequency-flat Rayleigh fading. Each symbol is multiplied by an
-//! independent complex fading coefficient `h ~ CN(0, 1)` and then corrupted by
-//! complex AWGN:
-//!
-//! ```text
-//! r = h * x + n
-//! ```
-//!
-//! where `h = (h_r + j*h_i) / sqrt(2)` with `h_r, h_i ~ N(0,1)` (so
-//! `E[|h|^2] = 1`), and `n = (n_r + j*n_i)` with `n_r, n_i ~ N(0, sigma^2)`.
-//!
-//! # Noise model
-//!
-//! `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` — the same per-axis variance as in
-//! the AWGN channel (`frame_sim.rs` SSOT). The fading and noise draws are
-//! interleaved from the **same** ChaCha20 stream. Each symbol draws a complex
-//! fading coefficient `h ~ CN(0, 1)` (one `draw_cn01` complex-normal draw
-//! = 2 normals = 8 words) **plus** complex noise `n` (2 normals = 8 words),
-//! consuming **16 ChaCha20 32-bit words per symbol** — twice AWGN's 8
-//! words/symbol, because the fading channel adds the fading draw on top of the
-//! noise draw. The QPSK-Normal worst case (32400 symbols ×16 ≈ 518k words/frame)
-//! still fits `FRAME_STRIDE = 2^20` (≈1.05 M words) with ~2× margin.
-//!
-//! A debug assertion guards that the total draw does not exceed
-//! `FRAME_STRIDE - 256` words.
-//!
-//! # Per-frame seek entry point (§3 contract)
-//!
-//! [`Rayleigh::apply_for_frame`] is the per-frame-seeked entry point: it calls
-//! [`WorkerCtx::reseek_to_frame`](crate::parallel::WorkerCtx::reseek_to_frame)
-//! (which internally performs `set_word_pos(worker_offset(...))`, the §3 seek)
-//! and then draws from that position. [`Stage::process`] is the executor-facing
-//! path consuming the scratch RNG which the Phase C executor pre-seeks.
 
 use rand_chacha::ChaCha20Rng;
 
@@ -46,26 +11,9 @@ use crate::stage::{ExecutionClass, Stage};
 
 /// Rayleigh flat-fading channel stage.
 ///
-/// Each symbol is passed through an independent complex fading coefficient
-/// `h ~ CN(0, 1)` plus AWGN noise, matching the standard frequency-flat
-/// Rayleigh model.
-///
-/// # Arguments (constructor)
-///
-/// * `es_n0_db` — channel Es/N0 in dB.
-/// * `bits_per_symbol` — modulation order in bits/symbol (stored for diagnostics).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::channels::rayleigh::Rayleigh;
-///
-/// let ch = Rayleigh::new(6.25, 4);
-/// assert_eq!(ch.bits_per_symbol(), 4);
-/// let sigma_sq = 1.0_f64 / (2.0 * 10.0_f64.powf(6.25 / 10.0));
-/// let expected_sigma = (sigma_sq as f32).sqrt();
-/// assert!((ch.sigma() - expected_sigma).abs() < 1e-7);
-/// ```
+/// Each symbol `x` becomes `r = h * x + n` with an independent
+/// `h ~ CN(0, 1)` (`E[|h|^2] = 1`) and complex AWGN `n` of per-axis variance
+/// `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))`.
 #[derive(Debug, Clone)]
 pub struct Rayleigh {
     /// Channel Es/N0 in dB.
@@ -77,12 +25,8 @@ pub struct Rayleigh {
 }
 
 impl Rayleigh {
-    /// Constructs a Rayleigh fading channel stage.
-    ///
-    /// # Arguments
-    ///
-    /// * `es_n0_db` — channel Es/N0 in dB.
-    /// * `bits_per_symbol` — modulation order in bits/symbol.
+    /// Constructs a Rayleigh fading channel stage; `bits_per_symbol` does not
+    /// enter the channel model.
     #[must_use]
     pub fn new(es_n0_db: f32, bits_per_symbol: usize) -> Self {
         let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
@@ -115,25 +59,6 @@ impl Rayleigh {
     }
 
     /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies the channel.
-    ///
-    /// This is the per-frame-seeked entry point implementing the §3 determinism
-    /// contract: it calls
-    /// [`WorkerCtx::reseek_to_frame`](crate::parallel::WorkerCtx::reseek_to_frame)
-    /// — which internally performs `set_word_pos(worker_offset(...))` — and then
-    /// draws from that position via [`apply`](Self::apply). The output is a pure
-    /// function of the frame index and therefore byte-identical across worker
-    /// counts.
-    ///
-    /// # Arguments
-    ///
-    /// * `batch` — the IQ symbol batch to corrupt in-place.
-    /// * `ctx` — the per-worker context whose RNG is reseeked to the frame.
-    /// * `frame_idx_in_worker` — the frame index to seek to (the global frame
-    ///   index for logical worker 0, per design doc §3).
-    ///
-    /// # Complexity
-    ///
-    /// O(N) where N is the total number of symbols across all frames in the batch.
     pub fn apply_for_frame(
         &self,
         batch: &mut SymbolBatch,
@@ -144,40 +69,27 @@ impl Rayleigh {
         self.apply(batch, ctx.rng_mut());
     }
 
-    /// Applies Rayleigh fading and AWGN to `batch` in-place, drawing from `rng`.
+    /// Applies Rayleigh fading and AWGN to `batch` in-place, drawing from `rng`
+    /// at its current position.
     ///
-    /// For each symbol, draws `h ~ CN(0, 1)` via the crate-private `draw_cn01`
-    /// helper and complex noise `n` (two `draw_standard_normal` calls
-    /// scaled by `sigma`), then sets `r = h * x + n`. The fading and noise draws
-    /// are interleaved from the same stream, consuming **16 ChaCha20 32-bit words
-    /// per symbol** (8 for `h`, 8 for `n`).
+    /// Per symbol, `h` is drawn first and then `n`, consuming 16 ChaCha20
+    /// 32-bit words (8 for `h`, 8 for `n`).
     ///
-    /// This consumes the RNG from wherever it is currently positioned;
-    /// [`apply_for_frame`](Self::apply_for_frame) is the per-frame-seeked wrapper.
+    /// # Panics
     ///
-    /// # Arguments
-    ///
-    /// * `batch` — the IQ symbol batch to corrupt in-place.
-    /// * `rng` — noise RNG seeked to the frame's §3 word-position offset.
-    ///
-    /// # Complexity
-    ///
-    /// O(N) where N is the total number of symbols across all frames in the batch.
+    /// In debug builds, if the call draws more than `FRAME_STRIDE - 256`
+    /// ChaCha20 words.
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
         let pos_before = rng.get_word_pos();
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
-                // Complex fading coefficient h ~ CN(0, 1) (per-component variance
-                // 1/2, so E[|h|^2] = 1 — the Rayleigh envelope).
                 let (h_r, h_i) = draw_cn01(rng);
 
-                // Apply fading: r_noiseless = h * x
                 let x_i = *xi;
                 let x_q = *xq;
                 let r_i = h_r * x_i - h_i * x_q;
                 let r_q = h_r * x_q + h_i * x_i;
 
-                // Complex AWGN noise n ~ CN(0, 2*sigma^2): n_r, n_q ~ N(0, sigma^2).
                 let n_i = draw_standard_normal(rng) * self.sigma;
                 let n_q = draw_standard_normal(rng) * self.sigma;
 
@@ -199,12 +111,7 @@ impl Stage<SymbolBatch, SymbolBatch> for Rayleigh {
     type CpuFallback = Self;
 
     /// Applies Rayleigh fading and AWGN to a copy of `input`, drawing from
-    /// `scratch.rng`.
-    ///
-    /// # Errors
-    ///
-    /// This stage is infallible in release builds; the debug-budget assertion
-    /// panics only in debug builds if the draw exceeds `FRAME_STRIDE - 256`.
+    /// `scratch.rng`; never returns `Err`.
     fn process(
         &self,
         input: &SymbolBatch,

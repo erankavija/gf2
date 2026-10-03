@@ -562,32 +562,21 @@ pub struct OsdBlockContext<'a> {
 
 /// A cell's ChaCha20 stream, positioned at one block's reserved region.
 ///
-/// This is the protocol's per-block seek: the stream is selected by the cell
-/// seed and positioned by [`worker_offset`]`(seed, 0, 0, block_index)`. A
-/// block's draws therefore depend on its global index alone, which is what
-/// makes a cell's counters, stopping index, and receipt byte-identical across
-/// worker counts and across a checkpoint boundary.
+/// The stream is selected by the cell seed and positioned by
+/// [`worker_offset`]`(seed, 0, 0, block_index)`, so a block's draws depend on
+/// its global index alone. Each block owns a reserved [`FRAME_STRIDE`] region;
+/// [`debug_assert_block_budget`] checks in debug builds that a block's draws
+/// stay inside it.
 ///
-/// Each block owns a reserved [`FRAME_STRIDE`] region, so a variable-consumption
-/// sampler — the campaign's rejection-sampled Gaussian noise — cannot draw into
-/// the next block's region.
-/// [`debug_assert_block_budget`] checks that in debug builds, as
-/// [`WorkerCtx`](crate::parallel::WorkerCtx) does per frame.
-///
-/// # Named exception to the shared worker context
-///
-/// This type mirrors [`WorkerCtx`](crate::parallel::WorkerCtx)'s seek surface
-/// instead of reusing it, and delegates the offset arithmetic to the shared
-/// [`worker_offset`]. `WorkerCtx` owns a `rand_chacha` 0.9 stream, while the
-/// campaign's channel (`gf2_coding::simulation::BpskAwgnChannel`) takes a
-/// `rand` 0.8 RNG, and the two ecosystems' `ChaCha20Rng` types do not
-/// interoperate. Their word-position
-/// contracts do agree — both count ChaCha20 32-bit words in a 68-bit space with
-/// `BLOCK_WORDS = 16` — so the same offsets are valid in both. The exception is
-/// recorded under `@/inv/convention-convergence` against JIT issue
-/// `c1b253cb` (the `rand` 0.8 holdout), whose convergence condition is
-/// `gf2-coding` moving to `rand` 0.9; JIT issue `90a88fa9` tracks converging
-/// the campaign execution stacks.
+/// This type has the seek surface of [`WorkerCtx`](crate::parallel::WorkerCtx)
+/// over a `rand` 0.8 stream: `WorkerCtx` owns a `rand_chacha` 0.9 stream, while
+/// the campaign's channel (`gf2_coding::simulation::BpskAwgnChannel`) takes a
+/// `rand` 0.8 RNG. Both streams count their position in ChaCha20 32-bit words,
+/// so the same offsets are valid in both
+/// (`block_streams_seek_to_the_shared_worker_offset` in
+/// `tests/osd_campaign_protocol.rs`). This is a named exception under
+/// `@/inv/convention-convergence`; its convergence condition is `gf2-coding`
+/// moving to `rand` 0.9.
 ///
 /// [`debug_assert_block_budget`]: Self::debug_assert_block_budget
 pub struct OsdBlockStream {
@@ -1049,11 +1038,12 @@ pub fn accepts_published_value(
 /// continues at the next block index. Each attempt is atomically checkpointed
 /// before the next cell, and terminal cells are skipped on recovery.
 ///
-/// `workers` is invocation-local: for a fixed campaign and seed every counter,
-/// the stopping index, and the receipt payload are byte-identical across worker
-/// counts, with the single-worker run as the reference. It is excluded from the
-/// campaign configuration identity and reaches a receipt only through the
-/// caller's recorded invocation argument vector.
+/// `workers` is invocation-local: for a fixed campaign and seed the receipt
+/// payload is byte-identical for 1, 2, 8 and 24 workers
+/// (`multi_worker_runs_reproduce_the_single_worker_reference` in
+/// `tests/osd_campaign_protocol.rs`). It is excluded from the campaign
+/// configuration identity and reaches a receipt only through the caller's
+/// recorded invocation argument vector.
 ///
 /// # Arguments
 ///
