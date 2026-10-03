@@ -132,8 +132,7 @@ pub fn last_effective_partition() -> Option<PermanentPartitionObservation> {
 ///
 /// Splits the `2^n - 1` non-empty-subset walk of
 /// [`super::bipedal3::permanent_bipedal3`] into chunks of
-/// [`permanent_chunk_len`] subsets and delegates to
-/// [`permanent_bipedal3_parallel_with_chunk`]. Output is identical to
+/// [`permanent_chunk_len`] subsets. Output is identical to
 /// `permanent_bipedal3` on the same matrix for every thread count and
 /// schedule.
 ///

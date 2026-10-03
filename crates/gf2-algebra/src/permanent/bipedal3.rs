@@ -12,9 +12,8 @@ use crate::packed::PackedFieldVec;
 use crate::permanent::bipedal3_multiword;
 
 /// Cached AVX2 function bundle for F_3 bipedal operations, or `None` if AVX2
-/// is absent at runtime. Delegates to
-/// [`gf2_kernels_simd::bipedal::detect_avx2`], which queries CPUID at most
-/// once per process.
+/// is absent at runtime; [`gf2_kernels_simd::bipedal::detect_avx2`] queries
+/// CPUID at most once per process.
 #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
 #[inline]
 fn maybe_bipedal_avx2() -> Option<gf2_kernels_simd::bipedal::BipedalAvx2Fns> {
