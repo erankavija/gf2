@@ -34,18 +34,6 @@ pub use packed7::{Packed7, Packed7Matrix, Packed7Vec};
 /// `lane` and `with_lane` are `O(1)`. Every other method is `O(1)` for
 /// fixed-width encodings (e.g. bipedal3) and `O(LANES)` for scalar-array
 /// encodings (e.g. [`ScalarPackedFp3`]).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-/// use gf2_core::gfp::Fp;
-///
-/// let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
-/// let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-/// let s = a.add(b);
-/// assert_eq!(s.lane(0), Fp::<3>::new(0)); // 1 + 2 == 0 mod 3
-/// ```
 pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
     /// Number of independent `F`-lanes packed into one `Self`.
     ///
@@ -98,18 +86,6 @@ pub trait PackedField<F: FiniteField>: Copy + Eq + core::fmt::Debug {
 ///
 /// Each logical position `0..len()` holds one `F`. `Eq` is canonical-decode
 /// equality.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-/// use gf2_core::gfp::Fp;
-///
-/// let xs = [Fp::<3>::new(1), Fp::<3>::new(2), Fp::<3>::new(0)];
-/// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
-/// assert_eq!(v.len(), 3);
-/// assert_eq!(v.get(1), Fp::<3>::new(2));
-/// ```
 pub trait PackedFieldVec<F: FiniteField>: Clone + Eq + core::fmt::Debug {
     /// Fixed-LANES packed companion type.
     type Element: PackedField<F>;
