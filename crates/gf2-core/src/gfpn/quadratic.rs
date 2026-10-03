@@ -657,10 +657,6 @@ mod tests {
     }
     type Fq2 = QuadraticExt<Fq2Config>;
 
-    // -----------------------------------------------------------------------
-    // Axiom test harness
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_quadratic_ext_fp7_field_axioms() {
         let strategy = (0..7u64, 0..7u64)
@@ -914,10 +910,6 @@ mod tests {
     fn test_size_of() {
         assert_eq!(std::mem::size_of::<Fq2>(), 2 * std::mem::size_of::<Fp<7>>());
     }
-
-    // -----------------------------------------------------------------------
-    // Wide accumulator tests
-    // -----------------------------------------------------------------------
 
     /// Wide is a real two-component accumulator, not an alias for `Self`.
     #[test]

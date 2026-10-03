@@ -827,8 +827,6 @@ mod tests {
     use super::*;
     use crate::field::{ConstField, FiniteField, FiniteFieldExt};
 
-    // --- Construction ---
-
     #[test]
     fn test_new_reduces_mod_p() {
         assert_eq!(Fp::<7>::new(10).value(), 3);
@@ -850,8 +848,6 @@ mod tests {
         assert_eq!(format!("{}", Fp::<7>::new(5)), "5");
         assert_eq!(format!("{}", Fp::<7>::new(0)), "0");
     }
-
-    // --- Basic arithmetic (GF(7)) ---
 
     #[test]
     fn test_add_gf7() {
@@ -890,8 +886,6 @@ mod tests {
         assert_eq!(F2::new(1).inv(), Some(F2::new(1)));
     }
 
-    // --- Inversion + division ---
-
     #[test]
     fn test_inv_gf7() {
         assert_eq!(Fp::<7>::new(3).inv(), Some(Fp::<7>::new(5))); // 3 * 5 = 15 ≡ 1
@@ -911,8 +905,6 @@ mod tests {
             assert!(Fp::<7>::new(v).pow(6).is_one());
         }
     }
-
-    // --- Reference ops + AddAssign ---
 
     #[test]
     #[allow(clippy::op_ref)]
@@ -943,8 +935,6 @@ mod tests {
         assert_eq!(a, Fp::<7>::new(1));
         assert_eq!(b.value(), 5); // b still valid
     }
-
-    // --- FiniteField trait ---
 
     #[test]
     fn test_characteristic_and_extension() {
@@ -1017,8 +1007,6 @@ mod tests {
         let inv = a.inv().unwrap();
         assert!((a * inv).is_one());
     }
-
-    // --- ConstField ---
 
     #[test]
     fn test_const_field_order() {

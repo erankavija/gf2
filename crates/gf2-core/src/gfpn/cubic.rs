@@ -707,10 +707,6 @@ mod tests {
     }
     type Fq3 = CubicExt<Fq3Config>;
 
-    // -----------------------------------------------------------------------
-    // Axiom test harness
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_cubic_ext_fp7_field_axioms() {
         let strategy = (0..7u64, 0..7u64, 0..7u64)
@@ -995,10 +991,6 @@ mod tests {
     fn test_size_of() {
         assert_eq!(std::mem::size_of::<Fq3>(), 3 * std::mem::size_of::<Fp<7>>());
     }
-
-    // -----------------------------------------------------------------------
-    // Wide accumulator tests
-    // -----------------------------------------------------------------------
 
     /// Wide is a real three-component accumulator, not an alias for `Self`.
     #[test]

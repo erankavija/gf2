@@ -452,10 +452,6 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     P >= F32_MIN_PRIME_SELECTED && P <= 251 && n >= F32_MIN_COLS_SELECTED
 }
 
-// ---------------------------------------------------------------------------
-// Route-A dispatch toggle
-// ---------------------------------------------------------------------------
-
 #[cfg(all(feature = "simd", any(test, feature = "test-support")))]
 use std::sync::atomic::AtomicUsize;
 #[cfg(feature = "simd")]
@@ -499,10 +495,6 @@ fn route_a_gf251_enabled<const P: u64>() -> bool {
     }
     ROUTE_A_GF251_ENABLED.load(Ordering::Relaxed)
 }
-
-// ---------------------------------------------------------------------------
-// Route-C dispatch toggle
-// ---------------------------------------------------------------------------
 
 /// Process-wide debug switch for the route-C GF(251) pure-integer
 /// Goto/BLIS-style panelized micro-kernel; set through
@@ -1590,10 +1582,6 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     false
 }
 
-// ---------------------------------------------------------------------------
-// Packed matvec entry points
-// ---------------------------------------------------------------------------
-//
 // `fp_try_matvec` packs `A` and `x` per call for `FieldMatrix::matvec`;
 // `PackedFpMatrix` packs `A` once and reuses the pack across the matvec
 // calls of `cyclic_decomposition` and `wiedemann_minpoly_attempt`.
@@ -1942,10 +1930,6 @@ pub(crate) fn fp_try_axpy<const P: u64>(_y: &mut [Fp<P>], _a: &Fp<P>, _x: &[Fp<P
     false
 }
 
-// ---------------------------------------------------------------------------
-// Packed cyclic-decomposition basis cache
-// ---------------------------------------------------------------------------
-
 /// Cached canonical-form basis used by the cyclic-decomposition
 /// reduce loop. Each pivot column is stored once in canonical form
 /// (`P ≤ 251`: bytes; `252 ≤ P < 65536`: u16) and reused across all
@@ -2104,7 +2088,6 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
 #[cfg(feature = "simd")]
 impl<const P: u64> crate::field::matrix::BasisReducer<Fp<P>> for PackedFpBasis<P> {
     fn push_col(&mut self, col: &[Fp<P>]) {
-        // The pivot is the first non-zero entry.
         let pivot_row = col
             .iter()
             .position(|v| !v.is_zero())
@@ -2202,10 +2185,6 @@ pub(crate) fn fp_try_matvec<const P: u64>(
     false
 }
 
-// ---------------------------------------------------------------------------
-// PackedFpChainPolys<P> — canonical-byte chain-polynomial arithmetic
-// for `cyclic_decomposition`.
-//
 // Each chain polynomial of degree `d` is stored as a `Vec<u8>` of length
 // `d + 1` in ascending-degree order (coeffs[i] = coeff of x^i), with all
 // entries in `[0, P)`.  The Krylov-step update
@@ -2215,7 +2194,6 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 // prepends a zero byte, then applies one fused `sub_scaled` per non-zero
 // α_j. `finish_buf` converts the bytes back to `FieldPoly<Fp<P>>` via
 // `Fp::new`.
-// ---------------------------------------------------------------------------
 
 /// Packed canonical-byte chain-polynomial store for small primes (`P ≤ 251`),
 /// used by `cyclic_decomposition`.
@@ -2500,10 +2478,6 @@ pub(crate) fn fp_ple_panel_lane<const P: u64>() -> Option<PlePanelLane> {
 pub(crate) fn fp_ple_panel_lane<const P: u64>() -> Option<PlePanelLane> {
     None
 }
-
-// ---------------------------------------------------------------------------
-// Medium-prime PLE base-case dispatch
-// ---------------------------------------------------------------------------
 
 /// Per-prime u16 inverse table for medium primes `Fp<P>` (`P ∈ (251,
 /// 65536)`). `inv_table[v]` is the modular inverse of `v` for `v ∈

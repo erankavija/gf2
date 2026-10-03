@@ -1085,11 +1085,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Cross-verification: specialized Fp<P> against naive `%` AND against
-    // a reference Montgomery path recomputed locally.
-    // -----------------------------------------------------------------------
-
     use crate::field::two_adic::BABYBEAR_P;
     use crate::field::FiniteField;
     use crate::gfp::Fp;
@@ -1246,7 +1241,6 @@ mod tests {
             prop_assert!((fa * inv).is_one());
         }
 
-        // Montgomery cross-verification against the standalone reference.
 
         #[test]
         fn proptest_fp_mersenne31_mul_matches_montgomery(a in 0..M31, b in 0..M31) {
