@@ -1,13 +1,13 @@
 {
   "record_version": 2,
   "id": "jit-default",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatible_jit": ">=1.0.0, <2.0.0",
   "origin": {
     "source": "directory",
     "location": "packages/jit-default"
   },
-  "package_hash": "5414306b4969d52c7046e77e157f97033ed81604084eeca57e83dd0aa4cc3a62",
+  "package_hash": "20a18a3e8c49cdaa8a3a5f418586633b8110d9da965b4185106e2e5ce6257b56",
   "variables": {},
   "claims": [
     {
@@ -434,36 +434,6 @@
           "target": {
             "kind": "set-string",
             "target": "documentation-managed-paths",
-            "value": "dev/design"
-          }
-        }
-      },
-      "base_fingerprint": "e001c2c19486e98ca0c45bdb1bea2c3430a7a1785ed43026ce225fd2b64c2752",
-      "retain_if_unowned": false
-    },
-    {
-      "identity": {
-        "kind": "semantic",
-        "identity": {
-          "registry": "config",
-          "target": {
-            "kind": "set-string",
-            "target": "documentation-managed-paths",
-            "value": "dev/experiments"
-          }
-        }
-      },
-      "base_fingerprint": "0974b641ddb2c4baf24d04e000ac1afe374a0a93257f2954e7006d2869460520",
-      "retain_if_unowned": false
-    },
-    {
-      "identity": {
-        "kind": "semantic",
-        "identity": {
-          "registry": "config",
-          "target": {
-            "kind": "set-string",
-            "target": "documentation-managed-paths",
             "value": "dev/plans"
           }
         }
@@ -524,36 +494,6 @@
           "target": {
             "kind": "set-string",
             "target": "documentation-permanent-paths",
-            "value": "dev/TESTING.md"
-          }
-        }
-      },
-      "base_fingerprint": "51bc26f5c0e95f9b4435156ed38f631e6ec97347df890ba3dfaa99a7945983d2",
-      "retain_if_unowned": false
-    },
-    {
-      "identity": {
-        "kind": "semantic",
-        "identity": {
-          "registry": "config",
-          "target": {
-            "kind": "set-string",
-            "target": "documentation-permanent-paths",
-            "value": "dev/architecture"
-          }
-        }
-      },
-      "base_fingerprint": "a8387512370dda87f84994ad377d60ca8645ffa8ebbd32e4a90d1e3358244eb8",
-      "retain_if_unowned": false
-    },
-    {
-      "identity": {
-        "kind": "semantic",
-        "identity": {
-          "registry": "config",
-          "target": {
-            "kind": "set-string",
-            "target": "documentation-permanent-paths",
             "value": "dev/authoring-conventions.md"
           }
         }
@@ -569,41 +509,11 @@
           "target": {
             "kind": "set-string",
             "target": "documentation-permanent-paths",
-            "value": "dev/eval"
-          }
-        }
-      },
-      "base_fingerprint": "9a628bd1db71d7f56963251fa395decc17a866896553462eccd4e7c47d2f5705",
-      "retain_if_unowned": false
-    },
-    {
-      "identity": {
-        "kind": "semantic",
-        "identity": {
-          "registry": "config",
-          "target": {
-            "kind": "set-string",
-            "target": "documentation-permanent-paths",
             "value": "dev/index.md"
           }
         }
       },
       "base_fingerprint": "f987a224ac4801c2203e04373ae60ad912c4225b42a79412383f95ca478b40f1",
-      "retain_if_unowned": false
-    },
-    {
-      "identity": {
-        "kind": "semantic",
-        "identity": {
-          "registry": "config",
-          "target": {
-            "kind": "set-string",
-            "target": "documentation-permanent-paths",
-            "value": "dev/vision"
-          }
-        }
-      },
-      "base_fingerprint": "f888ebdb0cf0e6d6ca1764dfe4aad4b0ef77aec1d6fe032ffab1175f571d7157",
       "retain_if_unowned": false
     },
     {
