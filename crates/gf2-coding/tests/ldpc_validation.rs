@@ -479,7 +479,7 @@ mod edge_case_validation {
 }
 
 #[test]
-#[ignore = "external: requires DVB-T2 ETSI test vectors at $DVB_TEST_VECTORS_PATH"]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_parity_construction() {
     let Some(base_path) = common::dvb_vectors_dir() else {
         common::skip(
