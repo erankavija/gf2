@@ -1,64 +1,43 @@
 # gf2-sim
 
-Deterministic, resumable simulation pipelines for forward error correction, built on [`gf2-coding`](../gf2-coding/). A `Pipeline` composes typed `Stage`s joined by `Connector`s into a BICM chain whose frame loop runs across CPU workers and, under the `hip` feature, a HIP device. A fixed seed and configuration give identical results across worker counts and across checkpoint and resume.
+Simulation orchestration layer of the gf2 workspace. `gf2-sim` composes the
+codes and modems of [`gf2-coding`](../gf2-coding/README.md) into a `Pipeline`
+of typed `Stage`s and runs seeded, checkpointed error-rate sweeps on CPU
+workers and, with the `hip` feature, on a HIP device. It also holds the
+checkpointed ordered-statistics-decoding and permanent-zero-fraction campaigns
+built on `gf2-coding`, [`gf2-algebra`](../gf2-algebra/README.md) and
+[`gf2-stats`](../gf2-stats/README.md).
 
-## Capabilities
+## When to choose it
 
-- `pipeline`, `stage`, `connector`, `batch`: typed stages and batches composed into a pipeline.
-- `graph`: hand-wired stage DAGs for non-standard chains.
-- `presets`, `stages`: compile-time-ordered DVB-T2 (BCH+LDPC BICM, `@/citation/Etsi2015`) and 5G NR (LDPC BG1 and BG2, `@/citation/ThreeGpp2017`) chains.
-- `channels`: AWGN, Rayleigh and Rician flat-fading.
-- `executor`, `parallel`: CPU and GPU scheduling with per-worker seekable random streams.
-- `checkpoint`, `snr_checkpoint`: crash-safe checkpoints and SNR-sweep resume.
-- `osd_campaign`, `permanent_campaign`, `permanent_rare_event`: resumable OSD, permanent-zero-fraction and rare-event campaigns.
-- `observability`: JSON-lines tracing for campaign heartbeats.
+Choose `gf2-sim` when a study needs an error-rate sweep or a campaign that is
+seeded, distributed over workers and resumable from checkpoints. The component
+crates serve work below that layer: `gf2-coding` for codes, decoders, modems,
+channel models and its `sim_runner` campaign files, `gf2-algebra` for
+permanent computation, `gf2-stats` for sampling and interval statistics, and
+[`gf2-core`](../gf2-core/README.md) for field arithmetic and linear algebra.
 
-## When to choose gf2-sim
+## Documentation
 
-- BLER/FER sweeps of the DVB-T2 or 5G NR LDPC chains with byte-reproducible results across worker counts.
-- Long campaigns that must survive interruption and resume from validated checkpoints.
-- Non-standard chains assembled from custom `Stage`s through the graph API.
-- CPU-versus-GPU comparisons with a shared determinism contract.
+- [Documentation index](../../docs/index.md)
+- [Coded-modulation link simulation](../../docs/tutorials/coded-modulation-link-simulation.md):
+  a checkpointed sweep through a preset pipeline.
+- [Run a simulation campaign](../../docs/how-to/run-simulation-campaigns.md)
+  and [select SIMD, GPU and parallel execution](../../docs/how-to/select-acceleration.md).
+- [Acceleration architecture](../../docs/concepts/acceleration-architecture.md):
+  the [hybrid executor](../../docs/concepts/acceleration-architecture.md#hybrid-executor)
+  and the determinism contract under
+  [parallelism](../../docs/concepts/acceleration-architecture.md#parallelism).
+- [Cargo features](../../docs/reference/supported-configurations.md#cargo-features),
+  defined in the `[features]` table of [`Cargo.toml`](Cargo.toml), and
+  [installation](../../docs/reference/supported-configurations.md#installation).
+- Build and test commands: [`AGENTS.md`](../../AGENTS.md#supported-toolchain-and-commands).
 
-Codes, modems, channel models and the `simulation` BER/FER harness are in `gf2-coding`.
-
-## Binaries
-
-Binaries under `src/bin` are thin drivers over the library.
-
-| Role | Binaries |
-|---|---|
-| DVB-T2 BICM AWGN campaign with `--resume` | `dvb_t2_awgn_campaign` |
-| Checkpointed SNR sweep over AWGN, Rayleigh or Rician | `checkpoint_sweep` |
-| eBCH OSD reference campaign | `ebch_osd_awgn_campaign` |
-| Permanent-zero-fraction campaign, validation, dataset inspection, rare-event cross-check | `permanent_campaign`, `permanent_validation`, `permanent_dataset`, `permanent_rare_event` |
-| External-library comparison (BLER sweep, AList export) | `ldpc_bler_sweep`, `export_alist` |
-| Throughput benchmarks | `*_throughput` |
-
-```console
-$ ./scripts/cargo-budget.sh cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
-    --rate 1/2 --modulation 16qam --esn0-range 4.0:5.0:0.5 \
-    --max-frames 100 --target-errors 5 --output-dir /tmp/dvb_smoke --seed 42
+```bash
+./scripts/cargo-budget.sh cargo doc -p gf2-sim --no-deps
 ```
 
-Binaries with `required-features` in `Cargo.toml` need `--features test-support`.
-
-## Features
-
-The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.
-
-| Feature | Default | Effect |
-|---|---|---|
-| `hip` | no | HIP device dispatch for LDPC belief propagation, demapping, AWGN and BCH syndromes; requires ROCm. Enables `gf2-coding/hip` and `gf2-algebra/hip` |
-| `llr-f64` | no | Selects `f64` LLRs through `gf2-coding/llr-f64` |
-| `test-support` | no | Deterministic AWGN channel-LLR source `testutil::AwgnLlrSource` for tests, benches and the comparison binaries |
-
-Dependency setup is in [installation](../../docs/reference/supported-configurations.md#installation).
-
-## Reference
-
-- API reference: [Rustdoc](../../target/doc/gf2_sim/index.html), generated by `./scripts/cargo-budget.sh cargo doc -p gf2-sim --no-deps`; the crate-level page is [`src/lib.rs`](src/lib.rs).
-- Documentation index: [`docs/index.md`](../../docs/index.md).
+Rendered output: [Rustdoc](../../target/doc/gf2_sim/index.html).
 
 ## License
 
