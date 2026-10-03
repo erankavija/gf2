@@ -1,52 +1,19 @@
 //! AVX2 + FMA3 f32-cascade GEMM micro-kernel for small `Fp<P>` with
-//! `P <= 251` (Candidate F per
-//! `dev/plans/small_prime_kernel_strategy.md` § 4.5 / § 5.5 / § 6.1).
+//! `P <= 251`.
 //!
-//! Inputs and outputs are canonical residues. Inputs arrive **already
-//! pre-packed to `f32`** (one canonical residue per lane, value in
-//! `[0, p)`); outputs are written as canonical bytes (`u8`, value
-//! `< P`). All inner-loop arithmetic happens through f32 lanes via
-//! `_mm256_fmadd_ps`. The kernel is structured as a BLIS-class
-//! register-blocked sgemm micro-kernel:
+//! Inputs arrive as canonical residues, one per `f32` lane; outputs are
+//! canonical bytes. `bt` is repacked into N-major panels of width
+//! `N_R = 24`; a register-blocked `M_R × N_R = 4 × 24` micro-kernel (12
+//! accumulators, 3 B registers, 1 broadcast) runs 12 `_mm256_fmadd_ps` per
+//! k step with no conversion instruction in the inner loop. At each
+//! `k_chunk = min(k, k_max(p), K_CHUNK_CAP)` boundary, with
+//! `k_max(p) = floor(2^24 / (p-1)²)` keeping the f32 sums exact integers,
+//! the accumulators are rounded into a running i32 tile that is reduced
+//! modulo `p` once per output cell.
 //!
-//! - **Pack pass.** `a: &[f32]` (m × k row-major) is consumed in place
-//!   — no auxiliary `Vec<f32>` is allocated for A. `bt: &[f32]` (n × k
-//!   row-major, row j = column j of B) is repacked into N-major f32
-//!   panels of width `N_R = 24` (each panel `k × N_R` contiguous f32).
-//!   The packed B-panel is consumed by 3 × 8-lane `_mm256_loadu_ps`
-//!   loads per inner step — no cvt instructions in the inner loop,
-//!   matching the OpenBLAS / fflas-ffpack `Modular<float>` micro-kernel
-//!   structure.
-//! - **Inner micro-kernel.** A `4 × 24` tile (`m_R = 4`, `n_R = 24`)
-//!   uses 12 accumulator AVX2 registers + 3 b registers + 1 a
-//!   broadcast — exhausting the 16-register file by design. Each
-//!   inner-`k` step issues 12 `_mm256_fmadd_ps`; on Zen-3 the two FMA
-//!   ports each retire one per cycle so the inner body is back-end-
-//!   bound at ~6 cycles / step. With pure f32 loads (no
-//!   `vpmovzxbd + vcvtdq2ps` chains competing for back-end ports)
-//!   the FMAs hit their issue-rate ceiling.
-//! - **Reduction.** At each `k_chunk` boundary the f32 accumulator
-//!   tile is rounded to nearest integer, converted to `i32` SIMD
-//!   lanes, and added into a 12-vector i32 running sum kept across
-//!   all chunks. Only the final tile-end pass runs the scalar `% p`
-//!   per output cell. The chunk size is
-//!   `k_chunk = min(k, k_max(p), K_CHUNK_CAP)` where
-//!   `k_max(p) = floor(2^24 / (p-1)²)` keeps the running f32 sum
-//!   inside the exact-integer range, and the `K_CHUNK_CAP` limit
-//!   (1024 f32) keeps each B-panel slice
-//!   `k_chunk · N_R · 4 byte = 96 KB` close to the L1d/L2 boundary
-//!   on the Zen-3 reference host (3072 cells × 24 lanes worth of
-//!   working set).
-//! - **Prefetch.** `_MM_HINT_T0` is issued for the next 4 B-panel
-//!   rows ahead of the inner step (rows are 96 B → 1.5 cache lines;
-//!   4 rows ahead lifts the next 6 lines onto the L1d miss queue).
-//!
-//! # Safety
-//!
-//! All public functions here are `unsafe` — callers must ensure
-//! AVX2 + FMA3 are both available at runtime. Safe, dispatched entry
-//! points live in `crate::fp_small_f32` via the `SmallPrimeF32Fns`
-//! table returned by `detect`.
+//! All public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
+//! available at runtime. `crate::fp_small_f32::detect` returns the safe
+//! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -57,49 +24,18 @@ use core::arch::x86_64::*;
 const M_R: usize = 4;
 const N_R: usize = 24;
 
-/// L2-resident k-chunk cap measured in **f32 lanes**. The k-chunk size
-/// is `min(k, k_max(p), K_CHUNK_CAP)`.
-///
-/// Choice of 1024: for the 4 × 24 tile, the B-panel slice consumed per
-/// chunk is `K_CHUNK_CAP · N_R · 4 byte = 1024 · 24 · 4 = 96 KB`,
-/// fitting in Zen-3's 512 KB L2 with room for A-pack and the running
-/// accumulator state. Picking 256 (24 KB, L1d-resident) penalises
-/// `p ≤ 31` by 3 extra round-and-cast passes per panel at `k = 1024`
-/// (k_chunk = 256 → 4 chunks vs 1 chunk at K_CHUNK_CAP = 1024). The
-/// per-chunk reduction (12 `vroundps + vcvtps2dq + vpaddd`) is small
-/// vs the inner FMAs but adds up over many panel sweeps.
-///
-/// For `p = 251` the per-prime `k_max = 268` cap binds first, so the
-/// cap value only affects `p ≤ 31` and large `k`; the outer-N
-/// cache-blocking (below) handles the L1d/L2 working-set sizing
-/// independently of the chunk cap.
+/// k-chunk cap in f32 lanes; the k-chunk size is
+/// `min(k, k_max(p), K_CHUNK_CAP)`. At 1024 the B-panel slice consumed per
+/// chunk is `K_CHUNK_CAP · N_R · 4 byte = 96 KB`, inside Zen 3's 512 KB L2.
+/// For `p = 251` the per-prime `k_max = 268` binds first.
 const K_CHUNK_CAP: usize = 1024;
 
-/// Outer-N panel grouping for the cache-blocked loop nest. Picks an
-/// `n_c_panels` value that keeps the active B-panel slice resident in
-/// the CCX-shared L3 (Zen 3: 32 MB per CCX) while sharing one A-pack
-/// across every panel in the group.
-///
-/// The previous heuristic (2026-05-25 baseline) used an L2 budget
-/// (256 KB), which at `n = 4096, k = 4096` clamps to `n_c_panels = 1`
-/// — degrading the loop nest into one A-pack per panel per i_blk
-/// (`171 × 1024 = 175 000` A-packs) instead of one A-pack per i_blk
-/// across all 171 panels (`1024` A-packs).
-///
-/// The L3 budget (24 MB, 75 % of CCX L3 to leave headroom for the
-/// A-pack scratch + criterion harness state) at `n = 4096, k = 4096`
-/// returns ~64 panels, recovering ~64× more B-reuse per A-pack while
-/// still bounding the active B set to fit in L3. The `min(n_panels)`
-/// clamp handles small-n cells where the simple single-group path is
-/// strictly faster.
+/// Outer-N panel grouping for the cache-blocked loop nest: the number of
+/// B panels that fit a 16 MB L3 budget, sharing one A-pack across every
+/// panel in the group.
 #[inline]
 fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
-    // 16 MB — half of Zen 3's 32 MB CCX-shared L3. Empirical sweep
-    // at n=4096 (74ba1cdc R1, 2026-05-26): 24 MB delivers 99.3 Gop/s,
-    // 16 MB delivers 108.6 Gop/s (+9.4%), 8 MB delivers 108.0 Gop/s
-    // (within noise of 16 MB), 4 MB regresses to 106.6 Gop/s. The
-    // sweet spot is 8-16 MB; pick 16 MB as the conservative defaults
-    // (more headroom for criterion / shared L3 contention).
+    // Half of Zen 3's 32 MB CCX-shared L3.
     const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k.saturating_mul(N_R).saturating_mul(4);
     if panel_bytes == 0 {
@@ -147,17 +83,11 @@ pub unsafe fn fp_small_f32_gemm(
         return;
     }
 
-    // ── Pack B-transpose (n × k row-major: row j == column j of B)
-    //    into N-major f32 panels of width N_R, each `k × N_R` row-major.
-    //    For each n-panel `j_blk = 0, N_R, 2*N_R, ...`, we need
-    //    `b_packed[panel_offset + t*N_R + j_off] = B[t, j_blk + j_off]
-    //                                            = bt[(j_blk + j_off)*k + t]`.
-    //    For the partial trailing panel (`n % N_R != 0`), unused
-    //    lanes are filled with 0.0 so the FMA accumulates a zero
-    //    (semantically harmless; the unused output cells are not
-    //    read at unpack time). Storing as f32 lets the inner kernel
-    //    issue 3 × `_mm256_loadu_ps` per step with NO cvt micro-ops
-    //    competing with the FMAs for back-end ports.
+    // Pack B-transpose (n × k row-major: row j == column j of B) into
+    // N-major f32 panels of width N_R, each `k × N_R` row-major:
+    // `b_packed[panel_offset + t*N_R + j_off] = bt[(j_blk + j_off)*k + t]`.
+    // Unused lanes of a partial trailing panel stay 0.0 and are not read
+    // at unpack time.
     let n_panels = n.div_ceil(N_R);
     let panel_stride = k * N_R;
     let mut b_packed: Vec<f32> = vec![0.0f32; n_panels * panel_stride];
@@ -172,9 +102,6 @@ pub unsafe fn fp_small_f32_gemm(
         for t in 0..k {
             let dst_row_off = panel_off + t * N_R;
             for j_off in 0..n_eff {
-                // Source: bt[(j_blk + j_off) * k + t] — strided read,
-                // but cache lines are touched in column-major order
-                // so the prefetcher can stream them.
                 b_packed[dst_row_off + j_off] = bt[(j_blk + j_off) * k + t];
             }
         }
@@ -182,67 +109,20 @@ pub unsafe fn fp_small_f32_gemm(
 
     let p_i32 = p as i32;
 
-    // ── Per-prime k_max ───────────────────────────────────────────
-    //
-    // The largest number of `(p-1)²`-magnitude FMA accumulations a
-    // single f32 register can absorb without leaving the exact-integer
-    // range `[0, 2^24]`.
-    //
-    //   k_max(p) = floor(2^24 / (p-1)²)
-    //
-    // For `p = 7`: k_max = 466 033, but we cap at K_CHUNK_CAP.
-    // For `p = 31`: k_max = 18 631 (capped at K_CHUNK_CAP).
-    // For `p = 251`: k_max = 268.
+    // k_max(p) = floor(2^24 / (p-1)²): the number of `(p-1)²`-magnitude
+    // FMA accumulations an f32 lane absorbs within the exact-integer range
+    // `[0, 2^24]`; 268 for `p = 251`.
     let k_max = compute_k_max(p);
     let k_chunk = k_max.min(K_CHUNK_CAP);
 
-    // ── A-pack (per row-tile) ─────────────────────────────────────
-    //
-    // Re-pack each `M_R`-row block of A into a stack-resident
-    // interleaved row-major buffer: `a_pack_f32[t*M_R + i]
-    // = a[(i_blk + i) * k + t]`. The inner kernel then reads each of
-    // M_EFF a-rows as a single `_mm256_broadcast_ss` from a
-    // contiguous f32 address. The interleave step keeps the
-    // broadcasts cache-line-aligned to the t-axis (one cache line
-    // covers M_R = 4 lanes = 16 B), so the broadcast load issues
-    // from the same cache line as the prior step's broadcast and the
-    // prefetcher stays on the t-axis stride.
+    // A-pack (per row-tile): `a_pack_f32[t*M_R + i] = a[(i_blk + i) * k + t]`,
+    // so the inner kernel reads the M_EFF a-rows as `_mm256_broadcast_ss`
+    // from contiguous f32 addresses.
     let mut a_pack_f32: Vec<f32> = vec![0.0; M_R * k];
 
-    // ── Outer-N cache-block size ──────────────────────────────────
-    //
-    // Two regimes based on whether the full `b_packed` fits in
-    // Zen-3's 32 MB CCX-shared L3:
-    //
-    // - **Small/medium B (≤ 16 MB)**: use a single outer block
-    //   covering all panels. The kernel's loop nest collapses to
-    //   `for i_blk: for panel:`, packing A once per i_blk. The
-    //   full `b_packed` lives in L3 across all `m / M_R` sweeps;
-    //   per-i_blk B traffic comes from L3 at ~30 GB/s. This is the
-    //   best path at `n = 1024` where the FMA back-end is the
-    //   binding constraint.
-    //
-    // - **Large B (> 16 MB)**: split panels into outer blocks of
-    //   size `n_c_panels` so each block's B-data fits in L2
-    //   (256 KB target, half of Zen-3's 512 KB L2). Then within
-    //   each outer block, sweep all i_blks before moving on. This
-    //   re-uses each block's B-data across all row-tiles, bounding
-    //   inner-loop B traffic to one streaming pass per outer block
-    //   instead of `m / M_R` passes per panel. The cost is
-    //   `n_outer_blocks × m / M_R` A-pack calls instead of `m / M_R`,
-    //   but with `n_outer_blocks` ≪ `m / M_R` the trade is favorable
-    //   (and `n = 4096` was hard-bound on B-bandwidth without it).
-    //
-    // Outer-N grouping: L3-budgeted shared helper (issue 74ba1cdc R1).
-    // The 2026-05-25 heuristic used an L2 budget which collapses to
-    // `n_c_panels = 1` at `n = 4096, k = 4096`, degrading the loop
-    // nest into 175 000 A-packs instead of 1024. The L3 budget
-    // (`n_c_panels_outer`) recovers ~64-panel groups for that cell
-    // while keeping small-n cells on the single-group path.
+    // Outer-N grouping bounded by the L3 budget of `n_c_panels_outer`.
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
-    // ── Inner GEMM loop (outer-N cache-blocked) ───────────────────
-    //
     // Loop nesting:
     //
     //   for n_outer (group of n_c_panels panels):
@@ -251,15 +131,8 @@ pub unsafe fn fp_small_f32_gemm(
     //       for panel in n_outer:
     //         run_one_panel(panel, i_blk)
     //
-    // The panel slice (active B-data for one outer block) stays
-    // resident in L3 for the duration of the i_blk sweep; cold
-    // panel data only crosses memory once per outer block. One
-    // A-pack per i_blk feeds every panel in the group.
-    //
-    // Within `run_one_panel` we still split into a `m_eff = M_R = 4`
-    // steady-state path and a generic `m_eff < 4` trailing path,
-    // monomorphised on `M_EFF` so the inner FMA body has zero
-    // branches.
+    // `run_one_panel` is monomorphised on `M_EFF`: `M_EFF = M_R = 4` for
+    // the steady state and `M_EFF < 4` for the trailing rows.
     let m_full = m - (m % M_R);
     let mut n_outer = 0usize;
     while n_outer < n_panels {
@@ -327,21 +200,16 @@ pub unsafe fn fp_small_f32_gemm(
     }
 }
 
-/// Route-A whole-gemm entry point (issue 68cdf4c8). Same f32 inputs and
-/// u8 outputs as [`fp_small_f32_gemm`], but applies a vectorized AVX2
+/// Whole-gemm entry point with a vectorized output reduction. Same f32
+/// inputs and u8 outputs as [`fp_small_f32_gemm`], but applies an AVX2
 /// Barrett reduction at the end of each tile instead of the per-cell
-/// scalar `% p`. Kept separate from the production
-/// [`fp_small_f32_gemm`] entry so the dormant Candidate F path remains
-/// byte-identical for any future host where it might be selected.
+/// scalar `% p`.
 ///
 /// # Safety
 ///
 /// Caller must ensure AVX2 and FMA3 are both available at runtime,
 /// `p ∈ [3, 251]` is an odd prime, and every input lane holds a
-/// non-negative integer canonical residue in `[0, p)`. The current
-/// route-A toggle in `gf2-core` restricts this to `p = 251`, but the
-/// kernel itself is correct for every `p ≤ 251` (and `barrett_mu_u16`
-/// supports the broader byte-prime family).
+/// non-negative integer canonical residue in `[0, p)`.
 ///
 /// # Panics
 ///
@@ -385,7 +253,7 @@ pub unsafe fn fp_small_f32_gemm_route_a(
     let k_chunk = k_max.min(K_CHUNK_CAP);
     let mut a_pack_f32: Vec<f32> = vec![0.0; M_R * k];
 
-    // Outer-N grouping: shared L3-budgeted helper (issue 74ba1cdc R1).
+    // Outer-N grouping bounded by the L3 budget of `n_c_panels_outer`.
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
     let m_full = m - (m % M_R);
@@ -585,9 +453,6 @@ unsafe fn run_one_panel_route_a<const M_EFF: usize>(
 /// row-major form `dst[t * M_R + i] = a[(i_blk + i) * k + t]`. The
 /// dst slack rows (`i ∈ [M_EFF, M_R)`) hold zeros (already initialised
 /// by the caller's zero-fill).
-///
-/// Done once per i_blk; the inner kernel reads broadcasts from this
-/// scratch buffer rather than non-contiguous strided f32 lanes.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_a_block<const M_EFF: usize>(a: &[f32], i_blk: usize, k: usize, dst: &mut [f32]) {
@@ -595,7 +460,6 @@ unsafe fn pack_a_block<const M_EFF: usize>(a: &[f32], i_blk: usize, k: usize, ds
     debug_assert!(M_EFF <= M_R);
     let a_base = a.as_ptr().add(i_blk * k);
     let dst_base = dst.as_mut_ptr();
-    // Manual loop, branch-free over t.
     for t in 0..k {
         let dst_row = dst_base.add(t * M_R);
         if M_EFF >= 1 {
@@ -610,8 +474,6 @@ unsafe fn pack_a_block<const M_EFF: usize>(a: &[f32], i_blk: usize, k: usize, ds
         if M_EFF >= 4 {
             *dst_row.add(3) = *a_base.add(3 * k + t);
         }
-        // Slack rows for M_EFF < M_R are pre-zeroed by the caller's
-        // `vec![0.0; M_R * k]`; we leave them untouched here.
     }
 }
 
@@ -659,11 +521,9 @@ unsafe fn run_one_panel<const M_EFF: usize>(
         let mut sum31 = _mm256_setzero_si256();
         let mut sum32 = _mm256_setzero_si256();
 
-        // k-chunked FMA loop: each chunk holds 12 f32 accumulators
-        // alive in the register file. At chunk end we round-and-cast
-        // to i32 and add into the 12 i32 SIMD accumulators above, so
-        // the costly per-lane scalar % p is paid only ONCE at the
-        // very end of the k axis (not once per chunk).
+        // k-chunked FMA loop: at each chunk end the 12 f32 accumulators
+        // are rounded into the i32 sums above, so the per-lane `% p` runs
+        // once at the end of the k axis.
         let mut t_blk = 0usize;
         while t_blk < k {
             let t_end = (t_blk + k_chunk).min(k);
@@ -684,13 +544,8 @@ unsafe fn run_one_panel<const M_EFF: usize>(
             let b_panel_base = b_packed.as_ptr().add(panel_off);
             let a_pack_base = a_pack_f32.as_ptr();
 
-            // Pre-compute the prefetch boundary so the inner branch
-            // condition reduces to a single compare.
-            //
             // Prefetch distance: 4 rows ahead = 4 × 96 B = 384 B (6
-            // cache lines). With the inner step at ~6 cycles on Zen-3
-            // and L1d miss latency ~12 cycles + L2 ~12 cycles, 4 rows
-            // ahead lifts the demand misses off the FMA critical path.
+            // cache lines).
             const PREFETCH_DIST: usize = 4;
             let prefetch_end = t_end.saturating_sub(PREFETCH_DIST);
 
@@ -698,10 +553,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
                 let b_row_ptr = b_panel_base.add(t * N_R);
                 let a_row_ptr = a_pack_base.add(t * M_R);
 
-                // Issue prefetch hints for the B-panel rows
-                // PREFETCH_DIST steps ahead. Cheap (no µops on the
-                // back-end FMA ports); typically lifts L1d miss
-                // latency off the critical path on n ≥ 1024 cells.
                 if t < prefetch_end {
                     let pf_ptr = b_row_ptr.add(PREFETCH_DIST * N_R) as *const i8;
                     _mm_prefetch::<{ _MM_HINT_T0 }>(pf_ptr);
@@ -709,18 +560,10 @@ unsafe fn run_one_panel<const M_EFF: usize>(
                     _mm_prefetch::<{ _MM_HINT_T0 }>(pf_ptr.add(64));
                 }
 
-                // Three pure 8-lane f32 loads — no cvt instructions in
-                // the inner loop (matches OpenBLAS sgemm micro-kernel
-                // structure). The B-panel is already f32; loads are
-                // contiguous within a single 96-byte row.
                 let b0 = _mm256_loadu_ps(b_row_ptr);
                 let b1 = _mm256_loadu_ps(b_row_ptr.add(8));
                 let b2 = _mm256_loadu_ps(b_row_ptr.add(16));
 
-                // 12 FMAs per inner iteration (M_EFF=4 path). The four
-                // a-row broadcasts are `_mm256_broadcast_ss` from a
-                // contiguous f32 address — single load+broadcast µop
-                // on Zen-3 (no scalar cvt dep chain).
                 if M_EFF >= 1 {
                     let a0 = _mm256_broadcast_ss(&*a_row_ptr);
                     acc00 = _mm256_fmadd_ps(b0, a0, acc00);
@@ -747,8 +590,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
                 }
             }
 
-            // Round-and-cast all live f32 accumulators to i32 SIMD
-            // and add into the running i32 SIMD sums.
             if M_EFF >= 1 {
                 sum00 = _mm256_add_epi32(sum00, round_ps_to_epi32(acc00));
                 sum01 = _mm256_add_epi32(sum01, round_ps_to_epi32(acc01));
@@ -773,8 +614,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
             t_blk = t_end;
         }
 
-        // Final reduction: store the 12 i32 SIMD sums to a stack
-        // buffer and reduce modulo p once per output cell.
         store_and_reduce_tile(
             sum00, sum01, sum02, sum10, sum11, sum12, sum20, sum21, sum22, sum30, sum31, sum32,
             M_EFF, n_eff, p_i32, i_blk, j_blk, n, c,
@@ -810,19 +649,8 @@ unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
 
 /// Pack 8 reduced i32 lanes (each in `[0, p)`) into an 8-byte u8 array.
 ///
-/// AVX2 pack instructions are lane-wise across 128-bit halves: a single
-/// `_mm256_packus_epi32(r, r)` puts 4 u16 lanes from each input's low
-/// 128 into the result's low 128, and similarly for high — so after
-/// pack32 the low 128 of `packed16` holds `[r[0..4] u16, r[0..4] u16]`
-/// and the high 128 holds `[r[4..8] u16, r[4..8] u16]`. We undo the
-/// duplication with a single `vpermq` (control `0b11_01_10_00` =
-/// (0,2,1,3) on 64-bit lanes) before the u16→u8 pack so the low 128
-/// of the result holds `[r[0..8] u16]` in order. The subsequent
-/// `_mm256_packus_epi16` then writes `r[0..8] u8` to its low 64 bits.
-///
-/// Used by `store_and_reduce_tile_route_a` to write three 8-lane i32
-/// vectors representing one row of the 4×24 tile back to the caller's
-/// canonical-byte output buffer.
+/// `_mm256_packus_epi32` and `_mm256_packus_epi16` pack per 128-bit half,
+/// so a `vpermq` between them gathers `r[0..8]` into the low 128 bits.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
@@ -849,11 +677,10 @@ unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
     ]
 }
 
-/// Vectorized `store_and_reduce_tile` variant for the route-A rework
-/// (issue 68cdf4c8). Applies the Phase-2 SSOT 32-bit-lane Barrett
-/// primitive ([`super::fp_small::barrett_reduce_lane32`]) to each of
-/// the 12 i32 accumulator vectors before storing them, replacing the
-/// 96 scalar `% p` calls in [`store_and_reduce_tile`].
+/// Vectorized `store_and_reduce_tile` variant: applies
+/// [`super::fp_small::barrett_reduce_lane32`] to each of the 12 i32
+/// accumulator vectors before storing them, in place of the scalar `% p`
+/// of [`store_and_reduce_tile`].
 ///
 /// Lane bounds: each `sum_ij` lane holds `Σ_chunks round_ps_to_epi32(acc)`
 /// where each chunk contribution is in `[0, 2²⁴]` and chunks ≤
@@ -884,7 +711,6 @@ unsafe fn store_and_reduce_tile_route_a(
     n: usize,
     c: &mut [u8],
 ) {
-    // Build Barrett constants once per tile call.
     let p_u32 = p_i32 as u32;
     let mu32 = ((1u64 << 32) / p_u32 as u64) as u32;
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
@@ -906,7 +732,6 @@ unsafe fn store_and_reduce_tile_route_a(
         let r2 = super::fp_small::barrett_reduce_lane32(s2, mu_vec, p_vec);
         // n_eff ∈ [1, 24] picks how many cells we write into the row.
         if n_eff == N_R {
-            // Full 24-lane row: write 8 + 8 + 8.
             let b0 = pack_i32x8_to_u8(r0);
             let b1 = pack_i32x8_to_u8(r1);
             let b2 = pack_i32x8_to_u8(r2);
@@ -914,11 +739,8 @@ unsafe fn store_and_reduce_tile_route_a(
             core::ptr::copy_nonoverlapping(b1.as_ptr(), dst.add(8), 8);
             core::ptr::copy_nonoverlapping(b2.as_ptr(), dst.add(16), 8);
         } else {
-            // Partial trailing panel: fall back to a small scalar tail.
-            // We materialise the 24 reduced lanes to a stack scratch and
-            // copy the first n_eff bytes. This path runs only on the
-            // last `n % 24` columns; the inner cache-blocked sweep hits
-            // the fast path for every full panel.
+            // Partial trailing panel: materialise the 24 reduced lanes and
+            // copy the first n_eff bytes.
             let mut scratch = [0u8; 24];
             let b0 = pack_i32x8_to_u8(r0);
             let b1 = pack_i32x8_to_u8(r1);
@@ -1185,7 +1007,7 @@ mod tests {
         assert!(out.is_empty());
     }
 
-    // ─── Route-A (issue 68cdf4c8) tests ─────────────────────────────────
+    // ─── Route-A tests ──────────────────────────────────────────────────
 
     #[test]
     fn route_a_gemm_matches_scalar_small_shapes() {
@@ -1302,12 +1124,10 @@ mod tests {
 
     #[test]
     fn route_a_gemm_matches_existing_candidate_f() {
-        // Bit-exact parity between the route-A and the existing Candidate F
-        // entry points: the only intentional differences are (a) the
-        // output-reduction algorithm (SIMD Barrett vs scalar `% p`) and
-        // (b) the destination-write path (direct write vs scratch buffer).
-        // Both algorithms compute the same mathematical function, so the
-        // emitted bytes must be identical for every (m, k, n, p) tuple.
+        // Bit-exact parity between `fp_small_f32_gemm_route_a` and
+        // `fp_small_f32_gemm`: they differ only in the output-reduction
+        // algorithm (SIMD Barrett vs scalar `% p`) and the destination-write
+        // path (direct write vs scratch buffer).
         run_for_primes(|p| {
             for &(m, k, n) in &[
                 (1usize, 1usize, 1usize),
