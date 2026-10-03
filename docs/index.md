@@ -43,3 +43,4 @@ Supported configurations, limitations, evidence methodology and stable contracts
 | `gf2-core` | [README](../crates/gf2-core/README.md) |
 | `gf2-coding` | [README](../crates/gf2-coding/README.md) |
 | `gf2-algebra` | [README](../crates/gf2-algebra/README.md) |
+| `gf2-sim` | [README](../crates/gf2-sim/README.md) |
