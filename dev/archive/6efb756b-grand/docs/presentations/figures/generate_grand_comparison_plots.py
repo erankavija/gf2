@@ -10,6 +10,7 @@ this script lives in.
 from __future__ import annotations
 
 import csv
+import subprocess
 from pathlib import Path
 
 import matplotlib
@@ -27,10 +28,13 @@ matplotlib.rcParams.update({
     "svg.fonttype": "none",
 })
 
-REPO = Path(__file__).resolve().parents[3]
+OUT = Path(__file__).resolve().parent
+REPO = Path(subprocess.run(
+    ["git", "-C", str(OUT), "rev-parse", "--show-toplevel"],
+    capture_output=True, check=True, text=True,
+).stdout.strip())
 SIM = REPO / "dev" / "simulation_results"
 REF = REPO / "dev" / "reference_data"
-OUT = Path(__file__).resolve().parent
 
 
 def read_sim(path: Path) -> tuple[list[float], list[float]]:

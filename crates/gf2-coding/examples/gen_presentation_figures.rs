@@ -2,7 +2,7 @@
 //! uncoded BER against Eb/N0 for BPSK and Gray QAM, per-bit mutual information
 //! for 16-QAM, and per-bit conditional LLR histograms for 16-QAM. The figures
 //! land in the directory given by `--output-dir <path>`, which defaults to
-//! `target/presentation_figures` under the working directory.
+//! `presentation_figures` in the Cargo target directory holding this executable.
 
 use gf2_coding::modem::analysis::{HistogramConfig, PerBitChannelStats, PerBitLlrStats};
 use gf2_coding::modem::{
@@ -18,7 +18,10 @@ use std::num::NonZeroUsize;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let out_dir = parse_args();
+    let out_dir = match parse_args() {
+        Some(out_dir) => out_dir,
+        None => cargo_target_dir()?.join("presentation_figures"),
+    };
     std::fs::create_dir_all(&out_dir)?;
 
     eprintln!("[1/3] Running BER Monte Carlo sweeps...");
@@ -37,18 +40,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn parse_args() -> PathBuf {
+fn parse_args() -> Option<PathBuf> {
     let mut args = std::env::args().skip(1);
-    let mut out_dir = PathBuf::from("target/presentation_figures");
+    let mut out_dir = None;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--output-dir" => {
-                out_dir = PathBuf::from(args.next().expect("--output-dir requires a path"));
+                out_dir = Some(PathBuf::from(
+                    args.next().expect("--output-dir requires a path"),
+                ));
             }
             other => panic!("unknown argument: {other}"),
         }
     }
     out_dir
+}
+
+/// The nearest directory above this executable that carries Cargo's
+/// `CACHEDIR.TAG`, which Cargo writes at the root of a target directory.
+fn cargo_target_dir() -> Result<PathBuf, Box<dyn Error>> {
+    let executable = std::env::current_exe()?;
+    executable
+        .ancestors()
+        .find(|directory| directory.join("CACHEDIR.TAG").is_file())
+        .map(PathBuf::from)
+        .ok_or_else(|| "no Cargo target directory above the executable; pass --output-dir".into())
 }
 
 // --------------------------------------------------------------------
