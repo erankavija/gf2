@@ -494,7 +494,7 @@
      "short_id": "290b8716",
      "title": "Tersify comments in the remaining gf2-kernels-simd files",
      "classification": "documentation",
-     "status": "returned_unmerged_rework"
+     "status": "regating"
     },
     {
      "id": "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
@@ -508,35 +508,35 @@
      "short_id": "3da13f39",
      "title": "Tersify comments in the gf2-core prime-field modules",
      "classification": "documentation",
-     "status": "returned_unmerged_rework"
+     "status": "rework"
     },
     {
      "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
      "short_id": "4997a3ed",
      "title": "Tersify comments in gf2-core bit-level structures",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "57436474-9b84-4d68-804f-070c10b673d9",
      "short_id": "57436474",
      "title": "Tersify comments in the remaining gf2-algebra files",
      "classification": "documentation",
-     "status": "returned_unmerged_rework"
+     "status": "done"
     },
     {
      "id": "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
      "short_id": "66858db0",
      "title": "Tersify comments in gf2-core field polynomial and extension modules",
      "classification": "documentation",
-     "status": "returned_unmerged_rework"
+     "status": "done"
     },
     {
      "id": "67048b47-ed17-4672-822a-829a796420c2",
      "short_id": "67048b47",
      "title": "Link unlinked owned artifacts to their issues",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "67b5d1d8-b6e2-4687-ae5f-fd36bcee334a",
@@ -557,14 +557,14 @@
      "short_id": "7bfad039",
      "title": "Tersify comments in gf2-sim GPU, preset, stage and graph modules",
      "classification": "documentation",
-     "status": "returned_unmerged_rework"
+     "status": "done"
     },
     {
      "id": "8a9db61a-115b-4f07-9baf-97e6545525a5",
      "short_id": "8a9db61a",
      "title": "Tersify comments in the gf2-coding modem module",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
@@ -578,21 +578,21 @@
      "short_id": "93aed46a",
      "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "9dda3958-4e62-4bb2-89e4-a1999e000a09",
      "short_id": "9dda3958",
      "title": "Tersify comments in gf2-core field matrix algorithm modules",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "9f47bb94-c7cd-4de9-b57f-0ea3cdeee282",
      "short_id": "9f47bb94",
      "title": "Tersify comments in the gf2-kernels-simd x86 module",
      "classification": "documentation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "aa0558c1-8143-44b9-a2ca-27282d1cf015",
@@ -606,7 +606,7 @@
      "short_id": "bfb37a21",
      "title": "Tersify comments in gf2-coding BCH and transform modules",
      "classification": "documentation",
-     "status": "returned_unmerged_rework"
+     "status": "done"
     },
     {
      "id": "c6aa0e84-072e-4671-9c50-0c8e9d0d4f66",
@@ -620,7 +620,7 @@
      "short_id": "cafb463c",
      "title": "Tersify comments in gf2-coding OSD, product, GRAND and GLDPC modules",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
@@ -634,7 +634,7 @@
      "short_id": "ee2b0c0c",
      "title": "Tersify comments in the gf2-coding LDPC module",
      "classification": "documentation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "f2064e90-ad75-4253-8402-41d63d38af41",
@@ -648,21 +648,21 @@
      "short_id": "f22ec590",
      "title": "Tersify comments in the remaining gf2-sim source files",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "f46046f0-3672-4bec-8d57-83bc77a6043b",
      "short_id": "f46046f0",
      "title": "Tersify comments in gf2-sim executor and campaign modules",
      "classification": "documentation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "554c2935",
      "short_id": "554c2935",
      "title": "Register citation keys for external works cited in Rust sources",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "waiting_on_sweep"
     }
    ]
   },
@@ -1196,6 +1196,16 @@
    "issue": "b0b1faf5",
    "question": "REQ-03 unmet for nine dev/bench_results literals naming evidence directories; CI step added to scripts/cargo-ci.sh.",
    "resolution": "Owner chose a named exception (evidence-directory-paths, tracked by 10f23a84) and accepted the CI step; REQ-03 amended, DEC-01 (2026-10-03)."
+  },
+  {
+   "issue": "554c2935",
+   "question": "Eight citations in source match no identifiable work (Condo 2022, Knuth/MMIX, Shoup 12.4, TS 38.214 edition, IEEE AES standard, NASA/CCSDS K=7, unnamed papers).",
+   "resolution": "Owner: remove Condo and cite Yuan2025; register TAOCP vol. 2 3rd ed. (Knuth1997, attribution confirmed via Steele-Vigna doi:10.1002/spe.3030, table line unverified); TS 38.214 V15.0.0 (ThreeGpp2017a); identify where certain (Nist2001, Ccsds2017), else the sweep removes the pointer (2026-10-03)."
+  },
+  {
+   "issue": "290b8716",
+   "question": "Fix-lane merge 796771eaf was tagged jit:290b8716 and carried eight issues' commits; reviewers attributed registry edits to 290b8716.",
+   "resolution": "Owner approved rewording the unpushed tip merge commit to the epic scope (2026-10-04); tree unchanged."
   }
  ],
  "rework_counts": {
@@ -1228,10 +1238,17 @@
   "62ce5927": 1,
   "f46046f0": 1,
   "9f47bb94": 1,
-  "3aef9e33": 1,
-  "67b5d1d8": 1,
+  "3aef9e33": 2,
+  "67b5d1d8": 2,
   "ee2b0c0c": 1,
-  "67048b47": 2
+  "67048b47": 2,
+  "3da13f39": 2,
+  "554c2935": 1,
+  "66858db0": 1,
+  "bfb37a21": 1,
+  "7bfad039": 1,
+  "57436474": 1,
+  "290b8716": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1313,6 +1330,21 @@
    "issue": "157c305c",
    "finding": "629e0ff0 rework states the filler LLR 15.0 and its reason in public Rustdoc; 157c305c REQ-01 met, REQ-02 not (prose value beside a private const).",
    "disposition": "157c305c is label-only (outside the DAG); owner decides"
+  },
+  {
+   "issue": "bfb37a21",
+   "finding": "bch/dvb_t2/mod.rs lost its library-first-generality tracked-exception citation (@/issue/1a8f6acd) because reviewers class an issue reference in Rustdoc as planned work.",
+   "disposition": "record the exception on issue 1a8f6acd; verify at the story gate"
+  },
+  {
+   "issue": "ee2b0c0c",
+   "finding": "ldpc/dvb_t2/dvb_t2_matrices.rs module doc is multi-section with prose ETSI citations (kept as a generated-data header); ldpc/dvb_t2/table_interpretation.md claims a sub-diagonal wrap the code lacks and is listed by producing-inputs surveys.",
+   "disposition": "check at the ffc35b8c story gate; table_interpretation.md is a digest-pinned input"
+  },
+  {
+   "issue": "9f47bb94",
+   "finding": "scripts/asm-artefact-present.sh fails for comment-only edits to x86 sources (no asm.txt change); it is a separate gate, not part of cargo-ci or the sweep units.",
+   "disposition": "informational"
   }
  ],
  "notes": [
@@ -1355,6 +1387,7 @@
   "A record that names a measured commit must give a reproduction that compares a fresh run at that commit against the files of the record's commit, not the files checked out at the measured commit (62f0d0e6 round 2).",
   "AI review gates can fail with 'Agent produced no output' (reviewer service timeout); that is infrastructure, not a verdict: re-run the gate.",
   "The first sweep brief forbade removing Rustdoc examples and let workers reformat banners; both failed review (teaching-rustdoc-examples, non-obvious-comments). Use the v2 standard in notes.",
-  "Each SendMessage resume replays a worker's whole context (300-500k tokens for a sweep unit): batch all follow-ups for a worker into one message, and settle shared prerequisites (citation keys) before resuming."
+  "Each SendMessage resume replays a worker's whole context (300-500k tokens for a sweep unit): batch all follow-ups for a worker into one message, and settle shared prerequisites (citation keys) before resuming.",
+  "Tag a multi-issue lane merge commit with the epic id (chore(jit:fa787f85): merge ...), never with one of the lane's issues: reviewers attribute every commit whose subject carries jit:<id> to that issue (290b8716 failed on a registry edit that belonged to 554c2935)."
  ]
 }
