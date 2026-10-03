@@ -1,7 +1,7 @@
 {
   "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
   "epic_short_id": "fa787f85",
-  "current_wave": 6,
+  "current_wave": 7,
   "waves": [
     {
       "wave_number": 1,
@@ -73,7 +73,7 @@
           "short_id": "12907582",
           "title": "Correct surviving source-level documentation drift",
           "classification": "implementation",
-          "status": "in_progress"
+          "status": "blocked_on_owner"
         },
         {
           "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -204,7 +204,7 @@
           "short_id": "5a25717c",
           "title": "Locate receipt-pinned campaign inputs by content identity",
           "classification": "implementation",
-          "status": "pending"
+          "status": "blocked_on_owner"
         },
         {
           "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
@@ -218,7 +218,7 @@
           "short_id": "65a5436a",
           "title": "Resolve campaign CI check inputs through the configured repository root",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "69aa6896-4c6e-42bb-90b6-d7237a31dc14",
@@ -232,7 +232,7 @@
           "short_id": "7bac1303",
           "title": "Make the first survey-harness crates' tool dependency depth-independent",
           "classification": "implementation",
-          "status": "pending"
+          "status": "blocked_on_owner"
         },
         {
           "id": "8434e0e1-859d-4b18-ad3c-2942ae248b60",
@@ -267,105 +267,105 @@
           "short_id": "1fca3739",
           "title": "Write the performance evidence reference page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "2ff9953a-8d33-449f-80ac-f1564fefa14a",
           "short_id": "2ff9953a",
           "title": "Write the supported configurations reference page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "44f4586d-5d13-42a3-b6ff-1be4ae2bc18d",
           "short_id": "44f4586d",
           "title": "Write the finite-field arithmetic concepts page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "4f752758-6fd7-45f6-880c-3c8b853e1783",
           "short_id": "4f752758",
           "title": "Rewrite the gf2-algebra README as its entry page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "5625a423-3ccc-4d11-b839-52c8fd311601",
           "short_id": "5625a423",
           "title": "Write the standards conformance reference page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "698fa793-8c74-4019-a605-9d078f023cbc",
           "short_id": "698fa793",
           "title": "Rewrite the gf2-coding README as its entry page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "6c314026-6f34-490d-9403-39b7ecc89ea5",
           "short_id": "6c314026",
           "title": "Write the finite-field linear algebra at scale tutorial",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "8b42d23b-d94b-4c2b-84a5-9776619123c5",
           "short_id": "8b42d23b",
           "title": "Rewrite the gf2-core README as its entry page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "9dcc0cae-ef55-4f02-9446-83a0822ec158",
           "short_id": "9dcc0cae",
           "title": "Write the simulation campaign how-to",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "b16d013a-c200-4e75-8c57-6638a313438e",
           "short_id": "b16d013a",
           "title": "Write the gf2-sim README as its entry page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "blocked_on_owner"
         },
         {
           "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
           "short_id": "da120b98",
           "title": "Write the formal verification how-to",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "deda0962-2366-493d-b0fd-c65874ba7cbe",
           "short_id": "deda0962",
           "title": "Write the acceleration architecture concepts page",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa",
           "short_id": "ec7d2aec",
           "title": "Widen the docs policy to manage archival sources",
           "classification": "implementation",
-          "status": "pending"
+          "status": "blocked_on_owner"
         },
         {
           "id": "fb209a81-59cf-4bb1-86c9-597637a4bba2",
           "short_id": "fb209a81",
           "title": "Move presentation decks into their epics' archive dirs",
           "classification": "implementation",
-          "status": "pending"
+          "status": "blocked_on_owner"
         },
         {
           "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
           "short_id": "112f23c6",
           "title": "Share one repository-root resolver across tuning-campaign tooling",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "",
@@ -398,7 +398,7 @@
           "short_id": "153297cf",
           "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "3fd3db5e-60ea-41c1-b95a-144d9ae02e4a",
@@ -412,34 +412,41 @@
           "short_id": "01c20b61",
           "title": "Write the evidence reproduction how-to",
           "classification": "documentation",
-          "status": "pending"
+          "status": "blocked_on_owner"
         },
         {
           "id": "130d5fd7-4540-4a29-9bd5-67d755bae78c",
           "short_id": "130d5fd7",
           "title": "Move the Lean pipeline guide into its epic's archive dir",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
           "short_id": "8a9156fc",
           "title": "Write the acceleration selection how-to",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
           "short_id": "cdba4e71",
           "title": "Write the coded-modulation link simulation tutorial",
           "classification": "documentation",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "ee50e270-74ea-4566-a0a7-69791af66e8a",
           "short_id": "ee50e270",
           "title": "Rewrite the SIMD kernel and statistics crate READMEs",
           "classification": "documentation",
+          "status": "blocked_on_owner"
+        },
+        {
+          "id": "629e0ff0-29ce-4450-83a0-f56bb1fda15b",
+          "short_id": "629e0ff0",
+          "title": "Correct gf2-coding standards-conformance doc and test drift",
+          "classification": "implementation",
           "status": "pending"
         }
       ]
@@ -989,6 +996,61 @@
       "issue": "session-3",
       "question": "Dirty main from .agents/skills edits; release tuning-tooling hold?",
       "resolution": "Owner committed the skill edits (9b219e095) and released the hold (2026-10-03)."
+    },
+    {
+      "issue": "12907582",
+      "question": "Same-finding escalation (narration x3)",
+      "resolution": "Owner approved one final full-sweep rework (2026-10-03)."
+    },
+    {
+      "issue": "12907582",
+      "question": "OPEN: rework limit exceeded; code-review F1 lib.rs:340 Route C dispatch sentence false, F2 permanent/mod.rs:13 F5 bound n<=64 vs n<=63. Approve another rework or split remaining drift into a new task?",
+      "resolution": null
+    },
+    {
+      "issue": "5a25717c",
+      "question": "OPEN: P-02 text in digest-pinned dev/active/f547c394/protocol.md states path matching; implementation matches content identity. Protocol amendment/new version, or accept discrepancy?",
+      "resolution": null
+    },
+    {
+      "issue": "ec7d2aec",
+      "question": "OPEN: REQ-01 cannot hold for 24 docs/ container-archive rows (outside development_root); REQ-03 needs packages/jit-default edit + profile re-mint. Amend REQ-01 to dev/ rows and approve re-mint?",
+      "resolution": null
+    },
+    {
+      "issue": "fb209a81",
+      "question": "OPEN: doc-review blocks on gen_presentation_figures.rs writing docs/presentations/figures (1adfe2e9 scope; 1adfe2e9 depends on fb209a81 and ffc35b8c). Absorb 1adfe2e9 into fb209a81, or reorder?",
+      "resolution": null
+    },
+    {
+      "issue": "b16d013a",
+      "question": "OPEN: doc-review rejects target/doc Rustdoc link 3x (passed on gf2-core/gf2-coding) and capability list 2x. What satisfies REQ-03 'links to Rustdoc' while unhosted, and how much capability statement REQ-01 allows?",
+      "resolution": null
+    },
+    {
+      "issue": "7bac1303",
+      "question": "OPEN: REQ-02 vs REQ-03 conflict (other depth-counting paths) and only viable form needs [patch.crates-io] in repo .cargo/config.toml + Cargo.lock changes. Narrow/widen scope; approve shared config?",
+      "resolution": null
+    },
+    {
+      "issue": "ee50e270",
+      "question": "OPEN: doc-review requires cargo-ci evidence for REQ-04 but owner removed cargo-ci from this issue. Re-add cargo-ci?",
+      "resolution": null
+    },
+    {
+      "issue": "01c20b61",
+      "question": "OPEN: rework limit reached; doc-review blocks because bench-window run-window.sh/follow-window.sh (epic 1a379447) hard-code repo=/home/vkaskivuo/Projects/gf2, so the documented queued reproduction cannot run on another clone. Fix the runner first (file issue), or accept the page?",
+      "resolution": null
+    },
+    {
+      "issue": "session-3",
+      "question": "OPEN: push main to origin (at f9224650, 2026-08-14) so commit-pinned evidence links on permanent pages resolve on GitHub?",
+      "resolution": null
+    },
+    {
+      "issue": "session-3",
+      "question": "OPEN: choose containers for out-of-scope defects listed in surfaced_pitfalls (disposition 'file issue: owner picks container').",
+      "resolution": null
     }
   ],
   "rework_counts": {
@@ -999,7 +1061,21 @@
     "60652fe4": 1,
     "a24b2af7": 4,
     "e85b8edf": 2,
-    "875914b3": 1
+    "875914b3": 1,
+    "698fa793": 1,
+    "8b42d23b": 1,
+    "44f4586d": 1,
+    "1fca3739": 1,
+    "2ff9953a": 1,
+    "6c314026": 1,
+    "9dcc0cae": 1,
+    "4f752758": 1,
+    "b16d013a": 2,
+    "112f23c6": 1,
+    "12907582": 4,
+    "5a25717c": 1,
+    "ee50e270": 1,
+    "01c20b61": 2
   },
   "surfaced_pitfalls": [
     {
@@ -1011,6 +1087,66 @@
       "issue": "56378e82",
       "finding": "~40 source comments and crate docs cite 'CLAUDE.md \u00a7<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
       "disposition": "subject of REQ-17/12907582 and the tersification sweep; verify closed before story/epic gates"
+    },
+    {
+      "issue": "2ff9953a",
+      "finding": "Root README claims AVX-512 and aarch64 kernels and lists LDPC BP under gf2-coding HIP; code has AVX2 kernels only, LDPC BP GPU is in gf2-sim.",
+      "disposition": "fdb998ec (root README rewrite) must not reuse these claims"
+    },
+    {
+      "issue": "12907582",
+      "finding": "Uncited feasibility/timing text not added by 12907582 remains in gf2-algebra: '~600 years'/'infeasible' (bipedal3_multiword.rs, bipedal5.rs:450, reference.rs:28), permanent_demo.rs:5 'headline speedup numbers' + dev/ CSV path, #[ignore ... (\u2248 5 s)] in bipedal3.rs, narrowing narration bipedal3.rs:21,118.",
+      "disposition": "sweep units 3aef9e33/57436474 (REQ-17)"
+    },
+    {
+      "issue": "8b42d23b",
+      "finding": "gf2-core lib.rs:1 'High-Performance' title and lib.rs:23 accessor-only crate example (doc-review advisory).",
+      "disposition": "audit fca578b1 / sweep (REQ-07, REQ-17)"
+    },
+    {
+      "issue": "deda0962",
+      "finding": "GPU BCJR product decoder .expect('Failed to initialize GPU BCJR') at gf2-coding product/mod.rs:952 panics on recoverable HIP errors; gf2_algebra::gpu panics on HIP failures (@/inv/accelerator-safe-fallback).",
+      "disposition": "file issue: owner picks container"
+    },
+    {
+      "issue": "9dcc0cae",
+      "finding": "sim_runner ignores SIGINT (no checkpoint_dir; sequential path never checks flag); parallel product curves skip CSV resume cache.",
+      "disposition": "file issue: owner picks container"
+    },
+    {
+      "issue": "cdba4e71",
+      "finding": "gf2_sim::snr_checkpoint::config_hash omits rate, modulation, decoder, demapper; --resume with another decoder reuses checkpoints (reproduced).",
+      "disposition": "file issue: owner picks container (correctness)"
+    },
+    {
+      "issue": "12907582",
+      "finding": "PrimitivePolynomialDatabase::trinomials(8) returns reducible x^8+x^4+1 as primitive; doctest asserts it.",
+      "disposition": "file issue: owner picks container (correctness)"
+    },
+    {
+      "issue": "8a9156fc",
+      "finding": "ProfileRegistry::from_json rejects two committed core profiles in crates/gf2-core/data/tuning-profiles/ (schema v2/v3 vs v4).",
+      "disposition": "file issue: owner picks container"
+    },
+    {
+      "issue": "01c20b61",
+      "finding": "bench-window run-window.sh/follow-window.sh (dev/active/1a379447-zen3-cpu-performance/bench-window/) hard-code repo=/home/vkaskivuo/Projects/gf2.",
+      "disposition": "file issue: owner picks container (no-dev-path-coupling)"
+    },
+    {
+      "issue": "5a25717c",
+      "finding": "Survey scripts hard-code dev/active/f547c394/producing-inputs.json.",
+      "disposition": "filed b0b1faf5; 602652bf waits on it"
+    },
+    {
+      "issue": "5625a423",
+      "finding": "gf2-coding standards doc/test drift (vector dir defaults, ignore reason, stale headers, filler LLR, TP07a notes, Sionna key).",
+      "disposition": "filed 629e0ff0"
+    },
+    {
+      "issue": "1fca3739",
+      "finding": "perf-evidence-catalog.md read comparator ratios inverted.",
+      "disposition": "resolved: \u00a76 correction appended (falsification-preserved)"
     }
   ],
   "notes": [
@@ -1023,7 +1159,9 @@
     "Wave 6a dispatched concurrently with 12907582 (no dependency between them). Held: 8bd873f7 (done by another session for dbd8787d), 3fd3db5e (fd9d5416 in progress, hard precondition), 5a25717c/65a5436a/7bac1303 (tuning-campaign tooling under concurrent edit), 153297cf (after 12907582 merges; both edit rustdoc).",
     "Owner approved parenting the 10 session-filed issues (2026-10-02); 112f23c6 joined fa787f85 with the standard four gates.",
     "Session 3 (2026-10-03): session 2 ended without a handoff; progress reconciled against JIT. Wave 6 = remaining decoupling tasks plus the 14 page/move tasks pulled forward from wave 7 (no deps between them); 5a25717c runs after 112f23c6 (shared root resolver). 153297cf (after 12907582) and 3fd3db5e (fd9d5416 still in progress, hard REQ-01) moved to wave 7.",
-    "Owner instruction 2026-10-03: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff after waves 6 and 7 finish, or when only owner-blocked work remains. Check workers every 30 min."
+    "Owner instruction 2026-10-03: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff after waves 6 and 7 finish, or when only owner-blocked work remains. Check workers every 30 min.",
+    "Worker-prompt lessons (binding for dispatch prompts):- Mathematical notation in prose uses LaTeX per `.jit/reference/content-standards.md` (`$\\mathrm{GF}(2^m)$`, `$O(n^2)$`, `$r < 1$`); code identifiers stay in code spans. - Every command uses the AGENTS.md forms: `./scripts/cargo-budget.sh cargo ...`; tests `./scripts/cargo-budget.sh --test cargo nextest run ...`. - External works and standards cite registry keys `@/citation/<key>` from `.jit/references.toml` (resolve with `jit item show`). - No timing, speed or feasibility statement without a commit-pinned receipt; performance figures appear only on `docs/reference/performance-evidence.md`, and other pages link its anchors. - State exactly what a check or guarantee establishes (probabilistic vs exact; which binary flushes on which signal); verify each behavioral claim against code or by running it. - A universal statement (\"every claim\", \"all paths\") must hold for every case on the page. - Records hold no hand-copied counts: commit raw outputs as files and cite them with the exact commands; show equality with a `diff` whose empty output the record states. - Facts owned by another page are linked, not restated (installation and per-crate features: `docs/reference/supported-configurations.md`; architecture: `docs/concepts/acceleration-architecture.md`; field families: `docs/concepts/finite-field-arithmetic.md`). - Crate READMEs follow the rules in `the README rules note below` and state capabilities per area naming at most public modules, never type or function inventories. - Index rows in `docs/index.md` go into the section's existing `| Page | ... |` table. - Digest-pinned inputs (protocols, preregistrations, addenda, schemas, receipts, `inputs/` snapshots) keep their bytes. - Never commit `__pycache__` or build output.",
+    "README rules: R1 Rendered Rustdoc link: `[Rustdoc](../../target/doc/<crate_underscored>/index.html)` next to `./scripts/cargo-budget.sh cargo doc -p <crate> --no-deps`. A `src/lib.rs` link alone fails REQ-03. R2 Feature table: keep one line per feature, but state its authority right above it: \"The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.\" (@/inv/single-source-prose; an uncited manual inventory fails). R3 Module/identifier names: name only public paths (`gf2_core::BitVec`, public modules). Private modules re-exported at the root (e.g. gf2-core `bitvec`, `bitslice`) are not \"modules\" to an adopter; check `pub mod` vs `mod` in src/lib.rs. R4 Installation: no layout-dependent `path = \"crates/<crate>\"` snippet. Link the single installation source instead: `[installation](../../docs/reference/supported-configurations.md#installation)` (the page lands on main from branch worktree-agent-2ff9953a; docs-mechanical may flag the link until it merges \u2014 expected). R5 Commands in AGENTS.md form only (`./scripts/cargo-budget.sh cargo ...`, tests `./scripts/cargo-budget.sh --test cargo nextest run -p <crate> --cargo-profile ci-test --profile ci`). R6 External works and standards cite `@/citation/<key>` from .jit/references.toml."
   ],
   "started_at": "2026-10-01T19:40:00Z",
   "traps": [
