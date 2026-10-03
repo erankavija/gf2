@@ -1,30 +1,10 @@
 //! GF(p) — Prime Field Arithmetic
 //!
-//! Arithmetic over prime fields GF(p) using a const-generic representation.
-//! The public API is uniform — `new()` converts any `u64` into a canonical
-//! field element, `value()` extracts the canonical `[0, P)` representative,
-//! and the `+ − * /` operators and `inv()` all work as expected — but the
-//! internal storage form is chosen at compile time based on the algebraic
-//! shape of `P`:
-//!
-//! - **Montgomery form** (`aR mod P` with `R = 2^64`) for generic primes.
-//!   Multiplication uses REDC; `new()` and `value()` pay the cost of the
-//!   `to_mont` / `from_mont` conversions.
-//! - **Canonical form** (value in `[0, P)`) for primes with recognised
-//!   structure: Mersenne `2^n − 1` with `n ≥ 31` and Proth `k·2^n + 1`
-//!   with `n ≥ 24`. These use the specialised reducers in
-//!   [`specialized`]; `new()`/`value()` are essentially the identity
-//!   (modulo a single `%`), so short-lived values pay no boundary cost.
-//!
-//! The switch is made by the compile-time `use_specialized_storage`
-//! helper below; callers see a single consistent API regardless of which
-//! form the underlying `u64` carries.
-//!
-//! `P = 2` is handled specially with naive bitwise arithmetic since
-//! Montgomery form requires an odd modulus (`gcd(P, R) = 1`).
-//!
-//! The Goldilocks prime `2^64 − 2^32 + 1` does not fit the `P ≤ 2^63`
-//! bound enforced by `Fp<P>` and is exposed via the dedicated
+//! [`Fp`] is a prime field over a const-generic modulus. Its API works on
+//! canonical values in `[0, P)`; the storage form (Montgomery, canonical, or
+//! bitwise for `P = 2`) is chosen at compile time from the algebraic shape
+//! of `P`. The Goldilocks prime `2^64 − 2^32 + 1` does not fit the
+//! `P ≤ 2^63` bound enforced by `Fp<P>` and is exposed via the dedicated
 //! [`specialized::GoldilocksFp`] type.
 //!
 //! # Examples
@@ -66,23 +46,16 @@ use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use crate::field::{ConstField, FiniteField, PlePanelLane};
 
-/// Compile-time flag indicating whether `Fp<P>` should use canonical storage
+/// Compile-time flag indicating whether `Fp<P>` uses canonical storage
 /// with a specialized reduction instead of Montgomery form.
-///
-/// Evaluated at compile time from the [`classify`] result; `true` only for
-/// primes whose specialized reduction beats the `to_mont`/`redc`/`from_mont`
-/// round-trip. For generic primes (and for small primes such as `P = 2` or
-/// `P = 65537` where Montgomery is already competitive) this is `false`.
 const fn use_specialized_storage(p: u64) -> bool {
     if p == 2 {
         return false;
     }
     match classify(p) {
         PrimeShape::Mersenne { n } => n >= 31,
-        // Proth primes with n >= 24 benefit because the divisor fits in
-        // ≲ 40 bits and the 128-bit `%` path avoids Montgomery's three
-        // multiplies. The threshold also covers the BabyBear (n=27) and
-        // KoalaBear (n=24) zk-friendly primes.
+        // The threshold covers the BabyBear (n=27) and KoalaBear (n=24)
+        // primes.
         PrimeShape::Proth { n, .. } => n >= 24,
         // Goldilocks is handled by the dedicated `GoldilocksFp` type.
         PrimeShape::Goldilocks => false,
@@ -95,18 +68,14 @@ const fn use_specialized_storage(p: u64) -> bool {
 /// The public API operates on canonical values in `[0, P)`. The internal
 /// storage form is chosen at compile time via `use_specialized_storage`:
 ///
-/// - **Canonical form** (value in `[0, P)`) for specialised Mersenne
-///   (`n ≥ 31`) and Proth (`n ≥ 24`) primes. `new`/`value` are essentially
-///   the identity (one `%`), and multiplication dispatches into the
-///   specialised reducers in [`specialized`].
+/// - **Canonical form** (value in `[0, P)`) for Mersenne `2^n − 1` with
+///   `n ≥ 31` and Proth `k·2^n + 1` with `n ≥ 24`. Multiplication
+///   dispatches into the reducers in [`specialized`].
 /// - **Montgomery form** (`aR mod P` with `R = 2^64`) for all other
 ///   primes with `P > 2`. `new`/`value` perform `to_mont`/`from_mont`;
 ///   multiplication uses REDC.
-/// - **Bitwise form** for `P = 2`: multiplication is `&`, addition is
-///   `^` — Montgomery is inapplicable because `P` must be odd.
-///
-/// This is invisible at the API surface: callers always see canonical
-/// values and a single set of operators.
+/// - **Canonical form with bitwise multiplication** for `P = 2`, because
+///   Montgomery form requires an odd modulus.
 ///
 /// The type parameter `P` must be prime with `1 < P <= 2^63`; primality is not
 /// checked at compile time but is required for correctness.
@@ -140,7 +109,6 @@ impl<const P: u64> fmt::Debug for Fp<P> {
 }
 
 impl<const P: u64> Fp<P> {
-    /// Compile-time validation that P is valid.
     const VALIDATED: () = {
         assert!(P > 1, "Fp<P>: P must be > 1");
         assert!(
@@ -150,17 +118,11 @@ impl<const P: u64> Fp<P> {
     };
 
     /// Creates a new element from a representative value, reduced modulo `P`.
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - Any `u64`; will be reduced to `[0, P)`.
     #[inline]
     pub const fn new(value: u64) -> Self {
         #[allow(clippy::let_unit_value)]
         let _ = Self::VALIDATED;
         let reduced = value % P;
-        // Canonical storage (for `P = 2` and for specialized primes) keeps
-        // the reduced value as-is; Montgomery storage converts via `to_mont`.
         if P == 2 || use_specialized_storage(P) {
             Self(reduced)
         } else {
@@ -186,12 +148,6 @@ impl<const P: u64> Fp<P> {
     /// `a · R mod P` — which coincides with the canonical value only
     /// when `R ≡ 1 (mod P)` (for instance `P = 65537`, since
     /// `R = 2^64 ≡ 1 (mod P)`).
-    ///
-    /// This is a `pub(crate)` backdoor that callers in specialised
-    /// SIMD dispatch paths use to avoid the redundant REDC round-trip
-    /// in `.value()` for those specific primes. Do **not** use this
-    /// outside the crate: the storage form is an implementation detail
-    /// and is free to change.
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn raw_storage(self) -> u64 {
@@ -200,14 +156,9 @@ impl<const P: u64> Fp<P> {
 
     /// Constructs an `Fp<P>` directly from a raw storage word.
     ///
-    /// The caller asserts that `raw` is already in the correct internal
-    /// representation (canonical for specialised primes and `P = 2`;
-    /// Montgomery for everything else). See [`Self::raw_storage`] for
-    /// the legality of using a canonical value as Montgomery storage
-    /// when `R ≡ 1 (mod P)` (e.g. `P = 65537`).
-    ///
-    /// Misuse produces silently wrong arithmetic; this helper is
-    /// crate-private and exists only for the SIMD dispatch layer.
+    /// `raw` must already be in the storage form of `P` described at
+    /// [`Self::raw_storage`]; any other word produces silently wrong
+    /// arithmetic.
     #[inline]
     #[allow(dead_code)]
     pub(crate) const fn from_raw_storage(raw: u64) -> Self {
@@ -215,21 +166,19 @@ impl<const P: u64> Fp<P> {
     }
 }
 
-/// Compile-time helper that performs a specialized modular multiplication
-/// when `P` has a recognised structure. Only called from code paths guarded
-/// by `use_specialized_storage(P) == true`.
+/// Canonical-form modular multiplication for a `P` with recognised
+/// structure. Only called from code paths guarded by
+/// `use_specialized_storage(P) == true`.
 #[inline(always)]
 fn specialized_mul<const P: u64>(a: u64, b: u64) -> u64 {
     match classify(P) {
         PrimeShape::Mersenne { n } => {
-            // Dispatch on the (compile-time) exponent so the reducer sees
-            // a concrete const-generic `N`.
+            // Dispatch on the exponent so the reducer sees a const-generic `N`.
             dispatch_mersenne_mul(n, a, b)
         }
         PrimeShape::Proth { k, n } => dispatch_proth_mul(k, n, a, b),
         PrimeShape::Goldilocks | PrimeShape::Generic => {
-            // Unreachable when use_specialized_storage(P) is true; kept as a
-            // safety fallback that still produces correct results.
+            // Unreachable when use_specialized_storage(P) is true.
             ((a as u128 * b as u128) % P as u128) as u64
         }
     }
@@ -241,13 +190,9 @@ fn specialized_mul<const P: u64>(a: u64, b: u64) -> u64 {
 #[inline(always)]
 fn dispatch_mersenne_mul(n: u32, a: u64, b: u64) -> u64 {
     match n {
-        // For N ≤ 31 the product fits in u64 so we skip u128 entirely
-        // — a 64×64→64 multiply plus a 64-bit fold beats the generic path.
+        // The product of two values below 2^31 fits in u64.
         31 => mersenne_reduce_u64::<31>(a.wrapping_mul(b)),
-        // For N = 61 the product is 122 bits; the u128 reducer is optimal.
         61 => mersenne_reduce::<61>((a as u128) * (b as u128)),
-        // Other Mersenne exponents are theoretically supported but not
-        // specialised here; fall back to generic reduction.
         _ => {
             let wide = (a as u128) * (b as u128);
             (wide % ((1u128 << n) - 1)) as u64
@@ -258,15 +203,11 @@ fn dispatch_mersenne_mul(n: u32, a: u64, b: u64) -> u64 {
 #[inline(always)]
 fn dispatch_proth_mul(k: u64, n: u32, a: u64, b: u64) -> u64 {
     // For Proth primes P < 2^32 (such as BabyBear and KoalaBear), the
-    // product a*b fits in u64 and we can avoid u128 entirely. A u64
-    // modulo by a compile-time-known constant compiles to a multiply-high
-    // schedule that beats Montgomery REDC's three 64-bit multiplies.
+    // product a*b fits in u64.
     let p = (k as u128) * (1u128 << n) + 1;
     let p32 = p as u64;
     if p < (1u128 << 32) {
         let prod = a.wrapping_mul(b);
-        // For the common cases we hand off to the const-generic reducer;
-        // the compiler monomorphises each case separately.
         match (k, n) {
             (15, 27) => proth_reduce_u64::<15, 27>(prod),
             (127, 24) => proth_reduce_u64::<127, 24>(prod),
@@ -292,15 +233,6 @@ impl<const P: u64> Add for Fp<P> {
     type Output = Self;
 
     /// Branchless modular addition.
-    ///
-    /// Selects between Montgomery-form and canonical-form addition at
-    /// compile time based on `use_specialized_storage`. Both paths are
-    /// identical modular adds on `u64`; the distinction only matters for
-    /// consistency with the chosen storage form of `self.0`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     fn add(self, rhs: Self) -> Self {
         if use_specialized_storage(P) {
@@ -315,10 +247,6 @@ impl<const P: u64> Sub for Fp<P> {
     type Output = Self;
 
     /// Branchless modular subtraction.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         if use_specialized_storage(P) {
@@ -332,16 +260,7 @@ impl<const P: u64> Sub for Fp<P> {
 impl<const P: u64> Mul for Fp<P> {
     type Output = Self;
 
-    /// Modular multiplication.
-    ///
-    /// Uses specialized reduction for primes with favourable algebraic
-    /// structure (Mersenne, Proth), Montgomery REDC otherwise, and bitwise
-    /// AND for `P = 2`. The choice is made at compile time — callers see
-    /// a single inlined implementation per instantiation.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
+    /// Modular multiplication in the storage form of `P`.
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         if P == 2 {
@@ -357,13 +276,8 @@ impl<const P: u64> Mul for Fp<P> {
 impl<const P: u64> Neg for Fp<P> {
     type Output = Self;
 
-    /// Additive inverse: `-a = P - a` for non-zero, `0` for zero.
-    ///
-    /// Works identically for both Montgomery and canonical representations.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
+    /// Additive inverse; `P - self.0` holds in both the Montgomery and
+    /// the canonical storage form.
     #[inline]
     fn neg(self) -> Self {
         if self.0 == 0 {
@@ -530,7 +444,6 @@ impl<const P: u64> FiniteField for Fp<P> {
         } else if P == 2 {
             Some(Self(1))
         } else if use_specialized_storage(P) {
-            // Canonical-form square-and-multiply using specialized_mul.
             let mut result: u64 = 1;
             let mut base: u64 = self.0;
             let mut e = P - 2;
@@ -572,9 +485,6 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// [`FiniteField::cardinality_log2_hint`].
     #[inline]
     fn cardinality_log2_hint() -> Option<u32> {
-        // P is a const generic ≥ 2 (validated by `Self::VALIDATED`), so
-        // `(u64::BITS - 1) - P.leading_zeros()` is the same as
-        // `P.ilog2()` and never panics.
         Some(u64::BITS - 1 - P.leading_zeros())
     }
 
@@ -604,10 +514,6 @@ impl<const P: u64> FiniteField for Fp<P> {
     ///   accumulator is `R² Σ aᵢbᵢ (mod P)`. Reducing it modulo `P` and
     ///   applying one REDC multiplies by `R⁻¹`, yielding `R Σ aᵢbᵢ`, the
     ///   correct Montgomery storage of the dot product.
-    ///
-    /// This removes two per-product Montgomery-to-canonical conversions from
-    /// `FieldVec::dot_product`/`FieldMatrix::gemm`; reduction still happens at
-    /// chunk boundaries only.
     #[inline]
     fn mul_product_sum_wide(&self, rhs: &Self) -> u128 {
         self.0 as u128 * rhs.0 as u128
@@ -668,9 +574,7 @@ impl<const P: u64> FiniteField for Fp<P> {
         }
     }
 
-    /// Theorem-4 per-cell operand bound: `p - 1` for `Fp<P>` with `P > 1`,
-    /// and `0` for the degenerate `P = 1` case (which is not a valid
-    /// prime — the override is defensive). See
+    /// Theorem-4 per-cell operand bound `P - 1`. See
     /// [`FiniteField::theorem_4_operand_bound`] for the semantics.
     #[inline]
     fn theorem_4_operand_bound() -> u128 {
@@ -688,24 +592,17 @@ impl<const P: u64> FiniteField for Fp<P> {
         <Self as simd_ops::SimdVecOps>::try_simd_dot_vec(a, b)
     }
 
-    /// Whole-gemm small-prime fast path. Pre-packs `a` and `b_t` to
-    /// canonical bytes once, calls the AVX2 byte-lane batch-dot
-    /// kernel for every output cell against the same packed buffers,
-    /// then unpacks. Amortises the Montgomery REDC pack overhead
-    /// across the `O(m·k·n)` inner work, eliminating the per-cell
-    /// pack thrash that blocks the `dot_product_slices`-level
-    /// dispatch from beating scalar at small `n`.
+    /// Whole-gemm fast path: packs `a` and `b_t` once and runs a SIMD
+    /// kernel over the packed buffers. Dispatched by `P`:
     ///
-    /// Two regimes dispatched by `P`:
+    /// * `P = 2^31 − 1` — `fp_m31_try_gemm_classical`.
     /// * `P ≤ 251` — byte-lane Route C / Route A / Candidate C
-    ///   (`fp_small_try_gemm_classical`, issue `40195c09`).
+    ///   (`fp_small_try_gemm_classical`).
     /// * `P ∈ (251, 65535]` — u16-lane panelized GEMM kernel
-    ///   (`fp_medium_try_gemm_panel`, issue `74ba1cdc` R1).
+    ///   (`fp_medium_try_gemm_panel`).
     ///
-    /// Returns `false` (declining the fast path) when:
-    /// - `P > 65535` (out of medium-prime u16-lane range);
-    /// - the `simd` feature is disabled;
-    /// - AVX2 is unavailable at runtime.
+    /// Returns `false` (declining the fast path) for other primes, when the
+    /// `simd` feature is disabled, or when AVX2 is unavailable at runtime.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_gemm_classical(
@@ -716,12 +613,6 @@ impl<const P: u64> FiniteField for Fp<P> {
         n: usize,
         out: &mut [Self],
     ) -> bool {
-        // Mersenne31 whole-GEMM: must be checked FIRST because
-        // `use_specialized_storage(M31) == true`, which means
-        // `fp_small_enabled` and `fp_medium_eligible` both return
-        // `false` for P == M31.  Without this guard the call falls
-        // through to scalar `dot_product_slices` for every M31 GEMM.
-        // Issue `6a7d4c8e`.
         if simd_ops::fp_m31_try_gemm_classical::<P>(a, b_t, m, k, n, out) {
             return true;
         }
@@ -731,9 +622,8 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_medium_try_gemm_panel::<P>(a, b_t, m, k, n, out)
     }
 
-    /// Non-allocating availability probe for the whole-GEMM fast path
-    /// (issues `40195c09`, `6a7d4c8e`). Returns `true` when a SIMD
-    /// kernel is available for this prime:
+    /// Non-allocating availability probe for the whole-GEMM fast path.
+    /// Returns `true` when a SIMD kernel is available for this prime:
     ///
     /// - `P == 2^31 - 1` (Mersenne31): AVX2 `m31_batch_dot_fn`.
     /// - `P ≤ 251`: byte-lane AVX2 (Candidate C / route A / route C).
@@ -750,8 +640,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 
     /// Constructs a packed basis reducer for the cyclic-decomposition
-    /// reduce loop (issue `d1dd266c`). Returns `None` when no SIMD
-    /// fast path is available.
+    /// reduce loop. Returns `None` when no SIMD fast path is available.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_make_basis_reducer(
@@ -761,10 +650,9 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 
     /// Constructs a packed chain-polynomial arithmetic handle for the
-    /// `cyclic_decomposition` Krylov-step polynomial bookkeeping
-    /// (issue `5a3dbd5b`). Returns `None` when `P > 251` or when AVX2
-    /// is unavailable; the caller falls back to the scalar `FieldPoly`
-    /// path.
+    /// `cyclic_decomposition` Krylov-step polynomial bookkeeping.
+    /// Returns `None` when `P > 251` or when AVX2 is unavailable; the
+    /// caller falls back to the scalar `FieldPoly` path.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_make_chain_poly_arith(
@@ -774,9 +662,6 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 
     /// Non-allocating availability probe for `try_make_chain_poly_arith`.
-    /// Lets `cyclic_decomposition` decide whether to take the packed
-    /// canonical-byte chain-poly arithmetic path without paying a boxed
-    /// allocation per decomposition.
     #[cfg(not(verify_lean))]
     #[inline]
     fn chain_poly_arith_available() -> bool {
@@ -784,23 +669,19 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 
     /// SIMD-accelerated `axpy` (`y[i] += a · x[i]`) for `Fp<P>` with
-    /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
-    /// byte-lane (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`)
-    /// `batch_mul` + `batch_add` kernels with the scalar `a` broadcast
-    /// across the whole vector. Returns `false` for `P > 65535` or
-    /// when the `simd` feature / AVX2 are unavailable.
+    /// `P ≤ 65521`. Routes through the AVX2 byte-lane (`P ≤ 251`) or
+    /// u16-lane (`252 ≤ P < 65536`) `batch_mul` + `batch_add` kernels with
+    /// the scalar `a` broadcast across the whole vector. Returns `false`
+    /// for `P > 65535` or when the `simd` feature / AVX2 are unavailable.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
         simd_ops::fp_try_axpy::<P>(y, a, x)
     }
 
-    /// Whole-matvec fast path for `Fp<P>` with `P ≤ 65521`
-    /// (issue `d1dd266c`). Routes through the AVX2 byte-lane batch-dot
-    /// kernel for `P ≤ 251` or the u16-lane batch-dot kernel for
-    /// `252 ≤ P < 65536`. Pre-packs the matrix and the vector to the
-    /// canonical-storage layout used by the kernel; runs one `batch_dot`
-    /// per output row; reduces to `Fp<P>` storage.
+    /// Whole-matvec fast path for `Fp<P>` with `P ≤ 65521`. Routes
+    /// through the AVX2 byte-lane row-panel kernel for `P ≤ 251` or the
+    /// u16-lane batch-dot kernel for `252 ≤ P < 65536`.
     ///
     /// Returns `false` for `P > 65535` or when the `simd` feature is
     /// disabled / AVX2 is unavailable, in which case the caller (the
@@ -815,10 +696,9 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// Pre-packs an `m × k` matrix into the AVX2 canonical-byte
     /// (`P ≤ 251`) or storage-`u16` (`252 ≤ P < 65536`) layout used by
     /// the matvec kernel. Returns `None` when the field is out of range
-    /// or the SIMD path is unavailable. Used by the iterative drivers
-    /// in [`crate::field::charpoly`] (`cyclic_decomposition`,
-    /// `wiedemann_minpoly_attempt`) to amortise the matrix-pack cost
-    /// across `O(n)` matvec calls per minpoly / charpoly invocation.
+    /// or the SIMD path is unavailable. The iterative drivers in
+    /// [`crate::field::charpoly`] (`cyclic_decomposition`,
+    /// `wiedemann_minpoly_attempt`) reuse the pack across their matvecs.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_prepack_matvec(
@@ -835,9 +715,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// 65535]` (medium-prime path). Returns `false` for `P > 65535` or
     /// when the `simd` feature is disabled / AVX2 is unavailable, in
     /// which case the caller falls back to the generic
-    /// Wide-accumulator scatter path. The hook packs `b` once
-    /// internally and reuses the canonical-byte / canonical-u16 buffer
-    /// across every row of the sparse left matrix.
+    /// Wide-accumulator scatter path.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_spmm(
@@ -853,10 +731,8 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 
     /// Routes to the extension-field scalar Wiedemann minimal-polynomial
-    /// path for the supported low-cardinality primes (issue `6c926de0`).
-    /// `P ∈ {7, 251}` engages a quadratic or cubic extension large enough
-    /// that `|E| > n` for the project's bench sizes (n ≤ 256); other
-    /// primes fall through to the default `None`.
+    /// path for `P ∈ {7, 251}`; other primes fall through to the default
+    /// `None`.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_extension_wiedemann_minpoly(
@@ -865,17 +741,15 @@ impl<const P: u64> FiniteField for Fp<P> {
         crate::field::extension_wiedemann::try_extension_wiedemann_fp::<P>(a)
     }
 
-    /// Panelized PLE base-case fast path for `Fp<P>` (issues `6823c8a0`
-    /// + `68db401b`, design `2e8c5a29`).
+    /// Panelized PLE base-case fast path for `Fp<P>`.
     ///
     /// Routes by `P`:
     /// * `P <= 251` — AVX2 byte-lane panel kernel via
     ///   [`crate::simd::maybe_fp_small_ple`], row-major axpy Schur
     ///   update over canonical-byte panel rows.
     /// * `252 <= P < 65536` — AVX2 u16-lane panel kernel via
-    ///   [`crate::simd::maybe_fp_medium_ple`] (issue `68db401b`),
-    ///   row-major axpy Schur update over canonical u16 panel rows
-    ///   with widening-to-u32 multiply and the SSOT Barrett reduction.
+    ///   [`crate::simd::maybe_fp_medium_ple`], row-major axpy Schur
+    ///   update over canonical u16 panel rows.
     /// * Otherwise: returns `None` and the caller falls back to scalar
     ///   `ple_base_direct`.
     #[cfg(not(verify_lean))]
@@ -905,7 +779,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// Returns `Some(PlePanelLane::Byte)` when `P <= 251` and the
     /// small-prime PLE panel kernel is registered, or
     /// `Some(PlePanelLane::U16)` when `252 <= P < 65536` and the
-    /// medium-prime PLE panel kernel is registered (issue `68db401b`).
+    /// medium-prime PLE panel kernel is registered.
     /// Both require the `simd` feature and runtime-detected AVX2.
     /// Returns `None` otherwise.
     #[cfg(not(verify_lean))]
@@ -953,7 +827,7 @@ mod tests {
     use super::*;
     use crate::field::{ConstField, FiniteField, FiniteFieldExt};
 
-    // --- Step 1: Construction ---
+    // --- Construction ---
 
     #[test]
     fn test_new_reduces_mod_p() {
@@ -977,7 +851,7 @@ mod tests {
         assert_eq!(format!("{}", Fp::<7>::new(0)), "0");
     }
 
-    // --- Step 2: Basic arithmetic (GF(7)) ---
+    // --- Basic arithmetic (GF(7)) ---
 
     #[test]
     fn test_add_gf7() {
@@ -1016,7 +890,7 @@ mod tests {
         assert_eq!(F2::new(1).inv(), Some(F2::new(1)));
     }
 
-    // --- Step 3: Inversion + division ---
+    // --- Inversion + division ---
 
     #[test]
     fn test_inv_gf7() {
@@ -1038,7 +912,7 @@ mod tests {
         }
     }
 
-    // --- Step 4: Reference ops + AddAssign ---
+    // --- Reference ops + AddAssign ---
 
     #[test]
     #[allow(clippy::op_ref)]
@@ -1070,7 +944,7 @@ mod tests {
         assert_eq!(b.value(), 5); // b still valid
     }
 
-    // --- Step 5: FiniteField trait ---
+    // --- FiniteField trait ---
 
     #[test]
     fn test_characteristic_and_extension() {
@@ -1144,7 +1018,7 @@ mod tests {
         assert!((a * inv).is_one());
     }
 
-    // --- Step 6: ConstField ---
+    // --- ConstField ---
 
     #[test]
     fn test_const_field_order() {
@@ -1214,11 +1088,6 @@ mod tests {
 
         const MERSENNE_61: u64 = (1u64 << 61) - 1;
 
-        // Fp<3>: 2000 cases × 5 ops = 10,000 random ops (also exhaustively
-        // covered in test_montgomery_cross_verify_gf3_exhaustive above).
-        // Fp<65537>: 2000 cases × 5 ops = 10,000 random ops.
-        // Fp<2^61-1>: 2000 cases × 5 ops = 10,000 random ops.
-        // Total: 30,000+ verified random operations against naive (a op b) % P.
         proptest! {
             #![proptest_config(proptest::prelude::ProptestConfig::with_cases(2000))]
             #[test]

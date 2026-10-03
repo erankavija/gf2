@@ -1,22 +1,11 @@
-//! SIMD element-wise vector-op hooks for `Fp<P>`.
+//! SIMD dispatch hooks for `Fp<P>`.
 //!
-//! This module exposes [`SimdVecOps`], the single source of truth for
-//! element-wise SIMD dispatch used by [`crate::field::FieldVec`] and
-//! [`crate::gfpn::BatchExtField`]. The trait carries default-`None`
-//! implementations that make every `FiniteField` compile unchanged;
-//! specific primes override the hooks to route through AVX2 kernels in
-//! `gf2-kernels-simd`.
-//!
-//! Specialised primes are routed before the generic Montgomery path:
-//! `Fp<65537>` uses the Fermat-prime AVX2 kernels, `Fp<2^31 - 1>` uses
-//! the existing Mersenne multiply kernel, and eligible non-special
-//! Montgomery primes use the generic `u64` AVX2 kernels. The shared
-//! packing and unpacking helpers live here so that `FieldVec` and
-//! `BatchExtField` share the same implementation.
-//!
-//! When the `simd` feature is disabled or AVX2 is unavailable at
-//! runtime, every `try_*` hook returns `None` and callers fall back to
-//! the scalar element-wise path.
+//! [`SimdVecOps`] is the element-wise SIMD dispatch used by
+//! [`crate::field::FieldVec`] and [`crate::gfpn::BatchExtField`]; `Fp<P>`
+//! overrides its default-`None` hooks to route through AVX2 kernels in
+//! `gf2-kernels-simd`. When the `simd` feature is disabled or AVX2 is
+//! unavailable at runtime, every `try_*` hook declines and callers fall back
+//! to their scalar path.
 
 use super::Fp;
 #[cfg(feature = "simd")]
@@ -31,17 +20,9 @@ use crate::field::PlePanelLane;
 
 /// Element-wise SIMD-dispatch hook for batched base-field arithmetic.
 ///
-/// `FieldVec::mul_vec` / `add_vec` / `sub_vec` consult the three
-/// `try_simd_*` methods before falling back to scalar loops. Every
-/// implementing type may return `None` (the default — scalar behaviour)
-/// or override a hook to route through a kernel in `gf2-kernels-simd`.
-///
-/// This trait is sealed in effect: external users should treat it as
-/// an implementation detail — the default `None` methods are the only
-/// stable contract they see. The blanket impl for `Fp<P>` covers every
-/// prime instantiation and is what satisfies the
-/// `F: FiniteField + SimdVecOps` bound on `FieldVec`'s element-wise
-/// ops.
+/// `FieldVec::mul_vec` / `add_vec` / `sub_vec` consult the `try_simd_*`
+/// methods before their scalar loops; the default `None` selects the scalar
+/// loop.
 ///
 /// # Examples
 ///
@@ -59,72 +40,31 @@ use crate::field::PlePanelLane;
 /// let _ = FieldVec::from(xs).mul_vec(&FieldVec::from(ys));
 /// ```
 pub trait SimdVecOps: Sized {
-    /// Attempts a SIMD batch multiply; returns `None` to defer to the
-    /// scalar element-wise path.
-    ///
-    /// # Arguments
-    ///
-    /// * `a`, `b` — same-length element slices.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` base-field multiplies, with an 8-lane vectorisation
-    /// factor on AVX2-capable CPUs for the specialised primes.
+    /// Attempts a SIMD batch multiply of same-length slices; returns `None`
+    /// to defer to the scalar element-wise path.
     #[inline]
     fn try_simd_mul_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
         None
     }
 
-    /// Attempts a SIMD batch add; returns `None` to defer to the
-    /// scalar element-wise path.
-    ///
-    /// # Arguments
-    ///
-    /// * `a`, `b` — same-length element slices.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)`, lane-parallel when specialised.
+    /// Attempts a SIMD batch add of same-length slices; returns `None` to
+    /// defer to the scalar element-wise path.
     #[inline]
     fn try_simd_add_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
         None
     }
 
-    /// Attempts a SIMD batch subtract; returns `None` to defer to the
-    /// scalar element-wise path.
-    ///
-    /// # Arguments
-    ///
-    /// * `a`, `b` — same-length element slices.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)`, lane-parallel when specialised.
+    /// Attempts a SIMD batch subtract of same-length slices; returns `None`
+    /// to defer to the scalar element-wise path.
     #[inline]
     fn try_simd_sub_vec(_a: &[Self], _b: &[Self]) -> Option<Vec<Self>> {
         None
     }
 
-    /// Attempts a SIMD-accelerated dot product `∑ a[i] · b[i]`; returns
-    /// `None` to defer to the scalar `mul_product_sum_wide` chunked
-    /// loop in `crate::field::vec::dot_product_slices`.
-    ///
-    /// The returned value is the canonical reduced sum, equivalent to
-    /// the scalar `dot_product_slices` result. Implementors that
-    /// vectorise this hook can typically eliminate the
-    /// pack/unpack round-trip that
-    /// [`Self::try_simd_mul_vec`] + scalar reduction would otherwise
-    /// pay, because the kernel reduces the 32-bit-lane accumulator
-    /// directly to a scalar at the panel boundary.
-    ///
-    /// # Arguments
-    ///
-    /// * `a`, `b` — same-length element slices.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` base-field MACs; lane-parallel via `_mm256_madd_epi16`
-    /// when specialised on the small-prime byte-lane path.
+    /// Attempts a SIMD dot product `∑ a[i] · b[i]` of same-length slices,
+    /// equal to the scalar `dot_product_slices` result; returns `None` to
+    /// defer to the chunked `mul_product_sum_wide` loop in
+    /// `crate::field::vec::dot_product_slices`.
     #[inline]
     fn try_simd_dot_vec(_a: &[Self], _b: &[Self]) -> Option<Self> {
         None
@@ -164,30 +104,11 @@ impl<C: crate::gfpn::ExtConfig> SimdVecOps for crate::gfpn::CubicExt<C> {}
 // Blanket impl for Fp<P>: exact specialisations win, then generic Montgomery.
 // ---------------------------------------------------------------------------
 
-// IMPORTANT — dispatch ordering invariant (Issue 3d06224c, regression guard).
-//
-// The `try_simd_*_vec` methods below dispatch most-specific first to preserve
-// the Mersenne31 (`P = 2^31 − 1`) and Fermat-prime (`P = 65537`) fast paths
-// over the generic Montgomery AVX2 lane. The `if P == M31` and
-// `if P == 65537` exact tests MUST remain ABOVE the generic
-// `fp_generic_try_*` fallback (which itself is internally guarded by
-// `fp_generic_enabled` so it never claims either specialised prime).
-//
-// New per-prime dispatch branches (e.g. small-prime packed kernel for
-// `p ≤ 251`, u16-packed kernel for `p < 65536`) MUST be inserted BELOW the
-// existing exact-prime tests but ABOVE the generic fallback, and MUST also
-// be excluded by `fp_generic_enabled` so the dispatch lattice stays sound.
-// Re-ordering or removing the existing exact tests would silently route
-// Mersenne31 / Fermat traffic through the generic Montgomery kernel and
-// regress the `WITHIN_1.5X` family verdict in
-// `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md`.
-//
-// The regression test `m31_simd_mul_matches_scalar_across_boundary_lens`
-// and the dispatch-classification test
-// `specialized_primes_do_not_use_generic_montgomery_path` in this file's
-// `tests` module guard this invariant at the unit level; the criterion
-// benchmark `mersenne_gemm_regression` (`benches/mersenne_gemm_regression.rs`)
-// guards it at the throughput level.
+// Dispatch-order invariant: the exact-prime tests (`P == 65537`, `P == M31`)
+// precede the range tests, which precede the generic Montgomery fallback,
+// and `fp_generic_enabled` excludes every prime an earlier branch owns. The
+// tests `m31_simd_mul_matches_scalar_across_boundary_lens` and
+// `specialized_primes_do_not_use_generic_montgomery_path` guard it.
 impl<const P: u64> SimdVecOps for Fp<P> {
     #[inline]
     fn try_simd_mul_vec(a: &[Self], b: &[Self]) -> Option<Vec<Self>> {
@@ -284,32 +205,16 @@ fn fpm31_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<
 }
 
 /// Whole-GEMM fast path for `Fp<2^31 - 1>` (Mersenne31) using the
-/// AVX2 `m31_batch_dot_fn` kernel (issue `6a7d4c8e`).
+/// AVX2 `m31_batch_dot_fn` kernel.
 ///
-/// Pre-packs both operands into contiguous `u32` buffers once per
-/// GEMM call (`O(mk + kn)`), then for each output cell `(i, j)`
-/// invokes the batch-dot kernel on the pre-packed row slices
-/// (`O(mn)` kernel calls, each `O(k)` work). The pack step uses
-/// direct `raw_storage() as u32` truncation — `Fp<M31>` uses
-/// canonical storage (`raw_storage()` returns the value in `[0,
-/// 2^31-1)`), so no Montgomery REDC round-trip is needed.
+/// Packs `a` (`m × k` row-major) and `b_t` (`n × k` row-major, already
+/// transposed by the caller) once into `u32` buffers; `Fp<M31>` storage is
+/// canonical, so the pack is a truncation. Runs one batch dot per cell of
+/// `out` (`m × n` row-major).
 ///
 /// Returns `true` when the kernel populated `out`; `false` when the
-/// field is not M31, the `simd` feature is disabled, or AVX2 is
-/// unavailable at runtime.
-///
-/// # Arguments
-///
-/// * `a`   — `m × k` flattened row-major `Fp<M31>` slice.
-/// * `b_t` — `n × k` flattened row-major `Fp<M31>` slice (already
-///   transposed by the caller).
-/// * `m`, `k`, `n` — matrix dimensions.
-/// * `out` — `m × n` output slice; written cell-by-cell.
-///
-/// # Complexity
-///
-/// `O(m·k·n)` Mersenne multiplications, with AVX2 vectorisation
-/// factor of 8 per lane via `m31_batch_dot_fn`.
+/// field is not M31, a dimension is zero, the `simd` feature is disabled,
+/// or AVX2 is unavailable at runtime.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
     a: &[Fp<P>],
@@ -335,8 +240,6 @@ pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
 
     GEMM_M31_A_SCRATCH.with_borrow_mut(|a_u32| {
         GEMM_M31_BT_SCRATCH.with_borrow_mut(|bt_u32| {
-            // Pack A and B^T into canonical u32 buffers.
-            // M31 uses canonical storage: raw_storage() is already in [0, M31).
             a_u32.resize(m * k, 0u32);
             bt_u32.resize(n * k, 0u32);
             for (dst, src) in a_u32.iter_mut().zip(a.iter()) {
@@ -346,9 +249,6 @@ pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
                 *dst = src.raw_storage() as u32;
             }
 
-            // For each output cell (i, j), compute the dot product of
-            // row i of A against row j of B^T (= column j of B) via
-            // the AVX2 m31_batch_dot_fn kernel.
             for i in 0..m {
                 let a_row = &a_u32[i * k..(i + 1) * k];
                 for j in 0..n {
@@ -362,7 +262,6 @@ pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
     true
 }
 
-/// Non-SIMD stub for `fp_m31_try_gemm_classical`; always returns `false`.
 #[cfg(not(feature = "simd"))]
 #[inline]
 pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
@@ -377,18 +276,12 @@ pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
 }
 
 /// Non-allocating availability probe for `fp_m31_try_gemm_classical`.
-///
-/// Returns `true` when `P == 2^31 - 1`, the `simd` feature is enabled,
-/// and AVX2 was detected at runtime. Used by
-/// [`crate::field::matrix::gemm_axpy_into_view`] to decide whether to
-/// allocate the contiguous-`A` scratch buffer before dispatching.
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp_m31_gemm_classical_available<const P: u64>() -> bool {
     P == M31 && crate::simd::maybe_mersenne().is_some()
 }
 
-/// Non-SIMD stub for `fp_m31_gemm_classical_available`; always returns `false`.
 #[cfg(not(feature = "simd"))]
 #[inline]
 pub(crate) fn fp_m31_gemm_classical_available<const P: u64>() -> bool {
@@ -398,28 +291,19 @@ pub(crate) fn fp_m31_gemm_classical_available<const P: u64>() -> bool {
 // ---------------------------------------------------------------------------
 // Small-prime (P <= 251) SIMD helpers.
 //
-// Operates on canonical bytes ([0, P)). For Montgomery-stored primes
-// (P <= 251 means use_specialized_storage is false, so storage is
-// Montgomery), we round-trip via .value() / Fp::new() at pack/unpack
-// boundaries. The pack/unpack cost is O(n) and is amortised against
-// the AVX2 16-element-per-iteration multiply / add / sub.
+// The kernels take canonical bytes in `[0, P)`; `P <= 251` is
+// Montgomery-stored, so pack and unpack convert through `value()` /
+// `Fp::new`.
 // ---------------------------------------------------------------------------
 
-/// Returns `true` when the small-prime AVX2 byte-lane dispatch handles
-/// `P` (odd prime, `3 <= P <= 251`).
-///
-/// `P = 2` is excluded because the byte-lane Barrett constant assumes
-/// `p ≥ 3`; `P = 2` already has its own bitwise-XOR / bitwise-AND fast
-/// path through `Fp<2>`'s scalar arithmetic and does not benefit from
-/// byte-lane SIMD.
+/// Whether the small-prime byte-lane dispatch handles `P`. `P = 2` is
+/// excluded because the byte-lane Barrett constant assumes `p ≥ 3`.
 #[cfg(feature = "simd")]
 #[inline]
 fn fp_small_enabled<const P: u64>() -> bool {
     P >= 3 && P <= 251
 }
 
-/// Packs a slice of `Fp<P>` (Montgomery-stored, `P <= 251`) into
-/// canonical bytes in `[0, P)`.
 #[cfg(feature = "simd")]
 #[inline]
 fn fp_small_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u8> {
@@ -427,8 +311,6 @@ fn fp_small_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u8> {
     xs.iter().map(|x| x.value() as u8).collect()
 }
 
-/// Unpacks a slice of canonical bytes back into `Vec<Fp<P>>` via
-/// `Fp::new`, restoring Montgomery storage for non-specialised primes.
 #[cfg(feature = "simd")]
 #[inline]
 fn fp_small_unpack<const P: u64>(xs: &[u8]) -> Vec<Fp<P>> {
@@ -519,32 +401,14 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 
 /// Conservative default for the tuning profile's `prime_route.f32_min_prime`
 /// field: the minimum prime for which Candidate F (f32-FMA cascade) is
-/// preferred over Candidate C (AVX2 16-bit Barrett).
-///
-/// `select_f32_path` compares against `F32_MIN_PRIME_SELECTED`, which is this
-/// conservative declaration in both the default and current baked builds.
-///
-/// Set to 251 (the value of the highest in-scope small prime) by the
-/// route-selection decision of `@/issue/41096af5`. Combined with the column
-/// threshold in `select_f32_path`, only the cell `P == 251 && n >= 512` reaches
-/// the F / route-A path; all other in-scope primes (GF(7), GF(31), GF(127),
-/// GF(241)) have `P < 251` and therefore `P >= F32_MIN_PRIME_SELECTED`
-/// evaluates to `false`, routing them to Candidate C. See
-/// `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
-/// for the full side-by-side evidence table and decision-rule application.
-///
-/// A measured replacement can select F for a wider prime window through
-/// `crate::tuning::baked::N_THRESH_PRIME` (e.g. a value of 11 routes GF(7) to
-/// C and GF(11)+ to F); the dispatch wiring accepts such a baked declaration.
+/// preferred over Candidate C (AVX2 16-bit Barrett). With the default
+/// column threshold [`F32_MIN_COLS`], it admits only the cell
+/// `P == 251 && n >= 512`.
 pub(crate) const N_THRESH_PRIME: u64 = 251;
 
 /// Conservative default for the tuning profile's `prime_route.f32_min_cols`
 /// field: the minimum output width, in columns, at which `select_f32_path`
 /// prefers the f32-FMA cascade.
-///
-/// The pack-cost overhead amortises at this size (≈ 7 % at `n = 1024` against
-/// ≈ 28 % at `n = 256`); below it Candidate C wins. `select_f32_path`
-/// compares against `F32_MIN_COLS_SELECTED`.
 pub(crate) const F32_MIN_COLS: usize = 512;
 
 /// The `prime_route.f32_min_prime` value [`select_f32_path`] compares `P`
@@ -552,13 +416,10 @@ pub(crate) const F32_MIN_COLS: usize = 512;
 ///
 /// The field is baked rather than resolved through `crate::tuning::active()`
 /// because the predicate is a `const fn` over a const-generic prime, so the
-/// whole comparison folds at monomorphisation and a runtime profile read
-/// would put a load and a branch in front of every prime-field GEMM dispatch
-/// (`dev/active/7d824b2f/design.md` §3.11). The default build resolves it to
-/// [`N_THRESH_PRIME`]; `RUSTFLAGS="--cfg gf2_tuning_baked"` resolves it to
-/// `crate::tuning::baked::N_THRESH_PRIME`, following the bit-backend wiring
-/// at `crates/gf2-core/src/kernels/backend.rs:83-89` (DEC-G). Installing a
-/// runtime profile does not move this boundary.
+/// whole comparison folds at monomorphisation. The default build resolves it
+/// to [`N_THRESH_PRIME`]; `RUSTFLAGS="--cfg gf2_tuning_baked"` resolves it to
+/// `crate::tuning::baked::N_THRESH_PRIME`. Installing a runtime profile does
+/// not move this boundary.
 #[cfg(all(feature = "simd", gf2_tuning_baked))]
 const F32_MIN_PRIME_SELECTED: u64 = crate::tuning::baked::N_THRESH_PRIME;
 
@@ -579,44 +440,20 @@ const F32_MIN_COLS_SELECTED: usize = F32_MIN_COLS;
 
 /// Per-(P, m, k, n) Candidate-F / route-A selector.
 ///
-/// Returns `true` when the F-path / route-A is the production default for
-/// this (prime, size) cell.
-///
-/// The two bounds come from the tuning profile's `prime_route.f32_min_prime`
-/// and `prime_route.f32_min_cols` fields through [`F32_MIN_PRIME_SELECTED`]
-/// and [`F32_MIN_COLS_SELECTED`]; at their conservative defaults (251 and
-/// 512) only the cell `P == 251 && n >= 512` reaches the F / route-A path:
-///
-/// * `P == 251`: `251 >= 251` → prime window satisfied.
-/// * `n >= 512`: pack-cost overhead amortises at this size (≈ 7% at n=1024
-///   vs ≈ 28% at n=256); below this threshold Candidate C wins.
-///
-/// All other in-scope primes (`P ∈ {7, 31, 127, 241}`) have `P < 251` and
-/// therefore `P >= F32_MIN_PRIME_SELECTED` evaluates to `false` →
-/// Candidate C. GF(251)/n < 512 is excluded by the column guard →
-/// Candidate C.
-///
-/// GF(251)/n=1024 ratio: 0.683 vs fflas-ffpack on Zen 3, PASS (≥ 0.667).
-/// GF(251)/n=256 ratio: 0.547 — pack cost dominates; Candidate C wins.
-///
-/// See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
-/// for the full side-by-side evidence table and decision-rule application.
+/// Returns `true` when the f32 cascade is the default arm for this
+/// (prime, size) cell. The two bounds come from the tuning profile's
+/// `prime_route.f32_min_prime` and `prime_route.f32_min_cols` fields through
+/// [`F32_MIN_PRIME_SELECTED`] and [`F32_MIN_COLS_SELECTED`]; at their
+/// conservative defaults (251 and 512) only the cell `P == 251 && n >= 512`
+/// qualifies.
 #[cfg(feature = "simd")]
 #[inline]
 const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
-    // F-path / route A enabled when prime is in window AND size has
-    // amortised the pack cost. At the conservative prime bound of 251 the
-    // prime window is exactly {251}; other in-scope primes (≤ 241) stay on
-    // Candidate C.
-    //
-    // GF(251)/n ≥ 512: ratio 0.683 vs fflas-ffpack on Zen 3, PASS.
-    // GF(251)/n < 512: pack cost dominates; Candidate C wins.
-    // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`.
     P >= F32_MIN_PRIME_SELECTED && P <= 251 && n >= F32_MIN_COLS_SELECTED
 }
 
 // ---------------------------------------------------------------------------
-// Route-A dispatch toggle (AtomicBool, issue 68cdf4c8)
+// Route-A dispatch toggle
 // ---------------------------------------------------------------------------
 
 #[cfg(all(feature = "simd", any(test, feature = "test-support")))]
@@ -624,35 +461,19 @@ use std::sync::atomic::AtomicUsize;
 #[cfg(feature = "simd")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-/// Global runtime debug switch for the route-A GF(251) f32/FMA cascade
-/// (issue 68cdf4c8). Default `false`; off by default so production
-/// dispatch is unchanged. Tests and bench drivers flip this via
-/// [`set_route_a_gf251_enabled`] instead of unsafe env-var mutation.
+/// Process-wide debug switch forcing GF(251) GEMM onto the route-A f32/FMA
+/// cascade; set through [`set_route_a_gf251_enabled`].
 #[cfg(feature = "simd")]
 static ROUTE_A_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 
-/// Sets the runtime debug switch that opts GF(251) GEMM calls into the
-/// reworked Candidate F path (vectorized AVX2 Barrett output reduction +
-/// lookup-table pack / unpack).
+/// Sets the runtime debug switch that forces every GF(251) GEMM call onto
+/// route A (the f32-FMA cascade with lookup-table pack / unpack and
+/// vectorized AVX2 Barrett output reduction).
 ///
-/// As of issue 41096af5, route A is the production default for
-/// GF(251)/n ≥ 512 via `select_f32_path` — this toggle is now an
-/// **explicit override** that additionally forces route A on for
-/// GF(251)/n < 512 (cells that the production dispatch routes to
-/// Candidate C). With the toggle `false` (default), GF(251)/n ≥ 512 still
-/// routes through route A; with the toggle `true`, all GF(251) cells do.
-/// Tests and benches that need to exercise route A at small n flip this
-/// flag; restore to `false` after to avoid cross-test interference (the
-/// flag is a process-wide `AtomicBool`).
-///
-/// Originally added under issue 68cdf4c8 SC#1 as the "non-default
-/// dispatch toggle (cargo feature OR runtime debug switch)" exposing the
-/// reworked path "without changing default production behaviour" — that
-/// remained accurate until 41096af5 wired route A as the production
-/// default for n ≥ 512.
-///
-/// Scope: only affects `P == 251`; other primes continue to use
-/// Candidate C regardless of this flag.
+/// With the switch `false` (default), GF(251) still takes route A in the
+/// cells `select_f32_path` admits (`n ≥ 512` at the default thresholds).
+/// The flag is a process-wide `AtomicBool`: restore `false` after use to
+/// avoid cross-test interference. Primes other than 251 ignore it.
 ///
 /// # Examples
 ///
@@ -670,10 +491,6 @@ pub fn set_route_a_gf251_enabled(enabled: bool) {
     ROUTE_A_GF251_ENABLED.store(enabled, Ordering::Relaxed);
 }
 
-/// Returns `true` when `P == 251` and the route-A debug switch is on.
-/// See [`set_route_a_gf251_enabled`].
-///
-/// Scope: GF(251) only. Non-GF(251) primes always return `false`.
 #[cfg(feature = "simd")]
 #[inline]
 fn route_a_gf251_enabled<const P: u64>() -> bool {
@@ -684,19 +501,13 @@ fn route_a_gf251_enabled<const P: u64>() -> bool {
 }
 
 // ---------------------------------------------------------------------------
-// Route-C dispatch toggle (AtomicBool, issue fc182ed5)
+// Route-C dispatch toggle
 // ---------------------------------------------------------------------------
 
-/// Global runtime debug switch for the route-C GF(251) pure-integer
-/// Goto/BLIS-style panelized micro-kernel (issue fc182ed5). Default
-/// `false`; off by default so production dispatch is unchanged. Tests
-/// and bench drivers flip this via [`set_route_c_gf251_enabled`].
-///
-/// Mechanically identical to [`ROUTE_A_GF251_ENABLED`]: a process-wide
-/// `AtomicBool` accessed via a safe setter / `Relaxed` load. The two
-/// flags coexist; if both are on for `P == 251`, route A wins (the
-/// dispatch checks route A first). Bench drivers toggle one route at
-/// a time.
+/// Process-wide debug switch for the route-C GF(251) pure-integer
+/// Goto/BLIS-style panelized micro-kernel; set through
+/// [`set_route_c_gf251_enabled`]. If both switches are on for `P == 251`,
+/// route A wins (the dispatch checks route A first).
 #[cfg(feature = "simd")]
 static ROUTE_C_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 
@@ -704,13 +515,9 @@ static ROUTE_C_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 /// route-C pure-integer Goto/BLIS-style panelized micro-kernel
 /// (`crate::simd::maybe_fp_small_panel`).
 ///
-/// Default is `false` — production dispatch is unaffected. Call with
-/// `true` in test or bench code to exercise route C; restore to `false`
-/// after the test to avoid cross-test interference (the flag is a
-/// process-wide `AtomicBool`).
-///
-/// Scope: the `P == 251` cells that route A's guard in `prime_gemm_select`
-/// leaves.
+/// The switch applies to the `P == 251` cells that route A's guard in
+/// `prime_gemm_select` leaves. The flag is a process-wide `AtomicBool`:
+/// restore `false` after use to avoid cross-test interference.
 ///
 /// # Examples
 ///
@@ -728,10 +535,6 @@ pub fn set_route_c_gf251_enabled(enabled: bool) {
     ROUTE_C_GF251_ENABLED.store(enabled, Ordering::Relaxed);
 }
 
-/// Returns `true` when `P == 251` and the route-C debug switch is on.
-/// See [`set_route_c_gf251_enabled`].
-///
-/// Scope: GF(251) only. Non-GF(251) primes always return `false`.
 #[cfg(feature = "simd")]
 #[inline]
 fn route_c_gf251_enabled<const P: u64>() -> bool {
@@ -741,62 +544,14 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
     ROUTE_C_GF251_ENABLED.load(Ordering::Relaxed)
 }
 
-/// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
-/// (`n × k` row-major, already transposed by the caller) to
-/// canonical-byte SoA buffers and runs the AVX2 byte-lane batch-dot
-/// kernel for every output cell against the cached packs. Unpacks the
-/// output and writes it through `out` (`m × n` row-major).
+/// Whole-gemm fast path for `P ≤ 251`. Packs `a` (`m × k` row-major) and
+/// `b_t` (`n × k` row-major, already transposed by the caller), runs the arm
+/// [`prime_gemm_select`] names, and unpacks into `out` (`m × n` row-major).
 ///
-/// **Dispatch policy (issue 41096af5):** Candidate C
-/// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells except the
-/// GF(251)/n ≥ 512 production default (route A). `select_f32_path` returns
-/// `true` for `P == 251 && n >= 512` (the pack-cost amortisation threshold of
-/// the route-selection decision, `@/issue/41096af5`); the conservative
-/// `prime_route.f32_min_prime` and `prime_route.f32_min_cols` defaults (251
-/// and 512) route exactly the cell `P == 251 && n >= 512` through route A; all other in-scope primes have `P <
-/// 251` and stay on Candidate C. [`prime_gemm_route`] reports the arm for any
-/// cell.
-///
-/// **Route-A dispatch (issues 68cdf4c8 + 41096af5):** route A (reworked
-/// Candidate F: `from_mont_f32` lookup-table pack + vectorized AVX2 Barrett
-/// output reduction) runs in two cases:
-///
-/// 1. `route_a_selected` — explicit AtomicBool toggle via
-///    [`set_route_a_gf251_enabled`]; opt-in for testing and benches at any n.
-/// 2. `f32_selected` — production default for `P == 251 && n >= 512` since
-///    `select_f32_path` returns `true` for that cell (issue 41096af5 wire-in).
-///    The `&& P == 251` guard in the branch is a defensive belt-and-suspenders
-///    check; it is a compile-time const-generic comparison that the compiler
-///    optimises out, and it preserves local readability.
-///
-/// Both cases share the same route-A code block. GF(7) / GF(31) / GF(127) /
-/// GF(241) are never affected — `route_a_selected` is scoped to `P == 251`
-/// and `select_f32_path` returns `false` for all primes < 251.
-///
-/// **Route-A toggle (issue 68cdf4c8):** when [`set_route_a_gf251_enabled`] has
-/// been called with `true` AND `P == 251`, this function routes through route A
-/// for any n (not just n ≥ 512), so bench drivers can force route A
-/// unconditionally. See `@/issue/68cdf4c8`.
-///
-/// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
-/// per-call constants (panel-pack heap allocations + Montgomery REDC on
-/// every packed byte) are a measurable fraction of wall time. Profiling
-/// at GF(7)/n=64 attributed ~7 µs (≈ 27 % of 26 µs) to the 12 288 REDCs
-/// in the A-pack + B^T-pack + output-unpack loops, plus ≈ 1 µs to the
-/// three `vec![]` allocations. This path replaces:
-///
-///  * the per-element `Fp::value()` REDC in the A and B^T pack with a
-///    single byte-indexed lookup in the per-prime `from_mont` table
-///    (built once per prime per process by `build_small_prime_tables`);
-///  * the per-element `Fp::new(byte)` REDC in the output unpack with a
-///    single u64 lookup in the per-prime `to_mont` table;
-///  * the three per-call `Vec<u8>` allocations with thread-local
-///    scratch buffers that grow once to the steady-state shape.
-///
-/// At n=k=m=64 this collapses ~12 288 REDCs into the same number of
-/// L1-resident table lookups (each ≤ 1 byte / 8 bytes; the from_mont
-/// table for P ≤ 251 fits in a single cache line and the to_mont table
-/// in four).
+/// Every arm except `F32CascadeDirect` packs and unpacks through the
+/// per-prime `from_mont` / `to_mont` tables of `build_small_prime_tables`
+/// into thread-local scratch; `F32CascadeDirect` converts each element and
+/// allocates per call.
 ///
 /// Returns `true` when one of the fast paths executed; `false` to
 /// defer to the caller's scalar `dot_product_slices` loop.
@@ -815,22 +570,11 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
 
     let p_u8 = P as u8;
 
-    // Arm selection belongs to `prime_gemm_select` alone: it holds the
-    // eligibility window, the degenerate-shape guard, the window predicate,
-    // the GF(251) switches and the kernel-registration lookups, in the order
-    // the arms appear below. Each arm here only runs the kernel it names, so
-    // the reporter and this dispatcher cannot disagree.
+    // Arm selection belongs to `prime_gemm_select` alone. Each arm here only
+    // runs the kernel it names, so the reporter and this dispatcher cannot
+    // disagree.
     match prime_gemm_select::<P>(m, k, n) {
         PrimeGemmRoute::F32CascadeTabled => {
-            // Route A (issues 68cdf4c8 + 41096af5): reworked Candidate F for
-            // GF(251) with vectorized output reduction and lookup-table
-            // pack/unpack. Selection reaches it through the
-            // `set_route_a_gf251_enabled` switch (opt-in at any n) or through
-            // the window predicate at `P == 251`, which at the conservative
-            // `prime_route` defaults means `P == 251 && n >= 512`.
-            //
-            // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
-            // for the Phase 1 decision table and wire-in rationale.
             #[cfg(any(test, feature = "test-support"))]
             record_executed_prime_gemm_route(PrimeGemmRoute::F32CascadeTabled);
             let Some(fns_f32) = crate::simd::maybe_fp_small_f32() else {
@@ -846,11 +590,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                         bt_f32_scratch.resize(n * k, 0.0);
                         out_u8_scratch.resize(m * n, 0u8);
 
-                        // Pack via the `from_mont_f32` table: one L1
-                        // table load + f32 store per element. Replaces
-                        // the `a.iter().map(|x| x.value() as f32)`
-                        // chain which does a full Montgomery REDC per
-                        // element.
                         for (dst, src) in a_f32_scratch.iter_mut().zip(a.iter()) {
                             let raw = src.raw_storage() as usize;
                             debug_assert!(raw < from_mont_f32.len());
@@ -872,9 +611,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                             out_u8_scratch,
                         );
 
-                        // Unpack canonical bytes → Montgomery storage
-                        // via the `to_mont` table — same fast path as
-                        // Candidate C's unpack (no REDC per element).
                         for (slot, &byte) in out.iter_mut().zip(out_u8_scratch.iter()) {
                             let canon = byte as usize;
                             debug_assert!(canon < to_mont.len());
@@ -887,12 +623,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         }
 
         PrimeGemmRoute::U8Panel => {
-            // Route C (issue fc182ed5): pure-integer Goto/BLIS-style panelized
-            // micro-kernel for GF(251) with explicit A/B panel packing + KC
-            // blocking. Selection reaches it only through
-            // `set_route_c_gf251_enabled(true)`.
-            // See `@/issue/fc182ed5` for the panel-dimension derivation (MR ×
-            // NR × KC = 4 × 24 × 256).
             #[cfg(any(test, feature = "test-support"))]
             record_executed_prime_gemm_route(PrimeGemmRoute::U8Panel);
             let Some(fns_panel) = crate::simd::maybe_fp_small_panel() else {
@@ -908,10 +638,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                         bt_u8.resize(n * k, 0u8);
                         out_u8.resize(m * n, 0u8);
 
-                        // Pack A and B^T canonical bytes via the
-                        // `from_mont` table (one L1 lookup per element,
-                        // no REDC). Same pre-pack the Candidate C
-                        // dispatch uses.
                         for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
                             let raw = src.raw_storage() as usize;
                             debug_assert!(raw < from_mont.len());
@@ -925,9 +651,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
 
                         (fns_panel.batch_gemm_fn)(a_u8, bt_u8, m, k, n, p_u8, out_u8);
 
-                        // Unpack canonical bytes → Montgomery storage
-                        // via the `to_mont` table (same fast path as
-                        // Candidate C's output unpack — no REDC).
                         for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
                             let canon = byte as usize;
                             debug_assert!(canon < to_mont.len());
@@ -940,10 +663,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         }
 
         PrimeGemmRoute::F32CascadeDirect => {
-            // Candidate F's original f32-FMA cascade. Selection reaches it
-            // when the window predicate admits a prime other than 251, which
-            // a `prime_route.f32_min_prime` below 251 does; the allocation
-            // pattern is the one this kernel entry point has always used.
             #[cfg(any(test, feature = "test-support"))]
             record_executed_prime_gemm_route(PrimeGemmRoute::F32CascadeDirect);
             let Some(fns_f32) = crate::simd::maybe_fp_small_f32() else {
@@ -960,17 +679,11 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         }
 
         PrimeGemmRoute::ByteLaneBaseline => {
-            // Candidate C (AVX2 16-bit-integer Barrett kernel) — the arm for
-            // every `p ≤ 251` cell the cascades and route C leave.
             #[cfg(any(test, feature = "test-support"))]
             record_executed_prime_gemm_route(PrimeGemmRoute::ByteLaneBaseline);
             let Some(fns) = crate::simd::maybe_fp_small() else {
                 return false;
             };
-            // Per-prime lookup tables. Built at most once per (prime,
-            // process); the OnceLock cost is paid the first time a process
-            // touches any GEMM for this prime and is amortised forever
-            // afterwards.
             let tables = build_small_prime_tables::<P>();
 
             GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
@@ -983,10 +696,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                         bt_u8.resize(bt_len, 0u8);
                         out_u8.resize(out_len, 0u8);
 
-                        // Pack A and B^T via the from_mont table. Each entry is
-                        // one byte read indexed by the Montgomery storage word
-                        // (in `[0, P)`) — replacing what used to be a `Fp::value()`
-                        // REDC call per element.
                         let from_mont = tables.from_mont.as_slice();
                         for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
                             let raw = src.raw_storage() as usize;
@@ -999,16 +708,12 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                             *dst = from_mont[raw];
                         }
 
-                        // Run the row-panel kernel for each row of A.
                         for i in 0..m {
                             let a_row = &a_u8[i * k..(i + 1) * k];
                             let out_row = &mut out_u8[i * n..(i + 1) * n];
                             (fns.gemm_row_panel_fn)(a_row, bt_u8, k, n, p_u8, out_row);
                         }
 
-                        // Unpack canonical bytes → Montgomery storage via the
-                        // to_mont table — replacing what used to be a
-                        // `Fp::new(byte as u64)` REDC call per element.
                         let to_mont = tables.to_mont.as_slice();
                         for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
                             let canon = byte as usize;
@@ -1041,17 +746,11 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
 /// Sparse-times-dense whole-matmat dispatcher for `Fp<P>`.
 ///
 /// Packs `b` once into a canonical-byte (`P ≤ 251`) or canonical-u16
-/// (`P ∈ (251, 65535]`) buffer, sweeps every row of the sparse left
-/// matrix through the AVX2 SpMM kernel against the shared `b` pack,
-/// and unpacks the output back to `Fp<P>` storage. Returns `false`
-/// when `P` is outside the supported range, when the `simd` feature
-/// is disabled, or when AVX2 is unavailable; in those cases the
-/// caller falls back to the generic Wide-accumulator scatter path
-/// in `SparseFieldMatrix::matmat`.
-///
-/// # Returns
-///
-/// `true` when the SIMD kernel populated `out`, `false` to fall back.
+/// (`P ∈ (251, 65535]`) buffer and sweeps every row of the sparse left
+/// matrix through the AVX2 SpMM kernel. Returns `false` when `P` is outside
+/// the supported range, when the `simd` feature is disabled, or when AVX2
+/// is unavailable; the caller then falls back to the generic
+/// Wide-accumulator scatter path in `SparseFieldMatrix::matmat`.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_try_spmm<const P: u64>(
     a_row_ptr: &[usize],
@@ -1075,15 +774,12 @@ pub(crate) fn fp_try_spmm<const P: u64>(
         let Some(fns) = crate::simd::maybe_fp_small() else {
             return false;
         };
-        // Pack b canonical bytes once.
         let b_u8: Vec<u8> = b.iter().map(|x| x.value() as u8).collect();
-        // Pack all a_values canonical bytes once.
         let a_vals_u8: Vec<u8> = a_values.iter().map(|x| x.value() as u8).collect();
         let mut out_u8 = vec![0u8; n];
         for r in 0..m {
             let start = a_row_ptr[r];
             let end = a_row_ptr[r + 1];
-            // Cleared per-row scratch.
             for slot in out_u8.iter_mut() {
                 *slot = 0;
             }
@@ -1254,25 +950,11 @@ fn fp_generic_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Ve
 // ---------------------------------------------------------------------------
 // Fp<65537> SIMD helpers — shared with BatchExtField::batch_mul_quadratic.
 // ---------------------------------------------------------------------------
-//
-// All four helpers below (`fp65537_pack`, `fp65537_unpack`, and the three
-// `fp65537_try_*_vec` functions) exist as crate-private single sources of
-// truth: `FieldVec` element-wise ops and `BatchExtField::batch_mul_quadratic`
-// both reach them through this module.
 
 /// Packs a slice of `Fp<P>` where `P == 65537` into canonical `Vec<u32>`.
 ///
 /// For `P = 65537`, Montgomery storage equals the canonical value because
-/// `R = 2^64 ≡ 1 (mod P)`. We therefore use `raw_storage()` directly and
-/// avoid the REDC round-trip of `.value()`.
-///
-/// # Arguments
-///
-/// * `xs` — slice of `Fp<P>` with `P = 65537`.
-///
-/// # Complexity
-///
-/// `O(n)`; one pointer chase and a `u64→u32` truncation per element.
+/// `R = 2^64 ≡ 1 (mod P)`, so `raw_storage()` is used directly.
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp65537_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u32> {
@@ -1280,16 +962,7 @@ pub(crate) fn fp65537_pack<const P: u64>(xs: &[Fp<P>]) -> Vec<u32> {
     xs.iter().map(|x| x.raw_storage() as u32).collect()
 }
 
-/// Unpacks a slice of canonical `u32` values into `Vec<Fp<P>>` where
-/// `P == 65537`. The inverse of [`fp65537_pack`].
-///
-/// # Arguments
-///
-/// * `xs` — slice of canonical values, all `< 65537`.
-///
-/// # Complexity
-///
-/// `O(n)`.
+/// The inverse of [`fp65537_pack`]; every value in `xs` is `< 65537`.
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp65537_unpack<const P: u64>(xs: &[u32]) -> Vec<Fp<P>> {
@@ -1332,8 +1005,6 @@ fn fp65537_try_sub_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<Fp<
     Some(fp65537_unpack::<P>(&out))
 }
 
-// No-SIMD stubs when the `simd` feature is off.
-
 #[cfg(not(feature = "simd"))]
 #[inline]
 fn fp65537_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<P>>> {
@@ -1361,11 +1032,6 @@ fn fp65537_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<F
 // via raw_storage and avoid the REDC round-trip. Multiplication is not
 // linear in storage form, so we round-trip through `value()` / `Fp::new` to
 // expose canonical residues to the Barrett kernel.
-//
-// The `P >= 252 && P < 65536` guard mirrors the dispatch in `SimdVecOps`:
-// primes `P <= 251` are owned by the dedicated 8-bit small-prime kernel
-// (sibling issue `662f7a15`); primes `P >= 65536` route to the 64-bit
-// generic Montgomery kernel.
 
 #[cfg(feature = "simd")]
 #[inline]
@@ -1440,8 +1106,6 @@ fn fp_medium_try_add_vec<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Option<Vec<F
     }
     let fns = crate::simd::maybe_fp_medium()?;
     let n = a.len();
-    // add/sub are linear in Montgomery storage: `aR + bR = (a+b)R`. Pack
-    // raw, run, unpack raw — saves two REDC round-trips per element.
     let a_u16 = fp_medium_pack_raw::<P>(a);
     let b_u16 = fp_medium_pack_raw::<P>(b);
     let mut out = vec![0u16; n];
@@ -1481,36 +1145,23 @@ fn fp_medium_try_sub_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec
     None
 }
 
-/// Crate-internal hook: SIMD batch dot product for `Fp<P>` with
-/// `P ∈ (251, 65536)`.
+/// SIMD batch dot product `Σ a[i] · b[i]` for `Fp<P>` with
+/// `P ∈ (251, 65536)`; `None` when the prime is ineligible or the kernel
+/// is unavailable.
 ///
-/// Returns `Σ a[i] · b[i]` (a `Fp<P>` element), or `None` when the
-/// runtime / compile-time prerequisites (AVX2, P-eligibility, simd
-/// feature) are not satisfied.
-///
-/// # Implementation
-///
-/// Operates entirely on **Montgomery raw storage** to avoid the per-
-/// element REDC round-trip that `value()` / `Fp::new` would impose.
-/// Storage words are in `[0, P) ⊆ [0, 2^16)`, so packing is a `u64 →
-/// u16` truncation. The kernel computes
+/// Operates on Montgomery raw storage. Storage words are in
+/// `[0, P) ⊆ [0, 2^16)`, so packing is a `u64 → u16` truncation. The
+/// kernel computes
 ///
 /// ```text
 ///   total = Σ raw(aᵢ) · raw(bᵢ)   (in u64, exact for n < 2^32)
 /// ```
 ///
-/// which is congruent to `R² · Σ aᵢbᵢ (mod P)` because each raw word is
-/// the Montgomery image `aᵢR (mod P)` (see `Fp::mul_product_sum_wide`
-/// for the full representation proof). Reducing modulo `P` yields a
-/// value in `[0, P²)`; one Montgomery REDC then recovers `R · Σ aᵢbᵢ
-/// (mod P)`, which is exactly the Montgomery storage form of the dot
-/// product. This matches the storage-domain reduction performed by
-/// `Fp::reduce_product_sum_wide` for the scalar path, so the SIMD and
-/// scalar dots are bit-for-bit equivalent.
-///
-/// This is the hot path that `crate::field::vec::dot_product_slices`
-/// consults for medium primes; the GEMM kernel calls it once per output
-/// cell.
+/// reduced modulo `P`, which is congruent to `R² · Σ aᵢbᵢ (mod P)` (see
+/// `Fp::mul_product_sum_wide` for the representation proof). One
+/// Montgomery REDC then recovers `R · Σ aᵢbᵢ (mod P)`, the storage form of
+/// the dot product, matching `Fp::reduce_product_sum_wide` on the scalar
+/// path.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_medium_try_dot_product<const P: u64>(
     a: &[Fp<P>],
@@ -1523,11 +1174,6 @@ pub(crate) fn fp_medium_try_dot_product<const P: u64>(
     }
     let fns = crate::simd::maybe_fp_medium()?;
 
-    // Pack Montgomery raw storage into the caller-owned scratches.
-    // Storage is already in [0, P), and P < 2^16, so the u64→u16
-    // truncation is exact. Reusing the scratches across the surrounding
-    // GEMM traversal is the difference between this path beating the
-    // scalar `mul_product_sum_wide` loop and merely matching it.
     scratch_a.clear();
     scratch_b.clear();
     scratch_a.reserve(a.len());
@@ -1539,9 +1185,6 @@ pub(crate) fn fp_medium_try_dot_product<const P: u64>(
         scratch_b.push(y.raw_storage() as u16);
     }
 
-    // batch_dot_fn returns a canonical-domain reduction
-    // `total % P ≡ R² · Σ aᵢbᵢ (mod P)`. We need the Montgomery storage
-    // form, so apply one REDC: `redc(R² · Σ aᵢbᵢ) = R · Σ aᵢbᵢ (mod P)`.
     let r2_sum_mod_p = (fns.batch_dot_fn)(scratch_a, scratch_b, P as u16) as u64;
     let r_sum_mod_p = super::montgomery::redc::<P>(r2_sum_mod_p as u128);
     Some(Fp::<P>::from_raw_storage(r_sum_mod_p))
@@ -1558,14 +1201,9 @@ pub(crate) fn fp_medium_try_dot_product<const P: u64>(
     None
 }
 
-/// GEMM helper: pack a slice of `Fp<P>` Montgomery raw storage as `Vec<u16>`
-/// when the medium-prime fast path is eligible. Returns `Some(())` on
-/// success; `None` if the field is not eligible (so the caller skips the
-/// medium-prime fast path entirely).
-///
-/// The pack pushes raw storage truncated to u16. See
-/// [`fp_medium_try_dot_packed`] for the dot kernel that consumes the
-/// packed slices and applies the final REDC.
+/// GEMM helper: packs `Fp<P>` Montgomery raw storage as `u16` for
+/// [`fp_medium_try_dot_packed`]. Returns `None` when the medium-prime fast
+/// path is unavailable.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_medium_try_pack_u16<const P: u64>(xs: &[Fp<P>], out: &mut Vec<u16>) -> Option<()> {
     if !fp_medium_eligible::<P>() {
@@ -1589,10 +1227,8 @@ pub(crate) fn fp_medium_try_pack_u16<const P: u64>(
     None
 }
 
-/// GEMM helper: SIMD dot product on pre-packed u16 raw-storage slices for
-/// medium-prime `Fp<P>`. Mirrors [`fp_medium_try_dot_product`] but skips
-/// the per-call pack so the GEMM kernel pays the truncation cost once
-/// per matrix instead of once per output cell.
+/// GEMM helper: [`fp_medium_try_dot_product`] on u16 raw-storage slices
+/// pre-packed by [`fp_medium_try_pack_u16`].
 #[cfg(feature = "simd")]
 pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
     a_packed: &[u16],
@@ -1619,11 +1255,6 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
 /// Conservative default for the tuning profile's `prime_route.f64_min_cols`
 /// field: the minimum output width, in columns, at which `select_f64_path`
 /// prefers the f64-FMA cascade.
-///
-/// The f64 pack cost is ~3-4× the u16 pack cost (REDC against truncation), and
-/// the panel kernel's inner-loop throughput advantage (~70 Gop/s against
-/// ~40 Gop/s on Zen 3) only amortises that overhead from this width up.
-/// `select_f64_path` compares against `F64_MIN_COLS_SELECTED`.
 pub(crate) const F64_MIN_COLS: usize = 512;
 
 /// The `prime_route.f64_min_cols` value [`select_f64_path`] compares `n`
@@ -1636,31 +1267,16 @@ const F64_MIN_COLS_SELECTED: usize = crate::tuning::baked::F64_MIN_COLS;
 #[cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 const F64_MIN_COLS_SELECTED: usize = F64_MIN_COLS;
 
-/// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`).
+/// Per-(P, m, k, n) f64-cascade selector for medium primes.
 ///
-/// Returns `true` when the f64-FMA cascade is the production-preferred path
-/// for this size. The cascade has a non-trivial pack overhead (one
-/// `Fp::value()` REDC per A/B^T element, two `Vec<f64>` scratches of size
-/// `m·k` and `n·k`), so the per-element pack cost is paid up front; below a
-/// size threshold the u16 panel kernel wins because its pack is a pure
-/// `u64 → u16` truncation (no REDC per element).
-///
-/// The column threshold comes from the tuning profile's
-/// `prime_route.f64_min_cols` field through [`F64_MIN_COLS_SELECTED`]; at its
-/// conservative default of 512 the f64 pack cost is ~3-4× the u16 pack cost
-/// (REDC vs truncation), and the panel kernel's inner-loop throughput
-/// advantage (~70 Gop/s vs ~40 Gop/s on Zen 3) only amortises that
-/// overhead at n ≥ 512. Below n=512 the u16 kernel + its lighter pack
-/// stays competitive.
+/// Returns `true` when the f64-FMA cascade is the default arm for this
+/// size. The cascade's pack is one `Fp::value()` REDC per A/B^T element,
+/// where the u16 panel kernel's is a `u64 → u16` truncation, so the cascade
+/// is selected only from a column threshold up: the tuning profile's
+/// `prime_route.f64_min_cols` field through [`F64_MIN_COLS_SELECTED`].
 #[cfg(feature = "simd")]
 #[inline]
 const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
-    // Pack-cost amortisation knee: at n=4096 the inner-loop time dominates
-    // (≈ 95 % of wall) and the cascade clears 1.5× of fflas; at n=1024 the
-    // inner-loop is ≈ 80 % of wall; at n=512 the pack overhead is ~15 %
-    // (still amortised); at n=256 the pack approaches 25 % and the u16
-    // kernel's lighter pack wins. The threshold mirrors Route A's
-    // `select_f32_path` column calibration for fp_small.
     P > 251 && P < 65536 && n >= F64_MIN_COLS_SELECTED
 }
 
@@ -1677,8 +1293,8 @@ pub enum PrimeGemmRoute {
     /// The f32-FMA cascade through route A's `batch_gemm_route_a_fn`: lookup-
     /// table pack and unpack around a vectorized Barrett output reduction.
     F32CascadeTabled,
-    /// The f32-FMA cascade through Candidate F's original `batch_gemm_fn`,
-    /// which converts each element directly and allocates its own scratch.
+    /// The f32-FMA cascade through Candidate F's `batch_gemm_fn`, which
+    /// converts each element directly and allocates its own scratch.
     /// Reachable when the window predicate admits a prime other than 251,
     /// which a `prime_route.f32_min_prime` below 251 does.
     F32CascadeDirect,
@@ -1702,10 +1318,6 @@ pub enum PrimeGemmRoute {
 #[cfg(feature = "simd")]
 impl PrimeGemmRoute {
     /// Returns `true` for either f32-FMA cascade arm.
-    ///
-    /// The two differ in pack strategy and kernel entry point, not in the
-    /// selection question "does this cell take the f32 cascade", so callers
-    /// asking that question ask it here.
     #[must_use]
     pub fn is_f32_cascade(self) -> bool {
         matches!(
@@ -1738,9 +1350,8 @@ impl PrimeGemmRoute {
 /// The window predicates [`select_f32_path`] and [`select_f64_path`] take
 /// their bounds from the tuning profile's `prime_route.f32_min_prime`,
 /// `prime_route.f32_min_cols` and `prime_route.f64_min_cols` fields, baked at
-/// compile time (`dev/active/7d824b2f/design.md` §3.11); the rest of the chain
-/// is runtime state, so the selected arm depends on the host's detected
-/// kernels and on the current switch settings.
+/// compile time; the rest of the chain is runtime state, so the selected arm
+/// depends on the host's detected kernels and on the current switch settings.
 #[cfg(feature = "simd")]
 #[must_use]
 pub(crate) fn prime_gemm_select<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
@@ -1785,16 +1396,11 @@ pub(crate) fn prime_gemm_select<const P: u64>(m: usize, k: usize, n: usize) -> P
 /// Reports the prime-field GEMM arm for the field `Fp<P>` at output shape
 /// `m × n` with inner dimension `k`.
 ///
-/// The window halves of the decision take their bounds from the tuning
-/// profile's `prime_route.f32_min_prime`, `prime_route.f32_min_cols` and
-/// `prime_route.f64_min_cols` fields, baked at compile time through
-/// `select_f32_path` and `select_f64_path`
-/// (`dev/active/7d824b2f/design.md` §3.11).
-///
 /// The reporter is `prime_gemm_select`, the function the dispatchers
 /// themselves select on, so what this reports is what the dispatcher runs.
-/// See that function for the gate chain and for which parts of it are baked
-/// and which are runtime state (host-detected kernels, GF(251) switches).
+/// The window bounds (`prime_route.f32_min_prime`, `prime_route.f32_min_cols`
+/// and `prime_route.f64_min_cols`) are baked at compile time; the
+/// host-detected kernels and the GF(251) switches are runtime state.
 #[cfg(feature = "simd")]
 #[must_use]
 pub fn prime_gemm_route<const P: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
@@ -1852,37 +1458,18 @@ pub fn last_executed_prime_gemm_route() -> Option<PrimeGemmRoute> {
     }
 }
 
-/// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime
-/// `Fp<P>` with `P ∈ (251, 65535]`. Pre-packs both operands as
-/// Montgomery raw u16 once per gemm call (`O(mk + kn)`), runs the
-/// AVX2 panel kernel, then applies one Montgomery REDC per output
-/// cell (`O(mn)` REDCs vs `O(mn)` `% p` reductions; the difference
-/// is paid once at output time, identical asymptotic cost).
+/// GEMM helper: whole-GEMM path for medium-prime `Fp<P>` with
+/// `P ∈ (251, 65535]`; runs the arm [`prime_gemm_select`] names.
 ///
-/// The panel kernel computes `c_canonical[i, j] = (Σ a_pack[i,t] *
-/// b_pack[j,t]) mod p`, which when inputs carry Montgomery raw
-/// storage works out to `R² · Σ a_canonical b_canonical mod p`. The
-/// per-cell REDC then maps `R² · x → R · x = Mont(x)`.
+/// The u16 panel arm packs both operands as Montgomery raw u16. The panel
+/// kernel computes `(Σ a_pack[i,t] * b_pack[j,t]) mod p`, which for raw
+/// inputs is `R² · Σ a_canonical b_canonical mod p`; one REDC per output
+/// cell maps `R² · x → R · x = Mont(x)`. The f64 cascade arm is
+/// [`fp_medium_f64_try_gemm`].
 ///
-/// Returns `true` when the kernel ran (and `out` is populated);
-/// `false` when the field is out of range, the `simd` feature is
+/// Returns `true` when a kernel ran (and `out` is populated); `false` when
+/// the field is out of range, a dimension is zero, the `simd` feature is
 /// disabled, or AVX2 detection failed.
-///
-/// # Dispatch policy (updated 2026-05-27, issue `0749dbad`)
-///
-/// For sufficiently large cells (`n ≥ 512`) on AVX2 + FMA3 hosts the
-/// **f64 cascade** in [`fp_medium_f64_try_gemm`] is preferred: it
-/// reaches Zen 3's f64 FMA back-end (~70 Gop/s) versus the u16 panel
-/// kernel's shuffle-pipe-bound ~40 Gop/s. Below the threshold the
-/// u16 path stays — its pack is a pure `u64 → u16` truncation (no
-/// REDC per element), avoiding the cascade's per-element
-/// `Fp::value()` REDC.
-///
-/// # Issue
-///
-/// jit:74ba1cdc — u16 panel kernel (large-n ratio ≤ 1.5 for primes ≤ 32 767).
-/// jit:0749dbad — f64 cascade dispatch override for `n ≥ 512` (GF(65521)/n=4096
-/// ratio ≤ 1.5×).
 #[cfg(feature = "simd")]
 pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     a: &[Fp<P>],
@@ -1900,11 +1487,6 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     // dispatcher for the shape of this match.
     match prime_gemm_select::<P>(m, k, n) {
         PrimeGemmRoute::F64Cascade => {
-            // f64 cascade override (issue 0749dbad, Phase 6e). Selection
-            // reaches it when the cell sits above the pack-amortisation
-            // threshold and the AVX2 + FMA3 kernel is registered. The cascade
-            // reaches Zen 3's f64 FMA back-end (~70 Gop/s); the u16 panel
-            // kernel sits at ~40 Gop/s (695350fd R0 post-mortem § 4-5).
             #[cfg(any(test, feature = "test-support"))]
             record_executed_prime_gemm_route(PrimeGemmRoute::F64Cascade);
             fp_medium_f64_try_gemm::<P>(a, b_t, m, k, n, out)
@@ -1917,8 +1499,6 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
                 return false;
             };
 
-            // Pack A and B^T as Montgomery raw u16 (pure u64 → u16 truncation,
-            // no REDC per element — same trick `fp_medium_try_dot_packed` uses).
             GEMM_MEDIUM_A_SCRATCH.with_borrow_mut(|a_u16| {
                 GEMM_MEDIUM_BT_SCRATCH.with_borrow_mut(|bt_u16| {
                     GEMM_MEDIUM_OUT_SCRATCH.with_borrow_mut(|out_u16| {
@@ -1934,10 +1514,6 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
 
                         (fns.gemm_panel_fn)(a_u16, bt_u16, m, k, n, P as u16, out_u16);
 
-                        // Each `out_u16[i*n + j]` holds `(R² · Σ a_canon · b_canon) mod P`.
-                        // One Montgomery REDC maps that to the canonical Montgomery
-                        // storage `R · Σ a · b mod P`, matching the storage domain
-                        // the caller expects.
                         for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
                             let r2_sum = word as u128;
                             let r_sum = super::montgomery::redc::<P>(r2_sum);
@@ -1957,16 +1533,13 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     }
 }
 
-/// f64-cascade GEMM helper for medium primes (issue `0749dbad`). Pre-packs A and B^T as canonical
+/// f64-cascade GEMM helper for medium primes. Pre-packs A and B^T as canonical
 /// f64 (via per-element `Fp::value()` REDC), runs the AVX2 + FMA3 dgemm micro-kernel, then re-packs
 /// the canonical-u16 output as `Fp::new(u as u64)` per cell.
 ///
 /// Returns `true` when the kernel ran (and `out` is populated); `false`
-/// when AVX2 + FMA3 is unavailable at runtime.
-///
-/// The caller is expected to have gated this through
-/// [`select_f64_path`] — there is no internal shape gate beyond the
-/// AVX2 + FMA3 detection.
+/// when AVX2 + FMA3 is unavailable at runtime. The caller gates the shape
+/// through [`select_f64_path`].
 #[cfg(feature = "simd")]
 fn fp_medium_f64_try_gemm<const P: u64>(
     a: &[Fp<P>],
@@ -1986,13 +1559,6 @@ fn fp_medium_f64_try_gemm<const P: u64>(
                 bt_f64.resize(n * k, 0.0f64);
                 out_u16.resize(m * n, 0u16);
 
-                // Per-element `Fp::value()` REDC: maps Montgomery raw
-                // storage to canonical `[0, P)` and stores as f64.
-                // O(mk + nk) REDCs vs the u16 panel kernel's O(mn)
-                // REDCs at output time — for k > n the f64 path pays
-                // less, for k < n more; at the bench cells (m = k = n
-                // square) the two paths pay the same total REDCs but
-                // arrange them differently.
                 for (dst, src) in a_f64.iter_mut().zip(a.iter()) {
                     *dst = src.value() as f64;
                 }
@@ -2002,8 +1568,6 @@ fn fp_medium_f64_try_gemm<const P: u64>(
 
                 (fns_f64.batch_gemm_fn)(a_f64, bt_f64, m, k, n, P as u16, out_u16);
 
-                // Re-pack canonical u16 → Montgomery storage via
-                // `Fp::new(u as u64)`. One REDC per output cell.
                 for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
                     *slot = Fp::<P>::new(word as u64);
                 }
@@ -2027,148 +1591,76 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
 }
 
 // ---------------------------------------------------------------------------
-// Packed matvec entry points — issue d1dd266c
+// Packed matvec entry points
 // ---------------------------------------------------------------------------
 //
-// Reuses the existing AVX2 small-prime byte-lane and medium-prime u16-lane
-// kernels to compute `y = A · x` without forcing the per-cell scalar
-// `mul_product_sum_wide` chain. Two flavours:
-//
-// - One-shot per-call entry point `fp_try_matvec` — packs `A` and `x`,
-//   runs the kernel, unpacks `out`. Used by `FieldMatrix::matvec` for the
-//   case where the caller does a single matvec at a time.
-// - Pre-packed `PackedFpMatvec` cache — packs `A` once and reuses the
-//   pack across many matvec calls. Used by `cyclic_decomposition` and
-//   `wiedemann_minpoly_attempt` so each minpoly call pays the matrix
-//   pack cost exactly once.
+// `fp_try_matvec` packs `A` and `x` per call for `FieldMatrix::matvec`;
+// `PackedFpMatrix` packs `A` once and reuses the pack across the matvec
+// calls of `cyclic_decomposition` and `wiedemann_minpoly_attempt`.
 
-// Thread-local scratch buffers reused across repeated `matvec_packed`
-// calls on the same thread (issue 70766cb1). Avoids the per-call heap
-// allocation of `x_u8` and `out_u8` in the `Small` hot path.
-//
-// The buffers grow as needed (`resize` with a capacity check) and are
-// never shrunk, so after the first `n`-sized call on a given thread the
-// allocator is not consulted again.
+// Thread-local scratch buffers for the matvec and GEMM pack and output
+// stages. They grow as needed and are never shrunk.
 #[cfg(feature = "simd")]
 thread_local! {
     static SMALL_X_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static SMALL_OUT_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
-    // GEMM-specific scratch buffers (issue 27bb2f75). The small-n GEMM
-    // dispatch path packs A, B^T, and the canonical-byte output into
-    // three separate buffers; reusing thread-local Vecs avoids three
-    // heap allocations per gemm call. For the GF(7)/GF(31)/n=64 target
-    // cell these allocations total ~12 KB and the alloc/free overhead
-    // is a measurable fraction of the ~26 µs wall time.
     static GEMM_SMALL_A_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_SMALL_BT_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_SMALL_OUT_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
-    // Route-A GEMM scratch (issue 68cdf4c8). Pre-packs `a` and `bt`
-    // into f32 buffers via the `from_mont_f32` table lookup; the output
-    // is written to a u8 buffer first then unpacked through `to_mont`.
-    // Buffers grow as needed and are reused across repeated GEMM calls
-    // on the same thread.
     static GEMM_SMALL_F32_A_SCRATCH: std::cell::RefCell<Vec<f32>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_SMALL_F32_BT_SCRATCH: std::cell::RefCell<Vec<f32>> =
         const { std::cell::RefCell::new(Vec::new()) };
-    // Medium-prime GEMM scratch (issue 74ba1cdc R1). Pre-packs `a`
-    // and `bt` into u16 buffers via raw-storage truncation; the output
-    // is written to a u16 buffer first then unpacked through REDC into
-    // the caller's `Fp<P>` slot. Buffers grow as needed and are reused
-    // across repeated GEMM calls on the same thread.
     static GEMM_MEDIUM_A_SCRATCH: std::cell::RefCell<Vec<u16>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_MEDIUM_BT_SCRATCH: std::cell::RefCell<Vec<u16>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_MEDIUM_OUT_SCRATCH: std::cell::RefCell<Vec<u16>> =
         const { std::cell::RefCell::new(Vec::new()) };
-    // f64-cascade scratch (issue 0749dbad). Pre-packs `a` and `bt` into
-    // canonical f64 buffers via `Fp::value()`; the output is written to
-    // the existing `GEMM_MEDIUM_OUT_SCRATCH` u16 buffer first and then
-    // unpacked through `Fp::new` into the caller's `Fp<P>` slot. Buffers
-    // grow as needed and are reused across repeated GEMM calls on the
-    // same thread.
+    // The f64 cascade shares `GEMM_MEDIUM_OUT_SCRATCH` for its output.
     static GEMM_MEDIUM_F64_A_SCRATCH: std::cell::RefCell<Vec<f64>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_MEDIUM_F64_BT_SCRATCH: std::cell::RefCell<Vec<f64>> =
         const { std::cell::RefCell::new(Vec::new()) };
-    // Mersenne-31 GEMM scratch (issue 6a7d4c8e). Pre-packs `a` and `bt`
-    // into u32 canonical buffers (direct `raw_storage() as u32` — M31
-    // uses canonical storage, no REDC needed). The output is a u32 buffer
-    // written by `m31_batch_dot_fn`; unpacked back into `Fp<M31>` by
-    // direct `from_raw_storage`. Buffers grow as needed and are reused
-    // across repeated GEMM calls on the same thread.
     static GEMM_M31_A_SCRATCH: std::cell::RefCell<Vec<u32>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_M31_BT_SCRATCH: std::cell::RefCell<Vec<u32>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
-/// Pre-prime Barrett-constant cache for the small-prime row-panel matvec
-/// (issue 70766cb1). Stores per-prime lookup tables for converting
-/// Montgomery-stored `Fp<P>` values to and from canonical bytes in O(1)
-/// table-lookup rather than O(1) REDC arithmetic. At P ≤ 251 the full
-/// table has ≤ 251 bytes and fits in a single cache line.
-///
-/// `from_mont_table[raw]` — canonical value for a Montgomery word `raw`
-/// in `[0, P)`. This is the inverse of `to_mont` and replaces the
-/// per-element `from_mont` REDC call in the x-pack loop.
-///
-/// `to_mont_table[canon]` — Montgomery word for a canonical value `canon`
-/// in `[0, P)`. This replaces the per-element `to_mont` call in the
-/// output-unpack loop.
+/// Per-prime lookup tables converting Montgomery-stored `Fp<P>` values
+/// (`P ≤ 251`) to and from canonical bytes without a REDC per element.
 #[cfg(feature = "simd")]
 pub(crate) struct SmallPrimeTables {
     from_mont: Vec<u8>, // index = raw storage word (in [0, P)); value = canonical
     to_mont: Vec<u64>,  // index = canonical value (in [0, P)); value = raw storage
-    /// 16-bit Barrett constant `μ = ⌊2¹⁶ / P⌋`.
-    ///
-    /// Cached here so callers into `fp_small`'s `sub_scaled` /
-    /// `batch_mul` / `batch_sub` kernels can pass `μ` as a kernel
-    /// argument and skip the 22-25 cycle integer `div esi` that the
-    /// kernel prologue otherwise emits once per call. At ~32 000
-    /// invocations per GF(251)/n=256 charpoly call this hoist removes
-    /// roughly 190 µs of wall time (7-8 %).
+    /// 16-bit Barrett constant `μ = ⌊2¹⁶ / P⌋`, passed to the `fp_small`
+    /// `sub_scaled` kernel so it skips a per-call division.
     barrett_mu: u16,
     /// `from_mont_f32[raw]` — canonical value as `f32` for a Montgomery
-    /// word `raw` in `[0, P)`. Used by the route-A f32 cascade dispatch
-    /// (issue 68cdf4c8) to replace the per-element
-    /// `a.iter().map(|x| x.value() as f32)` REDC pack with a single
-    /// L1-resident table load. At `P ≤ 251` the table is 251 × 4 = 1004
-    /// bytes, fitting in 16 cache lines.
+    /// word `raw` in `[0, P)`; the pack table of the route-A f32 cascade.
     from_mont_f32: Vec<f32>,
     /// `inv_table[v]` — modular inverse of `v` in canonical-byte form,
-    /// for `v ∈ [1, P)`. `inv_table[0]` is unused (kept 0). Used by the
-    /// panelized PLE base-case kernel (issue 6823c8a0) to look up the
-    /// pivot inverse in one L1 load instead of a per-pivot Fermat
-    /// exponentiation. The table is `P` bytes (≤ 251), trivially L1.
+    /// for `v ∈ [1, P)`. `inv_table[0]` is unused (kept 0). The pivot-inverse
+    /// table of the panelized PLE base-case kernel.
     inv_table: Vec<u8>,
 }
 
-// Global per-prime table cache for small primes (P ≤ 251).
-// 256 slots, one per possible prime value; each slot is a OnceLock so
-// the table is built at most once per prime per process lifetime.
-// A static array avoids the shared-static problem (statics inside generic
-// functions are not per-monomorphization in Rust — they are shared across
-// all instantiations of the same generic). Using a global array indexed by
-// prime value P gives one independent OnceLock per prime.
+// One `OnceLock` slot per prime value: a static inside the generic
+// `build_small_prime_tables` would be shared across all its instantiations.
 #[cfg(feature = "simd")]
 static SMALL_PRIME_TABLE_SLOTS: [std::sync::OnceLock<SmallPrimeTables>; 256] = {
-    // const initialisation: all 256 slots start as uninitialised OnceLocks.
+    // All 256 slots start uninitialised.
     [const { std::sync::OnceLock::new() }; 256]
 };
 
-/// Returns a reference to the per-prime lookup tables for `Fp<P>` with
-/// `P ≤ 251`. The tables are built at most once per prime per process and
-/// then cached in a global array slot.
-///
-/// Cost: `O(P)` REDC calls on first access; `O(1)` atomic load on all
-/// subsequent accesses.
+/// Returns the per-prime lookup tables for `Fp<P>` with `3 ≤ P ≤ 251`,
+/// built at most once per prime per process.
 #[cfg(feature = "simd")]
 fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
     debug_assert!(
@@ -2188,10 +1680,7 @@ fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
             to_mont[canon as usize] = raw;
         }
         let barrett_mu = gf2_kernels_simd::fp_small::barrett_mu_u16(P as u8);
-        // Modular inverse table (issue 6823c8a0): inv_table[v] = v^{P-2}
-        // mod P for v ∈ [1, P). One Fermat exponentiation per prime
-        // value during table init; `O(P log P)` total, paid once per
-        // prime per process.
+        // inv_table[v] = v^{P-2} mod P for v ∈ [1, P).
         let mut inv_table = vec![0u8; p];
         for v in 1..p as u64 {
             let mut result: u64 = 1;
@@ -2222,20 +1711,6 @@ fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
 /// Internal cache that holds a pre-packed copy of an `m × k` `Fp<P>`
 /// matrix in the canonical-byte (`P ≤ 251`) or storage-domain-`u16`
 /// (`252 ≤ P < 65536`) layout used by the AVX2 kernels.
-///
-/// Created once per `cyclic_decomposition` / `wiedemann_minpoly_attempt`
-/// call and reused across the `O(n)` matvec sequence steps.
-///
-/// # Performance notes (issue 70766cb1)
-///
-/// The `Small` variant caches:
-/// 1. `fns: SmallPrimeFns` (avoids the per-call `OnceLock` read)
-/// 2. `tables: SmallPrimeTables` (replaces per-element REDC with O(1)
-///    table lookup in the x-pack and output-unpack loops)
-/// 3. Thread-local scratch buffers for `x_u8` and `out_u8`
-///
-/// At n = k = 64 (the GF(251)/n=64 target cell), (2) removes ~640 ns of
-/// Montgomery-REDC overhead from every matvec call.
 #[cfg(feature = "simd")]
 pub(crate) enum PackedFpMatrix<const P: u64> {
     /// Small-prime layout — canonical bytes, length `m · k`.
@@ -2243,9 +1718,7 @@ pub(crate) enum PackedFpMatrix<const P: u64> {
         data: Vec<u8>,
         m: usize,
         k: usize,
-        /// Cached function-pointer table.
         fns: gf2_kernels_simd::fp_small::SmallPrimeFns,
-        /// Per-prime lookup tables (static — built once per prime per process).
         tables: &'static SmallPrimeTables,
     },
     /// Medium-prime layout — storage-domain `u16`s, length `m · k`.
@@ -2285,8 +1758,6 @@ impl<const P: u64> PackedFpMatrix<P> {
         if fp_small_enabled::<P>() {
             let fns = *crate::simd::maybe_fp_small()?;
             let tables = build_small_prime_tables::<P>();
-            // Use the from_mont table for the initial matrix pack so it's
-            // consistent with subsequent matvec calls (same fast path).
             let data: Vec<u8> = rows
                 .iter()
                 .map(|x| tables.from_mont[x.raw_storage() as usize])
@@ -2310,14 +1781,8 @@ impl<const P: u64> PackedFpMatrix<P> {
     /// Computes `y = A · x` using the pre-packed matrix. Writes into
     /// `out` (length `m`).
     ///
-    /// For `P ≤ 251` uses the AVX2 `gemm_row_panel_fn` kernel
-    /// (which loads each 16-byte block of `x` once against four
-    /// rows of `A` simultaneously, amortising the AVX2
-    /// lane-broadcast and constant-table overhead across four
-    /// output cells per inner pass). For medium primes
-    /// (`252 ≤ P < 65536`) the dot kernel is called per row;
-    /// extending the medium-prime kernel to a row-panel matvec is
-    /// future work.
+    /// For `P ≤ 251` uses the AVX2 `gemm_row_panel_fn` kernel. For medium
+    /// primes (`252 ≤ P < 65536`) the dot kernel is called per row.
     pub(crate) fn matvec_packed(&self, x: &[Fp<P>], out: &mut [Fp<P>]) {
         match self {
             PackedFpMatrix::Small {
@@ -2331,26 +1796,16 @@ impl<const P: u64> PackedFpMatrix<P> {
                 debug_assert_eq!(out.len(), *m);
                 let p_u8 = P as u8;
 
-                // Use thread-local scratch buffers to avoid heap allocation
-                // on every call (issue 70766cb1). `resize` extends only when
-                // the buffer is shorter, so on steady-state calls (same k, m)
-                // the allocator is not consulted.
                 SMALL_X_SCRATCH.with_borrow_mut(|x_u8| {
                     x_u8.resize(*k, 0u8);
-                    // Pack x using the pre-built from_mont lookup table
-                    // (O(1) table lookup per element vs O(1) REDC per element).
-                    // For GF(251) this replaces 64 REDC operations with 64
-                    // byte-indexed table reads — typically ~2-3x faster.
                     for (dst, v) in x_u8.iter_mut().zip(x.iter()) {
                         *dst = tables.from_mont[v.raw_storage() as usize];
                     }
                     SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
                         out_u8.resize(*m, 0u8);
-                        // Use the row-panel gemm kernel: y[j] = sum_t x[t] * A[j*k+t].
-                        // `fns` is cached at construction time — no OnceLock read here.
+                        // Row-panel GEMM with `x` as the single left row:
+                        // y[j] = sum_t x[t] * A[j*k+t].
                         (fns.gemm_row_panel_fn)(&x_u8[..*k], data, *k, *m, p_u8, &mut out_u8[..*m]);
-                        // Unpack using the pre-built to_mont lookup table instead
-                        // of calling Fp::new (which invokes to_mont REDC).
                         for (slot, &b) in out.iter_mut().zip(out_u8[..*m].iter()) {
                             *slot = Fp::<P>::from_raw_storage(tables.to_mont[b as usize]);
                         }
@@ -2363,7 +1818,6 @@ impl<const P: u64> PackedFpMatrix<P> {
                 let fns = crate::simd::maybe_fp_medium().expect(
                     "PackedFpMatrix::Medium requires AVX2 (try_pack would have returned None)",
                 );
-                // Pack x storage-domain once per matvec call.
                 let x_u16: Vec<u16> = x.iter().map(|v| v.raw_storage() as u16).collect();
                 for r in 0..*m {
                     let row = &data[r * *k..(r + 1) * *k];
@@ -2402,11 +1856,8 @@ impl<const P: u64> PackedFpMatrix<P> {
 /// One-shot SIMD matvec for `Fp<P>`. Packs `a` and `x` per call and
 /// dispatches to the AVX2 byte-lane (`P ≤ 251`) or u16-lane
 /// (`252 ≤ P < 65536`) kernel. Returns `true` on success, `false`
-/// when the field is out of range or the kernel is unavailable.
-///
-/// For repeated matvec calls on the same `a` (e.g. inside Wiedemann
-/// or `cyclic_decomposition`), use [`PackedFpMatrix`] instead so the
-/// per-row pack cost is paid exactly once.
+/// when `k == 0`, the field is out of range or the kernel is unavailable.
+/// [`PackedFpMatrix`] pays the pack once for repeated calls on the same `a`.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_try_matvec<const P: u64>(
     a: &[Fp<P>],
@@ -2419,8 +1870,6 @@ pub(crate) fn fp_try_matvec<const P: u64>(
     debug_assert_eq!(x.len(), k);
     debug_assert_eq!(out.len(), m);
     if k == 0 {
-        // y = A · 0-length x is the zero vector. Caller's responsibility
-        // to populate `out` with zeros if needed; the kernel path skips.
         return false;
     }
     let Some(packed) = PackedFpMatrix::<P>::try_pack(a, m, k) else {
@@ -2431,26 +1880,10 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 }
 
 /// SIMD-accelerated axpy (`y[i] += a · x[i]`) for `Fp<P>` with
-/// `P ≤ 65521`. Routes through the AVX2 byte-lane (`P ≤ 251`) or
-/// u16-lane (`252 ≤ P < 65536`) `batch_mul` + `batch_add` kernels
-/// against a broadcast of the scalar `a`. Returns `true` when the
-/// kernel populated `y`, `false` to defer to the caller's scalar
-/// zip-loop.
-///
-/// # Algorithm
-///
-/// 1. Pack `y`, `x`, and the broadcast `[a; n]` to canonical bytes
-///    (`P ≤ 251`) or storage-domain `u16`s (`252 ≤ P < 65536`).
-/// 2. `tmp = batch_mul(broadcast, x)`.
-/// 3. `y_packed = batch_add(y_packed, tmp)`.
-/// 4. Unpack `y_packed` back into `y`.
-///
-/// The pack/unpack cost is `O(n)`; it is amortised against the
-/// `O(n)` SIMD inner work but adds a constant factor versus the
-/// scalar Montgomery path. The win comes from callers that do many
-/// axpys on the SAME `y` (the [`cyclic_decomposition`] reduce loop
-/// performs `O(basis_size)` axpys per chain step), where the SIMD
-/// throughput dominates the per-call pack/unpack.
+/// `3 ≤ P < 65536`. Packs `y`, `x` and a broadcast of `a` to canonical
+/// bytes (`P ≤ 251`) or canonical `u16`s (`252 ≤ P < 65536`) and runs the
+/// AVX2 `batch_mul` + `batch_add` kernels. Returns `true` when `y` holds
+/// the result, `false` to defer to the caller's scalar zip-loop.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_try_axpy<const P: u64>(y: &mut [Fp<P>], a: &Fp<P>, x: &[Fp<P>]) -> bool {
     debug_assert_eq!(y.len(), x.len());
@@ -2510,26 +1943,20 @@ pub(crate) fn fp_try_axpy<const P: u64>(_y: &mut [Fp<P>], _a: &Fp<P>, _x: &[Fp<P
 }
 
 // ---------------------------------------------------------------------------
-// Packed cyclic-decomposition basis cache (issue d1dd266c)
+// Packed cyclic-decomposition basis cache
 // ---------------------------------------------------------------------------
 
 /// Cached canonical-form basis used by the cyclic-decomposition
 /// reduce loop. Each pivot column is stored once in canonical form
 /// (`P ≤ 251`: bytes; `252 ≤ P < 65536`: u16) and reused across all
-/// reduce calls. With this cache, the inner reduce loop runs as
-/// `factor_compute → broadcast → batch_mul → batch_sub` per pivot,
-/// avoiding the per-element Montgomery REDC overhead of the scalar
-/// `axpy` path.
+/// reduce calls.
 #[cfg(feature = "simd")]
 pub(crate) enum PackedFpBasis<const P: u64> {
     Small {
         cols: Vec<Vec<u8>>,
         /// Pre-computed pivot inverses, one per column, indexed in lockstep
         /// with `cols`. `pivot_inv[j] = col_j[pivot_row_j]^{-1} (mod P)`,
-        /// canonical byte form. Hoists the Fermat-style `Fp::inv` out of
-        /// `fp_reduce_packed`'s inner loop (issue 52cce970); profiling
-        /// at GF(251)/n=256 showed `Fp::inv` consumed ~12 % of charpoly
-        /// wall time before this hoist.
+        /// canonical byte form.
         pivot_inv: Vec<u8>,
         n: usize,
     },
@@ -2600,12 +2027,10 @@ impl<const P: u64> PackedFpBasis<P> {
 /// Packed `reduce` for the cyclic-decomposition basis sweep. Computes
 /// `(residual, coeffs) = v − Σ coeffs[j] · basis[j]` where `coeffs[j]
 /// = v[pivot_row[j]] / basis[j][pivot_row[j]]`. Operates entirely in
-/// canonical form (bytes for `P ≤ 251`, u16 for `252 ≤ P < 65536`),
-/// avoiding the Montgomery REDC chain of the scalar
-/// [`crate::field::vec::FieldVec::axpy`] path.
+/// canonical form (bytes for `P ≤ 251`, u16 for `252 ≤ P < 65536`).
 ///
-/// Returns the residual as a `FieldVec<Fp<P>>` (re-packed to
-/// Montgomery storage) and the coefficient vector.
+/// Returns the residual (re-packed to `Fp<P>` storage) and the coefficient
+/// vector.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_reduce_packed<const P: u64>(
     v: &[Fp<P>],
@@ -2620,19 +2045,9 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
         } => {
             let fns = crate::simd::maybe_fp_small().expect("PackedFpBasis::Small requires AVX2");
             let p_u8 = P as u8;
-            // Use the per-prime from_mont / to_mont lookup tables (issue
-            // 27bb2f75 / 70766cb1 precedent) so packing/unpacking is a
-            // byte-indexed table read rather than a Montgomery REDC per
-            // element. At n=256 this removes 2 · 256 = 512 REDC calls per
-            // `do_reduce` invocation; over the ~n calls per charpoly this
-            // is ~131 k REDCs eliminated.
             let tables = build_small_prime_tables::<P>();
             let from_mont = tables.from_mont.as_slice();
             let to_mont = tables.to_mont.as_slice();
-            // Per-prime Barrett constant μ = ⌊2¹⁶ / P⌋ (issue 52cce970 R1):
-            // hoisted out of the kernel so the per-call `div esi` prologue
-            // is replaced by a single broadcast load. At ~32 k sub_scaled
-            // calls per GF(251)/n=256 charpoly the hoist saves ~190 µs.
             let barrett_mu = tables.barrett_mu;
             let mut residual: Vec<u8> = v
                 .iter()
@@ -2645,27 +2060,11 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
                 if v_at_r == 0 {
                     continue;
                 }
-                // factor = v_at_r * pivot_inv mod P (canonical scalar mul).
-                // Pivot inverses are pre-computed once per column at `push_col`
-                // time (issue 52cce970): profiling showed Fermat-style
-                // `Fp::inv` consumed ~12 % of charpoly wall time when called
-                // here, repeatedly, with the same column. Hoisting trims
-                // that overhead entirely.
                 let factor = ((v_at_r as u32 * pivot_inv[j] as u32) % P as u32) as u8;
-                // Fused in-place `residual := (residual − factor · col) mod p`
-                // (issue 52cce970): replaces the prior `batch_mul(bcast, col)
-                // → tmp; batch_sub(residual, tmp) → new_residual; swap` triple
-                // pass. Eliminates one broadcast-fill, one intermediate Vec,
-                // one new_residual Vec, and one swap; keeps factor, μ, p in
-                // ymm registers across the column sweep.
+                // In place: residual := (residual − factor · col) mod p.
                 (fns.sub_scaled_fn)(&mut residual, col, factor, p_u8, barrett_mu);
-                // Coeff value is the canonical `factor` byte — store the
-                // matching Montgomery storage word via the `to_mont` table
-                // (one byte-indexed lookup; no REDC).
                 coeffs[j] = Fp::<P>::from_raw_storage(to_mont[factor as usize]);
             }
-            // Unpack the canonical-byte residual back to Fp<P> Montgomery
-            // storage via the same per-prime `to_mont` table.
             let unpacked: Vec<Fp<P>> = residual
                 .iter()
                 .map(|&b| Fp::<P>::from_raw_storage(to_mont[b as usize]))
@@ -2689,8 +2088,6 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
                 if v_at_r == 0 {
                     continue;
                 }
-                // Pivot inverses pre-computed once per column at `push_col`
-                // time (issue 52cce970); see Small branch for rationale.
                 let factor = ((v_at_r as u64 * pivot_inv[j] as u64) % P) as u16;
                 bcast.iter_mut().for_each(|s| *s = factor);
                 (fns.batch_mul_fn)(&bcast, col, p_u16, barrett_m, &mut tmp);
@@ -2707,8 +2104,7 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
 #[cfg(feature = "simd")]
 impl<const P: u64> crate::field::matrix::BasisReducer<Fp<P>> for PackedFpBasis<P> {
     fn push_col(&mut self, col: &[Fp<P>]) {
-        // Find the first non-zero entry to serve as pivot. The basis
-        // invariant guarantees at least one exists; if not, panic.
+        // The pivot is the first non-zero entry.
         let pivot_row = col
             .iter()
             .position(|v| !v.is_zero())
@@ -2716,9 +2112,7 @@ impl<const P: u64> crate::field::matrix::BasisReducer<Fp<P>> for PackedFpBasis<P
         self.push(col, pivot_row);
     }
 
-    /// Optimised override: callers that already hold `pivot_row` (all
-    /// hot paths in `cyclic_decomposition`) call this variant to skip
-    /// the linear pivot-scan of the default implementation.
+    /// Skips the linear pivot scan of `push_col`.
     fn push_col_with_pivot_row(&mut self, col: &[Fp<P>], pivot_row: usize) {
         self.push(col, pivot_row);
     }
@@ -2775,9 +2169,7 @@ pub(crate) fn fp_try_make_basis_reducer<const P: u64>(
 
 /// Pre-packs the `m × k` matrix `a` and returns it as a boxed
 /// [`crate::field::matrix::PackedMatvec`] handle. Returns `None` for
-/// fields without a SIMD fast path. The boxed handle's `matvec` method
-/// runs the full AVX2 kernel against the pre-packed buffer for every
-/// call, paying the matrix-pack cost exactly once.
+/// fields without a SIMD fast path.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_try_prepack_matvec<const P: u64>(
     a: &[Fp<P>],
@@ -2812,7 +2204,7 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 
 // ---------------------------------------------------------------------------
 // PackedFpChainPolys<P> — canonical-byte chain-polynomial arithmetic
-// for `cyclic_decomposition` (issue `5a3dbd5b`).
+// for `cyclic_decomposition`.
 //
 // Each chain polynomial of degree `d` is stored as a `Vec<u8>` of length
 // `d + 1` in ascending-degree order (coeffs[i] = coeff of x^i), with all
@@ -2820,51 +2212,25 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 //
 //     next[d] = x · chain[d-1]  −  Σ_j α_j · chain[j]
 //
-// is therefore:
-//   1. shift_x: prepend a zero byte → length grows by 1.
-//   2. For each j where α_j ≠ 0:
-//        broadcast(α_j) · chain[j] → tmp   (batch_mul, zero-padded)
-//        next − tmp → next                 (batch_sub)
-//
-// All arithmetic stays in canonical-byte form. `alpha`'s canonical byte
-// is obtained from a per-prime `from_mont` lookup table (built once via
-// `build_small_prime_tables::<P>()`) — no Montgomery REDC inside the
-// `sub_scaled_into` hot loop. The only REDC remaining on this path is
-// at the very end, when `finish_buf` converts bytes back to
-// `FieldPoly<Fp<P>>` via `Fp::new`.
+// prepends a zero byte, then applies one fused `sub_scaled` per non-zero
+// α_j. `finish_buf` converts the bytes back to `FieldPoly<Fp<P>>` via
+// `Fp::new`.
 // ---------------------------------------------------------------------------
 
-/// Packed canonical-byte chain-polynomial store for small primes (`P ≤ 251`).
+/// Packed canonical-byte chain-polynomial store for small primes (`P ≤ 251`),
+/// used by `cyclic_decomposition`.
 ///
-/// Used by `cyclic_decomposition` (issue `5a3dbd5b`) to replace the scalar
-/// `FieldPoly::mul_scalar` / `Sub` polynomial-bookkeeping with AVX2
-/// byte-lane kernels, closing the ~10x wall-clock gap on `GF(251)/n=256
-/// charpoly` reported in `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md`
-/// § 6.4.
-///
-/// As of issue `52cce970`, `sub_scaled_into` calls a single fused AVX2
-/// kernel (`fns.sub_scaled_fn`, semantics `buf := (buf − α·chain_j) mod p`)
-/// instead of the two-step `batch_mul` + `batch_sub` sequence that the
-/// `5a3dbd5b` implementation used. The fused path eliminates the
-/// per-call scratch broadcast-fill, the intermediate-product write,
-/// and the copy-back step.
-///
-/// # Complexity
-///
-/// Each `sub_scaled_into` call costs `O(d)` byte-lane AVX2 muls + subs
-/// (where `d` is the current chain length), matching the scalar complexity
-/// but with a 16-element SIMD factor.  The total polynomial-bookkeeping cost
-/// for one Krylov block of length `d` is `O(d²)` — the same as the scalar
-/// path but with the Montgomery REDC per-element overhead eliminated.
+/// Each `sub_scaled_into` call is one fused AVX2 kernel call
+/// (`fns.sub_scaled_fn`, semantics `buf := (buf − α·chain_j) mod p`), `O(d)`
+/// in the current chain length `d`; the polynomial bookkeeping for one
+/// Krylov block of length `d` is `O(d²)`.
 #[cfg(feature = "simd")]
 pub(crate) struct PackedFpChainPolys<const P: u64> {
     /// Stored coefficients for each chain polynomial, in canonical bytes,
     /// ascending-degree order.  `polys[j]` has length `j + 1` (degree `j`).
     polys: Vec<Vec<u8>>,
-    /// Per-prime conversion tables: `from_mont[raw]` maps a Montgomery storage
-    /// word to its canonical byte. Used in `sub_scaled_into` so `alpha`'s
-    /// canonical value is obtained via a single table lookup rather than a
-    /// per-call REDC.
+    /// Per-prime conversion tables; `sub_scaled_into` reads `alpha`'s
+    /// canonical byte from `from_mont` and the Barrett constant.
     tables: &'static SmallPrimeTables,
 }
 
@@ -2887,7 +2253,6 @@ impl<const P: u64> PackedFpChainPolys<P> {
 #[cfg(feature = "simd")]
 impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChainPolys<P> {
     fn push_one(&mut self) {
-        // The constant polynomial 1 has coefficients [1] (degree 0).
         self.polys.push(vec![1u8]);
     }
 
@@ -2896,16 +2261,11 @@ impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChain
         let last = self.polys.last().expect("shift_x_last_into: empty chain");
         let new_len = last.len() + 1;
         buf.resize(new_len, 0u8);
-        // Copy last[0..] into buf[1..] (shift by one position).
         buf[1..new_len].copy_from_slice(last);
         buf[0] = 0;
     }
 
     fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &Fp<P>, j: usize) {
-        // Convert alpha from Montgomery to canonical via the per-prime
-        // lookup table built once per prime in
-        // `build_small_prime_tables::<P>()` (issue 5a3dbd5b R5 review
-        // feedback). Single byte read; no REDC inside the hot loop.
         let alpha_val = self.tables.from_mont[alpha.raw_storage() as usize];
         if alpha_val == 0 {
             return;
@@ -2919,14 +2279,7 @@ impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChain
             buf.len(),
             chain_j.len()
         );
-        // Single fused in-place kernel call: buf[..cj_len] := (buf − α · chain_j) mod p.
-        // Replaces the prior `tmp = batch_mul(α, chain_j); buf = batch_sub(buf, tmp)`
-        // two-call sequence (issue 52cce970): the fused kernel keeps α, μ, p
-        // in ymm registers, threads the intermediate product through
-        // registers only, and writes results back in a single pass.
-        //
-        // μ is precomputed in `build_small_prime_tables::<P>()` (issue
-        // 52cce970 R1) and passed in to skip the kernel's per-call `div`.
+        // In place: buf[..cj_len] := (buf − α · chain_j) mod p.
         (fns.sub_scaled_fn)(
             &mut buf[..],
             chain_j,
@@ -2965,10 +2318,7 @@ pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
     Some(Box::new(cpa))
 }
 
-/// Non-allocating mirror of [`fp_try_make_chain_poly_arith`]:
-/// returns `true` exactly when the SIMD chain-poly path is available
-/// (`P ≤ 251` and AVX2 detected at runtime), without constructing the
-/// boxed handle.
+/// Non-allocating availability probe for [`fp_try_make_chain_poly_arith`].
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
@@ -2976,49 +2326,39 @@ pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
 }
 
 /// Non-allocating availability probe for
-/// [`fp_small_try_gemm_classical`] (issue `40195c09`).
+/// [`fp_small_try_gemm_classical`] and [`fp_medium_try_gemm_panel`].
 ///
-/// Returns `true` exactly when the small-prime whole-GEMM kernel
-/// would populate `out` for any compatible shape: `P` in the byte-lane
-/// range (`3..=251`) AND a SIMD kernel was detected at runtime (either
-/// Candidate C `maybe_fp_small`, route A `maybe_fp_small_f32`, or route
-/// C `maybe_fp_small_panel`). Used by
-/// [`crate::field::matrix::gemm_axpy_into_view`] to skip the
-/// contiguous-`A` scratch allocation when the kernel would decline.
+/// Returns `true` when `P` is in the byte-lane range (`3..=251`) and a
+/// small-prime kernel was detected at runtime (Candidate C
+/// `maybe_fp_small`, route A `maybe_fp_small_f32`, or route C
+/// `maybe_fp_small_panel`), or `P ∈ (251, 65535]` and the u16 kernel was
+/// detected. Used by [`crate::field::matrix::gemm_axpy_into_view`] to skip
+/// the contiguous-`A` scratch allocation when the kernel would decline.
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
     if fp_small_enabled::<P>() {
-        // Any of the three small-prime kernels can take the call. The
-        // dispatch order inside `fp_small_try_gemm_classical` is route
-        // A (f32), route C (panel), then Candidate C (byte-lane).
-        // Returning `true` whenever any of them is available exactly
-        // mirrors the "kernel will succeed" condition.
         return crate::simd::maybe_fp_small().is_some()
             || crate::simd::maybe_fp_small_f32().is_some()
             || crate::simd::maybe_fp_small_panel().is_some();
     }
-    // Medium-prime panel kernel (issue 74ba1cdc R1): `Fp<P>` with
-    // `P ∈ (251, 65535]` routes through `fp_medium_try_gemm_panel`
-    // inside `try_simd_gemm_classical`.
     if fp_medium_eligible::<P>() {
         return crate::simd::maybe_fp_medium().is_some();
     }
     false
 }
 
-/// Non-SIMD stub that always returns `false`.
 #[cfg(not(feature = "simd"))]
 #[inline]
 pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
     false
 }
 
-/// Panelized PLE base-case fast path for `Fp<P>` with `P <= 251`
-/// (issue `6823c8a0`, design `2e8c5a29`).
+/// Panelized PLE base-case fast path for `Fp<P>`. Medium primes
+/// (`P ∈ (251, 65536)`) delegate to [`fp_try_ple_panel_base_medium`].
 ///
-/// Operates on the column window `[col_lo, col_hi)` of the parent
-/// row-major matrix storage:
+/// For `P <= 251`, operates on the column window `[col_lo, col_hi)` of the
+/// parent row-major matrix storage:
 ///   1. Packs the window into a canonical-byte scratch buffer (one
 ///      `from_mont` table lookup per cell).
 ///   2. Invokes the unsafe AVX2 kernel via
@@ -3031,7 +2371,7 @@ pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
 ///      storage in the parent matrix.
 ///
 /// Returns `Some(rank)` on success; `None` when the kernel declined
-/// (e.g. `P > 251`, the `simd` feature disabled, AVX2 unavailable at
+/// (e.g. `P >= 65536`, the `simd` feature disabled, AVX2 unavailable at
 /// runtime). The caller falls back to `ple_base_direct` in this case.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_try_ple_panel_base<const P: u64>(
@@ -3043,10 +2383,6 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> Option<usize> {
-    // Route by P range: small primes (≤ 251) go through the byte-lane
-    // kernel; medium primes ((251, 65536)) go through the u16-lane
-    // kernel (issue `68db401b`). Other primes return `None` and the
-    // caller falls back to scalar `ple_base_direct`.
     if fp_medium_eligible::<P>() {
         return fp_try_ple_panel_base_medium::<P>(
             matrix,
@@ -3084,8 +2420,6 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
     let to_mont = tables.to_mont.as_slice();
     let inv_table = tables.inv_table.as_slice();
 
-    // Pack the window into canonical bytes: scratch[r * win + c] =
-    // canonical(matrix[r, col_lo + c]).
     let mut window: Vec<u8> = Vec::with_capacity(m * win);
     for r in 0..m {
         let row_base = r * parent_cols + col_lo;
@@ -3096,14 +2430,12 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
         }
     }
 
-    // Initialise local row perm tracker.
     let mut row_perm: Vec<usize> = (0..m).collect();
     let mut pivot_cols_local: Vec<usize> = Vec::with_capacity(win.min(m));
 
-    // Invoke the kernel via the safe wrapper. The wrapper internally
-    // enters an `unsafe` block only after `detect` confirmed AVX2 at
-    // runtime; the canonical-byte preconditions are upheld by the
-    // `from_mont` pack above.
+    // The safe wrapper enters an `unsafe` block only after `detect`
+    // confirmed AVX2 at runtime; the canonical-byte preconditions are
+    // upheld by the `from_mont` pack above.
     let rank = (fns.ple_panel_base_fn)(
         &mut window,
         m,
@@ -3114,28 +2446,12 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
         &mut pivot_cols_local,
     );
 
-    // Propagate the kernel's row swaps to cells **outside** the column
-    // window (the kernel only touched the panel bytes; cells in
-    // `[0, col_lo)` and `[col_hi, parent_cols)` of each row still
-    // reflect the pre-call row order).
-    //
-    // `row_perm[k] = original_row_index` means the row that originally
-    // sat at `original_row_index` now sits at position `k`. We need to
-    // physically rearrange the parent matrix rows outside the window
-    // so the post-call matrix has consistent row order across all
-    // columns. We use the cycle decomposition of `row_perm` to do the
-    // outside-window swaps in-place without an extra allocation.
+    // The kernel permuted only the window; `row_perm[k]` is the original
+    // index of the row now at position `k`.
     apply_row_perm_outside_window::<P>(matrix, parent_cols, m, col_lo, col_hi, &row_perm);
 
-    // Apply the same permutation to the caller's `perm` (full-matrix
-    // permutation tracker).
     apply_perm_indices(perm, &row_perm);
 
-    // Unpack the (already permuted) window scratch back into Montgomery
-    // storage. After `apply_row_perm_outside_window`, the parent
-    // matrix's rows are now in the post-PLE order outside the window;
-    // we write `window[k * win + c]` into row `k`'s slice at
-    // [col_lo, col_hi).
     for r in 0..m {
         let row_base = r * parent_cols + col_lo;
         for c in 0..win {
@@ -3145,8 +2461,6 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
         }
     }
 
-    // Push panel-relative pivot column offsets as absolute column
-    // indices (offset by `col_lo`).
     for off in pivot_cols_local {
         pivot_cols.push(col_lo + off);
     }
@@ -3168,8 +2482,7 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
     None
 }
 
-/// Non-allocating lane-class probe for [`fp_try_ple_panel_base`]
-/// (issue `6823c8a0`).
+/// Non-allocating lane-class probe for [`fp_try_ple_panel_base`].
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp_ple_panel_lane<const P: u64>() -> Option<PlePanelLane> {
@@ -3189,18 +2502,15 @@ pub(crate) fn fp_ple_panel_lane<const P: u64>() -> Option<PlePanelLane> {
 }
 
 // ---------------------------------------------------------------------------
-// Medium-prime PLE base-case dispatch (jit:68db401b)
+// Medium-prime PLE base-case dispatch
 // ---------------------------------------------------------------------------
 
 /// Per-prime u16 inverse table for medium primes `Fp<P>` (`P ∈ (251,
 /// 65536)`). `inv_table[v]` is the modular inverse of `v` for `v ∈
 /// [1, P)`; `inv_table[0]` is unused (kept 0).
 ///
-/// Built once per prime per process via [`build_medium_prime_inv_table`]
-/// and cached in a global mutex-guarded map; on subsequent calls a
-/// `&'static [u16]` slice is returned via `Box::leak` (the table is
-/// permanently retained for the process lifetime, which is acceptable —
-/// 65521 × 2 = 128 KB at most, one allocation per prime).
+/// Built once per prime per process, cached in a global mutex-guarded map
+/// and leaked for the process lifetime (65521 × 2 bytes at most per prime).
 #[cfg(feature = "simd")]
 #[allow(clippy::explicit_auto_deref)]
 fn build_medium_prime_inv_table<const P: u64>() -> &'static [u16] {
@@ -3218,9 +2528,7 @@ fn build_medium_prime_inv_table<const P: u64>() -> &'static [u16] {
         }
     }
 
-    // Compute the table outside the lock: O(P log P) Fermat
-    // exponentiations. At P = 65521 this is ~65520 * ~16 = ~1M small
-    // ops, paid once per prime per process.
+    // Computed outside the lock: `P − 1` Fermat exponentiations.
     let p_u64 = P;
     let mut table = vec![0u16; p_u64 as usize];
     for v in 1..p_u64 {
@@ -3241,21 +2549,13 @@ fn build_medium_prime_inv_table<const P: u64>() -> &'static [u16] {
     let leaked: &'static [u16] = Box::leak(table.into_boxed_slice());
 
     let mut guard = map.lock().expect("medium inv-table mutex poisoned");
-    // Another thread may have raced ahead and inserted while we were
-    // computing. If so, drop our table (it's already leaked — small
-    // permanent leak; happens at most once per prime per concurrent
-    // race) and return the winner.
-    // `&'static [u16]` is `Copy`, so `*entry(...)` copies the slice
-    // handle out of the `&mut &'static [u16]` returned by `or_insert`,
-    // releasing the lock guard's borrow before the function returns.
-    // clippy's `explicit_auto_deref` suggestion does not apply here: the
-    // function signature returns `&'static [u16]`, not `&mut &'static
-    // [u16]`, so the explicit `*` is required to drop one indirection.
+    // A racing thread may have inserted first; its table wins and ours
+    // stays leaked. The explicit `*` copies the `&'static [u16]` out of the
+    // `&mut` that `or_insert` returns, hence the `explicit_auto_deref` allow.
     *guard.entry(P).or_insert(leaked)
 }
 
-/// Medium-prime PLE base-case dispatch helper (issue `68db401b`,
-/// design `2e8c5a29` § 9).
+/// Medium-prime PLE base-case dispatch helper.
 ///
 /// Operates on `Fp<P>` matrices with `P ∈ (251, 65536)`. Packs the
 /// column window into canonical u16 storage via `Fp::value()`, invokes
@@ -3301,10 +2601,6 @@ pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
     let p_u16 = P as u16;
     let inv_table = build_medium_prime_inv_table::<P>();
 
-    // Pack the window into canonical u16: scratch[r * win + c] =
-    // value(matrix[r, col_lo + c]). Round-tripping through `Fp::value()`
-    // performs one REDC per cell, but this is amortised by the SIMD
-    // Schur update inside the kernel.
     let mut window: Vec<u16> = Vec::with_capacity(m * win);
     for r in 0..m {
         let row_base = r * parent_cols + col_lo;
@@ -3315,11 +2611,9 @@ pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
         }
     }
 
-    // Initialise local row perm tracker.
     let mut row_perm: Vec<usize> = (0..m).collect();
     let mut pivot_cols_local: Vec<usize> = Vec::with_capacity(win.min(m));
 
-    // Invoke the kernel via the safe wrapper.
     let rank = (fns.ple_panel_base_fn)(
         &mut window,
         m,
@@ -3330,17 +2624,10 @@ pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
         &mut pivot_cols_local,
     );
 
-    // Propagate the kernel's row swaps to cells outside the column
-    // window (same cycle-decomposition helper used by the small-prime
-    // path).
     apply_row_perm_outside_window::<P>(matrix, parent_cols, m, col_lo, col_hi, &row_perm);
 
-    // Apply the same permutation to the caller's `perm` (full-matrix
-    // permutation tracker).
     apply_perm_indices(perm, &row_perm);
 
-    // Unpack the (already permuted) window scratch back into
-    // Montgomery storage via `Fp::new` (one REDC per cell).
     for r in 0..m {
         let row_base = r * parent_cols + col_lo;
         for c in 0..win {
@@ -3350,8 +2637,6 @@ pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
         }
     }
 
-    // Push panel-relative pivot column offsets as absolute column
-    // indices (offset by `col_lo`).
     for off in pivot_cols_local {
         pivot_cols.push(col_lo + off);
     }
@@ -3374,14 +2659,10 @@ pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
     None
 }
 
-/// Physically rearrange the rows of `matrix` according to `row_perm`,
-/// **leaving the column window `[col_lo, col_hi)` untouched** (the
-/// kernel already permuted those bytes in its own scratch buffer).
-///
-/// `row_perm[k]` = original row index that now sits at row `k`. We
-/// build a buffer of size `m` recording, for each original row, where
-/// it now lives; then swap the outside-window cells via cycle
-/// decomposition so each row's external cells are moved exactly once.
+/// Rearranges the rows of `matrix` according to `row_perm`, leaving the
+/// column window `[col_lo, col_hi)` untouched (the kernel already permuted
+/// it in its own scratch buffer). `row_perm[k]` is the original index of
+/// the row that now sits at row `k`.
 #[cfg(feature = "simd")]
 fn apply_row_perm_outside_window<const P: u64>(
     matrix: &mut [Fp<P>],
@@ -3392,64 +2673,24 @@ fn apply_row_perm_outside_window<const P: u64>(
     row_perm: &[usize],
 ) {
     if col_lo == 0 && col_hi == parent_cols {
-        // Window spans the full row width; nothing to swap outside.
         return;
     }
-    // Compute the inverse: `inv[src] = dst`, meaning the row originally
-    // at index `src` now lives at row `dst`. We use this to walk
-    // cycles.
+    // `where_now[src] = dst`: the row originally at `src` now lives at `dst`.
     let mut where_now: Vec<usize> = vec![0; m];
     for (dst, &src) in row_perm.iter().enumerate() {
         where_now[src] = dst;
     }
 
-    // Identity case fast-out.
     if where_now.iter().enumerate().all(|(i, &v)| i == v) {
         return;
     }
 
-    // Cycle walk: visit each row, follow `where_now` until we return.
-    // For each cycle of length > 1, swap the outside-window cells
-    // around the cycle.
     let mut visited = vec![false; m];
     for start in 0..m {
         if visited[start] || where_now[start] == start {
             visited[start] = true;
             continue;
         }
-        // Walk the cycle starting at `start`. We'll perform a sequence
-        // of pairwise swaps that achieve the same permutation.
-        //
-        // Strategy: for cycle (r0, r1, r2, ..., rk) where r0 is the
-        // smallest unvisited, with row originally at r_i moving to
-        // position r_{i+1 mod k+1}, we can apply the cycle by doing
-        // k swaps: swap(r_0, r_1), swap(r_0, r_2), ..., swap(r_0, r_k).
-        // After these k swaps, the row originally at r_i is at
-        // position r_{i+1 mod k+1}. This walks each row exactly once
-        // among the cycle's non-pivot positions.
-        //
-        // We need to be careful: the row_perm encodes "now-row's
-        // original index"; we need to ensure outside-window cells end
-        // up at the row indices that match the kernel's window cells.
-        //
-        // Approach: use `row_perm` directly. After the kernel call,
-        // window[k * win + c] holds the cell that should sit at row k
-        // post-PLE. Outside the window, the cell at row k should be
-        // the original cell at row `row_perm[k]`. So we need:
-        //   matrix_outside[k, :] = matrix_outside_original[row_perm[k], :]
-        //
-        // Equivalently, for each k, copy original-row `row_perm[k]`'s
-        // outside-window cells into row `k`. Since rows can move both
-        // ways, we use a per-cycle scratch swap.
-        //
-        // Simplest correct (allocation-free per cycle): copy the cycle
-        // out into a stack/heap buffer, then write back. For
-        // `parent_cols - win` outside cells per row, the buffer cost
-        // is bounded by `cycle_len * (parent_cols - win)` field
-        // elements; cycles are short in practice (rank-revealing PLE
-        // generates a small number of swaps).
-        //
-        // For clarity and correctness we use a small Vec per cycle.
         let mut cycle: Vec<usize> = Vec::new();
         let mut cur = start;
         while !visited[cur] {
@@ -3457,17 +2698,9 @@ fn apply_row_perm_outside_window<const P: u64>(
             visited[cur] = true;
             cur = where_now[cur];
         }
-        // `cycle` lists positions [r_0, r_1, ..., r_{k}] in walk order
-        // where row originally at r_i now lives at r_{i+1 mod len}.
-        // Hence the row at the **new** position r_{i+1} came from the
-        // **original** position r_i. Equivalently:
-        //   new_row(r_{i+1 mod len}) = orig_row(r_i)
-        //
-        // We want to physically move the outside-window cells so that
-        // `matrix[new_pos]` carries `original_matrix[orig_pos]`.
-        //
-        // Buffer the original outside-window cells for every row in
-        // the cycle, then redistribute.
+        // The row originally at `cycle[i]` now lives at
+        // `cycle[(i + 1) % len]`: buffer the cycle's outside-window cells,
+        // then redistribute them.
         let outside_len_left = col_lo;
         let outside_len_right = parent_cols - col_hi;
         let outside_total = outside_len_left + outside_len_right;
@@ -3475,7 +2708,6 @@ fn apply_row_perm_outside_window<const P: u64>(
             continue;
         }
         let mut buf: Vec<Fp<P>> = Vec::with_capacity(cycle.len() * outside_total);
-        // First read all the original cells.
         for &pos in &cycle {
             let row_base = pos * parent_cols;
             for c in 0..col_lo {
@@ -3485,10 +2717,6 @@ fn apply_row_perm_outside_window<const P: u64>(
                 buf.push(matrix[row_base + c]);
             }
         }
-        // Now write back: for cycle index i (so new-position
-        // r_{i+1 mod len} should receive the original cells of r_i),
-        // write buf[i * outside_total .. (i+1) * outside_total] into
-        // row `cycle[(i + 1) mod len]`'s outside cells.
         for i in 0..cycle.len() {
             let dst_pos = cycle[(i + 1) % cycle.len()];
             let dst_row_base = dst_pos * parent_cols;
@@ -3504,29 +2732,21 @@ fn apply_row_perm_outside_window<const P: u64>(
     }
 }
 
-/// Compose `perm` with `row_perm` (apply `row_perm` to the existing
-/// `perm` slots).
-///
-/// `perm` is the caller's permutation tracker (length `m`); the
-/// kernel's local `row_perm` says "the row originally at `row_perm[k]`
-/// now sits at row `k`". After composition, `perm[k]` reflects the
-/// composed source-index.
+/// Composes the caller's permutation tracker `perm` with the kernel's
+/// `row_perm`: `perm_new[k] = perm_old[row_perm[k]]`.
 #[cfg(feature = "simd")]
 fn apply_perm_indices(perm: &mut [usize], row_perm: &[usize]) {
     debug_assert_eq!(perm.len(), row_perm.len());
-    // perm_new[k] = perm_old[row_perm[k]]
     let perm_old: Vec<usize> = perm.to_vec();
     for (k, slot) in perm.iter_mut().enumerate() {
         *slot = perm_old[row_perm[k]];
     }
 }
 
-/// Non-SIMD stub for `PackedFpChainPolys<P>`.
 #[cfg(not(feature = "simd"))]
 #[allow(dead_code)] // No-simd stub; constructed only from feature-gated code paths.
 pub(crate) struct PackedFpChainPolys<const P: u64>;
 
-/// Non-SIMD stub that always returns `None`.
 #[cfg(not(feature = "simd"))]
 #[inline]
 pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
@@ -3535,7 +2755,6 @@ pub(crate) fn fp_try_make_chain_poly_arith<const P: u64>(
     None
 }
 
-/// Non-SIMD stub that always returns `false`.
 #[cfg(not(feature = "simd"))]
 #[inline]
 pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
@@ -3547,12 +2766,6 @@ mod tests {
     use super::*;
 
     const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
-
-    // ---------------------------------------------------------------------------
-    // Tests for the inlined / cached matvec path (issue 70766cb1).
-    // Checks scalar-equivalence of the PackedFpMatrix::Small path at the
-    // boundary lengths mandated by the issue: {0, 1, 15, 16, 17, 63, 64, 65}.
-    // ---------------------------------------------------------------------------
 
     /// Checks that `fp_try_prepack_matvec` + `PackedMatvec::matvec` on a
     /// pre-packed small-prime matrix matches the scalar reference at boundary
@@ -3637,12 +2850,8 @@ mod tests {
         }
     }
 
-    /// Boundary-length scalar-equivalence test for the inlined/cached
-    /// small-prime prepack matvec path (issue 70766cb1).
-    ///
-    /// Tests lengths {0, 1, 15, 16, 17, 63, 64, 65} for both m and k, at
-    /// GF(251) (the primary target of the 70766cb1 optimization) and
-    /// GF(7) (regression guard).
+    /// Boundary-length scalar equivalence of the small-prime prepack matvec
+    /// path for both m and k.
     #[test]
     fn test_small_prime_prepack_matvec_boundary_lengths() {
         #[cfg(not(feature = "simd"))]
@@ -3657,12 +2866,8 @@ mod tests {
         }
     }
 
-    /// Boundary-length scalar-equivalence test for the small-n GEMM
-    /// dispatch path (issue 27bb2f75). Covers the table-lookup
-    /// pack/unpack and the thread-local scratch reuse for
-    /// `fp_small_try_gemm_classical`. Lengths `{0, 1, 15, 16, 17, 63,
-    /// 64, 65, 128, 129}` exercise the kernel's row-panel tile (4× per
-    /// inner pass) at its boundaries and the per-row scratch reuse.
+    /// Scalar equivalence of `fp_small_try_gemm_classical` over `lens`,
+    /// including the thread-local scratch reuse of a repeated call.
     #[cfg(feature = "simd")]
     fn check_small_prime_gemm_dispatch<const P: u64>(lens: &[usize]) {
         if crate::simd::maybe_fp_small().is_none() {
@@ -3730,12 +2935,8 @@ mod tests {
         }
     }
 
-    /// Boundary-length scalar-equivalence test for the small-n GEMM
-    /// dispatch path (issue 27bb2f75). Covers the lengths mandated by
-    /// the issue: `{0, 1, 15, 16, 17, 63, 64, 65, 128, 129}` for each
-    /// of m, k, n. Tests both GF(7) (lowest in-scope prime; small
-    /// table) and GF(251) (largest in-scope prime; table spans 251
-    /// slots).
+    /// Boundary-length scalar equivalence of the small-prime GEMM dispatch
+    /// for each of m, k, n.
     #[test]
     fn test_small_prime_gemm_dispatch_boundary_lengths() {
         #[cfg(not(feature = "simd"))]
@@ -3756,8 +2957,7 @@ mod tests {
 
         /// Property: `fp_small_try_gemm_classical` for GF(251) at random
         /// `(m, k, n)` boundary shapes matches the scalar GEMM reference
-        /// bit-exactly. Boundary lengths from issue 27bb2f75's success
-        /// criteria: `{0, 1, 15, 16, 17, 63, 64, 65, 128, 129}`.
+        /// bit-exactly.
         #[test]
         fn proptest_small_prime_gemm_boundary_fp251(
             m_idx in 0usize..10,
@@ -3821,11 +3021,9 @@ mod tests {
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(48))]
 
-        /// Property: the inlined/cached small-prime prepack matvec path returns
-        /// the same result as the scalar reference for any `(m, k)` shape with
-        /// each dimension in `{0, 1, 15, 16, 17, 63, 64, 65}`, complementing
-        /// the deterministic `test_small_prime_prepack_matvec_boundary_lengths`
-        /// unit test.
+        /// Property: the small-prime prepack matvec path returns the same result
+        /// as the scalar reference for any `(m, k)` shape with each dimension in
+        /// `{0, 1, 15, 16, 17, 63, 64, 65}`.
         #[test]
         fn proptest_small_prime_prepack_matvec_boundary_fp251(
             m_idx in 0usize..8,
@@ -3929,10 +3127,8 @@ mod tests {
         check_small_prime::<251>();
     }
 
-    /// Property test: SIMD path matches scalar element-wise across
-    /// `WORD_BOUNDARY_LENS` for the small-prime byte-lane dispatch
-    /// (`P <= 251`). Mirrors [`check_generic_prime`] but exercises the
-    /// `fp_small_*` SIMD branch installed by `try_simd_*_vec`.
+    /// SIMD path matches scalar element-wise across `WORD_BOUNDARY_LENS` for
+    /// the small-prime byte-lane dispatch (`P <= 251`).
     fn check_small_prime<const P: u64>() {
         #[cfg(not(feature = "simd"))]
         {
@@ -4019,7 +3215,7 @@ mod tests {
 
     #[test]
     fn medium_simd_matches_scalar_word_boundaries() {
-        // Reference prime named in the [hard] criterion of issue 9e12659b.
+        // The largest prime in the dispatch range.
         check_medium_prime::<65521>();
         // Sweep across the dispatch range (P ∈ (251, 65535]) to verify
         // Barrett reduction generality. GF(257) is the smallest in-range
@@ -4042,17 +3238,10 @@ mod tests {
         assert!(!fp_generic_enabled::<{ (1u64 << 63) + 25 }>());
     }
 
-    /// Regression guard for issue `3d06224c` (story `cc5de315`, "Protect
-    /// Mersenne fast path"). Asserts that the `if P == M31` dispatch
-    /// branch in `<Fp<P> as SimdVecOps>::try_simd_mul_vec` is reachable on
-    /// AVX2 hosts and that, on every word-boundary-relevant length, the
-    /// SIMD-batched Mersenne31 multiply matches the scalar element-wise
-    /// product bit-exactly. Sibling issues `662f7a15` and `9e12659b`
-    /// concurrently extend the dispatch ladder; this test fails if either
-    /// of them accidentally re-orders the ladder so Mersenne31 traffic is
-    /// routed through the generic Montgomery AVX2 kernel (which would
-    /// regress the `WITHIN_1.5X` family verdict per
-    /// `dev/bench_results/2026-05-04-609855d9-gfp-by-family.md`).
+    /// Guards the dispatch-order invariant: the `if P == M31` branch of
+    /// `<Fp<P> as SimdVecOps>::try_simd_mul_vec` is reachable on AVX2 hosts
+    /// and, at every word-boundary length, the SIMD-batched Mersenne31
+    /// multiply matches the scalar element-wise product bit-exactly.
     #[test]
     #[cfg(feature = "simd")]
     fn m31_simd_mul_matches_scalar_across_boundary_lens() {
