@@ -139,6 +139,13 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("complete entry is present", out)
 
+    def test_policy_rows_sort_by_key_then_value(self):
+        both = [policy("dev/active", "pending"), policy("dev/plans", "pending")]
+        self.assertEqual(self.run_check([], both)[0], 0)
+        code, out = self.run_check([], both[::-1])
+        self.assertEqual(code, 1)
+        self.assertIn("sorted by key, value", out)
+
 
 if __name__ == "__main__":
     unittest.main()
