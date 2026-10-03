@@ -1,60 +1,9 @@
 //! Generic SIMD framework for bipedal-like `(mag, sgn)` finite-field encodings.
 //!
-//! This module hosts the [`framework::BatchedBipedalLike`] template plus the
-//! [`lanes::BipedalLogicalLanes`] lane abstraction that lets a single body
-//! serve every `(prime, ISA)` instantiation. F_3 ships via
-//! [`bipedal3::Config3`] / [`bipedal3::Bipedal3x4`] on top of the generic
-//! framework. F_5 (3-plane bit-sliced, `@/issue/6b3f6054`) and F_7 (3-bit +
-//! 2^16 LUT, `@/issue/f10152f6`) ship via **dedicated AVX2 batch entry points**
-//! instead — the framework's 2-stream `(mag, sgn)` shape cannot losslessly
-//! carry F_5 value 4 (which needs `b2 = 1`), and F_7's LUT encoding fits
-//! naturally in 1 plane per operand (`@/issue/1f769232`).
-//!
-//! Architectural decision recorded in `@/issue/c7542983`: the generic framework
-//! wins over per-prime hand-rolled kernels by tie-break (every microbench cell
-//! within `[0.83, 1.20]` ratio; criterion-4 says generic on tie; full data in
-//! §5 of that doc).
-//!
-//! ## Module layout
-//!
-//! | Module | Purpose |
-//! |--------|---------|
-//! | [`framework`]  | The `BipedalLikeConfig` trait + `BatchedBipedalLike` generic struct (used by F_3 only). |
-//! | [`lanes`]      | The `BipedalLogicalLanes` trait + `Avx2Lane` impl. |
-//! | [`bipedal3`]   | F_3 instantiation: `Config3` + `Bipedal3x4` type alias (uses the framework). |
-//! | [`packed5`]    | F_5 scalar word ops + AVX2 batch entry points + `F5AvxFns` detection bundle. |
-//! | [`packed7`]    | F_7 scalar word ops + AVX2 batch entry points + `F7AvxFns` detection bundle. |
-//!
-//! The actual AVX2 batch entry points live in
-//! `crate::x86::bipedal_avx2` (F_3, generic over `BipedalLikeConfig`),
-//! `crate::x86::bipedal_avx2_packed5` (F_5, dedicated 3-plane shape), and
-//! `crate::x86::bipedal_avx2_packed7` (F_7, dedicated 1-plane LUT shape).
-//! The F_3 module also owns the four-matrix single-word permanent Gray walk.
-//! All three trigger the asm-artefact-present gate on source changes.
-//!
-//! ## Adding a new prime
-//!
-//! There are two integration paths, depending on whether the prime's
-//! encoding fits the 2-stream `(MagLane, SgnLane)` framework shape.
-//!
-//! **(a) Encoding fits the framework — e.g. another 2-stream
-//! bipedal-like prime.** Implement [`framework::BipedalLikeConfig`] for
-//! a new zero-sized struct. Pick `MagLane` / `SgnLane` from existing
-//! lane impls (only [`lanes::Avx2Lane`] exists; another backend contributes
-//! its own lane impl). Supply `PRIME`,
-//! `U64_PER_LANE_PAIR`, and the lane-level `add_lane / sub_lane /
-//! mul_lane / neg_lane` formulas. The generic AVX2 entry points in
-//! `crate::x86::bipedal_avx2` then monomorphise over the new config;
-//! no kernel code changes are required.
-//!
-//! **(b) Encoding does not fit the framework — e.g. F_5's 3-plane bit-sliced or
-//! F_7's LUT encoding.** Add a new module under
-//! `crates/gf2-kernels-simd/src/bipedal/packed<prime>.rs` with the scalar word
-//! ops, runtime-detection bundle, and scalar fallbacks; add a dedicated AVX2
-//! batch entry-point file under
-//! `crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed<prime>.rs` so the
-//! asm-artefact-present gate fires; commit a sibling `.asm.txt` artefact. This
-//! is how F_5 and F_7 ship today.
+//! [`framework::BatchedBipedalLike`] over [`lanes::BipedalLogicalLanes`] serves
+//! F_3 through [`bipedal3::Config3`]. F_5 ([`packed5`], 3-plane bit-sliced) and
+//! F_7 ([`packed7`], 3-bit digits with a 2^16 LUT) use dedicated AVX2 batch
+//! entry points, because neither encoding fits the 2-stream `(mag, sgn)` shape.
 
 pub mod bipedal3;
 pub mod framework;
@@ -73,17 +22,10 @@ pub use lanes::Avx2Lane;
 
 /// AVX2 batch entry points for the F_3 instantiation.
 ///
-/// The four functions in this module are thin `Config3`-monomorphised
-/// shims over the generic `crate::x86::bipedal_avx2::run_add_batch`
-/// (and its `sub` / `mul` / `neg` siblings). The generic entry points
-/// are already `#[target_feature(enable = "avx2")]`; this module gives
-/// F_3 callers a stable, non-generic path that does not depend on the
-/// private `x86` module layout. Callers must runtime-detect AVX2 before
-/// invoking these functions.
-///
-/// To target a different prime in the future, call the generic entry
-/// point in `crate::x86::bipedal_avx2` directly with the appropriate
-/// `BipedalLikeConfig` — no per-prime shim module is required.
+/// `Config3` monomorphisations of the generic `crate::x86::bipedal_avx2`
+/// entry points, giving F_3 callers a non-generic path independent of the
+/// private `x86` module. Callers must runtime-detect AVX2 before invoking
+/// these functions.
 ///
 /// # Examples
 ///
@@ -227,18 +169,9 @@ pub type BipedalPermanent4KernelFn = fn(&[[u64; 4]], &[[u64; 4]]) -> [u64; 4];
 
 /// Function-pointer bundle for the F_3 bipedal AVX2 batch kernels.
 ///
-/// Mirrors the [`crate::LogicalFns`] / [`crate::fp65537::Fp65537Fns`] pattern:
-/// runtime detection ([`detect_avx2`]) returns this bundle when the host
-/// supports AVX2, and `None` otherwise. The function-pointer fields are
-/// safe to call (the safety preconditions have already been discharged by
-/// the detection).
-///
-/// The four arithmetic operations (`add`, `sub`, `mul`, `neg`) take same-length
-/// `&[u64]` streams (input) and `&mut [u64]` buffers (output) where the
-/// length is divisible by 4 (one AVX2 lane = 4 × u64). `add` / `sub` / `mul`
-/// are 6-tuple arity (two `(mag, sgn)` operands + two outputs);
-/// `neg` is 2-input + 2-output. `permanent4` instead accepts paired packed
-/// column slices and returns the four canonical residues directly.
+/// [`detect_avx2`] returns this bundle only when the host supports AVX2. The
+/// arithmetic kernels require same-length slices whose length is divisible by
+/// 4 (one AVX2 lane).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Copy, Clone)]
 pub struct BipedalAvx2Fns {
@@ -259,11 +192,7 @@ pub struct BipedalAvx2Fns {
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks AVX2.
 /// Callers must then fall back to scalar arithmetic.
 ///
-/// Mirrors the project's `gf2_core::simd::maybe_simd()` SSOT pattern: the
-/// detection result is cached in a `OnceLock` so the first call performs
-/// CPUID, all subsequent calls are a cheap atomic load. Returning a value
-/// rather than `&'static` keeps the function-pointer fields `Copy`-friendly
-/// for callers that want to bind locally.
+/// The detection result is cached in a `OnceLock`.
 ///
 /// # Examples
 ///
@@ -273,11 +202,6 @@ pub struct BipedalAvx2Fns {
 /// // `maybe_fns.is_some()` on any AVX2-capable x86_64 host.
 /// let _ = maybe_fns;
 /// ```
-///
-/// # Complexity
-///
-/// `O(1)`; the first call performs CPUID + `OnceLock` initialisation,
-/// subsequent calls return the cached value.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn detect_avx2() -> Option<BipedalAvx2Fns> {
     use std::sync::OnceLock;

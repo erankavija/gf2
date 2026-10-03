@@ -1,35 +1,16 @@
 //! Lane-width logical primitives used by the generic bipedal-like SIMD
-//! framework.
+//! framework ([`crate::bipedal::framework`]).
 //!
-//! A lane impl supplies the lane-wise AND, XOR, OR, AND-NOT, plus loads and
-//! stores, for one register width. The framework's per-prime arithmetic
-//! ([`crate::bipedal::framework`]) is written entirely in terms of this trait,
-//! which is what allows a single body to serve every encoding currently
-//! shipping (F_3, F_5, F_7).
-//!
-//! ## Inlining contract
-//!
-//! Every method on this trait must be `#[inline(always)]`. The framework's
-//! kernel entry points carry `#[target_feature(enable = "avx2")]`; without the
-//! always-inline annotation here, rustc cannot inline an AVX2-emitting trait
-//! method into a target-feature-enabled function and the resulting codegen
-//! regresses by 12-34x (`@/issue/c7542983` §4.1).
-//!
-//! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment
-//! per `@/inv/unsafe-kernel-isolation`.
+//! Every method impl must be `#[inline(always)]`: rustc otherwise cannot
+//! inline an AVX2-emitting trait method into the
+//! `#[target_feature(enable = "avx2")]` kernel entry points.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
-/// Lane-width logical primitives required by the generic bipedal-like
-/// framework.
-///
-/// An impl supplies the lane-wise AND, XOR, OR, and AND-NOT (`a AND NOT b`)
-/// for one register width plus the load and store. The framework calls
-/// these primitives in the same order the per-prime kernels would, but is
-/// generic over the underlying lane width.
+/// Lane-wise AND, XOR, OR, AND-NOT, load and store for one register width.
 ///
 /// # Safety
 ///
@@ -38,16 +19,9 @@ use core::arch::x86_64::*;
 /// before calling any method.
 pub trait BipedalLogicalLanes: Copy {
     /// How many `u64` words this lane spans.
-    ///
-    /// For [`Avx2Lane`] this is 4 (256 bits / 64).
     const U64_PER_LANE: usize;
 
-    /// Load a lane from a `&[u64]` slice at the given word offset.
-    ///
-    /// # Arguments
-    ///
-    /// * `src` — source slice; must contain at least `offset + U64_PER_LANE` words.
-    /// * `offset` — starting u64 word index.
+    /// Load a lane from `src` at word index `offset`.
     ///
     /// # Safety
     ///
@@ -55,13 +29,7 @@ pub trait BipedalLogicalLanes: Copy {
     /// hardware feature must be available at runtime.
     unsafe fn loadu(src: &[u64], offset: usize) -> Self;
 
-    /// Store a lane to a `&mut [u64]` slice at the given word offset.
-    ///
-    /// # Arguments
-    ///
-    /// * `dst` — destination slice; must contain at least `offset + U64_PER_LANE` words.
-    /// * `offset` — starting u64 word index.
-    /// * `v` — value to store.
+    /// Store `v` to `dst` at word index `offset`.
     ///
     /// # Safety
     ///
@@ -90,12 +58,7 @@ pub trait BipedalLogicalLanes: Copy {
     /// Hardware feature must be available.
     unsafe fn or(a: Self, b: Self) -> Self;
 
-    /// Lane-wise `a AND NOT b` — bits set in `a` that are clear in `b`.
-    ///
-    /// On AVX2 this maps to a single `vpandn` instruction. Required by
-    /// some bipedal-like primes whose `neg` formula is most compactly
-    /// expressed as `mag AND NOT sgn` (when the `(mag, sgn)` encoding
-    /// uses the alt-zero form `(0, 1)` for canonicalisation).
+    /// Lane-wise `a AND NOT b`.
     ///
     /// # Safety
     ///
@@ -104,8 +67,6 @@ pub trait BipedalLogicalLanes: Copy {
 }
 
 /// AVX2 256-bit lane (4 × `u64`) impl of [`BipedalLogicalLanes`].
-///
-/// Used by the F_3 instantiation [`crate::bipedal::Bipedal3x4`].
 ///
 /// # Examples
 ///
@@ -164,9 +125,8 @@ impl BipedalLogicalLanes for Avx2Lane {
     #[inline(always)]
     unsafe fn andn(a: Self, b: Self) -> Self {
         // SAFETY: AVX2 availability is the caller's precondition.
-        // `_mm256_andnot_si256(x, y)` computes `(NOT x) AND y`, i.e. `andn(b, a)`
-        // in our convention. We swap the operand order so the result is
-        // `a AND NOT b` as documented.
+        // `_mm256_andnot_si256(x, y)` computes `(NOT x) AND y`, hence the
+        // swapped operands.
         unsafe { Avx2Lane(_mm256_andnot_si256(b.0, a.0)) }
     }
 }

@@ -1,50 +1,17 @@
 //! F_3 instantiation of the generic [`super::framework::BatchedBipedalLike`]
 //! framework.
 //!
-//! The F_3 (mag, sgn) encoding follows Scheinerman 2024 §2.2:
-//!
-//! - `0` ↔ `(mag=0, sgn=0)` (canonical zero)
-//! - `1` ↔ `(mag=1, sgn=0)`
-//! - `2` ↔ `(mag=1, sgn=1)`
-//! - `(mag=0, sgn=1)` is an "alt-zero" — meaningless sgn bit on a
-//!   zero magnitude lane. Production paths produce only canonical
-//!   `(mag, sgn)` pairs satisfying `sgn & !mag == 0`.
-//!
-//! Add/sub/mul/neg formulas (paper Theorem 2.1):
-//!
-//! - add: `t = m1^s1^s2; u = m2&t; m_+ = u | (m1^m2); s_+ = u ^ s1`  (6 ops)
-//! - sub: `t = s1^s2; u = m1&t; m_- = u | (m1^m2); s_- = u ^ (m2^s2)`  (6 ops)
-//! - mul: `m_x = m1 & m2; s_x = s1 ^ s2`  (2 ops)
-//! - neg: `(m', s') = (m, s ^ m)`  (1 op; flips sgn on every nonzero lane)
-//!
-//! For F_3 the magnitude and sign lane shapes coincide (both are
-//! [`super::lanes::Avx2Lane`]); the per-prime config selects this via the
-//! `MagLane` / `SgnLane` associated types on
-//! [`super::framework::BipedalLikeConfig`]. F_5 and F_7 do not use this
-//! framework — their encodings do not fit the 2-stream `(MagLane, SgnLane)`
-//! shape, and they ship via dedicated AVX2 batch entry points instead
-//! (`@/issue/1f769232`).
-//!
-//! The actual AVX2 batch entry points (`run_add_batch`, etc.) live in
-//! `crate::x86::bipedal_avx2` so the asm-artefact-present gate fires on source
-//! changes — see `@/issue/c7542983`.
+//! The `(mag, sgn)` encoding follows `@/citation/Scheinerman2024` §2.2:
+//! `0 ↔ (0, 0)`, `1 ↔ (1, 0)`, `2 ↔ (1, 1)`; canonical pairs satisfy
+//! `sgn & !mag == 0`, and the alt-zero `(0, 1)` also decodes to 0.
 
 use super::framework::BipedalLikeConfig;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 use super::lanes::Avx2Lane;
 use super::lanes::BipedalLogicalLanes;
 
-/// Returns `true` when the CPU supports AVX2, `false` otherwise.
-///
-/// The result is cached in a `OnceLock<bool>` so CPUID is queried at most
-/// once per process — matching the project's `simd::maybe_simd()` pattern
-/// from `gf2-core`. Callers in this module
-/// use this instead of bare `is_x86_feature_detected!("avx2")` to make the
-/// caching visible and auditable.
-///
-/// # Complexity
-///
-/// `O(1)` after the first call (CPUID result is cached).
+/// Returns `true` when the CPU supports AVX2; the result is cached in a
+/// `OnceLock`.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn has_avx2() -> bool {
     use std::sync::OnceLock;
@@ -57,14 +24,8 @@ pub fn has_avx2() -> bool {
 
 /// F_3 arithmetic recipe for the generic bipedal-like framework.
 ///
-/// Implements [`BipedalLikeConfig`] using the Scheinerman 2024 §2.2
-/// formulas. The associated types `MagLane` and `SgnLane` both pick
-/// [`Avx2Lane`] (the only lane shape currently wired); each `*_lane`
-/// method is `#[inline(always)]` so it inlines cleanly into the
-/// AVX2-feature-enabled batch entry points (`run_*_batch`) defined in
-/// `crate::x86::bipedal_avx2`.
-///
-/// This struct is zero-sized — it is a type-level tag only.
+/// Implements [`BipedalLikeConfig`] with the `@/citation/Scheinerman2024`
+/// §2.2 formulas over [`Avx2Lane`].
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Config3;
 
@@ -84,7 +45,6 @@ impl BipedalLikeConfig for Config3 {
     ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
         unsafe {
-            // F_3 add: t = m1^s1^s2; u = m2&t; m_+ = u | (m1^m2); s_+ = u^s1
             let t = Avx2Lane::xor(Avx2Lane::xor(m1, s1), s2);
             let u = Avx2Lane::and(m2, t);
             let m_plus = Avx2Lane::or(u, Avx2Lane::xor(m1, m2));
@@ -101,11 +61,8 @@ impl BipedalLikeConfig for Config3 {
         s2: Self::SgnLane,
     ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
-        // F_3 sub computed as `a + neg(b)`, matching the scalar reference
-        // (`dev/research/f3_bipedal::Bipedal3::sub_assign`) bit-for-bit so
-        // the SIMD parity tests can assert raw-word equality, not just
-        // canonical-decoded equality. The 7-op sequence is the same paper
-        // Theorem 2.1 add formula applied with `bsg = s2 ^ m2` (neg(b)).
+        // Computed as `a + neg(b)` with `bsg = s2 ^ m2`, so the raw words
+        // match the scalar reference `Bipedal3::sub_assign` bit-for-bit.
         unsafe {
             let bsg = Avx2Lane::xor(s2, m2);
             let t = Avx2Lane::xor(Avx2Lane::xor(m1, s1), bsg);
@@ -125,7 +82,6 @@ impl BipedalLikeConfig for Config3 {
     ) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
         unsafe {
-            // F_3 mul: m_x = m1 & m2; s_x = s1 ^ s2
             let m_x = Avx2Lane::and(m1, m2);
             let s_x = Avx2Lane::xor(s1, s2);
             (m_x, s_x)
@@ -135,9 +91,8 @@ impl BipedalLikeConfig for Config3 {
     #[inline(always)]
     unsafe fn neg_lane(m: Self::MagLane, s: Self::SgnLane) -> (Self::MagLane, Self::SgnLane) {
         // SAFETY: hardware feature is the caller's precondition.
-        // F_3 canonical-form invariant `sgn & !mag == 0` => `sgn ^ mag`
-        // flips sgn on nonzero lanes, leaves zero lanes invariant.
-        // Equivalent to `sub(0, x)` but cheaper (1 op vs 6).
+        // `sgn ^ mag` flips sgn on nonzero lanes and leaves zero lanes
+        // unchanged.
         unsafe {
             let s_neg = Avx2Lane::xor(s, m);
             (m, s_neg)
@@ -145,44 +100,18 @@ impl BipedalLikeConfig for Config3 {
     }
 }
 
-/// Concrete F_3 instantiation: 256-lane batched AVX2 over [`Avx2Lane`].
-///
-/// 4 × `u64` × 64 bits = 256 logical F_3 lanes per `(mag, sgn)` word-pair.
-/// Both magnitude and sign use the AVX2 256-bit lane via the
-/// [`Config3::MagLane`] / [`Config3::SgnLane`] associated types.
-///
-/// The associated batch entry points (`run_add_batch`, `run_sub_batch`,
-/// `run_mul_batch`, `run_neg_batch`) live in `crate::x86::bipedal_avx2`
-/// so the asm-artefact-present gate fires on changes to them. Call those
-/// directly — they are re-exported via [`crate::bipedal`] for convenience.
+/// F_3 instantiation over [`Avx2Lane`]: 256 logical F_3 lanes per
+/// `(mag, sgn)` lane pair.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type Bipedal3x4 = super::framework::BatchedBipedalLike<Config3>;
-
-// =============================================================================
-// Tests: SIMD-vs-scalar parity against the SSOT `Bipedal3` reference
-// (dev/research/f3_bipedal::Bipedal3) and a synthetic non-F_3 config for
-// genericity demonstration.
-// =============================================================================
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // The canonical scalar reference is the standalone `Bipedal3` prototype
-    // at dev/research/f3_bipedal::Bipedal3 (paper Theorem 2.1, six-op
-    // formula). Per b17bec62 success criterion 3 and the SSOT rule
-    // ("no custom implementations of what already exists"), the AVX2
-    // parity tests below cross-check against that one reference rather
-    // than carrying a duplicate inline oracle.
+    // Scalar reference for the AVX2 parity tests.
     use f3_bipedal_prototype::{Bipedal3, F3Encoding};
 
-    // ---- Encoding helper: derive packed (mag, sgn) word streams via SSOT ----
-    //
-    // Per the SSOT rule we route every encoding through `Bipedal3::pack`
-    // (paper Theorem 2.1 reference) and read its raw word arrays back via
-    // `raw_mag()` / `raw_sgn()` rather than carrying a duplicate packing loop
-    // here. The tests below use 64-aligned lengths so the AVX2 mod-4-words
-    // contract is trivially satisfied without any sub-word bookkeeping.
     fn encode_to_words(canonical: &[u8]) -> (Vec<u64>, Vec<u64>) {
         assert!(
             canonical.len().is_multiple_of(64),
@@ -191,13 +120,6 @@ mod tests {
         let v = Bipedal3::pack(canonical);
         (v.raw_mag().to_vec(), v.raw_sgn().to_vec())
     }
-
-    // ---- Truth-table sanity checks (3x3 grid) against `Bipedal3` ----
-    //
-    // Each test packs a single-element vector with the canonical reference,
-    // applies the op, and asserts the unpacked result matches the F_3
-    // ground-truth table. These run quickly and serve as smoke tests
-    // independent of the SIMD path.
 
     #[test]
     fn test_bipedal3_reference_add_truth_table() {
@@ -237,8 +159,7 @@ mod tests {
 
     #[test]
     fn test_bipedal3_reference_neg_truth_table() {
-        // Bipedal3 has no neg_assign; the framework's neg(a) = sub(0, a)
-        // by definition. Use sub against zero to exercise neg semantics.
+        // `Bipedal3` has no `neg_assign`; neg(a) = 0 - a.
         for a in 0u8..3 {
             let zero = Bipedal3::pack(&[0]);
             let mut va = zero.clone();
@@ -247,23 +168,13 @@ mod tests {
         }
     }
 
-    // ---- AVX2 SIMD parity tests vs the SSOT `Bipedal3` reference ----
-
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     mod simd_parity {
         use super::*;
         use crate::x86::bipedal_avx2 as avx2;
 
-        /// Run AVX2 add on the bit-packed encoding of `a`/`b` and assert
-        /// bitwise equality of the resulting `(mag, sgn)` word streams
-        /// against `Bipedal3::pack(a).add_assign(b)`'s internal raw words.
-        ///
-        /// Raw-word comparison is required: comparing only canonical-decoded
-        /// outputs would let alt-zero divergences (`(mag=0, sgn=1)` vs
-        /// `(mag=0, sgn=0)`) slip through even though they decode to the
-        /// same F_3 value. Both implementations follow paper Theorem 2.1
-        /// (same six XOR/AND/OR sequence), so the raw `(mag, sgn)` buffers
-        /// must agree word-for-word.
+        /// Compares raw `(mag, sgn)` words, so an alt-zero divergence that
+        /// decodes to the same F_3 value still fails.
         fn run_parity_add(a: &[u8], b: &[u8]) {
             assert_eq!(a.len(), b.len());
             let n_elems = a.len();
@@ -390,8 +301,7 @@ mod tests {
         }
 
         /// Deterministic LCG-driven canonical F_3 vector of length `n_elems`
-        /// (multiple of 64). Uses two-bit rejection sampling on a 64-bit
-        /// LCG state to draw uniform 0..=2.
+        /// (multiple of 64).
         fn make_canonical_vec(n_elems: usize, seed: u64) -> Vec<u8> {
             assert_eq!(n_elems % 64, 0);
             let mut state = seed;
@@ -412,11 +322,7 @@ mod tests {
             out
         }
 
-        // ---- Word-boundary explicit tests at n_elems = {0, 256, 1024, 4096} ----
-        //
-        // 0 = empty, 256 = 4 words = one AVX2 lane, 1024 = 16 words = four
-        // AVX2 lanes, 4096 = 64 words = sixteen AVX2 lanes (loop iteration
-        // coverage). All multiples of 64 (one Bipedal3 word).
+        // n_elems: 0 = empty, 256 = one AVX2 lane, 1024 = four, 4096 = sixteen.
 
         #[test]
         fn test_bipedal3_avx2_add_matches_reference_l0() {
@@ -574,17 +480,10 @@ mod tests {
             run_parity_neg(&a);
         }
 
-        // ---- Proptest cross-checks (1000 cases per op) vs `Bipedal3` ----
-
         use proptest::prelude::*;
 
-        /// Canonical F_3 element-pair strategy at SIMD-aligned lengths.
-        ///
-        /// `n_elems` is one of `{0, 256, 512, 1024, 2048}`; all multiples
-        /// of 64 (= one Bipedal3 word) AND yield a `n_words` that is a
-        /// multiple of 4 (one AVX2 lane). `0` exercises the empty-input
-        /// boundary. Length stays small so 1000 cases run well under the
-        /// 5 s per-test limit.
+        /// Canonical F_3 element-pair strategy at lengths whose word count is
+        /// a multiple of 4 (one AVX2 lane).
         fn canonical_pair_strategy() -> impl Strategy<Value = (Vec<u8>, Vec<u8>)> {
             (
                 prop_oneof![Just(0usize), Just(256), Just(512), Just(1024), Just(2048),],
@@ -599,8 +498,6 @@ mod tests {
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(1000))]
 
-            /// Cross-check AVX2 add against `dev/research/f3_bipedal::Bipedal3`
-            /// on 1000 random canonical-form F_3 vectors of varying length.
             #[test]
             fn test_bipedal3_avx2_add_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
@@ -612,8 +509,6 @@ mod tests {
                 run_parity_add(&a, &b);
             }
 
-            /// Cross-check AVX2 sub against `dev/research/f3_bipedal::Bipedal3`
-            /// on 1000 random canonical-form F_3 vectors.
             #[test]
             fn test_bipedal3_avx2_sub_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
@@ -625,8 +520,6 @@ mod tests {
                 run_parity_sub(&a, &b);
             }
 
-            /// Cross-check AVX2 mul against `dev/research/f3_bipedal::Bipedal3`
-            /// on 1000 random canonical-form F_3 vectors.
             #[test]
             fn test_bipedal3_avx2_mul_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
@@ -638,8 +531,6 @@ mod tests {
                 run_parity_mul(&a, &b);
             }
 
-            /// Cross-check AVX2 neg against `dev/research/f3_bipedal::Bipedal3`
-            /// on 1000 random canonical-form F_3 vectors.
             #[test]
             fn test_bipedal3_avx2_neg_matches_reference_proptest(
                 pair in canonical_pair_strategy(),
@@ -653,21 +544,8 @@ mod tests {
         }
     }
 
-    // ---- Genericity demonstration: a synthetic non-F_3 config ----
-
-    /// Synthetic config used only by `test_framework_is_generic_over_config`.
-    /// Implements `BipedalLikeConfig` with trivial formulas to demonstrate
-    /// that adding a new prime requires only a new config impl, no new
-    /// kernel code (success criterion 4).
-    ///
-    /// The "arithmetic" here is intentionally trivial — `add_lane` returns
-    /// the first operand unchanged; we are only checking that the trait
-    /// bound machinery resolves and the body type-checks.
-    ///
-    /// Picks the same lane shape as F_3 (`Avx2Lane` for both `MagLane` and
-    /// `SgnLane`) so the existing AVX2 entry points monomorphise without
-    /// any per-config kernel code; a real F_5 / F_7 config can pick a
-    /// different shape via the same associated-type machinery.
+    /// Synthetic config with trivial formulas, used only by
+    /// `test_framework_is_generic_over_config`.
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[derive(Clone, Copy, Debug, Default)]
     struct MockConfig;
@@ -715,29 +593,16 @@ mod tests {
         }
     }
 
-    /// Demonstrates that `BatchedBipedalLike` is generic over the config
-    /// parameter — instantiating with a fresh `BipedalLikeConfig` impl
-    /// requires zero kernel-code changes (success criterion 4). The
-    /// generic AVX2 entry points `run_*_batch::<C>` in
-    /// `crate::x86::bipedal_avx2` accept the new config without
-    /// modification; the type-level check below proves the trait machinery
-    /// resolves end-to-end.
+    /// The generic AVX2 entry points monomorphise over a second
+    /// `BipedalLikeConfig` impl.
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[test]
     fn test_framework_is_generic_over_config() {
         type _Mock5x4 = super::super::framework::BatchedBipedalLike<MockConfig>;
-        // Reference the generic entry points monomorphised over the new
-        // config to prove they accept it without source changes. The
-        // `unsafe fn` pointer cast below is sound because the AVX2 entry
-        // points share a uniform shape across configs whose `MagLane` and
-        // `SgnLane` resolve to the same lane type (`Avx2Lane` here).
         type BinaryKernel = unsafe fn(&[u64], &[u64], &[u64], &[u64], &mut [u64], &mut [u64]);
         let _add: BinaryKernel = crate::x86::bipedal_avx2::run_add_batch::<MockConfig>;
         let _sub: BinaryKernel = crate::x86::bipedal_avx2::run_sub_batch::<MockConfig>;
         let _mul: BinaryKernel = crate::x86::bipedal_avx2::run_mul_batch::<MockConfig>;
-        // The fact that the type alias and the generic-fn pointers above
-        // resolved already proves genericity; the assertions here just tie
-        // the constants through.
         assert_eq!(<MockConfig as BipedalLikeConfig>::PRIME, 5);
         assert_eq!(<MockConfig as BipedalLikeConfig>::U64_PER_LANE_PAIR, 4);
         assert_eq!(<Config3 as BipedalLikeConfig>::PRIME, 3);
