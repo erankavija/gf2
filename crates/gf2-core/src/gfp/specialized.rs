@@ -1,78 +1,11 @@
-//! Specialized fast reduction for primes with special algebraic structure.
+//! Reductions for primes with special algebraic structure.
 //!
-//! This module provides compile-time detection of three classes of "friendly"
-//! primes whose modular reduction admits a narrower-than-Montgomery code
-//! path on typical 64-bit hardware.
-//!
-//! # Supported prime shapes
-//!
-//! - **Mersenne primes** `2^n - 1` (e.g. `2^31 - 1`, `2^61 - 1`) —
-//!   `x mod (2^n - 1)` is a mask + add cycle (shifts, ands, adds only).
-//! - **Proth primes** `k·2^n + 1` with small `k` (e.g. `15·2^27 + 1`
-//!   "BabyBear", `127·2^24 + 1` "KoalaBear") — reduced via the compiler's
-//!   strength-reduced `%` on a compile-time constant divisor. See the
-//!   Proth note below.
-//! - **Goldilocks prime** `2^64 - 2^32 + 1` — exploits the relation
-//!   `2^64 ≡ 2^32 - 1 (mod p)` for a branch-light reduction that avoids
-//!   a 128-bit divide.
-//!
-//! # Storage forms
-//!
-//! `Fp<P>` supports two storage representations chosen at compile time:
-//!
-//! 1. **Montgomery form** (`aR mod P` with `R = 2^64`) for generic primes.
-//!    Multiplication uses REDC; round-tripping through `new`/`value`
-//!    performs `to_mont`/`from_mont` conversions.
-//! 2. **Canonical form** (`a mod P`, value in `[0, P)`) for specialised
-//!    Mersenne and Proth primes. `new`/`value` are the identity (modulo a
-//!    final reduction); multiplication dispatches into
-//!    [`mersenne_reduce`]/[`mersenne_reduce_u64`] or the Proth reducer.
-//!
-//! The storage choice is made at compile time by `use_specialized_storage`
-//! in the parent module and is invisible at the API surface — all
-//! user-visible values are canonical.
-//!
-//! # Performance note on Proth reduction
-//!
-//! The Proth identity `K·2^N ≡ −1 (mod P)` in principle enables a
-//! shift-and-subtract reducer without any wide multiplies. In practice,
-//! for the supported sub-`2^32` Proth primes (BabyBear, KoalaBear,
-//! `3·2^32 + 1` families), LLVM already strength-reduces `u64 % P` with
-//! a compile-time constant `P` to a two-multiply + shift schedule that
-//! matches — and on some microarchitectures slightly beats — a
-//! hand-rolled shift/subtract loop. The raw-reducer benchmark
-//! (`proth_reduce_raw` in `benches/fp_specialized.rs`) and the
-//! side-by-side field benches (`fp_proth_mul_specialized` vs
-//! `naive_proth_mul_mod`) confirm there is no speedup headroom from a
-//! bespoke implementation here. The current [`proth_reduce`] /
-//! [`proth_reduce_u64`] therefore keep the strength-reduced `%` path
-//! internally; they exist as an explicit tagged surface so that
-//! downstream callers can express the algebraic structure, and so that
-//! future architectures or wider Proth primes can gain a specialised
-//! body without a source-compatibility break.
-//!
-//! # Scalar vs SIMD Mersenne31 speedup
-//!
-//! The *scalar* Mersenne31 multiplication path is within ~1× of Montgomery
-//! on modern x86-64 (the Montgomery REDC pipeline is extremely well tuned
-//! for primes of this magnitude). The ≥2× speedup target for the M31
-//! workload is met by the AVX2 batch path [`batch_mul_mersenne31`]
-//! (backed by the kernel in `gf2-kernels-simd::mersenne`), which measures
-//! ~4× scalar Montgomery at length 1024. The scalar specialised path is
-//! still retained because
-//! (a) it is the compile-time dispatch surface used inside `Fp<M31>`,
-//! (b) for the wider Mersenne61 prime the reduction structure starts to
-//! dominate and gives a small scalar win over Montgomery, and
-//! (c) it removes Montgomery's `to_mont`/`from_mont` boundary cost at
-//! new/value conversion points for workloads that touch values once.
-//!
-//! # Correctness
-//!
-//! Every specialized path is cross-verified in tests against both the
-//! naive `%` operator *and* an explicit Montgomery reference path
-//! (`to_mont`/`redc`/`from_mont`). See the Cross-verification proptests
-//! at the bottom of the file. All three shapes (Mersenne31, Mersenne61,
-//! Proth/BabyBear) are covered for 500+ random inputs each.
+//! [`classify`] detects three shapes at compile time: Mersenne primes
+//! `2^n - 1`, reduced by mask-and-add folds; Proth primes `k·2^n + 1`,
+//! reduced by `%` on a compile-time-constant divisor; and the Goldilocks
+//! prime `2^64 - 2^32 + 1`, reduced through `2^64 ≡ 2^32 - 1 (mod p)`.
+//! `Fp<P>` stores canonical values for the shapes that
+//! `use_specialized_storage` in the parent module selects.
 //!
 //! # Examples
 //!
@@ -94,10 +27,8 @@ use crate::field::{ConstField, FiniteField};
 // Compile-time prime classification
 // ---------------------------------------------------------------------------
 
-/// Algebraic shape of a prime `P`, used for choosing a fast reduction.
-///
-/// Values are `Copy` and produced by the const [`classify`] function so they
-/// can drive compile-time dispatch in the generic `Fp<P>` type.
+/// Algebraic shape of a prime `P`, produced by the const [`classify`]
+/// function to drive compile-time dispatch in the generic `Fp<P>` type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PrimeShape {
     /// `P = 2^n - 1` (Mersenne prime).
@@ -121,11 +52,9 @@ pub enum PrimeShape {
 }
 
 /// The 64-bit Goldilocks prime `2^64 - 2^32 + 1`.
-///
-/// This is the unique Solinas prime commonly used in SNARK-friendly arithmetic.
 pub const GOLDILOCKS_PRIME: u64 = 0xFFFF_FFFF_0000_0001;
 
-/// Returns `true` if `p = 2^n - 1` for some `n ≥ 2`.
+/// Returns `true` if `p = 2^n - 1` for some `4 ≤ n ≤ 62`.
 ///
 /// # Examples
 ///
@@ -136,14 +65,6 @@ pub const GOLDILOCKS_PRIME: u64 = 0xFFFF_FFFF_0000_0001;
 /// assert!(is_mersenne_prime((1u64 << 61) - 1));
 /// assert!(!is_mersenne_prime(7)); // 7 = 2^3 - 1 but P must be at least 3
 /// ```
-///
-/// Note: `7 = 2^3 - 1` would qualify as a Mersenne prime in the abstract
-/// sense, but the predicate requires `n ≥ 4` so that the specialised path
-/// provides a meaningful speedup relative to the native hardware path.
-///
-/// # Complexity
-///
-/// O(1) const evaluation.
 #[inline]
 pub const fn is_mersenne_prime(p: u64) -> bool {
     matches!(classify(p), PrimeShape::Mersenne { .. })
@@ -151,9 +72,6 @@ pub const fn is_mersenne_prime(p: u64) -> bool {
 
 /// Returns `true` if `p = k·2^n + 1` for some odd `k ≥ 1` and `n ≥ 16`,
 /// with `k < 2^n`.
-///
-/// The `n ≥ 16` bound keeps the shift-based reduction profitable; smaller
-/// `n` is indistinguishable from an ordinary modulus.
 ///
 /// # Examples
 ///
@@ -163,20 +81,12 @@ pub const fn is_mersenne_prime(p: u64) -> bool {
 /// assert!(is_proth_prime(3 * (1u64 << 32) + 1));
 /// assert!(!is_proth_prime(7));
 /// ```
-///
-/// # Complexity
-///
-/// O(1) const evaluation.
 #[inline]
 pub const fn is_proth_prime(p: u64) -> bool {
     matches!(classify(p), PrimeShape::Proth { .. })
 }
 
 /// Returns `true` if `p` is the Goldilocks prime `2^64 - 2^32 + 1`.
-///
-/// # Complexity
-///
-/// O(1) const evaluation.
 #[inline]
 pub const fn is_goldilocks_prime(p: u64) -> bool {
     p == GOLDILOCKS_PRIME
@@ -184,13 +94,8 @@ pub const fn is_goldilocks_prime(p: u64) -> bool {
 
 /// Classifies a prime `p` into one of the four [`PrimeShape`] categories.
 ///
-/// The function is `const` so it can drive zero-cost compile-time dispatch
-/// in generic code.
-///
-/// # Arguments
-///
-/// * `p` - The modulus to classify. Must be prime for correctness of the
-///   selected fast reduction; primality is **not** verified.
+/// `p` must be prime for correctness of the selected reduction; primality
+/// is **not** verified.
 ///
 /// # Examples
 ///
@@ -201,10 +106,6 @@ pub const fn is_goldilocks_prime(p: u64) -> bool {
 /// assert_eq!(classify(65537), PrimeShape::Proth { k: 1, n: 16 });
 /// assert_eq!(classify(17), PrimeShape::Generic);
 /// ```
-///
-/// # Complexity
-///
-/// O(1): at most a handful of shifts and a `trailing_zeros` call.
 pub const fn classify(p: u64) -> PrimeShape {
     if p == GOLDILOCKS_PRIME {
         return PrimeShape::Goldilocks;
@@ -214,7 +115,6 @@ pub const fn classify(p: u64) -> PrimeShape {
     let q = p.wrapping_add(1);
     if q != 0 && q.is_power_of_two() {
         let n = q.trailing_zeros();
-        // Require n >= 4 (so P >= 15) for the specialized path to pay off.
         if n >= 4 && n <= 62 {
             return PrimeShape::Mersenne { n };
         }
@@ -226,9 +126,8 @@ pub const fn classify(p: u64) -> PrimeShape {
         let n = r.trailing_zeros();
         if n >= 16 {
             let k = r >> n;
-            // Proth requires k odd and k < 2^n; `k` is odd by construction
-            // (we factored out all trailing zeros). Enforce the size bound
-            // and a lower bound so the classification is meaningful.
+            // `k` is odd by construction (all trailing zeros are factored
+            // out); enforce the Proth size bound k < 2^n.
             if k >= 1 && (n >= 63 || k < (1u64 << n)) {
                 return PrimeShape::Proth { k, n };
             }
@@ -245,32 +144,18 @@ pub const fn classify(p: u64) -> PrimeShape {
 /// Reduces a 128-bit product modulo a Mersenne prime `P = 2^n - 1`.
 ///
 /// Uses the identity `2^n ≡ 1 (mod 2^n - 1)` so that splitting the input
-/// into `n`-bit chunks and adding them produces the same residue. Iterates
-/// the fold `x ← (x & mask) + (x >> n)` until the result fits in `n` bits,
-/// then applies a final branchless fixup.
+/// into `n`-bit chunks and adding them produces the same residue; one more
+/// fold and a conditional subtraction give a `u64` in `[0, 2^N - 1)`.
 ///
-/// # Arguments
+/// # Panics
 ///
-/// * `x` - The (possibly 128-bit) value to reduce.
-/// * `N` - The Mersenne exponent (compile-time).
-///
-/// # Returns
-///
-/// A `u64` in `[0, 2^N - 1)`.
-///
-/// # Complexity
-///
-/// O(1): at most `⌈128 / N⌉` iterations (≤ 5 folds for `N ≥ 31`).
+/// Panics if `N` is outside `4..=62`.
 #[inline]
 pub const fn mersenne_reduce<const N: u32>(x: u128) -> u64 {
     debug_assert_n_in_range::<N>();
     let p: u64 = (1u64 << N) - 1;
     let mask64: u64 = p; // mask = 2^N - 1
 
-    // Split x into N-bit chunks. For N = 61 the input fits in two chunks
-    // (lo = low 61 bits, hi = next 61 bits, at most 6 bits left over). For
-    // N = 31 we need four chunks. We handle both via a carry-chain tuned
-    // at compile time by the `N` generic.
     if N >= 61 {
         // Fast path: two folds suffice for 128-bit input when N ≥ 61.
         let lo = (x as u64) & mask64;
@@ -311,8 +196,7 @@ pub const fn mersenne_reduce<const N: u32>(x: u128) -> u64 {
 
 #[inline]
 const fn debug_assert_n_in_range<const N: u32>() {
-    // Static guard against degenerate instantiations. The bound matches
-    // classify() above.
+    // The bound matches classify() above.
     assert!(
         N >= 4 && N <= 62,
         "Mersenne exponent out of supported range"
@@ -320,19 +204,8 @@ const fn debug_assert_n_in_range<const N: u32>() {
 }
 
 /// Reduces a 64-bit value modulo a small Mersenne prime `P = 2^N - 1`
-/// (for `N ≤ 32`). Skips the 128-bit arithmetic entirely — the input is
-/// already ≤ 2^(2N) ≤ 2^64. Two folds plus a branchless canonicalisation
-/// are always sufficient.
-///
-/// # Arguments
-///
-/// * `x` - The 64-bit value to reduce. Intended for products `a * b`
-///   with `a, b ∈ [0, 2^N)`.
-/// * `N` - Mersenne exponent (compile-time).
-///
-/// # Complexity
-///
-/// O(1) — two shifts, two ands, two adds, and a branchless fixup.
+/// (for `N ≤ 32`). Intended for products `a * b` with `a, b ∈ [0, 2^N)`,
+/// for which two folds plus a conditional subtraction are sufficient.
 #[inline]
 pub const fn mersenne_reduce_u64<const N: u32>(x: u64) -> u64 {
     debug_assert!(N <= 32);
@@ -353,116 +226,34 @@ pub const fn mersenne_reduce_u64<const N: u32>(x: u64) -> u64 {
 
 /// Reduces a 64-bit product modulo a Proth prime `P = K·2^N + 1` with `P < 2^32`.
 ///
-/// For small Proth primes whose product fits in `u64`, this variant skips
-/// all `u128` work.
-///
-/// # Implementation
-///
-/// The algebraic identity `K·2^N ≡ −1 (mod P)` in principle enables a
-/// shift-and-subtract reduction. For the supported prime range
-/// (`16 ≤ N ≤ 32`, `K` small and odd), the Rust/LLVM compiler already
-/// emits a two-multiply multiply-high schedule for `u64 % P` when `P` is
-/// a compile-time constant. Empirical benchmarks
-/// (`benches/fp_specialized.rs::proth_reduce_raw`,
-/// `fp_proth_mul_specialized`) show the hand-rolled shift/subtract
-/// variant matches the strength-reduced `%` within noise on x86-64;
-/// therefore this function intentionally delegates to the hardware path.
-/// The explicit Proth typing on the function is retained so callers can
-/// express intent, and so wider Proth primes (where the shift path would
-/// actually win) can get a bespoke body in a later revision without a
-/// source-compatibility break.
-///
-/// # Arguments
-///
-/// * `x` - The 64-bit product to reduce (typically `a * b` with `a, b < P`).
-/// * `K`, `N` - Compile-time Proth parameters.
-///
-/// # Complexity
-///
-/// O(1) — a multiply-high schedule emitted by the compiler for the
-/// compile-time-constant divisor `P = K·2^N + 1`.
+/// The reduction is `%` on the compile-time-constant divisor.
 #[inline]
 pub const fn proth_reduce_u64<const K: u64, const N: u32>(x: u64) -> u64 {
     debug_assert!(K >= 1 && N >= 16 && N <= 32);
     let p: u64 = K * (1u64 << N) + 1;
-    // See the module-level "Performance note on Proth reduction" and the
-    // per-function discussion above: on x86-64 with a compile-time
-    // constant `P`, `u64 % P` is strength-reduced into a multiply-high
-    // sequence that matches the hand-rolled shift-and-subtract reducer.
     x % p
 }
 
-/// Reduces a 128-bit product modulo a Proth prime `P = K·2^N + 1`.
-///
-/// # Implementation
-///
-/// In principle, the Proth identity `K·2^N ≡ −1 (mod P)` allows writing
-/// `x = hi · 2^N + lo` and iterating `x ← K·lo + (P − hi)` using only
-/// shifts, multiplies by `K`, and subtracts. In practice, for the
-/// supported Proth primes (`P < 2^63`, `16 ≤ N ≤ 62`), the 128-bit
-/// `%` on a compile-time-constant divisor is already implemented by the
-/// compiler as a narrow division — for sub-`2^34` divisors the inner
-/// loop is dominated by a single 64-bit reciprocal multiply, which we
-/// would struggle to beat with a portable shift schedule.
-/// Benchmarks (`proth_reduce_raw`, `fp_proth_mul_specialized` vs
-/// `fp_generic_near_m31_mul_montgomery`) confirm this: the `%`-based
-/// body is already materially faster than the Montgomery REDC
-/// round-trip (`to_mont` + `redc` + `from_mont`) because it avoids two
-/// of the three 64-bit multiplies, and a hand-rolled fold does not
-/// widen the gap.
-///
-/// The explicit Proth typing is preserved so (a) the algebraic intent
-/// is visible at the call site, (b) compile-time dispatch in `Fp<P>`
-/// can pick this reducer without relying on `%` type inference, and
-/// (c) future primes or architectures where the shift path actually
-/// wins can be swapped in without a source-compatibility break.
-///
-/// # Arguments
-///
-/// * `x` - The 128-bit value to reduce.
-/// * `K` / `N` - Compile-time Proth parameters.
-///
-/// # Complexity
-///
-/// O(1) — a compiler-generated narrow division schedule.
+/// Reduces a 128-bit product modulo a Proth prime `P = K·2^N + 1` by `%`
+/// on the compile-time-constant divisor.
 #[inline]
 pub fn proth_reduce<const K: u64, const N: u32>(x: u128) -> u64 {
     debug_assert!(K >= 1 && N >= 16 && N <= 62);
     let p: u128 = (K as u128) * (1u128 << N) + 1;
-    // See the per-function Implementation note and the module-level
-    // "Performance note on Proth reduction": for the supported Proth
-    // prime range the strength-reduced 128-bit `%` already saturates the
-    // available microarchitectural headroom on x86-64.
     (x % p) as u64
 }
 
-/// Reduces a 128-bit product modulo the Goldilocks prime `2^64 - 2^32 + 1`.
-///
-/// Uses the identity `2^64 ≡ 2^32 - 1  (mod p)` derived from
-/// `p = 2^64 - 2^32 + 1`. Writing the input as four 32-bit limbs
-/// `x = c·2^96 + b·2^64 + a`, the reduction becomes a short chain of shifts,
-/// subtracts, and branchless fixups.
-///
-/// # Arguments
-///
-/// * `x` - The 128-bit value to reduce.
-///
-/// # Complexity
-///
-/// O(1).
+/// Reduces a 128-bit product modulo the Goldilocks prime `2^64 - 2^32 + 1`
+/// by a 128-bit `%`: the reference for [`goldilocks_reduce_fast`].
 #[inline]
 pub fn goldilocks_reduce(x: u128) -> u64 {
     let p = GOLDILOCKS_PRIME as u128;
-    // Straightforward `%` is acceptable as a reference; the specialised
-    // path below beats it by avoiding the 128-bit division. For correctness
-    // first, we compute using widening arithmetic and confine optimisation
-    // to the canonical `Mul` impl of `GoldilocksFp`.
     (x % p) as u64
 }
 
-/// Fast 128-bit reduction modulo the Goldilocks prime using the `2^64 ≡ 2^32 - 1`
-/// identity. Correctness-equivalent to [`goldilocks_reduce`] but avoids the
-/// 128-bit modulo operation.
+/// 128-bit reduction modulo the Goldilocks prime using the `2^64 ≡ 2^32 - 1`
+/// identity. Equal to [`goldilocks_reduce`] without the 128-bit modulo
+/// operation.
 ///
 /// # Overflow invariants
 ///
@@ -498,34 +289,19 @@ pub fn goldilocks_reduce(x: u128) -> u64 {
 /// of `x mod p` in `[0, p)`, and no intermediate value exceeds
 /// `2·p < 2^65` (the only place this matters — `acc1` — uses `u128`
 /// arithmetic inside `goldilocks_add`).
-///
-/// # Complexity
-///
-/// O(1) — a short branchless chain of adds, subs, and shifts.
 #[inline]
 pub fn goldilocks_reduce_fast(x: u128) -> u64 {
-    // Split x = hi * 2^64 + lo with hi, lo ∈ [0, 2^64), then split the upper
-    // half as hi = hh · 2^32 + hl. Using
-    //   2^64 ≡ 2^32 - 1       (mod p)
-    //   2^96 ≡ -1              (mod p)
-    // we have  x ≡ lo + hl·(2^32 - 1) - hh  (mod p). Per the invariants
-    // above, each intermediate stays safely within its representation.
     let lo = x as u64;
     let hi = (x >> 64) as u64;
     let hh = hi >> 32;
     let hl = hi & 0xFFFF_FFFF;
 
-    // hl · (2^32 - 1) = (hl << 32) - hl. Both operands fit in u64 (hl < 2^32
-    // so hl_shifted < 2^64); `goldilocks_sub` canonicalises to [0, p).
+    // hl · (2^32 - 1) = (hl << 32) - hl.
     let hl_shifted = hl << 32;
     let term_hl = goldilocks_sub(hl_shifted, hl);
 
-    // lo + term_hl (mod p). `goldilocks_add` promotes to u128 internally so
-    // the sum cannot overflow, and canonicalises to [0, p).
     let acc1 = goldilocks_add(lo, term_hl);
 
-    // acc1 - hh (mod p). acc1 ∈ [0, p) and hh < 2^32 ≤ p, so at most one
-    // wrap-plus-p fixup is required.
     goldilocks_sub(acc1, hh)
 }
 
@@ -538,20 +314,12 @@ pub const M31_PRIME: u64 = (1u64 << 31) - 1;
 
 /// Batch multiplication in `Fp<2^31 - 1>` with SIMD acceleration.
 ///
-/// Computes `out[i] = a[i] * b[i]` in `GF(2^31 - 1)` for every index.
-/// On x86_64 CPUs with AVX2, this dispatches into an AVX2 kernel that
-/// processes 8 packed `u32` lanes per 256-bit vector, amortising the
-/// Mersenne reduction across lanes. On all other CPUs, the function
-/// falls back transparently to a scalar loop with identical semantics.
+/// Computes `out[i] = a[i] * b[i]` in `GF(2^31 - 1)` for every index,
+/// through the AVX2 kernel when it is available and a scalar loop with
+/// identical semantics otherwise.
 ///
 /// Input values must lie in `[0, 2^31 - 1)` (i.e. canonical `Fp<M31>`
 /// values). The output slice is overwritten with canonical results.
-///
-/// # Arguments
-///
-/// * `a` — slice of canonical M31 values.
-/// * `b` — slice of canonical M31 values, same length as `a`.
-/// * `out` — output slice, same length as `a` and `b`.
 ///
 /// # Panics
 ///
@@ -571,11 +339,6 @@ pub const M31_PRIME: u64 = (1u64 << 31) - 1;
 ///     assert_eq!(out[i], expected);
 /// }
 /// ```
-///
-/// # Complexity
-///
-/// O(n) with a vectorisation factor of 8 on AVX2-capable CPUs, where
-/// `n = a.len()`.
 pub fn batch_mul_mersenne31(a: &[u32], b: &[u32], out: &mut [u32]) {
     assert_eq!(a.len(), b.len(), "batch_mul_mersenne31: length mismatch");
     assert_eq!(a.len(), out.len(), "batch_mul_mersenne31: output length");
@@ -588,7 +351,6 @@ pub fn batch_mul_mersenne31(a: &[u32], b: &[u32], out: &mut [u32]) {
         }
     }
 
-    // Scalar fallback — identical semantics to the SIMD kernel.
     for (o, (x, y)) in out.iter_mut().zip(a.iter().zip(b.iter())) {
         *o = scalar_m31_mul(*x, *y);
     }
@@ -597,14 +359,8 @@ pub fn batch_mul_mersenne31(a: &[u32], b: &[u32], out: &mut [u32]) {
 /// Batch multiply-and-accumulate in `Fp<2^31 - 1>` with SIMD acceleration.
 ///
 /// Computes `acc[i] = (acc[i] + a[i] * b[i]) mod (2^31 - 1)` for every
-/// index. Uses the same AVX2 kernel as [`batch_mul_mersenne31`] with an
-/// extra 32-bit add-and-canonicalise step per lane. Falls back to a
-/// scalar loop when AVX2 is unavailable.
-///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical M31 values (same length).
-/// * `acc` — in/out accumulator slice of canonical M31 values (same length).
+/// index over canonical M31 values. Falls back to a scalar loop when AVX2
+/// is unavailable.
 ///
 /// # Panics
 ///
@@ -624,10 +380,6 @@ pub fn batch_mul_mersenne31(a: &[u32], b: &[u32], out: &mut [u32]) {
 ///     assert_eq!(acc[i], expected);
 /// }
 /// ```
-///
-/// # Complexity
-///
-/// O(n) with lane-parallel AVX2 on capable CPUs.
 pub fn batch_mul_add_mersenne31(a: &[u32], b: &[u32], acc: &mut [u32]) {
     assert_eq!(
         a.len(),
@@ -654,19 +406,9 @@ pub fn batch_mul_add_mersenne31(a: &[u32], b: &[u32], acc: &mut [u32]) {
 
 /// Batch dot product in `Fp<2^31 - 1>` with SIMD acceleration.
 ///
-/// Computes `sum_i a[i] * b[i] mod (2^31 - 1)`, returning a canonical
-/// `u32`. Uses the same AVX2 batch multiplication kernel and accumulates
-/// the reduced per-lane products in 64-bit SIMD lanes before a single
-/// final canonicalisation. Falls back to a scalar loop when AVX2 is
-/// unavailable.
-///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical M31 values (same length).
-///
-/// # Returns
-///
-/// The canonical dot product in `[0, 2^31 - 1)`.
+/// Computes `sum_i a[i] * b[i] mod (2^31 - 1)` over canonical M31 values,
+/// returning a canonical `u32` in `[0, 2^31 - 1)`. Falls back to a scalar
+/// loop when AVX2 is unavailable.
 ///
 /// # Panics
 ///
@@ -683,10 +425,6 @@ pub fn batch_mul_add_mersenne31(a: &[u32], b: &[u32], acc: &mut [u32]) {
 /// let expected: u64 = (1..=100u64).map(|x| x * x).sum::<u64>() % M31_PRIME;
 /// assert_eq!(got as u64, expected);
 /// ```
-///
-/// # Complexity
-///
-/// O(n) with lane-parallel AVX2 on capable CPUs.
 pub fn batch_dot_mersenne31(a: &[u32], b: &[u32]) -> u32 {
     assert_eq!(a.len(), b.len(), "batch_dot_mersenne31: length mismatch");
 
@@ -776,10 +514,6 @@ impl GoldilocksFp {
 
     /// Creates a new element from a representative value, reduced modulo the prime.
     ///
-    /// # Arguments
-    ///
-    /// * `value` - Any `u64`; will be reduced to `[0, p)`.
-    ///
     /// # Examples
     ///
     /// ```
@@ -788,14 +522,9 @@ impl GoldilocksFp {
     /// let a = GoldilocksFp::new(GoldilocksFp::PRIME); // wraps to 0
     /// assert_eq!(a.value(), 0);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub const fn new(value: u64) -> Self {
-        // Since PRIME > 2^63, value may or may not exceed it. A single
-        // conditional subtract canonicalises.
+        // PRIME > 2^63, so a single conditional subtract canonicalises.
         let v = if value >= Self::PRIME {
             value - Self::PRIME
         } else {
@@ -855,10 +584,6 @@ fn goldilocks_neg(a: u64) -> u64 {
 impl Add for GoldilocksFp {
     type Output = Self;
     /// Modular addition in the Goldilocks field.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     fn add(self, rhs: Self) -> Self {
         Self(goldilocks_add(self.0, rhs.0))
@@ -868,10 +593,6 @@ impl Add for GoldilocksFp {
 impl Sub for GoldilocksFp {
     type Output = Self;
     /// Modular subtraction in the Goldilocks field.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self(goldilocks_sub(self.0, rhs.0))
@@ -881,10 +602,6 @@ impl Sub for GoldilocksFp {
 impl Mul for GoldilocksFp {
     type Output = Self;
     /// Modular multiplication using fast Goldilocks reduction.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self(goldilocks_reduce_fast((self.0 as u128) * (rhs.0 as u128)))
@@ -894,10 +611,6 @@ impl Mul for GoldilocksFp {
 impl Neg for GoldilocksFp {
     type Output = Self;
     /// Additive inverse.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     fn neg(self) -> Self {
         Self(goldilocks_neg(self.0))
@@ -999,7 +712,6 @@ impl FiniteField for GoldilocksFp {
         if self.0 == 0 {
             return None;
         }
-        // Square-and-multiply using specialized multiplication.
         let mut result = Self(1);
         let mut base = *self;
         let mut e = GOLDILOCKS_PRIME - 2;
@@ -1375,16 +1087,7 @@ mod tests {
 
     // -----------------------------------------------------------------------
     // Cross-verification: specialized Fp<P> against naive `%` AND against
-    // a reference Montgomery path.
-    //
-    // This exercises the compile-time dispatch in `Fp<P>` for Mersenne and
-    // Proth primes — both the canonical-form arithmetic and the specialized
-    // reducer are validated end-to-end against the unconditional `%`
-    // operator AND against an explicit Montgomery reference
-    // (`to_mont`/`redc`/`from_mont` recomputed locally from first
-    // principles) as ground truth. This closes the loop required by the
-    // spec: specialized reduction produces identical results to naive `%`
-    // AND to Montgomery for all operations.
+    // a reference Montgomery path recomputed locally.
     // -----------------------------------------------------------------------
 
     use crate::field::two_adic::BABYBEAR_P;
@@ -1393,9 +1096,7 @@ mod tests {
 
     const M31: u64 = (1u64 << 31) - 1;
     const M61: u64 = (1u64 << 61) - 1;
-    /// BabyBear Proth prime: 15 · 2^27 + 1 = 2013265921 — re-exported from
-    /// [`crate::field::two_adic::BABYBEAR_P`] to keep this test module aligned
-    /// with the canonical constant defined alongside the `TwoAdicField` impls.
+    /// BabyBear Proth prime: 15 · 2^27 + 1 = 2013265921.
     const PROTH: u64 = BABYBEAR_P;
 
     // ------------------------------------------------------------------
@@ -1405,12 +1106,9 @@ mod tests {
     //
     // R = 2^64. We work in u128 throughout to stay obviously correct.
     //
-    // Preconditions: P must be an *odd* prime with `P ≤ 2^63`. The
-    // `Fp<P>` type enforces this invariant, so the reference matches
-    // Fp's own Montgomery bounds exactly. Goldilocks (`P = 2^64 − 2^32
-    // + 1`) exceeds the bound and is cross-verified via the canonical
-    // `%` reference path instead; see `proptest_goldilocks_mul_matches_naive`
-    // in the earlier proptest block.
+    // Preconditions: P must be an *odd* prime with `P ≤ 2^63`.
+    // Goldilocks exceeds the bound and is cross-verified via the `%`
+    // reference path instead (`proptest_goldilocks_mul_matches_naive`).
     // ------------------------------------------------------------------
 
     /// `-P^{-1} mod 2^64` computed via Hensel lifting (requires odd P).
@@ -1472,8 +1170,6 @@ mod tests {
         ((a as u128 + p as u128 - b as u128) % p as u128) as u64
     }
 
-    // Sanity-check the reference helper itself against a few hand-computed
-    // cases so a regression in it would be caught immediately.
     #[test]
     fn ref_montgomery_mul_sanity() {
         assert_eq!(ref_montgomery_mul(0, 5, 7), 0);
@@ -1550,15 +1246,7 @@ mod tests {
             prop_assert!((fa * inv).is_one());
         }
 
-        // -------------------------------------------------------------
-        // Montgomery cross-verification.
-        //
-        // For each specialized prime shape we assert:
-        //   specialized_result == ref_montgomery_result
-        // where the reference path is a standalone Montgomery mul
-        // (to_mont · to_mont → redc → from_mont). This closes the
-        // "cross-check against Montgomery" requirement from the spec.
-        // -------------------------------------------------------------
+        // Montgomery cross-verification against the standalone reference.
 
         #[test]
         fn proptest_fp_mersenne31_mul_matches_montgomery(a in 0..M31, b in 0..M31) {
@@ -1623,13 +1311,6 @@ mod tests {
             prop_assert_eq!(specialized, reference);
         }
 
-        // Goldilocks: `GoldilocksFp` exceeds Fp<P>'s 2^63 bound so our
-        // 64-bit Montgomery reference (which requires p ≤ 2^63 to keep
-        // the REDC fold-add safely in u128) does not apply. The
-        // `proptest_goldilocks_mul_matches_naive` / `_add_` / `_sub_`
-        // tests above already close the loop: they compare specialized
-        // Goldilocks to the naive `%` ground truth, which is the same
-        // mathematical target Montgomery would have computed.
     }
 
     // -----------------------------------------------------------------------
@@ -1756,7 +1437,7 @@ mod tests {
     #[test]
     fn specialized_storage_flags() {
         use crate::gfp::Fp;
-        // Sanity: specialized and generic primes both round-trip through
+        // Specialized and generic primes both round-trip through
         // `new` / `value`, regardless of internal storage form.
         let a = Fp::<M31>::new(1234567);
         assert_eq!(a.value(), 1234567);

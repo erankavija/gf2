@@ -1,14 +1,9 @@
 //! Montgomery multiplication helpers for GF(p).
 //!
-//! Internal module providing compile-time constant computation and runtime
-//! Montgomery reduction (REDC) for prime field arithmetic. All functions
-//! require P > 2 and P odd; the P = 2 special case is handled in the
-//! parent module.
+//! Compile-time constants and runtime Montgomery reduction (REDC) with
+//! `R = 2^64`. The constants and REDC require P odd.
 
 /// Compile-time Montgomery constants for a prime modulus P.
-///
-/// These constants are computed at compile time via const evaluation
-/// and enable efficient Montgomery-form arithmetic where R = 2^64.
 pub(super) struct MontConsts<const P: u64>;
 
 impl<const P: u64> MontConsts<P> {
@@ -23,19 +18,11 @@ impl<const P: u64> MontConsts<P> {
 }
 
 /// Compute 2^64 mod p.
-///
-/// # Complexity
-///
-/// O(1).
 const fn compute_r_mod_p(p: u64) -> u64 {
     ((1u128 << 64) % p as u128) as u64
 }
 
 /// Compute R^2 mod p where R = 2^64 mod p.
-///
-/// # Complexity
-///
-/// O(1).
 const fn compute_r2_mod_p(p: u64) -> u64 {
     let r = compute_r_mod_p(p) as u128;
     ((r * r) % p as u128) as u64
@@ -45,10 +32,6 @@ const fn compute_r2_mod_p(p: u64) -> u64 {
 ///
 /// Requires P to be odd. Starts with inv = 1 (correct mod 2),
 /// then doubles the number of correct bits six times to reach 64.
-///
-/// # Complexity
-///
-/// O(1) (6 iterations).
 const fn compute_p_inv(p: u64) -> u64 {
     let mut inv: u64 = 1;
     let mut i = 0;
@@ -56,7 +39,6 @@ const fn compute_p_inv(p: u64) -> u64 {
         inv = inv.wrapping_mul(2u64.wrapping_sub(p.wrapping_mul(inv)));
         i += 1;
     }
-    // inv = P^{-1} mod 2^64; negate to get -P^{-1} mod 2^64
     inv.wrapping_neg()
 }
 
@@ -65,48 +47,31 @@ const fn compute_p_inv(p: u64) -> u64 {
 /// Input: t < P * R (satisfied for products of Montgomery-form elements).
 /// Output: result in [0, P).
 ///
-/// Uses branchless final subtraction for constant-time execution.
-///
-/// # Complexity
-///
-/// O(1).
+/// The final subtraction is branchless.
 #[inline]
 pub(super) const fn redc<const P: u64>(t: u128) -> u64 {
     let t_lo = t as u64;
     let m = t_lo.wrapping_mul(MontConsts::<P>::P_INV);
     let mp = m as u128 * P as u128;
     let u = ((t + mp) >> 64) as u64;
-    // Branchless: if u >= P then u - P else u
     let (result, borrow) = u.overflowing_sub(P);
     let correction = (borrow as u64).wrapping_neg() & P;
     result.wrapping_add(correction)
 }
 
 /// Convert canonical form to Montgomery form: a -> aR mod P.
-///
-/// # Complexity
-///
-/// O(1).
 #[inline]
 pub(super) const fn to_mont<const P: u64>(a: u64) -> u64 {
     redc::<P>(a as u128 * MontConsts::<P>::R2_MOD_P as u128)
 }
 
 /// Convert Montgomery form to canonical form: aR -> a mod P.
-///
-/// # Complexity
-///
-/// O(1).
 #[inline]
 pub(super) const fn from_mont<const P: u64>(a: u64) -> u64 {
     redc::<P>(a as u128)
 }
 
 /// Branchless modular addition in [0, P).
-///
-/// # Complexity
-///
-/// O(1).
 #[inline]
 pub(super) fn mont_add<const P: u64>(a: u64, b: u64) -> u64 {
     let sum = a + b;
@@ -116,10 +81,6 @@ pub(super) fn mont_add<const P: u64>(a: u64, b: u64) -> u64 {
 }
 
 /// Branchless modular subtraction in [0, P).
-///
-/// # Complexity
-///
-/// O(1).
 #[inline]
 pub(super) fn mont_sub<const P: u64>(a: u64, b: u64) -> u64 {
     let (result, borrow) = a.overflowing_sub(b);
