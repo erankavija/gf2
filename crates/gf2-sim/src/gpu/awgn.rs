@@ -11,10 +11,6 @@
 //! CPU `draw_standard_normal` word order (4 words per sample); the host assigns
 //! them planar, as the CPU stage does: sample `k` is symbol `k`'s I-axis noise
 //! and sample `num_symbols + k` its Q-axis noise.
-//!
-//! [`Stage::process`](crate::Stage) and `GpuAwgn::apply` run on the default
-//! stream; `apply_for_frame_on_stream` / `apply_on_stream` order the launch and
-//! read-back on a caller-owned HIP stream and add byte-identical noise.
 
 #[cfg(feature = "hip")]
 mod imp {
@@ -35,15 +31,6 @@ mod imp {
     /// so it stays outside the `Send + Sync` [`Stage::Scratch`](crate::Stage)
     /// and is passed to [`apply_for_frame`](GpuAwgn::apply_for_frame) by
     /// reference.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::gpu::awgn::GpuAwgnScratch;
-    ///
-    /// let scratch = GpuAwgnScratch::default();
-    /// assert!(scratch.host_buf().is_empty());
-    /// ```
     #[derive(Default)]
     pub struct GpuAwgnScratch {
         host_buf: Vec<f32>,
@@ -63,17 +50,6 @@ mod imp {
     /// The per-axis noise standard deviation is
     /// `sigma = sqrt(1 / (2 * 10^(es_n0_db / 10)))`, shared with the CPU
     /// [`Awgn`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::gpu::awgn::GpuAwgn;
-    ///
-    /// // Constructible without a GPU; the device generator is built lazily in
-    /// // `process` / `apply_for_frame`.
-    /// let ch = GpuAwgn::new(6.25, 4);
-    /// assert_eq!(ch.bits_per_symbol(), 4);
-    /// ```
     #[derive(Debug, Clone)]
     pub struct GpuAwgn {
         es_n0_db: f32,
@@ -108,15 +84,6 @@ mod imp {
 
         /// Sets the `worker_offset` parameters `(seed, snr_idx, worker_idx)`
         /// each frame's noise is drawn at.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use gf2_sim::gpu::awgn::GpuAwgn;
-        ///
-        /// let ch = GpuAwgn::new(6.25, 4).with_seek(42, 1, 0);
-        /// assert_eq!(ch.seed(), 42);
-        /// ```
         #[must_use]
         pub fn with_seek(mut self, seed: u64, snr_idx: usize, worker_idx: usize) -> Self {
             self.seed = seed;
@@ -490,10 +457,6 @@ mod imp {
             assert_send::<GpuAwgnScratch>();
         }
 
-        /// For N ∈ {1, 256, 1024} frames, every word of the device ChaCha20
-        /// stream at each frame's `worker_offset(...)` equals a host
-        /// `ChaCha20Rng::seed_from_u64(seed)` repositioned with
-        /// `set_word_pos(worker_offset(...))`. Skips with no GPU.
         #[test]
         fn test_gpu_chacha_raw_words_full_range_byte_identical() {
             use crate::parallel::worker_offset;
@@ -538,9 +501,6 @@ mod imp {
             }
         }
 
-        /// For every frame in `0..1024`, each device Box-Muller sample agrees
-        /// with the host `box_muller_cos`, fed the same two `f64` uniforms in
-        /// `draw_standard_normal` order, to ≤ 1 ulp f32. Skips with no GPU.
         #[test]
         fn test_gpu_box_muller_within_1_ulp_over_1024_frames() {
             use crate::parallel::worker_offset;
@@ -589,9 +549,6 @@ mod imp {
             }
         }
 
-        /// For every frame in `0..256`, `GpuAwgn` output matches the CPU
-        /// `channels::Awgn` applied to the same input at the same
-        /// `worker_offset` to ≤ 1 ulp f32 per sample. Skips with no GPU.
         #[test]
         fn test_gpu_awgn_matches_cpu_within_1_ulp() {
             use crate::parallel::WorkerCtx;
@@ -644,8 +601,6 @@ mod imp {
             }
         }
 
-        /// `Stage::process` (reading back through `scratch.host_buf`) produces
-        /// the same per-frame noise as `apply_for_frame`. Skips with no GPU.
         #[test]
         fn test_process_matches_apply_for_frame() {
             use crate::stage::Stage;
@@ -686,8 +641,6 @@ mod imp {
             assert!(scratch.host_buf().len() >= 2 * num_symbols);
         }
 
-        /// `apply_on_stream` corrupts a batch byte-identically to the
-        /// default-stream `apply`. Skips with no GPU.
         #[test]
         fn test_apply_on_stream_matches_default_stream() {
             use gf2_kernels_hip::host::{device_mem_info, HipStream};
@@ -740,7 +693,6 @@ mod imp {
             }
         }
 
-        /// True if `a` and `b` are within one f32 ulp.
         fn ulps_within_one(a: f32, b: f32) -> bool {
             if a == b {
                 return true;

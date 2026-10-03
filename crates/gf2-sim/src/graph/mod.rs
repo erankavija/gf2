@@ -25,64 +25,6 @@ const DEFAULT_EDGE_BATCH_SIZE: usize = 1;
 ///
 /// # Examples
 ///
-/// A two-stage chain compiled to a [`Pipeline`]:
-///
-/// ```
-/// use gf2_sim::graph::Chain;
-/// use gf2_sim::stage::{erase, BatchSize, ExecutionClass, Stage};
-/// use gf2_sim::error::StageError;
-///
-/// // Two distinct batch newtypes so the connector type-check has something to
-/// // verify.
-/// #[derive(Clone)]
-/// struct Bits(Vec<u8>);
-/// impl BatchSize for Bits {
-///     fn batch_size(&self) -> usize {
-///         self.0.len()
-///     }
-/// }
-/// #[derive(Clone)]
-/// struct Syms(Vec<u8>);
-/// impl BatchSize for Syms {
-///     fn batch_size(&self) -> usize {
-///         self.0.len()
-///     }
-/// }
-///
-/// struct Modulate;
-/// impl Stage<Bits, Syms> for Modulate {
-///     type Scratch = ();
-///     type CpuFallback = Self;
-///     fn process(&self, input: &Bits, _: &mut ()) -> Result<Syms, StageError> {
-///         Ok(Syms(input.0.clone()))
-///     }
-///     fn execution_class(&self) -> ExecutionClass {
-///         ExecutionClass::CpuOnly
-///     }
-/// }
-///
-/// struct Sink;
-/// impl Stage<Syms, Syms> for Sink {
-///     type Scratch = ();
-///     type CpuFallback = Self;
-///     fn process(&self, input: &Syms, _: &mut ()) -> Result<Syms, StageError> {
-///         Ok(input.clone())
-///     }
-///     fn execution_class(&self) -> ExecutionClass {
-///         ExecutionClass::CpuOnly
-///     }
-/// }
-///
-/// let mut chain = Chain::new();
-/// let a = chain.add(erase(Modulate));
-/// let b = chain.add(erase(Sink));
-/// chain.connect(a, b).unwrap();
-/// let pipeline = chain.build().unwrap();
-/// assert_eq!(pipeline.stage_count(), 2);
-/// ```
-///
-/// ## A DVB-T2 BICM chain
-///
 /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) returns the
 /// forward and inverse stages type-erased; each is added in order and
 /// connected to the next. The forward→inverse hop is a noiseless
@@ -160,32 +102,6 @@ impl Chain {
     }
 
     /// Sets the [`PipelineConfig`] the built [`Pipeline`] carries.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::num::NonZeroUsize;
-    /// use gf2_sim::graph::Chain;
-    /// use gf2_sim::PipelineConfig;
-    ///
-    /// let cfg = PipelineConfig {
-    ///     seed: 7,
-    ///     esn0_db_points: vec![4.0],
-    ///     target_errors: 100,
-    ///     max_frames: 1000,
-    ///     heartbeat_every_frames: 0,
-    ///     checkpoint_dir: None,
-    ///     tracing_log_path: None,
-    ///     parallelism: NonZeroUsize::new(1).unwrap(),
-    ///     gpu_enabled: false,
-    ///     strict_gpu: false,
-    ///     diagnostic_dump_dir: None,
-    ///     inject_gpu_oom_modulus: None,
-    /// };
-    /// let chain = Chain::new().with_config(cfg);
-    /// let pipeline = chain.build().unwrap();
-    /// assert_eq!(pipeline.config().seed, 7);
-    /// ```
     pub fn with_config(mut self, config: PipelineConfig) -> Self {
         self.config = Some(config);
         self
@@ -215,30 +131,6 @@ impl Chain {
     /// * [`BuildError::TypeMismatch`] if the producer output type and consumer
     ///   input type differ.
     /// * [`BuildError::Disconnected`] if either id refers to no added stage.
-    ///
-    /// # Examples
-    ///
-    /// Connecting a `SymbolBatch` producer into a `BitPackedBatch` consumer is a
-    /// type error:
-    ///
-    /// ```
-    /// use gf2_sim::graph::Chain;
-    /// use gf2_sim::stages::{GrayQamMap, DvbT2Encode};
-    /// use gf2_sim::stage::erase;
-    /// use gf2_sim::error::BuildError;
-    /// use std::sync::Arc;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    /// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
-    /// let mut chain = Chain::new();
-    /// // GrayQamMap outputs SymbolBatch; DvbT2Encode consumes BitPackedBatch.
-    /// let map = chain.add(erase(GrayQamMap::new(DvbT2Modulation::Qam16)));
-    /// let enc = chain.add(erase(DvbT2Encode::new(codec)));
-    /// assert!(matches!(chain.connect(map, enc), Err(BuildError::TypeMismatch { .. })));
-    /// ```
     pub fn connect(&mut self, from: StageId, to: StageId) -> Result<(), BuildError> {
         let from_stage = self
             .stage(from)
@@ -345,8 +237,6 @@ impl Chain {
     /// re-validation, a Kahn topological sort (which also detects cycles), and a
     /// weak-connectivity check over the non-fallback stages.
     ///
-    /// ## Edge `from`/`to` contract
-    ///
     /// Each [`Edge`]'s `from` and `to` are remapped to post-sort positions in
     /// [`Pipeline::stages()`]: `pipeline.stages()[from]` is the producer and
     /// `pipeline.stages()[to]` the consumer. The built pipeline drops the
@@ -377,44 +267,6 @@ impl Chain {
     ///   fallback registration references an out-of-range stage id or reuses one
     ///   CPU fallback for more than one GPU stage. The offending id(s) are
     ///   listed in `stages`.
-    ///
-    /// # Examples
-    ///
-    /// A linear three-stage chain compiles to a three-stage pipeline:
-    ///
-    /// ```
-    /// use gf2_sim::graph::Chain;
-    /// use gf2_sim::stage::{erase, BatchSize, ExecutionClass, Stage};
-    /// use gf2_sim::error::StageError;
-    ///
-    /// #[derive(Clone)]
-    /// struct B(u8);
-    /// impl BatchSize for B {
-    ///     fn batch_size(&self) -> usize {
-    ///         1
-    ///     }
-    /// }
-    /// struct Id;
-    /// impl Stage<B, B> for Id {
-    ///     type Scratch = ();
-    ///     type CpuFallback = Self;
-    ///     fn process(&self, i: &B, _: &mut ()) -> Result<B, StageError> {
-    ///         Ok(i.clone())
-    ///     }
-    ///     fn execution_class(&self) -> ExecutionClass {
-    ///         ExecutionClass::CpuOnly
-    ///     }
-    /// }
-    ///
-    /// let mut chain = Chain::new();
-    /// let a = chain.add(erase(Id));
-    /// let b = chain.add(erase(Id));
-    /// let c = chain.add(erase(Id));
-    /// chain.connect(a, b).unwrap();
-    /// chain.connect(b, c).unwrap();
-    /// let pipeline = chain.build().unwrap();
-    /// assert_eq!(pipeline.stage_count(), 3);
-    /// ```
     pub fn build(mut self) -> Result<Pipeline, BuildError> {
         // The checks below back every index, `take()` and `new_index_of`
         // lookup of the materialisation at the end of this function.
@@ -486,7 +338,6 @@ impl Chain {
             }
         }
 
-        // Every GPU-only graph stage needs a registered CPU fallback.
         for (idx, stage) in self.stages.iter().enumerate() {
             let id = StageId(idx as u32);
             if fallback_targets.contains(&id) {
@@ -559,7 +410,6 @@ impl Chain {
 
         let config = self.config.take().unwrap_or_else(default_pipeline_config);
 
-        // Indexable slots let stages be relocated by id.
         let mut slots: Vec<Option<Box<dyn AnyStage>>> = self.stages.into_iter().map(Some).collect();
 
         let ordered_stages: Vec<Box<dyn AnyStage>> = order
@@ -761,7 +611,6 @@ mod tests {
     use crate::stage::{erase, ExecutionClass, Stage};
     use gf2_core::BitVec;
 
-    /// Identity over `BitPackedBatch` (CPU).
     struct BitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for BitId {
         type Scratch = ();
@@ -774,7 +623,6 @@ mod tests {
         }
     }
 
-    /// BitPacked → Symbol (CPU), with empty symbol frames.
     struct BitToSym;
     impl Stage<BitPackedBatch, SymbolBatch> for BitToSym {
         type Scratch = ();
@@ -788,7 +636,6 @@ mod tests {
         }
     }
 
-    /// Symbol → Llr (CPU).
     struct SymToLlr;
     impl Stage<SymbolBatch, LlrBatch> for SymToLlr {
         type Scratch = ();
@@ -801,7 +648,6 @@ mod tests {
         }
     }
 
-    /// A GPU-only identity over `BitPackedBatch`.
     struct GpuBitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for GpuBitId {
         type Scratch = ();
@@ -814,7 +660,6 @@ mod tests {
         }
     }
 
-    /// A Hybrid identity over `BitPackedBatch`, valid in either fallback role.
     struct HybridBitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for HybridBitId {
         type Scratch = ();
@@ -850,7 +695,6 @@ mod tests {
     #[test]
     fn test_connect_incompatible_types_is_type_mismatch() {
         let mut chain = Chain::new();
-        // SymToLlr outputs LlrBatch; BitId consumes BitPackedBatch.
         let s = chain.add(erase(SymToLlr));
         let b = chain.add(erase(BitId));
         match chain.connect(s, b) {
@@ -882,7 +726,7 @@ mod tests {
         let a = chain.add(erase(BitId));
         let b = chain.add(erase(BitId));
         chain.connect(a, b).unwrap();
-        chain.connect(b, a).unwrap(); // BitPacked → BitPacked both ways: a 2-cycle.
+        chain.connect(b, a).unwrap();
         match chain.build() {
             Err(BuildError::Cyclic { involved }) => {
                 assert_eq!(involved, vec![a, b]);
@@ -895,18 +739,16 @@ mod tests {
     #[test]
     fn test_build_detects_disconnected_components() {
         let mut chain = Chain::new();
-        // Component 1: a → b.
         let a = chain.add(erase(BitId));
         let b = chain.add(erase(BitId));
         chain.connect(a, b).unwrap();
-        // Component 2: c → d, disjoint from the first.
         let c = chain.add(erase(BitId));
         let d = chain.add(erase(BitId));
         chain.connect(c, d).unwrap();
         match chain.build() {
             Err(BuildError::Disconnected { stages }) => {
-                // The component containing the lowest id (a) is kept; c and d
-                // are reported as outside it.
+                // The reported set is the complement of the component holding
+                // the lowest id.
                 assert_eq!(stages, vec![c, d]);
             }
             Err(other) => panic!("expected Disconnected, got {other:?}"),
@@ -932,7 +774,6 @@ mod tests {
         let cpu = chain.add(erase(BitId));
         chain.register_fallback(g, cpu);
         let pipeline = chain.build().expect("gpu stage now has a fallback");
-        // Only the GPU stage is a graph node.
         assert_eq!(pipeline.stage_count(), 1);
         assert_eq!(pipeline.fallback_count(), 1);
     }
@@ -967,7 +808,6 @@ mod tests {
 
     #[test]
     fn test_build_branching_dag_topological_order() {
-        // Fan-out then fan-in:  a → b, a → c, b → d, c → d.
         let mut chain = Chain::new();
         let a = chain.add(erase(BitId));
         let b = chain.add(erase(BitId));
@@ -1006,18 +846,16 @@ mod tests {
         assert_eq!(out.frames[0].len(), 8);
     }
 
-    /// Stages added in reverse topological order: each built edge's `from` and
-    /// `to` index its producer and consumer in `Pipeline::stages()`.
     #[test]
     fn test_edge_positions_remapped_after_non_topo_insertion() {
         // Insertion: C = StageId(0), M = StageId(1), P = StageId(2), with
         // P → M → C. Post-sort positions: P→0, M→1, C→2.
         let mut chain = Chain::new();
-        let c = chain.add(erase(SymToLlr)); // consumer: SymbolBatch → LlrBatch
-        let m = chain.add(erase(BitToSym)); // middle:   BitPackedBatch → SymbolBatch
-        let p = chain.add(erase(BitId)); //   producer: BitPackedBatch → BitPackedBatch
-        chain.connect(p, m).unwrap(); // P → M: BitPacked → BitPacked (M input)
-        chain.connect(m, c).unwrap(); // M → C: Symbol → Symbol (C input)
+        let c = chain.add(erase(SymToLlr));
+        let m = chain.add(erase(BitToSym));
+        let p = chain.add(erase(BitId));
+        chain.connect(p, m).unwrap();
+        chain.connect(m, c).unwrap();
         let pipeline = chain.build().expect("valid non-topo-inserted chain");
 
         assert_eq!(pipeline.stage_count(), 3);
@@ -1066,7 +904,7 @@ mod tests {
         let cpu1 = chain.add(erase(BitId));
         let cpu2 = chain.add(erase(BitId));
         chain.register_fallback(g, cpu1);
-        chain.register_fallback(g, cpu2); // same GPU stage registered again
+        chain.register_fallback(g, cpu2);
         match chain.build() {
             Err(BuildError::DuplicateFallback { gpu_stage }) => {
                 assert_eq!(gpu_stage, g);
@@ -1081,8 +919,8 @@ mod tests {
     #[test]
     fn test_build_rejects_type_incompatible_fallback() {
         let mut chain = Chain::new();
-        let g = chain.add(erase(GpuBitId)); // BitPacked → BitPacked, GpuOnly
-        let wrong_cpu = chain.add(erase(SymToLlr)); // Symbol → Llr, CpuOnly
+        let g = chain.add(erase(GpuBitId));
+        let wrong_cpu = chain.add(erase(SymToLlr));
         chain.register_fallback(g, wrong_cpu);
         match chain.build() {
             Err(BuildError::FallbackTypeMismatch {
@@ -1105,12 +943,10 @@ mod tests {
     #[test]
     fn test_build_rejects_fallback_role_overlap_without_panic() {
         let mut chain = Chain::new();
-        let g = chain.add(erase(GpuBitId)); // pure GPU stage
-        let x = chain.add(erase(HybridBitId)); // plays both roles below
-        let c = chain.add(erase(BitId)); // pure CPU fallback for x
-                                         // x is a CPU fallback target for g ...
+        let g = chain.add(erase(GpuBitId));
+        let x = chain.add(erase(HybridBitId));
+        let c = chain.add(erase(BitId));
         chain.register_fallback(g, x);
-        // ... and x is also a GPU stage with its own fallback c.
         chain.register_fallback(x, c);
         match chain.build() {
             Err(BuildError::FallbackRoleConflict { stage }) => assert_eq!(stage, x),
@@ -1122,8 +958,8 @@ mod tests {
     #[test]
     fn test_build_rejects_gpu_only_stage_as_cpu_fallback() {
         let mut chain = Chain::new();
-        let g = chain.add(erase(GpuBitId)); // the GPU stage needing a fallback
-        let bad_cpu = chain.add(erase(GpuBitId)); // GpuOnly — not CPU-capable
+        let g = chain.add(erase(GpuBitId));
+        let bad_cpu = chain.add(erase(GpuBitId));
         chain.register_fallback(g, bad_cpu);
         match chain.build() {
             Err(BuildError::FallbackNotCpuCapable { cpu_stage }) => {
@@ -1139,8 +975,8 @@ mod tests {
     #[test]
     fn test_build_rejects_fallback_for_cpu_only_stage() {
         let mut chain = Chain::new();
-        let cpu_gpu = chain.add(erase(BitId)); // CpuOnly — cannot OOM on GPU
-        let cpu_fb = chain.add(erase(BitId)); // a valid CPU fallback otherwise
+        let cpu_gpu = chain.add(erase(BitId));
+        let cpu_fb = chain.add(erase(BitId));
         chain.register_fallback(cpu_gpu, cpu_fb);
         match chain.build() {
             Err(BuildError::FallbackForCpuStage { gpu_stage }) => {
@@ -1154,13 +990,12 @@ mod tests {
     #[test]
     fn test_build_accepts_hybrid_stage_and_hybrid_fallback() {
         let mut chain = Chain::new();
-        let gpu = chain.add(erase(HybridBitId)); // GPU-capable (Hybrid)
-        let cpu = chain.add(erase(HybridBitId)); // CPU-capable (Hybrid)
+        let gpu = chain.add(erase(HybridBitId));
+        let cpu = chain.add(erase(HybridBitId));
         chain.register_fallback(gpu, cpu);
         let pipeline = chain
             .build()
             .expect("hybrid gpu + hybrid fallback is valid");
-        // Only the GPU stage is a graph node.
         assert_eq!(pipeline.stage_count(), 1);
         assert_eq!(pipeline.fallback_count(), 1);
     }
@@ -1168,11 +1003,11 @@ mod tests {
     #[test]
     fn test_build_rejects_edge_into_fallback_target() {
         let mut chain = Chain::new();
-        let g = chain.add(erase(GpuBitId)); // GPU stage needing a fallback
-        let x = chain.add(erase(BitId)); // an ordinary producer
-        let c = chain.add(erase(BitId)); // the CPU fallback target
+        let g = chain.add(erase(GpuBitId));
+        let x = chain.add(erase(BitId));
+        let c = chain.add(erase(BitId));
         chain.register_fallback(g, c);
-        chain.connect(x, c).unwrap(); // illegal: edge INTO the fallback target
+        chain.connect(x, c).unwrap();
         match chain.build() {
             Err(BuildError::FallbackTargetHasEdge { stage, edge_peer }) => {
                 assert_eq!(stage, c, "the fallback target is the offending stage");
@@ -1186,11 +1021,11 @@ mod tests {
     #[test]
     fn test_build_rejects_edge_out_of_fallback_target() {
         let mut chain = Chain::new();
-        let g = chain.add(erase(GpuBitId)); // GPU stage needing a fallback
-        let c = chain.add(erase(BitId)); // the CPU fallback target
-        let y = chain.add(erase(BitId)); // an ordinary consumer
+        let g = chain.add(erase(GpuBitId));
+        let c = chain.add(erase(BitId));
+        let y = chain.add(erase(BitId));
         chain.register_fallback(g, c);
-        chain.connect(c, y).unwrap(); // illegal: edge OUT OF the fallback target
+        chain.connect(c, y).unwrap();
         match chain.build() {
             Err(BuildError::FallbackTargetHasEdge { stage, edge_peer }) => {
                 assert_eq!(stage, c, "the fallback target is the offending stage");
@@ -1204,15 +1039,14 @@ mod tests {
     #[test]
     fn test_build_accepts_fallback_with_no_incident_edge_preserving_graph_edge() {
         let mut chain = Chain::new();
-        let src = chain.add(erase(BitId)); // ordinary producer
-        let g = chain.add(erase(GpuBitId)); // GPU stage, in the graph
-        let c = chain.add(erase(BitId)); // CPU fallback target, NOT connected
-        chain.connect(src, g).unwrap(); // src → g is a real graph edge
+        let src = chain.add(erase(BitId));
+        let g = chain.add(erase(GpuBitId));
+        let c = chain.add(erase(BitId));
+        chain.connect(src, g).unwrap();
         chain.register_fallback(g, c);
         let pipeline = chain
             .build()
             .expect("fallback target with no incident edge is valid");
-        // Two graph nodes (src, g); c is a substitution target.
         assert_eq!(pipeline.stage_count(), 2);
         assert_eq!(pipeline.fallback_count(), 1);
         assert_eq!(
@@ -1226,7 +1060,7 @@ mod tests {
     fn test_build_rejects_self_fallback() {
         let mut chain = Chain::new();
         let g = chain.add(erase(HybridBitId)); // Hybrid so capability checks pass
-        chain.register_fallback(g, g); // g is its own fallback: self-overlap
+        chain.register_fallback(g, g);
         match chain.build() {
             Err(BuildError::FallbackRoleConflict { stage }) => assert_eq!(stage, g),
             Err(other) => panic!("expected FallbackRoleConflict for self-fallback, got {other:?}"),

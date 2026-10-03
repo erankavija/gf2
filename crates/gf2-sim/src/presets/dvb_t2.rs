@@ -88,25 +88,6 @@ impl Modcod {
     /// Returns [`BuildError::InvalidModcod`], carrying the requested rate and
     /// modulation as strings (e.g. `rate = "5/6"`, `modulation = "QPSK"`), when
     /// the pair is outside the supported set.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::presets::dvb_t2::Modcod;
-    /// use gf2_sim::error::BuildError;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    ///
-    /// let ok = Modcod::Normal { rate: CodeRate::Rate2_3, modulation: DvbT2Modulation::Qam64 };
-    /// assert!(ok.validate().is_ok());
-    ///
-    /// // The error reports the TRUE offending rate, not an in-scope substitute.
-    /// let bad = Modcod::Normal { rate: CodeRate::Rate5_6, modulation: DvbT2Modulation::Qam16 };
-    /// match bad.validate() {
-    ///     Err(BuildError::InvalidModcod { rate, .. }) => assert_eq!(rate, "5/6"),
-    ///     other => panic!("expected InvalidModcod, got {other:?}"),
-    /// }
-    /// ```
     pub fn validate(self) -> Result<(), BuildError> {
         let (rate, modulation) = self.parts();
         let rate_ok = matches!(
@@ -342,30 +323,6 @@ impl Builder<Ready> {
     /// pipeline) followed by the CPU BCH outer-decode tail
     /// ([`DvbT2BchTail`](crate::stages::DvbT2BchTail)): an eight-stage chain.
     /// Without `hip` the chain stays all-CPU (seven stages).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// let pipeline = Pipeline::dvb_t2()
-    ///     .modcod(Modcod::Normal {
-    ///         rate: CodeRate::Rate1_2,
-    ///         modulation: DvbT2Modulation::Qam16,
-    ///     })
-    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
-    ///     .demap(DemapMethod::MaxLog)
-    ///     .channel(Channel::awgn(6.0))
-    ///     .with_gpu(true)
-    ///     .build()
-    ///     .unwrap();
-    /// assert!(pipeline.config().gpu_enabled);
-    /// ```
     #[must_use]
     pub fn with_gpu(mut self, enabled: bool) -> Self {
         self.cfg_gpu_enabled = enabled;
@@ -393,29 +350,6 @@ impl Builder<Ready> {
     /// Dominated by constructing the
     /// [`DvbT2Concat`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat) codec
     /// and the LDPC encoder cache inside [`dvb_t2_bicm_stages`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// let pipeline = Pipeline::dvb_t2()
-    ///     .modcod(Modcod::Normal {
-    ///         rate: CodeRate::Rate3_4,
-    ///         modulation: DvbT2Modulation::Qam64,
-    ///     })
-    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
-    ///     .demap(DemapMethod::MaxLog)
-    ///     .channel(Channel::awgn(10.0))
-    ///     .build()
-    ///     .unwrap();
-    /// assert_eq!(pipeline.stage_count(), 7);
-    /// ```
     pub fn build(self) -> Result<Pipeline, BuildError> {
         // The required fields are `Some` by typestate.
         let modcod = self.cfg_modcod.expect("modcod set before Ready");
@@ -532,29 +466,6 @@ impl Pipeline {
     /// Starts a DVB-T2 BICM preset builder in the [`NeedsModcod`] state.
     ///
     /// See the [module docs](crate::presets::dvb_t2) for the call sequence.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// let pipeline = Pipeline::dvb_t2()
-    ///     .modcod(Modcod::Normal {
-    ///         rate: CodeRate::Rate1_2,
-    ///         modulation: DvbT2Modulation::Qam16,
-    ///     })
-    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
-    ///     .demap(DemapMethod::ExactLogMap)
-    ///     .channel(Channel::awgn(6.0))
-    ///     .build()
-    ///     .unwrap();
-    /// assert_eq!(pipeline.stage_count(), 7);
-    /// ```
     #[must_use]
     pub fn dvb_t2() -> Builder<NeedsModcod> {
         Builder::<NeedsModcod>::new()

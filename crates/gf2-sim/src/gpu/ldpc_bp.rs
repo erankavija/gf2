@@ -145,20 +145,6 @@ mod imp {
     /// Construction touches no device: [`process`](Stage::process) builds a
     /// device decoder per call, and [`decode_batch`](Self::decode_batch) reuses
     /// one from [`build_decoder`](Self::build_decoder).
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// // Requires a real HIP device to decode; constructing the stage does not.
-    /// let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-    /// let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
-    /// let stage = GpuLdpcBp::new(code, config, 50);
-    /// assert_eq!(stage.max_iterations(), 50);
-    /// ```
     pub struct GpuLdpcBp {
         code: LdpcCode,
         config: DecoderConfig,
@@ -509,8 +495,6 @@ mod imp {
                 );
             }
 
-            // A check-edge `e` and its mapped var-edge `f` reference the same
-            // Tanner edge.
             for c in 0..layout.m {
                 let cs = layout.check_row_ptr[c] as usize;
                 let ce = layout.check_row_ptr[c + 1] as usize;

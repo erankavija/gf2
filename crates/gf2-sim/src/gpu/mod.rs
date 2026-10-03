@@ -99,8 +99,6 @@ mod imp {
     /// A `HipDispatcher` holds one `HipStreamPool` bound to a single device and
     /// the per-stage [`StageScratch`].
     ///
-    /// # Concurrency model
-    ///
     /// The dispatcher is owned by the orchestrator thread: its
     /// [`StageScratch`] embeds a `Send`-only `PinnedHostBuffer`, so
     /// `HipDispatcher` is `Send` but not `Sync`. The stream pool is `Sync`; the
@@ -201,10 +199,8 @@ mod imp {
         const fn _assert_sync<T: Sync>() {}
 
         const _: () = {
-            // The pool is shared by `&` across rayon workers: Send + Sync.
             _assert_send::<HipStreamPool>();
             _assert_sync::<HipStreamPool>();
-            // The dispatcher is orchestrator-owned and moved between threads.
             _assert_send::<HipDispatcher>();
         };
     }
@@ -266,9 +262,6 @@ mod imp {
             }
         }
 
-        /// A blob-load I/O failure maps to a fatal `KernelLaunch` whose
-        /// `hip_code` is the `hipErrorFileNotFound` sentinel (301) and whose
-        /// `args` carry the offending path.
         #[test]
         fn test_map_blob_load_is_fatal_kernel_launch() {
             let err = HipError::BlobLoad {
@@ -385,8 +378,6 @@ mod imp {
             }
         }
 
-        /// End-to-end OOM path on the real GPU: a `DeviceBuffer` request larger
-        /// than device memory must return a recoverable OOM error, not panic.
         #[test]
         fn test_forced_oom_returns_recoverable_not_panic() {
             use gf2_kernels_hip::host::{device_mem_info, DeviceBuffer};

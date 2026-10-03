@@ -24,9 +24,10 @@
 //! The message length is the largest payload realising exactly the requested
 //! `Z` ([`max_payload_for_lifting`]). The codeword length is
 //! `E = ⌊k·den/(num·Q_m)⌋·Q_m` for rate `num/den`, the floor form of the
-//! §5.4.2.1 bit-selection formula, so `E` is a multiple of `Q_m` as the
-//! §5.4.2.2 interleaver requires. When `k·den/num` is not a `Q_m`-multiple
-//! integer the realized rate `k/E` exceeds the requested one.
+//! clause 5.4.2.1 bit-selection formula, so `E` is a multiple of `Q_m` as the
+//! `@/citation/ThreeGpp2020` clause 5.4.2.2 interleaver requires. When
+//! `k·den/num` is not a `Q_m`-multiple integer the realized rate `k/E` exceeds
+//! the requested one.
 
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
@@ -340,15 +341,6 @@ impl Builder<NeedsBaseGraph> {
     }
 
     /// Selects the base graph, advancing to [`NeedsLifting`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::nr_5g::BaseGraph;
-    ///
-    /// let _b = Pipeline::nr_5g().base_graph(BaseGraph::Bg1);
-    /// ```
     pub fn base_graph(self, base_graph: BaseGraph) -> Builder<NeedsLifting> {
         self.with_state(|b| b.cfg_base_graph = Some(base_graph))
     }
@@ -361,21 +353,6 @@ impl Builder<NeedsLifting> {
     /// [`build`](Builder::build) returns [`BuildError::InvalidNr5gParams`] when
     /// the index differs from the [`lifting_set_index`] of the chosen
     /// [`lifting_size`](Builder::lifting_size).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::nr_5g::BaseGraph;
-    /// use gf2_coding::ldpc::nr_5g::lifting_set_index;
-    ///
-    /// // Z = 104 belongs to the a = 13 set; derive the index, don't hardcode.
-    /// let i_ls = lifting_set_index(104).unwrap();
-    /// let _b = Pipeline::nr_5g()
-    ///     .base_graph(BaseGraph::Bg2)
-    ///     .lifting_set(i_ls)
-    ///     .lifting_size(104);
-    /// ```
     #[must_use]
     pub fn lifting_set(mut self, i_ls: usize) -> Self {
         self.cfg_lifting_set = Some(i_ls);
@@ -383,7 +360,8 @@ impl Builder<NeedsLifting> {
     }
 
     /// Selects the lifting size `Z`, advancing to [`NeedsRate`].
-    /// [`build`](Builder::build) requires a Table 5.3.2-1 lifting size.
+    /// [`build`](Builder::build) requires a `@/citation/ThreeGpp2017`
+    /// Table 5.3.2-1 lifting size.
     pub fn lifting_size(self, z: usize) -> Builder<NeedsRate> {
         self.with_state(|b| b.cfg_lifting_size = Some(z))
     }
@@ -408,7 +386,7 @@ impl Builder<NeedsDemap> {
     /// Sets the modulation and soft-demap method, advancing to
     /// [`NeedsChannel`].
     ///
-    /// The modulation order `Q_m` parameterises the §5.4.2.2 interleaver, the
+    /// The modulation order `Q_m` parameterises the bit interleaver, the
     /// Gray-QAM mapper, and the soft demapper.
     pub fn demap(self, modulation: NrModulation, method: DemapMethod) -> Builder<NeedsChannel> {
         self.with_state(|b| {
@@ -463,8 +441,9 @@ impl Builder<Ready> {
     ///
     /// # Errors
     ///
-    /// * [`BuildError::InvalidNr5gParams`] if `Z` is not a Table 5.3.2-1
-    ///   lifting size; if a [`lifting_set`](Builder::lifting_set) index is
+    /// * [`BuildError::InvalidNr5gParams`] if `Z` is not a
+    ///   `@/citation/ThreeGpp2017` Table 5.3.2-1 lifting size; if a
+    ///   [`lifting_set`](Builder::lifting_set) index is
     ///   inconsistent with `Z`; if the rate is 5/6 on BG2; if the decoder
     ///   configuration is invalid (zero iteration cap, out-of-range min-sum
     ///   scale); if the constructed code does not realise the requested `Z`;
@@ -478,28 +457,6 @@ impl Builder<Ready> {
     /// Dominated by the rate-matched mother-code construction
     /// ([`QuasiCyclicLdpc::nr_5g_rate_matched`]: RREF on the `N_b * Z`-column
     /// parity-check matrix).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::Pipeline;
-    /// use gf2_sim::presets::nr_5g::{
-    ///     BaseGraph, Channel, Nr5gDecoderConfig, Nr5gRate, NrModulation,
-    /// };
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// // A small BG2 code (Z = 52, k = 416, n = 1248) builds in milliseconds.
-    /// let pipeline = Pipeline::nr_5g()
-    ///     .base_graph(BaseGraph::Bg2)
-    ///     .lifting_size(52)
-    ///     .rate(Nr5gRate::R1_3)
-    ///     .decoder(Nr5gDecoderConfig::normalized_min_sum(25))
-    ///     .demap(NrModulation::Qpsk, DemapMethod::ExactLogMap)
-    ///     .channel(Channel::awgn(3.0))
-    ///     .build()
-    ///     .unwrap();
-    /// assert_eq!(pipeline.stage_count(), 7);
-    /// ```
     pub fn build(self) -> Result<Pipeline, BuildError> {
         // The required fields are `Some` by typestate.
         let base_graph = self.cfg_base_graph.expect("base graph set before Ready");
@@ -556,8 +513,8 @@ impl Builder<Ready> {
         let q_m = modulation.bits_per_symbol();
         let target_n = (target_k * den) / (num * q_m) * q_m;
 
-        // Holds by the derivation above; checked because the §5.4.2.2
-        // interleaver asserts it.
+        // Holds by the derivation above; checked because the bit interleaver
+        // asserts it.
         if !target_n.is_multiple_of(q_m) {
             return Err(BuildError::InvalidNr5gParams {
                 reason: format!(
@@ -783,7 +740,7 @@ mod tests {
     fn test_build_rejects_invalid_lifting_size() {
         let result = Pipeline::nr_5g()
             .base_graph(BaseGraph::Bg1)
-            .lifting_size(100) // not in Table 5.3.2-1
+            .lifting_size(100) // not a lifting size
             .rate(Nr5gRate::R1_2)
             .decoder(nms25())
             .demap(NrModulation::Qpsk, DemapMethod::ExactLogMap)

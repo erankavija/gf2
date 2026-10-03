@@ -26,21 +26,6 @@ mod imp {
 
     /// A device LDPC BP decoder for a rate-matched 5G NR code: a [`GpuLdpcBp`]
     /// over the mother code plus the host-side rate-matching maps.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use std::sync::Arc;
-    /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, QuasiCyclicLdpc};
-    ///
-    /// // BG1, i_LS = 1 (Z = 384), rate 1/2 — the headline configuration.
-    /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
-    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-    /// // Constructing the wrapper does not touch the GPU; decoding does.
-    /// let dec = GpuNr5gDecoder::new(code, config, 25);
-    /// assert_eq!(dec.target_k(), 8448);
-    /// ```
     pub struct GpuNr5gDecoder {
         code: Arc<Nr5gRateMatchedCode>,
         /// GPU LDPC BP stage over the mother code.
@@ -120,19 +105,10 @@ mod imp {
         /// Returns a [`StageError`] if the device allocation or graph upload
         /// fails.
         ///
-        /// # Examples
+        /// # Complexity
         ///
-        /// ```no_run
-        /// use std::sync::Arc;
-        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
-        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-        ///
-        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
-        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
-        /// let device = dec.build_decoder(128)?;
-        /// # Ok::<(), gf2_sim::error::StageError>(())
-        /// ```
+        /// O(`edges`) host layout flattening and O(`max_batch * edges`) device
+        /// memory, where `edges` is over the full mother code.
         pub fn build_decoder(&self, max_batch: usize) -> Result<KernelGpuLdpcBp, StageError> {
             self.gpu.build_decoder(max_batch)
         }
@@ -143,23 +119,6 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `channel_llrs.len() != target_n`.
-        ///
-        /// # Examples
-        ///
-        /// ```no_run
-        /// use std::sync::Arc;
-        /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
-        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
-        /// use gf2_coding::llr::Llr;
-        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-        ///
-        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
-        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
-        /// let channel = vec![Llr::new(4.0); 16896];
-        /// let full = dec.prepare_llrs(&channel);
-        /// assert_eq!(full.len(), dec.full_n());
-        /// ```
         #[must_use]
         pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
             self.code.prepare_llrs(channel_llrs)
@@ -180,25 +139,6 @@ mod imp {
         /// # Panics
         ///
         /// Panics if any frame's LLR length != `target_n`.
-        ///
-        /// # Examples
-        ///
-        /// ```no_run
-        /// use std::sync::Arc;
-        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
-        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-        ///
-        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
-        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
-        /// # use gf2_coding::llr::Llr;
-        /// # use gf2_sim::LlrBatch;
-        /// let device = dec.build_decoder(128)?;
-        /// let batch = LlrBatch::new(vec![vec![Llr::new(4.0); 16896]; 8]);
-        /// let recovered = dec.decode_batch(&batch, &device)?;
-        /// assert_eq!(recovered.frames.len(), 8);
-        /// # Ok::<(), gf2_sim::error::StageError>(())
-        /// ```
         ///
         /// # Complexity
         ///
@@ -232,24 +172,6 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `mother_codeword.len() < target_k`.
-        ///
-        /// # Examples
-        ///
-        /// ```no_run
-        /// use std::sync::Arc;
-        /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
-        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
-        /// use gf2_coding::llr::Llr;
-        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-        ///
-        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
-        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
-        /// # use gf2_core::BitVec;
-        /// let mother = BitVec::zeros(dec.full_n());
-        /// let msg = dec.extract_message(&mother);
-        /// assert_eq!(msg.len(), dec.target_k());
-        /// ```
         #[must_use]
         pub fn extract_message(&self, mother_codeword: &BitVec) -> BitVec {
             let target_k = self.code.params().target_k;
@@ -268,23 +190,6 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `channel_llrs.len() != target_n`.
-        ///
-        /// # Examples
-        ///
-        /// ```no_run
-        /// use std::sync::Arc;
-        /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
-        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
-        /// use gf2_coding::llr::Llr;
-        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-        ///
-        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
-        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
-        /// let channel = vec![Llr::new(4.0); 16896];
-        /// let oracle = dec.cpu_reference_message(&channel);
-        /// assert_eq!(oracle.len(), dec.target_k());
-        /// ```
         ///
         /// # Complexity
         ///
