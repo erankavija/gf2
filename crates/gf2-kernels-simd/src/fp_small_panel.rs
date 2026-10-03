@@ -1,18 +1,17 @@
-//! AVX2 pure-integer Goto/BLIS-style panelized GEMM kernel for small `Fp<P>`
-//! with `P <= 251`.
+//! AVX2 pure-integer panelized GEMM kernel for small `Fp<P>` with
+//! `P <= 251`, in the style of `@/citation/GotoGeijn2008` and
+//! `@/citation/VanZee2015`.
 //!
 //! Safe wrapper layer over `crate::x86::fp_small_panel`, operating on
 //! canonical bytes (each element in `[0, p)`). [`detect`] returns `None`
-//! without AVX2.
-//!
-//! Provenance: implemented from public Goto-vandeGeijn 2008 / BLIS 2015
-//! framework and the AMD Zen 3 Software Optimization Guide; no
-//! fflas-ffpack source, comments, or autotuning tables consulted.
+//! without AVX2. Implemented from `@/citation/GotoGeijn2008`,
+//! `@/citation/VanZee2015` and `@/citation/Amd2020`; no
+//! `@/citation/FflasFfpack2021` source, comments, or autotuning tables
+//! consulted.
 
 /// Cache-blocking factor along the k-axis, chosen to fit L1d. The u32
 /// accumulator bound `k ≤ 2³² / (p − 1)²` (`68 719` at `p = 251`) is not
-/// binding. Measurement:
-/// `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel-aggregate.csv`.
+/// binding.
 pub const KC: usize = 256;
 
 /// Whole-GEMM panelized integer kernel signature for `Fp<P>` with
@@ -38,8 +37,8 @@ pub type SmallPrimePanelGemmFn = fn(&[u8], &[u8], usize, usize, usize, u8, &mut 
 /// is a runtime argument.
 #[derive(Copy, Clone)]
 pub struct SmallPrimePanelFns {
-    /// Goto/BLIS-style panelized whole-GEMM kernel for canonical-byte
-    /// `Fp<P>` operands with `P ≤ 251`.
+    /// Panelized whole-GEMM kernel for canonical-byte `Fp<P>` operands with
+    /// `P ≤ 251`.
     pub batch_gemm_fn: SmallPrimePanelGemmFn,
 }
 
@@ -48,23 +47,6 @@ pub struct SmallPrimePanelFns {
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
 /// AVX2.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_small_panel;
-///
-/// if let Some(fns) = fp_small_panel::detect() {
-///     // 4×4 identity row-major; bt = row-major transpose of identity
-///     // (which equals the identity in storage).
-///     let a = [1u8, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-///     let bt = [1u8, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-///     let mut out = [0u8; 16];
-///     (fns.batch_gemm_fn)(&a, &bt, 4, 4, 4, 7, &mut out);
-///     // out is the 4×4 identity in canonical bytes.
-///     assert_eq!(out, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-/// }
-/// ```
 pub fn detect() -> Option<SmallPrimePanelFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {

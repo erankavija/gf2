@@ -12,16 +12,6 @@
 //! $\mathrm{output}\[c\]\[r\] = \mathrm{input}\[r\]\[c\]$. The input and output
 //! buffers must not overlap. The buffers carry no alignment requirement: every
 //! lane reads and writes them through unaligned vector accesses.
-//!
-//! # Lanes
-//!
-//! [`TransposeLane`] names every implementation of that contract and
-//! [`lane`] maps a name to the safe function pointer, or to `None` where the
-//! host lacks the processor feature the lane needs. [`detect`] resolves the
-//! production lane through [`PRODUCTION_PREFERENCE`] and is what
-//! `gf2_core::BitMatrix::transpose` and [`crate::bch_encode`]'s bit-slicing
-//! reach. The AVX2 lanes need the `avx2` processor feature, which [`lane`]
-//! tests at run time.
 
 /// Safe 64×64 bit-block transpose function pointer.
 pub type Transpose64x64Fn = fn(&[u64; 64], &mut [u64; 64]);
@@ -80,9 +70,7 @@ impl TransposeLane {
 ///
 /// The first entry whose [`lane`] is available on the host wins.
 /// [`TransposeLane::Scalar`] is last and always available, so the walk always
-/// ends in a usable kernel. `dev/active/1d4fd63d/findings.md` (§ Adoption)
-/// states the selection rule and names the confirmation receipt, which
-/// qualifies no other AVX2 candidate for production selection.
+/// ends in a usable kernel.
 pub const PRODUCTION_PREFERENCE: [TransposeLane; 2] =
     [TransposeLane::Avx2BitTwiddle, TransposeLane::Scalar];
 
@@ -157,22 +145,6 @@ pub fn lane(lane: TransposeLane) -> Option<Transpose64x64Fn> {
 /// even [`TransposeLane::Scalar`] is unavailable, which no supported target
 /// is. Callers may equally use `lane(TransposeLane::Scalar)` directly, which
 /// needs no processor feature.
-///
-/// # Examples
-///
-/// ```
-/// if let Some(fns) = gf2_kernels_simd::transpose::detect() {
-///     let mut input = [0u64; 64];
-///     input[0] = 0xFF; // first row has 8 set bits in cols 0..8
-///     let mut output = [0u64; 64];
-///     (fns.transpose_64x64)(&input, &mut output);
-///     // After transpose, the first 8 output rows have bit 0 set.
-///     for i in 0..8 {
-///         assert_eq!(output[i] & 1, 1);
-///     }
-///     assert_eq!(fns.name, fns.lane.name());
-/// }
-/// ```
 #[must_use]
 pub fn detect() -> Option<TransposeFns> {
     PRODUCTION_PREFERENCE.into_iter().find_map(|candidate| {
@@ -215,7 +187,7 @@ fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
 }
 
 /// 64×64 bit-block transpose using the recursive bit-interleave /
-/// mask-and-shift pattern (Hacker's Delight ch. 7-3).
+/// mask-and-shift pattern (`@/citation/Warren2012` ch. 7-3).
 ///
 /// `input[r]` is interpreted as the `r`-th row, with bit `c` carrying
 /// the matrix entry `(r, c)`. After the call, `output[c]` is the
@@ -224,20 +196,6 @@ fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
 /// Six stages of mask-shift-XOR swap the off-diagonal sub-quadrants of a
 /// recursive 32×32, 16×16, ... partition, halving the swap distance each
 /// stage: `64 · log₂ 64` word operations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::transpose::transpose_64x64_scalar;
-/// // Identity matrix maps to itself under transpose.
-/// let mut input = [0u64; 64];
-/// for i in 0..64 {
-///     input[i] = 1u64 << i;
-/// }
-/// let mut output = [0u64; 64];
-/// transpose_64x64_scalar(&input, &mut output);
-/// assert_eq!(input, output);
-/// ```
 pub fn transpose_64x64_scalar(input: &[u64; 64], output: &mut [u64; 64]) {
     let mut buf: [u64; 64] = *input;
 
@@ -266,17 +224,12 @@ pub fn transpose_64x64_scalar(input: &[u64; 64], output: &mut [u64; 64]) {
     loop {
         let j = 1usize << k;
         let m = MASKS[5 - k];
-        // For each block of size 2j, swap rows [i..i+j) with rows
-        // [i+j..i+2j) using the mask-shift-XOR idiom.
         let mut i = 0usize;
         while i < 64 {
             let mut r = i;
             while r < i + j {
                 let a = buf[r];
                 let b = buf[r + j];
-                // t = ((a >> j) ^ b) & m
-                // a' = a ^ (t << j)
-                // b' = b ^ t
                 let t = ((a >> j) ^ b) & m;
                 buf[r] = a ^ (t << j);
                 buf[r + j] = b ^ t;

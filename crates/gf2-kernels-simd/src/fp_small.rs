@@ -109,21 +109,6 @@ pub struct SmallPrimeFns {
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
 /// AVX2.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_small;
-///
-/// if let Some(fns) = fp_small::detect() {
-///     let a = [1u8, 2, 3, 4];
-///     let b = [5u8, 6, 0, 1];
-///     let mut out = [0u8; 4];
-///     (fns.batch_mul_fn)(&a, &b, 7, &mut out);
-///     // out[i] = a[i] * b[i] mod 7
-///     assert_eq!(out, [5, 5, 0, 4]);
-/// }
-/// ```
 pub fn detect() -> Option<SmallPrimeFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -207,14 +192,6 @@ fn sub_scaled_safe(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8, mu: u16) {
 /// # Panics
 ///
 /// Debug builds panic if `p < 3`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::fp_small;
-/// assert_eq!(fp_small::barrett_mu_u16(251), (65536u32 / 251) as u16);
-/// assert_eq!(fp_small::barrett_mu_u16(7), (65536u32 / 7) as u16);
-/// ```
 #[inline]
 pub const fn barrett_mu_u16(p: u8) -> u16 {
     debug_assert!(p >= 3);

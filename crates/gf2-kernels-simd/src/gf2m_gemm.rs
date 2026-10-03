@@ -147,7 +147,6 @@ mod tests {
             for j in 0..n {
                 let mut acc = 0u64;
                 for ki in 0..k {
-                    // Schoolbook GF(2^8) multiply.
                     let mut a_val = a[i * k + ki];
                     let mut b_val = b[ki * n + j];
                     let mut prod = 0u64;

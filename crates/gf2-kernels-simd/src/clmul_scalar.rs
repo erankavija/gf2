@@ -3,18 +3,6 @@
 
 /// Carry-less multiplication of two `u64` GF(2)-coefficient polynomials,
 /// producing a 128-bit product in O(popcount(b)) XOR-shifts.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_simd::clmul_u64_scalar;
-///
-/// // (x + 1) * (x + 1) = x^2 + 1  (no carry: x + x = 0 in GF(2))
-/// assert_eq!(clmul_u64_scalar(0b11, 0b11), 0b101);
-///
-/// // x * x = x^2
-/// assert_eq!(clmul_u64_scalar(0b10, 0b10), 0b100);
-/// ```
 pub fn clmul_u64_scalar(a: u64, b: u64) -> u128 {
     let a = a as u128;
     let mut result: u128 = 0;

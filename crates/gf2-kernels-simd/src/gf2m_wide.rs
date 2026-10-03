@@ -81,7 +81,6 @@ pub fn detect_571() -> Option<ClmulWide571Fns> {
 fn detect_x86_wide() -> Option<Gf2mWideFns> {
     use std::arch::is_x86_feature_detected;
 
-    // YMM (AVX2 + VPCLMULQDQ).
     if is_x86_feature_detected!("avx2")
         && is_x86_feature_detected!("vpclmulqdq")
         && is_x86_feature_detected!("sse4.1")
@@ -99,7 +98,6 @@ fn detect_x86_wide() -> Option<Gf2mWideFns> {
         });
     }
 
-    // XMM (PCLMULQDQ scalar-lane).
     if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
         return Some(Gf2mWideFns {
             wide256: ClmulWide256Fns {

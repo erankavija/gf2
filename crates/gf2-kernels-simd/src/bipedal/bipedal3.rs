@@ -109,7 +109,6 @@ pub type Bipedal3x4 = super::framework::BatchedBipedalLike<Config3>;
 mod tests {
     use super::*;
 
-    // Scalar reference for the AVX2 parity tests.
     use f3_bipedal_prototype::{Bipedal3, F3Encoding};
 
     fn encode_to_words(canonical: &[u8]) -> (Vec<u64>, Vec<u64>) {

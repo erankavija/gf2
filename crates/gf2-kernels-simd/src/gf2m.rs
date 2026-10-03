@@ -54,8 +54,7 @@ pub struct Gf2mFns {
 
 /// Detect the default GF(2^m) function bundle.
 ///
-/// The raw batch lane is sequential PCLMULQDQ; the Zen 3 confirmation in
-/// `dev/active/1d0da41f/findings.md` rejects YMM adoption.
+/// The raw batch lane is sequential PCLMULQDQ.
 /// Returns `None` without PCLMULQDQ and SSE4.1; callers use their scalar path.
 pub fn detect() -> Option<Gf2mFns> {
     detect_with_clmul_batch_preference(ClmulBatchLane::Sequential)
@@ -266,8 +265,8 @@ mod tests {
     /// An AVX2 + VPCLMULQDQ host can select the 256-bit raw-batch lane.
     ///
     /// VPCLMULQDQ at 256 bits is VEX-encodable, so AVX512VL is not part of the
-    /// lane's feature contract. Zen 3 publishes AVX2 and VPCLMULQDQ without
-    /// AVX512VL, and this assertion pins that such a host reaches the YMM lane.
+    /// lane's feature contract: a host with AVX2 and VPCLMULQDQ and without
+    /// AVX512VL reaches the YMM lane.
     #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn clmul_batch_selects_ymm_lane_on_avx2_vpclmulqdq_host() {
