@@ -59,10 +59,6 @@ fn ext_non_residue<C: ExtConfig>() -> C::BaseField {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Core SoA batch container
-// ---------------------------------------------------------------------------
-
 /// Batch of GF(p^n) extension-field elements stored in Structure-of-Arrays
 /// layout.
 ///
@@ -71,20 +67,6 @@ fn ext_non_residue<C: ExtConfig>() -> C::BaseField {
 /// [`BatchExtField::len`]; [`BatchExtField::new`] enforces this. `F` is the
 /// coefficient (base) field and `N` the number of coefficients per element
 /// (the extension degree; `N = 1` for base-field batches).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::BatchExtField;
-///
-/// // A batch of three GF(p²)-like elements with hand-constructed coefficients.
-/// let batch = BatchExtField::<Fp<7>, 2>::new([
-///     vec![Fp::new(1), Fp::new(2), Fp::new(3)],
-///     vec![Fp::new(4), Fp::new(5), Fp::new(6)],
-/// ]);
-/// assert_eq!(batch.len(), 3);
-/// ```
 #[derive(Clone, Debug)]
 pub struct BatchExtField<F: FiniteField, const N: usize> {
     coeffs: [Vec<F>; N],
@@ -116,20 +98,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// `sample` is any base-field element; only its
     /// [`FiniteField::zero_like`] is consulted, which supports base fields
     /// whose identity element depends on runtime configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::BatchExtField;
-    ///
-    /// let zeros = BatchExtField::<Fp<7>, 2>::zeros(4, &Fp::new(0));
-    /// assert_eq!(zeros.len(), 4);
-    /// for lane in zeros.coeff(0).iter().chain(zeros.coeff(1).iter()) {
-    ///     assert!(lane.is_zero());
-    /// }
-    /// ```
     pub fn zeros(len: usize, sample: &F) -> Self {
         let coeffs: [Vec<F>; N] =
             array::from_fn(|_| (0..len).map(|_| sample.zero_like()).collect());
@@ -173,10 +141,6 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
         self.coeffs.iter().all(|lane| lane.len() == expected)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Element-wise (coefficient-by-coefficient) arithmetic
-// ---------------------------------------------------------------------------
 
 impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     /// Element-wise addition across the batch.
@@ -230,36 +194,9 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Quadratic extension specialisations (N = 2)
-// ---------------------------------------------------------------------------
-
 impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// Converts a slice of [`QuadraticExt<C>`] elements into SoA form (the
     /// AoS→SoA transpose).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    /// type Fq2 = QuadraticExt<Cfg>;
-    ///
-    /// let xs = vec![
-    ///     Fq2::new(Fp::new(1), Fp::new(2)),
-    ///     Fq2::new(Fp::new(3), Fp::new(4)),
-    /// ];
-    /// let batch = BatchExtField::<Fp<7>, 2>::from_quadratic::<Cfg>(&xs);
-    /// assert_eq!(batch.len(), 2);
-    /// assert_eq!(batch.coeff(0)[0].value(), 1);
-    /// assert_eq!(batch.coeff(1)[1].value(), 4);
-    /// ```
     pub fn from_quadratic<C: ExtConfig<BaseField = F>>(elements: &[QuadraticExt<C>]) -> Self {
         let len = elements.len();
         let mut c0 = Vec::with_capacity(len);
@@ -272,28 +209,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     }
 
     /// Converts the SoA batch back into an AoS `Vec<QuadraticExt<C>>`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    /// type Fq2 = QuadraticExt<Cfg>;
-    ///
-    /// let xs = vec![
-    ///     Fq2::new(Fp::new(1), Fp::new(2)),
-    ///     Fq2::new(Fp::new(3), Fp::new(4)),
-    /// ];
-    /// let batch = BatchExtField::<Fp<7>, 2>::from_quadratic::<Cfg>(&xs);
-    /// let roundtrip = batch.to_quadratic::<Cfg>();
-    /// assert_eq!(roundtrip, xs);
-    /// ```
     pub fn to_quadratic<C: ExtConfig<BaseField = F>>(&self) -> Vec<QuadraticExt<C>> {
         self.coeffs[0]
             .iter()
@@ -331,29 +246,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// # Panics
     ///
     /// Panics if `self.len() != other.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6); // β = −1
-    ///     fn mul_by_non_residue(x: Fp<7>) -> Fp<7> { -x }
-    /// }
-    /// type Fq2 = QuadraticExt<Cfg>;
-    ///
-    /// let a = vec![Fq2::new(Fp::new(3), Fp::new(2))];
-    /// let b = vec![Fq2::new(Fp::new(4), Fp::new(5))];
-    /// let batch_a = BatchExtField::<Fp<7>, 2>::from_quadratic::<Cfg>(&a);
-    /// let batch_b = BatchExtField::<Fp<7>, 2>::from_quadratic::<Cfg>(&b);
-    /// let batch_c = batch_a.batch_mul_quadratic::<Cfg>(&batch_b);
-    /// let c = batch_c.to_quadratic::<Cfg>();
-    /// assert_eq!(c[0], a[0] * b[0]);
-    /// ```
     pub fn batch_mul_quadratic<C: ExtConfig<BaseField = F>>(&self, other: &Self) -> Self {
         assert_eq!(
             self.len(),
@@ -395,25 +287,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     /// For each batch index `i`, computes `self[i]²` using the same SoA
     /// Karatsuba backend as [`Self::batch_mul_quadratic`], with the left
     /// and right input lanes aliased.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
-    /// }
-    /// type Fq2 = QuadraticExt<Cfg>;
-    ///
-    /// let xs = vec![Fq2::new(Fp::new(3), Fp::new(2))];
-    /// let batch = BatchExtField::<Fp<7>, 2>::from_quadratic::<Cfg>(&xs);
-    /// let squares = batch.batch_square_quadratic::<Cfg>().to_quadratic::<Cfg>();
-    /// assert_eq!(squares[0], xs[0] * xs[0]);
-    /// ```
     pub fn batch_square_quadratic<C: ExtConfig<BaseField = F>>(&self) -> Self {
         #[cfg(feature = "parallel")]
         {
@@ -439,31 +312,9 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 2> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Cubic extension specialisations (N = 3)
-// ---------------------------------------------------------------------------
-
 impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// Converts a slice of [`CubicExt<C>`] elements into SoA form (the
     /// AoS→SoA transpose).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    /// type Fq3 = CubicExt<Cfg>;
-    ///
-    /// let xs = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
-    /// let batch = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&xs);
-    /// assert_eq!(batch.coeff(2)[0].value(), 3);
-    /// ```
     pub fn from_cubic<C: ExtConfig<BaseField = F>>(elements: &[CubicExt<C>]) -> Self {
         let len = elements.len();
         let mut c0 = Vec::with_capacity(len);
@@ -480,24 +331,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     }
 
     /// Converts a cubic SoA batch back into an AoS `Vec<CubicExt<C>>`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    /// type Fq3 = CubicExt<Cfg>;
-    ///
-    /// let xs = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
-    /// let roundtrip = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&xs).to_cubic::<Cfg>();
-    /// assert_eq!(roundtrip, xs);
-    /// ```
     pub fn to_cubic<C: ExtConfig<BaseField = F>>(&self) -> Vec<CubicExt<C>> {
         self.coeffs[0]
             .iter()
@@ -584,25 +417,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// Computes `self[i]²` by applying the cubic SoA Karatsuba-3 combine of
     /// [`Self::batch_mul_cubic`] with the left and right coefficient lanes
     /// aliased.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{BatchExtField, CubicExt, ExtConfig};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(3);
-    /// }
-    /// type Fq3 = CubicExt<Cfg>;
-    ///
-    /// let xs = vec![Fq3::new(Fp::new(1), Fp::new(2), Fp::new(3))];
-    /// let batch = BatchExtField::<Fp<7>, 3>::from_cubic::<Cfg>(&xs);
-    /// let squares = batch.batch_square_cubic::<Cfg>().to_cubic::<Cfg>();
-    /// assert_eq!(squares[0], xs[0] * xs[0]);
-    /// ```
     pub fn batch_square_cubic<C: ExtConfig<BaseField = F>>(&self) -> Self {
         #[cfg(feature = "parallel")]
         {
@@ -630,10 +444,6 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
         Self { coeffs }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Base-lane and Karatsuba back-ends: scalar and SIMD-composed
-// ---------------------------------------------------------------------------
 
 #[inline]
 fn batch_add_lane<F>(a: &[F], b: &[F]) -> Vec<F>
@@ -733,10 +543,6 @@ where
     [c0, c1, z]
 }
 
-// ---------------------------------------------------------------------------
-// Karatsuba back-ends: scalar (generic) and SIMD-specialised (Fp<65537>)
-// ---------------------------------------------------------------------------
-
 /// Straight-line scalar Karatsuba combine over any `F: ConstField`. The
 /// loop body is branchless and carries no cross-lane dependencies.
 #[inline]
@@ -799,28 +605,6 @@ pub trait SimdKaratsubaHook: ConstField {
     /// and have identical length. Returns `None` when no SIMD kernel is
     /// available for `Self`; the caller then falls back to the scalar
     /// combine.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::SimdKaratsubaHook;
-    /// use gf2_core::gfpn::ExtConfig;
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<65537>;
-    ///     const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
-    /// }
-    ///
-    /// let a0 = vec![Fp::<65537>::new(1), Fp::<65537>::new(2)];
-    /// let a1 = vec![Fp::<65537>::new(3), Fp::<65537>::new(4)];
-    /// let b0 = vec![Fp::<65537>::new(5), Fp::<65537>::new(6)];
-    /// let b1 = vec![Fp::<65537>::new(7), Fp::<65537>::new(8)];
-    /// let _ = <Fp<65537> as SimdKaratsubaHook>::try_simd_karatsuba::<Cfg>(
-    ///     &a0, &a1, &b0, &b1,
-    /// );
-    /// ```
     #[inline]
     fn try_simd_karatsuba<C: ExtConfig<BaseField = Self>>(
         _a0: &[Self],
@@ -838,30 +622,6 @@ pub trait SimdKaratsubaHook: ConstField {
     /// the left lanes `a0`, `a1`, `a2` and the right lanes `b0`, `b1`, `b2`.
     /// Returning `None` asks the generic SoA path to compose the operation
     /// from base-field batch add, sub, and multiplication hooks instead.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, SimdKaratsubaHook};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<65537>;
-    ///     const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
-    /// }
-    ///
-    /// let a0 = vec![Fp::<65537>::new(1), Fp::<65537>::new(2)];
-    /// let a1 = vec![Fp::<65537>::new(3), Fp::<65537>::new(4)];
-    /// let a2 = vec![Fp::<65537>::new(5), Fp::<65537>::new(6)];
-    /// let b0 = vec![Fp::<65537>::new(7), Fp::<65537>::new(8)];
-    /// let b1 = vec![Fp::<65537>::new(9), Fp::<65537>::new(10)];
-    /// let b2 = vec![Fp::<65537>::new(11), Fp::<65537>::new(12)];
-    ///
-    /// let _ = <Fp<65537> as SimdKaratsubaHook>::try_simd_cubic_karatsuba::<Cfg>(
-    ///     &a0, &a1, &a2, &b0, &b1, &b2,
-    /// );
-    /// ```
     #[inline]
     #[allow(clippy::too_many_arguments)]
     fn try_simd_cubic_karatsuba<C: ExtConfig<BaseField = Self>>(
@@ -1100,19 +860,11 @@ fn fp65537_simd_impl<const P: u64, C: ExtConfig<BaseField = Fp<P>>>(
     None
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::gfp::Fp;
     use proptest::prelude::*;
-
-    // -----------------------------------------------------------------------
-    // Test configs
-    // -----------------------------------------------------------------------
 
     struct CfgBeta3;
     impl ExtConfig for CfgBeta3 {
@@ -1153,10 +905,6 @@ mod tests {
         const NON_RESIDUE: Fp<65537> = Fp::<65537>::new(3);
     }
     type Fq3Big = CubicExt<CfgCubicBeta3>;
-
-    // -----------------------------------------------------------------------
-    // Constructor / invariant tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_new_reports_correct_len() {
@@ -1208,10 +956,6 @@ mod tests {
         let _ = a.batch_add(&b);
     }
 
-    // -----------------------------------------------------------------------
-    // Round-trip AoS↔SoA
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_roundtrip_small_handcrafted() {
         let xs = vec![
@@ -1243,10 +987,6 @@ mod tests {
         assert_eq!(batch.to_quadratic::<CfgNeg1>(), xs);
     }
 
-    // -----------------------------------------------------------------------
-    // batch_mul_quadratic: correctness on hand-computed cases
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_batch_mul_small_handcrafted() {
         // (3 + 2u)·(4 + 5u) over GF(7), β = −1:
@@ -1264,7 +1004,6 @@ mod tests {
 
     #[test]
     fn test_batch_mul_matches_scalar_exhaustive_gf7() {
-        // Exhaustively check every GF(7²) × GF(7²) pair in a single batch.
         let mut a = Vec::new();
         let mut b = Vec::new();
         for a0 in 0..7u64 {
@@ -1306,10 +1045,6 @@ mod tests {
         ]);
         let _ = a.batch_mul_quadratic::<CfgNeg1>(&b);
     }
-
-    // -----------------------------------------------------------------------
-    // batch_add / batch_sub
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_batch_add_matches_scalar() {

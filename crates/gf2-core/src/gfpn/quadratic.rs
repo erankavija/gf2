@@ -3,32 +3,8 @@
 //! [`QuadraticExt<C>`] is a degree-2 extension of any base field that
 //! implements [`ConstField`], parameterized by an [`ExtConfig`] specifying the
 //! non-residue β. Multiplication is Karatsuba with 3 base-field
-//! multiplications (Devegili, O hEigeartaigh, Scott, Dahab, ePrint 2006/471);
-//! inversion is `a⁻¹ = conjugate(a) / norm(a)` with `norm(a) = a0² − β·a1²`.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gfp::Fp;
-//! use gf2_core::gfpn::{ExtConfig, QuadraticExt};
-//! use gf2_core::field::{FiniteField, ConstField};
-//!
-//! struct Fq2Config;
-//! impl ExtConfig for Fq2Config {
-//!     type BaseField = Fp<7>;
-//!     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6); // β = −1 mod 7
-//! }
-//! type Fq2 = QuadraticExt<Fq2Config>;
-//!
-//! let a = Fq2::new(Fp::new(3), Fp::new(5));
-//! assert_eq!(a.c0().value(), 3);
-//! assert_eq!(a.c1().value(), 5);
-//!
-//! // Field axioms hold
-//! assert!(Fq2::zero().is_zero());
-//! assert!(Fq2::one().is_one());
-//! assert!((a * a.inv().unwrap()).is_one());
-//! ```
+//! multiplications (`@/citation/Devegili2006`); inversion is
+//! `a⁻¹ = conjugate(a) / norm(a)` with `norm(a) = a0² − β·a1²`.
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -37,10 +13,6 @@ use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 use crate::field::{ConstField, FiniteField};
 
 use super::ExtConfig;
-
-// ---------------------------------------------------------------------------
-// Wide accumulator
-// ---------------------------------------------------------------------------
 
 /// Wide accumulator for [`QuadraticExt`]: two base-field wide components.
 ///
@@ -165,30 +137,6 @@ impl<W: AddAssign> AddAssign for QuadraticExtWide<W> {
 ///
 /// Parameterized by a config type `C: ExtConfig` that specifies the base field
 /// and non-residue. Two extensions with different configs are distinct types.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gfp::Fp;
-/// use gf2_core::gfpn::{ExtConfig, QuadraticExt};
-/// use gf2_core::field::{FiniteField, ConstField};
-///
-/// struct Fq2Config;
-/// impl ExtConfig for Fq2Config {
-///     type BaseField = Fp<7>;
-///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6); // β = −1
-/// }
-/// type Fq2 = QuadraticExt<Fq2Config>;
-///
-/// let a = Fq2::new(Fp::new(3), Fp::new(5));
-/// let b = Fq2::new(Fp::new(2), Fp::new(4));
-/// let c = a * b;
-///
-/// assert_eq!(a.c0().value(), 3);
-/// assert_eq!(a.c1().value(), 5);
-/// assert!(Fq2::zero().is_zero());
-/// assert!(Fq2::one().is_one());
-/// ```
 pub struct QuadraticExt<C: ExtConfig> {
     c0: C::BaseField,
     c1: C::BaseField,
@@ -242,24 +190,6 @@ impl<C: ExtConfig> QuadraticExt<C> {
     }
 
     /// Returns the conjugate: `c0 − c1·u`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, QuadraticExt};
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
-    /// }
-    ///
-    /// let a = QuadraticExt::<Cfg>::new(Fp::new(3), Fp::new(5));
-    /// let conj = a.conjugate();
-    /// assert_eq!(conj.c0().value(), 3);
-    /// assert_eq!(conj.c1().value(), 2); // −5 mod 7 = 2
-    /// ```
     pub fn conjugate(&self) -> Self {
         Self::new(self.c0, -self.c1)
     }
@@ -267,25 +197,6 @@ impl<C: ExtConfig> QuadraticExt<C> {
     /// Returns the field norm: `c0² − β·c1²` (a base field element).
     ///
     /// The norm is multiplicative: `N(a·b) = N(a)·N(b)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::{ExtConfig, QuadraticExt};
-    /// use gf2_core::field::FiniteField;
-    ///
-    /// struct Cfg;
-    /// impl ExtConfig for Cfg {
-    ///     type BaseField = Fp<7>;
-    ///     const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
-    /// }
-    /// type Fq2 = QuadraticExt<Cfg>;
-    ///
-    /// // N(1 + u) = 1² − (−1)·1² = 1 + 1 = 2
-    /// let a = Fq2::new(Fp::new(1), Fp::new(1));
-    /// assert_eq!(a.norm().value(), 2);
-    /// ```
     pub fn norm(&self) -> C::BaseField {
         let t0 = self.c0 * self.c0;
         let t1 = self.c1 * self.c1;
@@ -300,10 +211,6 @@ impl<C: ExtConfig> QuadraticExt<C> {
         Self::new(value, C::BaseField::zero())
     }
 }
-
-// ---------------------------------------------------------------------------
-// Display and Debug
-// ---------------------------------------------------------------------------
 
 impl<C: ExtConfig> fmt::Display for QuadraticExt<C>
 where
@@ -327,10 +234,6 @@ impl<C: ExtConfig> fmt::Debug for QuadraticExt<C> {
         write!(f, "QuadraticExt({:?}, {:?})", self.c0, self.c1)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Arithmetic operators
-// ---------------------------------------------------------------------------
 
 impl<C: ExtConfig> Add for QuadraticExt<C> {
     type Output = Self;
@@ -395,10 +298,6 @@ impl<C: ExtConfig> Div for QuadraticExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// AddAssign
-// ---------------------------------------------------------------------------
-
 impl<C: ExtConfig> AddAssign for QuadraticExt<C> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
@@ -412,10 +311,6 @@ impl<C: ExtConfig> AddAssign<&Self> for QuadraticExt<C> {
         *self = *self + *rhs;
     }
 }
-
-// ---------------------------------------------------------------------------
-// Reference-forwarding operators (QuadraticExt is Copy, so dereference)
-// ---------------------------------------------------------------------------
 
 impl<C: ExtConfig> Add<&QuadraticExt<C>> for QuadraticExt<C> {
     type Output = QuadraticExt<C>;
@@ -488,10 +383,6 @@ impl<C: ExtConfig> Neg for &QuadraticExt<C> {
         -(*self)
     }
 }
-
-// ---------------------------------------------------------------------------
-// FiniteField implementation
-// ---------------------------------------------------------------------------
 
 impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
     type Characteristic = <C::BaseField as FiniteField>::Characteristic;
@@ -608,10 +499,6 @@ impl<C: ExtConfig> FiniteField for QuadraticExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// ConstField implementation
-// ---------------------------------------------------------------------------
-
 impl<C: ExtConfig> ConstField for QuadraticExt<C> {
     #[inline]
     fn zero() -> Self {
@@ -630,20 +517,12 @@ impl<C: ExtConfig> ConstField for QuadraticExt<C> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::field::axiom_tests::test_const_field_axioms;
     use crate::gfp::Fp;
     use proptest::prelude::*;
-
-    // -----------------------------------------------------------------------
-    // Test config: GF(7²) with β = 6 (= −1 mod 7)
-    // -----------------------------------------------------------------------
 
     struct Fq2Config;
     impl ExtConfig for Fq2Config {
@@ -665,10 +544,6 @@ mod tests {
         test_const_field_axioms(strategy, 7);
     }
 
-    // -----------------------------------------------------------------------
-    // Construction and accessors
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_new_and_accessors() {
         let a = Fq2::new(Fp::new(3), Fp::new(5));
@@ -684,13 +559,8 @@ mod tests {
         assert!(!Fq2::one().is_zero());
     }
 
-    // -----------------------------------------------------------------------
-    // Embedding
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_embedding() {
-        // from_base embeds base field element as (k, 0)
         // Note: generic From<C::BaseField> cannot be implemented due to
         // coherence conflict with blanket From<T> for T.
         for k in 0..7u64 {
@@ -698,10 +568,6 @@ mod tests {
             assert_eq!(embedded, Fq2::new(Fp::new(k), Fp::new(0)));
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Display and Debug
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_display() {
@@ -725,10 +591,6 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Extension degree, order, characteristic
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_extension_degree() {
         assert_eq!(Fq2::one().extension_degree(), 2);
@@ -743,10 +605,6 @@ mod tests {
     fn test_characteristic() {
         assert_eq!(Fq2::one().characteristic(), 7u64);
     }
-
-    // -----------------------------------------------------------------------
-    // Conjugate and norm
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_conjugate() {
@@ -782,10 +640,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Known value tests (hand-computed for GF(7²) with β = −1)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_known_u_squared_is_beta() {
         // u² = β = 6 = −1 mod 7
@@ -813,10 +667,6 @@ mod tests {
         assert_eq!(c.c0().value(), 2);
         assert_eq!(c.c1().value(), 2);
     }
-
-    // -----------------------------------------------------------------------
-    // Exhaustive multiplication cross-check (all 49 × 49 pairs)
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_karatsuba_matches_naive_exhaustive() {
@@ -849,10 +699,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Exhaustive inversion round-trip (all 48 non-zero elements)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_inversion_roundtrip_exhaustive() {
         let one = Fq2::one();
@@ -868,10 +714,6 @@ mod tests {
             }
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Reference operators
-    // -----------------------------------------------------------------------
 
     #[test]
     #[allow(clippy::op_ref)]
@@ -902,19 +744,13 @@ mod tests {
         assert_eq!(b.c0().value(), 2); // b still valid
     }
 
-    // -----------------------------------------------------------------------
-    // Size: no runtime overhead
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_size_of() {
         assert_eq!(std::mem::size_of::<Fq2>(), 2 * std::mem::size_of::<Fp<7>>());
     }
 
-    /// Wide is a real two-component accumulator, not an alias for `Self`.
     #[test]
     fn test_wide_type_is_not_self() {
-        // Same memory footprint as two base-field Wide values.
         assert_eq!(
             std::mem::size_of::<<Fq2 as FiniteField>::Wide>(),
             2 * std::mem::size_of::<<Fp<7> as FiniteField>::Wide>(),
@@ -933,8 +769,6 @@ mod tests {
         assert_eq!(k, base);
     }
 
-    /// For a large enough prime, `max_unreduced_additions()` is finite (not
-    /// `usize::MAX`).
     #[test]
     fn test_max_unreduced_additions_finite_for_large_prime() {
         // GF(Mersenne61²) with β = 2.
@@ -956,7 +790,6 @@ mod tests {
         assert!(k >= 1);
     }
 
-    /// `reduce_wide(to_wide(a)) == a` for all 49 elements of GF(7²).
     #[test]
     fn test_wide_roundtrip_exhaustive() {
         for c0 in 0..7u64 {
@@ -969,7 +802,6 @@ mod tests {
         }
     }
 
-    /// `reduce_wide(mul_to_wide(a, b)) == a * b` for all 49×49 pairs.
     #[test]
     fn test_mul_to_wide_consistency_exhaustive() {
         for a0 in 0..7u64 {
@@ -1025,11 +857,8 @@ mod tests {
         );
     }
 
-    /// Dot-product accumulation: N products summed in wide, reduced once,
-    /// matches element-wise multiply-and-add.
     #[test]
     fn test_dot_product_accumulation_proptest() {
-        // Generate ≥200 cases of a random-length dot product (1..=32 terms).
         let mut runner =
             proptest::test_runner::TestRunner::new(proptest::test_runner::Config::with_cases(200));
         let strategy = proptest::collection::vec((0..7u64, 0..7u64, 0..7u64, 0..7u64), 1..=32);
@@ -1050,7 +879,6 @@ mod tests {
             .expect("dot-product accumulation must match element-wise");
     }
 
-    /// `QuadraticExtWide`-level Add and AddAssign are component-wise.
     #[test]
     fn test_wide_add_and_add_assign() {
         let w1 = <Fq2 as FiniteField>::Wide::new(10u128, 20u128);
@@ -1065,7 +893,6 @@ mod tests {
         assert_eq!(*w.c1(), 22u128);
     }
 
-    /// `QuadraticExtWide` Debug output is informative and not `Self`-typed.
     #[test]
     fn test_wide_debug_format() {
         let w = <Fq2 as FiniteField>::Wide::new(10u128, 20u128);
