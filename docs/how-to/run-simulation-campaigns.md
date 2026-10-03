@@ -111,9 +111,12 @@ cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
 It writes `checkpoints/snr_<index>.json` under `--output-dir` at each SNR
 boundary and every `--heartbeat-frames` frames within a point. SIGINT or
 SIGTERM flushes the in-progress checkpoint and ends the run. Repeat the same
-command with `--resume` to continue; the checkpoints carry a BLAKE3 hash of the
-configuration, and a resume under different arguments fails with a
-configuration-hash mismatch. A run without `--resume` deletes existing
+command with `--resume` to continue. The checkpoints carry a BLAKE3 hash of
+`--seed`, `--esn0-range`, `--target-errors`, `--max-frames`,
+`--heartbeat-frames`, `--gpu`, `--strict-gpu` and the host's worker count, and a
+resume that changes any of them fails with a configuration-hash mismatch. The
+hash excludes `--rate`, `--modulation`, `--decoder` and `--demap`; a resume
+that changes them reuses the existing checkpoints. A run without `--resume` deletes existing
 checkpoints. The deterministic CSV columns of a resumed run are byte-identical
 to an uninterrupted run at the same seed
 ([`campaign_cli_flags.rs`](../../crates/gf2-sim/tests/campaign_cli_flags.rs)).

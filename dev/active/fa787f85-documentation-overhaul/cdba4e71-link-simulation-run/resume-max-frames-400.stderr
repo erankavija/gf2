@@ -1,0 +1,4 @@
+Campaign (gf2-sim pipeline): 1/2 16qam | decoder=SumProduct demap=ExactLogMap | gpu=false strict_gpu=false
+SNR points (Es/N0): ["5.90", "6.00", "6.10", "6.20"]
+Running via Scheduler::run_sweep_checkpointed (parallelism=24, checkpoint=dvb_r12_16qam/checkpoints)
+Error: Checkpointed sweep failed: checkpoint load failed: BuildError(ConfigHashMismatch { loaded: "blake3:4f2ba1ae9252c550b5373b4cbf7b9a23cb873721aa797f70b65aa46d262e5b7e", expected: "blake3:c51099f99c7ac9d284cc244a385a67df85c4c3edfbc86468676a7d300a7a2c2b" })
