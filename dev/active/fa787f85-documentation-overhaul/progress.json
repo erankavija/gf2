@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 7,
+ "current_wave": 8,
  "waves": [
   {
    "wave_number": 1,
@@ -372,7 +372,7 @@
      "short_id": "b0b1faf5",
      "title": "Locate the shared producing manifest by identity in survey scripts",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     }
    ]
   },
@@ -384,7 +384,7 @@
      "short_id": "62f0d0e6",
      "title": "Record the pre-sweep comment census",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "c84ac71a-b9e8-4b10-9ebb-b433f7077dae",
@@ -468,7 +468,14 @@
      "short_id": "62ce5927",
      "title": "Campaign declaration lookup rejects byte-identical archived copies",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
+    },
+    {
+     "id": "96cea1b9",
+     "short_id": "96cea1b9",
+     "title": "Reconcile the migration manifest with the archived field-dispatch epic",
+     "classification": "implementation",
+     "status": "pending"
     }
    ]
   },
@@ -494,7 +501,7 @@
      "short_id": "3aef9e33",
      "title": "Tersify comments in the gf2-algebra packed-field module",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "3da13f39-225c-4615-9f68-f1daa76af90b",
@@ -529,14 +536,14 @@
      "short_id": "67048b47",
      "title": "Link unlinked owned artifacts to their issues",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "67b5d1d8-b6e2-4687-ae5f-fd36bcee334a",
      "short_id": "67b5d1d8",
      "title": "Tersify comments in the gf2-core GF(2^m) module",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "72768e37-a609-427c-a3e6-8a4efcf4c8b8",
@@ -585,7 +592,7 @@
      "short_id": "9f47bb94",
      "title": "Tersify comments in the gf2-kernels-simd x86 module",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "aa0558c1-8143-44b9-a2ca-27282d1cf015",
@@ -627,7 +634,7 @@
      "short_id": "ee2b0c0c",
      "title": "Tersify comments in the gf2-coding LDPC module",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "f2064e90-ad75-4253-8402-41d63d38af41",
@@ -648,7 +655,7 @@
      "short_id": "f46046f0",
      "title": "Tersify comments in gf2-sim executor and campaign modules",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     }
    ]
   },
@@ -1062,6 +1069,10 @@
    "id": "63cc5518",
    "epic": "b4b4b9ee",
    "reason": "producing-closure check rejects identical protocol copies (found by 62ce5927)"
+  },
+  {
+   "id": "96cea1b9",
+   "reason": "migration checker fails: 6dc81018 archive moved pending manifest sources"
   }
  ],
  "escalations": [
@@ -1164,6 +1175,11 @@
    "issue": "session-4",
    "question": "Main dirty from an external archive of 6dc81018; commit ab6b6b09b swept in its tracker state.",
    "resolution": "Owner committed the archive moves (66717006f) and said to continue (2026-10-03)."
+  },
+  {
+   "issue": "67048b47",
+   "question": "REQ-03 (no new conformance findings) conflicts with REQ-01/02 (35 new findings: multi-owner, misplaced); directory rows cannot be linked.",
+   "resolution": "Owner amended REQ-01 (file rows only) and REQ-03 (validation clean; conformance findings limited to multi-owner and misplaced files); DEC-01 (2026-10-03)."
   }
  ],
  "rework_counts": {
