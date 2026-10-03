@@ -1,8 +1,7 @@
 //! Sealed trait for integer types used as GF(2^m) element representations.
 //!
-//! [`UintExt`] abstracts over unsigned integer types (`u8`, `u16`, `u32`, `u64`, `u128`),
-//! enabling generic GF(2^m) arithmetic that works at any width while keeping the common
-//! `u64` path zero-cost via monomorphization.
+//! [`UintExt`] abstracts over the unsigned integer types `u8`, `u16`, `u32`,
+//! `u64` and `u128`, so GF(2^m) arithmetic is generic over the element width.
 
 use std::fmt::{Binary, Debug, Display};
 use std::hash::Hash;
@@ -170,8 +169,8 @@ mod tests {
     #[test]
     fn test_bit() {
         assert!(10u64.bit(1)); // 1010 -> bit 1 is set
-        assert!(!10u64.bit(2)); // bit 2 is not set
-        assert!(10u64.bit(3)); // bit 3 is set
+        assert!(!10u64.bit(2));
+        assert!(10u64.bit(3));
     }
 
     #[test]

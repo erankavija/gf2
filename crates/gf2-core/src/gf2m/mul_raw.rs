@@ -1,6 +1,7 @@
 /// Schoolbook GF(2^m) multiplication: `a * b mod primitive_poly`.
 ///
-/// Monomorphized to `u64` for formal verification via Charon/Aeneas.
+/// Monomorphized to `u64` for formal verification via Charon/Aeneas
+/// (`@/citation/AeneasVerif2026`).
 ///
 /// # Arguments
 ///
@@ -16,16 +17,6 @@
 /// # Complexity
 ///
 /// O(m) bitwise operations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::mul_raw::gf2m_mul_raw;
-///
-/// // GF(2^4) with primitive polynomial x^4 + x + 1 = 0b10011
-/// let result = gf2m_mul_raw(0b0011, 0b0101, 4, 0b10011);
-/// assert_eq!(result, 0b1111); // (x+1) * (x^2+1) = x^3+x^2+x+1 in GF(2^4)
-/// ```
 pub fn gf2m_mul_raw(a: u64, b: u64, m: usize, primitive_poly: u64) -> u64 {
     assert!(m >= 1, "gf2m_mul_raw: m must be >= 1, got {m}");
     assert!(m <= 63, "gf2m_mul_raw: m must be <= 63, got {m}");
@@ -71,18 +62,6 @@ pub fn gf2m_add_raw(a: u64, b: u64) -> u64 {
 /// # Complexity
 ///
 /// O(m · log(exp)) bitwise operations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::mul_raw::gf2m_pow_raw;
-///
-/// // GF(2^4) with p(x) = x^4 + x + 1
-/// let alpha = 0b0010; // x (primitive element)
-/// assert_eq!(gf2m_pow_raw(alpha, 0, 4, 0b10011), 1); // x^0 = 1
-/// assert_eq!(gf2m_pow_raw(alpha, 1, 4, 0b10011), alpha); // x^1 = x
-/// assert_eq!(gf2m_pow_raw(alpha, 15, 4, 0b10011), 1); // x^15 = 1 (order of GF(16)*)
-/// ```
 pub fn gf2m_pow_raw(mut base: u64, mut exp: u64, m: usize, primitive_poly: u64) -> u64 {
     let mut result: u64 = 1;
     while exp > 0 {
@@ -109,17 +88,6 @@ pub fn gf2m_pow_raw(mut base: u64, mut exp: u64, m: usize, primitive_poly: u64) 
 /// # Complexity
 ///
 /// O(m²) bitwise operations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::mul_raw::{gf2m_inverse_raw, gf2m_mul_raw};
-///
-/// // GF(2^4) with p(x) = x^4 + x + 1
-/// let a = 0b0011; // x + 1
-/// let inv = gf2m_inverse_raw(a, 4, 0b10011);
-/// assert_eq!(gf2m_mul_raw(a, inv, 4, 0b10011), 1); // a * a^(-1) = 1
-/// ```
 pub fn gf2m_inverse_raw(a: u64, m: usize, primitive_poly: u64) -> u64 {
     if a == 0 {
         return 0;

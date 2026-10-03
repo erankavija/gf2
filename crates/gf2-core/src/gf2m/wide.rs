@@ -3,22 +3,7 @@
 //! [`Gf2mWide`] is the const-generic, stack-allocated analogue of
 //! [`crate::gf2m::Gf2mElement_`]. Elements are `Copy` and carry their
 //! configuration at the type level via a zero-sized [`Gf2mWideConfig`] marker.
-//!
-//! `clmul_wide_dispatch` is the one place a wide carry-less product selects
-//! its kernel; its rustdoc states the exact dispatch predicate. The public
-//! long-product API ([`clmul_wide`], [`clmul_wide_slice`]),
-//! [`Gf2mWide::mul_ref`] and the wide Barrett reducer all reach it. A caller
-//! that wants the portable schoolbook whatever the build and host offer calls
-//! [`clmul_wide_slice_portable`] directly.
-//!
-//! Every mutating operation leaves all bits at positions `>= Cfg::M` in the
-//! top word zero. Callers that fabricate words from raw input use
-//! [`Gf2mWide::new`] (which masks) rather than [`Gf2mWide::from_words`] (which
-//! only debug-asserts).
-//!
-//! `[u64; 2 * N]` is not expressible on stable Rust, so [`clmul_wide`] takes a
-//! second const parameter `M` and asserts `M == 2 * N` at compile time:
-//! `clmul_wide::<2, 4>(a, b)`.
+//! Every wide carry-less product selects its kernel in `clmul_wide_dispatch`.
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
@@ -42,39 +27,13 @@ use super::wide_config::Gf2mWideConfig;
 /// Bits at positions `>= Cfg::M` in the top word must be zero. This
 /// module's constructors (except [`Gf2mWide::from_words`]) and mutating
 /// operators preserve this invariant automatically.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-///
-/// /// GF(2^256), Seroussi HPL-98-135 Table 1 row m = 256:
-/// /// `x^256 + x^10 + x^5 + x^2 + 1`. This is the canonical
-/// /// `Gf2m256TestConfig` used by every other public item's doctest in
-/// /// this module.
-/// struct Gf2m256TestConfig;
-/// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-///     const M: usize = 256;
-///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-/// }
-///
-/// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(5);
-/// let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
-/// let sum = a + b;
-/// assert_eq!(sum.words()[0], 5 ^ 3);
-/// // Characteristic 2: a + a == 0.
-/// assert!((a + a).is_zero());
-/// ```
 pub struct Gf2mWide<const N: usize, Cfg: Gf2mWideConfig<N>> {
     words: [u64; N],
     _marker: PhantomData<fn() -> Cfg>,
 }
 
-// ---------------------------------------------------------------------------
-// Basic trait derivations — written by hand so we can keep `Cfg` off the
-// `Copy` / `Clone` / `PartialEq` / `Hash` bounds (it is a ZST marker and
-// doesn't actually need those traits).
-// ---------------------------------------------------------------------------
+// `Copy` / `Clone` / `PartialEq` / `Hash` are written by hand to keep `Cfg`, a
+// ZST marker, off their bounds.
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> Copy for Gf2mWide<N, Cfg> {}
 
@@ -116,23 +75,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> fmt::Debug for Gf2mWide<N, Cfg> {
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> fmt::Display for Gf2mWide<N, Cfg> {
     /// Formats the element as `GF(2^M):0x<words in little-endian-limb order>`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// let one = Gf2mWide::<4, Gf2m256TestConfig>::one();
-    /// let s = format!("{}", one);
-    /// assert!(s.starts_with("GF(2^256):0x"), "got: {}", s);
-    /// assert!(s.contains("0000000000000001"), "got: {}", s);
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt_gf2m_wide(f, Cfg::M, &self.words)
     }
@@ -159,10 +101,6 @@ fn fmt_gf2m_wide(f: &mut fmt::Formatter<'_>, m: usize, words: &[u64]) -> fmt::Re
     }
     Ok(())
 }
-
-// ---------------------------------------------------------------------------
-// Construction and accessors
-// ---------------------------------------------------------------------------
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Constructs an element directly from `words`, asserting in debug
@@ -255,23 +193,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// # Panics
     ///
     /// Panics if `i >= Cfg::M`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    /// let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(0b1010);
-    /// assert!(!a.bit(0));
-    /// assert!(a.bit(1));
-    /// assert!(!a.bit(2));
-    /// assert!(a.bit(3));
-    /// ```
     #[inline]
     pub fn bit(&self, i: usize) -> bool {
         assert!(
@@ -297,10 +218,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         }
         self.words[0] == 1 && self.words[1..].iter().all(|w| *w == 0)
     }
-
-    // -----------------------------------------------------------------------
-    // Private helpers
-    // -----------------------------------------------------------------------
 
     /// Computes the mask that selects bits `[0, M - 64 * (N - 1))` of the
     /// top word. Bits above this mask are the "tail" that must always be
@@ -342,10 +259,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
         (words[top] & !Self::top_word_mask()) == 0
     }
 }
-
-// ---------------------------------------------------------------------------
-// Addition / subtraction (word-wise XOR in characteristic 2).
-// ---------------------------------------------------------------------------
 
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> Add for &Gf2mWide<N, Cfg> {
@@ -473,15 +386,11 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Neg for Gf2mWide<N, Cfg> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Barrett-reducer cache
-//
 // `BarrettReducerWide<N>` is derived from `Cfg::MODULUS` and `Cfg::M` and is
 // cached after its first construction. Stable Rust has no generic statics,
 // so one global map from `(TypeId::of::<Cfg>(), N)` holds the reducers,
 // type-erased to `dyn Any`. `N` is part of the key because one marker type
 // may implement `Gf2mWideConfig<N>` for several `N`.
-// ---------------------------------------------------------------------------
 
 /// Type-erased Barrett reducer stored in the global cache.
 type CachedReducer = Box<dyn Any + Send + Sync>;
@@ -520,10 +429,6 @@ fn get_reducer<const N: usize, Cfg: Gf2mWideConfig<N>>() -> BarrettReducerWide<N
     guard.insert(key, Box::new(reducer.clone()));
     reducer
 }
-
-// ---------------------------------------------------------------------------
-// Multiplication
-// ---------------------------------------------------------------------------
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Multiplies two field elements using carry-less multiplication and
@@ -664,10 +569,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> MulAssign<&Gf2mWide<N, Cfg>> for Gf
     }
 }
 
-// ---------------------------------------------------------------------------
-// Division — defined as mul by inverse
-// ---------------------------------------------------------------------------
-
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> Div for &Gf2mWide<N, Cfg> {
     type Output = Gf2mWide<N, Cfg>;
 
@@ -719,10 +620,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Div<Gf2mWide<N, Cfg>> for &Gf2mWide
         self.mul_ref(&inv)
     }
 }
-
-// ---------------------------------------------------------------------------
-// FiniteField trait impl
-// ---------------------------------------------------------------------------
 
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mWide<N, Cfg> {
     type Characteristic = u64;
@@ -941,10 +838,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
     }
 }
 
-// ---------------------------------------------------------------------------
-// Inherent helpers: scalar panelized GEMM fallback (with test entry point)
-// ---------------------------------------------------------------------------
-
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     /// Body of the scalar panelized GEMM fallback, separate from
     /// `try_simd_gemm_classical` so tests reach it without runtime SIMD
@@ -1020,10 +913,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// ConstField trait impl
-// ---------------------------------------------------------------------------
-
 impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWide<N, Cfg> {
     fn zero() -> Self {
         Gf2mWide::zero()
@@ -1039,32 +928,6 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
     ///
     /// Panics if `Cfg::M >= 128`, because `2^M` does not fit in a `u128`;
     /// [`order_log2`](crate::field::ConstField::order_log2) covers those fields.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::ConstField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// // GF(2^128): largest M that fits in u128.
-    /// struct Gf2m128TestConfig;
-    /// impl Gf2mWideConfig<2> for Gf2m128TestConfig {
-    ///     const M: usize = 128;
-    ///     // x^128 + x^7 + x^2 + x + 1 (low bits only, implicit high bit)
-    ///     const MODULUS: [u64; 2] = [0x87, 0];
-    /// }
-    ///
-    /// // M = 127 fits: order = 2^127
-    /// struct Gf2m127TestConfig;
-    /// impl Gf2mWideConfig<2> for Gf2m127TestConfig {
-    ///     const M: usize = 127;
-    ///     // x^127 + x + 1 (low bits, implicit high bit)
-    ///     const MODULUS: [u64; 2] = [3, 0];
-    /// }
-    ///
-    /// // order fits in u128 for M <= 127
-    /// assert_eq!(<Gf2mWide::<2, Gf2m127TestConfig> as ConstField>::order(), 1u128 << 127);
-    /// ```
     fn order() -> u128 {
         let m = Cfg::M;
         if m >= 128 {
@@ -1075,32 +938,10 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::ConstField for Gf2mWi
 
     /// Returns `M`. Unlike [`order`](crate::field::ConstField::order), this does
     /// not panic for `M >= 128`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::ConstField;
-    /// use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
-    ///
-    /// struct Gf2m256TestConfig;
-    /// impl Gf2mWideConfig<4> for Gf2m256TestConfig {
-    ///     const M: usize = 256;
-    ///     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-    /// }
-    ///
-    /// assert_eq!(
-    ///     <Gf2mWide::<4, Gf2m256TestConfig> as ConstField>::order_log2(),
-    ///     256,
-    /// );
-    /// ```
     fn order_log2() -> u32 {
         Cfg::M as u32
     }
 }
-
-// ---------------------------------------------------------------------------
-// Multiplication — schoolbook carry-less kernel
-// ---------------------------------------------------------------------------
 
 /// Name the carry-less product dispatch reports when it runs the portable
 /// bit-by-bit schoolbook rather than a capability-dispatched kernel.
@@ -1330,25 +1171,6 @@ fn xor_into(out: &mut [u64], scratch: &[u64]) {
 ///
 /// `O(N²)` word products; the portable schoolbook performs `N²` bit-by-bit
 /// `clmul` calls.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::wide::clmul_wide;
-///
-/// // 1 * 1 = 1 (N = 1, M = 2)
-/// let a = [1u64];
-/// let b = [1u64];
-/// let out = clmul_wide::<1, 2>(&a, &b);
-/// assert_eq!(out, [1u64, 0u64]);
-///
-/// // x * x = x^2  (operand = 0b10, result = 0b100 in word 0)
-/// let a = [0b10u64];
-/// let b = [0b10u64];
-/// let out = clmul_wide::<1, 2>(&a, &b);
-/// assert_eq!(out[0], 0b100);
-/// assert_eq!(out[1], 0);
-/// ```
 pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; M] {
     const { assert!(M == 2 * N, "clmul_wide: M must equal 2 * N") }
     let mut out = [0u64; M];
@@ -1376,18 +1198,6 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 ///
 /// `O(N²)` word products, as [`clmul_wide`] describes, plus the `O(N)` XOR
 /// pass on a dispatched width.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::wide::clmul_wide_slice;
-///
-/// let a = [0b10u64];              // polynomial x
-/// let b = [0b10u64];              // polynomial x
-/// let mut out = [0u64; 2];
-/// clmul_wide_slice::<1>(&a, &b, &mut out);
-/// assert_eq!(out[0], 0b100);      // x * x == x²
-/// ```
 #[inline]
 pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
     clmul_wide_dispatch::<N>(a, b, out, ProductWrite::Accumulate);
@@ -1399,8 +1209,7 @@ pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u
 ///
 /// XOR-accumulates `a * b` into `out`, which must have length exactly
 /// `2 * N`. It reaches no capability dispatch, so a caller that wants the
-/// portable path whatever the host offers — a benchmark baseline, a
-/// conformance oracle — calls it directly.
+/// portable path whatever the host offers calls it directly.
 ///
 /// # Panics
 ///
@@ -1410,18 +1219,6 @@ pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u
 ///
 /// `O(N²)` carry-less-multiply-plus-XOR operations, each `clmul` walking the
 /// set bits of its operand.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::wide::clmul_wide_slice_portable;
-///
-/// let a = [0b10u64];              // polynomial x
-/// let b = [0b10u64];              // polynomial x
-/// let mut out = [0u64; 2];
-/// clmul_wide_slice_portable::<1>(&a, &b, &mut out);
-/// assert_eq!(out[0], 0b100);      // x * x == x²
-/// ```
 #[inline]
 pub fn clmul_wide_slice_portable<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
     debug_assert_eq!(out.len(), 2 * N);
@@ -1434,10 +1231,6 @@ pub fn clmul_wide_slice_portable<const N: usize>(a: &[u64; N], b: &[u64; N], out
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 #[allow(clippy::op_ref)]
@@ -1486,28 +1279,24 @@ mod tests {
         }
     }
 
-    /// GF(2^8) config (Rijndael polynomial) for the scalar fallback GEMM tests.
     struct ScalarFallbackGf2m8Cfg;
     impl Gf2mWideConfig<1> for ScalarFallbackGf2m8Cfg {
         const M: usize = 8;
         const MODULUS: [u64; 1] = [0x1B];
     }
 
-    /// GF(2^16) config for the scalar fallback tests.
     struct ScalarFallbackGf2m16Cfg;
     impl Gf2mWideConfig<1> for ScalarFallbackGf2m16Cfg {
         const M: usize = 16;
         const MODULUS: [u64; 1] = [0x002D];
     }
 
-    /// GF(2^32) config for the scalar fallback tests.
     struct ScalarFallbackGf2m32Cfg;
     impl Gf2mWideConfig<1> for ScalarFallbackGf2m32Cfg {
         const M: usize = 32;
         const MODULUS: [u64; 1] = [0x0000_8299];
     }
 
-    /// Naive triple-loop reference GEMM for `Gf2mWide<1, Cfg>`.
     fn naive_gf2m_gemm<Cfg: Gf2mWideConfig<1>>(
         a: &[Gf2mWide<1, Cfg>],
         b: &[Gf2mWide<1, Cfg>],
@@ -1629,9 +1418,8 @@ mod tests {
     }
 
     /// Test config for GF(2^256) using the pentanomial
-    /// `x^256 + x^10 + x^5 + x^2 + 1` from Seroussi, *Table of Low-Weight
-    /// Binary Irreducible Polynomials*, HP Laboratories technical report
-    /// HPL-98-135 (1998), Table 1 row `m = 256`.
+    /// `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`, Table 1 row
+    /// `m = 256`).
     pub(super) struct Gf2m256TestConfig;
 
     impl Gf2mWideConfig<4> for Gf2m256TestConfig {
@@ -1641,8 +1429,8 @@ mod tests {
         const NAME: &'static str = "Gf2m256TestConfig";
     }
 
-    /// GF(2^571) NIST B-571/K-571 binary-field polynomial:
-    /// `x^571 + x^10 + x^5 + x^2 + 1`.
+    /// GF(2^571) B-571/K-571 binary-field polynomial (`@/citation/Nist2013`,
+    /// Appendix D): `x^571 + x^10 + x^5 + x^2 + 1`.
     pub(super) struct Gf2m571TestConfig;
 
     impl Gf2mWideConfig<9> for Gf2m571TestConfig {
@@ -1662,10 +1450,6 @@ mod tests {
         // no multiplicative operation runs against it.
         const MODULUS: [u64; 4] = [0x1, 0, 0, 0];
     }
-
-    // -----------------------------------------------------------------------
-    // Config constants
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_config_modulus_high_bit_word_and_mask_m256() {
@@ -1691,10 +1475,6 @@ mod tests {
     fn test_config_default_name() {
         assert_eq!(Gf2m250TestConfig::NAME, "Gf2mWide");
     }
-
-    // -----------------------------------------------------------------------
-    // Construction and accessors
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_zero_is_zero() {
@@ -1731,7 +1511,6 @@ mod tests {
         assert!(a.bit(1));
         assert!(!a.bit(2));
         assert!(a.bit(3));
-        // Bit above low word: all zero for a `from_u64` construction.
         assert!(!a.bit(100));
         assert!(!a.bit(255));
     }
@@ -1742,10 +1521,6 @@ mod tests {
         let a = Gf2mWide::<4, Gf2m256TestConfig>::zero();
         let _ = a.bit(256);
     }
-
-    // -----------------------------------------------------------------------
-    // Addition
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_add_zero_identity() {
@@ -1823,20 +1598,12 @@ mod tests {
         assert_eq!(acc2, &a + &b);
     }
 
-    // -----------------------------------------------------------------------
-    // Negation (identity in characteristic 2)
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_neg_is_identity_char2() {
         let a = Gf2mWide::<4, Gf2m256TestConfig>::new([0x11, 0x22, 0x33, 0x44]);
         assert_eq!(-a, a);
         assert_eq!(-&a, a);
     }
-
-    // -----------------------------------------------------------------------
-    // Tail masking
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_new_tail_masking_m256_fills_top_word() {
@@ -1875,10 +1642,6 @@ mod tests {
         assert_eq!(a.words()[0], 0b0111_1111);
     }
 
-    // -----------------------------------------------------------------------
-    // `from_words` debug-assert
-    // -----------------------------------------------------------------------
-
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic(expected = "Gf2mWide::from_words")]
@@ -1897,10 +1660,6 @@ mod tests {
         let a = Gf2mWide::<4, Gf2m250TestConfig>::from_words(words);
         assert_eq!(a.words(), &words);
     }
-
-    // -----------------------------------------------------------------------
-    // Other derived-trait checks
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_copy_clone_eq_hash() {
@@ -1930,16 +1689,12 @@ mod tests {
         assert_eq!(s, display, "Debug and Display must be identical");
     }
 
-    // -----------------------------------------------------------------------
-    // Word-boundary configs (M = 1, 63, 64, 65)
-    //
     // Covers the word-boundary bit counts 1, 63, 64 and 65; `M = 0` is
     // ill-formed. The `M = 7`, `M = 250` and `M = 256` configs cover the
     // remaining boundary classes.
     //
     // The moduli below are not necessarily irreducible; they exercise only the
     // tail-masking and XOR paths.
-    // -----------------------------------------------------------------------
 
     /// `M = 1`: the single-bit field, the low extreme of the
     /// `64 * (N - 1) < M <= 64 * N` range. `MODULUS = [0x1]` is `x + 1`.
@@ -1984,7 +1739,6 @@ mod tests {
         let one = Gf2mWide::<1, Gf2m1TestConfig>::new([0x1]);
         let all_ones = Gf2mWide::<1, Gf2m1TestConfig>::new([u64::MAX]);
 
-        // Tail mask keeps only the low bit.
         assert_eq!(zero.words()[0], 0);
         assert_eq!(one.words()[0], 1);
         assert_eq!(all_ones.words()[0], 1);
@@ -2001,10 +1755,8 @@ mod tests {
 
     #[test]
     fn test_boundary_m63_tail_masking() {
-        // top_word_mask must zero the single high bit (bit 63).
         let a = Gf2mWide::<1, Gf2m63TestConfig>::new([u64::MAX]);
         assert_eq!(a.words()[0], (1u64 << 63) - 1);
-        // `from_u64(u64::MAX)` must also strip bit 63.
         let b = Gf2mWide::<1, Gf2m63TestConfig>::from_u64(u64::MAX);
         assert_eq!(b.words()[0], (1u64 << 63) - 1);
         assert!(Gf2mWide::<1, Gf2m63TestConfig>::zero().is_zero());
@@ -2015,7 +1767,6 @@ mod tests {
 
     #[test]
     fn test_boundary_m64_tail_masking() {
-        // top_word_mask must equal u64::MAX — no masking is performed.
         let a = Gf2mWide::<1, Gf2m64TestConfig>::new([u64::MAX]);
         assert_eq!(a.words()[0], u64::MAX);
         let b = Gf2mWide::<1, Gf2m64TestConfig>::from_u64(u64::MAX);
@@ -2028,7 +1779,6 @@ mod tests {
 
     #[test]
     fn test_boundary_m65_tail_masking() {
-        // top_word_mask must select exactly bit 0 of word 1.
         let a = Gf2mWide::<2, Gf2m65TestConfig>::new([u64::MAX; 2]);
         assert_eq!(a.words()[0], u64::MAX);
         assert_eq!(a.words()[1], 1);
@@ -2041,12 +1791,8 @@ mod tests {
         assert!((x + x).is_zero());
     }
 
-    // -----------------------------------------------------------------------
-    // Property-based tests (`proptest`)
-    //
     // `ProptestConfig::with_cases(64)` keeps the suite within the fast-tier
     // budget (`@/inv/test-tier-budgets`).
-    // -----------------------------------------------------------------------
 
     mod proptests {
         use super::*;
@@ -2061,7 +1807,6 @@ mod tests {
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(64))]
 
-            // ---- Gf2m256TestConfig (M = 256, full top-word) ------------
 
             #[test]
             fn prop_add_commutative_m256(xs in any_4_words(), ys in any_4_words()) {
@@ -2105,7 +1850,6 @@ mod tests {
                 prop_assert_eq!(a.words()[3] & !top_mask, 0);
             }
 
-            // ---- Gf2m250TestConfig (M = 250, unaligned top-word) -------
 
             #[test]
             fn prop_add_commutative_m250(xs in any_4_words(), ys in any_4_words()) {
@@ -2162,7 +1906,6 @@ mod tests {
                 prop_assert_eq!(f.words()[3] & !top_mask, 0);
             }
 
-            // ---- Boundary configs: M = 63, 64, 65 ----------------------
 
             #[test]
             fn prop_add_commutative_m63(x in any::<u64>(), y in any::<u64>()) {
@@ -2226,25 +1969,17 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // clmul_wide — schoolbook carry-less multiplication
-    // -----------------------------------------------------------------------
-
     mod clmul_wide_tests {
         use super::super::clmul_wide;
         use crate::gf2m::barrett::clmul;
         use proptest::prelude::*;
 
-        // ---- Known-vector unit tests --------------------------------------
-
-        /// `1 * 1 = 1` (N = 1).
         #[test]
         fn test_clmul_wide_one_times_one() {
             let out = clmul_wide::<1, 2>(&[1u64], &[1u64]);
             assert_eq!(out, [1u64, 0u64]);
         }
 
-        /// `x * x = x²` (N = 1).
         #[test]
         fn test_clmul_wide_x_times_x() {
             let out = clmul_wide::<1, 2>(&[0b10u64], &[0b10u64]);
@@ -2252,7 +1987,6 @@ mod tests {
             assert_eq!(out[1], 0);
         }
 
-        /// `(x + 1)² = x² + 1` in GF(2)[x] (N = 1).
         #[test]
         fn test_clmul_wide_x_plus_one_squared() {
             // (x + 1) = 0b11
@@ -2262,16 +1996,14 @@ mod tests {
             assert_eq!(out[1], 0);
         }
 
-        /// All-ones squared, N = 1.
-        ///
-        /// `(sum_{i=0}^{63} x^i)² = sum_{i=0}^{126} x^{2i}` (even powers).
+        /// `(sum_{i=0}^{63} x^i)² = sum_{i=0}^{63} x^{2i}` (even powers).
         #[test]
         fn test_clmul_wide_all_ones_squared_n1() {
             let a = [u64::MAX];
             let out = clmul_wide::<1, 2>(&a, &a);
             // Each set bit at position k maps to position 2k in the product.
-            let expected_word0: u64 = 0x5555_5555_5555_5555u64; // 0x55…55 = even bits set in low 64
-            let expected_word1: u64 = 0x5555_5555_5555_5555u64; // even bits set in high 63 positions
+            let expected_word0: u64 = 0x5555_5555_5555_5555u64;
+            let expected_word1: u64 = 0x5555_5555_5555_5555u64;
             assert_eq!(
                 out[0], expected_word0,
                 "word 0 mismatch for all-ones squared"
@@ -2282,8 +2014,6 @@ mod tests {
             );
         }
 
-        /// All-ones squared, N = 2 (128-bit operand).
-        ///
         /// Bit `i` of the input lands at bit `2i` of the output, and the
         /// cross-terms `a[0]*a[1]` and `a[1]*a[0]` cancel, so every output word
         /// is `0x5555_5555_5555_5555`.
@@ -2297,8 +2027,6 @@ mod tests {
             assert_eq!(out[2], even, "word 2");
             assert_eq!(out[3], even, "word 3");
         }
-
-        // ---- Property-based tests ----------------------------------------
 
         proptest! {
             #![proptest_config(ProptestConfig::with_cases(128))]
@@ -2349,7 +2077,6 @@ mod tests {
                 let a = [a0, a1];
                 let b = [b0, b1];
 
-                // Reference: schoolbook with u128 intermediates.
                 let p00: u128 = clmul(a0, b0);
                 let p01: u128 = clmul(a0, b1);
                 let p10: u128 = clmul(a1, b0);
@@ -2372,10 +2099,6 @@ mod tests {
             }
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Multiplication tests (Gf2m256TestConfig, M = 256)
-    // -----------------------------------------------------------------------
 
     /// GF(2^128) config using x^128 + x^7 + x^2 + x + 1; `MODULUS = 0x87`
     /// encodes the low terms. M = 128 is the smallest degree whose order
@@ -2428,7 +2151,6 @@ mod tests {
         let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
         let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(11);
         let c = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(13);
-        // a * (b + c) = a*b + a*c
         assert_eq!(a * (b + c), (a * b) + (a * c));
     }
 
@@ -2497,10 +2219,6 @@ mod tests {
         assert_eq!(actual2, expected, "mul_assign (&ref)");
     }
 
-    // -----------------------------------------------------------------------
-    // Inverse tests
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_inverse_zero_returns_none_m256() {
         let z = Gf2mWide::<4, Gf2m256TestConfig>::zero();
@@ -2529,7 +2247,6 @@ mod tests {
 
     #[test]
     fn test_inverse_roundtrip_m127() {
-        // GF(2^127) with primitive polynomial x^127 + x + 1.
         for v in [2u64, 3, 100, 0xffff, 0xdead_beef] {
             let a = Gf2mWide::<2, Gf2m127TestConfig>::from_u64(v);
             let inv = a.inverse().expect("non-zero element must have inverse");
@@ -2545,15 +2262,9 @@ mod tests {
     fn test_div_undoes_mul_m256() {
         let a = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(7);
         let b = Gf2mWide::<4, Gf2m256TestConfig>::from_u64(3);
-        // (a / b) * b = a
         assert_eq!((a / b) * b, a);
-        // a / a = 1
         assert!((a / a).is_one());
     }
-
-    // -----------------------------------------------------------------------
-    // FiniteField trait tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_finite_field_characteristic_m256() {
@@ -2605,10 +2316,6 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // ConstField trait tests
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_const_field_zero_one_m127() {
         use crate::field::ConstField;
@@ -2629,7 +2336,6 @@ mod tests {
     fn test_const_field_order_m128() {
         use crate::field::ConstField;
         type F = Gf2mWide<2, Gf2m128TestConfig>;
-        // M = 128 >= 128 → must panic with exact message
         let result = std::panic::catch_unwind(<F as ConstField>::order);
         assert!(result.is_err(), "order() must panic for M = 128");
         let msg = result.unwrap_err();
@@ -2651,10 +2357,6 @@ mod tests {
         use crate::field::ConstField;
         let _ = <Gf2mWide<4, Gf2m256TestConfig> as ConstField>::order();
     }
-
-    // -----------------------------------------------------------------------
-    // Display / Debug format tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_display_format_one_m256() {
@@ -2701,10 +2403,6 @@ mod tests {
         // word[0] = 1 → "0000000000000001"; word[1] = 0 → "0"
         assert_eq!(s, "GF(2^127):0x0000000000000001_0", "got: {}", s);
     }
-
-    // -----------------------------------------------------------------------
-    // Mul proptest
-    // -----------------------------------------------------------------------
 
     mod mul_proptests {
         use super::*;

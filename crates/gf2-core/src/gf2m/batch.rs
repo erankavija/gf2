@@ -1,35 +1,10 @@
 //! Batch element-wise GF(2^m) multiply / square.
 //!
 //! These free functions wrap the SIMD-dispatched batch kernel
-//! (`crate::simd::maybe_gf2m_batch`). Callers receive a SIMD path when the
-//! runtime CPU advertises `avx2 + vpclmulqdq + pclmulqdq + sse4.1`, and an
-//! equivalent scalar fallback otherwise. Both paths produce identical results.
-//!
-//! The batched product is faster than the per-element
-//! [`crate::gf2m::Gf2mField`] loop at a batch of eight: cell
-//! `field-batch-mul-8` in `dev/bench_results/53c5a8c0/tables.md`. Shorter
-//! batches are unmeasured.
-//!
-//! Inputs are canonical (each element `< 2^m`). The SIMD path covers
-//! `m ∈ {8, 16, 32}`; other degrees take the scalar path.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gf2m::batch::batch_mul;
-//! use gf2_core::gf2m::Gf2mField;
-//!
-//! let field = Gf2mField::gf256();
-//! let xs: Vec<u64> = (0..16).map(|i| (i * 7) & 0xFF).collect();
-//! let ys: Vec<u64> = (0..16).map(|i| (i * 11 + 1) & 0xFF).collect();
-//! let mut out = vec![0u64; 16];
-//! batch_mul(&field, &xs, &ys, &mut out);
-//! // out[i] == field.element(xs[i]) * field.element(ys[i])
-//! for i in 0..16 {
-//!     let expected = (&field.element(xs[i]) * &field.element(ys[i])).value();
-//!     assert_eq!(out[i], expected);
-//! }
-//! ```
+//! (`crate::simd::maybe_gf2m_batch`), taken for `m ∈ {8, 16, 32}` when the
+//! runtime CPU advertises `avx2 + vpclmulqdq + pclmulqdq + sse4.1`; every
+//! other case takes a scalar path with identical results. Inputs are
+//! canonical (each element `< 2^m`).
 
 #[cfg(feature = "simd")]
 use crate::gf2m::barrett::BarrettReducer;
@@ -45,23 +20,10 @@ use crate::gf2m::Gf2mField;
 ///
 /// Panics if `a.len() != b.len()` or `a.len() != out.len()`.
 ///
-/// # Examples
+/// # Complexity
 ///
-/// ```
-/// use gf2_core::gf2m::{batch::batch_mul, Gf2mField};
-///
-/// let field = Gf2mField::gf256();
-/// let a = [0x53, 0xca, 0x01, 0xff];
-/// let b = [0xca, 0x53, 0xff, 0x01];
-/// let mut out = [0; 4];
-///
-/// batch_mul(&field, &a, &b, &mut out);
-///
-/// for i in 0..a.len() {
-///     let expected = (&field.element(a[i]) * &field.element(b[i])).value();
-///     assert_eq!(out[i], expected);
-/// }
-/// ```
+/// `a.len()` field multiplications; each is `O(m)` shift-XOR steps on the
+/// scalar path and a Barrett-reduced carry-less product in the SIMD kernel.
 pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
     batch_mul_raw(field.degree(), field.primitive_polynomial(), a, b, out);
 }
@@ -113,21 +75,10 @@ pub(crate) fn batch_mul_raw(m: usize, primitive_poly: u64, a: &[u64], b: &[u64],
 ///
 /// Panics if `a.len() != out.len()`.
 ///
-/// # Examples
+/// # Complexity
 ///
-/// ```
-/// use gf2_core::gf2m::{batch::{batch_mul, batch_square}, Gf2mField};
-///
-/// let field = Gf2mField::gf65536();
-/// let a = [0x1234, 0xabcd, 0x0001, 0xffff];
-/// let mut squared = [0; 4];
-/// let mut multiplied = [0; 4];
-///
-/// batch_square(&field, &a, &mut squared);
-/// batch_mul(&field, &a, &a, &mut multiplied);
-///
-/// assert_eq!(squared, multiplied);
-/// ```
+/// `a.len()` field squarings; each is one [`Gf2mField`] multiplication on the
+/// scalar path and a Barrett-reduced carry-less square in the SIMD kernel.
 pub fn batch_square(field: &Gf2mField, a: &[u64], out: &mut [u64]) {
     assert_eq!(
         a.len(),

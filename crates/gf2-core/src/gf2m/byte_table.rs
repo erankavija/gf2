@@ -1,20 +1,14 @@
 //! Cached GF(2^8) byte product tables and the region kernel that reads them.
 //!
 //! One table holds the product of every byte pair under one degree-8
-//! reduction polynomial, so multiplying by a reused coefficient is one indexed
-//! load. [`gf256_table_dispatch`] is the one function that selects between the
+//! reduction polynomial, keyed by that polynomial's low eight bits.
+//! [`gf256_table_dispatch`] is the one function that selects between the
 //! table lane and the consumer's scalar element loop.
 //!
-//! The cache key is the low eight bits of the reduction polynomial: a degree-8
-//! modulus is eight low bits plus an implicit leading one, so the key is
-//! collision-free over every field a table can serve.
-//!
-//! One table occupies 65536 bytes. The registry holds one lazily built table
-//! per distinct key used, at most 16 MiB, and never evicts.
-//!
-//! A table's contents are a function of its key alone and it holds no interior
-//! mutability, so identical inputs give identical results across worker
-//! counts, scheduling and lane switches.
+//! A table occupies 65536 bytes; the registry holds one per key used, at most
+//! 16 MiB, and never evicts. A table's contents are a function of its key
+//! alone, so results are identical across worker counts, scheduling and lane
+//! switches.
 
 use std::sync::OnceLock;
 
@@ -264,10 +258,6 @@ pub(crate) fn gf256_table_dispatch(
         None
     }
 }
-
-// ---------------------------------------------------------------------------
-// Lane witness, build counter and the test-only force switch
-// ---------------------------------------------------------------------------
 
 /// Records the lane the most recent GF(2^8) table dispatch selected.
 ///
