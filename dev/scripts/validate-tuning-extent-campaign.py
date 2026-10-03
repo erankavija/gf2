@@ -441,17 +441,20 @@ def relative_path(value: Any, where: str) -> str:
 def locate_declaration(issue: str, root: Path) -> str:
     """The `root`-relative path of the one `DECLARATION_FILE` naming `issue`.
 
-    Candidates are the files git lists as tracked or untracked and not ignored;
-    the driver's `locate_campaign_declaration` applies the same rule.
+    Candidates are the files git lists as tracked or untracked and not ignored.
+    Byte-identical copies are one declaration, named by its lexicographically
+    first path; the driver's `locate_campaign_declaration` applies the same rule.
     """
     listing = git_output(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard",
                          "--", f":(glob)**/{DECLARATION_FILE}")
-    matches = sorted({candidate for candidate in listing.split("\0") if candidate
-                      and (root / candidate).is_file()
-                      and load_json(root / candidate, canonical=False).get("issue") == issue})
+    matches: dict[bytes, str] = {}
+    for candidate in sorted({path for path in listing.split("\0") if path}):
+        if ((root / candidate).is_file()
+                and load_json(root / candidate, canonical=False).get("issue") == issue):
+            matches.setdefault((root / candidate).read_bytes(), candidate)
     require(len(matches) == 1,
             f"{len(matches)} campaign declarations name issue {issue}; exactly one must")
-    return matches[0]
+    return next(iter(matches.values()))
 
 
 def recorded_declaration(declaration: Any, identities: Any, where: str) -> tuple[str, str]:
@@ -4657,18 +4660,23 @@ def launcher_run_id_self_test() -> None:
 
 
 def declaration_location_self_test() -> None:
-    """A declaration is found wherever it lies; an issue needs exactly one."""
+    """A declaration is found wherever it lies; an issue needs exactly one content."""
     with tempfile.TemporaryDirectory(prefix="gf2-validator-declaration-", dir="/tmp") as temporary:
         root = Path(temporary)
         git_output(root, "init", "-q")
         (root / ".gitignore").write_text("ignored/\n", encoding="utf-8")
-        for directory, issue in [("relocated/x", "0badc0de"), ("ignored", "0badc0de"),
-                                 ("a", "12345678"), ("b", "12345678")]:
+        for directory, issue, tail in [("relocated/x", "0badc0de", ""),
+                                       ("ignored", "0badc0de", "\n"),
+                                       ("a", "12345678", ""), ("a/copy", "12345678", ""),
+                                       ("b", "12345678", "\n"),
+                                       ("copies/y", "cafef00d", ""), ("copies/x", "cafef00d", "")]:
             (root / directory).mkdir(parents=True)
-            (root / directory / DECLARATION_FILE).write_text(json.dumps({"issue": issue}),
-                                                             encoding="utf-8")
+            (root / directory / DECLARATION_FILE).write_text(
+                json.dumps({"issue": issue}) + tail, encoding="utf-8")
         require(locate_declaration("0badc0de", root) == f"relocated/x/{DECLARATION_FILE}",
                 "relocated declaration was not located")
+        require(locate_declaration("cafef00d", root) == f"copies/x/{DECLARATION_FILE}",
+                "byte-identical copies were not located as one declaration")
         must_reject(lambda: locate_declaration("12345678", root), "ambiguous declaration")
         must_reject(lambda: locate_declaration("feedface", root), "absent declaration")
     declaration = load_declaration("gf2-dbd8787d-19700101t000000z-1")

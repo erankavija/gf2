@@ -64,13 +64,14 @@ pub const DECLARATION_FILE: &str = "campaign-declaration.json";
 
 /// The `root`-relative path of the one [`DECLARATION_FILE`] whose `issue`
 /// field is `issue`, wherever it lies below `root` among the files
-/// [`crate::repository::listed_files`] reports. The launcher and the
-/// independent validator apply the same rule.
+/// [`crate::repository::listed_files`] reports. Byte-identical copies are
+/// one declaration, named by its lexicographically first path. The launcher
+/// and the independent validator apply the same rule.
 ///
 /// # Errors
 ///
 /// Fails when git cannot list `root`, a candidate does not decode, or the
-/// number of declarations naming `issue` is not exactly one.
+/// number of distinct declarations naming `issue` is not exactly one.
 pub fn locate_campaign_declaration(root: &Path, issue: &str) -> io::Result<String> {
     let mut matches = Vec::new();
     for candidate in crate::repository::listed_files(root, DECLARATION_FILE)? {
@@ -81,10 +82,10 @@ pub fn locate_campaign_declaration(root: &Path, issue: &str) -> io::Result<Strin
         let value: Value = serde_json::from_slice(&bytes)
             .map_err(|error| invalid(format!("{candidate} does not decode: {error}")))?;
         if value.get("issue").and_then(Value::as_str) == Some(issue) {
-            matches.push(candidate);
+            matches.push((candidate, bytes));
         }
     }
-    let mut matches = matches.into_iter();
+    let mut matches = crate::repository::distinct_contents(matches).into_iter();
     match (matches.next(), matches.next()) {
         (Some(path), None) => Ok(path),
         (None, _) => Err(invalid(format!(
