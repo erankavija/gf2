@@ -2,7 +2,7 @@
 ; ---------------------------------------------------------
 ; Pinned non-generic call sites for the two dispatch tables
 ; (Fp65537Fns, ClmulWide256Fns) that don't survive monomorphisation
-; as standalone lib symbols at HEAD. Source harness:
+; as standalone lib symbols. Source harness:
 ;     crates/gf2-core/examples/lto_opacity_audit.rs
 ; Regenerate with:
 ;   cargo rustc -p gf2-core --release --features simd \

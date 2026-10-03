@@ -1,12 +1,10 @@
 //! Population-count and fused AND-population-count kernels for x86-64.
 //!
-//! [`popcnt_words`] counts word by word with the scalar `POPCNT` instruction
-//! and [`count_ones_words`] is the same loop for a host without it;
+//! [`popcnt_words`] and [`count_ones_words`] count word by word;
 //! [`avx2_popcnt_csa`] and [`avx2_and_popcnt_csa`] fold sixteen vectors
-//! through Harley-Seal carry-save adders before one nibble lookup [Mula2018].
-//! The per-vector nibble-lookup route is `avx2_popcnt` in the sibling `avx2`
-//! module. A buffer shorter than one 512-byte block reaches only the
-//! per-vector remainder of the carry-save kernels.
+//! through Harley-Seal carry-save adders before one nibble lookup
+//! (`@/citation/Mula2018`). A buffer shorter than one 512-byte block reaches
+//! only their per-vector remainder.
 
 use core::arch::x86_64::*;
 
@@ -17,7 +15,7 @@ const WORDS_PER_VECTOR: usize = 4;
 ///
 /// One block produces partial sums of weight 1, 2, 4, 8 and 16; only the
 /// weight-16 register is looked up, so the block costs one lookup and fifteen
-/// carry-save adders instead of sixteen lookups [Mula2018].
+/// carry-save adders instead of sixteen lookups (`@/citation/Mula2018`).
 pub const CSA_BLOCK_VECTORS: usize = 16;
 
 /// Words folded by one Harley-Seal block.
@@ -67,7 +65,8 @@ unsafe fn horizontal_sum(acc: __m256i) -> u64 {
 ///
 /// Returns `(high, low)` where `low` holds the parity of the three inputs and
 /// `high` their majority, so `2 * high + low` equals `a + b + c` bit column by
-/// bit column [Mula2018]. Five Boolean operations over three live inputs.
+/// bit column (`@/citation/Mula2018`). Five Boolean operations over three
+/// live inputs.
 #[inline(always)]
 unsafe fn csa(a: __m256i, b: __m256i, c: __m256i) -> (__m256i, __m256i) {
     let u = _mm256_xor_si256(a, b);

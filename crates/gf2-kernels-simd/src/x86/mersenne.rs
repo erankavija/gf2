@@ -1,23 +1,13 @@
 //! AVX2 batch multiply-reduce kernels for the Mersenne prime
 //! `M31 = 2^31 - 1`, on packed `u32` lanes (8 per 256-bit vector).
 //!
-//! For `a, b ∈ [0, 2^31 - 1)`, the product `a·b` fits in 62 bits. Writing
-//! `p = a·b = hi · 2^31 + lo` with `lo < 2^31`, the identity `2^31 ≡ 1
-//! (mod 2^31 - 1)` gives `a·b ≡ lo + hi (mod 2^31 - 1)`. AVX2 has no
-//! `u32 × u32 → u32` widening multiply, so `_mm256_mul_epu32` multiplies the
-//! even 32-bit lanes into four 64-bit products, the odd lanes follow after
-//! `_mm256_srli_epi64`, and the two reduced vectors are recombined.
-//!
+//! The reduction uses `2^31 ≡ 1 (mod M31)`: `a·b = hi · 2^31 + lo ≡ lo + hi`.
 //! All public functions are `unsafe`: callers must ensure AVX2 is available
-//! at runtime. `crate::mersenne::detect` returns the safe dispatched table.
+//! at runtime; `crate::mersenne::detect` returns the safe dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 
 use core::arch::x86_64::*;
-
-// ---------------------------------------------------------------------------
-// Packed M31 reduction kernel
-// ---------------------------------------------------------------------------
 
 /// Reduces four packed 64-bit products modulo `M31 = 2^31 - 1`, returning
 /// four canonical `u32` values in the low 32 bits of each 64-bit lane.
@@ -78,10 +68,6 @@ pub unsafe fn mersenne31_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
     let odd_shifted = _mm256_slli_epi64(red_odd, 32);
     _mm256_or_si256(red_even, odd_shifted)
 }
-
-// ---------------------------------------------------------------------------
-// Public batch entry point
-// ---------------------------------------------------------------------------
 
 /// Batch lane-wise multiplication for `Fp<2^31 - 1>`.
 ///
@@ -260,10 +246,6 @@ pub unsafe fn mersenne31_batch_dot(a: &[u32], b: &[u32]) -> u32 {
 
     total as u32
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {

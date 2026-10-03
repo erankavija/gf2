@@ -13,10 +13,6 @@
 use core::arch::asm;
 use core::arch::x86_64::*;
 
-// ---------------------------------------------------------------------------
-// Barrett constants
-// ---------------------------------------------------------------------------
-
 /// Computes the 16-bit Barrett constant for an odd prime `p ∈ [3, 255]`.
 ///
 /// Returns `μ = ⌊2¹⁶ / p⌋`. For canonical input `n ∈ [0, 2¹⁶)`,
@@ -31,10 +27,6 @@ pub(crate) const fn barrett_mu_u16(p: u8) -> u16 {
     debug_assert!(p >= 3);
     (65536u32 / p as u32) as u16
 }
-
-// ---------------------------------------------------------------------------
-// Reduction helpers
-// ---------------------------------------------------------------------------
 
 /// Reduces 16 packed `u16` lanes (each `< 2¹⁶`) modulo `p`, returning
 /// 16 packed canonical `u16` lanes (each `< p`).
@@ -75,10 +67,6 @@ unsafe fn canon_after_sub(diff: __m256i, p: u8) -> __m256i {
     _mm256_min_epu16(shifted, minus_p)
 }
 
-// ---------------------------------------------------------------------------
-// Pack/unpack helpers
-// ---------------------------------------------------------------------------
-
 /// Loads 16 packed bytes from `ptr` and zero-extends them into a
 /// 256-bit vector of 16 `u16` lanes.
 #[inline]
@@ -103,10 +91,6 @@ unsafe fn store_u16_to_u8(v: __m256i, ptr: *mut u8) {
     _mm_storeu_si128(ptr as *mut __m128i, _mm256_castsi256_si128(permuted));
 }
 
-// ---------------------------------------------------------------------------
-// Scalar tail helpers
-// ---------------------------------------------------------------------------
-
 #[inline(always)]
 fn scalar_mul_mod(a: u8, b: u8, p: u8) -> u8 {
     ((a as u32 * b as u32) % p as u32) as u8
@@ -130,10 +114,6 @@ fn scalar_sub_mod(a: u8, b: u8, p: u8) -> u8 {
         p - (b - a)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Public batch entry points
-// ---------------------------------------------------------------------------
 
 /// Batch lane-wise multiplication for `Fp<P>` with `P ≤ 251`.
 ///
@@ -172,7 +152,6 @@ pub unsafe fn fp_small_batch_mul(a: &[u8], b: &[u8], p: u8, out: &mut [u8]) {
         o_ptr = o_ptr.add(16);
     }
 
-    // Scalar tail.
     let tail_start = nvec * 16;
     for i in tail_start..n {
         *out.get_unchecked_mut(i) = scalar_mul_mod(*a.get_unchecked(i), *b.get_unchecked(i), p);
@@ -323,7 +302,6 @@ pub unsafe fn fp_small_batch_dot(a: &[u8], b: &[u8], p: u8) -> u8 {
         vec_idx = chunk_end;
     }
 
-    // Scalar tail.
     let tail_start = nvec * 16;
     for i in tail_start..n {
         total =
@@ -413,7 +391,6 @@ pub unsafe fn fp_small_gemm_row_panel(
         }
         j += 4;
     }
-    // Scalar-loop tail for non-multiples of 4 in `n`.
     while j < n {
         let bt_row = bt.as_ptr().add(j * k);
         let mut acc = _mm256_setzero_si256();
@@ -514,11 +491,10 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
     let mut c_ptr = chain_j.as_ptr();
     let mut b_ptr = buf.as_mut_ptr();
     for _ in 0..nvec {
-        // 1. Load 16 chain_j bytes, expand to u16 lanes.
         let cv = _mm256_cvtepu8_epi16(_mm_loadu_si128(c_ptr as *const __m128i));
-        // 2. Lane-wise mul by α. Product fits in u16.
+        // Lane-wise mul by α; the product fits in u16.
         let prod = _mm256_mullo_epi16(cv, alpha_vec);
-        // 3. Barrett-reduce mod p (single step, result in [0, p)).
+        // Barrett-reduce mod p (single step, result in [0, p)).
         let q: __m256i;
         asm!(
             "vpmulhuw {q}, {p}, {m}",
@@ -531,22 +507,19 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
         let r = _mm256_sub_epi16(prod, qp);
         let r_minus_p = _mm256_sub_epi16(r, p_vec);
         let r_canon = _mm256_min_epu16(r, r_minus_p);
-        // 4. Load buf bytes, expand.
         let bv = _mm256_cvtepu8_epi16(_mm_loadu_si128(b_ptr as *const __m128i));
-        // 5. diff = bv - r_canon ∈ [-(p-1), p-1] (signed 16-bit).
+        // diff = bv - r_canon ∈ [-(p-1), p-1] (signed 16-bit).
         let diff = _mm256_sub_epi16(bv, r_canon);
-        // 6. shifted = diff + p ∈ [1, 2p-1].
+        // shifted = diff + p ∈ [1, 2p-1].
         let shifted = _mm256_add_epi16(diff, p_vec);
         let shifted_minus_p = _mm256_sub_epi16(shifted, p_vec);
         let out = _mm256_min_epu16(shifted, shifted_minus_p);
-        // 7. Pack 16 × u16 → 16 × u8 and store.
         store_u16_to_u8(out, b_ptr);
 
         c_ptr = c_ptr.add(16);
         b_ptr = b_ptr.add(16);
     }
 
-    // Scalar tail (at most 15 iterations).
     let tail_start = nvec * 16;
     let p_u32 = p as u32;
     let alpha_u32 = alpha as u32;
@@ -658,7 +631,6 @@ pub unsafe fn fp_small_spmm_row(
         _mm_storeu_si128(out.as_mut_ptr().add(j) as *mut __m128i, lower);
         j += 16;
     }
-    // Scalar tail for j ∈ [j..n).
     while j < n {
         let mut total: u64 = 0;
         for h in 0..nnz {
@@ -674,7 +646,7 @@ pub unsafe fn fp_small_spmm_row(
 
 /// 32-bit-lane Barrett reduction: `r = x mod p` for `x ∈ [0, 2³²)`.
 ///
-/// # Algorithm (Granlund-Möller, one-step branchless)
+/// # Algorithm (`@/citation/MollerGranlund2011`, one-step branchless)
 ///
 /// With `μ = ⌊2³² / p⌋`:
 ///
@@ -715,7 +687,6 @@ pub(crate) unsafe fn barrett_reduce_lane32(x: __m256i, mu_vec: __m256i, p_vec: _
     let q_odd_shifted = _mm256_slli_epi64::<32>(q_odd_hi);
     let q = _mm256_or_si256(q_even_hi, q_odd_shifted);
 
-    // r = x - q * p, with r in [0, 2p).
     let qp = _mm256_mullo_epi32(q, p_vec);
     let r = _mm256_sub_epi32(x, qp);
 
@@ -737,10 +708,6 @@ unsafe fn horizontal_sum_u32(v: __m256i) -> u32 {
         .wrapping_add(tmp[2])
         .wrapping_add(tmp[3])
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -792,9 +759,6 @@ mod tests {
     #[test]
     fn batch_mul_boundary_values() {
         run_for_primes(|p| {
-            // Generate identical-length adversarial sequences exercising the
-            // {0, 1, p-1, p/2} corners across enough lanes to span both an
-            // AVX2 vector boundary and a scalar tail.
             let len = 48;
             let a: Vec<u8> = (0..len).map(|i| (i as u8) % p).collect();
             let b: Vec<u8> = (0..len)
@@ -864,9 +828,6 @@ mod tests {
     #[test]
     fn gemm_row_panel_matches_scalar() {
         run_for_primes(|p| {
-            // Cover row counts that span both the 4-output-cell tile
-            // and the 1-cell tail, plus k values that exercise the
-            // SIMD body and the scalar tail.
             let cases = [(7usize, 65usize), (16, 64), (15, 100), (32, 128)];
             for &(n, k) in &cases {
                 let a: Vec<u8> = (0..k as u32)
@@ -892,9 +853,6 @@ mod tests {
     #[test]
     fn spmm_row_matches_scalar() {
         run_for_primes(|p| {
-            // Cover (nnz, n) shapes spanning the 16-lane SIMD body and
-            // the scalar tail, with sparse columns scattered across
-            // multiple B rows.
             let cases = [
                 (1usize, 16usize, 8usize), // single nnz, exact 16
                 (5, 16, 32),               // tail-free 32
@@ -986,8 +944,6 @@ mod tests {
                 let primes: [u8; 9] = [3, 5, 7, 11, 13, 17, 31, 127, 251];
                 let p = primes[p_idx];
                 let mu = barrett_mu_u16(p);
-                // Derive alpha and data from seed via a simple LCG so
-                // every proptest case uses independent pseudo-random values.
                 let s1 = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
                 let s2 = s1.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
                 let alpha = ((s1 >> 32) % p as u64) as u8;
@@ -1013,7 +969,6 @@ mod tests {
         }
     }
 
-    /// Deterministic boundary-length check alongside the proptest.
     #[test]
     fn sub_scaled_matches_scalar_boundary_lengths_jit_52cce970() {
         run_for_primes(|p| {
@@ -1057,7 +1012,6 @@ mod tests {
             scalar_sub_scaled_oracle(&mut expected[..chain_len], &chain_j, alpha, p);
             unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p, mu) };
             assert_eq!(buf, expected, "p={p}");
-            // Explicit check: tail bytes equal the original initial values.
             let original_tail: Vec<u8> = (chain_len..chain_len + buf_extra)
                 .map(|i| ((i as u32 * 23 + 5) % p as u32) as u8)
                 .collect();

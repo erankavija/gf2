@@ -1,17 +1,11 @@
 //! Generic AVX2 batch entry points for the bipedal-like
 //! [`crate::bipedal::framework::BatchedBipedalLike`] framework.
 //!
-//! Each `run_*_batch::<C>` function is `#[target_feature(enable = "avx2")]`
-//! and generic over the per-prime [`BipedalLikeConfig`] impl `C`, whose two
-//! lane types must both be `Avx2Lane`. `Config3` (F_3) satisfies the bound;
-//! the F_5 3-plane and F_7 LUT encodings do not fit the 2-stream
-//! `(MagLane, SgnLane)` shape and have dedicated entry points in
-//! [`crate::x86::bipedal_avx2_packed5`] and
-//! [`crate::x86::bipedal_avx2_packed7`]. [`run_permanent4`] keeps four F_3
-//! matrices in those lanes for an entire Ryser/Gray walk.
-//!
-//! Every caller detects AVX2 at runtime with
-//! `is_x86_feature_detected!("avx2")` before invoking a function here.
+//! Each `run_*_batch::<C>` function is generic over a per-prime
+//! [`BipedalLikeConfig`] `C` whose two lane types are both `Avx2Lane`;
+//! [`run_permanent4`] keeps four F_3 matrices in those lanes for a whole
+//! Ryser/Gray walk. Every caller detects AVX2 at runtime before invoking a
+//! function here.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::_mm256_srli_epi64;
@@ -32,28 +26,6 @@ use crate::bipedal::Bipedal3x4;
 /// AVX2 must be available at runtime (verify via
 /// `is_x86_feature_detected!("avx2")`). All six slices share length
 /// divisible by 4; behaviour is undefined otherwise.
-///
-/// # Examples
-///
-/// The generic entry point itself is crate-internal (the parent `x86` module
-/// is private to the crate); F_3 callers reach it through the
-/// `Config3`-monomorphised public re-export at
-/// [`crate::bipedal::avx2::run_add_batch`]:
-///
-/// ```no_run
-/// use gf2_kernels_simd::bipedal::avx2::run_add_batch;
-/// if is_x86_feature_detected!("avx2") {
-///     let v = vec![0u64; 4];
-///     let mut out_m = vec![0u64; 4];
-///     let mut out_s = vec![0u64; 4];
-///     // SAFETY: AVX2 verified, slices length 4 (= one AVX2 lane).
-///     unsafe { run_add_batch(&v, &v, &v, &v, &mut out_m, &mut out_s); }
-/// }
-/// ```
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops, where `n = mag1.len()`.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_add_batch<C>(
@@ -98,10 +70,6 @@ pub unsafe fn run_add_batch<C>(
 ///
 /// AVX2 must be available at runtime. All six slices share length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_sub_batch<C>(
@@ -146,10 +114,6 @@ pub unsafe fn run_sub_batch<C>(
 ///
 /// AVX2 must be available at runtime. All six slices share length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_mul_batch<C>(
@@ -191,10 +155,6 @@ pub unsafe fn run_mul_batch<C>(
 ///
 /// AVX2 must be available at runtime. All four slices share length
 /// divisible by 4.
-///
-/// # Complexity
-///
-/// `O(n / 4)` AVX2 ops.
 #[inline]
 #[target_feature(enable = "avx2")]
 pub unsafe fn run_neg_batch<C>(mag: &[u64], sgn: &[u64], out_mag: &mut [u64], out_sgn: &mut [u64])

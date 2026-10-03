@@ -19,10 +19,6 @@ use core::arch::x86_64::*;
 
 use super::gf2m_common::{clmul_barrett_scalar, correct, ymm_barrett_reduce};
 
-// ---------------------------------------------------------------------------
-// Main kernel: broadcast-multiply-accumulate
-// ---------------------------------------------------------------------------
-
 /// Inner kernel for the panelized GEMM: for a fixed scalar `a_ik`, compute
 /// `acc_row[j] ^= a_ik * b_row[j]` for all j.
 ///
@@ -93,7 +89,6 @@ pub unsafe fn gf2m_broadcast_mul_xor<const SHIFT: i32>(
         j += 4;
     }
 
-    // Scalar tail.
     while j < n {
         let p = clmul_barrett_scalar(a_ik, b_row[j], mu, modulus, degree);
         acc_row[j] ^= p;
@@ -132,9 +127,8 @@ pub unsafe fn gf2m_gemm_panelized(
     debug_assert_eq!(b_flat.len(), k * n);
     debug_assert_eq!(out.len(), m * n);
 
-    // Row-tiled outer loop: process I_TILE output rows simultaneously so the
-    // b_flat[ki*n..(ki+1)*n] slice is shared across I_TILE rows per ki step,
-    // reducing the number of times each b_flat chunk is loaded from L3.
+    // Row-tiled outer loop: I_TILE output rows share one
+    // b_flat[ki*n..(ki+1)*n] slice per ki step.
     const I_TILE: usize = 4;
 
     macro_rules! run {
@@ -224,7 +218,6 @@ mod tests {
         mu
     }
 
-    /// Reference triple-loop scalar GEMM.
     fn scalar_gemm(
         a: &[u64],
         b: &[u64],
@@ -334,7 +327,6 @@ mod tests {
             gf2m_broadcast_mul_xor::<1>(a_ik, &b_row, &mut acc, mu, poly);
         }
 
-        // Cross-check against scalar.
         for (j, &got) in acc.iter().enumerate() {
             let expected = unsafe { clmul_barrett_scalar(a_ik, b_row[j], mu, poly, 8) };
             assert_eq!(got, expected, "j={j}");

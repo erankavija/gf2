@@ -1,18 +1,11 @@
 //! AVX2 + FMA3 f32-cascade GEMM micro-kernel for small `Fp<P>` with
 //! `P <= 251`.
 //!
-//! Inputs arrive as canonical residues, one per `f32` lane; outputs are
-//! canonical bytes. `bt` is repacked into N-major panels of width
-//! `N_R = 24`; a register-blocked `M_R × N_R = 4 × 24` micro-kernel (12
-//! accumulators, 3 B registers, 1 broadcast) runs 12 `_mm256_fmadd_ps` per
-//! k step with no conversion instruction in the inner loop. At each
-//! `k_chunk = min(k, k_max(p), K_CHUNK_CAP)` boundary, with
-//! `k_max(p) = floor(2^24 / (p-1)²)` keeping the f32 sums exact integers,
-//! the accumulators are rounded into a running i32 tile that is reduced
-//! modulo `p` once per output cell.
-//!
-//! All public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
-//! available at runtime. `crate::fp_small_f32::detect` returns the safe
+//! Inputs are canonical residues, one per `f32` lane; a `4 × 24`
+//! register-blocked micro-kernel accumulates exact integer sums in chunks
+//! of at most `floor(2^24 / (p-1)²)` k steps and writes canonical bytes. All
+//! public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
+//! available at runtime; `crate::fp_small_f32::detect` returns the safe
 //! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
@@ -26,7 +19,7 @@ const N_R: usize = 24;
 
 /// k-chunk cap in f32 lanes; the k-chunk size is
 /// `min(k, k_max(p), K_CHUNK_CAP)`. At 1024 the B-panel slice consumed per
-/// chunk is `K_CHUNK_CAP · N_R · 4 byte = 96 KB`, inside Zen 3's 512 KB L2.
+/// chunk is `K_CHUNK_CAP · N_R · 4 byte = 96 KB`.
 /// For `p = 251` the per-prime `k_max = 268` binds first.
 const K_CHUNK_CAP: usize = 1024;
 
@@ -35,7 +28,6 @@ const K_CHUNK_CAP: usize = 1024;
 /// panel in the group.
 #[inline]
 fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
-    // Half of Zen 3's 32 MB CCX-shared L3.
     const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k.saturating_mul(N_R).saturating_mul(4);
     if panel_bytes == 0 {
@@ -92,8 +84,7 @@ pub unsafe fn fp_small_f32_gemm(
     let panel_stride = k * N_R;
     let mut b_packed: Vec<f32> = vec![0.0f32; n_panels * panel_stride];
     // Outer loop over t so the inner write is the contiguous N_R-wide
-    // row of the panel; this keeps writes streaming and avoids the
-    // 24-lane stride that would otherwise be on the inner axis.
+    // row of the panel.
     for panel_idx in 0..n_panels {
         let j_blk = panel_idx * N_R;
         let j_end = (j_blk + N_R).min(n);
@@ -120,7 +111,6 @@ pub unsafe fn fp_small_f32_gemm(
     // from contiguous f32 addresses.
     let mut a_pack_f32: Vec<f32> = vec![0.0; M_R * k];
 
-    // Outer-N grouping bounded by the L3 budget of `n_c_panels_outer`.
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
     // Loop nesting:
@@ -253,7 +243,6 @@ pub unsafe fn fp_small_f32_gemm_route_a(
     let k_chunk = k_max.min(K_CHUNK_CAP);
     let mut a_pack_f32: Vec<f32> = vec![0.0; M_R * k];
 
-    // Outer-N grouping bounded by the L3 budget of `n_c_panels_outer`.
     let n_c_panels = n_c_panels_outer(n_panels, k);
 
     let m_full = m - (m % M_R);
@@ -481,7 +470,7 @@ unsafe fn pack_a_block<const M_EFF: usize>(a: &[f32], i_blk: usize, k: usize, ds
 ///
 /// Monomorphisation on `M_EFF` deletes the dead FMA / sum branches
 /// for `m_eff < 4`, leaving the steady-state `M_EFF = 4` body with
-/// exactly 12 FMAs per inner step (no branches inside the hot loop).
+/// exactly 12 FMAs per inner step.
 ///
 /// `a_pack_f32` is the pre-packed A-row block: `M_R × k` f32 in
 /// interleaved row-major (`a_pack_f32[t * M_R + i] = a[(i_blk + i) * k + t]`).
@@ -716,7 +705,6 @@ unsafe fn store_and_reduce_tile_route_a(
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
     let p_vec = _mm256_set1_epi32(p_i32);
 
-    // Reduce + pack one tile-row at a time (8 cells per __m256i lane).
     #[inline(always)]
     unsafe fn write_row(
         s0: __m256i,
@@ -730,7 +718,6 @@ unsafe fn store_and_reduce_tile_route_a(
         let r0 = super::fp_small::barrett_reduce_lane32(s0, mu_vec, p_vec);
         let r1 = super::fp_small::barrett_reduce_lane32(s1, mu_vec, p_vec);
         let r2 = super::fp_small::barrett_reduce_lane32(s2, mu_vec, p_vec);
-        // n_eff ∈ [1, 24] picks how many cells we write into the row.
         if n_eff == N_R {
             let b0 = pack_i32x8_to_u8(r0);
             let b1 = pack_i32x8_to_u8(r1);
@@ -852,10 +839,6 @@ unsafe fn store_and_reduce_tile(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -885,8 +868,6 @@ mod tests {
         out
     }
 
-    /// Convert a `u8` canonical-residue slice to f32 lanes for input
-    /// to the kernel.
     fn u8_to_f32(xs: &[u8]) -> Vec<f32> {
         xs.iter().map(|&b| b as f32).collect()
     }
@@ -1006,8 +987,6 @@ mod tests {
         unsafe { fp_small_f32_gemm(&[], &[], 0, 0, 0, 7, &mut out) };
         assert!(out.is_empty());
     }
-
-    // ─── Route-A tests ──────────────────────────────────────────────────
 
     #[test]
     fn route_a_gemm_matches_scalar_small_shapes() {
