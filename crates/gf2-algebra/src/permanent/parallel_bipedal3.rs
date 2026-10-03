@@ -1,36 +1,14 @@
 //! Rayon-parallel `permanent_bipedal3` over fixed Gray-code chunks.
 //!
-//! Splits the `2^n - 1` Gray-code subset walk into fixed-size chunks, each
-//! processed by an independent rayon worker. Each worker computes its
-//! starting `col_sum` from scratch via [`gray_code_index_to_subset`] (O(n)
-//! per chunk start), then walks the chunk in Gray order using the standard
-//! incremental add/sub update. Partial Ryser sums are combined
-//! deterministically at the end.
+//! Each chunk of the `2^n - 1` subset walk rebuilds its starting column sum
+//! via [`gray_code_index_to_subset`] (`O(n)`) and then walks in Gray order;
+//! the partial Ryser sums are added in F_3. [`permanent_bipedal3_parallel`]
+//! reads its chunk length from [`permanent_chunk_len`].
 //!
 //! # Determinism
 //!
-//! The chunk partition is fixed by `(n, chunk_subsets)`. Within each chunk
-//! the Gray walk is deterministic. The final reduction is associative under
-//! F_3 addition — `par_bridge` + rayon's work-stealing may reorder map
-//! results but the reduction order does not affect the sum in a commutative
-//! group. Output is therefore bit-identical to `permanent_bipedal3` (serial)
-//! regardless of rayon's thread schedule or the chunk length. The shared
-//! scalar/parallel behavioral suite checks this equivalence across chunk
-//! lengths.
-//!
-//! # Chunk-size tuning
-//!
-//! [`permanent_bipedal3_parallel`] resolves its chunk length at runtime via
-//! [`permanent_chunk_len`], a single non-recursive read of the active
-//! [`crate::tuning::AlgebraTuning`] section's `permanent.gray_chunk_subsets` field
-//! (`dev/active/7d824b2f/design.md` §2.3, §3.12). With no profile installed
-//! the field resolves to the crate-owned conservative [`CHUNK_SUBSETS`].
-//!
-//! `CHUNK_SUBSETS = 1 << 16` is the conservative declaration. Supporting n=28
-//! sweep rows are committed at
-//! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-2026-05-11.csv`;
-//! they do not establish a universal optimum. An installed
-//! algebra section can select a different admissible chunk for its campaign.
+//! F_3 addition is commutative and associative, so the result equals
+//! `permanent_bipedal3` for every rayon thread schedule and chunk length.
 
 use gf2_core::gfp::Fp;
 use rayon::prelude::*;
@@ -46,16 +24,13 @@ pub use super::CHUNK_SUBSETS;
 /// to [`permanent_bipedal3_parallel_with_chunk`].
 ///
 /// Reads [`crate::tuning::AlgebraTuning::permanent`]'s
-/// [`crate::tuning::PermanentSelectors::gray_chunk_subsets`] once per call, at
-/// the non-recursive, non-looping entry position
-/// `dev/active/7d824b2f/design.md` §2.3 requires. With no envelope installed,
+/// [`crate::tuning::PermanentSelectors::gray_chunk_subsets`] once per call.
+/// With no envelope installed,
 /// [`crate::tuning::active`] resolves to [`crate::tuning::AlgebraTuning::CONSERVATIVE`],
 /// whose value is the canonical [`CHUNK_SUBSETS`] constant.
 ///
 /// This is one `O(log s)` immutable section lookup for `s` installed sections;
-/// after process resolution it allocates nothing and takes no lock. The
-/// parallel permanent wrapper calls it once and passes the result into the
-/// exponential Gray-code walk.
+/// after process resolution it allocates nothing and takes no lock.
 ///
 /// # Panics
 ///
@@ -76,14 +51,10 @@ static LAST_EFFECTIVE_CHUNK: std::sync::atomic::AtomicUsize =
 /// Route-observation hook: returns the `chunk_subsets` value most recently
 /// received by [`permanent_bipedal3_parallel_with_chunk`].
 ///
-/// Exists only under `cfg(test)` or the `test-support` feature. Chunk
-/// partitioning does not change the permanent's value (`# Determinism`
-/// above), so comparing [`permanent_bipedal3_parallel`]'s output against a
-/// forced-chunk call is not evidence that the resolved
-/// [`permanent_chunk_len`] actually reached the callee — every valid chunk
-/// length produces the same output. This hook lets a route-observation test
-/// read the value production code received, directly, instead of inferring
-/// it from output equality.
+/// Every valid chunk length produces the same permanent (`# Determinism`
+/// above), so output equality cannot show that the resolved
+/// [`permanent_chunk_len`] reached the callee; this hook exposes the
+/// received value directly.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn last_effective_chunk() -> usize {
@@ -159,42 +130,12 @@ pub fn last_effective_partition() -> Option<PermanentPartitionObservation> {
 /// Ryser's formula, splitting the Gray-code subset enumeration across worker
 /// threads.
 ///
-/// Mirrors [`super::bipedal3::permanent_bipedal3`] in algorithm but splits the
-/// `2^n - 1` non-empty-subset walk into chunks sized by [`permanent_chunk_len`]
-/// (the active algebra section's `permanent.gray_chunk_subsets` selector, read
-/// once here and passed to [`permanent_bipedal3_parallel_with_chunk`]). Each
-/// rayon worker independently reconstructs its starting `col_sum` from the
-/// Gray-code index (O(n) per chunk start) and then performs incremental add/sub
-/// updates within the chunk. Partial Ryser contributions are summed at the end.
-///
-/// Output is bit-identical to `permanent_bipedal3` on the same matrix,
-/// regardless of thread count or rayon's work-stealing schedule
-/// (F_3 addition is commutative and associative).
-///
-/// # Arguments
-///
-/// * `mat` — An `n × n` [`Bipedal3Matrix`] (column-major, `rows == cols`).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal3_parallel;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_3: permanent = 1
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal3_parallel(&m), Fp::<3>::new(1));
-///
-/// // 2×2 all-ones over F_3: permanent = 2! mod 3 = 2
-/// let ones: Vec<Fp<3>> = vec![Fp::<3>::new(1); 4];
-/// let m2 = Bipedal3Matrix::from_row_major(&ones, 2, 2);
-/// assert_eq!(permanent_bipedal3_parallel(&m2), Fp::<3>::new(2));
-/// ```
+/// Splits the `2^n - 1` non-empty-subset walk of
+/// [`super::bipedal3::permanent_bipedal3`] into chunks of
+/// [`permanent_chunk_len`] subsets and delegates to
+/// [`permanent_bipedal3_parallel_with_chunk`]. Output is identical to
+/// `permanent_bipedal3` on the same matrix for every thread count and
+/// schedule.
 ///
 /// # Panics
 ///
@@ -205,56 +146,24 @@ pub fn last_effective_partition() -> Option<PermanentPartitionObservation> {
 /// # Complexity
 ///
 /// `O(n · 2^n / T)` field operations per thread for `T` rayon threads, plus
-/// `O(n · C)` per chunk start to reconstruct the initial `col_sum`, where `C`
-/// is the value [`permanent_chunk_len`] returns. Matrix prep is `O(n^2)`
-/// one-time.
+/// `O(n)` per chunk start to reconstruct the initial `col_sum`. Matrix prep
+/// is `O(n^2)`.
 pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
     permanent_bipedal3_parallel_with_chunk(mat, permanent_chunk_len())
 }
 
-/// Same as [`permanent_bipedal3_parallel`] but takes the chunk size as a
-/// runtime argument instead of resolving it from the algebra tuning section via
-/// [`permanent_chunk_len`].
-///
-/// This is the SSOT entry point used by both the production wrapper
-/// ([`permanent_bipedal3_parallel`] passes the resolved [`permanent_chunk_len`])
-/// and the `parallel_chunk_sweep` example (sweeps over `2^7..=2^22`). Keeping the
-/// chunk-sweep and production paths sharing one implementation ensures
-/// the recorded CSV throughput numbers reflect the exact code path that
-/// production callers exercise.
-///
-/// # Arguments
-///
-/// * `mat` — square `Bipedal3Matrix` with `mat.cols() <= 63`.
-/// * `chunk_subsets` — number of Gray-code subsets per rayon chunk
-///   (must be `>= 1`).
+/// Same as [`permanent_bipedal3_parallel`] but takes the chunk size as an
+/// argument. The `parallel_chunk_sweep` example calls this function, so its
+/// sweep measures the code path [`permanent_bipedal3_parallel`] runs.
 ///
 /// # Panics
 ///
 /// Panics on non-square matrices, `n > 63`, or `chunk_subsets == 0`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel_with_chunk;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_3 with chunk_subsets = 2 (covers the full 2^2 - 1 = 3
-/// // non-empty subsets in 2 chunks of 2/1 entries).
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal3_parallel_with_chunk(&m, 2), Fp::<3>::new(1));
-/// ```
-///
 /// # Complexity
 ///
-/// Identical to [`permanent_bipedal3_parallel`] but parametrised by chunk
-/// size: `O(n · 2^n / T)` field operations per thread, plus `O(n)` per
-/// chunk start for the initial `col_sum` reconstruction.
+/// As [`permanent_bipedal3_parallel`], with `ceil((2^n - 1) / chunk_subsets)`
+/// chunk starts.
 pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subsets: usize) -> Fp<3> {
     let n = mat.cols();
     assert_eq!(
@@ -277,14 +186,12 @@ pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subset
     #[cfg(any(test, feature = "test-support"))]
     LAST_EFFECTIVE_CHUNK.store(chunk_subsets, std::sync::atomic::Ordering::SeqCst);
 
-    // Edge case: 0×0 matrix has exactly one permutation (empty), product = 1.
+    // 0×0: one (empty) permutation, product = 1.
     if n == 0 {
         return Fp::<3>::new(1);
     }
 
-    // One-time matrix prep: extract each column j into a Bipedal3 word.
     // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..63 are 0.
-    // Cost: O(n^2) — negligible vs. O(n · 2^n) Gray walk.
     let columns: Vec<Bipedal3> = (0..n)
         .map(|j| {
             let col_vec = mat.column(j);
@@ -298,17 +205,9 @@ pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subset
 
     let total_subsets = (1u64 << n) - 1; // count of non-empty subsets
 
-    // Parallel chunk sweep: each chunk covers [chunk_start, chunk_end) in the
-    // Gray-code index space 1..=total_subsets.
-    //
-    // For each chunk, the worker:
-    //   1. Derives the starting col_sum from scratch via the Gray-code bitmask.
-    //   2. Walks the chunk incrementally using add/sub per step.
-    //   3. Returns its partial Ryser sum.
-    //
-    // The final reduce sums all partial results under F_3 addition, which is
-    // commutative and associative, guaranteeing determinism regardless of
-    // rayon's scheduling.
+    // Each chunk covers [chunk_start, chunk_end) of the Gray-code index space
+    // 1..=total_subsets. F_3 addition is commutative and associative, so the
+    // reduce is independent of rayon's scheduling.
     let partial_total: Fp<3> = (1..=total_subsets)
         .step_by(chunk_subsets)
         .par_bridge()
@@ -327,7 +226,7 @@ pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subset
     #[cfg(any(test, feature = "test-support"))]
     record_effective_partition(total_subsets, chunk_subsets);
 
-    // Apply the outer (-1)^n factor from Ryser's formula, as in the serial impl.
+    // Outer (-1)^n factor from Ryser's formula.
     if n % 2 == 1 {
         -partial_total
     } else {
@@ -335,45 +234,24 @@ pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subset
     }
 }
 
-/// Process a single chunk of Gray-code indices `[start, end)`.
-///
-/// Reconstructs the starting `col_sum` from the Gray-code subset bitmask at
-/// index `start`, then walks the chunk in Gray order, accumulating the partial
-/// Ryser sum. Returns the partial sum for this chunk.
-///
-/// # Arguments
-///
-/// * `columns`  — column vectors of the matrix, precomputed as Bipedal3 words.
-/// * `n`        — matrix dimension (number of active lanes in each Bipedal3 word).
-/// * `start`    — first Gray-code index in this chunk (1-based, inclusive).
-/// * `end`      — one past the last Gray-code index in this chunk (exclusive).
-///
-/// # Complexity
-///
-/// `O(n)` for the initial col_sum reconstruction + `O(n · chunk_size)` for the
-/// incremental Gray walk within the chunk.
+/// Partial Ryser sum over the Gray-code indices `[start, end)`, `start ≥ 1`,
+/// for `n` active lanes per column word.
 fn process_chunk(columns: &[Bipedal3], n: usize, start: u64, end: u64) -> Fp<3> {
-    // Reconstruct the col_sum for the subset at Gray-code index `start`.
     // g(start) = start ^ (start >> 1) is the bitmask of columns in the subset.
     let start_mask = gray_code_index_to_subset(start);
     let mut col_sum = Bipedal3::zero();
     for (j, &col) in columns.iter().enumerate().take(n) {
         if (start_mask >> j) & 1 == 1 {
-            // Column j is in the starting subset: add it to col_sum.
             col_sum = col_sum.add(col);
         }
     }
 
-    // Track the current subset size (popcount of the Gray-code bitmask) for
-    // the Ryser sign term (-1)^|S|.
     let mut subset_size: usize = start_mask.count_ones() as usize;
 
-    // Accumulate the Ryser contribution for the starting subset.
     let term = col_sum.fold_mul_first_n(n);
     let mut partial = if subset_size % 2 == 1 { -term } else { term };
 
-    // Walk Gray-code steps start+1 .. end (inclusive).
-    // Each step k has flip = trailing_zeros(k), and parity derived from g(k).
+    // Step k flips column trailing_zeros(k); bit `flip` of g(k) gives add vs sub.
     for k in (start + 1)..end {
         let flip = k.trailing_zeros() as usize;
         let g_k = k ^ (k >> 1);
@@ -398,10 +276,6 @@ fn process_chunk(columns: &[Bipedal3], n: usize, start: u64, end: u64) -> Fp<3> 
     partial
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -411,16 +285,10 @@ mod tests {
     #[cfg(feature = "test-support")]
     use crate::testutil::random_matrix;
 
-    /// Wrap a row-major `Vec<Fp<3>>` into a `Bipedal3Matrix`.
     fn to_bipedal3_matrix(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
         Bipedal3Matrix::from_row_major(row_major, n, n)
     }
 
-    // -----------------------------------------------------------------------
-    // Hand-checked vectors (mirrors bipedal3.rs)
-    // -----------------------------------------------------------------------
-
-    /// `permanent_bipedal3_parallel` of the 0×0 matrix is 1 (vacuous product).
     #[test]
     fn test_parallel_permanent_empty_matrix() {
         let m = Bipedal3Matrix::from_row_major(&[], 0, 0);
@@ -431,7 +299,6 @@ mod tests {
         );
     }
 
-    /// A 1×1 matrix `[v]` has permanent = `v`.
     #[test]
     fn test_parallel_permanent_1x1() {
         for v in 0u64..3 {
@@ -445,7 +312,6 @@ mod tests {
         }
     }
 
-    /// `I_n` has permanent = 1 for `n in {1, 2, 3, 4}`.
     #[test]
     fn test_parallel_permanent_identity_n() {
         for n in 1..=4usize {
@@ -462,7 +328,6 @@ mod tests {
         }
     }
 
-    /// All-ones `n×n` matrix: permanent = `n! mod 3` for `n in {1, 2, 3, 4}`.
     #[test]
     fn test_parallel_permanent_all_ones_n() {
         // n! mod 3: {1, 2, 0, 0}
@@ -479,11 +344,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
-
-    /// Non-square matrix panics.
     #[test]
     #[should_panic(expected = "matrix must be square")]
     fn test_parallel_permanent_panics_on_non_square() {
@@ -492,7 +352,6 @@ mod tests {
         let _ = permanent_bipedal3_parallel(&m);
     }
 
-    /// `n = 64` exceeds the single-u64 fast path limit and panics.
     #[test]
     #[should_panic(expected = "single-u64 fast path requires n <= 63")]
     fn test_parallel_permanent_panics_on_n_64() {
@@ -500,15 +359,6 @@ mod tests {
         let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal3_parallel(&m);
     }
-
-    // -----------------------------------------------------------------------
-    // Direct coverage for permanent_bipedal3_parallel_with_chunk.
-    //
-    // The public chunk-parametrised entrypoint is the SSOT used by both the
-    // default wrapper and the chunk-sweep example, so it needs explicit tests
-    // for its own contract: it must accept varying chunk sizes, panic on
-    // chunk_subsets == 0, and produce the same answer as the wrapper.
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_parallel_with_chunk_matches_default_wrapper() {
@@ -550,11 +400,6 @@ mod tests {
         let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal3_parallel_with_chunk(&m, 1024);
     }
-
-    // -----------------------------------------------------------------------
-    // Cross-checks: parallel vs serial (fast tier)
-    // 100 random matrices per n in {1..12} — well within the 5 s budget.
-    // -----------------------------------------------------------------------
 
     macro_rules! cross_check_parallel_n {
         ($name:ident, $n:expr) => {
@@ -611,22 +456,6 @@ mod tests {
     cross_check_parallel_n!(test_parallel_cross_check_n11, 11);
     cross_check_parallel_n!(test_parallel_cross_check_n12, 12);
 
-    // Large-n cross-checks (slow tier): parallel vs serial.
-    //
-    // Per the empirical chunk-sweep CSV the parallel implementation runs at
-    // ~5.4 G subsets/s on the dev host (12-core 5900X). The bottleneck for
-    // the slow-tier budget is the *serial* `permanent_bipedal3` oracle:
-    //   n=20: serial ~5 ms/matrix; 100 matrices ~ 0.5 s    (fast tier)
-    //   n=24: serial ~85 ms/matrix; 10 matrices ~0.85 s    (slow-tier sub-tests)
-    //   n=28: serial ~ 1 s/matrix; 100 matrices ~ 100 s    (slow tier, one block)
-    //   n=32: serial ~17 s/matrix; 5 matrices ~85 s        (slow tier, count amended)
-    //
-    // Criterion 3 originally asked for 100 random matrices at each of
-    // n in {20, 24, 28, 32}. n=32 with 100 matrices would exceed the
-    // 120 s slow-tier limit by ~14x (serial oracle bottleneck), so the
-    // issue text was amended to "≥ 5 random matrices at n=32" with the
-    // shipped n=28 count holding at 100. See the description amendment
-    // dated 2026-05-11.
     cross_check_parallel_n!(test_parallel_cross_check_n20, 20);
 
     macro_rules! large_n_parallel_cross_check {
@@ -654,9 +483,6 @@ mod tests {
         };
     }
 
-    // n=24: 10 sub-tests × 10 matrices each = 100 total.
-    // Serial oracle is the bottleneck at ~85 ms/matrix; 10 matrices
-    // ~ 0.85 s/sub-test — well under the 120 s slow-tier limit.
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_a, 24, 10, 0);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_b, 24, 10, 1_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_c, 24, 10, 2_000);
@@ -668,30 +494,11 @@ mod tests {
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_i, 24, 10, 8_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_j, 24, 10, 9_000);
 
-    // n=28: 5 sub-tests × 5 matrices each = 25 total. The serial oracle
-    // dominates (~1 s/matrix on the dev box, ~6 s/matrix on the slower GitHub
-    // nightly runner); 20 matrices/sub-test overran the 120 s slow-tier cap
-    // there, so this is reduced to 5 matrices (~30 s/sub-test) to fit with
-    // margin while keeping n=28 parallel-vs-serial coverage.
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_a, 28, 5, 0);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_b, 28, 5, 1_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_c, 28, 5, 2_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_d, 28, 5, 3_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_e, 28, 5, 4_000);
-
-    // -----------------------------------------------------------------------
-    // Determinism test: same seed + same n=24 across varied thread counts.
-    //
-    // Uses rayon::ThreadPoolBuilder to pin the thread count per run. Ten runs
-    // per thread count {1, 2, 4, 8, 12} = 10 permanent evaluations per sub-test
-    // at n=24. Serial oracle is ~85 ms/matrix; with the parallel-side scaling
-    // factor across thread counts, the worst case (1-thread parallel) is on the
-    // order of ~85 ms × 10 ≈ 1 s; default (12-thread) is sub-second. All
-    // sub-tests fit comfortably within the 120 s slow-tier limit.
-    //
-    // Split into one sub-test per thread count to keep each within 120 s and
-    // to make per-thread-count failures obvious.
-    // -----------------------------------------------------------------------
 
     macro_rules! determinism_test {
         ($name:ident, $num_threads:expr) => {
@@ -706,10 +513,8 @@ mod tests {
                 let row_major = random_matrix::<3>(N, SEED);
                 let mat = to_bipedal3_matrix(&row_major, N);
 
-                // Compute reference result with the default thread pool.
                 let reference = permanent_bipedal3_parallel(&mat);
 
-                // Repeat with a fixed thread pool of $num_threads.
                 let pool = rayon::ThreadPoolBuilder::new()
                     .num_threads($num_threads)
                     .build()

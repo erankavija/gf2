@@ -4,10 +4,7 @@
 //! treats its cases and evidence as opaque bytes. Only a guarded fresh child
 //! installs tuning. Reporting, validation, analysis, and owner emission never
 //! resolve process-global tuning.
-//!
-//! The permanent row and sections 3, 6, 8, 8.1, and 10 of
-//! `dev/active/a83583e0/premeasurement-protocol.md` are the authority for the
-//! grid, fixtures, ordering, framing, accounting, and publication behavior.
+//! Protocol: `dev/active/a83583e0/premeasurement-protocol.md` §3, 6, 8, 8.1, 10.
 
 use std::collections::BTreeSet;
 use std::env;

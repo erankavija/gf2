@@ -1,54 +1,14 @@
-//! Sa (jit:96dcbec4): Reproduce the paper's Table 2 scaling slope using
-//! `permanent_mod3_reference` on the dev host.
+//! Reproduces the Table 2 scaling slope of `@/citation/Scheinerman2024` with
+//! [`permanent_mod3_reference`].
 //!
-//! Times the in-tree [`permanent_mod3_reference`] (W2-T8, the faithful Rust
-//! port of Scheinerman 2024 arxiv 2407.20205v2 Julia listing) over a range of
-//! matrix sizes `n`, fits `ln(mean_us) = a + b*n` by ordinary least squares,
-//! and checks that the observed slope `b` lies within ±10% of the paper's
-//! published slope 0.693 nats/n (Table 2, Appendix B; see also `dev/plans/
-//! gf2_algebra_permanent.md` §2.4).
-//!
-//! The paper's Table 2 covers `n ∈ {24, 26, …, 36}` on a 4.20 GHz desktop.
-//! Running the Rust port at `n ≥ 26` takes ~hours per matrix on the dev host
-//! (AMD Ryzen 9 5900X), so this harness covers `n ∈ {8, 10, 12, …, 24}` (9
-//! points). Per criterion 1 amendment 2026-05-11, the slope of log-time vs n
-//! is asymptotically `log 2` for any range covering the `O(n·2^n)` regime; the
-//! `n = 8..24` sweep is sufficient to estimate it with `R² > 0.99`.
-//!
-//! # CSV columns
-//!
-//! - `n` — matrix dimension (sweep parameter).
-//! - `mean_us` — mean per-matrix wall-clock time over `SAMPLES_PER_N` samples
-//!   (microseconds; varies ~5–10% across repeated runs per criterion 5
-//!   amendment).
-//! - `std_us` — sample standard deviation of the per-matrix timings.
-//! - `samples` — number of independent matrices timed (== `SAMPLES_PER_N`).
-//! - `input_hash` — lowercase-hex SHA-256 of the deterministic input matrices
-//!   for this `n`, computed by concatenating `(n as u64 LE, seed as u64 LE,
-//!   sample_idx as u64 LE, matrix entries as u8s)` across every sample.
-//!   Bit-reproducible across runs.
-//!
-//! # Output paths
-//!
-//! - CSV at `dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-<DATE>.csv`,
-//!   where `<DATE>` defaults to today's UTC date (`YYYY-MM-DD`) but can be
-//!   overridden via the `SA_DATE` environment variable for reproducible
-//!   pipelines.
-//!
-//! # Reproducibility (criterion 5 amendment 2026-05-11)
-//!
-//! Same RNG seed reproduces the same **input matrices** across runs (verified
-//! by the `input_hash` column). The `mean_us`/`std_us` columns vary within
-//! measurement noise (~5–10% on the dev host); this is the unavoidable
-//! property of wall-clock timing.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features test-support --example paper_repro_slope
-//! # Override the date in the filename (e.g. for CI):
-//! SA_DATE=2026-05-11 cargo run -p gf2-algebra --release --features test-support --example paper_repro_slope
-//! ```
+//! Times the function over `n ∈ {8, 10, …, 24}` (the cited table covers
+//! `n ∈ {24, 26, …, 36}`), fits `ln(mean_us) = a + b*n` by ordinary least
+//! squares, and exits nonzero unless `b` lies within ±10% of
+//! `ln 2 + mean(1/n)`, the slope of an `O(n·2^n)` cost over the sweep.
+//! Writes `dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-<DATE>.csv`
+//! (date overridable via `SA_DATE`) with columns `n`, `mean_us`, `std_us`,
+//! `samples` and `input_hash`: the SHA-256 over `n` and each sample's seed,
+//! index and matrix entries, identical across runs.
 
 use gf2_algebra::permanent::permanent_mod3_reference;
 use gf2_algebra::testutil::{random_matrix, today_yyyy_mm_dd};
@@ -57,7 +17,6 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
 
-/// Number of independently seeded matrices timed per `n`.
 const SAMPLES_PER_N: usize = 5;
 
 /// Target wall-clock per timed window, in microseconds. For each sample the
@@ -66,26 +25,18 @@ const SAMPLES_PER_N: usize = 5;
 /// small `n` where a single call is otherwise sub-millisecond.
 const TARGET_US: f64 = 100_000.0; // 100 ms per timed window
 
-/// Base seed derived from the JIT issue ID `96dcbec4`.
 const SEED_BASE: u64 = 0x96dc_bec4_0000_0000;
 
-/// Paper-published asymptotic slope (nats/n) at the limit $n \to \infty$ for
-/// the $O(n \cdot 2^n)$ algorithm. Equals $\ln 2 \approx 0.6931$. Paper's
-/// Table 2 measured at `n ∈ {24, …, 36}` lands very close to this asymptotic.
+/// Asymptotic slope (nats/n) at the limit $n \to \infty$ for the
+/// $O(n \cdot 2^n)$ algorithm: $\ln 2 \approx 0.6931$.
 const PAPER_ASYMPTOTIC_SLOPE: f64 = std::f64::consts::LN_2;
 
 /// ±10% tolerance fraction; applied against the range-adjusted reference
-/// (`ln(2) + mean(1/n)` over the sweep) per criterion 2 amendment 2026-05-11b.
+/// (`ln(2) + mean(1/n)` over the sweep).
 const SLOPE_TOLERANCE: f64 = 0.10;
 
-/// Convert Unix epoch seconds to a `YYYY-MM-DD` UTC date string.
-///
 fn main() {
-    // n sweep: 9 points in {8, 10, …, 24}.
-    // - n=24 is the bottom of the paper's Table 2 range; included so the
-    //   sweep partially overlaps the paper's domain.
-    // - n=8..22 is cheap enough for SAMPLES_PER_N=5 and gives strong
-    //   log-linear regression statistics (R² typically > 0.999).
+    // n=24 is the bottom of the cited Table 2 range, so the sweep overlaps it.
     let n_values: &[usize] = &[8, 10, 12, 14, 16, 18, 20, 22, 24];
 
     let date = today_yyyy_mm_dd();
@@ -105,9 +56,6 @@ fn main() {
     for &n in n_values {
         let mut samples: Vec<f64> = Vec::with_capacity(SAMPLES_PER_N);
         let mut hasher = Sha256::new();
-        // SHA-256 input fingerprint: hash (n as u64 LE, seed as u64 LE,
-        // sample_idx as u64 LE, matrix entries as u8s) across every sample.
-        // Bit-reproducible across runs given the same seeds and matrices.
         hasher.update((n as u64).to_le_bytes());
 
         // Calibrate inner-iteration count: a single call at sample_idx=0,
@@ -188,8 +136,6 @@ fn main() {
 
     // Range-adjusted reference: for an O(n·2^n) algorithm, the integrated
     // slope over [n_min, n_max] equals ln(2) + mean(1/n) over the sweep.
-    // Per criterion 2 amendment 2026-05-11b, comparison is against this
-    // reference, not the paper's asymptotic-limit value.
     let mean_inv_n: f64 =
         n_values.iter().map(|&n| 1.0 / n as f64).sum::<f64>() / n_values.len() as f64;
     let reference_slope = PAPER_ASYMPTOTIC_SLOPE + mean_inv_n;
@@ -233,7 +179,6 @@ fn hex_lower(bytes: &[u8]) -> String {
 mod tests {
     use super::hex_lower;
 
-    /// `hex_lower` produces the canonical lowercase-hex SHA-256 encoding.
     #[test]
     fn test_hex_lower() {
         assert_eq!(hex_lower(&[]), "");

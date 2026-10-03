@@ -1,45 +1,10 @@
-//! T15 (jit:05250df5): Chunk-size sweep for `permanent_bipedal3_parallel`.
+//! Chunk-size sweep for `permanent_bipedal3_parallel_with_chunk` at n=28.
 //!
-//! Measures throughput of the rayon parallel permanent at n=28 across chunk
-//! sizes spanning four orders of magnitude: {2^7, 2^10, 2^12, 2^14, 2^16,
-//! 2^18, 2^20, 2^22} — 128 → 4_194_304 ≈ 32 768x dynamic range (>10^4).
-//! For each chunk size, times SAMPLES_PER_CHUNK independent matrices and
-//! records mean throughput in subsets/second.
-//!
-//! # CSV columns
-//!
-//! - `chunk_size`               — number of Gray-code subsets per rayon chunk.
-//! - `mean_us`                  — mean per-permanent wall-clock time (microseconds).
-//! - `std_us`                   — sample standard deviation of per-permanent timings.
-//! - `throughput_subsets_per_sec` — mean subsets/second (= (2^n - 1) / (mean_us * 1e-6)).
-//! - `samples`                  — number of independent matrices timed.
-//!
-//! # Output path
-//!
-//! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-<DATE>.csv`
-//! where `<DATE>` defaults to today's UTC date (`YYYY-MM-DD`) but can be
-//! overridden via the `SA_DATE` environment variable.
-//!
-//! # Chosen default
-//!
-//! `CHUNK_SUBSETS = 1 << 16` (65536 subsets per chunk) is the conservative
-//! default `permanent_bipedal3_parallel` resolves when no tuning profile is
-//! installed. See the CSV for empirical justification.
-//! At n=28 on the dev host (AMD Ryzen 9 5900X, 12c/24t), the throughput plateau
-//! sits across `2^14 .. 2^16` (within ~1 σ of each other); `2^16` is chosen
-//! as a single round number near the empirical optimum at `2^14`. Smaller
-//! chunks (`2^7 = 128`) waste rayon-scheduler overhead (-91% throughput);
-//! larger chunks (`2^22 = 4_194_304`) leave tail threads idle near `2^28` (-10%).
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-algebra --release --features "parallel test-support" \
-//!   --example parallel_chunk_sweep
-//! # Override the output date:
-//! SA_DATE=2026-05-11 cargo run -p gf2-algebra --release \
-//!   --features "parallel test-support" --example parallel_chunk_sweep
-//! ```
+//! Times `SAMPLES_PER_CHUNK` seeded matrices per chunk size in `CHUNK_SIZES` and
+//! writes `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-<DATE>.csv`
+//! (date overridable via `SA_DATE`) with columns `chunk_size`, `mean_us`,
+//! `std_us`, `throughput_subsets_per_sec` (`(2^n - 1) / (mean_us * 1e-6)`) and
+//! `samples`.
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::parallel_bipedal3::{
@@ -50,36 +15,22 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
 
-/// Matrix dimension for the sweep. n=28 gives 2^28 - 1 ≈ 268M subsets, which
-/// is large enough for reliable throughput measurements while finishing in a
-/// few minutes per chunk size on the dev host.
 const SWEEP_N: usize = 28;
 
-/// Number of independently seeded matrices timed per chunk size.
 const SAMPLES_PER_CHUNK: usize = 3;
 
-/// Base seed derived from the JIT issue ID `05250df5`.
 const SEED_BASE: u64 = 0x0525_0df5_0000_0000;
 
-/// Chunk sizes to sweep, spanning >10^4 in dynamic range
-/// (128 ≤ chunk ≤ 4_194_304 = `2^7 .. 2^22`, ratio 32 768x).
 const CHUNK_SIZES: &[usize] = &[
-    1 << 7,  // 128 — far below the typical L1d-friendly band; checks scheduler overhead floor
+    1 << 7,  // 128
     1 << 10, // 1024
     1 << 12, // 4096
     1 << 14, // 16_384
-    1 << 16, // 65_536  — current CHUNK_SUBSETS default
+    1 << 16, // 65_536
     1 << 18, // 262_144
     1 << 20, // 1_048_576
-    1 << 22, // 4_194_304 — well above where rayon load-balance starves tail threads
+    1 << 22, // 4_194_304
 ];
-
-// SSOT: the algorithm body lives in
-// `gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel_with_chunk`.
-// This example only varies the `chunk_subsets` parameter and times the
-// call; it does NOT duplicate the production code path. That guarantee
-// keeps the recorded chunk-sweep CSV trustworthy as the empirical basis
-// for the `CHUNK_SUBSETS` default constant.
 
 fn main() {
     let date = today_yyyy_mm_dd();

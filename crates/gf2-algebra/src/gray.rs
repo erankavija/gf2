@@ -1,48 +1,13 @@
 //! Gray-code subset enumeration used by Ryser's permanent formula and the
 //! `permanent_bipedal*` kernels.
 //!
-//! Hosts the [`gray_code_iter`] enumerator that walks the `2^n - 1`
-//! non-empty subsets of a length-`n` universe by toggling one bit per
-//! step. Each step yields `(flip_index, parity)`: which bit toggled,
-//! and whether the toggled bit was just added (`+1`) or removed (`-1`)
-//! from the running subset.
-//!
-//! See `@/issue/6e20133d` §4.2 for why this lives in `gf2-algebra` rather than
-//! alongside the unrelated M4RM Gray table in `gf2-core::alg::m4rm`. The
-//! formula derivation is in `@/issue/60c30e2d` §3 and §6.
-//!
-//! Re-exported as [`crate::permanent::gray`] for callers that want the
-//! permanent-grouped path.
+//! Re-exported as [`crate::permanent::gray`].
 
 /// Convert a Gray-code sequential index to the corresponding subset bitmask.
 ///
 /// The binary-reflected Gray code maps index `k` to the subset bitmask
 /// `g(k) = k ^ (k >> 1)`. Bit `j` set in the result means column `j` is
 /// present in the `k`-th non-empty subset visited by [`gray_code_iter`].
-///
-/// # Arguments
-///
-/// * `k` — Gray-code step index in `1..2^n`. For `k = 0` the result is `0`
-///   (the empty subset, which is excluded from [`gray_code_iter`]).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::gray::gray_code_index_to_subset;
-///
-/// // k=1 maps to subset {0} (bit 0 set), g(1) = 1 ^ 0 = 1.
-/// assert_eq!(gray_code_index_to_subset(1), 0b001);
-/// // k=2 maps to subset {0,1} (bits 0 and 1 set), g(2) = 2 ^ 1 = 3.
-/// assert_eq!(gray_code_index_to_subset(2), 0b011);
-/// // k=3 maps to subset {1} (bit 1 set only), g(3) = 3 ^ 1 = 2.
-/// assert_eq!(gray_code_index_to_subset(3), 0b010);
-/// // k=4 maps to subset {1,2}, g(4) = 4 ^ 2 = 6.
-/// assert_eq!(gray_code_index_to_subset(4), 0b110);
-/// ```
-///
-/// # Complexity
-///
-/// `O(1)` — two arithmetic operations on a `u64`.
 #[inline]
 pub fn gray_code_index_to_subset(k: u64) -> u64 {
     k ^ (k >> 1)
@@ -61,42 +26,14 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// visiting every non-empty subset of `[n]` exactly once. The running
 /// sum of `parity` equals the popcount of the current subset.
 ///
-/// # Arguments
-///
-/// * `n` — universe size; the iterator yields `2^n - 1` items. Must
-///   satisfy `n <= 63`, the bound shared with the GPU kernels. Internally the
-///   iterator widens to `u128` so the bound `(1u128 << n)` is well-defined; the
-///   same widening shape is used downstream. Iteration cost is `O(2^n)`. For
-///   `n >= 64` use the multi-word path (`permanent_bipedal3_multiword`) which
-///   carries its own 256-bit counter.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::gray::gray_code_iter;
-///
-/// let items: Vec<_> = gray_code_iter(3).collect();
-/// assert_eq!(items.len(), 7); // 2^3 - 1
-///
-/// // First four items trace the binary-reflected Gray code:
-/// // {} -> {0} -> {0,1} -> {1} -> {1,2}
-/// assert_eq!(items[0], (0, 1)); // add bit 0
-/// assert_eq!(items[1], (1, 1)); // add bit 1
-/// assert_eq!(items[2], (0, -1)); // remove bit 0
-/// assert_eq!(items[3], (2, 1)); // add bit 2
-/// ```
-///
 /// # Panics
 ///
-/// Panics if `n >= 64`. The singleword permanent boundary (`n <= 63`)
-/// gates upstream callers. For `n == 0` the
-/// iterator yields zero items (the empty universe has only the empty
-/// subset, which is excluded).
+/// Panics if `n >= 64`. For `n == 0` the iterator yields zero items (the
+/// empty universe has only the empty subset, which is excluded).
 ///
 /// # Complexity
 ///
-/// `O(2^n)` time, `O(1)` space. Iterator state is one `u64` index plus
-/// the universe size; no heap allocation.
+/// `O(2^n)` time, `O(1)` space.
 ///
 /// # Formula
 ///
@@ -111,23 +48,17 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// Inspecting `(k >> flip) & 1` instead of `(g_k >> flip) & 1` is a trap: with
 /// `flip = trailing_zeros(k)`, bit `flip` of `k` is always `1` by construction,
 /// so the predicate is identically true and the loop only ever adds, never
-/// subtracts. See `@/issue/60c30e2d` §6 for the worked derivation.
+/// subtracts.
 #[inline]
 pub fn gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)> {
     assert!(
         n <= 63,
         "gray_code_iter: n must satisfy n <= 63; got n = {n}"
     );
-    // `1u128 << n` fits in u64 for n <= 63; the u128 shape matches dependent
-    // code that monomorphises against `u128` arithmetic.
     let upper: u128 = 1u128 << n;
     (1u128..upper).map(|k| {
         let flip = k.trailing_zeros() as usize;
         let g_k = k ^ (k >> 1);
-        // Bit `flip` of `g_k` is the new state of that bit in the
-        // active subset after the toggle. Set => column just entered
-        // the subset (ADD, parity +1); clear => column just left
-        // (SUB, parity -1).
         let parity: i8 = if ((g_k >> flip) & 1) == 1 { 1 } else { -1 };
         (flip, parity)
     })
@@ -138,24 +69,7 @@ mod tests {
     use super::*;
 
     /// Hand-verified sequence for `n = 3` matching the canonical
-    /// binary-reflected Gray code: subset register starts at 0, after
-    /// `k = 1` toggles bit 0 -> `{0}`, after `k = 2` toggles bit 1 ->
-    /// `{0,1}`, after `k = 3` toggles bit 0 -> `{1}`, after `k = 4`
-    /// toggles bit 2 -> `{1,2}`, after `k = 5` toggles bit 0 ->
-    /// `{0,1,2}`, after `k = 6` toggles bit 1 -> `{0,2}`, after
-    /// `k = 7` toggles bit 0 -> `{2}`.
-    ///
-    /// Expected `(flip, parity)` sequence:
-    ///
-    /// ```text
-    /// k = 1: (0, +1)   subset = {0}
-    /// k = 2: (1, +1)   subset = {0,1}
-    /// k = 3: (0, -1)   subset = {1}
-    /// k = 4: (2, +1)   subset = {1,2}
-    /// k = 5: (0, +1)   subset = {0,1,2}
-    /// k = 6: (1, -1)   subset = {0,2}
-    /// k = 7: (0, -1)   subset = {2}
-    /// ```
+    /// binary-reflected Gray code.
     #[test]
     fn test_gray_code_iter_k_1_to_4_traces_paper_table() {
         let items: Vec<_> = gray_code_iter(3).collect();
@@ -203,10 +117,6 @@ mod tests {
         assert_eq!(count_for(16), (1usize << 16) - 1);
     }
 
-    /// Walk the toggles into a running `u64` subset register and
-    /// collect every intermediate value. Assert the multiset equals
-    /// `{1, 2, ..., 2^n - 1}` exactly — every non-empty subset of
-    /// `[n]` visited exactly once. Implements criterion 2.
     fn assert_visits_every_nonempty_subset(n: usize) {
         let mut register: u64 = 0;
         let mut visited: Vec<u64> = Vec::with_capacity((1usize << n) - 1);
@@ -255,9 +165,6 @@ mod tests {
         assert_visits_every_nonempty_subset(16);
     }
 
-    /// At every step, the running sum of `parity` from `k = 1..K`
-    /// equals `popcount(register_at_step_K)`. Asserts the invariant
-    /// at every step for `n in {1,2,3,4,8}`. Implements criterion 3.
     fn assert_running_parity_matches_popcount_per_step(n: usize) {
         let mut register: u64 = 0;
         let mut parity_sum: i64 = 0;
@@ -301,10 +208,6 @@ mod tests {
         assert_running_parity_matches_popcount_per_step(8);
     }
 
-    /// At `n = 16` the per-step assertion is 65535 checks; we still
-    /// run the per-step invariant since the cost is negligible in
-    /// release mode, fully covering criterion 3 at the largest
-    /// exhaustive universe size required by criterion 4.
     #[test]
     fn test_gray_code_iter_parity_matches_running_popcount_n_16() {
         assert_running_parity_matches_popcount_per_step(16);
@@ -318,11 +221,6 @@ mod tests {
         assert_eq!(gray_code_iter(0).count(), 0);
     }
 
-    // -----------------------------------------------------------------------
-    // gray_code_index_to_subset tests
-    // -----------------------------------------------------------------------
-
-    /// `gray_code_index_to_subset(0)` returns `0` (the empty subset).
     #[test]
     fn test_gray_code_index_to_subset_k0() {
         assert_eq!(gray_code_index_to_subset(0), 0);
@@ -331,25 +229,15 @@ mod tests {
     /// Hand-verified values matching the canonical BRGC formula `g(k) = k ^ (k>>1)`.
     #[test]
     fn test_gray_code_index_to_subset_hand_checked() {
-        // g(1) = 1^0 = 1 = 0b001  (subset {0})
         assert_eq!(gray_code_index_to_subset(1), 0b001);
-        // g(2) = 2^1 = 3 = 0b011  (subset {0,1})
         assert_eq!(gray_code_index_to_subset(2), 0b011);
-        // g(3) = 3^1 = 2 = 0b010  (subset {1})
         assert_eq!(gray_code_index_to_subset(3), 0b010);
-        // g(4) = 4^2 = 6 = 0b110  (subset {1,2})
         assert_eq!(gray_code_index_to_subset(4), 0b110);
-        // g(5) = 5^2 = 7 = 0b111  (subset {0,1,2})
         assert_eq!(gray_code_index_to_subset(5), 0b111);
-        // g(6) = 6^3 = 5 = 0b101  (subset {0,2})
         assert_eq!(gray_code_index_to_subset(6), 0b101);
-        // g(7) = 7^3 = 4 = 0b100  (subset {2})
         assert_eq!(gray_code_index_to_subset(7), 0b100);
     }
 
-    /// `gray_code_index_to_subset` is consistent with the cumulative XOR of
-    /// `gray_code_iter` flips: after walking `k` steps, the running subset
-    /// register equals `gray_code_index_to_subset(k)`.
     #[test]
     fn test_gray_code_index_to_subset_consistent_with_iter_n4() {
         let n = 4;
