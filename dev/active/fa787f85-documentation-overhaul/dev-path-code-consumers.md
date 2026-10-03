@@ -4,7 +4,7 @@ Status: partial (wound down on coordinator request). Scanned: `crates/`,
 `dev/tools/`, `dev/scripts/`, `scripts/`, `contrib/`, `.github/`, `tests/`,
 `Cargo.toml`, `.jit/*.toml`, `packages/`, `.gitignore`, `.claude/`,
 `dev/benchmarks/**` tooling, `dev/research/**`, `dev/studies/**` scripts,
-`docs/presentations/**`, and `dev/active/**` scripts (aggregated only).
+`dev/archive/*/docs/presentations/**`, and `dev/active/**` scripts (aggregated only).
 Comment-only lines (`//`, `#`, `;`, docstrings) are excluded. Not scanned:
 `proofs/` Lean sources beyond a grep (comment mentions only), `dev/sessions`,
 `dev/plans`, `.codex/`, `.config/`, `benches/`, `benchmarks/` beyond a grep
@@ -156,7 +156,7 @@ blob and content SHA-256; fixtures carry the path as data.
 | `dev/benchmarks/permanent_campaign/*` | `dev/benchmarks/permanent_campaign/{accelerator_launch_costs_v1,determinant_cost_v5,summarize_premeasure_v1}.py` and tests | consts incl. self path digests | identity |
 | `dev/benchmarks/gf2_algebra_permanent` | `crates/gf2-algebra/benches/s1_n36_speedup.rs:275`; `examples/{parallel_chunk_sweep.rs:86,paper_repro_slope.rs:92,parallel_scaling_sweep.rs:107}`; `scripts/permanent-repro.sh:106`; `scripts/plot_permanent_benchmarks.py:520,526`; `dev/research/permanent_gpu_{crossover,speedup}` | literals, CLI defaults | write/read |
 | `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` | `crates/gf2-algebra/examples/permanent_demo.rs:233,245` | message text | text |
-| `dev/benchmarks/gf2_algebra_permanent/README.md` | `dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:124,162` | `<a href="../../../dev/benchmarks/...">` | relative link |
+| `dev/benchmarks/gf2_algebra_permanent/README.md` | `dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html:124,162` | `<a href="../../../../../../dev/benchmarks/...">` | relative link |
 | `dev/benchmarks/perm_uniformity` | `scripts/perm-uniformity-repro.sh:43`; `scripts/perm-uniformity-gpu-repro.sh:59`; `dev/research/perm_uniformity_gpu/src/main.rs:812` (`SSOT_DIR`) | consts | write |
 | `dev/benchmarks/gf2-sim/diagnostic-dumps` | `crates/gf2-sim/src/executor/failure.rs:276` (`default_dump_dir`); `.gitignore:115` | default | write |
 | `dev/benchmarks/dvb_t2_awgn/plot.py` | `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:713` | help text | text |
@@ -239,8 +239,6 @@ comments in `proofs/`.
 
 | Target | Consumer | Construct | Mode |
 | --- | --- | --- | --- |
-| `docs/presentations/figures` | `crates/gf2-coding/examples/gen_presentation_figures.rs:39` | `workspace_root().join("docs/presentations/figures")` | write |
-| `docs/presentations/*/talk.html` | self-contained; `ae82bd73` links `../../../dev/benchmarks/gf2_algebra_permanent/README.md` | relative href | link |
 | `docs` | `.jit/config.toml:164` | `permanent_paths` | config |
 | `docs/lean4-verification-pipeline.md` | none in code (md mentions in `proofs/README.md`, `proofs/WORKAROUNDS.md`) | | |
 
