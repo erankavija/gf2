@@ -17196,3 +17196,10 @@
 {"fields":["documents"],"id":"25e29d30-f610-481f-b603-ea18cdc6e14f","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-03T16:31:19.834380990Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"b6f66691-488a-48fc-a28f-e7e503ab5be5","issue_id":"fd9d5416-d529-427d-a273-10e6468b9a19","timestamp":"2026-10-03T16:31:19.916213373Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"105843c6-510e-40ea-84ae-e5195eb76b6f","issue_id":"fd9d5416-d529-427d-a273-10e6468b9a19","timestamp":"2026-10-03T16:31:20.001878476Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"docs-mechanical","id":"07c848d7-c1a6-479c-a91f-f8441272905b","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:32:32.461459366Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"5f010ffd-3c48-4f6c-b6df-7edddce404c6","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:37:14.778945313Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"d9c71586-98f4-45fd-b60a-3d064cdab7aa","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:39:02.766030994Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"310e460b-d556-4e3e-a3dd-2598c80ef22a","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:39:24.390212764Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"0ec030a4-c005-4355-93dd-cda5da286954","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:39:24.679218502Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"b3f6fd88-3088-4a68-9ddb-adfdec0e71c0","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:39:24.733680589Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"cc537ce2-9b2d-4cc4-b3ba-f0ddf0412e7e","issue_id":"67048b47-ed17-4672-822a-829a796420c2","timestamp":"2026-10-03T16:39:24.786462326Z","type":"issue_updated","updated_by":"doc-add"}
