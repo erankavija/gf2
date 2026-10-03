@@ -7,17 +7,104 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "The `gf2-coding` README is the crate's concise adopter-facing entry page: what the crate provides, when to choose it, and where its reference material lives.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. A crate README is the crate's entry page; the docs index links it.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-coding/README.md` states supported code families, decoders, modulation and standards support, feature flags, acceleration ownership, and when to choose the crate, verified against the crate's current public API and Cargo manifest.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-coding/README.md` and the gf2-coding crate guides are limited to verified code, commands and identifiers.\n- [hard] REQ-03: It carries no performance figures, API walkthrough duplicating Rustdoc, hand-maintained example list, history, or future promises; it links to the crate's Rustdoc and to `docs/index.md`.\n- [hard] REQ-04: It links to no file under a crate-local `docs/` directory.\n- [hard] REQ-05: Its links and commands resolve, and the Rust CI gate passes.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c0fc4456056ddcd6ca4c8382d8584986a1d9103ec02b2a684071e1b85550c3dd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "src/lib.rs",
+          "resolved_path": "crates/gf2-coding/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "426696c6000258ed53b7a20afb102ff8df38950b0f69024c0b41f19855bc22fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../LICENSE-MIT",
+          "resolved_path": "LICENSE-MIT"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eaf5f97a2a5f9d423d9c805ffab2d301a7042b7364727b026ffe43667777d754",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "Cargo.toml",
+          "resolved_path": "crates/gf2-coding/Cargo.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a40b391716973ae0eea83cff11342e6153c95d7f15492fdaa722167f0f81b0f9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../docs/reference/supported-configurations.md",
+          "resolved_path": "docs/reference/supported-configurations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3cb15f08f70bf051c304d20940c58fcf4fae2c5b6af52daaa611d359876be5e8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../target/doc/gf2_coding/index.html",
+          "resolved_path": "target/doc/gf2_coding/index.html"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6e56bdd261e56631555576d062386627ceb387cd3a932aa62ca4f3fe8cc2f6c2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../README.md",
+          "resolved_path": "README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "615d3aa379d2943d75e727d5e364bb3a45567c6ba0e6d4cbe3d0c6e5dcddcb60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../gf2-core/README.md",
+          "resolved_path": "crates/gf2-core/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "961376defd3892cd72c348c9a8682e2525ab03a3af5af02d56730194e5444d7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../docs/index.md",
+          "resolved_path": "docs/index.md"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../gf2-kernels-hip/",
+          "resolved_path": "crates/gf2-kernels-hip"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "crates/gf2-coding/README.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:27.020881581Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T00:08:21.461734731Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:25.044675441Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:03:00.331833128Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "698fa793-8c74-4019-a605-9d078f023cbc",
@@ -31,5 +118,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Rewrite the gf2-coding README as its entry page",
-  "updated_at": "2026-10-02T23:49:47.529656472Z"
+  "updated_at": "2026-10-03T00:18:30.212320870Z"
 }

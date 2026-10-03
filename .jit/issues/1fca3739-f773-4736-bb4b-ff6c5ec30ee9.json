@@ -7,7 +7,81 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "Performance is a first-class adoption concern. One reference page states gf2's performance claims, how they are measured, and the commit-pinned evidence behind each.\n\n## Background\n\nNo evidence class in the tree carries every required field in-file; the commit field comes from the pinned link (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.10). Receipt bytes never change.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/reference/` states the measurement methodology (statistical treatment, warm-up, host control and comparison basis) in freshly authored prose.\n- [hard] REQ-02: Each claim links to commit-pinned evidence (a repository URL at a fixed commit) and states hardware, build flags, dataset or workload, baseline and measurement date, taken from that evidence.\n- [hard] REQ-03: Claims are concise and non-marketing; no volatile result table is hand-copied; a claim appears only where current commit-pinned evidence exists.\n- [hard] REQ-04: Each claim has a stable anchor for other pages to link.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links and anchors resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/f88bd137298d93f57f8867acc1f9207186ffbaca/dev/bench_results/eda07788/2026-09-10-eda07788-nr-derate-confirmation/acceptance-summary.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/8896b2a339846f28a5d29bed8da346f45c730a2b/dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/acceptance-summary.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/acceptance-summary.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/a8937d14ce000cc4fbcde5b2afc0d9e6da624eef/dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/acceptance-summary.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-comparator-single-worker-confirmation/acceptance-summary.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/4fd96ef94d8176712b80b16662f1f067acd5c4a0/dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/acceptance-summary.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/6776fe30ea9af85ad509ddca95926f051421676d/dev/active/f547c394/protocol.md",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/reference/performance-evidence.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:26.468400371Z",
   "gates_required": [
     "doc-review",
@@ -30,5 +104,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the performance evidence reference page",
-  "updated_at": "2026-10-02T23:49:46.829546245Z"
+  "updated_at": "2026-10-03T00:18:24.456218227Z"
 }

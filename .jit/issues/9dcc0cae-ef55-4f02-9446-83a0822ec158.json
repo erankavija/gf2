@@ -7,7 +7,41 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "Error-rate curves come from configured simulation campaigns. Researchers need the steps to configure, run, checkpoint and resume one.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/how-to/` shows how to configure a campaign file, run it with the campaign binaries, checkpoint and resume it, and locate its output dataset, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from campaign configurations under `dev/campaigns/` and the gf2-sim binaries are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2a0f1b75b6370c57c41e64ea0dbaf53aced1c6b5e219a53ad169284726be2c83",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/tests/campaign_cli_flags.rs",
+          "resolved_path": "crates/gf2-sim/tests/campaign_cli_flags.rs"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/tree/6776fe30ea9af85ad509ddca95926f051421676d/dev/campaigns",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6e2bef37263645b567d616b9a523b51fdb946ebac2c152fdac51245bd904cbb2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/src/bin/sim_runner.rs",
+          "resolved_path": "crates/gf2-coding/src/bin/sim_runner.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/how-to/run-simulation-campaigns.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:27.357904968Z",
   "gates_required": [
     "doc-review",
@@ -30,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the simulation campaign how-to",
-  "updated_at": "2026-10-02T23:49:47.963637724Z"
+  "updated_at": "2026-10-03T00:18:29.992401912Z"
 }

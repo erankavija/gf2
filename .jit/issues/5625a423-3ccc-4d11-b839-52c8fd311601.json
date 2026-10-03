@@ -7,7 +7,105 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "gf2 implements codes from DVB-T2 and 5G NR. Researchers relying on them need the supported configurations, conventions and verification evidence in one place.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/reference/` states the supported DVB-T2 and 5G NR code configurations, the systematic encoding convention, test-vector provenance and the conformance tests that verify them, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-coding/docs/DVB_T2.md`, `LDPC_VERIFICATION_TESTS.md` and `SYSTEMATIC_ENCODING_CONVENTION.md` are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: Provenance files kept beside data (for example `crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md`) are linked, not copied.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "88c550fe7d1521c013038b9c236996f0b5b6e6fd49fec57ce979f2736ed30555",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/tests/dvb_t2_bch_verification.rs",
+          "resolved_path": "crates/gf2-coding/tests/dvb_t2_bch_verification.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3100d93b43b458f8b44b11ce7546f6f21ba0fbb4685cc2d1bf91244ab033d2b8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/src/bch/dvb_t2/params.rs",
+          "resolved_path": "crates/gf2-coding/src/bch/dvb_t2/params.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "542efc2a836648551b3bf9bcfa06f13205954ed06baaa568cf87839b750bd6af",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs",
+          "resolved_path": "crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://dvb.org/specifications/verification-validation/dvb-t2-reference-streams/",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0afedd69aa59321549f18da18aaad85becaf120199c827a3fb0f11952994434d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "30f1013c306d0967b1931ac25533688f95d2b73328159ef90f98fc88056f08e7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs",
+          "resolved_path": "crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72141a06a15da1bc97955b5576d5caf0eb2ff7dc648d0d0a670b591e281c596d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/tests/nr5g_regression.rs",
+          "resolved_path": "crates/gf2-coding/tests/nr5g_regression.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "29f60ed952a2d5a84e4ac54be388371efe143c3b63035967705e23d6b774dc0b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md",
+          "resolved_path": "crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/src/ldpc/dvb_t2/",
+          "resolved_path": "crates/gf2-coding/src/ldpc/dvb_t2"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/data/ldpc/nr_5g/",
+          "resolved_path": "crates/gf2-coding/data/ldpc/nr_5g"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "52c960cfdcf064d00467ed4c7c4a5d26df39489da74fcf84c6a53795bd41f70c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/tests/nr5g_external_vectors.rs",
+          "resolved_path": "crates/gf2-coding/tests/nr5g_external_vectors.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/reference/standards-conformance.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:26.906134155Z",
   "gates_required": [
     "doc-review",
@@ -30,5 +128,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the standards conformance reference page",
-  "updated_at": "2026-10-02T23:49:47.391855083Z"
+  "updated_at": "2026-10-03T00:18:29.834203252Z"
 }

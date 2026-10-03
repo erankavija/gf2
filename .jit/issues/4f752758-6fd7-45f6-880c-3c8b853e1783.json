@@ -7,7 +7,65 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "The `gf2-algebra` README is the crate's concise adopter-facing entry page: what the crate provides, when to choose it, and where its reference material lives.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. A crate README is the crate's entry page; the docs index links it.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-algebra/README.md` states permanent and packed-field computation, backends, feature flags, and when to choose the crate, verified against the crate's current public API and Cargo manifest.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-algebra/README.md` are limited to verified code, commands and identifiers.\n- [hard] REQ-03: It carries no performance figures, API walkthrough duplicating Rustdoc, hand-maintained example list, history, or future promises; it links to the crate's Rustdoc and to `docs/index.md`.\n- [hard] REQ-04: It links to no file under a crate-local `docs/` directory.\n- [hard] REQ-05: Its links and commands resolve, and the Rust CI gate passes.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "a40b391716973ae0eea83cff11342e6153c95d7f15492fdaa722167f0f81b0f9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../docs/reference/supported-configurations.md",
+          "resolved_path": "docs/reference/supported-configurations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "961376defd3892cd72c348c9a8682e2525ab03a3af5af02d56730194e5444d7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../docs/index.md",
+          "resolved_path": "docs/index.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7211d57e5803dab9dff6fb5ea19ff408124d89118655f807a4537d912a4698e2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "Cargo.toml",
+          "resolved_path": "crates/gf2-algebra/Cargo.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "426696c6000258ed53b7a20afb102ff8df38950b0f69024c0b41f19855bc22fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../LICENSE-MIT",
+          "resolved_path": "LICENSE-MIT"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "615d3aa379d2943d75e727d5e364bb3a45567c6ba0e6d4cbe3d0c6e5dcddcb60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../gf2-core/README.md",
+          "resolved_path": "crates/gf2-core/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eef3f3cef7bc900579dee7114bfe4a89ddbad914f295c7db7595b78b2388ed44",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../target/doc/gf2_algebra/index.html",
+          "resolved_path": "target/doc/gf2_algebra/index.html"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "crates/gf2-algebra/README.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:26.799806786Z",
   "gates_required": [
     "doc-review",
@@ -31,5 +89,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Rewrite the gf2-algebra README as its entry page",
-  "updated_at": "2026-10-02T23:49:47.250924866Z"
+  "updated_at": "2026-10-03T00:18:30.156248302Z"
 }

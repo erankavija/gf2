@@ -7,7 +7,81 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "gf2 dispatches hot kernels to SIMD and HIP backends and parallelizes workloads. Researchers need the architecture to reason about which path a computation takes.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/concepts/` explains kernel dispatch, the SIMD backend, the HIP GPU backend and the parallelism model, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` and the backend crates' Rustdoc are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "dc34ded397864dfd97577aa7fec2c4fb185840869717f23aa3be80341615e112",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-kernels-hip/src/lib.rs",
+          "resolved_path": "crates/gf2-kernels-hip/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b5e711eee73f43fdf136fd8c2d135783f16ab49696bc0bcb403710f168d4be0d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/examples/gpu_hybrid.rs",
+          "resolved_path": "crates/gf2-sim/examples/gpu_hybrid.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d1fbffce3d089b0a199aa93589f033a97439d7b5b914cec3adaa5bc7b4fb3c69",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs",
+          "resolved_path": "crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "93e0e9af4f21b1b3b3eaca3e3596e97361a9fb6eeb4ca5c0c85c3a871ac7598b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/tests/popcount_routes.rs",
+          "resolved_path": "crates/gf2-core/tests/popcount_routes.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a40b391716973ae0eea83cff11342e6153c95d7f15492fdaa722167f0f81b0f9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../reference/supported-configurations.md",
+          "resolved_path": "docs/reference/supported-configurations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "48a6793bc83d4b7f887c3f80ae04e4fc0fd3e6bd522984c5097120aefda6bd9c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/tests/simd_equiv/mod.rs",
+          "resolved_path": "crates/gf2-core/tests/simd_equiv/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "319b5ea670d720f5805a45470f923de19b848914e2d441388cd0e31fa4546927",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/src/lib.rs",
+          "resolved_path": "crates/gf2-sim/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "79025372e6123830d6372228c512952a0978fc7cd3b4532cda70bcbbca6c75bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/tests/parallel_determinism.rs",
+          "resolved_path": "crates/gf2-sim/tests/parallel_determinism.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/concepts/acceleration-architecture.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:27.719094868Z",
   "gates_required": [
     "doc-review",
@@ -30,5 +104,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the acceleration architecture concepts page",
-  "updated_at": "2026-10-02T23:49:48.389588491Z"
+  "updated_at": "2026-10-03T00:18:30.100960658Z"
 }

@@ -7,7 +7,49 @@
     "69aa6896-4c6e-42bb-90b6-d7237a31dc14"
   ],
   "description": "Researchers choosing gf2's field types need the representation and strategy choices that the API alone does not explain.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/concepts/` explains the supported field families (GF(2), GF(2^m), GF(p), GF(p^m)), their representations, strategy selection and primitive-polynomial choice, and when each applies, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-core/docs/GF2M.md` and `PRIMITIVE_POLYNOMIALS.md` are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d67075820582a31219bca255a695e9c904f2dcc78ac9400ebd341ba4c5ff1f43",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/src/gf2m/wide.rs",
+          "resolved_path": "crates/gf2-core/src/gf2m/wide.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1dde3e9a65fb7b350db6b47ffd5f2c0b98b44efa684b5f72d651f110f19d43c4",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/tests/gf256_table_conformance.rs",
+          "resolved_path": "crates/gf2-core/tests/gf256_table_conformance.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7d986548b2d2affd9ea69c4c6c1fdf3f67285c5ab7d50f449fc5d4d68726ae50",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/tests/clmul_wide_conformance.rs",
+          "resolved_path": "crates/gf2-core/tests/clmul_wide_conformance.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "965d5cfaa11f11e9ef4fbbb7547967aa243668bf0744622b3ad6394dc7c0782f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-core/src/primitive_polys.rs",
+          "resolved_path": "crates/gf2-core/src/primitive_polys.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/concepts/finite-field-arithmetic.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T14:11:26.688560640Z",
   "gates_required": [
     "doc-review",
@@ -30,5 +72,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the finite-field arithmetic concepts page",
-  "updated_at": "2026-10-02T23:49:47.113057687Z"
+  "updated_at": "2026-10-03T00:18:28.936790050Z"
 }
