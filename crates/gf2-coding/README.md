@@ -1,174 +1,75 @@
 # gf2-coding
 
-Error-correcting codes and coding-theory primitives built on [`gf2-core`](../gf2-core/): Hamming and BCH algebraic codes, LDPC with belief propagation (DVB-T2 and 5G NR base graphs), convolutional/Viterbi, product codes and generalized LDPC with Chase–Pyndiah, GRAND-family decoders (ORBGRAND, SO-GRAND), a batch-oriented modem framework with Gray-QAM soft demapping, and AWGN / Rician fading channel models tied together by a simulation harness.
+Error-correcting codes, soft decoders, modems, channels, and Monte Carlo simulation over the finite-field and bit-matrix primitives of [`gf2-core`](../gf2-core/README.md).
 
-## What's here
+## Capabilities
 
-### Block codes
+| Area | Supported | Module |
+|---|---|---|
+| Algebraic block codes | Hamming with syndrome-table decoding; BCH over GF(2), GF(p), and GF(p^r) from an independent specification of length, designed distance, and first root; binary BCH decoding (Berlekamp-Massey, Chien search); shortening | `linear`, `bch`, `transform` |
+| LDPC | Quasi-cyclic codes and sparse edge-list codes; min-sum, normalized min-sum, offset min-sum, and sum-product belief propagation; Richardson-Urbanke encoding with file-cached generators | `ldpc` |
+| Concatenated and graph codes | Product codes with Chase-Pyndiah and SO-GRAND/BCJR turbo decoding; generalized LDPC | `product`, `gldpc` |
+| Soft and universal decoders | ORBGRAND, SO-GRAND, BCJR, ordered-statistics decoding, BP-OSD | `grand`, `bcjr`, `osd` |
+| Streaming codes | Convolutional encoder with caller-supplied generator polynomials, hard-decision Viterbi decoder | `convolutional` |
+| Other component codes | CRC, Reed-Muller subcodes with polar-transform extension | `crc`, `drm` |
+| Modem | BPSK, Gray-coded square QAM presets, validated builder for custom constellations, exact log-MAP reference and Gray-QAM fast backends | `modem` |
+| Channels and simulation | AWGN, Rician fading, SNR and capacity helpers, batched BER/FER harness with checkpointed campaigns | `channel`, `fading`, `info_theory`, `simulation` |
 
-| Family | Module | Parameters | Notes |
-|---|---|---|---|
-| Hamming | `linear` | (2^r − 1, 2^r − r − 1) | Syndrome-table decoder |
-| BCH | `bch` | field-generic construction over GF(2), GF(p), GF(p^r); k, distance bound, and t derived from the extension witness, the length (primitive or non-primitive with a derived or supplied order-n root), designed distance δ, and optional first root b | Canonical `BchSpec` construction (`bch::spec`); binary Berlekamp–Massey + Chien decoding; extended BCH; DVB-T2 outer codes as the mother code shortened on its leading message coordinates, in the standard's declared transmission layout, validated against ETSI EN 302 755 (202/202) |
-| LDPC | `ldpc` | quasi-cyclic (n, k) | Belief propagation; DVB-T2 (all 12 rates, 202/202) and 5G NR (BG1/BG2 with per-i_LS shift tables); Richardson–Urbanke encoding with file cache |
-| Product | `product` | N₁ × N₂ | Row/column iteration |
-| Generalized LDPC | `gldpc` | — | Chase–Pyndiah product decoder |
+Block-code and decoder interfaces are traits in `traits`; `llr::Llr` is the soft-value type.
 
-### Streaming and soft decoders
+## Standards support
 
-- `convolutional` — convolutional encoder, Viterbi decoder (NASA/CCSDS generator polynomials)
-- `bcjr` — batch BCJR soft-input/soft-output decoder (CPU; HIP GPU path via `gf2-kernels-hip`)
-- `grand` — `ORBGRAND` and `SO-GRAND` universal noise-centric decoders
-- `llr` — `Llr` type (`f32` by default, `f64` with `llr-f64`) and min-sum / box-plus operations
-- `drm` — Doubled Reed–Muller with polar transform
+| Standard | Coverage | Evidence |
+|---|---|---|
+| ETSI EN 302 755 (DVB-T2) | LDPC and outer BCH for normal and short frames at all six code rates, bit interleaver, QAM mapping, BICM concatenation | ETSI VV001 test-point streams read from `$DVB_TEST_VECTORS_PATH`; tests return early when the streams are absent |
+| 3GPP TS 38.212 (5G NR) | LDPC base graphs BG1 and BG2 with every lifting set, rate matching | Bit-exact comparison of the shift tables against external reference tables with recorded provenance |
 
-### Modem, channel, simulation
+## When to choose this crate
 
-- `modem` — BPSK, Gray-coded QPSK / 16-QAM / 64-QAM / 256-QAM presets, plus a validated builder for arbitrary custom constellations; reference (exact log-MAP) and optimized (Gray-QAM fast) backends selected through `ModemSpec::preferred_*` factories; optional GPU demap
-- `channel` — AWGN with BPSK modulation for quick BER sweeps
-- `fading` — Rician channel models integrated with the modem framework (`QpskRicianChannelModel`)
-- `simulation` — BER/FER harness with batched encode/transmit/decode
-- `info_theory`, `crc` — capacity/mutual information helpers, CRC polynomials
+- Coding research that needs standards-conformant DVB-T2 or 5G NR LDPC/BCH constructions inside a reproducible simulation chain.
+- Soft-decoding studies over GRAND, BCJR, OSD, and turbo product decoders sharing one LLR type and decoder trait surface.
+- Modem and bit-channel studies that swap constellations, labelings, and demapper backends behind one trait layer.
+- BCH over non-binary base fields, with explicit coordinate layouts and typed decode outcomes.
 
-## Install
+Finite-field arithmetic, bit storage, and linear algebra live in `gf2-core`; large-scale orchestration lives in `gf2-sim`.
 
-```toml
-[dependencies]
-gf2-core   = { path = "../gf2-core" }
-gf2-coding = { path = "../gf2-coding" }  # simd on by default
-
-# Enable extras
-# gf2-coding = { path = "...", features = ["parallel", "llr-f64", "hip"] }
-```
-
-## Getting started
-
-### Hamming(7,4)
-
-```rust
-use gf2_coding::{LinearBlockCode, SyndromeTableDecoder};
-use gf2_coding::traits::{BlockEncoder, HardDecisionDecoder};
-use gf2_core::BitVec;
-
-let code    = LinearBlockCode::hamming(3);
-let decoder = SyndromeTableDecoder::new(code.clone());
-
-let msg = BitVec::from_bytes_le(&[0b1010]);
-let mut cw = code.encode(&msg);
-cw.set(2, !cw.get(2));                   // inject a single-bit error
-assert_eq!(decoder.decode(&cw), msg);
-```
-
-### DVB-T2 LDPC
-
-```rust
-use gf2_coding::{CodeRate, ldpc::LdpcCode};
-use gf2_core::BitVec;
-
-let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-assert_eq!((code.k(), code.n()), (32_400, 64_800));
-
-let zero_cw = BitVec::zeros(code.n());
-assert!(code.is_valid_codeword(&zero_cw));
-```
-
-See `examples/ldpc_awgn.rs` for the full BPSK/AWGN → LLR → belief-propagation pipeline.
-
-### 5G NR LDPC
-
-The `ldpc::nr_5g` submodule carries BG1 and BG2 base graphs with per-i_LS shift tables. Select the lifting factor and base graph, then use the shared `LdpcCode` API for encode/decode. A single shift table across lifting sets costs ~2 dB BLER, so the per-i_LS indirection matters.
-
-### Gray-QAM modem
-
-```rust
-use gf2_coding::modem::ModemSpec;
-
-let modem = ModemSpec::gray_qam_16().preferred_fast();  // Gray-QAM fast backend
-// see examples/modem_gray_qam_preset.rs and modem_simulation_harness.rs
-```
-
-Custom constellations go through the validated builder in `examples/modem_custom_constellation.rs`.
-
-### GRAND
-
-```rust
-use gf2_coding::grand::OrbGrandDecoder;
-// see examples/sogrand_crc_probe.rs for a CRC-aided soft-GRAND setup
-```
-
-## Acceleration
-
-- **SIMD** (default): bit-level and RREF-stage operations go through AVX2 / AVX-512 via `gf2-core`'s SIMD layer. Word-level (64×) × SIMD (4–8×) ≈ 256–512× over naïve Gaussian elimination for LDPC preprocessing.
-- **Batch BCH encoding**: `bch::encode` dispatches a batch among registered algorithm families, one of which bit-slices the batch and advances the shift register across 64 frames at a time through `gf2-kernels-simd`'s AVX2 kernels, falling back to portable kernels that write the same bits. Every family is bit-identical to the scalar reference; which one runs is a tuning-profile decision, and a process that installs no profile stays on the reference.
-- **Parallel** (opt-in, `--features parallel`): Rayon-backed batch encode/decode across frames.
-
-  ```bash
-  RAYON_NUM_THREADS=8 cargo bench -p gf2-coding --bench quick_parallel --features parallel
-  ```
-
-- **GPU** (opt-in, `--features hip`): HIP/ROCm kernels on gfx1030 accelerate batched BCJR soft decoding, Gray-QAM demapping, LDPC belief propagation, and BCH syndrome evaluation (`BinaryBchDecoder::{compute_syndromes_batch_gpu, correct_batch_gpu}`: GPU Horner over GF(2^m), CPU Berlekamp-Massey + Chien with verified typed outcomes). Requires `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/). The HIP crate is excluded from the default workspace build.
-
-See [`docs/SIMD_PERFORMANCE_GUIDE.md`](docs/SIMD_PERFORMANCE_GUIDE.md), [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md), and [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md) for benchmarks and methodology.
-
-## Features
+## Feature flags
 
 | Feature | Default | Effect |
 |---|---|---|
-| `simd` | ✅ | Propagates to `gf2-core/simd` (AVX2 / AVX-512) |
-| `parallel` | — | Rayon batch encode/decode |
-| `visualization` | — | Propagates to `gf2-core/visualization` (matrix PNG export) |
-| `llr-f64` | — | Use `f64` LLRs instead of `f32` (for research / reference runs) |
-| `hip` | — | Enable `gf2-kernels-hip` GPU kernels (requires ROCm/hipcc) |
+| `simd` | yes | Enables `gf2-core/simd` |
+| `sim-observability` | yes | Per-SNR JSON checkpoints, signal-safe flush, JSON-lines tracing, deterministic ChaCha20 seek |
+| `parallel` | no | Rayon batch encode, decode, and simulation across frames |
+| `hip` | no | HIP/ROCm paths for batched BCJR, Gray-QAM soft demapping, and BCH syndrome evaluation (`BinaryBchDecoder::compute_syndromes_batch_gpu`, `correct_batch_gpu`) |
+| `llr-f64` | no | `f64` LLRs instead of `f32` |
+| `visualization` | no | Enables `gf2-core/visualization` |
+| `tuning-profile` | no | Format-2 codec for the coding-owned tuning section |
+| `test-support` | no | Shared test helpers |
+| `bench-csv` | no | Enables `gf2-core/test-support` for the benchmark CSV emitters |
 
-## Utility binaries
+## Acceleration ownership
+
+- `gf2-core` owns runtime SIMD dispatch for bit-level and elimination operations.
+- `gf2-kernels-simd` owns the AVX2 batch BCH encoding kernels; `bch::encode` selects among registered algorithm families, all bit-identical to the scalar reference, under the process tuning profile in `tuning`.
+- `gf2-kernels-hip` owns the GPU kernels. It is outside the default workspace and needs `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/).
+- This crate owns codes, decoders, and the dispatch that selects among those backends. This crate denies `unsafe` code.
+
+## Commands
 
 ```bash
+cargo doc -p gf2-coding --no-deps --open
+cargo test -p gf2-coding --release
 cargo run --release -p gf2-coding --bin generate_ldpc_cache all
 cargo run --release -p gf2-coding --bin validate_ldpc_cache
-cargo run           -p gf2-coding --bin check_encoding
+cargo run --release -p gf2-coding --example <name>
 ```
 
-`generate_ldpc_cache` writes ~530 MB of generator-matrix caches (a one-time ~13 min preprocessing); cached encoders then load in <16 ms.
+## Further reading
 
-## Examples
-
-Run with `cargo run --release -p gf2-coding --example <name>`:
-
-| Area | Examples |
-|---|---|
-| Block / Hamming | `hamming_basic`, `hamming_7_4`, `block_code_intro`, `generator_from_parity_check` |
-| DVB-T2 | `dvb_t2_ldpc_basic`, `dvb_t2_bch_demo` |
-| LDPC | `ldpc_awgn`, `ldpc_bler_check`, `ldpc_mother_check`, `ldpc_cache_file_io`, `ldpc_encoding_with_cache`, `qc_ldpc_demo` |
-| Convolutional | `nasa_rate_half_k3` |
-| Modem / fading | `modem_gray_qam_preset`, `modem_custom_constellation`, `modem_simulation_harness` |
-| Soft / GRAND | `llr_operations`, `sogrand_crc_probe` |
-| Channel / utilities | `awgn_uncoded`, `visualize_large_matrices`, `gen_presentation_figures` |
-
-## Testing
-
-```bash
-cargo test  -p gf2-coding --release
-cargo test  -p gf2-coding --release --doc
-cargo bench -p gf2-coding --bench ldpc_decode
-```
-
-Always use `--release`: debug mode is 10–100× slower on LDPC and simulation code, and the suite has a 60-second wall-clock budget.
-
-## Documentation
-
-- [`docs/DVB_T2.md`](docs/DVB_T2.md) — DVB-T2 implementation and reference-vector verification
-- [`docs/SIMD_PERFORMANCE_GUIDE.md`](docs/SIMD_PERFORMANCE_GUIDE.md) — SIMD routing and measured speedups
-- [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md) — Rayon batch strategy
-- [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md), [`docs/LDPC_VERIFICATION_TESTS.md`](docs/LDPC_VERIFICATION_TESTS.md)
-- [`docs/SDR_INTEGRATION.md`](docs/SDR_INTEGRATION.md) — using the modem from an SDR stack
-- [`docs/SYSTEMATIC_ENCODING_CONVENTION.md`](docs/SYSTEMATIC_ENCODING_CONVENTION.md) — coordinate, layout, and systematic form conventions
-- `src/modem/mod.rs` — module-level modem-framework guide
-- Workspace overview: [`../../README.md`](../../README.md)
-
-## Contributing
-
-Follow TDD. Add property tests for algebraic invariants, standards test vectors where the code claims standards compliance, and benchmarks for anything performance-sensitive. See the workspace guide in [`../../AGENTS.md`](../../AGENTS.md).
+- Rustdoc, generated by the `cargo doc` command above, from the crate-level documentation in [`src/lib.rs`](src/lib.rs); module documentation carries the BCH, DVB-T2, and modem guides.
+- [Documentation index](../../docs/index.md)
+- [Workspace README](../../README.md)
 
 ## License
 
-MIT — see [`../../LICENSE-MIT`](../../LICENSE-MIT).
+MIT; see [`../../LICENSE-MIT`](../../LICENSE-MIT).
