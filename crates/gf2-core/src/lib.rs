@@ -264,11 +264,9 @@ pub(crate) mod simd {
     /// Barrett reduction (`r = x - p · round(x · (1/p))`) at the end
     /// of the k-axis.
     ///
-    /// The f64 cascade is the structural lever for GF(65521)/n=4096
-    /// (`@/issue/695350fd`): the u16-lane `_mm256_pmullw + _mm256_pmulhuw`
-    /// kernel sits at ~92 % of its arithmetic ceiling (~40 Gop/s) while
-    /// fflas-ffpack's `Modular<double>` peak (~70 Gop/s) matches Zen 3's f64
-    /// FMA back-end exactly. This kernel reaches the same back-end.
+    /// The f64 cascade targets GF(65521)/n=4096 (`@/issue/695350fd`) through the
+    /// f64 FMA back-end, which the u16-lane `_mm256_pmullw + _mm256_pmulhuw`
+    /// kernel does not use.
     ///
     /// Returns `None` on hosts without AVX2 + FMA3.
     #[inline]

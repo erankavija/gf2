@@ -66,11 +66,9 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// * `n` — universe size; the iterator yields `2^n - 1` items. Must
 ///   satisfy `n <= 63`, the bound shared with the GPU kernels. Internally the
 ///   iterator widens to `u128` so the bound `(1u128 << n)` is well-defined; the
-///   same widening shape is used downstream. Iteration cost is `O(2^n)`, so
-///   practical callers stay at or below `n = 36` (`@/issue/ae82bd73` §7.3). For
+///   same widening shape is used downstream. Iteration cost is `O(2^n)`. For
 ///   `n >= 64` use the multi-word path (`permanent_bipedal3_multiword`) which
-///   carries its own 256-bit counter. The bound reflects feasibility: 2^64
-///   Gray steps is infeasible on CPU or GPU.
+///   carries its own 256-bit counter.
 ///
 /// # Examples
 ///
@@ -121,8 +119,7 @@ pub fn gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)> {
         "gray_code_iter: n must satisfy n <= 63; got n = {n}"
     );
     // `1u128 << n` fits in u64 for n <= 63; the u128 shape matches dependent
-    // code that monomorphises against `u128` arithmetic. The n <= 63 bound
-    // is wallclock-driven (n=64 takes ~600 years on CPU or GPU).
+    // code that monomorphises against `u128` arithmetic.
     let upper: u128 = 1u128 << n;
     (1u128..upper).map(|k| {
         let flip = k.trailing_zeros() as usize;
