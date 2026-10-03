@@ -32,10 +32,6 @@ pub const BG2_KB: usize = 10;
 ///
 /// This is suitable for passing to [`QuasiCyclicLdpc::new()`](super::super::QuasiCyclicLdpc::new).
 ///
-/// # Arguments
-///
-/// * `z` - Lifting size (must be a valid 5G NR lifting size from Table 5.3.2-1)
-///
 /// # Panics
 ///
 /// Panics if `z` is not a valid 5G NR lifting size.
@@ -49,10 +45,6 @@ pub const BG2_KB: usize = 10;
 /// assert_eq!(matrix[0].len(), 52);       // 52 columns
 /// assert!(matrix[0][0] >= 0 && matrix[0][0] < 13);
 /// ```
-///
-/// # Complexity
-///
-/// O(rows × cols) = O(42 × 52) = O(2184) for table copy and mod reduction.
 pub fn bg2_base_matrix(z: usize) -> Vec<Vec<i32>> {
     let i_ls = super::require_lifting_set_index(z);
     super::reduce_shifts(&BG2_SHIFTS[i_ls], z)

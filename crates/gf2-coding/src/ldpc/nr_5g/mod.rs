@@ -1,88 +1,11 @@
-//! 5G NR LDPC code construction from 3GPP TS 38.212.
+//! 5G NR LDPC code construction from `@/citation/ThreeGpp2017` Section 5.3.2.
 //!
-//! This module provides factory methods for creating 5G NR standard LDPC codes
-//! as defined in 3GPP TS 38.212 Section 5.3.2.
-//!
-//! 5G NR uses two base graphs:
-//! - **BG1**: 46x68 base matrix (K_b = 22, higher code rates, larger blocks)
-//! - **BG2**: 42x52 base matrix (K_b = 10, lower code rates, smaller blocks)
-//!
-//! # Quasi-Cyclic Structure
-//!
-//! The parity-check matrix H is constructed by replacing each entry in the
-//! base matrix with a Z x Z circulant permutation matrix (or a zero matrix
-//! for entries equal to -1). The actual shift for entry V is `V mod Z`.
-//!
-//! # Lifting Sizes
-//!
-//! Valid lifting sizes Z range from 2 to 384 and belong to one of 8 sets
-//! defined in Table 5.3.2-1. Each set contains Z values of the form `a * 2^j`
-//! where `a` is the set's base factor (2, 3, 5, 7, 9, 11, 13, or 15).
-//!
-//! # 3GPP Rate Matching (TS 38.212 Section 5.3.2)
-//!
-//! Rate matching works through LLR initialization on the FULL mother code,
-//! NOT by removing columns from H. This preserves the Tanner graph structure
-//! needed for proper BP convergence (especially for BG1 codes).
-//!
-//! ## Encoder side
-//!
-//! 1. **Select Z**: smallest valid Z such that `K_b * Z >= target_k` AND
-//!    enough transmitted bits remain after mandatory puncturing.
-//! 2. **Pad message**: append `num_filler = K_b * Z - target_k` zero bits.
-//! 3. **Encode**: with full mother code to get N = N_b * Z coded bits.
-//! 4. **Puncture**: the first `2 * Z` coded output bits are always
-//!    punctured (not transmitted).
-//! 5. **Rate match**: skip filler positions and transmit E = target_n bits.
-//!
-//! ## Decoder side
-//!
-//! 1. Receive target_n LLRs from the channel.
-//! 2. Construct full-length N LLR vector:
-//!    - First 2*Z positions: LLR = 0 (no channel information)
-//!    - Filler bit positions: the finite prior of
-//!      [`Nr5gRateMatchedCode::prepare_llrs`] (known to be zero)
-//!    - Transmitted positions: LLR from channel
-//!    - Remaining parity positions: LLR = 0 (punctured parity)
-//! 3. Decode with BP on the FULL mother code H.
-//! 4. Extract target_k message bits from the decoded output.
-//!
-//! # Target Code Construction Parameters
-//!
-//! The following table documents the exact parameters for each of the 6
-//! downstream target codes with 3GPP-conformant rate matching.
-//!
-//! | Target (n, k) | Rate  | BG  | Z   | Mother (N, K)  | Filler | 2*Z punct. | Parity kept | Parity removed |
-//! |---------------|-------|-----|-----|----------------|--------|------------|-------------|----------------|
-//! | (256, 121)    | 0.473 | BG2 | 22  | (1144, 220)    | 99     | 44         | 179         | 745            |
-//! | (256, 49)     | 0.191 | BG2 | 9   | (468, 90)      | 41     | 18         | 225         | 153            |
-//! | (625, 225)    | 0.360 | BG2 | 30  | (1560, 300)    | 75     | 60         | 460         | 800            |
-//! | (1024, 441)   | 0.431 | BG2 | 56  | (2912, 560)    | 119    | 112        | 695         | 1657           |
-//! | (1024, 640)   | 0.625 | BG1 | 30  | (2040, 660)    | 20     | 60         | 444         | 936            |
-//! | (4096, 3249)  | 0.793 | BG1 | 160 | (10880, 3520)  | 271    | 320        | 1167        | 6193           |
-//!
-//! **Ambiguities**: For (1024, 640) either BG1 or BG2 could work. BG1 is
-//! preferred because TS 38.212 recommends BG1 for rates above 0.25 when the
-//! information block size permits. For BG2, K_b=10 gives Z=64 and a 3328-column
-//! mother code, which also works but is less standard at this rate.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
-//!
-//! // Create a 5G NR LDPC code with BG2 and lifting factor Z=52
-//! let qc = QuasiCyclicLdpc::nr_5g(2, 52);
-//! let code = LdpcCode::from_quasi_cyclic(&qc);
-//!
-//! // BG2: 42 rows x 52 cols, expanded by Z=52
-//! assert_eq!(code.m(), 42 * 52);
-//! assert_eq!(code.n(), 52 * 52);
-//! ```
-//!
-//! # References
-//!
-//! 3GPP TS 38.212 V15.0.0 (2017-12): Multiplexing and channel coding
+//! [`QuasiCyclicLdpc::nr_5g`] expands base graph BG1 (46x68, K_b = 22) or BG2
+//! (42x52, K_b = 10) by a lifting size Z from Table 5.3.2-1: each base entry V
+//! becomes a Z x Z circulant with shift `V mod Z`, and -1 a zero block.
+//! [`QuasiCyclicLdpc::nr_5g_rate_matched`] adds rate matching, which
+//! [`Nr5gRateMatchedCode`] applies through LLR initialization on the full
+//! mother code, keeping every column of H.
 
 pub(crate) mod bg1;
 pub(crate) mod bg2;
@@ -99,15 +22,8 @@ pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 /// are the base shifts **before** the `V mod Z` reduction that
 /// [`QuasiCyclicLdpc::nr_5g`] applies for a concrete lifting size.
 ///
-/// This is the table-level single source of truth behind the constructor
-/// surface; it exists so external reference data (e.g. the committed
-/// `@/citation/Sionna2026` tables under `data/ldpc/nr_5g/`) can be compared bit-exactly
-/// against the compiled-in constants.
-///
-/// # Arguments
-///
-/// * `base_graph` - Base graph number: 1 (46x68) or 2 (42x52)
-/// * `i_ls` - Lifting set index (0..=7) per TS 38.212 Table 5.3.2-1
+/// External reference data (e.g. the committed `@/citation/Sionna2026` tables
+/// under `data/ldpc/nr_5g/`) can be compared bit-exactly against it.
 ///
 /// # Panics
 ///
@@ -129,10 +45,6 @@ pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 /// assert_eq!(bg2_ils6[0].len(), 52);
 /// assert_eq!(bg2_ils6[0][0], 143); // TS 38.212 Table 5.3.2-3, i_LS=6, (0,0)
 /// ```
-///
-/// # Complexity
-///
-/// O(rows × cols) for the table copy (46×68 for BG1, 42×52 for BG2).
 pub fn shift_table(base_graph: u8, i_ls: usize) -> Vec<Vec<i16>> {
     assert!(
         base_graph == 1 || base_graph == 2,
@@ -153,16 +65,12 @@ pub fn shift_table(base_graph: u8, i_ls: usize) -> Vec<Vec<i16>> {
 }
 
 /// Returns the lifting set index for Z, panicking if Z is invalid.
-///
-/// Shared validation used by both `bg1_base_matrix` and `bg2_base_matrix`.
 pub(crate) fn require_lifting_set_index(z: usize) -> usize {
     lifting::lifting_set_index(z as u16)
         .unwrap_or_else(|| panic!("Z={z} is not a valid 5G NR lifting size"))
 }
 
 /// Applies `V mod Z` to each entry, preserving -1 (no connection).
-///
-/// Shared mod-reduction used by both `bg1_base_matrix` and `bg2_base_matrix`.
 pub(crate) fn reduce_shifts(table: &[impl AsRef<[i16]>], z: usize) -> Vec<Vec<i32>> {
     table
         .iter()
@@ -188,14 +96,7 @@ pub(crate) fn reduce_shifts(table: &[impl AsRef<[i16]>], z: usize) -> Vec<Vec<i3
 /// `B` (= `target_k` here): `10` for `B > 640`, `9` for `560 < B <= 640`,
 /// `8` for `192 < B <= 560`, and `6` for `B <= 192`. The standard selects a
 /// larger lifting size (and thus a larger mother code) for small information
-/// blocks. This is the single source of truth consumed by both
-/// [`QuasiCyclicLdpc::nr_5g_rate_matched`]'s Z-selection and
-/// [`max_payload_for_lifting`].
-///
-/// # Arguments
-///
-/// * `base_graph` - Base graph number: 1 or 2
-/// * `target_k` - Information block size `B`
+/// blocks.
 ///
 /// # Panics
 ///
@@ -212,10 +113,6 @@ pub(crate) fn reduce_shifts(table: &[impl AsRef<[i16]>], z: usize) -> Vec<Vec<i3
 /// assert_eq!(kb_for_z_selection(2, 300), 8);
 /// assert_eq!(kb_for_z_selection(2, 100), 6);
 /// ```
-///
-/// # Complexity
-///
-/// O(1).
 pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {
     assert!(
         base_graph == 1 || base_graph == 2,
@@ -254,25 +151,11 @@ pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {
 /// candidate exists for every valid lifting size of both base graphs (BG1 is
 /// trivially `22 * z`; BG2 resolves to one of `{10, 9, 8, 6} * z`).
 ///
-/// Consumers (e.g. the `gf2-sim` 5G NR pipeline preset) use this to express a
-/// code in `(base graph, lifting size, rate)` form: `target_k` from this
-/// function, `target_n` from the rate.
-///
 /// The exact-`z` guarantee additionally requires `target_n` to satisfy the
 /// Z-selection's transmission-budget criterion
 /// `target_k + (N_b - K_b - 2) * z >= target_n` (else a larger lifting size is
 /// selected). Every code rate `>= 1/3` satisfies it for both base graphs, so
 /// the guarantee holds throughout the TS 38.212 operating region.
-///
-/// # Arguments
-///
-/// * `base_graph` - Base graph number: 1 or 2
-/// * `z` - The lifting size the rate-matched code must use. Must be a valid
-///   5G NR lifting size per TS 38.212 Table 5.3.2-1.
-///
-/// # Returns
-///
-/// The largest `target_k` realising exactly `z`.
 ///
 /// # Panics
 ///
@@ -295,10 +178,6 @@ pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {
 /// let rm = QuasiCyclicLdpc::nr_5g_rate_matched(2, 832, 416);
 /// assert_eq!(rm.params().lifting_factor, 52);
 /// ```
-///
-/// # Complexity
-///
-/// O(1) (at most four candidate checks).
 pub fn max_payload_for_lifting(base_graph: u8, z: usize) -> usize {
     assert!(
         base_graph == 1 || base_graph == 2,
@@ -339,18 +218,9 @@ use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
 
 impl QuasiCyclicLdpc {
-    /// Creates a 5G NR LDPC code from a base graph and lifting factor.
-    ///
-    /// Constructs the full quasi-cyclic parity-check matrix by expanding
-    /// the specified base graph with the given lifting size Z. Each entry V
-    /// in the base matrix becomes a Z x Z circulant permutation matrix with
-    /// shift `V mod Z`, or a zero matrix if V = -1.
-    ///
-    /// # Arguments
-    ///
-    /// * `base_graph` - Base graph number: 1 (BG1, 46x68, K_b=22) or 2 (BG2, 42x52, K_b=10)
-    /// * `lifting_factor` - Expansion factor Z. Must be a valid 5G NR lifting size
-    ///   from 3GPP TS 38.212 Table 5.3.2-1.
+    /// Creates the 5G NR quasi-cyclic structure of base graph `base_graph`
+    /// (1 or 2) with lifting size `lifting_factor`: each base entry V becomes
+    /// a Z x Z circulant with shift `V mod Z`, or a zero block if V = -1.
     ///
     /// # Panics
     ///
@@ -375,10 +245,6 @@ impl QuasiCyclicLdpc {
     /// assert_eq!(qc.base_cols(), 68);
     /// assert_eq!(qc.expansion_factor(), 384);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(mb * nb) where mb x nb is the base matrix size.
     pub fn nr_5g(base_graph: u8, lifting_factor: usize) -> Self {
         assert!(
             base_graph == 1 || base_graph == 2,
@@ -401,35 +267,13 @@ impl QuasiCyclicLdpc {
     /// Creates a rate-matched 5G NR LDPC code with exact target dimensions.
     ///
     /// Builds the full mother code from the base graph expanded by Z, then
-    /// wraps it in an [`Nr5gRateMatchedCode`] that handles 3GPP TS 38.212
-    /// rate matching via LLR initialization on the full Tanner graph.
+    /// wraps it in an [`Nr5gRateMatchedCode`], which documents the rate
+    /// matching.
     ///
-    /// # 3GPP Rate Matching Algorithm (TS 38.212 Section 5.3.2)
-    ///
-    /// 1. **Select Z**: The smallest valid lifting size Z such that
-    ///    `K_b * Z >= target_k` and enough transmitted bits remain after
-    ///    mandatory puncturing of the first 2*Z systematic columns.
-    /// 2. **Shortening (filler bits)**: `K_b * Z - target_k` positions at the
-    ///    end of the systematic section are forced to zero.
-    /// 3. **Mandatory systematic puncturing**: The first `2 * Z` coded bits
-    ///    are always punctured (not transmitted).
-    /// 4. **Parity truncation**: Excess parity columns are not transmitted.
-    ///
-    /// Unlike column-removal approaches, this preserves the full mother code
-    /// H for BP decoding. Rate matching is handled via LLR initialization:
-    /// punctured positions get LLR=0, filler positions get the finite prior
-    /// of [`Nr5gRateMatchedCode::prepare_llrs`].
-    ///
-    /// # Arguments
-    ///
-    /// * `base_graph` - Base graph number: 1 or 2
-    /// * `target_n` - Target codeword length (must satisfy `target_n > target_k`)
-    /// * `target_k` - Target message length
-    ///
-    /// # Returns
-    ///
-    /// An [`Nr5gRateMatchedCode`] that implements [`BlockEncoder`](crate::traits::BlockEncoder),
-    /// [`SoftDecoder`], and [`IterativeSoftDecoder`] with the target (n, k) dimensions.
+    /// Z is the smallest valid lifting size with `K_b' * Z >= target_k`, for
+    /// the `K_b'` of [`kb_for_z_selection`], and
+    /// `target_k + (N_b - K_b - 2) * Z >= target_n` (enough transmitted bits
+    /// after mandatory puncturing of the first 2*Z systematic columns).
     ///
     /// # Panics
     ///
@@ -454,7 +298,8 @@ impl QuasiCyclicLdpc {
     ///
     /// # Complexity
     ///
-    /// O(mb * nb * Z) for expanding the mother code parity-check matrix.
+    /// O(m * n * min(m, n)) for Gaussian elimination on the m × n mother
+    /// parity-check matrix.
     pub fn nr_5g_rate_matched(
         base_graph: u8,
         target_n: usize,
@@ -483,12 +328,10 @@ impl QuasiCyclicLdpc {
         };
 
         // 3GPP TS 38.212 Section 5.2.2: K_b for Z selection depends on B
-        // (the input block size) for BG2. This selects a larger Z (and thus
-        // a larger mother code) for small information blocks, matching the
-        // standard's intended code structure.
+        // (the input block size) for BG2.
         let kb_for_z = kb_for_z_selection(base_graph, target_k);
 
-        // Step 1: Find the smallest valid Z such that:
+        // The smallest valid Z such that:
         //   (a) kb_for_z * Z >= target_k  (3GPP Z selection criterion)
         //   (b) target_k + (N_b - K_b - 2) * Z >= target_n  (enough transmitted bits
         //       after mandatory 2*Z systematic puncturing)
@@ -515,17 +358,14 @@ impl QuasiCyclicLdpc {
             });
         let z = z as usize;
 
-        // Mother code dimensions
         let full_k = kb * z;
         let full_n = nb * z;
 
-        // Step 2: Compute filler (shortening) count
         let num_filler = full_k - target_k;
 
-        // Step 3: 3GPP mandatory systematic puncturing — first 2*Z columns
+        // 3GPP mandatory systematic puncturing — first 2*Z columns
         let num_punct_sys = 2 * z;
 
-        // Step 4: Compute parity truncation
         let total_parity = full_n - full_k;
         let remaining_sys = full_k - num_filler - num_punct_sys;
         let available_total = remaining_sys + total_parity;
@@ -560,11 +400,9 @@ impl QuasiCyclicLdpc {
             nb,
         };
 
-        // Build the full mother code
         let qc = Self::nr_5g(base_graph, z);
         let mother_code = LdpcCode::from_quasi_cyclic(&qc);
 
-        // Compute encoding data with column mapping
         let encoding = compute_mother_encoding(&mother_code, &params);
 
         Nr5gRateMatchedCode {
@@ -576,9 +414,6 @@ impl QuasiCyclicLdpc {
 }
 
 /// Parameters describing the 3GPP-conformant rate matching applied to a 5G NR LDPC code.
-///
-/// Documents the exact construction choices (Z_c, shortening count, puncturing
-/// counts) so that encoders and decoders can correctly interpret the code.
 ///
 /// # Examples
 ///
@@ -636,10 +471,6 @@ impl NrRateMatchParams {
     /// let rate = rm_code.params().effective_rate();
     /// assert!((rate - 121.0 / 256.0).abs() < 1e-6);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn effective_rate(&self) -> f64 {
         self.target_k as f64 / self.target_n as f64
     }
@@ -655,10 +486,6 @@ impl NrRateMatchParams {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.params().active_systematic_bits(), 220 - 99 - 44);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn active_systematic_bits(&self) -> usize {
         self.full_k - self.num_shortened - self.num_punctured_systematic
     }
@@ -673,10 +500,6 @@ impl NrRateMatchParams {
     /// let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
     /// assert_eq!(rm_code.params().transmitted_parity_bits(), 256 - 77);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn transmitted_parity_bits(&self) -> usize {
         self.target_n - self.active_systematic_bits()
     }
@@ -690,8 +513,6 @@ const FILLER_LLR: f32 = 15.0;
 ///
 /// Contains the parity matrix and the systematic/parity column indices
 /// computed via RREF with right-to-left pivoting on the parity-check matrix H.
-/// This matches the encoder's internal column ordering, ensuring that the
-/// codeword positions are consistent with H's column layout for BP decoding.
 #[derive(Clone)]
 struct MotherEncoding {
     /// Parity matrix P (k × m): for systematic codes, G = [I at sys_cols | P at par_cols]
@@ -704,8 +525,7 @@ struct MotherEncoding {
     /// rate matching. Length = target_n. Respects the RREF column assignment so
     /// that punctured, filler, and truncated positions are correctly excluded.
     transmitted_cols: Vec<usize>,
-    /// Set of filler (shortened) column positions in the full codeword, for
-    /// efficient lookup during LLR preparation.
+    /// Set of filler (shortened) column positions in the full codeword.
     filler_col_set: std::collections::HashSet<usize>,
 }
 
@@ -723,16 +543,6 @@ struct MotherEncoding {
 /// as parity pivots and vice-versa, which affects which columns carry filler
 /// zeros and which carry actual information.
 ///
-/// # Arguments
-///
-/// * `code` - The LDPC code with parity-check matrix H
-/// * `params` - Rate matching parameters
-///
-/// # Returns
-///
-/// A `MotherEncoding` containing the parity matrix, column mappings, and
-/// the transmitted column list.
-///
 /// # Panics
 ///
 /// Panics if H is not full rank.
@@ -748,7 +558,6 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
     let k = n - m;
     let h = code.parity_check_matrix();
 
-    // Convert sparse H to dense for RREF
     let mut work = BitMatrix::zeros(m, n);
     for row in 0..m {
         for col in h.row_iter(row) {
@@ -863,7 +672,6 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
         }
     }
 
-    // Build parity matrix P (k × m)
     // P[i, j] = work[row_for_pivot[j], systematic_cols[i]]
     let mut parity_matrix = BitMatrix::zeros(k, m);
     for (i, &sys_col) in systematic_cols.iter().enumerate() {
@@ -896,15 +704,12 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
     let punctured_end = params.num_punctured_systematic; // = 2*Z
     let mut transmitted_cols = Vec::with_capacity(params.target_n);
     for col in 0..params.full_n {
-        // (a) Skip punctured columns
         if col < punctured_end {
             continue;
         }
-        // (b) Skip filler columns
         if filler_col_set.contains(&col) {
             continue;
         }
-        // (c) Skip truncated parity columns (parity col not in kept set)
         if pivot_set.contains(&col) && !parity_kept_set.contains(&col) {
             continue;
         }
@@ -978,28 +783,16 @@ pub struct Nr5gRateMatchedCode {
 
 impl Nr5gRateMatchedCode {
     /// Returns the target codeword length (transmitted bits).
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn n(&self) -> usize {
         self.params.target_n
     }
 
     /// Returns the target message length.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn k(&self) -> usize {
         self.params.target_k
     }
 
     /// Returns a reference to the rate matching parameters.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn params(&self) -> &NrRateMatchParams {
         &self.params
     }
@@ -1008,35 +801,17 @@ impl Nr5gRateMatchedCode {
     ///
     /// The mother code has n = N_b * Z columns and m = M_b * Z rows.
     /// BP decoding operates on this full code.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn mother_code(&self) -> &LdpcCode {
         &self.mother_code
     }
 
-    /// Encodes a target_k message into a target_n transmitted codeword.
-    ///
-    /// 1. Pads with filler zeros to reach full_k.
-    /// 2. Encodes with full mother code to get full_n bits.
-    /// 3. Extracts target_n transmitted bits.
-    ///
-    /// # Arguments
-    ///
-    /// * `message` - A bit vector of length target_k
-    ///
-    /// # Returns
-    ///
-    /// A bit vector of length target_n
+    /// Encodes a target_k message into a target_n transmitted codeword: pads
+    /// with filler zeros to full_k, encodes with the mother code through the
+    /// RREF-derived column mapping, and extracts the transmitted bits.
     ///
     /// # Panics
     ///
     /// Panics if `message.len() != target_k`.
-    /// Encodes using the mother code and applies rate matching.
-    ///
-    /// The encoding uses the RREF-derived column mapping to place
-    /// message and parity bits at the correct codeword positions.
     fn encode_rate_matched(&self, message: &BitVec) -> BitVec {
         assert_eq!(
             message.len(),
@@ -1049,16 +824,13 @@ impl Nr5gRateMatchedCode {
         let p = &self.params;
         let enc = &self.encoding;
 
-        // Step 1: Pad message with filler zeros to full_k
         let mut padded = BitVec::zeros(p.full_k);
         for i in 0..p.target_k {
             padded.set(i, message.get(i));
         }
 
-        // Step 2: Compute parity bits: parity = P^T * padded_message
         let parity = enc.parity_matrix.matvec_transpose(&padded);
 
-        // Step 3: Build full codeword using the column mapping
         let mut codeword = BitVec::zeros(p.full_n);
         for (i, &col) in enc.systematic_cols.iter().enumerate() {
             codeword.set(col, padded.get(i));
@@ -1067,9 +839,8 @@ impl Nr5gRateMatchedCode {
             codeword.set(col, parity.get(j));
         }
 
-        // Step 4: Extract transmitted bits using the precomputed column list.
-        // This correctly handles the case where RREF assigns some natural
-        // "systematic" columns as parity pivots (e.g., BG2 row 41).
+        // The precomputed column list covers the case where RREF assigns some
+        // natural "systematic" columns as parity pivots (e.g., BG2 row 41).
         let mut output = BitVec::with_capacity(p.target_n);
         for &col in &enc.transmitted_cols {
             output.push_bit(codeword.get(col));
@@ -1094,14 +865,6 @@ impl Nr5gRateMatchedCode {
     /// `f32`, whereas the exact prior $+\infty$ gives `tanh` = 1, the argument
     /// at which the sum-product check-node `atanh` diverges.
     ///
-    /// # Arguments
-    ///
-    /// * `channel_llrs` - LLR values for target_n received positions
-    ///
-    /// # Returns
-    ///
-    /// Full-length (full_n) LLR vector for BP decoding.
-    ///
     /// # Panics
     ///
     /// Panics if `channel_llrs.len() != target_n`.
@@ -1122,10 +885,6 @@ impl Nr5gRateMatchedCode {
     ///
     /// assert_eq!(full_llrs.len(), full_n);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(full_n) where full_n = N_b * Z.
     pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
         assert_eq!(
             channel_llrs.len(),
@@ -1139,23 +898,15 @@ impl Nr5gRateMatchedCode {
         let enc = &self.encoding;
         let mut full_llrs = vec![Llr::zero(); p.full_n];
 
-        // Map channel LLRs to full codeword positions using transmitted_cols.
-        // This uses the same column list as the encoder, ensuring consistency
-        // even when the RREF assigns some natural-systematic columns as pivots.
         for (ch_idx, &col) in enc.transmitted_cols.iter().enumerate() {
             full_llrs[col] = channel_llrs[ch_idx];
         }
 
-        // Set filler LLRs: filler message indices are target_k..full_k.
-        // These message bits were forced to zero during encoding.
-        // Their codeword positions are systematic_cols[target_k..full_k].
-        // They are NOT in transmitted_cols so no overwrite conflict.
+        // Filler positions are systematic_cols[target_k..full_k]; none is in
+        // transmitted_cols, so nothing is overwritten.
         for &col in &enc.filler_col_set {
             full_llrs[col] = Llr::new(FILLER_LLR);
         }
-
-        // All other positions (punctured columns 0..2*Z, untransmitted parity,
-        // and any non-transmitted positions) remain at LLR=0.
 
         full_llrs
     }
@@ -1165,14 +916,6 @@ impl Nr5gRateMatchedCode {
     /// The decoded codeword has full_n bits indexed by H column position.
     /// Message bit `i` is at position `systematic_cols[i]` in the codeword.
     /// This method extracts the first target_k message bits, discarding filler.
-    ///
-    /// # Arguments
-    ///
-    /// * `decoded_codeword` - Decoded codeword from mother code (length full_n)
-    ///
-    /// # Returns
-    ///
-    /// Extracted message bits of length target_k.
     ///
     /// # Panics
     ///
@@ -1195,10 +938,6 @@ impl Nr5gRateMatchedCode {
     ///
     /// assert_eq!(message.len(), target_k);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(target_k).
     pub fn extract_message(&self, decoded_codeword: &BitVec) -> BitVec {
         let mut msg = BitVec::with_capacity(self.params.target_k);
         for i in 0..self.params.target_k {
@@ -1245,18 +984,13 @@ impl SoftDecoder for Nr5gRateMatchedCode {
 }
 
 /// Default normalized min-sum scaling factor for check-to-variable messages.
-///
-/// The standard min-sum algorithm overestimates check-to-variable messages.
-/// Multiplying by alpha ≈ 0.75 corrects this and is critical for convergence
-/// when many variable nodes are punctured (LLR=0), as in rate-matched codes.
 const DEFAULT_NMS_SCALE: f32 = 0.75;
 
 /// Iterative BP decoder for rate-matched 5G NR LDPC codes.
 ///
 /// Wraps an [`LdpcDecoder`] operating on the full mother code, with
 /// rate-matching preprocessing (LLR mapping) and postprocessing (message
-/// extraction). The BP algorithm itself is delegated entirely to
-/// [`LdpcDecoder`], avoiding code duplication.
+/// extraction).
 ///
 /// # Examples
 ///
@@ -1279,13 +1013,6 @@ pub struct Nr5gRateMatchedDecoder {
 impl Nr5gRateMatchedDecoder {
     /// Creates a new rate-matched decoder with default normalized min-sum (α=0.75).
     ///
-    /// Internally constructs an [`LdpcDecoder`] for the mother code, configured
-    /// with [`DecoderAlgorithm::NormalizedMinSum`] at the default scaling factor.
-    ///
-    /// # Arguments
-    ///
-    /// * `rm_code` - The rate-matched code to decode
-    ///
     /// # Complexity
     ///
     /// O(nnz(H)) for building the inner decoder's Tanner graph adjacency.
@@ -1293,15 +1020,8 @@ impl Nr5gRateMatchedDecoder {
         Self::with_scale(rm_code, DEFAULT_NMS_SCALE)
     }
 
-    /// Creates a decoder with a custom min-sum scaling factor.
-    ///
-    /// Use `scale = 1.0` for plain min-sum (no normalization).
-    /// Use `scale = 0.75` (default) for normalized min-sum.
-    ///
-    /// # Arguments
-    ///
-    /// * `rm_code` - The rate-matched code to decode
-    /// * `scale` - Min-sum scaling factor (0.0, 1.0]
+    /// Creates a decoder with a custom min-sum scaling factor; `scale = 1.0`
+    /// selects plain min-sum.
     ///
     /// # Panics
     ///
@@ -1321,15 +1041,6 @@ impl Nr5gRateMatchedDecoder {
 
     /// Creates a decoder with a specific BP algorithm variant.
     ///
-    /// Use [`DecoderAlgorithm::SumProduct`] for exact belief propagation,
-    /// [`DecoderAlgorithm::NormalizedMinSum`] for the standard 5G NR
-    /// approximation, or [`DecoderAlgorithm::MinSum`] for plain min-sum.
-    ///
-    /// # Arguments
-    ///
-    /// * `rm_code` - The rate-matched code to decode
-    /// * `algorithm` - The check-node update algorithm
-    ///
     /// # Panics
     ///
     /// Panics if `algorithm` carries a parameter [`DecoderConfig::new`] rejects.
@@ -1344,37 +1055,21 @@ impl Nr5gRateMatchedDecoder {
     }
 
     /// Returns the target codeword length.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn n(&self) -> usize {
         self.rm_code.n()
     }
 
     /// Returns the target message length.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn k(&self) -> usize {
         self.rm_code.k()
     }
 
     /// Returns a reference to the rate matching parameters.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn params(&self) -> &NrRateMatchParams {
         self.rm_code.params()
     }
 
     /// Returns a reference to the underlying rate-matched code.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn code(&self) -> &Nr5gRateMatchedCode {
         &self.rm_code
     }
@@ -1404,19 +1099,14 @@ impl IterativeSoftDecoder for Nr5gRateMatchedDecoder {
             self.rm_code.params.target_n
         );
 
-        // Step 1: Rate-matching preprocessing — map target_n channel LLRs
-        // to the full mother code length with punctured/filler LLR values.
         let full_llrs = self.rm_code.prepare_llrs(llrs);
 
-        // Step 2: Run BP on the full mother code and get the decoded CODEWORD
-        // (all N bits). We use decode_to_codeword instead of decode_iterative
-        // because the message extraction must use natural column ordering
-        // (positions 0..target_k) per the 3GPP encoding convention, not the
-        // RREF-determined systematic positions used by LdpcDecoder internally.
+        // decode_to_codeword returns all N bits: the message extraction uses
+        // natural column ordering (positions 0..target_k) per the 3GPP
+        // encoding convention, not the RREF-determined systematic positions
+        // of LdpcDecoder::decode_iterative.
         let mother_result = self.inner.decode_to_codeword(&full_llrs, max_iterations);
 
-        // Step 3: Extract target_k message bits from positions 0..target_k
-        // of the decoded codeword (natural column ordering per 3GPP TS 38.212).
         let target_k = self.rm_code.params.target_k;
         let mut message = BitVec::with_capacity(target_k);
         for i in 0..target_k {
@@ -1635,7 +1325,6 @@ mod tests {
 
     #[test]
     fn test_bg2_extension_has_identity_diagonal() {
-        // Test with multiple i_LS values to verify structure
         for z in [2u16, 52, 384] {
             let matrix = bg2::bg2_base_matrix(z as usize);
             // Extension rows 4..39 should have at least one parity entry
@@ -1693,7 +1382,7 @@ mod tests {
     #[test]
     fn test_rate_matched_bg2_256_49_exact_dimensions() {
         // With 3GPP K_b rules, target_k=49 <= 192 so K_b_for_z=6,
-        // smallest Z with 6*Z >= 49 is Z=9 (set 2: a=3, j=2).
+        // smallest Z with 6*Z >= 49 is Z=9.
         let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 49);
         let params = rm_code.params();
         assert_eq!(rm_code.n(), 256, "n mismatch");
@@ -1839,9 +1528,8 @@ mod tests {
         }
     }
 
-    /// All-Z exact-realization sweep (both BGs, rate 1/2). Construction of the
-    /// large-Z mother codes (RREF on up to 26112 columns) takes seconds, so
-    /// this is slow-tier; the representative subset above runs in the fast tier.
+    /// All-Z exact-realization sweep (both BGs, rate 1/2), with RREF on up to
+    /// 26112 columns; the representative subset above runs in the fast tier.
     #[test]
     #[ignore = "slow: constructs rate-matched codes for all 51 lifting sizes x both BGs"]
     fn test_max_payload_realizes_exact_z_all() {
@@ -2062,8 +1750,6 @@ mod tests {
 
     #[test]
     fn test_rate_matched_params_consistency() {
-        // Verify that active_systematic + transmitted_parity == target_n
-        // for all 6 target codes.
         let cases: &[(u8, usize, usize)] = &[
             (2, 256, 121),
             (2, 256, 49),
@@ -2131,7 +1817,6 @@ mod tests {
         let mut frames_decoded = 0usize;
 
         for _ in 0..num_frames {
-            // Generate random message
             let mut msg = BitVec::zeros(target_k);
             for i in 0..target_k {
                 if rng.gen_bool(0.5) {
@@ -2139,7 +1824,6 @@ mod tests {
                 }
             }
 
-            // Encode with rate matching
             let codeword = rm_code.encode(&msg);
             assert_eq!(codeword.len(), target_n);
 
@@ -2147,14 +1831,12 @@ mod tests {
             // modem-framework-backed reference channel.
             let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
 
-            // BP decode on full mother code via rate-matched decoder
             let result = decoder.decode_iterative(&llrs, 50);
 
             if result.converged {
                 frames_decoded += 1;
             }
 
-            // Compare decoded message with original
             let mut frame_has_error = false;
             for i in 0..target_k {
                 if result.decoded_bits.get(i) != msg.get(i) {
@@ -2177,7 +1859,6 @@ mod tests {
              {frames_decoded}/{num_frames} converged, \
              BLER = {bler:.2e}, Eb/N0 = {eb_n0_db} dB)"
         );
-        // BLER must also be reasonable (at least some frames decoded correctly)
         assert!(
             bler < 1.0,
             "{label}: BLER = 1.0 — no frame decoded correctly at {eb_n0_db} dB"
@@ -2186,38 +1867,32 @@ mod tests {
 
     #[test]
     fn test_ber_bg2_256_121_6db() {
-        // BG2 (256, 121) at 6 dB: low-rate code, expect near-zero BER
         ber_acceptance(2, 256, 121, 6.0, 1e-3, 20, "BG2 (256,121) @ 6dB");
     }
 
     #[test]
     fn test_ber_bg2_256_49_6db() {
-        // BG2 (256, 49) at 6 dB: very low rate, strong protection
         ber_acceptance(2, 256, 49, 6.0, 1e-3, 20, "BG2 (256,49) @ 6dB");
     }
 
     #[test]
     fn test_ber_bg2_1024_441_6db() {
-        // BG2 (1024, 441) at 6 dB: moderate rate 0.43 with larger block
         ber_acceptance(2, 1024, 441, 6.0, 1e-3, 10, "BG2 (1024,441) @ 6dB");
     }
 
     #[test]
     fn test_ber_bg2_625_225_6db() {
-        // BG2 (625, 225) at 6 dB: rate 0.36
         ber_acceptance(2, 625, 225, 6.0, 1e-3, 10, "BG2 (625,225) @ 6dB");
     }
 
     #[test]
     fn test_ber_bg1_1024_640_8db() {
-        // BG1 (1024, 640) at 8 dB: previously broken with column-removal approach
         ber_acceptance(1, 1024, 640, 8.0, 1e-3, 10, "BG1 (1024,640) @ 8dB");
     }
 
     #[test]
     #[ignore = "slow: BER simulation BG1(4096,3249) at 8dB; large code exceeds 5s"]
     fn test_ber_bg1_4096_3249_8db() {
-        // BG1 (4096, 3249) at 8 dB: high rate 0.793
         ber_acceptance(1, 4096, 3249, 8.0, 1e-2, 5, "BG1 (4096,3249) @ 8dB");
     }
 
@@ -2266,7 +1941,6 @@ mod proptests {
             let (target_n, target_k) = if bg == 1 { (1024, 640) } else { (256, 121) };
             let rm_code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, target_n, target_k);
 
-            // Generate a deterministic random message
             use rand::rngs::StdRng;
             use rand::SeedableRng;
             let mut rng = StdRng::seed_from_u64(seed);
