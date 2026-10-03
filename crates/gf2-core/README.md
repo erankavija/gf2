@@ -6,12 +6,12 @@ Safe-Rust storage and linear algebra over GF(2), and arithmetic over binary, pri
 
 | Area | Provides | Modules |
 |---|---|---|
-| Dense GF(2) | `BitVec`, `BitSlice`, `BitSliceMut` and the row-major `BitMatrix`; table-based multiplication, Gauss-Jordan inversion, RREF, polar transform | `bitvec`, `bitslice`, `matrix`, `alg` |
+| Dense GF(2) | `BitVec`, `BitSlice`, `BitSliceMut` and the row-major `BitMatrix`; M4RM multiplication, Gauss-Jordan inversion, RREF, polar transform | crate root re-exports, `matrix`, `alg` |
 | Sparse GF(2) | `SpBitMatrix` (CSR), `SpBitMatrixDual` (row and column traversal), block-CSR and row permutations | `sparse` |
-| Binary fields | GF(2^m) generic over storage width, with reduction-based, table and SIMD multiplication strategies; wide-degree fields; primitive-polynomial database and generation | `gf2m`, `primitive_polys` |
-| Prime fields | `Fp<const P: u64>` with a modular-reduction form chosen per prime, and canonical-form reduction for Mersenne and Proth primes | `gfp` |
+| Binary fields | GF(2^m) generic over storage width, with Barrett, Karatsuba, table and SIMD multiplication strategies; wide-degree fields; primitive-polynomial database and generation | `gf2m`, `primitive_polys` |
+| Prime fields | `Fp<const P: u64>` with Montgomery form for generic primes, and canonical-form reduction for Mersenne and Proth primes | `gfp` |
 | Extension fields | `QuadraticExt` and `CubicExt` towers over `ExtConfig`; `QuotientField` for runtime irreducible moduli; field identity and extension witnesses | `gfpn`, `field::extension` |
-| Field linear algebra | `FieldMatrix<F>` and sparse `SparseFieldMatrix<F>` over any `FiniteField`: GEMM (classical and recursive), PLE, RREF, nullspace, inverse, determinant, triangular solves, characteristic polynomial; `FieldPoly`, NTT, batch inversion | `field` |
+| Field linear algebra | `FieldMatrix<F>` and sparse `SparseFieldMatrix<F>` over any `FiniteField`: GEMM (classical and Strassen-Winograd), PLE, RREF, nullspace, inverse, determinant, triangular solves, characteristic polynomial; `FieldPoly`, NTT, batch inversion | `field` |
 | Execution | Runtime scalar/SIMD dispatch, Rayon batch backends, typed tuning profiles, serialization | `kernels`, `compute`, `tuning`, `io` |
 
 Every field implementation passes the shared field-law suite exposed as `field::axiom_tests` under `test-support`.
@@ -30,6 +30,8 @@ Bit `i` lives in word `i >> 6` under mask `1u64 << (i & 63)`; padding bits past 
 
 ## Features
 
+The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.
+
 | Feature | Default | Effect |
 |---|---|---|
 | `rand` | yes | Random bit containers, matrices and field elements |
@@ -40,10 +42,7 @@ Bit `i` lives in word `i >> 6` under mask `1u64 << (i & 63)`; padding bits past 
 | `tuning-profile` | no | Strict format-2 tuning-envelope JSON codecs |
 | `test-support` | no | Field axiom harness and test utilities for downstream crates |
 
-```toml
-[dependencies]
-gf2-core = { path = "crates/gf2-core", features = ["simd", "parallel"] }
-```
+Dependency setup: see [installation](../../docs/reference/supported-configurations.md#installation).
 
 ## Reference
 
