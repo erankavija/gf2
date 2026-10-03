@@ -7,6 +7,7 @@ Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
 | Page | Workflow |
 |---|---|
 | [Finite-field linear algebra at scale](tutorials/field-linear-algebra-at-scale.md) | Dense multiplication, PLE solving, inversion and characteristic polynomials over a prime field and its extension, with identity checks |
+| [Coded-modulation link simulation](tutorials/coded-modulation-link-simulation.md) | Checkpointed DVB-T2 BICM error-rate sweep through the `gf2-sim` preset, with frame-error-rate confidence intervals |
 
 ## How-to guides
 
