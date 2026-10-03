@@ -3,7 +3,7 @@
 use crate::connector::StageId;
 
 /// The top-level error returned by [`Stage::process`](crate::Stage::process)
-/// and the pipeline submit/collect APIs.
+/// and the pipeline run entry points.
 ///
 /// Splits into a [`RecoverableError`] (the executor may substitute a CPU
 /// fallback and continue) and a [`FatalError`] (the run aborts).
