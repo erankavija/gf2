@@ -11,15 +11,7 @@
 //! 3. **Chien search**: find the locator's roots, the error positions.
 //! 4. **Verification**: flip those positions and recompute the syndrome.
 //!
-//! It reports a [`BchDecodeOutcome`], keeps its workspace allocation outside
-//! the per-word path, and exposes the corrected codeword, information word,
-//! and error positions only through the opt-in [`BinaryBchDecoder::decode`]
-//! diagnostic path. Coordinate `i` carries the coefficient of `x^i`.
-//!
-//! Under `--features hip`, `BinaryBchDecoder::correct_batch_gpu` runs the
-//! syndrome evaluations of a whole batch on a HIP device and the locator
-//! search on the CPU, reporting the same [`BchDecodeOutcome`] values, and
-//! leaving the same corrected words, as the per-word CPU path.
+//! Coordinate `i` carries the coefficient of `x^i`.
 
 use crate::bch::error::BchError;
 use crate::bch::spec::BinaryBchCode;
@@ -78,16 +70,10 @@ impl BchDecodeOutcome {
 /// The reusable scratch space one [`BinaryBchDecoder`] needs per word.
 ///
 /// Every buffer is sized once, by [`BinaryBchDecoder::workspace`], from the
-/// code's syndrome count and correction radius, and is only ever overwritten
-/// in place afterwards; none is ever pushed to, resized, or replaced. Together
-/// with two further facts that gives
+/// code's syndrome count and correction radius, and is only overwritten in
+/// place afterwards, which gives
 /// [`correct_in_place`](BinaryBchDecoder::correct_in_place) its
-/// no-heap-allocation contract: the decoder itself precomputes its evaluation
-/// points and root powers at construction and holds no interior mutability,
-/// and $\mathrm{GF}(2^m)$ element arithmetic produces values that share their
-/// field by reference count rather than by allocating. The buffers here are
-/// therefore the only heap a decode could want, and the caller owns their one
-/// allocation.
+/// no-heap-allocation contract.
 ///
 /// A workspace belongs to the decoder that produced it. Every workspace
 /// carries a fingerprint of the code it was built for, and the decoder
@@ -146,17 +132,6 @@ pub struct BchDecodeWorkspace<V: UintExt = u64> {
 /// zero, which is equivalent to codeword membership (see
 /// [`workspace`](Self::workspace) for why the evaluated exponents suffice).
 /// No received word makes a decode panic.
-///
-/// # Paths
-///
-/// [`correct_in_place`](Self::correct_in_place) is the fast path: it corrects
-/// the caller's packed storage and returns status and count, with no heap
-/// allocation. [`decode`](Self::decode) is the opt-in diagnostic path: it may
-/// allocate, and returns the corrected codeword, the information word, the
-/// sorted error positions, and the count. Under `--features hip`,
-/// `correct_batch_gpu` is the fast path over a whole batch, with the syndrome
-/// evaluations on a device; it reports the same outcomes and leaves the same
-/// corrected words.
 ///
 /// # Examples
 ///
@@ -806,10 +781,6 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// all-zero row is therefore equivalent to the word being a codeword, the
     /// same equivalence the CPU path decides on.
     ///
-    /// # Arguments
-    ///
-    /// * `received` — the batch of received words, each of `n` coordinates.
-    ///
     /// # Returns
     ///
     /// One row per frame, in input order. An empty batch yields no rows, and a
@@ -872,11 +843,6 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// Unlike the per-word path this one allocates: it owns one workspace for
     /// the whole batch, holds the coordinates of each applied candidate until
     /// verification, and stages the batch's coefficient streams.
-    ///
-    /// # Arguments
-    ///
-    /// * `received` — the batch of received words, each of `n` coordinates,
-    ///   corrected in place.
     ///
     /// # Returns
     ///
@@ -1194,9 +1160,9 @@ mod canonical_decoder_tests {
         // Two distinct primitive presentations of the same (n, delta) give
         // decoders with identical buffer geometry; the stamp must still tell
         // them apart.
-        // Designed distance 3 (t = 1) is the reviewer's sharpest case: the
-        // syndrome points x, x^2 have identical raw values in every degree-4
-        // presentation, so only the modulus separates the stamps.
+        // At designed distance 3 (t = 1) the syndrome points x, x^2 have
+        // identical raw values in every degree-4 presentation, so only the
+        // modulus separates the stamps.
         let code_a = narrow_sense(4, 0b10011, 3);
         let code_b = narrow_sense(4, 0b11001, 3);
         let decoder_a = BinaryBchDecoder::new(&code_a);
@@ -1307,7 +1273,7 @@ mod canonical_decoder_tests {
         sorted
     }
 
-    // -- REQ-01/REQ-02: the error-free outcome and the two paths -----------
+    // -- The error-free outcome and the two paths --------------------------
 
     #[test]
     fn a_codeword_decodes_to_its_information_word() {
@@ -1336,7 +1302,7 @@ mod canonical_decoder_tests {
         }
     }
 
-    // -- REQ-03: every error count at and beyond the radius ----------------
+    // -- Every error count at and beyond the radius ------------------------
 
     fn error_cases() -> impl Strategy<Value = (usize, Vec<bool>, Vec<usize>)> {
         (
@@ -1574,7 +1540,7 @@ mod canonical_decoder_tests {
         assert!(report.error_positions().is_empty());
     }
 
-    // -- REQ-02: the fast path reuses one workspace ------------------------
+    // -- The fast path reuses one workspace --------------------------------
 
     /// The lengths and capacities of every workspace buffer after a mixed run
     /// of decodes. The decoder sizes each buffer once and only overwrites it
@@ -1735,11 +1701,6 @@ mod canonical_decoder_tests {
     // -- GPU-assisted decoding over the same model -------------------------
 
     /// The device path, held against the CPU path it reproduces.
-    ///
-    /// Each test self-gates on a usable device and skips without one, and each
-    /// runs in about a tenth of a second on the small parameter points, so
-    /// they stay in the fast tier rather than behind an ignore. The committed
-    /// receipt of issue `c3cc5226` records a run on a named HIP host.
     #[cfg(feature = "hip")]
     mod gpu {
         use super::*;
@@ -2097,9 +2058,8 @@ mod canonical_decoder_tests {
 
         /// The supported presentations stay on the device, so the fallback is
         /// selected by capability rather than taken always: the tabled
-        /// counterpart of the code above, and GF(2^16) — the DVB-T2 normal
-        /// frame's field, and the widest the kernel's u16 boundary carries,
-        /// whose device path the committed receipt measures.
+        /// counterpart of the code above, and GF(2^16), the DVB-T2 normal
+        /// frame's field and the widest the kernel's u16 boundary carries.
         #[test]
         fn a_tabled_presentation_is_device_supported() {
             for code in [

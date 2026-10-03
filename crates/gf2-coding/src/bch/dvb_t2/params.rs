@@ -34,11 +34,6 @@ pub struct DvbBchParams {
 impl DvbBchParams {
     /// Get DVB-T2 BCH parameters for a given configuration.
     ///
-    /// # Arguments
-    ///
-    /// * `frame_size` - Short (16200) or Normal (64800) LDPC frame
-    /// * `rate` - Code rate (1/2, 3/5, 2/3, 3/4, 4/5, 5/6)
-    ///
     /// # Examples
     ///
     /// ```

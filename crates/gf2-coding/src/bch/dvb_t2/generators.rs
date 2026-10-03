@@ -47,11 +47,9 @@ pub const NORMAL_GENERATORS: &[&[usize]] = &[
 
 /// Computes the product of the first t DVB-T2 generator polynomials.
 ///
-/// # Arguments
+/// # Panics
 ///
-/// * `field` - The extension field GF(2^m)
-/// * `generators` - Array of generator polynomial exponent lists
-/// * `t` - Number of polynomials to multiply (error correction capability)
+/// Panics if `t` is zero or exceeds `generators.len()`.
 ///
 /// # Examples
 ///

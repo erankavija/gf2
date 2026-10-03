@@ -5,22 +5,6 @@
 //! the code-symbol field. [`spec`] constructs them over any supported base
 //! field; [`BinaryBchDecoder`] decodes binary codes over GF(2^m).
 //!
-//! # Organization
-//!
-//! - [`spec`]: the construction model, its validating pipeline, and the
-//!   canonical code type over any supported base field
-//! - [`encode`]: systematic encoding over any supported base field, with the
-//!   explicit user-layout contract, the layout-declaring view, and the
-//!   profile-driven dispatch among equivalent batch-encoding algorithm
-//!   families
-//! - [`matrix`]: generator and parity-check materialization in the default
-//!   user layout and under a declared one, with caller buffers and explicit
-//!   opt-in caching
-//! - [`error`]: the BCH construction and decoding error surface
-//! - [`BinaryBchDecoder`]: binary Berlekamp-Massey and Chien decoding with
-//!   verified [`BchDecodeOutcome`]s
-//! - [`dvb_t2`]: DVB-T2 standard BCH outer codes
-//!
 //! Extended, shortened, and punctured BCH codes are
 //! [`Extended`](crate::transform::Extended),
 //! [`Shortened`](crate::transform::Shortened), and
@@ -28,33 +12,8 @@
 //! exposes the [`CoordinateMap`](crate::transform::CoordinateMap) from its
 //! coordinates to its mother's.
 //!
-//! # Workflow
-//!
-//! 1. **Construct.** A concise binary code needs only a relative degree and a
-//!    designed distance: [`BinaryBchCode::primitive_narrow_sense_auto`]
-//!    selects the splitting field deterministically. A fully explicit code
-//!    names its extension witness, length, [`RootSelection`], first root, and
-//!    designed distance through a [`BchSpec`] passed to
-//!    [`BchCode::construct`]. [`BinaryBchCode`] stores packed bits;
-//!    [`DenseBchCode`] stores field elements over any base field.
-//! 2. **Encode.** [`BlockEncoder`](crate::traits::block::BlockEncoder)
-//!    encodes systematically in the default layout;
-//!    [`BchCode::encode_systematic`] takes a layout, and
-//!    [`BchCode::systematic_message`] reads the message back.
-//! 3. **Decode.** [`BinaryBchDecoder`] corrects binary words in place.
-//! 4. **Materialize.**
-//!    [`GeneratorMatrixAccess`](crate::traits::block::GeneratorMatrixAccess)
-//!    and
-//!    [`ParityCheckMatrixAccess`](crate::traits::block::ParityCheckMatrixAccess)
-//!    write $G$ and $H$.
-//! 5. **Save.** [`FieldMatrix::save_to_file`](gf2_core::field::matrix::FieldMatrix::save_to_file)
-//!    atomically writes the canonical checksummed format of
-//!    [`gf2_core::io::field_matrix`], which records the field identity; a
-//!    [`DenseBchCode`] produces its matrices in that type, including over
-//!    GF(2).
-//!
 //! The example programs `bch_binary_quickstart` and `bch_nonbinary_explicit`
-//! in this crate's `examples/` directory run these steps end to end, for a
+//! in this crate's `examples/` directory show the API end to end, for a
 //! primitive narrow-sense binary code and for the ternary Golay code built
 //! from explicit inputs.
 //!
@@ -134,58 +93,9 @@
 //!
 //! # Decoder guarantees
 //!
-//! With $t$ the correction radius, a received word within distance $t$ of a
-//! codeword decodes to that codeword, reported as
-//! [`BchDecodeOutcome::NoErrors`] or [`BchDecodeOutcome::Corrected`]. Beyond
-//! $t$ the decoder reports [`BchDecodeOutcome::Uncorrectable`] or corrects to
-//! a different codeword within distance $t$ of the received word; every
-//! accepted correction is verified by recomputing the syndrome, so the
-//! outcome is sound about the word produced and never a claim about the
-//! transmitted word. [`BinaryBchDecoder`'s guarantee](BinaryBchDecoder#guarantee)
-//! is the authoritative statement. Codes over other base fields have
-//! construction, encoding, and matrices; membership is checked through $H$.
-//!
-//! # Complexity
-//!
-//! With $r = n - k$, $t$ the correction radius, and $s$ the number of
-//! syndrome evaluations:
-//!
-//! | Operation | Cost | Statement |
-//! |---|---|---|
-//! | construction | canonical-root search over $N = \lvert E^{*} \rvert$ candidates at $O(\log N)$ multiplications each, then the closure, minimal-polynomial, and LCM stages | [`spec`](spec#complexity) |
-//! | encode one message, reference | $O(kr)$ field operations; $O(k \lceil r/64 \rceil)$ words packed | [`encode`](encode#complexity) |
-//! | encode a batch | per family; see the module | [`encode`](encode#complexity) |
-//! | generator matrix | $O(k \lceil n/64 \rceil)$ words packed; $O(kn)$ cells field-generic | [`matrix`](matrix#complexity) |
-//! | parity-check matrix | $O(kr)$ coordinate writes over its $O(rn)$ output | [`matrix`](matrix#complexity) |
-//! | decode one word | $O(sn + tn)$ field multiplications plus $O(r^2)$ for Berlekamp-Massey | [`BinaryBchDecoder::correct_in_place`] |
-//!
-//! # Performance-path selection
-//!
-//! - **Single messages.** [`BlockEncoder`](crate::traits::block::BlockEncoder)
-//!   and [`BchCode::encode_systematic`] run the reference recurrence over
-//!   registers the calling thread keeps; [`BchCode::encode_systematic_with`]
-//!   takes a caller-owned [`BchCode::encode_workspace`] instead.
-//! - **Batches.** [`BchCode::encode_batch`], [`BchCode::encode_batch_into`],
-//!   and [`BchCode::encode_batch_parallel_into`] select one
-//!   [`EncodeFamily`](encode::EncodeFamily) per batch: the first entry of
-//!   [`EncodeFamily::REGISTERED`](encode::EncodeFamily::REGISTERED) that the
-//!   representation implements for the plan and that the active tuning
-//!   profile ([`crate::tuning`]) admits for the redundancy and batch length.
-//!   The conservative profile, which a process resolves when it installs
-//!   none through [`gf2_core::tuning::install`], admits only the reference.
-//!   [`BchCode::selected_encode_family`] reports the selection.
-//! - **Instruction sets.** The bit-sliced and carry-less-fold families run
-//!   the accelerated kernels of [`gf2_kernels_simd::bch_encode`] when
-//!   [`detect`](gf2_kernels_simd::bch_encode::detect) finds the processor
-//!   features it names at run time, and that module's portable kernels
-//!   otherwise.
-//! - **Equivalence.** Every family, kernel, and worker count writes the same
-//!   bits, so path selection changes speed and never output.
-//! - **Matrices and decoding.** The `_into` matrix methods write caller
-//!   buffers without allocating, and [`CachedMatrices`] retains
-//!   materializations on request. [`BinaryBchDecoder::correct_in_place`]
-//!   allocates nothing per word; under `--features hip`, batch syndrome
-//!   evaluation runs on a HIP device with the same outcomes.
+//! [`BinaryBchDecoder`'s guarantee](BinaryBchDecoder#guarantee) states the
+//! decoding contract. Codes over other base fields have construction,
+//! encoding, and matrices; membership is checked through $H$.
 //!
 //! # Examples
 //!

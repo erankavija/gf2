@@ -37,20 +37,6 @@
 //!    the longest cyclic run of consecutive roots, and take the correction
 //!    radius that bound implies.
 //!
-//! # Constructors
-//!
-//! [`BchCode::construct`] is the canonical validating path. The five explicit
-//! convenience families — [`BchCode::primitive_narrow_sense`],
-//! [`BchCode::primitive`], [`BchCode::consecutive_roots`],
-//! [`BchCode::from_root_seeds`], and [`BchCode::from_generator`] — accept an
-//! extension witness and their independent construction inputs, then delegate
-//! to that path. The first four also have `_auto` counterparts that accept a
-//! base witness and relative degree; they use the deterministic selection
-//! policy in [`gf2_core::field::modulus_select`].
-//!
-//! No convenience method accepts $k$, a correction radius, a closed defining
-//! set, or a generator beside roots: each is derived by construction.
-//!
 //! # Validations
 //!
 //! Stage 1 performs, in order:
@@ -276,9 +262,6 @@ impl From<u64> for RootExponent {
 }
 
 /// How a construction obtains the element whose exact order is the length.
-///
-/// The two arms name one semantic role — "the order-$n$ root of unity this
-/// code is built on" — filled either by derivation or by the caller.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RootSelection<E> {
     /// Derive the reproducible element of exact multiplicative order $n$.
@@ -344,9 +327,7 @@ where
     /// [`RootSelection`] chooses between the derived canonical element of
     /// exact order $n$ and a caller-supplied $n$-th root of unity. Supplying
     /// the canonical element explicitly constructs the same code as deriving
-    /// it. Everything after the root — the closure, the generator, $k$, the
-    /// witnessed bound and the radius — is the shared consecutive-root
-    /// derivation the primitive variants use.
+    /// it.
     ///
     /// # Example
     ///
@@ -541,8 +522,7 @@ impl BchDistanceBound {
 ///
 /// `X` fixes the base/splitting-field relation, `S` fixes the symbol-sequence
 /// storage, and `M` fixes the matrix storage. The representation parameters
-/// carry no runtime data: they select monomorphized code paths, so choosing a
-/// representation costs nothing at run time. Use [`DenseBchCode`] for the
+/// carry no runtime data. Use [`DenseBchCode`] for the
 /// field-generic reference representation and [`BinaryBchCode`] for packed
 /// binary storage.
 ///
@@ -585,10 +565,8 @@ where
 {
     /// Validates a spec and derives the code it names.
     ///
-    /// This is the only construction path: it performs every validation listed
-    /// at the module level and derives the generator, the dimension, the
-    /// defining set, the witnessed bound and the correction radius from the
-    /// spec's independent inputs.
+    /// The only construction path; it performs every validation listed at the
+    /// module level.
     ///
     /// Mathematically valid boundary results are constructed rather than
     /// rejected: a spec requesting no roots yields the full-space code with
@@ -654,12 +632,6 @@ where
     /// Constructs a primitive narrow-sense BCH code from an extension witness
     /// and a designed distance.
     ///
-    /// The extension and designed distance are independent inputs. The
-    /// primitive length, canonical root, generator, dimension, defining set,
-    /// distance bound, and correction radius are derived by [`Self::construct`].
-    /// The designed distance is a guaranteed lower bound on minimum distance,
-    /// never the minimum distance itself.
-    ///
     /// # Errors
     ///
     /// See [`Self::construct`] for the complete construction error list.
@@ -675,12 +647,6 @@ where
 
     /// Constructs a primitive BCH code from an extension witness, first-root
     /// exponent, and designed distance.
-    ///
-    /// The extension, first-root exponent, and designed distance are
-    /// independent inputs. The primitive length, canonical root, generator,
-    /// dimension, defining set, distance bound, and correction radius are
-    /// derived by [`Self::construct`]. The designed distance is a guaranteed
-    /// lower bound on minimum distance, never the minimum distance itself.
     ///
     /// # Errors
     ///
@@ -698,13 +664,6 @@ where
     }
 
     /// Constructs a non-primitive consecutive-root BCH code.
-    ///
-    /// The extension, proper code length, root selection, first-root exponent,
-    /// and designed distance are independent inputs. The selected root when
-    /// canonical, generator, dimension, defining set, distance bound, and
-    /// correction radius are derived by [`Self::construct`]. The designed
-    /// distance is a guaranteed lower bound on minimum distance, never the
-    /// minimum distance itself.
     ///
     /// # Errors
     ///
@@ -727,12 +686,6 @@ where
 
     /// Constructs a BCH code from root exponents that need not be closed.
     ///
-    /// The extension, code length, root selection, and unclosed seed set are
-    /// independent inputs. The selected root when canonical, cyclotomic
-    /// closure, generator, dimension, distance bound, and correction radius
-    /// are derived by [`Self::construct`]. The bound is a guaranteed lower
-    /// bound on minimum distance, never the minimum distance itself.
-    ///
     /// # Errors
     ///
     /// See [`Self::construct`] for the complete construction error list.
@@ -753,14 +706,9 @@ where
     /// Constructs a BCH code from a monic generator in the splitting-field
     /// carrier.
     ///
-    /// The extension, code length, and generator polynomial are independent
-    /// inputs. Coefficient restriction, the canonical root, defining set,
-    /// dimension, distance bound, and correction radius are validated or
-    /// derived by [`Self::construct`]. The bound is a guaranteed lower bound on
-    /// minimum distance, never the minimum distance itself. There is no
-    /// automatic counterpart because the generator coefficients already live
-    /// in the splitting-field carrier; compose [`SelectExtension::select`]
-    /// with this method when that witness is not available yet.
+    /// It has no `_auto` counterpart because the generator coefficients
+    /// already live in the splitting-field carrier; compose
+    /// [`SelectExtension::select`] with this method instead.
     ///
     /// ```
     /// use gf2_coding::bch::error::BchError;
@@ -799,11 +747,6 @@ where
     /// Constructs a primitive narrow-sense BCH code after automatic extension
     /// selection from a base witness and relative degree.
     ///
-    /// The base witness, degree, and designed distance are independent inputs;
-    /// selection and all code quantities are delegated to the explicit
-    /// constructor. The designed distance is a guaranteed lower bound on
-    /// minimum distance, never the minimum distance itself.
-    ///
     /// # Errors
     ///
     /// Returns [`BchError::ModulusSelection`] when extension selection fails;
@@ -821,11 +764,6 @@ where
     }
 
     /// Constructs a primitive BCH code after automatic extension selection.
-    ///
-    /// The base witness, degree, first-root exponent, and designed distance are
-    /// independent inputs; selection and all code quantities are delegated to
-    /// [`Self::primitive`]. The designed distance is a guaranteed lower bound
-    /// on minimum distance, never the minimum distance itself.
     ///
     /// # Errors
     ///
@@ -846,12 +784,6 @@ where
 
     /// Constructs a consecutive-root BCH code after automatic extension
     /// selection, using the canonical order-`length` root.
-    ///
-    /// The base witness, degree, length, first-root exponent, and designed
-    /// distance are independent inputs; selection and all code quantities are
-    /// delegated to [`Self::consecutive_roots`]. The designed distance is a
-    /// guaranteed lower bound on minimum distance, never the minimum distance
-    /// itself.
     ///
     /// # Errors
     ///
@@ -879,11 +811,6 @@ where
 
     /// Constructs a BCH code from root seeds after automatic extension
     /// selection, using the canonical order-`length` root.
-    ///
-    /// The base witness, degree, length, and unclosed seeds are independent
-    /// inputs; selection and all code quantities are delegated to
-    /// [`Self::from_root_seeds`]. The distance bound is a guaranteed lower
-    /// bound on minimum distance, never the minimum distance itself.
     ///
     /// # Errors
     ///
@@ -985,8 +912,7 @@ where
 // ---------------------------------------------------------------------------
 
 /// The independent inputs after validation, in the form every later stage
-/// consumes. Adding a spec flavor means producing this value; the stages
-/// after it are shared unchanged.
+/// consumes.
 struct DerivedInputs<X: FieldExtension> {
     extension: X,
     length: BchLength,
@@ -1027,12 +953,6 @@ fn normalize<X: FieldExtension>(spec: BchSpec<X>) -> Result<DerivedInputs<X>, Bc
     }
 }
 
-/// Normalizes a primitive consecutive-root request.
-///
-/// The length is derived as $|E^{*}|$ and the root is always canonical, so
-/// neither is a caller input. `first_root` of `None` selects the narrow-sense
-/// convention, whose first root exponent is the residue of one modulo the
-/// derived length.
 fn normalize_primitive<X: FieldExtension>(
     extension: X,
     first_root: Option<RootExponent>,
@@ -1050,14 +970,6 @@ fn normalize_primitive<X: FieldExtension>(
     )
 }
 
-/// Normalizes a consecutive-root request at a proper non-primitive length.
-///
-/// The caller's length is validated as a proper divisor of $|E^{*}|$ that is
-/// coprime to the characteristic, and the order-`length` root is either
-/// derived or validated according to `root_selection`. The request then enters
-/// the same consecutive-root normalization the primitive variants use, so the
-/// length and the root parameterize one algorithm rather than selecting
-/// another.
 fn normalize_non_primitive<X: FieldExtension>(
     extension: X,
     length: BchLength,
@@ -1078,10 +990,8 @@ fn normalize_non_primitive<X: FieldExtension>(
 }
 
 /// Resolves the root and expands a consecutive-root request into its seeds.
-///
-/// This is the shared tail of every consecutive-root variant; its callers
-/// differ only in how they obtain and validate `length`. `first_root` of
-/// `None` selects the narrow-sense first exponent $1 \bmod n$.
+/// `first_root` of `None` selects the narrow-sense first exponent
+/// $1 \bmod n$.
 fn normalize_consecutive<X: FieldExtension>(
     extension: X,
     length: BchLength,
@@ -1106,12 +1016,8 @@ fn normalize_consecutive<X: FieldExtension>(
     })
 }
 
-/// Normalizes an arbitrary root-seed request.
-///
-/// Seed exponents are reduced modulo the selected length before the shared
-/// closure stage. This makes duplicate and out-of-range representatives
-/// equivalent to their residue-class representatives without weakening the
-/// contextual range validation of `first_root` in consecutive variants.
+/// Reduces seed exponents modulo the length, so duplicate and out-of-range
+/// representatives are equivalent to their residues.
 fn normalize_root_seeds<X: FieldExtension>(
     extension: X,
     length: BchLength,
@@ -1138,15 +1044,6 @@ fn normalize_root_seeds<X: FieldExtension>(
     })
 }
 
-/// Normalizes an explicitly supplied generator polynomial.
-///
-/// The candidate is checked in the order required by the construction
-/// contract: its coefficients must belong to the extension presentation and
-/// restrict to the base field, then it must be nonzero and monic, and finally
-/// the restricted polynomial must divide `x^n - 1`. Its roots are found by
-/// evaluating the original extension-carrier polynomial at every power of the
-/// canonical order-`n` root. The resulting exponents become the input to the
-/// shared cyclotomic-closure and generator derivation stages.
 fn normalize_generator_polynomial<X: FieldExtension>(
     extension: X,
     length: BchLength,
@@ -1291,10 +1188,6 @@ fn validate_length_divides_unit_group<X: FieldExtension>(
 
 /// Decides $n < |E^{*}|$, the condition separating a non-primitive length
 /// from the primitive one.
-///
-/// The primitive length is derived rather than supplied, so a non-primitive
-/// spec carrying it names a construction that already has an unambiguous
-/// variant.
 fn validate_length_is_proper_divisor<X: FieldExtension>(
     extension: &X,
     length: BchLength,
@@ -1584,8 +1477,7 @@ mod tests {
     use gf2_core::gfpn::{QuotientElement, QuotientField};
     use proptest::prelude::*;
 
-    /// The binary parameter points the existing suite pins, as
-    /// `(m, primitive polynomial, n, k, t)`.
+    /// Binary parameter points as `(m, primitive polynomial, n, k, t)`.
     const BINARY_POINTS: &[(usize, u64, usize, usize, usize)] = &[
         (3, 0b1011, 7, 4, 1),
         (4, 0b10011, 15, 11, 1),
@@ -2002,7 +1894,7 @@ mod tests {
         }
     }
 
-    // -- REQ-02: the generator is the LCM of the run's minimal polynomials --
+    // -- The generator is the LCM of the run's minimal polynomials ---------
 
     /// The binary narrow-sense generator `lcm(m_1, ..., m_{2t})`, where `m_i`
     /// is the minimal polynomial of `α^i` for the field's primitive element,
@@ -2057,7 +1949,7 @@ mod tests {
         }
     }
 
-    // -- REQ-03: nonbinary construction ------------------------------------
+    // -- Nonbinary construction --------------------------------------------
 
     #[test]
     fn prime_base_primitive_construction_derives_a_base_field_generator() {

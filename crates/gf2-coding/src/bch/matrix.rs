@@ -21,10 +21,8 @@
 //! $(\sigma(k + j) - k, \sigma(c))$, so the view keeps both block forms:
 //! $\sigma$ maps the message coordinates onto themselves.
 //!
-//! Materialization holds no implicit cache. [`CachedMatrices`] is the explicit
-//! opt-in cache for callers that reuse these matrices. It caches successful
-//! generator and parity-check materializations independently, while its
-//! allocating access still returns a fresh matrix on every call.
+//! Materialization holds no implicit cache; [`CachedMatrices`] is the opt-in
+//! one.
 //!
 //! # Algorithm
 //!
@@ -41,18 +39,6 @@
 //! beside the caller's buffer, and the caller-buffer path reaches no
 //! allocator. For the packed binary representation the generator step is one
 //! word-level shift and one conditional exclusive-or of row zero.
-//!
-//! # Representation
-//!
-//! [`SymbolMatrix`] is the storage contract and [`MatrixFill`] is the
-//! materialization contract over it. [`MatrixFill`] carries provided bodies
-//! that write both canonical matrices through the storage accessors alone, so
-//! a representation opts into canonical-matrix access with an empty
-//! implementation. The two canonical representations override them:
-//! [`BitMatrix`] with the packed word-level path that single-coordinate
-//! accessors cannot express, and [`FieldMatrix`] with a row-slice path. One
-//! canonical trait set covers both, and the specialization is by matrix
-//! representation, as the packed binary storage decision states.
 //!
 //! # Complexity
 //!
@@ -664,8 +650,7 @@ where
     ///
     /// The materialization writes $G = [\,I_k \mid P\,]$ in the default user
     /// layout, so the message coordinates are the columns $0$ to $k - 1$ by
-    /// construction. This is the equivalent cheap fact the trait admits in
-    /// place of a materialize-and-inspect answer.
+    /// construction.
     fn is_systematic(&self) -> Result<bool, CodeError> {
         Ok(true)
     }
@@ -827,9 +812,8 @@ fn leads_its_cycle(start: usize, source: &impl Fn(usize) -> usize) -> bool {
 /// allocating accessors return a fresh clone. `clear` drops both retained
 /// values so that the next access rebuilds them.
 ///
-/// The cache uses synchronization because the wrapper is intended to remain a
-/// usable static code value when it is shared across threads. Synchronization
-/// exists only after a caller explicitly chooses this wrapper.
+/// The cache is synchronized so that the wrapper can be shared across
+/// threads.
 pub struct CachedMatrices<C> {
     code: C,
     generator: Mutex<Option<Box<dyn Any + Send + Sync>>>,
@@ -1542,13 +1526,9 @@ mod tests {
         assert_matrix_contract(&redundancy_65);
     }
 
-    /// The workload contract's binary rows B1, B2 and B3 at the exact lengths
-    /// `dev/active/4e732b56/workload-selection.md` § 2 fixes, in both
-    /// canonical representations.
-    ///
-    /// Each row runs the whole matrix contract, which includes equality with
-    /// the by-encoding oracle, so every contract row the fast tier reaches
-    /// has a packed and a field-generic equality witness.
+    /// Three binary rows in both canonical representations, each through the
+    /// whole matrix contract, which includes equality with the by-encoding
+    /// oracle.
     #[test]
     fn workload_rows_follow_the_contract_and_match_the_oracle() {
         const ROWS: &[(usize, u64, u64, usize, usize)] = &[
@@ -1611,8 +1591,7 @@ mod tests {
     }
 
     /// The provided bodies and the field-generic override write the same
-    /// generator and the same parity check on the workload contract's binary
-    /// rows B1, B2 and B3.
+    /// generator and the same parity check.
     ///
     /// Calling both through the same code isolates the two materialization
     /// paths from the access paths [`assert_matrix_contract`] exercises.
@@ -1696,13 +1675,8 @@ mod tests {
         }
     }
 
-    /// The workload contract's T2S row at its mother length, the largest W2
-    /// cell the fast tier reaches: a $16215 \times 16383$ generator and its
-    /// $168 \times 16383$ parity check, witnessed on sampled rows.
-    ///
-    /// The canonical model reaches the DVB-T2 rows at mother length, which
-    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes as the length
-    /// this consumer measures and compares them at.
+    /// The T2S row at its mother length: a $16215 \times 16383$ generator and
+    /// its $168 \times 16383$ parity check, witnessed on sampled rows.
     #[test]
     fn t2s_mother_sampled_rows_are_systematic() {
         let code = primitive_binary(14, 0b100_0000_0010_1011, 25);
@@ -1712,18 +1686,14 @@ mod tests {
         assert_sampled_rows_are_systematic(&code, &generator, &parity);
     }
 
-    /// Both DVB-T2 rows at the mother lengths
-    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes, generator and
-    /// parity check, over every row.
+    /// Both DVB-T2 rows at their mother lengths, generator and parity check,
+    /// over every row, in the packed representation.
     ///
-    /// The by-encoding oracle costs $O(k^2 r)$, which is a slow-tier cost at
-    /// these dimensions; the fast tier witnesses the T2S row on a sample.
-    /// This is the packed representation of both rows. The field-generic
+    /// The by-encoding oracle costs $O(k^2 r)$. The field-generic
     /// representation reaches the T2S row in
     /// [`t2s_mother_row_matches_the_oracle_field_generic`]; a
     /// `FieldMatrix<Fp<2>>` stores eight bytes per coordinate, so the T2N row
-    /// is $65343 \times 65535 \times 8 = 34$ GB per matrix and the equality
-    /// witness would need two of them.
+    /// is $65343 \times 65535 \times 8 = 34$ GB per matrix.
     #[test]
     #[ignore = "slow: the DVB-T2 mother rows materialize up to a 512 MiB generator"]
     fn dvb_t2_mother_rows_match_the_oracle() {
