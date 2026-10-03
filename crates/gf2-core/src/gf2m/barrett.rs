@@ -4,24 +4,12 @@
 //! `mu = x^(2m) / P(x)` is precomputed once. Reduction of a product c(x) of
 //! degree ≤ 2(m-1) then takes two carry-less multiplications and at most two
 //! XOR corrections.
-//!
-//! [`BarrettReducer`] holds `mu` and the dividend `x^(2m)` in a `u128` and
-//! supports `m <= 63`. [`BarrettReducerWide`] supports `N`-word fields; its
-//! carry-less products go through `wide::clmul_wide_dispatch`.
 
 /// Carry-less multiplication of two GF(2) polynomials.
 ///
-/// # Examples
+/// # Complexity
 ///
-/// ```
-/// use gf2_core::gf2m::barrett::clmul;
-///
-/// // (x + 1) * (x + 1) = x^2 + 1  (no carry: x + x = 0 in GF(2))
-/// assert_eq!(clmul(0b11, 0b11), 0b101);
-///
-/// // x * x = x^2
-/// assert_eq!(clmul(0b10, 0b10), 0b100);
-/// ```
+/// One shift-XOR per set bit of `b`.
 pub fn clmul(a: u64, b: u64) -> u128 {
     // SSOT: the bit-by-bit scalar algorithm lives in `gf2-kernels-simd`
     // so production callers and test-only reference oracles share a
@@ -49,20 +37,6 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 /// Both the Barrett constant `mu = x^(2m) / P(x)` and the dividend `x^(2m)`
 /// are held in a `u128`, so `degree <= 63`. [`BarrettReducerWide`] covers
 /// wider fields.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::barrett::BarrettReducer;
-///
-/// // GF(2^8) with AES polynomial x^8 + x^4 + x^3 + x + 1 = 0x11B
-/// let reducer = BarrettReducer::new(0x11B, 8);
-///
-/// // Reduce a product back to the field
-/// let product: u128 = 0x1234; // some 16-bit polynomial
-/// let reduced = reducer.reduce(product);
-/// assert!(reduced < 256); // result fits in 8 bits
-/// ```
 #[derive(Debug)]
 pub struct BarrettReducer {
     /// The irreducible polynomial P(x), degree m.
@@ -121,21 +95,6 @@ impl BarrettReducer {
 
     /// Reduce a polynomial product of degree ≤ 2(m-1) to an m-bit field element.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducer;
-    ///
-    /// // GF(2^4) with P(x) = x^4 + x + 1
-    /// let reducer = BarrettReducer::new(0b10011, 4);
-    ///
-    /// // Reducing 0 gives 0
-    /// assert_eq!(reducer.reduce(0), 0);
-    ///
-    /// // Reducing a value < 2^m gives itself
-    /// assert_eq!(reducer.reduce(0b1010), 0b1010);
-    /// ```
-    ///
     /// # Complexity
     ///
     /// Two carry-less multiplications, each a loop over the set bits of one operand.
@@ -173,22 +132,9 @@ impl BarrettReducer {
     /// `product` has degree at most `2m - 2`. Both operands of each `clmul`
     /// call fit in `u64` because `m ≤ 63`.
     ///
-    /// # Examples
+    /// # Complexity
     ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::{clmul, BarrettReducer};
-    ///
-    /// // GF(2^4) with P(x) = x^4 + x + 1
-    /// let reducer = BarrettReducer::new(0b10011, 4);
-    ///
-    /// // Use the scalar clmul as the function pointer
-    /// let result = reducer.reduce_with_clmul(0b1010, clmul);
-    /// assert_eq!(result, 0b1010); // already reduced
-    ///
-    /// let product = clmul(0b1111, 0b1010); // some GF(2^4) product
-    /// let reduced = reducer.reduce_with_clmul(product, clmul);
-    /// assert!(reduced < 16); // fits in 4 bits
-    /// ```
+    /// Two calls of the supplied `clmul`; the cost is that function's.
     pub fn reduce_with_clmul(&self, product: u128, clmul: fn(u64, u64) -> u128) -> u64 {
         let m = self.degree;
         let field_mask = (1u128 << m) - 1;
@@ -242,15 +188,9 @@ impl BarrettReducer {
 /// Reference implementation for testing Barrett reduction; `modulus` has degree
 /// `degree`.
 ///
-/// # Examples
+/// # Complexity
 ///
-/// ```
-/// use gf2_core::gf2m::barrett::naive_reduce;
-///
-/// // Reduce x^5 mod (x^4 + x + 1): x^5 = x*(x^4) = x*(x+1) = x^2 + x
-/// // Actually: x^5 XOR (x^4+x+1)<<1 = 0b100000 XOR 0b100110 = 0b000110
-/// assert_eq!(naive_reduce(0b100000, 0b10011, 4), 0b0110);
-/// ```
+/// `128 - degree` conditional shift-XOR steps.
 pub fn naive_reduce(product: u128, modulus: u128, degree: u32) -> u64 {
     let mut r = product;
     for bit in (degree..128).rev() {
@@ -260,10 +200,6 @@ pub fn naive_reduce(product: u128, modulus: u128, degree: u32) -> u64 {
     }
     r as u64
 }
-
-// ---------------------------------------------------------------------------
-// Multi-word Barrett reduction helpers (used by BarrettReducerWide)
-// ---------------------------------------------------------------------------
 
 /// Compute `mu = floor(x^(2m) / P(x))` over GF(2) via polynomial long division.
 ///
@@ -343,10 +279,6 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
     quotient
 }
 
-// ---------------------------------------------------------------------------
-// BarrettReducerWide — multi-word Barrett reduction for GF(2^m)
-// ---------------------------------------------------------------------------
-
 /// Precomputed Barrett reduction constants for an N-word GF(2^m) field.
 ///
 /// The multi-word sibling of [`BarrettReducer`], for `64*(N-1) < m ≤ 64*N`.
@@ -406,17 +338,6 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// # Complexity
     ///
     /// O(m · N) word operations for the long division that computes mu.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
-    ///
-    /// // GF(2^127) with P(x) = x^127 + x + 1.
-    /// // Low bits are stored in 2 words; leading bit at position 127 is implicit.
-    /// let reducer = BarrettReducerWide::<2>::new([3u64, 0u64], 127);
-    /// assert_eq!(reducer.degree(), 127);
-    /// ```
     pub fn new(modulus: [u64; N], m: u32) -> Self {
         assert!(
             m > 0 && (m as usize) <= 64 * N,
@@ -456,23 +377,6 @@ impl<const N: usize> BarrettReducerWide<N> {
     ///
     /// O(N²) carry-less word multiplications: two dispatched products of
     /// cost O(N²) each, plus O(N) shift and XOR operations.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::barrett::BarrettReducerWide;
-    ///
-    /// // GF(2^63) with P(x) = x^63 + x + 1.
-    /// let reducer = BarrettReducerWide::<1>::new([3u64], 63);
-    ///
-    /// // The zero product reduces to zero.
-    /// let zero = reducer.reduce::<2>(&[0u64, 0u64]);
-    /// assert_eq!(zero, [0u64]);
-    ///
-    /// // An already-reduced element is unchanged.
-    /// let already = reducer.reduce::<2>(&[42u64, 0u64]);
-    /// assert_eq!(already, [42u64]);
-    /// ```
     pub fn reduce<const M: usize>(&self, product: &[u64; M]) -> [u64; N] {
         const { assert!(M == 2 * N, "BarrettReducerWide::reduce: M must equal 2 * N") }
         // `M == 2 * N` guarantees the slice length `reduce_slice` asserts.
@@ -718,8 +622,6 @@ mod tests {
     use crate::primitive_polys::PrimitivePolynomialDatabase;
     use proptest::prelude::*;
 
-    // ---- Known-value tests ----
-
     #[test]
     fn test_clmul_identity() {
         assert_eq!(clmul(0b1010, 1), 0b1010);
@@ -794,7 +696,7 @@ mod tests {
 
     #[test]
     fn test_reduce_gf2_8_aes() {
-        // GF(2^8) with AES polynomial: x^8 + x^4 + x^3 + x + 1 = 0x11B
+        // x^8 + x^4 + x^3 + x + 1 = 0x11B
         let poly: u128 = 0x11B;
         let m = 8;
         let reducer = BarrettReducer::new(poly, m);
@@ -844,7 +746,6 @@ mod tests {
 
             for product in 0..num_tests {
                 let p = if max_product_deg > 12 {
-                    // Pseudo-random sampling for larger fields.
                     let p = product
                         .wrapping_mul(0x9E3779B97F4A7C15)
                         .wrapping_add(product ^ 0xDEAD);
@@ -892,8 +793,6 @@ mod tests {
         // x^5 = x * x^4 = x * (x+1) = x^2 + x = 0b110
         assert_eq!(naive_reduce(0b100000, 0b10011, 4), 0b0110);
     }
-
-    // ---- Property-based tests ----
 
     proptest! {
         #[test]
@@ -1052,24 +951,13 @@ mod tests {
         }
     }
 
-    // =========================================================================
-    // BarrettReducerWide tests
-    // =========================================================================
-
-    /// Helper: convert a GF(2^m) product stored in a `u128` into the 2-word
-    /// format used by BarrettReducerWide<1>.
     fn u128_to_2words(v: u128) -> [u64; 2] {
         [v as u64, (v >> 64) as u64]
     }
 
-    /// Helper: convert a 1-word result from BarrettReducerWide<1> to u64.
     fn word1_to_u64(w: [u64; 1]) -> u64 {
         w[0]
     }
-
-    // -------------------------------------------------------------------------
-    // N = 1, m = 63: cross-check against BarrettReducer (oracle)
-    // -------------------------------------------------------------------------
 
     #[test]
     fn test_wide_n1_m63_cross_check_against_barrett_reducer() {
@@ -1134,10 +1022,6 @@ mod tests {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // N = 2, m = 127: proptest vs reference_reduce_wide
-    // -------------------------------------------------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
 
@@ -1167,14 +1051,10 @@ mod tests {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // N = 4, m = 256: proptest vs reference_reduce_wide
-    // -------------------------------------------------------------------------
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
 
-        /// P(x) = x^256 + x^10 + x^5 + x^2 + 1 (Seroussi HPL-98-135, Table 1 row
+        /// P(x) = x^256 + x^10 + x^5 + x^2 + 1 (`@/citation/Seroussi1998`, Table 1 row
         /// m=256). Products are limited to degree ≤ 2m-2 = 510, the range
         /// `clmul_wide` produces from two m-bit inputs; a degree-2m-1 input at
         /// m = 64*N needs one more bit of precision in q1 and is outside the
@@ -1205,10 +1085,6 @@ mod tests {
                 p0, p7, barrett[0], reference[0]);
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Additional known-value sanity checks for BarrettReducerWide
-    // -------------------------------------------------------------------------
 
     #[test]
     fn test_wide_reduce_zero_n2_m127() {
