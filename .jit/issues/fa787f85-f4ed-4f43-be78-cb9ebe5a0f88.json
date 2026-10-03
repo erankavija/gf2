@@ -70,6 +70,13 @@
       "doc_type": "progress",
       "label": "Execution progress",
       "path": "dev/active/fa787f85-documentation-overhaul/progress.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "handoff",
+      "format": "markdown",
+      "label": "Session 3 handoff",
+      "path": "dev/active/fa787f85-documentation-overhaul/handoff-2.md"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -97,5 +104,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-03T02:14:03.492363916Z"
+  "updated_at": "2026-10-03T02:25:21.396666373Z"
 }
