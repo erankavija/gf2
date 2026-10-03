@@ -1,94 +1,27 @@
-//! Test/bench-only deterministic generators and shared harness configuration
-//! across the crate's GPU suites and benchmark bins (feature = `test-support`).
-//!
-//! Centralises the **deterministic AWGN channel-LLR source**
-//! ([`AwgnLlrSource`]) used by the GPU byte-identity tests and throughput
-//! benches, so the SplitMix64 + Box-Muller + BPSK-LLR math exists exactly
-//! once (review SSOT rule, issue `23d3525f` finding F3), and the
-//! **external-comparison code selection** ([`ComparisonCode`]) shared by the
-//! `export_alist` and `ldpc_bler_sweep` bins, so both sides of the aff3ct
-//! comparison build the identical `H` from one construction site (same SSOT
-//! rule, issue `18e69a1a`). The module mirrors
-//! the `gf2-algebra::testutil` / `gf2-core::test-support` workspace pattern:
-//! gated on `cfg(any(test, feature = "test-support"))`, auto-enabled for this
-//! crate's own tests and benches via the self-dev-dependency in `Cargo.toml`.
-//!
-//! # Determinism contract
-//!
-//! The draw sequence is pinned: **two** `u64` draws per LLR sample (`u1` then
-//! `u2`), SplitMix64 stream, Box-Muller **cosine** transform, channel LLR
-//! `2·r/N0` computed in `f64` and narrowed to `f32` once. The byte-identity
-//! suites' pinned outputs depend on this exact sequence — any change to the
-//! expression order is a math change and will flip pinned hard decisions.
-//!
-//! # Deliberately distinct generators (do NOT fold here)
-//!
-//! * `gf2_coding::dvb_t2_bicm_harness::box_muller_cos` — the **production**
-//!   shared-noise-realisation primitive with its own §5-pinned draw order
-//!   (one noise stream shared verbatim between CPU and GPU chain arms);
-//!   `tests/gpu_byte_identity.rs` feeds it from a raw SplitMix64 word stream.
-//!   That is a different generator contract (harness draw order, not a
-//!   channel-LLR source).
-//! * The signed-unit IQ fillers in `tests/gpu_demap_byte_identity.rs` and
-//!   `src/bin/gpu_demap_throughput.rs` — uniform IQ symbol streams (no
-//!   Box-Muller, no LLR), a different contract.
+//! Deterministic LLR generation and comparison-code selection for tests and
+//! benches, compiled under `cfg(test)` or the `test-support` feature.
 
 use gf2_coding::ldpc::QuasiCyclicLdpc;
 use gf2_coding::{CodeRate, LdpcCode, Llr};
 use gf2_core::BitVec;
 
-/// The two LDPC code configurations of the external-library comparison
-/// harness (`dev/benchmarks/gf2-sim/comparison/`, issue `18e69a1a`).
+/// The LDPC codes of the comparison against AFF3CT
+/// (`@/citation/Cassagne2019`).
 ///
-/// This is the **single construction site** for the comparison codes: the
-/// `export_alist` bin derives the AList `H` fed to aff3ct from
-/// [`build`](Self::build), and the `ldpc_bler_sweep` bin decodes the code
-/// returned by the same [`build`](Self::build) — so the "bit-identical `H`
-/// on both sides" property of the comparison cannot drift between the two
-/// bins (review SSOT rule).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::testutil::ComparisonCode;
-///
-/// let code = ComparisonCode::parse("nr-bg1-r12").unwrap();
-/// let ldpc = code.build();
-/// // BG1 Z=384 mother code: N = 68*384, K = 22*384.
-/// assert_eq!((ldpc.n(), ldpc.k()), (26112, 8448));
-///
-/// assert!(ComparisonCode::parse("bogus").is_err());
-/// ```
+/// The `export_alist` bin exports the `H` of [`build`](Self::build) and the
+/// `ldpc_bler_sweep` bin decodes the same code, so both sides share one
+/// parity-check matrix.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ComparisonCode {
-    /// DVB-T2 r1/2 Normal LDPC (ETSI EN 302 755): N = 64800, K = 32400.
+    /// DVB-T2 r1/2 Normal LDPC (`@/citation/Etsi2015`): N = 64800, K = 32400.
     DvbT2R12,
     /// 5G NR BG1 mother code (Z = 384): N = 68·384 = 26112, K = 22·384 =
-    /// 8448, rate ≈ 0.323. The mother code of
-    /// `nr_5g_rate_matched(1, 16896, 8448)` — the comparison decodes it
-    /// directly (no puncturing/shortening) so the exported AList and the
-    /// decoded code are one and the same `H`.
+    /// 8448, decoded without puncturing or shortening.
     NrBg1R12,
 }
 
 impl ComparisonCode {
     /// Parses the harness CLI name (`dvb-t2-r12` / `nr-bg1-r12`).
-    ///
-    /// # Arguments
-    ///
-    /// * `s` — the `--code` CLI value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::testutil::ComparisonCode;
-    ///
-    /// assert_eq!(
-    ///     ComparisonCode::parse("dvb-t2-r12").unwrap(),
-    ///     ComparisonCode::DvbT2R12,
-    /// );
-    /// assert!(ComparisonCode::parse("dvb-t2").is_err());
-    /// ```
     pub fn parse(s: &str) -> Result<Self, String> {
         match s {
             "dvb-t2-r12" => Ok(Self::DvbT2R12),
@@ -99,24 +32,13 @@ impl ComparisonCode {
         }
     }
 
-    /// Builds the `LdpcCode` for this configuration — the one whose
-    /// parity-check matrix both comparison bins share.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::testutil::ComparisonCode;
-    ///
-    /// let ldpc = ComparisonCode::NrBg1R12.build();
-    /// assert_eq!((ldpc.n(), ldpc.k()), (26112, 8448));
-    /// ```
+    /// Builds the `LdpcCode` for this configuration.
     ///
     /// # Complexity
     ///
-    /// Construction follows the selected code-family constructor. The NR path
-    /// calls [`QuasiCyclicLdpc::nr_5g_rate_matched`], including its encoder-data
-    /// preparation, before retaining the mother code. Decoder-only input
-    /// adapters can construct a recorded graph with [`LdpcCode::from_edges`].
+    /// That of the selected code-family constructor. The NR path calls
+    /// [`QuasiCyclicLdpc::nr_5g_rate_matched`], including its encoder-data
+    /// preparation, before retaining the mother code.
     #[must_use]
     pub fn build(self) -> LdpcCode {
         match self {
@@ -136,41 +58,12 @@ impl ComparisonCode {
 /// added to a BPSK-mapped codeword (bit `b` → `1 - 2b`, i.e. `+1` for 0,
 /// `-1` for 1). The channel LLR is `2·r/N0` with `N0 = 2·sigma²` (the
 /// standard AWGN-BPSK LLR).
-///
-/// Only used to manufacture varied, reproducible LLR inputs for the GPU
-/// byte-identity tests and throughput benches; the exact distribution is
-/// irrelevant to those comparisons (both decode arms see the identical
-/// LLRs) — only that the stream is deterministic per seed.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::testutil::AwgnLlrSource;
-/// use gf2_core::BitVec;
-///
-/// // Same seed -> bit-identical frames.
-/// let mut a = AwgnLlrSource::new(42);
-/// let mut b = AwgnLlrSource::new(42);
-/// let cw = BitVec::zeros(8);
-/// assert_eq!(a.frame_for_codeword(&cw, 0.8), b.frame_for_codeword(&cw, 0.8));
-///
-/// // The all-zero convenience draws the same stream as the explicit
-/// // all-zero codeword (BPSK maps bit 0 -> +1 either way).
-/// let mut c = AwgnLlrSource::new(42);
-/// let mut d = AwgnLlrSource::new(42);
-/// assert_eq!(c.frame_all_zero(8, 0.8), d.frame_for_codeword(&cw, 0.8));
-/// ```
 pub struct AwgnLlrSource {
     state: u64,
 }
 
 impl AwgnLlrSource {
     /// Creates a source whose SplitMix64 stream starts at `seed`.
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` — the SplitMix64 starting state; equal seeds reproduce
-    ///   bit-identical LLR streams.
     #[must_use]
     pub fn new(seed: u64) -> Self {
         Self { state: seed }
@@ -191,7 +84,7 @@ impl AwgnLlrSource {
     }
 
     /// One N(0, 1) draw via the Box-Muller cosine transform (two uniform
-    /// draws per sample: `u1` then `u2` — the pinned draw order).
+    /// draws per sample: `u1` then `u2`).
     fn next_normal(&mut self) -> f64 {
         let mut u1 = self.next_uniform();
         let u2 = self.next_uniform();
@@ -206,7 +99,7 @@ impl AwgnLlrSource {
     /// `sigma`: `r = s + N(0, sigma)`, LLR `= 2·r/N0`.
     ///
     /// The expression tree (`(2.0 * r / n0) as f32`, noise = `normal * sigma`)
-    /// is pinned — see the module-level determinism contract.
+    /// fixes the `f32` output bits.
     fn llr_sample(&mut self, s: f64, sigma: f64, n0: f64) -> Llr {
         let noise = self.next_normal() * sigma;
         let r = s + noise;
@@ -219,25 +112,6 @@ impl AwgnLlrSource {
     /// Draws exactly `2·n` `u64`s from the stream (two per sample), identical
     /// to [`frame_for_codeword`](Self::frame_for_codeword) over
     /// `BitVec::zeros(n)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` — the frame length (number of LLRs).
-    /// * `sigma` — the AWGN noise standard deviation (`N0 = 2·sigma²`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::testutil::AwgnLlrSource;
-    ///
-    /// let mut src = AwgnLlrSource::new(7);
-    /// let frame = src.frame_all_zero(16, 0.8);
-    /// assert_eq!(frame.len(), 16);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(`n`) — two SplitMix64 draws and one Box-Muller transform per LLR.
     #[must_use]
     pub fn frame_all_zero(&mut self, n: usize, sigma: f64) -> Vec<Llr> {
         let n0 = 2.0 * sigma * sigma;
@@ -246,29 +120,6 @@ impl AwgnLlrSource {
 
     /// One frame of channel LLRs over a transmitted codeword `cw` at noise
     /// std `sigma`. BPSK: bit `b` → `1 - 2b` (`+1` for 0, `-1` for 1).
-    ///
-    /// # Arguments
-    ///
-    /// * `cw` — the transmitted codeword; the frame has `cw.len()` LLRs.
-    /// * `sigma` — the AWGN noise standard deviation (`N0 = 2·sigma²`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::testutil::AwgnLlrSource;
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut cw = BitVec::zeros(4);
-    /// cw.set(1, true);
-    /// let mut src = AwgnLlrSource::new(3);
-    /// let frame = src.frame_for_codeword(&cw, 0.7);
-    /// assert_eq!(frame.len(), 4);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(`cw.len()`) — two SplitMix64 draws and one Box-Muller transform per
-    /// LLR.
     #[must_use]
     pub fn frame_for_codeword(&mut self, cw: &BitVec, sigma: f64) -> Vec<Llr> {
         let n0 = 2.0 * sigma * sigma;
@@ -285,13 +136,10 @@ impl AwgnLlrSource {
 mod tests {
     use super::*;
 
-    /// The pinned SplitMix64 stream: first outputs from seed 0 must match the
-    /// reference sequence (guards against an accidental constant/step change,
-    /// which would silently re-pin every byte-identity suite's inputs).
     #[test]
     fn test_splitmix64_reference_stream() {
         let mut src = AwgnLlrSource::new(0);
-        // SplitMix64(seed = 0) reference outputs (Vigna's splitmix64.c).
+        // SplitMix64(seed = 0) reference outputs (`@/citation/Vigna2015`).
         assert_eq!(src.next_u64(), 0xE220_A839_7B1D_CDAF);
         assert_eq!(src.next_u64(), 0x6E78_9E6A_A1B9_65F4);
         assert_eq!(src.next_u64(), 0x06C4_5D18_8009_454F);
@@ -306,9 +154,6 @@ mod tests {
         assert_eq!(fa, fb);
     }
 
-    /// `frame_all_zero(n, sigma)` and `frame_for_codeword(zeros(n), sigma)`
-    /// must be the SAME stream (the all-zero convenience is not a separate
-    /// generator).
     #[test]
     fn test_all_zero_equals_zero_codeword() {
         let mut a = AwgnLlrSource::new(0x1234);
@@ -318,10 +163,6 @@ mod tests {
         assert_eq!(fa, fb);
     }
 
-    /// A set bit flips the BPSK sign: with the same stream position the LLR
-    /// for bit 1 is `2(-1 + noise)/N0` vs `2(1 + noise)/N0` for bit 0 — they
-    /// must differ by exactly `4/N0` in f64 before the f32 narrowing, so
-    /// check the sign relation on a strong-signal draw.
     #[test]
     fn test_codeword_bit_flips_sign() {
         let n = 16;

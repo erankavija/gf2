@@ -1,9 +1,4 @@
-//! Pipeline configuration, the v2 successor to
-//! [`gf2_coding::simulation::SimulationConfig`].
-//!
-//! Lifts the §1 "`PipelineConfig`" block and the §12 config mapping of the
-//! design doc (`@/issue/ec530af9`) into code, including the
-//! [`From<&SimulationConfig>`] conversion.
+//! Run configuration of a [`Pipeline`](crate::Pipeline).
 
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
@@ -12,37 +7,10 @@ use gf2_coding::simulation::SimulationConfig;
 
 /// Configuration for a [`Pipeline`](crate::Pipeline) run.
 ///
-/// Mirrors the run-control fields of
-/// [`gf2_coding::simulation::SimulationConfig`] and adds the pipeline
-/// knobs (`parallelism`, `strict_gpu`, `diagnostic_dump_dir`). A
-/// [`From<&SimulationConfig>`] impl is provided so existing campaign configs
-/// convert directly.
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::PipelineConfig;
-///
-/// let cfg = PipelineConfig {
-///     seed: 0xC0DE_F00D,
-///     esn0_db_points: vec![4.0, 4.5, 5.0],
-///     target_errors: 100,
-///     max_frames: 10_000_000,
-///     heartbeat_every_frames: 1000,
-///     checkpoint_dir: None,
-///     tracing_log_path: None,
-///     parallelism: NonZeroUsize::new(1).unwrap(),
-///     gpu_enabled: false,
-///     strict_gpu: false,
-///     diagnostic_dump_dir: None,
-///     inject_gpu_oom_modulus: None,
-/// };
-/// assert_eq!(cfg.esn0_db_points.len(), 3);
-/// ```
+/// Converts from [`SimulationConfig`] through [`From`].
 #[derive(Debug, Clone)]
 pub struct PipelineConfig {
-    /// Base RNG seed for the per-worker ChaCha20 streams (design doc §3).
+    /// Base RNG seed for the per-worker ChaCha20 streams.
     pub seed: u64,
     /// The Es/N0 points (in dB) to simulate.
     pub esn0_db_points: Vec<f64>,
@@ -61,80 +29,39 @@ pub struct PipelineConfig {
     pub tracing_log_path: Option<PathBuf>,
     /// Number of parallel workers.
     pub parallelism: NonZeroUsize,
-    /// When set, the hybrid executor offloads the heavy GPU-bound stages (LDPC
-    /// belief-propagation decode, and max-log demap) to the HIP device,
-    /// overlapping device execution of one batch with CPU preparation of the
-    /// next (scheduler `75c22fa8`). When unset (the default), every stage runs
-    /// on the CPU.
+    /// When set, the hybrid executor offloads GPU-capable stages to the HIP
+    /// device; when unset, every stage runs on the CPU.
     ///
-    /// Without the `hip` Cargo feature this flag has no effect: a pipeline built
-    /// with it set degrades gracefully to the CPU path after a `tracing::warn!`
-    /// (there is no device backend to dispatch to).
+    /// Without the `hip` Cargo feature, or when no HIP stream pool can be
+    /// built, a set flag logs a `tracing::warn!` and the CPU path runs.
     pub gpu_enabled: bool,
     /// When set, GPU out-of-memory is promoted to a fatal error instead of
-    /// falling back to the CPU stage (design doc §8).
+    /// falling back to the CPU stage.
     pub strict_gpu: bool,
     /// Directory for JSON hard-fail diagnostic dumps (one file per fatal GPU
     /// stage event, written atomically via a `.tmp` sibling + rename).
     ///
-    /// Defaults to `None`; when `None` the executor uses
-    /// `dev/benchmarks/gf2-sim/diagnostic-dumps/` (from
-    /// [`default_dump_dir`](crate::executor::failure::default_dump_dir)).
-    /// Tests should set this to a temp dir to avoid polluting the repo.
+    /// `None` selects
+    /// [`default_dump_dir`](crate::executor::failure::default_dump_dir).
     pub diagnostic_dump_dir: Option<PathBuf>,
-    /// **Test-only** GPU out-of-memory fault-injection hook (issue `42eac5cc`).
+    /// Test-only GPU out-of-memory fault injection.
     ///
-    /// When `Some(m)` (with `m >= 1`), all THREE GPU LDPC dispatch surfaces
-    /// force a
+    /// `Some(m)` with `m >= 1` makes the GPU LDPC dispatch raise
     /// [`RecoverableError::OutOfMemory`](crate::error::RecoverableError::OutOfMemory)
-    /// instead of launching the real kernel:
-    ///
-    /// * **Topology executor** (`TopologyExecutor::run_dvb_t2_snr_point`):
-    ///   injects on each **frame** whose global frame index `g` satisfies
-    ///   `g % m == 0` (each topology dispatch is one frame, keyed on its global
-    ///   frame index `batch_id == g`). The forced OOM flows through the
-    ///   production `dispatch_with_fallback` path (CPU fallback when
-    ///   `!strict_gpu`, hard-fail promotion when `strict_gpu`).
-    /// * **Scheduler hybrid loop** (`worker_partition_hybrid`): injects on each
-    ///   **batch** whose **first** global frame index satisfies
-    ///   `first_g % m == 0`; the whole batch is one unit. Same
-    ///   `dispatch_with_fallback` semantics as the topology surface.
-    /// * **Checkpointed drain loop** (`worker_round_hybrid`, `bb11c2e6`): same
-    ///   batch-first-frame keying, but the forced OOM is **propagated**, NOT
-    ///   dispatched to a fallback — the checkpointed sweep aborts *resumably*
-    ///   (the OPTION (a) failure semantics; see
-    ///   [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)).
-    ///   This field is deliberately **excluded from `config_hash`** (it is
-    ///   test-only and an injected fault propagates before any flush, so a
-    ///   committed checkpoint can never contain injection-tainted counters) —
-    ///   which lets tests resume a checkpoint with a different modulus.
-    ///
-    /// On the two fallback-dispatching surfaces this drives the run-level
-    /// OOM-auto-fallback criterion (`42eac5cc` SC1/SC4); on the checkpointed
-    /// surface it drives the abort-resumably proof (`bb11c2e6`) — all against
-    /// real executor paths without exhausting device memory.
-    ///
-    /// `m == 1` injects on every frame/batch; `m == 2` injects on the even
-    /// frames/batches only (a genuine mixed GPU + CPU-fallback run on the
-    /// dispatching surfaces). `None` (the default) disables injection —
-    /// production runs never set this.
+    /// instead of launching the kernel: the topology executor on each frame
+    /// whose global index `g` satisfies `g % m == 0`, the scheduler and the
+    /// checkpointed sweep on each batch whose first global frame index does.
+    /// The topology executor and the scheduler route the error through the
+    /// fallback dispatch (CPU fallback, or fatal under `strict_gpu`); the
+    /// checkpointed sweep propagates it before any flush, leaving the run
+    /// resumable. Excluded from
+    /// [`config_hash`](crate::snr_checkpoint::config_hash).
     pub inject_gpu_oom_modulus: Option<u64>,
 }
 
 impl From<&SimulationConfig> for PipelineConfig {
-    /// Converts a legacy [`SimulationConfig`] into a [`PipelineConfig`].
-    ///
-    /// Field mapping (design doc §12):
-    ///
-    /// * `rng_seed` → `seed` (defaulting to `0` when `None`, since the new
-    ///   pipeline always uses a fixed seed for deterministic per-worker seek).
-    /// * `eb_n0_range_db` → `esn0_db_points` (the SNR-point vector moves
-    ///   verbatim; callers that work in Eb/N0 convert upstream).
-    /// * `min_errors` / `max_frames` widen `usize` → `u64`.
-    /// * `heartbeat_every_frames: Option<usize>` → `u64` (`None` ⇒ `0`).
-    /// * `checkpoint_dir` / `tracing_log_path` move verbatim.
-    /// * `parallelism` defaults to `1`; `gpu_enabled` and `strict_gpu` default
-    ///   to `false` (none has a legacy source field).
+    /// `rng_seed: None` maps to seed `0`. `eb_n0_range_db` is copied into
+    /// `esn0_db_points` without unit conversion.
     fn from(c: &SimulationConfig) -> Self {
         Self {
             seed: c.rng_seed.unwrap_or(0),

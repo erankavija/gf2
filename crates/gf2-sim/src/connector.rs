@@ -1,7 +1,4 @@
 //! Connectors and edges joining stages in a [`Pipeline`](crate::Pipeline).
-//!
-//! Lifts the §1 "`Connector<T>` and `Edge`" block of the design doc
-//! (`@/issue/ec530af9`) into code.
 
 use std::any::TypeId;
 use std::marker::PhantomData;
@@ -13,25 +10,6 @@ use crate::stage::TypedBatch;
 /// Carries the batch sizing the pipeline pre-allocates SoA buffers for. The
 /// phantom `T` records the batch element type so the graph API can type-check
 /// connections at compile time.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::connector::Connector;
-/// use gf2_sim::stage::BatchSize;
-///
-/// // `TypedBatch` is auto-implemented for any `BatchSize` batch type.
-/// struct Bits(Vec<u8>);
-/// impl BatchSize for Bits {
-///     fn batch_size(&self) -> usize {
-///         self.0.len()
-///     }
-/// }
-///
-/// let c = Connector::<Bits>::new(256, 64800);
-/// assert_eq!(c.batch_size, 256);
-/// assert_eq!(c.frame_len_bits, 64800);
-/// ```
 pub struct Connector<T: TypedBatch> {
     /// Number of frames per batch crossing this connector.
     pub batch_size: usize,
@@ -42,11 +20,6 @@ pub struct Connector<T: TypedBatch> {
 
 impl<T: TypedBatch> Connector<T> {
     /// Creates a connector for the given batch size and frame length.
-    ///
-    /// # Arguments
-    ///
-    /// * `batch_size` — number of frames per batch.
-    /// * `frame_len_bits` — frame length in bits.
     pub fn new(batch_size: usize, frame_len_bits: usize) -> Self {
         Self {
             batch_size,
