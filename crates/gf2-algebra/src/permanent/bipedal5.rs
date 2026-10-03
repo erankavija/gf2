@@ -1,30 +1,9 @@
 //! `permanent_bipedal5` — Gray-code Ryser permanent over `F_5`.
 //!
-//! Mirrors the F_3 path in `permanent_bipedal3`: walks the Gray-code subset
-//! order, updates a single `Packed5` column-sum word by one [`Packed5::add`]
-//! or [`Packed5::sub`] per step, and folds via [`Packed5::fold_mul_first_n`]
-//! at each step.
-//!
-//! ## Single-word path (`n ≤ 63`)
-//!
-//! For `n ≤ 63` the column-sum fits in a single `Packed5` word (one
-//! `u64`-triple per bit-plane). Each Gray-code step performs an O(1)
-//! [`Packed5::add`] or [`Packed5::sub`] on the running column-sum, followed
-//! by a horizontal fold via [`Packed5::fold_mul_first_n`] — the F_5
-//! multiplication tree lives once in that method.
-//!
-//! ## Multi-word path (`n > 63`)
-//!
-//! No multi-word path exists. `permanent_bipedal5` panics for `n > 63`;
-//! use `permanent_ryser::<Fp<5>>` for larger sizes.
-//!
-//! ## Matrix-size upper bound
-//!
-//! The single-word path is limited to `n ≤ 63` (one `u64`-triple holds
-//! `Packed5::LANES = 64` F_5 lanes; `fold_mul_first_n` operates on the first
-//! `n`). Larger matrices use `permanent_ryser::<Fp<5>>`.
-//!
-//! # Feature gating
+//! Walks the Gray-code subset order, updates a single `Packed5` column-sum
+//! word (one `u64`-triple of bit-planes) by one [`Packed5::add`] or
+//! [`Packed5::sub`] per step, and folds the first `n` lanes via
+//! [`Packed5::fold_mul_first_n`]. `permanent_bipedal5` panics for `n > 63`.
 //!
 //! Compiled only when the `f5` Cargo feature is enabled.
 
@@ -36,16 +15,6 @@ use crate::packed::{PackedField, PackedFieldVec};
 
 /// Compute the permanent of an `n × n` matrix over `F_5`, using the single-word
 /// Gray-code Ryser fast path.
-///
-/// For `n ≤ 63` the column-sum fits in a single [`Packed5`] word (one
-/// `u64`-triple per bit-plane). Each Gray-code step performs exactly one
-/// O(1) [`Packed5::add`] or [`Packed5::sub`] on the column-sum accumulator,
-/// followed by a horizontal fold via [`Packed5::fold_mul_first_n`] on the
-/// first `n` lanes.
-///
-/// **Matrix-size upper bound for the single-word path:** `n ≤ 63`.
-/// For `n > 63`, call `permanent_ryser::<Fp<5>>`. This function panics if
-/// `n > 63`.
 ///
 /// The permanent of an `n × n` matrix `A` over `F_5` is:
 ///
@@ -89,8 +58,7 @@ use crate::packed::{PackedField, PackedFieldVec};
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
-/// Panics if `mat.cols() > 63` (single-word path requires `n ≤ 63`; for
-/// `n > 63` use `permanent_ryser::<Fp<5>>`).
+/// Panics if `mat.cols() > 63` (single-word path requires `n ≤ 63`).
 ///
 /// # Complexity
 ///
@@ -120,22 +88,8 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
     permanent_bipedal5_singleword(mat)
 }
 
-/// Compute the permanent of an `n × n` matrix over `F_5` using the
-/// single-`Packed5`-word fast path.
-///
-/// This is the inner implementation called by [`permanent_bipedal5`].
-/// It is also exposed as `pub` so callers that are certain of `n ≤ 63` can
-/// call it directly (e.g., for cross-checks that bypass the dispatcher).
-///
-/// The algorithm mirrors `permanent_bipedal3_singleword`:
-/// 1. Extract each column `j` into a `Packed5` word.
-/// 2. Walk Gray-code subsets: each step adds or subtracts one column into
-///    the running column-sum `Packed5` word via [`Packed5::add`] /
-///    [`Packed5::sub`] — O(1) per step.
-/// 3. At each step, fold the first `n` lanes of the column-sum into a
-///    scalar `Fp<5>` via [`Packed5::fold_mul_first_n`] and accumulate into
-///    the Ryser running total with the appropriate sign.
-/// 4. Apply the outer `(-1)^n` factor.
+/// Single-word implementation behind [`permanent_bipedal5`], with the same
+/// shape contract.
 ///
 /// # Arguments
 ///
@@ -179,17 +133,12 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
         n
     );
 
-    // Edge case: the 0×0 matrix has exactly one permutation (the empty
-    // one), whose product over an empty index set is the vacuous product 1.
+    // The 0×0 matrix has one permutation (the empty one), with product 1.
     if n == 0 {
         return Fp::<5>::new(1);
     }
 
-    // One-time matrix-prep: extract each column j into a Packed5 word.
-    // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..63 are 0
-    // (the additive identity, i.e. all bit-planes zero).
-    //
-    // Cost: O(n^2) — dominated by the O(n · 2^n) Gray walk for n ≥ 4.
+    // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..63 are 0.
     let mut columns: Vec<Packed5> = Vec::with_capacity(n);
     for j in 0..n {
         let col_vec = mat.column(j);
@@ -200,35 +149,25 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
         columns.push(col);
     }
 
-    // Column-sum accumulator as a single Packed5 word.
-    // Lane i of col_sum holds Σ_{j ∈ S} A[i,j] mod 5.
-    // Lanes n..63 stay 0 throughout (add/sub on the packed bit-planes
-    // leave them at 0; fold_mul_first_n only reads lanes 0..n-1).
+    // Lane i of col_sum holds Σ_{j ∈ S} A[i,j] mod 5; lanes n..63 stay 0.
     let mut col_sum = Packed5::zero();
 
-    // Running Ryser accumulator and subset-size counter.
     let mut total = Fp::<5>::new(0);
     let mut subset_size: usize = 0;
 
-    // Gray walk: enumerate all 2^n - 1 non-empty subsets of [n].
-    // At each step (flip, parity):
-    //   flip   — which column just entered or left S
-    //   parity — +1 (entered, ADD) or -1 (left, SUB)
+    // flip is the column that entered (parity +1) or left (parity -1) S.
     for (flip, parity) in gray_code_iter(n) {
         if parity == 1 {
-            // col_sum += columns[flip] — O(1) packed bit-plane add.
             subset_size += 1;
             col_sum = col_sum.add(columns[flip]);
         } else {
-            // col_sum -= columns[flip] — O(1) packed bit-plane sub.
             subset_size -= 1;
             col_sum = col_sum.sub(columns[flip]);
         }
 
-        // Horizontal fold via F_5 multiplication of the first n lanes.
         let term = col_sum.fold_mul_first_n(n);
 
-        // Ryser sign: (-1)^|S| in F_5 means +1 for even |S|, -1 (= 4 in F_5) for odd.
+        // Ryser sign: (-1)^|S|.
         if subset_size % 2 == 1 {
             total = total - term;
         } else {
@@ -236,9 +175,7 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
         }
     }
 
-    // Apply the outer (-1)^n factor from Ryser's formula.
-    // In F_5, -1 == 4, so (-1)^n == 4^n mod 5, which cycles: 1, 4, 1, 4, ...
-    // i.e. if n is even, factor = 1; if n is odd, factor = -1 = 4.
+    // Outer (-1)^n factor of Ryser's formula.
     if n % 2 == 1 {
         -total
     } else {
@@ -258,7 +195,6 @@ mod tests {
     use crate::testutil::random_matrix;
     use gf2_core::gfp::Fp;
 
-    /// Wrap a row-major `Vec<Fp<5>>` into a `Packed5Matrix`.
     fn to_packed5_matrix(row_major: &[Fp<5>], n: usize) -> Packed5Matrix {
         Packed5Matrix::from_row_major(row_major, n, n)
     }
@@ -310,8 +246,6 @@ mod tests {
     }
 
     /// All-ones `n×n` matrix: permanent = `n! mod 5` for `n ∈ {1, 2, 3, 4}`.
-    ///
-    /// n! mod 5: n=1 → 1, n=2 → 2, n=3 → 6 ≡ 1, n=4 → 24 ≡ 4.
     #[test]
     fn test_permanent5_all_ones_n() {
         // n! mod 5: {1, 2, 1, 4}
@@ -328,9 +262,6 @@ mod tests {
         }
     }
 
-    /// 2×2 explicit test vector from direct calculation.
-    ///
-    /// Matrix: [[1,2],[3,4]], perm = 1*4 + 2*3 = 4 + 6 = 10 ≡ 0 mod 5.
     #[test]
     fn test_permanent5_2x2_known_vector() {
         let data: Vec<Fp<5>> = vec![
@@ -348,7 +279,6 @@ mod tests {
     // Panic tests
     // -----------------------------------------------------------------------
 
-    /// Non-square matrix panics.
     #[test]
     #[should_panic(expected = "matrix must be square")]
     fn test_permanent5_panics_on_non_square() {
@@ -357,7 +287,6 @@ mod tests {
         let _ = permanent_bipedal5(&m);
     }
 
-    /// `n > 63` panics.
     #[test]
     #[should_panic(expected = "single-word path requires n <=")]
     fn test_permanent5_panics_on_n_64() {
@@ -369,16 +298,6 @@ mod tests {
     // -----------------------------------------------------------------------
     // Cross-checks: permanent_bipedal5 vs permanent_ryser<Fp<5>>
     // Per-n tests with 1000 random matrices each.
-    //
-    // Timing budget (release mode):
-    //   n=1..12  — fast tier: 2^n <= 4096 Gray steps; 1000 matrices well
-    //              within 5 s (each matrix: sub-millisecond).
-    //   n=13..14 — fast tier: 2^13=8192, 2^14=16384 steps; 1000 matrices
-    //              x ~1 ms each = ~1-2 s total — within 5 s.
-    //              (The issue criterion requires n ∈ {1,...,14}.)
-    //
-    // Ryser oracle at n=14: 16384 steps × ~5 ns/step ≈ 82 µs/matrix,
-    // × 1000 = 82 ms total — safely within 5 s.
     // -----------------------------------------------------------------------
 
     macro_rules! cross_check_n {
@@ -437,36 +356,17 @@ mod tests {
     cross_check_n!(test_cross_check_n12, 12);
     cross_check_n!(test_cross_check_n13, 13);
     cross_check_n!(test_cross_check_n14, 14);
-    // n=15..16: 2^15=32768, 2^16=65536 steps; 1000 matrices may push past 5 s.
     cross_check_n!(test_cross_check_n15, 15, slow);
     cross_check_n!(test_cross_check_n16, 16, slow);
 
     // -----------------------------------------------------------------------
-    // Word-boundary coverage: exercise n closer to Packed5::LANES = 64.
-    //
-    // AGENTS.md §Correctness and test policy prescribes word-boundary coverage at 0, 1, 63, 64, 65.
-    // For permanent_bipedal5, literal positive cross-check at n = 63 / 64
-    // would need 2^n - 1 Gray steps — 9.2e18 / 1.8e19 respectively, both
-    // physically infeasible. n=32 (4.3e9 steps, ~30 s/matrix on the 5900X)
-    // is the largest dimension where even a single cross-check completes
-    // within the 120 s slow-tier budget; n ≥ 33 exceeds it.
-    //
-    // The boundary contract is covered as follows (full rationale in the
-    // issue's `## Amendment 2026-05-14` block, user-approved):
-    //   n = 0      → test_permanent5_empty_matrix (vacuous-product = 1)
+    // Word-boundary coverage. A cross-check at n = 63 needs 2^63 - 1 Gray
+    // steps, so the size contract is covered by:
+    //   n = 0      → test_permanent5_empty_matrix
     //   n = 1      → test_permanent5_1x1
-    //   n = 65     → test_permanent5_panics_on_n_65 (panic boundary)
+    //   n = 64     → test_permanent5_panics_on_n_64 (panic boundary)
     //   n = 15, 16 → cross_check_n!(_, _, slow), 1000 matrices each
-    //   n = 20/24/32 → sparse boundary cross-check below
-    //
-    // Bit-level word boundaries (bit 63 / 64 / 65 inside the u64-triple
-    // storage) are covered by the Packed5 / Packed5Vec type's own tests
-    // in `packed5.rs`; permanent_bipedal5 consumes Packed5 via its trait
-    // surface and inherits that coverage.
-    //
-    // Throughputs (release, dev host: 5900X):
-    //   n=20: ~10 ms/matrix × 20 matrices ≈ 0.2 s
-    //   n=24: ~150 ms/matrix × 10 matrices ≈ 1.5 s
+    //   n = 20, 24 → boundary_check_n! below
     // -----------------------------------------------------------------------
 
     macro_rules! boundary_check_n {

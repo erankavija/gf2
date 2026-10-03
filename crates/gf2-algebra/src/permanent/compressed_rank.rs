@@ -27,16 +27,12 @@
 //! `C_t(S)` counts valid ordered prefixes in state `S` and `m(S,S')` is an
 //! edge multiplicity, exact propagation applies
 //! `C_(t+1)(S') = sum_S C_t(S) m(S,S')`. The terminal count divided by
-//! `q^(3n)` is returned as an arbitrary-precision [`ExactProbability`]. This
-//! is a finite algebraic count, not an estimator, interval, or statistical
-//! interpretation.
+//! `q^(3n)` is returned as an arbitrary-precision [`ExactProbability`].
 //!
-//! # Validation and safety
+//! # Validation
 //!
 //! Persisted subspaces reject noncanonical RREF bytes, and persisted states are
-//! accepted only when canonical transition replay reconstructs them. The module
-//! contains no unsafe code, randomness, sampling, device work, or fallback
-//! path; every supported field and every transition is exact.
+//! accepted only when canonical transition replay reconstructs them.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};

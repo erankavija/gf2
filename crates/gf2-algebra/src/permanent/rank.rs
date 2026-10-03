@@ -1,41 +1,28 @@
 //! Permanental rank deficiency for rectangular matrices over a finite field.
 //!
-//! # What the predicate decides
-//!
-//! The **permanental rank** of a matrix is the largest `r` for which some
+//! The permanental rank of a matrix is the largest `r` for which some
 //! `r × r` submatrix has nonzero permanent. For an `n × k` matrix `A` with
-//! `k ≤ n` the permanental rank is at most `k`, and every `k × k` submatrix
-//! uses all `k` columns together with a `k`-subset of the rows. Hence
+//! `k ≤ n`,
 //!
 //! ```text
 //! per-rank(A) < k  <=>  every k × k row submatrix of A has zero permanent,
 //! ```
 //!
-//! so deciding the event is a **conjunction over the `C(n, k)` row subsets**,
-//! not the evaluation of a single number. [`permanental_rank_status`] walks
-//! those subsets and stops at the first nonzero `k × k` permanent.
+//! a conjunction over the `C(n, k)` row subsets. [`permanental_rank_status`]
+//! walks those subsets and stops at the first nonzero `k × k` permanent. The
+//! event is the one studied in `@/citation/GGK2025`, whose theorem
+//! hypothesises `k ≤ 0.1 · sqrt(n)`.
 //!
-//! # A vanishing rectangular permanent is a different, strictly weaker condition
+//! # Rectangular permanent
 //!
-//! The scalar "rectangular permanent" of an `n × k` matrix — the sum over all
-//! injections from the `k` columns into the `n` rows — is **not** the quantity
-//! this module tests. Expanding that sum by which rows it uses gives
-//!
-//! ```text
-//! rect-per(A) = sum over k-subsets S of rows of  perm(A_S),
-//! ```
-//!
-//! a sum of exactly the `C(n, k)` submatrix permanents whose *individual*
-//! vanishing the rank condition asks about. That identity makes the
-//! relationship a one-way implication:
+//! The scalar rectangular permanent
 //!
 //! ```text
-//! per-rank(A) < k  implies         rect-per(A) = 0   (every summand vanishes)
-//! rect-per(A) = 0  does not imply  per-rank(A) < k   (the sum can cancel)
+//! rect-per(A) = sum over k-subsets S of rows of  perm(A_S)
 //! ```
 //!
-//! Deficiency zeroes every summand and therefore zeroes the sum. The converse
-//! fails because a sum of nonzero terms can still cancel. Over `F_3`,
+//! is a strictly weaker test: deficiency zeroes every summand, and the
+//! converse fails because nonzero summands can cancel. Over `F_3`,
 //!
 //! ```text
 //! A = [[1, 0],
@@ -45,42 +32,12 @@
 //!
 //! has all three `2 × 2` row-submatrix permanents equal to `1`, so
 //! `per-rank(A) = 2` is full, while `rect-per(A) = 1 + 1 + 1 = 0 mod 3`.
-//! Testing `rect-per(A) = 0` in place of the rank condition therefore
-//! over-reports deficiency: it accepts every deficient matrix and some
-//! full-rank ones besides. The integration test
-//! `test_rectangular_permanent_vanishes_but_submatrix_does_not` in
-//! `tests/permanental_rank.rs` pins both quantities on this matrix.
-//!
-//! # Scope of validation
-//!
-//! The theorem that motivates the event — `@/citation/GGK2025`, "Ghasemi,
-//! Gross, Kopparty — Permanental Rank versus Determinantal Rank of Random
-//! Matrices over Finite Fields, APPROX/RANDOM 2025" — hypothesises
-//! `k ≤ 0.1 · sqrt(n)`. Even `k = 3` then needs `n ≥ 900`, where the
-//! deficiency probability is about `3 · 3^-900`: no Monte Carlo campaign
-//! observes a single event. Every `(n, k)` pair a sampling campaign can reach
-//! therefore lies **outside** that hypothesis, so agreement between this
-//! predicate, an independent brute-force oracle, and the `k / q^n` heuristic
-//! supports the implementation and the heuristic. It is not evidence about
-//! the theorem in its proven range.
-//!
-//! # No statistical machinery
-//!
-//! This module depends on [`gf2_core::field::FiniteField`] and on the crate's
-//! own [`permanent_ryser`] square kernel, and on nothing else. It decides one
-//! matrix and reports nothing about rates; estimating
-//! `Pr[per-rank(A) < k]` over a sample belongs to a campaign driver, which
-//! calls this predicate rather than living beside it.
 
 use gf2_core::field::FiniteField;
 
 use crate::permanent::permanent_ryser;
 
 /// Whether an `n × k` matrix with `k ≤ n` attains permanental rank `k`.
-///
-/// The two variants are the closed vocabulary of the decision that
-/// [`permanental_rank_status`] and its brute-force oracle return; comparing
-/// the two implementations compares values of this type.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PermanentalRank {
     /// `per-rank(A) < k`: every `k × k` row submatrix has zero permanent.
@@ -119,8 +76,6 @@ impl PermanentalRank {
 /// permanent of each `k × k` row submatrix with [`permanent_ryser`], and
 /// returns [`PermanentalRank::Full`] at the **first nonzero permanent**. Only
 /// when every subset yields zero is the answer [`PermanentalRank::Deficient`].
-/// See the module documentation for why this conjunction — and not a scalar
-/// rectangular permanent — is the quantity of interest.
 ///
 /// # Arguments
 ///
@@ -168,9 +123,7 @@ impl PermanentalRank {
 ///
 /// `O(C(n, k) · k · 2^k)` field operations in the worst case — the all-zero
 /// matrix, where no subset exits early — and `O(k^2)` extra space for the
-/// submatrix buffer. The early exit dominates in practice: a nonzero
-/// permanent is the overwhelmingly common case, so typical cost is a small
-/// constant number of `k × k` permanents rather than `C(n, k)` of them.
+/// submatrix buffer.
 ///
 /// `k = 0` returns [`PermanentalRank::Full`]: the single `0 × 0` submatrix has
 /// permanent `1`, so `per-rank(A) = 0` and `0 < 0` is false.
@@ -185,10 +138,8 @@ pub fn permanental_rank_status<F: FiniteField>(
 /// Decide permanental rank and report the number of square permanent
 /// evaluations used by the production predicate.
 ///
-/// This is the instrumented form of [`permanental_rank_status`]. The returned
-/// count is intended for reproducible cost measurements; it does not change
-/// the early-exit traversal or the decision. See [`permanental_rank_status`]
-/// for the matrix representation, panics, and complexity contract.
+/// The traversal and decision are those of [`permanental_rank_status`], which
+/// states the matrix representation, panics, and complexity contract.
 #[must_use]
 pub fn permanental_rank_status_with_stats<F: FiniteField>(
     matrix: &[F],
@@ -209,8 +160,7 @@ pub fn permanental_rank_status_with_stats<F: FiniteField>(
     );
 
     // The empty submatrix has permanent 1, which is nonzero, so per-rank is 0
-    // and the strict inequality `0 < 0` fails. Returning here also keeps the
-    // loop below free of the degenerate `matrix[0]` bootstrap.
+    // and the strict inequality `0 < 0` fails.
     if k == 0 {
         return PermanentalRankEvaluation {
             status: PermanentalRank::Full,
@@ -266,7 +216,6 @@ mod tests {
     use gf2_core::field::ConstField;
     use gf2_core::gfp::Fp;
 
-    /// Build a flat row-major `n × k` matrix over `F_P` from residue literals.
     fn matrix<const P: u64>(values: &[u64]) -> Vec<Fp<P>> {
         values.iter().map(|&v| Fp::<P>::new(v)).collect()
     }
@@ -279,7 +228,6 @@ mod tests {
         let _ = permanental_rank_status::<Fp<3>>(&a, 2, 3);
     }
 
-    /// A slice whose length is not `n * k` panics.
     #[test]
     #[should_panic(expected = "matrix.len() (5) must equal n * k (6)")]
     fn test_panics_on_shape_mismatch() {
@@ -336,15 +284,12 @@ mod tests {
         );
     }
 
-    /// The predicate exits at the first nonzero permanent (REQ-01).
+    /// The predicate exits at the first nonzero permanent.
     ///
     /// The matrix is `32 × 16` over `F_3` whose first sixteen rows are the
     /// identity, so the lexicographically first row subset `{0, ..., 15}` has
-    /// permanent `1`. This test terminates only because of that early exit: a
-    /// full scan would evaluate `C(32, 16) = 601 080 390` submatrix
-    /// permanents of `2^16` Gray steps each, roughly `6 · 10^14` field
-    /// operations, which the fast tier's five-second per-test kill would cut
-    /// off by many orders of magnitude.
+    /// permanent `1`. A full scan evaluates `C(32, 16) = 601 080 390`
+    /// submatrix permanents of `2^16` Gray steps each.
     #[test]
     fn test_exits_at_first_nonzero_permanent() {
         let n = 32;
