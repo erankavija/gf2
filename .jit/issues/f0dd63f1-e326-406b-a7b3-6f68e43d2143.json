@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-03T21:51:08.648222958Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-14"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Empty dev/presentations of leftover theme files",
-  "updated_at": "2026-10-03T18:24:39.399651833Z"
+  "updated_at": "2026-10-03T21:51:08.648222958Z"
 }
