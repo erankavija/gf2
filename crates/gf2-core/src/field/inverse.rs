@@ -1,64 +1,12 @@
 //! Matrix inversion, linear-system solving, and determinant over an
 //! arbitrary [`FiniteField`].
 //!
-//! Issue `ae1d1e88`. Implements Dumas–Pernet §2.3 Table 2 by composing the
-//! PLE decomposition (issue `c3f8c1cb`) with the triangular primitives
-//! (issue `83b1ad8b`):
-//!
-//! - [`FieldMatrix::inv`] / [`inv`] — `A⁻¹ = E⁻¹ · L⁻¹ · Pᵀ` where
-//!   `(P, L, E, r) = self.ple()`. Defined iff `r == n == m`; returns
-//!   `None` on rank-deficient input. Uses the in-place `trtrm` primitive
-//!   (issue `d1a5fea8`) to compose `E⁻¹ · L⁻¹` directly into `L⁻¹`'s
-//!   storage, replacing the prior dense `n × n` `gemm` target. This
-//!   halves the constant factor on the dense `n³` work versus the
-//!   pre-`d1a5fea8` driver and removes one full `n × n` allocation
-//!   (the `temp = E⁻¹ · L⁻¹` materialisation).
-//! - [`FieldMatrix::solve`] / [`solve`] — solve `A · x = b` for a single
-//!   column `b`. Routes through [`solve_batch`](FieldMatrix::solve_batch)
-//!   on a `n × 1` right-hand side.
-//! - [`FieldMatrix::solve_batch`] / [`solve`] — solve `A · X = B` for a
-//!   matrix `B`. Returns `None` on singular `A`. Uses one `trsm_lower`
-//!   for `L · Y = Pᵀ B` and one `trsm_upper` for `E · X = Y`.
-//! - [`FieldMatrix::det`] / [`det`] — `det(A) = sign(P) · ∏ E[i, i]`.
-//!   Returns the field zero on rank-deficient input.
-//!
-//! All matrix–matrix multiplications go through
-//! `gemm_into_view`; all
-//! triangular solves through
-//! [`trsm_lower`] /
-//! [`trsm_upper`]; all triangular
-//! inversions through
-//! [`trtri_lower`] /
-//! [`trtri_upper`]; the final
-//! upper-times-unit-lower product through
-//! [`trtrm`]. No bespoke kernels.
-//!
-//! # Allocation budget
-//!
-//! Each operation's `FieldMatrix::new` count is pinned in
-//! `tests::test_*_allocation_budget_*`. The dominant cost is paid by the
-//! upstream PLE call (see [`crate::field::ple`]) and by the kernels'
-//! intrinsic gemm B-transpose materialisation; the inverse / solve
-//! drivers add only the small handful of clones documented per
-//! function.
-//!
-//! # Edge cases
-//!
-//! `n == 0` is supported (the 0×0 matrix has determinant 1, inverse
-//! itself, and the trivial empty system has the unique empty solution).
-//! `n == 1` reduces to scalar inversion when `A[0,0] != 0` and to
-//! `None`/zero determinant when `A[0,0] == 0`. Singular and
-//! rank-deficient inputs never panic; they return `None` (inv, solve)
-//! or the field zero (det).
-//!
-//! # Non-square inputs
-//!
-//! `inv`, `solve`, `solve_batch`, and `det` panic with a clear message on
-//! non-square `self`. The pseudo-inverse for rectangular / rank-
-//! deficient matrices is intentionally out of scope; callers needing
-//! that should use [`crate::field::ple`]'s row-echelon form together
-//! with [`crate::field::matrix::FieldMatrix::nullspace`] to assemble the
-//! Moore–Penrose pseudo-inverse manually.
+//! [`FieldMatrix::inv`], [`FieldMatrix::solve`],
+//! [`FieldMatrix::solve_batch`] and [`FieldMatrix::det`] compose the PLE
+//! decomposition with the triangular kernels
+//! (`@/citation/DumasPernet2012` §2.3, Table 2). They panic on non-square
+//! input; a singular input yields `None` (`inv`, `solve`, `solve_batch`)
+//! or the field zero (`det`).
 
 use crate::field::matrix::FieldMatrix;
 #[cfg(any(test, feature = "test-support"))]
@@ -77,22 +25,8 @@ use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 use crate::tuning;
 
-// ─── Blocked-invert constants ─────────────────────────────────────────────────
-
-/// Conservative default for `dense_inverse.blocked_min_dim()` in the active
-/// [`crate::tuning::CoreTuning`].
-///
-/// Below the active profile value the scalar-PLE + `trtri` + `trtrm` driver
-/// is competitive with (or faster than) the panelized path
-/// ([`blocked_inv_panelized`]) because the GEMM inner dimensions are too
-/// small to amortise the packing overhead of `fp_small_try_gemm_classical` /
-/// `gemm_axpy_into_view`. The default value 16 was selected empirically: the
-/// `fieldmatrix_solve` bench shows a crossover for small primes in the range
-/// n ∈ [14, 18] across GF(7), GF(251), and GF(65521) (see
-/// `dev/bench_results/2026-05-26-8df0c501-blocked-invert.md` § 2 for the
-/// sweep). For n ≥ 16 the panelized path is equal-or-faster on every prime
-/// tested. This constant remains the compiled-in conservative default
-/// consumed by [`crate::tuning::CoreTuning::CONSERVATIVE`].
+/// Conservative default for `dense_inverse.blocked_min_dim()`, consumed
+/// by [`crate::tuning::CoreTuning::CONSERVATIVE`].
 pub(crate) const BLOCKED_INVERT_THRESHOLD: usize = 16;
 
 /// The selected arm of the [`FieldMatrix::inv`] dispatcher.
@@ -114,8 +48,6 @@ pub fn inv_route(n: usize) -> InvRoute {
     inv_route_resolved(tuning::active().dense_inverse().blocked_min_dim(), n)
 }
 
-/// Reports the [`FieldMatrix::inv`] arm for a matrix of dimension `n`
-/// against an already-resolved `blocked_min_dim`.
 fn inv_route_resolved(blocked_min_dim: usize, n: usize) -> InvRoute {
     if n >= blocked_min_dim {
         InvRoute::BlockedPanelized
@@ -124,44 +56,14 @@ fn inv_route_resolved(blocked_min_dim: usize, n: usize) -> InvRoute {
     }
 }
 
-// ─── Public methods on FieldMatrix ───────────────────────────────────────────
-
 impl<F: FiniteField> FieldMatrix<F> {
-    /// Returns the matrix inverse `A⁻¹` if `self` is non-singular.
+    /// Returns the matrix inverse `A⁻¹`, or `None` if `self` is singular.
     ///
-    /// Implements Dumas–Pernet §2.3 Table 2 with the §5.2 in-place
-    /// composition variant (issue `d1a5fea8`). Computes the PLE
-    /// decomposition `P · L · E = self`. If `rank < n`, returns `None`.
-    /// Otherwise inverts each triangular factor in place
-    /// ([`trtri_lower`] on `L`,
-    /// [`trtri_upper`] on `E`),
-    /// then composes `M = E⁻¹ · L⁻¹` **in place into `L⁻¹`'s storage**
-    /// via [`trtrm`] (the upper-times-
-    /// unit-lower product kernel that exploits `L⁻¹`'s unit-lower
-    /// structure to halve the dense work versus a generic `gemm`).
-    /// Finally applies `Pᵀ` on the right by column-permuting `M` into
-    /// the result.
-    ///
-    /// **Algorithm-choice note.** Prior versions of this driver used a
-    /// full `n × n` `gemm_into_view` for the `E⁻¹ · L⁻¹` step, requiring
-    /// a fresh `n × n` allocation and ~`n³` field operations on top of
-    /// the two triangular inversions. The `trtrm` formulation reuses
-    /// `L⁻¹`'s storage (no extra `n × n` allocation) and reduces that
-    /// step's cost to ~`n³ / 2` because one operand is unit lower-
-    /// triangular. The total dense `n³` work drops from `≈ 1.33 n³`
-    /// (PLE-share excluded) to `≈ 0.83 n³`, closing the gap to
-    /// fflas-ffpack's `dgetri`-style in-place driver. See
-    /// `dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md` for
-    /// the per-cell ratios.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — Square `n × n` input. Not modified.
-    ///
-    /// # Returns
-    ///
-    /// `Some(A⁻¹)` if `self` is invertible (i.e. `rank(self) == n`),
-    /// `None` otherwise. Never panics on a singular input.
+    /// Starts from the PLE decomposition `P · L · E = self`
+    /// (`@/citation/DumasPernet2012` §2.3, Table 2). The route reported by
+    /// [`inv_route`] either inverts `L` and `E` and composes `E⁻¹ · L⁻¹`
+    /// in place with [`trtrm`], or solves `L · Y = I` and `E · X = Y`;
+    /// both then apply `Pᵀ` on the right.
     ///
     /// # Panics
     ///
@@ -169,25 +71,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Complexity
     ///
-    /// `O(n³)` field operations (one PLE + two triangular inversions +
-    /// one in-place upper-times-unit-lower product via `trtrm`).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::{gemm, FieldMatrix};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // A = [[2, 3], [1, 4]] over GF(7).
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 1, Fp::<7>::new(3));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(4));
-    /// let a_inv = a.inv().expect("invertible");
-    /// let prod = gemm(&a, &a_inv);
-    /// assert_eq!(prod, FieldMatrix::<Fp<7>>::identity(2));
-    /// ```
+    /// `O(n³)` field operations.
     pub fn inv(&self) -> Option<FieldMatrix<F>> {
         let (m, n) = self.shape();
         assert_eq!(
@@ -196,29 +80,10 @@ impl<F: FiniteField> FieldMatrix<F> {
             m, n
         );
         if n == 0 {
-            // 0×0 matrix: its own inverse (the unique empty linear map).
-            // The output carries empty storage; a zero witness is not
-            // required for either ConstField or runtime-context fields.
+            // The 0×0 matrix is its own inverse.
             return Some(self.clone());
         }
 
-        // Panelized fast path (issue 8df0c501, design feb15da9).
-        //
-        // At or above the active `dense_inverse.blocked_min_dim()` profile
-        // value, as reported by `inv_route`, the blocked-invert algorithm
-        // (Higham §14.1) replaces the scalar-pivot PLE + trtri + trtrm
-        // driver with:
-        //   1. panelized_ple(A) — wide Schur updates via gemm_axpy_into_view,
-        //      which routes to fp_small_try_gemm_classical (post-40195c09)
-        //      for small primes and to fp_medium for GF(65521).
-        //   2. trsm_lower(L, I_n) — forward solve.
-        //   3. trsm_upper(E, Y)   — back solve.
-        //   4. column-permute by Pᵀ.
-        //
-        // The result is returned directly. The scalar-pivot path is not
-        // reached on the blocked route; returning None from
-        // blocked_inv_panelized signals rank-deficiency (same contract as
-        // the scalar path's `if rank < n { return None; }` guard).
         if inv_route(n) == InvRoute::BlockedPanelized {
             return blocked_inv_panelized(self);
         }
@@ -227,32 +92,16 @@ impl<F: FiniteField> FieldMatrix<F> {
         if rank < n {
             return None;
         }
-        // Full rank ⇒ L is n×n unit lower-triangular, E is n×n with
-        // pivots on the leading diagonal (i.e. upper-triangular).
-        // Invert in place via the §2.3 algorithm 2.3 primitives.
+        // Full rank ⇒ L is n×n unit lower-triangular and E is n×n
+        // upper-triangular.
         trtri_lower(l.submat_mut(.., ..));
         trtri_upper(e.submat_mut(.., ..));
 
-        // Compose M = E⁻¹ · L⁻¹ in place into L⁻¹'s storage via the
-        // in-place upper-times-unit-lower product. `trtrm(L_mut, U)`
-        // computes `A = U · L` and writes `A` over `L`'s view; the
-        // `L`-operand is treated as unit-lower with implicit diagonal,
-        // matching `L⁻¹`'s structure (the explicit `1`s on the diagonal
-        // from `trtri_lower` are not read by `trtrm`).
-        //
-        // Algorithm-choice rationale: see method-level docs and
-        // `dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md`.
-        // Allocation budget: NO `n × n` scratch (the prior driver
-        // allocated `temp` of shape `n × n` for the `gemm` target);
-        // `trtrm`'s recursion adds the documented per-level
-        // `(m-h) × h` scratch for the `U22 · L21` chain.
+        // `trtrm` overwrites `L⁻¹` with `E⁻¹ · L⁻¹`. It treats its first
+        // operand as unit lower-triangular and does not read the diagonal.
         trtrm(l.submat_mut(.., ..), e.submat(.., ..));
 
         // Apply Pᵀ on the right: (M · Pᵀ)[i, j] = M[i, perm[j]].
-        // Materialise the column-permuted output. We cannot do this in
-        // place (column-permutation in row-major storage would alias
-        // sources and sinks within a row); a fresh allocation is the
-        // standard library-style cost.
         let zero = self.get(0, 0).zero_like();
         let mut out = FieldMatrix::new(n, n, zero);
         let perm_idx = perm.indices();
@@ -266,37 +115,9 @@ impl<F: FiniteField> FieldMatrix<F> {
 
     /// Solves `A · x = b` for a single column `b`.
     ///
-    /// Contract:
-    ///
-    /// * Returns `Some(x)` with `A · x == b` iff `A` is square and
-    ///   non-singular (`rank(A) == n`).
-    /// * Returns `None` iff `A` is square and rank-deficient
-    ///   (`rank(A) < n`). This is the entire singular-system signal —
-    ///   inconsistent rank-deficient systems and underdetermined
-    ///   compatible systems are not distinguished, both report `None`.
-    /// * Panics if `A` is non-square. Square inputs are a precondition
-    ///   not enforceable in Rust's type system, so the violation is
-    ///   surfaced at the call site rather than swallowed.
-    ///
-    /// Callers needing least-squares or pseudo-inverse semantics over
-    /// rank-deficient compatible systems should compose
-    /// [`row_echelon`](crate::field::matrix::FieldMatrix::row_echelon)
-    /// and
-    /// [`nullspace`](crate::field::matrix::FieldMatrix::nullspace) from
-    /// the PLE module directly; the Moore–Penrose pseudo-inverse is
-    /// out of scope here (see "Non-square inputs" in the module docs).
-    ///
-    /// Implements Dumas–Pernet §2.3 Table 2 by composing
-    /// [`solve_batch`](Self::solve_batch) with a `n × 1` right-hand side.
-    ///
-    /// # Arguments
-    ///
-    /// * `b` — Right-hand side; `b.len()` must equal `self.rows()`.
-    ///
-    /// # Returns
-    ///
-    /// `Some(x)` with `self · x == b` if `self` is invertible, `None`
-    /// otherwise.
+    /// Returns `Some(x)` with `A · x == b` iff `A` is non-singular, and
+    /// `None` for every rank-deficient `A`: inconsistent systems and
+    /// underdetermined compatible systems are not distinguished.
     ///
     /// # Panics
     ///
@@ -306,26 +127,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Complexity
     ///
     /// `O(n³)` field operations — dominated by the PLE.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::field::vec::FieldVec;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // A = [[2, 3], [1, 4]] over GF(7), b = [4, 1].
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 1, Fp::<7>::new(3));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(4));
-    /// let b = FieldVec::from(vec![Fp::<7>::new(4), Fp::<7>::new(1)]);
-    /// let x = a.solve(&b).expect("invertible");
-    /// // Cross-check: A · x == b.
-    /// let bb = a.matvec(&x);
-    /// assert_eq!(bb, b);
-    /// ```
     pub fn solve(&self, b: &FieldVec<F>) -> Option<FieldVec<F>> {
         let (m, n) = self.shape();
         assert_eq!(
@@ -344,7 +145,6 @@ impl<F: FiniteField> FieldMatrix<F> {
             // Trivial empty system: the unique solution is the empty vector.
             return Some(FieldVec::new());
         }
-        // Wrap b as an n × 1 matrix and reuse the batch path.
         let zero = b.get(0).zero_like();
         let mut b_mat = FieldMatrix::new(n, 1, zero);
         for i in 0..n {
@@ -358,67 +158,22 @@ impl<F: FiniteField> FieldMatrix<F> {
         Some(x)
     }
 
-    /// Solves `A · X = B` for a right-hand-side matrix `B`.
+    /// Solves `A · X = B` for a right-hand-side matrix `B` with one PLE
+    /// decomposition and two triangular solves
+    /// (`@/citation/DumasPernet2012` §2.3, Table 2).
     ///
-    /// Equivalent to applying [`solve`](Self::solve) to each column of
-    /// `B`; the matrix path benefits from a single PLE + two `trsm`
-    /// calls instead of `k` independent solves.
-    ///
-    /// Contract (mirrors [`solve`](Self::solve)):
-    ///
-    /// * Returns `Some(X)` with `A · X == B` iff `A` is square and
-    ///   non-singular.
-    /// * Returns `None` iff `A` is square and rank-deficient. As with
-    ///   [`solve`](Self::solve), this is the entire singular-system
-    ///   signal; rectangular / pseudo-inverse semantics are out of
-    ///   scope (see the module docs).
-    /// * Panics if `A` is non-square or if `B.rows() != A.rows()`.
-    ///
-    /// Implements Dumas–Pernet §2.3 Table 2:
-    ///
-    /// 1. `(P, L, E, r) = self.ple()`.
-    /// 2. If `r < n`, return `None`.
-    /// 3. `Y = Pᵀ · B` (row-permute `B` by `perm`).
-    /// 4. `L · Y' = Y` solved in place via
-    ///    [`trsm_lower`].
-    /// 5. `E · X = Y'` solved in place via
-    ///    [`trsm_upper`].
-    ///
-    /// # Arguments
-    ///
-    /// * `b` — Right-hand side `n × k` matrix.
-    ///
-    /// # Returns
-    ///
-    /// `Some(X)` with `self · X == b` if `self` is invertible, `None`
-    /// otherwise.
+    /// Returns `Some(X)` with `A · X == B` iff `A` is non-singular, and
+    /// `None` for every rank-deficient `A`.
     ///
     /// # Panics
     ///
     /// * Panics if `self` is not square.
     /// * Panics if `b.rows() != self.rows()`.
+    /// * Panics if `b` has no entries and the field has no static zero.
     ///
     /// # Complexity
     ///
     /// `O(n³ + n² · k)` field operations.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::{gemm, FieldMatrix};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // A = [[2, 3], [1, 4]] over GF(7); B = identity ⇒ X = A⁻¹.
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 1, Fp::<7>::new(3));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(4));
-    /// let b = FieldMatrix::<Fp<7>>::identity(2);
-    /// let x = a.solve_batch(&b).expect("invertible");
-    /// let prod = gemm(&a, &x);
-    /// assert_eq!(prod, b);
-    /// ```
     pub fn solve_batch(&self, b: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
         self.solve_batch_with_policy::<RecordObservations>(b)
     }
@@ -451,11 +206,8 @@ impl<F: FiniteField> FieldMatrix<F> {
         if rank < n {
             return None;
         }
-        // Build Y = Pᵀ · B by row-permuting b through perm.indices().
-        // (Pᵀ · B)[i, *] = B[k, *] where perm[k] = i, i.e.
-        // k = perm⁻¹(i). Equivalently, the inverse permutation applied
-        // to b. Permutation::apply(&b) computes (P · B)[i] = B[perm[i]],
-        // so we use perm.inverse().apply(b) for Pᵀ · B.
+        // Y = Pᵀ · B. `Permutation::apply` computes
+        // (P · B)[i] = B[perm[i]], so Pᵀ takes the inverse permutation.
         let mut y = perm.inverse().apply(b);
         let tuning = tuning::active();
         let triangular = tuning.triangular();
@@ -463,12 +215,7 @@ impl<F: FiniteField> FieldMatrix<F> {
         let trsm_panel_rows = triangular.trsm_panel_rows();
 
         // Solve L · Y' = Y in place. L is n×n unit lower-triangular at
-        // full rank. Result overwrites y.
-        // Dispatch to the blocked variant when the field exposes the AVX2
-        // whole-GEMM fast path and the matrix is large enough to benefit
-        // (the first blocking update lands at panel k=1, GEMM shape
-        // bs × bs × k, which hits the fast path at the conservative panel
-        // width even for k=1).
+        // full rank.
         if F::has_simd_gemm_classical()
             && trsm_route_resolved(trsm_blocked_min_dim, n) == TrsmRoute::Blocked
         {
@@ -498,75 +245,37 @@ impl<F: FiniteField> FieldMatrix<F> {
         Some(y)
     }
 
-    /// Runs the complete solve body without test-support observation writes.
-    ///
-    /// Development calibration resolves this function before timing. It shares
-    /// all validation, profile reads, PLE, TRSM, and GEMM computation with
-    /// [`solve_batch`](Self::solve_batch), while its zero-sized compile-time
-    /// policy emits no route, panel, or GEMM observations.
+    /// [`solve_batch`](Self::solve_batch) under the zero-sized quiet
+    /// observation policy: the same validation, profile reads and
+    /// computation, with no route, panel, or GEMM observations.
     ///
     /// # Panics
     ///
-    /// Panics under the same shape conditions as [`solve_batch`](Self::solve_batch).
+    /// Panics under the same conditions as [`solve_batch`](Self::solve_batch).
     ///
     /// # Complexity
     ///
-    /// `O(n³ + n² · k)` field operations, matching the recorded specialization.
+    /// `O(n³ + n² · k)` field operations.
     #[cfg(any(test, feature = "test-support"))]
     pub fn solve_batch_quiet_for_test(&self, b: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
         self.solve_batch_with_policy::<QuietObservations>(b)
     }
 
-    /// Returns the determinant `det(self)`.
+    /// Returns the determinant `det(self)`: the field zero iff
+    /// `rank(self) < n`, and `1` for the `0×0` matrix.
     ///
-    /// Implements Dumas–Pernet §2.3 Table 2: from the PLE decomposition
-    /// `P · L · E = self`, `det(self) = sign(P) · det(L) · det(E)`.
-    /// `L` is unit lower-trapezoidal so `det(L) = 1` (when full rank).
-    /// `E`'s pivot values lie on the leading diagonal of its `r × r`
-    /// square block, and at full rank `det(E) = ∏ E[i, i]`.
-    ///
-    /// At rank `< n` the determinant is the field zero.
-    ///
-    /// # Sign of the permutation
-    ///
-    /// `sign(P) ∈ {+1, −1}` is the parity of the number of
-    /// transpositions in `P`. Over a field of characteristic 2 the
-    /// distinction collapses (`+1 == −1`), but for `Fp<7>`,
-    /// `Fp<MERSENNE_31>`, and any other odd-characteristic field the
-    /// sign matters: a determinant computed without the sign can flip
-    /// across permutations and break test-vector equality.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — Square `n × n` input. Not modified.
-    ///
-    /// # Returns
-    ///
-    /// The field element `det(self)`. Equal to the field zero iff
-    /// `rank(self) < n`.
+    /// From the PLE decomposition `P · L · E = self`
+    /// (`@/citation/DumasPernet2012` §2.3, Table 2), at full rank
+    /// `det(self) = sign(P) · ∏ E[i, i]`.
     ///
     /// # Panics
     ///
-    /// Panics if `self` is not square.
+    /// Panics if `self` is not square. Panics on a `0×0` matrix over a
+    /// field without a static zero.
     ///
     /// # Complexity
     ///
     /// `O(n³)` field operations (one PLE).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // det([[2, 3], [1, 4]]) = 2·4 - 3·1 = 5 over GF(7).
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 1, Fp::<7>::new(3));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(4));
-    /// assert_eq!(a.det(), Fp::<7>::new(5));
-    /// ```
     pub fn det(&self) -> F {
         let (m, n) = self.shape();
         assert_eq!(
@@ -575,12 +284,7 @@ impl<F: FiniteField> FieldMatrix<F> {
             m, n
         );
         if n == 0 {
-            // Convention: det of the 0×0 matrix is 1 (empty product). We
-            // need a witness for `F::one()`. ConstField has it for free;
-            // for a runtime-context field on a 0×0 input there is no
-            // existing element to clone, so fall back to F::zero_hint
-            // and synthesise one_like; if that fails (Gf2mElement on
-            // 0×0 input has no field witness), panic with a clear message.
+            // Empty product: det of the 0×0 matrix is 1.
             if let Some(z) = F::zero_hint() {
                 return z.one_like();
             }
@@ -595,15 +299,11 @@ impl<F: FiniteField> FieldMatrix<F> {
         if rank < n {
             return zero;
         }
-        // Product of the leading diagonal of E (the pivot values).
         let one = zero.one_like();
         let mut det = one.clone();
         for i in 0..n {
             det = det * e.get(i, i);
         }
-        // Multiply by sign(P): parity of the number of inversions in
-        // perm.indices(). Over characteristic 2 this is a no-op
-        // (-1 == 1), but the explicit multiply keeps the code generic.
         if permutation_sign_is_negative(perm.indices()) {
             det = -det;
         }
@@ -611,31 +311,24 @@ impl<F: FiniteField> FieldMatrix<F> {
     }
 }
 
-// ─── Free-function aliases (Armadillo-style ergonomics) ──────────────────────
-
-/// Free-function alias for [`FieldMatrix::inv`].
+/// Returns `A⁻¹`, or `None` if `a` is singular; see [`FieldMatrix::inv`].
 pub fn inv<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
     a.inv()
 }
 
-/// Free-function alias for [`FieldMatrix::solve`].
+/// Solves `A · x = b`; see [`FieldMatrix::solve`].
 pub fn solve<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldVec<F>) -> Option<FieldVec<F>> {
     a.solve(b)
 }
 
-/// Free-function alias for [`FieldMatrix::det`].
+/// Returns `det(a)`; see [`FieldMatrix::det`].
 pub fn det<F: FiniteField>(a: &FieldMatrix<F>) -> F {
     a.det()
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 /// Returns `true` iff the permutation has odd parity (i.e. `sign = −1`).
 ///
-/// Counts inversions in `O(n²)`; for the small `n` typical of test
-/// matrices this is fine, and the call is amortised against the
-/// `O(n³)` PLE that produced the permutation. Equivalent to counting
-/// transpositions in any decomposition (parity is well-defined modulo 2).
+/// Counts inversions in `O(n²)`.
 fn permutation_sign_is_negative(perm: &[usize]) -> bool {
     let n = perm.len();
     let mut inversions: usize = 0;
@@ -649,46 +342,20 @@ fn permutation_sign_is_negative(perm: &[usize]) -> bool {
     inversions % 2 == 1
 }
 
-// ─── Blocked-invert driver (issue 8df0c501, design feb15da9) ─────────────────
-
-/// Blocked GF(p) matrix inversion via panelized PLE (Higham §14.1).
-///
-/// Implements the four-step algorithm from design doc `feb15da9`:
-///
-/// 1. `(perm, L, E, rank) = A.ple()` — panelized PLE decomposition
-///    (the `ple()` method already dispatches through the panelized kernel
-///    introduced in issue `6823c8a0`; no separate function is needed).
-/// 2. If `rank < n`, return `None` (rank-deficient).
-/// 3. Build the `n × n` identity `I`.
-/// 4. `Y = L⁻¹ · I` via `trsm_lower(L, I)` — forward solve.
-/// 5. `X = E⁻¹ · Y` via `trsm_upper(E, Y)` — back solve.
-/// 6. Apply `Pᵀ` on the right: `out[i, j] = X[i, perm[j]]`.
-///
-/// The `trsm_lower` and `trsm_upper` calls are block-recursive and
-/// dispatch to `gemm_axpy_into_view`, which (after issue `40195c09`)
-/// routes to `fp_small_try_gemm_classical` for small primes and to the
-/// pre-packed u16 medium-prime kernel for GF(65521).
-///
-/// # Returns
-///
-/// `Some(A⁻¹)` if `self` is full-rank, `None` if rank-deficient.
+/// Inversion through PLE and two triangular solves on the identity
+/// (`@/citation/Higham2002` §14.1): `L · Y = I`, `E · X = Y`, then `Pᵀ`
+/// applied on the right. Returns `None` if `a` is rank-deficient.
 fn blocked_inv_panelized<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
     let n = a.rows();
     debug_assert_eq!(n, a.cols(), "blocked_inv_panelized: non-square input");
 
-    // Step 1: panelized PLE decomposition. `a.ple()` already dispatches
-    // through the panelized kernel (issue 6823c8a0) for eligible fields.
     let (perm, l, e, rank) = a.ple();
 
-    // Step 2: rank-deficiency check.
     if rank < n {
         return None;
     }
 
-    // Step 3: build n×n identity. We need a zero and one witness — safe
-    // because this path is only reached when `inv_route(n)` reports
-    // `BlockedPanelized`, i.e. n >= dense_inverse.blocked_min_dim() >= 1
-    // (the field's floor), so `a.get(0, 0)` exists.
+    // `inv` handles `n == 0` before this route, so `a.get(0, 0)` exists.
     let zero = a.get(0, 0).zero_like();
     let one = zero.one_like();
     let mut y = FieldMatrix::new(n, n, zero.clone());
@@ -696,16 +363,11 @@ fn blocked_inv_panelized<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatr
         y.set(i, i, one.clone());
     }
 
-    // Step 4: forward solve L · Y = I in place.
-    // L is unit lower-triangular at full rank.
     trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
 
-    // Step 5: back solve E · X = Y in place.
-    // E is upper-triangular with nonzero diagonal (full rank).
     trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
-    // Y now holds E⁻¹ · L⁻¹ · I = (LE)⁻¹.
 
-    // Step 6: apply Pᵀ on the right: A⁻¹[i, j] = Y[i, perm[j]].
+    // Apply Pᵀ on the right: A⁻¹[i, j] = X[i, perm[j]].
     let mut out = FieldMatrix::new(n, n, zero);
     let perm_idx = perm.indices();
     for i in 0..n {
@@ -716,25 +378,16 @@ fn blocked_inv_panelized<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatr
     Some(out)
 }
 
-// Convenience constructor for empty result matrices that may need to
-// source a zero witness from the right-hand side `b` rather than from
-// `self`. Lives here as a private helper rather than on `FieldMatrix`
-// because it is only ever called in the empty-shape edge cases of
-// [`FieldMatrix::solve_batch`].
+// Zero-sized results for `solve_batch`, whose zero witness may have to
+// come from `F::zero_hint`.
 impl<F: FiniteField> FieldMatrix<F> {
     fn new_empty_like(rows: usize, cols: usize, template: &FieldMatrix<F>) -> FieldMatrix<F> {
         if rows == 0 || cols == 0 {
-            // Use a template witness if available, else zero_hint.
             let zero = if !template.is_empty() {
                 template.get(0, 0).zero_like()
             } else if let Some(z) = F::zero_hint() {
                 z
             } else {
-                // Pathological: B is empty AND the field has no static
-                // zero. Fall back to an unreachable-style panic; in
-                // practice no caller can hit this because b.rows() ==
-                // self.rows() == n >= 0 and at least one of the four
-                // dimensions is > 0 in any non-trivial call.
                 panic!(
                     "solve_batch: cannot synthesise empty-result zero \
                      witness for runtime-context field with empty inputs"
@@ -745,8 +398,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         FieldMatrix::new(rows, cols, template.get(0, 0).zero_like())
     }
 }
-
-// ─── Tests ───────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -763,7 +414,7 @@ mod tests {
 
     const MERSENNE_31: u64 = 2_147_483_647;
 
-    /// AES-irreducible Gf2mWide<8>.
+    /// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
     struct InvGf2m8Cfg;
     impl Gf2mWideConfig<1> for InvGf2m8Cfg {
         const M: usize = 8;
@@ -772,7 +423,7 @@ mod tests {
     }
     type Gf2m8 = Gf2mWide<1, InvGf2m8Cfg>;
 
-    /// Gf2mWide<16>: same Conway polynomial as the PLE test.
+    /// GF(2^16) with the Conway polynomial.
     struct InvGf2m16Cfg;
     impl Gf2mWideConfig<1> for InvGf2m16Cfg {
         const M: usize = 16;
@@ -781,9 +432,6 @@ mod tests {
     }
     type Gf2m16 = Gf2mWide<1, InvGf2m16Cfg>;
 
-    // Convenience aliases that monomorphise the shared generic helpers
-    // in `field::test_random_matrix` to this module's configs. Keeping
-    // the call sites short below.
     fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
         random_gf2m_wide_1::<InvGf2m8Cfg>(rows, cols, seed)
     }
@@ -793,8 +441,6 @@ mod tests {
     fn random_gf2m16_invertible(n: usize, seed: u64) -> FieldMatrix<Gf2m16> {
         random_gf2m_wide_1_invertible::<InvGf2m16Cfg>(n, seed)
     }
-
-    // ── Hard SC#1 — A · A⁻¹ == I across five fields ───────────────────────────
 
     fn check_inv_round_trip<F: FiniteField>(a: &FieldMatrix<F>) {
         let n = a.rows();
@@ -808,7 +454,6 @@ mod tests {
                 assert_eq!(prod.get(i, j), expected, "A·A⁻¹[{}, {}] != I", i, j);
             }
         }
-        // Also check the symmetric direction A⁻¹ · A = I.
         let prod2 = gemm(&inverse, a);
         for i in 0..n {
             for j in 0..n {
@@ -858,8 +503,6 @@ mod tests {
         }
     }
 
-    // ── Hard SC#2 — None on singular inputs, no panic ────────────────────────
-
     #[test]
     fn test_inv_singular_zero_matrix() {
         let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
@@ -873,7 +516,6 @@ mod tests {
             let v = a.get(0, j);
             a.set(2, j, v);
         }
-        // a may already be singular; if not, force it.
         assert!(a.rank() < 4);
         assert!(a.inv().is_none());
     }
@@ -890,7 +532,6 @@ mod tests {
 
     #[test]
     fn test_inv_singular_outer_product() {
-        // 4×4 rank-1 matrix.
         let f1 = random_fp::<MERSENNE_31>(4, 1, 0x11);
         let f2 = random_fp::<MERSENNE_31>(1, 4, 0x22);
         let a = gemm(&f1, &f2);
@@ -898,8 +539,6 @@ mod tests {
             assert!(a.inv().is_none());
         }
     }
-
-    // ── Hard SC#3 — solve correctness ────────────────────────────────────────
 
     fn check_solve<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldVec<F>) {
         let x = a.solve(b).expect("invertible");
@@ -948,12 +587,8 @@ mod tests {
         assert!(a.solve(&b).is_none());
     }
 
-    /// Build a deterministic rank-2 4x4 `Fp<MERSENNE_31>` matrix used
-    /// by the rank-deficient non-zero correctness tests below. Rows
-    /// 0 and 2 hold `[1, 2, 3, 4]`; rows 1 and 3 hold `[5, 6, 7, 8]`.
-    /// Row duplication is the simplest non-zero rank drop and exercises
-    /// the rank-detection path inside the PLE driver for a structurally
-    /// singular but non-trivial input.
+    /// Rank-2 4×4 matrix: rows 0 and 2 hold `[1, 2, 3, 4]`, rows 1 and 3
+    /// hold `[5, 6, 7, 8]`.
     fn rank_deficient_nonzero_4x4_fp_m31() -> FieldMatrix<Fp<MERSENNE_31>> {
         let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
         for j in 0..4usize {
@@ -966,7 +601,6 @@ mod tests {
         a
     }
 
-    /// `solve` returns `None` on a rank-deficient non-zero input.
     #[test]
     fn test_solve_rank_deficient_nonzero_returns_none() {
         let a = rank_deficient_nonzero_4x4_fp_m31();
@@ -977,7 +611,6 @@ mod tests {
         assert!(a.solve(&b).is_none());
     }
 
-    /// `solve_batch` returns `None` on a rank-deficient non-zero input.
     #[test]
     fn test_solve_batch_rank_deficient_nonzero_returns_none() {
         let a = rank_deficient_nonzero_4x4_fp_m31();
@@ -986,10 +619,7 @@ mod tests {
         assert!(a.solve_batch(&b).is_none());
     }
 
-    // ── Hard SC#4 — det correctness ──────────────────────────────────────────
-
-    /// Brute-force determinant via cofactor expansion. Used as oracle
-    /// for `n ≤ 4`. Quadratic in `n!` so only invoked for tiny `n`.
+    /// Determinant by cofactor expansion along row 0, `O(n!)`.
     fn det_oracle<F: FiniteField>(a: &FieldMatrix<F>) -> F {
         let n = a.rows();
         assert_eq!(n, a.cols());
@@ -1002,13 +632,11 @@ mod tests {
         }
         let zero = a.get(0, 0).zero_like();
         let mut acc = zero.clone();
-        // Expand along row 0.
         for j in 0..n {
             let aij = a.get(0, j);
             if aij == zero {
                 continue;
             }
-            // Build (n−1)×(n−1) minor.
             let mut minor = FieldMatrix::new(n - 1, n - 1, zero.clone());
             for r in 1..n {
                 let mut cc = 0;
@@ -1063,20 +691,12 @@ mod tests {
 
     #[test]
     fn test_det_zero_iff_singular() {
-        // Singular => det == 0.
         let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 4);
         assert_eq!(a.det(), Fp::<MERSENNE_31>::new(0));
-
-        // Random invertible => det != 0.
         let b = random_fp_invertible::<MERSENNE_31>(5, 0xC0FFEE);
         assert_ne!(b.det(), Fp::<MERSENNE_31>::new(0));
     }
 
-    /// `det` returns the field zero for a rank-deficient non-zero matrix.
-    ///
-    /// The zero-matrix test above is the simplest singular case; this
-    /// test covers the structurally distinct "rank < n but non-zero
-    /// entries" path through the PLE driver's pivot detection.
     #[test]
     fn test_det_zero_for_rank_deficient_nonzero() {
         let a = rank_deficient_nonzero_4x4_fp_m31();
@@ -1084,10 +704,6 @@ mod tests {
         assert_eq!(a.det(), Fp::<MERSENNE_31>::new(0));
     }
 
-    /// `inv` returns `None` for a rank-deficient non-zero matrix.
-    ///
-    /// Complements `test_inv_singular_zero_matrix` for the case where
-    /// the matrix has non-zero entries but is structurally singular.
     #[test]
     fn test_inv_rank_deficient_nonzero_returns_none() {
         let a = rank_deficient_nonzero_4x4_fp_m31();
@@ -1139,8 +755,6 @@ mod tests {
         assert_eq!(a.det(), Fp::<7>::new(6));
     }
 
-    // ── Hard SC#5 — solve_batch matches per-column solve ────────────────────
-
     #[test]
     fn test_solve_batch_matches_per_column() {
         let n = 5;
@@ -1167,8 +781,6 @@ mod tests {
         assert!(a.solve_batch(&b).is_none());
     }
 
-    // ── Hard SC#6 — solve / inv composition ─────────────────────────────────
-
     #[test]
     fn test_solve_batch_with_identity_yields_inverse() {
         let a = random_fp_invertible::<MERSENNE_31>(4, 0x9999);
@@ -1177,8 +789,6 @@ mod tests {
         let a_inv = a.inv().expect("invertible");
         assert_eq!(x, a_inv);
     }
-
-    // ── Edge cases (Hard SC list) ───────────────────────────────────────────
 
     #[test]
     fn test_inv_n_eq_0() {
@@ -1221,7 +831,6 @@ mod tests {
 
     #[test]
     fn test_inv_permutation_matrix() {
-        // [[0, 1, 0], [0, 0, 1], [1, 0, 0]] over GF(7).
         let mut a = FieldMatrix::<Fp<7>>::zeros(3, 3);
         a.set(0, 1, Fp::<7>::new(1));
         a.set(1, 2, Fp::<7>::new(1));
@@ -1233,9 +842,7 @@ mod tests {
 
     #[test]
     fn test_inv_near_singular_single_zero_pivot() {
-        // Matrix that pivots on a zero in its leading column but is
-        // still invertible after row swaps:
-        //    [[0, 1, 2], [3, 4, 5], [6, 0, 1]]
+        // The zero leading entry forces a row swap.
         let mut a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(3, 3);
         a.set(0, 0, Fp::<MERSENNE_31>::new(0));
         a.set(0, 1, Fp::<MERSENNE_31>::new(1));
@@ -1283,8 +890,6 @@ mod tests {
         assert_eq!(a.det(), Fp::<7>::new(4));
     }
 
-    // ── Hard SC#7 — Free-function aliases ────────────────────────────────────
-
     #[test]
     fn test_free_function_aliases_match_methods() {
         let a = random_fp_invertible::<MERSENNE_31>(4, 0xF11F);
@@ -1296,16 +901,8 @@ mod tests {
         assert_eq!(a.solve(&b), super::solve(&a, &b));
     }
 
-    // ── d1a5fea8 — Bit-exact equivalence with prior Dumas–Pernet driver ──────
-    //
-    // Reference implementation of the prior Dumas–Pernet Table 2 driver
-    // (PLE + 2 trtri + 1 dense gemm + permutation). The production
-    // `inv()` uses the in-place trtrm composition (issue d1a5fea8). The
-    // tests below cross-check that the two drivers return bit-exact
-    // identical matrices on randomized invertible inputs across all
-    // five fields, so any future tuning of the in-place driver can be
-    // detected as a divergence (vs only correctness vs identity).
-
+    // Reference driver (`@/citation/DumasPernet2012` §2.3, Table 2): PLE,
+    // two `trtri`, one dense `gemm`, column permutation.
     fn inv_reference_dumas_pernet<F: FiniteField>(a: &FieldMatrix<F>) -> Option<FieldMatrix<F>> {
         use crate::field::matrix::gemm_into_view;
         use crate::field::triangular::{trtri_lower, trtri_upper};
@@ -1402,19 +999,6 @@ mod tests {
         }
     }
 
-    // ── Hard SC#8 — Allocation budget ────────────────────────────────────────
-
-    // Pinned allocation counts. Update only when the recursion strategy
-    // or the underlying gemm/trsm/trtri kernels change their allocation
-    // footprint. Counts come from `FIELDMATRIX_NEW_COUNT`, which bumps
-    // on every `FieldMatrix::new` (also covering `FieldMatrix::clone`,
-    // `MatView::transpose`, `MatViewMut::to_owned`, etc.).
-    //
-    // Empirical numbers obtained on the current driver; not derived
-    // from a closed-form because the recursion's allocation profile
-    // depends on PLE's branching and the gemm kernel's internal
-    // B-transpose. See module rustdoc for the breakdown formula.
-
     #[test]
     #[serial]
     fn test_inv_allocation_budget_n4_fp_m31() {
@@ -1482,96 +1066,18 @@ mod tests {
         );
     }
 
-    // Pinned counts. These values are pinned empirically against the
-    // current view-based driver and the upstream PLE driver in
-    // `crate::field::ple`. Update only when the recursion strategy or
-    // the underlying gemm/trsm/trtri kernels change their allocation
-    // footprint. Each count is the exact `FIELDMATRIX_NEW_COUNT`
-    // reading observed for the corresponding operation:
-    //
-    //   inv(n × n) = ple(n × n)            // upstream PLE budget
-    //              + (trtri's base-case `inv` scratches and outer
-    //                 chain scratches at each peeled level — one
-    //                 per peel for L and one for E)
-    //              + trtrm(L⁻¹, E⁻¹) recursion budget   // d1a5fea8
-    //                                                       // in-place
-    //              + 1 (column-permuted output)
-    //
-    //   solve_batch(n × n, n × k) = ple + 1 (perm.inverse().apply)
-    //              + 2 trsm calls × kernel B-transpose tree
-    //
-    //   det(n × n) = ple                   // L is dropped
-    //
-    // The empirical numbers are the sum of these per-call costs at the
-    // active recursion thresholds. Numbers below comprise the c3f8c1cb PLE
-    // budget plus the small additions above. The active
-    // `triangular.base_case_max_dim = 8` profile value is selected by the
-    // jit:73ec5da3 Criterion sweep on Mersenne-31. Its evidence records
-    // ~4–30% more allocations at small n than the threshold-32 comparison,
-    // together with 1–7% lower wall time on the target PLE/TRSM cells.
-    //
-    // d1a5fea8 (in-place compose):
-    //   - n=4 dropped 19 → 17: trtrm at base case (no scratch) replaces
-    //     the prior gemm path's 3 allocs (`temp` + 2 B-transpose).
-    //   - n=64 grew 353 → 386: trtrm's recursive (m-h)×h scratch and
-    //     per-level gemm_axpy/gemm B-transpose copies sum to ~36 allocs
-    //     above the prior single-gemm path; in exchange the n×n `temp`
-    //     allocation is gone and the dense `n³` work is halved.
-    //
-    // 8df0c501 (blocked-invert via panelized PLE):
-    //   - n=4 unchanged: n=4 < BLOCKED_INVERT_THRESHOLD=16, so the scalar
-    //     path (trtri + trtrm) still runs; count stays at 17.
-    //   - n=64 changed 386 → 294: blocked path uses ple + 1 identity +
-    //     2 trsm calls + 1 output. The panelized ple has the same alloc
-    //     budget; the two trsm calls (each with n×n RHS) are cheaper than
-    //     trtri_lower + trtri_upper + trtrm in terms of intermediate
-    //     scratch because trsm on the wide RHS folds the output directly
-    //     into the RHS buffer rather than materialising a separate `(m-h)×h`
-    //     scratch per level. Measured 2026-05-26 on Fp<MERSENNE_31> n=64.
+    // Exact `fieldmatrix_new_count` readings for the current drivers. They
+    // change with the recursion strategy, the dispatch thresholds and the
+    // allocation footprint of the PLE, gemm, trsm, trtri and trtrm kernels.
     const EXPECTED_INV_N4: u64 = 17;
     const EXPECTED_INV_N64: u64 = 294;
-    // Pinned 2026-05-08 by user-authorized direct measurement under the
-    // d1a5fea8 in-place trtrm driver (slow-tier nextest run, walls 1.89s
-    // on the host pinned in `dev/bench_results/2026-05-07-d1a5fea8-
-    // invert-inplace.md`). The earlier extrapolation (5645) was 22%
-    // below the actual measurement; the test now uses `assert_eq!`
-    // against this pinned value.
-    //
-    // Re-measured 2026-05-27 (8df0c501 R1 rework) under the blocked-invert
-    // driver (blocked_inv_panelized path). n=1024 >= BLOCKED_INVERT_THRESHOLD,
-    // so the blocked path (ple + identity + 2 trsm + column-permute) now runs
-    // instead of the old scalar-pivot + trtri + trtrm driver. The new count
-    // (5246) is lower than the old value (6898) because the two trsm calls on
-    // the n×n identity RHS fold output directly into the RHS buffer instead of
-    // materialising a separate (m-h)×h scratch per recursion level.
-    // Measured by slow-tier nextest run on 2026-05-27 (worktree agent-8df0c501).
     const EXPECTED_INV_N1024: u64 = 5246;
     const EXPECTED_SOLVE_N64: u64 = 294;
     const EXPECTED_DET_N64: u64 = 264;
 
-    // ── Property-based tests (proptest) ──────────────────────────────────────
-    //
-    // Per AGENTS.md §Correctness and test policy: TDD plus property-based
-    // tests for mathematical invariants. The block below sweeps many
-    // seeds at small bounded sizes (`n ∈ 1..=6`) so each case stays
-    // well under the 5 s per-test wall-clock cap, and the per-block
-    // `cases = 32` budget keeps the aggregate suite cost negligible.
-    //
-    // Invariants checked:
-    //   1. `A · A⁻¹ == I`           (inverse round-trip, full-rank `A`).
-    //   2. `A · solve(A, b) == b`   (solve round-trip).
-    //   3. `det(A · B) == det(A) · det(B)`  (multiplicativity).
-    //   4. `det(A) == 0  iff  rank(A) < n`  (singularity criterion).
-    //
-    // Both Fp<MERSENNE_31> (odd characteristic) and Gf2m8
-    // (characteristic 2) are exercised so any sign-related bug
-    // affecting only odd characteristics is caught alongside
-    // characteristic-2 specific failures.
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(32))]
 
-        /// `A · A⁻¹ == I` for full-rank `A` over Fp<MERSENNE_31>.
         #[test]
         fn proptest_inv_round_trip_fp_m31(
             n in 1usize..=6,
@@ -1584,7 +1090,6 @@ mod tests {
             prop_assert_eq!(prod, id);
         }
 
-        /// `A · A⁻¹ == I` and `A⁻¹ · A == I` for full-rank `A` over Gf2m8.
         #[test]
         fn proptest_inv_round_trip_gf2m8(
             n in 1usize..=6,
@@ -1594,8 +1099,6 @@ mod tests {
             let inv = a.inv().expect("full-rank");
             let prod = gemm(&a, &inv);
             let prod2 = gemm(&inv, &a);
-            // Compare to the identity element-wise. Gf2m8 is `Copy`,
-            // so the zero/one witnesses are cheap to use directly.
             let zero = Gf2m8::new([0]);
             let one = Gf2m8::new([1]);
             for i in 0..n {
@@ -1607,7 +1110,6 @@ mod tests {
             }
         }
 
-        /// `A · solve(A, b) == b` for full-rank `A` and arbitrary `b`.
         #[test]
         fn proptest_solve_round_trip_fp_m31(
             n in 1usize..=6,
@@ -1615,19 +1117,13 @@ mod tests {
             seed_b in any::<u64>(),
         ) {
             let a = random_fp_invertible::<MERSENNE_31>(n, seed_a);
-            // Use the shared random_fp_vec helper to obtain an
-            // arbitrary right-hand side over the same field.
             let b = crate::field::test_random_matrix::random_fp_vec::<MERSENNE_31>(n, seed_b);
             let x = a.solve(&b).expect("full-rank");
             let bb = a.matvec(&x);
             prop_assert_eq!(bb, b);
         }
 
-        /// `det(A · B) == det(A) · det(B)` for square `A`, `B`.
-        ///
-        /// `A` and `B` are arbitrary (possibly singular); the
-        /// identity holds in either case because both sides are zero
-        /// when either factor is singular.
+        /// Holds for singular factors too: both sides are then zero.
         #[test]
         fn proptest_det_multiplicative_fp_m31(
             n in 1usize..=5,
@@ -1642,7 +1138,6 @@ mod tests {
             prop_assert_eq!(lhs, rhs);
         }
 
-        /// `det(A) == 0  iff  rank(A) < n` for square `A`.
         #[test]
         fn proptest_det_zero_iff_singular_fp_m31(
             n in 1usize..=5,
@@ -1659,10 +1154,6 @@ mod tests {
             }
         }
 
-        /// `det(A) == 0  iff  rank(A) < n` for square `A` over Gf2m8.
-        ///
-        /// Independent of `proptest_det_zero_iff_singular_fp_m31` to
-        /// catch any characteristic-2-specific sign-handling bug.
         #[test]
         fn proptest_det_zero_iff_singular_gf2m8(
             n in 1usize..=5,
@@ -1680,40 +1171,12 @@ mod tests {
         }
     }
 
-    // ── SC#2 — Blocked-invert boundary sweep proptests (issue 8df0c501) ────────
-    //
-    // These tests satisfy the literal reading of SC#2 from jit:8df0c501:
-    //   "Bit-exact correctness: A · A⁻¹ = I for all proptest cases across
-    //    GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at boundary lengths."
-    //
-    // Pattern mirror: ple.rs prop_ple_panelized_boundary_sweep_fp* (lines 3270-3392).
-    //
-    // Design:
-    //   - Each proptest macro runs `cases: 8`, seed in `0u64..1_000_000`.
-    //   - Inside the macro body, ALL square n ∈ {1, 15, 16, 17, 63, 64, 65}
-    //     are tested exhaustively for each seed.
-    //   - For each (seed, n): generate a random invertible n×n matrix via
-    //     `random_fp_invertible`, call `.inv()`, assert A · A⁻¹ == I_n.
-    //   - n=0 is excluded because a 0×0 matrix is trivially its own inverse
-    //     and does not exercise any blocked/scalar dispatch path.
-    //
-    // Run command:
-    //   cargo nextest run -p gf2-core --release --all-features --profile ci \
-    //     -E 'test(prop_blocked_inv_product_fp)'
-
-    /// Boundary sizes to exhaustively iterate per proptest seed.
-    /// n ∈ {1, 15, 16, 17, 63, 64, 65} covers below/at/above panel width
-    /// (b=16) and below/at/above a 64-element SIMD-lane register.
+    /// Sizes on both sides of `BLOCKED_INVERT_THRESHOLD` and of 64.
     const INV_BOUNDARY_LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
 
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
 
-        /// `A · A⁻¹ == I_n` at all boundary sizes over GF(7).
-        ///
-        /// Addresses SC#2 of jit:8df0c501. Seeds drive the matrix generator;
-        /// the inner loop exhaustively covers all boundary n values so both
-        /// the scalar path (n < 16) and the blocked path (n >= 16) are hit.
         #[test]
         fn prop_blocked_inv_product_fp7(seed in 0u64..1_000_000) {
             for &n in INV_BOUNDARY_LENS {
@@ -1733,7 +1196,6 @@ mod tests {
             }
         }
 
-        /// `A · A⁻¹ == I_n` at all boundary sizes over GF(31).
         #[test]
         fn prop_blocked_inv_product_fp31(seed in 0u64..1_000_000) {
             for &n in INV_BOUNDARY_LENS {
@@ -1753,7 +1215,6 @@ mod tests {
             }
         }
 
-        /// `A · A⁻¹ == I_n` at all boundary sizes over GF(127).
         #[test]
         fn prop_blocked_inv_product_fp127(seed in 0u64..1_000_000) {
             for &n in INV_BOUNDARY_LENS {
@@ -1773,7 +1234,6 @@ mod tests {
             }
         }
 
-        /// `A · A⁻¹ == I_n` at all boundary sizes over GF(241).
         #[test]
         fn prop_blocked_inv_product_fp241(seed in 0u64..1_000_000) {
             for &n in INV_BOUNDARY_LENS {
@@ -1793,7 +1253,6 @@ mod tests {
             }
         }
 
-        /// `A · A⁻¹ == I_n` at all boundary sizes over GF(251).
         #[test]
         fn prop_blocked_inv_product_fp251(seed in 0u64..1_000_000) {
             for &n in INV_BOUNDARY_LENS {
@@ -1813,7 +1272,6 @@ mod tests {
             }
         }
 
-        /// `A · A⁻¹ == I_n` at all boundary sizes over GF(65521).
         #[test]
         fn prop_blocked_inv_product_fp65521(seed in 0u64..1_000_000) {
             for &n in INV_BOUNDARY_LENS {
@@ -1834,17 +1292,9 @@ mod tests {
         }
     }
 
-    // ── SC#5.2 — Rank-deficient inputs return None (blocked path) ───────────────
-
-    /// Rank-deficient inputs at boundary sizes return `None` without panicking.
-    ///
-    /// Mirrors design doc feb15da9 §5.2 (rank-deficient failure mode). Tests
-    /// n ∈ {16, 32, 64} (all at/above BLOCKED_INVERT_THRESHOLD) to exercise
-    /// the panelized path's early-exit on rank detection.
     #[test]
     fn test_blocked_inv_rank_deficient_fp7() {
         for &n in &[16usize, 32, 64] {
-            // Rank-n/2 matrix: duplicate first n/2 rows into second n/2.
             let mut a = random_fp::<7>(n, n, 0x000D_EAD7_u64.wrapping_add(n as u64));
             for j in 0..n {
                 let v = a.get(0, j);
@@ -1890,16 +1340,9 @@ mod tests {
         }
     }
 
-    // ── SC#5.3 — Dispatch-boundary correctness ────────────────────────────────
-    //
-    // Verifies that inv() returns correct results at n = THRESHOLD-1 (scalar
-    // path) and n = THRESHOLD+1 (blocked path), and that both agree with
-    // the reference Dumas–Pernet driver.
-
     #[test]
     fn test_blocked_inv_dispatch_boundary_fp7() {
         let threshold = super::BLOCKED_INVERT_THRESHOLD;
-        // n just below threshold — scalar path.
         let n_below = threshold - 1;
         if n_below >= 1 {
             for seed in 0..3u64 {
@@ -1913,7 +1356,6 @@ mod tests {
                 );
             }
         }
-        // n just above threshold — blocked path.
         let n_above = threshold + 1;
         for seed in 0..3u64 {
             let a = random_fp_invertible::<7>(n_above, seed * 41 + n_above as u64);
@@ -1956,18 +1398,6 @@ mod tests {
         }
     }
 
-    // ── SC#5.4 — Allocation budget for blocked path ───────────────────────────
-    //
-    // Pins the FieldMatrix::new count for the blocked-path at n=64 over
-    // Fp<MERSENNE_31>. The blocked path allocates:
-    //   - ple() budget (as before)
-    //   - 1 n×n identity scratch (Y)
-    //   - trsm_lower budget (block-recursive + gemm_axpy B-transpose)
-    //   - trsm_upper budget
-    //   - 1 n×n output
-    // The exact count is measured empirically at first run; the test uses
-    // `assert!(allocs <= UPPER_BOUND)` with a documented expected value.
-
     #[test]
     #[serial]
     fn test_blocked_inv_allocation_budget_n64_fp7() {
@@ -1975,12 +1405,6 @@ mod tests {
         reset_fieldmatrix_new_count();
         let _ = a.inv();
         let allocs = fieldmatrix_new_count();
-        // The blocked path at n=64 over GF(7):
-        //   ple(64×64) + 1 identity + trsm_lower + trsm_upper + 1 output.
-        // An upper bound of 700 is conservative relative to the prior scalar
-        // path at n=64 (386 allocs); the blocked path has two full trsm calls
-        // instead of two trtri + one trtrm, so it uses more scratch buffers.
-        // This bound is tightened after empirical measurement.
         assert!(
             allocs <= 700,
             "blocked inv(64×64 Fp<7>) allocs={} exceeds upper bound 700",
@@ -1988,28 +1412,11 @@ mod tests {
         );
     }
 
-    // ── SC#2 extended — existing reference-match tests cover n≤32 ─────────────
-    // The existing test_inv_matches_reference_fp7/fp251/fp65521/mersenne31 tests
-    // now exercise both the scalar path (n ≤ 15) and the blocked path (n = 16, 32).
-    // No new test is needed; the boundary coverage is already present.
-    // ─── Blocked solve_batch correctness — boundary-length sweep ─────────
-    //
-    // These tests verify that the blocked-TRSM dispatch in solve_batch
-    // is correct: A · solve_batch(A, B) == B for square full-rank A and
-    // arbitrary B.  The blocked path is only activated when
-    // F::has_simd_gemm_classical() is true AND n >= TRSM_BLOCKED_PANEL_SIZE,
-    // so we include sizes both below and at/above the panel boundary.
-    //
-    // Note: rank-deficient inputs are covered by test_solve_batch_rank_deficient_*
-    // above; here we focus on correctness across the blocked/unblocked
-    // boundary sizes (1, 15, 16, 17, 63, 64, 65) for six primes.
-
     const SOLVE_BOUNDARY_LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(8))]
 
-        /// Blocked solve_batch round-trip: A · X == B for Fp<7>.
         #[test]
         fn prop_blocked_solve_boundary_sweep_fp7(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2026,7 +1433,6 @@ mod tests {
             }
         }
 
-        /// Blocked solve_batch round-trip: A · X == B for Fp<31>.
         #[test]
         fn prop_blocked_solve_boundary_sweep_fp31(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2043,7 +1449,6 @@ mod tests {
             }
         }
 
-        /// Blocked solve_batch round-trip: A · X == B for Fp<127>.
         #[test]
         fn prop_blocked_solve_boundary_sweep_fp127(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2060,7 +1465,6 @@ mod tests {
             }
         }
 
-        /// Blocked solve_batch round-trip: A · X == B for Fp<241>.
         #[test]
         fn prop_blocked_solve_boundary_sweep_fp241(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2077,7 +1481,6 @@ mod tests {
             }
         }
 
-        /// Blocked solve_batch round-trip: A · X == B for Fp<251>.
         #[test]
         fn prop_blocked_solve_boundary_sweep_fp251(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2094,7 +1497,6 @@ mod tests {
             }
         }
 
-        /// Blocked solve_batch round-trip: A · X == B for Fp<65521>.
         #[test]
         fn prop_blocked_solve_boundary_sweep_fp65521(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2112,24 +1514,9 @@ mod tests {
         }
     }
 
-    // ─── Blocked solve_batch correctness — rank-deficient sweep ──────────
-    //
-    // These tests verify that solve_batch returns None for any rank-deficient
-    // square matrix, covering all 6 primes required by SC#2.
-    //
-    // Construction: A = F · G where F is n × rank and G is rank × n (outer
-    // product), giving rank(A) = rank < n. We iterate over SOLVE_BOUNDARY_LENS
-    // as the matrix dimension n, and set rank = n / 2 (skip n < 2 since
-    // rank-deficiency requires rank < n and rank >= 1).
-    //
-    // The proptest seed parameterizes the outer-product factors (different
-    // seeds → different rank-deficient matrices), giving broad coverage beyond
-    // the narrow deterministic cases in test_solve_batch_rank_deficient_*.
-
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(8))]
 
-        /// solve_batch returns None for rank-deficient Fp<7> at boundary sizes.
         #[test]
         fn prop_blocked_solve_rank_deficient_fp7(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2149,7 +1536,6 @@ mod tests {
             }
         }
 
-        /// solve_batch returns None for rank-deficient Fp<31> at boundary sizes.
         #[test]
         fn prop_blocked_solve_rank_deficient_fp31(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2169,7 +1555,6 @@ mod tests {
             }
         }
 
-        /// solve_batch returns None for rank-deficient Fp<127> at boundary sizes.
         #[test]
         fn prop_blocked_solve_rank_deficient_fp127(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2189,7 +1574,6 @@ mod tests {
             }
         }
 
-        /// solve_batch returns None for rank-deficient Fp<241> at boundary sizes.
         #[test]
         fn prop_blocked_solve_rank_deficient_fp241(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2209,7 +1593,6 @@ mod tests {
             }
         }
 
-        /// solve_batch returns None for rank-deficient Fp<251> at boundary sizes.
         #[test]
         fn prop_blocked_solve_rank_deficient_fp251(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2229,7 +1612,6 @@ mod tests {
             }
         }
 
-        /// solve_batch returns None for rank-deficient Fp<65521> at boundary sizes.
         #[test]
         fn prop_blocked_solve_rank_deficient_fp65521(seed in 0u64..1_000_000) {
             for &n in SOLVE_BOUNDARY_LENS {
@@ -2250,25 +1632,6 @@ mod tests {
         }
     }
 
-    // ─── jit:9138d86c — GF(65521)/n=64 medium-prime packed-dot dispatch ──────
-    //
-    // Focused deterministic tests that exercise the n=64 / single-column-RHS
-    // regime for GF(65521). These are the shapes that were FAIL (rows 55-56 in
-    // the A8 scorecard) before the `gemm_axpy_into_view` medium-prime threshold
-    // fix. Correctness is the primary guard; the performance regression is
-    // measured separately in bench_results/2026-05-27-9138d86c-fp65521-n64-solve.md.
-    //
-    // The tests cover:
-    //   - n=64 / k=1 (single RHS — the exact shape that triggered the gap)
-    //   - n=64 / k=64 (square RHS — exercises more of the packed-dot path)
-    //   - n=64 with rank-deficient A → None (deficient regime row 56)
-
-    /// `solve_batch` returns correct X for GF(65521) n=64 with k=1 RHS.
-    ///
-    /// This is the exact shape that exposed the n=64 medium-prime gap: a single
-    /// RHS column forces the TRSM recursion to generate update GEMMs of shape
-    /// m×k×1 with m*k*1 < 4096, which previously bypassed the medium-prime
-    /// pre-pack path and hit the per-cell scratch-allocating fallback instead.
     #[test]
     fn test_solve_batch_fp65521_n64_single_rhs_correctness() {
         let a = random_fp_invertible::<65521>(64, 0xDEAD_9138_D86C_0001);
@@ -2278,7 +1641,6 @@ mod tests {
         assert_eq!(recon, b, "A·X != B for GF(65521) n=64 k=1");
     }
 
-    /// `solve_batch` returns correct X for GF(65521) n=64 with k=64 RHS.
     #[test]
     fn test_solve_batch_fp65521_n64_square_rhs_correctness() {
         let a = random_fp_invertible::<65521>(64, 0xDEAD_9138_D86C_0002);
@@ -2288,11 +1650,6 @@ mod tests {
         assert_eq!(recon, b, "A·X != B for GF(65521) n=64 k=64");
     }
 
-    /// `solve_batch` returns `None` for rank-deficient GF(65521) n=64 (row 56 guard).
-    ///
-    /// Construct an exact rank-32 matrix via the canonical
-    /// `random_fp_rank_deficient` helper (matching the regime used by the bench
-    /// harness for "deficient" inputs — see `crates/gf2-core/benches/...`).
     #[test]
     fn test_solve_batch_fp65521_n64_rank_deficient_returns_none() {
         let a = random_fp_rank_deficient::<65521>(64, 64, 32, 0xDEAD_9138_D86C_0003);
@@ -2303,18 +1660,6 @@ mod tests {
         );
     }
 
-    // ─── d36cc414: GF(251)/n=64 borderline cost decomposition ────────────
-    //
-    // The five wave-7b borderline cells (rows 23, 37, 40, 51, 52) all land in
-    // 1.566x..1.728x of the fflas reference at GF(251). This test instruments
-    // each phase of the three ops (echelon/invert/solve) at n=64 to identify
-    // whether a single per-call setup cost dominates (fixable) or the panelized
-    // PLE itself is at-floor for this size (structural).
-    //
-    // Output CSV (stderr, between BEGIN/END markers):
-    //   op,phase,field,n,regime,trial,wall_ns
-
-    /// Build the GF(251) borderline input matrices the benches use.
     fn build_borderline_input<const P: u64>(n: usize, regime: &str) -> FieldMatrix<Fp<P>> {
         let seed = P
             .wrapping_mul(0x9E37_79B9)
@@ -2330,14 +1675,12 @@ mod tests {
         }
     }
 
-    /// Echelon (row_echelon) decomposition: PLE -> pad_l -> build_pt -> trsm -> build_e_full.
+    /// Times the phases of `row_echelon`.
     fn decompose_echelon<const P: u64>(a: &FieldMatrix<Fp<P>>, regime: &str, trial: usize) {
         let n = a.rows();
-        // Phase 1: PLE
         let t = std::time::Instant::now();
         let (p, l, e, _r) = a.ple();
         let ns_ple = t.elapsed().as_nanos();
-        // Phase 2: pad L_full
         let t = std::time::Instant::now();
         let l_full = {
             let zero = a.get(0, 0).zero_like();
@@ -2354,7 +1697,6 @@ mod tests {
             lf
         };
         let ns_pad_l = t.elapsed().as_nanos();
-        // Phase 3: build P^T
         let t = std::time::Instant::now();
         let mut p_t = {
             let zero = a.get(0, 0).zero_like();
@@ -2366,11 +1708,9 @@ mod tests {
             pt
         };
         let ns_build_pt = t.elapsed().as_nanos();
-        // Phase 4: trsm_lower(L_full, P^T)
         let t = std::time::Instant::now();
         trsm_lower(l_full.submat(.., ..), p_t.submat_mut(.., ..));
         let ns_trsm = t.elapsed().as_nanos();
-        // Phase 5: build E_full
         let t = std::time::Instant::now();
         let _e_full = {
             let zero = a.get(0, 0).zero_like();
@@ -2391,21 +1731,17 @@ mod tests {
         eprintln!("decomp,echelon,build_e_full,GF(251),{n},{regime},{trial},{ns_build_e}");
     }
 
-    /// Invert (uniform path) decomposition: PLE -> build_I -> trsm_lower -> trsm_upper -> col_perm.
+    /// Times the phases of the blocked `inv` route.
     fn decompose_invert<const P: u64>(a: &FieldMatrix<Fp<P>>, regime: &str, trial: usize) {
         let n = a.rows();
-        // Phase 1: PLE
         let t = std::time::Instant::now();
         let (perm, l, e, rank) = a.ple();
         let ns_ple = t.elapsed().as_nanos();
         if rank < n {
-            // Deficient: invert returns None right after this; the n=256
-            // deficient case (row 40) is dominated by PLE.
             eprintln!("decomp,invert,ple,GF(251),{n},{regime},{trial},{ns_ple}");
             eprintln!("decomp,invert,rank_deficient_early_exit,GF(251),{n},{regime},{trial},0");
             return;
         }
-        // Phase 2: build identity
         let t = std::time::Instant::now();
         let zero = a.get(0, 0).zero_like();
         let one = zero.one_like();
@@ -2414,15 +1750,12 @@ mod tests {
             y.set(i, i, one);
         }
         let ns_build_i = t.elapsed().as_nanos();
-        // Phase 3: trsm_lower(L, I)
         let t = std::time::Instant::now();
         trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
         let ns_trsm_lower = t.elapsed().as_nanos();
-        // Phase 4: trsm_upper(E, Y)
         let t = std::time::Instant::now();
         trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
         let ns_trsm_upper = t.elapsed().as_nanos();
-        // Phase 5: column permutation
         let t = std::time::Instant::now();
         let perm_idx = perm.indices();
         let mut out = FieldMatrix::new(n, n, zero);
@@ -2439,7 +1772,7 @@ mod tests {
         eprintln!("decomp,invert,col_perm,GF(251),{n},{regime},{trial},{ns_col_perm}");
     }
 
-    /// Solve decomposition: wrap b -> PLE -> permute -> trsm_lower -> trsm_upper -> unwrap.
+    /// Times the phases of `solve`.
     fn decompose_solve<const P: u64>(
         a: &FieldMatrix<Fp<P>>,
         b: &FieldVec<Fp<P>>,
@@ -2447,7 +1780,6 @@ mod tests {
         trial: usize,
     ) {
         let n = a.rows();
-        // Phase 1: wrap b -> n×1 FieldMatrix (mirrors `solve` -> `solve_batch`)
         let t = std::time::Instant::now();
         let zero = b.get(0).zero_like();
         let mut b_mat = FieldMatrix::new(n, 1, zero);
@@ -2455,7 +1787,6 @@ mod tests {
             b_mat.set(i, 0, *b.get(i));
         }
         let ns_wrap = t.elapsed().as_nanos();
-        // Phase 2: PLE
         let t = std::time::Instant::now();
         let (perm, l, e, rank) = a.ple();
         let ns_ple = t.elapsed().as_nanos();
@@ -2465,11 +1796,9 @@ mod tests {
             eprintln!("decomp,solve,rank_deficient_early_exit,GF(251),{n},{regime},{trial},0");
             return;
         }
-        // Phase 3: row permute b
         let t = std::time::Instant::now();
         let mut y = perm.inverse().apply(&b_mat);
         let ns_perm = t.elapsed().as_nanos();
-        // Phase 4: blocked TRSM lower (falls back to recursive at n=64)
         let t = std::time::Instant::now();
         if <Fp<P> as FiniteField>::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
             trsm_lower_blocked(
@@ -2481,7 +1810,6 @@ mod tests {
             trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
         }
         let ns_trsm_lower = t.elapsed().as_nanos();
-        // Phase 5: blocked TRSM upper
         let t = std::time::Instant::now();
         if <Fp<P> as FiniteField>::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
             trsm_upper_blocked(
@@ -2493,7 +1821,6 @@ mod tests {
             trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
         }
         let ns_trsm_upper = t.elapsed().as_nanos();
-        // Phase 6: unwrap to FieldVec
         let t = std::time::Instant::now();
         let mut x = FieldVec::zeros_from(n, b.get(0));
         for i in 0..n {
@@ -2508,30 +1835,10 @@ mod tests {
         eprintln!("decomp,solve,unwrap,GF(251),{n},{regime},{trial},{ns_unwrap}");
     }
 
-    /// d36cc414 cost-decomposition harness for GF(251)/n=64 (rows 23, 37, 40, 51, 52).
-    ///
-    /// Run via:
-    /// ```bash
-    /// ./dev/scripts/ccx1-bench-flock.sh \
-    ///   cargo test -p gf2-core --release --all-features --lib \
-    ///   -- --nocapture --ignored \
-    ///   field::inverse::tests::test_gf251_n64_borderline_cost_decomposition \
-    ///   2>&1 | grep -E 'decomp|whole|BEGIN|END'
-    /// ```
-    ///
-    /// Emits two CSV blocks to stderr:
-    ///
-    /// - `--- d36cc414-decomp BEGIN/END ---`: phase-level wall times for each
-    ///   op at GF(251)/n=64 (and n=256 for row 40).
-    /// - `--- d36cc414-whole BEGIN/END ---`: control 5-trial whole-op wall
-    ///   times so we can confirm the decomp sums are within a sensible
-    ///   inflation factor of the integrated path (per evidence doc the
-    ///   integrated medians at these cells are 103-169 µs).
+    /// Prints per-phase and whole-operation wall times as CSV on stderr.
     #[test]
     #[ignore = "slow: GF(251)/n=64 cost decomposition for d36cc414 (~10 s)"]
     fn test_gf251_n64_borderline_cost_decomposition() {
-        // Cells in scope: 23 (echelon/64/def), 37 (invert/64/uni),
-        // 40 (invert/256/def), 51 (solve/64/uni), 52 (solve/64/def).
         const ECHELON_CELLS: &[(usize, &str)] = &[(64, "deficient")];
         const INVERT_CELLS: &[(usize, &str)] = &[(64, "uniform"), (256, "deficient")];
         const SOLVE_CELLS: &[(usize, &str)] = &[(64, "uniform"), (64, "deficient")];
@@ -2539,7 +1846,6 @@ mod tests {
         eprintln!("--- d36cc414-decomp BEGIN ---");
         eprintln!("op,phase,field,n,regime,trial,wall_ns");
 
-        // Echelon decomposition
         for &(n, regime) in ECHELON_CELLS {
             let a = build_borderline_input::<251>(n, regime);
             // Warm up
@@ -2550,7 +1856,6 @@ mod tests {
                 decompose_echelon::<251>(&a, regime, trial);
             }
         }
-        // Invert decomposition
         for &(n, regime) in INVERT_CELLS {
             let a = build_borderline_input::<251>(n, regime);
             for _ in 0..3 {
@@ -2560,13 +1865,10 @@ mod tests {
                 decompose_invert::<251>(&a, regime, trial);
             }
         }
-        // Solve decomposition
         for &(n, regime) in SOLVE_CELLS {
             let a = build_borderline_input::<251>(n, regime);
-            // Build an n-vector RHS (matches `solve` API used by the bench).
             let zero = a.get(0, 0).zero_like();
             let mut b = FieldVec::zeros_from(n, &zero);
-            // Deterministic non-trivial entries.
             for i in 0..n {
                 b.set(i, Fp::<251>::new(((i as u64).wrapping_mul(13) + 7) % 251));
             }
@@ -2579,11 +1881,6 @@ mod tests {
         }
         eprintln!("--- d36cc414-decomp END ---");
 
-        // ── Control: whole-op 5-trial wall-time on identical inputs ────────
-        //
-        // Confirms the integrated path is reachable from the same input
-        // matrices; lets us cross-check that the decomp totals are within a
-        // reasonable inflation factor of the production op wall time.
         eprintln!("--- d36cc414-whole BEGIN ---");
         eprintln!("op,field,n,regime,trial,wall_ns");
         for &(n, regime) in ECHELON_CELLS {
@@ -2630,13 +1927,6 @@ mod tests {
         eprintln!("--- d36cc414-whole END ---");
     }
 
-    // ─── Coverage: det and solve_batch edge cases (n == 0 / k == 0) ─────────────
-    //
-    // `det` on a 0×0 matrix returns the multiplicative identity (empty product
-    // convention) via `F::zero_hint().one_like()`.  `solve_batch` on a 0×0
-    // system or with a zero-column right-hand side returns a trivially empty
-    // solution matrix without entering the PLE path.
-
     #[test]
     fn test_det_n_zero_returns_one_fp7() {
         let a = FieldMatrix::<Fp<7>>::zeros(0, 0);
@@ -2646,8 +1936,6 @@ mod tests {
 
     #[test]
     fn test_solve_batch_n_zero_returns_empty_solution_fp7() {
-        // A is 0×0 (trivially full rank), B is 0×3.
-        // solve_batch hits the `if n == 0` branch and returns Some(0×3 matrix).
         let a = FieldMatrix::<Fp<7>>::zeros(0, 0);
         let b = FieldMatrix::<Fp<7>>::zeros(0, 3);
         let x = a
@@ -2659,8 +1947,6 @@ mod tests {
 
     #[test]
     fn test_solve_batch_k_zero_returns_empty_solution_fp7() {
-        // A is 4×4 invertible, B is 4×0.
-        // solve_batch hits the `if k == 0` branch and returns Some(4×0 matrix).
         let a = random_fp_invertible::<7>(4, 0xEE01);
         let b = FieldMatrix::<Fp<7>>::zeros(4, 0);
         let x = a
