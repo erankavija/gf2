@@ -1,53 +1,26 @@
-//! 5G NR rate-matching bit interleaver — 3GPP TS 38.212 clause 5.4.2.2.
-//!
-//! After bit selection (clause 5.4.2.1,
-//! [`Nr5gRateMatchedCode`](super::Nr5gRateMatchedCode)), the length-`E`
-//! rate-matched bit sequence `e_0, e_1, ..., e_{E-1}` is interleaved into
-//! `f_0, f_1, ..., f_{E-1}` by a block interleaver parameterised by the
-//! modulation order `Q_m` (bits per QAM symbol):
-//!
-//! ```text
-//! for j = 0 to E/Q_m - 1
-//!     for i = 0 to Q_m - 1
-//!         f_{i + j*Q_m} = e_{i*(E/Q_m) + j}
-//!     end for
-//! end for
-//! ```
-//!
-//! Equivalently, the `E` input bits are written **row by row** into a
-//! `Q_m × (E/Q_m)` matrix (row `i`, column `j` holds `e_{i*(E/Q_m)+j}`) and read
-//! out **column by column** (`f_{i + j*Q_m}` is row `i` of column `j`). `E` must
-//! be divisible by `Q_m`.
-//!
-//! [`output_interleaver`] materialises the **gather permutation** `perm` with
-//! `perm[i + j*Q_m] = i*(E/Q_m) + j`, so that `f[p] = e[perm[p]]`; this is the
-//! `generate_out_int` routine in `@/citation/Sionna2026`
-//! (`LDPC5GEncoder.generate_out_int`).
+//! 5G NR rate-matching bit interleaver (`@/citation/ThreeGpp2020` clause
+//! 5.4.2.2): after bit selection (clause 5.4.2.1,
+//! [`Nr5gRateMatchedCode`](super::Nr5gRateMatchedCode)), a block interleaver
+//! parameterised by the modulation order `Q_m` permutes the length-`E`
+//! rate-matched sequence `e` into `f`.
 
 use crate::llr::Llr;
 use gf2_core::BitVec;
 
-/// Builds the TS 38.212 §5.4.2.2 output-interleaver gather permutation for a
+/// Builds the `@/citation/ThreeGpp2020` §5.4.2.2 output-interleaver gather permutation for a
 /// length-`e_len` sequence at modulation order `q_m`.
 ///
 /// The returned vector `perm` has length `e_len` and satisfies
 /// `perm[i + j*q_m] = i*(e_len/q_m) + j` for `j ∈ [0, e_len/q_m)`,
 /// `i ∈ [0, q_m)`. Interleaving is the gather `f[p] = e[perm[p]]`; the spec
-/// formula is `f_{i + j*Q_m} = e_{i*(E/Q_m) + j}`.
+/// formula is `f_{i + j*Q_m} = e_{i*(E/Q_m) + j}`, which writes `e` row by row
+/// into a `Q_m × (E/Q_m)` matrix and reads it column by column. It is the
+/// `generate_out_int` routine of `@/citation/Sionna2026`.
 ///
 /// # Panics
 ///
 /// Panics if `q_m == 0` or if `e_len` is not a multiple of `q_m` (the spec
 /// requires a rectangular `Q_m × (E/Q_m)` interleaver matrix).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::interleaver::output_interleaver;
-///
-/// // Q_m = 2, E = 6: rows = 2, cols = 3. Spec loop yields perm[0,3,1,4,2,5].
-/// assert_eq!(output_interleaver(6, 2), vec![0, 3, 1, 4, 2, 5]);
-/// ```
 #[must_use]
 pub fn output_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
     assert!(q_m != 0, "modulation order Q_m must be non-zero");
@@ -75,19 +48,6 @@ pub fn output_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
 /// # Panics
 ///
 /// Panics under the same conditions as [`output_interleaver`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::interleaver::{output_interleaver, inverse_interleaver};
-///
-/// let perm = output_interleaver(6, 2);
-/// let inv = inverse_interleaver(6, 2);
-/// // inv is the argsort of perm: applying perm then inv is the identity.
-/// for p in 0..6 {
-///     assert_eq!(inv[perm[p]], p);
-/// }
-/// ```
 #[must_use]
 pub fn inverse_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
     let perm = output_interleaver(e_len, q_m);
@@ -98,7 +58,7 @@ pub fn inverse_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
     inv
 }
 
-/// Interleaves a rate-matched bit sequence per TS 38.212 §5.4.2.2.
+/// Interleaves a rate-matched bit sequence per `@/citation/ThreeGpp2020` §5.4.2.2.
 ///
 /// Returns `f` where `f[p] = e[perm[p]]` and `perm = output_interleaver(E, q_m)`
 /// with `E = e.len()`.
@@ -106,21 +66,6 @@ pub fn inverse_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
 /// # Panics
 ///
 /// Panics if `e.len()` is not a multiple of `q_m`, or `q_m == 0`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::interleaver::interleave_bits;
-/// use gf2_core::BitVec;
-///
-/// // e = [1,0,0,1,1,0] (bit i set per index), Q_m = 2.
-/// let mut e = BitVec::zeros(6);
-/// for &i in &[0usize, 3, 4] { e.set(i, true); }
-/// // perm = [0,3,1,4,2,5] => f = [e0,e3,e1,e4,e2,e5] = [1,1,0,1,0,0].
-/// let f = interleave_bits(&e, 2);
-/// let bits: Vec<bool> = (0..6).map(|i| f.get(i)).collect();
-/// assert_eq!(bits, vec![true, true, false, true, false, false]);
-/// ```
 #[must_use]
 pub fn interleave_bits(e: &BitVec, q_m: usize) -> BitVec {
     let perm = output_interleaver(e.len(), q_m);
@@ -131,7 +76,7 @@ pub fn interleave_bits(e: &BitVec, q_m: usize) -> BitVec {
     f
 }
 
-/// Deinterleaves an LLR sequence per the inverse of TS 38.212 §5.4.2.2.
+/// Deinterleaves an LLR sequence per the inverse of `@/citation/ThreeGpp2020` §5.4.2.2.
 ///
 /// Recovers the rate-matched-order LLRs `e_llr` from the interleaved-order
 /// LLRs `f_llr` via `e_llr[p] = f_llr[inv[p]]` where
@@ -140,19 +85,6 @@ pub fn interleave_bits(e: &BitVec, q_m: usize) -> BitVec {
 /// # Panics
 ///
 /// Panics if `f_llr.len()` is not a multiple of `q_m`, or `q_m == 0`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::interleaver::deinterleave_llrs;
-/// use gf2_coding::llr::Llr;
-///
-/// // f = [10,11,12,13,14,15], Q_m = 2; inv = [0,2,4,1,3,5].
-/// let f: Vec<Llr> = (10..16).map(|v| Llr::new(v as f32)).collect();
-/// let e = deinterleave_llrs(&f, 2);
-/// let vals: Vec<f32> = e.iter().map(|l| l.value()).collect();
-/// assert_eq!(vals, vec![10.0, 12.0, 14.0, 11.0, 13.0, 15.0]);
-/// ```
 #[must_use]
 pub fn deinterleave_llrs(f_llr: &[Llr], q_m: usize) -> Vec<Llr> {
     let inv = inverse_interleaver(f_llr.len(), q_m);
@@ -179,7 +111,6 @@ mod tests {
         assert_eq!(output_interleaver(8, 4), vec![0, 2, 4, 6, 1, 3, 5, 7]);
     }
 
-    /// Q_m = 6, E = 12 (rows = 6, cols = 2): the spec loop verbatim.
     #[test]
     fn test_worked_example_qm6_e12() {
         // j=0: i=0..5 -> f0=e0,f1=e2,f2=e4,f3=e6,f4=e8,f5=e10
@@ -202,7 +133,6 @@ mod tests {
         let _ = output_interleaver(6, 0);
     }
 
-    /// The inverse permutation is the argsort of the forward permutation.
     #[test]
     fn test_inverse_is_argsort() {
         let perm = output_interleaver(12, 4);
@@ -212,7 +142,6 @@ mod tests {
         }
     }
 
-    /// Both permutations are bijections (every index appears exactly once).
     fn assert_bijection(perm: &[usize]) {
         let mut seen = vec![false; perm.len()];
         for &p in perm {
@@ -224,8 +153,6 @@ mod tests {
     }
 
     proptest! {
-        /// For every supported Q_m and odd/even number of columns, the forward
-        /// and inverse permutations are bijections over 0..E.
         #[test]
         fn prop_perm_is_bijection(
             q_m in prop::sample::select(vec![2usize, 4, 6, 8]),
@@ -259,7 +186,6 @@ mod tests {
         }
     }
 
-    /// `interleave_bits` then bit-domain inverse recovers the original bits.
     #[test]
     fn test_bit_roundtrip_qm6() {
         let q_m = 6;

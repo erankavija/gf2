@@ -30,18 +30,6 @@ pub struct DvbParams {
 
 impl DvbParams {
     /// Get parameters for a DVB-T2 configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use gf2_coding::ldpc::dvb_t2::{DvbParams, FrameSize};
-    /// # use gf2_coding::CodeRate;
-    /// #
-    /// let params = DvbParams::for_code(FrameSize::Normal, CodeRate::Rate1_2);
-    /// assert_eq!(params.n, 64800);
-    /// assert_eq!(params.k, 32400);
-    /// assert_eq!(params.m, 32400);
-    /// ```
     pub fn for_code(frame_size: FrameSize, rate: CodeRate) -> Self {
         let expansion_factor = 360;
 

@@ -12,36 +12,6 @@
 //! matrix's CSR [`row_iter`](gf2_core::SpBitMatrixDual::row_iter) order.
 //! Variable `v` owns the variable-major slots `var_range(v)`, in the CSC
 //! [`col_iter`](gf2_core::SpBitMatrixDual::col_iter) order.
-//!
-//! # Storage
-//!
-//! A consumer that keeps its messages in one flat check-major array indexes
-//! them by canonical edge id: a check update walks a contiguous run, and a
-//! variable update walks the variable's slots and follows
-//! [`EdgeLayout::var_edge_to_check_edge`] into the same array. A consumer that
-//! keeps a second, variable-major array follows
-//! [`EdgeLayout::check_edge_to_var_edge`] the other way; the GPU decode stage
-//! in `gf2-sim` uploads exactly these arrays.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::ldpc::{EdgeLayout, LdpcCode};
-//!
-//! let code = LdpcCode::from_edges(2, 3, &[(0, 0), (0, 1), (1, 1), (1, 2)]);
-//! let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
-//!
-//! assert_eq!(layout.edges(), 4);
-//! assert_eq!(layout.max_check_degree(), 2);
-//! // Check 0's edges are the canonical ids 0 and 1, at variables 0 and 1.
-//! assert_eq!(layout.check_range(0), 0..2);
-//! assert_eq!(layout.check_edge_var()[0], 0);
-//! assert_eq!(layout.check_edge_var()[1], 1);
-//! // Variable 1 sits on both checks, so its two slots resolve to one edge each.
-//! let slots = layout.var_range(1);
-//! let edges: Vec<u32> = slots.map(|slot| layout.var_edge_to_check_edge()[slot]).collect();
-//! assert_eq!(edges, vec![1, 2]);
-//! ```
 
 use gf2_core::SpBitMatrixDual;
 
@@ -51,8 +21,27 @@ use gf2_core::SpBitMatrixDual;
 /// in the edge count and allocates; no decoding operation allocates or
 /// searches through it.
 ///
-/// See the module documentation for the edge orders and how a consumer
-/// stores messages against them.
+/// See the module documentation for the edge orders.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::{EdgeLayout, LdpcCode};
+///
+/// let code = LdpcCode::from_edges(2, 3, &[(0, 0), (0, 1), (1, 1), (1, 2)]);
+/// let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
+///
+/// assert_eq!(layout.edges(), 4);
+/// assert_eq!(layout.max_check_degree(), 2);
+/// // Check 0's edges are the canonical ids 0 and 1, at variables 0 and 1.
+/// assert_eq!(layout.check_range(0), 0..2);
+/// assert_eq!(layout.check_edge_var()[0], 0);
+/// assert_eq!(layout.check_edge_var()[1], 1);
+/// // Variable 1 sits on both checks, so its two slots resolve to one edge each.
+/// let slots = layout.var_range(1);
+/// let edges: Vec<u32> = slots.map(|slot| layout.var_edge_to_check_edge()[slot]).collect();
+/// assert_eq!(edges, vec![1, 2]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EdgeLayout {
     n: usize,
@@ -254,8 +243,6 @@ mod tests {
         }
     }
 
-    /// Both cross-maps invert each other over the whole edge set, and a
-    /// variable's slots resolve to edges that name that variable.
     #[test]
     fn cross_maps_invert_each_other() {
         let code = LdpcCode::dvb_t2_short(crate::CodeRate::Rate1_2);

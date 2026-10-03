@@ -1,39 +1,22 @@
 //! Linear-time IRA (Irregular Repeat-Accumulate) staircase encoder.
-//!
-//! The codeword is systematic, `c = [info (k bits) | parity (m bits)]`, and the
-//! parity part of H is dual-diagonal: row 0 has a single 1 at column `k`, and
-//! row `p > 0` has 1s at columns `k+p` and `k+p-1`. With `s[p]` the XOR of the
-//! info bits in check row `p`, the parity bits follow the staircase recursion:
-//!
-//! ```text
-//! par[0] = s[0]
-//! par[p] = s[p] XOR par[p-1]   for p = 1 .. m-1
-//! ```
-//!
-//! [`IraEncoder::new`] checks only `m + k == n`; the dual-diagonal parity part
-//! is the caller's precondition.
 
 use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::BitVec;
 
 /// Precomputed staircase encoder for dual-diagonal IRA codes (e.g. DVB-T2).
 ///
-/// # Examples
+/// The codeword is systematic, `c = [info (k bits) | parity (m bits)]`, and the
+/// parity part of H is dual-diagonal: row 0 has a single 1 at column `k`, and
+/// row `p > 0` has 1s at columns `k+p` and `k+p-1`. With `s[p]` the XOR of the
+/// info bits in check row `p`, the parity bits follow the staircase recursion:
 ///
+/// ```text
+/// par[0] = s[0]
+/// par[p] = s[p] XOR par[p-1]   for p = 1 .. m-1
 /// ```
-/// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-/// use gf2_coding::traits::BlockEncoder;
-/// use gf2_coding::CodeRate;
-/// use gf2_core::BitVec;
 ///
-/// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-/// let enc = LdpcEncoder::new(code.clone());
-///
-/// let msg = BitVec::zeros(code.k());
-/// let cw = enc.encode(&msg);
-/// assert_eq!(cw.len(), code.n());
-/// assert!(code.is_valid_codeword(&cw));
-/// ```
+/// [`IraEncoder::new`] checks only `m + k == n`; the dual-diagonal parity part
+/// is the caller's precondition.
 #[derive(Debug, Clone)]
 pub struct IraEncoder {
     /// Codeword length n.
@@ -142,22 +125,10 @@ mod tests {
 
     /// A dual-diagonal H fixture.
     fn make_mini_ira_h() -> (SpBitMatrixDual, usize) {
-        // k=4, m=4, n=8
-        // Info-bit edges (arbitrary):
-        //   c0 ← {0, 1}
-        //   c1 ← {1, 2}
-        //   c2 ← {2, 3}
-        //   c3 ← {0, 3}
-        // Dual-diagonal parity edges:
-        //   c0 ← p0=col4
-        //   c1 ← p1=col5, p0=col4
-        //   c2 ← p2=col6, p1=col5
-        //   c3 ← p3=col7, p2=col6
         let k = 4usize;
         let m = 4usize;
         let n = k + m;
         let edges: Vec<(usize, usize)> = vec![
-            // Info edges
             (0, 0),
             (0, 1),
             (1, 1),
@@ -166,14 +137,13 @@ mod tests {
             (2, 3),
             (3, 0),
             (3, 3),
-            // Dual-diagonal parity edges
-            (0, k),     // c0 ← p0
-            (1, k + 1), // c1 ← p1
-            (1, k),     // c1 ← p0  (sub-diagonal)
-            (2, k + 2), // c2 ← p2
-            (2, k + 1), // c2 ← p1  (sub-diagonal)
-            (3, k + 3), // c3 ← p3
-            (3, k + 2), // c3 ← p2  (sub-diagonal)
+            (0, k),
+            (1, k + 1),
+            (1, k),
+            (2, k + 2),
+            (2, k + 1),
+            (3, k + 3),
+            (3, k + 2),
         ];
         (SpBitMatrixDual::from_coo(m, n, &edges), k)
     }

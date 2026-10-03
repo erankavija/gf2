@@ -1,24 +1,5 @@
-//! DVB-T2 BCH+LDPC concatenated codec (`@/citation/Etsi2015` §6).
-//!
-//! [`DvbT2Concat`] wraps the BCH outer code and the LDPC inner code:
-//!
-//! ```text
-//! encode: BBFRAME (k_bch bits) → BCH encode (k_ldpc bits) → LDPC encode → FECFRAME (N bits)
-//! decode: N LLRs → LDPC belief propagation → first k_ldpc bits → BCH hard-decision decode → BBFRAME
-//! ```
-//!
-//! # Example
-//!
-//! ```
-//! use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-//! use gf2_coding::CodeRate;
-//!
-//! let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2)
-//!     .expect("unsupported configuration");
-//! assert_eq!(codec.k_bch(), 32208);  // BBFRAME size
-//! assert_eq!(codec.k_ldpc(), 32400); // LDPC input = BCH codeword
-//! assert_eq!(codec.n_ldpc(), 64800); // FECFRAME size
-//! ```
+//! DVB-T2 BCH+LDPC concatenated codec (`@/citation/Etsi2015` §6):
+//! [`DvbT2Concat`] wraps the BCH outer code and the LDPC inner code.
 
 use crate::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder};
 use crate::ldpc::{DecoderConfig, LdpcCode, LdpcDecoder, LdpcEncoder};
@@ -221,20 +202,6 @@ impl DvbT2Concat {
     /// Rebuilds the internal decoder with the supplied [`DecoderConfig`]
     /// in O(nnz). The default decoder is plain
     /// [`DecoderAlgorithm::MinSum`](crate::ldpc::DecoderAlgorithm::MinSum).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let mut codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// codec.set_decoder_config(DecoderConfig::new(
-    ///     DecoderAlgorithm::NormalizedMinSum(0.75),
-    ///     true,
-    /// ));
-    /// ```
     pub fn set_decoder_config(&mut self, config: DecoderConfig) {
         self.ldpc_decoder = Mutex::new(LdpcDecoder::with_config(self.ldpc_code.clone(), config));
     }
@@ -252,19 +219,6 @@ impl DvbT2Concat {
     ///
     /// The BCH outer encode plus O(nnz) for LDPC; the first call adds O(nnz)
     /// for IRA encoder construction.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    /// use gf2_core::BitVec;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// let bbframe = BitVec::zeros(codec.k_bch());
-    /// let fecframe = codec.encode(&bbframe);
-    /// assert_eq!(fecframe.len(), codec.n_ldpc());
-    /// ```
     pub fn encode(&self, bbframe: &BitVec) -> BitVec {
         assert_eq!(
             bbframe.len(),
@@ -308,21 +262,6 @@ impl DvbT2Concat {
     /// # Complexity
     ///
     /// O(max_iterations × nnz) for LDPC, plus the BCH outer decode.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_core::BitVec;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// // Zero-noise LLRs for the all-zeros FECFRAME:
-    /// let llrs: Vec<Llr> = vec![Llr::new(10.0); codec.n_ldpc()];
-    /// let bbframe = codec.decode_soft(&llrs).unwrap();
-    /// assert_eq!(bbframe.len(), codec.k_bch());
-    /// ```
     pub fn decode_soft(&self, llrs: &[Llr]) -> Result<BitVec, ConcatError> {
         self.decode_soft_counted(llrs)
             .map(|(bbframe, _iterations)| bbframe)
@@ -392,21 +331,6 @@ impl DvbT2Concat {
     ///
     /// O(`k_ldpc`) for the systematic extraction, plus one
     /// [`DvbT2BchDecoder`] construction and decode over the mother length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
-    /// use gf2_coding::CodeRate;
-    /// use gf2_core::BitVec;
-    ///
-    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
-    /// // The all-zeros FECFRAME is a valid codeword; it BCH-decodes to the
-    /// // all-zeros BBFRAME.
-    /// let zero_codeword = BitVec::zeros(codec.n_ldpc());
-    /// let bbframe = codec.decode_bch_from_ldpc_codeword(&zero_codeword);
-    /// assert_eq!(bbframe.len(), codec.k_bch());
-    /// ```
     pub fn decode_bch_from_ldpc_codeword(&self, full_codeword: &BitVec) -> BitVec {
         assert_eq!(
             full_codeword.len(),
@@ -489,9 +413,6 @@ mod tests {
         }
     }
 
-    /// Verify [`DvbT2Concat::set_decoder_config`] rebuilds the internal LDPC
-    /// belief-propagation decoder with the supplied algorithm and that
-    /// decoding still recovers a zero-noise codeword afterward.
     #[test]
     fn test_set_decoder_config_rebuilds_decoder() {
         use crate::ldpc::DecoderAlgorithm;

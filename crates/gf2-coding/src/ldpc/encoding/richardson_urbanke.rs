@@ -65,14 +65,9 @@ impl RuEncodingMatrices {
     /// [`PreprocessError::InvalidDimensions`] if `m == 0`, `n == 0` or
     /// `m >= n`; [`PreprocessError::RankDeficient`] if the rank of `h` is not `m`.
     ///
-    /// # Examples
+    /// # Complexity
     ///
-    /// ```ignore
-    /// use gf2_coding::ldpc::encoding::RuEncodingMatrices;
-    ///
-    /// let matrices = RuEncodingMatrices::preprocess(&h)?;
-    /// let codeword = matrices.encode(&message);
-    /// ```
+    /// O(m * n * min(m, n)) for the row reduction of the dense m × n copy.
     pub fn preprocess(h: &SpBitMatrixDual) -> Result<Self, PreprocessError> {
         let m = h.rows();
         let n = h.cols();
