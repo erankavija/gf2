@@ -94,7 +94,7 @@ Evidence shorthand: jit states as of 2026-10-01 (`jit query all --json`,
 | Technical reports on implementations | DONE | `01ae4c20`, `24c11004`, `a9ab0a4f`; `dev/benchmarks/*/README.md`. | high |
 | Open-source benchmark suites | DONE | `6ed7f050`, `dev/benchmarks/`. | high |
 | Conference/journal submissions (ISIT, ICC, Trans. IT) | GAP | No issue tracks paper writing or submission. | low |
-| DVB-T2 bit-exact compliance | DONE | `4cdaf1c5` (TP04->TP07a, 202/202), `crates/gf2-coding/docs/DVB_T2.md`. | high |
+| DVB-T2 bit-exact compliance | DONE | `4cdaf1c5` (TP04->TP07a, 202/202), `dev/archive/legacy/crates/gf2-coding/docs/DVB_T2.md`. | high |
 | 5G NR polar vs 3GPP vectors | TRACKED | `b81c239c` backlog (5G NR LDPC vectors DONE: `dd22a099`, `acf9b11a`). | high |
 | Decode real-world DVB-T2 captures | TRACKED | `fcb09e6f` ready, `dfca71b8` backlog. | high |
 | Compete with commercial SDR implementations | DROPPED | No commercial comparator in reach; superseded by open-source baselines `1a379447`, `18e69a1a`. | low |
@@ -117,7 +117,7 @@ Evidence shorthand: jit states as of 2026-10-01 (`jit query all --json`,
 | Integration tests with real-world signals | TRACKED | `dfca71b8`. | high |
 | Educational examples with decoding traces | TRACKED | `315f4de5` ready. | high |
 | Research notes documenting experiments | DONE | `dev/research/`, `dev/studies/`. | high |
-| Performance analysis and optimization guides | DONE | `crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md`, `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`; sweep `f357b3dc` backlog. | high |
+| Performance analysis and optimization guides | DONE | `dev/archive/legacy/crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md`, `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md`; sweep `f357b3dc` backlog. | high |
 
 ## 2. crates/gf2-core/ROADMAP.md
 

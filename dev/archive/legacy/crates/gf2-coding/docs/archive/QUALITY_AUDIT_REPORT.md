@@ -1087,7 +1087,7 @@ All internal links verified:
 - ✅ [docs/DVB_T2.md](docs/DVB_T2.md) ✓
 - ✅ [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) ✓
 - ✅ [docs/LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md) ✓
-- ✅ [workspace README](../../README.md) ✓
+- ✅ [workspace README](../../../../../../../crates/gf2-coding/README.md) ✓
 - ✅ [ROADMAP.md](../ROADMAP.md) ✓
 
 **Cargo.toml Metadata** (gf2-coding):

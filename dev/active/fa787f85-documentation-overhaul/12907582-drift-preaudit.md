@@ -159,7 +159,7 @@ Contributor prose (REQ-05 territory, classify in the migration manifest):
 | `crates/gf2-core/docs/QUALITY_AUDIT_REPORT.md:214` | `TODO: Validate with cargo +1.80 build` |
 | `crates/gf2-core/docs/POLAR_IMPLEMENTATION_PLAN.md:162,167` | `TODO` status markers |
 | `crates/gf2-core/docs/archive/PHASE11_IMPLEMENTATION_PLAN.md:56,750-753` | `TODO` status legend (archived) |
-| `crates/gf2-coding/docs/archive/QUALITY_AUDIT_*.md:176,496,596` | mentions of TODO/FIXME as audit items (archived) |
+| `dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_*.md:176,496,596` | mentions of TODO/FIXME as audit items (archived) |
 
 No `FIXME`, `XXX`, or `HACK` markers in `crates/`.
 

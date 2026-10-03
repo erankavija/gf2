@@ -766,7 +766,7 @@ find examples -name "*.rs" -exec wc -l {} \; | sort -n
 - Main README: `/home/vkaskivuo/Projects/gf2/crates/gf2-coding/README.md`
 - Lib.rs docs: `/home/vkaskivuo/Projects/gf2/crates/gf2-coding/src/lib.rs`
 - Examples dir: `/home/vkaskivuo/Projects/gf2/crates/gf2-coding/examples/`
-- Docs dir: `/home/vkaskivuo/Projects/gf2/crates/gf2-coding/docs/`
+- Docs dir: `/home/vkaskivuo/Projects/gf2/dev/archive/legacy/crates/gf2-coding/docs/`
 
 ---
 

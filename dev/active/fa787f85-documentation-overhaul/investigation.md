@@ -66,7 +66,7 @@ Not obtained. `jit archive candidates` ran for the 30-minute background limit wi
 | `3f29e945` description, DEC-01..DEC-06 | story decisions | DEC-04 keeps the AI-review wrapper; DEC-05 docs-mechanical is stdlib Python under `contrib/gates/`; DEC-06 rustdoc/doctests inside `scripts/cargo-ci.sh`. |
 | `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:138-196` | drift audit | 20 doc-drift findings in CONTRIBUTING, README, decks; the source of 84db2984 and several REQ-18 candidates. |
 | `dev/active/DOCUMENTATION_AUDIT.md` | 2026-02-20 audit (no jit tag, commit 13e82164f) | Class (c) legacy; proposes a CONTRIBUTING template (`:526,619`) that conflicts with D-13. |
-| `crates/gf2-core/docs/archive/DOCUMENTATION_AUDIT_{PLAN,REPORT}.md`, `crates/gf2-coding/docs/archive/QUALITY_AUDIT_*` | pre-JIT audits | Legacy; mine only for verified facts. |
+| `crates/gf2-core/docs/archive/DOCUMENTATION_AUDIT_{PLAN,REPORT}.md`, `dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_*` | pre-JIT audits | Legacy; mine only for verified facts. |
 | `dev/archive/b7157be6-osd/active/b7157be6-completion-report.md` and `e034dfaab` message | manual archive precedent | Records that 58 done-issue descriptions name old `dev/active` paths and were left unchanged. |
 | `195f8254f` | 12-epic archive execution | Shows R097/R099 renames and hand edits to `crates/gf2-algebra/README.md`: the reference repointing was manual. |
 | `.agents/skills/jit-project-lead/scripts/standards-scan.sh:82` | tooling | Defaults permanent paths to `docs/`; a reuse point for the doc footprint. |
@@ -112,7 +112,7 @@ Each figure has one owning deck, so the shared directory splits cleanly. A stray
 
 ### 3.5 Crate-local guides
 
-`crates/gf2-core/docs`: 25 tracked md (9,544 lines; 13 under `archive/`). `crates/gf2-coding/docs`: 10 tracked md (3,922 lines; 2 under `archive/`). Line counts: `git ls-files ... | xargs wc -l`.
+`crates/gf2-core/docs`: 25 tracked md (9,544 lines; 13 under `archive/`). `dev/archive/legacy/crates/gf2-coding/docs`: 10 tracked md (3,922 lines; 2 under `archive/`). Line counts: `git ls-files ... | xargs wc -l`.
 
 Inbound references (outside the dirs, excluding archives):
 - `crates/gf2-core/README.md:125,155-159` (BENCHMARKS, KERNEL_OPTIMIZATION, GF2M, PRIMITIVE_POLYNOMIALS, COMPUTE_BACKEND_DESIGN, RREF_DESIGN_PLAN, SPARSE_DEDUP_DESIGN).
@@ -142,7 +142,7 @@ Other permanent-adjacent markdown not in the brief's inventory: `crates/gf2-core
 
 Content: pointer to AGENTS.md; toolchain and nextest prerequisite; six invariant addresses; `./scripts/cargo-ci.sh`; conventional commit with `jit:<id>` scope; PR content; Rust Code of Conduct link (`CONTRIBUTING.md:1-58`). Everything except the Code of Conduct link and PR-content guidance is already in AGENTS.md (`AGENTS.md:148-155` commits; `:17-24` commands).
 
-Consumers: `README.md:195` (live). Historical mentions only in `crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md`, `dev/active/DOCUMENTATION_AUDIT.md:526,619`, `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:30,141-196`. No CI, gate, profile or script consumer (`git grep CONTRIBUTING`; `packages/`, `.github/`, `contrib/` clean). `.github/copilot-instructions.md` was deleted today (`e8a68dc73`), so `CLAUDE.md` is the only tool-specific pointer left (7 lines, regular file).
+Consumers: `README.md:195` (live). Historical mentions only in `dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md`, `dev/active/DOCUMENTATION_AUDIT.md:526,619`, `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:30,141-196`. No CI, gate, profile or script consumer (`git grep CONTRIBUTING`; `packages/`, `.github/`, `contrib/` clean). `.github/copilot-instructions.md` was deleted today (`e8a68dc73`), so `CLAUDE.md` is the only tool-specific pointer left (7 lines, regular file).
 
 ### 3.9 Deleted roadmaps (for the retroactive task)
 
