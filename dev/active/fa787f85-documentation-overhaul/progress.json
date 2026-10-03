@@ -372,7 +372,7 @@
      "short_id": "b0b1faf5",
      "title": "Locate the shared producing manifest by identity in survey scripts",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     }
    ]
   },
@@ -494,21 +494,21 @@
      "short_id": "290b8716",
      "title": "Tersify comments in the remaining gf2-kernels-simd files",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "returned_unmerged_rework"
     },
     {
      "id": "3aef9e33-d0e5-4de7-b73b-d0a99839829b",
      "short_id": "3aef9e33",
      "title": "Tersify comments in the gf2-algebra packed-field module",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "rework"
     },
     {
      "id": "3da13f39-225c-4615-9f68-f1daa76af90b",
      "short_id": "3da13f39",
      "title": "Tersify comments in the gf2-core prime-field modules",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "returned_unmerged_rework"
     },
     {
      "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
@@ -522,28 +522,28 @@
      "short_id": "57436474",
      "title": "Tersify comments in the remaining gf2-algebra files",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "returned_unmerged_rework"
     },
     {
      "id": "66858db0-c5c6-45a7-9c3d-c1a58f0f9f24",
      "short_id": "66858db0",
      "title": "Tersify comments in gf2-core field polynomial and extension modules",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "returned_unmerged_rework"
     },
     {
      "id": "67048b47-ed17-4672-822a-829a796420c2",
      "short_id": "67048b47",
      "title": "Link unlinked owned artifacts to their issues",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "rework"
     },
     {
      "id": "67b5d1d8-b6e2-4687-ae5f-fd36bcee334a",
      "short_id": "67b5d1d8",
      "title": "Tersify comments in the gf2-core GF(2^m) module",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "rework"
     },
     {
      "id": "72768e37-a609-427c-a3e6-8a4efcf4c8b8",
@@ -557,7 +557,7 @@
      "short_id": "7bfad039",
      "title": "Tersify comments in gf2-sim GPU, preset, stage and graph modules",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "returned_unmerged_rework"
     },
     {
      "id": "8a9db61a-115b-4f07-9baf-97e6545525a5",
@@ -592,7 +592,7 @@
      "short_id": "9f47bb94",
      "title": "Tersify comments in the gf2-kernels-simd x86 module",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "rework"
     },
     {
      "id": "aa0558c1-8143-44b9-a2ca-27282d1cf015",
@@ -606,7 +606,7 @@
      "short_id": "bfb37a21",
      "title": "Tersify comments in gf2-coding BCH and transform modules",
      "classification": "documentation",
-     "status": "dispatched"
+     "status": "returned_unmerged_rework"
     },
     {
      "id": "c6aa0e84-072e-4671-9c50-0c8e9d0d4f66",
@@ -634,7 +634,7 @@
      "short_id": "ee2b0c0c",
      "title": "Tersify comments in the gf2-coding LDPC module",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "rework"
     },
     {
      "id": "f2064e90-ad75-4253-8402-41d63d38af41",
@@ -655,7 +655,14 @@
      "short_id": "f46046f0",
      "title": "Tersify comments in gf2-sim executor and campaign modules",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "rework"
+    },
+    {
+     "id": "554c2935",
+     "short_id": "554c2935",
+     "title": "Register citation keys for external works cited in Rust sources",
+     "classification": "implementation",
+     "status": "dispatched"
     }
    ]
   },
@@ -1073,6 +1080,10 @@
   {
    "id": "96cea1b9",
    "reason": "migration checker fails: 6dc81018 archive moved pending manifest sources"
+  },
+  {
+   "id": "554c2935",
+   "reason": "sweep reviews require registry keys for prose citations (external-claims-cited)"
   }
  ],
  "escalations": [
@@ -1214,7 +1225,13 @@
   "62f0d0e6": 2,
   "629e0ff0": 1,
   "eb2a833d": 1,
-  "62ce5927": 1
+  "62ce5927": 1,
+  "f46046f0": 1,
+  "9f47bb94": 1,
+  "3aef9e33": 1,
+  "67b5d1d8": 1,
+  "ee2b0c0c": 1,
+  "67048b47": 2
  },
  "surfaced_pitfalls": [
   {
@@ -1313,7 +1330,8 @@
   "README rules: R1 Rendered Rustdoc link: `[Rustdoc](../../target/doc/<crate_underscored>/index.html)` next to `./scripts/cargo-budget.sh cargo doc -p <crate> --no-deps`. A `src/lib.rs` link alone fails REQ-03. R2 Feature table: keep one line per feature, but state its authority right above it: \"The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.\" (@/inv/single-source-prose; an uncited manual inventory fails). R3 Module/identifier names: name only public paths (`gf2_core::BitVec`, public modules). Private modules re-exported at the root (e.g. gf2-core `bitvec`, `bitslice`) are not \"modules\" to an adopter; check `pub mod` vs `mod` in src/lib.rs. R4 Installation: no layout-dependent `path = \"crates/<crate>\"` snippet. Link the single installation source instead: `[installation](../../docs/reference/supported-configurations.md#installation)` (the page lands on main from branch worktree-agent-2ff9953a; docs-mechanical may flag the link until it merges \u2014 expected). R5 Commands in AGENTS.md form only (`./scripts/cargo-budget.sh cargo ...`, tests `./scripts/cargo-budget.sh --test cargo nextest run -p <crate> --cargo-profile ci-test --profile ci`). R6 External works and standards cite `@/citation/<key>` from .jit/references.toml.",
   "Session 4 (2026-10-03): owner interviewed on all ten open questions; rulings are in escalations. Standing rules: sweep units must be net-negative in lines per unit unless each added line is a missing panic, safety or contract statement listed in the unit's record; models: opus for Rust, scripts, permanent prose and reworks, sonnet for moves, inventories and records, no fable; the lead never pushes.",
   "README rules superseded 2026-10-03: a crate README states purpose and when to choose the crate, plus links (docs/index.md, owning reference/concepts pages, generated Rustdoc link with its cargo doc command). No capability list, feature table or module inventory (R2 and R3 lapse; R1, R4, R5, R6 stand).",
-  "Sweep dispatch: per-unit briefs are generated from the session scratchpad template (hard net-negative rule, token-diff proof, planned-work matching). Wave A (67b5d1d8, ee2b0c0c, f46046f0, 3aef9e33, 9f47bb94) removed about 7,750 net lines; each unit's commit body lists justified pattern lines, planned-work issue ids and added contracts. Sweep follow-ups filed under b4b4b9ee: c04d3f1c, 02ed3c51, 8342487d, ebd26779, 7c8ab1e2, bb64ee0e, bc4eb125, 1fe6e218, a44566c0, 2a9cc72c, 3464c241, a1e02780, d436dd5f, de0528d2."
+  "Sweep dispatch: per-unit briefs are generated from the session scratchpad template (hard net-negative rule, token-diff proof, planned-work matching). Wave A (67b5d1d8, ee2b0c0c, f46046f0, 3aef9e33, 9f47bb94) removed about 7,750 net lines; each unit's commit body lists justified pattern lines, planned-work issue ids and added contracts. Sweep follow-ups filed under b4b4b9ee: c04d3f1c, 02ed3c51, 8342487d, ebd26779, 7c8ab1e2, bb64ee0e, bc4eb125, 1fe6e218, a44566c0, 2a9cc72c, 3464c241, a1e02780, d436dd5f, de0528d2.",
+  "Sweep review standard v2 (from the first five units' blocking findings; binding for every sweep brief and rework): (1) delete every navigational comment in scope, pre-existing ones included: banners, separators, test-group labels, test inventories, assertion narration; (2) remove Rustdoc examples for accessors, constants, constructors, predicates, lookups and direct field mappings, uncompilable or never-run examples and elementary tutorials; keep workflow and contract examples untouched; (3) each module doc is one short orientation paragraph plus contracts no single item owns; (4) keep or restore one-line non-obvious complexity statements on public items; (5) no performance, timing or feasibility statement in source comments and no dev/active|plans|sessions provenance pointers; a committed digest-pinned protocol the code implements stays as one line; (6) external works cite `@/citation/<Key>` from .jit/references.toml (554c2935 registers keys and a mapping); unkeyed works are listed, never left as prose on a touched line; (7) commit body lists 'planned work: <statement> -> <id> (jit issue show <id>)', 'removed examples:', justified pattern lines, added contracts, token diff; (8) hand-written notes in non-Rust artefacts inside the scope directory (x86/asm/*.asm.txt headers) follow the same rules; (9) reviewers judge the whole scope, not the diff."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
@@ -1335,6 +1353,8 @@
   "dispatch-worker-worktree.sh stops at the first branch collision after creating earlier worktrees; delete merged worktree-agent-* branches first and verify `git worktree list` shows every worktree before dispatching (three workers were sent to missing worktrees).",
   "scripts/cargo-ci.sh exports a scratch TMPDIR; an sccache server first started inside a CI run keeps it after deletion and every later compile fails with 'Failed to create temp dir' (e250b5bb). Before a gate batch: `sccache --stop-server; sccache --start-server` from a normal shell.",
   "A record that names a measured commit must give a reproduction that compares a fresh run at that commit against the files of the record's commit, not the files checked out at the measured commit (62f0d0e6 round 2).",
-  "AI review gates can fail with 'Agent produced no output' (reviewer service timeout); that is infrastructure, not a verdict: re-run the gate."
+  "AI review gates can fail with 'Agent produced no output' (reviewer service timeout); that is infrastructure, not a verdict: re-run the gate.",
+  "The first sweep brief forbade removing Rustdoc examples and let workers reformat banners; both failed review (teaching-rustdoc-examples, non-obvious-comments). Use the v2 standard in notes.",
+  "Each SendMessage resume replays a worker's whole context (300-500k tokens for a sweep unit): batch all follow-ups for a worker into one message, and settle shared prerequisites (citation keys) before resuming."
  ]
 }
