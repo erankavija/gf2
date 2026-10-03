@@ -258,10 +258,6 @@ mod segmentation_tests {
 }
 
 /// Which end of the canonical reliability order leads the column preference.
-///
-/// The preference decides which columns the elimination pivots on, and
-/// therefore which columns end up in the independent basis and which end up
-/// free.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ColumnPreference {
     /// Pivot on the largest reliability magnitudes first, so the basis is the
@@ -315,22 +311,14 @@ impl MostReliableBasis {
     /// `magnitudes` and `reference` carry one entry per matrix column.  The
     /// canonical [`ReliabilityPermutation`] orders the columns, `preference`
     /// picks the direction, and the ordered elimination selects the greedy
-    /// independent set under that order.  A `right_hand_side` is moved into the
-    /// reduced coordinates by the elimination's row transform, and the
-    /// resulting system is checked for consistency.
+    /// independent set under that order.  A `right_hand_side` (`None` for a
+    /// homogeneous system) is moved into the reduced coordinates by the
+    /// elimination's row transform, and the resulting system is checked for
+    /// consistency.
     ///
     /// `reference` is the word candidates are scored against: the soft metric
     /// of a candidate is the sum of the magnitudes of the coordinates where it
     /// disagrees with `reference`.
-    ///
-    /// # Arguments
-    ///
-    /// * `matrix` — the linear system whose columns are ordered
-    /// * `magnitudes` — reliability magnitude of each column
-    /// * `reference` — the word the soft metric measures candidates against
-    /// * `right_hand_side` — one entry per matrix row, or `None` for a
-    ///   homogeneous system
-    /// * `preference` — which end of the reliability order leads
     ///
     /// # Errors
     ///
@@ -341,18 +329,12 @@ impl MostReliableBasis {
     ///
     /// # Panics
     ///
-    /// Panics if any entry of `magnitudes` is NaN.  NaN has no numeric
-    /// ordering, so it is not a valid reliability magnitude for the canonical
-    /// permutation.
+    /// Panics if any entry of `magnitudes` is NaN.
     ///
     /// # Complexity
     ///
     /// O(n log n) for `n` columns to order them, plus the ordered
     /// elimination's own cost.
-    ///
-    /// # Examples
-    ///
-    /// See [`reprocess`] for an end-to-end walkthrough.
     pub fn build(
         matrix: &BitMatrix,
         magnitudes: &[f32],
@@ -413,9 +395,6 @@ impl MostReliableBasis {
     }
 
     /// Returns the ordered elimination that selected this basis.
-    ///
-    /// Its `reduced`, `selected_cols`, `rank`, and `transform` fields are the
-    /// canonical description of the eliminated system.
     pub fn elimination(&self) -> &OrderedEliminationResult {
         &self.elimination
     }
@@ -474,23 +453,11 @@ impl MostReliableBasis {
         &self.magnitudes
     }
 
-    /// Reprocesses this basis with deterministic weight-segment accounting.
-    ///
-    /// This inherent entry point keeps the additive segmented API reachable
-    /// through the existing public [`MostReliableBasis`] export while the
-    /// baseline [`reprocess`] function retains its original result type.
+    /// Reprocesses this basis with weight-segment accounting.
     ///
     /// # Errors
     ///
-    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
-    /// order-m candidate bound cannot be represented by `usize`, or when the
-    /// semantics returns a base candidate or delta vector with a width or
-    /// count that does not match the basis.
-    ///
-    /// # Panics
-    ///
-    /// This method adds no panics beyond those possible while executing the
-    /// caller-provided [`OsdSemantics`] implementation.
+    /// Returns the same errors as [`reprocess`].
     pub fn reprocess_segmented<S>(
         &self,
         semantics: &S,
@@ -502,34 +469,22 @@ impl MostReliableBasis {
         reprocess_segmented(self, semantics, config)
     }
 
-    /// Reprocesses this basis with an optional implementation-policy discard
-    /// threshold.
+    /// Reprocesses this basis with an optional segment discard threshold.
     ///
     /// The threshold is compared with the policy's generated-pattern metric
-    /// once, at each deterministic weight-segment boundary.  A segment is
-    /// discarded only when `metric > discard_threshold`; equality retains the
-    /// segment.  `None` disables discarding and preserves exhaustive order-`m`
-    /// results.  A thresholded result is a policy-bounded approximation, not
-    /// an exhaustive order-`m` search.
+    /// once, at each weight-segment boundary.  A segment is discarded only
+    /// when `metric > discard_threshold`; equality retains the segment.
+    /// `None` disables discarding.  A thresholded result approximates the
+    /// exhaustive order-`m` search.
     ///
     /// # Errors
     ///
-    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
-    /// order-m candidate bound cannot be represented by `usize`, or when the
-    /// semantics returns a base candidate or delta vector with a width or
-    /// count that does not match the basis.
-    ///
-    /// # Panics
-    ///
-    /// This method adds no panics beyond those possible while executing the
-    /// caller-provided [`OsdSemantics`] implementation.
+    /// Returns the same errors as [`reprocess`].
     ///
     /// # Complexity
     ///
-    /// The pattern source still accounts for each generated pattern, while
-    /// reconstruction, validation, and ranking run only for retained
-    /// patterns: O(generated + retained × (weight + columns) / 64) word
-    /// operations after the shared basis setup.
+    /// A discarded pattern costs only its enumeration; a retained one costs
+    /// as in [`reprocess`].
     pub fn reprocess_segmented_with_discard_threshold<S>(
         &self,
         semantics: &S,
@@ -546,15 +501,7 @@ impl MostReliableBasis {
     ///
     /// # Errors
     ///
-    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
-    /// order-m candidate bound cannot be represented by `usize`, or when the
-    /// semantics returns a base candidate or delta vector with a width or
-    /// count that does not match the basis.
-    ///
-    /// # Panics
-    ///
-    /// This method adds no panics beyond those possible while executing the
-    /// caller-provided [`OsdSemantics`] implementation.
+    /// Returns the same errors as [`reprocess`].
     pub fn reprocess_segmented_with_cancellation<S>(
         &self,
         semantics: &S,
@@ -567,34 +514,12 @@ impl MostReliableBasis {
         reprocess_segmented_with_cancellation(self, semantics, config, cancellation)
     }
 
-    /// Reprocesses this basis with an optional discard threshold and caller
-    /// cancellation.
-    ///
-    /// Threshold decisions use the implementation-produced generated-pattern
-    /// metric at deterministic weight boundaries.  A segment is discarded
-    /// only when `metric > discard_threshold`; equality retains it.  `None`
-    /// disables discarding.  When a threshold is active, the returned best
-    /// candidate is a policy-bounded approximation rather than the result of
-    /// exhaustive order-`m` search.
+    /// Like [`Self::reprocess_segmented_with_discard_threshold`], observing a
+    /// caller-owned cancellation flag before every generated pattern.
     ///
     /// # Errors
     ///
-    /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
-    /// order-m candidate bound cannot be represented by `usize`, or when the
-    /// semantics returns a base candidate or delta vector with a width or
-    /// count that does not match the basis.
-    ///
-    /// # Panics
-    ///
-    /// This method adds no panics beyond those possible while executing the
-    /// caller-provided [`OsdSemantics`] implementation.
-    ///
-    /// # Complexity
-    ///
-    /// The pattern source accounts for each generated pattern, while
-    /// reconstruction, validation, and ranking run only for retained
-    /// patterns: O(generated + retained × (weight + columns) / 64) word
-    /// operations after the shared basis setup.
+    /// Returns the same errors as [`reprocess`].
     pub fn reprocess_segmented_with_discard_threshold_and_cancellation<S>(
         &self,
         semantics: &S,
@@ -619,16 +544,9 @@ impl MostReliableBasis {
 ///
 /// The engine reconstructs candidates as an affine map over GF(2): the empty
 /// pattern reconstructs [`Self::base_candidate`], and a pattern adds the
-/// [`Self::position_deltas`] of the reprocessed columns it names.  A candidate
-/// space carved out of a linear system is affine in exactly this sense —
-/// re-encoding from an information set and back-substituting a free assignment
-/// both are — so the engine needs no other reconstruction hook.
+/// [`Self::position_deltas`] of the reprocessed columns it names.
 ///
 /// Every vector an adapter returns carries one entry per matrix column.
-///
-/// # Examples
-///
-/// See [`reprocess`] for an adapter implemented end to end.
 pub trait OsdSemantics {
     /// Returns which column set the order-`m` patterns perturb.
     fn reprocessed_columns(&self) -> ReprocessedColumns;
@@ -724,18 +642,13 @@ impl OsdWork {
     /// Returns the number of reconstructed candidates the semantics evaluated.
     ///
     /// Every candidate handed to [`OsdSemantics::accepts`] counts, whichever
-    /// way that rule answered; a candidate the run stopped before evaluating
-    /// does not.  The accepted subset is what the ranking sees, so a run whose
-    /// semantics rejected everything reports tested candidates and no best
-    /// candidate.
+    /// way that rule answered.
     pub const fn tested_candidates(&self) -> usize {
         self.tested_candidates
     }
 
-    /// Returns the number of ordered eliminations behind this outcome.
-    ///
-    /// The baseline engine reprocesses one most-reliable basis, so this is
-    /// always one.
+    /// Returns the number of ordered eliminations behind this outcome, which
+    /// is always one.
     pub const fn eliminations(&self) -> usize {
         self.eliminations
     }
@@ -771,36 +684,19 @@ impl OsdOutcome {
     }
 }
 
-/// The metric a discard-threshold consumer compares at a segment boundary.
-///
-/// The segmentation producer currently exposes generated-pattern count.  It
-/// is deliberately a named enum rather than an implicit field so a future
-/// threshold policy cannot silently switch to tested-candidate count, which
-/// has different semantics when a segment is discarded.
-///
-/// # Panics
-///
-/// Selecting a metric does not panic.
+/// The metric a discard threshold is compared with at a segment boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OsdComplexityMetric {
     /// Compare the cap-bounded number of patterns in the segment.
     GeneratedPatterns,
 }
 
-/// Implementation-produced complexity policy for segmented OSD search.
+/// Complexity policy for segmented OSD search.
 ///
 /// The policy has one weight-ordered descriptor per possible pattern weight.
-/// Its [`Self::segment_metric`] values are the cap-bounded generated-pattern
-/// counts a threshold evaluator compares before deciding whether to retain a
-/// segment.  An optional discard threshold uses the rule
+/// An optional discard threshold discards a segment when
 /// `segment_metric > discard_threshold`; equality retains the segment.  With
-/// no threshold, the policy is descriptive and segmented execution remains
-/// exhaustive.  With a threshold, results are policy-bounded approximations,
-/// not exhaustive order-`m` search results.
-///
-/// # Panics
-///
-/// Constructing or copying a policy does not panic for a valid checked bound.
+/// a threshold, results approximate the exhaustive order-`m` search.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OsdComplexityPolicy {
     segmentation: PatternSegmentation,
@@ -809,16 +705,13 @@ pub struct OsdComplexityPolicy {
 }
 
 impl OsdComplexityPolicy {
-    /// Builds the implementation-level policy for one reprocessed dimension.
+    /// Builds the policy for one reprocessed dimension, with no discard
+    /// threshold.
     ///
     /// # Errors
     ///
     /// Returns [`OsdEngineError::Patterns`] when the checked uncapped
     /// order-m candidate bound cannot be represented by `usize`.
-    ///
-    /// # Panics
-    ///
-    /// This constructor never panics for any dimension or [`OsdConfig`].
     pub fn new(dimension: usize, config: OsdConfig) -> Result<Self, OsdEngineError> {
         Ok(Self {
             segmentation: PatternSegmentation::new(dimension, config)?,
@@ -827,86 +720,46 @@ impl OsdComplexityPolicy {
         })
     }
 
-    /// Returns a copy of this policy with an optional segment discard
-    /// threshold.
-    ///
-    /// The threshold compares only [`Self::segment_metric`] at a deterministic
-    /// segment boundary.  A segment is discarded when the metric is strictly
-    /// greater than the threshold; equality retains it.  `None` disables
+    /// Sets the optional segment discard threshold; `None` disables
     /// discarding.
-    ///
-    /// # Panics
-    ///
-    /// This builder never panics.
     pub const fn with_discard_threshold(mut self, threshold: Option<usize>) -> Self {
         self.discard_threshold = threshold;
         self
     }
 
     /// Returns the configured segment discard threshold, if any.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn discard_threshold(&self) -> Option<usize> {
         self.discard_threshold
     }
 
     /// Returns the metric used at every segment boundary.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn metric(&self) -> OsdComplexityMetric {
         self.metric
     }
 
-    /// Returns all deterministic weight descriptors, including empty capped
-    /// tail segments.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns all weight descriptors, including empty capped tail segments.
     pub fn segments(&self) -> &[PatternSegment] {
         self.segmentation.segments()
     }
 
     /// Returns the descriptor at `index`, if present.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics for any index.
     pub fn segment(&self, index: usize) -> Option<&PatternSegment> {
         self.segmentation.segment(index)
     }
 
-    /// Returns the threshold-comparison value for `index`, if present.
-    ///
-    /// The value is the generated-pattern count in the descriptor's
-    /// cap-bounded range.  It is available before any candidate is tested.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics for any index.
+    /// Returns the threshold-comparison value for `index`, if present: the
+    /// generated-pattern count of the descriptor's cap-bounded range.
     pub fn segment_metric(&self, index: usize) -> Option<usize> {
         self.segment(index)
             .map(|segment| self.metric_value(segment))
     }
 
     /// Returns the checked uncapped candidate bound.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn theoretical_candidates(&self) -> usize {
         self.segmentation.theoretical_candidates()
     }
 
     /// Returns the candidate cap represented by the policy.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn candidate_cap(&self) -> Option<usize> {
         self.segmentation.candidate_cap()
     }
@@ -924,10 +777,6 @@ impl OsdComplexityPolicy {
 }
 
 /// Per-segment counters emitted by a segmented OSD run.
-///
-/// # Panics
-///
-/// Constructing or copying segment work does not panic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct OsdSegmentWork {
     segment: PatternSegment,
@@ -937,41 +786,23 @@ pub struct OsdSegmentWork {
 }
 
 impl OsdSegmentWork {
-    /// Returns the deterministic descriptor for this segment.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the descriptor for this segment.
     pub const fn segment(&self) -> PatternSegment {
         self.segment
     }
 
     /// Returns the generated-pattern count observed in this segment.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn generated_patterns(&self) -> usize {
         self.generated_patterns
     }
 
     /// Returns the number of adapter-evaluated candidates in this segment.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn tested_candidates(&self) -> usize {
         self.tested_candidates
     }
 
-    /// Returns the number of generated patterns discarded by the active
-    /// segment policy before candidate reconstruction.
-    ///
-    /// A discarded pattern is never counted by [`Self::tested_candidates`].
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the number of generated patterns discarded by the segment
+    /// policy before candidate reconstruction.
     pub const fn discarded_patterns(&self) -> usize {
         self.discarded_patterns
     }
@@ -979,17 +810,9 @@ impl OsdSegmentWork {
 
 /// Work metadata for a segmented OSD run.
 ///
-/// Aggregate counters retain the baseline meanings: generated patterns are
-/// enumerator output and tested candidates are adapter evaluations.  The
-/// segment reports add deterministic weight-local counters without changing
-/// the baseline [`OsdWork`] representation.  A discarded pattern contributes
-/// to generated and discarded counts, but never to tested candidates.
-/// Thresholded outcomes are policy-bounded approximations rather than
-/// exhaustive order-`m` searches.
-///
-/// # Panics
-///
-/// Constructing or copying work metadata does not panic.
+/// Aggregate counters have the meanings of their [`OsdWork`] counterparts.  A
+/// discarded pattern contributes to generated and discarded counts, but never
+/// to tested candidates.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OsdSegmentedWork {
     rank: usize,
@@ -1006,96 +829,53 @@ pub struct OsdSegmentedWork {
 
 impl OsdSegmentedWork {
     /// Returns the rank of the eliminated matrix.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn rank(&self) -> usize {
         self.rank
     }
 
-    /// Returns the implementation-produced threshold policy.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the threshold policy of the run.
     pub const fn policy(&self) -> &OsdComplexityPolicy {
         &self.policy
     }
 
     /// Returns the number of nonempty segments visited by the run.
-    ///
-    /// Empty capped tail descriptors remain available through
-    /// [`Self::segment_work`] but do not contribute to this counter.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn segments(&self) -> usize {
         self.segments
     }
 
     /// Returns one counter record for every policy segment, including empty
     /// capped tails.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub fn segment_work(&self) -> &[OsdSegmentWork] {
         &self.segment_work
     }
 
     /// Returns the checked uncapped candidate bound.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn theoretical_candidates(&self) -> usize {
         self.theoretical_candidates
     }
 
     /// Returns the number of generated patterns.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn generated_patterns(&self) -> usize {
         self.generated_patterns
     }
 
     /// Returns the number of adapter-evaluated candidates.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn tested_candidates(&self) -> usize {
         self.tested_candidates
     }
 
     /// Returns the number of generated patterns discarded before candidate
     /// reconstruction.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn discarded_patterns(&self) -> usize {
         self.discarded_patterns
     }
 
     /// Returns the number of ordered eliminations behind the outcome.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn eliminations(&self) -> usize {
         self.eliminations
     }
 
     /// Returns the reason the segmented run stopped.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn termination(&self) -> OsdTermination {
         self.termination
     }
@@ -1113,15 +893,6 @@ impl OsdSegmentedWork {
 }
 
 /// Best candidate and complexity metadata from segmented OSD search.
-///
-/// When [`OsdSegmentedWork::policy`] has a discard threshold, the candidate is
-/// a policy-bounded approximation rather than the result of exhaustive
-/// order-`m` search.  With no threshold, the segmented result preserves the
-/// exhaustive baseline candidate order and ranking.
-///
-/// # Panics
-///
-/// Constructing or copying an outcome does not panic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct OsdSegmentedOutcome {
     best: Option<OsdCandidate>,
@@ -1130,32 +901,19 @@ pub struct OsdSegmentedOutcome {
 
 impl OsdSegmentedOutcome {
     /// Returns the lowest-metric accepted candidate, if one was tested.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub fn best(&self) -> Option<&OsdCandidate> {
         self.best.as_ref()
     }
 
     /// Returns the segmented work metadata.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn work(&self) -> &OsdSegmentedWork {
         &self.work
     }
 
-    /// Projects the segmented result onto the unchanged baseline outcome.
+    /// Projects the segmented result onto an [`OsdOutcome`].
     ///
-    /// With no active discard threshold, this projection is equal to the
-    /// result of [`reprocess`] because segmentation only observes the existing
-    /// pattern stream.
-    ///
-    /// # Panics
-    ///
-    /// This method never panics.
+    /// With no discard threshold, the projection equals the result of
+    /// [`reprocess`] (test `segmentation_without_discard_is_baseline_equivalent`).
     pub fn outcome(&self) -> OsdOutcome {
         OsdOutcome {
             best: self.best.clone(),
@@ -1163,11 +921,8 @@ impl OsdSegmentedOutcome {
         }
     }
 
-    /// Consumes the segmented result and returns its baseline projection.
-    ///
-    /// # Panics
-    ///
-    /// This method never panics.
+    /// Consumes the segmented result and returns its [`OsdOutcome`]
+    /// projection.
     pub fn into_outcome(self) -> OsdOutcome {
         OsdOutcome {
             best: self.best,
@@ -1298,14 +1053,7 @@ impl From<PatternEnumerationError> for OsdEngineError {
 /// where it disagrees with the basis reference word, accumulated in ascending
 /// column order.  A candidate replaces the standing best only when its metric
 /// is strictly smaller, so equal metrics keep the earlier candidate in
-/// generation order.  Because the reprocessed columns are listed in the
-/// canonical preference order, which breaks equal magnitudes by original
-/// index, the whole ranking is a deterministic function of the inputs.
-///
-/// The work metadata keeps those stages apart:
-/// [`OsdWork::generated_patterns`] counts what the enumerator emitted,
-/// [`OsdWork::tested_candidates`] counts what the semantics evaluated, and the
-/// returned candidate is the ranking over the accepted subset.
+/// generation order.
 ///
 /// An inconsistent transformed right-hand side has no solution, so the run
 /// generates nothing and reports [`OsdTermination::InconsistentTransform`].
@@ -1320,9 +1068,10 @@ impl From<PatternEnumerationError> for OsdEngineError {
 ///
 /// # Complexity
 ///
-/// O(candidates × (weight + columns) / 64) word operations, plus one
-/// reconstruction setup of O(dimension × columns / 64).  The bound is checked
-/// before any candidate is reconstructed.
+/// Each tested candidate costs O(weight × columns / 64) word operations to
+/// reconstruct and O(columns) to score, plus the adapter's
+/// [`OsdSemantics::accepts`].  The candidate bound is checked before any
+/// candidate is reconstructed.
 ///
 /// # Examples
 ///
@@ -1420,10 +1169,6 @@ where
 /// # Errors
 ///
 /// Identical to [`reprocess`].
-///
-/// # Examples
-///
-/// See [`reprocess`]; this entry point differs only by the flag.
 pub fn reprocess_with_cancellation<S>(
     basis: &MostReliableBasis,
     semantics: &S,
@@ -1436,23 +1181,12 @@ where
     reprocess_inner(basis, semantics, config, Some(cancellation))
 }
 
-/// Reprocesses the baseline pattern stream with deterministic weight-segment
-/// accounting.
-///
-/// Segmentation observes the same generated patterns, reconstructs candidates
-/// through the same adapter, and ranks them in the same order as
-/// [`reprocess`].  The returned policy exposes the cap-bounded generated
-/// pattern count at every weight boundary for a later discard-threshold
-/// consumer; this function does not discard any segment.
+/// Reprocesses like [`reprocess`], with weight-segment accounting and no
+/// discarded segment.
 ///
 /// # Errors
 ///
 /// Returns the same errors as [`reprocess`].
-///
-/// # Panics
-///
-/// This function adds no panics beyond those possible while executing the
-/// caller-provided [`OsdSemantics`] implementation.
 pub fn reprocess_segmented<S>(
     basis: &MostReliableBasis,
     semantics: &S,
@@ -1464,8 +1198,8 @@ where
     reprocess_segmented_inner(basis, semantics, config, None, None)
 }
 
-/// Reprocesses with deterministic segment accounting and observes a caller-
-/// owned cancellation flag before every candidate.
+/// Reprocesses with segment accounting and observes a caller-owned
+/// cancellation flag before every candidate.
 ///
 /// Cancellation stops before reconstructing the next candidate and takes
 /// precedence over a candidate cap reached by the preceding candidate.
@@ -1473,11 +1207,6 @@ where
 /// # Errors
 ///
 /// Returns the same errors as [`reprocess`].
-///
-/// # Panics
-///
-/// This function adds no panics beyond those possible while executing the
-/// caller-provided [`OsdSemantics`] implementation.
 pub fn reprocess_segmented_with_cancellation<S>(
     basis: &MostReliableBasis,
     semantics: &S,
@@ -1788,9 +1517,6 @@ fn empty_segment_work(policy: &OsdComplexityPolicy) -> Vec<OsdSegmentWork> {
 
 /// Sums the reliability magnitudes of the coordinates where `candidate` and
 /// `reference` disagree.
-///
-/// The accumulation runs in ascending column order and widens each `f32`
-/// magnitude to `f64`, so the same inputs always produce the same sum.
 fn soft_metric(candidate: &BitVec, reference: &BitVec, magnitudes: &[f32]) -> f64 {
     let mut total = 0.0;
     for (column, &magnitude) in magnitudes.iter().enumerate() {
