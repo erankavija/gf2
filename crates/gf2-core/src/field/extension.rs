@@ -86,14 +86,10 @@
 //!
 //! # Certificates
 //!
-//! Validating a field presentation is expensive, and callers construct over
-//! the same presentation again and again. A certificate is the **memo** of
-//! that validation: [`ExtensionCertificate`] is `Arc`-backed, carries the two
-//! [`FieldId`]s it covers, and is matched by identity comparison
-//! ([`ExtensionCertificate::matches`]) rather than by re-deriving anything.
-//! [`CertificateBasis`] records which validation the memo stands for.
-//!
-//! Two constructors validate, and two reuse the memo:
+//! [`ExtensionCertificate`] is the `Arc`-backed memo of a validated pair of
+//! [`FieldId`]s, matched by identity comparison
+//! ([`ExtensionCertificate::matches`]); [`CertificateBasis`] records which
+//! validation the memo stands for.
 //!
 //! - [`BinaryPrimeExt::new`] decides the runtime field's defining polynomial
 //!   with [`prove_irreducible`] and records
@@ -102,22 +98,9 @@
 //!   an [`ExtConfig`] non-residue, which the type fixes rather than decides.
 //! - [`BinaryPrimeExt::from_certificate_unchecked`] and
 //!   [`ConstExt::from_certificate_unchecked`] take a memo the caller already
-//!   holds and skip the validation entirely. This is what makes repeated
-//!   construction over one presentation cheap.
-//!
-//! The `_unchecked` suffix carries the contract, as it does elsewhere in
-//! Rust: no memory safety is at stake and no `unsafe` is involved, but the
-//! caller promises the memo really does stand for the pair the witness names.
-//! Both reuse paths check only that the certificate's identities match —
-//! a structural comparison linear in the modulus degree, and in particular
-//! free of any decision procedure — which catches an honest mix-up; neither
-//! re-derives. A memo of
-//! something else yields a mathematically invalid witness, the same way wrong
-//! parameters do anywhere else. This is the shape
-//! `@/inv/caller-trusted-fast-paths` fixes for the whole project: validation
-//! catches mistakes and amortizes cost, a path that skips it for performance
-//! is a distinct `_unchecked` method with its precondition documented, and a
-//! violated precondition is caller error rather than grounds for hardening.
+//!   holds and check only that its identities match, a structural comparison
+//!   linear in the modulus degree. A memo of something else yields a
+//!   mathematically invalid witness (`@/inv/caller-trusted-fast-paths`).
 //!
 //! [`crate::field::irreducibility`] is the other producer: proving a
 //! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
@@ -448,9 +431,8 @@ fn shift_coordinate_index(error: FieldError, offset: usize) -> FieldError {
 
 /// Which $\mathbb{F}_p$-basis the coordinates of a quotient field name.
 ///
-/// Identity has to pin basis semantics for a stored coordinate vector to be
-/// interpretable, so a future normal-basis carrier cannot silently share an
-/// identity with a polynomial-basis one.
+/// Identity pins basis semantics so that a stored coordinate vector is
+/// interpretable.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Basis {
@@ -1265,8 +1247,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> FieldIdentity for Gf2mWide<N, Cfg> 
 }
 
 /// The identity of a quadratic tower element is the quotient of its base by
-/// $x^{2} - \beta$, so the [`ExtConfig`] non-residue *is* the modulus and no
-/// parallel configuration concept appears.
+/// $x^{2} - \beta$, with $\beta$ the [`ExtConfig`] non-residue.
 impl<C: ExtConfig> FieldIdentity for QuadraticExt<C>
 where
     C::BaseField: FieldIdentity,
@@ -1987,10 +1968,6 @@ impl CosetPartition {
     /// The outer order is by smallest representative. The first member of
     /// every inner vector is that representative, and later members follow
     /// the multiplication orbit rather than numeric sorting.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the returned slice borrows the partition.
     pub fn cosets(&self) -> &[Vec<u64>] {
         &self.cosets
     }
@@ -2505,9 +2482,7 @@ fn restrict_invariant<X: FieldExtension>(ext: &X, x: &X::Ext) -> X::Base {
 /// [`ext_id`](Self::ext_id). Passing a carrier value from an unrelated field
 /// is outside the contract.
 ///
-/// The trait is not object-safe, and static dispatch is the point; a
-/// type-erased handle is a separate concern that does not constrain this
-/// surface.
+/// The trait is not object-safe; dispatch is static.
 pub trait FieldExtension: Clone + fmt::Debug + Eq {
     /// Element type of the base field $B$.
     type Base: FieldIdentity;
@@ -2777,28 +2752,16 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     /// Builds the witness from a certificate the caller already holds, doing
     /// no validation of its own.
     ///
-    /// The certificate is a **memo** of validation performed earlier. The
-    /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, so a
-    /// caller constructing repeatedly over one presentation runs it once and
-    /// presents the result here. This method skips that decision entirely:
-    /// its only check is the identity comparison below — structural, linear
-    /// in the modulus degree, free of any decision procedure — which is there
-    /// to catch an honest mix-up, not to re-derive anything.
+    /// The irreducibility decision of [`new`](Self::new) is skipped: the only
+    /// check is the structural identity comparison, linear in the modulus
+    /// degree.
     ///
     /// # Contract
     ///
-    /// The caller promises that the certificate really does memoize a
-    /// validation of the pair `field` names. Nothing here confirms it. A
-    /// certificate that memoizes something else — a modulus that was never
-    /// decided, or one that was decided and found reducible — produces a
-    /// witness over a carrier that is not a field, and every result computed
-    /// through it is meaningless. That is caller error in the same way that
-    /// passing wrong parameters to any other `_unchecked` API is: nothing in
-    /// this crate can detect it after the fact, which is precisely why the
-    /// name says so. `@/inv/caller-trusted-fast-paths` fixes this contract
-    /// shape project-wide.
-    ///
-    /// Use [`new`](Self::new) when the modulus has not already been decided.
+    /// The caller promises that the certificate memoizes a validation of the
+    /// pair `field` names. A certificate that memoizes something else produces
+    /// a witness over a carrier that is not a field, with unspecified
+    /// mathematical results (`@/inv/caller-trusted-fast-paths`).
     ///
     /// # Errors
     ///
@@ -2869,8 +2832,7 @@ impl<V: UintExt> FieldExtension for BinaryPrimeExt<V> {
 /// base.
 ///
 /// [`QuadraticExt`] and [`CubicExt`] implement it by forwarding to their
-/// existing inherent `from_base`, so the binomial towers gain the extension
-/// relation without a second configuration concept.
+/// inherent `from_base`.
 pub trait ConstSimpleExtension: ConstField + FieldIdentity {
     /// Element type of the compile-time base field.
     type ConstBase: ConstField + FieldIdentity;
@@ -3088,10 +3050,8 @@ impl<F: FieldIdentity> TrivialExt<F> {
     ///
     /// The value of `witness` is ignored; only its field matters.
     ///
-    /// There is no certificate-consuming counterpart, because there is no
-    /// validation to reuse: $E = B$ holds for any carrier by construction, so
-    /// [`ExtensionCertificate::trivial`] decides nothing and the witness makes
-    /// no claim about the irreducibility of whatever modulus `F` presents.
+    /// [`ExtensionCertificate::trivial`] decides nothing: the witness makes no
+    /// claim about the irreducibility of the modulus `F` presents.
     pub fn new(witness: F) -> Self {
         let certificate = ExtensionCertificate::trivial(witness.field_id());
         Self {
