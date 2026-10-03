@@ -24,9 +24,9 @@ use tuning_campaign_support::protocol::{
     DecoderCell, DecoderInput, EffectRule, FamilyAddendum, FamilyIdentity, FamilyPurpose,
     FamilyWise, Frozen, Holdout, MetricKind, Normalization, NormalizationKind, Precision,
     ProtocolRef, QualityTolerance, ReceiptLabel, ResolutionEvidence, RunnerPlan, Scaling, Schedule,
-    SearchBudget, Stopping, StoppingKind, WorkerDeclaration, Workload, ADDENDUM_SCHEMA_ID,
-    ADDENDUM_SCHEMA_PATH, CONTRACT_PATH, PROTOCOL_ID, PROTOCOL_PATH, PROTOCOL_VERSION,
-    RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
+    SearchBudget, SharedInput, Stopping, StoppingKind, WorkerDeclaration, Workload,
+    ADDENDUM_SCHEMA_ID, PROTOCOL_ID, PROTOCOL_VERSION, RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA,
+    SHARED_PRODUCING_MANIFEST, SHARED_SETTINGS,
 };
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::receipt::{
@@ -36,7 +36,7 @@ use tuning_campaign_support::receipt::{
     PairRecord, Severity, SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR,
     LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
-use tuning_campaign_support::repository::repository_root;
+use tuning_campaign_support::repository::{is_snapshot_copy, listed_files, repository_root};
 use tuning_campaign_support::schema;
 use tuning_campaign_support::scratch::Scratch;
 
@@ -47,18 +47,95 @@ fn scratch(name: &str) -> Scratch {
     tuning_campaign_support::scratch::scratch(&format!("gf2-f547c394-{name}"))
 }
 
-/// Copies the committed protocol documents into a scratch repository root.
+/// Scratch-repository locations of the shared documents and family addenda.
+const PROTOCOL_DOC: &str = "protocol/protocol.md";
+const SCHEMA_DOC: &str = "protocol/addendum.schema.json";
+const CONTRACT_DOC: &str = "contract/measurement-contract.md";
+const ADDENDUM_DOC: &str = "campaign/addendum-fixture.json";
+/// SHA-256 of the earlier-version documents the fixtures pin: the version-1
+/// schema, and the version-2 and version-3 documents the published smoke
+/// pilots of those versions pin.
+const V1_SCHEMA_SHA256: &str = "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1";
+const V2_PROTOCOL_SHA256: &str = "9e0193ecce1453119a575e07d6ff84bf8c82eca3ce38d53f3b01fafe14df0eae";
+const V2_SCHEMA_SHA256: &str = "4900f412729a76cd6ecf94de21b1f3fb36239f977975490ab8e182397a6fadef";
+const V3_PROTOCOL_SHA256: &str = "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c";
+const V3_SCHEMA_SHA256: &str = "513f37627dd82dbce95f49ff3f714af83131320fdbd0fe704baffc18a57412cd";
+
+fn put(root: &Path, relative: &str, bytes: &[u8]) {
+    let target = root.join(relative);
+    fs::create_dir_all(target.parent().unwrap()).unwrap();
+    fs::write(target, bytes).unwrap();
+}
+
+/// Bytes of the committed file named by the glob `name` whose SHA-256 is
+/// `sha256`, snapshot copies included.
+fn committed(name: &str, sha256: &str) -> Vec<u8> {
+    let root = repository_root().unwrap();
+    listed_files(&root, name)
+        .unwrap()
+        .into_iter()
+        .map(|path| fs::read(root.join(path)).unwrap())
+        .find(|bytes| sha256_hex(bytes) == sha256)
+        .unwrap_or_else(|| panic!("no committed {name} has SHA-256 {sha256}"))
+}
+
+/// The live shared document declaring `identity`, path and bytes.
+fn live(input: SharedInput, identity: &str) -> (String, Vec<u8>) {
+    let root = repository_root().unwrap();
+    let path = input.locate(&root, identity).unwrap();
+    let bytes = fs::read(root.join(&path)).unwrap();
+    (path, bytes)
+}
+
+/// The directory of the one committed receipt of `campaign_id`.
+fn committed_receipt(campaign_id: &str) -> PathBuf {
+    let root = repository_root().unwrap();
+    let found: Vec<_> = listed_files(&root, RECEIPT_FILE)
+        .unwrap()
+        .into_iter()
+        .filter(|path| !is_snapshot_copy(path))
+        .filter(|path| {
+            let value: Value = serde_json::from_slice(&fs::read(root.join(path)).unwrap()).unwrap();
+            value["campaign_id"] == campaign_id
+        })
+        .collect();
+    assert_eq!(found.len(), 1, "{campaign_id}: {found:?}");
+    root.join(&found[0]).parent().unwrap().to_path_buf()
+}
+
+/// Copies the live current protocol document and addendum schema into `root`.
+fn stage_current(root: &Path) {
+    let protocol = live(
+        SharedInput::Protocol,
+        &SharedInput::protocol_identity(PROTOCOL_VERSION),
+    );
+    put(root, PROTOCOL_DOC, &protocol.1);
+    put(
+        root,
+        SCHEMA_DOC,
+        &live(SharedInput::AddendumSchema, ADDENDUM_SCHEMA_ID).1,
+    );
+}
+
+/// Stages the version-1 protocol documents and the contract into a scratch
+/// repository root.
 fn stage_repo(root: &Path) {
-    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH, CONTRACT_PATH] {
-        let target = root.join(relative);
-        fs::create_dir_all(target.parent().unwrap()).unwrap();
-        let archived = match relative {
-            PROTOCOL_PATH => "dev/active/f547c394/protocol-v1.md",
-            ADDENDUM_SCHEMA_PATH => "dev/active/f547c394/addendum-v1.schema.json",
-            _ => relative,
-        };
-        fs::copy(repository_root().unwrap().join(archived), target).unwrap();
-    }
+    put(
+        root,
+        PROTOCOL_DOC,
+        &live(SharedInput::Protocol, &SharedInput::protocol_identity(1)).1,
+    );
+    put(
+        root,
+        SCHEMA_DOC,
+        &committed("addendum*.schema.json", V1_SCHEMA_SHA256),
+    );
+    put(
+        root,
+        CONTRACT_DOC,
+        &live(SharedInput::Contract, &SharedInput::contract_identity()).1,
+    );
+    fs::create_dir_all(root.join(Path::new(ADDENDUM_DOC).parent().unwrap())).unwrap();
     let source = "producer.rs";
     fs::write(root.join(source), b"fn measured_behavior() {}\n").unwrap();
     let manifest = json!({
@@ -74,17 +151,30 @@ fn stage_repo(root: &Path) {
     .unwrap();
 }
 
-/// Copies the runner's declared producing-input closure into a scratch repo.
+/// Copies the runner's shared producing-input closure into a scratch repo,
+/// beside the scratch protocol document.
 fn stage_runner_producing(root: &Path) {
-    const MANIFEST: &str = "dev/active/f547c394/producing-inputs.json";
     let source_root = repository_root().unwrap();
-    let producing = ProducingInputs::read_at(&source_root, MANIFEST).unwrap();
-    for relative in
-        std::iter::once(MANIFEST).chain(producing.build_inputs.iter().map(String::as_str))
-    {
-        let target = root.join(relative);
-        fs::create_dir_all(target.parent().unwrap()).unwrap();
-        fs::copy(source_root.join(relative), target).unwrap();
+    let (protocol, _) = live(
+        SharedInput::Protocol,
+        &SharedInput::protocol_identity(PROTOCOL_VERSION),
+    );
+    let manifest = Path::new(&protocol).with_file_name(SHARED_PRODUCING_MANIFEST);
+    let manifest = manifest.to_str().unwrap();
+    let producing = ProducingInputs::read_at(&source_root, manifest).unwrap();
+    put(
+        root,
+        &Path::new(PROTOCOL_DOC)
+            .with_file_name(SHARED_PRODUCING_MANIFEST)
+            .to_string_lossy(),
+        &fs::read(source_root.join(manifest)).unwrap(),
+    );
+    for relative in &producing.build_inputs {
+        put(
+            root,
+            relative,
+            &fs::read(source_root.join(relative)).unwrap(),
+        );
     }
 }
 
@@ -177,7 +267,7 @@ fn addendum(cells: Vec<CellDeclaration>) -> FamilyAddendum {
 }
 
 fn write_addendum(root: &Path, addendum: &FamilyAddendum) {
-    let relative = "dev/active/f547c394/addendum-fixture.json";
+    let relative = ADDENDUM_DOC;
     let mut bytes = serde_json::to_vec_pretty(addendum).unwrap();
     bytes.push(b'\n');
     fs::write(root.join(relative), bytes).unwrap();
@@ -327,14 +417,14 @@ fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt
         campaign_id: "fixture-pilot".into(),
         family_id: "fixture-family".into(),
         issue: "f547c394".into(),
-        receipt_path: "dev/bench_results/f547c394/pilot/receipt.json".into(),
+        receipt_path: "receipts/pilot/receipt.json".into(),
         label: ReceiptLabel::Pilot,
         campaign_seed: CAMPAIGN_SEED,
         settings: SHARED_SETTINGS,
         settings_deviation: false,
-        protocol: pin(repo, PROTOCOL_PATH),
-        contract: pin(repo, CONTRACT_PATH),
-        addendum_schema: pin(repo, ADDENDUM_SCHEMA_PATH),
+        protocol: pin(repo, PROTOCOL_DOC),
+        contract: pin(repo, CONTRACT_DOC),
+        addendum_schema: pin(repo, SCHEMA_DOC),
         addendum,
         source: SourceIdentity {
             revision: COMMIT.into(),
@@ -346,7 +436,7 @@ fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt
             lock_path: "/tmp/gf2-ccx1.lock".into(),
             holder_pid: 4242,
             observation: "fixture".into(),
-            wrapper: "dev/scripts/ccx1-bench-flock.sh".into(),
+            wrapper: "scripts/bench-flock.sh".into(),
         },
         workers: WorkerReport {
             environment_rayon_threads: None,
@@ -443,27 +533,32 @@ fn build_receipt_with_history(
     stage_repo(&repo);
     if addendum.protocol.version >= 2 {
         // An earlier version uses the documents its published smoke receipts pin.
-        let pinned = match addendum.protocol.version {
-            2 => Some("dev/bench_results/f547c394/v2-pilot/inputs"),
-            3 => Some("dev/bench_results/f547c394/v3-r2-pilot/inputs"),
-            _ => None,
-        };
-        if let Some(inputs) = pinned {
-            let source = repository_root().unwrap().join(inputs);
-            fs::copy(source.join("protocol.md"), repo.join(PROTOCOL_PATH)).unwrap();
-            fs::copy(
-                source.join("addendum.schema.json"),
-                repo.join(ADDENDUM_SCHEMA_PATH),
-            )
-            .unwrap();
-        } else {
-            for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-                fs::copy(
-                    repository_root().unwrap().join(relative),
-                    repo.join(relative),
-                )
-                .unwrap();
+        match addendum.protocol.version {
+            2 => {
+                put(
+                    &repo,
+                    PROTOCOL_DOC,
+                    &committed("protocol.md", V2_PROTOCOL_SHA256),
+                );
+                put(
+                    &repo,
+                    SCHEMA_DOC,
+                    &committed("addendum*.schema.json", V2_SCHEMA_SHA256),
+                );
             }
+            3 => {
+                put(
+                    &repo,
+                    PROTOCOL_DOC,
+                    &committed("protocol.md", V3_PROTOCOL_SHA256),
+                );
+                put(
+                    &repo,
+                    SCHEMA_DOC,
+                    &committed("addendum*.schema.json", V3_SCHEMA_SHA256),
+                );
+            }
+            _ => stage_current(&repo),
         }
         fs::write(
             repo.join(addendum.family_wise.ledger_path.as_ref().unwrap()),
@@ -471,9 +566,9 @@ fn build_receipt_with_history(
         )
         .unwrap();
     }
-    let dir = repo.join("dev/bench_results/f547c394/confirmation");
+    let dir = repo.join("receipts/confirmation");
     fs::create_dir_all(&dir).unwrap();
-    let pilot_addendum_path = "dev/active/f547c394/addendum-fixture-pilot.json";
+    let pilot_addendum_path = "campaign/addendum-fixture-pilot.json";
     let mut pilot_addendum = addendum.clone();
     pilot_addendum.effect.measurement_resolution = None;
     pilot_addendum.effect.resolution_evidence = None;
@@ -487,7 +582,7 @@ fn build_receipt_with_history(
     let mut pilot_addendum_bytes = serde_json::to_vec_pretty(&pilot_addendum).unwrap();
     pilot_addendum_bytes.push(b'\n');
     fs::write(repo.join(pilot_addendum_path), pilot_addendum_bytes).unwrap();
-    let pilot_path = "dev/bench_results/f547c394/pilot/receipt.json";
+    let pilot_path = "receipts/pilot/receipt.json";
     let pilot_dir = repo.join(pilot_path).parent().unwrap().to_path_buf();
     fs::create_dir_all(&pilot_dir).unwrap();
     fs::create_dir_all(pilot_dir.join("inputs")).unwrap();
@@ -602,24 +697,14 @@ fn build_receipt_with_history(
         });
     }
     write_addendum(&repo, &addendum);
-    let protocol_pin =
-        ArtifactPin::capture(&repo, &dir, PROTOCOL_PATH, "inputs/protocol.md").unwrap();
-    let contract_pin =
-        ArtifactPin::capture(&repo, &dir, CONTRACT_PATH, "inputs/measurement-contract.md").unwrap();
-    let schema_pin = ArtifactPin::capture(
-        &repo,
-        &dir,
-        ADDENDUM_SCHEMA_PATH,
-        "inputs/addendum.schema.json",
-    )
-    .unwrap();
-    let addendum_pin = ArtifactPin::capture(
-        &repo,
-        &dir,
-        "dev/active/f547c394/addendum-fixture.json",
-        "inputs/family-addendum.json",
-    )
-    .unwrap();
+    let shared = |input: SharedInput, relative: &str| {
+        ArtifactPin::capture(&repo, &dir, relative, input.snapshot()).unwrap()
+    };
+    let protocol_pin = shared(SharedInput::Protocol, PROTOCOL_DOC);
+    let contract_pin = shared(SharedInput::Contract, CONTRACT_DOC);
+    let schema_pin = shared(SharedInput::AddendumSchema, SCHEMA_DOC);
+    let addendum_pin =
+        ArtifactPin::capture(&repo, &dir, ADDENDUM_DOC, "inputs/family-addendum.json").unwrap();
     fs::create_dir_all(dir.join("inputs/resolution-evidence")).unwrap();
     fs::write(
         dir.join("inputs/resolution-evidence/receipt.json"),
@@ -691,9 +776,9 @@ fn build_receipt_with_history(
         "issue": "f547c394",
         "label": "confirmation",
         "campaign_seed": CAMPAIGN_SEED,
-        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "addendum": ADDENDUM_DOC,
         "lock_path": "/tmp/gf2-ccx1.lock",
-        "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+        "wrapper": "scripts/bench-flock.sh",
         "timing_override": null,
         "arms": plan_arms,
         "cells": specs.iter().map(|spec| {
@@ -991,7 +1076,7 @@ fn build_receipt_with_history(
         campaign_id: campaign.into(),
         family_id: addendum.family.id.clone(),
         issue: "f547c394".into(),
-        receipt_path: "dev/bench_results/f547c394/confirmation/receipt.json".into(),
+        receipt_path: "receipts/confirmation/receipt.json".into(),
         label: ReceiptLabel::Confirmation,
         campaign_seed: CAMPAIGN_SEED,
         settings: SHARED_SETTINGS,
@@ -1017,7 +1102,7 @@ fn build_receipt_with_history(
             wrapper: if addendum.protocol.version >= 3 {
                 String::new()
             } else {
-                "dev/scripts/ccx1-bench-flock.sh".into()
+                "scripts/bench-flock.sh".into()
             },
         },
         workers: WorkerReport {
@@ -1075,19 +1160,21 @@ fn outcome(summary: &tuning_campaign_support::receipt::AcceptanceSummary, id: &s
 
 #[test]
 fn addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields() {
-    let root = repository_root().unwrap();
-    let schema_value: Value = serde_json::from_slice(
-        &fs::read(root.join("dev/active/f547c394/addendum-v1.schema.json")).unwrap(),
-    )
-    .unwrap();
-    let bytes = fs::read(root.join("dev/active/f547c394/addendum-protocol-smoke.json")).unwrap();
+    let schema_value: Value =
+        serde_json::from_slice(&committed("addendum*.schema.json", V1_SCHEMA_SHA256)).unwrap();
+    let bytes = committed(
+        "addendum-protocol-smoke.json",
+        "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c",
+    );
     let instance: Value = serde_json::from_slice(&bytes).unwrap();
     assert!(schema::validate(&schema_value, &instance).is_empty());
     let smoke = FamilyAddendum::decode(&bytes).unwrap();
     smoke.validate().unwrap();
     assert_eq!(smoke.family.id, "protocol-smoke");
-    let pilot_bytes =
-        fs::read(root.join("dev/active/f547c394/addendum-protocol-smoke-pilot.json")).unwrap();
+    let pilot_bytes = committed(
+        "addendum-protocol-smoke-pilot.json",
+        "6f762913988f8cb517f5e17c2832fff06d22359a7f1eb8c59d2f47a7ffe0feb4",
+    );
     let pilot_instance: Value = serde_json::from_slice(&pilot_bytes).unwrap();
     assert!(schema::validate(&schema_value, &pilot_instance).is_empty());
     let pilot = FamilyAddendum::decode(&pilot_bytes).unwrap();
@@ -1453,6 +1540,58 @@ fn acceptance_rejects_a_digest_that_does_not_match_the_snapshot() {
 }
 
 #[test]
+fn acceptance_identifies_shared_pins_by_digest_not_by_source_path() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Confirmatory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "relocated-pins",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let receipt =
+        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
+    for (pin, (path, bytes)) in [
+        (
+            &receipt.protocol,
+            live(SharedInput::Protocol, &SharedInput::protocol_identity(1)),
+        ),
+        (
+            &receipt.contract,
+            live(SharedInput::Contract, &SharedInput::contract_identity()),
+        ),
+    ] {
+        assert_ne!(pin.path, path);
+        assert_eq!(pin.sha256, sha256_hex(&bytes));
+    }
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+
+    let built = build_receipt(
+        "other-content-pin",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| {
+            receipt.protocol.sha256 = receipt.contract.sha256.clone();
+            receipt.protocol.snapshot = receipt.contract.snapshot.clone();
+        },
+    );
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected);
+    assert!(summary.findings.iter().any(|finding| {
+        finding.rule == "P-02" && finding.message.contains("identifies no protocol edition")
+    }));
+}
+
+#[test]
 fn source_control_metadata_does_not_change_acceptance() {
     let family = addendum(vec![cell(
         "a",
@@ -1756,11 +1895,11 @@ fn acceptance_rejects_an_addendum_not_frozen_before_measurement() {
 
 #[test]
 fn acceptance_rejects_missing_and_self_referential_resolution_evidence() {
-    let confirmation_path = "dev/bench_results/f547c394/confirmation/receipt.json";
+    let confirmation_path = "receipts/confirmation/receipt.json";
     for (name, evidence, expected) in [
         (
             "missing-resolution-evidence",
-            "dev/bench_results/f547c394/missing-pilot/receipt.json",
+            "receipts/missing-pilot/receipt.json",
             "resolution evidence",
         ),
         (
@@ -2095,7 +2234,14 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
 
 #[test]
 fn protocol_document_pins_the_frozen_shared_settings() {
-    let text = fs::read_to_string(repository_root().unwrap().join(PROTOCOL_PATH)).unwrap();
+    let text = String::from_utf8(
+        live(
+            SharedInput::Protocol,
+            &SharedInput::protocol_identity(PROTOCOL_VERSION),
+        )
+        .1,
+    )
+    .unwrap();
     assert!(text.contains(&format!("`{PROTOCOL_ID}` version {PROTOCOL_VERSION}")));
     let mut found = BTreeMap::new();
     for line in text.lines() {
@@ -2120,14 +2266,7 @@ fn protocol_document_pins_the_frozen_shared_settings() {
     };
     assert_eq!(
         rules(&text),
-        rules(
-            &fs::read_to_string(
-                repository_root()
-                    .unwrap()
-                    .join("dev/tools/tuning-campaign-support/src/receipt.rs")
-            )
-            .unwrap()
-        ),
+        rules(include_str!("../src/receipt.rs")),
         "the document must name exactly the acceptance rules the evaluator enforces"
     );
 }
@@ -2237,7 +2376,14 @@ fn flagged_windows_include_the_exact_boundary_without_pooling_arms() {
 
 #[test]
 fn protocol_document_guard_includes_justifications_and_every_rule_it_declares() {
-    let text = fs::read_to_string(repository_root().unwrap().join(PROTOCOL_PATH)).unwrap();
+    let text = String::from_utf8(
+        live(
+            SharedInput::Protocol,
+            &SharedInput::protocol_identity(PROTOCOL_VERSION),
+        )
+        .1,
+    )
+    .unwrap();
     let rows = SHARED_SETTINGS.table();
     for (name, value, justification) in rows {
         let row = format!("| `{name}` | `{value}` | {justification} |");
@@ -2249,17 +2395,12 @@ fn protocol_document_guard_includes_justifications_and_every_rule_it_declares() 
         .filter(|digits| digits.bytes().all(|byte| byte.is_ascii_digit()))
         .map(|digits| format!("P-{digits}"))
         .collect();
-    let enforced: std::collections::BTreeSet<_> = fs::read_to_string(
-        repository_root()
-            .unwrap()
-            .join("dev/tools/tuning-campaign-support/src/receipt.rs"),
-    )
-    .unwrap()
-    .split("P-")
-    .filter_map(|suffix| suffix.get(..2))
-    .filter(|digits| digits.bytes().all(|byte| byte.is_ascii_digit()))
-    .map(|digits| format!("P-{digits}"))
-    .collect();
+    let enforced: std::collections::BTreeSet<_> = include_str!("../src/receipt.rs")
+        .split("P-")
+        .filter_map(|suffix| suffix.get(..2))
+        .filter(|digits| digits.bytes().all(|byte| byte.is_ascii_digit()))
+        .map(|digits| format!("P-{digits}"))
+        .collect();
     assert_eq!(declared, enforced);
 }
 
@@ -2351,13 +2492,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     family.schema = ADDENDUM_SCHEMA_ID.into();
     family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
-    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-        fs::copy(
-            repository_root().unwrap().join(relative),
-            repo.join(relative),
-        )
-        .unwrap();
-    }
+    stage_current(&repo);
     family.cells[0].decoder = Some(decoder(DecoderArmKind::MatchedAlgorithm));
     family.cells[1].cache_state = CacheState::Cold;
     family.cells[1].cold_calls = Some(1000);
@@ -2400,7 +2535,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "issue": "f547c394",
         "label": "pilot",
         "campaign_seed": 5,
-        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "addendum": ADDENDUM_DOC,
         "lock_path": lock,
         "wrapper": "flock",
         "timing_override": {"windows_per_execution": 2, "window_target_ms": 3},
@@ -2472,7 +2607,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "{}",
         String::from_utf8_lossy(&second.stderr)
     );
-    let unrelated_notes = repo.join("dev/active/unrelated-session-notes.md");
+    let unrelated_notes = repo.join("notes/unrelated-session-notes.md");
     fs::create_dir_all(unrelated_notes.parent().unwrap()).unwrap();
     fs::write(
         unrelated_notes,
@@ -2486,7 +2621,7 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         "{}",
         String::from_utf8_lossy(&third.stderr)
     );
-    let out = repo.join("dev/bench_results/f547c394/runner-contract");
+    let out = repo.join("receipts/runner-contract");
     let finalize = Command::new(runner)
         .args(["finalize"])
         .arg(&stage)
@@ -2604,7 +2739,7 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
         "issue": "f547c394",
         "label": "pilot",
         "campaign_seed": 11,
-        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "addendum": ADDENDUM_DOC,
         "lock_path": "/tmp/unused.lock",
         "wrapper": "flock",
         "timing_override": null,
@@ -2666,10 +2801,11 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
 
 #[test]
 fn v1_published_receipts_keep_their_pinned_rules_and_refuse_v2() {
-    for mode in ["pilot", "confirmation"] {
-        let dir = repository_root().unwrap().join(format!(
-            "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-{mode}"
-        ));
+    for campaign_id in [
+        "pilot-f547c394-20260906t230725z",
+        "confirmation-f547c394-20260906t230920z",
+    ] {
+        let dir = committed_receipt(campaign_id);
         let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(1)).unwrap();
         assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
         let wrong = tuning_campaign_support::receipt::evaluate_version(&dir, Some(2)).unwrap();
@@ -3352,7 +3488,12 @@ fn v3_family_producing_manifest_is_selected_by_the_plan_and_bound_to_facts() {
             )
             .iter()
             .any(|e| e.contains("producing")),
-        "an omitted field selects the historical default, not the family manifest"
+        "an omitted field selects the shared manifest, not the family manifest"
+    );
+    assert_eq!(
+        Path::new(&omitted.producing_manifest_path(&facts.protocol.path)),
+        Path::new(&facts.protocol.path).with_file_name(SHARED_PRODUCING_MANIFEST),
+        "the shared manifest lies beside the pinned protocol document"
     );
     for invalid in ["/tmp/manifest.json", "../manifest.json", "family/*.json"] {
         value["producing_manifest"] = json!(invalid);
@@ -3485,13 +3626,7 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
     family.effect.measurement_resolution = None;
     family.effect.resolution_evidence = None;
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
-    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-        fs::copy(
-            repository_root().unwrap().join(relative),
-            repo.join(relative),
-        )
-        .unwrap();
-    }
+    stage_current(&repo);
     write_addendum(&repo, &family);
     git(&repo, &["init", "-q"]);
     let lock = root.join("bench.lock");
@@ -3507,7 +3642,7 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
         "issue": "f547c394",
         "label": "pilot",
         "campaign_seed": 11,
-        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "addendum": ADDENDUM_DOC,
         "lock_path": lock,
         "wrapper": "flock",
         "timing_override": {"windows_per_execution": 2, "window_target_ms": 3},
@@ -3609,7 +3744,7 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
         "{}",
         String::from_utf8_lossy(&resumed.stderr)
     );
-    let out = repo.join("dev/bench_results/f547c394/interrupted");
+    let out = repo.join("receipts/interrupted");
     let finalize = Command::new(runner)
         .arg("finalize")
         .arg(&stage)
@@ -3914,9 +4049,7 @@ fn resolution_evidence_accepts_pilots_from_version_3_to_the_citing_version() {
 
 #[test]
 fn v3_receipts_keep_rejecting_a_restarted_cell_and_refuse_later_rules() {
-    let dir = repository_root()
-        .unwrap()
-        .join("dev/bench_results/26465e6c/v3-and-popcnt-pilot");
+    let dir = committed_receipt("26465e6c-v3-and-popcnt-pilot");
     let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(3)).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
@@ -4170,13 +4303,7 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     family.effect.measurement_resolution = None;
     family.effect.resolution_evidence = None;
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
-    for relative in [PROTOCOL_PATH, ADDENDUM_SCHEMA_PATH] {
-        fs::copy(
-            repository_root().unwrap().join(relative),
-            repo.join(relative),
-        )
-        .unwrap();
-    }
+    stage_current(&repo);
     write_addendum(&repo, &family);
     git(&repo, &["init", "-q"]);
     let lock = root.join("absent.lock");
@@ -4199,7 +4326,7 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
         "issue": "f547c394",
         "label": "smoke",
         "campaign_seed": 11,
-        "addendum": "dev/active/f547c394/addendum-fixture.json",
+        "addendum": ADDENDUM_DOC,
         "lock_path": lock,
         "wrapper": "flock",
         "timing_override": null,
@@ -4349,7 +4476,7 @@ mod arm_smoke {
     use tuning_campaign_support::protocol::{sha256_hex, CacheState};
     use tuning_campaign_support::scratch::Scratch;
 
-    const ADDENDUM: &str = "dev/active/f547c394/addendum-fixture.json";
+    const ADDENDUM: &str = super::ADDENDUM_DOC;
     const CELLS: [&str; 2] = ["first", "second"];
 
     /// A conforming arm: the crate's own synthetic workload, which serves the
@@ -4392,7 +4519,7 @@ mod arm_smoke {
     fn fixture(name: &str, candidate: Value, cell_ids: [&str; 2]) -> Fixture {
         let root = scratch(name);
         let repo = root.join("repo");
-        fs::create_dir_all(repo.join("dev/active/f547c394")).unwrap();
+        fs::create_dir_all(repo.join(Path::new(ADDENDUM).parent().unwrap())).unwrap();
         let mut family = addendum(
             CELLS
                 .iter()

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Checks that the shared producing-input closure enumerates the runner's sources.
 
-A campaign plan that names no family closure pins the path
-`protocol::RunnerPlan::producing_manifest_path` returns, so that document decides which bytes the campaign's behaviour identity covers. A
+A campaign plan that names no family closure pins the shared closure
+`protocol::RunnerPlan::producing_manifest_path` resolves, so that document
+decides which bytes the campaign's behaviour identity covers. A
 source the runner compiles and the closure omits leaves a file that can change
 what a campaign measures outside the receipt's snapshot, which
 `@/inv/behavioral-evidence-validity` and `@/inv/runtime-observed-provenance`
@@ -11,8 +12,9 @@ a family closure generated from its own tree is checked by that generator's
 `--check`.
 
 The crate is the live `Cargo.toml` naming package `tuning-campaign-support`, and the
-closure is the path its `protocol.rs` declares; the check resolves both under the
-repository root git reports.
+closure is `producing-inputs.json` beside the live protocol documents, which open
+with the protocol's title and identity sentence; the check resolves both under
+the repository root git reports.
 
 The runner's sources are `src/lib.rs`, every module it declares transitively,
 and the runner binary. A module behind a cargo feature outside the crate's
@@ -45,10 +47,8 @@ SCHEMA = "tuning-campaign-producing-inputs-v1"
 REQUIRED_SECTIONS = ("behavior_sources", "build_inputs")
 
 MODULE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
-DEFAULT_CLOSURE = re.compile(
-    r'fn producing_manifest_path[^{]*\{\s*self\.producing_manifest\s*\.as_ref\(\)\s*'
-    r'\.map_or\(\s*"([^"]+)"'
-)
+CLOSURE = "producing-inputs.json"
+PROTOCOL_OPENING = b"# Zen 3 benchmark protocol\n\nProtocol `zen3-benchmark-protocol` version "
 FEATURE_GATE = re.compile(r'^\s*#\[cfg\(feature\s*=\s*"([^"]+)"\)\]\s*$')
 
 
@@ -64,13 +64,18 @@ def locate_crate(root: Path) -> str:
     return matches[0]
 
 
-def closure_path(root: Path, crate: str) -> str:
-    """The root-relative closure path the crate's runner plan defaults to."""
-    source = root / crate / "src/protocol.rs"
-    declared = DEFAULT_CLOSURE.search(source.read_text())
-    if declared is None:
-        raise SystemExit(f"{source}: no default producing manifest path found")
-    return declared.group(1)
+def closure_path(root: Path) -> str:
+    """The root-relative shared closure, beside the live protocol documents."""
+    directories = {
+        str(Path(path).parent)
+        for path in tracked_files(root, "protocol*.md")
+        if (root / path).read_bytes().startswith(PROTOCOL_OPENING)
+    }
+    if len(directories) != 1:
+        raise SystemExit(
+            f"protocol documents lie in {len(directories)} directories; exactly one must"
+        )
+    return str(Path(directories.pop()) / CLOSURE)
 
 
 def default_features(manifest: Path) -> set[str]:
@@ -153,7 +158,7 @@ def omissions(closure: dict, sources: list[str]) -> list[str]:
 
 def check(root: Path) -> list[str]:
     """Reports every defect of the shared closure under `root`."""
-    closure_file = closure_path(root, locate_crate(root))
+    closure_file = closure_path(root)
     try:
         closure = json.loads((root / closure_file).read_text())
     except (OSError, json.JSONDecodeError) as error:
@@ -164,7 +169,7 @@ def check(root: Path) -> list[str]:
 
 
 FIXTURE_CRATE = "fixture/crate"
-FIXTURE_CLOSURE = "fixture/closure.json"
+FIXTURE_PROTOCOL = "fixture/protocol/protocol.md"
 
 
 def write_fixture(root: Path, name_arm: bool) -> None:
@@ -180,15 +185,12 @@ def write_fixture(root: Path, name_arm: bool) -> None:
     )
     for relative in ("src/arm.rs", "src/scratch.rs", RUNNER):
         (crate / relative).write_text("\n")
-    (crate / "src/protocol.rs").write_text(
-        "fn producing_manifest_path(&self) -> &str {\n"
-        "    self.producing_manifest.as_ref().map_or(\n"
-        f'        "{FIXTURE_CLOSURE}",\n'
-    )
+    (root / FIXTURE_PROTOCOL).parent.mkdir(parents=True)
+    (root / FIXTURE_PROTOCOL).write_bytes(PROTOCOL_OPENING + b"1. Fixture.\n")
     named = [f"{FIXTURE_CRATE}/src/lib.rs", f"{FIXTURE_CRATE}/{RUNNER}"]
     if name_arm:
         named.append(f"{FIXTURE_CRATE}/src/arm.rs")
-    (root / FIXTURE_CLOSURE).write_text(
+    (root / FIXTURE_PROTOCOL).with_name(CLOSURE).write_text(
         json.dumps(
             {
                 "schema": SCHEMA,
@@ -246,7 +248,7 @@ def main() -> int:
     if arguments.self_test:
         return self_test()
     root = repository_root(Path(__file__).resolve())
-    closure_file = closure_path(root, locate_crate(root))
+    closure_file = closure_path(root)
     findings = check(root)
     if findings:
         print(f"{closure_file} does not enumerate the runner's sources:", file=sys.stderr)

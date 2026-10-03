@@ -32,11 +32,14 @@ crate is the canonical home.
 - The protocol identity is the pair `zen3-benchmark-protocol` version 4, the
   constants `PROTOCOL_ID` and `PROTOCOL_VERSION` in `src/protocol.rs`.
 - The content identity of this document, the addendum schema, the measurement
-  contract and every addendum is an `ArtifactPin`: its original path, its
-  receipt-local immutable snapshot path and the SHA-256 of the exact bytes.
-  The runner publishes each snapshot atomically before opening the execution
-  log. The acceptance tool reads only those portable receipt-local bytes and
-  rejects a missing snapshot or digest mismatch (P-02, P-03). Git revisions,
+  contract and every addendum is an `ArtifactPin`: its source path as
+  provenance, its receipt-local immutable snapshot path and the SHA-256 of the
+  exact bytes. The runner pins the live protocol document and schema whose
+  identities the addendum names, wherever they lie in the repository, and
+  publishes each snapshot atomically before opening the execution log. The
+  acceptance tool reads only those portable receipt-local bytes and rejects a
+  missing snapshot, a digest mismatch, or a shared pin whose bytes do not
+  declare that document's identity (P-02, P-03). Git revisions,
   commit ancestry and whole-tree state are optional navigation metadata and do
   not decide acceptance or resume compatibility.
 - This is version 4. The amendment records of [version 2](amendment-v2.md),
@@ -507,7 +510,7 @@ receipt. Neither is a performance result about gf2.
 | Rule | Check |
 |---|---|
 | P-01 | Receipt envelope is `zen3-benchmark-receipt-v1`; the pinned protocol and addendum versions agree with each other and any explicitly requested evaluation version. |
-| P-02 | Protocol, contract and addendum-schema pins name the canonical source paths, literal receipt-local snapshot paths and 64-hex digests; missing snapshots and digest mismatches reject. |
+| P-02 | Protocol, contract and addendum-schema pins name literal receipt-local snapshot paths and 64-hex digests of bytes that declare that document's identity; missing snapshots, digest mismatches and other content reject. |
 | P-03 | The addendum matches its receipt-local snapshot, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot from the same family whose widest relative bootstrap half-width supports the declared resolution. |
 | P-04 | Receipt settings equal the frozen shared settings unless a deviation is declared; a deviation makes every cell non-confirmatory. |
 | P-05 | The manifest and every declared producing/build input match their receipt-local content snapshot, and the toolchain is recorded. Source-control metadata is informational. |

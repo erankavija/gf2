@@ -2,9 +2,10 @@
 //! family/cell addendum contract.
 //!
 //! The protocol document, the addendum schema and this module describe one
-//! versioned contract. Receipts pin the document and schema by source path,
-//! receipt-local snapshot and content digest; the acceptance tool recomputes every digest and every
-//! statistic instead of trusting a receipt's own claims.
+//! versioned contract. Receipts pin the document and schema by receipt-local
+//! snapshot and content digest, with the source path as provenance; the
+//! acceptance tool recomputes every digest and every statistic instead of
+//! trusting a receipt's own claims.
 
 use crate::abtest::Margins;
 use crate::host::CoreArm;
@@ -21,12 +22,6 @@ use crate::journal::atomic_write_new;
 pub const PROTOCOL_ID: &str = "zen3-benchmark-protocol";
 /// Protocol version described by this module and the committed document.
 pub const PROTOCOL_VERSION: u32 = 4;
-/// Repository-relative path of the executable protocol document.
-pub const PROTOCOL_PATH: &str = "dev/active/f547c394/protocol.md";
-/// Repository-relative path of the addendum JSON Schema.
-pub const ADDENDUM_SCHEMA_PATH: &str = "dev/active/f547c394/addendum.schema.json";
-/// Repository-relative path of the normative measurement contract.
-pub const CONTRACT_PATH: &str = "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md";
 /// Schema identity carried by every addendum.
 pub const ADDENDUM_SCHEMA_ID: &str = "zen3-benchmark-addendum-v4";
 /// Schema identity carried by every runner plan.
@@ -137,6 +132,110 @@ impl SharedSettings {
             ),
             ("quality_confidence", format!("{}", self.quality_confidence), "Marginal FER uses Wilson at 95% [Wilson1927] [BrownCaiDasGupta2001]; BER uses the frame-bounded interval below."),
         ]
+    }
+}
+
+/// File name of the shared producing-input manifest, which lies beside the
+/// protocol document and serves every plan that names no manifest of its own.
+pub const SHARED_PRODUCING_MANIFEST: &str = "producing-inputs.json";
+
+/// A shared document every receipt pins. Each is identified by the identity
+/// its own bytes declare, so a receipt's recorded source path is provenance
+/// and a live document is found wherever it lies below the repository root.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SharedInput {
+    /// The executable protocol document of one protocol version.
+    Protocol,
+    /// The normative measurement contract.
+    Contract,
+    /// The addendum JSON Schema of one protocol version.
+    AddendumSchema,
+}
+
+impl SharedInput {
+    const PROTOCOL_OPENING: &'static str = "# Zen 3 benchmark protocol\n\nProtocol `";
+    const CONTRACT_TITLE: &'static str = "Zen 3 performance measurement contract";
+
+    /// Name used in acceptance findings.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Protocol => "protocol",
+            Self::Contract => "contract",
+            Self::AddendumSchema => "addendum schema",
+        }
+    }
+
+    /// Receipt-relative snapshot path.
+    pub fn snapshot(self) -> &'static str {
+        match self {
+            Self::Protocol => "inputs/protocol.md",
+            Self::Contract => "inputs/measurement-contract.md",
+            Self::AddendumSchema => "inputs/addendum.schema.json",
+        }
+    }
+
+    /// File-name glob of the live documents.
+    fn file_name(self) -> &'static str {
+        match self {
+            Self::Protocol => "protocol*.md",
+            Self::Contract => "measurement-contract.md",
+            Self::AddendumSchema => "addendum*.schema.json",
+        }
+    }
+
+    /// Identity of the protocol document of `version`.
+    pub fn protocol_identity(version: u32) -> String {
+        format!("{PROTOCOL_ID} version {version}")
+    }
+
+    /// The identity `bytes` declare as this input, or `None` when they are no
+    /// edition of it: the protocol document opens with its title and a
+    /// sentence naming [`PROTOCOL_ID`] and its version, the schema's `$id`
+    /// names an addendum schema version, and the contract opens with its title.
+    pub fn identity(self, bytes: &[u8]) -> Option<String> {
+        match self {
+            Self::Protocol => {
+                let text = std::str::from_utf8(bytes).ok()?;
+                let rest = text
+                    .strip_prefix(Self::PROTOCOL_OPENING)?
+                    .strip_prefix(PROTOCOL_ID)?
+                    .strip_prefix("` version ")?;
+                let (version, _) = rest.split_once('.')?;
+                Some(Self::protocol_identity(version.parse().ok()?))
+            }
+            Self::Contract => bytes
+                .strip_prefix(b"# ")?
+                .strip_prefix(Self::CONTRACT_TITLE.as_bytes())?
+                .starts_with(b"\n")
+                .then(Self::contract_identity),
+            Self::AddendumSchema => {
+                let value: serde_json::Value = serde_json::from_slice(bytes).ok()?;
+                let id = value.get("$id")?.as_str()?;
+                let family = ADDENDUM_SCHEMA_ID.trim_end_matches(|c: char| c.is_ascii_digit());
+                id.strip_prefix(family)?
+                    .parse::<u32>()
+                    .ok()
+                    .map(|_| id.to_owned())
+            }
+        }
+    }
+
+    /// Identity the measurement contract declares.
+    pub fn contract_identity() -> String {
+        Self::CONTRACT_TITLE.to_owned()
+    }
+
+    /// The `root`-relative path of the one live document declaring
+    /// `identity`.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the listing fails or not exactly one live document declares
+    /// `identity`.
+    pub fn locate(self, root: &Path, identity: &str) -> io::Result<String> {
+        crate::repository::locate_live(root, self.file_name(), |bytes| {
+            self.identity(bytes).as_deref() == Some(identity)
+        })
     }
 }
 
@@ -1096,12 +1195,17 @@ pub struct RunnerPlan {
 }
 
 impl RunnerPlan {
-    /// Manifest captured into this campaign's existing producing-input snapshot.
-    pub fn producing_manifest_path(&self) -> &str {
-        self.producing_manifest.as_ref().map_or(
-            "dev/active/f547c394/producing-inputs.json",
-            crate::provenance::ProducingManifestPath::as_str,
-        )
+    /// Manifest captured into this campaign's producing-input snapshot: the
+    /// plan's own, or [`SHARED_PRODUCING_MANIFEST`] beside the pinned
+    /// protocol document at `protocol_path`.
+    pub fn producing_manifest_path(&self, protocol_path: &str) -> String {
+        match &self.producing_manifest {
+            Some(path) => path.as_str().to_owned(),
+            None => Path::new(protocol_path)
+                .with_file_name(SHARED_PRODUCING_MANIFEST)
+                .to_string_lossy()
+                .into_owned(),
+        }
     }
 
     /// Decodes a plan strictly.
