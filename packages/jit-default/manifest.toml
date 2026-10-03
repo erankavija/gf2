@@ -360,17 +360,7 @@ value = "dev/presentations"
 [[contribution]]
 kind = "set-string"
 target = "documentation-managed-paths"
-value = "dev/design"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
 value = "dev/benchmarks"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-managed-paths"
-value = "dev/experiments"
 
 # Living documentation, a configured item-kind source, or documented
 # invocation paths: each keeps its source where readers and configuration
@@ -380,27 +370,7 @@ value = "dev/experiments"
 [[contribution]]
 kind = "set-string"
 target = "documentation-permanent-paths"
-value = "dev/architecture"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-permanent-paths"
-value = "dev/eval"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-permanent-paths"
-value = "dev/vision"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-permanent-paths"
 value = "dev/index.md"
-
-[[contribution]]
-kind = "set-string"
-target = "documentation-permanent-paths"
-value = "dev/TESTING.md"
 
 [[contribution]]
 kind = "set-string"
