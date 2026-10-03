@@ -16,20 +16,10 @@
 //! Canonical prime coordinates concatenate the coordinates of each stored
 //! base coefficient, with the base coordinate varying fastest.
 //!
-//! # The compile-time form
-//!
-//! [`ConstQuotient`] carries the same field with the presentation fixed by a
-//! [`ConstQuotientConfig`] implementor instead of by runtime values. Elements
-//! are `[B; R]` arrays, the modulus lives in the config's associated constant
-//! rather than in any element, and the arithmetic monomorphizes over it, so a
-//! compile-time element stores no descriptor and consults no certificate.
-//! [`ConstQuotient::extension`] decides the declared modulus and yields a
-//! [`ConstQuotientExt`] witness; [`ConstQuotient::extension_unchecked`] takes
-//! the declaration on trust.
-//!
 //! # Equivalence of the two forms
 //!
-//! Both forms of one presentation are the same field under three propositions,
+//! [`QuotientField`] and the compile-time [`ConstQuotient`] of one
+//! presentation are the same field under three propositions,
 //! which the file's differential suite checks over
 //! $\mathrm{GF}(2^4)$, $\mathrm{GF}(5^3)$, and $\mathrm{GF}(3^4)$ over
 //! $\mathrm{GF}(9)$:
@@ -335,10 +325,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     }
 
     /// Returns the canonical monic modulus, with its constant coefficient first.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the returned polynomial is borrowed.
     pub fn modulus(&self) -> &FieldPoly<F> {
         &self.params.modulus
     }
@@ -409,10 +395,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     /// # Errors
     ///
     /// [`FieldError::UnsupportedSize`] when the order exceeds `u128::MAX`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)` checked exponentiation on the identity metadata.
     pub fn order(&self) -> Result<u128, FieldError> {
         self.params
             .field_id
@@ -435,23 +417,6 @@ impl<F: FieldIdentity> QuotientField<F> {
     /// # Complexity
     ///
     /// `O(|E| [E:GF(p)])` time and `O(|E| r)` stored base coefficients.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldPoly, FiniteField};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<3>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// let elements = field.elements()?;
-    /// assert_eq!(elements.len(), 9);
-    /// assert!(elements[0].is_zero());
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn elements(&self) -> Result<Vec<QuotientElement<F>>, FieldError> {
         let order = self.order()?;
         let count = usize::try_from(order).map_err(|_| self.unsupported())?;
@@ -696,19 +661,11 @@ impl<F: FieldIdentity> Hash for QuotientElement<F> {
 
 impl<F: FieldIdentity> QuotientElement<F> {
     /// Returns the fixed-length base-coefficient vector, constant first.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the slice is borrowed.
     pub fn coefficients(&self) -> &[F] {
         &self.coefficients
     }
 
     /// Returns a descriptor for this element's field.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; cloning the descriptor increments an `Arc` count.
     pub fn field(&self) -> QuotientField<F> {
         QuotientField {
             params: Arc::clone(&self.params),
@@ -724,22 +681,6 @@ impl<F: FieldIdentity> QuotientElement<F> {
     ///
     /// `O((k mod d) log(p) r^2)` base-field operations for absolute degree
     /// `d` and relative degree `r`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{ConstField, FieldPoly};
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gfpn::QuotientField;
-    ///
-    /// let field = QuotientField::new(
-    ///     Fp::<2>::zero(),
-    ///     FieldPoly::new(vec![Fp::new(1), Fp::new(1), Fp::new(0), Fp::new(1)]),
-    /// )?;
-    /// let x = field.indeterminate();
-    /// assert_eq!(x.frobenius(3), x);
-    /// # Ok::<(), gf2_core::field::FieldError>(())
-    /// ```
     pub fn frobenius(&self, k: usize) -> Self {
         let mut result = self.clone();
         let steps = k % self.params.absolute_degree;
@@ -1134,10 +1075,6 @@ impl<F: FieldIdentity> FieldExtension for QuotientField<F> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Compile-time configured quotient
-// ---------------------------------------------------------------------------
-
 /// Compile-time declaration of the quotient $B\lbrack x\rbrack/(f)$ of relative degree `R`.
 ///
 /// The implementor is a zero-sized marker naming the base field and the monic
@@ -1235,10 +1172,6 @@ impl<const R: usize, C: ConstQuotientConfig<R>> ConstQuotient<R, C> {
     ///
     /// Fails to compile, rather than panicking, when `R` is zero: a quotient
     /// modulus has degree at least one.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the array is moved.
     pub fn new(coefficients: [C::BaseField; R]) -> Self {
         const { assert!(R > 0, "a quotient modulus has degree at least one") };
         Self { coefficients }
@@ -1259,10 +1192,6 @@ impl<const R: usize, C: ConstQuotientConfig<R>> ConstQuotient<R, C> {
     }
 
     /// Returns the fixed-length coefficient array, constant first.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the array is borrowed.
     pub fn coefficients(&self) -> &[C::BaseField; R] {
         &self.coefficients
     }
@@ -1569,10 +1498,6 @@ impl<const R: usize, C: ConstQuotientConfig<R>> AddAssign<&Self> for ConstQuotie
     }
 }
 
-// ---------------------------------------------------------------------------
-// Reference-forwarding operators (ConstQuotient is Copy, so dereference)
-// ---------------------------------------------------------------------------
-
 impl<const R: usize, C: ConstQuotientConfig<R>> Add<&ConstQuotient<R, C>> for ConstQuotient<R, C> {
     type Output = ConstQuotient<R, C>;
 
@@ -1813,14 +1738,10 @@ impl<const R: usize, C: ConstQuotientConfig<R>> ConstSimpleExtension for ConstQu
     }
 }
 
-// ---------------------------------------------------------------------------
-// In-tree compile-time declarations
-//
 // Every declaration here is decided by `prove_irreducible` and registered in
 // the shared conformance harness (`field/axiom_tests.rs`), which imports them,
 // so no in-tree compile-time quotient rests on its declaration alone. The one
 // exception is deliberately reducible and is named only by the rejection test.
-// ---------------------------------------------------------------------------
 
 // The GF(9) carrier is the harness's own `Gf9`, so the compile-time tower
 // declaration below and the harness's runtime `quotient_gf81()` extend one
@@ -2152,10 +2073,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Compile-time form: differential equivalence with the runtime form
-    // -----------------------------------------------------------------------
-
     /// Checks the three obligations that make the compile-time and runtime
     /// carriers of one declaration the same field.
     ///
@@ -2174,7 +2091,6 @@ mod tests {
             ConstQuotient::<R, C>::runtime_field().expect("the declaration is irreducible");
         let extension = ConstQuotient::<R, C>::extension().expect("the declaration is irreducible");
 
-        // Obligation 1: identity agreement.
         assert_eq!(
             <ConstQuotient<R, C> as FieldIdentity>::field_id_hint(),
             Some(runtime.ext_id().clone()),
@@ -2190,7 +2106,6 @@ mod tests {
                 .expect("both carriers name one algebraic field")
         };
 
-        // Obligation 3 at field level: the deterministic generator agrees.
         let (const_generator, const_order) =
             canonical_generator(&extension).expect("a finite field has a cyclic unit group");
         let (runtime_generator, runtime_order) =
@@ -2211,21 +2126,18 @@ mod tests {
                     .element(right)
                     .expect("the strategy draws base-field coefficients");
 
-                // Obligation 2: coordinate agreement.
                 let mut const_coords = Vec::new();
                 let mut runtime_coords = Vec::new();
                 a.write_prime_coords(&mut const_coords);
                 a_runtime.write_prime_coords(&mut runtime_coords);
                 prop_assert_eq!(&const_coords, &runtime_coords);
 
-                // Conversion is the identity on coordinates in both directions.
                 prop_assert_eq!(transport(&a), a_runtime.clone());
                 prop_assert_eq!(
                     convert_into_const::<_, ConstQuotient<R, C>>(&a_runtime).unwrap(),
                     a
                 );
 
-                // Obligation 3 at element level.
                 prop_assert_eq!(transport(&(a + b)), a_runtime.clone() + b_runtime.clone());
                 prop_assert_eq!(transport(&(a - b)), a_runtime.clone() - b_runtime.clone());
                 prop_assert_eq!(transport(&(a * b)), a_runtime.clone() * b_runtime.clone());
