@@ -1,0 +1,56 @@
+2026-08-22T14:53:51Z E2 start
+2026-08-22T14:53:51Z affinity=Cpus_allowed_list:6-11
+2026-08-22T14:53:51Z niceness=0
+2026-08-22T14:53:51Z loadavg=0.01 0.05 0.16 1/952 1749928
+2026-08-22T14:53:51Z lock=14: FLOCK  ADVISORY  WRITE 1749916 00:2d:39210 0 EOF;
+2026-08-22T14:53:51Z governor=powersave,powersave,powersave,powersave,powersave,powersave,
+2026-08-22T14:53:51Z stat arm=cand j=1 set=A rep=1
+2026-08-22T14:54:02Z   rc=0
+2026-08-22T14:54:02Z stat arm=cand j=3 set=A rep=1
+2026-08-22T14:54:12Z   rc=0
+2026-08-22T14:54:12Z stat arm=ref j=0 set=A rep=1
+2026-08-22T14:54:23Z   rc=0
+2026-08-22T14:54:23Z stat arm=ref j=1 set=A rep=1
+2026-08-22T14:54:34Z   rc=0
+2026-08-22T14:54:34Z stat arm=cand j=1 set=B rep=1
+2026-08-22T14:54:45Z   rc=0
+2026-08-22T14:54:45Z stat arm=cand j=3 set=B rep=1
+2026-08-22T14:54:56Z   rc=0
+2026-08-22T14:54:56Z stat arm=ref j=0 set=B rep=1
+2026-08-22T14:55:07Z   rc=0
+2026-08-22T14:55:07Z stat arm=ref j=1 set=B rep=1
+2026-08-22T14:55:18Z   rc=0
+2026-08-22T14:55:18Z stat arm=cand j=1 set=A rep=2
+2026-08-22T14:55:29Z   rc=0
+2026-08-22T14:55:29Z stat arm=cand j=3 set=A rep=2
+2026-08-22T14:55:39Z   rc=0
+2026-08-22T14:55:39Z stat arm=ref j=0 set=A rep=2
+2026-08-22T14:55:50Z   rc=0
+2026-08-22T14:55:50Z stat arm=ref j=1 set=A rep=2
+2026-08-22T14:56:01Z   rc=0
+2026-08-22T14:56:01Z stat arm=cand j=1 set=B rep=2
+2026-08-22T14:56:12Z   rc=0
+2026-08-22T14:56:12Z stat arm=cand j=3 set=B rep=2
+2026-08-22T14:56:23Z   rc=0
+2026-08-22T14:56:23Z stat arm=ref j=0 set=B rep=2
+2026-08-22T14:56:34Z   rc=0
+2026-08-22T14:56:34Z stat arm=ref j=1 set=B rep=2
+2026-08-22T14:56:45Z   rc=0
+2026-08-22T14:56:45Z record arm=cand j=1 ev=cycles:u tag=cyc
+2026-08-22T14:56:56Z   rc=0
+2026-08-22T14:56:56Z record arm=cand j=3 ev=cycles:u tag=cyc
+2026-08-22T14:57:07Z   rc=0
+2026-08-22T14:57:07Z record arm=ref j=0 ev=cycles:u tag=cyc
+2026-08-22T14:57:18Z   rc=0
+2026-08-22T14:57:18Z record arm=ref j=1 ev=cycles:u tag=cyc
+2026-08-22T14:57:29Z   rc=0
+2026-08-22T14:57:29Z record arm=cand j=1 ev=ex_ret_brn_misp:u tag=misp
+2026-08-22T14:57:40Z   rc=0
+2026-08-22T14:57:40Z record arm=cand j=3 ev=ex_ret_brn_misp:u tag=misp
+2026-08-22T14:57:51Z   rc=0
+2026-08-22T14:57:51Z record arm=ref j=0 ev=ex_ret_brn_misp:u tag=misp
+2026-08-22T14:58:02Z   rc=0
+2026-08-22T14:58:02Z record arm=ref j=1 ev=ex_ret_brn_misp:u tag=misp
+2026-08-22T14:58:13Z   rc=0
+2026-08-22T14:58:13Z loadavg=1.06 0.63 0.38 2/953 1750631
+2026-08-22T14:58:13Z E2 end
