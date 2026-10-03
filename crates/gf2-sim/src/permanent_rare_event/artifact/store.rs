@@ -56,7 +56,6 @@ impl<'a> Component<'a> {
         Ok(Self(name))
     }
 
-    /// Returns the exact component text.
     pub(super) fn as_str(self) -> &'a str {
         self.0
     }
@@ -96,7 +95,6 @@ impl DirHandle {
         })
     }
 
-    /// Returns the path this descriptor was opened from.
     pub(super) fn path(&self) -> &Path {
         &self.path
     }

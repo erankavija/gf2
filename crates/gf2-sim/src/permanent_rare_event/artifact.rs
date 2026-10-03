@@ -5,17 +5,6 @@
 //! dataset/run/attempt IDs, closed address sets, and attempt/checkpoint
 //! lineage. Publication synchronizes both files and their directory before a
 //! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
-//!
-//! Publication and recovery form one boundary with four properties. Every
-//! directory and file below a pinned dataset root is reached through a held
-//! descriptor with no-follow opens, so a name swapped between a check and its
-//! use cannot redirect an artifact. Each payload derives the destination it
-//! owns, so publication takes no caller-chosen name and no payload can occupy
-//! another kind's or phase's directory. Recovery reads process liveness from
-//! the operating system at the recovery barrier and binds the observation
-//! time. Terminals, resumes, and final receipts reconstruct their checkpoint
-//! and attempt state from the strict published directories, so a byte-valid
-//! artifact that never reached the filesystem cannot enter the lifecycle.
 
 use gf2_stats::weighted::ScaledStudentInterval;
 use num_bigint::BigUint;

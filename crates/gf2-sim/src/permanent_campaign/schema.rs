@@ -46,9 +46,8 @@ pub const DATASET_HOME: &str = "dev/simulation_results/permanent-zero-fraction";
 
 /// Returns the campaign-relative path of one shard record.
 ///
-/// This is the one place the shard path grammar is written; the layout, the
-/// conformance reader, and the integrity layer all derive their paths here so
-/// a path built for one purpose cannot drift from a path built for another.
+/// The layout, the conformance reader, and the integrity layer all derive
+/// their shard paths here.
 pub fn shard_record_file(q: u8, n: u16, shard_id: u64) -> String {
     format!("shards/q{q}/n{n:02}/shard-{shard_id:06}.json")
 }
@@ -141,9 +140,8 @@ const JSON_FIELDS: &[&str] = &[
 
 /// Returns every admitted field name in the JSON and CSV schemas.
 ///
-/// This list is the review surface used to ensure the durable format contains
-/// data and mechanical provenance only. It intentionally contains no free-form
-/// analysis or scientific-claim field.
+/// The durable format contains data and mechanical provenance only: no
+/// free-form analysis or scientific-claim field.
 pub fn schema_field_names() -> impl Iterator<Item = &'static str> {
     JSON_FIELDS.iter().chain(SUMMARY_CSV_FIELDS).copied()
 }
@@ -569,8 +567,7 @@ macro_rules! define_campaign_backends {
             /// Every backend admitted by the campaign schema.
             ///
             /// This inventory and [`Self::name`] are generated from the same
-            /// variant declaration, so a backend cannot join one without the
-            /// other.
+            /// variant declaration.
             #[must_use]
             pub const fn campaign_inventory() -> &'static [Self] {
                 &[$(Self::$variant,)+]
@@ -1471,10 +1468,8 @@ fn validate_estimate(estimate: ProportionEstimate) -> Result<(), String> {
 
 /// Strictly reads and validates the root manifest of a dataset directory.
 ///
-/// The manifest declares the dataset's file layout and its recorded source
-/// revision, both of which the integrity layer needs before the remaining
-/// files can be checked. It is therefore readable on its own, without the
-/// whole-dataset cross-document conformance [`conform_dataset`] performs.
+/// Reads one document, without the whole-dataset cross-document conformance
+/// [`conform_dataset`] performs.
 pub fn read_manifest(root: &Path) -> Result<CampaignManifest, SchemaError> {
     read_json(&root.join(MANIFEST_FILE))
 }
@@ -1490,18 +1485,15 @@ pub(crate) fn read_manifest_bytes(
 
 /// Strictly reads and validates one field arm's summary.
 ///
-/// The integrity layer needs each cell's recorded terminal state to tell a
-/// shard a halted cell never executed from one that has been lost, and that
-/// state lives here. Like [`read_manifest`], this reads one document without
-/// the whole-dataset conformance [`conform_dataset`] performs.
+/// Like [`read_manifest`], this reads one document without the whole-dataset
+/// conformance [`conform_dataset`] performs.
 pub fn read_field_summary(root: &Path, q: u8) -> Result<FieldSummary, SchemaError> {
     read_json(&root.join(field_summary_file(q)))
 }
 
 /// Strictly reads and validates every required raw document in a dataset.
 ///
-/// The function performs schema and cross-document conformance. Cryptographic
-/// checksum verification is intentionally separate from this shape check and
+/// Performs schema and cross-document conformance. Checksum verification
 /// belongs to [`verify_dataset`](super::provenance::verify_dataset).
 pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     let manifest_path = root.join(MANIFEST_FILE);

@@ -1,23 +1,17 @@
 //! [`SimulationResults`] — the aggregate outcome of a [`Pipeline`](crate::Pipeline)
-//! run, the v2 successor to the legacy `gf2_coding::simulation` result rows.
+//! run.
 //!
-//! The per-SNR-point columns are a thin projection of the [`WorkerCounters`]
-//! SSOT (`frames` / `errors` / `total_iterations` / `total_bits` /
-//! `total_bit_errors`), so the determinism contract that pins those counters
-//! (design doc §11) carries through verbatim: `fer = errors / frames`,
-//! `errors` is the **frame**-error count (not bit errors), and `mean_iters =
-//! total_iterations / frames`. No divergent column definition is introduced —
-//! a [`SnrPointResult`] is built directly from a [`WorkerCounters`] via
-//! [`SnrPointResult::from_counters`].
+//! The per-SNR-point columns are a projection of [`WorkerCounters`], built only
+//! by [`SnrPointResult::from_counters`]: `fer = errors / frames`, `errors` is
+//! the **frame**-error count (not bit errors), and `mean_iters =
+//! total_iterations / frames`.
 
 use crate::parallel::WorkerCounters;
 
 /// The aggregate result of one SNR point.
 ///
-/// Every numeric column is derived from a [`WorkerCounters`] (the SSOT), so the
-/// byte-identity guarantees of design doc §11 hold: `fer` / `frames` / `errors`
-/// / `mean_iters` are byte-identical across worker counts at a fixed seed (and,
-/// for the hybrid path, run-to-run since it is the same device path twice).
+/// `fer` / `frames` / `errors` / `mean_iters` are byte-identical across worker
+/// counts at a fixed seed (and, for the hybrid path, run-to-run).
 ///
 /// # Examples
 ///
@@ -57,16 +51,8 @@ pub struct SnrPointResult {
 }
 
 impl SnrPointResult {
-    /// Builds a point result from its Es/N0 and the SSOT [`WorkerCounters`].
-    ///
-    /// `fer` and `mean_iters` are the counters' derived ratios; `errors` is the
-    /// frame-error count. This is the single conversion point so no column is
-    /// ever computed two different ways.
-    ///
-    /// # Arguments
-    ///
-    /// * `es_n0_db` — the SNR point's Es/N0 in dB.
-    /// * `counters` — the aggregated per-SNR-point counters.
+    /// Builds a point result from its Es/N0 (dB) and aggregated
+    /// [`WorkerCounters`]; the single conversion point for every column.
     #[must_use]
     pub fn from_counters(es_n0_db: f64, counters: WorkerCounters) -> Self {
         Self {
@@ -84,12 +70,6 @@ impl SnrPointResult {
 
 /// The aggregate result of a full [`Pipeline`](crate::Pipeline) run: one
 /// [`SnrPointResult`] per simulated Es/N0 point, in sweep order.
-///
-/// This is the type the §12 migration table's `Pipeline::run` /
-/// `Pipeline::run_with_decoder` / `Pipeline::run_parallel` return. Downstream
-/// consumers (the D.3 calibration receipt, the campaign-binary migration) read
-/// the four contractual columns `fer` / `frames` / `errors` / `mean_iters` off
-/// each point.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SimulationResults {
     /// One result per SNR point, in `esn0_db_points` order.

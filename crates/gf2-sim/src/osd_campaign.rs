@@ -9,37 +9,7 @@
 //! to [`crate::checkpoint`], parallel dispatch to [`crate::parallel`], and the
 //! exact binomial endpoints to [`gf2_stats::intervals`].
 //!
-//! # Evaluation and stopping
-//!
-//! A block's identity is its cell, that cell's deterministic seed, and its
-//! zero-based cumulative [`block_index`](OsdBlockContext::block_index).
-//! [`OsdBlockStream`] positions the block's random stream from that index
-//! alone, so a block's outcome is a pure function of its identity — the
-//! evaluator contract this protocol requires and the reason results do not
-//! depend on which worker evaluated which block.
-//!
-//! The protocol dispatches blocks to `workers` per-worker evaluators through
-//! [`crate::parallel::map_indices_in_order`] and commits the returned outcomes
-//! in block-index order. It alone accumulates the sample, error, squared-error,
-//! and work counters, and completes a cell at the smallest block index whose
-//! in-order cumulative block-error count reaches the target `K`. Workers
-//! evaluate blocks past that index speculatively; those outcomes are discarded
-//! and contribute to no counter. The evaluator therefore answers for every
-//! index it is handed, in any order, and cannot choose termination, report
-//! aggregate counters, or skip, reorder, or double-count blocks.
-//!
-//! Results are byte-identical across worker counts for a fixed campaign and
-//! seed, with the single-worker run as the reference. On resume the protocol
-//! restores durable counters and continues at the next block index under the
-//! same cell seed, reaching the evidence an uninterrupted run would have.
-//! Earlier attempts remain in the receipt. Completed, censored, exhausted, and
-//! contradictory cells are terminal evidence and are never evaluated again.
-//!
-//! The worker count is invocation-local: it never enters the campaign
-//! configuration identity, and reaches a receipt only through the recorded
-//! invocation argument vector.
-//!
-//! # Interval coverage and schema history
+//! # Interval coverage
 //!
 //! Schema 2 treats one decoded block as the independent sampling unit for both
 //! intervals, and both follow the stopping design rather than assuming a fixed
@@ -85,20 +55,16 @@
 //! stopping design does not deliver the intervals' stated coverage there.
 //! Published-value acceptance likewise applies only to a completed cell.
 //!
-//! Schema 1 receipts remain deserializable as historical evidence. Their BER
-//! intervals used Clopper-Pearson over individual bits without naming a
-//! sampling unit, so their stated coverage does not apply to clustered decoder
-//! error bursts. Their BLER intervals are computed over blocks, but under a
-//! bit-error stopping rule that leaves the block count a stopping time rather
-//! than the fixed trial count that inversion assumes. Schema 1 also compared a
-//! published value against `[L - delta, U + delta]`, applying a digitization
-//! precision recorded in base-10 decades as a linear probability offset; schema
-//! 2 supersedes that rule with [`accepts_published_value`]. Schema 1 stored one
-//! usually executable-only invocation in the global
-//! runtime provenance, and its `cpu_model` may contain an OS/architecture
-//! platform token. Schema 2 records the full argument vector and runtime
-//! provenance for every invocation that contributes an attempt, plus observed
-//! processor topology.
+//! Schema 1 receipts deserialize as evidence with weaker guarantees. Their BER
+//! intervals are Clopper-Pearson over individual bits with no sampling unit, so
+//! the stated coverage does not apply to clustered decoder error bursts. Their
+//! BLER intervals are computed over blocks, but under a bit-error stopping rule
+//! that leaves the block count a stopping time rather than the fixed trial
+//! count that inversion assumes. Their published-value comparison uses
+//! `[L - delta, U + delta]`, the digitization precision applied as a linear
+//! probability offset, where schema 2 applies [`accepts_published_value`].
+//! Their global runtime provenance holds one invocation, and its `cpu_model`
+//! may be an OS/architecture platform token.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -126,14 +92,12 @@ const CELL_SEED_DOMAIN: &[u8] = b"gf2-sim/osd-campaign/cell-seed/v1\0";
 
 /// Blocks dispatched to each worker per speculative wave.
 ///
-/// A wave is the unit of speculation: the protocol dispatches
-/// `workers * OSD_WAVE_BLOCKS_PER_WORKER` blocks (capped by the invocation's
-/// remaining sample bound), then commits them in index order. A cell therefore
-/// wastes at most one wave of block evaluations past its stopping block, once,
-/// while the wave stays long enough to amortise the fan-out over the per-block
-/// decode cost. The value changes how much speculative work happens, never the
-/// committed result: index-ordered truncation makes the outcome a function of
-/// the block sequence and the block-error target alone.
+/// The protocol dispatches `workers * OSD_WAVE_BLOCKS_PER_WORKER` blocks
+/// (capped by the invocation's remaining sample bound), then commits them in
+/// index order, so a cell discards at most that many evaluations past its
+/// stopping block. The value changes how much speculative work happens, never
+/// the committed result: index-ordered truncation makes the outcome a function
+/// of the block sequence and the block-error target alone.
 const OSD_WAVE_BLOCKS_PER_WORKER: u64 = 16;
 
 /// Stable identity of one OSD campaign cell.
@@ -248,10 +212,9 @@ impl OsdCell {
 pub enum BinomialIntervalMethod {
     /// Equal-tailed exact Clopper-Pearson interval for a fixed trial count.
     ///
-    /// Schema 1 campaigns stopped on a bit-error target and dispatched this for
-    /// both rates. A live campaign under this protocol stops on block errors,
-    /// where the block count is a stopping time, so [`OsdCampaign::new`]
-    /// refuses this method and it survives only for reading schema 1 evidence.
+    /// A campaign stops on block errors, where the block count is a stopping
+    /// time, so [`OsdCampaign::new`] refuses this method; it names the
+    /// estimator of schema 1 evidence.
     ClopperPearson,
     /// Equal-tailed exact inversion of the stop-at-Kth-error design.
     NegativeBinomialClopperPearson,
@@ -457,9 +420,8 @@ impl BinomialIntervalSpec {
 
 /// A receipted confidence interval with its estimator and sampling unit.
 ///
-/// Schema 1 serialized the estimator under the field name `method` and omitted
-/// `sampling_unit`. Deserialization retains that estimator and represents its
-/// historically unstated unit as `None`.
+/// Schema 1 names the estimator field `method` and omits `sampling_unit`; such
+/// an interval deserializes with its unit as `None`.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BinomialConfidenceInterval {
@@ -639,11 +601,10 @@ pub struct OsdBlockContext<'a> {
 /// A cell's ChaCha20 stream, positioned at one block's reserved region.
 ///
 /// This is the protocol's per-block seek: the stream is selected by the cell
-/// seed and positioned by [`worker_offset`]`(seed, 0, 0, block_index)`, the
-/// design-doc §3 word-position scheme. A block's draws therefore depend on its
-/// global index alone, which is what makes a cell's counters, stopping index,
-/// and receipt byte-identical across worker counts and across a checkpoint
-/// boundary.
+/// seed and positioned by [`worker_offset`]`(seed, 0, 0, block_index)`. A
+/// block's draws therefore depend on its global index alone, which is what
+/// makes a cell's counters, stopping index, and receipt byte-identical across
+/// worker counts and across a checkpoint boundary.
 ///
 /// Each block owns a reserved [`FRAME_STRIDE`] region (`2^20` ChaCha20 32-bit
 /// words, 4 MiB), so a variable-consumption sampler — the campaign's
@@ -908,7 +869,7 @@ pub struct OsdCampaignReceipt {
     pub cells: Vec<OsdCell>,
     /// Exact block-error interval method and campaign confidence level.
     pub interval: BinomialIntervalSpec,
-    /// Cumulative block-error target, absent from historical schema 1 receipts.
+    /// Cumulative block-error target, absent in schema 1.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_block_errors: Option<u64>,
     /// Unit of every cell's digitization precision, absent in schema 1.
@@ -1154,12 +1115,9 @@ pub fn accepts_published_value(
 ///
 /// # Arguments
 ///
-/// * `checkpoint_path` — the protocol's durable progress file.
-/// * `campaign` — the validated campaign configuration.
 /// * `max_samples` — this invocation's per-cell sample bound. It is consulted
 ///   without reference to any outcome, so censoring stays independent of the
 ///   sampled values.
-/// * `workers` — number of concurrent block evaluators.
 /// * `make_evaluator` — per-worker evaluator factory, called once per worker
 ///   per dispatched wave. Every evaluator it produces must return the same
 ///   outcome for the same block, so a block's result stays a pure function of
@@ -1400,11 +1358,8 @@ fn latest_resume(results: &[OsdCellReceipt], cell_id: &OsdCellId) -> CellResume 
 /// Samples one pending cell, dispatching blocks in waves and committing their
 /// outcomes in block-index order.
 ///
-/// Each wave covers `workers * OSD_WAVE_BLOCKS_PER_WORKER` consecutive block
-/// indices, capped by the invocation's remaining sample bound so that bound
-/// never depends on an outcome. The wave's outcomes are committed in index
-/// order until the cell reaches the block-error target; the rest of the wave is
-/// discarded unread.
+/// Waves are capped by the invocation's remaining sample bound, so that bound
+/// never depends on an outcome.
 fn sample_cell<E, M>(
     cell: &OsdCell,
     seed: u64,

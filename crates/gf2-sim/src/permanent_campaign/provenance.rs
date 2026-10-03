@@ -1,17 +1,11 @@
 //! Source identity and integrity for published campaign datasets.
 //!
-//! Two independent guarantees live here. [`approve_emission`] decides whether
-//! the running binary may publish into a campaign directory at all: it checks
-//! the executable identity named by the frozen manifest and refuses when that
-//! manifest differs from its committed content. [`verify_dataset`] decides,
-//! later and from the published bytes alone, whether the dataset still matches its
-//! [`INTEGRITY_FILE`] and whether the revision it
+//! [`approve_emission`] decides whether the running binary may publish into a
+//! campaign directory: it checks the executable identity named by the frozen
+//! manifest and refuses when that manifest differs from its committed content.
+//! [`verify_dataset`] decides, from the published bytes alone, whether the
+//! dataset still matches its [`INTEGRITY_FILE`] and whether the revision it
 //! names still exists.
-//!
-//! Emission protects the identity of the executable and the frozen manifest,
-//! not repository-wide cleanliness. Runtime source facts are captured in the
-//! source-closure fields and the repository-wide revision is retained as
-//! context; neither context nor unrelated output is an emission gate.
 //!
 //! The on-disk integrity format and its `sha256sum -c` verification procedure
 //! are documented in
@@ -94,10 +88,7 @@ struct VerifiedEmission {
 
 /// Why a path inside the repository is not one campaign's directory.
 ///
-/// The root names the frozen manifest the guard verifies against, so a root
-/// that is not one campaign's directory names no single manifest and leaves
-/// the guard nothing to check. The accepted shape is therefore exactly
-/// `<repository>/<DATASET_HOME>/<campaign-id>`.
+/// The accepted shape is exactly `<repository>/<DATASET_HOME>/<campaign-id>`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CampaignPathFault {
     /// The path is not under the dataset home at all.
@@ -137,9 +128,7 @@ impl fmt::Display for CampaignPathFault {
 
 /// Why a binary may not publish into a campaign directory.
 ///
-/// Every variant refuses: an inconclusive check is a refusal, because a dataset
-/// whose source cannot be established is exactly what the guard exists to
-/// prevent.
+/// Every variant refuses, including an inconclusive check.
 #[derive(Debug)]
 pub enum EmissionRefusal {
     /// The running executable's digest could not be determined.
@@ -154,7 +143,7 @@ pub enum EmissionRefusal {
         /// Digest observed for the running executable.
         actual: Sha256Digest,
     },
-    /// The frozen manifest predates binary-scoped provenance and declares no digest.
+    /// The frozen manifest declares no binary digest.
     UndeclaredBinaryDigest {
         /// Manifest path that declares no binary digest.
         path: PathBuf,
@@ -249,16 +238,13 @@ impl std::error::Error for EmissionRefusal {
 /// state is recorded as context by the producer and is not an emission gate.
 ///
 /// `campaign_root` must be one campaign's directory: exactly one
-/// [`CampaignId`] level below [`DATASET_HOME`] inside the repository. A root
-/// that is merely somewhere inside the repository is refused, because it names
-/// no single frozen manifest for the guard to verify against. The frozen
-/// campaign directory and manifest must already exist.
+/// [`CampaignId`] level below [`DATASET_HOME`] inside the repository. The
+/// frozen campaign directory and manifest must already exist.
 ///
 /// # Errors
 ///
 /// Returns the [`EmissionRefusal`] that blocked publication. An unusable
-/// repository, an unreadable path, or a failing `git` invocation refuses too:
-/// the guard never approves a check it could not complete.
+/// repository, an unreadable path, or a failing `git` invocation refuses too.
 pub fn approve_emission(campaign_root: &Path) -> Result<EmissionApproval, EmissionRefusal> {
     let (mapped_executable, binary_sha256) = mapped_executable_identity()?;
     let verified = verify_emission(Some(binary_sha256), campaign_root)?;
@@ -271,7 +257,6 @@ pub fn approve_emission(campaign_root: &Path) -> Result<EmissionApproval, Emissi
     })
 }
 
-/// Returns the SHA-256 digest of the running executable.
 fn running_binary_sha256() -> Result<Sha256Digest, EmissionRefusal> {
     mapped_executable_identity().map(|(_, digest)| digest)
 }
@@ -304,10 +289,9 @@ fn mapped_executable_identity() -> Result<(File, Sha256Digest), EmissionRefusal>
 ///
 /// `Some` checks the supplied digest as the emitting binary's identity. `None`
 /// verifies every other emission guard and uses the frozen manifest's own
-/// digest as the identity under test; this is the inspection mode for callers
-/// that do not have the writer executable available. In either mode the
-/// manifest is compared with its committed bytes before it is parsed, so a
-/// changed manifest remains a [`EmissionRefusal::ManifestChanged`] refusal.
+/// digest as the identity under test. In either mode the manifest is compared
+/// with its committed bytes before it is parsed, so a changed manifest is a
+/// [`EmissionRefusal::ManifestChanged`] refusal.
 pub fn inspect_emission_with_binary_digest(
     binary_sha256: Option<Sha256Digest>,
     campaign_root: &Path,
@@ -378,11 +362,9 @@ fn verify_emission(
 /// Returns the campaign directory as a repository-relative `/`-terminated prefix.
 ///
 /// The prefix addresses that campaign's committed manifest as
-/// `HEAD:<prefix>manifest.json`, the copy the guard compares the on-disk
-/// manifest against. Being somewhere inside the repository is not enough: only
-/// exactly one [`CampaignId`] directory below [`DATASET_HOME`] names one
-/// campaign's frozen manifest, so anything else refuses and names which of
-/// those conditions it broke.
+/// `HEAD:<prefix>manifest.json`. Any other path inside the repository than one
+/// [`CampaignId`] directory below [`DATASET_HOME`] refuses with its
+/// [`CampaignPathFault`].
 fn campaign_prefix(
     anchor: &Path,
     campaign_root: &Path,
@@ -413,8 +395,6 @@ fn campaign_prefix(
         })
     };
     if components.len() <= home.len() {
-        // An ancestor of the home, or the home itself, contains campaigns
-        // rather than being one; anything else short is simply elsewhere.
         return if home.starts_with(&components) {
             reject(CampaignPathFault::AboveCampaignDirectory)
         } else {
@@ -527,8 +507,7 @@ pub struct RuntimeAcceleratorIdentity {
 ///
 /// The runtime version comes from ROCm's installation metadata. The model is
 /// read from the Linux DRM sysfs inventory and is reported only for an AMD GPU
-/// with a non-empty product name. Missing metadata is an explicit absent state,
-/// not a hand-written placeholder.
+/// with a non-empty product name. Missing metadata is an explicit absent state.
 pub fn observe_accelerator_identity() -> RuntimeAcceleratorIdentity {
     let runtime = fs::read_to_string("/opt/rocm/.info/version")
         .ok()
@@ -985,13 +964,12 @@ impl From<SchemaError> for IntegrityError {
 
 /// Renders the integrity file covering exactly the raw data present in `root`.
 ///
-/// The returned text is what finalization writes to
-/// [`INTEGRITY_FILE`]. Coverage is the raw-data
-/// half of [`DatasetLayout::from_manifest`]: the root manifest, every executed
-/// shard record, every field summary, and the pooled summary. Derived artefacts
-/// and the integrity file itself are excluded, so the file can close. Shard
-/// paths a halted cell never executed are absent from the dataset and are
-/// skipped; every other planned raw path must exist.
+/// The returned text is what finalization writes to [`INTEGRITY_FILE`].
+/// Coverage is the raw-data half of [`DatasetLayout::from_manifest`]: the root
+/// manifest, every executed shard record, every field summary, and the pooled
+/// summary. Derived artefacts and the integrity file itself are excluded.
+/// Shard paths a halted cell never executed are skipped; every other planned
+/// raw path must exist.
 ///
 /// Entries are sorted by path, so the same dataset always renders the same
 /// bytes. Each file is read whole, which is bounded by the dataset's own size.
@@ -1000,9 +978,8 @@ impl From<SchemaError> for IntegrityError {
 ///
 /// Returns [`IntegrityError::MissingRawFile`] when a raw path the manifest
 /// requires is absent without a halted cell to account for it,
-/// [`IntegrityError::Schema`] when a field summary cannot be read — an
-/// undecidable halt state exempts nothing — and [`IntegrityError::Io`] when a
-/// file cannot be read.
+/// [`IntegrityError::Schema`] when a field summary cannot be read, and
+/// [`IntegrityError::Io`] when a file cannot be read.
 pub fn generate_integrity_file(
     root: &Path,
     manifest: &CampaignManifest,
@@ -1034,17 +1011,12 @@ pub fn generate_integrity_file(
 
 /// Returns the shard paths a halted cell may legitimately never have written.
 ///
-/// What makes an absent shard legitimate is not its path but its cell's
-/// recorded terminal state: a halted cell may hold any subset of its planned
-/// shards, while a completed cell requires every one of them. The set is
-/// therefore derived from the field summaries the manifest declares, and it
-/// names exact paths rather than a prefix, so a lost shard of a completed cell
-/// can never fall through it.
+/// A halted cell may hold any subset of its planned shards, while a completed
+/// cell requires every one of them, so the set names the exact shard paths of
+/// the cells the declared field summaries record as halted.
 ///
-/// Every declared field summary must be present and readable. An unreadable
-/// summary decides nothing about which shards are legitimately absent, and
-/// treating it as an exemption would reopen the same hole through a wider
-/// door, so this fails closed.
+/// Every declared field summary must be present and readable; an unreadable
+/// summary is an error and exempts nothing.
 fn unexecuted_shard_paths(
     root: &Path,
     manifest: &CampaignManifest,
@@ -1158,10 +1130,8 @@ pub fn decode_integrity_file(text: &str) -> Result<Vec<IntegrityEntry>, Integrit
 
 /// Recomputes the root manifest's content hash from `manifest.json` alone.
 ///
-/// The manifest stores no digest of itself, so this value is derived from the
-/// file's bytes and never from a field inside the structure it covers. The
-/// recorded counterpart lives in the integrity sidecar and is read by
-/// [`recorded_manifest_hash`]; a reader compares the two.
+/// The manifest stores no digest of itself. The recorded counterpart lives in
+/// the integrity sidecar and is read by [`recorded_manifest_hash`].
 ///
 /// # Errors
 ///
@@ -1193,12 +1163,11 @@ pub fn recorded_manifest_hash(root: &Path) -> Result<Sha256Digest, IntegrityErro
 
 /// Re-checks a published dataset against its integrity file and its source.
 ///
-/// The manifest is authenticated first: it declares the layout every other
-/// check depends on, so a manifest that is missing, uncovered, or changed is
-/// reported on its own rather than used to derive a file set that can no longer
-/// be trusted. Otherwise every recorded path is hashed and compared, every
-/// present raw path is required to be covered, and the revision the manifest
-/// records is resolved in the repository holding the dataset.
+/// The manifest declares the layout every other check depends on, so a
+/// manifest that is missing, uncovered, or changed is the only fault reported.
+/// Otherwise every recorded path is hashed and compared, every present raw
+/// path is required to be covered, and the revision the manifest records is
+/// resolved in the repository holding the dataset.
 ///
 /// Each file is read whole, which is bounded by the dataset's own size.
 ///
@@ -1245,12 +1214,8 @@ pub fn verify_dataset(root: &Path) -> Result<DatasetVerdict, IntegrityError> {
             });
         }
     }
-    // A path the manifest declares but the integrity file never lists is a
-    // fault in its own right, whether or not it is still on disk. Without this
-    // a sidecar that simply omitted a lost shard would verify clean. An
-    // undecidable halt state exempts nothing, so a summary that cannot be read
-    // — which is itself reported above as a changed or missing raw file —
-    // leaves every absent shard reported rather than excused.
+    // A declared path the integrity file omits is a fault whether or not it is
+    // on disk. An unreadable summary exempts no absent shard.
     let unexecuted = unexecuted_shard_paths(root, &manifest).unwrap_or_default();
     for path in &raw {
         if recorded.contains_key(path) {
@@ -1405,16 +1370,12 @@ mod tests {
     const SECOND_SHARD: &str = "shards/q3/n04/shard-000001.json";
     const DERIVED_REPORT: &str = "derived/report.md";
 
-    /// Returns the frozen protocol's path, derived from the one dataset home.
     fn protocol_document() -> String {
         format!("{DATASET_HOME}/protocol.md")
     }
 
-    /// A throwaway repository with the shape the guard reasons about.
-    ///
-    /// The guard is driven against these, never against the repository the
-    /// tests are running inside, so no test depends on or mutates this
-    /// checkout's working tree.
+    /// A throwaway repository, so no test depends on or mutates the checkout
+    /// the tests run inside.
     struct TestRepo {
         root: PathBuf,
         _scratch: gf2_core::test_scratch::Scratch,
@@ -1485,7 +1446,6 @@ mod tests {
             self.path(&format!("{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}"))
         }
 
-        /// Writes the conforming fixture dataset under the campaign area.
         fn write_dataset(&self) -> PathBuf {
             let root = self.campaign_root();
             fs::create_dir_all(&root).unwrap();
@@ -1923,13 +1883,8 @@ mod tests {
         ));
     }
 
-    /// REQ-02, REQ-03: the campaign's own output never refuses its own writer.
-    ///
-    /// Emission reads the frozen manifest and the running binary, so writing a
-    /// campaign's own raw and derived files cannot refuse the writer that
-    /// produces them. The derived report is committed and then changed, and a
-    /// second shard added, so the test fails if a repository-state sweep is
-    /// ever reintroduced ahead of the guard.
+    /// The derived report is committed and then changed, and a second shard
+    /// added, so the test fails if emission depends on repository-wide state.
     #[test]
     fn emission_admits_a_tree_dirtied_only_by_campaign_outputs() {
         let repo = TestRepo::new();
@@ -1945,12 +1900,8 @@ mod tests {
         approve(&repo, &campaign).expect("a tree dirtied only by campaign output emits");
     }
 
-    /// REQ-02: only one campaign's own directory may be emitted into.
-    ///
-    /// Each rejected root names no single frozen manifest, which is what the
-    /// guard needs to decide emission. A tracked source file is modified
-    /// throughout to show the refusal follows from the root's shape alone and
-    /// not from the state of the tree around it.
+    /// A tracked source file is modified throughout, so each refusal follows
+    /// from the root's shape alone.
     #[test]
     fn emission_refuses_non_campaign_root() {
         let repo = TestRepo::new();
@@ -1998,15 +1949,13 @@ mod tests {
             }
         }
 
-        // The legitimate root still approves, once its own output is the only
-        // thing dirtying the tree.
+        // The campaign root approves once only its own output dirties the tree.
         repo.git(&["checkout", "--", SOURCE_FILE]);
         let root = repo.path(&campaign);
         fs::write(root.join(SECOND_SHARD), b"{}\n").unwrap();
         approve(&repo, &root).expect("one campaign's own directory emits");
     }
 
-    /// REQ-02: a campaign directory outside the repository cannot be approved.
     #[test]
     fn emission_refuses_a_campaign_directory_outside_the_repository() {
         let outside = TestDir::new();
@@ -2025,7 +1974,6 @@ mod tests {
         );
     }
 
-    /// REQ-04: the manifest hash is recomputable from the manifest alone.
     #[test]
     fn root_manifest_hash_is_recomputable_from_the_manifest_alone() {
         let repo = TestRepo::new();
@@ -2051,7 +1999,6 @@ mod tests {
         );
     }
 
-    /// REQ-05: coverage is exactly the raw data set.
     #[test]
     fn integrity_file_covers_exactly_the_raw_data_set() {
         let repo = TestRepo::new();
@@ -2077,7 +2024,6 @@ mod tests {
         assert!(!covered.iter().any(|path| path.starts_with("derived/")));
     }
 
-    /// REQ-05: the format is the coreutils check-file format.
     #[test]
     fn integrity_file_verifies_with_external_sha256sum_tooling() {
         let repo = TestRepo::new();
@@ -2109,7 +2055,6 @@ mod tests {
         }
     }
 
-    /// REQ-06: an untouched dataset verifies.
     #[test]
     fn verification_accepts_a_dataset_that_still_matches_its_integrity_file() {
         let repo = TestRepo::new();
@@ -2122,7 +2067,6 @@ mod tests {
         );
     }
 
-    /// REQ-06: a missing file and a changed file are distinguished.
     #[test]
     fn verification_distinguishes_a_missing_file_from_a_changed_one() {
         let repo = TestRepo::new();
@@ -2153,7 +2097,6 @@ mod tests {
         );
     }
 
-    /// REQ-05, REQ-06: coverage drift in either direction is reported.
     #[test]
     fn verification_reports_uncovered_and_non_raw_entries() {
         let repo = TestRepo::new();
@@ -2205,7 +2148,6 @@ mod tests {
         );
     }
 
-    /// REQ-05, REQ-06: a completed cell's shard cannot leave coverage quietly.
     #[test]
     fn a_lost_shard_of_a_completed_cell_refuses_generation_and_fails_verification() {
         let repo = TestRepo::new();
@@ -2219,8 +2161,7 @@ mod tests {
             "{error}"
         );
 
-        // A sidecar that simply omits the lost shard must not verify clean
-        // either, which is what a regenerated file would have looked like.
+        // A sidecar that omits the lost shard must not verify clean either.
         let text = fs::read_to_string(campaign.join(INTEGRITY_FILE)).unwrap();
         let entries: Vec<_> = decode_integrity_file(&text)
             .expect("the generated file parses")
@@ -2246,7 +2187,6 @@ mod tests {
         );
     }
 
-    /// REQ-05, REQ-06: a halted cell's unexecuted shards stay legitimately absent.
     #[test]
     fn a_halted_cell_omits_its_unexecuted_shards_and_still_verifies() {
         let repo = TestRepo::new();
@@ -2266,7 +2206,6 @@ mod tests {
         );
     }
 
-    /// REQ-05: an undecidable halt state exempts nothing.
     #[test]
     fn generation_refuses_when_a_field_summary_cannot_decide_the_halt_state() {
         let repo = TestRepo::new();
@@ -2279,7 +2218,6 @@ mod tests {
         assert!(matches!(error, IntegrityError::Schema(_)), "{error}");
     }
 
-    /// REQ-07: a revision absent from the repository does not pass silently.
     #[test]
     fn verification_reports_an_absent_recorded_revision_as_unverifiable() {
         let repo = TestRepo::new();
@@ -2302,7 +2240,6 @@ mod tests {
         }
     }
 
-    /// REQ-07: outside a repository the recorded revision cannot be resolved.
     #[test]
     fn verification_outside_a_repository_reports_unresolvable_provenance() {
         let fixture = TestDir::new();

@@ -35,8 +35,7 @@ const COVERAGE_ADEQUACY_THRESHOLD: u16 = 180;
 /// A completing target run reads these bytes from its artifact root and cites
 /// them by path and digest in its final receipt, so the stochastic estimate is
 /// compared against a preregistered exact answer rather than one chosen after
-/// the fact. The issue that executes a target campaign commits them before its
-/// first draw.
+/// the fact.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExactTargetResultV1 {
@@ -133,7 +132,6 @@ fn decimal(value: &ExactValue) -> ExactDecimalV1 {
     ExactDecimalV1::new(value.numerator.to_string(), value.denominator.to_string())
 }
 
-/// Returns the fixed degeneracy threshold on the ESS fraction.
 fn degeneracy_threshold() -> ExactValue {
     ExactValue::new(
         BigUint::from(1_u8),

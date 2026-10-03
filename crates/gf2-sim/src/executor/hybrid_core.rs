@@ -1,59 +1,17 @@
-//! The shared hybrid CPU/GPU double-buffer core (epic task `bb11c2e6`).
+//! The hybrid CPU/GPU double-buffer core shared by the uncheckpointed scheduler
+//! loop ([`Scheduler::run`](crate::Scheduler::run)) and the checkpointed drain
+//! loop ([`run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed)):
+//! each worker owns one HIP stream and double-buffers the CPU preparation of
+//! batch `N+1` against the stream-ordered GPU LDPC decode of batch `N`.
+//! [`run_hybrid_double_buffer`] also emits the `pipeline_stage` spans, so both
+//! callers instrument identically.
 //!
-//! Both the uncheckpointed C.1 scheduler loop
-//! ([`Scheduler::run`](crate::Scheduler::run) → `scheduler.rs`) and the
-//! checkpointed `571c11c4` drain loop
-//! ([`run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed) →
-//! `drain.rs`) drive the identical design-doc §6 overlap protocol: each worker
-//! owns one HIP stream and double-buffers the CPU preparation of batch `N+1`
-//! against the stream-ordered GPU LDPC decode of batch `N`. Before `bb11c2e6`
-//! that protocol was transcribed twice; this module factors it into ONE
-//! generic core ([`run_hybrid_double_buffer`]) parameterized by the two
-//! per-batch behaviours that genuinely differ between the callers:
-//!
-//! 1. **decode dispatch** ([`BatchHooks::decode_batch`]) — the scheduler wraps
-//!    the GPU decode in [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
-//!    (OOM → CPU fallback unless `strict_gpu`) plus the test-only OOM
-//!    injection; the checkpointed drain loop brackets the decode with the
-//!    [`StreamInFlight`](crate::executor::StreamInFlight) tally and
-//!    **propagates** a recoverable fault instead of substituting the fallback
-//!    (the deliberate failure-semantics divergence — see below);
-//! 2. **stop-after-batch** ([`BatchHooks::stop_after_batch`]) — the scheduler
-//!    runs every batch; the checkpointed loop checks
-//!    [`is_interrupted`](crate::snr_checkpoint::is_interrupted) at each batch
-//!    boundary so a SIGINT stops at a batch-aligned point.
-//!
-//! The **instrumentation** (the `tracing` `pipeline_stage` spans + the
-//! [`OverlapTimeline`](crate::executor::OverlapTimeline) intervals) now lives
-//! in the core too, so BOTH callers emit identical spans — closing the second
-//! `571c11c4` "intentional divergence" (deliverable 3): the checkpointed loop
-//! gains span parity for free by sharing this core.
-//!
-//! # Failure-semantics divergence is now an explicit hook, not an omission
-//!
-//! The two callers must differ on ONE axis — what a recoverable GPU fault does:
-//!
-//! * the uncheckpointed scheduler **substitutes the CPU LDPC fallback** (a
-//!   mixed CPU+GPU run is byte-identical on the §11 three-column verdict, so a
-//!   transparent fallback is correct there);
-//! * the checkpointed drain loop **propagates the fault** so the sweep aborts
-//!   *resumably* (a CPU-substituted frame would record a different
-//!   `mean_iters`/RNG draw than the GPU path, and resume restores from a
-//!   checkpoint whose byte-identity contract — §11 four-column,
-//!   `mean_iters` INCLUDED on the same-path resume comparison — would then
-//!   silently break).
-//!
-//! That difference is realised entirely **inside each caller's `decode_batch`
-//! hook**: the core never makes a fallback-vs-propagate decision itself. The
-//! checkpointed caller's hook is the explicit policy decision (epic task
-//! `bb11c2e6`, OPTION (a) — keep abort-resumably) that `571c11c4` documented as
-//! a divergence and deferred. See `executor/drain.rs` for the hook site and
-//! [`run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed) /
-//! [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed) for the
-//! public contract.
-//!
-//! (Compiled only under `feature = "hip"` — the `mod` declaration in
-//! `executor/mod.rs` carries the `#[cfg]`.)
+//! The callers differ only in their [`BatchHooks`]. On a recoverable GPU fault
+//! the scheduler substitutes the CPU LDPC fallback, while the checkpointed loop
+//! propagates the fault so the sweep aborts resumably: a CPU-substituted frame
+//! records a different `mean_iters` than the GPU path, which would break the
+//! same-path resume byte-identity of all four columns (`mean_iters` included).
+//! The core never makes that decision itself.
 
 use std::time::Instant;
 
@@ -65,8 +23,6 @@ use crate::parallel::{WorkerCounters, WorkerCtx};
 
 /// One GPU decode batch's result: the per-frame hard codewords and BP iteration
 /// counts (or a [`StageError`](crate::error::StageError) on a device fault).
-/// The single SSOT alias both hybrid callers share (it was duplicated in
-/// `scheduler.rs` and `drain.rs` before `bb11c2e6`).
 pub(crate) type GpuBatchResult =
     Result<(Vec<gf2_core::BitVec>, Vec<u32>), crate::error::StageError>;
 
@@ -88,20 +44,17 @@ pub(crate) struct WorkerDevice<'a> {
 
 /// The fixed identifiers + sinks the core threads through every instrumented
 /// interval for one worker's run.
-///
-/// Bundled so [`run_hybrid_double_buffer`]'s signature stays readable and the
-/// two callers populate exactly the same context.
 pub(crate) struct HybridRunCtx<'a> {
     /// The rayon worker index (appears in spans + intervals).
     pub(crate) worker_idx: usize,
     /// The HIP stream id the worker owns (`worker_idx % n_streams`).
     pub(crate) stream_id: usize,
-    /// The SNR-point index keying the §3 RNG seek.
+    /// The SNR-point index keying the RNG seek.
     pub(crate) snr_idx: usize,
-    /// The base ChaCha20 seed (design doc §3).
+    /// The base ChaCha20 seed.
     pub(crate) seed: u64,
     /// The overlap-attestation timeline sink. `Some` on the uncheckpointed
-    /// scheduler (its overlap criterion reads the intervals); `None` on the
+    /// scheduler (its overlap attestation reads the intervals); `None` on the
     /// checkpointed drain path, which never reads intervals — the
     /// `pipeline_stage` spans (always emitted) are its observable parity.
     /// A `None` sink avoids unbounded dead interval accumulation + lock
@@ -111,14 +64,10 @@ pub(crate) struct HybridRunCtx<'a> {
     pub(crate) run_start: Instant,
 }
 
-/// The per-batch behaviours that differ between the hybrid callers (`bb11c2e6`
-/// deliverable 1). Everything else — the double-buffer skeleton, the per-frame
-/// RNG seek, the BCH decode-tail, the instrumentation — is the shared core's,
-/// identical across callers.
+/// The per-batch behaviours that differ between the hybrid callers.
 ///
-/// Implemented as a trait taken by `&mut` generic so the per-batch dispatch is
-/// **monomorphized** (no `dyn` in the hot loop), preserving the C.1 hybrid
-/// throughput.
+/// Taken by `&mut` generic so the per-batch dispatch is monomorphized (no
+/// `dyn` in the hot loop).
 pub(crate) trait BatchHooks {
     /// Decodes one already-CPU-prepped batch on the GPU and returns its
     /// per-frame hard codewords + BP iteration counts.
@@ -151,8 +100,8 @@ pub(crate) trait BatchHooks {
     fn stop_after_batch(&self, batch_idx: usize) -> bool;
 }
 
-/// Runs one worker's strided frame partition through the shared §6 double-buffer
-/// overlap protocol (`bb11c2e6` deliverable 1).
+/// Runs one worker's strided frame partition through the shared double-buffer
+/// overlap protocol.
 ///
 /// `my_frames` is the worker's global-frame partition (already filtered to the
 /// round / point range). The core: (1) chunks it into [`BATCH_FRAMES`] batches;
@@ -163,11 +112,10 @@ pub(crate) trait BatchHooks {
 /// (5) stops after a batch when [`BatchHooks::stop_after_batch`] returns `true`.
 /// Every CPU-prep, GPU-decode, and decode-tail interval is wrapped in a
 /// `pipeline_stage` `tracing` span and appended to the
-/// [`OverlapTimeline`](crate::executor::OverlapTimeline) (deliverable 3 — both
-/// callers now instrument identically).
+/// [`OverlapTimeline`](crate::executor::OverlapTimeline).
 ///
 /// Per-frame randomness is keyed on the GLOBAL frame index via
-/// [`WorkerCtx::reseek_to_frame`] (the §3 logical-worker-0 convention), so the
+/// [`WorkerCtx::reseek_to_frame`] (the logical-worker-0 convention), so the
 /// per-frame outcome is a pure function of the global index regardless of which
 /// physical worker — or helper thread — prepped it: the byte-identity rule the
 /// whole hybrid path rests on.
@@ -177,17 +125,6 @@ pub(crate) trait BatchHooks {
 /// helper thread for batches `N+1`). The checkpointed loop fires the campaign
 /// frame observer here; the uncheckpointed scheduler passes a no-op. It must be
 /// `Sync` because the helper thread also calls it.
-///
-/// # Arguments
-///
-/// * `sim` — the worker's frame-kernel clone (owns its BCH decode-tail decoder).
-/// * `device` — the worker's borrowed device decoder + scratch.
-/// * `stream` — the worker's owned HIP stream (all launches + transfers
-///   stream-ordered on it; completion awaited per-stream inside the decode).
-/// * `run_ctx` — the worker/stream/snr identifiers + instrumentation sinks.
-/// * `my_frames` — the worker's global-frame partition for this run/round.
-/// * `hooks` — the per-batch decode-dispatch / stop behaviours.
-/// * `observe_frame` — per-frame observation callback.
 ///
 /// # Returns
 ///
@@ -223,7 +160,7 @@ where
 
     // CPU-prep one batch of frames into FramePrep, inside the stage's tracing
     // span + timeline interval. The per-frame RNG seek is keyed on the GLOBAL
-    // frame index (§3), so a throwaway `ctx` seeked per frame is byte-identical
+    // frame index, so a throwaway `ctx` seeked per frame is byte-identical
     // regardless of which thread runs the prep. Captures only `&sim` /
     // `&observe_frame` (both `Sync`), never the `&mut` decode state — so the
     // helper thread's prep never aliases the worker thread's decode.
@@ -280,7 +217,6 @@ where
         let (codewords, iters) = gpu_res?;
         prepared = next_preps;
 
-        // CPU BCH decode-tail + error count for the just-decoded batch.
         traced_interval(run_ctx, bi, "CpuDecodeTail", ActivityKind::CpuPrep, || {
             for (i, prep) in cur_preps.iter().enumerate() {
                 let outcome =
@@ -313,12 +249,11 @@ where
 /// match exactly (the checkpointed `mean_iters` byte-identity rests on it).
 pub(crate) const BATCH_FRAMES: usize = 16;
 
-/// Microseconds elapsed since `run_start`.
 fn elapsed_us(run_start: Instant) -> u128 {
     run_start.elapsed().as_micros()
 }
 
-/// Runs `f` as one instrumented stage interval (deliverable 3): a `tracing`
+/// Runs `f` as one instrumented stage interval: a `tracing`
 /// span named `pipeline_stage` carrying
 /// `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)` — entered
 /// for the duration of `f`, with the measured `wall_us` recorded on the span
@@ -328,7 +263,7 @@ fn elapsed_us(run_start: Instant) -> u128 {
 /// carries a sink (the span and the interval mark the same boundaries; the
 /// checkpointed path passes `None` and gets spans only).
 ///
-/// Shared by both hybrid callers. Note: the `GpuLdpcBp` interval brackets the
+/// The `GpuLdpcBp` interval brackets the
 /// caller's whole `decode_batch` hook, which on the scheduler path includes
 /// the host-side staging of the fallback LLR clone — the GPU-active time in
 /// the overlap attestation is therefore a slight over-count of device time.
