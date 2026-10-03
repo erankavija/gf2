@@ -21,11 +21,18 @@
 # <job-key>.done markers. Re-running the window skips completed jobs; an
 # interrupted campaign resumes under its own identity without repeating cells.
 # Each campaign's own execution log stays the authoritative record of its run.
+#
+# --print-root prints the resolved repository root and exits before the window
+# opens.
 set -uo pipefail
 
-repo=/home/vkaskivuo/Projects/gf2
-here="$repo/dev/active/1a379447-zen3-cpu-performance/bench-window"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 state="${GF2_WINDOW_STATE:-$repo/.agents/bench-window}"
+if [[ "${1:-}" == --print-root ]]; then
+    printf '%s\n' "$repo"
+    exit 0
+fi
 export GF2_BENCH_WINDOW=1
 mkdir -p "$state"
 log="$state/window.log"
