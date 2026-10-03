@@ -1,0 +1,86 @@
+moved dev/active/1ac74567/elaboration/FunsExternal.lean -> dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/FunsExternal.lean
+moved dev/active/1ac74567/elaboration/elaborate.log -> dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log
+moved dev/active/1ac74567/elaboration/elaborate.sh -> dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh
+moved dev/active/1ac74567/elaboration/statements.lean -> dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/statements.lean
+moved dev/active/1ac74567/proof-sketch.md -> dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md
+in-place dev/active/220cab0b/design.md
+moved dev/active/2a85f728/asm-delta.md -> dev/archive/6dc81018-field-capability-dispatch/active/2a85f728/asm-delta.md
+moved dev/active/34d85cb9/findings.md -> dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md
+in-place dev/active/3fa7c9d0/design.md
+in-place dev/active/6dc81018-field-capability-dispatch/breakdown.json
+in-place dev/active/6dc81018-field-capability-dispatch/classification.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-10.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-10.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-11.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-11.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-14.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-14.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-15.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-15.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-16.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-16.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-2.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-2.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-3.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-3.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-4.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-4.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-5.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-5.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-6.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-6.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-7.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-7.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-8.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-8.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff-9.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-9.md
+moved dev/active/6dc81018-field-capability-dispatch/handoff.md -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md
+in-place dev/active/6dc81018-field-capability-dispatch/investigation.md
+in-place dev/active/6dc81018-field-capability-dispatch/plan.md
+moved dev/active/6dc81018-field-capability-dispatch/progress.json -> dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json
+in-place dev/active/7d7c647c/design.md
+in-place dev/active/7d824b2f/design.md
+in-place dev/active/9162956b/ensemble-axes-pilot-2-protocol.md
+in-place dev/active/9162956b/ensemble-axes-pilot-3-protocol.md
+in-place dev/active/9162956b/ensemble-axes-pilot-protocol.md
+in-place dev/active/9162956b/ensemble-axes-pilot-receipt.md
+in-place dev/active/9162956b/pilot-1-sh.csv
+in-place dev/active/9162956b/pilot-1-v1.csv
+in-place dev/active/9162956b/pilot-1-v2.csv
+in-place dev/active/9162956b/pilot-2-ctl.csv
+in-place dev/active/9162956b/pilot-2-ens.csv
+in-place dev/active/9162956b/pilot-2-fix.csv
+in-place dev/active/9162956b/pilot-3-ctl.csv
+in-place dev/active/9162956b/pilot-3-ens.csv
+in-place dev/active/9162956b/pilot-3-fix.csv
+in-place dev/active/9162956b/pilot-3-member-provenance.tsv
+in-place dev/active/972e2b88/ensemble-axis-verification.md
+in-place dev/active/a83583e0/premeasurement-protocol.md
+in-place dev/active/dbd8787d/campaign-declaration.json
+in-place dev/active/dbd8787d/premeasurement-protocol.md
+in-place dev/active/dbd8787d/producing-build-inputs.json
+moved dev/active/e6ea0dde/record.md -> dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md
+in-place dev/active/eaae1b56/premeasurement-protocol.md
+moved dev/active/eb9b324c/diagnosis-brainstorm.md -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/diagnosis-brainstorm.md
+moved dev/active/eb9b324c/findings.md -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/findings.md
+moved dev/active/eb9b324c/perf/e2-perf.sh -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/e2-perf.sh
+moved dev/active/eb9b324c/perf/e2-run.log -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/e2-run.log
+moved dev/active/eb9b324c/perf/reproduced-cell-rates.tsv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/reproduced-cell-rates.tsv
+moved dev/active/eb9b324c/perf/session5-dispatch-decomposition.tsv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/session5-dispatch-decomposition.tsv
+moved dev/active/eb9b324c/perf/static-dispatch-disasm.txt -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/static-dispatch-disasm.txt
+moved dev/active/eb9b324c/perf/symbol-cycles.tsv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/symbol-cycles.tsv
+moved dev/active/eb9b324c/perf/whole-suite-counters.tsv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/whole-suite-counters.tsv
+moved dev/active/eb9b324c/pilot/ledger-cand-fixed.tsv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/ledger-cand-fixed.tsv
+moved dev/active/eb9b324c/pilot/pilot-cand-fixed.csv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/pilot-cand-fixed.csv
+moved dev/active/eb9b324c/pilot/pilot-comparison.tsv -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/pilot-comparison.tsv
+moved dev/active/eb9b324c/pilot/timed.log -> dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/timed.log
+in-place dev/active/fc976a80/findings.md
+in-place dev/benchmarks/tuning_profiles/2026-08-19-pre-cutover-baseline.md
+in-place dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md
+moved dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md -> dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md
+in-place dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md
+in-place dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-3.md
+in-place dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md
+in-place dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-4.md
+in-place dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-5.md
+moved dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-6.md -> dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-6.md
+in-place dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md
+in-place dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md
+in-place dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md
+in-place dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298-evidence.md
+in-place dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md
+in-place dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601-evidence.md
+in-place dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md
+in-place dev/benchmarks/tuning_profiles/layout-attribution-verdict-v1.md
+in-place dev/benchmarks/tuning_profiles/layout-attribution-verdict-v2.md
+in-place dev/benchmarks/tuning_profiles/layout-attribution-verdict-v3.md
+in-place dev/benchmarks/tuning_profiles/layout-attribution-verdict-v4.md
+in-place dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md
