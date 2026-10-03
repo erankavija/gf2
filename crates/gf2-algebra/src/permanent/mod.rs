@@ -10,8 +10,8 @@
 //! `@/issue/9fe275d3` for the trait surface.
 //!
 //! The F_5/F_7 analogues [`permanent_bipedal5`] and [`permanent_bipedal7`] are
-//! single-word paths: F_5 covers `n ≤ Packed5::LANES = 64`, F_7 covers `n ≤
-//! Packed7::LANES = 16`.
+//! single-word paths: F_5 covers `n ≤ 63`, F_7 covers `n ≤ Packed7::LANES =
+//! 16`.
 //!
 //! The square surface is joined by [`rank`], whose
 //! [`permanental_rank_status`] decides `per-rank(A) < k` for a rectangular
