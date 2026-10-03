@@ -99,8 +99,8 @@ impl PatternSegment {
         self.theoretical_end - self.theoretical_start
     }
 
-    /// Returns the number of patterns in this segment after the cap: a planned
-    /// count, independent of what an adapter accepts.
+    /// Returns the number of patterns in this segment after the cap,
+    /// independent of what an adapter accepts.
     pub const fn generated_pattern_count(&self) -> usize {
         self.generated_end - self.generated_start
     }
