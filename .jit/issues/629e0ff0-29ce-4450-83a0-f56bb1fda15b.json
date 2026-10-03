@@ -13,7 +13,28 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T13:49:43.329945551Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T14:15:16.424043809Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T14:13:17.526301739Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-03T13:55:44.137213561Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "629e0ff0-29ce-4450-83a0-f56bb1fda15b",
   "labels": [
     "epic:documentation-overhaul",
@@ -24,5 +45,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Correct gf2-coding standards-conformance doc and test drift",
-  "updated_at": "2026-10-03T13:16:32.077235573Z"
+  "updated_at": "2026-10-03T14:15:16.424043809Z"
 }

@@ -43,12 +43,12 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T02:22:54.346475301Z",
+      "updated_at": "2026-10-03T14:27:41.634034980Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T02:20:25.001656800Z",
+      "updated_at": "2026-10-03T13:56:02.930035939Z",
       "updated_by": "auto:executor"
     }
   },
@@ -62,5 +62,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the evidence reproduction how-to",
-  "updated_at": "2026-10-03T13:10:23.428712254Z"
+  "updated_at": "2026-10-03T14:27:41.634034980Z"
 }

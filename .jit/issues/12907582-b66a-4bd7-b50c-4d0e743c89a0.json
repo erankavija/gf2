@@ -24,6 +24,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/12907582-drift-record.md"
     }
   ],
+  "done_at": "2026-10-03T14:28:37.743179835Z",
   "first_ready_at": "2026-10-02T10:06:45.596849618Z",
   "gates_required": [
     "cargo-ci",
@@ -34,22 +35,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T01:42:58.003432281Z",
+      "updated_at": "2026-10-03T13:41:09.322113659Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T01:48:26.468552446Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T14:00:03.416239209Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-03T01:52:33.097555030Z",
+      "updated_at": "2026-10-03T13:59:14.755116282Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T01:39:17.820395514Z",
+      "updated_at": "2026-10-03T13:55:28.962238Z",
       "updated_by": "auto:executor"
     }
   },
@@ -61,7 +62,7 @@
     "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-03T01:52:33.097555030Z"
+  "updated_at": "2026-10-03T14:28:37.743179835Z"
 }

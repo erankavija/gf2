@@ -24,14 +24,24 @@
     "docs-mechanical"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T13:44:00.766237428Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T00:34:24.392854831Z",
+      "updated_at": "2026-10-03T14:07:58.795038722Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T14:05:13.644472213Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:30:52.631317297Z",
+      "updated_at": "2026-10-03T13:55:36.660974308Z",
       "updated_by": "auto:executor"
     }
   },
@@ -45,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Move presentation decks into their epics' archive dirs",
-  "updated_at": "2026-10-03T13:10:22.674732819Z"
+  "updated_at": "2026-10-03T14:07:58.795038722Z"
 }

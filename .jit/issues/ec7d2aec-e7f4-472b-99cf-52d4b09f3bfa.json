@@ -14,6 +14,7 @@
   ],
   "description": "JIT archival moves only sources under managed paths below `dev/`. The repository's documentation policy temporarily manages every legacy source the archival plans need, and drops entries that name absent directories.\n\n## Background\n\nThe policy lives in the `[documentation]` table of `.jit/config.toml`. Stale entries and area semantics are listed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §3.1 and §4.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest row with a container-archive disposition whose source lies under `development_root` has its source under a managed path of the documentation policy. Rows whose source lies under `docs/` move by explicit relocation.\n- [hard] REQ-02: Each entry added for the overhaul is recorded in the manifest's policy notes as temporary, with the condition for its removal.\n- [hard] REQ-03: Policy entries naming absent paths are removed.\n- [hard] REQ-04: Repository validation passes with the widened policy.\n\n## Decisions\n\n- DEC-01: The owner decided on 2026-10-03 that REQ-01 covers rows under `development_root` only, that the `packages/jit-default` profile is re-minted to drop the absent policy entries, and that `dev/archive` is a temporary managed path.\n",
   "documents": [],
+  "done_at": "2026-10-03T14:28:38.322599366Z",
   "first_ready_at": "2026-10-02T22:06:10.335226928Z",
   "gates_required": [
     "cargo-ci",
@@ -22,9 +23,24 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T13:46:52.050972753Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T14:11:35.680257157Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T14:09:47.638813625Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T13:20:22.585533838Z",
+      "updated_at": "2026-10-03T13:55:40.445630500Z",
       "updated_by": "auto:executor"
     }
   },
@@ -36,7 +52,7 @@
     "satisfies:fa787f85/REQ-15"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Widen the docs policy to manage archival sources",
-  "updated_at": "2026-10-03T13:20:22.585533838Z"
+  "updated_at": "2026-10-03T14:28:38.322599366Z"
 }

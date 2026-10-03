@@ -23,7 +23,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Locate the shared producing manifest by identity in survey scripts",
-  "updated_at": "2026-10-03T01:24:19.248942837Z"
+  "updated_at": "2026-10-03T14:28:38.148318621Z"
 }

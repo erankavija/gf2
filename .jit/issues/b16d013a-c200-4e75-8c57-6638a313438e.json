@@ -74,6 +74,7 @@
       "path": "crates/gf2-sim/README.md"
     }
   ],
+  "done_at": "2026-10-03T14:28:38.568249400Z",
   "first_ready_at": "2026-10-02T14:11:27.475151827Z",
   "gates_required": [
     "doc-review",
@@ -81,13 +82,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T01:03:34.059609918Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T14:19:38.080443679Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T01:00:41.463295663Z",
+      "updated_at": "2026-10-03T13:55:51.728701089Z",
       "updated_by": "auto:executor"
     }
   },
@@ -100,7 +101,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the gf2-sim README as its entry page",
-  "updated_at": "2026-10-03T13:10:21.811483484Z"
+  "updated_at": "2026-10-03T14:28:38.568249400Z"
 }

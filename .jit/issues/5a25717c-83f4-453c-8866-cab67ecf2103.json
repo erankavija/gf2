@@ -73,6 +73,7 @@
       "path": "dev/active/f547c394/amendment-p02.md"
     }
   ],
+  "done_at": "2026-10-03T14:28:38.082664774Z",
   "first_ready_at": "2026-10-02T11:05:37.712044871Z",
   "gates_required": [
     "cargo-ci",
@@ -83,22 +84,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T02:15:28.803460895Z",
+      "updated_at": "2026-10-03T13:55:25.051625992Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T01:47:26.703610782Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T14:03:38.020627195Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T01:51:50.892746439Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T14:01:56.530979174Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T01:24:24.700852568Z",
+      "updated_at": "2026-10-03T13:55:32.851784085Z",
       "updated_by": "auto:executor"
     }
   },
@@ -110,7 +111,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Locate receipt-pinned campaign inputs by content identity",
-  "updated_at": "2026-10-03T13:23:23.605674861Z"
+  "updated_at": "2026-10-03T14:28:38.082664774Z"
 }

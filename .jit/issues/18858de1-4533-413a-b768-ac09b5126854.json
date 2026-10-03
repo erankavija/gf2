@@ -38,7 +38,23 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T14:21:32.650431992Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T14:23:57.261619029Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-03T13:55:59.133382970Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "18858de1-4533-413a-b768-ac09b5126854",
   "labels": [
     "epic:documentation-overhaul",
@@ -48,5 +64,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Resolve the repository root at runtime in the bench-window runner",
-  "updated_at": "2026-10-03T13:24:07.889286106Z"
+  "updated_at": "2026-10-03T14:23:57.261619029Z"
 }

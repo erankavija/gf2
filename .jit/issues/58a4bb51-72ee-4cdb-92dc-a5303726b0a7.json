@@ -19,7 +19,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Converge survey harness path dependencies on a depth-independent form",
-  "updated_at": "2026-10-03T13:27:27.230002591Z"
+  "updated_at": "2026-10-03T14:28:37.864832865Z"
 }
