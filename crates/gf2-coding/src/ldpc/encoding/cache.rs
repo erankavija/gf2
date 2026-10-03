@@ -1,40 +1,18 @@
-//! Optional caching for LDPC encoding matrices.
-//!
-//! This module provides an opt-in performance optimization for LDPC encoding.
-//! All functionality works WITHOUT the cache - it's purely for speed.
-//!
-//! # Usage
-//!
-//! ## Without Cache (Simple, Always Works)
-//!
-//! ```no_run
-//! use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-//! use gf2_coding::CodeRate;
-//!
-//! // Just works, no cache needed
-//! let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-//! let encoder = LdpcEncoder::new(code);
-//! // Takes 2-3 seconds, but no complexity
-//! ```
-//!
-//! ## With Cache (Performance Boost)
+//! Opt-in cache of preprocessed LDPC encoding matrices.
 //!
 //! ```no_run
 //! use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 //! use gf2_coding::ldpc::encoding::EncodingCache;
 //! use gf2_coding::CodeRate;
 //!
-//! // Create and own the cache
 //! let cache = EncodingCache::new();
 //!
 //! // First call: preprocesses and caches
 //! let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
 //! let enc1 = LdpcEncoder::with_cache(code.clone(), &cache);
-//! // Takes 2-3 seconds
 //!
-//! // Second call: instant
+//! // Second call: cache hit
 //! let enc2 = LdpcEncoder::with_cache(code, &cache);
-//! // Takes <1μs
 //! ```
 
 use super::{PreprocessError, RuEncodingMatrices};
@@ -65,10 +43,8 @@ impl std::fmt::Display for CacheIoError {
 
 impl std::error::Error for CacheIoError {}
 
-/// Cache key for LDPC encoding matrices.
-///
-/// Uniquely identifies an LDPC code configuration based on its dimensions
-/// and parity-check matrix structure.
+/// Cache key for LDPC encoding matrices: the code dimensions and a hash of the
+/// parity-check matrix's dimensions, edge count and first 100 edges.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct CacheKey {
     /// Codeword length
@@ -90,34 +66,9 @@ impl CacheKey {
     }
 }
 
-/// Optional cache for preprocessed LDPC encoding matrices.
+/// Cache of preprocessed LDPC encoding matrices, keyed by [`CacheKey`].
 ///
-/// This cache stores the results of expensive preprocessing (Gaussian elimination)
-/// so that creating multiple encoders for the same LDPC code is fast.
-///
-/// The cache is thread-safe and can be shared across threads. Each entry stores
-/// an `Arc<RuEncodingMatrices>`, so cloning the cache value is cheap.
-///
-/// # Lifecycle
-///
-/// You control the cache lifetime. It can be:
-/// - Local to a function
-/// - Stored in application state
-/// - Thread-local
-/// - Global (if you choose)
-///
-/// # Memory (In-Memory Cache)
-///
-/// Each cached matrix in memory consumes approximately:
-/// - DVB-T2 Short: ~7-8 MB (dense parity matrix k × r)
-/// - DVB-T2 Normal: ~120-130 MB (dense parity matrix k × r)
-///
-/// # Disk Storage
-///
-/// Cache files on disk:
-/// - DVB-T2 Short: ~5-8 MB per config (dense .gf2 format)
-/// - DVB-T2 Normal: ~70-126 MB per config (dense .gf2 format)
-/// - Total for all 12 configs: ~530 MB
+/// Thread-safe; each entry is an `Arc<RuEncodingMatrices>`.
 ///
 /// # Examples
 ///
@@ -127,11 +78,8 @@ impl CacheKey {
 /// use gf2_coding::CodeRate;
 ///
 /// let cache = EncodingCache::new();
-///
-/// // Precompute all DVB-T2 configs at startup
 /// cache.precompute_dvb_t2();
 ///
-/// // All subsequent encoder creation is instant
 /// let encoder = LdpcEncoder::with_cache(
 ///     LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
 ///     &cache
@@ -150,23 +98,9 @@ impl EncodingCache {
         }
     }
 
-    /// Look up encoding matrices without computing them on a miss.
-    ///
-    /// Use this when a cache miss is an error rather than a reason to spend
-    /// minutes in RREF preprocessing — e.g. when verifying a cache loaded from
-    /// disk with [`Self::from_directory`].
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - Cache key identifying the LDPC code
-    ///
-    /// # Returns
-    ///
-    /// `Some` with the cached matrices, or `None` if the key is not present.
-    ///
-    /// # Complexity
-    ///
-    /// O(1) hash lookup under a read lock.
+    /// Look up encoding matrices without computing them on a miss, for a
+    /// caller that treats a miss as an error, e.g. when verifying a cache
+    /// loaded from disk with [`Self::from_directory`].
     ///
     /// # Examples
     ///
@@ -186,19 +120,8 @@ impl EncodingCache {
         cache_read.get(key).map(Arc::clone)
     }
 
-    /// Get or compute encoding matrices for the given parity-check matrix.
-    ///
-    /// If the matrices are already cached, returns them immediately (<1μs).
-    /// Otherwise, preprocesses the matrix (2-10 seconds) and caches the result.
-    ///
-    /// # Arguments
-    ///
-    /// * `key` - Cache key identifying the LDPC code
-    /// * `h` - Parity-check matrix (only used if cache miss)
-    ///
-    /// # Returns
-    ///
-    /// Arc to the preprocessed encoding matrices, either from cache or newly computed.
+    /// Returns the cached matrices for `key`; on a miss, preprocesses `h` and
+    /// caches the result.
     ///
     /// # Errors
     ///
@@ -208,7 +131,6 @@ impl EncodingCache {
         key: CacheKey,
         h: &SpBitMatrixDual,
     ) -> Result<Arc<RuEncodingMatrices>, PreprocessError> {
-        // Fast path: check cache with read lock
         {
             let cache_read = self.cache.read().unwrap();
             if let Some(matrices) = cache_read.get(&key) {
@@ -216,7 +138,6 @@ impl EncodingCache {
             }
         }
 
-        // Slow path: preprocess and cache with write lock
         let matrices = Arc::new(RuEncodingMatrices::preprocess(h)?);
 
         let mut cache_write = self.cache.write().unwrap();
@@ -225,16 +146,8 @@ impl EncodingCache {
         Ok(matrices)
     }
 
-    /// Precompute all DVB-T2 LDPC encoding matrices.
-    ///
-    /// This preprocesses all 12 DVB-T2 configurations (6 rates × 2 frame sizes)
-    /// and stores them in the cache for instant access.
-    ///
-    /// # Performance
-    ///
-    /// - Total time: ~13 minutes (with RREF+SIMD optimization)
-    /// - Memory usage: ~800 MB peak (all 12 configs in memory)
-    /// - Recommended for production applications
+    /// Preprocesses the encoding matrices of every DVB-T2 frame size and code
+    /// rate into the cache.
     ///
     /// # Examples
     ///
@@ -242,12 +155,7 @@ impl EncodingCache {
     /// use gf2_coding::ldpc::encoding::EncodingCache;
     ///
     /// let cache = EncodingCache::new();
-    ///
-    /// // One-time precomputation at startup
     /// cache.precompute_dvb_t2();
-    ///
-    /// // Now all encoders are instant
-    /// // ... rest of application
     /// ```
     pub fn precompute_dvb_t2(&self) {
         use crate::bch::CodeRate;
@@ -296,8 +204,6 @@ impl EncodingCache {
     }
 
     /// Get cache statistics.
-    ///
-    /// Returns information about the current cache state.
     pub fn stats(&self) -> CacheStats {
         let cache_read = self.cache.read().unwrap();
         CacheStats {
@@ -306,22 +212,13 @@ impl EncodingCache {
     }
 
     /// Clear all cached entries.
-    ///
-    /// This is primarily useful for testing. In production, you typically
-    /// want to keep the cache populated.
     pub fn clear(&self) {
         let mut cache_write = self.cache.write().unwrap();
         cache_write.clear();
     }
 
-    /// Save cache to directory as .gf2 files.
-    ///
-    /// Each cached entry is saved as a separate file with naming convention:
-    /// `n{codeword_length}_k{message_length}_h{hash}.gf2`
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Directory to save cache files (created if doesn't exist)
+    /// Saves each entry to the directory `path` (created if missing) as
+    /// `n{codeword_length}_k{message_length}_h{hash}.gf2`.
     ///
     /// # Errors
     ///
@@ -346,8 +243,8 @@ impl EncodingCache {
             let filename = format!("n{}_k{}_h{:x}", key.n, key.k, key.matrix_hash);
             let filepath = path.join(&filename);
 
-            // Save only parity part (identity is implicit for systematic codes)
-            // Assumes standard systematic form: systematic bits in [0..k), parity in [k..n)
+            // Only the parity part is saved; loading assumes systematic bits
+            // in [0..k) and parity in [k..n).
             let parity_path = filepath.with_extension("gf2");
             matrices
                 .parity_part()
@@ -358,18 +255,13 @@ impl EncodingCache {
         Ok(())
     }
 
-    /// Load cache from directory of .gf2 files.
-    ///
-    /// Loads all .gf2 files in the directory and reconstructs the cache.
-    /// If directory doesn't exist or is empty, returns an empty cache.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Directory containing .gf2 cache files
+    /// Loads every `n{n}_k{k}_h{hash}.gf2` file in the directory `path`; other
+    /// files are skipped.
     ///
     /// # Errors
     ///
-    /// Returns error if directory cannot be read or files are corrupted.
+    /// Returns error if the directory does not exist or cannot be read, or a
+    /// file is corrupted.
     ///
     /// # Examples
     ///
@@ -378,7 +270,6 @@ impl EncodingCache {
     /// use std::path::Path;
     ///
     /// let cache = EncodingCache::from_directory(Path::new("cache_data")).unwrap();
-    /// // Cache now contains all pre-computed matrices
     /// ```
     pub fn from_directory(path: &Path) -> Result<Self, CacheIoError> {
         let cache = Self::new();
@@ -400,20 +291,15 @@ impl EncodingCache {
                 continue;
             }
 
-            // Parse filename: n{n}_k{k}_h{hash}.gf2
             if let Some(filename) = filepath.file_stem().and_then(|s| s.to_str()) {
                 if let Some((n, k, hash)) = parse_cache_filename(filename) {
-                    // Load parity matrix as DENSE BitMatrix (DVB-T2 is 40-50% dense)
                     let parity_matrix =
                         BitMatrix::load_from_file(&filepath).map_err(CacheIoError::Gf2IoError)?;
 
-                    // Assume standard systematic form:
-                    // Systematic bits in columns [0, 1, ..., k-1]
-                    // Parity bits in columns [k, k+1, ..., n-1]
+                    // Assumes systematic columns 0..k and parity columns k..n.
                     let systematic_cols: Vec<usize> = (0..k).collect();
                     let parity_cols: Vec<usize> = (k..n).collect();
 
-                    // Reconstruct RuEncodingMatrices
                     let matrices = Arc::new(RuEncodingMatrices::from_components(
                         k,
                         n,
@@ -437,22 +323,12 @@ impl EncodingCache {
         Ok(cache)
     }
 
-    /// Precompute and save all DVB-T2 LDPC configurations.
-    ///
-    /// This is a convenience method that:
-    /// 1. Precomputes all 12 DVB-T2 encoding matrices (~13 minutes with SIMD)
-    /// 2. Saves them to disk (~530 MB total, dense format)
-    ///
-    /// Run this once to generate cache files, then use `from_directory()`
-    /// for instant initialization.
-    ///
-    /// # Arguments
-    ///
-    /// * `output_dir` - Directory to save cache files (created if doesn't exist)
+    /// Runs [`Self::precompute_dvb_t2`] on a fresh cache and saves it to
+    /// `output_dir` (created if missing) for [`Self::from_directory`].
     ///
     /// # Errors
     ///
-    /// Returns error if preprocessing fails or file writing fails.
+    /// Returns error if file writing fails.
     ///
     /// # Examples
     ///
@@ -460,16 +336,13 @@ impl EncodingCache {
     /// use gf2_coding::ldpc::encoding::EncodingCache;
     /// use std::path::Path;
     ///
-    /// // One-time generation (takes ~13 minutes)
     /// EncodingCache::precompute_and_save_dvb_t2(
     ///     Path::new("data/ldpc/dvb_t2")
     /// ).unwrap();
     ///
-    /// // Subsequently, loading is fast:
     /// let cache = EncodingCache::from_directory(
     ///     Path::new("data/ldpc/dvb_t2")
     /// ).unwrap();
-    /// // Loading all 12 configs: ~16ms
     /// ```
     pub fn precompute_and_save_dvb_t2(output_dir: &Path) -> Result<(), CacheIoError> {
         let cache = Self::new();
@@ -486,26 +359,18 @@ pub struct CacheStats {
     pub entries: usize,
 }
 
-/// Compute a structural hash of a sparse parity-check matrix.
-///
-/// This hash is based on:
-/// - Matrix dimensions (rows, cols)
-/// - Number of non-zero entries
-/// - First 100 edge positions (fingerprint)
-///
-/// The hash is deterministic and uniquely identifies the matrix structure.
+/// Hashes the matrix dimensions, edge count and first 100 edges in row-major
+/// order; matrices that agree on those collide.
 fn compute_matrix_hash(h: &SpBitMatrixDual) -> u64 {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 
     let mut hasher = DefaultHasher::new();
 
-    // Hash dimensions
     h.rows().hash(&mut hasher);
     h.cols().hash(&mut hasher);
     h.nnz().hash(&mut hasher);
 
-    // Hash first 100 edges as structure fingerprint
     let mut edge_count = 0;
     'outer: for row in 0..h.rows() {
         for col in h.row_iter(row) {
@@ -520,9 +385,7 @@ fn compute_matrix_hash(h: &SpBitMatrixDual) -> u64 {
     hasher.finish()
 }
 
-/// Parse cache filename to extract n, k, and hash.
-///
-/// Expected format: n{n}_k{k}_h{hash}
+/// Parses `n{n}_k{k}_h{hash}` with the hash in hexadecimal.
 fn parse_cache_filename(filename: &str) -> Option<(usize, usize, u64)> {
     let parts: Vec<&str> = filename.split('_').collect();
     if parts.len() != 3 {
@@ -570,15 +433,12 @@ mod tests {
         let h = simple_hamming_h();
         let key = CacheKey::from_params(7, 4, &h);
 
-        // First access: cache miss
         let m1 = cache.get_or_compute(key.clone(), &h).unwrap();
         assert_eq!(cache.stats().entries, 1);
 
-        // Second access: cache hit
         let m2 = cache.get_or_compute(key, &h).unwrap();
         assert_eq!(cache.stats().entries, 1);
 
-        // Should be same Arc
         assert!(Arc::ptr_eq(&m1, &m2));
     }
 
@@ -657,7 +517,6 @@ mod tests {
     fn test_matrix_hash_different() {
         let h1 = simple_hamming_h();
 
-        // Different matrix
         let edges2 = vec![(0, 0), (0, 1), (1, 1), (1, 2)];
         let h2 = SpBitMatrixDual::from_coo(2, 3, &edges2);
 
