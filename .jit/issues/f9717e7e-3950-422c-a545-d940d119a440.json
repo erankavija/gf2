@@ -29,7 +29,7 @@
       "doc_type": "tool",
       "format": "markdown",
       "label": "gruvbox.css",
-      "path": "dev/presentations/f9717e7e-gf2-sim/themes/gruvbox.css"
+      "path": "dev/archive/f9717e7e-gf2-sim/presentations/themes/gruvbox.css"
     }
   ],
   "done_at": "2026-06-12T16:31:15.248679896Z",
@@ -45,5 +45,5 @@
   "priority": "high",
   "state": "archived",
   "title": "Research-grade CPU+GPU FEC simulation pipeline (gf2-sim)",
-  "updated_at": "2026-10-03T16:31:19.331407060Z"
+  "updated_at": "2026-10-03T22:09:27.145324723Z"
 }

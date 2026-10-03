@@ -81,7 +81,7 @@
       "doc_type": "tool",
       "format": "markdown",
       "label": "gruvbox.css",
-      "path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/themes/gruvbox.css"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/presentations/babcf05e-ppc-spiral/themes/gruvbox.css"
     }
   ],
   "done_at": "2026-04-29T23:24:31.431719157Z",
@@ -118,5 +118,5 @@
   "priority": "normal",
   "state": "archived",
   "title": "gf2-core PPC-spiral performance sweep",
-  "updated_at": "2026-10-03T16:30:33.286318373Z"
+  "updated_at": "2026-10-03T22:09:27.046303387Z"
 }
