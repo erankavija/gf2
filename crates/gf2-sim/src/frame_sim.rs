@@ -33,34 +33,6 @@ const DECODE_HARD_FAIL_ITERS: u64 = 50;
 /// shared across workers serialises every decode. Give each worker its own
 /// clone, as in `make_state = || template.clone()` for
 /// [`run_snr_point`](crate::parallel::run_snr_point).
-///
-/// # Examples
-///
-/// ```no_run
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::frame_sim::DvbT2BicmFrameSim;
-/// use gf2_sim::parallel::run_snr_point;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-/// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-/// use gf2_coding::modem::DemapMethod;
-/// use gf2_coding::CodeRate;
-///
-/// let template = DvbT2BicmFrameSim::new(
-///     CodeRate::Rate1_2,
-///     DvbT2Modulation::Qam16,
-///     9.0, // Es/N0 dB, above threshold
-///     DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
-///     DemapMethod::ExactLogMap,
-/// );
-///
-/// // Each worker clones its own simulator (own decoder, no lock contention).
-/// let counters = run_snr_point(
-///     42, 0, 1, NonZeroUsize::new(1).unwrap(),
-///     || template.clone(),
-///     |g, ctx, sim| sim.simulate_frame(g, ctx),
-/// );
-/// assert_eq!(counters.frames, 1);
-/// ```
 pub struct DvbT2BicmFrameSim {
     // Build parameters retained so [`Clone`] can rebuild the (non-`Clone`)
     // codec for a fresh per-worker instance.
