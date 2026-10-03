@@ -274,12 +274,10 @@ mod tests {
 
     #[test]
     fn test_mod_pow_mont_basic() {
-        // 3^5 mod 7 = 243 mod 7 = 5
         let base = to_mont::<7>(3);
         let result = mod_pow_mont::<7>(base, 5);
         assert_eq!(from_mont::<7>(result), 5);
 
-        // 2^10 mod 1000003 = 1024
         let base = to_mont::<1000003>(2);
         let result = mod_pow_mont::<1000003>(base, 10);
         assert_eq!(from_mont::<1000003>(result), 1024);

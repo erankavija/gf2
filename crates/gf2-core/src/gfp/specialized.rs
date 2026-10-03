@@ -694,7 +694,7 @@ mod tests {
     fn classify_detects_mersenne() {
         assert_eq!(classify((1u64 << 31) - 1), PrimeShape::Mersenne { n: 31 });
         assert_eq!(classify((1u64 << 61) - 1), PrimeShape::Mersenne { n: 61 });
-        assert_eq!(classify((1u64 << 13) - 1), PrimeShape::Mersenne { n: 13 }); // 8191
+        assert_eq!(classify((1u64 << 13) - 1), PrimeShape::Mersenne { n: 13 });
     }
 
     #[test]
@@ -704,9 +704,7 @@ mod tests {
         // `PrimeShape::Proth { k, n }` form.
         use crate::field::two_adic::{BABYBEAR_P, KOALABEAR_P};
 
-        // BabyBear: 15 * 2^27 + 1
         assert_eq!(classify(BABYBEAR_P), PrimeShape::Proth { k: 15, n: 27 });
-        // 65537 = 1 * 2^16 + 1 (Fermat prime, also Proth with k=1)
         assert_eq!(classify(65537), PrimeShape::Proth { k: 1, n: 16 });
         // KoalaBear: p - 1 = 2^31 - 2^24, so k = 2^7 - 1 = 127, n = 24
         assert_eq!(classify(KOALABEAR_P), PrimeShape::Proth { k: 127, n: 24 });
@@ -758,7 +756,6 @@ mod tests {
 
     #[test]
     fn proth_reduce_small_values() {
-        // BabyBear: 15 * 2^27 + 1 (a genuine Proth prime).
         const K: u64 = 15;
         const N: u32 = 27;
         let p = K * (1u64 << N) + 1;
@@ -892,7 +889,6 @@ mod tests {
 
         #[test]
         fn proptest_proth_reduce_matches_naive(x_lo in any::<u64>(), x_hi in any::<u64>()) {
-            // BabyBear: 15 * 2^27 + 1
             const K: u64 = 15;
             const N: u32 = 27;
             let p = K * (1u64 << N) + 1;
@@ -946,7 +942,6 @@ mod tests {
 
     const M31: u64 = (1u64 << 31) - 1;
     const M61: u64 = (1u64 << 61) - 1;
-    /// BabyBear Proth prime: 15 · 2^27 + 1 = 2013265921.
     const PROTH: u64 = BABYBEAR_P;
 
     // Naive Montgomery reference (standalone; independent of the main
@@ -1018,8 +1013,8 @@ mod tests {
     #[test]
     fn ref_montgomery_mul_sanity() {
         assert_eq!(ref_montgomery_mul(0, 5, 7), 0);
-        assert_eq!(ref_montgomery_mul(3, 5, 7), 1); // 15 mod 7
-        assert_eq!(ref_montgomery_mul(6, 6, 7), 1); // 36 mod 7
+        assert_eq!(ref_montgomery_mul(3, 5, 7), 1);
+        assert_eq!(ref_montgomery_mul(6, 6, 7), 1);
         assert_eq!(
             ref_montgomery_mul(123_456_789, 987_654_321, M31),
             ((123_456_789u128 * 987_654_321u128) % M31 as u128) as u64
@@ -1277,7 +1272,7 @@ mod tests {
         assert_eq!(a.value(), 1234567);
         let b = Fp::<PROTH>::new(1_000_000_001);
         assert_eq!(b.value(), 1_000_000_001);
-        let c = Fp::<65537>::new(12345); // should use Montgomery
+        let c = Fp::<65537>::new(12345);
         assert_eq!(c.value(), 12345);
     }
 }
