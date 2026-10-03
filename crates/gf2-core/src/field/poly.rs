@@ -321,8 +321,6 @@ impl<F: FiniteField> FieldPoly<F> {
 
     /// Computes the product of a non-empty slice of polynomials.
     ///
-    /// Delegates to [`FieldPoly::batch_mul`].
-    ///
     /// # Panics
     ///
     /// Panics if `polys` is empty. Use [`FieldPoly::batch_mul_with_field`]
@@ -480,7 +478,6 @@ impl<F: FiniteField> FieldPoly<F> {
 
             quotient_coeffs[q_deg] = q_coeff.clone();
 
-            // remainder -= q_coeff · x^q_deg · divisor
             for i in 0..divisor.coeffs.len() {
                 let sub_term = q_coeff.clone() * divisor.coeffs[i].clone();
                 let slot = i + q_deg;
@@ -1177,10 +1174,9 @@ fn mul_dispatch<F: FiniteField>(lhs: &[F], rhs: &[F], karatsuba_min_degree: usiz
     }
 }
 
-/// Top-level multiplication dispatcher used by the `Mul` operator and
-/// the inherent [`FieldPoly::mul`] method. Handles zero-polynomial
-/// short-circuits, resolves the active profile once, and delegates to
-/// [`mul_dispatch`].
+/// Multiplication entry point of the `Mul` operator and the inherent
+/// [`FieldPoly::mul`] method: short-circuits zero polynomials and resolves
+/// the active profile once.
 fn mul_impl<F: FiniteField>(lhs: &[F], rhs: &[F]) -> FieldPoly<F> {
     if lhs.is_empty() || rhs.is_empty() {
         return FieldPoly { coeffs: Vec::new() };

@@ -227,7 +227,7 @@ fn dot_product_slices<F: FiniteField>(a: &[F], b: &[F], zero: &F) -> F {
     acc
 }
 
-/// The sum of `count` ones.
+/// Image of the integer `count` in `F`.
 fn gen_base_element<F: FiniteField>(zero: &F, one: &F, count: u32) -> F {
     let mut acc = zero.clone();
     for _ in 0..count {
@@ -321,7 +321,6 @@ where
     Some(FieldPoly::from_coeffs_trimmed(coeffs))
 }
 
-/// [`crate::field::charpoly::poly_annihilates_a_lasvegas`] under a local name.
 #[inline]
 fn p_annihilates_a<F: FiniteField>(p: &FieldPoly<F>, a: &FieldMatrix<F>, seed: u64) -> bool {
     crate::field::charpoly::poly_annihilates_a_lasvegas(p, a, seed)
