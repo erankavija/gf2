@@ -1,0 +1,11 @@
+commit: c42507c026c195d1f3388ce573019d298ffd5cd5
+files: 706
+crate                       comment  non-blank   share  pattern
+crates/gf2-algebra             7788      22990  33.88%        9
+crates/gf2-coding             26946      94570  28.49%       74
+crates/gf2-core               37360     135122  27.65%      279
+crates/gf2-kernels-hip         4799      10239  46.87%       33
+crates/gf2-kernels-simd        7984      23772  33.59%       48
+crates/gf2-sim                18038      70819  25.47%      197
+crates/gf2-stats                623       3410  18.27%        0
+total                        103538     360922  28.69%      640
