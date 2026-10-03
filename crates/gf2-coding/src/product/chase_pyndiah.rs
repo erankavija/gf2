@@ -1,51 +1,13 @@
-//! Chase-Pyndiah soft-input soft-output (SISO) decoder for turbo product codes.
+//! Chase-Pyndiah soft-input soft-output (SISO) decoder for turbo product codes
+//! (`@/citation/Chase1972`, `@/citation/Pyndiah1998`).
 //!
-//! Implements the classical Chase-Pyndiah algorithm for iterative block turbo
-//! decoding, as described in:
-//!
-//! - Chase, D. (1972). "A class of algorithms for decoding block codes with channel
-//!   measurement information." *IEEE Trans. Inform. Theory.*
-//! - Pyndiah, R.M. (1998). "Near-optimum decoding of product codes: Block turbo
-//!   codes." *IEEE Trans. Commun.*
-//!
-//! # Algorithm Overview
-//!
-//! For each component decode (row or column):
-//!
-//! 1. **Chase search**: Identify the `p` least reliable bit positions (by |LLR|),
-//!    enumerate 2^p test patterns by flipping subsets of these positions, compute
-//!    the syndrome of each candidate. Valid codewords (zero syndrome) are kept as-is;
-//!    invalid candidates are re-encoded from their systematic part.
-//!    The maximum-likelihood (ML) codeword maximizes the bipolar correlation
-//!    `M = sum_j L_j * (1 - 2*bit_j)`.
-//!
-//! 2. **Pyndiah soft output**: For each bit position, find the best competitor
-//!    codeword (highest correlation among codewords that differ from ML at that
-//!    position). The soft output is
-//!    `W_i = c_ML_i_bipolar * (M_ML - M_comp_i) / 2` when a competitor exists,
-//!    or `W_i = c_ML_i_bipolar * beta * min_j |L_j|` as a reliability fallback.
-//!
-//! 3. **Extrinsic extraction**: `L_E = W - L_input`, scaled by the per-half-iteration
-//!    factor `alpha_h`.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode};
-//! use gf2_coding::product::ExtendedBchComponent;
-//! use gf2_coding::traits::BlockEncoder;
-//! use gf2_coding::llr::Llr;
-//! use gf2_core::BitVec;
-//!
-//! let component = ExtendedBchComponent::ebch_16_11();
-//! let product = ProductCode::new(component.clone());
-//! let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
-//!
-//! let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
-//! let result = decoder.decode(&llrs);
-//! assert!(result.converged);
-//! assert_eq!(result.decoded_bits.len(), product.k());
-//! ```
+//! Each component decode flips subsets of the `p` least reliable positions,
+//! maps every test pattern to a codeword, and takes the candidate maximising
+//! the bipolar correlation `M = sum_j L_j * (1 - 2*bit_j)`.  The soft output is
+//! `W_i = c_ML_i_bipolar * (M_ML - M_comp_i) / 2` against the best competitor
+//! differing at position `i`, or the input when there is none.  The extrinsic
+//! `L_E = W - L_input` is clamped to `beta_h * mean_j |L_j|` and scaled by
+//! `alpha_h`.
 
 use crate::llr::{Llr, ReliabilityPermutation};
 use gf2_core::{BitMatrix, BitVec};
@@ -53,9 +15,6 @@ use gf2_core::{BitMatrix, BitVec};
 use super::{ProductCode, ProductComponent, TurboDecoderResult};
 
 /// Configuration for the Chase-Pyndiah turbo product code decoder.
-///
-/// Controls the number of turbo iteration pairs, the Chase search depth `p`,
-/// and the per-half-iteration alpha/beta schedules from Pyndiah (1998).
 #[derive(Debug, Clone)]
 pub struct ChasePyndiahConfig {
     /// Maximum number of row-column iteration pairs.
@@ -64,8 +23,6 @@ pub struct ChasePyndiahConfig {
     /// Number of least reliable positions to flip in the Chase search.
     ///
     /// The search generates 2^p candidate codewords per component decode.
-    /// Typical values are 3-5. Larger values improve ML approximation at
-    /// exponential cost.
     pub p: usize,
 
     /// Per-half-iteration extrinsic scaling schedule.
@@ -75,36 +32,18 @@ pub struct ChasePyndiahConfig {
     /// 2 is the second row step, etc.
     ///
     /// If the schedule is shorter than the total number of half-iterations,
-    /// it wraps: `alpha[h % alpha.len()]`.
+    /// its last entry repeats.
     pub alpha: Vec<f32>,
 
-    /// Per-half-iteration reliability fallback schedule.
+    /// Per-half-iteration extrinsic bound schedule.
     ///
-    /// `beta[h]` is used in the Pyndiah soft-output formula when no competing
-    /// codeword differs from ML at a given bit position. The fallback soft
-    /// output is `c_ML_i_bipolar * beta * min_j |L_j|`.
+    /// The extrinsic at half-iteration `h` is clamped to
+    /// `beta[h] * mean_j |L_j|`.  A schedule shorter than the total number of
+    /// half-iterations repeats its last entry.
     pub beta: Vec<f32>,
 }
 
 impl Default for ChasePyndiahConfig {
-    /// Creates a default configuration with Pyndiah (1998) schedules.
-    ///
-    /// - 8 turbo iteration pairs
-    /// - Chase search depth p = 4 (16 test patterns)
-    /// - Alpha schedule: [0.0, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 1.0]
-    /// - Beta schedule: [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.2, 1.2]
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::ChasePyndiahConfig;
-    ///
-    /// let config = ChasePyndiahConfig::default();
-    /// assert_eq!(config.max_iterations, 8);
-    /// assert_eq!(config.p, 4);
-    /// assert!((config.alpha[0] - 0.0).abs() < 1e-10);
-    /// assert!((config.beta[0] - 0.2).abs() < 1e-10);
-    /// ```
     fn default() -> Self {
         Self {
             max_iterations: 8,
@@ -117,75 +56,28 @@ impl Default for ChasePyndiahConfig {
 
 /// Chase-Pyndiah turbo product code decoder.
 ///
-/// Performs iterative block turbo decoding using the Chase-Pyndiah SISO
-/// algorithm for component-level soft decoding. The turbo loop alternates
-/// between row-wise and column-wise Chase-Pyndiah decodes, exchanging
-/// extrinsic information with per-half-iteration alpha/beta schedules.
-///
-/// The type parameter `C` is the component code, which must implement
-/// [`ProductComponent`] and [`Clone`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode};
-/// use gf2_coding::product::ExtendedBchComponent;
-/// use gf2_coding::traits::BlockEncoder;
-/// use gf2_coding::llr::Llr;
-/// use gf2_core::BitVec;
-///
-/// let component = ExtendedBchComponent::ebch_16_11();
-/// let product = ProductCode::new(component.clone());
-/// let decoder = ChasePyndiahDecoder::new(component, ChasePyndiahConfig::default());
-///
-/// let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
-/// let result = decoder.decode(&llrs);
-/// assert!(result.converged);
-/// ```
-///
-/// # Complexity
-///
-/// O(I * n * 2^p * n) where I is the number of iteration pairs, n is the
-/// component code length, and p is the Chase search depth. Each iteration
-/// performs 2n component decodes (n rows + n columns), each examining 2^p
-/// candidate codewords.
+/// The turbo loop alternates between row-wise and column-wise SISO decodes,
+/// exchanging extrinsic information under the per-half-iteration alpha/beta
+/// schedules.
 pub struct ChasePyndiahDecoder<C: ProductComponent> {
-    /// Component code for encoding and syndrome checks.
     component: C,
-    /// Decoder configuration.
     config: ChasePyndiahConfig,
     /// Component codeword length.
     n: usize,
     /// Component message length.
     k: usize,
-    /// Parity-check columns as bitmasks for fast syndrome computation.
-    ///
     /// `h_cols[j]` is a bitmask where bit `r` is set if H[r][j] == 1.
-    /// The syndrome of a candidate word is XOR of `h_cols[j]` for all set bits j.
     h_cols: Vec<u32>,
-    /// Product code for validity checking and message extraction.
     product_code: ProductCode<C>,
 }
 
 impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
-    /// Creates a new Chase-Pyndiah decoder for the given component code.
-    ///
-    /// Precomputes H-column bitmasks from the component parity-check matrix
-    /// for fast syndrome evaluation during the Chase search.
-    ///
-    /// # Arguments
-    ///
-    /// * `component` - The component (n, k) code implementing [`ProductComponent`].
-    /// * `config` - Decoder configuration with schedules and search depth.
+    /// Creates a Chase-Pyndiah decoder for the given component code.
     ///
     /// # Panics
     ///
     /// Panics if the parity-check matrix has more than 32 rows (i.e., n - k > 32),
     /// since syndrome bitmasks are stored as `u32`.
-    ///
-    /// # Complexity
-    ///
-    /// O(n * (n - k)) for building the H-column bitmask table.
     pub fn new(component: C, config: ChasePyndiahConfig) -> Self {
         let n = component.comp_n();
         let k = component.comp_k();
@@ -196,7 +88,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             "Chase-Pyndiah requires n-k <= 32, got {n_checks}"
         );
 
-        // Build column bitmasks: h_cols[j] bit r = H[r][j]
         let h_cols: Vec<u32> = (0..n)
             .map(|j| {
                 let mut mask = 0u32;
@@ -220,49 +111,22 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         }
     }
 
-    /// Decodes a received product codeword from channel LLRs.
+    /// Decodes a received product codeword from `n^2` row-major channel LLRs,
+    /// where a positive LLR favours bit 0.
     ///
-    /// The turbo loop iterates between row-wise and column-wise Chase-Pyndiah
-    /// SISO decodes, exchanging extrinsic information. Early termination occurs
-    /// when the hard-decision matrix forms a valid product codeword.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_llrs` - Channel LLRs of length n^2. Positive means bit 0
-    ///   is more likely; negative means bit 1.
-    ///
-    /// # Returns
-    ///
-    /// A [`TurboDecoderResult`] containing decoded message bits and statistics.
+    /// Decoding stops early when the hard-decision matrix forms a valid
+    /// product codeword.
     ///
     /// # Panics
     ///
     /// Panics if `channel_llrs.len() != n^2`.
     /// Panics if any LLR has a NaN magnitude and at least one iteration runs.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::product::{ChasePyndiahConfig, ChasePyndiahDecoder, ProductCode};
-    /// use gf2_coding::product::ExtendedBchComponent;
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_core::BitVec;
-    ///
-    /// let component = ExtendedBchComponent::ebch_16_11();
-    /// let product = ProductCode::new(component.clone());
-    /// let config = ChasePyndiahConfig { max_iterations: 3, ..ChasePyndiahConfig::default() };
-    /// let decoder = ChasePyndiahDecoder::new(component, config);
-    ///
-    /// let llrs: Vec<Llr> = vec![Llr::new(5.0); product.n()];
-    /// let result = decoder.decode(&llrs);
-    /// assert!(result.converged);
-    /// assert_eq!(result.decoded_bits.len(), product.k());
-    /// ```
+    /// Panics if `alpha` or `beta` is empty and at least one iteration runs.
     ///
     /// # Complexity
     ///
-    /// O(I * n * 2^p * n) per iteration pair.
+    /// O(I × n² × 2^p) for I iteration pairs, plus the component re-encodes
+    /// and one product-codeword check per half-iteration.
     pub fn decode(&self, channel_llrs: &[Llr]) -> TurboDecoderResult {
         let n = self.n;
         let n_sq = n * n;
@@ -274,18 +138,15 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             n_sq
         );
 
-        // Reshape channel LLRs into n x n matrix (row-major)
         let l_ch: Vec<Vec<f32>> = (0..n)
             .map(|i| (0..n).map(|j| channel_llrs[i * n + j].value()).collect())
             .collect();
 
-        // Initialize a-priori LLRs to zero
         let mut l_a: Vec<Vec<f32>> = vec![vec![0.0; n]; n];
 
         let mut half_iter: usize = 0;
 
         for iteration in 0..self.config.max_iterations {
-            // === Row step ===
             let alpha_h = self.config.alpha[half_iter.min(self.config.alpha.len() - 1)];
             let beta_h = self.config.beta[half_iter.min(self.config.beta.len() - 1)];
 
@@ -298,7 +159,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
                 }
             }
 
-            // Check early termination on L_ch + L_A + L_E = W
             let l_total_row: Vec<Vec<f32>> = (0..n)
                 .map(|i| (0..n).map(|j| l_ch[i][j] + l_a[i][j] + l_e[i][j]).collect())
                 .collect();
@@ -313,7 +173,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
                 };
             }
 
-            // Update L_A = alpha_h * L_E
             for i in 0..n {
                 for j in 0..n {
                     l_a[i][j] = alpha_h * l_e[i][j];
@@ -322,7 +181,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
 
             half_iter += 1;
 
-            // === Column step ===
             let alpha_h = self.config.alpha[half_iter.min(self.config.alpha.len() - 1)];
             let beta_h = self.config.beta[half_iter.min(self.config.beta.len() - 1)];
 
@@ -335,7 +193,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
                 }
             }
 
-            // Check early termination on column APP
             let l_total_col: Vec<Vec<f32>> = (0..n)
                 .map(|i| (0..n).map(|j| l_ch[i][j] + l_a[i][j] + l_e[i][j]).collect())
                 .collect();
@@ -350,7 +207,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
                 };
             }
 
-            // Update L_A = alpha_h * L_E
             for i in 0..n {
                 for j in 0..n {
                     l_a[i][j] = alpha_h * l_e[i][j];
@@ -360,7 +216,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             half_iter += 1;
         }
 
-        // Maximum iterations reached without convergence
         let final_llrs: Vec<Vec<f32>> = (0..n)
             .map(|i| (0..n).map(|j| l_ch[i][j] + l_a[i][j]).collect())
             .collect();
@@ -375,26 +230,18 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         }
     }
 
-    /// Performs one Chase-Pyndiah SISO decode on a single row or column.
-    ///
-    /// # Arguments
-    ///
-    /// * `input` - Combined channel + a-priori LLRs (length n).
-    /// * `beta` - Reliability fallback parameter for the current half-iteration.
-    ///
-    /// # Returns
-    ///
-    /// Soft output vector W of length n (the Pyndiah soft decisions).
+    /// Performs one Chase-Pyndiah SISO decode on a single row or column and
+    /// returns the soft output `W` for the combined channel + a-priori LLRs
+    /// `input`.
     ///
     /// # Complexity
     ///
-    /// O(2^p * n) for the Chase search plus O(n) for soft-output computation.
+    /// O(2^p * n) plus the component re-encodes.
     fn chase_pyndiah_siso(&self, input: &[f32], beta: f32) -> Vec<f32> {
         let n = self.n;
         let k = self.k;
-        let p = self.config.p.min(n); // cap p at n
+        let p = self.config.p.min(n);
 
-        // Step 1: Hard decision and reliability
         let hard: Vec<bool> = input
             .iter()
             .copied()
@@ -403,7 +250,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             .collect();
         let reliability: Vec<f32> = input.iter().copied().map(f32::abs).collect();
 
-        // Find p least reliable positions
         let least_reliable: Vec<usize> = ReliabilityPermutation::from_magnitudes(&reliability)
             .ascending()
             .iter()
@@ -411,16 +257,13 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             .copied()
             .collect();
 
-        // Reliability statistics for bounding the soft output
         let mean_reliability: f32 = reliability.iter().copied().sum::<f32>() / n as f32;
 
-        // Step 2: Generate 2^p test patterns and find codewords
         let num_patterns = 1usize << p;
         let mut codewords: Vec<Vec<bool>> = Vec::with_capacity(num_patterns);
         let mut correlations: Vec<f32> = Vec::with_capacity(num_patterns);
 
         for pattern in 0..num_patterns {
-            // Build candidate by flipping subsets of least reliable positions
             let mut candidate: Vec<bool> = hard.clone();
             for (bit_idx, &pos) in least_reliable.iter().enumerate() {
                 if pattern & (1 << bit_idx) != 0 {
@@ -428,10 +271,8 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
                 }
             }
 
-            // Check syndrome and attempt correction
             let syndrome = self.compute_syndrome(&candidate);
             let codeword = if syndrome == 0 {
-                // Valid codeword
                 Some(candidate)
             } else {
                 // Try single-error correction: find H column matching syndrome
@@ -454,7 +295,7 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             };
 
             if let Some(cw) = codeword {
-                // Compute bipolar correlation: M = sum_j L_j * (1 - 2*bit_j)
+                // M = sum_j L_j * (1 - 2*bit_j)
                 let corr: f32 = (0..n)
                     .map(|j| {
                         let bipolar = if cw[j] { -1.0f32 } else { 1.0 };
@@ -467,12 +308,10 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             }
         }
 
-        // If no codewords found, return the input unchanged (no code information)
         if codewords.is_empty() {
             return input.to_vec();
         }
 
-        // Find ML codeword (maximum correlation)
         let (ml_idx, &ml_corr) = correlations
             .iter()
             .enumerate()
@@ -480,25 +319,16 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
             .unwrap();
         let ml_codeword = &codewords[ml_idx];
 
-        // Step 3: Pyndiah soft output with extrinsic clamping
-        //
-        // The raw formula W_j = c_d_j * (M_ML - M_comp_j) / 2 can produce
-        // enormous values when the competitor is far from ML (many differing
-        // bits). In Pyndiah's received-signal domain (values ≈ ±1), this is
-        // naturally bounded. In the LLR domain (values ≈ ±3-10), unclamped W
-        // creates extrinsic that overwhelms channel LLRs, causing turbo
-        // divergence.
-        //
-        // We bound the extrinsic (W - input) using the beta schedule and the
-        // mean reliability. This is equivalent to Pyndiah's bounded-reliability
-        // approach adapted to the LLR domain.
+        // The raw W_j = c_d_j * (M_ML - M_comp_j) / 2 is unbounded in the LLR
+        // domain when the competitor is far from ML, so the extrinsic
+        // (W - input) is bounded by the beta schedule times the mean
+        // reliability.
         let ext_bound = beta * mean_reliability;
 
         let mut w = vec![0.0f32; n];
         for i in 0..n {
             let ml_bipolar = if ml_codeword[i] { -1.0f32 } else { 1.0 };
 
-            // Find best competitor: highest correlation among codewords differing at position i
             let mut best_comp_corr: Option<f32> = None;
             for (idx, corr) in correlations.iter().enumerate() {
                 if idx == ml_idx {
@@ -514,12 +344,10 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
 
             let raw_w = match best_comp_corr {
                 Some(comp_corr) => ml_bipolar * (ml_corr - comp_corr) / 2.0,
-                // No competitor: return input unchanged (zero extrinsic).
-                // Conservative: no code information available for this bit.
+                // No competitor: zero extrinsic.
                 None => input[i],
             };
 
-            // Clamp the extrinsic to prevent turbo divergence.
             let ext = (raw_w - input[i]).clamp(-ext_bound, ext_bound);
             w[i] = input[i] + ext;
         }
@@ -527,19 +355,8 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
         w
     }
 
-    /// Computes the syndrome of a candidate word using precomputed H-column bitmasks.
-    ///
-    /// # Arguments
-    ///
-    /// * `candidate` - A boolean vector of length n representing the candidate codeword.
-    ///
-    /// # Returns
-    ///
-    /// The syndrome as a u32 bitmask. Zero indicates a valid codeword.
-    ///
-    /// # Complexity
-    ///
-    /// O(n).
+    /// Returns the syndrome of `candidate` as a bitmask: the XOR of
+    /// `h_cols[j]` over its set bits `j`.
     fn compute_syndrome(&self, candidate: &[bool]) -> u32 {
         let mut syndrome = 0u32;
         for (j, &bit) in candidate.iter().enumerate() {
@@ -551,14 +368,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     }
 
     /// Checks if the hard decision on the given LLR matrix forms a valid product codeword.
-    ///
-    /// # Arguments
-    ///
-    /// * `llr_matrix` - n x n matrix of LLR values.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the hard-decision matrix is a valid product codeword.
     fn check_early_termination(&self, llr_matrix: &[Vec<f32>]) -> bool {
         let n = self.n;
         let mut matrix = BitMatrix::zeros(n, n);
@@ -575,14 +384,6 @@ impl<C: ProductComponent + Clone> ChasePyndiahDecoder<C> {
     /// Extracts k^2 decoded message bits from the hard decision on an LLR matrix.
     ///
     /// For a systematic code, the message bits are in the top-left k x k submatrix.
-    ///
-    /// # Arguments
-    ///
-    /// * `llr_matrix` - n x n matrix of LLR values.
-    ///
-    /// # Returns
-    ///
-    /// A bit vector of length k^2.
     fn extract_decoded_message(&self, llr_matrix: &[Vec<f32>]) -> BitVec {
         let k = self.k;
         let mut msg = BitVec::with_capacity(k * k);
@@ -655,7 +456,6 @@ mod tests {
         let component = ExtendedBchComponent::ebch_16_11();
         let decoder = ChasePyndiahDecoder::new(component.clone(), ChasePyndiahConfig::default());
 
-        // Encode a message and verify zero syndrome
         let mut msg = BitVec::with_capacity(11);
         for i in 0..11 {
             msg.push_bit(i % 3 == 0);
@@ -669,7 +469,6 @@ mod tests {
             "Valid codeword must have zero syndrome, got {syndrome:#010b}"
         );
 
-        // Flip one bit and verify nonzero syndrome
         let mut corrupted = candidate.clone();
         corrupted[0] = !corrupted[0];
         let syndrome = decoder.compute_syndrome(&corrupted);
@@ -687,11 +486,9 @@ mod tests {
             },
         );
 
-        // All-zeros codeword with high-confidence positive LLRs
         let input: Vec<f32> = vec![10.0; 16];
         let w = decoder.chase_pyndiah_siso(&input, 0.5);
 
-        // All soft outputs should be positive (matching bit=0 decision)
         for (i, &wi) in w.iter().enumerate() {
             assert!(
                 wi > 0.0,
@@ -711,7 +508,6 @@ mod tests {
         };
         let decoder = ChasePyndiahDecoder::new(component, config);
 
-        // All-zeros product codeword at high SNR
         let llrs: Vec<Llr> = vec![Llr::new(8.0); product.n()];
         let result = decoder.decode(&llrs);
 
@@ -731,7 +527,6 @@ mod tests {
         let component = DrmCode::drm_32_21();
         let decoder = ChasePyndiahDecoder::new(component.clone(), ChasePyndiahConfig::default());
 
-        // Encode several messages and verify zero syndrome
         for seed in 0..10 {
             let mut msg = BitVec::with_capacity(21);
             for i in 0..21 {
@@ -749,7 +544,6 @@ mod tests {
 
     #[test]
     fn test_drm_chase_siso_component_decode() {
-        // Test single-component Chase-Pyndiah SISO for dRM(32,21) at high SNR
         use crate::drm::DrmCode;
 
         let component = DrmCode::drm_32_21();
@@ -761,11 +555,9 @@ mod tests {
             },
         );
 
-        // All-zeros codeword, high-confidence positive LLRs
         let input: Vec<f32> = vec![10.0; 32];
         let w = decoder.chase_pyndiah_siso(&input, 0.5);
 
-        // All soft outputs should be positive (matching bit=0)
         for (i, &wi) in w.iter().enumerate() {
             assert!(
                 wi > 0.0,
@@ -773,20 +565,17 @@ mod tests {
             );
         }
 
-        // Now test with a non-trivial codeword
         let mut msg = BitVec::with_capacity(21);
         for i in 0..21 {
             msg.push_bit(i % 2 == 0);
         }
         let cw = component.encode(&msg);
 
-        // Create LLRs: +10 for bit=0, -10 for bit=1
         let input: Vec<f32> = (0..32)
             .map(|j| if cw.get(j) { -10.0 } else { 10.0 })
             .collect();
         let w = decoder.chase_pyndiah_siso(&input, 0.5);
 
-        // Soft outputs should have correct sign for each bit
         for (j, &wi) in w.iter().enumerate() {
             let expected_sign = if cw.get(j) { "negative" } else { "positive" };
             let correct = if cw.get(j) { wi < 0.0 } else { wi > 0.0 };
@@ -800,25 +589,21 @@ mod tests {
 
     #[test]
     fn test_drm_turbo_first_iteration() {
-        // Trace what happens in the first turbo iteration for dRM(32,21)
-        // at high SNR where the answer should be obvious.
         use crate::drm::DrmCode;
 
         let component = DrmCode::drm_32_21();
         let config = ChasePyndiahConfig {
-            max_iterations: 1, // Just one iteration
+            max_iterations: 1,
             p: 4,
             ..ChasePyndiahConfig::default()
         };
         let decoder = ChasePyndiahDecoder::new(component, config);
 
-        // All-zeros product code at moderately high SNR
         let n = 32;
-        let llrs: Vec<Llr> = vec![Llr::new(4.0); n * n]; // All +4.0, all-zeros codeword
+        let llrs: Vec<Llr> = vec![Llr::new(4.0); n * n];
 
         let result = decoder.decode(&llrs);
 
-        // At LLR=4.0 for all-zeros, the product code should decode correctly
         assert!(
             result.converged,
             "Should converge at LLR=4.0 for all-zeros (got {} iters, {} errors)",
@@ -829,7 +614,6 @@ mod tests {
 
     #[test]
     fn test_drm_turbo_moderate_noise() {
-        // Test dRM turbo with light noise (a few bit errors)
         use crate::drm::DrmCode;
 
         let component = DrmCode::drm_32_21();
@@ -842,11 +626,8 @@ mod tests {
         };
         let decoder = ChasePyndiahDecoder::new(component.clone(), config);
 
-        // All-zeros codeword with a few flipped bits to simulate errors
-        // LLR = +3.0 for correct bits, -1.0 for "errored" bits
         let mut llrs = vec![Llr::new(3.0); n * n];
 
-        // Flip some bits in a pattern (scattered errors)
         let error_positions = [5, 37, 100, 200, 350, 500, 700, 850];
         for &pos in &error_positions {
             if pos < n * n {
@@ -866,7 +647,6 @@ mod tests {
             product.k()
         );
 
-        // Should correct these errors (they're weak: LLR=-1.0)
         assert!(
             bit_errors < 50,
             "Too many bit errors after turbo decode: {bit_errors}"
@@ -875,7 +655,6 @@ mod tests {
 
     #[test]
     fn test_drm_turbo_nonzero_message() {
-        // Critical test: encode a non-trivial message and decode at high SNR
         use crate::drm::DrmCode;
 
         let component = DrmCode::drm_32_21();
@@ -889,27 +668,24 @@ mod tests {
         };
         let decoder = ChasePyndiahDecoder::new(component.clone(), config);
 
-        // Non-trivial message
         let mut msg = BitVec::with_capacity(k * k);
         for i in 0..(k * k) {
             msg.push_bit(i % 3 == 0);
         }
         let cw = product.encode(&msg);
 
-        // Create high-SNR LLRs: +8 for bit=0, -8 for bit=1
         let llrs: Vec<Llr> = (0..n * n)
             .map(|i| {
                 if cw.get(i) {
-                    Llr::new(-8.0) // bit=1 → negative
+                    Llr::new(-8.0)
                 } else {
-                    Llr::new(8.0) // bit=0 → positive
+                    Llr::new(8.0)
                 }
             })
             .collect();
 
         let result = decoder.decode(&llrs);
 
-        // Compare decoded message with original
         let bit_errors = (0..k * k)
             .filter(|&i| result.decoded_bits.get(i) != msg.get(i))
             .count();
@@ -925,7 +701,6 @@ mod tests {
     #[test]
     #[ignore = "slow: Chase-Pyndiah turbo decode with AWGN on dRM(32,21) product"]
     fn test_drm_turbo_with_awgn() {
-        // Reproduce the BLER=1.0 issue with realistic AWGN noise
         use crate::drm::DrmCode;
         use crate::simulation::{BpskAwgnChannel, ChannelModel};
         use rand::rngs::StdRng;
@@ -972,9 +747,6 @@ mod tests {
         let avg_ber = total_errors as f64 / (num_frames * k * k) as f64;
         eprintln!("Average BER over {num_frames} frames: {avg_ber:.4}");
 
-        // At 3.0 dB, BCJR turbo gives BLER=0.002.
-        // Chase-Pyndiah should at least not make things worse than uncoded.
-        // Uncoded BER at 3.0 dB ≈ 0.013
         assert!(
             avg_ber < 0.10,
             "Average BER {avg_ber:.4} is too high — decoder is degrading the signal"
@@ -983,8 +755,6 @@ mod tests {
 
     #[test]
     fn test_drm_chase_extrinsic_sign() {
-        // Test that Chase-Pyndiah extrinsic has correct sign for dRM(32,21)
-        // This is the critical test: wrong extrinsic sign would cause turbo divergence
         use crate::drm::DrmCode;
 
         let component = DrmCode::drm_32_21();
@@ -996,19 +766,14 @@ mod tests {
             },
         );
 
-        // Moderate SNR: add some noise to the all-zeros codeword
-        // L_ch = 2.0 for all bits (moderate confidence that bit=0)
         let input: Vec<f32> = vec![2.0; 32];
         let w = decoder.chase_pyndiah_siso(&input, 0.5);
 
-        // Extrinsic = W - input should have the same sign as input (code reinforces)
         let mut negative_ext_count = 0;
         for (j, &wi) in w.iter().enumerate() {
             let ext = wi - input[j];
             if ext < -0.1 {
                 negative_ext_count += 1;
-                // A strongly negative extrinsic for a correct codeword
-                // means the Chase decoder is actively harming the turbo loop
                 eprintln!(
                     "WARN: bit {j}: input={:.2}, W={:.2}, ext={:.2}",
                     input[j], wi, ext
@@ -1016,7 +781,6 @@ mod tests {
             }
         }
 
-        // For the all-zeros codeword at moderate SNR, most extrinsic should be >= 0
         assert!(
             negative_ext_count <= 8,
             "Too many negative extrinsics ({negative_ext_count}/32) for correct codeword"
