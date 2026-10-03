@@ -15,15 +15,8 @@ use crate::permanent::PermanentalRank;
 /// Generate a deterministic pseudo-random `n × n` matrix of [`Fp<P>`] elements,
 /// row-major.
 ///
-/// Internally constructs a fresh [`Lcg`] from `seed` and draws `n * n` words,
-/// reducing each modulo `P` to obtain a canonical `Fp<P>` value. The output
-/// layout matches the row-major convention used by every `permanent_*` kernel
-/// in this crate.
-///
-/// # Arguments
-///
-/// * `n`    — matrix dimension; result has length `n * n`.
-/// * `seed` — seed for the workspace SSOT [`Lcg`] RNG.
+/// Each entry is one [`Lcg::next_u64`] draw from a fresh [`Lcg`] seeded with
+/// `seed`, reduced modulo `P`.
 ///
 /// # Examples
 ///
@@ -35,10 +28,6 @@ use crate::permanent::PermanentalRank;
 /// // Same seed reproduces bit-identical output.
 /// assert_eq!(mat, random_matrix::<3>(4, 0xdead_beef));
 /// ```
-///
-/// # Complexity
-///
-/// `O(n^2)` — one [`Lcg::next_u64`] call per entry.
 pub fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
     let mut rng = Lcg::new(seed);
     (0..n * n)
@@ -46,14 +35,9 @@ pub fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
         .collect()
 }
 
-/// Same as [`random_matrix`] but draws from an existing [`Lcg`] stream rather
-/// than reseeding, so callers can produce multiple independent matrices from a
-/// single deterministic stream.
-///
-/// # Arguments
-///
-/// * `rng` — mutable [`Lcg`] state to draw from; advanced by `n * n` words.
-/// * `n`   — matrix dimension; result has length `n * n`.
+/// Same as [`random_matrix`] but draws its `n * n` words from an existing
+/// [`Lcg`] stream rather than reseeding, so callers can produce multiple
+/// independent matrices from a single deterministic stream.
 ///
 /// # Examples
 ///
@@ -66,17 +50,14 @@ pub fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
 /// let m2 = random_matrix_with_rng::<3>(&mut rng, 4);
 /// assert_ne!(m1, m2); // independent draws from the same stream
 /// ```
-///
-/// # Complexity
-///
-/// `O(n^2)` — one [`Lcg::next_u64`] call per entry.
 pub fn random_matrix_with_rng<const P: u64>(rng: &mut Lcg, n: usize) -> Vec<Fp<P>> {
     (0..n * n)
         .map(|_| Fp::<P>::new(rng.next_u64() % P))
         .collect()
 }
 
-/// Brute-force permanental-rank oracle for an `n × k` matrix with `k ≤ n`.
+/// Brute-force permanental-rank oracle for a row-major `n × k` matrix with
+/// `k ≤ n`.
 ///
 /// Returns [`PermanentalRank::Deficient`] exactly when every `k × k` row
 /// submatrix has zero permanent. This is the independent cross-check for
@@ -93,12 +74,6 @@ pub fn random_matrix_with_rng<const P: u64>(rng: &mut Lcg, n: usize) -> Vec<Fp<P
 ///
 /// The only thing it shares with the predicate is the [`PermanentalRank`]
 /// return vocabulary, so that the two decisions compare directly.
-///
-/// # Arguments
-///
-/// * `matrix` — flat row-major slice of `n * k` field elements.
-/// * `n` — number of rows.
-/// * `k` — number of columns; must satisfy `k <= n`.
 ///
 /// # Examples
 ///
@@ -122,10 +97,7 @@ pub fn random_matrix_with_rng<const P: u64>(rng: &mut Lcg, n: usize) -> Vec<Fp<P
 ///
 /// # Complexity
 ///
-/// `O(2^n · k · k!)` field operations — exponential in both dimensions by
-/// construction, since an oracle that shortcut anything would stop being one.
-/// Intended for exhaustive validation at the tiny shapes where `q^(n·k)` is
-/// itself enumerable.
+/// `O(2^n · k · k!)` field operations.
 pub fn permanental_rank_bruteforce<F: FiniteField>(
     matrix: &[F],
     n: usize,
@@ -188,9 +160,7 @@ pub fn permanental_rank_bruteforce<F: FiniteField>(
 ///
 /// Enumerates all `k!` permutations by decoding each index in `0..k!` through
 /// the factorial number system (radices `k, k-1, ..., 1`), which is a
-/// bijection onto `S_k`, and accumulates `prod_i A[i, sigma(i)]`. No
-/// inclusion-exclusion, no Gray code, no shared helper with the crate's
-/// production permanent kernels.
+/// bijection onto `S_k`, and accumulates `prod_i A[i, sigma(i)]`.
 fn permanent_permutation_sum<F: FiniteField>(matrix: &[F], k: usize) -> F {
     debug_assert!(k >= 1 && matrix.len() == k * k);
 
@@ -218,16 +188,10 @@ fn permanent_permutation_sum<F: FiniteField>(matrix: &[F], k: usize) -> F {
 }
 
 /// Convert Unix epoch seconds to a `(year, month, day)` UTC tuple via the
-/// Howard Hinnant civil-from-days algorithm.
+/// Howard Hinnant civil-from-days algorithm; negative `secs` give pre-1970
+/// dates.
 ///
-/// Inlined to avoid pulling `chrono`/`time` into `gf2-algebra` for the
-/// benchmark/repro examples (`paper_repro_slope`, `parallel_chunk_sweep`,
-/// `parallel_scaling_sweep`) that need a date string for the CSV filename.
-///
-/// # Arguments
-///
-/// * `secs` — Unix epoch seconds (signed; pre-1970 dates produce
-///   correct historical UTC dates).
+/// Inlined to keep `chrono`/`time` out of the crate's dependencies.
 ///
 /// # Examples
 ///
@@ -241,10 +205,6 @@ fn permanent_permutation_sum<F: FiniteField>(matrix: &[F], k: usize) -> F {
 /// // Leap-day handling
 /// assert_eq!(unix_secs_to_ymd(951_782_400), (2000, 2, 29));
 /// ```
-///
-/// # Complexity
-///
-/// `O(1)` — fixed-shape integer arithmetic per call.
 pub fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
     let days = secs.div_euclid(86_400);
     let z = days + 719_468;
@@ -278,10 +238,6 @@ pub fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
 /// assert_eq!(&today[4..5], "-");
 /// assert_eq!(&today[7..8], "-");
 /// ```
-///
-/// # Complexity
-///
-/// `O(1)` plus one `SystemTime::now()` syscall.
 pub fn today_yyyy_mm_dd() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     if let Ok(s) = std::env::var("SA_DATE") {
