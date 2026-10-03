@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T13:27:27.040982297Z",
+  "dependencies": [],
+  "description": "Survey harness crates under `dev/` declare Cargo path dependencies relative to their own directory, the named exception `harness-path-dependencies` to `@/inv/no-dev-path-coupling`. The exception ends when the harness crates resolve those dependencies independently of their depth.\n\n## Background\n\nOn Rust 1.95 a `[patch]` table in the repository `.cargo/config.toml` adds `[[patch.unused]]` entries to every lockfile whose graph lacks a patched package, and those graphs then fail under `--locked`. The exception record linked to the documentation-overhaul epic holds the trials.\n\n## Success Criteria\n\n- [hard] REQ-01: Each survey harness crate builds from its location and from a copy one directory level deeper with no manifest change.\n- [hard] REQ-02: The root lockfile and every tracked harness lockfile resolve under `--locked`.\n- [hard] REQ-03: The benchmark-acceptance verdict of every committed `zen3-benchmark-receipt-v1` receipt is identical before and after the change.\n- [hard] REQ-04: The exception record is removed or states that the exception has ended.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T13:27:27.040982297Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "58a4bb51-72ee-4cdb-92dc-a5303726b0a7",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:tooling",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Converge survey harness path dependencies on a depth-independent form",
+  "updated_at": "2026-10-03T13:27:27.230002591Z"
+}

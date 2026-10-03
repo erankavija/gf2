@@ -25,10 +25,11 @@
     "type:task",
     "epic:documentation-overhaul",
     "component:tooling",
-    "satisfies:fa787f85/REQ-11"
+    "satisfies:fa787f85/REQ-11",
+    "resolution:obsolete"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "rejected",
   "title": "Apply the depth-independent tool dependency to the remaining harness crates",
-  "updated_at": "2026-10-03T13:10:22.476976806Z"
+  "updated_at": "2026-10-03T13:27:28.172368670Z"
 }

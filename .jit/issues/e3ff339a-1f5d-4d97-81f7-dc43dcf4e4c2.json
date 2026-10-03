@@ -5,7 +5,529 @@
   "created_at": "2026-10-03T13:10:23.004370027Z",
   "dependencies": [],
   "description": "A crate README states the crate's purpose and when to choose it, and links to the pages that own everything else. The gf2-core, gf2-coding and gf2-algebra READMEs carry per-area capability statements that the reference and concepts pages own.\n\n## Background\n\nThe owner decided on 2026-10-03 that every crate README holds purpose and links only. Capabilities and feature flags are owned by `docs/reference/supported-configurations.md`, `docs/concepts/` and Rustdoc.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/README.md`, `crates/gf2-coding/README.md` and `crates/gf2-algebra/README.md` each state the crate's purpose and when to choose it, and carry no capability list, feature table or module inventory.\n- [hard] REQ-02: Each links to `docs/index.md`, to the pages that own its capabilities and feature flags, and to the crate's Rustdoc through the locally generated `target/doc/<crate>/index.html` path next to the command that builds it.\n- [hard] REQ-03: Every fact removed from a README is stated on the page the README links to; no fact is lost.\n- [hard] REQ-04: Each README has fewer lines after the change, and its links and commands resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "a2f36a08ff999327755389d9420e1fc61e75a883e61aaba7cfe1591b17a36942",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/concepts/acceleration-architecture.md",
+          "resolved_path": "docs/concepts/acceleration-architecture.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "14133940d9d93f5fdf99bdd5362a0a15e1c36ea60b32512363ab3f68976ae40d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/reference/supported-configurations.md",
+          "resolved_path": "docs/reference/supported-configurations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c9d61b27236238838d6a6881b21961b56b838c8d2d6359a39a6e3da41a6f3c40",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/info_theory.rs",
+          "resolved_path": "crates/gf2-coding/src/info_theory.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d561f41ab9e4f0fea54a714ae437b341f44e1edf74aed53ca425828ac072f06c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/gauss.rs",
+          "resolved_path": "crates/gf2-core/src/alg/gauss.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8dcffc305190b780f4917334cfe6f83fe85f22501ab8ee8093ba435bf8ebe341",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/rref.rs",
+          "resolved_path": "crates/gf2-core/src/alg/rref.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "157bdf464dee72c05351292f88834f2741304f0429e3e0c9c68069d542fd02ee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/matrix.rs",
+          "resolved_path": "crates/gf2-core/src/matrix.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "033366a75f2bc2b52ca1efe46191050784d54d1667520b0652c638f56b215429",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/dvb_t2_bicm_harness.rs",
+          "resolved_path": "crates/gf2-coding/src/dvb_t2_bicm_harness.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "889cc7ef411edb29eed6938bd6de86c4be401a52a4a62834ae8d52e241272612",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/tutorials/field-linear-algebra-at-scale.md",
+          "resolved_path": "docs/tutorials/field-linear-algebra-at-scale.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e849e157e75d4ea4870dd28aaf999aa3bfc608222ed40d38a4e161386186adee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/simulation.rs",
+          "resolved_path": "crates/gf2-coding/src/simulation.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0b178a05f5b91a90f06f18744157cd44f6d230bf1e87b2e47f6b8700f8bf1ace",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/traits.rs",
+          "resolved_path": "crates/gf2-coding/src/traits.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1ded00e0affb4c08cefaad91cdb7b4d15078d55640e4c21be64a1e083620cd4e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/modem/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/modem/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "30577089b0eddf9b84ac72b58854b36a155f607127354d9ecbf37ffb93a19e54",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/ldpc/encoding/cache.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/encoding/cache.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa0864875d806fc7564b95d81337c8e42757b2a3aab8b52b248197d50d7e61b6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/src/lib.rs",
+          "resolved_path": "crates/gf2-algebra/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d3a8feb8bc952532773f370a17f526824f0644cf29732604dfd7d41cc85294d9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/transform/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/transform/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "25fdf2cafe23385ddb9b9286487a5af9b32ab79bc5ad243cadc49e70b942fe58",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/matrix.rs",
+          "resolved_path": "crates/gf2-core/src/field/matrix.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "dda06fb30709de6ce0074f7d768ee3fdc7022d55e0cab9615969bb5da9bef0be",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/channel.rs",
+          "resolved_path": "crates/gf2-coding/src/channel.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "da31482a38910bfefe6344949b54fbefa22d5c35c1d945e40e6ff80451d82b0a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/product/chase_pyndiah.rs",
+          "resolved_path": "crates/gf2-coding/src/product/chase_pyndiah.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3bb124b51755ba8215e671c771734e5188de991186b0ef867bfe6870dfcb11a0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bch/encode.rs",
+          "resolved_path": "crates/gf2-coding/src/bch/encode.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b1c0aef1e78f5c3b3b5e84b5a9152dedfaa3e65145309bf0aa8eb0f9996ba75e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/tuning.rs",
+          "resolved_path": "crates/gf2-coding/src/tuning.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ac0892065a81f951a315b14b4d7ddae31faf13d1fae4e38e1e26c26df5047546",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/ldpc/core.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/core.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8a8806bf0b0fb6bb79df060a440192c7e703648fd39e95091d763af81c3f41a3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/src/permanent/exact.rs",
+          "resolved_path": "crates/gf2-algebra/src/permanent/exact.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "24e68bc658da53748ae7bd91b495a9d1322c1a65f1771f746d66d151a6886517",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/fading.rs",
+          "resolved_path": "crates/gf2-coding/src/fading.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "91566e8f886a1b18758fefa4da840a7df01959595de3795f9d94e72eefdd1a38",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bin/generate_ldpc_cache.rs",
+          "resolved_path": "crates/gf2-coding/src/bin/generate_ldpc_cache.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "69b0cabe11ee523e4755cde531fa2f6948b8ef95d0d32c1b90b8fc1f00ae391f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bch/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/bch/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e43025cc159395ed11e80983b2a7d6ee8dc11086c82914515809ecaf9f0506b5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/convolutional.rs",
+          "resolved_path": "crates/gf2-coding/src/convolutional.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ed2e8d7b55d7634ef31e55e6f8dbdd0e93e4e1c342d533b5d8f879bae7a90b7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/reference/performance-evidence.md",
+          "resolved_path": "docs/reference/performance-evidence.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7f5e1099f8f9be868f3955902eb6df9be69e73737aead4d78eb4764873cc4f6f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/src/gpu.rs",
+          "resolved_path": "crates/gf2-algebra/src/gpu.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7024b6e7674c595e072aabd263079da25e1642f72c880c66c78ce61970f82fac",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../AGENTS.md",
+          "resolved_path": "AGENTS.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "524db1d7cb60c4008a37d495407fab8abcfcf806ef7f53361f37598f99146d6b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/ldpc/min_sum.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/min_sum.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3bd876fd6d1c5b8c5762ae26b4346f48d3bcd831aeb7b338a11040009148e25f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/concepts/finite-field-arithmetic.md",
+          "resolved_path": "docs/concepts/finite-field-arithmetic.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ddf58ef2db924d68887c197fc99775dc04269a5803ad46fb96aae59e30f4e70d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/reference/standards-conformance.md",
+          "resolved_path": "docs/reference/standards-conformance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "576db88b52ec77a7a9e010c77feb2ad8893ef47a12c3106de9267df4227e42da",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/io/mod.rs",
+          "resolved_path": "crates/gf2-core/src/io/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b942eb15559be8d6e63f45b8087b76b202c6d2debbbda362e5cb510c8201552c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bin/validate_ldpc_cache.rs",
+          "resolved_path": "crates/gf2-coding/src/bin/validate_ldpc_cache.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a9e0ac0e6d59a08c92d6add9efd18c77d73cd65dea3558b94ca244f8cbd55de3",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/Cargo.toml",
+          "resolved_path": "crates/gf2-core/Cargo.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b7feaae704e6d3bc700df29790801ce551d3706c90535342d928464f76449361",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/how-to/select-acceleration.md",
+          "resolved_path": "docs/how-to/select-acceleration.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4b3a415b76bf252ad0e1767a6d023fb829a277baae086a12a88fea7a66d43ee4",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/crc.rs",
+          "resolved_path": "crates/gf2-coding/src/crc.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "db0abad0ca16390c4c4606babb21b283d3359250fa25a7aa7fe9bb7ce7c3c3d9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/osd/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/osd/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ba9ff8d8bcaebcad2064561aee360a70a687f4356350e17a241a736f3fa1f8e8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/alg/matmul.rs",
+          "resolved_path": "crates/gf2-core/src/alg/matmul.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4123374e7e3560674c0d07dba2db23f905ff5995f2c0ae9dc19f3c1657ac7a1b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/src/packed/packed7.rs",
+          "resolved_path": "crates/gf2-algebra/src/packed/packed7.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "72df2e3376883310f7c2fec3fedbf27519446272c62ade097dc200f2dd5e9707",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/grand/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/grand/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3594a0f3ec83b7a782bb8bf112d22ed28560df22995ae2b28622b8b05dd6b7bb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/ple.rs",
+          "resolved_path": "crates/gf2-core/src/field/ple.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e36ef0cd00a40daf1359df7c59752612af345c37743372ee160edb9013689d5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/product/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/product/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "446015ee58d761943ac4741638bd1c168091a00bddb3769fedefdb8710957faa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/sparse.rs",
+          "resolved_path": "crates/gf2-core/src/sparse.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bbb800d991733ba8b1863b06649ab5ed7ae94336f785fca6609c365cfe9bb023",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/drm.rs",
+          "resolved_path": "crates/gf2-coding/src/drm.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6be18f7a36e145cad176dc10dd938d1677033269258d7043f6dc3e9a213137ad",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/osd/bp_osd.rs",
+          "resolved_path": "crates/gf2-coding/src/osd/bp_osd.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "29541fab19534bdd6def0e54a06d26932a19903c0f783668f099696e6bcf0911",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/src/packed/mod.rs",
+          "resolved_path": "crates/gf2-algebra/src/packed/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0004c1dd9c570d8da130fbd85e61be03ecb1e973091b21765b8888b3d62722c1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bch/spec.rs",
+          "resolved_path": "crates/gf2-coding/src/bch/spec.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0fc4456056ddcd6ca4c8382d8584986a1d9103ec02b2a684071e1b85550c3dd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/lib.rs",
+          "resolved_path": "crates/gf2-coding/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d3436b569b45d1636eb83386aa682b936cbe0bebcb9931442973f5a0803d5649",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../docs/how-to/run-simulation-campaigns.md",
+          "resolved_path": "docs/how-to/run-simulation-campaigns.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9be46bb784fbe84aa11853315415885948d4ce286fea64daadc82f6f88ae9205",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/compute/mod.rs",
+          "resolved_path": "crates/gf2-core/src/compute/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "eaf5f97a2a5f9d423d9c805ffab2d301a7042b7364727b026ffe43667777d754",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/Cargo.toml",
+          "resolved_path": "crates/gf2-coding/Cargo.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6f28d81ce31234edebb25e0cb80b5ac8dac24373050593f31eab0d86c437e74",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/io/field_matrix.rs",
+          "resolved_path": "crates/gf2-core/src/io/field_matrix.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2084c3b7d57cf20236d74d7c534b436a274d3e6d9284c5456b74388fa3762a09",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/inverse.rs",
+          "resolved_path": "crates/gf2-core/src/field/inverse.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8205e0d48561ebf4ab73b046c6f25d28b4639b369d8f1618a3358ca31f6cff86",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/bcjr/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/bcjr/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7211d57e5803dab9dff6fb5ea19ff408124d89118655f807a4537d912a4698e2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/Cargo.toml",
+          "resolved_path": "crates/gf2-algebra/Cargo.toml"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "363b747ebfb24baf7764081fc92aeb5b852461837c0d46d4e15e098da1024f07",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/kernels/mod.rs",
+          "resolved_path": "crates/gf2-core/src/kernels/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1ac1ba0bdb570d039f71936b4f912ba7e0f38fc1bb6579c23eedc6b1a271b292",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-coding/src/gldpc/mod.rs",
+          "resolved_path": "crates/gf2-coding/src/gldpc/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "037d52cdfee176f415e21c0322c1cb1cb3d1a1a72c65d361818f8fb712d680e2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/sparse_matrix.rs",
+          "resolved_path": "crates/gf2-core/src/field/sparse_matrix.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7738d7c1ada8252abd55c5e6e5c80d941d2602096e2adc4e28411faace976f05",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/charpoly.rs",
+          "resolved_path": "crates/gf2-core/src/field/charpoly.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bf51d5f1fc435dbddc4b02356cb2bf30f54919e9505cf79768caf5fbda6a6b35",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/triangular.rs",
+          "resolved_path": "crates/gf2-core/src/field/triangular.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aef36db7067cc50550117c6612be3687c85fa633bd9ef2ba102fed7967e24b40",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/field/mod.rs",
+          "resolved_path": "crates/gf2-core/src/field/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "079d06da66b6f7e245101df88ac9af52bd6920eca2168334a9e8b01794c4ef05",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/bitvec.rs",
+          "resolved_path": "crates/gf2-core/src/bitvec.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "92d0926e68444cb3419256abc8b5e5f2bb7104bec678c2394be310fbba8626ce",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-core/src/lib.rs",
+          "resolved_path": "crates/gf2-core/src/lib.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5e60a112cb83d9aafc127c49b015028e14ca097d8d51f407beda92effcf4e0bb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-algebra/src/permanent/mod.rs",
+          "resolved_path": "crates/gf2-algebra/src/permanent/mod.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Fact map",
+      "path": "dev/active/fa787f85-documentation-overhaul/e3ff339a-fact-map.md"
+    }
+  ],
   "first_ready_at": "2026-10-03T13:10:23.004370027Z",
   "gates_required": [
     "doc-review",
@@ -22,5 +544,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reduce the gf2-core, gf2-coding and gf2-algebra READMEs to purpose and links",
-  "updated_at": "2026-10-03T13:16:32.590503246Z"
+  "updated_at": "2026-10-03T13:26:44.731519465Z"
 }
