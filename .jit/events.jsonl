@@ -15649,3 +15649,9 @@
 {"id":"41ceb481-6277-407e-b5d0-63ae0472f59f","issue_id":"6c314026-6f34-490d-9403-39b7ecc89ea5","timestamp":"2026-10-03T01:23:03.807884607Z","type":"issue_completed"}
 {"from":"in_progress","id":"c8ffb33b-2461-4f54-966d-c3c04e2e33b0","issue_id":"112f23c6-77f3-4e2c-9f40-fd3b31aaa776","timestamp":"2026-10-03T01:23:03.917939981Z","to":"done","type":"issue_state_changed"}
 {"id":"39c58efc-d28b-4b39-8d80-f809e8f4a59a","issue_id":"112f23c6-77f3-4e2c-9f40-fd3b31aaa776","timestamp":"2026-10-03T01:23:03.917939981Z","type":"issue_completed"}
+{"id":"22bed084-3389-48f1-917b-2a4a1b6f5446","issue_id":"b0b1faf5-382a-4be6-857e-146b804cf413","priority":"normal","timestamp":"2026-10-03T01:23:48.491100544Z","title":"Locate the shared producing manifest by identity in survey scripts","type":"issue_created"}
+{"fields":["dependencies"],"id":"fd2c469a-2137-49fe-b3b3-d78153dcabca","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-03T01:23:48.711911101Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"c1125710-d474-48f6-b609-077b0003a495","issue_id":"b0b1faf5-382a-4be6-857e-146b804cf413","timestamp":"2026-10-03T01:23:48.876064969Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"62522f61-e374-459f-85e5-a594b1e9efaa","issue_id":"602652bf-0388-4604-882b-f874efff83c2","timestamp":"2026-10-03T01:23:59.050071378Z","type":"issue_updated","updated_by":"dependency-add"}
+{"id":"ed99c95c-0800-402b-9ef4-6780d3cd1424","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","new_count":8,"old_count":9,"removed_deps":["b0b1faf5-382a-4be6-857e-146b804cf413"],"timestamp":"2026-10-03T01:23:59.050071378Z","type":"dependency_reduced"}
+{"fields":["documents"],"id":"b1ad005a-4b83-4c48-846a-b5671220bbc3","issue_id":"5a25717c-83f4-453c-8866-cab67ecf2103","timestamp":"2026-10-03T01:24:11.963476311Z","type":"issue_updated","updated_by":"doc-add"}

@@ -6,6 +6,7 @@
     "4f161183-869b-4369-83e9-46dc023720d5",
     "5a25717c-83f4-453c-8866-cab67ecf2103",
     "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
+    "b0b1faf5-382a-4be6-857e-146b804cf413",
     "d53cba10-d5ee-4764-8626-968ba5e6642c"
   ],
   "description": "The flat `dev/active/f547c394/` entry holds the campaign protocol, addendum schemas and producing inputs that CI and the tuning-campaign tooling read. Once those readers no longer hard-code its path, it moves under its owning epic's directory.\n\n## Background\n\nReaders: `dev/scripts/check-campaign-producing-closure.py:33`, `dev/scripts/check-addendum-schema-versions.py:53`, `dev/tools/tuning-campaign-support/src/protocol.rs`, `src/bin/benchmark-ab-runner.rs:145`, `tests/protocol_contracts.rs` and `tests/addendum_schema_versions.rs`. The entry is shared by epics 1a379447 and d77176e5. Receipts quote the old path as provenance strings and stay byte-identical.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed entry's files live under the canonical directory of its owning epic, chosen by the multi-owner rule where several epics own it.\n- [hard] REQ-02: Every tracker document reference to a moved file names its new path.\n- [hard] REQ-03: The move commit changes no consumer code apart from self-path literals: the tuning-campaign tooling, the A/B runner, their tests and the two CI check scripts locate these inputs by content identity or through the configured repository root.\n- [hard] REQ-04: The benchmark-acceptance run recorded in the receipt verdict baseline, repeated after the move, yields identical verdicts and findings for every committed `zen3-benchmark-receipt-v1` receipt; the repeat run is appended to that record.\n- [hard] REQ-05: The Rust CI gate passes, including the addendum and producing-closure checks.\n- [hard] REQ-06: Human-facing citations of old paths are repointed, and a link scan of the touched files reports no unresolved local link; digest-pinned machine inputs (preregistrations, addenda, plans, journals, schemas, continuation JSON, receipts and snapshot copies) keep their bytes.\n- [hard] REQ-07: The manifest records each moved row as complete.\n- [hard] REQ-08: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n",
@@ -33,5 +34,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Move the f547c394 protocol inputs under their epic dir",
-  "updated_at": "2026-10-02T09:38:24.012564130Z"
+  "updated_at": "2026-10-03T01:23:59.050071378Z"
 }

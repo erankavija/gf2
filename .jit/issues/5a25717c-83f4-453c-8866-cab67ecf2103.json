@@ -7,7 +7,15 @@
     "871b401d-59f7-4fa4-86b6-9c067795ff06"
   ],
   "description": "The tuning-campaign tooling pins the protocol, addendum schema and measurement contract by literal paths under `dev/active/` (`PROTOCOL_PATH`, `ADDENDUM_SCHEMA_PATH`, `CONTRACT_PATH`), and rule P-02 rejects any receipt whose pin path differs. Pins are matched by content identity, and live inputs are located through one configured repository root, so these inputs can relocate.\n\n## Background\n\nReaders: `dev/tools/tuning-campaign-support/src/protocol.rs:25,27,29,1102`, `src/receipt.rs:1028-1048` (rule P-02), `src/bin/benchmark-ab-runner.rs:145-150` and `tests/protocol_contracts.rs`. About 780 committed receipt files quote these paths as runtime-observed provenance.\n\n## Success Criteria\n\n- [hard] REQ-01: Rule P-02 accepts a pin when its recorded digest identifies the expected protocol, addendum schema or measurement contract content, independent of the recorded path string.\n- [hard] REQ-02: The benchmark A/B runner and the default producing-manifest lookup locate live inputs through one repository root resolved at runtime, with no literal `dev/` path.\n- [hard] REQ-03: Before the change, a linked baseline record lists the benchmark-acceptance verdict and findings for every committed `receipt.json` with schema `zen3-benchmark-receipt-v1` under `dev/bench_results/` outside `inputs/` directories, with the exact command and commit; after the change, the same run yields identical verdicts and findings, so existing receipts and snapshots stay valid.\n- [hard] REQ-04: Tests cover a pin whose path differs but whose digest matches (accepted) and a pin whose digest differs (rejected).\n- [hard] REQ-05: No historical-path allow-list or hard-coded `dev/` path remains in the changed consumer; code review checks the change against `@/inv/no-dev-path-coupling`.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Baseline record",
+      "path": "dev/active/fa787f85-documentation-overhaul/5a25717c-verdict-baseline.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T11:05:37.712044871Z",
   "gates_required": [
     "cargo-ci",
@@ -32,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate receipt-pinned campaign inputs by content identity",
-  "updated_at": "2026-10-03T01:00:43.876684899Z"
+  "updated_at": "2026-10-03T01:24:11.963476311Z"
 }

@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T01:23:48.491100544Z",
+  "dependencies": [],
+  "description": "Survey scripts outside the tuning-campaign crate read the shared producing manifest from a literal `dev/active/f547c394/` path. They locate it through the configured repository root or by content identity, so the f547c394 entry can move.\n\n## Background\n\nReaders found while decoupling rule P-02 (5a25717c): `dev/active/3be770d5/survey/record-preparation.py:108`, `dev/active/c077a88b/survey/snapshot-inputs.py:42`, `dev/active/f63a2464/survey/record-preparation.py:30` and `dev/active/a203a23c/reevaluate-receipts.sh:83`. The runner locates the same manifest by identity through `tuning_campaign_support::repository`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed script locates the shared producing manifest without a literal `dev/active/` path, through one runtime-resolved repository root or a content-identity lookup.\n- [hard] REQ-02: Before the change, a linked record holds each script's output on a committed input with the exact command and commit; after the change, the output is identical.\n- [hard] REQ-03: No historical-path allow-list or hard-coded `dev/` path remains in the changed scripts; code review checks the change against `@/inv/no-dev-path-coupling`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T01:23:48.491100544Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "b0b1faf5-382a-4be6-857e-146b804cf413",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "satisfies:fa787f85/REQ-11",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Locate the shared producing manifest by identity in survey scripts",
+  "updated_at": "2026-10-03T01:23:48.876064969Z"
+}
