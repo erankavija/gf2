@@ -92,7 +92,6 @@ pub trait Gf2mWideConfig<const N: usize>: 'static {
     /// [`MODULUS_HIGH_BIT_WORD`](Self::MODULUS_HIGH_BIT_WORD).
     const MODULUS_HIGH_BIT_MASK: u64 = 1u64 << ((Self::M - 1) & 63);
 
-    /// Human-readable name of the field, used by `Debug` on
-    /// [`crate::gf2m::Gf2mWide`].
+    /// Human-readable name of the field.
     const NAME: &'static str = "Gf2mWide";
 }

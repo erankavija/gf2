@@ -97,7 +97,7 @@ impl<V: UintExt> Eq for Gf2mField_<V> {}
 struct FieldParams_<V: UintExt = u64> {
     m: usize,
     primitive_poly: V,
-    // Log/antilog tables for fast multiplication (m ≤ 16)
+    // Log/antilog tables (m ≤ 16)
     log_table: Option<Vec<u16>>, // log_table[α^i] = i
     exp_table: Option<Vec<u16>>, // exp_table[i] = α^i
     // SIMD multiplication function (if available) — combined mul+reduce path
