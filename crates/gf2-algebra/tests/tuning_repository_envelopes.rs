@@ -185,6 +185,7 @@ fn committed_measured_algebra_owner_is_canonical_and_cites_the_campaign() {
 /// The complete envelope composes the core owner measured by the seam campaign
 /// with the algebra owner it imports unchanged, so its profile ID is the core
 /// owner's and each section keeps its own receipt.
+/// Protocol: `dev/active/dbd8787d/premeasurement-protocol.md` §6.
 #[test]
 fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
     let core = core_registry().from_json(MEASURED_CORE_OWNER).unwrap();
