@@ -99,11 +99,11 @@ mod tests {
 
     impl ExtConfig for Fq2NegOneConfig {
         type BaseField = Fp<7>;
-        const NON_RESIDUE: Fp<7> = Fp::<7>::new(6); // −1 mod 7
+        const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
 
         #[inline]
         fn mul_by_non_residue(x: Fp<7>) -> Fp<7> {
-            -x // fast path for β = −1
+            -x
         }
     }
 
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_config_compiles_and_returns_correct_non_residue() {
-        assert_eq!(Fq2NegOneConfig::NON_RESIDUE.value(), 6); // −1 mod 7
+        assert_eq!(Fq2NegOneConfig::NON_RESIDUE.value(), 6);
     }
 
     #[test]
@@ -162,8 +162,8 @@ mod tests {
     fn test_mul_by_non_residue_override_matches_manual() {
         for i in 0..7u64 {
             let x = Fp::<7>::new(i);
-            let expected = x * Fq2NegOneConfig::NON_RESIDUE; // generic: x * 6 mod 7
-            let actual = Fq2NegOneConfig::mul_by_non_residue(x); // override: -x
+            let expected = x * Fq2NegOneConfig::NON_RESIDUE;
+            let actual = Fq2NegOneConfig::mul_by_non_residue(x);
             assert_eq!(
                 actual, expected,
                 "overridden mul_by_non_residue({}) should match generic",
@@ -224,7 +224,6 @@ mod tests {
     fn test_generic_usage() {
         let x = Fp::<7>::new(4);
         let result = generic_mul_by_non_residue::<Fq2Beta3Config>(x);
-        // 4 * 3 mod 7 = 12 mod 7 = 5
         assert_eq!(result.value(), 5);
     }
 }
