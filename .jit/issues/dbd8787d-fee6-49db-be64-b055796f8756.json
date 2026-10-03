@@ -13,53 +13,11 @@
   "description": "Calibrate the three sweepable seam threshold fields through the strict core-owner tuning producer.\n\n## Background\n\nThe proof-surface seam design at `dev/active/7d7c647c/design.md` fixes the three-part seam and each field's production route obligation. The crate-owned tuning cutover and preceding calibrated core envelope supply the canonical codec, fresh-process steering protocol, and artifact composition path.\n\n## Success Criteria\n\n- [hard] REQ-01: The explicit calibration action sweeps `gemm.winograd_min_dim`, `triangular.base_case_max_dim`, and `ple.scalar_base_max_cols`. Every timed route runs in a fresh child that installs a strict prepared core section and asserts `Installed` before observing both public production routes. The parent and composer never install a profile; a nonzero exit, malformed result, `DefaultedMissing`, or `FrozenBeforeInstall` invalidates the run without publishing an artifact.\n- [hard] REQ-02: The receipt records every grid, timing sample and uncertainty, route observation, selection and fallback, outcome, tie, non-monotone case, clean source revision, seed, host, toolchain, and separate section-measurement versus envelope-assembly provenance The committed receipt carries these records directly or as summaries (per-arm sample counts, medians, spreads) with digest citations; raw timing windows, accepted results, checkpoints and the execution log are host-local archived evidence, pinned by SHA-256 through the committed checksum manifest and not committed to the repository (invoker decision 2026-10-01, repository size). The two panel-lane fields stay omitted under the core codec's omission rule until a valid production steering path reaches the non-panel arm.\n- [hard] REQ-03: The authoritative core-owner envelope is updated atomically and strictly reopened. Its single section-level measurement provenance and receipt cover every retained measured selector; values not covered by this run are explicitly superseded or omitted. The both-codec composer regenerates and strictly reopens the complete repository envelope, preserves the canonical core wrapper, and proves the algebra wrapper unchanged.\n- [hard] REQ-04: Calibration remains an explicit action under one outer benchmark lock with no build side effect.",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "2c10a0fcc4e3f8d7add4907fb91f908190f0e3acfefd4ccc114574ccc1071264",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../7d7c647c/design.md",
-          "resolved_path": "dev/active/7d7c647c/design.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "bc96f1fbdb0e52bd6fa74d8fa8439e2136cda39c2f4708ba4a06c3833d6c95cc",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../7d824b2f/design.md",
-          "resolved_path": "dev/active/7d824b2f/design.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7763bf0cc62f1811912f72273b728497c1a2df516783437967348da784ef135f",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "producing-build-inputs.json",
-          "resolved_path": "dev/active/dbd8787d/producing-build-inputs.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e23164deee44858e537424ae4e54a4abe8c0ef8274e2ccb8e263bbc8c17c7d1b",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "campaign-declaration.json",
-          "resolved_path": "dev/active/dbd8787d/campaign-declaration.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "1d3642d554248593865d94989fef99e9e6c8def173305ca6cf8e0fbfa7585cda",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../a83583e0/premeasurement-protocol.md",
-          "resolved_path": "dev/active/a83583e0/premeasurement-protocol.md"
-        }
-      ],
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Seam premeasurement protocol",
-      "path": "dev/active/dbd8787d/premeasurement-protocol.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/dbd8787d/premeasurement-protocol.md"
     }
   ],
   "done_at": "2026-10-02T14:49:11.838596036Z",
@@ -96,5 +54,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Extend the calibration sweep to the seam threshold fields",
-  "updated_at": "2026-10-02T14:49:11.838596036Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

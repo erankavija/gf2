@@ -11,39 +11,21 @@
       "doc_type": null,
       "format": "markdown",
       "label": "Investigation: field capability reconciliation (6dc81018)",
-      "path": "dev/active/6dc81018-field-capability-dispatch/investigation.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/investigation.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "661e61c7edd5fd2ea03abda215aab79cbe167cb797c648f064eed4ab2f73d513",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "breakdown.json",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/breakdown.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "55c4bc3b4ed927f813e6b283b8fee8fdeb3cdd5c2be10ce6471a85af6a4f4f83",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "investigation.md",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/investigation.md"
-        }
-      ],
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Plan: field capability reconciliation (6dc81018)",
-      "path": "dev/active/6dc81018-field-capability-dispatch/plan.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/plan.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Breakdown manifest: field capability reconciliation (6dc81018)",
-      "path": "dev/active/6dc81018-field-capability-dispatch/breakdown.json"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/breakdown.json"
     }
   ],
   "done_at": "2026-08-18T19:57:18.558951365Z",
@@ -68,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Plan the field-capability reconciliation breakdown",
-  "updated_at": "2026-08-18T19:57:18.558951365Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

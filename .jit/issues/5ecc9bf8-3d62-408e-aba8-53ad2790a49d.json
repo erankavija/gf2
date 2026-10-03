@@ -13,7 +13,7 @@
       "doc_type": "receipt",
       "format": "markdown",
       "label": "Host-calibration receipt",
-      "path": "dev/benchmarks/tuning_profiles/2026-08-20-host-calibration.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md"
     }
   ],
   "done_at": "2026-08-19T22:36:54.436337192Z",
@@ -44,5 +44,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement the explicit host-calibration benchmark action",
-  "updated_at": "2026-10-01T22:41:32.977623479Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

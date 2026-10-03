@@ -17,167 +17,49 @@
   "description": "Extend the explicit calibration action to the eleven sweepable follow-on core threshold fields.\n\n## Background\n\nThe follow-on selector migration design at `dev/active/7d824b2f/design.md` fixes the sweepability test and field set. The strict format-2 mechanism and the pilot measured core-owner envelope are inputs. This task reuses the one fresh-process steering protocol and `CoreTuningCodec`; it creates no second loader, forcing hook, or artifact representation.\n\n## Success Criteria\n\n- [hard] REQ-01: The calibration action sweeps the eleven sweepable follow-on threshold fields through the standing crossover rule. Every timed route runs in a fresh child that installs a strict prepared core section and asserts `Installed` for every steered field before public production dispatch. The parent and composer never install a profile; a nonzero exit, malformed result, `DefaultedMissing`, or `FrozenBeforeInstall` invalidates the run without publishing an artifact.\n- [hard] REQ-02: The receipt records every field's grid, timing samples and uncertainty, route observations, selection and fallback rule, and outcome—measured, tie, non-monotone, or uncalibrated—together with clean source revision, seed, host, toolchain, and separate section-measurement versus envelope-assembly provenance. A non-sweepable or invalid result remains omitted under the core codec's section-local omission rule and is never filled with an estimate.\n- [hard] REQ-03: The authoritative core-owner envelope is updated atomically and strictly reopened and contains no algebra vocabulary. Its one section-level measurement provenance and receipt cover every retained measured selector; values not covered by the run are explicitly superseded or omitted rather than copied beneath unrelated evidence.\n- [hard] REQ-04: Calibration remains an explicit action under one outer benchmark lock with no build side effect. The both-codec composer regenerates and strictly reopens the complete repository envelope while preserving the canonical core wrapper and leaving the algebra wrapper unchanged.\n",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "e189214622a59b9f8bb2d2148062b058aeed82ec80c8c3bfc4005145939dec08",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-389aa4de.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ea4dc1bb84ed41dde5981b3e675a37739796c9c7f65ca64ddac8cbcabc2eb527",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../7d824b2f/design.md",
-          "resolved_path": "dev/active/7d824b2f/design.md"
-        }
-      ],
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Authoritative premeasurement protocol",
-      "path": "dev/active/eaae1b56/premeasurement-protocol.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eaae1b56/premeasurement-protocol.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../eaae1b56/premeasurement-protocol.md",
-          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c0cb1f00c67275e08f6c8e2cc30e610273532db6eab3a1bb6ef90edfdbdee54c",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../220cab0b/design.md",
-          "resolved_path": "dev/active/220cab0b/design.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9ed7e84893338d9c2ede97efdbe8bf108f1ca24428fa55f1541d9f3e239c0c9e",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-eaae1b56.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7f93ba16aef30dda33c21a3e2fee82f16f663b657154b904dce5cd6cbc813b8f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
-        }
-      ],
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Governing selector migration design with executed-state amendment",
-      "path": "dev/active/7d824b2f/design.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/7d824b2f/design.md"
     },
     {
       "commit": null,
       "doc_type": "benchmark",
       "label": "Untimed release startup failure: raw output",
-      "path": "dev/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.log"
     },
     {
       "commit": null,
       "doc_type": "benchmark",
       "label": "Untimed release startup failure: stderr",
-      "path": "dev/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.stderr"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-05-eaae1b56-startup-failure.stderr"
     },
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "38a74fda3918cb2f4ed2e017f4cda003c745e53ed08a06b0b925ebaa08055b48",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json",
-          "resolved_path": "dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e189214622a59b9f8bb2d2148062b058aeed82ec80c8c3bfc4005145939dec08",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "2026-09-01-389aa4de.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "0296a498b2dcaf303af0dc88afba2feb708deda60c24fd94236b4533cfdc138a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json",
-          "resolved_path": "crates/gf2-core/data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2162b4b6170de3db0d0005bbad75497b2bcc881c46c712443ea451e6197b42a2",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-eaae1b56.sha256",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.sha256"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "5f69729e6a283f84fc1ba7dab02e6a75517cd97665d4617efc4eadd9ee09b5c3",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-algebra/data/tuning-profiles/conservative.json",
-          "resolved_path": "crates/gf2-algebra/data/tuning-profiles/conservative.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "d7231db8590fe526f8fbc5f3c83836503b9543b0ee29548d4477d6f2cbd0d6f2",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-09-01-eaae1b56-calibration.log",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56-calibration.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "37c6914ef2221a982a9c6a46f911b5e779fd1a6d58255a1eb360d305ba917631",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../active/eaae1b56/premeasurement-protocol.md",
-          "resolved_path": "dev/active/eaae1b56/premeasurement-protocol.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "15539c9146a92ab554d7099a03ad36afc1e1b0d90f79914c85a3cdc4d185353b",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../active/7d824b2f/design.md",
-          "resolved_path": "dev/active/7d824b2f/design.md"
-        }
-      ],
       "commit": null,
       "doc_type": "benchmark",
       "format": "markdown",
       "label": "Measured selector campaign receipt",
-      "path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md"
     },
     {
       "commit": null,
       "doc_type": "benchmark",
       "label": "Measured selector campaign raw execution log",
-      "path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56-calibration.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56-calibration.log"
     },
     {
       "commit": null,
       "doc_type": "benchmark",
       "label": "Measured selector campaign checksum manifest",
-      "path": "dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.sha256"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-eaae1b56.sha256"
     },
     {
       "commit": null,
@@ -189,7 +71,7 @@
       "commit": null,
       "doc_type": "benchmark",
       "label": "Composed measured repository envelope",
-      "path": "dev/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/reference_data/tuning-profiles/gf2-eaae1b56-20260904-215231-898522.json"
     }
   ],
   "done_at": "2026-09-04T23:12:37.450546318Z",
@@ -226,5 +108,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Extend the calibration sweep to the follow-on threshold fields",
-  "updated_at": "2026-10-01T22:42:01.065634019Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

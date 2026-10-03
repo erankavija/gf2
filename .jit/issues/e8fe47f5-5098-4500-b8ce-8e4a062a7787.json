@@ -9,90 +9,30 @@
   "description": "Pin the benchmark set, predeclared tolerance, and runnable procedure that gate the selector cutover.\n\n## Background\n\nA reconciled capability trait or migrated selector goes public only after a pinned benchmark set passes within a predeclared non-regression tolerance. The set covers the selector families marked profile-scoped for the pilot cutover; the tolerance is declared before any cutover measurement exists. This issue delivers the protocol and the runnable procedure only; baseline measurement is a separate issue.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed procedure names the pinned benchmarks covering the pilot selector families and states the non-regression tolerance, declared before any cutover measurement.\n- [hard] REQ-02: The procedure executes end to end in benchmark mode on a prepared host, and is reproducible from its committed description alone.",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "67915996bd9719457aa747306a50ce041003c4aad3cae77b1d950e36f8030e93",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "/crates/gf2-core/benches/selector_non_regression.rs",
-          "resolved_path": "crates/gf2-core/benches/selector_non_regression.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ddbdce01e9df1802d9dad2b7901b483db794165ec28ab8fd50d0c2cd0fc0633a",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "2026-08-19-procedure-verification.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a271c614f3a4f1258aa482a3a578240214c425cc461200d79e02f63d80021e15",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "/dev/active/220cab0b/design.md",
-          "resolved_path": "dev/active/220cab0b/design.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ec8795cff768ebe753dcac134672a8983da3906f37cf3ff357637fe1802cc720",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "/dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md",
-          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md"
-        }
-      ],
       "commit": null,
       "doc_type": "plan",
       "format": "markdown",
       "label": "Pinned selector non-regression set and tolerance v1",
-      "path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "076cc83d87b51f7b22dbd70120a54abfb9238cba63c9654d260bff1a76f3724f",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-08-19-procedure-verification-cohort-b.csv",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-b.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "edde480f2b4d3a4af427e612ab6c887f5e29a975acb65349b11216feee9153e2",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "selector-non-regression-plan-v1.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "44ff73c9e7b3af0aa4e6432514c43e3c20e9a1eda407b5712100811eabd6e627",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "2026-08-19-procedure-verification-cohort-a.csv",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-a.csv"
-        }
-      ],
       "commit": null,
       "doc_type": "receipt",
       "format": "markdown",
       "label": "Procedure-verification receipt (not the baseline)",
-      "path": "dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md"
     },
     {
       "commit": null,
       "doc_type": "data",
       "label": "Verification cohort A raw windows",
-      "path": "dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-a.csv"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-a.csv"
     },
     {
       "commit": null,
       "doc_type": "data",
       "label": "Verification cohort B raw windows",
-      "path": "dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-b.csv"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-19-procedure-verification-cohort-b.csv"
     },
     {
       "commit": null,
@@ -130,5 +70,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Pin the non-regression benchmark set and tolerance",
-  "updated_at": "2026-10-01T22:42:00.738032682Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

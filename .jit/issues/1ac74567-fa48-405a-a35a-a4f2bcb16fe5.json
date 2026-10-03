@@ -11,33 +11,33 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "REQ-05 loop-free extraction proof-obligation factoring sketch",
-      "path": "dev/active/1ac74567/proof-sketch.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/proof-sketch.md"
     },
     {
       "commit": null,
       "doc_type": "harness",
       "format": "markdown",
       "label": "A8b_lean elaboration harness (four stages)",
-      "path": "dev/active/1ac74567/elaboration/elaborate.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.sh"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "A8b_lean elaboration receipt: commands, exit statuses, output",
-      "path": "dev/active/1ac74567/elaboration/elaborate.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/elaborate.log"
     },
     {
       "commit": null,
       "doc_type": "harness",
       "format": "markdown",
       "label": "Sketch lemma statements, statement-elaboration input",
-      "path": "dev/active/1ac74567/elaboration/statements.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/statements.lean"
     },
     {
       "commit": null,
       "doc_type": "harness",
       "label": "Empty stand-in for the missing R8bGf2Core.FunsExternal module",
-      "path": "dev/active/1ac74567/elaboration/FunsExternal.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/1ac74567/elaboration/FunsExternal.lean"
     }
   ],
   "done_at": "2026-08-19T17:59:16.815300969Z",
@@ -62,5 +62,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Author the loop-free extraction proof-obligation factoring sketch",
-  "updated_at": "2026-10-01T22:41:16.270124327Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

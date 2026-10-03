@@ -11,48 +11,14 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Selection-boundary instruction delta",
-      "path": "dev/active/2a85f728/asm-delta.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/2a85f728/asm-delta.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "0c494a07d3a9e11504eddf0104ab8658398cd6af39f529b278bbc9c1296fbbd3",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../6dc81018-field-capability-dispatch/plan.md",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/plan.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e5fad14e8784087abd17443fe29e36037df5817cfd4b1b6bff80d073588dfeb1",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt-2.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "88ec7e40f84a5332733ab23427249f2ba63d7ed16e42b88c6288d46841bf8266",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md",
-          "resolved_path": "dev/benchmarks/tuning_profiles/2026-08-20-post-cutover-receipt.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ae4f9246f1714c3955986882e889ea3ffa91a6e8435b864daebb70cced67ac4b",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../6dc81018-field-capability-dispatch/classification.md",
-          "resolved_path": "dev/active/6dc81018-field-capability-dispatch/classification.md"
-        }
-      ],
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Design §4.1 (amended by 2a85f728)",
-      "path": "dev/active/220cab0b/design.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/220cab0b/design.md"
     }
   ],
   "done_at": "2026-08-20T20:38:36.898033463Z",
@@ -83,5 +49,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Eliminate the per-call cost of the bit-backend selection boundary",
-  "updated_at": "2026-10-01T22:41:20.729501676Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

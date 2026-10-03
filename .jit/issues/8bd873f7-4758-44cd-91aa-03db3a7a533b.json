@@ -13,7 +13,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "Tuning-extent validator verdicts before and after",
-      "path": "dev/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/fa787f85-documentation-overhaul/tuning-extent-verdict-baseline.md"
     }
   ],
   "done_at": "2026-10-02T14:44:17.268035629Z",
@@ -56,5 +56,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Locate tuning-extent campaign declarations without derived dev paths",
-  "updated_at": "2026-10-02T14:44:17.268035629Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

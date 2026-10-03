@@ -13,7 +13,7 @@
       "doc_type": "research",
       "format": "markdown",
       "label": "Charon generic-extraction spike record",
-      "path": "dev/active/34d85cb9/findings.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md"
     }
   ],
   "done_at": "2026-08-19T04:45:28.735182572Z",
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Spike Charon extraction of a trait-generic field algorithm",
-  "updated_at": "2026-10-01T22:41:22.626716496Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }

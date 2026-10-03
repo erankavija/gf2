@@ -11,7 +11,7 @@
       "doc_type": "research",
       "format": "markdown",
       "label": "Clean-exit extraction record (DEC-R)",
-      "path": "dev/active/e6ea0dde/record.md"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md"
     }
   ],
   "done_at": "2026-08-22T21:49:37.987142334Z",
@@ -48,5 +48,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Record a clean-exit extraction of the loop-free generic operations",
-  "updated_at": "2026-10-01T22:42:00.256420336Z"
+  "updated_at": "2026-10-03T14:39:01.439792070Z"
 }
