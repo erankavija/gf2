@@ -8,6 +8,7 @@
   ],
   "description": "Bring the comments and Rustdoc in the gf2-kernels-simd x86 module to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-kernels-simd/src/x86/`, about 4,100 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
   "documents": [],
+  "done_at": "2026-10-03T21:37:03.538248158Z",
   "first_ready_at": "2026-10-03T16:21:58.070445002Z",
   "gates_required": [
     "cargo-ci",
@@ -22,13 +23,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T17:59:23.893047830Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T21:01:13.833801603Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T17:55:44.304701490Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T20:56:57.571559432Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -50,7 +51,7 @@
     "satisfies:ffc35b8c/REQ-26"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Tersify comments in the gf2-kernels-simd x86 module",
-  "updated_at": "2026-10-03T20:52:38.795722501Z"
+  "updated_at": "2026-10-03T21:37:03.538248158Z"
 }

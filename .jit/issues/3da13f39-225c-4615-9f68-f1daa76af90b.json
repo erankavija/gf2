@@ -18,22 +18,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T19:54:05.541636647Z",
+      "updated_at": "2026-10-03T21:03:47.291234313Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "passed",
-      "updated_at": "2026-10-03T20:11:05.711190106Z",
+      "status": "failed",
+      "updated_at": "2026-10-03T21:16:53.166640383Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T20:12:41.839628005Z",
+      "updated_at": "2026-10-03T21:10:43.099487661Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T20:06:02.565893706Z",
+      "updated_at": "2026-10-03T21:16:07.115154159Z",
       "updated_by": "auto:executor"
     }
   },
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the gf2-core prime-field modules",
-  "updated_at": "2026-10-03T20:12:41.839628005Z"
+  "updated_at": "2026-10-03T21:16:53.166640383Z"
 }

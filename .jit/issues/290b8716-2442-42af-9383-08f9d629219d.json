@@ -18,22 +18,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T20:05:58.847549829Z",
+      "updated_at": "2026-10-03T21:14:00.559247128Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T20:30:50.562144758Z",
+      "updated_at": "2026-10-03T21:36:48.563575745Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T20:32:33.090727092Z",
+      "updated_at": "2026-10-03T21:29:22.649271827Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T20:06:21.059489623Z",
+      "updated_at": "2026-10-03T21:16:26.242505640Z",
       "updated_by": "auto:executor"
     }
   },
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the remaining gf2-kernels-simd files",
-  "updated_at": "2026-10-03T20:32:33.090727092Z"
+  "updated_at": "2026-10-03T21:36:48.563575745Z"
 }

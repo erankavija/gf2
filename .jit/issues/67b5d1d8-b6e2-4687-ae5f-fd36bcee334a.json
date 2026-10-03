@@ -18,22 +18,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T20:50:29.730245930Z",
+      "updated_at": "2026-10-03T21:16:03.277429238Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T18:08:18.971561681Z",
+      "updated_at": "2026-10-03T21:09:08.646057640Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T18:04:05.703823778Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T21:03:47.004707784Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T20:52:46.398194941Z",
+      "updated_at": "2026-10-03T21:16:30.080676663Z",
       "updated_by": "auto:executor"
     }
   },
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the gf2-core GF(2^m) module",
-  "updated_at": "2026-10-03T20:52:46.398194941Z"
+  "updated_at": "2026-10-03T21:16:30.080676663Z"
 }
