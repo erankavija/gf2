@@ -7,7 +7,15 @@
     "67048b47-ed17-4672-822a-829a796420c2"
   ],
   "description": "`dev/sessions/` holds three handoff and root-cause notes. Two name their issues; one has no identifier.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/sessions/` does not exist.\n- [hard] REQ-02: Each owned note lives in its owner's archive directory (terminal top epic) or `dev/active/` epic directory (open top epic) and is linked; the unowned note lives under `dev/archive/legacy/dev/sessions/`.\n- [hard] REQ-03: The relative link from `dev/benchmarks/gf2_algebra_permanent/README.md` resolves to the note's new path.\n- [hard] REQ-04: The manifest records each row as complete.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Session-note document relink commands",
+      "path": "dev/active/fa787f85-documentation-overhaul/37099e5b-doc-relink.sh"
+    }
+  ],
   "first_ready_at": "2026-10-03T18:24:39.327626755Z",
   "gates_required": [
     "cargo-ci",
@@ -42,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Empty dev/sessions into owner dirs or the legacy mirror",
-  "updated_at": "2026-10-03T22:18:43.161900045Z"
+  "updated_at": "2026-10-03T22:53:19.125508467Z"
 }

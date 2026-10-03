@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:54:36.058780972Z",
+  "dependencies": [],
+  "description": "`GfxTarget::load_blob` and `LaunchDims` in `crates/gf2-kernels-hip` have no caller. `build.rs` compiles a probe per `kernels/<target>/` directory.\n\n## Background\n\nComments in `build.rs`, `host/arch.rs` and `host/launch.rs` described both as waiting for per-target kernels and for the launch call sites to be rewired; the issues those comments named are done. The source-comment sweep removed the statements, and this issue tracks the remaining work.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of `GfxTarget::load_blob` and `LaunchDims` has a production caller covered by a test, or is removed together with the per-target probe build it serves.\n- [hard] REQ-02: The crate checks of the `gf2-kernels-hip-ci` gate pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:54:36.058780972Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "0ecf6fcd-8733-4e97-a70e-7b5eaa9f1940",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-hip",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Adopt or remove the unused HIP blob loader and LaunchDims",
+  "updated_at": "2026-10-03T22:54:36.058780972Z"
+}

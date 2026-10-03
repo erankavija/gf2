@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:54:28.526028254Z",
+  "dependencies": [],
+  "description": "The primitive-polynomial verifier in `crates/gf2-core/src/primitive_polys.rs` stores polynomials in `u64`, which bounds the degrees it verifies.\n\n## Background\n\nThe module documentation named the widening as an extension; the source-comment sweep removed that statement, and this issue tracks it.\n\n## Success Criteria\n\n- [hard] REQ-01: `verify_primitive` accepts polynomials in `u128` storage, or the supported degree bound is stated as a present-tense contract in its Rustdoc and enforced by a test.\n- [hard] REQ-02: Verification results for every catalogued polynomial are unchanged, shown by a test over the catalogue.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:54:28.526028254Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "d1e5db10-c150-4ef2-94ee-cf584c482bbb",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Widen verify_primitive to u128 polynomial storage",
+  "updated_at": "2026-10-03T22:54:28.526028254Z"
+}

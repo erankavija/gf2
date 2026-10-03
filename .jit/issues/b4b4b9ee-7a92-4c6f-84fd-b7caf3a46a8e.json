@@ -9,6 +9,7 @@
     "0afbd34a-17c3-4f9a-9871-27a6aa7a3f96",
     "0b45a5fa-ca47-4e32-a7a8-04a13d65c348",
     "0d1e9536-a858-494d-b204-1f47a7aacc76",
+    "0ecf6fcd-8733-4e97-a70e-7b5eaa9f1940",
     "1015ae73-ce41-4004-bc2d-d57ee8c3c881",
     "10f23a84-788b-4fcd-a977-84838160e19f",
     "18db6e3d-7657-4b94-8662-06e989e6deb0",
@@ -38,12 +39,14 @@
     "aabc528a-ac5c-4c4f-961b-d3b3abb3eade",
     "ad978596-08fd-415a-963f-cfd21fa2d481",
     "b2520e0f-76b1-4cfa-b9ce-0859c0823eb7",
+    "b53a6036-ed6c-41ea-8c7c-51b491775e69",
     "bb64ee0e-3e03-47b7-8640-518574108eed",
     "bc4eb125-12a6-4470-86ca-e6031edc9b6b",
     "bd5a401d-3e6a-41d0-a0f5-ef5ee26d8857",
     "c04d3f1c-89b6-4983-a1f3-0aedb9a6651b",
     "c11640f2-7ebc-4167-94c4-bd781df1452a",
     "cfc2e9a9-24f4-4c0a-a7d3-bca1f89a9241",
+    "d1e5db10-c150-4ef2-94ee-cf584c482bbb",
     "d436dd5f-f0f7-4243-9727-d00a1830f61b",
     "d5afe5aa-9261-432f-81bb-2f33bd90e786",
     "de0528d2-2ac1-412d-89ce-6a328d795256",
@@ -80,5 +83,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Technical debt assessment remediation (2026-06-30)",
-  "updated_at": "2026-10-03T22:06:27.780030071Z"
+  "updated_at": "2026-10-03T22:54:50.795195348Z"
 }

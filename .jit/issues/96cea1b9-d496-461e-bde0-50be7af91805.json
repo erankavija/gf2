@@ -5,7 +5,20 @@
   "created_at": "2026-10-03T16:21:59.147876502Z",
   "dependencies": [],
   "description": "The migration manifest lists sources of epic 6dc81018 as pending at their `dev/active/` and `dev/benchmarks/` paths. Container archival moved them under `dev/archive/6dc81018-field-capability-dispatch/`, so the progress checker reports each row's pending source as missing.\n\n## Background\n\nThe manifest is `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml`; its checker is `migration/check.py`. The archive event's planned moves are recorded in the tracker event log.\n\n## Success Criteria\n\n- [hard] REQ-01: Each manifest row whose source the 6dc81018 archive moved records its archive destination and a complete status, taken from the archive's recorded moves by a committed command, not by hand.\n- [hard] REQ-02: The progress checker exits zero on the repository, and its self-tests pass.\n- [hard] REQ-03: Rows of sources that the archive copied and left in place keep their source path and status.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Manifest row reconciliation command",
+      "path": "dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Reconciliation decisions per manifest row",
+      "path": "dev/active/fa787f85-documentation-overhaul/96cea1b9-archive-rows.txt"
+    }
+  ],
   "first_ready_at": "2026-10-03T16:21:59.147876502Z",
   "gates_required": [
     "code-review",
@@ -39,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reconcile the migration manifest with the archived field-dispatch epic",
-  "updated_at": "2026-10-03T22:20:08.157228462Z"
+  "updated_at": "2026-10-03T22:53:19.091915479Z"
 }
