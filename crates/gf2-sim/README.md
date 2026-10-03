@@ -46,16 +46,15 @@ Binaries with `required-features` in `Cargo.toml` need `--features test-support`
 
 ## Features
 
+The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative.
+
 | Feature | Default | Effect |
 |---|---|---|
 | `hip` | no | HIP device dispatch for LDPC belief propagation, demapping, AWGN and BCH syndromes; requires ROCm. Enables `gf2-coding/hip` and `gf2-algebra/hip` |
 | `llr-f64` | no | Selects `f64` LLRs through `gf2-coding/llr-f64` |
 | `test-support` | no | Deterministic AWGN channel-LLR source `testutil::AwgnLlrSource` for tests, benches and the comparison binaries |
 
-```toml
-[dependencies]
-gf2-sim = { path = "crates/gf2-sim", features = ["hip"] }
-```
+Dependency setup is in [installation](../../docs/reference/supported-configurations.md#installation).
 
 ## Reference
 
