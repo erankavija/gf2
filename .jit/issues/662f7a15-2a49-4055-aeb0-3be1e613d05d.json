@@ -38,6 +38,13 @@
       "doc_type": "evidence",
       "label": "Small-prime sweep aggregate (5-trial median, 22 cells)",
       "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "2026-05-06-662f7a15-f-vs-c-verification.md",
+      "path": "dev/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md"
     }
   ],
   "done_at": "2026-05-06T10:43:00.288973082Z",
@@ -74,5 +81,5 @@
   "priority": "high",
   "state": "done",
   "title": "Implement small-prime GEMM kernels",
-  "updated_at": "2026-08-07T21:29:07.540503831Z"
+  "updated_at": "2026-10-03T16:30:19.435799903Z"
 }

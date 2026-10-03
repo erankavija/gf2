@@ -10,7 +10,32 @@
     "bd0edfa2-092e-4844-9291-3dd8fbd43d3e"
   ],
   "description": "Extend the existing BCH Criterion benches to the workload-selection contract: field-generic and AVX2 large-batch encoding and generator-matrix materialization, with worker-count sweeps and dispatch-path reporting.\n\n## Success Criteria\n\n- [hard] REQ-01: Criterion targets cover both selected workloads on the canonical model, binary and nonbinary, reporting the dispatch path taken.\n- [hard] REQ-02: Benchmarks run on the existing harness conventions and emit data consumable by the receipt task.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run.sh",
+      "path": "dev/active/d1b4f85e/run.sh"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "290ba073f0205e0e4b0337d25d4157d5880d84e2e37ab1520931ce5398715280",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "run.sh",
+          "resolved_path": "dev/active/d1b4f85e/run.sh"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "smoke-run.md",
+      "path": "dev/active/d1b4f85e/smoke-run.md"
+    }
+  ],
   "done_at": "2026-10-01T11:00:58.474002228Z",
   "first_ready_at": "2026-10-01T08:54:05.749726542Z",
   "gates_required": [
@@ -39,5 +64,5 @@
   "priority": "high",
   "state": "done",
   "title": "Extend Criterion benchmarks to the selected workloads",
-  "updated_at": "2026-10-01T22:41:56.698282335Z"
+  "updated_at": "2026-10-03T16:30:38.239444483Z"
 }

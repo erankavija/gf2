@@ -97,6 +97,20 @@
       "format": "markdown",
       "label": "Receipt protocol",
       "path": "dev/active/fd9d5416/receipt-protocol.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "render_receipt.py",
+      "path": "dev/active/fd9d5416/render_receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "test_render_receipt.py",
+      "path": "dev/active/fd9d5416/tests/test_render_receipt.py"
     }
   ],
   "first_ready_at": "2026-10-01T11:01:00.699226534Z",
@@ -116,5 +130,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
-  "updated_at": "2026-10-01T22:42:07.580606138Z"
+  "updated_at": "2026-10-03T16:31:20.001878476Z"
 }

@@ -9,7 +9,15 @@
     "8f68699b-d66a-45f2-a276-b8700bd4cc65"
   ],
   "description": "Migrate the DVB-T2 family to the canonical BCH model: the DVB-T2 BCH modules, LDPC concatenation, and the BICM harness, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: The DVB-T2 modules build and pass on the canonical model with the DVB-T2 verification vectors unchanged.\n- [hard] REQ-02: No file in this task's inventory constructs a BCH code through `BchCode::new` or `from_generator` any longer.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-97410c80.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-97410c80.md"
+    }
+  ],
   "done_at": "2026-10-01T07:46:11.150147563Z",
   "first_ready_at": "2026-08-28T23:04:06.062337929Z",
   "gates_required": [
@@ -38,5 +46,5 @@
   "priority": "high",
   "state": "done",
   "title": "Migrate the DVB-T2 BCH consumers to the canonical model",
-  "updated_at": "2026-10-01T22:41:44.555654354Z"
+  "updated_at": "2026-10-03T16:30:28.465354450Z"
 }

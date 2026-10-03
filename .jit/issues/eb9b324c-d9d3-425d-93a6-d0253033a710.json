@@ -72,6 +72,58 @@
       "format": "markdown",
       "label": "Static dispatch-path disassembly, reference vs candidate ordinary members",
       "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/static-dispatch-disasm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build.log",
+      "path": "dev/active/eb9b324c/pilot/build.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "pilot-analyse.py",
+      "path": "dev/active/eb9b324c/pilot/pilot-analyse.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "pilot-build.sh",
+      "path": "dev/active/eb9b324c/pilot/pilot-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "pilot-run.sh",
+      "path": "dev/active/eb9b324c/pilot/pilot-run.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "slots.tsv",
+      "path": "dev/active/eb9b324c/pilot/slots.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "e2-perf.sh",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/e2-perf.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "e2-run.log",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/perf/e2-run.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "timed.log",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/timed.log"
     }
   ],
   "done_at": "2026-08-22T16:24:32.105750922Z",
@@ -108,5 +160,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:31:05.072630317Z"
 }

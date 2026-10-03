@@ -622,6 +622,45 @@
       "doc_type": "benchmark",
       "label": "Append-only family ledger: transpose-lane-vs-external",
       "path": "dev/bench_results/1d4fd63d/transpose-lane-vs-external-family-ledger.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "1d4fd63d-links.tsv",
+      "path": "dev/active/1a379447-zen3-cpu-performance/pending-links/1d4fd63d-links.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "1d4fd63d-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/1d4fd63d-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/1d4fd63d/arms/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/1d4fd63d/arms/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/1d4fd63d/external-arms/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/1d4fd63d/external-arms/Cargo.lock"
     }
   ],
   "done_at": "2026-09-13T18:21:20.570758139Z",
@@ -677,5 +716,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Optimize bit transpose and bitslice conversion",
-  "updated_at": "2026-10-01T22:41:17.528409904Z"
+  "updated_at": "2026-10-03T16:28:39.228817252Z"
 }

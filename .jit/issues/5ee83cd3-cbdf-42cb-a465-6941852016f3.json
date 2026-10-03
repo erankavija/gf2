@@ -10,7 +10,15 @@
     "8f68699b-d66a-45f2-a276-b8700bd4cc65"
   ],
   "description": "Migrate the remaining gf2-coding library components consuming legacy BCH constructors: the BCJR, GLDPC, and OSD touchpoints, the simulation module, and the crate root re-exports, per the investigation inventory.\n\n## Success Criteria\n\n- [hard] REQ-01: Each file in this task's inventory builds and passes on the canonical model with unchanged observable results.\n- [hard] REQ-02: No file in this task's inventory constructs a BCH code through the legacy constructors any longer.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-5ee83cd3.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-5ee83cd3.md"
+    }
+  ],
   "done_at": "2026-10-01T07:13:14.534758400Z",
   "first_ready_at": "2026-08-28T23:04:06.062337929Z",
   "gates_required": [
@@ -39,5 +47,5 @@
   "priority": "high",
   "state": "done",
   "title": "Migrate the component-code BCH consumers to the canonical model",
-  "updated_at": "2026-10-01T22:41:33.064098781Z"
+  "updated_at": "2026-10-03T16:30:19.332904912Z"
 }

@@ -189,6 +189,348 @@
       "format": "markdown",
       "label": "Population-count and fused-reduction findings",
       "path": "dev/active/5cbb6545/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-fused-v4-confirmation.json",
+      "path": "dev/active/5cbb6545/addendum-fused-v4-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-fused-v4-pilot.json",
+      "path": "dev/active/5cbb6545/addendum-fused-v4-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-fused-v4-sweep.json",
+      "path": "dev/active/5cbb6545/addendum-fused-v4-sweep.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-fused-v4-sweep2.json",
+      "path": "dev/active/5cbb6545/addendum-fused-v4-sweep2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-popcount-v4-confirmation.json",
+      "path": "dev/active/5cbb6545/addendum-popcount-v4-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-popcount-v4-pilot.json",
+      "path": "dev/active/5cbb6545/addendum-popcount-v4-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-popcount-v4-sweep.json",
+      "path": "dev/active/5cbb6545/addendum-popcount-v4-sweep.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-popcount-v4-sweep2.json",
+      "path": "dev/active/5cbb6545/addendum-popcount-v4-sweep2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-smoke-v4-smoke.json",
+      "path": "dev/active/5cbb6545/addendum-smoke-v4-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/5cbb6545/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pilot-resolution-fused.txt",
+      "path": "dev/active/5cbb6545/pilot-resolution-fused.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pilot-resolution-popcount.txt",
+      "path": "dev/active/5cbb6545/pilot-resolution-popcount.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "producing-inputs.json",
+      "path": "dev/active/5cbb6545/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-count-campaign.sh",
+      "path": "dev/active/5cbb6545/run-count-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-validation.sh",
+      "path": "dev/active/5cbb6545/run-validation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/5cbb6545/survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "clock-observation.json",
+      "path": "dev/active/5cbb6545/survey/clock-observation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "families.py",
+      "path": "dev/active/5cbb6545/survey/families.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/5cbb6545/survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/5cbb6545/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "arms.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/src/arms.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "count-arm.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/src/bin/count-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "count-verify.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/src/bin/count-verify.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "external.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/src/external.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fixture.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/src/fixture.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "lib.rs",
+      "path": "dev/active/5cbb6545/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-addenda.py",
+      "path": "dev/active/5cbb6545/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-plan.py",
+      "path": "dev/active/5cbb6545/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/5cbb6545/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "observe-clock.py",
+      "path": "dev/active/5cbb6545/survey/observe-clock.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "source-evidence.json",
+      "path": "dev/active/5cbb6545/survey/source-evidence.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./{stage['directory'].name}/",
+          "resolved_path": "dev/active/5cbb6545/survey/{stage['directory'].name}"
+        }
+      ],
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize.py",
+      "path": "dev/active/5cbb6545/survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "validation-arms.txt",
+      "path": "dev/active/5cbb6545/validation-arms.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "validation-production.txt",
+      "path": "dev/active/5cbb6545/validation-production.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "validation-raw.txt",
+      "path": "dev/active/5cbb6545/validation-raw.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "validation-source-evidence.txt",
+      "path": "dev/active/5cbb6545/validation-source-evidence.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "validation.json",
+      "path": "dev/active/5cbb6545/validation.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-popcount-sweep/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-sweep"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-popcount-sweep2/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-sweep2"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-fused-sweep/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-sweep"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-popcount-pilot-r2/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot-r2"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-fused-pilot-r2/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot-r2"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-popcount-confirmation/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-confirmation"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-fused-confirmation/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-confirmation"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-fused-pilot/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-pilot"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-fused-sweep2/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-fused-sweep2"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "./2026-09-13-5cbb6545-popcount-pilot/",
+          "resolved_path": "dev/bench_results/5cbb6545/2026-09-13-5cbb6545-popcount-pilot"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "tables.md",
+      "path": "dev/bench_results/5cbb6545/tables.md"
     }
   ],
   "done_at": "2026-09-13T20:09:02.007568906Z",
@@ -241,5 +583,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Optimize population count and fused bit reductions",
-  "updated_at": "2026-10-01T22:41:32.549088769Z"
+  "updated_at": "2026-10-03T16:30:19.282007164Z"
 }

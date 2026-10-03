@@ -78,6 +78,13 @@
       "format": "html",
       "label": "Epic close-out reveal.js presentation",
       "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-presentation/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gruvbox.css",
+      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-presentation/themes/gruvbox.css"
     }
   ],
   "done_at": "2026-04-21T03:32:29.582295698Z",
@@ -118,5 +125,5 @@
   "priority": "low",
   "state": "archived",
   "title": "Implement general Galois field GF(p^m) arithmetic",
-  "updated_at": "2026-08-07T21:28:41.073179567Z"
+  "updated_at": "2026-10-03T16:30:38.770562973Z"
 }

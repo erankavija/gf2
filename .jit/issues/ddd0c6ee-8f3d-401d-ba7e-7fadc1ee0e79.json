@@ -7,7 +7,73 @@
     "240b7618-f24f-4fc1-b708-ac349b3b3286"
   ],
   "description": "The committed measurement of what the four-matrix batched AVX2 path is worth: per-matrix rates for the batched path, the scalar kernel, and the single-matrix AVX2 kernel at the sizes where one bipedal word suffices.\n\n## Background\n\nThe batched path exists to make AVX2 lanes carry four matrices instead of one zero-padded word, and the single-matrix AVX2 kernel is already measured at roughly three times the scalar cost. Neither fact tells anyone what the batched path actually delivers: lane utilisation is an argument about the hardware, and the repository requires performance claims to rest on committed measurements rather than on arguments of that shape.\n\nThe measurement lands after the dispatcher selection settles, so the receipt describes the code as it will stand rather than a configuration that changed underneath it. That ordering also keeps the benchmark group labels the receipt quotes consistent with the prose sweep that accompanies the selection.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports per-matrix rates for the batched path, the scalar single-word kernel, and the single-matrix AVX2 kernel at the sizes where one bipedal word suffices.\n- [hard] REQ-02: The receipt records seeds, git revision, hardware and toolchain, and reports repetition counts with dispersion rather than a single timing.\n- [hard] REQ-03: The batched path's speedup is stated against the scalar kernel as a measured ratio formed from pooled totals, never by averaging per-repetition reciprocals.\n- [hard] REQ-04: The receipt states the sizes over which the batched path leads and the sizes where it does not, rather than a single headline ratio.\n- [hard] REQ-05: Where the measured result contradicts the expectation that four-lane batching pays at these sizes, both the expectation and the measurement are recorded together with the contradiction.\n- [hard] REQ-06: Any in-tree prose quoting a rate for these kernels agrees with this receipt.\n\n## Notes\n\nTimed windows run under the repository's benchmark host lock so no other work shares the cores during a measurement.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "batched-f3-avx2-interrupted-2026-08-10.md",
+      "path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-interrupted-2026-08-10.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c05b0eb8f5e31cd299ad5ea13526e8e1c5a79bd7ca6cc1839f64cd09925be35c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "batched-f3-avx2-provenance-fixed.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "51ca20d4d5a1cb6ad59876bdafb90a2b2b35489e3576aab739e7efd66c8f8598",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "batched-f3-avx2.md",
+          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "batched-f3-avx2-provenance-fixed.md",
+      "path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f6c5eb673e982f002ab71002f4310fc7db7f31b320850a70bd2526e2248742ee",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "batched-f3-avx2-provenance-incomplete-2026-08-10.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-incomplete-2026-08-10.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec8795cff768ebe753dcac134672a8983da3906f37cf3ff357637fe1802cc720",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "batched-f3-avx2-provenance-fixed.md",
+          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86b12548e903dbd69bdf779fa543589c4dc5483c33f0e4cec045603f206b350b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "batched-f3-avx2-interrupted-2026-08-10.md",
+          "resolved_path": "dev/benchmarks/permanent_campaign/batched-f3-avx2-interrupted-2026-08-10.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "batched-f3-avx2.md",
+      "path": "dev/benchmarks/permanent_campaign/batched-f3-avx2.md"
+    }
+  ],
   "done_at": "2026-08-10T03:40:17.945570039Z",
   "first_ready_at": "2026-08-09T23:11:01.325436084Z",
   "gates_required": [
@@ -42,5 +108,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-10-01T22:41:58.672910146Z"
+  "updated_at": "2026-10-03T16:30:38.712488115Z"
 }

@@ -1220,6 +1220,275 @@
       "format": "markdown",
       "label": "Session26 final handoff and scheduled M4RI pilot",
       "path": "dev/active/1a379447-zen3-cpu-performance/handoff-22.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "follow-window.sh",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-window.sh",
+      "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d79717d1b2b81a4dca107a2aac3d5417936c38f4dda27b47ca868a98eebd55c6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/1d4fd63d-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/1d4fd63d-r1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "998f661b39ed136e9a9e5458a63fe9d808982dcab6819b14f06dca6c49040341",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-4.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-4.md"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "reviews/",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cfcddfc343bea74b1bb81c2ba8c7fbcc5198e09a110e811e63896b7ad537cda2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/follow-window.sh",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1a6240dc9a25088fd9c944dd16eb57df014f2e958c20d9a38fa6598051e4ce57",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-8.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-8.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "102766e1779588c1ad692bad196bd1dcc3e66466153cf2f78202122dc3ebc666",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-6.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-6.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "651454bfdd7eb6e34a66a0b4bb69537f839f53fee656c13fef7901d4124d0d5f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/queue.tsv",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3d4ad08c5adb5893ad1d42fd276e3b48146967df4dc00d524950cdb01d105c19",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-9.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-9.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c2d8cff7fb956e650a6a990b320bb5b59bc62223ffc92a0cc67d2d552a847fd2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reviews/07ca8585-r1.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/reviews/07ca8585-r1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5152ff20a3dfa5b3c69405d7c1d176f1d8a8bac0c17bc644de0dcf672d6cb0ce",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-2.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-2.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9124a0bc155424c1be0b63f72c0c5ebb81d0d5656ec34907ead7fcb3211a5559",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f44fd307d977d1fd8b746c6c799ea8bee725bed97d1717775ab936148340d033",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-3.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-3.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1b2169f065b202027b03a2651098b6dbecc0739a5bd92ab701983ed03fe1809c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-5.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-5.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5feed24fabd3c48c064bc95795296a71bc34ff7cb38342c84fe1e87374a72e8a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-10.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-10.md"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pending-links/",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/pending-links"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "18a449f00982c729e63be5d539bd1348310f2fcb244b3f50c30c857e0d81b7c8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "handoff-7.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/handoff-7.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "003e57b79a40691af62c5c0c372823740a4ab6ad1f2e1dee0803bde6c2f5cd32",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "progress.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/progress.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0a72d64daa508a70a617fde893b2f1eef004118fe19c56a214fb104fe728fd04",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "bench-window/run-window.sh",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bd04f71ba13a959efdf66baea0cc13106d4495c61f6004f32b77edf7fef3eddb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "worker-brief.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/worker-brief.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-11.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-11.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-15.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/handoff-15.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "07ca8585-links.tsv",
+      "path": "dev/active/1a379447-zen3-cpu-performance/pending-links/07ca8585-links.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "1d4fd63d-links.tsv",
+      "path": "dev/active/1a379447-zen3-cpu-performance/pending-links/1d4fd63d-links.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "07ca8585-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/07ca8585-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "07ca8585-r2.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/07ca8585-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "1d4fd63d-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/1d4fd63d-r1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7c29b22f123a91f213063e8be4c1f5d205029d9c88ae84295acfcfbbb620bf25",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/3be770d5/tables.md",
+          "resolved_path": "dev/bench_results/3be770d5/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a33233cf80512e8822d78424d6b9c2e7a8466f2a480c950a21aa66a0980e074d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../3be770d5/survey/summarize.py",
+          "resolved_path": "dev/active/3be770d5/survey/summarize.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "3be770d5-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/3be770d5-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "6fb89a3c-r2.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/6fb89a3c-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "7cc591a0-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/7cc591a0-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "subject-rewrite-sha-map.tsv",
+      "path": "dev/active/1a379447-zen3-cpu-performance/subject-rewrite-sha-map.tsv"
     }
   ],
   "first_ready_at": "2026-09-06T19:15:32.769714694Z",
@@ -1243,5 +1512,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Maximize Zen 3 CPU throughput against open-source baselines",
-  "updated_at": "2026-09-28T11:24:35.913946531Z"
+  "updated_at": "2026-10-03T16:28:37.639438063Z"
 }

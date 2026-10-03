@@ -14,6 +14,1110 @@
       "format": "markdown",
       "label": "Charon generic-extraction spike record",
       "path": "dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/34d85cb9/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/34d85cb9/extraction/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A11.cmd",
+      "path": "dev/active/34d85cb9/extraction/A11.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/A11_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/A11_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/34d85cb9/extraction/A11_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A2.cmd",
+      "path": "dev/active/34d85cb9/extraction/A2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/A2_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "FunsExternal_Template.lean",
+      "path": "dev/active/34d85cb9/extraction/A2_lean/FunsExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/A2_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A2b.cmd",
+      "path": "dev/active/34d85cb9/extraction/A2b.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/A2b_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/A2b_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A3.cmd",
+      "path": "dev/active/34d85cb9/extraction/A3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/A3_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/A3_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A4.cmd",
+      "path": "dev/active/34d85cb9/extraction/A4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/A4_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/A4_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/34d85cb9/extraction/A4_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A8b.cmd",
+      "path": "dev/active/34d85cb9/extraction/A8b.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/A8b_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/A8b_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A9.cmd",
+      "path": "dev/active/34d85cb9/extraction/A9.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AP1.cmd",
+      "path": "dev/active/34d85cb9/extraction/AP1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AP2.cmd",
+      "path": "dev/active/34d85cb9/extraction/AP2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AP3.cmd",
+      "path": "dev/active/34d85cb9/extraction/AP3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AP4.cmd",
+      "path": "dev/active/34d85cb9/extraction/AP4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "P1.cmd",
+      "path": "dev/active/34d85cb9/extraction/P1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/P1_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/P1_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "P2.cmd",
+      "path": "dev/active/34d85cb9/extraction/P2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/P2_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/P2_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "P3.cmd",
+      "path": "dev/active/34d85cb9/extraction/P3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/P3_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/P3_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "P4.cmd",
+      "path": "dev/active/34d85cb9/extraction/P4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/extraction/P4_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/extraction/P4_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R1.cmd",
+      "path": "dev/active/34d85cb9/extraction/R1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R10.cmd",
+      "path": "dev/active/34d85cb9/extraction/R10.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R11.cmd",
+      "path": "dev/active/34d85cb9/extraction/R11.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R2.cmd",
+      "path": "dev/active/34d85cb9/extraction/R2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R3.cmd",
+      "path": "dev/active/34d85cb9/extraction/R3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R4.cmd",
+      "path": "dev/active/34d85cb9/extraction/R4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R5.cmd",
+      "path": "dev/active/34d85cb9/extraction/R5.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R6.cmd",
+      "path": "dev/active/34d85cb9/extraction/R6.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R7.cmd",
+      "path": "dev/active/34d85cb9/extraction/R7.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R7b.cmd",
+      "path": "dev/active/34d85cb9/extraction/R7b.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R8.cmd",
+      "path": "dev/active/34d85cb9/extraction/R8.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R8b.cmd",
+      "path": "dev/active/34d85cb9/extraction/R8b.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R8c.cmd",
+      "path": "dev/active/34d85cb9/extraction/R8c.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R9.cmd",
+      "path": "dev/active/34d85cb9/extraction/R9.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "a11-accounting.sh",
+      "path": "dev/active/34d85cb9/extraction/a11-accounting.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "A11-accounting.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/A11-accounting.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "R1_batch_inverse.llbc.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/R1_batch_inverse.llbc.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "R2_batch_inverse.llbc.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/R2_batch_inverse.llbc.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "R8b_pow.llbc.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/R8b_pow.llbc.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "host-context.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/host-context.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "llbc-item-counts.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "toolchain-versions.txt",
+      "path": "dev/active/34d85cb9/extraction/excerpts/toolchain-versions.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "host.sh",
+      "path": "dev/active/34d85cb9/extraction/host.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "llbc-summary.sh",
+      "path": "dev/active/34d85cb9/extraction/llbc-summary.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "probe-P1.rs",
+      "path": "dev/active/34d85cb9/extraction/probe-P1.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "probe-P2.rs",
+      "path": "dev/active/34d85cb9/extraction/probe-P2.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "probe-P3.rs",
+      "path": "dev/active/34d85cb9/extraction/probe-P3.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "probe-P4.rs",
+      "path": "dev/active/34d85cb9/extraction/probe-P4.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run.sh",
+      "path": "dev/active/34d85cb9/extraction/run.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "trim-logs.sh",
+      "path": "dev/active/34d85cb9/extraction/trim-logs.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "versions.sh",
+      "path": "dev/active/34d85cb9/extraction/versions.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A11.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A11.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A2.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A2b.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A2b.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A3.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A4.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A8b.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A8b.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A9.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/A9.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AP1.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/AP1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AP2.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/AP2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AP3.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/AP3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AP4.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/AP4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "P1.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/P1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "P2.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/P2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "P3.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/P3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "P4.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/P4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R1.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R10.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R10.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R11.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R11.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R2.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R3.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R4.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R5.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R5.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R6.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R6.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R7.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R7.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R7b.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R7b.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R8.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R8.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R8b.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R8b.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R8c.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R8c.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R9.log",
+      "path": "dev/active/34d85cb9/logs-trimmed/R9.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/34d85cb9/upgrade/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "charon-local-patch-487f0320.patch",
+      "path": "dev/active/34d85cb9/upgrade/charon-local-patch-487f0320.patch"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "A2_errors.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/A2_errors.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "A8b_pow_loop_signature.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/A8b_pow_loop_signature.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "llbc-item-counts.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/llbc-item-counts.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pipeline-baseline-summary.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/pipeline-baseline-summary.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "pipeline-new-breakage.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/pipeline-new-breakage.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pipeline-new-summary.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/pipeline-new-summary.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "pipeline-regen-diff.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/pipeline-regen-diff.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "toolchain-versions-new.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/toolchain-versions-new.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "upstream-topology.txt",
+      "path": "dev/active/34d85cb9/upgrade/excerpts/upstream-topology.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/34d85cb9/upgrade/extraction/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A11.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A11.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A11_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A11_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A11_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A2.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A2_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A2_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A4.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A4_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A4_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A4_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A6.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A6.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A6_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A6_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A6_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A7.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A7.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A7_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A7_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A8b.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A8b.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A8b_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A8b_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "A9.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/A9.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AP1.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/AP1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "P1.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/P1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/P1_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/34d85cb9/upgrade/extraction/P1_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R1.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R10.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R10.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R11.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R11.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R2.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R3.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R4.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R5.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R5.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R6.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R6.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R7.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R7.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R8.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R8.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R8b.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R8b.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R8c.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R8c.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "R9.cmd",
+      "path": "dev/active/34d85cb9/upgrade/extraction/R9.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run.sh",
+      "path": "dev/active/34d85cb9/upgrade/extraction/run.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A11.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A11.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A2.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A4.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A6.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A6.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A7.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A7.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A8b.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A8b.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "A9.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/A9.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AP1.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/AP1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "P1.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/P1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R1.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R10.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R10.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R11.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R11.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R2.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R3.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R4.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R5.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R5.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R6.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R6.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R7.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R7.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R8.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R8.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R8b.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R8b.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R8c.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R8c.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "R9.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/R9.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "format": "markdown",
+      "label": "charon-build.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/charon-build.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "pipeline-baseline.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/pipeline-baseline.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "pipeline-new.log",
+      "path": "dev/active/34d85cb9/upgrade/logs-trimmed/pipeline-new.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "pipeline-regression.sh",
+      "path": "dev/active/34d85cb9/upgrade/pipeline-regression.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "topology.sh",
+      "path": "dev/active/34d85cb9/upgrade/topology.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "versions-new.sh",
+      "path": "dev/active/34d85cb9/upgrade/versions-new.sh"
     }
   ],
   "done_at": "2026-08-19T04:45:28.735182572Z",
@@ -38,5 +1142,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Spike Charon extraction of a trait-generic field algorithm",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:30:08.478185334Z"
 }

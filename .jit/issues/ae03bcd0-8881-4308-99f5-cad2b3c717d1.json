@@ -27,6 +27,265 @@
       "format": "markdown",
       "label": "Session 11 handoff",
       "path": "dev/active/ae03bcd0-general-bch/handoff-8.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-2.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-3.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-4.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-5.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-6.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-6.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-7.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff-7.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff.md",
+      "path": "dev/active/ae03bcd0-general-bch/handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gap-b4-probe.sh",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "gap.err",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap.err"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "gap.out",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/gap.out"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "rss.log",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/rss.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "scope.txt",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/scope.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "timeline.txt",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/attempts/2026-09-02-b4-heap-50g/timeline.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gap_oracle.g",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../$corpus",
+          "resolved_path": "dev/$corpus"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "oracle/run.sh",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/oracle/oracle/run.sh"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../$sage_out",
+          "resolved_path": "dev/$sage_out"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../$gap_out",
+          "resolved_path": "dev/$gap_out"
+        }
+      ],
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run.sh",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/run.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "sage_oracle.py",
+      "path": "dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "progress.json",
+      "path": "dev/active/ae03bcd0-general-bch/progress.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "3f7edef1-description.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/3f7edef1-description.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-0c21cb1e.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-0c21cb1e.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-227ac5c8.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-227ac5c8.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-591a1c5e.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-591a1c5e.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-97410c80.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-97410c80.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-ef8ff9c4.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-ef8ff9c4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-b1bd75ca-r1.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/rework-b1bd75ca-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "wave12-common.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/wave12-common.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-203ee826.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-203ee826.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-5ee83cd3.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-5ee83cd3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-b1bd75ca.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-b1bd75ca.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-e1e0e7ff.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-e1e0e7ff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gap-b4-probe.sh",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/gap-b4-probe.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-3f7edef1-r1-part2.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/rework-3f7edef1-r1-part2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-3f7edef1-r2.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/rework-3f7edef1-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-444c06bc-bd0edfa2-r2.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/rework-444c06bc-bd0edfa2-r2.md"
     }
   ],
   "first_ready_at": "2026-08-28T21:14:59.928863085Z",
@@ -49,5 +308,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Harden and generalize BCH codes over finite fields",
-  "updated_at": "2026-10-01T13:47:08.375110252Z"
+  "updated_at": "2026-10-03T16:30:31.680718703Z"
 }

@@ -29,6 +29,13 @@
       "format": "markdown",
       "label": "Session handoff 2026-04-16 (even-code lead)",
       "path": "dev/archive/6efb756b-grand/active/6efb756b-session-handoff-2026-04-16.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "generate_grand_comparison_plots.py",
+      "path": "dev/archive/6efb756b-grand/docs/presentations/figures/generate_grand_comparison_plots.py"
     }
   ],
   "done_at": "2026-04-16T22:42:25.262959359Z",
@@ -71,5 +78,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Run Phase 2 AWGN simulations: Figs 4-6 additional product code dimensions",
-  "updated_at": "2026-08-07T21:28:45.796696218Z"
+  "updated_at": "2026-10-03T16:30:09.881339730Z"
 }

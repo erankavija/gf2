@@ -118,6 +118,116 @@
       "doc_type": "research",
       "label": "Manifest integrity sidecar",
       "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/checksums.sha256"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-7a816262-phase1.md",
+      "path": "dev/active/b8206228-permanent-statistics/dispatch-7a816262-phase1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "backend-selection-v1-rng-addendum.md",
+      "path": "dev/benchmarks/permanent_campaign/backend-selection-v1-rng-addendum.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "premeasure-plan-v1.md",
+      "path": "dev/benchmarks/permanent_campaign/premeasure-plan-v1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "c268d554411c65bc6c3366247775e8d8d5b177b46f064e850a0da5b3d3b38640",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-plan-v1.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-plan-v1.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b5e8401a6523e2c05912fa720fe4b5b74491c28b77a7bf2154d2f5a36b1956eb",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "premeasure-v1-deviations.md",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2ec904ad9847011bfa9fda5e348b67361e97ba0ccf1dc0cbea74d6687eb848b6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "summarize_premeasure_v1.py",
+          "resolved_path": "dev/benchmarks/permanent_campaign/summarize_premeasure_v1.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d1efd9dcfa39b8498db1e04ba0720de2bf96677fc6b820ffadc3f1919848d046",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-v1-ledger.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-ledger.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "272a524185c14515394a24a5e7385e07b7dc5620c0a488a12438668b72b8c6b8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-v1-candidates.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-candidates.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5b08387b4d32bde37d3f41bc839455bbcb272d81d1c0b0930180d8d70926483b",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "premeasure-v1-censored/process-0539-3-26-A/receipt.txt",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-censored/process-0539-3-26-A/receipt.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f5bde7eb9f6c71611dc5726e8aca3eb4eba3e386da49e0a4ed5c295a90a73a0d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-v1-censored/process-0539-3-26-A/exit.status",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-censored/process-0539-3-26-A/exit.status"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "65f8097389d6d9a6f0c34d8aee02f385e229ff2724320674ec5cf7bc9145706d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-v1-censored/process-0539-3-26-A/harness.log",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-censored/process-0539-3-26-A/harness.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a881379d2066e764af4e7b6aa459b5f81c0562d67c42f9ddb81362b325ad65bd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-v1-cell-summary.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-cell-summary.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "premeasure-v1-censored/process-0539-3-26-A/scratch.csv",
+          "resolved_path": "dev/benchmarks/permanent_campaign/premeasure-v1-censored/process-0539-3-26-A/scratch.csv"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "premeasure-v1-receipt.md",
+      "path": "dev/benchmarks/permanent_campaign/premeasure-v1-receipt.md"
     }
   ],
   "done_at": "2026-08-30T01:31:45.912626754Z",
@@ -147,5 +257,5 @@
   "priority": "high",
   "state": "done",
   "title": "Frozen root manifest for the campaign",
-  "updated_at": "2026-08-30T01:31:45.912626754Z"
+  "updated_at": "2026-10-03T16:30:23.007662780Z"
 }

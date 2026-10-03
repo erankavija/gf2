@@ -182,6 +182,239 @@
       "format": "markdown",
       "label": "Session-34 handoff",
       "path": "dev/active/b8206228-permanent-statistics/handoff-30.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "backend-exclusions-draft.md",
+      "path": "dev/active/b8206228-permanent-statistics/backend-exclusions-draft.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "950d9bd20043f2408e514814c6d71798dce802230c662c5c75ab1843193c3ce0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "receipt-inventory.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/receipt-inventory.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "backend-selection-draft.md",
+      "path": "dev/active/b8206228-permanent-statistics/backend-selection-draft.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-032cc754.md",
+      "path": "dev/active/b8206228-permanent-statistics/dispatch-032cc754.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-7a816262-phase1.md",
+      "path": "dev/active/b8206228-permanent-statistics/dispatch-7a816262-phase1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-a39bb161.md",
+      "path": "dev/active/b8206228-permanent-statistics/dispatch-a39bb161.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d9bbcd6d8bddd51bab0e232732bb0e16d4710e5dce4ff48932d4879afea00cce",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "manifest-draft/manifest.json",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/manifest-draft/manifest.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f91fa2d25b4c81242925996de2d12f392c4d5152da6acc1063adf35b522911a5",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "gap-list.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/gap-list.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "950d9bd20043f2408e514814c6d71798dce802230c662c5c75ab1843193c3ce0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "receipt-inventory.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/receipt-inventory.md"
+        },
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "n",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/n"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f009e79b2ae2c4a7ea16415fdc14cd98da9e2e07a2796fde482fdfbd93bc1184",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "backend-selection-draft.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/backend-selection-draft.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ae9b5fb985bc85289adc6fc0ab9d514f8c2f93aba2936c845a5851407f3494fc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "validation.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/validation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ec92081cb15f9095ab8c26e0a3d200c5b398f221f161bf9833e35406527ebf15",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "backend-exclusions-draft.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/backend-exclusions-draft.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "generate_manifest_draft.py",
+      "path": "dev/active/b8206228-permanent-statistics/generate_manifest_draft.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-19.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-19.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-20.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-20.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-21.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-21.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-23.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-23.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-24.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-24.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-25.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-25.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-26.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-26.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-27.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-27.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-28.md",
+      "path": "dev/active/b8206228-permanent-statistics/handoff-28.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "checksums.sha256",
+      "path": "dev/active/b8206228-permanent-statistics/manifest-draft/checksums.sha256"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "manifest.json",
+      "path": "dev/active/b8206228-permanent-statistics/manifest-draft/manifest.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "profiled-run.sh",
+      "path": "dev/active/b8206228-permanent-statistics/profiled-run.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "progress.json",
+      "path": "dev/active/b8206228-permanent-statistics/progress.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "receipt-inventory.md",
+      "path": "dev/active/b8206228-permanent-statistics/receipt-inventory.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-032cc754-r1.md",
+      "path": "dev/active/b8206228-permanent-statistics/rework-032cc754-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-a39bb161-r1.md",
+      "path": "dev/active/b8206228-permanent-statistics/rework-a39bb161-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "validation.md",
+      "path": "dev/active/b8206228-permanent-statistics/validation.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "2026-08-09-b8206228-planning-handoff.md",
+      "path": "dev/sessions/2026-08-09-b8206228-planning-handoff.md"
     }
   ],
   "first_ready_at": "2026-08-07T12:32:21.572267461Z",
@@ -203,5 +436,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-10-01T22:41:52.103756815Z"
+  "updated_at": "2026-10-03T16:30:33.184913530Z"
 }

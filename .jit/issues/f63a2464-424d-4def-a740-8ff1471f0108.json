@@ -659,6 +659,193 @@
       "doc_type": "reference",
       "label": "Addendum-schema version table, counting the three new QC pilot receipts",
       "path": "dev/active/f547c394/schema-versions.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-qc-comparator-single-worker-pilot.json",
+      "path": "dev/active/f63a2464/addendum-ldpc-qc-comparator-single-worker-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-qc-intra-frame-multicore-pilot.json",
+      "path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-multicore-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-qc-intra-frame-single-worker-pilot.json",
+      "path": "dev/active/f63a2464/addendum-ldpc-qc-intra-frame-single-worker-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "arms.json",
+      "path": "dev/active/f63a2464/survey/arms.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/f63a2464/survey/arms/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/f63a2464/survey/arms/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "qc-arm-smoke.rs",
+      "path": "dev/active/f63a2464/survey/arms/src/bin/qc-arm-smoke.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "qc-decoder-arm.rs",
+      "path": "dev/active/f63a2464/survey/arms/src/bin/qc-decoder-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "confirmatory-budget.py",
+      "path": "dev/active/f63a2464/survey/confirmatory-budget.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/f63a2464/survey/intrinsics-probe/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/f63a2464/survey/intrinsics-probe/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-addenda.py",
+      "path": "dev/active/f63a2464/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-plan.py",
+      "path": "dev/active/f63a2464/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/f63a2464/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "producing-inputs.json",
+      "path": "dev/active/f63a2464/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/f63a2464/survey/prototypes/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/f63a2464/survey/prototypes/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "ldpc-candidate-quality.rs",
+      "path": "dev/active/f63a2464/survey/prototypes/src/bin/ldpc-candidate-quality.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "layered.rs",
+      "path": "dev/active/f63a2464/survey/prototypes/src/layered.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "lib.rs",
+      "path": "dev/active/f63a2464/survey/prototypes/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "qc.rs",
+      "path": "dev/active/f63a2464/survey/prototypes/src/qc.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "quantized.rs",
+      "path": "dev/active/f63a2464/survey/prototypes/src/quantized.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "contracts.rs",
+      "path": "dev/active/f63a2464/survey/prototypes/tests/contracts.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "record-intrinsic-feasibility.py",
+      "path": "dev/active/f63a2464/survey/record-intrinsic-feasibility.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "record-preparation.py",
+      "path": "dev/active/f63a2464/survey/record-preparation.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-quality.py",
+      "path": "dev/active/f63a2464/survey/run-quality.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "source-evidence.json",
+      "path": "dev/active/f63a2464/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-quality.py",
+      "path": "dev/active/f63a2464/survey/summarize-quality.py"
     }
   ],
   "first_ready_at": "2026-09-06T19:59:26.709153676Z",
@@ -686,5 +873,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate quantized layered and QC-aware LDPC candidates",
-  "updated_at": "2026-10-01T22:42:05.321439790Z"
+  "updated_at": "2026-10-03T16:31:19.016750472Z"
 }

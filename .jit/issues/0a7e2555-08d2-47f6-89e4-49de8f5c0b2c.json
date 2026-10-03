@@ -14,6 +14,23 @@
       "format": "markdown",
       "label": "RNS research (recommendation: defer)",
       "path": "dev/archive/e095a100-gfpm-arithmetic/research/rns_representation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/linbox-team/fflas-ffpack",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rns_representation.md",
+      "path": "dev/research/rns_representation.md"
     }
   ],
   "done_at": "2026-04-18T04:17:11.457529125Z",
@@ -49,5 +66,5 @@
   "priority": "low",
   "state": "done",
   "title": "Research RNS (Residue Number System) representation for large prime fields",
-  "updated_at": "2026-08-07T21:28:41.073179567Z"
+  "updated_at": "2026-10-03T16:27:49.835750149Z"
 }

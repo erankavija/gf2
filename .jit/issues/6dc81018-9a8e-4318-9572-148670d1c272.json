@@ -89,6 +89,92 @@
       "format": "markdown",
       "label": "Completion report",
       "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/completion-report.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-10.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-10.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-2.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-3.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-4.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-5.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-6.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-6.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-7.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-7.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-8.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-8.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff-9.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff-9.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "e189214622a59b9f8bb2d2148062b058aeed82ec80c8c3bfc4005145939dec08",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../benchmarks/tuning_profiles/2026-09-01-389aa4de.md",
+          "resolved_path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "handoff.md",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "progress.json",
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/progress.json"
     }
   ],
   "done_at": "2026-10-02T21:05:22.063465554Z",
@@ -125,5 +211,5 @@
   "priority": "normal",
   "state": "archived",
   "title": "Reconcile field capability traits and profile-driven kernel dispatch",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:30:20.432947036Z"
 }

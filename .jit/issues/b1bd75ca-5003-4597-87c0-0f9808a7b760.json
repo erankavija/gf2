@@ -32,6 +32,20 @@
       "format": "markdown",
       "label": "Formal-proof sketch: O-4 generator base-field membership and root correctness (anchor rows)",
       "path": "dev/active/64fd3afd/proof-sketch.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-b1bd75ca-r1.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/rework-b1bd75ca-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-b1bd75ca.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-b1bd75ca.md"
     }
   ],
   "done_at": "2026-10-01T07:07:53.945662942Z",
@@ -69,5 +83,5 @@
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-10-01T22:41:49.566409316Z"
+  "updated_at": "2026-10-03T16:30:31.832165379Z"
 }

@@ -339,6 +339,125 @@
       "doc_type": "report",
       "label": "Protocol-v3 preflight rejection record",
       "path": "dev/active/1d0da41f/evidence/v3-preflight-rejection.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ymm-clmul-dispatch-pilot.json",
+      "path": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ymm-clmul-dispatch.json",
+      "path": "dev/active/1d0da41f/addendum-ymm-clmul-dispatch.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "adoption-tests.txt",
+      "path": "dev/active/1d0da41f/evidence/adoption-tests.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "asm-gate.txt",
+      "path": "dev/active/1d0da41f/evidence/asm-gate.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "cargo-ci-first.txt",
+      "path": "dev/active/1d0da41f/evidence/cargo-ci-first.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ci-prerequisite-failures.txt",
+      "path": "dev/active/1d0da41f/evidence/ci-prerequisite-failures.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "default-failing-test.txt",
+      "path": "dev/active/1d0da41f/evidence/default-failing-test.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "feature-gate-failure.txt",
+      "path": "dev/active/1d0da41f/evidence/feature-gate-failure.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "portable-tests.txt",
+      "path": "dev/active/1d0da41f/evidence/portable-tests.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "preflight-tests.txt",
+      "path": "dev/active/1d0da41f/evidence/preflight-tests.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "req07-failing-test.txt",
+      "path": "dev/active/1d0da41f/evidence/req07-failing-test.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-ymm-clmul-v3-confirmation.json",
+      "path": "dev/active/1d0da41f/plan-ymm-clmul-v3-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-ymm-clmul-v3-pilot-r2.json",
+      "path": "dev/active/1d0da41f/plan-ymm-clmul-v3-pilot-r2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-ymm-clmul-v3-pilot.json",
+      "path": "dev/active/1d0da41f/plan-ymm-clmul-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "baseline-source.tar.gz",
+      "path": "dev/active/1d0da41f/survey/baseline-source.tar.gz"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-arms.sh",
+      "path": "dev/active/1d0da41f/survey/build-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "main.rs",
+      "path": "dev/active/1d0da41f/survey/ymm-clmul-arm/src/main.rs"
     }
   ],
   "done_at": "2026-09-10T17:10:33.383941955Z",
@@ -389,5 +508,5 @@
   "priority": "high",
   "state": "done",
   "title": "Repair YMM carry-less multiplication dispatch with measured evidence",
-  "updated_at": "2026-10-01T22:41:17.375218759Z"
+  "updated_at": "2026-10-03T16:28:38.868462466Z"
 }

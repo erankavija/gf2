@@ -18,6 +18,50 @@
       "format": "markdown",
       "label": "Seam premeasurement protocol",
       "path": "dev/archive/6dc81018-field-capability-dispatch/active/dbd8787d/premeasurement-protocol.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "campaign-declaration.json",
+      "path": "dev/active/dbd8787d/campaign-declaration.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "producing-build-inputs.json",
+      "path": "dev/active/dbd8787d/producing-build-inputs.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "179046b0b730208a9a50fd3b63cda30a739ca4f5e8881a554965e8355ea37e34",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "gf2-dbd8787d-20261001t230000z-2601601.md",
+          "resolved_path": "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "166c14932e3c731405c980073968f5a0978f561e5eeafd3d55a368931ea8ae71",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "gf2-dbd8787d-20261001t230000z-2601601.sha256",
+          "resolved_path": "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.sha256"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "gf2-dbd8787d-20261001t230000z-2601601-evidence.md",
+      "path": "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601-evidence.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "gf2-dbd8787d-20261001t230000z-2601601.md",
+      "path": "dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md"
     }
   ],
   "done_at": "2026-10-02T14:49:11.838596036Z",
@@ -54,5 +98,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Extend the calibration sweep to the seam threshold fields",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:30:38.546454557Z"
 }

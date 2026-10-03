@@ -167,6 +167,13 @@
       "format": "html",
       "label": "Modem framework for gf2 — researcher-facing highlights (revealjs)",
       "path": "dev/archive/d4851c3d-modem-framework/docs/presentations/d4851c3d-modem-framework/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gruvbox.css",
+      "path": "dev/archive/d4851c3d-modem-framework/docs/presentations/d4851c3d-modem-framework/themes/gruvbox.css"
     }
   ],
   "done_at": "2026-04-15T08:37:47.367356807Z",
@@ -181,5 +188,5 @@
   "priority": "high",
   "state": "archived",
   "title": "Implement QAM modulation with soft-decision demapping",
-  "updated_at": "2026-10-03T00:30:11.251251787Z"
+  "updated_at": "2026-10-03T16:30:38.340739755Z"
 }

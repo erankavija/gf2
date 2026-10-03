@@ -772,6 +772,150 @@
       "format": "markdown",
       "label": "Steady-state LDPC throughput harness (standalone workspace)",
       "path": "dev/active/3be770d5/survey/harness/Cargo.toml"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "7c29b22f123a91f213063e8be4c1f5d205029d9c88ae84295acfcfbbb620bf25",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/3be770d5/tables.md",
+          "resolved_path": "dev/bench_results/3be770d5/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a33233cf80512e8822d78424d6b9c2e7a8466f2a480c950a21aa66a0980e074d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../3be770d5/survey/summarize.py",
+          "resolved_path": "dev/active/3be770d5/survey/summarize.py"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "3be770d5-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/3be770d5-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "nextest.toml",
+      "path": "dev/active/3be770d5/survey/harness/.config/nextest.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/3be770d5/survey/harness/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/3be770d5/survey/harness/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "throughput_shim.cpp",
+      "path": "dev/active/3be770d5/survey/harness/cpp/throughput_shim.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "aff3ct.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/aff3ct.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "aff3ct-throughput-arm.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/bin/aff3ct-throughput-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf2-throughput-arm.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/bin/gf2-throughput-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "ldpc-alloc-census.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/bin/ldpc-alloc-census.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "ldpc-plan-check.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/bin/ldpc-plan-check.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "ldpc-profile.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/bin/ldpc-profile.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "ldpc-throughput-validate.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/bin/ldpc-throughput-validate.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "driver.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/driver.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf2.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/gf2.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "lib.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "pool.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/pool.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "workload.rs",
+      "path": "dev/active/3be770d5/survey/harness/src/workload.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "session-conditions.py",
+      "path": "dev/active/3be770d5/survey/session-conditions.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "profile.md",
+      "path": "dev/bench_results/3be770d5/v3-r1-steady-profile/profile.md"
     }
   ],
   "done_at": "2026-09-12T17:34:28.321336973Z",
@@ -817,5 +961,5 @@
   "priority": "high",
   "state": "done",
   "title": "Profile the CPU LDPC throughput gap against compatible decoders",
-  "updated_at": "2026-10-01T22:41:23.691953736Z"
+  "updated_at": "2026-10-03T16:30:09.563680506Z"
 }

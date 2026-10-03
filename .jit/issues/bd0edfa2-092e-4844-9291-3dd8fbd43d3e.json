@@ -25,6 +25,13 @@
       "format": "markdown",
       "label": "W2 generator-matrix materialization receipt",
       "path": "dev/bench_results/bd0edfa2/2026-09-02-bd0edfa2-genmatrix-receipt.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-444c06bc-bd0edfa2-r2.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/rework-444c06bc-bd0edfa2-r2.md"
     }
   ],
   "done_at": "2026-09-02T17:28:55.242769466Z",
@@ -56,5 +63,5 @@
   "priority": "high",
   "state": "done",
   "title": "Optimize the reference generator-matrix materialization",
-  "updated_at": "2026-10-01T22:41:52.988568259Z"
+  "updated_at": "2026-10-03T16:30:33.438928325Z"
 }

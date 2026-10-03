@@ -225,6 +225,54 @@
       "format": "markdown",
       "label": "Final story review and cumulative finding closure",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/c04dd4ac-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "profile-cases.txt",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/profile-cases.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/.gitignore"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "words_for",
+          "resolved_path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/words_for"
+        }
+      ],
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/residual-shift-feasibility/src/lib.rs"
     }
   ],
   "done_at": "2026-09-28T06:33:36.356376612Z",
@@ -290,5 +338,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Optimize arbitrary-offset shifts and coding permutations",
-  "updated_at": "2026-10-01T22:41:53.420981370Z"
+  "updated_at": "2026-10-03T16:30:33.804662321Z"
 }

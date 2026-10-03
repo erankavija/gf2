@@ -273,6 +273,13 @@
       "format": "html",
       "label": "Epic closing-showcase presentation (reveal.js; 14 slides, 6 new research capabilities; fitcheck-clean)",
       "path": "dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gruvbox.css",
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/docs/presentations/ae82bd73-gf2-algebra-permanent/themes/gruvbox.css"
     }
   ],
   "done_at": "2026-05-22T21:48:47.528536785Z",
@@ -288,5 +295,5 @@
   "priority": "high",
   "state": "archived",
   "title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
-  "updated_at": "2026-10-03T00:30:11.035596170Z"
+  "updated_at": "2026-10-03T16:30:31.731004668Z"
 }

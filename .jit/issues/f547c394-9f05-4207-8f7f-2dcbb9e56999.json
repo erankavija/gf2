@@ -551,6 +551,523 @@
       "format": "markdown",
       "label": "f547c394 final converged review round 6",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f547c394-r6.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-smoke-v2-confirmation-r1.json",
+      "path": "dev/active/f547c394/addendum-smoke-v2-confirmation-r1.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-smoke-v2-pilot-r1.json",
+      "path": "dev/active/f547c394/addendum-smoke-v2-pilot-r1.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-smoke-v2-pilot.json",
+      "path": "dev/active/f547c394/addendum-smoke-v2-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-smoke-v3-confirmation-r1.json",
+      "path": "dev/active/f547c394/addendum-smoke-v3-confirmation-r1.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-smoke-v3-pilot-r1.json",
+      "path": "dev/active/f547c394/addendum-smoke-v3-pilot-r1.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "06835b62af2b5a35148ae9342392eb61b7d997f01b5abff701def0c2d08adb8d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "findings.md",
+          "resolved_path": "dev/active/f547c394/findings.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "amendment-v2.md",
+      "path": "dev/active/f547c394/amendment-v2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "citation-additions.toml",
+      "path": "dev/active/f547c394/citation-additions.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-smoke-v2-confirmation-r1.json",
+      "path": "dev/active/f547c394/plan-smoke-v2-confirmation-r1.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-smoke-v2-pilot-r1.json",
+      "path": "dev/active/f547c394/plan-smoke-v2-pilot-r1.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-smoke-v2-pilot.json",
+      "path": "dev/active/f547c394/plan-smoke-v2-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-smoke-v3-confirmation-r1.json",
+      "path": "dev/active/f547c394/plan-smoke-v3-confirmation-r1.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "plan-smoke-v3-pilot-r1.json",
+      "path": "dev/active/f547c394/plan-smoke-v3-pilot-r1.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum.schema.json",
+          "resolved_path": "dev/active/f547c394/addendum.schema.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f3c7563580b7de0d3240f00a48f4c711f78cf7324e4c869d45166aa2cdcebb3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "aa437238361ba6519af25fe6408e4206a7c6a898a337d465e06b980f1e60163a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "design.md",
+          "resolved_path": "dev/active/f547c394/design.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "protocol-v1.md",
+      "path": "dev/active/f547c394/protocol-v1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "research-r3-addresses.txt",
+      "path": "dev/active/f547c394/research-r3-addresses.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "research-r3-deferred-audit.txt",
+      "path": "dev/active/f547c394/research-r3-deferred-audit.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "research-r3-deferred-resolutions.md",
+      "path": "dev/active/f547c394/research-r3-deferred-resolutions.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "research-r3-portability.json",
+      "path": "dev/active/f547c394/research-r3-portability.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "research-r3-prework.txt",
+      "path": "dev/active/f547c394/research-r3-prework.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "research-r3-sweep-resolutions.md",
+      "path": "dev/active/f547c394/research-r3-sweep-resolutions.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "research-r3-sweeps.json",
+      "path": "dev/active/f547c394/research-r3-sweeps.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "research-r3-v1-preservation.json",
+      "path": "dev/active/f547c394/research-r3-v1-preservation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-r4-raw-outputs.md",
+      "path": "dev/active/f547c394/rework-r4-raw-outputs.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-r5-raw-outputs.md",
+      "path": "dev/active/f547c394/rework-r5-raw-outputs.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-validation-r4.md",
+      "path": "dev/active/f547c394/rework-validation-r4.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2d073d402bc66567e556ece19ce602e90a35732e0c50e6b6681e9802d4b51cc4",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "rework-validation.md",
+          "resolved_path": "dev/active/f547c394/rework-validation.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-validation-raw-outputs.md",
+      "path": "dev/active/f547c394/rework-validation-raw-outputs.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "smoke-v2-evidence.json",
+      "path": "dev/active/f547c394/smoke-v2-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "cargo-ci.log",
+      "path": "dev/active/f547c394/validation-r3/cargo-ci.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "check-attempts.log",
+      "path": "dev/active/f547c394/validation-r3/check-attempts.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "check.log",
+      "path": "dev/active/f547c394/validation-r3/check.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "check2.log",
+      "path": "dev/active/f547c394/validation-r3/check2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "check3.log",
+      "path": "dev/active/f547c394/validation-r3/check3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "clippy-final.log",
+      "path": "dev/active/f547c394/validation-r3/clippy-final.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "clippy-ready.log",
+      "path": "dev/active/f547c394/validation-r3/clippy-ready.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "clippy.log",
+      "path": "dev/active/f547c394/validation-r3/clippy.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "clippy2.log",
+      "path": "dev/active/f547c394/validation-r3/clippy2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "clippy3.log",
+      "path": "dev/active/f547c394/validation-r3/clippy3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "commands.md",
+      "path": "dev/active/f547c394/validation-r3/commands.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "final-source-consistency.json",
+      "path": "dev/active/f547c394/validation-r3/final-source-consistency.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt-attempts.log",
+      "path": "dev/active/f547c394/validation-r3/fmt-attempts.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt-chain.log",
+      "path": "dev/active/f547c394/validation-r3/fmt-chain.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt-final.log",
+      "path": "dev/active/f547c394/validation-r3/fmt-final.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt-final2.log",
+      "path": "dev/active/f547c394/validation-r3/fmt-final2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt.log",
+      "path": "dev/active/f547c394/validation-r3/fmt.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt2.log",
+      "path": "dev/active/f547c394/validation-r3/fmt2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt3.log",
+      "path": "dev/active/f547c394/validation-r3/fmt3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt4.log",
+      "path": "dev/active/f547c394/validation-r3/fmt4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt5.log",
+      "path": "dev/active/f547c394/validation-r3/fmt5.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "fmt6.log",
+      "path": "dev/active/f547c394/validation-r3/fmt6.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "gpu-diagnosis.log",
+      "path": "dev/active/f547c394/validation-r3/gpu-diagnosis.log"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md",
+          "resolved_path": "dev/active/f547c394/validation-r3/dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "issue-status.txt",
+      "path": "dev/active/f547c394/validation-r3/issue-status.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "launcher-description.diff",
+      "path": "dev/active/f547c394/validation-r3/launcher-description.diff"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "launcher-syntax.json",
+      "path": "dev/active/f547c394/validation-r3/launcher-syntax.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "lock-wrapper-budgeted.log",
+      "path": "dev/active/f547c394/validation-r3/lock-wrapper-budgeted.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "lock-wrapper.log",
+      "path": "dev/active/f547c394/validation-r3/lock-wrapper.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "msrv-final.log",
+      "path": "dev/active/f547c394/validation-r3/msrv-final.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "msrv-ready.log",
+      "path": "dev/active/f547c394/validation-r3/msrv-ready.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "msrv.log",
+      "path": "dev/active/f547c394/validation-r3/msrv.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "msrv2.log",
+      "path": "dev/active/f547c394/validation-r3/msrv2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "narrative-clarification.json",
+      "path": "dev/active/f547c394/validation-r3/narrative-clarification.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "pilot-session1.log",
+      "path": "dev/active/f547c394/validation-r3/pilot-session1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "prepare-confirmation.log",
+      "path": "dev/active/f547c394/validation-r3/prepare-confirmation.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "prepare-pilot-r1.log",
+      "path": "dev/active/f547c394/validation-r3/prepare-pilot-r1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "prepare-pilot.log",
+      "path": "dev/active/f547c394/validation-r3/prepare-pilot.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "r3-red.log",
+      "path": "dev/active/f547c394/validation-r3/r3-red.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "release-final.log",
+      "path": "dev/active/f547c394/validation-r3/release-final.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "release-ready.log",
+      "path": "dev/active/f547c394/validation-r3/release-ready.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "suite-chain.log",
+      "path": "dev/active/f547c394/validation-r3/suite-chain.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "suite-final.log",
+      "path": "dev/active/f547c394/validation-r3/suite-final.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "suite.log",
+      "path": "dev/active/f547c394/validation-r3/suite.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "suite2.log",
+      "path": "dev/active/f547c394/validation-r3/suite2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "suite3.log",
+      "path": "dev/active/f547c394/validation-r3/suite3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "suite4.log",
+      "path": "dev/active/f547c394/validation-r3/suite4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "tests.log",
+      "path": "dev/active/f547c394/validation-r3/tests.log"
     }
   ],
   "done_at": "2026-09-08T17:31:50.985783908Z",
@@ -597,5 +1114,5 @@
   "priority": "high",
   "state": "done",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-10-01T23:05:54.448360525Z"
+  "updated_at": "2026-10-03T16:31:16.690423411Z"
 }

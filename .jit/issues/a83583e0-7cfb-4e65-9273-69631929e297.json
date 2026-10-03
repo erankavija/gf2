@@ -41,6 +41,49 @@
       "format": "markdown",
       "label": "Receipt evidence index",
       "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298-evidence.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "campaign-declaration.json",
+      "path": "dev/active/a83583e0/campaign-declaration.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "source-after.json",
+      "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/build/source-after.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "source-before.json",
+      "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/build/source-before.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "staging-input.json",
+      "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/build/staging-input.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "execution.log",
+      "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "stage-sha256.txt",
+      "path": "dev/active/a83583e0/failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/stage-sha256.txt"
     }
   ],
   "done_at": "2026-10-01T03:37:20.618543106Z",
@@ -78,5 +121,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design and implement the extent-sweep protocol",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:30:29.095211658Z"
 }

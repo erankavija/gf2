@@ -81,6 +81,26 @@
       "format": "markdown",
       "label": "f8dd4dde lead review round 1",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/f8dd4dde-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/f8dd4dde/msrv-validation/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/f8dd4dde/msrv-validation/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "main.rs",
+      "path": "dev/active/f8dd4dde/msrv-validation/src/main.rs"
     }
   ],
   "done_at": "2026-09-18T17:03:21.575276835Z",
@@ -128,5 +148,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Route residual BitVec shifts through a BMI2-gated funnel kernel",
-  "updated_at": "2026-10-01T22:42:06.063763759Z"
+  "updated_at": "2026-10-03T16:31:19.260354418Z"
 }

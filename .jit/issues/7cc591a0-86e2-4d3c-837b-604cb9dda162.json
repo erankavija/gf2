@@ -7,7 +7,15 @@
     "bb769456-6803-49ec-ae91-f1619dd0f278"
   ],
   "description": "Make every test scratch directory self-cleaning and honour `TMPDIR`.\n\n## Background\n\nSeven test helpers create a directory per test directly under `std::env::temp_dir()` and only some tests remove it; a failing or panicking test never does. On this host `/tmp` is a tmpfs with a 1,048,576-inode limit, and on 2026-09-16 the accumulated fixtures (about 29,700 directories, roughly 33 inodes each, dating from 2026-09-07) exhausted it, which stopped every build, `sccache`, and every agent shell on the host. One full `./scripts/cargo-ci.sh` run adds a few thousand directories. The helpers, by name pattern:\n\n- `crates/gf2-sim/src/snr_checkpoint.rs:1625` (`gf2sim-ck-{pid}-{n}`)\n- `crates/gf2-sim/tests/checkpoint_compat.rs:58` and `:80` (`gf2sim-ckcompat-{tag}-{pid}-{n}`)\n- `crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs:173` (`gf2-coordinator-fixture-{pid}-{nonce}-{id}`)\n- `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:2032` (`gf2-driver-{pid}-{n}-{name}`)\n- `dev/tools/tuning-campaign-support/tests/host_process_contracts.rs:18` and `tests/contracts.rs:37` (`tuning-campaign-support-{label}-{pid}-{nonce}`)\n- `dev/tools/tuning-campaign-support/tests/protocol_contracts.rs:52` (`gf2-f547c394-{name}-{pid}`)\n\n`tests/driver_launcher.rs:25` stages a campaign under `temp_dir()` that the driver requires to resolve under the real `/tmp` (`tuning-extent-campaign-driver.rs:684`), so that path needs its own treatment rather than a plain `TMPDIR` redirect.\n\n## Success Criteria\n\n- [hard] REQ-01: Every test scratch directory is removed when its test ends, whether the test passes, fails or panics (a guard type whose `Drop` removes the tree, or the `tempfile` crate's `TempDir` if a dependency is acceptable to the crate's policy); a test that needs to keep a tree for inspection opts in explicitly through an environment variable named in its doc comment.\n- [hard] REQ-02: The helpers place their directories under `std::env::temp_dir()` and nothing in the suites hardcodes `/tmp`; the driver's real-`/tmp` requirement is either removed or documented with the reason and kept to that one test.\n- [hard] REQ-03: Running `./scripts/cargo-ci.sh` from a clean checkout leaves no directory matching the seven name patterns under `temp_dir()` afterwards, verified by a count before and after the run recorded in the issue's commit message or a linked record.\n- [hard] REQ-04: The fast-tier and nightly budgets, the existing test names and their semantics are unchanged; `./scripts/cargo-ci.sh` passes.\n\n## Notes\n\nFound during epic 1a379447 session 18 (2026-09-16); the host was recovered by deleting the leaked directories by hand. Untimed work; builds and tests run unlocked in-session through the wrappers.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "7cc591a0-r1.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/7cc591a0-r1.md"
+    }
+  ],
   "done_at": "2026-09-17T00:08:56.547811986Z",
   "first_ready_at": "2026-09-16T16:59:44.107186734Z",
   "gates_required": [
@@ -35,5 +43,5 @@
   "priority": "high",
   "state": "done",
   "title": "Make test scratch directories self-cleaning and TMPDIR-aware",
-  "updated_at": "2026-09-17T00:08:56.547811986Z"
+  "updated_at": "2026-10-03T16:30:23.063749387Z"
 }

@@ -15,6 +15,13 @@
       "format": "markdown",
       "label": "Bench smoke run and ID mapping",
       "path": "dev/active/591a1c5e/smoke-run.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-591a1c5e.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/dispatch-591a1c5e.md"
     }
   ],
   "done_at": "2026-10-01T08:54:05.369522794Z",
@@ -45,5 +52,5 @@
   "priority": "high",
   "state": "done",
   "title": "Migrate gf2-coding benchmarks",
-  "updated_at": "2026-10-01T22:41:31.833472899Z"
+  "updated_at": "2026-10-03T16:30:16.385860964Z"
 }

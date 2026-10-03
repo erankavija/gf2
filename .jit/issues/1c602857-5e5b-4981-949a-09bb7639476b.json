@@ -262,6 +262,40 @@
       "format": "markdown",
       "label": "Lead review round 3",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/1c602857-r3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/1c602857/arms/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/1c602857/arms/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/1c602857/arms/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "main.rs",
+      "path": "dev/active/1c602857/arms/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-plan.py",
+      "path": "dev/active/1c602857/make-plan.py"
     }
   ],
   "done_at": "2026-09-13T12:00:43.204262357Z",
@@ -304,5 +338,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Route the public wide carry-less product through capability dispatch",
-  "updated_at": "2026-10-01T22:41:16.703425043Z"
+  "updated_at": "2026-10-03T16:28:37.901925956Z"
 }

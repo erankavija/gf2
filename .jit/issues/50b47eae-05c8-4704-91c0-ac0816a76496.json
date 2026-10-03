@@ -179,6 +179,401 @@
       "doc_type": "data",
       "label": "Session-6 candidate-arm member provenance",
       "path": "dev/archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-22-member-provenance-cand-6.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-arm.sh",
+      "path": "dev/active/50b47eae/s4-session/build-arm.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build-cand.log",
+      "path": "dev/active/50b47eae/s4-session/build-cand.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build-ref.log",
+      "path": "dev/active/50b47eae/s4-session/build-ref.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "comparison.txt",
+      "path": "dev/active/50b47eae/s4-session/comparison.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "continue-driver.log",
+      "path": "dev/active/50b47eae/s4-session/continue-driver.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "continue-driver.sh",
+      "path": "dev/active/50b47eae/s4-session/continue-driver.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "emit-tsv.sh",
+      "path": "dev/active/50b47eae/s4-session/emit-tsv.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "layout-audit.txt",
+      "path": "dev/active/50b47eae/s4-session/layout-audit.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-cand.tsv",
+      "path": "dev/active/50b47eae/s4-session/ledger-cand.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-ref.tsv",
+      "path": "dev/active/50b47eae/s4-session/ledger-ref.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "member-flags.sh",
+      "path": "dev/active/50b47eae/s4-session/member-flags.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-ensemble.sh",
+      "path": "dev/active/50b47eae/s4-session/run-ensemble.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "sha256-manifest.txt",
+      "path": "dev/active/50b47eae/s4-session/sha256-manifest.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "slots.tsv",
+      "path": "dev/active/50b47eae/s4-session/slots.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "timed.log",
+      "path": "dev/active/50b47eae/s4-session/timed.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-construction-v2.py",
+      "path": "dev/active/50b47eae/s4-session/verify-construction-v2.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-construction.py",
+      "path": "dev/active/50b47eae/s4-session/verify-construction.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-arm.sh",
+      "path": "dev/active/50b47eae/s5-session/build-arm.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build-cand.log",
+      "path": "dev/active/50b47eae/s5-session/build-cand.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build-ref.log",
+      "path": "dev/active/50b47eae/s5-session/build-ref.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "comparison.txt",
+      "path": "dev/active/50b47eae/s5-session/comparison.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "continue-driver.log",
+      "path": "dev/active/50b47eae/s5-session/continue-driver.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "continue-driver.sh",
+      "path": "dev/active/50b47eae/s5-session/continue-driver.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "emit-tsv.sh",
+      "path": "dev/active/50b47eae/s5-session/emit-tsv.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gen-members.py",
+      "path": "dev/active/50b47eae/s5-session/gen-members.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "layout-audit.txt",
+      "path": "dev/active/50b47eae/s5-session/layout-audit.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-cand.tsv",
+      "path": "dev/active/50b47eae/s5-session/ledger-cand.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-ref.tsv",
+      "path": "dev/active/50b47eae/s5-session/ledger-ref.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "list-cells-cand.txt",
+      "path": "dev/active/50b47eae/s5-session/list-cells-cand.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "list-cells-ref.txt",
+      "path": "dev/active/50b47eae/s5-session/list-cells-ref.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "members-cand.tsv",
+      "path": "dev/active/50b47eae/s5-session/members-cand.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "members-ref.tsv",
+      "path": "dev/active/50b47eae/s5-session/members-ref.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "phi-cand.txt",
+      "path": "dev/active/50b47eae/s5-session/phi-cand.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "phi-ref.txt",
+      "path": "dev/active/50b47eae/s5-session/phi-ref.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-ensemble.sh",
+      "path": "dev/active/50b47eae/s5-session/run-ensemble.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "sha256-manifest.txt",
+      "path": "dev/active/50b47eae/s5-session/sha256-manifest.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "single-build-comparison.txt",
+      "path": "dev/active/50b47eae/s5-session/single-build-comparison.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "slots.tsv",
+      "path": "dev/active/50b47eae/s5-session/slots.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "timed.log",
+      "path": "dev/active/50b47eae/s5-session/timed.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-construction.py",
+      "path": "dev/active/50b47eae/s5-session/verify-construction.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-arm.sh",
+      "path": "dev/active/50b47eae/s6-session/build-arm.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build-cand.log",
+      "path": "dev/active/50b47eae/s6-session/build-cand.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "build-ref.log",
+      "path": "dev/active/50b47eae/s6-session/build-ref.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "comparison.txt",
+      "path": "dev/active/50b47eae/s6-session/comparison.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "continue-driver.log",
+      "path": "dev/active/50b47eae/s6-session/continue-driver.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "continue-driver.sh",
+      "path": "dev/active/50b47eae/s6-session/continue-driver.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "emit-tsv.sh",
+      "path": "dev/active/50b47eae/s6-session/emit-tsv.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gen-members.py",
+      "path": "dev/active/50b47eae/s6-session/gen-members.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "layout-audit.txt",
+      "path": "dev/active/50b47eae/s6-session/layout-audit.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-cand.tsv",
+      "path": "dev/active/50b47eae/s6-session/ledger-cand.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-ref.tsv",
+      "path": "dev/active/50b47eae/s6-session/ledger-ref.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "list-cells-cand.txt",
+      "path": "dev/active/50b47eae/s6-session/list-cells-cand.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "list-cells-ref.txt",
+      "path": "dev/active/50b47eae/s6-session/list-cells-ref.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "members-cand.tsv",
+      "path": "dev/active/50b47eae/s6-session/members-cand.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "members-ref.tsv",
+      "path": "dev/active/50b47eae/s6-session/members-ref.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "phi-cand.txt",
+      "path": "dev/active/50b47eae/s6-session/phi-cand.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "phi-ref.txt",
+      "path": "dev/active/50b47eae/s6-session/phi-ref.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-ensemble.sh",
+      "path": "dev/active/50b47eae/s6-session/run-ensemble.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "sha256-manifest.txt",
+      "path": "dev/active/50b47eae/s6-session/sha256-manifest.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "single-build-comparison.txt",
+      "path": "dev/active/50b47eae/s6-session/single-build-comparison.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "slots.tsv",
+      "path": "dev/active/50b47eae/s6-session/slots.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "timed.log",
+      "path": "dev/active/50b47eae/s6-session/timed.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-construction.py",
+      "path": "dev/active/50b47eae/s6-session/verify-construction.py"
     }
   ],
   "done_at": "2026-08-22T20:02:21.163779662Z",
@@ -203,5 +598,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Record the post-cutover non-regression receipt",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:30:15.236875554Z"
 }

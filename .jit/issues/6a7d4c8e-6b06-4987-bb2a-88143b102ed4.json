@@ -1,11 +1,20 @@
 {
-  "id": "6a7d4c8e-6b06-4987-bb2a-88143b102ed4",
-  "title": "M31 echelon: wire m31_batch_dot_fn into gemm_axpy_into_view (869ce43b row 33 follow-up)",
-  "description": "Phase 6 follow-up filed under epic `026fc832`. Predecessor: `869ce43b` (blocked echelon R0 closed 14/18 PASS; row 33 GF(2^31-1)/n=1024/deficient FAIL @ 2.37× routed here).\n\n## Background\n\nThe `869ce43b` blocked echelon implementation closes 14 of 18 A8 echelon cells but FAILs row 33 (GF(2^31-1)/n=1024/deficient @ 2.37×). Root cause documented at `dev/bench_results/2026-05-26-869ce43b-blocked-echelon.md` § 5: the Mersenne31 batch-dot kernel `m31_batch_dot_fn` exists but is NOT dispatched from `gemm_axpy_into_view`. The current `SimdVecOps::try_simd_dot_vec` guard at `crates/gf2-core/src/gfp/simd_ops.rs:237-241` covers only `3 <= P <= 251`. Stage 3a of the blocked back-sub falls back to scalar `dot_product_slices` for Mersenne31, which at n=1024 dominates the wall time.\n\n## Success Criteria\n\n- [hard] `gemm_axpy_into_view` dispatches `m31_batch_dot_fn` for `Fp<MERSENNE_31>` matrices passing the existing `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³ = 4096` size gate.\n- [hard] Re-bench A8 row 33 (GF(2^31-1)/n=1024/deficient echelon) via the `869ce43b` measurement harness. Closes PASS (≤ 1.5× vs fflas) or carries explicit user-approved [aspirational] amendment.\n- [hard] No regression on currently-PASSing Mersenne31 cells (delta ≤ 5%, paired tight-session bench).\n- [hard] Bit-exact correctness preserved across Mersenne31 echelon proptest sweep (use the existing `prop_blocked_rref_mersenne31` test on `crates/gf2-core/src/field/ple.rs`).\n- [hard] No `unsafe` outside kernel crates.\n\n## Out of scope\n\n- Other Mersenne31 ops (PLE, invert, solve — already PASS or covered by sibling wave-7b issues).\n- Non-Mersenne31 dispatch paths.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-27T04:11:55.825071902Z",
+  "context": {},
+  "created_at": "2026-05-26T22:03:23.297820539Z",
   "dependencies": [],
+  "description": "Phase 6 follow-up filed under epic `026fc832`. Predecessor: `869ce43b` (blocked echelon R0 closed 14/18 PASS; row 33 GF(2^31-1)/n=1024/deficient FAIL @ 2.37× routed here).\n\n## Background\n\nThe `869ce43b` blocked echelon implementation closes 14 of 18 A8 echelon cells but FAILs row 33 (GF(2^31-1)/n=1024/deficient @ 2.37×). Root cause documented at `dev/bench_results/2026-05-26-869ce43b-blocked-echelon.md` § 5: the Mersenne31 batch-dot kernel `m31_batch_dot_fn` exists but is NOT dispatched from `gemm_axpy_into_view`. The current `SimdVecOps::try_simd_dot_vec` guard at `crates/gf2-core/src/gfp/simd_ops.rs:237-241` covers only `3 <= P <= 251`. Stage 3a of the blocked back-sub falls back to scalar `dot_product_slices` for Mersenne31, which at n=1024 dominates the wall time.\n\n## Success Criteria\n\n- [hard] `gemm_axpy_into_view` dispatches `m31_batch_dot_fn` for `Fp<MERSENNE_31>` matrices passing the existing `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³ = 4096` size gate.\n- [hard] Re-bench A8 row 33 (GF(2^31-1)/n=1024/deficient echelon) via the `869ce43b` measurement harness. Closes PASS (≤ 1.5× vs fflas) or carries explicit user-approved [aspirational] amendment.\n- [hard] No regression on currently-PASSing Mersenne31 cells (delta ≤ 5%, paired tight-session bench).\n- [hard] Bit-exact correctness preserved across Mersenne31 echelon proptest sweep (use the existing `prop_blocked_rref_mersenne31` test on `crates/gf2-core/src/field/ple.rs`).\n- [hard] No `unsafe` outside kernel crates.\n\n## Out of scope\n\n- Other Mersenne31 ops (PLE, invert, solve — already PASS or covered by sibling wave-7b issues).\n- Non-Mersenne31 dispatch paths.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "2026-05-27-6a7d4c8e-m31-echelon-dispatch.md",
+      "path": "dev/bench_results/2026-05-27-6a7d4c8e-m31-echelon-dispatch.md"
+    }
+  ],
+  "done_at": "2026-05-27T05:37:29.974333034Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -14,29 +23,28 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T05:11:41.940993988Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-27T05:36:18.132765260Z"
+      "updated_at": "2026-05-27T05:11:41.940993988Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T05:12:25.667640348Z"
+      "updated_at": "2026-05-27T05:12:25.667640348Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-27T05:36:18.132765260Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "6a7d4c8e-6b06-4987-bb2a-88143b102ed4",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-26T22:03:23.297820539Z",
-  "updated_at": "2026-07-12T20:02:55.448752348Z",
-  "claimed_at": "2026-05-27T04:11:55.825071902Z",
-  "done_at": "2026-05-27T05:37:29.974333034Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "M31 echelon: wire m31_batch_dot_fn into gemm_axpy_into_view (869ce43b row 33 follow-up)",
+  "updated_at": "2026-10-03T16:30:19.600036691Z"
 }

@@ -80,6 +80,46 @@
       "format": "markdown",
       "label": "Session 3 handoff",
       "path": "dev/active/fa787f85-documentation-overhaul/handoff-2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fa787f85-example-census.py",
+      "path": "dev/active/fa787f85-documentation-overhaul/fa787f85-example-census.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "fa787f85-rustdoc-example-verdicts.tsv",
+      "path": "dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "check_test.py",
+      "path": "dev/active/fa787f85-documentation-overhaul/migration/check_test.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "plan-review-r1.md",
+      "path": "dev/active/fa787f85-documentation-overhaul/plan-review-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "plan-review-r2.md",
+      "path": "dev/active/fa787f85-documentation-overhaul/plan-review-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "plan-review-r3.md",
+      "path": "dev/active/fa787f85-documentation-overhaul/plan-review-r3.md"
     }
   ],
   "first_ready_at": "2026-07-14T20:40:18.243561271Z",
@@ -107,5 +147,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-03T16:21:59.370288489Z"
+  "updated_at": "2026-10-03T16:31:19.834380990Z"
 }

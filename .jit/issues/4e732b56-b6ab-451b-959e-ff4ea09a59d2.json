@@ -314,6 +314,118 @@
       "format": "markdown",
       "label": "Baseline survey findings",
       "path": "dev/active/4e732b56/findings.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/4e732b56/baseline-survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Makefile",
+      "path": "dev/active/4e732b56/baseline-survey/Makefile"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "aff3ct_bch_bench.cpp",
+      "path": "dev/active/4e732b56/baseline-survey/aff3ct_bch_bench.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "bchlib_bch_bench.c",
+      "path": "dev/active/4e732b56/baseline-survey/bchlib_bch_bench.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fetch-build.sh",
+      "path": "dev/active/4e732b56/baseline-survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/4e732b56/baseline-survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "main.rs",
+      "path": "dev/active/4e732b56/baseline-survey/gf2-side/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "itpp_bch_bench.cpp",
+      "path": "dev/active/4e732b56/baseline-survey/itpp_bch_bench.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "m4ri_genmatrix_bench.c",
+      "path": "dev/active/4e732b56/baseline-survey/m4ri_genmatrix_bench.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-receipt.py",
+      "path": "dev/active/4e732b56/baseline-survey/make-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-survey.sh",
+      "path": "dev/active/4e732b56/baseline-survey/run-survey.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize.py",
+      "path": "dev/active/4e732b56/baseline-survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-determinism.py",
+      "path": "dev/active/4e732b56/baseline-survey/verify-determinism.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-generator-matrices.py",
+      "path": "dev/active/4e732b56/baseline-survey/verify-generator-matrices.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-generators.py",
+      "path": "dev/active/4e732b56/baseline-survey/verify-generators.py"
     }
   ],
   "done_at": "2026-09-01T05:06:03.514876505Z",
@@ -344,5 +456,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reproducible external-baseline survey and workload selection",
-  "updated_at": "2026-10-01T22:41:28.257817178Z"
+  "updated_at": "2026-10-03T16:30:11.035944543Z"
 }

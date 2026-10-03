@@ -672,6 +672,234 @@
       "format": "markdown",
       "label": "04b85d10 lead review round 3",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/04b85d10-r3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "ledger-genesis.json",
+      "path": "dev/active/04b85d10/ledger-genesis.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pilot-resolution-v3-count.txt",
+      "path": "dev/active/04b85d10/pilot-resolution-v3-count.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pilot-resolution-v3-layout.txt",
+      "path": "dev/active/04b85d10/pilot-resolution-v3-layout.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pilot-resolution-v3-logical.txt",
+      "path": "dev/active/04b85d10/pilot-resolution-v3-logical.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "v1-addendum-bit-storage-consumers-pilot.json",
+      "path": "dev/active/04b85d10/superseded/v1-addendum-bit-storage-consumers-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "alloc-trace-cases.txt",
+      "path": "dev/active/04b85d10/survey/alloc-trace-cases.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "asm-frame-classification.txt",
+      "path": "dev/active/04b85d10/survey/asm-frame-classification.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "asm-symbols.txt",
+      "path": "dev/active/04b85d10/survey/asm-symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-plan.py",
+      "path": "dev/active/04b85d10/survey/build-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "counter-cases.txt",
+      "path": "dev/active/04b85d10/survey/counter-cases.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "disassemble.sh",
+      "path": "dev/active/04b85d10/survey/disassemble.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "frame-traffic.py",
+      "path": "dev/active/04b85d10/survey/frame-traffic.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/04b85d10/survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/04b85d10/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "consumer-arm.rs",
+      "path": "dev/active/04b85d10/survey/gf2-side/src/bin/consumer-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "consumer-profile.rs",
+      "path": "dev/active/04b85d10/survey/gf2-side/src/bin/consumer-profile.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "consumer-verify.rs",
+      "path": "dev/active/04b85d10/survey/gf2-side/src/bin/consumer-verify.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/04b85d10/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "arm_paths.rs",
+      "path": "dev/active/04b85d10/survey/gf2-side/tests/arm_paths.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "import-v1-ledger.py",
+      "path": "dev/active/04b85d10/survey/import-v1-ledger.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "intervals.py",
+      "path": "dev/active/04b85d10/survey/intervals.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-addenda.py",
+      "path": "dev/active/04b85d10/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/04b85d10/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/04b85d10/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "pilot-resolution.py",
+      "path": "dev/active/04b85d10/survey/pilot-resolution.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "profile-cases.py",
+      "path": "dev/active/04b85d10/survey/profile-cases.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "report-cases.txt",
+      "path": "dev/active/04b85d10/survey/report-cases.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-attribution.py",
+      "path": "dev/active/04b85d10/survey/summarize-attribution.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-profile.py",
+      "path": "dev/active/04b85d10/survey/summarize-profile.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-receipts.py",
+      "path": "dev/active/04b85d10/survey/summarize-receipts.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "sweep.sh",
+      "path": "dev/active/04b85d10/survey/sweep.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "profile-summary.md",
+      "path": "dev/bench_results/04b85d10/2026-09-07-04b85d10-profile/profile-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "attribution-summary.md",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/attribution-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "profile-summary.md",
+      "path": "dev/bench_results/04b85d10/2026-09-10-04b85d10-profile-v3/profile-summary.md"
     }
   ],
   "done_at": "2026-09-13T07:16:35.738890792Z",
@@ -716,5 +944,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Profile bit-storage costs in production consumers",
-  "updated_at": "2026-10-01T22:41:11.110925295Z"
+  "updated_at": "2026-10-03T16:27:24.470728680Z"
 }

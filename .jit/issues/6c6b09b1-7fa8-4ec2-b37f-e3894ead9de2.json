@@ -878,6 +878,53 @@
       "format": "markdown",
       "label": "6c6b09b1 lead review round 1",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/6c6b09b1-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/6c6b09b1/survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/6c6b09b1/survey/analysis/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/6c6b09b1/survey/arm-common/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "allocation_counter.rs",
+      "path": "dev/active/6c6b09b1/survey/arm-common/tests/allocation_counter.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/6c6b09b1/survey/ext-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/6c6b09b1/survey/field-laws/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/6c6b09b1/survey/gf2-side/Cargo.lock"
     }
   ],
   "done_at": "2026-09-13T07:07:46.094381065Z",
@@ -924,5 +971,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Establish byte-field vector and matrix comparison arms",
-  "updated_at": "2026-10-01T22:41:35.228047409Z"
+  "updated_at": "2026-10-03T16:30:19.943474201Z"
 }

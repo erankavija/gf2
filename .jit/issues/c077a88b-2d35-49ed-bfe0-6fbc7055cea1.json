@@ -178,6 +178,313 @@
       "doc_type": "test",
       "label": "Rust 1.95 cargo-ci verdict",
       "path": "dev/bench_results/c077a88b/v3-preparation/cargo-ci-after-acceptance-fix.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-matched-algorithm-derivation.json",
+      "path": "dev/active/c077a88b/addendum-ldpc-matched-algorithm-derivation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-matched-algorithm-pilot.json",
+      "path": "dev/active/c077a88b/addendum-ldpc-matched-algorithm-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-matched-algorithm.json",
+      "path": "dev/active/c077a88b/addendum-ldpc-matched-algorithm.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-quality-compatible-pilot.json",
+      "path": "dev/active/c077a88b/addendum-ldpc-quality-compatible-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "resume-confirmation.md",
+      "path": "dev/active/c077a88b/resume-confirmation.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-ldpc-matched-algorithm-r3.json",
+      "path": "dev/active/c077a88b/superseded/addendum-ldpc-matched-algorithm-r3.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "v1-addendum-ldpc-matched-algorithm-pilot.json",
+      "path": "dev/active/c077a88b/superseded/v1-addendum-ldpc-matched-algorithm-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "v1-addendum-ldpc-matched-algorithm.json",
+      "path": "dev/active/c077a88b/superseded/v1-addendum-ldpc-matched-algorithm.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "v1-addendum-ldpc-quality-compatible-pilot.json",
+      "path": "dev/active/c077a88b/superseded/v1-addendum-ldpc-quality-compatible-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "v1-addendum-ldpc-quality-compatible.json",
+      "path": "dev/active/c077a88b/superseded/v1-addendum-ldpc-quality-compatible.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fetch-build.sh",
+      "path": "dev/active/c077a88b/survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "freeze-addendum.py",
+      "path": "dev/active/c077a88b/survey/freeze-addendum.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/c077a88b/survey/harness/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/c077a88b/survey/harness/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/c077a88b/survey/harness/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "aff3ct_shim.cpp",
+      "path": "dev/active/c077a88b/survey/harness/cpp/aff3ct_shim.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "arm.rs",
+      "path": "dev/active/c077a88b/survey/harness/src/arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "aff3ct-ldpc-arm.rs",
+      "path": "dev/active/c077a88b/survey/harness/src/bin/aff3ct-ldpc-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf2-ldpc-arm.rs",
+      "path": "dev/active/c077a88b/survey/harness/src/bin/gf2-ldpc-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "ldpc-make-inputs.rs",
+      "path": "dev/active/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "ldpc-validate.rs",
+      "path": "dev/active/c077a88b/survey/harness/src/bin/ldpc-validate.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/c077a88b/survey/harness/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "inspect-comparators.py",
+      "path": "dev/active/c077a88b/survey/inspect-comparators.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-inputs.sh",
+      "path": "dev/active/c077a88b/survey/make-inputs.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-plan.py",
+      "path": "dev/active/c077a88b/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "prepare-v3.py",
+      "path": "dev/active/c077a88b/survey/prepare-v3.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "probe-aff3ct-capabilities.py",
+      "path": "dev/active/c077a88b/survey/probe-aff3ct-capabilities.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "producing-inputs.json",
+      "path": "dev/active/c077a88b/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "snapshot-inputs.py",
+      "path": "dev/active/c077a88b/survey/snapshot-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize.py",
+      "path": "dev/active/c077a88b/survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-xdsopl-code.py",
+      "path": "dev/active/c077a88b/survey/verify-xdsopl-code.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "a18cf1bed742d65e4b398a204a0af177188f3c3059bfc5fff2a9ded207e18c0d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../active/c077a88b/findings.md",
+          "resolved_path": "dev/active/c077a88b/findings.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/bench_results/c077a88b/2026-09-07-c077a88b-adapter-validation/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/README.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "719cb61fe9bf8f48c128fbfbc49560ef0534048d663abdf2340a3d00300a99cd",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "superseded-v1-evidence.json",
+          "resolved_path": "dev/bench_results/c077a88b/superseded-v1-evidence.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "superseded-v1.md",
+      "path": "dev/bench_results/c077a88b/superseded-v1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "build-identity.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/build-identity.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cf5d50acf40b4c1b224020876434e776c2fefa8bb8df44d3c3a0a11d3b043ff5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation-plan.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/validation-plan.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "77f938f51dbf9ab594bea293939445951956233bb5b2a6e8098d1f24f1da5829",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation.json",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/validation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a74b03ef122585eed5eb5b7900b313944d3dc63641e7dc017fa6fcd77d0e4df6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "quality-final-execution.log",
+          "resolved_path": "dev/bench_results/c077a88b/v3-preparation/quality-final-execution.log"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/bench_results/c077a88b/v3-preparation/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "acceptance-summary.md",
+      "path": "dev/bench_results/c077a88b/v3-r1-matched-confirmation-rejection/acceptance-summary.md"
     }
   ],
   "done_at": "2026-09-10T16:21:47.776765510Z",
@@ -225,5 +532,5 @@
   "priority": "high",
   "state": "done",
   "title": "Establish compatible LDPC decoder benchmark arms",
-  "updated_at": "2026-10-01T23:05:53.309425828Z"
+  "updated_at": "2026-10-03T16:30:36.039211474Z"
 }

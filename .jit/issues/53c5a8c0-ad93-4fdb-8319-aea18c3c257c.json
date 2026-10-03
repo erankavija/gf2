@@ -573,6 +573,129 @@
       "format": "markdown",
       "label": "Lead review verdict",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/53c5a8c0-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/53c5a8c0/survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": ".gitignore",
+      "path": "dev/active/53c5a8c0/survey/arms/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/53c5a8c0/survey/arms/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "crossover-arm.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/crossover-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "crossover-validate.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/crossover-validate.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "dispatch-probe.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/dispatch-probe.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2x-poly-arm.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/gf2x-poly-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "poly-arm.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/poly-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "profile-arm.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/profile-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "stage-diagnostic.rs",
+      "path": "dev/active/53c5a8c0/survey/arms/src/bin/stage-diagnostic.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-arms.sh",
+      "path": "dev/active/53c5a8c0/survey/build-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "cells.py",
+      "path": "dev/active/53c5a8c0/survey/cells.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "check-profile-cases.py",
+      "path": "dev/active/53c5a8c0/survey/check-profile-cases.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "inspect-sources.py",
+      "path": "dev/active/53c5a8c0/survey/inspect-sources.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-addenda.py",
+      "path": "dev/active/53c5a8c0/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-holdout.py",
+      "path": "dev/active/53c5a8c0/survey/make-holdout.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-plan.py",
+      "path": "dev/active/53c5a8c0/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/53c5a8c0/survey/make-producing-inputs.py"
     }
   ],
   "done_at": "2026-09-15T00:40:07.609840453Z",
@@ -620,5 +743,5 @@
   "priority": "high",
   "state": "done",
   "title": "Measure carry-less multiplication crossovers and polynomial competitiveness",
-  "updated_at": "2026-10-01T22:41:30.068465316Z"
+  "updated_at": "2026-10-03T16:30:16.274177563Z"
 }

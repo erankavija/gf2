@@ -8,7 +8,137 @@
     "9b2886a7-35af-45cc-9200-dddea1c0323a"
   ],
   "description": "Permanent documentation uses an adapted Diátaxis layout under `docs/`. A single index routes researchers to tutorials, how-to guides, concepts, reference pages and the crate entry pages.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: `docs/index.md` has one section each for tutorials, how-to guides, concepts and reference, plus a crate section linking the existing entry pages of `gf2-core`, `gf2-coding` and `gf2-algebra`.\n- [hard] REQ-02: Each section states its quadrant's purpose in one sentence and cites the registered placement invariant by address rather than restating it.\n- [hard] REQ-03: The index links only to pages present in the tree, and its links resolve.\n- [hard] REQ-04: The index prose carries no marketing, history or future promises.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "0aa4bc45d3d782929fcc5faf780b5380b611c670dd188d206b305aae5307f94d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../crates/gf2-sim/README.md",
+          "resolved_path": "crates/gf2-sim/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ed2e8d7b55d7634ef31e55e6f8dbdd0e93e4e1c342d533b5d8f879bae7a90b7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reference/performance-evidence.md",
+          "resolved_path": "docs/reference/performance-evidence.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b93cc99cbf7353887fa1cf29f48cad59e6dc01314a567b578a08e7b7289ea5bf",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../crates/gf2-algebra/README.md",
+          "resolved_path": "crates/gf2-algebra/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "889cc7ef411edb29eed6938bd6de86c4be401a52a4a62834ae8d52e241272612",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "tutorials/field-linear-algebra-at-scale.md",
+          "resolved_path": "docs/tutorials/field-linear-algebra-at-scale.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1ebcbf2e37e80055ff1e4d29174aa8b304189d16c4e64660fb6fd593aaedd611",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../crates/gf2-coding/README.md",
+          "resolved_path": "crates/gf2-coding/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b7feaae704e6d3bc700df29790801ce551d3706c90535342d928464f76449361",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "how-to/select-acceleration.md",
+          "resolved_path": "docs/how-to/select-acceleration.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9fb60c8cbf346908547017d62d5848d46748370959c13a468fe1dbbcfd51c014",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "how-to/formal-verification.md",
+          "resolved_path": "docs/how-to/formal-verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a2f36a08ff999327755389d9420e1fc61e75a883e61aaba7cfe1591b17a36942",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "concepts/acceleration-architecture.md",
+          "resolved_path": "docs/concepts/acceleration-architecture.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "14133940d9d93f5fdf99bdd5362a0a15e1c36ea60b32512363ab3f68976ae40d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reference/supported-configurations.md",
+          "resolved_path": "docs/reference/supported-configurations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3bd876fd6d1c5b8c5762ae26b4346f48d3bcd831aeb7b338a11040009148e25f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "concepts/finite-field-arithmetic.md",
+          "resolved_path": "docs/concepts/finite-field-arithmetic.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ddf58ef2db924d68887c197fc99775dc04269a5803ad46fb96aae59e30f4e70d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "reference/standards-conformance.md",
+          "resolved_path": "docs/reference/standards-conformance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f701a515e006eabb0c81942281928ee24ff35b8a817699d0e67058762d5cfeea",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../crates/gf2-core/README.md",
+          "resolved_path": "crates/gf2-core/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "71ba68fc0d60bddc2fddd204e1eaf6fc3752fbc832103de0d87d2cd247641c29",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "tutorials/coded-modulation-link-simulation.md",
+          "resolved_path": "docs/tutorials/coded-modulation-link-simulation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "610e98b2fe651d1e94546a01039d54ed4cf5744894e5f5a922d07592d4987e4a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "how-to/reproduce-performance-evidence.md",
+          "resolved_path": "docs/how-to/reproduce-performance-evidence.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d3436b569b45d1636eb83386aa682b936cbe0bebcb9931442973f5a0803d5649",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "how-to/run-simulation-campaigns.md",
+          "resolved_path": "docs/how-to/run-simulation-campaigns.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "index.md",
+      "path": "docs/index.md"
+    }
+  ],
   "done_at": "2026-10-02T14:11:26.320749863Z",
   "first_ready_at": "2026-10-01T14:43:15.466350554Z",
   "gates_required": [
@@ -37,5 +167,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Create the docs index and quadrant layout",
-  "updated_at": "2026-10-02T14:11:26.320749863Z"
+  "updated_at": "2026-10-03T16:30:19.543455331Z"
 }

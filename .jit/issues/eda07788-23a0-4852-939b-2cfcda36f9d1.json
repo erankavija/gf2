@@ -303,6 +303,244 @@
       "doc_type": "report",
       "label": "Shift semantics and NR selection comparison",
       "path": "dev/active/eda07788/survey/analysis-output-v3.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-dvb-t2-bit-interleave-baselines.json",
+      "path": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-baselines.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-dvb-t2-bit-interleave-pilot.json",
+      "path": "dev/active/eda07788/addendum-dvb-t2-bit-interleave-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "pilot-resolution-v3.txt",
+      "path": "dev/active/eda07788/pilot-resolution-v3.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "analysis-output.txt",
+      "path": "dev/active/eda07788/survey/analysis-output.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/eda07788/survey/analysis/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/eda07788/survey/analysis/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "compare-nr-rate-matching.rs",
+      "path": "dev/active/eda07788/survey/analysis/src/bin/compare-nr-rate-matching.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "validate-shift-semantics.rs",
+      "path": "dev/active/eda07788/survey/analysis/src/bin/validate-shift-semantics.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "dvb-t2-v3-endpoint-stability.txt",
+      "path": "dev/active/eda07788/survey/dvb-t2-v3-endpoint-stability.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fetch-build.sh",
+      "path": "dev/active/eda07788/survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/eda07788/survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/eda07788/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "dvb-profile.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/dvb-profile.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2-dvb-t2-candidate.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/gf2-dvb-t2-candidate.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "validate-permutation-equivalence.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/validate-permutation-equivalence.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "xdsopl-dvb-t2-baseline.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/src/bin/xdsopl-dvb-t2-baseline.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "cache_policy.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/tests/cache_policy.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "profile_addendum.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/tests/profile_addendum.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "remeasure_addendum.rs",
+      "path": "dev/active/eda07788/survey/gf2-side/tests/remeasure_addendum.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "inspect-sources.py",
+      "path": "dev/active/eda07788/survey/inspect-sources.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "nr-derate-build.sh",
+      "path": "dev/active/eda07788/survey/nr-derate-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/eda07788/survey/nr-derate/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/eda07788/survey/nr-derate/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/eda07788/survey/nr-derate/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "aff3ct_depuncture_shim.cpp",
+      "path": "dev/active/eda07788/survey/nr-derate/cpp/aff3ct_depuncture_shim.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "aff3ct-nr-derate-arm.rs",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/aff3ct-nr-derate-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2-nr-derate-arm.rs",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/gf2-nr-derate-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "validate-nr-derate-equivalence.rs",
+      "path": "dev/active/eda07788/survey/nr-derate/src/bin/validate-nr-derate-equivalence.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/eda07788/survey/nr-derate/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-analysis.sh",
+      "path": "dev/active/eda07788/survey/run-analysis.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "validation-output.txt",
+      "path": "dev/active/eda07788/survey/validation-output.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "xdsopl-pin.txt",
+      "path": "dev/active/eda07788/survey/xdsopl-pin.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "xdsopl_shim.cpp",
+      "path": "dev/active/eda07788/survey/xdsopl-shim/xdsopl_shim.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "tables-nr-derate.md",
+      "path": "dev/bench_results/eda07788/tables-nr-derate.md"
     }
   ],
   "done_at": "2026-09-10T22:14:35.941839588Z",
@@ -348,5 +586,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Establish compatible shift and coding-permutation baselines",
-  "updated_at": "2026-10-01T22:42:02.806147884Z"
+  "updated_at": "2026-10-03T16:31:10.408404427Z"
 }

@@ -190,6 +190,13 @@
       "format": "html",
       "label": "FieldMatrix showcase presentation",
       "path": "dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gruvbox.css",
+      "path": "dev/archive/bb85c68a-field-linear-algebra/docs/presentations/bb85c68a-fieldmatrix/themes/gruvbox.css"
     }
   ],
   "done_at": "2026-04-30T08:53:07.347027106Z",
@@ -225,5 +232,5 @@
   "priority": "normal",
   "state": "archived",
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
-  "updated_at": "2026-10-03T00:30:11.141775585Z"
+  "updated_at": "2026-10-03T16:30:33.335969294Z"
 }

@@ -15,6 +15,31 @@
       "format": "markdown",
       "label": "Receipt supersession drafts (Blocks A-E)",
       "path": "dev/active/389aa4de/receipt-notes.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "b1d32a048af04d202c40beb46b4ca81df815d4b7db6f6f6ef36d127c45be8a1b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-389aa4de.sha256",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.sha256"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "db036d419d23fb546bbf88c9ae6d9c1834cdbd25577015b4d6058833cece2cde",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-09-01-389aa4de-calibration.log",
+          "resolved_path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de-calibration.log"
+        }
+      ],
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "2026-09-01-389aa4de.md",
+      "path": "dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md"
     }
   ],
   "done_at": "2026-09-01T06:27:34.064753622Z",
@@ -51,5 +76,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Extend the calibration sweep to karatsuba_min_degree after the polynomial cutover",
-  "updated_at": "2026-09-01T06:27:34.064753622Z"
+  "updated_at": "2026-10-03T16:30:08.588298336Z"
 }

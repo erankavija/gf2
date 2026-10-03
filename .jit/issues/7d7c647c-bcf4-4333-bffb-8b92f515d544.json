@@ -12,6 +12,538 @@
       "format": "markdown",
       "label": "Proof-surface seam design (DEC-T)",
       "path": "dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/design.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/7d7c647c/probes/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AM1.cmd",
+      "path": "dev/active/7d7c647c/probes/AM1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AM1_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AM1_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AM2.cmd",
+      "path": "dev/active/7d7c647c/probes/AM2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AM2_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "FunsExternal_Template.lean",
+      "path": "dev/active/7d7c647c/probes/AM2_lean/FunsExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AM2_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AM3.cmd",
+      "path": "dev/active/7d7c647c/probes/AM3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AM3_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AM3_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AM4.cmd",
+      "path": "dev/active/7d7c647c/probes/AM4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AM4_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AM4_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AM5.cmd",
+      "path": "dev/active/7d7c647c/probes/AM5.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AM5_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "FunsExternal_Template.lean",
+      "path": "dev/active/7d7c647c/probes/AM5_lean/FunsExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AM5_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/7d7c647c/probes/AM5_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AS1.cmd",
+      "path": "dev/active/7d7c647c/probes/AS1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AS1_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "FunsExternal_Template.lean",
+      "path": "dev/active/7d7c647c/probes/AS1_lean/FunsExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AS1_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "TypesExternal_Template.lean",
+      "path": "dev/active/7d7c647c/probes/AS1_lean/TypesExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AS2.cmd",
+      "path": "dev/active/7d7c647c/probes/AS2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AS3.cmd",
+      "path": "dev/active/7d7c647c/probes/AS3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AS4.cmd",
+      "path": "dev/active/7d7c647c/probes/AS4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AX1.cmd",
+      "path": "dev/active/7d7c647c/probes/AX1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AX1_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "FunsExternal_Template.lean",
+      "path": "dev/active/7d7c647c/probes/AX1_lean/FunsExternal_Template.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AX1_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "AX2.cmd",
+      "path": "dev/active/7d7c647c/probes/AX2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Funs.lean",
+      "path": "dev/active/7d7c647c/probes/AX2_lean/Funs.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "Types.lean",
+      "path": "dev/active/7d7c647c/probes/AX2_lean/Types.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "M1.cmd",
+      "path": "dev/active/7d7c647c/probes/M1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "M2.cmd",
+      "path": "dev/active/7d7c647c/probes/M2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "M3.cmd",
+      "path": "dev/active/7d7c647c/probes/M3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "M4.cmd",
+      "path": "dev/active/7d7c647c/probes/M4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "M5.cmd",
+      "path": "dev/active/7d7c647c/probes/M5.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "S1.cmd",
+      "path": "dev/active/7d7c647c/probes/S1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "S2.cmd",
+      "path": "dev/active/7d7c647c/probes/S2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "S3.cmd",
+      "path": "dev/active/7d7c647c/probes/S3.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "S4.cmd",
+      "path": "dev/active/7d7c647c/probes/S4.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "X1.cmd",
+      "path": "dev/active/7d7c647c/probes/X1.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "X2.cmd",
+      "path": "dev/active/7d7c647c/probes/X2.cmd"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "AS1-to-AS2.diff",
+      "path": "dev/active/7d7c647c/probes/excerpts/AS1-to-AS2.diff"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "AS1-to-AS4.diff",
+      "path": "dev/active/7d7c647c/probes/excerpts/AS1-to-AS4.diff"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "AS2-to-AS3.diff",
+      "path": "dev/active/7d7c647c/probes/excerpts/AS2-to-AS3.diff"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "AX1-to-AX2.diff",
+      "path": "dev/active/7d7c647c/probes/excerpts/AX1-to-AX2.diff"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "postprocess-AS1.txt",
+      "path": "dev/active/7d7c647c/probes/excerpts/postprocess-AS1.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "postprocess-AS2.txt",
+      "path": "dev/active/7d7c647c/probes/excerpts/postprocess-AS2.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "toolchain-versions.txt",
+      "path": "dev/active/7d7c647c/probes/excerpts/toolchain-versions.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "tree-summary.txt",
+      "path": "dev/active/7d7c647c/probes/excerpts/tree-summary.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AM1.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AM1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AM2.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AM2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AM3.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AM3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AM4.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AM4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AM5.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AM5.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AS1.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AS1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AS2.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AS2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AS3.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AS3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AS4.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AS4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AX1.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AX1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "AX2.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/AX2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "M1.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/M1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "M2.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/M2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "M3.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/M3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "M4.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/M4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "M5.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/M5.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "S1.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/S1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "S2.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/S2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "S3.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/S3.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "S4.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/S4.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "X1.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/X1.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "X2.log",
+      "path": "dev/active/7d7c647c/probes/logs-trimmed/X2.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-hoist-tree.py",
+      "path": "dev/active/7d7c647c/probes/make-hoist-tree.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-seam-tree.py",
+      "path": "dev/active/7d7c647c/probes/make-seam-tree.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run.sh",
+      "path": "dev/active/7d7c647c/probes/run.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/7d7c647c/probes/seam-shape/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "driver.rs",
+      "path": "dev/active/7d7c647c/probes/seam-shape/src/driver.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "field.rs",
+      "path": "dev/active/7d7c647c/probes/seam-shape/src/field.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "lib.rs",
+      "path": "dev/active/7d7c647c/probes/seam-shape/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "tuning.rs",
+      "path": "dev/active/7d7c647c/probes/seam-shape/src/tuning.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "surface-diffs.sh",
+      "path": "dev/active/7d7c647c/probes/surface-diffs.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "tree-summary.sh",
+      "path": "dev/active/7d7c647c/probes/tree-summary.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "trim-logs.sh",
+      "path": "dev/active/7d7c647c/probes/trim-logs.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "versions.sh",
+      "path": "dev/active/7d7c647c/probes/versions.sh"
     }
   ],
   "done_at": "2026-08-22T22:15:41.572669142Z",
@@ -36,5 +568,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design the proof-surface seam for the trait-associated selectors",
-  "updated_at": "2026-10-03T14:39:01.439792070Z"
+  "updated_at": "2026-10-03T16:30:27.951073485Z"
 }

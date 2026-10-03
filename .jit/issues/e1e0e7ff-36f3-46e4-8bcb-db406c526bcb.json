@@ -11,7 +11,15 @@
     "981c5ae3-f2af-405c-8c98-620d991c9fb5"
   ],
   "description": "Extend the shared property/conformance suites to cover construction, encoding, matrices, and the derived-code transformations (including coordinate maps and rank-derived dimensions) over base fields of forms $\\mathrm{GF}(2)$, $\\mathrm{GF}(p)$, and $\\mathrm{GF}(p^r)$, including valid boundary codes.\n\n## Background\n\nThe pre-cutover binary property tests provide the baseline invariants; this suite generalizes them to the canonical model and all field classes under the repository's shared-test-contract and tier-budget rules, over the evidence protocol's predeclared corpus rows.\n\n## Success Criteria\n\n- [hard] REQ-01: One shared suite exercises construction, encoding, matrix, and transformation invariants over the three field classes on the predeclared corpus, with boundary codes included and deterministic seeds.\n- [hard] REQ-02: Packed binary cases include the word-boundary lengths 0, 1, 63, 64, and 65 with little-endian indexing and zero tail padding.\n- [hard] REQ-03: Every implementation of the shared code interfaces runs the same behavioral conformance cases; fast-tier budgets hold with slow cases tagged.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "dispatch-e1e0e7ff.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-e1e0e7ff.md"
+    }
+  ],
   "done_at": "2026-10-01T08:16:26.914257375Z",
   "first_ready_at": "2026-09-02T05:46:27.568573763Z",
   "gates_required": [
@@ -40,5 +48,5 @@
   "priority": "high",
   "state": "done",
   "title": "Shared property and conformance suites across field classes",
-  "updated_at": "2026-10-01T22:41:59.622974224Z"
+  "updated_at": "2026-10-03T16:30:38.827964837Z"
 }

@@ -345,6 +345,228 @@
       "format": "markdown",
       "label": "Withdrawn protocol-v3 BCH confirmation acceptance summary",
       "path": "dev/bench_results/6fb89a3c/v3-r1-6fb89a3c-bch-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "6fb89a3c-r2.md",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/6fb89a3c-r2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-bch-genmatrix-pilot.json",
+      "path": "dev/active/6fb89a3c/addendum-bch-genmatrix-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-bch-genmatrix-v3-pilot.json",
+      "path": "dev/active/6fb89a3c/addendum-bch-genmatrix-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-logical-buffer-pilot.json",
+      "path": "dev/active/6fb89a3c/addendum-logical-buffer-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-logical-buffer-v3-pilot.json",
+      "path": "dev/active/6fb89a3c/addendum-logical-buffer-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-transpose-pilot.json",
+      "path": "dev/active/6fb89a3c/addendum-transpose-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-transpose-v3-pilot.json",
+      "path": "dev/active/6fb89a3c/addendum-transpose-v3-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/6fb89a3c/survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Makefile",
+      "path": "dev/active/6fb89a3c/survey/Makefile"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "bitshuffle_transpose_arm.c",
+      "path": "dev/active/6fb89a3c/survey/bitshuffle_transpose_arm.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "compare-arm-code.py",
+      "path": "dev/active/6fb89a3c/survey/compare-arm-code.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fetch-build.sh",
+      "path": "dev/active/6fb89a3c/survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "freeze-confirmation.py",
+      "path": "dev/active/6fb89a3c/survey/freeze-confirmation.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2_bch_genmatrix_arm.rs",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/bin/gf2_bch_genmatrix_arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2_dump_check.rs",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/bin/gf2_dump_check.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf2_logical_xor_arm.rs",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/bin/gf2_logical_xor_arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2_transpose_arm.rs",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/bin/gf2_transpose_arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "validate_addenda.rs",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/bin/validate_addenda.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/6fb89a3c/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "harness_common.h",
+      "path": "dev/active/6fb89a3c/survey/harness_common.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "isal_xor_arm.c",
+      "path": "dev/active/6fb89a3c/survey/isal_xor_arm.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "json_min.c",
+      "path": "dev/active/6fb89a3c/survey/json_min.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "json_min.h",
+      "path": "dev/active/6fb89a3c/survey/json_min.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "m4ri_genmatrix_arm.c",
+      "path": "dev/active/6fb89a3c/survey/m4ri_genmatrix_arm.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "m4ri_transpose_arm.c",
+      "path": "dev/active/6fb89a3c/survey/m4ri_transpose_arm.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/6fb89a3c/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/6fb89a3c/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "record-build-evidence.py",
+      "path": "dev/active/6fb89a3c/survey/record-build-evidence.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../active/6fb89a3c/findings.md",
+          "resolved_path": "dev/active/active/6fb89a3c/findings.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize.py",
+      "path": "dev/active/6fb89a3c/survey/summarize.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-arm-framing.py",
+      "path": "dev/active/6fb89a3c/survey/verify-arm-framing.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "verify-bit-mapping.py",
+      "path": "dev/active/6fb89a3c/survey/verify-bit-mapping.py"
     }
   ],
   "done_at": "2026-09-12T18:00:33.353010894Z",
@@ -391,5 +613,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Establish transpose and logical-buffer comparison arms",
-  "updated_at": "2026-10-01T22:41:36.075887277Z"
+  "updated_at": "2026-10-03T16:30:22.735360762Z"
 }

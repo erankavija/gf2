@@ -119,6 +119,471 @@
       "format": "markdown",
       "label": "Completed nine-session byte-field consumer profile",
       "path": "dev/bench_results/19513245/r1-consumer-profile/profile-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-v4-control-confirmation.json",
+      "path": "dev/active/19513245/addendum-v4-control-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-v4-control-pilot.json",
+      "path": "dev/active/19513245/addendum-v4-control-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-v4-matrix-confirmation.json",
+      "path": "dev/active/19513245/addendum-v4-matrix-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-v4-matrix-pilot.json",
+      "path": "dev/active/19513245/addendum-v4-matrix-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-v4-vector-confirmation.json",
+      "path": "dev/active/19513245/addendum-v4-vector-confirmation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-v4-vector-pilot.json",
+      "path": "dev/active/19513245/addendum-v4-vector-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "confirmation-derivation-control.txt",
+      "path": "dev/active/19513245/confirmation-derivation-control.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "confirmation-derivation-matrix.txt",
+      "path": "dev/active/19513245/confirmation-derivation-matrix.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "confirmation-derivation-vector.txt",
+      "path": "dev/active/19513245/confirmation-derivation-vector.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "asm-symbols.txt",
+      "path": "dev/active/19513245/survey/asm-symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-batch-kernel.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/current-batch-kernel.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-batch-mul-raw.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/current-batch-mul-raw.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-dot-product-slices.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/current-dot-product-slices.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/19513245/survey/asm/consumer-arm/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-fieldvec-axpy.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/current-fieldvec-axpy.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-wide-mul-ref.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/current-wide-mul-ref.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "instruction-mix.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/instruction-mix.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/19513245/survey/asm/consumer-arm/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-axpy-field-vec.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/prototype-axpy-field-vec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-axpy-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/prototype-axpy-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-gemm-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/prototype-gemm-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-matvec-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/prototype-matvec-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-pairwise-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/prototype-pairwise-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-table-refill.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/prototype-table-refill.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "symbols.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-arm/symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-batch-kernel.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/current-batch-kernel.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-batch-mul-raw.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/current-batch-mul-raw.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/19513245/survey/asm/consumer-profile/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-dot-product-slices.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/current-dot-product-slices.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/19513245/survey/asm/consumer-profile/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-fieldvec-axpy.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/current-fieldvec-axpy.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/19513245/survey/asm/consumer-profile/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "current-wide-mul-ref.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/current-wide-mul-ref.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "instruction-mix.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/instruction-mix.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/19513245/survey/asm/consumer-profile/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-axpy-field-vec.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/prototype-axpy-field-vec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-axpy-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/prototype-axpy-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-gemm-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/prototype-gemm-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-matvec-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/prototype-matvec-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-pairwise-region.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/prototype-pairwise-region.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "prototype-table-refill.asm.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/prototype-table-refill.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "symbols.txt",
+      "path": "dev/active/19513245/survey/asm/consumer-profile/symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/19513245/survey/consumer/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/19513245/survey/consumer/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "consumer-arm.rs",
+      "path": "dev/active/19513245/survey/consumer/src/bin/consumer-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "consumer-profile.rs",
+      "path": "dev/active/19513245/survey/consumer/src/bin/consumer-profile.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "consumer-verify.rs",
+      "path": "dev/active/19513245/survey/consumer/src/bin/consumer-verify.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/19513245/survey/consumer/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "table.rs",
+      "path": "dev/active/19513245/survey/consumer/src/table.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "counter-cases.txt",
+      "path": "dev/active/19513245/survey/counter-cases.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "disassemble.sh",
+      "path": "dev/active/19513245/survey/disassemble.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/19513245/survey/field-laws/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/19513245/survey/field-laws/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "main.rs",
+      "path": "dev/active/19513245/survey/field-laws/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "freeze-confirmations.sh",
+      "path": "dev/active/19513245/survey/freeze-confirmations.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-addenda.py",
+      "path": "dev/active/19513245/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-plan.py",
+      "path": "dev/active/19513245/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/19513245/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/19513245/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "msrv-intrinsics.rs",
+      "path": "dev/active/19513245/survey/msrv-intrinsics.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "producing-inputs.json",
+      "path": "dev/active/19513245/survey/producing-inputs.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-profile.sh",
+      "path": "dev/active/19513245/survey/run-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "smoke-arms.sh",
+      "path": "dev/active/19513245/survey/smoke-arms.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "source-evidence.json",
+      "path": "dev/active/19513245/survey/source-evidence.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-profile.py",
+      "path": "dev/active/19513245/survey/summarize-profile.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "sweep.sh",
+      "path": "dev/active/19513245/survey/sweep.sh"
     }
   ],
   "done_at": "2026-09-15T02:07:56.341612443Z",
@@ -172,5 +637,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Assess byte-field acceleration in vector and matrix consumers",
-  "updated_at": "2026-10-01T22:41:15.773217326Z"
+  "updated_at": "2026-10-03T16:28:36.851308860Z"
 }

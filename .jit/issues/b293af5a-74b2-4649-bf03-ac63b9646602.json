@@ -43,6 +43,13 @@
       "format": "markdown",
       "label": "R4 GPU high-N uniformity resample writeup (q=3 headline reproduced; F_5/F_7 extended to n=20; vs HKS + 8e4e19a0)",
       "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "README.md",
+      "path": "dev/research/perm_uniformity_gpu/README.md"
     }
   ],
   "done_at": "2026-05-22T21:44:04.791750183Z",
@@ -71,5 +78,5 @@
   "priority": "normal",
   "state": "done",
   "title": "GPU-accelerated high-N uniformity resample — reproduce perm→uniform convergence (F_3 large-n, F_5, F_7)",
-  "updated_at": "2026-08-07T21:28:57.832153747Z"
+  "updated_at": "2026-10-03T16:30:31.880928754Z"
 }

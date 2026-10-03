@@ -224,6 +224,223 @@
       "doc_type": "report",
       "label": "Dot-reduction diagnostic raw values",
       "path": "dev/bench_results/c7113c5a/v3-dot-reduction-diagnostic/diagnostic.jsonl"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-polynomial-baselines-2.json",
+      "path": "dev/active/c7113c5a/addendum-polynomial-baselines-2.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-polynomial-baselines-pilot.json",
+      "path": "dev/active/c7113c5a/addendum-polynomial-baselines-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-polynomial-baselines.json",
+      "path": "dev/active/c7113c5a/addendum-polynomial-baselines.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "resolution-v3-baselines.txt",
+      "path": "dev/active/c7113c5a/resolution-v3-baselines.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "resolution-v3-host-targeting.txt",
+      "path": "dev/active/c7113c5a/resolution-v3-host-targeting.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fetch-build.sh",
+      "path": "dev/active/c7113c5a/survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "freeze-confirmation.test.sh",
+      "path": "dev/active/c7113c5a/survey/freeze-confirmation.test.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/c7113c5a/survey/gf2-side/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/c7113c5a/survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/c7113c5a/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "dot-reduction-probe.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/bin/dot-reduction-probe.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2-poly-arm.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/bin/gf2-poly-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf2x-poly-arm.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/bin/gf2x-poly-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "poly-validate.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/bin/poly-validate.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "v1-ledger-lines.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/bin/v1-ledger-lines.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf2_backend.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/gf2_backend.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf2x_backend.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/gf2x_backend.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "wide_field.rs",
+      "path": "dev/active/c7113c5a/survey/gf2-side/src/wide_field.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "gf2x-build-evidence.txt",
+      "path": "dev/active/c7113c5a/survey/gf2x-build-evidence.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "gf2x-stock-build-probe.txt",
+      "path": "dev/active/c7113c5a/survey/gf2x-stock-build-probe.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "inspect-sources.py",
+      "path": "dev/active/c7113c5a/survey/inspect-sources.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-plan.py",
+      "path": "dev/active/c7113c5a/survey/make-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/c7113c5a/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "probe-stock-build.sh",
+      "path": "dev/active/c7113c5a/survey/probe-stock-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "record-build-evidence.sh",
+      "path": "dev/active/c7113c5a/survey/record-build-evidence.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "reevaluate.sh",
+      "path": "dev/active/c7113c5a/survey/reevaluate.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-baseline.sh",
+      "path": "dev/active/c7113c5a/survey/run-baseline.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-validation.sh",
+      "path": "dev/active/c7113c5a/survey/run-validation.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "summarize-receipt.py",
+      "path": "dev/active/c7113c5a/survey/summarize-receipt.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-v3.py",
+      "path": "dev/active/c7113c5a/survey/summarize-v3.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "validation.json",
+      "path": "dev/active/c7113c5a/survey/validation.json"
     }
   ],
   "done_at": "2026-09-11T16:10:26.172000665Z",
@@ -268,5 +485,5 @@
   "priority": "high",
   "state": "done",
   "title": "Establish equivalent polynomial multiplication baselines",
-  "updated_at": "2026-10-01T22:41:54.593605919Z"
+  "updated_at": "2026-10-03T16:30:38.088830022Z"
 }

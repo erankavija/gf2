@@ -303,6 +303,382 @@
       "format": "markdown",
       "label": "AND-family instruction record (both POPCNT counts)",
       "path": "dev/bench_results/26465e6c/v3-and-popcnt-confirmation/instruction-observation.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-and-popcnt-pilot.json",
+      "path": "dev/active/26465e6c/superseded/v1/addendum-and-popcnt-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-and-popcnt.json",
+      "path": "dev/active/26465e6c/superseded/v1/addendum-and-popcnt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-popcount-pilot.json",
+      "path": "dev/active/26465e6c/superseded/v1/addendum-popcount-pilot.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "addendum-popcount.json",
+      "path": "dev/active/26465e6c/superseded/v1/addendum-popcount.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Makefile",
+      "path": "dev/active/26465e6c/superseded/v1/survey/Makefile"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "arm-provenance.json",
+      "path": "dev/active/26465e6c/superseded/v1/survey/arm-provenance.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "cross-check.log",
+      "path": "dev/active/26465e6c/superseded/v1/survey/cross-check.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "cross-check.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/cross-check.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "format": "markdown",
+      "label": "dispatch-probe.log",
+      "path": "dev/active/26465e6c/superseded/v1/survey/dispatch-probe.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fetch-build.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/fetch-build.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "log",
+      "label": "flagged-window-recount.log",
+      "path": "dev/active/26465e6c/superseded/v1/survey/flagged-window-recount.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "freeze-confirmatory.py",
+      "path": "dev/active/26465e6c/superseded/v1/survey/freeze-confirmatory.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "main.rs",
+      "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/src/main.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "addenda.rs",
+      "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/tests/addenda.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "correctness.rs",
+      "path": "dev/active/26465e6c/superseded/v1/survey/gf2-side/tests/correctness.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "libpopcnt_arm.c",
+      "path": "dev/active/26465e6c/superseded/v1/survey/libpopcnt_arm.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "mula_arm.cpp",
+      "path": "dev/active/26465e6c/superseded/v1/survey/mula_arm.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "objdump-evidence.txt",
+      "path": "dev/active/26465e6c/superseded/v1/survey/objdump-evidence.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "observe-instructions.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/observe-instructions.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "probe-dispatch.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/probe-dispatch.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "record-provenance.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/record-provenance.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "recount-flagged-windows.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/recount-flagged-windows.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "render-findings-results.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/render-findings-results.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-campaign.sh",
+      "path": "dev/active/26465e6c/superseded/v1/survey/run-campaign.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "splitmix64.h",
+      "path": "dev/active/26465e6c/superseded/v1/survey/splitmix64.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "lookup-decl.h",
+      "path": "dev/active/26465e6c/superseded/v1/survey/vendor/mula/lookup-decl.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "wire_common.h",
+      "path": "dev/active/26465e6c/superseded/v1/survey/wire_common.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/26465e6c/survey/.gitignore"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "build-plan.py",
+      "path": "dev/active/26465e6c/survey/build-plan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "families.py",
+      "path": "dev/active/26465e6c/survey/families.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/26465e6c/survey/gf2-side/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.toml",
+      "path": "dev/active/26465e6c/survey/gf2-side/Cargo.toml"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "libpopcnt_kernels.c",
+      "path": "dev/active/26465e6c/survey/gf2-side/csrc/libpopcnt_kernels.c"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "mula_kernels.cpp",
+      "path": "dev/active/26465e6c/survey/gf2-side/csrc/mula_kernels.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "arms.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/arms.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "check-plan.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/bin/check-plan.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "import-v1-ledger.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/bin/import-v1-ledger.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "popcount-arm.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/bin/popcount-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "popcount-verify.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/bin/popcount-verify.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "external.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/external.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fixture.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/fixture.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "lib.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/src/lib.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "addenda.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/tests/addenda.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "arm_protocol.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/tests/arm_protocol.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "arms.rs",
+      "path": "dev/active/26465e6c/survey/gf2-side/tests/arms.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-addenda.py",
+      "path": "dev/active/26465e6c/survey/make-addenda.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "make-producing-inputs.py",
+      "path": "dev/active/26465e6c/survey/make-producing-inputs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "make-source-evidence.py",
+      "path": "dev/active/26465e6c/survey/make-source-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "observe-instructions.py",
+      "path": "dev/active/26465e6c/survey/observe-instructions.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "reevaluate.sh",
+      "path": "dev/active/26465e6c/survey/reevaluate.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-receipts.py",
+      "path": "dev/active/26465e6c/survey/summarize-receipts.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "LICENSE",
+      "path": "dev/active/26465e6c/survey/vendor/libpopcnt/LICENSE"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "libpopcnt.h",
+      "path": "dev/active/26465e6c/survey/vendor/libpopcnt/libpopcnt.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "LICENSE",
+      "path": "dev/active/26465e6c/survey/vendor/mula/LICENSE"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "config.h",
+      "path": "dev/active/26465e6c/survey/vendor/mula/config.h"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "popcnt-avx2-harley-seal.cpp",
+      "path": "dev/active/26465e6c/survey/vendor/mula/popcnt-avx2-harley-seal.cpp"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "popcnt-lookup.cpp",
+      "path": "dev/active/26465e6c/survey/vendor/mula/popcnt-lookup.cpp"
     }
   ],
   "done_at": "2026-09-12T06:49:43.700243389Z",
@@ -348,5 +724,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Establish population-count and fused-reduction baselines",
-  "updated_at": "2026-10-01T22:41:19.702696950Z"
+  "updated_at": "2026-10-03T16:29:53.591455918Z"
 }

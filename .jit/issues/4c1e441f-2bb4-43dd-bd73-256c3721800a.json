@@ -301,6 +301,40 @@
       "format": "markdown",
       "label": "Benchmark-window queue carrying the confirmation line",
       "path": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "gf256-gemm-arm.rs",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/src/bin/gf256-gemm-arm.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf256-gemm-smoke.rs",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/src/bin/gf256-gemm-smoke.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "gf256-gemm-verify.rs",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/src/bin/gf256-gemm-verify.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "lib.rs",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/src/lib.rs"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:34.507392176Z",
@@ -323,5 +357,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-10-01T22:41:27.935011508Z"
+  "updated_at": "2026-10-03T16:30:10.151484326Z"
 }

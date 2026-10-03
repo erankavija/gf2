@@ -86,6 +86,138 @@
       "doc_type": "evidence",
       "label": "Producer continuation authority v2 (machine-readable)",
       "path": "dev/active/02b8137c/pre-draw-validation-v2-continuation.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "frozen-artifacts-start.json",
+      "path": "dev/active/02b8137c/validation-journal/frozen-artifacts-start.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n01-s0.exact.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n01-s0.exact.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n01-s0.replay.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n01-s0.replay.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n01-s0.sample.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n01-s0.sample.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n01-s0.terminal.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n01-s0.terminal.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n02-s0.exact.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n02-s0.exact.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n02-s0.replay.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n02-s0.replay.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n02-s0.sample.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n02-s0.sample.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n02-s0.terminal.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n02-s0.terminal.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n03-s0.exact.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n03-s0.exact.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n03-s0.replay.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n03-s0.replay.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n03-s0.sample.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n03-s0.sample.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n03-s0.terminal.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n03-s0.terminal.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n04-s0.exact.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n04-s0.exact.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n04-s0.replay.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n04-s0.replay.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n04-s0.sample.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n04-s0.sample.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q3-n04-s0.terminal.json",
+      "path": "dev/active/02b8137c/validation-journal/q3-n04-s0.terminal.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q5-n01-s0.exact.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q5-n01-s0.exact.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q5-n01-s0.replay.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q5-n01-s0.replay.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q5-n01-s0.sample.started.json",
+      "path": "dev/active/02b8137c/validation-journal/q5-n01-s0.sample.started.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "q5-n01-s0.terminal.json",
+      "path": "dev/active/02b8137c/validation-journal/q5-n01-s0.terminal.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "run-state.json",
+      "path": "dev/active/02b8137c/validation-journal/run-state.json"
     }
   ],
   "first_ready_at": "2026-08-30T12:23:41.673727710Z",
@@ -128,5 +260,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Execute frozen pre-draw validation anchors",
-  "updated_at": "2026-08-31T17:39:11.454552133Z"
+  "updated_at": "2026-10-03T16:27:13.835498991Z"
 }

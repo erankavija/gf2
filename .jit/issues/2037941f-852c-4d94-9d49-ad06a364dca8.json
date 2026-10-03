@@ -13,6 +13,428 @@
       "format": "markdown",
       "label": "Shared Zen 3 measurement contract",
       "path": "dev/active/1a379447-zen3-cpu-performance/measurement-contract.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": ".gitignore",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/.gitignore"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "arm-body.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/arm-body.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "avx2-fused.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/avx2-fused.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "bundle-entry.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/bundle-entry.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "public-matvec.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/public-matvec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "retained-output.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/retained-output.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "scalar-matvec.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/scalar-matvec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "simd-matvec.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/simd-matvec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "symbols.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/scalar/symbols.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "arm-body.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/arm-body.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "avx2-fused.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/avx2-fused.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "bundle-entry.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/bundle-entry.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "public-matvec.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/public-matvec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "retained-output.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/retained-output.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "scalar-matvec.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/scalar-matvec.asm.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "simd-matvec.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/simd-matvec.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "symbols.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/dense-baseline/simd/symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "avx2-xor-into.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/avx2-xor-into.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "avx512-xor-into.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/avx512-xor-into.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "mix-patterns.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/mix-patterns.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "nr-rate-matched.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/nr-rate-matched.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "public-row-xor.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/public-row-xor.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "public-xor-inplace.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/public-xor-inplace.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "resolve-xor-inplace.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/resolve-xor-inplace.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "scalar-xor-inplace.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/scalar-xor-inplace.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "select-backend-for-size.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/select-backend-for-size.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "symbols.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-arm/symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "avx2-xor-into.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/avx2-xor-into.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "avx512-xor-into.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/avx512-xor-into.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "mix-patterns.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/mix-patterns.txt"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "missing",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "_Unwind_Resume@plt",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/_Unwind_Resume@plt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "nr-rate-matched.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/nr-rate-matched.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "public-row-xor.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/public-row-xor.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "public-xor-inplace.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/public-xor-inplace.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "resolve-xor-inplace.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/resolve-xor-inplace.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "scalar-xor-inplace.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/scalar-xor-inplace.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "select-backend-for-size.asm.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/select-backend-for-size.asm.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "symbols.txt",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/asm/logical-profile/symbols.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "campaign.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/campaign.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "external.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/external.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fixture.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/fixture.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "wire.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/src/wire.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "disassemble-dense.sh",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/disassemble-dense.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "format": "markdown",
+      "label": "Cargo.lock",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.lock"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "build.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/build.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "campaign.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/campaign.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "fixture.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/fixture.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "oracle.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/oracle.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "routes.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/routes.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "label": "wire.rs",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/wire.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "run-dense-profile.sh",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "summarize-dense-profile.py",
+      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/summarize-dense-profile.py"
     }
   ],
   "first_ready_at": "2026-02-21T19:49:04.209118475Z",
@@ -62,5 +484,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Profile and optimize mid-range buffer operations (8-64 words)",
-  "updated_at": "2026-10-01T22:41:17.822278833Z"
+  "updated_at": "2026-10-03T16:28:42.099436750Z"
 }

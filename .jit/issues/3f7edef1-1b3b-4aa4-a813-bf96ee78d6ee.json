@@ -194,6 +194,27 @@
       "format": "markdown",
       "label": "External oracle fixture-generation receipt",
       "path": "dev/active/ae03bcd0-general-bch/oracle-receipt.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "3f7edef1-description.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-10-prompts/3f7edef1-description.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-3f7edef1-r1-part2.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/rework-3f7edef1-r1-part2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "rework-3f7edef1-r2.md",
+      "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/rework-3f7edef1-r2.md"
     }
   ],
   "done_at": "2026-10-01T07:07:54.338662925Z",
@@ -236,5 +257,5 @@
   "priority": "high",
   "state": "done",
   "title": "External oracle and standards-vector agreement",
-  "updated_at": "2026-10-01T22:41:24.847623821Z"
+  "updated_at": "2026-10-03T16:30:09.755601690Z"
 }
