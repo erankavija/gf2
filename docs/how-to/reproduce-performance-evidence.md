@@ -70,10 +70,14 @@ path is the clone root:
 Append the receipt's loop as a job. The command finds the clone root from the
 worktree, runs the clone's wrapper, and sets `CARGO_CI_NO_LOCK=1` because the
 wrapper already holds the mutex that `cargo-budget.sh` would take shared;
-`CARGO_CI_NO_NICE=1` keeps `cargo-budget.sh` from lowering the run's priority:
+`CARGO_CI_NO_NICE=1` keeps `cargo-budget.sh` from lowering the run's priority.
+The harness under `--append` adds rows to whatever `--output` names, so the
+command requires `/tmp/f3-repro.csv` to be absent before the first execution,
+and `set -e` ends the job with a nonzero status at an existing file or at the
+first failed execution:
 
 ```sh
-cmd='r=$(git rev-parse --path-format=absolute --git-common-dir)/..; GF2=$r "$r"/dev/scripts/ccx1-bench-flock.sh bash -c "for e in 1 2 3 4 5; do CARGO_CI_NO_LOCK=1 CARGO_CI_NO_NICE=1 \"\$GF2\"/scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-algebra --bench batched_f3_permanent --features simd,test-support -- --execution \$e --repetitions 5 --target-ms 250 --output /tmp/f3-repro.csv --append; done"'
+cmd='r=$(git rev-parse --path-format=absolute --git-common-dir)/..; GF2=$r "$r"/dev/scripts/ccx1-bench-flock.sh bash -c "set -e; test ! -e /tmp/f3-repro.csv; for e in 1 2 3 4 5; do CARGO_CI_NO_LOCK=1 CARGO_CI_NO_NICE=1 \"\$GF2\"/scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-algebra --bench batched_f3_permanent --features simd,test-support -- --execution \$e --repetitions 5 --target-ms 250 --output /tmp/f3-repro.csv --append; done"'
 printf 'f3-repro\t.agents/worktrees/f3-receipt\t15\t%s\n' "$cmd" \
     >> "$GF2"/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv
 ```
@@ -104,6 +108,8 @@ grep 'issue=f3-repro ' "$GF2"/.agents/bench-window/window.log
 ```
 
 The `job start` line states the key and the `job exit` line states `rc`.
+After a nonzero `rc`, remove `/tmp/f3-repro.csv` so that the next window's run
+of the job starts from an absent file.
 [`follow-window.sh`](https://github.com/erankavija/gf2/blob/456e24fe3c6df031b7b5840b9e931e78eedbe5e5/dev/active/1a379447-zen3-cpu-performance/bench-window/follow-window.sh), run from a second shell, redraws
 each queue line's state from the same log, markers and output files until
 interrupted. Its status word is the `systemctl --user is-active` result for
@@ -117,14 +123,19 @@ equal permanents on one fixture. Each row records `git_revision`,
 harness sets `source_dirty` from `git status --porcelain --untracked-files=all`,
 so an output path inside the worktree marks every row dirty. Check that every
 row records revision `88474a74ceee817040327db164c21f9fdd5ccf84` and
-`source_dirty=false`.
+`source_dirty=false`, and that the `execution` column takes each value from $1$
+to $5$:
+
+```sh
+cut -d, -f2,15,16 /tmp/f3-repro.csv | sort | uniq -c
+```
 
 ## Compare with the receipt
 
 Extract the receipt's raw data from its pinned commit and check its digest
 against the one the
 [receipt](https://github.com/erankavija/gf2/blob/a8937d14ce000cc4fbcde5b2afc0d9e6da624eef/dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md)
-states:
+states; the redirection replaces any existing `/tmp/f3-receipt.csv`:
 
 ```sh
 git show a8937d14ce00:dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.csv \
@@ -134,10 +145,13 @@ sha256sum /tmp/f3-receipt.csv
 
 The claim's statistic is a ratio of pooled rates per size $n$, where a
 backend's pooled rate is its summed `matrices` over its summed `elapsed_ns`.
-This script prints the batched-to-scalar and scalar-to-direct ratios from both
-files:
+Save a script that prints the batched-to-scalar and scalar-to-direct ratios
+from both files. It goes outside the worktree, where an untracked file would
+mark the rows of a later run dirty, and the redirection replaces any existing
+`/tmp/f3-pooled.py`:
 
-```python
+```sh
+cat > /tmp/f3-pooled.py <<'EOF'
 import csv, sys
 from collections import defaultdict
 
@@ -157,10 +171,13 @@ print("n  B/S receipt  B/S here  S/D receipt  S/D here")
 for n in sorted({n for n, _ in ref}):
     print(n, *(f"{x[n, a] / x[n, b]:.3f}"
                for a, b in ((B, S), (S, D)) for x in (ref, new)))
+EOF
 ```
 
+Run it on the two files:
+
 ```sh
-python3 pooled.py /tmp/f3-receipt.csv /tmp/f3-repro.csv
+python3 /tmp/f3-pooled.py /tmp/f3-receipt.csv /tmp/f3-repro.csv
 ```
 
 The receipt columns match the receipt's pooled-rate table to the printed
