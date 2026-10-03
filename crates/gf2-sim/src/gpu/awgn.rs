@@ -4,8 +4,12 @@
 //! [`channels::Awgn`](crate::channels::Awgn) stage. Frame `f` draws its noise
 //! from the device ChaCha20 + Box-Muller kernel (`GpuChaChaAwgn`) at word offset
 //! [`worker_offset(seed, snr_idx, worker_idx, f)`](crate::parallel::worker_offset),
-//! so the raw ChaCha word stream is byte-identical to the CPU path and the noise
-//! samples agree with it to <= 1 ulp f32, independent of worker count.
+//! as the CPU path does. This module's tests, skipped without a usable GPU,
+//! check at worker 0 that the raw ChaCha words equal the CPU words
+//! (`test_gpu_chacha_raw_words_full_range_byte_identical`) and that the noise
+//! samples and the corrupted symbols are within 1 ulp `f32` of the CPU path
+//! (`test_gpu_box_muller_within_1_ulp_over_1024_frames`,
+//! `test_gpu_awgn_matches_cpu_within_1_ulp`).
 //!
 //! The kernel emits `2 * num_symbols` standard-normal samples per frame in the
 //! CPU `draw_standard_normal` word order (4 words per sample); the host assigns
@@ -182,7 +186,6 @@ mod imp {
                 .noise_samples(base, n_samples)
                 .map_err(|e| map_hip_error(e, "GpuChaChaAwgn::noise_samples"))?;
 
-            // Planar: sample k is symbol k's I noise, num_symbols + k its Q noise.
             for (k, (xi, xq)) in i_lane.iter_mut().zip(q_lane.iter_mut()).enumerate() {
                 *xi += noise[k] * sigma;
                 *xq += noise[num_symbols + k] * sigma;
