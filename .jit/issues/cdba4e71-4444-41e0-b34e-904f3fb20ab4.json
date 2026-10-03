@@ -8,7 +8,98 @@
     "9dcc0cae-ef55-4f02-9446-83a0822ec158"
   ],
   "description": "The first research tutorial takes a researcher through a standards-based coded-modulation link simulation with gf2-sim, ending in a reproducible error-rate result.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only. Presets, examples and campaign binaries are surveyed in `dev/active/fa787f85-documentation-overhaul/investigation.md` §5.2.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/tutorials/` walks through configuring a DVB-T2 or 5G NR preset pipeline in gf2-sim, running a checkpointed error-rate sweep with a stated frame budget, and interpreting the result.\n- [hard] REQ-02: Each command and code block comes from an example or binary in the tree and is verified by running it; the quick path completes in about a minute in release mode.\n- [hard] REQ-03: Its prose is freshly authored and contains no elementary primer, history, future promises or performance figures.\n- [hard] REQ-04: The page is listed in `docs/index.md`, and its links resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d3436b569b45d1636eb83386aa682b936cbe0bebcb9931442973f5a0803d5649",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../how-to/run-simulation-campaigns.md",
+          "resolved_path": "docs/how-to/run-simulation-campaigns.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "79025372e6123830d6372228c512952a0978fc7cd3b4532cda70bcbbca6c75bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/tests/parallel_determinism.rs",
+          "resolved_path": "crates/gf2-sim/tests/parallel_determinism.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "94e38e874ff5e95105cf4078b07d267c8799071737ce7abe885a761283b03f50",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/tests/campaign_byte_identity.rs",
+          "resolved_path": "crates/gf2-sim/tests/campaign_byte_identity.rs"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/erankavija/gf2/blob/08e424e21a6b8d88e096aabc9e435fa486f839c4/dev/active/fa787f85-documentation-overhaul/cdba4e71-link-simulation-run.md",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f61cb6710d55e6e4ef9de4c5bd070fbd027007131642ee4626292975e4729c7e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs",
+          "resolved_path": "crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ddf58ef2db924d68887c197fc99775dc04269a5803ad46fb96aae59e30f4e70d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../reference/standards-conformance.md",
+          "resolved_path": "docs/reference/standards-conformance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5848ff8afa610811c2371bc08a8dba6474c4871adc117480848980b722da6666",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/examples/nr_5g_quickstart.rs",
+          "resolved_path": "crates/gf2-sim/examples/nr_5g_quickstart.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9d0743f8acbc75687bc0eb9bb93d124147a91331e83a991c9a4a7374a6dd4f01",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-sim/examples/dvb_t2_typestate.rs",
+          "resolved_path": "crates/gf2-sim/examples/dvb_t2_typestate.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/tutorials/coded-modulation-link-simulation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "cdba4e71-link-simulation-run/",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/cdba4e71-link-simulation-run"
+        }
+      ],
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Record",
+      "path": "dev/active/fa787f85-documentation-overhaul/cdba4e71-link-simulation-run.md"
+    }
+  ],
   "first_ready_at": "2026-10-03T00:55:26.458304361Z",
   "gates_required": [
     "doc-review",
@@ -32,5 +123,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the coded-modulation link simulation tutorial",
-  "updated_at": "2026-10-03T01:25:20.143703201Z"
+  "updated_at": "2026-10-03T01:53:50.673697593Z"
 }

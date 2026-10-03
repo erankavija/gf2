@@ -8,7 +8,57 @@
     "deda0962-2366-493d-b0fd-c65874ba7cbe"
   ],
   "description": "Researchers running heavy workloads need to choose SIMD targets, GPU offload and thread parallelism for their case.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/how-to/` shows how to select and enable SIMD targets, HIP GPU offload and parallel execution for gf2-core and gf2-coding workloads, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md`, `PARALLELIZATION.md` and `LDPC_PERFORMANCE.md` are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: Statements about relative speed link to anchors on the performance evidence page instead of stating figures.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "167aba9094e7406c351f5cb07734a89924c092ecda28907a0ffe8168c561f14d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../concepts/acceleration-architecture.md",
+          "resolved_path": "docs/concepts/acceleration-architecture.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "14133940d9d93f5fdf99bdd5362a0a15e1c36ea60b32512363ab3f68976ae40d",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../reference/supported-configurations.md",
+          "resolved_path": "docs/reference/supported-configurations.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ed2e8d7b55d7634ef31e55e6f8dbdd0e93e4e1c342d533b5d8f879bae7a90b7b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../reference/performance-evidence.md",
+          "resolved_path": "docs/reference/performance-evidence.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3bb124b51755ba8215e671c771734e5188de991186b0ef867bfe6870dfcb11a0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../crates/gf2-coding/src/bch/encode.rs",
+          "resolved_path": "crates/gf2-coding/src/bch/encode.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d3436b569b45d1636eb83386aa682b936cbe0bebcb9931442973f5a0803d5649",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "run-simulation-campaigns.md",
+          "resolved_path": "docs/how-to/run-simulation-campaigns.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Documentation",
+      "path": "docs/how-to/select-acceleration.md"
+    }
+  ],
   "first_ready_at": "2026-10-03T00:55:26.230391283Z",
   "gates_required": [
     "doc-review",
@@ -31,5 +81,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the acceleration selection how-to",
-  "updated_at": "2026-10-03T01:25:19.879451592Z"
+  "updated_at": "2026-10-03T01:53:50.561211685Z"
 }

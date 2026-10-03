@@ -8,6 +8,14 @@
     {
       "assets": [
         {
+          "asset_type": "local",
+          "content_hash": "fc22d8f0bbd35e426e9ebf26e0387da6294609ba692f2bb43cff1231334671ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../../proofs/WORKAROUNDS.md",
+          "resolved_path": "proofs/WORKAROUNDS.md"
+        },
+        {
           "asset_type": "external",
           "content_hash": null,
           "is_shared": false,
@@ -20,7 +28,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Lean4 verification pipeline documentation",
-      "path": "docs/lean4-verification-pipeline.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md"
     }
   ],
   "gates_required": [
@@ -60,5 +68,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Set up Aeneas/Charon to Lean4 verification infrastructure",
-  "updated_at": "2026-08-07T21:09:14.534467719Z"
+  "updated_at": "2026-10-03T01:53:39.206843244Z"
 }
