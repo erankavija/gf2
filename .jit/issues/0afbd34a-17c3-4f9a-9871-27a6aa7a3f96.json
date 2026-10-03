@@ -18,7 +18,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Window follower defaults to a host-specific systemd unit",
-  "updated_at": "2026-10-03T15:08:43.687144001Z"
+  "updated_at": "2026-10-03T16:05:07.396588723Z"
 }

@@ -18,7 +18,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Producing-closure check requires protocol documents in one directory",
-  "updated_at": "2026-10-03T15:29:15.414926169Z"
+  "updated_at": "2026-10-03T16:05:07.535330950Z"
 }

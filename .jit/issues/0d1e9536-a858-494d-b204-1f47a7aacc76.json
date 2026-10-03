@@ -18,7 +18,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Three tracked harness lockfiles fail --locked resolution",
-  "updated_at": "2026-10-03T15:08:44.001143155Z"
+  "updated_at": "2026-10-03T16:05:07.442832035Z"
 }

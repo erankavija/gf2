@@ -17,7 +17,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "cargo-ci leaves an sccache server bound to its deleted scratch TMPDIR",
-  "updated_at": "2026-10-03T15:29:15.098954115Z"
+  "updated_at": "2026-10-03T16:05:07.582638908Z"
 }

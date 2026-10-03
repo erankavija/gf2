@@ -18,7 +18,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Benchmark lock wrapper pins to a fixed CPU list",
-  "updated_at": "2026-10-03T15:08:43.367357394Z"
+  "updated_at": "2026-10-03T16:05:07.489178038Z"
 }

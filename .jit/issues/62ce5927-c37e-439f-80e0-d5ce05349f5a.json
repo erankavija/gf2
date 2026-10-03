@@ -21,7 +21,28 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T15:39:46.461308694Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T15:52:50.503791585Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T15:51:18.095027198Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-03T15:48:21.420376153Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "62ce5927-c37e-439f-80e0-d5ce05349f5a",
   "labels": [
     "epic:documentation-overhaul",
@@ -31,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Campaign declaration lookup rejects byte-identical archived copies",
-  "updated_at": "2026-10-03T15:29:14.588737302Z"
+  "updated_at": "2026-10-03T15:52:50.503791585Z"
 }

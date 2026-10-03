@@ -358,7 +358,7 @@
      "short_id": "fb209a81",
      "title": "Move presentation decks into their epics' archive dirs",
      "classification": "implementation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
@@ -412,7 +412,7 @@
      "short_id": "01c20b61",
      "title": "Write the evidence reproduction how-to",
      "classification": "documentation",
-     "status": "rework"
+     "status": "done"
     },
     {
      "id": "130d5fd7-4540-4a29-9bd5-67d755bae78c",
@@ -447,7 +447,7 @@
      "short_id": "629e0ff0",
      "title": "Correct gf2-coding standards-conformance doc and test drift",
      "classification": "implementation",
-     "status": "gating"
+     "status": "done"
     },
     {
      "id": "18858de1",
@@ -468,7 +468,7 @@
      "short_id": "62ce5927",
      "title": "Campaign declaration lookup rejects byte-identical archived copies",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "rework"
     }
    ]
   },
@@ -1052,6 +1052,16 @@
    "id": "18db6e3d",
    "epic": "b4b4b9ee",
    "reason": "non-vocabulary ignore reasons (found by 629e0ff0)"
+  },
+  {
+   "id": "e250b5bb",
+   "epic": "b4b4b9ee",
+   "reason": "cargo-ci scratch TMPDIR poisons the sccache server"
+  },
+  {
+   "id": "63cc5518",
+   "epic": "b4b4b9ee",
+   "reason": "producing-closure check rejects identical protocol copies (found by 62ce5927)"
   }
  ],
  "escalations": [
@@ -1180,9 +1190,10 @@
   "ee50e270": 1,
   "01c20b61": 4,
   "fb209a81": 3,
-  "62f0d0e6": 1,
+  "62f0d0e6": 2,
   "629e0ff0": 1,
-  "eb2a833d": 1
+  "eb2a833d": 1,
+  "62ce5927": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1298,6 +1309,9 @@
   "jit issue create --orphan does not satisfy repository integrity: a new issue with no dependency edge fails jit validate (isolated issue). Wire every filed issue into a container immediately; parenting into another epic needs owner approval.",
   "Never `git add .jit` blindly: another session's tracker writes ride along (ab6b6b09b swept in the 6dc81018 archive). Inspect `git status --short .jit` and stage only this epic's files plus events.jsonl/index.",
   "A container archive copies documents that a non-terminal issue also owns; content-identity lookups then see duplicates (62ce5927). Run cargo-ci after any archive lands on main.",
-  "Reviewer recomputation can be wrong (62f0d0e6 F2 pattern counts; an independent grep confirmed the record). Do not argue: make the record reproducible at the named commit so the reviewer runs the script itself."
+  "Reviewer recomputation can be wrong (62f0d0e6 F2 pattern counts; an independent grep confirmed the record). Do not argue: make the record reproducible at the named commit so the reviewer runs the script itself.",
+  "dispatch-worker-worktree.sh stops at the first branch collision after creating earlier worktrees; delete merged worktree-agent-* branches first and verify `git worktree list` shows every worktree before dispatching (three workers were sent to missing worktrees).",
+  "scripts/cargo-ci.sh exports a scratch TMPDIR; an sccache server first started inside a CI run keeps it after deletion and every later compile fails with 'Failed to create temp dir' (e250b5bb). Before a gate batch: `sccache --stop-server; sccache --start-server` from a normal shell.",
+  "A record that names a measured commit must give a reproduction that compares a fresh run at that commit against the files of the record's commit, not the files checked out at the measured commit (62f0d0e6 round 2)."
  ]
 }

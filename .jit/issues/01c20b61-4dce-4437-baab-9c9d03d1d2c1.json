@@ -35,6 +35,7 @@
       "path": "docs/how-to/reproduce-performance-evidence.md"
     }
   ],
+  "done_at": "2026-10-03T16:05:07.327235970Z",
   "first_ready_at": "2026-10-03T00:55:26.184113923Z",
   "gates_required": [
     "doc-review",
@@ -42,13 +43,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T14:52:17.721430550Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T15:56:23.564582107Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T14:45:49.924463432Z",
+      "updated_at": "2026-10-03T15:48:29.004519071Z",
       "updated_by": "auto:executor"
     }
   },
@@ -60,7 +61,7 @@
     "satisfies:fa787f85/REQ-06"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the evidence reproduction how-to",
-  "updated_at": "2026-10-03T14:52:17.721430550Z"
+  "updated_at": "2026-10-03T16:05:07.327235970Z"
 }

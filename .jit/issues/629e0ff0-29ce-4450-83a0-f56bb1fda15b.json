@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "Source documentation and test metadata for gf2-coding's standards conformance state facts that disagree with the code and the passing tests.\n\n## Background\n\nFound while writing `docs/reference/standards-conformance.md` (5625a423): the shared test helper `tests/common::dvb_vectors_dir` and the `tests/test_vectors` module default to different vector locations; `dvb_t2_ldpc_verification_suite` is ignored without a reason; the header of `tests/dvb_t2_ldpc_verification.rs` describes completed work as pending; `Nr5gRateMatchedCode` Rustdoc gives the filler LLR as +20 while `FILLER_LLR` is 15; the scope notes in `tests/dvb_t2_bit_interleaver_tp07a.rs` and `src/ldpc/dvb_t2/bit_interleaver.rs` contradict the passing TP07a bit-exact test. The Sionna reference behind the NR base-graph tables has no citation-registry key.\n\n## Success Criteria\n\n- [hard] REQ-01: The DVB-T2 vector location has one default, used by every test that reads the vectors.\n- [hard] REQ-02: Every ignored DVB-T2 conformance test carries a descriptive ignore reason in the tier vocabulary of `AGENTS.md`.\n- [hard] REQ-03: The listed Rustdoc and test comments state current behavior that matches the code and the passing tests.\n- [hard] REQ-04: `.jit/references.toml` holds a key for the Sionna reference, and the NR provenance record cites it.\n- [hard] REQ-05: The Rust CI gate passes.\n",
   "documents": [],
+  "done_at": "2026-10-03T16:05:07.942894022Z",
   "first_ready_at": "2026-10-03T02:14:03.115286495Z",
   "gates_required": [
     "cargo-ci",
@@ -15,13 +16,13 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "failed",
-      "updated_at": "2026-10-03T14:45:13.555435651Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T15:45:27.703347263Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T15:00:54.072202533Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T16:04:40.176464406Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -31,7 +32,7 @@
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T14:45:57.469414196Z",
+      "updated_at": "2026-10-03T15:48:36.574447955Z",
       "updated_by": "auto:executor"
     }
   },
@@ -43,7 +44,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Correct gf2-coding standards-conformance doc and test drift",
-  "updated_at": "2026-10-03T15:00:54.072202533Z"
+  "updated_at": "2026-10-03T16:05:07.942894022Z"
 }
