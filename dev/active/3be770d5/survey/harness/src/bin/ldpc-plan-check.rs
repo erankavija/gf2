@@ -1,7 +1,7 @@
 //! Pre-flight check of saved runner plans (jit:3be770d5).
 //!
 //! For each plan path, decodes the plan strictly, decodes the addendum it
-//! names, validates that addendum against `addendum.schema.json` and the
+//! names, validates that addendum against the current addendum schema and the
 //! protocol's semantic rules, and validates the plan against the addendum:
 //! the same checks the runner applies before opening a campaign. Times
 //! nothing and writes nothing. Run from the repository root.
@@ -10,7 +10,10 @@
 
 use serde_json::Value;
 use std::process::ExitCode;
-use tuning_campaign_support::protocol::{FamilyAddendum, RunnerPlan, ADDENDUM_SCHEMA_PATH};
+use tuning_campaign_support::protocol::{
+    FamilyAddendum, RunnerPlan, SharedInput, ADDENDUM_SCHEMA_ID,
+};
+use tuning_campaign_support::repository::repository_root;
 use tuning_campaign_support::schema;
 
 fn check(path: &str) -> Result<String, String> {
@@ -18,7 +21,11 @@ fn check(path: &str) -> Result<String, String> {
     let plan = RunnerPlan::decode(&bytes)?;
     let addendum_bytes =
         std::fs::read(&plan.addendum).map_err(|e| format!("{}: {e}", plan.addendum))?;
-    let schema_text = std::fs::read(ADDENDUM_SCHEMA_PATH).map_err(|e| e.to_string())?;
+    let root = repository_root().map_err(|e| e.to_string())?;
+    let schema_path = SharedInput::AddendumSchema
+        .locate(&root, ADDENDUM_SCHEMA_ID)
+        .map_err(|e| e.to_string())?;
+    let schema_text = std::fs::read(root.join(schema_path)).map_err(|e| e.to_string())?;
     let schema: Value = serde_json::from_slice(&schema_text).map_err(|e| e.to_string())?;
     let instance: Value = serde_json::from_slice(&addendum_bytes).map_err(|e| e.to_string())?;
     let violations = schema::validate(&schema, &instance);
