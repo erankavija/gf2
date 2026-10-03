@@ -33,6 +33,7 @@ Supported configurations, limitations, evidence methodology and stable contracts
 |---|---|
 | [Supported configurations](reference/supported-configurations.md) | Toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations |
 | [Standards conformance](reference/standards-conformance.md) | Supported DVB-T2 and 5G NR code configurations, bit order and conformance evidence |
+| [Performance evidence](reference/performance-evidence.md) | Measurement methodology and commit-pinned evidence for each performance claim |
 
 ## Crates
 
