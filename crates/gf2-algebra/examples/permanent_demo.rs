@@ -49,7 +49,6 @@ const BATCH: usize = 64;
 /// Base seed for deterministic matrix generation.
 const SEED_BASE: u64 = 0x16f0373400000000;
 
-// Reference mean (µs) and tolerance for the ±5% check.
 const S1_MEAN_US_BIPEDAL3_N24: f64 = 213_970.0;
 const S1_TOLERANCE: f64 = 0.05;
 
@@ -173,10 +172,6 @@ fn main() {
          (bipedal3_simd=213 970 µs vs reference=1 473 800 µs)"
     );
     println!();
-
-    // -------------------------------------------------------------------------
-    // ±5% check against S1_MEAN_US_BIPEDAL3_N24.
-    // -------------------------------------------------------------------------
 
     let lo = S1_MEAN_US_BIPEDAL3_N24 * (1.0 - S1_TOLERANCE);
     let hi = S1_MEAN_US_BIPEDAL3_N24 * (1.0 + S1_TOLERANCE);

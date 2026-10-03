@@ -938,10 +938,6 @@ mod tests {
         const { assert!(N_MAX_MULTIWORD >= 64) }
     }
 
-    // -----------------------------------------------------------------------
-    // Cross-checks: permanent_bipedal3 vs permanent_ryser
-    // -----------------------------------------------------------------------
-
     macro_rules! cross_check_n {
         ($name:ident, $n:expr) => {
             #[test]

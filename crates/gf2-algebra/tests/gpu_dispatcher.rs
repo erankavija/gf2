@@ -37,10 +37,6 @@ const N_SMOKE: usize = 16;
 const M_SMOKE: usize = 100;
 const SEED_SMOKE: u64 = 0xC0DE_CAFE_BEEF_5555_u64;
 
-// ---------------------------------------------------------------------------
-// Full-size tests: 1 000 matrices at n=24
-// ---------------------------------------------------------------------------
-
 /// F_3 batch dispatcher against `permanent_bipedal3` on 1 000 random 24×24
 /// matrices.
 #[test]

@@ -342,11 +342,6 @@ mod tests {
         assert!(!gray_counter_is_zero_above(&[15, 0, 0, 0], 4));
     }
 
-    // -----------------------------------------------------------------------
-    // Cross-check vs `permanent_ryser<Fp<3>>`, calling the multi-word path
-    // directly at small n.
-    // -----------------------------------------------------------------------
-
     fn run_multiword_vs_ryser_at_n(n: usize, n_trials: u64, seed_tag: u64) {
         let seed_base: u64 = 0xa788_6bd8_0000_0000_u64
             .wrapping_add((n as u64) << 16)

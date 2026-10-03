@@ -359,16 +359,6 @@ mod tests {
     cross_check_n!(test_cross_check_n15, 15, slow);
     cross_check_n!(test_cross_check_n16, 16, slow);
 
-    // -----------------------------------------------------------------------
-    // Word-boundary coverage. A cross-check at n = 63 needs 2^63 - 1 Gray
-    // steps, so the size contract is covered by:
-    //   n = 0      → test_permanent5_empty_matrix
-    //   n = 1      → test_permanent5_1x1
-    //   n = 64     → test_permanent5_panics_on_n_64 (panic boundary)
-    //   n = 15, 16 → cross_check_n!(_, _, slow), 1000 matrices each
-    //   n = 20, 24 → boundary_check_n! below
-    // -----------------------------------------------------------------------
-
     macro_rules! boundary_check_n {
         ($name:ident, $n:expr, $trials:expr) => {
             #[test]
