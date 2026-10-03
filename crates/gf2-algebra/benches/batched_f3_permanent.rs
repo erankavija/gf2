@@ -30,9 +30,8 @@ const DEFAULT_TARGET_MS: u64 = 250;
 const MAX_CALLS: u64 = 1 << 32;
 const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
 
-/// The established one-word permanent benchmark group. Keeping the receipt
-/// on this exact set makes its per-size statements auditable against the
-/// existing `permanent_bipedal3` benchmark protocol.
+/// The sizes of the `permanent_bipedal3` Criterion group in
+/// `benches/permanent.rs`, so per-size statements compare across the two.
 const CELLS: &[usize] = &[8, 12, 16, 20, 24, 28];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
