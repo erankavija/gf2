@@ -1,54 +1,17 @@
 //! SIMD batch element-wise multiply/square kernel for GF(2^m) at m ∈ {8, 16, 32}.
 //!
-//! Per-element scalar dispatch via [`crate::gf2m::Gf2mFns::clmul_barrett_fn`]
-//! processes one multiply per call. VPCLMULQDQ-on-YMM can pack two 64×64
-//! carry-less multiplies into a single instruction (one per 128-bit lane), and
-//! the Barrett reduction lookup constants for `m <= 32` fit comfortably in a
-//! single YMM lane. This module exposes a vectorised batch path that
-//! processes 2 element pairs per VPCLMULQDQ for the multiply step and 2
-//! element pairs per VPCLMULQDQ for each Barrett reduce step (`q = c_high *
-//! mu`, `r = product XOR q * P`).
-//!
-//! # Lane preference
-//!
-//! [`detect`] returns the fastest available lane:
-//!
-//! 1. **AVX2 + VPCLMULQDQ** (YMM, 256-bit) — 2 multiplies per VPCLMULQDQ.
-//!    Primary path on Zen 3.
-//! 2. `None` — callers fall back to the per-element
-//!    [`crate::gf2m::Gf2mFns::clmul_barrett_fn`] dispatch (PCLMULQDQ scalar
-//!    lane) or the pure-Rust scalar shift-and-add reducer in `gf2-core`.
-//!
-//! # Layout
-//!
-//! Inputs are slices of `u64`s holding canonical field elements (each `< 2^m`).
-//! Output is a slice of `u64`s of the same length, written element-wise. The
-//! multiply kernel computes `out[i] = a[i] * b[i] mod P(x)` and the square
-//! kernel computes `out[i] = a[i]^2 mod P(x)`.
-//!
-//! Tail elements (count not a multiple of 4) are handled by a scalar fallback
-//! path inside the same `#[target_feature]` scope to avoid call-pointer
-//! overhead.
-//!
-//! # Why m ∈ {8, 16, 32}
-//!
-//! * `m = 8`: GF(2^8) — Reed-Solomon ground field, BCH code helpers.
-//! * `m = 16`: GF(2^16) — DVB-T2 BCH outer field.
-//! * `m = 32`: GF(2^32) — emerging research codes (Gabidulin, network
-//!   coding); the largest power-of-two `m` where two operands and the
-//!   Barrett constants all fit in 64-bit lanes inside a YMM register.
-//!
-//! For `m > 32`, the Barrett `mu` and modulus may overflow a single 64-bit
-//! lane; the existing `crate::gf2m_wide` multi-word kernel covers those.
+//! The YMM lane runs two 64×64 carry-less multiplies per VPCLMULQDQ, for the
+//! multiply and for each Barrett reduce step (`q = c_high * mu`,
+//! `r = product XOR q * P`). Inputs and outputs are `u64` slices of canonical
+//! field elements (each `< 2^m`). [`detect`] returns `None` without AVX2 and
+//! VPCLMULQDQ, and callers fall back to per-element
+//! [`crate::gf2m::Gf2mFns::clmul_barrett_fn`] dispatch.
 
 /// Kernel signature: in-place batch element-wise multiply.
 ///
 /// Computes `out[i] = a[i] * b[i] mod P(x)` for `i ∈ 0..len`. All slices must
 /// have the same length. Each input element must already be reduced
 /// (< 2^m); output elements are reduced.
-///
-/// The kernel dispatches the Barrett constants `(mu, modulus, degree)` once
-/// per call rather than per element.
 pub type Gf2mBatchMulFn =
     fn(a: &[u64], b: &[u64], out: &mut [u64], mu: u64, modulus: u64, degree: u32);
 
@@ -66,8 +29,7 @@ pub struct Gf2mBatchFns {
     pub mul_fn: Gf2mBatchMulFn,
     /// Element-wise batch square with Barrett reduction.
     pub square_fn: Gf2mBatchSquareFn,
-    /// Human-readable lane tag, one of `"avx2+vpclmulqdq-ymm"`,
-    /// `"avx2+vpclmulqdq-ymm-unroll4"`.
+    /// Lane tag of the published kernels.
     pub name: &'static str,
 }
 
@@ -104,14 +66,6 @@ fn detect_x86() -> Option<Gf2mBatchFns> {
     None
 }
 
-// ---------------------------------------------------------------------------
-// Safe function-pointer wrappers (unsafe isolated in `crate::x86::gf2m_batch`)
-// ---------------------------------------------------------------------------
-//
-// `detect_x86` only publishes these function pointers when the corresponding
-// feature is detected at runtime. Callers that bypass `detect` must uphold
-// the feature precondition themselves.
-
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn gf2m_batch_mul_ymm_unroll4_safe(
     a: &[u64],
@@ -138,18 +92,13 @@ fn gf2m_batch_square_ymm_unroll4_safe(
     unsafe { crate::x86::gf2m_batch::gf2m_batch_square_ymm_unroll4(a, out, mu, modulus, degree) }
 }
 
-/// Test-only scalar reference matching the SIMD kernel's contract. Mirrors
-/// the canonical `BarrettReducer` reduction in `gf2_core::gf2m::barrett` so
-/// proptest equivalence harnesses can compare bit-exact results.
+/// Scalar reference matching the SIMD kernel's contract.
 #[cfg(test)]
 pub(crate) mod test_helpers {
     use crate::clmul_u64_scalar;
 
     /// Reduce a 128-bit carry-less product modulo a degree-`m` polynomial
-    /// using the canonical naive bit-by-bit reduction. Identical contract to
-    /// `gf2_core::gf2m::barrett::naive_reduce`, duplicated here only because
-    /// `gf2-kernels-simd` does not depend on `gf2-core` and we need a SSOT
-    /// for the reference oracle.
+    /// bit by bit.
     pub(crate) fn naive_reduce(product: u128, modulus: u64, degree: u32) -> u64 {
         let mask = if degree == 64 {
             u64::MAX
@@ -165,9 +114,7 @@ pub(crate) mod test_helpers {
         (r as u64) & mask
     }
 
-    /// Scalar-only reference that mirrors the per-element SIMD contract.
-    /// Used by every kernel test in this crate to confirm bit-exact
-    /// equivalence.
+    /// Scalar reference for the multiply kernel.
     pub(crate) fn scalar_batch_mul(
         a: &[u64],
         b: &[u64],
@@ -206,8 +153,7 @@ mod tests {
         ]
     }
 
-    /// Compute Barrett `mu = x^(2m) / P(x)` for `m <= 32`. Mirrors the
-    /// canonical computation in `gf2_core::gf2m::barrett::BarrettReducer::new`.
+    /// Compute Barrett `mu = x^(2m) / P(x)` for `m <= 32`.
     fn compute_mu(modulus: u64, degree: u32) -> u64 {
         let mut remainder: u128 = 1u128 << (2 * degree);
         let mut mu: u64 = 0;
@@ -256,7 +202,6 @@ mod tests {
             let mask = (1u64 << m) - 1;
             let n = 33; // odd to exercise the tail handler
 
-            // Deterministic test inputs.
             let a: Vec<u64> = (0..n)
                 .map(|i| {
                     let v = gf2_core::rng::Lcg::new(0xA5A5_A5A5 ^ i as u64).next_u64();
@@ -319,8 +264,7 @@ mod tests {
             }
         };
 
-        // Word-boundary element counts: 0/1/3/4/5/7/8/9/15/16/17 — covers
-        // tail-handling on the 4-element YMM-lane unroll.
+        // Lengths around the 4-element YMM-lane unroll.
         let lengths = [0usize, 1, 3, 4, 5, 7, 8, 9, 15, 16, 17, 31, 32, 33];
         let m: u32 = 8;
         let poly: u64 = 0b100011101;
@@ -356,7 +300,6 @@ mod tests {
         let poly: u64 = 0b100011101;
         let mu = compute_mu(poly, m);
 
-        // a contains zeros at various positions
         let a: Vec<u64> = vec![0, 1, 0, 0xAB, 0xCD, 0, 0xFF, 0];
         let b: Vec<u64> = vec![0xFF, 0, 1, 0, 0xAB, 0xCD, 0xEF, 0];
         let mut got = vec![0u64; a.len()];

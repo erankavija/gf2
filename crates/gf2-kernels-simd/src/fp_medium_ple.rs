@@ -1,47 +1,14 @@
-//! AVX2 panelized PLE base-case kernel for medium `Fp<P>` (`P ∈
-//! (251, 65536)`), issue `68db401b`, design `2e8c5a29` § 9.
+//! AVX2 panelized PLE base-case kernel for medium `Fp<P>` with
+//! `P ∈ (251, 65536)`.
 //!
-//! This is the safe wrapper layer; the unsafe AVX2 intrinsics live in
-//! `crate::x86::fp_medium_ple`. The kernel is the u16-lane analogue
-//! of the byte-lane [`crate::fp_small_ple`] panel-base kernel — same
-//! column-by-column Gaussian elimination as the scalar
-//! `ple_base_direct`, but with a row-major axpy-style Schur update
-//! that processes 8 × u32 lanes per inner step via SSOT-reused
-//! `_mm256_mullo_epi32` + Barrett reduction
-//! (`crate::x86::fp_small::barrett_reduce_lane32`, SSOT issued by
-//! `e8a0c47a`).
-//!
-//! # Algorithm summary
-//!
-//! See `@/issue/2e8c5a29` § 9 for the design context. Issue `68db401b` adds the
-//! u16 base case because GF(65521) PLE cells do not close to ≤ 1.5× via the
-//! Schur path alone.
-//!
-//! The base-case kernel processes an `m × win` column window of
-//! canonical u16 storage in-place, performing:
-//!   1. Linear-scan pivot search (rank-revealing, preserves the
-//!      bd9c6e13 scattered-column behaviour).
-//!   2. Full-row swap on the **panel window only** (caller propagates
-//!      to cells outside the window via the returned `row_perm`).
-//!   3. L-multiplier scale fused with the Schur update (scalar mod-mul
-//!      for the multiplier, SIMD axpy for the tail).
-//!   4. AVX2 row-major axpy Schur update with 8-lane Barrett reduction.
-//!
-//! # Coverage scope
-//!
-//! Activates exclusively for `Fp<P>` with `P ∈ (251, 65536)` on AVX2
-//! hosts. For `P ≤ 251` the dedicated byte-lane kernel
-//! ([`crate::fp_small_ple`]) is used. For `P ≥ 65536` the generic
-//! 64-bit Montgomery path remains.
+//! Safe wrapper layer over `crate::x86::fp_medium_ple`, the u16-lane analogue
+//! of [`crate::fp_small_ple`]. The kernel decomposes an `m × win` column
+//! window of canonical u16 storage in place; row swaps touch the window only,
+//! and the caller propagates them outside it through `row_perm`.
 
 /// L1d-fit column-window blocking factor for the u16-lane panel-base
-/// kernel: half the byte-lane panel kernel's `KC = 256`
-/// ([`crate::x86::fp_small_panel::KC`]), reflecting the 2× lane-density
-/// gap between u16 and u8 lanes (16 → 8 u16 lanes per AVX2 tile against
-/// 16 u8 lanes for the byte-lane kernel). Measured on the 5900X
-/// reference host:
-/// `dev/bench_results/2026-05-27-68db401b-fp-medium-ple.md:30-31` (host
-/// at `:8`).
+/// kernel: half the byte-lane panel kernel's
+/// [`crate::x86::fp_small_panel::KC`], because a u16 lane is twice as wide.
 pub const KC_U16: usize = 128;
 
 /// Structural scratch bound for the u16-lane PLE kernel, in columns.
@@ -63,11 +30,8 @@ pub const PANEL_SCRATCH_COLS: usize = 256;
 ///
 /// # Safety contract
 ///
-/// All function pointers in this struct are **safe `fn`** —
-/// internally they dispatch to AVX2 intrinsics under an `unsafe`
-/// block only after [`detect`] has confirmed AVX2 is available at
-/// runtime, exactly mirroring the [`crate::fp_small_ple`] safe
-/// wrapper pattern. Callers must still ensure `p ∈ (251, 65536)`,
+/// The pointer is a safe `fn` that [`detect`] publishes only when AVX2 is
+/// available at runtime. Callers must still ensure `p ∈ (251, 65536)`,
 /// `window.len() == m * win`, `inv_table.len() == p as usize`,
 /// `row_perm.len() == m`, and every lane in `window` is canonical
 /// (`< p`). These preconditions are debug-asserted by the kernel.
@@ -81,12 +45,10 @@ pub type MediumPrimePlePanelBaseFn = fn(
     pivot_cols_local: &mut Vec<usize>,
 ) -> usize;
 
-/// Bundle of medium-prime panelized PLE operations (issue `68db401b`).
+/// Bundle of medium-prime panelized PLE operations.
 ///
-/// Populated at runtime by [`detect`] when AVX2 is available. The
-/// function pointer takes the prime `p` as a runtime argument so one
-/// dispatch struct covers every medium-prime consumer (`252 ≤ P ≤
-/// 65535`).
+/// Populated at runtime by [`detect`] when AVX2 is available. The prime `p`
+/// is a runtime argument.
 #[derive(Copy, Clone)]
 pub struct MediumPrimePlePanelFns {
     /// Panelized PLE base-case kernel for canonical u16 `Fp<P>` with
@@ -98,8 +60,7 @@ pub struct MediumPrimePlePanelFns {
 /// base-case kernel.
 ///
 /// Returns `None` on non-x86 targets or when the runtime CPU lacks
-/// AVX2. Callers receive `None` and must fall back to the scalar
-/// `ple_base_direct` path.
+/// AVX2.
 ///
 /// # Examples
 ///
@@ -166,12 +127,10 @@ fn ple_panel_base_safe(
     pivot_cols_local: &mut Vec<usize>,
 ) -> usize {
     // Safety: `detect_x86` only published this pointer when AVX2 is
-    // available at runtime. The unsafe pre-conditions (canonical u16
+    // available at runtime. The other preconditions (canonical u16
     // lanes, prime in (251, 65536), slice lengths) are documented on
-    // the outer `ple_panel_base_fn` contract and enforced by the
-    // gf2-core dispatch site (which packs canonical u16 via the
-    // medium-prime `Fp::value()` round-trip) plus the kernel's own
-    // debug_asserts.
+    // `MediumPrimePlePanelBaseFn`, established by the gf2-core dispatch
+    // site and debug-asserted by the kernel.
     unsafe {
         crate::x86::fp_medium_ple::ple_panel_base_canonical_u16(
             window,

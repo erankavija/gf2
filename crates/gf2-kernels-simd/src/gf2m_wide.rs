@@ -1,47 +1,18 @@
 //! SIMD kernels for fixed-size multi-word carry-less multiplication.
 //!
-//! This module exposes dispatch for the 4×4 schoolbook multiply of
-//! GF(2^256) operands and the 9×9 multiply of GF(2^571) operands. Every
-//! `gf2-core` carry-less product of those widths — `Gf2mWide<4>` and
-//! `Gf2mWide<9>` multiplication, the wide Barrett reducer and the public
-//! long-product API — reaches them through one dispatch in that crate.
-//!
-//! The kernels produce only the **unreduced** carry-less product. Barrett
-//! reduction is performed by the caller in
-//! `gf2-core::gf2m::wide::Gf2mWide::mul_ref`, so the dispatched functions keep
-//! simple fixed-array signatures.
-//!
-//! Unsafe intrinsics are isolated in `x86/gf2m_wide.rs`; this module only
-//! exposes safe function-pointer wrappers through the [`ClmulWide256Fns`]
-//! table returned by [`detect`]. Callers without PCLMULQDQ receive `None`
-//! and must fall back to the scalar schoolbook in `gf2-core`.
-//!
-//! # Lane preference
-//!
-//! [`detect_wide`] returns the fastest available lane:
-//!
-//! 1. **AVX2 + VPCLMULQDQ** (YMM, 256-bit) — 2 clmuls per instruction,
-//!    16-product 4×4 schoolbook in 8 instructions and 81-product 9×9
-//!    schoolbook in 41 instructions. Primary path on Zen 3.
-//! 2. **PCLMULQDQ + SSE4.1** (XMM, 128-bit) — 1 clmul per instruction,
-//!    one instruction per scalar word product. Universal x86_64 fallback.
-//! 3. `None` — callers fall back to the pure-Rust
-//!    `clmul_wide_slice_portable` in `gf2-core`.
-//!
-//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
-//! is AVX2-only (Zen 3); the required `_mm512_*` carry-less-multiply and
-//! 128-bit-lane extraction intrinsics are stable since Rust 1.89, available
-//! under the current MSRV (1.95). Add the lane when AVX-512 hardware is in
-//! scope.
+//! Dispatch for the 4×4 schoolbook multiply of GF(2^256) operands and the
+//! 9×9 multiply of GF(2^571) operands. The kernels produce the unreduced
+//! carry-less product; the caller reduces. [`detect_wide`] prefers the
+//! AVX2 + VPCLMULQDQ YMM lane (two products per instruction), then
+//! PCLMULQDQ + SSE4.1 (one product per instruction), and returns `None`
+//! otherwise. No ZMM lane exists.
 
 /// Kernel signature: computes the 8-limb carry-less product of two 4-limb
 /// GF(2)-polynomial operands.
 ///
-/// The function pointer is safe (`fn`, not `unsafe fn`): the safe wrappers
-/// in this module guard the `#[target_feature]` intrinsics. [`detect`] only
-/// publishes a function pointer when the CPU supports the corresponding
-/// feature, so calling a pointer obtained from a populated
-/// [`ClmulWide256Fns`] always upholds the feature precondition.
+/// [`detect`] publishes a pointer only when the CPU supports the lane's
+/// features, so a pointer from a populated [`ClmulWide256Fns`] is safe to
+/// call.
 pub type ClmulWide256Fn = fn(&[u64; 4], &[u64; 4], &mut [u64; 8]);
 
 /// Kernel signature: computes the 18-limb carry-less product of two 9-limb
@@ -83,8 +54,7 @@ pub struct Gf2mWideFns {
 /// Detect and return all available fixed-size wide carry-less multiply kernels.
 ///
 /// Returns `None` on non-x86 targets, or when the runtime CPU lacks
-/// PCLMULQDQ/SSE4.1 entirely. The preference order matches the module-level
-/// documentation.
+/// PCLMULQDQ/SSE4.1 entirely.
 pub fn detect_wide() -> Option<Gf2mWideFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -96,8 +66,7 @@ pub fn detect_wide() -> Option<Gf2mWideFns> {
 
 /// Detect and return the best available 4-limb carry-less multiply kernel.
 ///
-/// Kept for compatibility with existing GF(2^256) callers. New wide-field
-/// callers should use [`detect_wide`] so m=571 dispatch is available too.
+/// [`detect_wide`] returns it together with the 9-limb kernel.
 pub fn detect() -> Option<ClmulWide256Fns> {
     detect_wide().map(|fns| fns.wide256)
 }
@@ -112,7 +81,6 @@ pub fn detect_571() -> Option<ClmulWide571Fns> {
 fn detect_x86_wide() -> Option<Gf2mWideFns> {
     use std::arch::is_x86_feature_detected;
 
-    // 1. YMM (AVX2 + VPCLMULQDQ) — primary path on Zen 3.
     if is_x86_feature_detected!("avx2")
         && is_x86_feature_detected!("vpclmulqdq")
         && is_x86_feature_detected!("sse4.1")
@@ -130,7 +98,6 @@ fn detect_x86_wide() -> Option<Gf2mWideFns> {
         });
     }
 
-    // 2. XMM (PCLMULQDQ scalar-lane) — universal x86_64 fallback.
     if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
         return Some(Gf2mWideFns {
             wide256: ClmulWide256Fns {
@@ -148,19 +115,10 @@ fn detect_x86_wide() -> Option<Gf2mWideFns> {
     None
 }
 
-// ---------------------------------------------------------------------------
-// Safe function-pointer wrappers (unsafe isolated in `crate::x86::gf2m_wide`)
-// ---------------------------------------------------------------------------
-//
-// `detect_x86` only publishes these function pointers when the corresponding
-// feature is detected at runtime. Callers that bypass `detect` must uphold
-// the feature precondition themselves.
-
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn clmul_wide4_xmm_safe(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
-    // SAFETY: `detect_x86` only returns this pointer when PCLMULQDQ and
-    // SSE4.1 are available. Callers who bypass `detect` must uphold that
-    // precondition.
+    // SAFETY: `detect_x86_wide` only returns this pointer when PCLMULQDQ and
+    // SSE4.1 are available.
     unsafe { crate::x86::gf2m_wide::clmul_wide4_xmm(a, b, out) }
 }
 
@@ -185,14 +143,10 @@ fn clmul_wide9_ymm_safe(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
     unsafe { crate::x86::gf2m_wide::clmul_wide9_ymm(a, b, out) }
 }
 
-/// Test-only helpers shared between this module's tests and the inner-x86
-/// kernel tests. Keeping `scalar_ref` here enforces SSOT: there is exactly
-/// one bit-by-bit reference implementation of wide carry-less schoolbook.
+/// Helpers shared between this module's tests and the x86 kernel tests.
 #[cfg(test)]
 pub(crate) mod test_helpers {
-    /// Scalar reference matching `gf2_core::gf2m::wide::clmul_wide_slice_portable::<N>`:
-    /// the schoolbook built on the workspace-wide bit-by-bit carry-less
-    /// 64×64 multiply SSOT (`crate::clmul_u64_scalar`).
+    /// Scalar schoolbook reference built on `crate::clmul_u64_scalar`.
     pub(crate) fn scalar_ref<const N: usize>(a: &[u64; N], b: &[u64; N]) -> Vec<u64> {
         let mut out = vec![0u64; 2 * N];
         for i in 0..N {
@@ -219,7 +173,6 @@ mod tests {
             use std::arch::is_x86_feature_detected;
             if is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1") {
                 let fns = fns.expect("expected PCLMULQDQ-backed kernel on this host");
-                // Name must reflect the lane.
                 assert!(
                     fns.name == "pclmulqdq-scalar-xmm" || fns.name == "avx2+vpclmulqdq-ymm",
                     "unexpected kernel name: {}",
