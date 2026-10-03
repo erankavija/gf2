@@ -930,7 +930,7 @@ mod tests {
         }
         let used = v.len_lanes - 64 * (n_words - 1);
         if used == 64 {
-            return; // full last word, no padding
+            return;
         }
         let mask = (1u64 << used) - 1;
         let last = n_words - 1;
@@ -1097,35 +1097,30 @@ mod tests {
 
     #[test]
     fn test_all_zero_redundant_codepoint_5() {
-        // Lane 0 = codepoint 5 (b0=1, b1=0, b2=1). Decodes to 0.
         let raw = packed5_raw(1u64, 0u64, 1u64);
         assert!(raw.all_zero(), "redundant codepoint 5 must report all_zero");
     }
 
     #[test]
     fn test_all_zero_redundant_codepoint_6() {
-        // Lane 0 = codepoint 6 (b0=0, b1=1, b2=1). Decodes to 0.
         let raw = packed5_raw(0u64, 1u64, 1u64);
         assert!(raw.all_zero(), "redundant codepoint 6 must report all_zero");
     }
 
     #[test]
     fn test_all_zero_redundant_codepoint_7() {
-        // Lane 0 = codepoint 7 (b0=1, b1=1, b2=1). Decodes to 0.
         let raw = packed5_raw(1u64, 1u64, 1u64);
         assert!(raw.all_zero(), "redundant codepoint 7 must report all_zero");
     }
 
     #[test]
     fn test_all_zero_canonical_one_not_zero() {
-        // Lane 0 = canonical 1 (b0=1, b1=0, b2=0). Not zero.
         let raw = packed5_raw(1u64, 0u64, 0u64);
         assert!(!raw.all_zero(), "canonical 1 must not report all_zero");
     }
 
     #[test]
     fn test_packed5_eq_redundant_codepoint_5_equals_canonical_zero() {
-        // Lane 0 = codepoint 5 (redundant zero) vs. canonical zero.
         let lhs = packed5_raw(1u64, 0u64, 1u64);
         let rhs = Packed5::zero();
         assert_eq!(lhs, rhs, "codepoint 5 must equal canonical zero");
@@ -1161,7 +1156,6 @@ mod tests {
 
     #[test]
     fn test_packed5vec_all_zero_redundant_codepoint_5() {
-        // Lane 0 = codepoint 5 (b0=1, b1=0, b2=1), rest canonical 0.
         let raw = packed5vec_raw(1u64, 0u64, 1u64, 64);
         assert!(
             raw.all_zero(),
@@ -1171,7 +1165,6 @@ mod tests {
 
     #[test]
     fn test_packed5vec_all_zero_canonical_one_not_zero() {
-        // Lane 0 = canonical 1.
         let raw = packed5vec_raw(1u64, 0u64, 0u64, 64);
         assert!(
             !raw.all_zero(),
@@ -1181,7 +1174,6 @@ mod tests {
 
     #[test]
     fn test_packed5vec_eq_redundant_zero_equals_canonical_zero() {
-        // Lane 0 = codepoint 5 (redundant zero) vs. full canonical zero vec.
         let lhs = packed5vec_raw(1u64, 0u64, 1u64, 64);
         let rhs = Packed5Vec::zeros(64);
         assert_eq!(

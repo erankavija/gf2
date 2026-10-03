@@ -259,7 +259,6 @@ mod tests {
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
         let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         assert_eq!(a.add(b), b.add(a));
-        // 1 + 2 = 0 mod 3: every lane of the sum decodes to zero.
         assert!(a.add(b).all_zero());
     }
 
@@ -410,8 +409,6 @@ mod tests {
 
 #[cfg(test)]
 mod vec_tests {
-    //! `ScalarPackedFp3Vec` tests at lengths `{1, 16, 63, 64, 65}`; 65
-    //! exceeds the fixed 64-lane [`super::ScalarPackedFp3`].
     use super::*;
     use proptest::prelude::*;
 
@@ -432,7 +429,6 @@ mod vec_tests {
     fn set_position(v: &mut ScalarPackedFp3Vec, i: usize, x: Fp<3>) {
         let cur = v.get(i);
         let mut delta = ScalarPackedFp3Vec::zeros(v.len());
-        // Need: cur + d == x, so d = x - cur.
         delta.elements[i] = x - cur;
         v.add_assign(&delta);
     }
@@ -469,7 +465,6 @@ mod vec_tests {
 
     #[test]
     fn test_is_empty_default_impl_calls_len() {
-        // Guards the trait's default `is_empty` against an override.
         for &len in REQUIRED_LENGTHS {
             let v = ScalarPackedFp3Vec::zeros(len);
             assert!(!v.is_empty(), "len = {}", len);
@@ -482,7 +477,7 @@ mod vec_tests {
         let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
         let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
         a.add_assign(&b);
-        assert_eq!(a.get(0), Fp::<3>::new(0)); // 1 + 2 == 0 mod 3
+        assert_eq!(a.get(0), Fp::<3>::new(0));
     }
 
     #[test]
@@ -534,7 +529,7 @@ mod vec_tests {
         let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(0)]);
         let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
         a.sub_assign(&b);
-        assert_eq!(a.get(0), Fp::<3>::new(2)); // 0 - 1 == 2 mod 3
+        assert_eq!(a.get(0), Fp::<3>::new(2));
     }
 
     #[test]
@@ -574,7 +569,7 @@ mod vec_tests {
         let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
         let b = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(2)]);
         a.mul_assign(&b);
-        assert_eq!(a.get(0), Fp::<3>::new(1)); // 2 * 2 == 1 mod 3
+        assert_eq!(a.get(0), Fp::<3>::new(1));
     }
 
     #[test]
@@ -626,7 +621,6 @@ mod vec_tests {
         let v = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
         let mut zero = ScalarPackedFp3Vec::zeros(1);
         zero.sub_assign(&v);
-        // -1 mod 3 == 2
         assert_eq!(zero.get(0), Fp::<3>::new(2));
         assert_eq!(zero.get(0), -Fp::<3>::new(1));
     }
