@@ -1,0 +1,8 @@
+commit: e3bfdfae782161c1f5031daac98f77ef48db2281
+crates/gf2-algebra 9
+crates/gf2-coding 74
+crates/gf2-core 279
+crates/gf2-kernels-hip 33
+crates/gf2-kernels-simd 48
+crates/gf2-sim 197
+crates/gf2-stats 0
