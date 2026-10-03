@@ -10,19 +10,6 @@ use super::{PackedField, PackedFieldVec};
 
 /// Scalar reference implementation of [`PackedField<Fp<3>>`]: one `Fp<3>`
 /// per lane, with `LANES = 64` to match `Bipedal3` lane for lane.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedField, ScalarPackedFp3};
-/// use gf2_core::gfp::Fp;
-///
-/// let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
-/// let b = a.add(a); // 2 + 2 = 4 mod 3 = 1
-/// for i in 0..<ScalarPackedFp3 as PackedField<Fp<3>>>::LANES {
-///     assert_eq!(b.lane(i), Fp::<3>::new(1));
-/// }
-/// ```
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ScalarPackedFp3 {
     lanes: [Fp<3>; 64],
@@ -116,20 +103,6 @@ impl PackedField<Fp<3>> for ScalarPackedFp3 {
 ///
 /// `Self::Element` is [`ScalarPackedFp3`] only to satisfy the trait bound;
 /// the storage never materialises an `Element`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedFieldVec, ScalarPackedFp3Vec};
-/// use gf2_core::gfp::Fp;
-///
-/// let xs = [Fp::<3>::new(1), Fp::<3>::new(2), Fp::<3>::new(0)];
-/// let v = ScalarPackedFp3Vec::from_field_slice(&xs);
-/// assert_eq!(v.len(), 3);
-/// for i in 0..3 {
-///     assert_eq!(v.get(i), xs[i]);
-/// }
-/// ```
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ScalarPackedFp3Vec {
     elements: Vec<Fp<3>>,
@@ -227,10 +200,6 @@ mod tests {
         })
     }
 
-    // ----------------------------------------------------------------
-    // Constants and lane round-trip
-    // ----------------------------------------------------------------
-
     #[test]
     fn test_zero_all_zero() {
         let z = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
@@ -260,7 +229,6 @@ mod tests {
             v = v.with_lane(i, Fp::<3>::new(2));
             assert_eq!(v.lane(i), Fp::<3>::new(2));
         }
-        // Lanes that were not written remain zero.
         for i in 0..64 {
             if ![0usize, 1, 16, 31, 32, 63].contains(&i) {
                 assert_eq!(v.lane(i), Fp::<3>::new(0));
@@ -268,18 +236,12 @@ mod tests {
         }
     }
 
-    // ----------------------------------------------------------------
-    // Add / sub / mul / neg deterministic checks
-    // ----------------------------------------------------------------
-
     #[test]
     fn test_add_commutative() {
-        // 1 non-zero lane.
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero().with_lane(7, Fp::<3>::new(1));
         let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero().with_lane(7, Fp::<3>::new(2));
         assert_eq!(a.add(b), b.add(a));
 
-        // 16 non-zero lanes (every fourth lane).
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         let mut b = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         for i in 0..16 {
@@ -288,14 +250,12 @@ mod tests {
         }
         assert_eq!(a.add(b), b.add(a));
 
-        // 63 non-zero lanes (skip lane 31).
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
         let mut b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         a = a.with_lane(31, Fp::<3>::new(0));
         b = b.with_lane(31, Fp::<3>::new(0));
         assert_eq!(a.add(b), b.add(a));
 
-        // 64 non-zero lanes (all of them).
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
         let b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         assert_eq!(a.add(b), b.add(a));
@@ -305,23 +265,19 @@ mod tests {
 
     #[test]
     fn test_sub_self_is_zero() {
-        // 1 non-zero lane.
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero().with_lane(0, Fp::<3>::new(2));
         assert!(a.sub(a).all_zero());
 
-        // 16 non-zero lanes.
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         for i in 0..16 {
             a = a.with_lane(i * 4, Fp::<3>::new((i as u64) % 3));
         }
         assert!(a.sub(a).all_zero());
 
-        // 63 non-zero lanes.
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         a = a.with_lane(31, Fp::<3>::new(0));
         assert!(a.sub(a).all_zero());
 
-        // 64 non-zero lanes.
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         assert!(a.sub(a).all_zero());
     }
@@ -338,8 +294,6 @@ mod tests {
         assert!(z.mul(two).all_zero());
         assert!(two.mul(z).all_zero());
 
-        // Mixed: a vector with 16 zeros and 48 twos, multiplied by a
-        // vector with the complement pattern, yields all-zero.
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         let mut b = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         for i in 0..16 {
@@ -353,30 +307,22 @@ mod tests {
 
     #[test]
     fn test_neg_double_is_identity() {
-        // 1 non-zero lane.
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero().with_lane(0, Fp::<3>::new(2));
         assert_eq!(a.neg().neg(), a);
 
-        // 16 non-zero lanes.
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         for i in 0..16 {
             a = a.with_lane(i * 4, Fp::<3>::new(((i as u64) % 2) + 1));
         }
         assert_eq!(a.neg().neg(), a);
 
-        // 63 non-zero lanes.
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         a = a.with_lane(31, Fp::<3>::new(0));
         assert_eq!(a.neg().neg(), a);
 
-        // 64 non-zero lanes.
         let a = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         assert_eq!(a.neg().neg(), a);
     }
-
-    // ----------------------------------------------------------------
-    // Word-boundary tests on lane indices
-    // ----------------------------------------------------------------
 
     #[test]
     fn test_with_lane_word_boundary_indices() {
@@ -386,7 +332,6 @@ mod tests {
             let v = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
             let v = v.with_lane(i, Fp::<3>::new(2));
             assert_eq!(v.lane(i), Fp::<3>::new(2));
-            // Round-trip preserves bit-for-bit equality.
             let v2 = v.with_lane(i, v.lane(i));
             assert_eq!(v, v2);
         }
@@ -420,14 +365,8 @@ mod tests {
         let _ = z.with_lane(65, Fp::<3>::new(1));
     }
 
-    // ----------------------------------------------------------------
-    // Full lane round-trip
-    // ----------------------------------------------------------------
-
     #[test]
     fn test_full_lane_round_trip() {
-        // For any value a, with_lane(i, lane(i)) should recover a
-        // bit-for-bit at every i.
         let mut a = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         for i in 0..64 {
             a = a.with_lane(i, Fp::<3>::new((i as u64) % 3));
@@ -437,10 +376,6 @@ mod tests {
             assert_eq!(a, a2);
         }
     }
-
-    // ----------------------------------------------------------------
-    // Property tests
-    // ----------------------------------------------------------------
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(1000))]
@@ -487,7 +422,6 @@ mod vec_tests {
     /// Lengths around the 64-element word boundary.
     const REQUIRED_LENGTHS: &[usize] = &[1, 16, 63, 64, 65];
 
-    /// Element `i` is `Fp::<3>::new(i % 3)`.
     fn deterministic_vec(len: usize) -> ScalarPackedFp3Vec {
         let xs: Vec<Fp<3>> = (0..len).map(|i| Fp::<3>::new((i as u64) % 3)).collect();
         ScalarPackedFp3Vec::from_field_slice(&xs)
@@ -502,10 +436,6 @@ mod vec_tests {
         delta.elements[i] = x - cur;
         v.add_assign(&delta);
     }
-
-    // ---------------------------------------------------------------
-    // Constructors and basic accessors
-    // ---------------------------------------------------------------
 
     #[test]
     fn test_zeros_then_get_returns_zero_at_each_required_length() {
@@ -546,10 +476,6 @@ mod vec_tests {
             assert_eq!(v.is_empty(), v.len() == 0);
         }
     }
-
-    // ---------------------------------------------------------------
-    // add_assign at each required length
-    // ---------------------------------------------------------------
 
     #[test]
     fn test_add_at_len_1() {
@@ -603,10 +529,6 @@ mod vec_tests {
         }
     }
 
-    // ---------------------------------------------------------------
-    // sub_assign at each required length
-    // ---------------------------------------------------------------
-
     #[test]
     fn test_sub_at_len_1() {
         let mut a = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(0)]);
@@ -646,10 +568,6 @@ mod vec_tests {
         a.sub_assign(&b);
         assert!(a.all_zero());
     }
-
-    // ---------------------------------------------------------------
-    // mul_assign at each required length
-    // ---------------------------------------------------------------
 
     #[test]
     fn test_mul_at_len_1() {
@@ -703,10 +621,6 @@ mod vec_tests {
         }
     }
 
-    // ---------------------------------------------------------------
-    // neg as `0 - self` (`PackedFieldVec` has no `neg`)
-    // ---------------------------------------------------------------
-
     #[test]
     fn test_neg_via_zero_minus_self_at_len_1() {
         let v = ScalarPackedFp3Vec::from_field_slice(&[Fp::<3>::new(1)]);
@@ -730,11 +644,6 @@ mod vec_tests {
         }
     }
 
-    // ---------------------------------------------------------------
-    // splat via a constant slice; with_lane via `set_position`
-    // (`PackedFieldVec` exposes neither)
-    // ---------------------------------------------------------------
-
     #[test]
     fn test_splat_via_from_field_slice_at_each_required_length() {
         for &len in REQUIRED_LENGTHS {
@@ -751,8 +660,6 @@ mod vec_tests {
     fn test_with_lane_via_add_assign_at_each_required_length() {
         for &len in REQUIRED_LENGTHS {
             let mut v = ScalarPackedFp3Vec::zeros(len);
-            // Hit a representative set of positions: first, last, and
-            // (for len >= 16) a couple of interior boundaries.
             let mut probes: Vec<usize> = vec![0, len - 1];
             if len >= 16 {
                 probes.push(len / 2);
@@ -767,10 +674,6 @@ mod vec_tests {
         }
     }
 
-    // ---------------------------------------------------------------
-    // round-trip (lane / get round-trip equivalent at vec scale)
-    // ---------------------------------------------------------------
-
     #[test]
     fn test_round_trip_from_field_slice_to_get_at_each_required_length() {
         for &len in REQUIRED_LENGTHS {
@@ -784,13 +687,8 @@ mod vec_tests {
         }
     }
 
-    // ---------------------------------------------------------------
-    // all_zero at each required length
-    // ---------------------------------------------------------------
-
     #[test]
     fn test_all_zero_on_zeros_constructor_at_each_required_length() {
-        // The empty vector is all-zero.
         for &len in &[0usize, 1, 16, 63, 64, 65] {
             let v = ScalarPackedFp3Vec::zeros(len);
             assert!(v.all_zero(), "len = {}", len);
@@ -805,10 +703,6 @@ mod vec_tests {
             assert!(!v.all_zero(), "len = {}", len);
         }
     }
-
-    // ---------------------------------------------------------------
-    // length-mismatch panics
-    // ---------------------------------------------------------------
 
     #[test]
     #[should_panic(expected = "length mismatch")]
@@ -834,10 +728,6 @@ mod vec_tests {
         a.mul_assign(&b);
     }
 
-    // ---------------------------------------------------------------
-    // get out-of-range panic at the 65-boundary
-    // ---------------------------------------------------------------
-
     #[test]
     #[should_panic(expected = "out of range")]
     fn test_get_out_of_range_at_len_65_panics() {
@@ -851,10 +741,6 @@ mod vec_tests {
         let v = ScalarPackedFp3Vec::zeros(64);
         let _ = v.get(64);
     }
-
-    // ---------------------------------------------------------------
-    // proptest: field laws at length 65
-    // ---------------------------------------------------------------
 
     fn vec_strat(len: usize) -> impl Strategy<Value = ScalarPackedFp3Vec> {
         prop::collection::vec(fp3_strat(), len)
@@ -893,12 +779,10 @@ mod vec_tests {
             b in vec_strat(65),
             c in vec_strat(65),
         ) {
-            // lhs = a * (b + c)
             let mut bc = b.clone();
             bc.add_assign(&c);
             let mut lhs = a.clone();
             lhs.mul_assign(&bc);
-            // rhs = a*b + a*c
             let mut ab = a.clone();
             ab.mul_assign(&b);
             let mut ac = a.clone();
