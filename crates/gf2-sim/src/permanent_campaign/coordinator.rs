@@ -399,10 +399,6 @@ impl CampaignCoordinator {
     /// Refuses a manifest without the predeclared first cell, a campaign path
     /// mismatch, or unavailable manifest/protocol bytes.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(C log C)` time and `O(C)` space for `C` manifest cells.
@@ -505,10 +501,6 @@ impl CampaignCoordinator {
     /// duplicate scheduling, a halted campaign, or any arm before `q=7,n=20`
     /// is terminal.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(C + A)` for `C` cells and `A` argument tokens.
@@ -549,10 +541,6 @@ impl CampaignCoordinator {
     /// Applies [`Self::authorize_arm_inner`] to a pending cell. A scheduled or
     /// terminal cell is accepted only when its persisted arm equals `arm`.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(C + A)` for receipt cells and arguments.
@@ -581,7 +569,6 @@ impl CampaignCoordinator {
         }
     }
 
-    /// Test-support admission of one exact arm.
     #[cfg(test)]
     fn authorize_arm(&mut self, arm: ArmInvocation) -> Result<(), CoordinatorError> {
         self.authorize_arm_inner(arm)
@@ -597,10 +584,6 @@ impl CampaignCoordinator {
     ///
     /// Refuses unknown or unscheduled shards, an existing active attempt, a
     /// retry after acceptance, or a third attempt.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
     ///
     /// # Complexity
     ///
@@ -843,10 +826,6 @@ impl CampaignCoordinator {
     /// not pool the accepted attempts, missing accepted shards, or determinant
     /// evidence contrary to the manifested plan.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(S + n + log N)` for `S` shards, matrix order `n`, and count `N`.
@@ -987,10 +966,6 @@ impl CampaignCoordinator {
     ///
     /// Refuses absent fields and fields with pending or scheduled cells.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(C + T)` for receipt cells and attempts.
@@ -1044,10 +1019,6 @@ impl CampaignCoordinator {
     /// Refuses a mismatched campaign directory or non-monotonic overwrite and
     /// reports filesystem and JSON failures.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(C + A + T + B)` for cells, arms, attempts, and serialized bytes.
@@ -1080,10 +1051,6 @@ impl CampaignCoordinator {
     ///
     /// Refuses a receipt whose identity, lifecycle evidence, or on-disk
     /// manifest digest differs from the frozen manifest.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
     ///
     /// # Complexity
     ///
@@ -1274,10 +1241,6 @@ impl Drop for ExecutionLock {
 /// transition failure. Evaluation and raw-emission failures consume the fixed
 /// mechanical attempt and are preserved in the receipt.
 ///
-/// # Panics
-///
-/// Does not intentionally panic.
-///
 /// # Complexity
 ///
 /// Receipt work is `O(C + S + T)` for cells, selected shards, and attempts;
@@ -1329,15 +1292,6 @@ pub fn execute_campaign_cell(
 ///
 /// Returns the same failures as [`execute_campaign_cell`] plus failures from
 /// `evaluator`.
-///
-/// # Panics
-///
-/// Does not intentionally panic.
-///
-/// # Complexity
-///
-/// Adds `O(1)` dispatch overhead per authorized attempt to the evaluator's
-/// cost.
 #[cfg(any(test, feature = "test-support"))]
 #[allow(clippy::too_many_arguments)]
 pub fn execute_campaign_cell_with_evaluator<E, H>(

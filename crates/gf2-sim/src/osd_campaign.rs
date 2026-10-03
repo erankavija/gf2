@@ -1,70 +1,32 @@
-//! Deterministic, resumable ordered-statistics-decoding campaigns.
-//!
-//! This module owns the campaign mechanics shared by OSD executables: explicit
+//! Deterministic, resumable ordered-statistics-decoding campaigns: explicit
 //! cell identities, order-independent seed derivation, block-index-keyed random
-//! streams, multi-worker block evaluation, bit- and block-error accounting,
-//! block-sampled intervals for BER and BLER, strict checkpoint and receipt
-//! schemas, and cell-boundary resume. Domain executables retain only
-//! code/channel construction and a per-block evaluator. Persistence delegates
-//! to [`crate::checkpoint`], parallel dispatch to [`crate::parallel`], and the
-//! exact binomial endpoints to [`gf2_stats::intervals`].
+//! streams, multi-worker block evaluation, block-sampled BER and BLER
+//! intervals, and cell-boundary resume. Domain executables supply only
+//! code/channel construction and a per-block evaluator.
 //!
 //! # Interval coverage
 //!
-//! Schema 2 treats one decoded block as the independent sampling unit for both
-//! intervals, and both follow the stopping design rather than assuming a fixed
-//! trial count. A completed cell is accepted only with exactly `K` block
-//! errors, where `K` is the campaign's `target_block_errors`; the protocol
-//! enforces that the last sampled block is the target's `K`-th error. The total
-//! block count `N` is therefore a stopping time and the design is
-//! inverse-binomial. `--max-samples` bounds one invocation without consulting
-//! any outcome, so that censoring is independent of the sampled values and a
-//! resumed completed cell still holds exactly `K` failing blocks drawn under
-//! the same design.
+//! One decoded block is the independent sampling unit. A completed cell holds
+//! exactly `K = target_block_errors` block errors and its last sampled block is
+//! the `K`-th error, so the block count is a stopping time and the design is
+//! inverse-binomial. BER factors as `BER = BLER * mu`, where `mu` is the mean
+//! information-bit error fraction of a failing block; each factor is bounded at
+//! `1 - alpha / 2` for a requested two-sided level `1 - alpha`:
 //!
-//! BER factors over that design as `BER = BLER * mu`, where `mu` is the mean
-//! information-bit error fraction of a failing block. Both factors are
-//! estimated at the component level `1 - alpha / 2` for a requested two-sided
-//! level `1 - alpha`:
-//!
-//! - BLER uses the equal-tailed exact inversion of the inverse-binomial
-//!   sampling distribution
-//!   ([`gf2_stats::intervals::negative_binomial_interval`]).
-//! - `mu` uses the Maurer-Pontil empirical-Bernstein bound
-//!   (`@/citation/MaurerPontil2009`,
-//!   [`gf2_stats::intervals::empirical_bernstein_interval`]) over the `K`
-//!   per-failing-block error fractions, intersected with the domain
-//!   `[1 / k, 1]` for information-block length `k`. `K` is fixed by the
-//!   stopping rule, so this fixed-sample bound applies; the failing blocks'
-//!   error magnitudes are independent and identically distributed under the
-//!   conditional law of a failing block, and are independent of where those
-//!   failures fall in the block sequence. The bound is variance-adaptive, which
-//!   matters because a failing block's error fraction concentrates far below
-//!   the `[0, 1]` range a Hoeffding-type bound would have to assume.
+//! - BLER by the equal-tailed exact inversion of the inverse-binomial sampling
+//!   distribution ([`gf2_stats::intervals::negative_binomial_interval`]);
+//! - `mu` by the empirical-Bernstein bound of `@/citation/MaurerPontil2009`
+//!   ([`gf2_stats::intervals::empirical_bernstein_interval`]) over the `K`
+//!   per-failing-block error fractions, intersected with `[1 / k, 1]` for
+//!   information-block length `k`. `K` is fixed by the stopping rule, and the
+//!   failing blocks' error fractions are independent and identically
+//!   distributed under the conditional law of a failing block.
 //!
 //! The recorded BER interval is the endpoint product
-//! `[BLER_L * mu_L, BLER_U * mu_U]`. All four endpoints are non-negative, so
-//! the product interval contains `BER` whenever both factor intervals contain
-//! their factors; by the union bound its coverage is at least
-//! `1 - alpha / 2 - alpha / 2 = 1 - alpha`. Nothing in the construction assumes
-//! independence among the bit errors inside a block.
-//!
-//! That coverage statement applies only to a completed cell. An attempt that
-//! stopped for any other reason retains its cumulative counters but records no
-//! intervals: its block-error count is not the design's fixed `K`, so the
-//! stopping design does not deliver the intervals' stated coverage there.
-//! Published-value acceptance likewise applies only to a completed cell.
-//!
-//! Schema 1 receipts deserialize as evidence with weaker guarantees. Their BER
-//! intervals are Clopper-Pearson over individual bits with no sampling unit, so
-//! the stated coverage does not apply to clustered decoder error bursts. Their
-//! BLER intervals are computed over blocks, but under a bit-error stopping rule
-//! that leaves the block count a stopping time rather than the fixed trial
-//! count that inversion assumes. Their published-value comparison uses
-//! `[L - delta, U + delta]`, the digitization precision applied as a linear
-//! probability offset, where schema 2 applies [`accepts_published_value`].
-//! Their global runtime provenance holds one invocation, and its `cpu_model`
-//! may be an OS/architecture platform token.
+//! `[BLER_L * mu_L, BLER_U * mu_U]`; by the union bound its coverage is at
+//! least `1 - alpha`, with no independence assumption among the bit errors
+//! inside a block. The coverage holds only for a completed cell; any other
+//! attempt records no intervals.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -213,8 +175,8 @@ pub enum BinomialIntervalMethod {
     /// Equal-tailed exact Clopper-Pearson interval for a fixed trial count.
     ///
     /// A campaign stops on block errors, where the block count is a stopping
-    /// time, so [`OsdCampaign::new`] refuses this method; it names the
-    /// estimator of schema 1 evidence.
+    /// time, so [`OsdCampaign::new`] refuses this method; a receipt naming it
+    /// still deserializes.
     ClopperPearson,
     /// Equal-tailed exact inversion of the stop-at-Kth-error design.
     NegativeBinomialClopperPearson,
@@ -606,9 +568,9 @@ pub struct OsdBlockContext<'a> {
 /// makes a cell's counters, stopping index, and receipt byte-identical across
 /// worker counts and across a checkpoint boundary.
 ///
-/// Each block owns a reserved [`FRAME_STRIDE`] region (`2^20` ChaCha20 32-bit
-/// words, 4 MiB), so a variable-consumption sampler — the campaign's
-/// rejection-sampled Gaussian noise — cannot draw into the next block's region.
+/// Each block owns a reserved [`FRAME_STRIDE`] region, so a variable-consumption
+/// sampler — the campaign's rejection-sampled Gaussian noise — cannot draw into
+/// the next block's region.
 /// [`debug_assert_block_budget`] checks that in debug builds, as
 /// [`WorkerCtx`](crate::parallel::WorkerCtx) does per frame.
 ///
@@ -628,24 +590,6 @@ pub struct OsdBlockContext<'a> {
 /// the campaign execution stacks.
 ///
 /// [`debug_assert_block_budget`]: Self::debug_assert_block_budget
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::osd_campaign::OsdBlockStream;
-/// use gf2_sim::parallel::worker_offset;
-///
-/// let mut stream = OsdBlockStream::new(0x5eed);
-/// stream.seek_to_block(3);
-/// assert_eq!(stream.current_word_pos(), worker_offset(0x5eed, 0, 0, 3));
-///
-/// // Two streams on the same cell seed agree at the same block, whichever
-/// // worker holds them and whatever they drew before.
-/// let mut other = OsdBlockStream::new(0x5eed);
-/// other.seek_to_block(9);
-/// other.seek_to_block(3);
-/// assert_eq!(other.current_word_pos(), stream.current_word_pos());
-/// ```
 pub struct OsdBlockStream {
     seed: u64,
     rng: ChaCha20Rng,
@@ -668,8 +612,7 @@ impl OsdBlockStream {
     /// # Panics
     ///
     /// Panics when `block_index` exceeds `usize::MAX`, the index width the
-    /// shared [`worker_offset`] takes; no campaign reaches `2^64` blocks on a
-    /// 64-bit host.
+    /// shared [`worker_offset`] takes.
     pub fn seek_to_block(&mut self, block_index: u64) {
         let block_index =
             usize::try_from(block_index).expect("block index fits the host word size");
@@ -1106,12 +1049,11 @@ pub fn accepts_published_value(
 /// continues at the next block index. Each attempt is atomically checkpointed
 /// before the next cell, and terminal cells are skipped on recovery.
 ///
-/// `workers` is invocation-local. It changes how fast a cell is sampled, never
-/// what is sampled: for a fixed campaign and seed every counter, the stopping
-/// index, and the receipt payload are byte-identical across worker counts, with
-/// the single-worker run as the reference. It is excluded from the campaign
-/// configuration identity and reaches a receipt only through the caller's
-/// recorded invocation argument vector.
+/// `workers` is invocation-local: for a fixed campaign and seed every counter,
+/// the stopping index, and the receipt payload are byte-identical across worker
+/// counts, with the single-worker run as the reference. It is excluded from the
+/// campaign configuration identity and reaches a receipt only through the
+/// caller's recorded invocation argument vector.
 ///
 /// # Arguments
 ///
@@ -1422,7 +1364,6 @@ where
     Ok(run)
 }
 
-/// Accumulates one validated block outcome into a cell's cumulative counters.
 fn commit_block(
     run: &mut CellRun,
     information_bits: &mut Option<u64>,

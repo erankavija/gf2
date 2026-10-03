@@ -1,65 +1,8 @@
 //! DAG topology executor: [`TopologyExecutor`] dispatches a built [`Pipeline`]
-//! graph's stages in topological order, with:
-//!
-//! * **fan-in** — a stage with `k > 1` in-edges waits on *all* its producers,
-//!   then receives their outputs concatenated frame-wise in in-edge order;
-//! * **fan-out** — a stage output referenced by `k > 1` consumers is shared by
-//!   reference and reference-counted: the executor drops the intermediate
-//!   buffer as soon as its last consumer has run;
-//! * **per-stage routing** — every stage executes via its type-erased
-//!   [`AnyStage`] object from [`Pipeline::stages`], routed by
-//!   [`execution_class()`](AnyStage::execution_class):
-//!   [`CpuOnly`](ExecutionClass::CpuOnly) runs on the rayon worker via
-//!   [`process_any`](AnyStage::process_any); [`GpuOnly`](ExecutionClass::GpuOnly)
-//!   is enqueued on the worker's owned HIP stream (`worker_idx % n_streams`,
-//!   selected by fixed index) via the stream-aware entry point of
-//!   [`GpuLdpcBp`](crate::gpu::ldpc_bp::GpuLdpcBp),
-//!   [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) or
-//!   [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper). Any other
-//!   GpuOnly stage type while a stream pool is active is a typed
-//!   [`BuildError::ExecutionValidation`] (wrapped in [`StageError::Fatal`]);
-//!   with **no** active stream pool (GPU disabled or unavailable) every
-//!   GpuOnly arm degrades to `process_any` after a `tracing::warn!`;
-//!   [`Hybrid`](ExecutionClass::Hybrid) is split per-batch
-//!   (see [`Hybrid split`](#hybrid-split-per-batch) below);
-//! * **per-stage tracing spans** — every stage start/end emits a
-//!   `pipeline_stage` span carrying
-//!   `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)`, with
-//!   `wall_us` recorded just before close.
-//!
-//! # Execution-start validation
-//!
-//! Cyclic and disconnected graphs are rejected at
-//! [`Chain::build`](crate::graph::Chain::build) ([`BuildError::Cyclic`] /
-//! [`BuildError::Disconnected`]). [`TopologyExecutor::validate`] re-checks the
-//! connector lineage at execution start — every edge must go *forward* in the
-//! stage list (i.e. the stored order is a topological linearisation), reference
-//! in-range stages, and join type-compatible endpoints — and reports any
-//! inconsistency **panic-free** as a typed
-//! [`BuildError::ExecutionValidation`] / [`BuildError::TypeMismatch`] wrapped
-//! in [`StageError::Fatal`].
-//!
-//! # Hybrid split per-batch
-//!
-//! A `Hybrid` stage's input batch is split into two frame sub-batches (first
-//! `ceil(n/2)` frames, then the rest), each sub-batch is processed via
-//! [`process_any`](AnyStage::process_any) on the worker, and the two outputs
-//! are re-concatenated in order. Single-frame or non-splittable batches are
-//! processed whole.
-//!
-//! # Throughput caveat
-//!
-//! The stage chain shares one [`DvbT2Concat`] codec behind its stages' `Arc`,
-//! and the codec's LDPC decoder sits behind a `Mutex` — so the stage-driven
-//! sweep's decodes serialise across workers. The scheduler path
-//! ([`Pipeline::run`](crate::Pipeline::run)) uses per-worker cloned frame
-//! kernels instead.
-//!
-//! [`DvbT2Concat`]: gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat
-//! [`BuildError::Cyclic`]: crate::error::BuildError::Cyclic
-//! [`BuildError::Disconnected`]: crate::error::BuildError::Disconnected
-//! [`BuildError::TypeMismatch`]: crate::error::BuildError::TypeMismatch
-//! [`BuildError::ExecutionValidation`]: crate::error::BuildError::ExecutionValidation
+//! graph's stages in topological order, routing each stage by its
+//! [`execution_class()`](AnyStage::execution_class) and wrapping it in a
+//! `pipeline_stage` span carrying
+//! `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)`.
 
 use rand::SeedableRng as _;
 use rand_chacha::ChaCha20Rng;
@@ -356,7 +299,7 @@ fn execute_stage(
 ///
 /// An **unknown** `GpuOnly` stage type while the worker owns a stream is a
 /// typed [`BuildError::ExecutionValidation`] — never a silent default-stream
-/// `process_any` (see the [module docs](self)). With no active stream pool
+/// `process_any`. With no active stream pool
 /// (GPU disabled or unavailable) every arm degrades to `process_any` after a
 /// `tracing::warn!`.
 ///
@@ -379,7 +322,6 @@ fn execute_gpu_stage(
 ) -> StageOutcome {
     use crate::executor::failure::{dispatch_with_fallback, FaultContext};
 
-    // Build a context for diagnostic reporting (shared across all three arms).
     let ctx = FaultContext {
         batch_id,
         snr_idx,
@@ -666,7 +608,7 @@ fn execute_gpu_stage(
 /// The `Hybrid` routing arm: split the batch per-batch into two frame halves
 /// (first `ceil(n/2)` frames, then the rest), process each half via the stage
 /// object, and re-concatenate the outputs in order. Single-frame or
-/// non-splittable batches are processed whole (see the module docs).
+/// non-splittable batches are processed whole.
 fn execute_hybrid_stage(
     stage: &dyn AnyStage,
     input: &dyn TypedBatch,
@@ -807,42 +749,6 @@ impl TopologyExecutor {
     /// # Complexity
     ///
     /// `O(edges)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::executor::TopologyExecutor;
-    /// use gf2_sim::graph::Chain;
-    /// use gf2_sim::stage::{erase, BatchSize, ExecutionClass, Stage};
-    /// use gf2_sim::error::StageError;
-    ///
-    /// #[derive(Clone)]
-    /// struct B(u8);
-    /// impl BatchSize for B {
-    ///     fn batch_size(&self) -> usize {
-    ///         1
-    ///     }
-    /// }
-    /// struct Id;
-    /// impl Stage<B, B> for Id {
-    ///     type Scratch = ();
-    ///     type CpuFallback = Self;
-    ///     fn process(&self, i: &B, _: &mut ()) -> Result<B, StageError> {
-    ///         Ok(i.clone())
-    ///     }
-    ///     fn execution_class(&self) -> ExecutionClass {
-    ///         ExecutionClass::CpuOnly
-    ///     }
-    /// }
-    ///
-    /// let mut chain = Chain::new();
-    /// let a = chain.add(erase(Id));
-    /// let b = chain.add(erase(Id));
-    /// chain.connect(a, b).unwrap();
-    /// let pipeline = chain.build().unwrap();
-    /// // A pipeline from the validating builder always passes.
-    /// TopologyExecutor::validate(&pipeline).unwrap();
-    /// ```
     pub fn validate(pipeline: &Pipeline) -> Result<(), StageError> {
         let stages = pipeline.stages();
         let n = stages.len();
@@ -912,8 +818,12 @@ impl TopologyExecutor {
     /// order; a fan-out producer's buffer is shared by reference and dropped
     /// once its last consumer has run (reference counting on the intermediate
     /// buffer). Every stage executes via its [`AnyStage`] object, routed by
-    /// [`execution_class()`](AnyStage::execution_class) (see the
-    /// [executor module docs](crate::executor)).
+    /// [`execution_class()`](AnyStage::execution_class): `CpuOnly` via
+    /// [`process_any`](AnyStage::process_any); `GpuOnly` on the worker's owned
+    /// HIP stream, or via `process_any` after a `tracing::warn!` when no
+    /// stream pool is active; `Hybrid` split into its first `ceil(n/2)` frames
+    /// and the rest, each processed via `process_any` and re-concatenated
+    /// (single-frame or non-splittable batches are processed whole).
     ///
     /// # Errors
     ///
@@ -921,7 +831,9 @@ impl TopologyExecutor {
     /// * [`StageError::TypeMismatch`] if the root input's type does not match
     ///   a source stage's input type;
     /// * [`BuildError::ExecutionValidation`] (wrapped fatal) if a fan-in joins
-    ///   a non-canonical batch type that cannot be concatenated;
+    ///   a non-canonical batch type that cannot be concatenated, or if a
+    ///   `GpuOnly` stage type has no stream-aware dispatch while a stream pool
+    ///   is active;
     /// * any [`StageError`] a stage itself returns.
     ///
     /// # Complexity
@@ -940,7 +852,6 @@ impl TopologyExecutor {
             return Ok(DagOutputs { sinks: Vec::new() });
         }
 
-        // Adjacency, in-degrees, and per-producer consumer refcounts.
         let mut in_edges: Vec<Vec<usize>> = vec![Vec::new(); n];
         let mut out_edges: Vec<Vec<usize>> = vec![Vec::new(); n];
         for e in pipeline.edges() {
@@ -951,7 +862,6 @@ impl TopologyExecutor {
         // Refcount per producer: the number of consumer edges still pending.
         let mut remaining: Vec<usize> = out_edges.iter().map(Vec::len).collect();
 
-        // Sources must accept the root input's concrete type.
         let input_type = batch.as_any().type_id();
         for (pos, stage) in stages.iter().enumerate() {
             if indeg[pos] == 0 && stage.input_type() != input_type {
@@ -1006,10 +916,6 @@ impl TopologyExecutor {
                 items.push((s, wave_input, scratch));
             }
 
-            // Run the wave in parallel on the scheduler's pool: independent
-            // branches (fan-out) genuinely execute concurrently.
-            // Build the failure policy once per wave, outside the parallel
-            // region (the config reference is cheap to copy).
             let dump_dir_buf;
             let failure = {
                 let cfg = pipeline.config();
@@ -1063,7 +969,6 @@ impl TopologyExecutor {
             };
             let wave_results = wave_results?;
 
-            // Commit outputs + scratches, then update refcounts and in-degrees.
             let completed: Vec<usize> = wave_results.iter().map(|(s, _, _)| *s).collect();
             for (s, out, scratch) in wave_results {
                 outputs[s] = Some(out);
@@ -1091,7 +996,6 @@ impl TopologyExecutor {
             wave = next;
         }
 
-        // Collect the sinks (out-degree 0) in ascending position order.
         let mut sinks = Vec::new();
         for (pos, out) in outputs.iter_mut().enumerate() {
             if out_edges[pos].is_empty() {
@@ -1152,32 +1056,6 @@ impl TopologyExecutor {
     ///
     /// `O(max_frames)` frame chains across the workers; the chain's shared
     /// codec serialises LDPC decodes on its internal lock.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use std::num::NonZeroUsize;
-    /// use gf2_sim::executor::{Scheduler, TopologyExecutor};
-    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-    /// use gf2_sim::Pipeline;
-    /// use gf2_coding::CodeRate;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// let pipeline = Pipeline::dvb_t2()
-    ///     .modcod(Modcod::Normal { rate: CodeRate::Rate1_2, modulation: DvbT2Modulation::Qam16 })
-    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
-    ///     .demap(DemapMethod::ExactLogMap)
-    ///     .channel(Channel::awgn(9.0))
-    ///     .seed(42)
-    ///     .build()
-    ///     .unwrap();
-    /// let scheduler = Scheduler::from_pipeline(&pipeline);
-    /// // Heavy: one full n=64800 BICM chain per frame.
-    /// let counters = TopologyExecutor::run_dvb_t2_snr_point(&pipeline, &scheduler, 0, 4).unwrap();
-    /// assert_eq!(counters.frames, 4);
-    /// ```
     pub fn run_dvb_t2_snr_point(
         pipeline: &Pipeline,
         scheduler: &Scheduler,
@@ -1193,7 +1071,6 @@ impl TopologyExecutor {
             ));
         }
 
-        // The sweep supports exactly the linear BICM chain: edges i -> i+1.
         let mut got: Vec<(usize, usize)> = pipeline
             .edges()
             .iter()
@@ -1317,13 +1194,12 @@ impl TopologyExecutor {
                         let mut counters = WorkerCounters::default();
                         let mut g = worker_idx;
                         while g < max_frames {
-                            // 1. Per-frame seek + the SSOT message draw.
                             ctx.reseek_to_frame(g);
                             let message = crate::frame_sim::random_bitvec(k, ctx.rng_mut());
 
-                            // 2. Channel scratch positioned at the post-message
-                            //    stream offset (the SSOT noise continues from
-                            //    exactly here).
+                            // Channel scratch positioned at the post-message
+                            // stream offset (the SSOT noise continues from
+                            // exactly here).
                             let mut chan_rng = ChaCha20Rng::seed_from_u64(seed);
                             chan_rng.set_word_pos(ctx.current_word_pos());
                             // Deref the box so `as_any_mut` dispatches to the
@@ -1338,11 +1214,10 @@ impl TopologyExecutor {
                                 })?
                                 .rng = chan_rng;
 
-                            // 3. Per-stage-driven chain execution. Iteration
-                            //    provenance is tracked at the GPU LDPC stage
-                            //    position ONLY: an AWGN/demap fallback
-                            //    substitution must not masquerade as a
-                            //    BP-iteration source.
+                            // Iteration provenance is tracked at the GPU LDPC
+                            // stage position ONLY: an AWGN/demap fallback
+                            // substitution must not masquerade as a
+                            // BP-iteration source.
                             let mut cur: Box<dyn TypedBatch> =
                                 Box::new(BitPackedBatch::new(vec![message.clone()]));
                             let mut gpu_iters: Option<u64> = None;
@@ -1371,7 +1246,6 @@ impl TopologyExecutor {
                                 cur = out;
                             }
 
-                            // 4. Verdict + iteration count.
                             let decoded = cur
                                 .as_any()
                                 .downcast_ref::<HardDecisionBatch>()
@@ -1456,7 +1330,6 @@ mod tests {
     use gf2_core::BitVec;
     use std::collections::HashMap;
 
-    /// Identity over `BitPackedBatch` (CPU) for assembling raw pipelines.
     struct BitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for BitId {
         type Scratch = ();
@@ -1516,8 +1389,6 @@ mod tests {
 
     #[test]
     fn test_validate_rejects_backward_edge_as_execution_validation() {
-        // A backward edge means the stored order is not a topological
-        // linearisation — the defensive net must catch it panic-free.
         let p = raw_pipeline(vec![erase(BitId), erase(BitId)], vec![bit_edge(1, 0)]);
         match TopologyExecutor::validate(&p) {
             Err(StageError::Fatal(FatalError::BuildError(BuildError::ExecutionValidation {
@@ -1599,8 +1470,6 @@ mod tests {
         assert!(out.outputs().is_empty());
     }
 
-    // --- concat / split helpers --------------------------------------------
-
     #[test]
     fn test_concat_batches_bitpacked_in_order() {
         let a = BitPackedBatch::new(vec![BitVec::zeros(4)]);
@@ -1671,8 +1540,6 @@ mod tests {
         assert!(split_half(&batch).is_none());
     }
 
-    // --- DagOutputs::into_outputs / into_single --------------------------
-
     #[test]
     fn test_dag_outputs_into_outputs_consumes_and_returns_pairs() {
         let mut chain = crate::graph::Chain::new();
@@ -1698,8 +1565,6 @@ mod tests {
             "two sinks → into_single must return None"
         );
     }
-
-    // --- HardDecisionBatch concat / split --------------------------------
 
     #[test]
     fn test_concat_batches_hard_decision() {
@@ -1731,8 +1596,6 @@ mod tests {
         assert_eq!(lo.frames[1], BitVec::ones(4));
     }
 
-    // --- LlrBatch concat / split -----------------------------------------
-
     #[test]
     fn test_concat_batches_llr() {
         use gf2_coding::Llr;
@@ -1754,8 +1617,6 @@ mod tests {
         assert_eq!(hi.batch_size(), 1);
     }
 
-    // --- SymbolBatch split -----------------------------------------------
-
     #[test]
     fn test_split_half_symbol() {
         let i_data: Vec<Vec<f32>> = (0..4).map(|j| vec![j as f32]).collect();
@@ -1768,8 +1629,6 @@ mod tests {
         assert_eq!(lo.i[0], vec![0.0_f32]);
         assert_eq!(lo.i[1], vec![1.0_f32]);
     }
-
-    // --- GpuOnly stage degrades to CPU on non-hip build ------------------
 
     #[cfg(not(feature = "hip"))]
     struct GpuBitId2;
@@ -1788,8 +1647,6 @@ mod tests {
     #[test]
     #[cfg(not(feature = "hip"))]
     fn test_run_gpu_only_stage_degrades_to_cpu_without_hip() {
-        // On a non-hip build a GpuOnly stage must degrade to process_any and
-        // return the identity output rather than panicking.
         let p = raw_pipeline(vec![erase(GpuBitId2)], vec![]);
         let sched = Scheduler::new(std::num::NonZeroUsize::new(1).unwrap(), false, 0);
         let frame = BitPackedBatch::new(vec![BitVec::ones(4)]);
@@ -1803,8 +1660,6 @@ mod tests {
             .expect("BitPackedBatch");
         assert_eq!(out.frames, frame.frames);
     }
-
-    // --- Hybrid stage splits and re-merges -------------------------------
 
     struct HybridBitId2;
     impl Stage<BitPackedBatch, BitPackedBatch> for HybridBitId2 {
@@ -1822,7 +1677,6 @@ mod tests {
     fn test_run_hybrid_stage_splits_and_merges_batch() {
         let p = raw_pipeline(vec![erase(HybridBitId2)], vec![]);
         let sched = Scheduler::new(std::num::NonZeroUsize::new(1).unwrap(), false, 0);
-        // 4-frame batch → split into 2+2, processed separately, merged back.
         let frames: Vec<_> = (0..4).map(|_| BitVec::ones(4)).collect();
         let input = BitPackedBatch::new(frames);
         let out = TopologyExecutor::run(&p, &sched, Box::new(input.clone()))

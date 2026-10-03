@@ -1,9 +1,9 @@
 //! Closed rare-event artifact schemas and immutable publication.
 //!
-//! The reader accepts one envelope version and four payload versions. It
-//! checks canonical JSON bytes, sidecars, embedded identities, recomputed
-//! dataset/run/attempt IDs, closed address sets, and attempt/checkpoint
-//! lineage. Publication synchronizes both files and their directory before a
+//! The reader accepts one envelope version and a closed set of payload
+//! versions. It checks canonical JSON bytes, sidecars, embedded identities,
+//! recomputed dataset/run/attempt IDs, closed address sets, and
+//! attempt/checkpoint lineage. Publication synchronizes both files and their directory before a
 //! safe `RENAME_NOREPLACE`; an unsupported platform or filesystem refuses.
 
 use gf2_stats::weighted::ScaledStudentInterval;
@@ -27,9 +27,7 @@ use super::{
     TARGET_RUNS, TARGET_TRAJECTORIES_PER_RUN,
 };
 
-/// Runtime facts observed from the operating system at the instant of use.
 pub mod observe;
-/// Exact reduction of published checkpoints into final result payloads.
 pub mod result;
 mod store;
 
@@ -1813,7 +1811,6 @@ pub const TARGET_RECEIPT_DIRECTORY: &str = "target-receipt";
 /// Dataset-relative directory holding the published coverage final receipt.
 pub const COVERAGE_RECEIPT_DIRECTORY: &str = "coverage-validation-receipt";
 
-/// Returns the destination components of one canonical block address.
 fn block_destination(block_address: &str) -> Result<Vec<String>, ArtifactError> {
     let mut destination = vec![BLOCKS_DIRECTORY.to_owned()];
     for component in block_address.split('/') {
@@ -1822,7 +1819,6 @@ fn block_destination(block_address: &str) -> Result<Vec<String>, ArtifactError> 
     Ok(destination)
 }
 
-/// Renders one attempt ordinal as its fixed twelve-digit directory name.
 fn attempt_ordinal_name(ordinal: u64) -> Result<String, ArtifactError> {
     if ordinal >= 1_000_000_000_000 {
         return Err(ArtifactError::Identity(
@@ -1858,7 +1854,6 @@ pub fn verify_artifact_dir(
     verify_dir_handle(&DirHandle::open_root(path)?, expected_identity)
 }
 
-/// Verifies the two-file contract of one already pinned artifact directory.
 fn verify_dir_handle(
     directory: &DirHandle,
     expected_identity: &RareEventDatasetIdentityV1,
@@ -1999,7 +1994,6 @@ fn publish_artifact_inner<A: PublishableArtifact>(
     )
 }
 
-/// Publishes one immutable directory into a pinned parent descriptor.
 fn publish_into_parent(
     parent: &DirHandle,
     final_name: Component<'_>,
@@ -2089,7 +2083,6 @@ pub fn verify_atomic_publication_support(parent: &Path) -> Result<(), ArtifactEr
     Ok(())
 }
 
-/// Creates one uniquely named staging directory inside a pinned parent.
 fn create_staging_directory(
     parent: &DirHandle,
     final_name: Component<'_>,
@@ -2147,7 +2140,6 @@ pub fn recover_artifact_parent(
     )
 }
 
-/// Scans one pinned publication parent for its expected published directories.
 fn scan_publication_parent(
     parent: &DirHandle,
     expected_final_names: &[String],
@@ -2267,7 +2259,6 @@ pub fn publish_checkpoint(
     bind_published_checkpoint(validated, destination)
 }
 
-/// Binds one validated checkpoint to the destination its address must name.
 fn bind_published_checkpoint(
     validated: ValidatedCheckpoint,
     destination: Vec<String>,
@@ -2346,7 +2337,6 @@ pub fn reconstruct_published_checkpoints(
         .collect())
 }
 
-/// Walks one level of the closed block-address tree through pinned descriptors.
 fn walk_block_tree(
     directory: &DirHandle,
     prefix: &mut Vec<String>,
@@ -2359,7 +2349,6 @@ fn walk_block_tree(
     let accepted = children.get(&prefix.join("/")).unwrap_or(&empty);
     for entry in directory.entries()? {
         if !accepted.contains(&entry.name) {
-            // Only a staging directory of an accepted sibling may remain here.
             let staging_sibling = accepted
                 .iter()
                 .any(|sibling| is_staging_name(&entry.name, sibling));
@@ -2921,7 +2910,6 @@ pub fn validate_checkpoint_set(
     )
 }
 
-/// Validates a closed checkpoint block set from already accepted handles.
 fn validate_checkpoint_handles(
     identity: &RareEventDatasetIdentityV1,
     checkpoints: Vec<ValidatedCheckpoint>,
@@ -3145,7 +3133,6 @@ pub fn validate_execution_lineage_fixture(
     validate_execution_lineage(identity, phases, checkpoints)
 }
 
-/// Verifies a gap-free start/terminal chain and exact checkpoint partition.
 fn validate_execution_lineage(
     identity: &RareEventDatasetIdentityV1,
     phases: &[ValidatedAttemptArtifact],
@@ -3698,7 +3685,6 @@ fn interval_radius_squared(
         .divide(&ExactValue::from_integer(TARGET_RUNS))
 }
 
-/// Builds the preregistered scaled Student interval for one exact estimate.
 fn scaled_interval(
     center: &ExactValue,
     independent_run_variance: &ExactValue,
@@ -3719,7 +3705,6 @@ fn scaled_interval(
     .map_err(|error| ArtifactError::Schema(error.to_string()))
 }
 
-/// Renders the preregistered interval outward to its fixed 18 digits.
 fn rendered_interval(
     center: &ExactValue,
     independent_run_variance: &ExactValue,
