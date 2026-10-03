@@ -32,7 +32,7 @@
 //! # External validation
 //!
 //! The `perm[i + j*Q_m] = i*(E/Q_m) + j` gather index is byte-for-byte the
-//! `generate_out_int` routine in NVIDIA Sionna
+//! `generate_out_int` routine in `@/citation/Sionna2026`
 //! (`src/sionna/phy/fec/ldpc/encoding.py`, `LDPC5GEncoder.generate_out_int`,
 //! main branch as of 2026-06; Apache-2.0), which builds the same permutation
 //! with `perm_seq[i + j*num_bits_per_symbol] = i*(n/num_bits_per_symbol) + j`
@@ -242,7 +242,7 @@ mod tests {
 
     /// The spec's worked example: Q_m = 2, E = 6. Writing e row-by-row into a
     /// 2x3 matrix and reading column-by-column yields perm = [0,3,1,4,2,5].
-    /// This reproduces Sionna's `generate_out_int(6, 2)` (Apache-2.0).
+    /// This reproduces `generate_out_int(6, 2)` of `@/citation/Sionna2026`.
     #[test]
     fn test_worked_example_qm2_e6() {
         assert_eq!(output_interleaver(6, 2), vec![0, 3, 1, 4, 2, 5]);

@@ -6,16 +6,11 @@ pub use config::ConfigError;
 pub use loader::TestVectorSet;
 pub use parser::ParseError;
 
-use std::env;
 use std::path::PathBuf;
 
-/// Get test vector base path from environment or default location
+/// Root of the DVB-T2 reference-stream tree.
 pub fn test_vectors_path() -> PathBuf {
-    env::var("DVB_TEST_VECTORS_PATH")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| {
-            PathBuf::from(env::var("HOME").expect("HOME not set")).join("dvb_test_vectors")
-        })
+    gf2_coding::test_support::dvb_vectors_path()
 }
 
 /// Check if test vectors are available

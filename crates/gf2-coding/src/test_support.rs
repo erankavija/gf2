@@ -222,6 +222,19 @@ impl<C: ParityCheckMatrixAccess> ParityCheckMatrixAccess for RankDerivedMother<C
     }
 }
 
+/// Root of the DVB-T2 reference-stream tree
+/// (`@/citation/DvbVerification2010`): `$DVB_TEST_VECTORS_PATH`, or
+/// `$HOME/dvb_test_vectors` when the variable is unset.
+pub fn dvb_vectors_path() -> PathBuf {
+    std::env::var_os("DVB_TEST_VECTORS_PATH")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            std::env::home_dir()
+                .unwrap_or_default()
+                .join("dvb_test_vectors")
+        })
+}
+
 /// Parses an ETSI CSP test-point file into a sequence of `BitVec` blocks.
 ///
 /// Each `%`- or `#`-prefixed line begins a new block. Within a block,

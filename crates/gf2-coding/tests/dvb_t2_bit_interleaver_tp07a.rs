@@ -1,37 +1,11 @@
-//! End-to-end TP07a bit-interleaver integration tests against VV001-CR35.
+//! Bit-interleaver tests on the VV001-CR35 reference stream
+//! (`@/citation/DvbVerification2010`).
 //!
-//! # VV001-CR35 configuration
-//!
-//! VV001-CR35 is the ETSI DVB-T2 conformance vector for Normal frame,
-//! Rate 3/5.  Its full modulation chain uses **256-QAM** (confirmed by
-//! TP08 complex symbol count: 8100 complex samples/block × 8 bits/symbol
-//! = 64800 bits/block = the Normal FECFRAME size).
-//!
-//! # Scope note
-//!
-//! `DvbT2BitInterleaver` implements the bit interleaver stage (ETSI EN
-//! 302 755 v1.4.1 §6.1.3) for QPSK, 16-QAM, and 64-QAM.  The VV001-CR35
-//! TP07a file is produced by a combined pipeline of §6.1.3 (bit
-//! interleaver), §6.1.4 (cell word demux), and §6.1.5 (cell interleaver)
-//! with 256-QAM parameters.  Reproducing TP07a bit-exactly from TP06
-//! therefore requires 256-QAM support plus the cell-word stages, which are
-//! out of scope for this module and will be addressed in issue 4cdaf1c5.
-//!
-//! # What these tests validate
-//!
-//! 1. **Structural integrity** — TP06 and TP07a have the same block count
-//!    and each block has exactly 64800 bits, as required by the Normal
-//!    FECFRAME specification.
-//! 2. **Rate 3/5 Normal construction** — `DvbT2BitInterleaver::new` with
-//!    `CodeRate::Rate3_5` and `FrameSize::Normal` does not panic for all
-//!    three modulations (QPSK, 16-QAM, 64-QAM) and produces an interleaver
-//!    of the correct frame size.
-//! 3. **Rate 3/5 roundtrip identity** — `deinterleave(interleave(tp06))`
-//!    equals `tp06` for the first block of the first frame, using the
-//!    Rate 3/5 × QPSK interleaver.  This confirms the permutation tables
-//!    are consistent (forward × inverse = identity) for Rate 3/5 Normal.
-
-use std::path::PathBuf;
+//! VV001-CR35 is a Normal-frame, rate 3/5, 256-QAM stream, a modulation
+//! `DvbT2Modulation` does not represent. These tests check the TP06 and TP07a
+//! block structure and the rate 3/5 round trip on TP06 data;
+//! `dvb_t2_chain_tp07a` asserts the bit-exact TP06 → TP07a mapping on the
+//! 16-QAM and 64-QAM streams.
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
@@ -39,33 +13,18 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::CodeRate;
 
-// CSP test-point file parser + path builder are factored into the
-// crate's shared `test_support` module so the inline test in
-// `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs` (TP04 → TP06 vector
-// check) and this integration test share one definition. Enabled by
-// the `test-support` feature on the self-referenced dev-dependency.
-use gf2_coding::test_support::{parse_tp_blocks, tp_path};
+use gf2_coding::test_support::{dvb_vectors_path, parse_tp_blocks, tp_path};
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-/// Structural validation: TP06 and TP07a have the same block count and
-/// each block contains exactly 64800 bits (Normal FECFRAME size).
-///
-/// This test does **not** validate the forward TP06 → TP07a mapping,
-/// because VV001-CR35 uses 256-QAM + cell interleaving stages (§6.1.4/
-/// §6.1.5) that are outside the scope of `DvbT2BitInterleaver`.  Full
-/// forward validation is deferred to issue 4cdaf1c5.
+/// TP06 and TP07a have the same block count and each block contains
+/// exactly 64800 bits (Normal FECFRAME size).
 #[test]
-#[ignore = "external: requires DVB-T2 test vectors at $DVB_TEST_VECTORS_PATH or ~/dvb_test_vectors"]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_to_tp07a_structural_validation() {
-    let base_path = std::env::var("DVB_TEST_VECTORS_PATH")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| {
-            PathBuf::from(std::env::var("HOME").expect("HOME not set")).join("dvb_test_vectors")
-        });
-    let config_dir = base_path.join("VV001-CR35_CSP");
+    let config_dir = dvb_vectors_path().join("VV001-CR35_CSP");
     if !config_dir.exists() {
         eprintln!("Test vectors not found at {:?}, skipping", config_dir);
         return;
@@ -150,21 +109,10 @@ fn test_rate3_5_normal_construction() {
 ///   inverse = identity).
 /// * The interleaver handles exactly 64800-bit inputs from a real ETSI
 ///   reference block without panicking or corrupting data.
-///
-/// Note: this test does **not** validate the forward TP06 → TP07a mapping.
-/// VV001-CR35 uses 256-QAM with cell interleaving stages beyond §6.1.3.
-/// A QPSK interleaver is used here because it is in scope; the TP06 data
-/// comes from the real ETSI reference vector irrespective of the final
-/// modulation.
 #[test]
-#[ignore = "external: requires DVB-T2 test vectors at $DVB_TEST_VECTORS_PATH or ~/dvb_test_vectors"]
+#[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_rate3_5_qpsk_roundtrip_on_vv001_cr35_tp06() {
-    let base_path = std::env::var("DVB_TEST_VECTORS_PATH")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| {
-            PathBuf::from(std::env::var("HOME").expect("HOME not set")).join("dvb_test_vectors")
-        });
-    let config_dir = base_path.join("VV001-CR35_CSP");
+    let config_dir = dvb_vectors_path().join("VV001-CR35_CSP");
     if !config_dir.exists() {
         eprintln!("Test vectors not found at {:?}, skipping", config_dir);
         return;

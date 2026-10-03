@@ -40,7 +40,7 @@
 //! 1. Receive target_n LLRs from the channel.
 //! 2. Construct full-length N LLR vector:
 //!    - First 2*Z positions: LLR = 0 (no channel information)
-//!    - Filler bit positions: LLR = +inf (known to be zero)
+//!    - Filler bit positions: LLR = `FILLER_LLR` (known to be zero)
 //!    - Transmitted positions: LLR from channel
 //!    - Remaining parity positions: LLR = 0 (punctured parity)
 //! 3. Decode with BP on the FULL mother code H.
@@ -100,7 +100,7 @@ pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 ///
 /// This is the table-level single source of truth behind the constructor
 /// surface; it exists so external reference data (e.g. the committed
-/// Sionna CSV tables under `data/ldpc/nr_5g/`) can be compared bit-exactly
+/// `@/citation/Sionna2026` tables under `data/ldpc/nr_5g/`) can be compared bit-exactly
 /// against the compiled-in constants.
 ///
 /// # Arguments
@@ -681,13 +681,6 @@ impl NrRateMatchParams {
     }
 }
 
-/// LLR value used for filler (shortened) bit positions.
-///
-/// Filler bits are known to be zero, so we use a moderately large positive LLR
-/// to represent high confidence in bit=0. Using a moderate value (20.0) rather
-/// than an extreme one (1000.0) avoids numerical saturation in the min-sum
-/// decoder, which can degrade convergence when many check nodes see mixed
-/// extreme and moderate messages.
 /// LLR value for filler (shortened) bit positions.
 ///
 /// Filler bits are known to be zero, so we use a positive LLR representing
@@ -957,7 +950,7 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
 /// 1. Receive target_n channel LLRs.
 /// 2. Map to full_n LLR vector using `transmitted_cols`:
 ///    - Transmitted positions: channel LLR
-///    - Filler positions: LLR = +20 (known zero)
+///    - Filler positions: LLR = `FILLER_LLR` (known zero)
 ///    - All other positions: LLR = 0 (no channel info)
 /// 3. BP decode on the full mother code H.
 /// 4. Extract target_k message bits.
@@ -1098,7 +1091,7 @@ impl Nr5gRateMatchedCode {
     /// natural-systematic columns as parity pivots (e.g., BG2 row 41).
     ///
     /// - Transmitted positions (from `transmitted_cols`): channel LLRs
-    /// - Filler positions: LLR = +20 (known to be zero)
+    /// - Filler positions: LLR = `FILLER_LLR` (known to be zero)
     /// - Punctured & untransmitted positions: LLR = 0 (no info)
     ///
     /// # Arguments

@@ -54,31 +54,10 @@ macro_rules! skip_unless_bench {
     };
 }
 
-/// Root of the ETSI DVB-T2 test-vector tree, or `None` when it is not present.
-///
-/// Resolution order:
-/// 1. `$DVB_TEST_VECTORS_PATH`
-/// 2. `/data/specs/dvb/t2/streams` (host default)
-/// 3. `$HOME/dvb_test_vectors`
-/// 4. `$HOME/Projects/dvb_test_vectors`
-///
-/// Every candidate must be an existing directory to be selected.
+/// The DVB-T2 reference-stream tree, or `None` when it is not a directory.
 pub fn dvb_vectors_dir() -> Option<PathBuf> {
-    if let Ok(explicit) = std::env::var("DVB_TEST_VECTORS_PATH") {
-        let path = PathBuf::from(explicit);
-        return path.is_dir().then_some(path);
-    }
-
-    let home = std::env::var("HOME").map(PathBuf::from);
-    let candidates = [
-        Some(PathBuf::from("/data/specs/dvb/t2/streams")),
-        home.as_ref().ok().map(|h| h.join("dvb_test_vectors")),
-        home.as_ref()
-            .ok()
-            .map(|h| h.join("Projects/dvb_test_vectors")),
-    ];
-
-    candidates.into_iter().flatten().find(|p| p.is_dir())
+    let path = gf2_coding::test_support::dvb_vectors_path();
+    path.is_dir().then_some(path)
 }
 
 /// Directory holding the precomputed DVB-T2 RREF generator cache
