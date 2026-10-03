@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/153297cf-example-decisions.md"
     }
   ],
+  "done_at": "2026-10-03T02:12:11.271837695Z",
   "first_ready_at": "2026-08-07T12:01:38.720737148Z",
   "gates_required": [
     "cargo-ci",
@@ -24,10 +25,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T02:01:42.460631006Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T02:11:03.022269172Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T02:04:52.088651273Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:19.844877028Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T02:01:46.328674877Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "153297cf-7687-4599-be56-23e038efee3d",
@@ -38,7 +54,7 @@
     "satisfies:fa787f85/REQ-07"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
-  "updated_at": "2026-10-03T01:53:50.728955466Z"
+  "updated_at": "2026-10-03T02:12:11.271837695Z"
 }

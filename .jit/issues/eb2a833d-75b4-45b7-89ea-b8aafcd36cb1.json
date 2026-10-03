@@ -10,6 +10,7 @@
   ],
   "description": "The gf2-coding crate guides served as fact sources for the permanent pages. Once mined, they leave the crate and are preserved in the legacy mirror.\n\n## Background\n\nInbound citations include the crate README and several `dev/active/` documents (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5).\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-coding/docs/` live under `dev/archive/legacy/<original-relative-path>`, moved with history preserved, and the original paths no longer exist.\n- [hard] REQ-02: Each inbound citation outside the mirror points to the permanent page covering the topic, to the mirror path, or is removed as design-history provenance.\n- [hard] REQ-03: A link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
   "documents": [],
+  "first_ready_at": "2026-10-03T02:12:11.519541425Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -31,7 +32,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move gf2-coding crate guides into the legacy mirror",
-  "updated_at": "2026-10-02T09:38:31.375548572Z"
+  "updated_at": "2026-10-03T02:12:11.519541425Z"
 }

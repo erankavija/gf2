@@ -9,6 +9,7 @@
   ],
   "description": "`docs/lean4-verification-pipeline.md` sits at the docs root outside the quadrant layout. It belongs to archived epic e095a100 and leaves the permanent surface once the formal-verification how-to covers its workflow.\n\n## Success Criteria\n\n- [hard] REQ-01: The file lives in epic e095a100's archive directory, moved with history, and the owning issue's document reference names the new path.\n- [hard] REQ-02: No Markdown file other than `docs/index.md` sits directly under `docs/`.\n- [hard] REQ-03: Inbound links point to the formal-verification how-to or the archive path, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-04: The manifest records the row as complete.\n",
   "documents": [],
+  "done_at": "2026-10-03T02:12:11.184090939Z",
   "first_ready_at": "2026-10-03T00:26:12.979279288Z",
   "gates_required": [
     "cargo-ci",
@@ -17,10 +18,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T01:58:51.038698922Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T02:12:02.217556653Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T02:04:16.762966726Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:19.584882302Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T02:01:46.876037126Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "130d5fd7-4540-4a29-9bd5-67d755bae78c",
@@ -32,7 +48,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Move the Lean pipeline guide into its epic's archive dir",
-  "updated_at": "2026-10-03T01:25:19.349455885Z"
+  "updated_at": "2026-10-03T02:12:11.184090939Z"
 }

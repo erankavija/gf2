@@ -59,16 +59,22 @@
       "path": "docs/how-to/select-acceleration.md"
     }
   ],
+  "done_at": "2026-10-03T02:12:11.359324559Z",
   "first_ready_at": "2026-10-03T00:55:26.230391283Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T02:06:05.957892112Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:26.692184831Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T02:04:20.506390550Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
@@ -79,7 +85,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the acceleration selection how-to",
-  "updated_at": "2026-10-03T01:53:50.561211685Z"
+  "updated_at": "2026-10-03T02:12:11.359324559Z"
 }
