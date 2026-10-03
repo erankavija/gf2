@@ -18,7 +18,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T17:25:51.904057170Z",
+      "updated_at": "2026-10-03T20:46:25.698528558Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -33,7 +33,7 @@
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T17:40:13.705393243Z",
+      "updated_at": "2026-10-03T20:52:38.795722501Z",
       "updated_by": "auto:executor"
     }
   },
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the gf2-kernels-simd x86 module",
-  "updated_at": "2026-10-03T17:59:23.893047830Z"
+  "updated_at": "2026-10-03T20:52:38.795722501Z"
 }

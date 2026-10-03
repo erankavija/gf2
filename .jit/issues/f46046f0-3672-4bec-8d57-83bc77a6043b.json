@@ -18,7 +18,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T17:23:00.673670549Z",
+      "updated_at": "2026-10-03T20:44:22.596946766Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -33,7 +33,7 @@
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T17:40:10.012140693Z",
+      "updated_at": "2026-10-03T20:52:35.001741744Z",
       "updated_by": "auto:executor"
     }
   },
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-sim executor and campaign modules",
-  "updated_at": "2026-10-03T17:54:43.992358680Z"
+  "updated_at": "2026-10-03T20:52:35.001741744Z"
 }
