@@ -7,7 +7,15 @@
     "871b401d-59f7-4fa4-86b6-9c067795ff06"
   ],
   "description": "Survey harness crates under `dev/active/` reach `dev/tools/tuning-campaign-support` and workspace crates through Cargo path dependencies relative to their own directory. Cargo 1.95 offers no depth-independent form without repository-wide lockfile effects, so these dependencies are a named exception to `@/inv/no-dev-path-coupling`, and a move rewrites them.\n\n## Background\n\nEvaluated forms: a `[patch]` table in the repository `.cargo/config.toml`, the same table in a separate file passed with `--config`, and a fixed-location harness workspace. The convergence condition is tracked by issue 58a4bb51.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked record names the exception `harness-path-dependencies` to `@/inv/no-dev-path-coupling`, states its scope (Cargo `path` dependencies in survey harness manifests), the rule a move follows (rewrite the path text to the new depth and rebuild), and the convergence condition with its tracking issue.\n- [hard] REQ-02: The record shows why each evaluated form is rejected, by exact commands on Rust 1.95 and their committed outputs.\n- [hard] REQ-03: The record gives the command that lists every harness manifest carrying such a dependency, and holds no hand-copied list or count.\n- [hard] REQ-04: No manifest, lockfile or configuration file changes.\n\n## Decisions\n\n- DEC-01: The owner decided on 2026-10-03 that the scope covers every path dependency of the harness crates and approved a `[patch]` table in the repository `.cargo/config.toml`.\n- DEC-02: The owner decided on 2026-10-03, on the evidence that the `[patch]` form breaks `--locked` resolution of the root lockfile and of most tracked harness lockfiles, that harness path dependencies are a named, tracked exception and that each move rewrites them. DEC-02 supersedes DEC-01.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "Exception record",
+      "path": "dev/active/fa787f85-documentation-overhaul/7bac1303-harness-path-exception.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T11:05:37.936183508Z",
   "gates_required": [
     "cargo-ci",
@@ -32,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the harness path-dependency exception",
-  "updated_at": "2026-10-03T13:27:27.442201826Z"
+  "updated_at": "2026-10-03T14:28:44.796020532Z"
 }
