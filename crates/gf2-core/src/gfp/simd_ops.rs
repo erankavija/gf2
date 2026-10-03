@@ -754,10 +754,7 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 ///
 /// **Dispatch policy (updated 2026-05-25, issue 41096af5):** Candidate C
 /// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells except the new
-/// GF(251)/n ≥ 512 production default (route A). The 5-trial criterion sweep
-/// over GF(7)–GF(251) at n ∈ {256, 1024} showed C beats F by 5–10 % at every
-/// cell except GF(251)/n=1024 where route A clears 1.5× of fflas-ffpack (ratio
-/// 0.679 > 0.667). `select_f32_path` returns `true` for `P == 251 && n >= 512`
+/// GF(251)/n ≥ 512 production default (route A). `select_f32_path` returns `true` for `P == 251 && n >= 512`
 /// (the pack-cost amortisation threshold of the route-selection decision,
 /// `@/issue/41096af5`); the conservative `prime_route.f32_min_prime` and
 /// `prime_route.f32_min_cols` defaults (251 and 512) route exactly the cell `P

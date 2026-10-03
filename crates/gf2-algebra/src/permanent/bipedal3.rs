@@ -4,8 +4,7 @@
 //! ## Single-word path (`n ≤ 63`)
 //!
 //! For `n ≤ 63` the column-sum vector fits in a single Bipedal3 word (one
-//! `u64` mag + one `u64` sgn pair). The bound is wallclock-driven
-//! (2^64 Gray steps takes ~600 years on CPU or GPU). Each Gray-code step updates a single
+//! `u64` mag + one `u64` sgn pair). Each Gray-code step updates a single
 //! `Bipedal3` column-sum in-place via `Bipedal3::add` or `Bipedal3::sub`
 //! (the canonical paper §2.2 SSOT lives once in those methods), followed by
 //! a horizontal fold via `Bipedal3::fold_mul_first_n` — the bipedal
@@ -356,9 +355,7 @@ fn pack_singleword_columns(mat: &Bipedal3Matrix) -> Vec<Bipedal3> {
 /// (one `u64` mag + one `u64` sgn pair), so each Gray-code step performs
 /// exactly one Bipedal3 add or sub followed by a horizontal
 /// bipedal-multiplication-tree fold of the `n` active lanes. The
-/// `n ≤ 63` upper bound was narrowed from the pre-2026-05-15 `n ≤ 64`
-/// for CPU/GPU consistency (n=64 is computationally infeasible on either
-/// path).
+/// upper bound is `n ≤ 63`.
 ///
 /// Prefer [`permanent_bipedal3`] for the dispatching entrypoint that also
 /// handles `n > 63`.
@@ -495,7 +492,7 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
 /// throughput the batched multi-matrix path is the intended SIMD consumer. This
 /// direct function remains available to exercise and cross-check the
 /// single-matrix kernel; the public single-matrix dispatcher selects the
-/// measured-faster scalar kernel.
+/// scalar kernel.
 ///
 /// # Arguments
 ///
@@ -1008,11 +1005,9 @@ mod tests {
 
     /// SIMD-vs-scalar cross-check for n=24: 3 random matrices (fast tier).
     ///
-    /// Fast tier: 2^24 ~16M steps × 3 matrices × 2 passes (SIMD + scalar). On a
-    /// developer machine with AVX2 this is ~0.15 s, but on shared CI runners
-    /// (where the "SIMD" pass may fall back to scalar and cores are throttled)
-    /// 10 matrices exceed the per-test budget — so the fast-tier smoke check
-    /// uses 3 matrices. The full 100-matrix run is covered by
+    /// Fast tier: 2^24 ~16M steps × 3 matrices × 2 passes (SIMD + scalar). The
+    /// smoke check uses 3 matrices to fit the per-test budget on runners where
+    /// the "SIMD" pass falls back to scalar. The full 100-matrix run is covered by
     /// `test_simd_vs_scalar_n24_slow`.
     #[test]
     fn test_simd_vs_scalar_n24() {
@@ -1021,7 +1016,7 @@ mod tests {
 
     /// SIMD-vs-scalar cross-check for n=24: 100 random matrices (slow tier).
     ///
-    /// Slow tier: 2^24 ~16M steps × 100 matrices × 2 passes ≈ 5 s total; fits
+    /// Slow tier: 2^24 ~16M steps × 100 matrices × 2 passes; fits
     /// the slow-tier budget.
     #[test]
     #[ignore = "sim: T13 SIMD/scalar cross-check n=24, 100 matrices (≈ 5 s)"]
@@ -1136,10 +1131,9 @@ mod tests {
     /// `permanent_bipedal3_singleword` panics for `n = 64` (above its bound).
     ///
     /// The single-word fast path supports `n <= 63`. At `n = 64` the column-sum state
-    /// still nominally fits one `(mag, sgn)` u64 pair, but the Gray walk
-    /// is wallclock-infeasible (~600 years on either CPU or GPU), so the
-    /// dispatcher routes to the multi-word path which uses a 256-bit
-    /// counter and can chunk across cores.
+    /// still nominally fits one `(mag, sgn)` u64 pair, but the dispatcher
+    /// routes to the multi-word path, which uses a 256-bit counter and can
+    /// chunk across cores.
     #[test]
     #[should_panic(expected = "single-u64 fast path requires n <= 63")]
     fn test_permanent_bipedal3_singleword_panics_on_n_64() {
@@ -1151,10 +1145,9 @@ mod tests {
     /// Dispatcher routes `n = 63` to the single-word fast path; `n = 64`
     /// routes to multi-word.
     ///
-    /// Verifies the post-2026-05-15 dispatch contract: the singleword arm
-    /// covers `1..=63`, and `64..=N_MAX_MULTIWORD` is multi-word. The
-    /// actual computation at n=64 is wallclock-infeasible (2^64 steps);
-    /// this test only checks the dispatch constant relationship.
+    /// Verifies the dispatch contract: the singleword arm covers `1..=63`,
+    /// and `64..=N_MAX_MULTIWORD` is multi-word. This test only checks the
+    /// dispatch constant relationship.
     #[test]
     fn test_permanent_bipedal3_dispatch_routes_n64_to_multiword() {
         use crate::permanent::bipedal3_multiword::N_MAX_MULTIWORD;
