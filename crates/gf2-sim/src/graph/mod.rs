@@ -761,7 +761,6 @@ mod tests {
     use crate::stage::{erase, ExecutionClass, Stage};
     use gf2_core::BitVec;
 
-
     /// Identity over `BitPackedBatch` (CPU).
     struct BitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for BitId {
