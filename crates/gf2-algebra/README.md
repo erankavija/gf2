@@ -4,7 +4,7 @@ Packed arithmetic over F_3, F_5 and F_7 and matrix-permanent algorithms built on
 
 ## When to choose it
 
-- Permanents over F_3, F_5 or F_7 for matrices too large for generic field arithmetic, using Ryser's formula in Gray-code order over bit-plane encodings of field elements (Scheinerman, arXiv 2407.20205).
+- Permanents over F_3, F_5 or F_7 using Ryser's formula in Gray-code order over bit-plane encodings of field elements (`@/citation/Scheinerman2024`).
 - Permanental rank deficiency of rectangular matrices (`permanent::rank`) and exact small-order permanent-zero probabilities (`permanent::exact`).
 - Lane-parallel F_3, F_5 and F_7 vectors through the `PackedField` traits: 64 lanes for F_3 and F_5, 16 lanes for F_7.
 
