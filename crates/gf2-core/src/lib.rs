@@ -296,29 +296,12 @@ pub(crate) mod simd {
     /// Returns the small-prime `Fp<P>` AVX2 + FMA3 f32-cascade GEMM
     /// kernel, if any.
     ///
-    /// Provides the **Candidate F** path from
-    /// `dev/plans/small_prime_kernel_strategy.md` § 4.5 / § 5.5 / § 6.1
-    /// — an in-Rust `_mm256_fmadd_ps`-based register-blocked sgemm
-    /// micro-kernel for canonical-byte `Fp<P>` operands with `P ≤ 251`.
+    /// Provides **Candidate F**, an `_mm256_fmadd_ps`-based register-blocked
+    /// GEMM micro-kernel for `Fp<P>` with `P ≤ 251`.
+    /// [`crate::gfp::simd_ops::prime_gemm_route`] reports the cells that
+    /// dispatch routes to it.
     ///
-    /// **Status (per 662f7a15 Amendment C, 2026-05-06):** the kernel is
-    /// fully implemented and tested but **not currently selected at
-    /// runtime** on any in-scope cell. `select_f32_path::<P>` (in
-    /// `crates/gf2-core/src/gfp/simd_ops.rs`) returns `false` for every
-    /// `P ≤ 251` because empirical 5-trial CCX1-pinned bench at GF(7)..GF(251)
-    /// at n ∈ {256, 1024} (`dev/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv`)
-    /// shows Candidate C (the AVX2-only `_mm256_madd_epi16` kernel) beats
-    /// Candidate F at every cell by 5–10 %. Production therefore routes
-    /// to [`maybe_fp_small`] for these cells.
-    ///
-    /// Candidate F retains forward-compatibility value: on a host where F
-    /// dominates, a calibration of the tuning profile's
-    /// `prime_route.f32_min_prime` field lowers the prime window without
-    /// touching this accessor or the kernel itself.
-    /// Returns `None` on hosts without FMA3.
-    ///
-    /// Specialised Fermat / Mersenne kernels for `P > 251` remain
-    /// separate and dispatch above this branch.
+    /// Returns `None` on hosts without AVX2 + FMA3.
     #[inline]
     pub fn maybe_fp_small_f32() -> Option<&'static SmallPrimeF32Fns> {
         FP_SMALL_F32_FNS
@@ -336,8 +319,7 @@ pub(crate) mod simd {
     ///
     /// The kernel is not selected by automatic dispatch; it is exposed only via
     /// the GF(251)-only opt-in toggle
-    /// [`crate::gfp::simd_ops::set_route_c_gf251_enabled`]. Automatic
-    /// dispatch uses Candidate C ([`maybe_fp_small`]) for every `p ≤ 251`.
+    /// [`crate::gfp::simd_ops::set_route_c_gf251_enabled`].
     ///
     /// Returns `None` on non-AVX2 hardware; callers must fall back to
     /// [`maybe_fp_small`] (the production Candidate C row-panel
