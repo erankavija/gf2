@@ -60,8 +60,7 @@ impl CoordinateMap {
     /// Creates the identity map for a code of `length` coordinates.
     ///
     /// The resulting map has both mother and derived length equal to
-    /// `length`, and is stored as a compact range.  This constructor cannot
-    /// fail and does not panic.
+    /// `length`, and is stored as a compact range.
     pub fn identity(length: usize) -> Self {
         Self::new_range(length, 0, length)
     }
@@ -72,8 +71,7 @@ impl CoordinateMap {
     /// The range is inclusive at `start` and exclusive at its end.  An empty
     /// range is valid when `start <= mother_length`.  Returns
     /// [`CodeError::CoordinateOutOfRange`] when the range does not fit or its
-    /// start is outside the mother code.  User input is reported as an error;
-    /// this method does not panic.
+    /// start is outside the mother code.
     pub fn range(
         mother_length: usize,
         start: usize,
@@ -109,7 +107,7 @@ impl CoordinateMap {
     /// distinct.  A vector that is an increasing contiguous range is stored
     /// as the compact range representation automatically; all other vectors
     /// are retained as an explicit permutation.  Returns a typed
-    /// [`CodeError`] for invalid input and does not panic on caller input.
+    /// [`CodeError`] for invalid input.
     pub fn from_permutation(
         mother_length: usize,
         coordinates: impl AsRef<[usize]>,
@@ -145,8 +143,7 @@ impl CoordinateMap {
     /// `None` entry is a fresh coordinate with no mother preimage.  An
     /// all-mapped increasing contiguous input is stored as a compact range;
     /// maps containing fresh coordinates retain an explicit `Option` vector.
-    /// Returns a typed [`CodeError`] for invalid mapped positions and does not
-    /// panic on caller input.
+    /// Returns a typed [`CodeError`] for invalid mapped positions.
     pub fn from_optional_positions(
         mother_length: usize,
         coordinates: impl AsRef<[Option<usize>]>,
@@ -201,9 +198,6 @@ impl CoordinateMap {
     }
 
     /// Returns the number of coordinates in the derived code.
-    ///
-    /// This is an O(1) operation for both compact and explicit maps and does
-    /// not panic.
     pub fn derived_len(&self) -> usize {
         match &self.representation {
             Representation::Range { length, .. } => *length,
@@ -213,8 +207,6 @@ impl CoordinateMap {
     }
 
     /// Returns the number of coordinates in the mother code.
-    ///
-    /// This is an O(1) operation and does not panic.
     pub fn mother_len(&self) -> usize {
         self.mother_length
     }
@@ -226,7 +218,7 @@ impl CoordinateMap {
     /// all-mapped accessor also returns `CoordinateOutOfRange`; use
     /// [`Self::mother_position_opt`] when fresh coordinates must be
     /// distinguished from invalid positions.  Mapped lookups are O(1) for
-    /// every representation.  This method does not panic on caller input.
+    /// every representation.
     pub fn mother_position(&self, derived_position: usize) -> Result<usize, CodeError> {
         self.mother_position_opt(derived_position)?
             .ok_or(CodeError::CoordinateOutOfRange {
@@ -240,8 +232,7 @@ impl CoordinateMap {
     /// Returns `Ok(Some(mother_position))` for an inherited coordinate and
     /// `Ok(None)` for a fresh coordinate.  Returns
     /// [`CodeError::CoordinateOutOfRange`] only when `derived_position` is not
-    /// in `0..self.derived_len()`.  This checked operation is O(1) and does
-    /// not panic on caller input.
+    /// in `0..self.derived_len()`.  The lookup is O(1).
     pub fn mother_position_opt(&self, derived_position: usize) -> Result<Option<usize>, CodeError> {
         if derived_position >= self.derived_len() {
             return Err(CodeError::CoordinateOutOfRange {
@@ -259,8 +250,7 @@ impl CoordinateMap {
     /// produced by `inner` must be valid inputs to this map.  A mismatch is
     /// reported as [`CodeError::CoordinateCountMismatch`].  Two range maps
     /// compose directly as a range; every other result is canonicalized so an
-    /// increasing contiguous result is still stored without a vector.  The
-    /// operation does not panic on caller input.
+    /// increasing contiguous result is still stored without a vector.
     pub fn compose(&self, inner: &Self) -> Result<Self, CodeError> {
         if self.derived_len() != inner.mother_len() {
             return Err(CodeError::CoordinateCountMismatch {
