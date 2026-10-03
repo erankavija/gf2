@@ -1,0 +1,8 @@
+command: python3 -B dev/active/3be770d5/survey/record-preparation.py --aff3ct target/fixture/external/aff3ct --bin-dir target/fixture/baseline/release --inputs target/fixture/external/inputs
+exit: 0
+stdout:
+dev/bench_results/3be770d5/preparation/build-identity.json dev/active/3be770d5/survey/producing-inputs.json
+stderr:
+written:
+48eba314d90a08e59995907a31f1c78821ba1f47c034e6d806cef8a30dd6222d  ./dev/active/3be770d5/survey/producing-inputs.json
+e23bfa54748e85e3c3bb26211c6b0994a3f3583a606e9c05bf4a7c23bd16b857  ./dev/bench_results/3be770d5/preparation/build-identity.json
