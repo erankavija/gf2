@@ -2,7 +2,7 @@
 //!
 //! This module implements GLDPC codes where check nodes use component codes
 //! (e.g., BCH codes) instead of simple single-parity-check constraints. The
-//! construction follows Lentmaier (2010), using circulant permutation matrices
+//! construction follows `@/citation/Lentmaier2010a`, using circulant permutation matrices
 //! to build the adjacency matrix.
 
 use crate::grand::{OrbGrand, OrbGrandConfig, SoGrand};
@@ -229,7 +229,7 @@ pub fn extended_bch_component(n_bch: usize, k_bch: usize, t_bch: usize) -> BchCo
 
 /// A quasi-cyclic Generalized LDPC code.
 ///
-/// Constructed using circulant permutation matrices following the Lentmaier (2010)
+/// Constructed using circulant permutation matrices following the `@/citation/Lentmaier2010a`
 /// construction. Each check node corresponds to a component code rather than a
 /// single parity check.
 ///
@@ -269,7 +269,7 @@ pub struct QcGldpcCode {
 }
 
 impl QcGldpcCode {
-    /// Creates a QC-GLDPC code using the Lentmaier (2010) construction.
+    /// Creates a QC-GLDPC code using the `@/citation/Lentmaier2010a` construction.
     ///
     /// Builds a GLDPC code with length `n_c^2` from a BCH
     /// component code with parameters `(n_c, k_c, t)`.
@@ -284,7 +284,7 @@ impl QcGldpcCode {
 
     /// Creates a (1024, 646) QC-GLDPC code using eBCH(32, 26) as the component code.
     ///
-    /// This is the target construction from Lentmaier (2010) for comparison
+    /// This is the target construction from `@/citation/Lentmaier2010a` for comparison
     /// with 5G NR LDPC codes in `@/citation/Yuan2025` (Fig. 7).
     ///
     /// The component is the extended BCH(32, 26) derived from BCH(31, 26, 1).
