@@ -631,3 +631,18 @@ url = "https://github.com/Plonky3/Plonky3"
 key = "RandCore2025"
 citation = "rust-random project — rand_core 0.9.3 (core random number generator traits for Rust). crates.io registry release, published 2025-03-01, checksum 99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38."
 url = "https://crates.io/crates/rand_core/0.9.3"
+
+[[references]]
+key = "ThreeGpp2017a"
+citation = "3GPP TS 38.214 V15.0.0 (2017-12) — 3rd Generation Partnership Project; Technical Specification Group Radio Access Network; NR; Physical layer procedures for data (Release 15). Tables 5.1.3.1-1 and 5.1.3.1-2 (MCS index tables 1 and 2 for PDSCH) give the modulation order Q_m."
+url = "https://www.3gpp.org/ftp/Specs/archive/38_series/38.214/"
+
+[[references]]
+key = "Nist2001"
+citation = "National Institute of Standards and Technology — Advanced Encryption Standard (AES). Federal Information Processing Standards Publication 197, November 26, 2001. Section 4.2 defines the GF(2^8) reduction polynomial x^8 + x^4 + x^3 + x + 1."
+doi = "10.6028/NIST.FIPS.197"
+
+[[references]]
+key = "Ccsds2017"
+citation = "CCSDS 131.0-B-3 (September 2017) — TM Synchronization and Channel Coding. Recommended Standard, Blue Book, Consultative Committee for Space Data Systems. Section 3.3 specifies the basic convolutional code: rate 1/2, constraint length 7, connection vectors 171 and 133 octal."
+url = "https://ccsds.org/Pubs/131x0b3s.pdf"
