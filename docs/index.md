@@ -24,7 +24,10 @@ Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis
 
 Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
 
-- [Supported configurations](reference/supported-configurations.md): toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations.
+| Page | Contents |
+|---|---|
+| [Supported configurations](reference/supported-configurations.md) | Toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations |
+| [Standards conformance](reference/standards-conformance.md) | Supported DVB-T2 and 5G NR code configurations, bit order and conformance evidence |
 
 ## Crates
 
