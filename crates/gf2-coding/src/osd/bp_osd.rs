@@ -2,9 +2,7 @@
 //!
 //! [`BpOsdDecoder`] runs LDPC belief propagation first.  A BP hard word whose
 //! syndrome is zero is the final decision; otherwise the decoder passes that
-//! word and BP's posterior LLRs to [`SyndromeOsdCorrector`].  The composition
-//! is intentionally an inherent mutable API rather than an implementation of
-//! [`crate::traits::SoftDecoder`], whose decode operation is immutable.
+//! word and BP's posterior LLRs to [`SyndromeOsdCorrector`].
 
 use std::fmt;
 
@@ -32,11 +30,9 @@ pub enum BpOsdStage {
 
 /// Why a BP-to-OSD decode stopped.
 ///
-/// The BP variant records the early path for which no [`OsdWork`] exists.  An
-/// OSD variant preserves the shared engine reason verbatim.  The composition's
-/// ordinary fallback forms `H yᵀ`, which is necessarily consistent for the
-/// same `H`; [`OsdTermination::InconsistentTransform`] remains representable
-/// when normalizing metadata from [`SyndromeOsdCorrector::solve`].
+/// Fallback forms `H yᵀ`, which is consistent for the same `H`, so
+/// [`BpOsdDecoder::decode`] never reports
+/// [`OsdTermination::InconsistentTransform`].
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BpOsdTermination {
     /// BP's hard word satisfied the parity checks.
@@ -51,13 +47,7 @@ impl From<OsdTermination> for BpOsdTermination {
     }
 }
 
-/// The inherent result of one mutable [`BpOsdDecoder`] call.
-///
-/// The BP hard word and iteration count are always retained.  [`Self::osd_work`]
-/// is `None` exactly when BP succeeded and fallback did not run; otherwise it
-/// exposes every shared [`OsdWork`] counter.  [`Self::decoded_word`] is absent
-/// when OSD ran without testing a candidate, such as with a zero candidate
-/// cap.
+/// The result of one [`BpOsdDecoder::decode`] call.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BpOsdResult {
     bp_hard_word: BitVec,
@@ -129,9 +119,6 @@ impl BpOsdResult {
     }
 
     /// Returns the syndrome-domain fallback result, if fallback ran.
-    ///
-    /// This exposes the failed BP syndrome, selected error pattern, candidate,
-    /// and complete engine outcome without duplicating their representations.
     pub const fn osd_result(&self) -> Option<&SyndromeOsdResult> {
         self.osd_result.as_ref()
     }
@@ -188,56 +175,14 @@ impl From<SyndromeOsdError> for BpOsdDecodeError {
 
 /// Mutable LDPC BP decoding with syndrome-domain OSD fallback.
 ///
-/// The decoder owns one [`LdpcDecoder`] and a [`SyndromeOsdCorrector`] built
-/// from the same parity-check matrix.  [`Self::decode`] always starts BP from
-/// reset messages and beliefs, then stores a clone of the returned result as
-/// [`Self::last_result`].  Repeated calls are independent and replace both BP
-/// state and the retained result.
+/// [`Self::decode`] always starts BP from reset messages and beliefs, so
+/// repeated calls are independent.  A bounded OSD run that finds no candidate
+/// is an `Ok` result with no decoded word and a false final syndrome status.
+/// If OSD returns an error, [`Self::last_result`] is `None` while the failed
+/// BP posterior remains available.
 ///
-/// Before the first decode, and after [`Self::reset`], posterior beliefs are
-/// zero and `last_result()` is `None`.  A bounded OSD run that finds no
-/// candidate is a normal `Ok` result with no decoded word, false final
-/// syndrome status, and retained OSD work.  If OSD returns an error,
-/// `last_result()` stays `None` while the failed BP posterior remains
-/// available for diagnosis; a subsequent decode starts from reset state.
-/// `reset()` clears both BP state and the retained composition result.
-///
-/// This type deliberately has no [`crate::traits::SoftDecoder`]
-/// implementation: belief propagation and its lifecycle require `&mut self`.
-///
-/// # Complexity
-///
-/// A successful BP path costs O(iterations × Tanner-graph edges).  Fallback
-/// adds one ordered elimination plus O(candidates × (order + n) / 64)
-/// reconstruction and ranking work; see [`SyndromeOsdCorrector::correct`].
-/// The decoder retains O(Tanner-graph edges) BP messages, the parity-check
-/// matrix, and one result-sized clone of the latest decision.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::LdpcCode;
-/// use gf2_coding::llr::Llr;
-/// use gf2_coding::osd::{BpOsdDecoder, BpOsdStage, OsdConfig};
-///
-/// // H = [1 1 0; 0 1 1] defines a three-bit repetition code.  One bounded
-/// // BP iteration leaves a failed hard word, which order-zero syndrome OSD
-/// // corrects using BP's posterior reliabilities.
-/// let code = LdpcCode::from_edges(
-///     2,
-///     3,
-///     &[(0, 0), (0, 1), (1, 1), (1, 2)],
-/// );
-/// let mut decoder = BpOsdDecoder::new(code, OsdConfig::new(0));
-/// let llrs = [Llr::new(-2.0), Llr::new(1.0), Llr::new(10.0)];
-///
-/// let result = decoder.decode(&llrs, 1).unwrap();
-/// assert_eq!(result.stage(), BpOsdStage::OrderedStatistics);
-/// assert!(result.syndrome_check_passed());
-/// assert_eq!(result.decoded_word().unwrap().count_ones(), 0);
-/// assert_eq!(result.bp_iterations(), 1);
-/// assert_eq!(result.osd_work().unwrap().tested_candidates(), 1);
-/// ```
+/// This type has no [`crate::traits::SoftDecoder`] implementation: belief
+/// propagation requires `&mut self`.
 #[derive(Debug)]
 pub struct BpOsdDecoder {
     bp: LdpcDecoder,
@@ -253,9 +198,8 @@ impl BpOsdDecoder {
 
     /// Creates a decoder with explicit BP and OSD configurations.
     ///
-    /// The syndrome corrector receives a dense copy of `code`'s parity-check
-    /// matrix, which keeps BP convergence and OSD correction in the same code
-    /// domain.
+    /// The syndrome corrector holds a dense copy of `code`'s parity-check
+    /// matrix.
     pub fn with_bp_config(code: LdpcCode, bp_config: DecoderConfig, osd_config: OsdConfig) -> Self {
         let parity_check = code.parity_check_matrix().to_dense();
         Self {
@@ -267,18 +211,15 @@ impl BpOsdDecoder {
 
     /// Runs mutable BP and invokes syndrome-domain OSD only after BP failure.
     ///
-    /// BP success returns its full hard word directly with no OSD work.  On BP
-    /// syndrome failure, this passes the exact hard word and the matching
-    /// [`LdpcDecoder::posterior_llrs`] slice to
+    /// On BP syndrome failure, the hard word and the matching
+    /// [`LdpcDecoder::posterior_llrs`] go to
     /// [`SyndromeOsdCorrector::correct`].  The returned result is also retained
     /// by [`Self::last_result`].
     ///
     /// # Errors
     ///
-    /// Returns [`BpOsdDecodeError::Osd`] if fallback rejects its dimensions or
-    /// if the configured uncapped candidate bound cannot be represented in
-    /// `usize`.  The construction invariant keeps the BP word and posterior
-    /// dimensions equal to the corrector width.
+    /// Returns [`BpOsdDecodeError::Osd`] if the configured uncapped candidate
+    /// bound cannot be represented in `usize`.
     ///
     /// # Panics
     ///
