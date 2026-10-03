@@ -1,24 +1,14 @@
 //! Exact binomial hypothesis tests for count data.
 //!
-//! These tests evaluate binomial tails rather than normal approximations. The
-//! normal critical values used when planning a campaign's sample size are not
-//! acceptance decisions: use the exact tests in this module to make campaign
-//! decisions. Results retain the natural logarithm of the p-value, so a valid
-//! decision remains available when converting the p-value itself to `f64`
-//! would underflow.
+//! These tests evaluate binomial tails rather than normal approximations.
+//! Results retain the natural logarithm of the p-value, so a decision remains
+//! available when the p-value itself underflows `f64`.
 
 use crate::numerics::log_gamma;
 
 const MAX_SUPPORTED_TRIALS: u64 = (1 << 53) - 1;
 
 /// The result of an exact binomial hypothesis test.
-///
-/// The result intentionally exposes the natural logarithm of the p-value,
-/// rather than a direct probability. A p-value below the smallest positive
-/// `f64` is still distinguished from zero by its finite logarithm. A p-value
-/// that is mathematically zero, which can occur after observing an impossible
-/// outcome under a degenerate null probability, is represented by negative
-/// infinity.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ExactBinomialTest {
     log_p_value: f64,
@@ -37,9 +27,7 @@ impl ExactBinomialTest {
 
     /// Returns whether this test rejects at `level`.
     ///
-    /// The comparison is closed: a p-value equal to `level` rejects. This is
-    /// the conventional p-value decision rule and matters for discrete exact
-    /// tests, whose attainable p-values need not equal a requested level.
+    /// The comparison is closed: a p-value equal to `level` rejects.
     ///
     /// # Panics
     ///
@@ -75,9 +63,7 @@ impl ExactBinomialTest {
 ///
 /// # Complexity
 ///
-/// Computes one binomial tail by recurrence in $O(N)$ worst-case time and
-/// $O(1)$ auxiliary space, where $N$ is `trials`. The final threshold decision
-/// through [`ExactBinomialTest::rejects_at`] is $O(1)$.
+/// $O(N)$ worst-case time and $O(1)$ auxiliary space, where $N$ is `trials`.
 #[must_use]
 pub fn lower_tail_test(successes: u64, trials: u64, null_probability: f64) -> ExactBinomialTest {
     validate_binomial_input(successes, trials, null_probability);
@@ -200,19 +186,12 @@ pub fn two_sided_test(successes: u64, trials: u64, null_probability: f64) -> Exa
 
 /// Returns a Bonferroni per-test level for a fixed family of tests.
 ///
-/// Divide the caller's complete family-wise error budget by every test across
-/// every family it intends to control. For example, allocating one global
-/// budget across 63 permanent cells and 63 determinant cells uses
-/// `bonferroni_level(budget, 126)`, not one independent full budget per family.
+/// `test_count` counts every test across every family the budget controls.
 ///
 /// # Panics
 ///
 /// Panics when `familywise_error` is not finite or outside `(0, 1]`, or when
 /// `test_count` is zero.
-///
-/// # Complexity
-///
-/// Runs in $O(1)$ time and uses $O(1)$ space.
 #[must_use]
 pub fn bonferroni_level(familywise_error: f64, test_count: u64) -> f64 {
     assert!(

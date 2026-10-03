@@ -1,19 +1,6 @@
-//! FFI shims for per-prime permanent computation kernels.
-//!
-//! Exposes the F_3 Ryser/Bipedal3 permanent kernel (ad55b777), the F_5
-//! direct-byte Ryser kernel (b43cdf33), and the F_7 LUT-based Ryser kernel
-//! (5c0505b2). The F_3, F_5, and F_7 kernels are all fully implemented.
-//!
-//! # Safety
-//!
-//! All functions in this module are `unsafe`. Callers must satisfy the
-//! preconditions documented on each function.
-//!
-//! # Feature gate
-//!
-//! This module is only compiled when the `hip` Cargo feature is enabled.
-//! The corresponding `.hip` source files are compiled by `build.rs` under
-//! the same condition.
+//! FFI shims and host wrappers for the F_3, F_5 and F_7 permanent kernels
+//! under `hip/permanent/`. Every kernel accepts matrix dimensions
+//! `1 <= n <= 63`.
 
 use std::ffi::c_void;
 use std::os::raw::c_int;
@@ -26,7 +13,7 @@ extern "C" {
     /// Enqueue one dependency-chained Gray update micro-kernel on `stream`.
     ///
     /// F_3 receives its two Bipedal3 planes through `bipedal_column`; F_5 and
-    /// F_7 receive their shipped byte-control column through `byte_column`.
+    /// F_7 receive their byte-control column through `byte_column`.
     /// `out` is a device output buffer: F_3 writes its two final Bipedal3
     /// planes, while F_5/F_7 write one checksum word. The kernel alternates
     /// add and subtract updates on one accumulator for `steps` iterations so
@@ -83,25 +70,15 @@ extern "C" {
         stream: *mut c_void,
     ) -> c_int;
 
-    /// Compute the permanent of an n×n matrix over GF(3) on the GPU (single matrix).
-    ///
-    /// Entry point in `hip/permanent/permanent_bipedal3.hip`. Delegates to
-    /// `permanent_bipedal3_hip_batch` with `m=1`.
-    ///
-    /// # Arguments
+    /// Computes the permanent of an n×n matrix over GF(3) on the GPU.
     ///
     /// - `matrix_ptr` — device pointer to an n×n row-major array of `u8`
     ///   elements in GF(3) (values 0, 1, 2).
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
-    ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-    ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
-    ///   `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
+    /// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
     /// - `out_ptr` — device pointer to a single `u64` output that receives
-    ///   the permanent value modulo 3 (in `{0, 1, 2}`).
+    ///   the permanent value modulo 3.
     ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
+    /// Returns 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
     fn permanent_bipedal3_hip(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int;
 
     /// Stream-bearing F_3 batch entry point.
@@ -125,25 +102,15 @@ extern "C" {
         kernel_start_event: *mut c_void,
     ) -> c_int;
 
-    /// Compute the permanent of an n×n matrix over GF(5) on the GPU (single matrix).
-    ///
-    /// Entry point in `hip/permanent/permanent_bipedal5.hip`. Delegates to
-    /// `permanent_bipedal5_hip_batch` with `m=1`.
-    ///
-    /// # Arguments
+    /// Computes the permanent of an n×n matrix over GF(5) on the GPU.
     ///
     /// - `matrix_ptr` — device pointer to an n×n row-major array of `u8`
     ///   elements in GF(5) (values 0..4).
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
-    ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-    ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
-    ///   `permanent_bipedal5_singleword` has the same bound, `n <= 63`.
+    /// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
     /// - `out_ptr` — device pointer to a single `u64` output that receives
-    ///   the permanent value modulo 5 (in `{0, 1, 2, 3, 4}`).
+    ///   the permanent value modulo 5.
     ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
+    /// Returns 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
     fn permanent_bipedal5_hip(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int;
 
     /// Stream-bearing F_5 batch entry point.
@@ -167,24 +134,10 @@ extern "C" {
         kernel_start_event: *mut c_void,
     ) -> c_int;
 
-    /// Initialize the F_7 GPU LUTs by copying host ADD/SUB/MUL LUTs to device memory.
+    /// Copies the host F_7 ADD/SUB/MUL LUTs (65536 bytes each) to the device
+    /// symbols `d_ADD_LUT`, `d_SUB_LUT` and `d_MUL_LUT`.
     ///
-    /// Entry point in `hip/permanent/permanent_bipedal7.hip`. Copies:
-    /// - `host_mul_lut` → `d_MUL_LUT` (__constant__, 64 KiB) via `hipMemcpyToSymbol`.
-    /// - `host_add_lut` → `d_ADD_LUT` (__device__, 64 KiB) via `hipMemcpyToSymbol`.
-    /// - `host_sub_lut` → `d_SUB_LUT` (__device__, 64 KiB) via `hipMemcpyToSymbol`.
-    ///
-    /// Idempotent — calling multiple times overwrites with the same data.
-    ///
-    /// # Arguments
-    ///
-    /// - `host_add_lut` — host pointer to 65536 bytes (the ADD_LUT from gf2-algebra).
-    /// - `host_sub_lut` — host pointer to 65536 bytes (the SUB_LUT from gf2-algebra).
-    /// - `host_mul_lut` — host pointer to 65536 bytes (the MUL_LUT from gf2-algebra).
-    ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
+    /// Returns 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
     fn permanent_bipedal7_hip_init(
         host_add_lut: *const u8,
         host_sub_lut: *const u8,
@@ -212,72 +165,30 @@ extern "C" {
         kernel_start_event: *mut c_void,
     ) -> c_int;
 
-    /// Compute the permanent of an n×n matrix over GF(7) on the GPU (single matrix).
-    ///
-    /// Entry point in `hip/permanent/permanent_bipedal7.hip`. Delegates to
-    /// `permanent_bipedal7_hip_batch` with `m=1`.
-    ///
-    /// # Arguments
+    /// Computes the permanent of an n×n matrix over GF(7) on the GPU.
     ///
     /// - `matrix_ptr` — device pointer to an n×n row-major array of `u8`
     ///   elements in GF(7) (values 0..6).
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`.
+    /// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
     /// - `out_ptr` — device pointer to a single `u64` output that receives
-    ///   the permanent value modulo 7 (in `{0, 1, ..., 6}`).
+    ///   the permanent value modulo 7.
     ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
-    #[allow(dead_code)] // single-matrix entry retained at the .hip level for symmetry
-    // with F_3/F_5; the Rust wrapper compute_permanent_gf7 forwards to the
-    // batched _hip_batch variant so the GF7_INIT_RC guard is checked.
+    /// Returns 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
+    #[allow(dead_code)]
+    // `compute_permanent_gf7` uses the batch entry, which checks `GF7_INIT_RC`.
     fn permanent_bipedal7_hip(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int;
 
-    /// Compute the byte-sum checksum of the GPU __constant__ MUL_LUT (criterion-3 test).
+    /// Sums all 65536 bytes of the device `d_MUL_LUT` in a single thread and
+    /// stores the `u64` result to `*out_ptr`, a device pointer.
     ///
-    /// Entry point in `hip/permanent/permanent_bipedal7.hip`. Launches a single
-    /// thread that sums all 65536 bytes of `d_MUL_LUT` and stores the `u64`
-    /// result to `*out_ptr`.
-    ///
-    /// # Arguments
-    ///
-    /// - `out_ptr` — device pointer to a single `u64` that receives the checksum.
-    ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
+    /// Returns 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
     fn permanent_bipedal7_hip_lut_checksum(out_ptr: *mut u64) -> c_int;
 }
 
-// ---------------------------------------------------------------------------
-// F_7 LUT init state
-//
-// The caller is responsible for invoking `init_permanent_gf7` (with the
-// host LUTs from `gf2_algebra::packed::packed7`) before the first call
-// to `compute_permanent_gf7_batch`. The init state is memoised in
-// `GF7_INIT_RC` (an AtomicI32), so a failed init does not silently
-// corrupt later compute calls: instead, `compute_permanent_gf7_batch`
-// returns the memoised non-zero rc and refuses to launch.
-//
-// `gf2-algebra` (which owns the canonical `packed7::*_LUT` byte tables)
-// is a dev-dependency of this crate, not a regular dependency: the cycle
-// `gf2-algebra -[hip]-> gf2-kernels-hip -> gf2-algebra` would otherwise
-// be unresolvable. Hence the explicit caller-driven init pattern below.
-// ---------------------------------------------------------------------------
-
-/// Memoised state of the F_7 LUT init.
-///
-/// Encoded values:
-/// - [`GF7_INIT_UNINIT`] (sentinel, default): `init_permanent_gf7` has
-///   not been called yet. `compute_permanent_gf7_batch` refuses to launch
-///   and returns this sentinel so the caller sees an explicit "not
-///   initialised" signal rather than silently computing against
-///   uninitialised device memory.
-/// - `0` (hipSuccess): init succeeded; the device LUTs are populated and
-///   the batch entry point is safe to launch.
-/// - any other value: a HIP error code propagated from the last init
-///   attempt. `compute_permanent_gf7_batch` returns this so the caller
-///   sees the original failure rather than silently computing.
+/// Memoised state of the F_7 LUT init: [`GF7_INIT_UNINIT`] before any init
+/// attempt, `0` (hipSuccess) once the device LUTs are populated, or the HIP
+/// error code of the last failed attempt. The F_7 launch refuses to run and
+/// returns this value unless it is `0`.
 static GF7_INIT_RC: std::sync::atomic::AtomicI32 =
     std::sync::atomic::AtomicI32::new(GF7_INIT_UNINIT);
 /// Sentinel "not yet initialised" value. Chosen as `i32::MIN` so it is
@@ -285,111 +196,43 @@ static GF7_INIT_RC: std::sync::atomic::AtomicI32 =
 /// non-negative integers, typically `<= 1000`).
 const GF7_INIT_UNINIT: i32 = i32::MIN;
 
-/// Compute the F_3 permanent of a single n×n matrix on the GPU.
-///
-/// Delegates to [`compute_permanent_gf3_batch`] with `m = 1`. This is the
-/// single-matrix convenience wrapper; for batch workloads use the batched
-/// variant directly.
-///
-/// # Arguments
-///
-/// - `matrix_ptr` — device pointer to an `n × n` row-major array of `u8`
-///   elements in GF(3) (values `0`, `1`, `2`).
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
-///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
-/// - `out_ptr` — device pointer to a single `u64` that receives the permanent
-///   value modulo 3 (value in `{0, 1, 2}`).
+/// Computes the F_3 permanent of a single n×n matrix on the GPU and returns
+/// the HIP status code (`0` = `hipSuccess`).
 ///
 /// # Safety
 ///
 /// - `matrix_ptr` must be a valid device allocation of at least `n * n` bytes,
-///   containing GF(3) element values (`0`, `1`, `2`).
-/// - `out_ptr` must be a valid device allocation of at least 8 bytes.
+///   row-major, containing GF(3) element values (`0`, `1`, `2`).
+/// - `out_ptr` must be a valid device allocation of at least 8 bytes; it
+///   receives the permanent modulo 3.
 /// - `n` must satisfy `1 <= n <= 63`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030 + device memory):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_permanent_gf3;
-/// // matrix_ptr / out_ptr are device pointers obtained from
-/// // hipMalloc; the caller is responsible for managing them.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_permanent_gf3(matrix_ptr, 8, out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work (Ryser Gray-code walk with Bipedal3 column-sum
-/// folding). Host overhead is a single kernel launch plus `hipGetLastError`.
+/// `O(n · 2^n)` GPU work.
 pub unsafe fn compute_permanent_gf3(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     unsafe { permanent_bipedal3_hip(matrix_ptr, n, out_ptr) }
 }
 
-/// Compute F_3 permanents for a batch of M n×n matrices in a single kernel launch.
-///
-/// Wraps `permanent_bipedal3_hip_batch` from
-/// `hip/permanent/permanent_bipedal3.hip`. Launches one HIP block per matrix
-/// (grid = M, block = 1); only thread 0 per block executes the Gray walk.
-/// GPU throughput derives from many blocks running simultaneously.
-///
-/// # Arguments
-///
-/// - `matrices_ptr` — device pointer to `m` consecutive n×n row-major arrays of
-///   `u8` elements in GF(3) (values `0`, `1`, `2`). Matrix `i` starts at
-///   `matrices_ptr + i * n * n`.
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
-///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal3_singleword` has the same bound, `n <= 63`.
-/// - `m` — batch size (number of matrices); must be `>= 1`.
-/// - `out_ptr` — device pointer to `m` consecutive `u64` outputs. On success,
-///   `out_ptr[i]` receives the permanent of matrix `i` modulo 3 (value in
-///   `{0, 1, 2}`).
+/// Enqueues F_3 permanents for a batch of `m` n×n matrices in one kernel
+/// launch on the default stream and returns the HIP status code (`0` =
+/// `hipSuccess`).
 ///
 /// # Safety
 ///
-/// - `matrices_ptr` must be a valid device allocation of at least `m * n * n` bytes.
-/// - Each element must be a valid GF(3) value (`0`, `1`, or `2`).
-/// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes.
+/// - `matrices_ptr` must be a valid device allocation of at least `m * n * n`
+///   bytes: `m` consecutive row-major matrices of GF(3) values (`0`, `1`, `2`).
+/// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes;
+///   `out_ptr[i]` receives the permanent of matrix `i` modulo 3.
 /// - `n` must satisfy `1 <= n <= 63`.
 /// - `m` must be `>= 1`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
-/// # Examples
-///
-/// ```ignore
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_permanent_gf3_batch;
-/// // matrices_ptr is a device pointer to 4 * 8 * 8 = 256 bytes.
-/// // out_ptr is a device pointer to 4 * 8 = 32 bytes.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_permanent_gf3_batch(matrices_ptr, 8, 4, out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work per matrix. With `m` matrices and enough GPU
-/// occupancy, the wall-clock cost is `O(n · 2^n)` total (all blocks overlap).
+/// `O(n · 2^n)` GPU work per matrix.
 pub unsafe fn compute_permanent_gf3_batch(
     matrices_ptr: *const u8,
     n: c_int,
@@ -397,7 +240,7 @@ pub unsafe fn compute_permanent_gf3_batch(
     out_ptr: *mut u64,
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
-    // A null stream preserves the original HIP default-stream behaviour.
+    // A null stream selects the HIP default stream.
     unsafe {
         compute_permanent_gf3_batch_on_stream(matrices_ptr, n, m, out_ptr, std::ptr::null_mut())
     }
@@ -405,10 +248,8 @@ pub unsafe fn compute_permanent_gf3_batch(
 
 /// Computes an F_3 permanent batch on a caller-supplied HIP stream.
 ///
-/// This is the asynchronous stream-bearing counterpart to
-/// [`compute_permanent_gf3_batch`]. It only enqueues the kernel; the caller
-/// must keep the allocations alive and synchronize or otherwise await the
-/// stream before reading `out_ptr`.
+/// Only enqueues the kernel; the caller synchronizes the stream before
+/// reading `out_ptr`.
 ///
 /// # Safety
 ///
@@ -424,8 +265,7 @@ pub unsafe fn compute_permanent_gf3_batch_on_stream(
     stream: *mut c_void,
 ) -> c_int {
     // SAFETY: all device-pointer, dimension, and stream-lifetime preconditions
-    // are forwarded verbatim from this unsafe function's contract. A null
-    // timing event preserves ordinary stream-launch behavior.
+    // are forwarded verbatim from this unsafe function's contract.
     unsafe {
         compute_permanent_gf3_batch_on_stream_with_kernel_start_event(
             matrices_ptr,
@@ -470,111 +310,43 @@ unsafe fn compute_permanent_gf3_batch_on_stream_with_kernel_start_event(
     }
 }
 
-/// Compute the F_5 permanent of a single n×n matrix on the GPU.
-///
-/// Delegates to [`compute_permanent_gf5_batch`] with `m = 1`. This is the
-/// single-matrix convenience wrapper; for batch workloads use the batched
-/// variant directly.
-///
-/// # Arguments
-///
-/// - `matrix_ptr` — device pointer to an `n × n` row-major array of `u8`
-///   elements in GF(5) (values `0`, `1`, `2`, `3`, `4`).
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
-///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal5_singleword` has the same bound, `n <= 63`.
-/// - `out_ptr` — device pointer to a single `u64` that receives the permanent
-///   value modulo 5 (value in `{0, 1, 2, 3, 4}`).
+/// Computes the F_5 permanent of a single n×n matrix on the GPU and returns
+/// the HIP status code (`0` = `hipSuccess`).
 ///
 /// # Safety
 ///
 /// - `matrix_ptr` must be a valid device allocation of at least `n * n` bytes,
-///   containing GF(5) element values (`0..=4`).
-/// - `out_ptr` must be a valid device allocation of at least 8 bytes.
+///   row-major, containing GF(5) element values (`0..=4`).
+/// - `out_ptr` must be a valid device allocation of at least 8 bytes; it
+///   receives the permanent modulo 5.
 /// - `n` must satisfy `1 <= n <= 63`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030 + device memory):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_permanent_gf5;
-/// // matrix_ptr / out_ptr are device pointers obtained from
-/// // hipMalloc; the caller is responsible for managing them.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_permanent_gf5(matrix_ptr, 8, out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work (Ryser Gray-code walk with byte-arithmetic F_5 column-sum
-/// folding). Host overhead is a single kernel launch plus `hipGetLastError`.
+/// `O(n · 2^n)` GPU work.
 pub unsafe fn compute_permanent_gf5(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     unsafe { permanent_bipedal5_hip(matrix_ptr, n, out_ptr) }
 }
 
-/// Compute F_5 permanents for a batch of M n×n matrices in a single kernel launch.
-///
-/// Wraps `permanent_bipedal5_hip_batch` from
-/// `hip/permanent/permanent_bipedal5.hip`. Launches one HIP block per matrix
-/// (grid = M, block = 1); only thread 0 per block executes the Gray walk.
-/// GPU throughput derives from many blocks running simultaneously.
-///
-/// # Arguments
-///
-/// - `matrices_ptr` — device pointer to `m` consecutive n×n row-major arrays of
-///   `u8` elements in GF(5) (values `0`, `1`, `2`, `3`, `4`). Matrix `i` starts
-///   at `matrices_ptr + i * n * n`.
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. This is
-///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-///   2^64 steps (~600 years on gfx1030). The CPU reference
-///   `permanent_bipedal5_singleword` has the same bound, `n <= 63`.
-/// - `m` — batch size (number of matrices); must be `>= 1`.
-/// - `out_ptr` — device pointer to `m` consecutive `u64` outputs. On success,
-///   `out_ptr[i]` receives the permanent of matrix `i` modulo 5 (value in
-///   `{0, 1, 2, 3, 4}`).
+/// Enqueues F_5 permanents for a batch of `m` n×n matrices in one kernel
+/// launch on the default stream and returns the HIP status code (`0` =
+/// `hipSuccess`).
 ///
 /// # Safety
 ///
-/// - `matrices_ptr` must be a valid device allocation of at least `m * n * n` bytes.
-/// - Each element must be a valid GF(5) value (`0..=4`).
-/// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes.
+/// - `matrices_ptr` must be a valid device allocation of at least `m * n * n`
+///   bytes: `m` consecutive row-major matrices of GF(5) values (`0..=4`).
+/// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes;
+///   `out_ptr[i]` receives the permanent of matrix `i` modulo 5.
 /// - `n` must satisfy `1 <= n <= 63`.
 /// - `m` must be `>= 1`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
-/// # Examples
-///
-/// ```ignore
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_permanent_gf5_batch;
-/// // matrices_ptr is a device pointer to 4 * 8 * 8 = 256 bytes.
-/// // out_ptr is a device pointer to 4 * 8 = 32 bytes.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_permanent_gf5_batch(matrices_ptr, 8, 4, out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work per matrix. With `m` matrices and enough GPU
-/// occupancy, the wall-clock cost is `O(n · 2^n)` total (all blocks overlap).
+/// `O(n · 2^n)` GPU work per matrix.
 pub unsafe fn compute_permanent_gf5_batch(
     matrices_ptr: *const u8,
     n: c_int,
@@ -582,7 +354,7 @@ pub unsafe fn compute_permanent_gf5_batch(
     out_ptr: *mut u64,
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
-    // A null stream preserves the original HIP default-stream behaviour.
+    // A null stream selects the HIP default stream.
     unsafe {
         compute_permanent_gf5_batch_on_stream(matrices_ptr, n, m, out_ptr, std::ptr::null_mut())
     }
@@ -590,10 +362,8 @@ pub unsafe fn compute_permanent_gf5_batch(
 
 /// Computes an F_5 permanent batch on a caller-supplied HIP stream.
 ///
-/// This is the asynchronous stream-bearing counterpart to
-/// [`compute_permanent_gf5_batch`]. It only enqueues the kernel; the caller
-/// must keep the allocations alive and synchronize or otherwise await the
-/// stream before reading `out_ptr`.
+/// Only enqueues the kernel; the caller synchronizes the stream before
+/// reading `out_ptr`.
 ///
 /// # Safety
 ///
@@ -609,8 +379,7 @@ pub unsafe fn compute_permanent_gf5_batch_on_stream(
     stream: *mut c_void,
 ) -> c_int {
     // SAFETY: all device-pointer, dimension, and stream-lifetime preconditions
-    // are forwarded verbatim from this unsafe function's contract. A null
-    // timing event preserves ordinary stream-launch behavior.
+    // are forwarded verbatim from this unsafe function's contract.
     unsafe {
         compute_permanent_gf5_batch_on_stream_with_kernel_start_event(
             matrices_ptr,
@@ -655,64 +424,19 @@ unsafe fn compute_permanent_gf5_batch_on_stream_with_kernel_start_event(
     }
 }
 
-/// Initialize the F_7 GPU LUT tables (ADD, SUB, MUL) from the host static consts.
+/// Copies the F_7 ADD, SUB and MUL LUTs to the device and memoises the
+/// outcome; returns the HIP status code (`0` = `hipSuccess`).
 ///
-/// Copies `gf2_algebra::packed::packed7::{ADD_LUT, SUB_LUT, MUL_LUT}` to the
-/// device via `permanent_bipedal7_hip_init`. The MUL_LUT lands in `__constant__`
-/// memory (64 KiB, hardware-cached on gfx1030); ADD_LUT and SUB_LUT land in
-/// `__device__` global memory (64 KiB each, L1/L2 cached).
-///
-/// **Must be called explicitly by the caller before the first invocation of
-/// [`compute_permanent_gf7`] or [`compute_permanent_gf7_batch`].** The
-/// compute entry points memoise this function's return code; if it has not
-/// been called (or returned a non-zero rc), the compute entry points refuse
-/// to launch and propagate the memoised rc. This is intentional:
-/// `gf2-kernels-hip` cannot reach `gf2_algebra::packed::packed7::*_LUT` from
-/// its `lib` (`gf2-algebra` is a *dev-dependency* of this crate to avoid a
-/// circular workspace dep with `gf2-algebra`'s `hip` feature), so the LUT
-/// pointers are caller-supplied.
-///
-/// Idempotent — safe to call multiple times; each call overwrites the device
-/// copy with the same data.
-///
-/// # Arguments
-///
-/// - `host_add_lut` — host pointer to 65 536 bytes (the F_7 ADD_LUT).
-/// - `host_sub_lut` — host pointer to 65 536 bytes (the F_7 SUB_LUT).
-/// - `host_mul_lut` — host pointer to 65 536 bytes (the F_7 MUL_LUT).
+/// [`compute_permanent_gf7`] and [`compute_permanent_gf7_batch`] refuse to
+/// launch and return the memoised code until one call has succeeded. The LUTs
+/// are caller-supplied because `gf2-algebra`, which owns them, depends on this
+/// crate through its `hip` feature.
 ///
 /// # Safety
 ///
 /// - All three pointers must be valid host pointers to exactly 65 536 bytes
-///   of F_7 LUT data (canonical: values in `{0..6}` per nibble pair).
+///   of F_7 LUT data.
 /// - The HIP runtime must be initialised and a device context must be active.
-///
-/// # Returns
-///
-/// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
-///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_algebra::packed::packed7::{ADD_LUT, SUB_LUT, MUL_LUT};
-/// use gf2_kernels_hip::permanent::init_permanent_gf7;
-/// // SAFETY: ADD_LUT, SUB_LUT, MUL_LUT are 'static [u8; 65536].
-/// let rc = unsafe { init_permanent_gf7(
-///     ADD_LUT.as_ptr(), SUB_LUT.as_ptr(), MUL_LUT.as_ptr()) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
-/// # Complexity
-///
-/// Three `hipMemcpyToSymbol` calls of 64 KiB each — `O(1)` host work.
 pub unsafe fn init_permanent_gf7(
     host_add_lut: *const u8,
     host_sub_lut: *const u8,
@@ -724,177 +448,60 @@ pub unsafe fn init_permanent_gf7(
     rc
 }
 
-/// CAS-loop helper that records `rc` into `state` per the init contract:
-/// "if any concurrent or prior init succeeded (`rc == 0`), the memoised
-/// state must end at 0; failed inits may be overwritten by later inits but
-/// never overwrite a successful one." Extracted from
-/// [`init_permanent_gf7`] so the state-machine semantics can be exercised
-/// by unit tests without a live HIP/ROCm context.
-///
-/// # Arguments
-///
-/// * `state` — the atomic the init outcome is memoised in (in production,
-///   [`GF7_INIT_RC`]).
-/// * `rc` — the return code from this call's init attempt; `0` means
-///   success, any other value is a HIP error code.
-///
-/// # Concurrency
-///
-/// Multi-thread-safe via [`AtomicI32::compare_exchange`]. The prior
-/// non-atomic load-then-store version of this code was racy — two parallel
-/// callers, one succeeding and one failing, could both see `prev != 0`
-/// (the sentinel) and store in any order, so a failed init could clobber
-/// a concurrent successful init. The CAS loop here is the correct fix:
-/// at every retry the exchange only succeeds if the observed `prev` is
-/// still current, so we never silently overwrite a freshly-stored success.
-///
-/// # Complexity
-///
-/// Amortised `O(1)` per call. Under contention, the loop retries at most
-/// once per concurrent overwriter; in practice the loop terminates in 1
-/// or 2 iterations.
+/// Records `rc` into `state`: a recorded success (`0`) is never overwritten,
+/// while the uninitialised sentinel and a failed code are replaced by `rc`.
 fn memoise_init_outcome(state: &std::sync::atomic::AtomicI32, rc: c_int) {
     use std::sync::atomic::Ordering::SeqCst;
     loop {
         let prev = state.load(SeqCst);
         if prev == 0 {
-            // Some init (possibly a concurrent one) has already recorded
-            // success — the LUTs are populated on the device. Even if
-            // this call's `rc` is non-zero (transient init failure on a
-            // separate context, say), the device state remains valid
-            // for compute. Leave the success state in place.
             return;
         }
-        // prev is either the uninitialised sentinel or a prior failed rc;
-        // overwrite atomically. If a racing thread mutated the state
-        // between our load and this CAS, the exchange fails and we retry
-        // — on the retry we'll either see success (and break) or another
-        // overwrite-eligible state.
         if state.compare_exchange(prev, rc, SeqCst, SeqCst).is_ok() {
             return;
         }
     }
 }
 
-/// Compute the F_7 permanent of a single n×n matrix on the GPU.
-///
-/// Delegates to [`compute_permanent_gf7_batch`] with `m = 1`. The caller must
-/// have invoked [`init_permanent_gf7`] (with the host LUTs from
-/// `gf2_algebra::packed::packed7`) before the first call to this function.
-///
-/// # Arguments
-///
-/// - `matrix_ptr` — device pointer to an `n × n` row-major array of `u8`
-///   elements in GF(7) (values `0..=6`).
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`.
-/// - `out_ptr` — device pointer to a single `u64` that receives the permanent
-///   value modulo 7 (value in `{0, 1, 2, 3, 4, 5, 6}`).
+/// Computes the F_7 permanent of a single n×n matrix on the GPU and returns
+/// the HIP status code, or the memoised init code when [`init_permanent_gf7`]
+/// has not succeeded.
 ///
 /// # Safety
 ///
 /// - `matrix_ptr` must be a valid device allocation of at least `n * n` bytes,
-///   containing GF(7) element values (`0..=6`).
-/// - `out_ptr` must be a valid device allocation of at least 8 bytes.
+///   row-major, containing GF(7) element values (`0..=6`).
+/// - `out_ptr` must be a valid device allocation of at least 8 bytes; it
+///   receives the permanent modulo 7.
 /// - `n` must satisfy `1 <= n <= 63`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030 + device memory):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_permanent_gf7;
-/// // matrix_ptr / out_ptr are device pointers obtained from
-/// // hipMalloc; the caller is responsible for managing them.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_permanent_gf7(matrix_ptr, 8, out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work (Ryser Gray-code walk with LUT-based F_7 column-sum
-/// folding). Host overhead is one memoised-state check (`GF7_INIT_RC` atomic
-/// load) plus a single kernel launch. The caller-supplied [`init_permanent_gf7`]
-/// runs once per process (idempotent at the FFI level).
+/// `O(n · 2^n)` GPU work.
 pub unsafe fn compute_permanent_gf7(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     unsafe { compute_permanent_gf7_batch(matrix_ptr, n, 1, out_ptr) }
 }
 
-/// Compute F_7 permanents for a batch of M n×n matrices in a single kernel launch.
-///
-/// Wraps `permanent_bipedal7_hip_batch` from
-/// `hip/permanent/permanent_bipedal7.hip`. The caller must have invoked
-/// [`init_permanent_gf7`] (with the host LUTs from `gf2_algebra::packed::packed7`)
-/// before this function — `gf2-algebra` is a dev-dependency of this crate, so
-/// the LUT bytes cannot be reached from `lib` here. If the memoised init state
-/// is the uninitialised sentinel (`i32::MIN`) or a non-zero error code, this
-/// function refuses to launch and propagates the memoised rc instead of
-/// silently computing against uninitialised device memory.
-///
-/// Launches one HIP block per matrix (grid = M, block = 1); only thread 0 per
-/// block executes the Gray walk. GPU throughput derives from many blocks running
-/// simultaneously.
-///
-/// # LUT placement
-///
-/// - `d_MUL_LUT` — `__constant__` memory (64 KiB, hardware-cached on gfx1030).
-/// - `d_ADD_LUT`, `d_SUB_LUT` — `__device__` global memory (64 KiB each, L1/L2).
-///
-/// Option (c) from the issue: MUL_LUT in `__constant__` (criterion 3 names
-/// "the LUT" — the MUL_LUT used in fold_mul), ADD/SUB in `__device__` global.
-/// Total 192 KiB on device; only the 64 KiB MUL_LUT is hardware-cached.
-///
-/// # Arguments
-///
-/// - `matrices_ptr` — device pointer to `m` consecutive n×n row-major arrays of
-///   `u8` elements in GF(7) (values `0..=6`). Matrix `i` starts at
-///   `matrices_ptr + i * n * n`.
-/// - `n` — matrix dimension (`n × n`); must satisfy `1 <= n <= 63`. GPU
-///   sequential Gray walk at n=64 would take ~600 years on gfx1030.
-/// - `m` — batch size (number of matrices); must be `>= 1`.
-/// - `out_ptr` — device pointer to `m` consecutive `u64` outputs. On success,
-///   `out_ptr[i]` receives the permanent of matrix `i` modulo 7 (value in
-///   `{0, 1, 2, 3, 4, 5, 6}`).
+/// Enqueues F_7 permanents for a batch of `m` n×n matrices in one kernel
+/// launch on the default stream and returns the HIP status code. When
+/// [`init_permanent_gf7`] has not succeeded, nothing is launched and the
+/// memoised init code is returned.
 ///
 /// # Safety
 ///
-/// - `matrices_ptr` must be a valid device allocation of at least `m * n * n` bytes.
-/// - Each element must be a valid GF(7) value (`0..=6`).
-/// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes.
+/// - `matrices_ptr` must be a valid device allocation of at least `m * n * n`
+///   bytes: `m` consecutive row-major matrices of GF(7) values (`0..=6`).
+/// - `out_ptr` must be a valid device allocation of at least `m * 8` bytes;
+///   `out_ptr[i]` receives the permanent of matrix `i` modulo 7.
 /// - `n` must satisfy `1 <= n <= 63`.
 /// - `m` must be `>= 1`.
 /// - The HIP runtime must be initialised and a device context must be active.
 ///
-/// # Examples
-///
-/// ```ignore
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_permanent_gf7_batch;
-/// // matrices_ptr is a device pointer to 4 * 8 * 8 = 256 bytes.
-/// // out_ptr is a device pointer to 4 * 8 = 32 bytes.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_permanent_gf7_batch(matrices_ptr, 8, 4, out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work per matrix. With `m` matrices and enough GPU
-/// occupancy, the wall-clock cost is `O(n · 2^n)` total (all blocks overlap).
+/// `O(n · 2^n)` GPU work per matrix.
 pub unsafe fn compute_permanent_gf7_batch(
     matrices_ptr: *const u8,
     n: c_int,
@@ -902,7 +509,7 @@ pub unsafe fn compute_permanent_gf7_batch(
     out_ptr: *mut u64,
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
-    // A null stream preserves the original HIP default-stream behaviour.
+    // A null stream selects the HIP default stream.
     unsafe {
         compute_permanent_gf7_batch_on_stream(matrices_ptr, n, m, out_ptr, std::ptr::null_mut())
     }
@@ -910,11 +517,9 @@ pub unsafe fn compute_permanent_gf7_batch(
 
 /// Computes an F_7 permanent batch on a caller-supplied HIP stream.
 ///
-/// This is the asynchronous stream-bearing counterpart to
-/// [`compute_permanent_gf7_batch`]. The F_7 LUTs must already have been
-/// initialized with [`init_permanent_gf7`]. It only enqueues the kernel; the
-/// caller must keep the allocations alive and synchronize or otherwise await
-/// the stream before reading `out_ptr`.
+/// Only enqueues the kernel; the caller synchronizes the stream before
+/// reading `out_ptr`. When [`init_permanent_gf7`] has not succeeded, nothing
+/// is enqueued and the memoised init code is returned.
 ///
 /// # Safety
 ///
@@ -929,31 +534,8 @@ pub unsafe fn compute_permanent_gf7_batch_on_stream(
     out_ptr: *mut u64,
     stream: *mut c_void,
 ) -> c_int {
-    // The caller is responsible for having called `init_permanent_gf7`
-    // (or its underlying FFI `permanent_bipedal7_hip_init`) at least once
-    // before invoking this function. If the LUTs are not populated, the
-    // device kernel will read zeros from the __constant__/__device__ LUT
-    // symbols and silently produce wrong permanent values.
-    //
-    // Rationale for not auto-initialising here: `gf2-kernels-hip` is
-    // algebra-agnostic at the library level — `gf2-algebra` (which owns
-    // the canonical `packed7::{ADD_LUT, SUB_LUT, MUL_LUT}` byte tables)
-    // is a *dev-dependency* of this crate to avoid a circular workspace
-    // dependency (`gf2-algebra` itself optionally pulls in
-    // `gf2-kernels-hip` via its `hip` feature). The LUTs therefore
-    // cannot be referenced from this crate's `lib`. Callers that have
-    // access to `gf2-algebra` (e.g. the integration tests in this crate
-    // and the host-side dispatcher landing in `2fbbdfa5`) provide the
-    // LUT pointers explicitly via `init_permanent_gf7` before the first
-    // batch launch.
-    //
-    // GF7_INIT_RC is consulted on every call: if a prior init attempt
-    // failed (returned non-zero), this function refuses to launch and
-    // propagates the original init error code rather than silently
-    // computing against uninitialised device memory.
     // SAFETY: all device-pointer, dimension, stream-lifetime, and initialized
-    // LUT preconditions are forwarded from this unsafe function's contract. A
-    // null timing event preserves ordinary stream-launch behavior.
+    // LUT preconditions are forwarded from this unsafe function's contract.
     unsafe {
         compute_permanent_gf7_batch_on_stream_with_kernel_start_event(
             matrices_ptr,
@@ -1003,93 +585,23 @@ unsafe fn compute_permanent_gf7_batch_on_stream_with_kernel_start_event(
     }
 }
 
-/// Compute the byte-sum checksum of the GPU __constant__ MUL_LUT.
-///
-/// Launches `permanent_bipedal7_lut_checksum_kernel` (a single-thread kernel)
-/// that sums all 65 536 bytes of `d_MUL_LUT` and writes the `u64` result to
-/// `*out_ptr`. Used by the criterion-3 test
-/// `test_permanent_bipedal7_constant_lut_checksum_matches_host` to verify
-/// that the device copy of MUL_LUT is byte-identical to the host static const.
-///
-/// # Arguments
-///
-/// - `out_ptr` — device pointer to a single `u64` that receives the checksum.
+/// Sums all 65 536 bytes of the device `d_MUL_LUT` into `*out_ptr` and
+/// returns the HIP status code (`0` = `hipSuccess`).
 ///
 /// # Safety
 ///
 /// - `out_ptr` must be a valid device allocation of at least 8 bytes.
 /// - The HIP runtime must be initialised and a device context must be active.
-/// - `init_permanent_gf7` (or `compute_permanent_gf7_batch`) must have been
-///   called beforehand so that `d_MUL_LUT` is populated.
-///
-/// # Returns
-///
-/// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
-///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030 + device memory):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::compute_lut_checksum_gpu;
-/// // out_ptr is a device pointer obtained from hipMalloc; the caller is
-/// // responsible for managing it. init_permanent_gf7 must have been
-/// // called first so d_MUL_LUT is populated.
-/// // SAFETY: see the function-level safety contract.
-/// let rc = unsafe { compute_lut_checksum_gpu(out_ptr) };
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `c_int`
-/// HIP-status return value.
-///
-/// # Complexity
-///
-/// Single kernel launch; the kernel does 65 536 sequential byte reads — `O(1)`
-/// from the host perspective.
+/// - [`init_permanent_gf7`] must have succeeded so that `d_MUL_LUT` is
+///   populated.
 pub unsafe fn compute_lut_checksum_gpu(out_ptr: *mut u64) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     unsafe { permanent_bipedal7_hip_lut_checksum(out_ptr) }
 }
 
-/// Safe wrapper around [`init_permanent_gf7`] that accepts typed references
-/// instead of raw pointers, allowing the call to be made from safe Rust code.
-///
-/// Identical in semantics to [`init_permanent_gf7`] but takes
-/// `&[u8; 65536]` references instead of raw pointers; the compiler proves
-/// they are valid host pointers of the required length.
-///
-/// # Arguments
-///
-/// - `add_lut` — reference to the F_7 ADD_LUT (65 536 bytes).
-/// - `sub_lut` — reference to the F_7 SUB_LUT (65 536 bytes).
-/// - `mul_lut` — reference to the F_7 MUL_LUT (65 536 bytes).
-///
-/// # Returns
-///
-/// 0 on success (`hipSuccess`), non-zero HIP error code otherwise.
-///
-/// # Panics
-///
-/// Never panics from Rust — all error reporting flows through the `i32`
-/// return value.
-///
-/// # Complexity
-///
-/// Three `hipMemcpyToSymbol` calls of 64 KiB each — `O(1)` host work.
-///
-/// # Examples
-///
-/// ```ignore
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::init_permanent_gf7_from_slices;
-/// let rc = init_permanent_gf7_from_slices(&add_arr, &sub_arr, &mul_arr);
-/// assert_eq!(rc, 0, "hipSuccess");
-/// # }
-/// ```
+/// [`init_permanent_gf7`] over typed references to the three 65 536-byte F_7
+/// LUTs; returns the HIP status code (`0` = `hipSuccess`). The HIP runtime
+/// must be initialised.
 pub fn init_permanent_gf7_from_slices(
     add_lut: &[u8; 65536],
     sub_lut: &[u8; 65536],
@@ -1105,32 +617,6 @@ pub fn init_permanent_gf7_from_slices(
     memoise_init_outcome(&GF7_INIT_RC, rc);
     rc
 }
-
-// ---------------------------------------------------------------------------
-// Safe host-dispatch wrappers
-//
-// The unsafe FFI surface above requires device pointers (obtained from
-// hipMalloc) and must be called within `unsafe` blocks. The three safe
-// wrappers below hide all of that behind the `DecoderDeviceBuffer` RAII
-// helper from `crate` (lib.rs) — a byte-oriented adapter over the canonical
-// `host::DeviceBuffer<u8>` — and the `check_hip` panic-on-error helper.
-//
-// `gf2-algebra::gpu` calls these from its `#![deny(unsafe_code)]`
-// environment, so they must be entirely safe on the Rust side. Any HIP
-// error surfaces as a panic (consistent with the CPU permanent entry points
-// that also panic on bad arguments).
-//
-// Each wrapper:
-//   1. Validates preconditions (n, m, slice length).
-//   2. Allocates device memory for the input matrix byte buffer and the
-//      u64 output array.
-//   3. Copies inputs H2D.
-//   4. Calls the corresponding `compute_permanent_gfX_batch` kernel launch.
-//   5. Calls `hipDeviceSynchronize`.
-//   6. Copies outputs D2H.
-//   7. Returns the output as `Vec<u64>`. Device memory is freed by `Drop`
-//      on the `DecoderDeviceBuffer` RAII wrappers.
-// ---------------------------------------------------------------------------
 
 /// Prime-specific permanent kernel selected by an instrumented dispatch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1170,7 +656,7 @@ pub enum GrayUpdateChecksum {
 
 /// Representation-specific operand for [`measure_gray_update_kernel`].
 pub enum GrayUpdateOperand<'a> {
-    /// The two raw Bipedal3 planes used by the shipped F_3 packed update.
+    /// The two raw Bipedal3 planes used by the F_3 packed update.
     Bipedal3 {
         /// Magnitude bit plane.
         mag: u64,
@@ -1179,7 +665,7 @@ pub enum GrayUpdateOperand<'a> {
         /// Active packed row lanes.
         n: usize,
     },
-    /// Canonical byte values used by the shipped F_5/F_7 GPU controls.
+    /// Canonical byte values used by the F_5/F_7 GPU controls.
     Bytes(&'a [u8]),
 }
 
@@ -1187,7 +673,7 @@ pub enum GrayUpdateOperand<'a> {
 ///
 /// The submitted update kernel holds one row-sum accumulator and alternates
 /// add and subtract updates for `steps` iterations.  F_3 uses the actual
-/// Bipedal3 two-plane update; F_5/F_7 use the shipped byte controls.  A second
+/// Bipedal3 two-plane update; F_5/F_7 use the byte controls.  A second
 /// event-timed kernel executes the same loop geometry with compiler barriers,
 /// allowing the harness to aggregate repetitions and report
 /// `(sum(update) - sum(baseline)) / (steps * reps)` without including
@@ -1331,12 +817,7 @@ pub fn measure_gray_update_kernel(
     })
 }
 
-/// Representation-specific horizontal-product circuit selected by the
-/// measurement harness.
-///
-/// This is intentionally a closed vocabulary rather than a raw integer FFI
-/// selector: every member names a landed arithmetic path, and its field order
-/// and branch observability stay coupled to the device implementation.
+/// Horizontal-product circuit selected by the measurement harness.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HorizontalProductCircuit {
     /// F_3 Bipedal3 six-stage halving control.
@@ -1377,7 +858,7 @@ impl HorizontalProductCircuit {
         }
     }
 
-    /// Whether the shipped circuit exposes distinct zero-fast and nonzero-slow
+    /// Whether the circuit exposes distinct zero-fast and nonzero-slow
     /// execution paths. The halving control only discovers zero after its full
     /// reduction and must not be assigned synthetic branch timings.
     #[must_use]
@@ -1435,9 +916,8 @@ pub struct HorizontalProductTimings {
 /// product event starts after representation encoding and upload, and output
 /// download occurs after both paired event stops.
 ///
-/// The F_7 lookup circuit reads the established permanent `d_MUL_LUT`; callers
-/// must initialise that table through the existing permanent-LUT boundary
-/// before invoking this function.
+/// The F_7 lookup circuit reads the permanent `d_MUL_LUT`; callers initialise
+/// it with [`init_permanent_gf7`] first.
 ///
 /// # Panics
 ///
@@ -1448,8 +928,7 @@ pub struct HorizontalProductTimings {
 /// # Errors
 ///
 /// Returns HIP errors from stream creation, allocation, upload, launch,
-/// synchronization, output download, or event timing. It never converts a host
-/// wall-clock duration into a device duration.
+/// synchronization, output download, or event timing.
 pub fn measure_horizontal_product_kernel(
     circuit: HorizontalProductCircuit,
     values: &[u8],
@@ -1694,9 +1173,6 @@ fn validate_bipedal3_active_lanes(mag: u64, sgn: u64, n: usize) {
 mod gray_update_micro_tests {
     use super::{measure_gray_update_kernel, GrayUpdateOperand, PermanentField};
 
-    /// Exercises the real paired device-event boundary.  Normal test gates do
-    /// not opt into this host-gated evidence test; benchmark execution records
-    /// actual device evidence through the harness command instead.
     #[test]
     #[ignore = "sim: requires a HIP device for Gray-update event timing"]
     fn bipedal3_gray_update_returns_two_device_event_spans() {
@@ -2210,48 +1686,17 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
     Ok(dispatch)
 }
 
-/// Run the F_3 permanent GPU kernel on a batch of pre-serialised matrices
-/// and return the results as a host `Vec<u64>`.
-///
-/// `host_matrices` must contain exactly `m * n * n` bytes in row-major
-/// order, one `u8` per GF(3) element (values 0, 1, 2). Output `result[i]`
-/// is the permanent of matrix `i` modulo 3.
-///
-/// # Arguments
-///
-/// - `host_matrices` — flat row-major byte buffer: `m` consecutive `n×n`
-///   arrays of GF(3) values (`0..=2`). Length must equal `m * n * n`.
-/// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
-/// - `m` — batch size; must be `>= 1`.
-///
-/// # Returns
-///
-/// `Vec<u64>` of length `m` where `result[i]` is the permanent of the
-/// i-th input matrix modulo 3.
+/// Runs the F_3 permanent GPU kernel on `m` row-major `n×n` matrices of GF(3)
+/// values (`0..=2`) and returns the `m` permanents modulo 3.
 ///
 /// # Panics
 ///
-/// Panics if any HIP runtime call (hipMalloc, hipMemcpy, kernel, sync)
-/// returns a non-zero error code, if `n` is outside `1..=63`, or if
-/// `host_matrices.len() != m * n * n`.
+/// Panics if any HIP runtime call returns a non-zero error code, if `n` is
+/// outside `1..=63`, if `m == 0`, or if `host_matrices.len() != m * n * n`.
 ///
 /// # Complexity
 ///
-/// `O(n · 2^n)` GPU work per matrix (all `m` matrices run in parallel).
-/// Host overhead: two `hipMalloc` + two `hipMemcpy` + one
-/// `hipDeviceSynchronize`.
-///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::permanent_gf3_batch_dispatch;
-/// // 1 identity matrix, n=2, in row-major GF(3) bytes: [[1,0],[0,1]]
-/// let results = permanent_gf3_batch_dispatch(&[1, 0, 0, 1], 2, 1);
-/// assert_eq!(results[0], 1); // perm = 1
-/// # }
-/// ```
+/// `O(n · 2^n)` GPU work per matrix.
 pub fn permanent_gf3_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) -> Vec<u64> {
     assert!(
         (1..=63).contains(&n),
@@ -2314,42 +1759,17 @@ pub fn permanent_gf3_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) ->
     out
 }
 
-/// Run the F_5 permanent GPU kernel on a batch of pre-serialised matrices
-/// and return the results as a host `Vec<u64>`.
-///
-/// `host_matrices` must contain exactly `m * n * n` bytes in row-major
-/// order, one `u8` per GF(5) element (values 0..=4). Output `result[i]`
-/// is the permanent of matrix `i` modulo 5.
-///
-/// # Arguments
-///
-/// - `host_matrices` — flat row-major byte buffer: `m` consecutive `n×n`
-///   arrays of GF(5) values (`0..=4`). Length must equal `m * n * n`.
-/// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
-/// - `m` — batch size; must be `>= 1`.
-///
-/// # Returns
-///
-/// `Vec<u64>` of length `m`.
+/// Runs the F_5 permanent GPU kernel on `m` row-major `n×n` matrices of GF(5)
+/// values (`0..=4`) and returns the `m` permanents modulo 5.
 ///
 /// # Panics
 ///
-/// Panics on HIP errors or invalid arguments (see [`permanent_gf3_batch_dispatch`]).
+/// Panics if any HIP runtime call returns a non-zero error code, if `n` is
+/// outside `1..=63`, if `m == 0`, or if `host_matrices.len() != m * n * n`.
 ///
 /// # Complexity
 ///
 /// `O(n · 2^n)` GPU work per matrix.
-///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::permanent_gf5_batch_dispatch;
-/// let results = permanent_gf5_batch_dispatch(&[1, 0, 0, 1], 2, 1);
-/// assert_eq!(results[0], 1); // perm of identity = 1
-/// # }
-/// ```
 pub fn permanent_gf5_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) -> Vec<u64> {
     assert!(
         (1..=63).contains(&n),
@@ -2409,51 +1829,18 @@ pub fn permanent_gf5_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) ->
     out
 }
 
-/// Run the F_7 permanent GPU kernel on a batch of pre-serialised matrices
-/// and return the results as a host `Vec<u64>`.
-///
-/// **Precondition:** the F_7 device LUTs must have been initialised by a
-/// prior call to [`init_permanent_gf7`] (or by calling this via
-/// `gf2_algebra::gpu::permanent_batch_bipedal7`, which does the one-shot
-/// init automatically). If the memoised init state is non-zero (failed or
-/// never called), this function panics.
-///
-/// `host_matrices` must contain exactly `m * n * n` bytes in row-major
-/// order, one `u8` per GF(7) element (values 0..=6). Output `result[i]`
-/// is the permanent of matrix `i` modulo 7.
-///
-/// # Arguments
-///
-/// - `host_matrices` — flat row-major byte buffer: `m` consecutive `n×n`
-///   arrays of GF(7) values (`0..=6`). Length must equal `m * n * n`.
-/// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
-/// - `m` — batch size; must be `>= 1`.
-///
-/// # Returns
-///
-/// `Vec<u64>` of length `m`.
+/// Runs the F_7 permanent GPU kernel on `m` row-major `n×n` matrices of GF(7)
+/// values (`0..=6`) and returns the `m` permanents modulo 7.
 ///
 /// # Panics
 ///
-/// Panics on HIP errors, invalid arguments, or if `init_permanent_gf7`
-/// has not been called successfully beforehand.
+/// Panics if [`init_permanent_gf7`] has not succeeded, if any HIP runtime
+/// call returns a non-zero error code, if `n` is outside `1..=63`, if
+/// `m == 0`, or if `host_matrices.len() != m * n * n`.
 ///
 /// # Complexity
 ///
 /// `O(n · 2^n)` GPU work per matrix.
-///
-/// # Examples
-///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030 + init):
-/// # #[cfg(feature = "hip")] {
-/// use gf2_kernels_hip::permanent::{init_permanent_gf7, permanent_gf7_batch_dispatch};
-/// // Caller must init LUTs first.
-/// // unsafe { init_permanent_gf7(add_ptr, sub_ptr, mul_ptr) };
-/// let results = permanent_gf7_batch_dispatch(&[1, 0, 0, 1], 2, 1);
-/// assert_eq!(results[0], 1); // perm of identity = 1
-/// # }
-/// ```
 pub fn permanent_gf7_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) -> Vec<u64> {
     assert!(
         (1..=63).contains(&n),
@@ -2518,15 +1905,10 @@ pub fn permanent_gf7_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) ->
 
 #[cfg(test)]
 mod init_state_machine_tests {
-    //! Pure-Rust unit tests for the [`memoise_init_outcome`] CAS state
-    //! machine, exercising the init-contract semantics without a HIP/ROCm
-    //! device. These cover the regression that prompted the rewrite from
-    //! the original non-atomic load-then-store: a failed init clobbering
-    //! a concurrent successful init.
+    //! Tests of the [`memoise_init_outcome`] state machine without a HIP device.
     use super::{memoise_init_outcome, GF7_INIT_UNINIT};
     use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
 
-    /// Fresh-state semantics: a single failed init records its rc.
     #[test]
     fn test_memoise_init_failed_init_records_rc() {
         let state = AtomicI32::new(GF7_INIT_UNINIT);
@@ -2534,7 +1916,6 @@ mod init_state_machine_tests {
         assert_eq!(state.load(SeqCst), 7);
     }
 
-    /// Fresh-state semantics: a single successful init records 0.
     #[test]
     fn test_memoise_init_successful_init_records_zero() {
         let state = AtomicI32::new(GF7_INIT_UNINIT);
@@ -2542,7 +1923,6 @@ mod init_state_machine_tests {
         assert_eq!(state.load(SeqCst), 0);
     }
 
-    /// Success-after-failure: a later success overwrites a prior failure.
     #[test]
     fn test_memoise_init_success_overwrites_prior_failure() {
         let state = AtomicI32::new(GF7_INIT_UNINIT);
@@ -2552,10 +1932,6 @@ mod init_state_machine_tests {
         assert_eq!(state.load(SeqCst), 0);
     }
 
-    /// Success-stickiness: a later failure does NOT overwrite a prior
-    /// success. This is the critical contract — the regression that
-    /// prompted the CAS rewrite — and the key invariant the prior
-    /// non-atomic load-then-store violated under concurrency.
     #[test]
     fn test_memoise_init_failure_does_not_overwrite_success() {
         let state = AtomicI32::new(GF7_INIT_UNINIT);
@@ -2568,7 +1944,6 @@ mod init_state_machine_tests {
         );
     }
 
-    /// Multi-call idempotency: repeated successful inits stay at 0.
     #[test]
     fn test_memoise_init_repeated_success_idempotent() {
         let state = AtomicI32::new(GF7_INIT_UNINIT);
@@ -2578,9 +1953,6 @@ mod init_state_machine_tests {
         assert_eq!(state.load(SeqCst), 0);
     }
 
-    /// Concurrent stress: spawn N threads, half succeeding, half failing.
-    /// The final state must be 0 (success) because at least one success
-    /// landed.
     #[test]
     fn test_memoise_init_concurrent_success_wins() {
         let state = std::sync::Arc::new(AtomicI32::new(GF7_INIT_UNINIT));

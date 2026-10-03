@@ -1,8 +1,5 @@
-//! Throughput benchmark: GPU batch BCJR vs CPU serial BCJR.
-//!
-//! Measures wall-clock time for 64 dRM(32,21) SISO decodes using:
-//! 1. GPU batch (single kernel launch for all 64)
-//! 2. CPU serial (64 individual BcjrDecoder::decode_siso calls)
+//! Throughput comparison: GPU batch BCJR vs CPU serial BCJR over 64 dRM(32,21)
+//! SISO decodes.
 
 use gf2_coding::bcjr::BcjrDecoder;
 use gf2_coding::drm::DrmCode;
@@ -27,10 +24,8 @@ fn bench_gpu_vs_cpu_batch64() {
         })
         .collect();
 
-    // Warmup GPU
     let _ = gpu.decode_batch(&inputs).unwrap();
 
-    // Benchmark GPU (batch)
     let gpu_iters = 100;
     let gpu_start = Instant::now();
     for _ in 0..gpu_iters {
@@ -39,7 +34,6 @@ fn bench_gpu_vs_cpu_batch64() {
     let gpu_elapsed = gpu_start.elapsed();
     let gpu_per_batch = gpu_elapsed / gpu_iters;
 
-    // Benchmark CPU (serial)
     let cpu_iters = 100;
     let cpu_start = Instant::now();
     for _ in 0..cpu_iters {
@@ -65,7 +59,6 @@ fn bench_gpu_vs_cpu_batch64() {
         speedup,
     );
 
-    // Acceptance criterion: GPU must be at least 5x faster
     assert!(
         speedup >= 5.0,
         "GPU speedup {:.1}x is below 5x threshold",
