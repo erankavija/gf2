@@ -1,10 +1,10 @@
 # Finite-field linear algebra at scale
 
-This tutorial runs dense linear algebra over GF(2^31 − 1) and its quadratic
-extension with `gf2-core`'s `FieldMatrix`: multiplication, PLE decomposition,
-solving, inversion and the characteristic polynomial. Every result is checked
-against an independent identity, so a run that exits zero is a verified
-computation. The code is the example program
+This tutorial runs dense linear algebra over $\mathrm{GF}(2^{31}-1)$ and its
+quadratic extension with `gf2-core`'s `FieldMatrix`: multiplication, PLE
+decomposition, solving, inversion and the characteristic polynomial. Each
+result is checked against an identity; the sections below state what each
+check establishes. The code is the example program
 [`field_linear_algebra.rs`](../../crates/gf2-core/examples/field_linear_algebra.rs);
 [`field_linear_algebra_example.rs`](../../crates/gf2-core/tests/field_linear_algebra_example.rs)
 runs it at small dimensions in the fast test tier.
@@ -37,19 +37,19 @@ constructors `zeros`, `identity` and `random` additionally require
 `ConstField`, a `Copy` carrier whose field is fixed by its type. The
 representation is therefore a type choice:
 
-- `Fp<P>` is GF(P) for a const prime `P ≤ 2^63`. Mersenne `2^n − 1`
-  (`n ≥ 31`) and Proth `k·2^n + 1` (`n ≥ 24`) primes are stored canonically
-  with specialised reduction; other primes are stored in Montgomery form.
-  `GoldilocksFp` covers `2^64 − 2^32 + 1`.
-- `QuadraticExt<C>` and `CubicExt<C>` build GF(p^2) and GF(p^3) from an
-  `ExtConfig` that names the base field and a non-residue β; they nest into
-  towers.
+- `Fp<P>` is $\mathrm{GF}(P)$ for a const prime $P \le 2^{63}$. Mersenne
+  primes $2^n - 1$ ($n \ge 31$) and Proth primes $k \cdot 2^n + 1$
+  ($n \ge 24$) are stored canonically with specialised reduction; other primes
+  are stored in Montgomery form. `GoldilocksFp` covers $2^{64} - 2^{32} + 1$.
+- `QuadraticExt<C>` and `CubicExt<C>` build $\mathrm{GF}(p^2)$ and
+  $\mathrm{GF}(p^3)$ from an `ExtConfig` that names the base field and a
+  non-residue $\beta$; they nest into towers.
 - `ConstQuotient` fixes an arbitrary-degree polynomial quotient in the type;
   `QuotientElement` and `Gf2mElement` carry a runtime modulus and run the
   same generic algorithms without the `ConstField` constructors.
 
 The example declares a Mersenne prime field and its quadratic extension by
-u² = −1, which is irreducible because p ≡ 3 (mod 4):
+$u^2 = -1$, which is irreducible because $p \equiv 3 \pmod 4$:
 
 ```rust
 type Mersenne31 = Fp<2_147_483_647>;
@@ -87,9 +87,12 @@ let mut matrix = |n: usize| FieldMatrix::from_rows((0..n).map(|_| vector(n)).col
 
 `gemm` is cache-blocked and accumulates each dot product in the field's
 `Wide` type, reducing once per `F::max_unreduced_additions()` terms;
-extension towers inherit the bound of their prime base. A Freivalds probe
-verifies the product in O(n²): a wrong product survives a uniform probe `x`
-with probability at most 1/|F|.
+extension towers inherit the bound of their prime base. The product check
+is probabilistic: one Freivalds probe $x$ compares $(AB)x$ with $A(Bx)$ in
+$O(n^2)$ operations. A wrong product passes with probability at most $1/|F|$
+for a uniform probe; the sampler reduces uniform 64-bit words modulo $p$,
+which raises the bound to at most $(1+\varepsilon)/|F|$ with
+$\varepsilon < 2^{-30}$.
 
 ```rust
 let ab = gemm(&a, &b);
@@ -101,10 +104,12 @@ ensure(
 
 ## Decompose, solve and invert
 
-`ple` returns a row permutation `P`, a unit lower-trapezoidal `L`, a
-row-echelon `E` and the rank, with `P · L · E = A` for any shape and rank.
-`solve` and `inv` are built on it: both return `None` exactly when the square
-input is rank-deficient, so the check branches on the result.
+`ple` returns a row permutation $P$, a unit lower-trapezoidal $L$, a
+row-echelon $E$ and the rank, with $PLE = A$ for any shape and rank. `solve`
+and `inv` are built on it: both return `None` exactly when the square input
+is rank-deficient, so the check branches on the result. The checks of
+$PLE = A$, $AA^{-1} = I$ and $Ay = b$ are exact equality tests; the first two
+form their products with `gemm`.
 
 ```rust
 let (p, l, e, rank) = a.ple();
@@ -127,10 +132,11 @@ same PLE module.
 
 ## Characteristic polynomial
 
-`charpoly` returns det(xI − C) as a `FieldPoly<F>`. Three coefficients have
-closed forms that `trace` and `det` check independently: the polynomial is
-monic of degree k, its x^(k−1) coefficient is −tr(C), and its constant term
-is (−1)^k det(C).
+`charpoly` returns $\chi_C(x) = \det(xI - C)$ as a `FieldPoly<F>`. The
+program checks three coefficients exactly against independently computed
+values: $\chi_C$ is monic of degree $k$, its $x^{k-1}$ coefficient is
+$-\operatorname{tr}(C)$, and its constant term is $(-1)^k \det(C)$. These
+are necessary conditions; the remaining $k - 2$ coefficients are unchecked.
 
 ```rust
 let k = cp.rows();
