@@ -1,38 +1,10 @@
 //! Deterministic single-frame DVB-T2 BICM-AWGN simulation kernel.
 //!
-//! This is the reusable per-frame simulation kernel that the within-SNR
-//! parallel dispatch ([`run_snr_point`](crate::parallel::run_snr_point))
-//! invokes. It composes the **existing, validated** `gf2-coding` BICM building
-//! blocks (the [`stages`](crate::stages) wrappers over [`DvbT2Concat`],
-//! [`DvbT2BitInterleaver`], `GrayQamMapper`, `FastGrayQamDemapper`) into one
-//! frame's worth of work, with the AWGN noise injected by an inline Box-Muller
-//! draw that mirrors the legacy baseline harness
-//! (`gf2_coding::dvb_t2_bicm_harness::BicmAwgnChannel`). It therefore runs the
-//! same per-frame compute as the single-thread baseline measured at 1.6216 fps
-//! (`dev/benchmarks/gf2-sim/baseline-single-thread.md`), so the parallel
-//! throughput number is comparable to that baseline.
-//!
-//! # Why it lives here, and why it draws noise inline
-//!
-//! The Phase A channel stages (`db9836e4`) are not yet on `main`, so the
-//! parallel-dispatch task supplies its own frame kernel. The kernel reuses
-//! `gf2-coding`'s codec / interleaver / modem math verbatim via the
-//! [`stages`](crate::stages) wrappers (no FEC or modem math reimplemented); only
-//! the AWGN Box-Muller draw is inline. That draw must come from the per-worker
-//! [`ChaCha20Rng`](rand_chacha::ChaCha20Rng) (`rand_chacha 0.9`, the design-doc
-//! §5 pin) so the determinism contract is self-contained in `gf2-sim`'s seek
-//! scheme — `gf2-coding`'s channel takes a `rand 0.8` RNG, a different version,
-//! so calling it directly would couple the contract to a second RNG stream.
-//!
-//! # Determinism
-//!
-//! [`DvbT2BicmFrameSim::simulate_frame`] draws **all** randomness (the random
-//! transmitted BBFRAME and the AWGN noise) from the supplied
-//! [`WorkerCtx`]'s RNG, which the dispatcher has
-//! already reseeked to the frame's global-frame-indexed offset. The frame
-//! outcome is thus a pure function of the global frame index — the property
-//! that makes the aggregate byte-identical across worker counts (design doc §3,
-//! §11).
+//! [`DvbT2BicmFrameSim::simulate_frame`] draws the transmitted BBFRAME and the
+//! AWGN noise from the supplied [`WorkerCtx`]'s RNG, which the dispatcher
+//! ([`run_snr_point`](crate::parallel::run_snr_point)) has reseeked to the
+//! frame's global-index offset, so the outcome is a function of the global
+//! frame index.
 
 use rand::Rng as _;
 
@@ -51,63 +23,16 @@ use gf2_core::BitVec;
 
 use crate::parallel::{FrameOutcome, WorkerCtx};
 
-/// BP iteration sentinel for a frame that fails to produce any BBFRAME estimate
-/// (unreachable in practice; matches the baseline closure's `50` fallback —
-/// the default DVB-T2 max BP iteration count).
+/// BP iteration count recorded for a frame whose decode returns no BBFRAME
+/// estimate.
 const DECODE_HARD_FAIL_ITERS: u64 = 50;
 
-/// A self-contained DVB-T2 BICM-AWGN single-frame simulator for one MODCOD and
-/// Es/N0 point.
+/// A DVB-T2 BICM-AWGN single-frame simulator for one MODCOD and Es/N0 point.
 ///
-/// Holds the concatenated BCH+LDPC codec, the bit interleaver, the Gray-QAM
-/// mapper/demapper, and the precomputed AWGN parameters for the configured
-/// Es/N0. [`simulate_frame`](Self::simulate_frame) runs one frame and returns a
-/// [`FrameOutcome`].
-///
-/// # Per-worker ownership (no shared decoder)
-///
-/// `gf2-coding`'s [`DvbT2Concat`] wraps its LDPC decoder in a `Mutex` (so
-/// `decode_soft` can take `&self`). Sharing **one** `DvbT2BicmFrameSim` across
-/// rayon workers would serialise every decode on that lock and erase the
-/// speedup. Instead, give each worker its **own** clone: this type is [`Clone`],
-/// so the canonical use is
-/// [`run_snr_point`](crate::parallel::run_snr_point) with a
-/// `make_state = || template.clone()` factory. Cloning copies the configured
-/// codec (a fresh, independent decoder per worker), keeping the per-frame outcome
-/// a pure function of the global frame index.
-///
-/// # Examples
-///
-/// `no_run`: a full n=64800 encode+decode is too heavy for an unoptimised
-/// doctest build (doctests run without `--release`). The example still compiles,
-/// satisfying the public-API example requirement; the executed coverage lives in
-/// the `--release` unit/integration tests.
-///
-/// ```no_run
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::frame_sim::DvbT2BicmFrameSim;
-/// use gf2_sim::parallel::run_snr_point;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-/// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-/// use gf2_coding::modem::DemapMethod;
-/// use gf2_coding::CodeRate;
-///
-/// let template = DvbT2BicmFrameSim::new(
-///     CodeRate::Rate1_2,
-///     DvbT2Modulation::Qam16,
-///     9.0, // Es/N0 dB, above threshold
-///     DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
-///     DemapMethod::ExactLogMap,
-/// );
-///
-/// // Each worker clones its own simulator (own decoder, no lock contention).
-/// let counters = run_snr_point(
-///     42, 0, 1, NonZeroUsize::new(1).unwrap(),
-///     || template.clone(),
-///     |g, ctx, sim| sim.simulate_frame(g, ctx),
-/// );
-/// assert_eq!(counters.frames, 1);
-/// ```
+/// [`DvbT2Concat`] holds its LDPC decoder behind a `Mutex`, so a simulator
+/// shared across workers serialises every decode. Give each worker its own
+/// clone, as in `make_state = || template.clone()` for
+/// [`run_snr_point`](crate::parallel::run_snr_point).
 pub struct DvbT2BicmFrameSim {
     // Build parameters retained so [`Clone`] can rebuild the (non-`Clone`)
     // codec for a fresh per-worker instance.
@@ -116,8 +41,7 @@ pub struct DvbT2BicmFrameSim {
     decoder: DecoderConfig,
     demap: DemapMethod,
     codec: DvbT2Concat,
-    /// The canonical DVB-T2 BICM-AWGN transmit/demod chain (SSOT in
-    /// `gf2-coding`); the frame kernel only supplies the noise draws.
+    /// Transmit and demodulate chain; this kernel supplies the noise draws.
     channel: BicmAwgnChannel,
     bits_per_symbol: usize,
     k: usize,
@@ -129,13 +53,8 @@ pub struct DvbT2BicmFrameSim {
 }
 
 impl Clone for DvbT2BicmFrameSim {
-    /// Rebuilds an independent simulator (fresh codec / decoder) from the stored
-    /// build parameters.
-    ///
-    /// [`DvbT2Concat`] is not `Clone` (it holds a `Mutex`/`OnceCell`), so the
-    /// clone reconstructs it via [`DvbT2BicmFrameSim::new`]. This is exactly what
-    /// the per-worker `make_state` factory needs: each worker gets its own
-    /// decoder and never contends on a shared lock.
+    /// Rebuilds an independent codec through [`DvbT2BicmFrameSim::new`];
+    /// [`DvbT2Concat`] is not `Clone`.
     fn clone(&self) -> Self {
         Self::new(
             self.rate,
@@ -150,25 +69,12 @@ impl Clone for DvbT2BicmFrameSim {
 impl DvbT2BicmFrameSim {
     /// Builds a frame simulator for a DVB-T2 MODCOD at a fixed Es/N0 point.
     ///
-    /// The codec is constructed for [`FrameSize::Normal`] (n = 64800) — the
-    /// in-scope DVB-T2 FECFRAME — and the supplied decoder configuration is
-    /// applied to it. The AWGN per-axis variance is derived from `es_n0_db`
-    /// using the same `sigma^2 = 1 / (2 * 10^(Es/N0 / 10))` formula as the
-    /// legacy baseline harness.
-    ///
-    /// # Arguments
-    ///
-    /// * `rate` — DVB-T2 LDPC code rate (1/2, 2/3, 3/4 are in scope).
-    /// * `modulation` — DVB-T2 modulation order (16-QAM or 64-QAM in scope).
-    /// * `es_n0_db` — channel Es/N0 in dB (e.g. 6.25 for the canonical point).
-    /// * `decoder` — LDPC belief-propagation decoder configuration.
-    /// * `demap` — soft-demap method ([`DemapMethod::ExactLogMap`] or
-    ///   [`DemapMethod::MaxLog`]).
+    /// The codec is built for [`FrameSize::Normal`] (n = 64800) with `decoder`
+    /// applied.
     ///
     /// # Panics
     ///
-    /// Panics if the `(FrameSize::Normal, rate)` codec cannot be constructed
-    /// (every in-scope DVB-T2 rate constructs successfully).
+    /// Panics if the `(FrameSize::Normal, rate)` codec cannot be constructed.
     #[must_use]
     pub fn new(
         rate: CodeRate,
@@ -185,19 +91,10 @@ impl DvbT2BicmFrameSim {
 
         let modcod = DvbT2Modcod::new(FrameSize::Normal, rate, modulation);
         let interleaver = DvbT2BitInterleaver::new(modcod);
-        // The canonical BICM-AWGN chain (SSOT in gf2-coding); the frame kernel
-        // supplies only the per-axis noise draws.
         let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol, demap);
 
-        // AWGN parameters — delegate to the SSOT once-rounded helpers so the
-        // arithmetic is defined in one place (channels::mod.rs) and every
-        // consumer (preset, frame kernel, tests, examples) is byte-identical.
-        //
-        // BOTH take the full-precision f64 input (the PAIRED `_f64` cores):
-        // `es_n0_db` here is generally non-f32-representable (`from_eb_n0`),
-        // and sigma/N0 must correspond to the SAME rounded SNR — narrowing
-        // either path independently would break the "demap with the true
-        // channel N0" contract below.
+        // Both conversions take the unrounded f64 `es_n0_db`, so sigma and N0
+        // correspond to the same SNR.
         let sigma = crate::channels::es_n0_db_to_sigma_f64(es_n0_db);
         let noise_var = crate::channels::es_n0_db_to_n0_f64(es_n0_db);
 
@@ -218,16 +115,12 @@ impl DvbT2BicmFrameSim {
         }
     }
 
-    /// Builds a frame simulator from a channel Eb/N0 instead of Es/N0.
+    /// Builds a frame simulator from a channel Eb/N0, converted to Es/N0 by
+    /// the BICM offset `10*log10(m * r)`.
     ///
-    /// Converts Eb/N0 → Es/N0 via the BICM offset `10*log10(m * r)` (the same
-    /// conversion the baseline harness applies) and delegates to [`new`].
+    /// # Panics
     ///
-    /// # Arguments
-    ///
-    /// Same as [`new`], except `eb_n0_db` is the per-information-bit SNR.
-    ///
-    /// [`new`]: Self::new
+    /// As [`new`](Self::new).
     #[must_use]
     pub fn from_eb_n0(
         rate: CodeRate,
@@ -254,8 +147,7 @@ impl DvbT2BicmFrameSim {
         self.codec.n_ldpc()
     }
 
-    /// The DVB-T2 LDPC code this simulator decodes (for building a GPU LDPC
-    /// decoder paired with this frame kernel's encoder).
+    /// The DVB-T2 LDPC code this simulator decodes.
     #[inline]
     #[must_use]
     pub fn ldpc_code(&self) -> gf2_coding::ldpc::LdpcCode {
@@ -311,42 +203,21 @@ impl DvbT2BicmFrameSim {
         self.es_n0_db
     }
 
-    /// The Eb/N0 (dB) equivalent of this simulator's Es/N0 for the MODCOD.
+    /// The Eb/N0 (dB) equivalent of this simulator's Es/N0 at code rate `rate`.
     #[must_use]
     pub fn eb_n0_db(&self, rate: CodeRate) -> f64 {
         esn0_to_ebn0(self.es_n0_db, self.bits_per_symbol, rate_f64(rate))
     }
 
-    /// Simulates one frame and returns its [`FrameOutcome`].
+    /// Simulates one frame: random `k`-bit BBFRAME, BCH+LDPC encode,
+    /// interleave, Gray-QAM map, per-axis Box-Muller AWGN, soft demap with the
+    /// channel `N0`, deinterleave, soft decode, information-bit error count.
     ///
-    /// Per-frame sequence (all randomness from `ctx`'s RNG):
-    ///
-    /// 1. Draw a random BBFRAME `message` of `k` bits.
-    /// 2. BCH+LDPC encode → `n_ldpc` FECFRAME codeword.
-    /// 3. Bit-interleave → Gray-QAM map to I/Q symbols.
-    /// 4. Add independent Box-Muller AWGN on the I and Q axes.
-    /// 5. Soft-demap (with the true channel `N0`) → bit-deinterleave LLRs.
-    /// 6. LDPC+BCH soft-decode (via
-    ///    [`decode_soft_counted`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat::decode_soft_counted))
-    ///    back to a BBFRAME estimate plus the real BP iteration count.
-    /// 7. Count information-bit errors vs the transmitted `message`.
-    ///
-    /// A frame is "in error" iff any information bit differs. Non-converged LDPC
-    /// decodes keep their best-effort BBFRAME estimate (matching the baseline's
-    /// `LdpcDecodeFailed` handling). The reported `iterations` is the genuine BP
-    /// depth on both the converged and non-converged arms (not a sentinel), so
-    /// the aggregated `mean_iters` is a real, byte-identical-across-workers
-    /// quantity.
-    ///
-    /// # Arguments
-    ///
-    /// * `_global_frame_idx` — the frame's global index (unused directly; the
-    ///   dispatcher has already reseeked `ctx`'s RNG to this frame's region).
-    /// * `ctx` — the worker context whose RNG supplies all randomness.
-    ///
-    /// # Returns
-    ///
-    /// The [`FrameOutcome`] for this frame.
+    /// All randomness comes from `ctx`'s RNG; `_global_frame_idx` is unused
+    /// because the dispatcher has already positioned that RNG. A frame is
+    /// errored iff any information bit differs. A non-converged LDPC decode
+    /// keeps its best-effort BBFRAME estimate, and `iterations` is the BP
+    /// iteration count on both the converged and the non-converged arm.
     ///
     /// # Complexity
     ///
@@ -354,16 +225,11 @@ impl DvbT2BicmFrameSim {
     pub fn simulate_frame(&self, _global_frame_idx: usize, ctx: &mut WorkerCtx) -> FrameOutcome {
         let rng = ctx.rng_mut();
 
-        // 1. Random BBFRAME (filled from the rand_chacha 0.9 stream; see
-        //    `random_bitvec` for why we do not call `BitVec::random`).
         let message = random_bitvec(self.k, rng);
-        // 2. Encode.
         let codeword = self.codec.encode(&message);
 
-        // 3-5. Interleave → QAM-map → per-axis AWGN → soft-demap → deinterleave,
-        // delegated to the canonical chain in gf2-coding. The noise draws come
-        // from the per-worker rand_chacha 0.9 stream (draw u1 then u2 per sample,
-        // all I-axis samples then all Q-axis samples — the chain's draw contract).
+        // Draw order: u1 then u2 per sample, all I-axis samples then all
+        // Q-axis samples.
         let llrs = self.channel.transmit_and_demodulate_with_noise(
             &codeword,
             self.sigma,
@@ -375,10 +241,6 @@ impl DvbT2BicmFrameSim {
             },
         );
 
-        // 6. Decode. `decode_soft_counted` reports the real BP iteration count
-        // on both arms — the true decoder effort, so `mean_iters` reflects
-        // genuine per-frame depth (not a sentinel) and its byte-identity across
-        // worker counts is a meaningful guarantee.
         let (decoded, iterations) = match self.codec.decode_soft_counted(&llrs) {
             Ok((bbframe, iters)) => (bbframe, iters as u64),
             Err(ConcatError::LdpcDecodeFailed {
@@ -388,7 +250,6 @@ impl DvbT2BicmFrameSim {
             Err(_) => (BitVec::with_capacity(self.k), DECODE_HARD_FAIL_ITERS),
         };
 
-        // 7. Information-bit error count.
         let bit_errors = count_bit_errors(&message, &decoded) as u64;
         FrameOutcome {
             errored: bit_errors > 0,
@@ -398,31 +259,11 @@ impl DvbT2BicmFrameSim {
         }
     }
 
-    /// CPU **batch-prep** half of one frame: draws the random BBFRAME and the
-    /// AWGN realisation and returns the transmitted message together with the
-    /// channel LLRs (steps 1-5 of [`simulate_frame`](Self::simulate_frame)).
+    /// CPU batch-prep half of one frame: draws the BBFRAME and the AWGN
+    /// realisation and returns the transmitted message with the channel LLRs,
+    /// omitting the decode of [`simulate_frame`](Self::simulate_frame).
     ///
-    /// This is the half the hybrid scheduler runs on the CPU while the previous
-    /// batch's LDPC decode runs on the GPU (the design-doc §6 / task overlap
-    /// protocol): the heavy LDPC belief-propagation decode (step 6) is *not*
-    /// done here — it is the GPU's job — so the returned [`FramePrep`] carries
-    /// exactly the LLRs the device decoder consumes plus the transmitted message
-    /// the error count is measured against.
-    ///
-    /// All randomness is drawn from `ctx`'s RNG, which the dispatcher has already
-    /// reseeked to the frame's global-frame-indexed offset, so the prep is a pure
-    /// function of the global frame index (the determinism basis).
-    ///
-    /// # Arguments
-    ///
-    /// * `_global_frame_idx` — the frame's global index (unused directly; `ctx`
-    ///   is already positioned at this frame's region).
-    /// * `ctx` — the worker context whose RNG supplies all randomness.
-    ///
-    /// # Returns
-    ///
-    /// A [`FramePrep`] with the transmitted `message` (`k` bits) and the channel
-    /// `llrs` (`n_ldpc` values).
+    /// All randomness comes from `ctx`'s RNG; `_global_frame_idx` is unused.
     ///
     /// # Complexity
     ///
@@ -444,25 +285,9 @@ impl DvbT2BicmFrameSim {
         FramePrep { message, llrs }
     }
 
-    /// CPU **decode-tail** for the hybrid path: finishes one frame from the GPU
-    /// LDPC hard-decision codeword and the transmitted message.
-    ///
-    /// The GPU LDPC BP stage returns the full `n_ldpc`-bit hard codeword and the
-    /// BP iteration count per frame; this method runs the SSOT BCH outer decode
-    /// ([`DvbT2Concat::decode_bch_from_ldpc_codeword`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat::decode_bch_from_ldpc_codeword))
-    /// to recover the BBFRAME and counts information-bit errors against
-    /// `message` — exactly steps 6 (BCH only) + 7 of
-    /// [`simulate_frame`](Self::simulate_frame).
-    ///
-    /// # Arguments
-    ///
-    /// * `message` — the transmitted BBFRAME (`k` bits) from [`prepare_frame`](Self::prepare_frame).
-    /// * `ldpc_codeword` — the GPU LDPC hard-decision codeword (`n_ldpc` bits).
-    /// * `iterations` — the GPU BP iteration count for the frame.
-    ///
-    /// # Returns
-    ///
-    /// The [`FrameOutcome`] for this frame.
+    /// CPU decode tail of the hybrid path: BCH-decodes the GPU LDPC
+    /// hard-decision codeword and counts information-bit errors against
+    /// `message`, reporting the supplied `iterations`.
     ///
     /// # Panics
     ///
@@ -489,13 +314,8 @@ impl DvbT2BicmFrameSim {
     }
 }
 
-/// The CPU batch-prep output for one frame: the transmitted message and the
-/// channel LLRs the device LDPC decoder consumes.
-///
-/// Produced by [`DvbT2BicmFrameSim::prepare_frame`] and consumed by the hybrid
-/// scheduler, which batches the `llrs` for a GPU LDPC decode launch and keeps
-/// the `message` to measure information-bit errors against once the device
-/// codeword comes back.
+/// Output of [`DvbT2BicmFrameSim::prepare_frame`]: the transmitted message and
+/// the channel LLRs the device LDPC decoder consumes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FramePrep {
     /// The transmitted BBFRAME (`k` information bits).
@@ -504,17 +324,11 @@ pub struct FramePrep {
     pub llrs: Vec<gf2_coding::Llr>,
 }
 
-/// Builds a `len_bits`-bit [`BitVec`] filled from a `rand_chacha 0.9` RNG.
+/// Builds a `len_bits`-bit [`BitVec`] from a `rand 0.9` RNG, one `u64` draw
+/// per word, with the padding bits beyond `len_bits` zeroed.
 ///
-/// `gf2_core::BitVec::random` requires a `rand 0.8` `Rng`, but the per-worker
-/// stream is `rand_chacha 0.9` (the design-doc §5 pin), so we fill the word
-/// storage directly and zero the padding bits beyond `len_bits` to uphold the
-/// tail-masking invariant (`gf2-core` design invariant 1). Each word is drawn
-/// as one `u64` so the draw count per frame is deterministic.
-///
-/// `pub(crate)`: the stage-driven topology executor (`de160fc5`) mints its
-/// per-frame BBFRAME with this exact helper so the message draw — and the
-/// stream position the channel noise continues from — is byte-identical to
+/// `gf2_core::BitVec::random` takes a `rand 0.8` RNG. The topology executor
+/// draws its BBFRAME with this helper, so its RNG stream position matches
 /// [`DvbT2BicmFrameSim::simulate_frame`]'s.
 #[inline]
 pub(crate) fn random_bitvec<R: rand::Rng>(len_bits: usize, rng: &mut R) -> BitVec {
@@ -523,7 +337,6 @@ pub(crate) fn random_bitvec<R: rand::Rng>(len_bits: usize, rng: &mut R) -> BitVe
     }
     let num_words = len_bits.div_ceil(64);
     let mut data: Vec<u64> = (0..num_words).map(|_| rng.random::<u64>()).collect();
-    // Tail-mask the final word so padding bits beyond `len_bits` are zero.
     let tail = len_bits & 63;
     if tail != 0 {
         let mask = (1u64 << tail) - 1;
@@ -555,8 +368,6 @@ mod tests {
     #[test]
     fn test_single_frame_above_threshold_decodes() {
         use crate::parallel::run_snr_point;
-        // One frame at a high Es/N0 (well above the r1/2 16-QAM waterfall) must
-        // decode without error. Single frame keeps the fast tier under 5 s.
         let sim = DvbT2BicmFrameSim::new(
             CodeRate::Rate1_2,
             DvbT2Modulation::Qam16,
@@ -587,7 +398,6 @@ mod tests {
         );
         assert!(sim.k() > 0);
         assert!(sim.n_ldpc() > sim.k());
-        // The eb_n0 roundtrip at the construction rate must be near 5.0.
         let roundtrip = sim.eb_n0_db(CodeRate::Rate1_2);
         assert!(
             (roundtrip - 5.0).abs() < 0.5,
@@ -648,8 +458,6 @@ mod tests {
         assert_eq!(prep.message.len(), sim.k(), "message has k bits");
         assert_eq!(prep.llrs.len(), sim.n_ldpc(), "llrs has n_ldpc entries");
 
-        // Decode an all-zeros codeword (not a valid codeword, but
-        // decode_codeword_to_outcome does not panic on it).
         let codeword = gf2_core::BitVec::zeros(sim.n_ldpc());
         let outcome = sim.decode_codeword_to_outcome(&prep.message, &codeword, 10);
         assert_eq!(outcome.info_bits, sim.k() as u64);

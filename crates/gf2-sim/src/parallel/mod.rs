@@ -1,54 +1,7 @@
-//! Within-SNR frame parallelism, deterministic per-worker [`ChaCha20Rng`] seek,
-//! and order-independent counter aggregation (design doc §3, §11).
-//!
-//! This module is the Phase A core of the `gf2-sim` parallel executor. It
-//! provides the three primitives the Phase C hybrid executor (`de160fc5` /
-//! `75c22fa8`) and the channel stages (`db9836e4`) build on:
-//!
-//! 1. [`worker_offset`] — the design-doc §3 per-worker ChaCha20 word-position
-//!    seek (`worker_idx`, `frame_idx_in_worker` → `u128` offset).
-//! 2. [`WorkerCtx`] — a per-worker simulation context owning an independent
-//!    [`ChaCha20Rng`] seeded via [`worker_offset`], plus [`WorkerCounters`].
-//! 3. [`run_snr_point`] — the frame-batch dispatch primitive: it runs a
-//!    per-frame closure across `parallelism` rayon workers within one SNR point,
-//!    each worker owning its own seeked RNG, then reduces the per-worker
-//!    counters in **`worker_idx` order** (the SSOT aggregation order).
-//! 4. [`map_indices_in_order`] — the same strided fan-out
-//!    ([`worker_index_partition`]) for work whose reduction is *not* a counter
-//!    sum: it returns one outcome per global index in **index order**, so a
-//!    consumer with a sequential stopping rule (the OSD campaign protocol,
-//!    [`crate::osd_campaign`]) can commit outcomes in order and discard the
-//!    ones its workers evaluated speculatively past the stopping index.
-//!
-//! # Determinism contract (design doc §3, §11)
-//!
-//! The headline guarantee is **byte-identical `fer` / `frames` / `errors` /
-//! `mean_iters`** across worker counts `{1, 2, 4, 8, 24}` for a fixed seed.
-//! This module achieves it with two rules:
-//!
-//! * **Per-frame RNG is keyed on the global frame index.** Every global frame
-//!   `g` in an SNR point draws its channel noise from a `ChaCha20Rng` seeked to
-//!   [`worker_offset`]`(seed, snr_idx, 0, g)`. Because the noise — and therefore
-//!   the per-frame decode verdict — is a pure function of `g` alone, it does not
-//!   matter which physical rayon worker happens to process frame `g`: the
-//!   per-frame outcome is identical. The `worker_idx` parameter of
-//!   [`worker_offset`] is reserved for the Phase C executor / GPU paths, where a
-//!   worker owns a *fixed* partition of the frame space and seeds its whole
-//!   partition from a single starting offset; the CPU within-SNR path treats the
-//!   SNR point as one logical stream (`worker_idx = 0`) indexed by global frame,
-//!   which is exactly [`worker_offset`] with the worker term zero. See
-//!   [`run_snr_point`] for the dispatch and [`WorkerCtx::reseek_to_frame`] for
-//!   the per-frame seek.
-//! * **Aggregation iterates workers in `worker_idx` order.** Even though `u64`
-//!   counter sums are order-invariant, the design doc fixes `worker_idx` order
-//!   as the SSOT so a future migration to non-associative accumulators stays
-//!   reproducible. [`WorkerCounters::reduce_in_worker_order`] enforces it.
-//!
-//! # No `unsafe`
-//!
-//! The crate is `#![deny(unsafe_code)]`; this module adds none. All
-//! parallelism is via `rayon`, all RNG seeking via `rand_chacha`'s safe
-//! `set_word_pos`.
+//! Within-SNR frame parallelism: the per-frame [`ChaCha20Rng`] seek
+//! ([`worker_offset`], [`WorkerCtx`]), frame dispatch across rayon workers
+//! ([`run_snr_point`], [`map_indices_in_order`]) and counter reduction in
+//! `worker_idx` order ([`WorkerCounters`]).
 
 use std::num::NonZeroUsize;
 
@@ -56,101 +9,35 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use rayon::prelude::*;
 
-/// ChaCha20 **32-bit words** reserved per SNR point (design doc §3): `2^56`.
+/// ChaCha20 32-bit words reserved per SNR point: `2^56`.
 ///
-/// All strides here are in ChaCha20 32-bit word units — the unit of
-/// [`ChaCha20Rng::set_word_pos`] / [`ChaCha20Rng::get_word_pos`] in
-/// `rand_chacha 0.9` (`BLOCK_WORDS = 16`, position is "the offset from the start
-/// of the stream, in 32-bit words"). Far above any practical run; guarantees
-/// distinct SNR points never share stream regions.
+/// All strides are in the unit of [`ChaCha20Rng::set_word_pos`] and
+/// [`ChaCha20Rng::get_word_pos`].
 pub const SNR_STRIDE: u128 = 1 << 56;
 
-/// ChaCha20 32-bit words reserved per worker partition (design doc §3): `2^40`
-/// (4 TiB of stream).
-///
-/// At [`FRAME_STRIDE`]` = 2^20` this admits `2^20` (≈ 1 M) frames per worker
-/// partition before a worker would run into the next worker's region — still
-/// ample for any realistic SNR point.
+/// ChaCha20 32-bit words reserved per worker partition: `2^40`, which admits
+/// `2^20` frames per partition at [`FRAME_STRIDE`]` = 2^20`.
 pub const WORKER_STRIDE: u128 = 1 << 40;
 
-/// ChaCha20 32-bit words reserved per frame (design doc §3, amended 2026-06-07):
-/// `2^20` (1048576 words = 4 MiB of stream).
+/// ChaCha20 32-bit words reserved per frame: `2^20`.
 ///
-/// Sized for the **measured** worst-case per-frame draw. The per-frame noise
-/// sampler draws two `f64` uniforms per Gaussian sample
-/// ([`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos)), i.e.
-/// **4 ChaCha20 32-bit words per noise sample**. The binding (largest) DVB-T2
-/// case is **r1/2 QPSK Normal** — QPSK packs the *fewest* bits/symbol (2), so it
-/// has the *most* symbols (n=64800 → 32400 symbols × 2 axes = 64800 noise
-/// samples → 259 200 words), plus the random BBFRAME fill (~1008 words) ≈
-/// **260 208 words/frame** (verified by the fast-tier unit test
-/// `tests::test_worst_case_frame_draw_under_stride`; 16-QAM measures 130 608,
-/// 64-QAM 87 408 — fewer bits/symbol ⇒ more symbols ⇒ more draws, so the
-/// lowest-order modulation binds). `2^20` gives ~4× headroom. Earlier values
-/// undercounted: `2^16` assumed ~1 word/sample f32 noise; `2^19` correctly
-/// counted f64 draws but only checked up to 16-QAM, missing that QPSK draws ~2×
-/// more. Each frame's region must not overlap its neighbour's, so the stride
-/// must exceed the worst-case draw of *any* supported modulation.
+/// The stride exceeds the largest per-frame draw of any supported modulation,
+/// that of r1/2 QPSK Normal: 32400 symbols × 2 axes × 4 words per noise sample
+/// plus the BBFRAME fill, checked by
+/// `tests::test_worst_case_frame_draw_under_stride`.
 pub const FRAME_STRIDE: u128 = 1 << 20;
 
-/// Debug-assert headroom (design doc §3): a frame must draw at most
+/// Debug-assert headroom: a frame draws at most
 /// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` ChaCha20 32-bit words.
 pub const DEBUG_ASSERT_WORD_MARGIN: u128 = 1024;
 
-/// Computes the per-worker ChaCha20 word-position seek offset (design doc §3).
+/// Computes the ChaCha20 word-position seek offset
+/// `snr_idx * SNR_STRIDE + worker_idx * WORKER_STRIDE + frame_idx_in_worker * FRAME_STRIDE`.
 ///
-/// This is the verbatim design-doc §3 seek scheme:
-///
-/// ```text
-/// worker_offset(seed, snr_idx, worker_idx, frame_idx_in_worker) =
-///     snr_idx * SNR_STRIDE                       // 2^56 32-bit words per SNR
-///   + (worker_idx as u128) * WORKER_STRIDE       // 2^40 32-bit words per worker
-///   + (frame_idx_in_worker as u128) * FRAME_STRIDE  // 2^20 32-bit words per frame
-/// ```
-///
-/// All strides are in ChaCha20 **32-bit word** units (the unit of
-/// [`ChaCha20Rng::set_word_pos`]). Only the `FRAME_STRIDE` constant changed in
-/// the 2026-06-07 amendment; the formula shape is unchanged.
-///
-/// The `seed` argument is part of the §3 signature but does *not* enter the
-/// offset: the base seed selects the ChaCha20 *stream* (via
-/// [`ChaCha20Rng::seed_from_u64`]); the offset selects the *position* within
-/// that stream. [`WorkerCtx::new`] combines the two.
-///
-/// # Arguments
-///
-/// * `seed` — base RNG seed (selects the stream; see note above).
-/// * `snr_idx` — zero-based index of the SNR point.
-/// * `worker_idx` — zero-based worker partition index. The CPU within-SNR path
-///   passes `0` and indexes by global frame (see module docs); the Phase C
-///   executor passes the physical worker index.
-/// * `frame_idx_in_worker` — zero-based frame index within the worker partition
-///   (the global frame index when `worker_idx == 0`).
-///
-/// # Returns
-///
-/// The absolute ChaCha20 word position to seek to via
-/// [`ChaCha20Rng::set_word_pos`].
-///
-/// # Complexity
-///
-/// `O(1)` — three `u128` multiplies and two adds.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::parallel::{worker_offset, SNR_STRIDE, WORKER_STRIDE, FRAME_STRIDE};
-///
-/// // SNR 0, worker 0, frame 0 → start of the stream.
-/// assert_eq!(worker_offset(42, 0, 0, 0), 0);
-/// // Frame term scales by FRAME_STRIDE.
-/// assert_eq!(worker_offset(42, 0, 0, 3), 3 * FRAME_STRIDE);
-/// // Worker and SNR terms add their strides.
-/// assert_eq!(
-///     worker_offset(42, 2, 1, 5),
-///     2 * SNR_STRIDE + WORKER_STRIDE + 5 * FRAME_STRIDE
-/// );
-/// ```
+/// `seed` does not enter the offset: it selects the ChaCha20 stream (via
+/// [`ChaCha20Rng::seed_from_u64`]) and the offset selects the position within
+/// it. The CPU within-SNR path passes `worker_idx = 0` and the global frame
+/// index.
 #[inline]
 #[must_use]
 pub fn worker_offset(
@@ -165,41 +52,13 @@ pub fn worker_offset(
         + (frame_idx_in_worker as u128) * FRAME_STRIDE
 }
 
-/// The global indices worker `worker_idx` processes under the design-doc §3
-/// strided partition of `indices` across `num_workers`.
+/// The global indices worker `worker_idx` processes under the strided
+/// partition of `indices` across `num_workers`.
 ///
 /// Worker `w` of `W` takes `start + w`, `start + w + W`, `start + w + 2W`, …
-/// below `end`. The partition covers every index of `indices` exactly once for
-/// any worker count, which is what lets a per-index outcome keyed on the global
-/// index stay independent of how the range was partitioned. This is the one
-/// definition of the rule; [`run_snr_point_range`] and
-/// [`map_indices_in_order`] both dispatch through it.
-///
-/// # Arguments
-///
-/// * `indices` — the half-open global index range being dispatched.
-/// * `worker_idx` — zero-based worker index, `< num_workers`. A `worker_idx` at
-///   or above `num_workers` yields an empty iterator or a strided subsequence
-///   that overlaps another worker's, so callers pass `0..num_workers`.
-/// * `num_workers` — the worker count the range is partitioned across.
-///
-/// # Complexity
-///
-/// `O(1)` to build; the iterator yields `indices.len() / num_workers` items
-/// (rounded up for the low worker indices).
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::parallel::worker_index_partition;
-///
-/// let three = NonZeroUsize::new(3).unwrap();
-/// let of = |w| worker_index_partition(10..17, w, three).collect::<Vec<_>>();
-/// assert_eq!(of(0), vec![10, 13, 16]);
-/// assert_eq!(of(1), vec![11, 14]);
-/// assert_eq!(of(2), vec![12, 15]);
-/// ```
+/// below `end`, so workers `0..W` cover every index of `indices` exactly once.
+/// A `worker_idx` at or above `num_workers` yields an empty iterator or a
+/// subsequence that overlaps another worker's.
 pub fn worker_index_partition(
     indices: std::ops::Range<u64>,
     worker_idx: usize,
@@ -210,77 +69,22 @@ pub fn worker_index_partition(
 }
 
 /// Evaluates every global index of `indices` across `parallelism` rayon
-/// workers and returns the outcomes **in global index order**.
+/// workers and returns the outcomes in global index order.
 ///
-/// This is the dispatch primitive for work whose reduction is not a counter sum
-/// — where the consumer must see outcomes in index order because its own
-/// stopping rule is sequential. [`run_snr_point`] stays the primitive for the
-/// counter-summing frame path; both fan out through the same
-/// [`worker_index_partition`] rule.
-///
-/// # Byte-identity across worker counts
-///
-/// The returned vector is a pure function of `indices` and `evaluate`'s
-/// behavior, never of `parallelism`: the strided partition covers each index
-/// exactly once and the outcomes are reassembled in index order. When
-/// `evaluate` is itself a pure function of the global index — which the
-/// worker-seeked RNG discipline of [`worker_offset`] delivers — the whole
-/// dispatch is byte-identical across worker counts.
-///
-/// A single worker runs the range directly on the calling thread, so a
-/// one-worker dispatch pays no fan-out cost and is the honest sequential
-/// reference for a speedup measurement.
-///
-/// # Per-worker mutable state
-///
-/// As in [`run_snr_point`], each worker builds its own state through
-/// `make_state` and threads it into `evaluate` by `&mut`, so a kernel holding
-/// an interior-mutable decoder does not serialise the workers on one lock. The
-/// factory must produce equivalent state on every call, and `evaluate` must not
-/// let one index's outcome depend on the state left by another, or the result
-/// stops being a pure function of the index.
-///
-/// # Arguments
-///
-/// * `indices` — the half-open global index range to evaluate.
-/// * `parallelism` — number of rayon workers to fan out across.
-/// * `make_state` — per-worker state factory, called once per worker.
-/// * `evaluate` — per-index closure `(global_index, &mut S) -> T`.
-///
-/// # Returns
-///
-/// One outcome per index of `indices`, ordered by index.
+/// The result depends on `indices` and `evaluate`, not on `parallelism`
+/// (`tests::test_map_indices_in_order_is_byte_identical_across_worker_counts`),
+/// provided `make_state`, called once per worker, produces equivalent state on
+/// every call and no index's outcome depends on the state left by another. A
+/// single worker runs the range on the calling thread.
 ///
 /// # Panics
 ///
-/// Panics when `indices` is longer than `usize::MAX`, which cannot be collected
-/// into a `Vec`.
+/// Panics when `indices` is longer than `usize::MAX`.
 ///
 /// # Complexity
 ///
-/// `O(indices.len())` closure calls fanned out across `parallelism` workers,
-/// plus one `make_state` call per worker and an `O(indices.len())` reassembly.
-/// The whole range's outcomes are held in memory at once, so callers with an
-/// unbounded index space dispatch in bounded chunks.
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::parallel::map_indices_in_order;
-///
-/// let squares = |workers| {
-///     map_indices_in_order(
-///         3..9,
-///         NonZeroUsize::new(workers).unwrap(),
-///         || (),
-///         |index, ()| index * index,
-///     )
-/// };
-/// assert_eq!(squares(1), vec![9, 16, 25, 36, 49, 64]);
-/// // Index order, whatever the worker count.
-/// assert_eq!(squares(4), squares(1));
-/// ```
+/// `O(indices.len())` `evaluate` calls plus one `make_state` call per worker;
+/// all outcomes are held in memory at once.
 pub fn map_indices_in_order<S, T, M, F>(
     indices: std::ops::Range<u64>,
     parallelism: NonZeroUsize,
@@ -300,8 +104,6 @@ where
         return indices.map(|index| evaluate(index, &mut state)).collect();
     }
 
-    // Each worker owns its strided subsequence, so the fan-out is data-race
-    // free and every index is evaluated exactly once.
     let per_worker: Vec<Vec<T>> = (0..num_workers)
         .into_par_iter()
         .map(|worker_idx| {
@@ -327,32 +129,8 @@ where
     ordered
 }
 
-/// Order-independent per-worker simulation counters (design doc §3, §11).
-///
-/// Each worker accumulates into its own `WorkerCounters`; the SNR-point reducer
-/// sums them in `worker_idx` order via [`reduce_in_worker_order`]. All fields
-/// are `u64` (integer-exact, never excluded from byte-identity per design-doc
-/// §10/§11).
-///
-/// [`reduce_in_worker_order`]: WorkerCounters::reduce_in_worker_order
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::parallel::WorkerCounters;
-///
-/// let mut a = WorkerCounters::default();
-/// a.record_frame(/* errored */ true, /* iterations */ 12, /* bits */ 100, /* bit_errors */ 3);
-/// let mut b = WorkerCounters::default();
-/// b.record_frame(false, 1, 100, 0);
-///
-/// let total = WorkerCounters::reduce_in_worker_order(&[a, b]);
-/// assert_eq!(total.frames, 2);
-/// assert_eq!(total.errors, 1);
-/// assert_eq!(total.total_iterations, 13);
-/// assert_eq!(total.total_bits, 200);
-/// assert_eq!(total.total_bit_errors, 3);
-/// ```
+/// Per-worker simulation counters, summed across workers by
+/// [`reduce_in_worker_order`](WorkerCounters::reduce_in_worker_order).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct WorkerCounters {
     /// Frames simulated by this worker.
@@ -369,14 +147,6 @@ pub struct WorkerCounters {
 
 impl WorkerCounters {
     /// Records one completed frame into the counters.
-    ///
-    /// # Arguments
-    ///
-    /// * `errored` — `true` if the frame is in error (any information-bit
-    ///   mismatch); increments [`errors`](Self::errors).
-    /// * `iterations` — decoder iteration count for the frame.
-    /// * `bits` — number of information bits compared for the frame.
-    /// * `bit_errors` — number of mismatched information bits for the frame.
     #[inline]
     pub fn record_frame(&mut self, errored: bool, iterations: u64, bits: u64, bit_errors: u64) {
         self.frames += 1;
@@ -386,7 +156,6 @@ impl WorkerCounters {
         self.total_bit_errors += bit_errors;
     }
 
-    /// Adds another worker's counters into `self` (field-wise `u64` sum).
     #[inline]
     fn add(&mut self, other: &WorkerCounters) {
         self.frames += other.frames;
@@ -396,28 +165,11 @@ impl WorkerCounters {
         self.total_bit_errors += other.total_bit_errors;
     }
 
-    /// Reduces per-worker counters into a single total **in `worker_idx`
-    /// order** (design doc §3 SSOT aggregation order).
-    ///
-    /// The input slice must be indexed by `worker_idx` (element `i` is worker
-    /// `i`'s counters). The reduction iterates `0..workers.len()` in order; this
-    /// is the mandated SSOT order even though `u64` addition is associative.
-    ///
-    /// # Arguments
-    ///
-    /// * `workers` — per-worker counters, indexed by `worker_idx`.
-    ///
-    /// # Returns
-    ///
-    /// The field-wise sum of all workers' counters.
-    ///
-    /// # Complexity
-    ///
-    /// `O(workers.len())`.
+    /// Reduces per-worker counters, indexed by `worker_idx`, into their
+    /// field-wise sum, iterating in slice order.
     #[must_use]
     pub fn reduce_in_worker_order(workers: &[WorkerCounters]) -> WorkerCounters {
         let mut total = WorkerCounters::default();
-        // Iterate strictly in worker_idx (slice) order — the SSOT order.
         for w in workers {
             total.add(w);
         }
@@ -425,9 +177,6 @@ impl WorkerCounters {
     }
 
     /// Frame error rate (`errors / frames`), or `0.0` when no frames ran.
-    ///
-    /// This is a derived `f64` ratio of the two integer-exact counters, so it
-    /// is itself byte-identical across worker counts.
     #[must_use]
     pub fn fer(&self) -> f64 {
         if self.frames == 0 {
@@ -448,31 +197,10 @@ impl WorkerCounters {
     }
 }
 
-/// Per-worker simulation context: an independent, seeked [`ChaCha20Rng`] plus
-/// the worker's [`WorkerCounters`] (design doc §3).
-///
-/// A `WorkerCtx` owns one ChaCha20 stream (selected by the base `seed`) and is
-/// repositioned per frame via [`reseek_to_frame`](Self::reseek_to_frame) so the
-/// frame's noise draw starts at the §3 word offset. This is the reusable
-/// surface the Phase C executor (`de160fc5`) and channel stages (`db9836e4`)
-/// consume.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::parallel::WorkerCtx;
-///
-/// // Two contexts on the same seed seeked to the same (snr, worker, frame)
-/// // produce byte-identical draws.
-/// let mut a = WorkerCtx::new(7, 0, 0);
-/// let mut b = WorkerCtx::new(7, 0, 0);
-/// a.reseek_to_frame(0);
-/// b.reseek_to_frame(0);
-/// use rand::Rng;
-/// let xa: u64 = a.rng_mut().random();
-/// let xb: u64 = b.rng_mut().random();
-/// assert_eq!(xa, xb);
-/// ```
+/// Per-worker simulation context: a [`ChaCha20Rng`] on the stream selected by
+/// `seed`, repositioned per frame by
+/// [`reseek_to_frame`](Self::reseek_to_frame), plus the worker's
+/// [`WorkerCounters`].
 pub struct WorkerCtx {
     seed: u64,
     snr_idx: usize,
@@ -485,15 +213,8 @@ impl WorkerCtx {
     /// Builds a worker context with a fresh [`ChaCha20Rng`] for `(seed,
     /// snr_idx, worker_idx)`.
     ///
-    /// The RNG is created from `seed` (selecting the stream) and left at word
-    /// position 0; call [`reseek_to_frame`](Self::reseek_to_frame) before each
-    /// frame to position it at the §3 offset.
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` — base RNG seed.
-    /// * `snr_idx` — zero-based SNR-point index.
-    /// * `worker_idx` — zero-based worker partition index.
+    /// The RNG is left at word position 0; call
+    /// [`reseek_to_frame`](Self::reseek_to_frame) before each frame.
     #[must_use]
     pub fn new(seed: u64, snr_idx: usize, worker_idx: usize) -> Self {
         Self {
@@ -505,16 +226,8 @@ impl WorkerCtx {
         }
     }
 
-    /// Repositions the RNG to the start of `frame_idx_in_worker`'s noise region.
-    ///
-    /// Seeks to [`worker_offset`]`(seed, snr_idx, worker_idx, frame_idx_in_worker)`.
-    /// After this call the next `random()` draws begin at the frame's reserved
-    /// [`FRAME_STRIDE`]-word (4 MiB) ChaCha20 region.
-    ///
-    /// # Arguments
-    ///
-    /// * `frame_idx_in_worker` — zero-based frame index within this worker's
-    ///   partition (the global frame index when `worker_idx == 0`).
+    /// Seeks the RNG to
+    /// [`worker_offset`]`(seed, snr_idx, worker_idx, frame_idx_in_worker)`.
     pub fn reseek_to_frame(&mut self, frame_idx_in_worker: usize) {
         let pos = worker_offset(
             self.seed,
@@ -551,28 +264,16 @@ impl WorkerCtx {
         self.worker_idx
     }
 
-    /// The RNG's current absolute word position (ChaCha20 **32-bit words**).
-    ///
-    /// Mirrors [`ChaCha20Rng::get_word_pos`]; exposed so consumers (the Phase C
-    /// checkpoint writer, and the per-frame-draw regression guard) can measure
-    /// how far into a frame's reserved [`FRAME_STRIDE`] region the noise draws
-    /// advanced.
+    /// The RNG's current absolute word position (ChaCha20 32-bit words).
     #[inline]
     #[must_use]
     pub fn current_word_pos(&self) -> u128 {
         self.rng.get_word_pos()
     }
 
-    /// Debug-asserts the per-frame draw stayed within its reserved region.
-    ///
-    /// Call after a frame's noise draws. Checks that the current word position
-    /// has not advanced past `frame_start + FRAME_STRIDE -
-    /// DEBUG_ASSERT_WORD_MARGIN` (design doc §3 debug assert). No-op in release
-    /// builds.
-    ///
-    /// # Arguments
-    ///
-    /// * `frame_idx_in_worker` — the frame whose region was just drawn from.
+    /// Debug-asserts that the RNG has advanced at most
+    /// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` words past the start of frame
+    /// `frame_idx_in_worker`'s region. No-op in release builds.
     pub fn debug_assert_frame_budget(&self, frame_idx_in_worker: usize) {
         debug_assert!({
             let start = worker_offset(
@@ -590,11 +291,6 @@ impl WorkerCtx {
 
 /// Outcome of simulating a single frame, returned by the per-frame closure
 /// passed to [`run_snr_point`].
-///
-/// The counters reducer turns these into the order-independent SNR-point
-/// totals. All fields are integer-exact (`u64` / `bool`), so the resulting
-/// `fer` / `frames` / `errors` / `mean_iters` are byte-identical across worker
-/// counts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FrameOutcome {
     /// `true` if the frame is in error (any information-bit mismatch).
@@ -607,66 +303,21 @@ pub struct FrameOutcome {
     pub bit_errors: u64,
 }
 
-/// Runs one SNR point across `parallelism` rayon workers, returning the
-/// `worker_idx`-ordered aggregate counters (design doc §3, §11).
+/// Runs global frames `0..max_frames` of one SNR point across `parallelism`
+/// rayon workers and returns the counters reduced in `worker_idx` order.
 ///
-/// This is the **frame-batch dispatch primitive** (issue deliverable 2). It
-/// simulates global frames `0..max_frames` (the order is irrelevant to the
-/// result, see below) by distributing them across `parallelism.get()` rayon
-/// workers. Each worker owns its own [`WorkerCtx`] (an independent seeked
-/// [`ChaCha20Rng`]). For every global frame `g` the worker reseeks its RNG to
-/// the frame's §3 offset and invokes `sim_frame(g, ctx)`, which returns a
-/// [`FrameOutcome`]. The per-worker counters are then reduced in `worker_idx`
-/// order via [`WorkerCounters::reduce_in_worker_order`].
-///
-/// # Byte-identity across worker counts
-///
-/// Each global frame `g` is seeded *only* by `g` (the RNG is reseeked to
-/// [`worker_offset`]`(seed, snr_idx, 0, g)` before the closure runs), so its
-/// [`FrameOutcome`] is a pure function of `g`, independent of which physical
-/// worker ran it or how many workers there are. The aggregate over the fixed
-/// frame set `0..max_frames` is therefore byte-identical for any `parallelism`.
-/// The closure receives the worker's `WorkerCtx` already positioned, so it
-/// simply draws noise from `ctx.rng_mut()`.
-///
-/// Note: this primitive runs the full `max_frames` budget; early-stop on
-/// `target_errors` is a Phase C executor concern (the executor will cap the
-/// global-frame range it dispatches). Keeping the frame set fixed here is what
-/// guarantees byte-identity.
-///
-/// # Per-worker mutable state
-///
-/// Many realistic per-frame kernels need **per-worker mutable state** that must
-/// not be shared by `&` across workers — most importantly a decoder with
-/// interior mutability (e.g. `gf2-coding`'s `DvbT2Concat` wraps its LDPC decoder
-/// in a `Mutex`, so a single shared instance would serialise every worker on the
-/// lock and erase the speedup). [`run_snr_point`] therefore builds one fresh
-/// state value per worker via the `make_state` factory and threads it into the
-/// frame closure by `&mut`. The factory must produce *equivalent* state on every
-/// call (a clone of the same configured decoder), so the per-frame outcome stays
-/// a pure function of the global frame index. For a stateless kernel, use
-/// [`run_snr_point_stateless`].
-///
-/// # Arguments
-///
-/// * `seed` — base RNG seed.
-/// * `snr_idx` — zero-based SNR-point index (selects the [`SNR_STRIDE`] region).
-/// * `max_frames` — number of global frames to simulate (`0..max_frames`).
-/// * `parallelism` — number of rayon workers to fan out across.
-/// * `make_state` — per-worker state factory `() -> S`, called once per worker.
-///   Must be `Sync` and produce equivalent state each call.
-/// * `sim_frame` — per-frame closure `(global_frame_idx, &mut WorkerCtx, &mut S)
-///   -> FrameOutcome`. Must be `Sync` and draw all randomness from
-///   `ctx.rng_mut()` so the result stays a pure function of the frame index.
-///
-/// # Returns
-///
-/// The `worker_idx`-ordered aggregate [`WorkerCounters`] for the SNR point.
+/// Before `sim_frame(g, ctx, state)` runs, the worker's RNG is reseeked to
+/// [`worker_offset`]`(seed, snr_idx, 0, g)`. When `sim_frame` draws all
+/// randomness from `ctx.rng_mut()` and `make_state`, called once per worker,
+/// produces equivalent state on every call, each [`FrameOutcome`] is a
+/// function of `g` and the aggregate does not depend on `parallelism`
+/// (`tests::test_run_snr_point_byte_identical_smoke` compares 1 and 2
+/// workers). Every frame of `0..max_frames` runs; there is no early stop on an
+/// error target.
 ///
 /// # Complexity
 ///
-/// `O(max_frames)` frame closures fanned out across `parallelism` workers, plus
-/// one `make_state` call per worker; the reduction is `O(parallelism)`.
+/// `O(max_frames)` `sim_frame` calls plus one `make_state` call per worker.
 ///
 /// # Examples
 ///
@@ -722,78 +373,20 @@ where
 }
 
 /// Per-worker breakdown of a [`run_snr_point_range`] dispatch.
-///
-/// Returned by the range runner so a checkpoint writer can record each
-/// worker's final `frames_in_worker` count (the SSOT for that worker's next
-/// [`worker_offset`] seek, design doc §4 "Drain commit contract") alongside the
-/// aggregate [`WorkerCounters`]. Indexed by `worker_idx`: element `i` is worker
-/// `i`'s state.
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::parallel::{run_snr_point_range, FrameOutcome};
-/// use rand::Rng;
-///
-/// let out = run_snr_point_range(
-///     7, 0, 0..10, NonZeroUsize::new(2).unwrap(),
-///     || (),
-///     |_g, ctx, ()| {
-///         let x: u64 = ctx.rng_mut().random();
-///         FrameOutcome { errored: false, iterations: 1, info_bits: 1, bit_errors: x & 1 }
-///     },
-/// );
-/// // Two workers split 10 frames 5/5.
-/// assert_eq!(out.counters.frames, 10);
-/// assert_eq!(out.per_worker_frames, vec![5, 5]);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SnrPointRangeOutcome {
     /// The `worker_idx`-ordered aggregate counters over the dispatched range.
     pub counters: WorkerCounters,
-    /// Per-worker frame counts, indexed by `worker_idx`. Element `i` is the
-    /// number of frames worker `i` simulated **in this dispatch** (the range
-    /// `frames` argument's slice that fell to worker `i`).
+    /// Frames each worker simulated in this dispatch, indexed by `worker_idx`.
     pub per_worker_frames: Vec<u64>,
 }
 
-/// Runs a **sub-range** of an SNR point's global frames across `parallelism`
-/// rayon workers (design doc §3, §4).
+/// Runs the global-frame sub-range `frames` of an SNR point across
+/// `parallelism` rayon workers.
 ///
-/// This is the resumable core of [`run_snr_point`] (which delegates to it with
-/// `frames = 0..max_frames`). It exists so the checkpoint executor
-/// (`5f12e7ff`) can dispatch a heartbeat-sized chunk of frames at a time,
-/// settle the rayon workers on a frame boundary (the CPU "drain"), latch the
-/// per-worker counts, and resume the next chunk from where it left off.
-///
-/// # Byte-identity across worker counts and chunkings
-///
-/// Each global frame `g` reseeks its RNG to [`worker_offset`]`(seed, snr_idx,
-/// 0, g)` before the closure runs, so its [`FrameOutcome`] is a pure function
-/// of `g` — independent of which worker ran it, how many workers there are,
-/// **and how the global range was split into chunks**. The aggregate over a
-/// fixed frame set is therefore identical whether it ran as one `0..N`
-/// dispatch or as `0..M` then `M..N`. This is exactly what makes
-/// checkpoint/resume byte-identical to an uninterrupted run.
-///
-/// # Arguments
-///
-/// * `seed` — base RNG seed.
-/// * `snr_idx` — zero-based SNR-point index.
-/// * `frames` — the half-open global-frame range `start..end` to simulate.
-/// * `parallelism` — number of rayon workers to fan out across.
-/// * `make_state` — per-worker state factory (see [`run_snr_point`]).
-/// * `sim_frame` — per-frame closure (see [`run_snr_point`]).
-///
-/// # Returns
-///
-/// A [`SnrPointRangeOutcome`] with the aggregate counters and the per-worker
-/// frame counts for this dispatch.
-///
-/// # Complexity
-///
-/// `O(frames.len())` frame closures fanned out across `parallelism` workers.
+/// The per-frame seek is that of [`run_snr_point`], so the aggregate over a
+/// frame set is the same whether it runs as one `0..N` dispatch or as `0..M`
+/// then `M..N`, as the example checks.
 ///
 /// # Examples
 ///
@@ -831,24 +424,14 @@ where
     let start = frames.start;
     let end = frames.end;
 
-    // Per-worker (counters, frames_simulated), indexed by worker_idx. Each
-    // worker writes only its own slot, so the fan-out is data-race free.
     let per_worker: Vec<(WorkerCounters, u64)> = (0..num_workers)
         .into_par_iter()
         .map(|worker_idx| {
-            // Logical worker 0: the CPU within-SNR path keys the per-frame seek
-            // on the global frame index (design-doc §3, module docs). The
-            // physical `worker_idx` only decides *which* global frames this
-            // worker processes, never the RNG stream those frames see.
+            // Logical worker 0: the seek is keyed on the global frame index;
+            // the physical `worker_idx` only selects which frames run here.
             let mut ctx = WorkerCtx::new(seed, snr_idx, 0);
-            // One fresh state per worker — never shared by `&` across threads.
             let mut state = make_state();
 
-            // Strided assignment over the *sub-range* (the shared
-            // `worker_index_partition` rule). It partitions `start..end`
-            // exactly once across workers for any worker count; the RNG seek
-            // (keyed on g) makes the per-frame outcome independent of the
-            // partitioning and of where the range boundaries fall.
             let mut frames_done: u64 = 0;
             for g in worker_index_partition(start as u64..end as u64, worker_idx, parallelism) {
                 let g = usize::try_from(g).expect("frame index fits the host word size");
@@ -875,38 +458,7 @@ where
     }
 }
 
-/// Stateless convenience wrapper over [`run_snr_point`] for per-frame kernels
-/// that need no per-worker mutable state.
-///
-/// Use this only when the frame closure is genuinely stateless (e.g. a synthetic
-/// channel). For any kernel holding an interior-mutable decoder, use
-/// [`run_snr_point`] with a per-worker `make_state` factory so the workers do not
-/// serialise on a shared lock.
-///
-/// # Arguments
-///
-/// Same as [`run_snr_point`] minus `make_state`; `sim_frame` is
-/// `(global_frame_idx, &mut WorkerCtx) -> FrameOutcome`.
-///
-/// # Returns
-///
-/// The `worker_idx`-ordered aggregate [`WorkerCounters`] for the SNR point.
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::parallel::{run_snr_point_stateless, FrameOutcome};
-/// use rand::Rng;
-///
-/// let sim = |_g: usize, ctx: &mut gf2_sim::parallel::WorkerCtx| {
-///     let x: u64 = ctx.rng_mut().random();
-///     FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
-/// };
-/// let one = run_snr_point_stateless(99, 0, 64, NonZeroUsize::new(1).unwrap(), &sim);
-/// let eight = run_snr_point_stateless(99, 0, 64, NonZeroUsize::new(8).unwrap(), &sim);
-/// assert_eq!(one, eight);
-/// ```
+/// [`run_snr_point`] for per-frame kernels without per-worker mutable state.
 pub fn run_snr_point_stateless<F>(
     seed: u64,
     snr_idx: usize,
@@ -934,7 +486,6 @@ mod tests {
 
     #[test]
     fn test_worker_offset_verbatim_formula() {
-        // Matches the design-doc §3 three-term formula exactly.
         assert_eq!(worker_offset(0, 0, 0, 0), 0);
         assert_eq!(worker_offset(0, 0, 0, 1), FRAME_STRIDE);
         assert_eq!(worker_offset(0, 0, 1, 0), WORKER_STRIDE);
@@ -947,7 +498,6 @@ mod tests {
 
     #[test]
     fn test_worker_offset_seed_does_not_affect_offset() {
-        // The seed selects the stream, not the position.
         assert_eq!(worker_offset(1, 2, 3, 4), worker_offset(999, 2, 3, 4));
     }
 
@@ -1003,7 +553,6 @@ mod tests {
         };
         assert!((c.fer() - 0.25).abs() < 1e-12);
         assert!((c.mean_iters() - 2.0).abs() < 1e-12);
-        // No-frame guard.
         assert_eq!(WorkerCounters::default().fer(), 0.0);
         assert_eq!(WorkerCounters::default().mean_iters(), 0.0);
     }
@@ -1012,7 +561,6 @@ mod tests {
     fn test_worker_ctx_reseek_is_deterministic() {
         let mut a = WorkerCtx::new(123, 1, 0);
         let mut b = WorkerCtx::new(123, 1, 0);
-        // Seek both to frame 5 and compare a block of draws.
         a.reseek_to_frame(5);
         b.reseek_to_frame(5);
         for _ in 0..16 {
@@ -1032,17 +580,9 @@ mod tests {
         assert_ne!(f0, f1, "different frames must seek to different regions");
     }
 
-    /// Fast-tier smoke guard for the seek + aggregation logic: a synthetic
-    /// per-frame closure whose outcome is a pure function of the global frame
-    /// index must aggregate byte-identically across {1, 2} workers. The full
-    /// {1,2,4,8,24} × 3-config DVB-T2 regression lives in the ignored
-    /// integration test (see `tests/`).
     #[test]
     fn test_run_snr_point_byte_identical_smoke() {
         let sim = |_g: usize, ctx: &mut WorkerCtx| {
-            // Draw two f64s as the real channel does (Box-Muller pair), derive a
-            // synthetic verdict from the stream so the outcome depends on the
-            // frame's seek position.
             let u1: f64 = ctx.rng_mut().random();
             let u2: f64 = ctx.rng_mut().random();
             let errored = (u1 + u2) > 1.0;
@@ -1089,8 +629,6 @@ mod tests {
 
     #[test]
     fn test_map_indices_in_order_is_byte_identical_across_worker_counts() {
-        // A per-index outcome keyed on the index alone, as the seek discipline
-        // delivers for a real kernel.
         let evaluate = |index: u64, _state: &mut ()| index.wrapping_mul(0x9E37_79B9);
         let reference = map_indices_in_order(0..97, NonZeroUsize::new(1).unwrap(), || (), evaluate);
         for workers in [2_usize, 3, 8, 24] {
@@ -1126,8 +664,6 @@ mod tests {
     #[test]
     fn test_per_worker_state_factory_runs_once_per_worker() {
         use std::sync::atomic::{AtomicUsize, Ordering};
-        // The factory must be invoked exactly `num_workers` times (once per
-        // worker), confirming state is per-worker, not per-frame.
         let factory_calls = AtomicUsize::new(0);
         let counters = run_snr_point(
             1,
@@ -1153,12 +689,6 @@ mod tests {
         assert_eq!(factory_calls.load(Ordering::Relaxed), 4);
     }
 
-    /// Measures the actual ChaCha20 32-bit-word draw of one simulated frame.
-    ///
-    /// Reseeks the worker to frame 0's region, snapshots the word position,
-    /// simulates one frame (which draws the random BBFRAME then the AWGN noise),
-    /// and returns the advance. BP decode draws nothing from the stream, so this
-    /// is the full per-frame draw.
     fn measure_frame_word_draw(
         rate: gf2_coding::CodeRate,
         modulation: gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation,
@@ -1167,8 +697,7 @@ mod tests {
         use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
         use gf2_coding::modem::DemapMethod;
 
-        // High Es/N0 so the frame decodes quickly; the noise draw count does not
-        // depend on SNR (it is purely num_symbols-driven), so any value works.
+        // The noise draw count does not depend on SNR.
         let sim = DvbT2BicmFrameSim::new(
             rate,
             modulation,
@@ -1183,24 +712,11 @@ mod tests {
         ctx.current_word_pos() - start
     }
 
-    /// Regression guard (design doc §3, 2026-06-07 amendment): the worst-case
-    /// per-frame ChaCha20 draw across **every supported modulation** must stay
-    /// strictly within a frame's reserved region so consecutive frames' RNG
-    /// streams never overlap.
-    ///
-    /// The binding case is **r1/2 QPSK Normal** — QPSK packs the *fewest*
-    /// bits/symbol (2), so it has the *most* symbols → the most AWGN noise draws.
-    /// The test enumerates all three `DvbT2Modulation` variants (QPSK, 16-QAM,
-    /// 64-QAM), measures each, and asserts QPSK is the maximum, that the max fits
-    /// under `FRAME_STRIDE - margin`, and that headroom is ≥ 3×. Fast tier: three
-    /// Normal-frame encode+decode at high SNR total well under 5 s.
     #[test]
     fn test_worst_case_frame_draw_under_stride() {
         use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
         use gf2_coding::CodeRate;
 
-        // Every modulation the sim supports, lowest bits/symbol first (QPSK=2,
-        // 16-QAM=4, 64-QAM=6). Lower order ⇒ more symbols ⇒ more noise draws.
         let mods = [
             ("QPSK", DvbT2Modulation::Qpsk),
             ("16-QAM", DvbT2Modulation::Qam16),
@@ -1211,7 +727,6 @@ mod tests {
             .map(|&(name, m)| (name, measure_frame_word_draw(CodeRate::Rate1_2, m)))
             .collect();
 
-        // Visible under `--no-capture` for receipt/design-doc bookkeeping.
         for (name, d) in &draws {
             eprintln!(
                 "per-frame ChaCha20 32-bit-word draw: {name} Normal = {d} \
@@ -1224,8 +739,6 @@ mod tests {
         let qam16 = draws[1].1;
         let qam64 = draws[2].1;
 
-        // QPSK is the binding (largest) case: lowest bits/symbol ⇒ most symbols
-        // ⇒ most noise draws. Confirm the strict ordering QPSK > 16-QAM > 64-QAM.
         assert!(
             qpsk > qam16 && qam16 > qam64,
             "expected draw order QPSK > 16-QAM > 64-QAM (fewer bits/symbol ⇒ \
@@ -1235,18 +748,13 @@ mod tests {
         let worst = draws.iter().map(|&(_, d)| d).max().expect("non-empty");
         assert_eq!(worst, qpsk, "QPSK must be the maximum draw");
 
-        // Sanity: the measured QPSK draw matches the design-doc §3 arithmetic
-        // (~260 208 words: 64800 noise samples × 4 words + ~1008 BBFRAME words).
-        // Wide band tolerates incidental layout drift but catches an
-        // order-of-magnitude regression.
+        // 64800 noise samples × 4 words + ~1008 BBFRAME words ≈ 260 208.
         assert!(
             (250_000..=270_000).contains(&qpsk),
             "QPSK Normal per-frame draw {qpsk} outside the expected ~260 208-word \
              band; design-doc §3 arithmetic needs revisiting"
         );
 
-        // The binding guarantee: the worst case across all modulations fits,
-        // with margin, inside one frame's reserved region.
         let budget = FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN;
         assert!(
             worst < budget,
@@ -1254,7 +762,6 @@ mod tests {
              margin = {budget} (FRAME_STRIDE = {FRAME_STRIDE}); raise FRAME_STRIDE"
         );
 
-        // And confirm the headroom factor is comfortable (≥ 3×).
         assert!(
             (worst as f64) * 3.0 <= FRAME_STRIDE as f64,
             "headroom factor < 3x: worst draw {worst} vs FRAME_STRIDE {FRAME_STRIDE}"
