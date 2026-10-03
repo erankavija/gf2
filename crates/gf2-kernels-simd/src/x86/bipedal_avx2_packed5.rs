@@ -1,34 +1,14 @@
 //! AVX2 batch entry points for the F_5 bit-sliced 3-plane encoding.
 //!
-//! These are the actual SIMD-emitting functions for the F_5 kernel. They
-//! operate on three parallel `&[u64]` planes per operand (one plane per bit
-//! in the 3-bit canonical encoding) and step by 4 u64 words (one AVX2 lane)
-//! per plane per iteration.
+//! Each operand is three parallel `&[u64]` planes, one per bit of the 3-bit
+//! canonical encoding; one iteration consumes 4 words per plane (256 F_5
+//! elements). The decode/cross-product/encode circuit mirrors
+//! `crate::bipedal::packed5`. The private helpers are `#[inline(always)]`
+//! without `#[target_feature]` and are called only from the
+//! `#[target_feature(enable = "avx2")]` entry points.
 //!
-//! The decode/cross-product/encode circuit from `gf2_algebra::packed::packed5`
-//! (R1 Candidate D) is reproduced here using AVX2 256-bit bitwise operations
-//! (`vpand`, `vpor`, `vpxor`). One AVX2 lane processes 4 u64 word-units
-//! simultaneously, each representing 64 independent F_5 lanes, giving 256
-//! F_5 elements per register group.
-//!
-//! Each public `run_*5_batch` function is `#[target_feature(enable = "avx2")]`.
-//! Private helper functions are `#[inline(always)]` `unsafe fn` without
-//! `#[target_feature]` — they are only called from within
-//! `#[target_feature(enable = "avx2")]` bodies and inherit that feature
-//! guarantee from the call chain.
-//!
-//! ## Slice contract
-//!
-//! All nine input/output slices for binary ops must have the same length `n`
-//! where `n % 4 == 0`. Empty slices (`n = 0`) are allowed (no-op). The three
-//! output slices for unary neg have the same shape: 3 parallel planes of
-//! length `n`.
-//!
-//! ## AVX-512 deferral
-//!
-//! AVX-512 variants (using `vpternlogd` for 3-input ternary logic to reduce
-//! op counts) are deferred. The aspirational criterion in the issue allows
-//! this omission.
+//! All slices of one call share a length `n` with `n % 4 == 0`; `n = 0` is a
+//! no-op.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
@@ -325,12 +305,6 @@ unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
 /// Each AVX2 lane covers 4 u64 words (= 256 F_5 lanes). All nine slices must
 /// have the same length `n` where `n % 4 == 0`. Empty input is allowed (no-op).
 ///
-/// # Arguments
-///
-/// * `b0a, b1a, b2a` — first operand plane slices.
-/// * `b0b, b1b, b2b` — second operand plane slices.
-/// * `out_b0, out_b1, out_b2` — output plane slices.
-///
 /// # Safety
 ///
 /// AVX2 must be available at runtime. All nine slices share the same length,
@@ -488,9 +462,6 @@ pub unsafe fn run_mul5_batch(
 
 /// Apply F_5 neg over 3-plane streams via AVX2.
 ///
-/// All six slices (`b0, b1, b2, out_b0, out_b1, out_b2`) must have the same
-/// length `n` where `n % 4 == 0`.
-///
 /// # Safety
 ///
 /// AVX2 must be available at runtime. All six slices share the same length
@@ -529,8 +500,3 @@ pub unsafe fn run_neg5_batch(
         i += 4;
     }
 }
-
-// AVX-512 paths are deferred (aspirational criterion). A
-// `#[cfg(target_feature = "avx512f")]` block would replace decode + cross-product
-// ORs with `_mm512_ternarylogic_epi64` (vpternlogd) to reduce instruction count.
-// Deferred per issue 1f769232 aspirational note.
