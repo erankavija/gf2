@@ -1,37 +1,12 @@
-//! v2 SNR-point checkpoint payload and simulation resume orchestration.
+//! SNR-point checkpoint payload and resumable sweep execution.
 //!
-//! [`CheckpointV2`] is one instantiation of the generic
-//! [`CheckpointPayload`] contract. [`CheckpointWriter`] and
-//! [`CheckpointReader`] are SNR path adapters over the sole persistence
-//! mechanism in [`crate::checkpoint`]; they add only the
-//! `snr_<NNNN>.json` naming convention and translate generic load failures into
-//! the simulation pipeline's established [`FatalError`] surface.
-//!
-//! This module also provides:
-//!
-//! * [`config_hash`] — the blake3 hash of the serialised [`PipelineConfig`]
-//!   **excluding** the path-dependent `checkpoint_dir` / `tracing_log_path`
-//!   fields. A loaded checkpoint whose hash differs aborts the resume.
-//! * [`run_snr_point_checkpointed`] — the executor-facing runner: it dispatches
-//!   heartbeat-sized chunks of frames over [`run_snr_point_range`], settles the
-//!   rayon workers on a frame boundary (the CPU drain), latches the per-worker
-//!   counters into a [`CheckpointV2`], and flushes it at the heartbeat cadence,
-//!   at the SNR boundary, and on SIGINT.
-//!
-//! # The CPU drain (design doc §4 "Drain commit contract")
-//!
-//! This module is the CPU half (Phase A). For the CPU path, "drain" means:
-//! dispatch a bounded chunk of frames via [`run_snr_point_range`] (whose rayon
-//! `join` is the natural settle point — every in-flight frame completes and
-//! increments its worker's count before the call returns), then latch the
-//! per-worker counts as the SSOT for each worker's next
-//! [`worker_offset`] seek. No partial frames
-//! are ever recorded mid-chunk. The GPU-stream drain
-//! ([`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint),
-//! per-stream `hipStreamSynchronize`) and the checkpointed **hybrid** CPU+GPU
-//! sweep ([`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed))
-//! landed with Phase C task `571c11c4` in `executor::drain`; see
-//! [`drain_for_checkpoint`] for how the two halves correspond.
+//! [`CheckpointV2`] is the [`CheckpointPayload`] of one SNR point.
+//! [`CheckpointWriter`] and [`CheckpointReader`] adapt the persistence
+//! mechanism of [`crate::checkpoint`] to the `snr_<NNNN>.json` naming and
+//! translate its load failures into [`FatalError`].
+//! [`run_snr_point_checkpointed`] and [`run_sweep_checkpointed`] run frames in
+//! heartbeat-sized chunks over [`run_snr_point_range`] and flush a checkpoint
+//! after each chunk.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -50,8 +25,8 @@ use crate::parallel::{
     run_snr_point_range, worker_offset, FrameOutcome, WorkerCounters, WorkerCtx,
 };
 
-/// The fixed schema version this module reads and writes. A loaded checkpoint
-/// with any other value is rejected (design doc §4: v2-only reader).
+/// The schema version this module reads and writes. A loaded checkpoint with
+/// any other value is rejected.
 pub const SCHEMA_VERSION: u32 = 2;
 
 impl ConfigHashProvider for PipelineConfig {
@@ -60,26 +35,15 @@ impl ConfigHashProvider for PipelineConfig {
     }
 }
 
-/// Per-worker resume state recorded in a [`CheckpointV2`] (design doc §4).
+/// Per-worker resume state recorded in a [`CheckpointV2`], indexed by
+/// `worker_idx`.
 ///
-/// Indexed by `worker_idx`. `rng_word_pos` is
-/// `worker_offset(seed, snr_index, worker_idx, frames_in_worker)` — the
-/// per-worker stream position per design-doc §4's drain contract.
-///
-/// **Resume semantics (design-doc §4, amended 2026-06-08 and 2026-06-10):**
-/// every executor keys every frame on the *global* frame index (§3,
-/// [`worker_offset`]`(seed, snr_idx, 0, g)`) —
-/// the **CPU within-SNR path** (Phase A, `5f12e7ff`/`3fcb7025`) resumes via the
-/// global `frames_completed`, and the **Phase C hybrid executor** (`75c22fa8`,
-/// strided partitions; resume `571c11c4`) restores per-worker *progress* from
-/// `frames_in_worker` and re-derives per-frame RNG positions from the global
-/// index. **No executor reads `rng_word_pos` back**; it is recorded for v2
-/// schema fidelity only (the per-worker-stream restore §4 originally
-/// anticipated was retired by the 2026-06-10 amendment). The global keying is
-/// what guarantees byte-identity across worker counts, per `3fcb7025`.
-///
-/// `rng_word_pos` is serialised as a **decimal string** because a `u128` does
-/// not fit a JSON number above `2^53`.
+/// `rng_word_pos` is
+/// [`worker_offset`]`(seed, snr_index, worker_idx, frames_in_worker)`. No
+/// executor reads it back: the CPU within-SNR path resumes from the global
+/// `frames_completed` and the hybrid executor restores per-worker progress
+/// from `frames_in_worker`; both key each frame's RNG position on the global
+/// frame index.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkerState {
     /// Zero-based worker partition index.
@@ -89,19 +53,16 @@ pub struct WorkerState {
     pub frames_in_worker: u64,
     /// Absolute ChaCha20 32-bit-word position for this worker's next frame.
     ///
-    /// Serialised as a decimal string (`u128` > `2^53` does not fit a JSON
-    /// number); see the module/type docs.
+    /// Serialised as a decimal string: a `u128` above `2^53` does not fit a
+    /// JSON number.
     #[serde(with = "u128_string")]
     pub rng_word_pos: u128,
 }
 
-/// A v2 per-SNR-point checkpoint (design doc §4).
+/// The checkpoint payload of one SNR point.
 ///
 /// Written to `<checkpoint_dir>/snr_<NNNN>.json` (zero-padded to 4 digits) by
-/// [`CheckpointWriter`] and loaded by [`CheckpointReader`]. Field order and
-/// names match the design-doc §4 schema verbatim. `worker_states[]` is required
-/// (not optional): per-SNR-boundary checkpoints set each worker's
-/// `frames_in_worker` from the executor's authoritative counter.
+/// [`CheckpointWriter`] and loaded by [`CheckpointReader`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CheckpointV2 {
     /// Schema version. Always [`SCHEMA_VERSION`] (`2`) on write; the reader
@@ -113,8 +74,7 @@ pub struct CheckpointV2 {
     pub esn0_db: f64,
     /// `"blake3:<hex>"` of the live [`PipelineConfig`] (see [`config_hash`]).
     pub config_hash: String,
-    /// Target frame count for the point (`max_frames` cap or the configured
-    /// `frames_target`).
+    /// Target frame count for the point; equals `max_frames`.
     pub frames_target: u64,
     /// Target frame-error count for the point.
     pub errors_target: u64,
@@ -135,7 +95,7 @@ pub struct CheckpointV2 {
     /// `true` once the point hit `frames_target` or `errors_target`; resume
     /// skips a completed point.
     pub completed: bool,
-    /// Per-worker resume state, indexed by `worker_idx`. **Required** in v2.
+    /// Per-worker resume state, indexed by `worker_idx`.
     pub worker_states: Vec<WorkerState>,
     /// Microseconds-since-epoch at which the drain completed and the counters
     /// were latched (diagnostic).
@@ -164,58 +124,15 @@ mod u128_string {
     }
 }
 
-/// Computes the v2 config hash for a [`PipelineConfig`] (design doc §4).
+/// Computes the config hash of a [`PipelineConfig`]:
+/// `"blake3:<64 lowercase hex chars>"` over every field except
+/// `checkpoint_dir`, `tracing_log_path`, `diagnostic_dump_dir` and
+/// `inject_gpu_oom_modulus`.
 ///
-/// The hash is `"blake3:<64 lowercase hex chars>"` over a canonical encoding of
-/// every field that affects simulation results: `seed`, the Es/N0 points,
-/// `target_errors`, `max_frames`, `heartbeat_every_frames`, `parallelism`,
-/// `gpu_enabled`, and `strict_gpu`. The path-dependent fields `checkpoint_dir`
-/// and `tracing_log_path` are **excluded** — they control where output lands,
-/// not the simulation itself, so changing them must not invalidate a checkpoint
-/// directory (design doc §4).
-///
-/// `gpu_enabled` **is** hashed (added by `571c11c4`): the CPU within-SNR
-/// executor and the hybrid strided-partition executor record *differently
-/// shaped* `worker_states[]` (chunk-restart striding vs fixed strided-partition
-/// prefixes) and accumulate path-specific `total_iterations` (design doc §11
-/// excludes `mean_iters` from CPU-vs-GPU byte-identity), so a checkpoint
-/// written by one path must not silently resume on the other.
-///
-/// # Arguments
-///
-/// * `config` — the live pipeline configuration.
-///
-/// # Returns
-///
-/// A `"blake3:<hex>"` string.
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::PipelineConfig;
-/// use gf2_sim::snr_checkpoint::config_hash;
-///
-/// let cfg = PipelineConfig {
-///     seed: 42,
-///     esn0_db_points: vec![6.25],
-///     target_errors: 100,
-///     max_frames: 1000,
-///     heartbeat_every_frames: 10,
-///     checkpoint_dir: None,
-///     tracing_log_path: None,
-///     parallelism: NonZeroUsize::new(4).unwrap(),
-///     gpu_enabled: false,
-///     strict_gpu: false,
-///     diagnostic_dump_dir: None,
-///     inject_gpu_oom_modulus: None,
-/// };
-/// let h = config_hash(&cfg);
-/// assert!(h.starts_with("blake3:"));
-/// // The path-dependent fields do not change the hash.
-/// let cfg2 = PipelineConfig { checkpoint_dir: Some("/tmp/x".into()), ..cfg.clone() };
-/// assert_eq!(config_hash(&cfg), config_hash(&cfg2));
-/// ```
+/// `gpu_enabled` is hashed because the CPU executor and the hybrid executor
+/// record differently shaped `worker_states[]` and path-specific
+/// `total_iterations`, so a checkpoint written by one does not resume on the
+/// other.
 #[must_use]
 pub fn config_hash(config: &PipelineConfig) -> String {
     let mut hasher = blake3::Hasher::new();
@@ -233,22 +150,7 @@ pub fn config_hash(config: &PipelineConfig) -> String {
     format!("blake3:{}", hasher.finalize().to_hex())
 }
 
-/// The checkpoint file name for SNR point `index` (`snr_<NNNN>.json`).
-///
-/// # Arguments
-///
-/// * `dir` — the checkpoint directory.
-/// * `index` — the zero-based SNR-point index.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use gf2_sim::snr_checkpoint::checkpoint_path;
-///
-/// let p = checkpoint_path(Path::new("/tmp/ck"), 5);
-/// assert!(p.ends_with("snr_0005.json"));
-/// ```
+/// The checkpoint file path for SNR point `index` (`<dir>/snr_<NNNN>.json`).
 #[must_use]
 pub fn checkpoint_path(dir: &Path, index: usize) -> PathBuf {
     dir.join(format!("snr_{index:04}.json"))
@@ -294,8 +196,7 @@ impl CheckpointWriter {
 
     /// Writes with an instrumentation callback immediately before file fsync.
     ///
-    /// This retains the existing subprocess seam for the deterministic
-    /// kill-during-fsync regression. Production callers use
+    /// The callback serves the kill-during-fsync test; production callers use
     /// [`write`](Self::write).
     ///
     /// # Errors
@@ -341,8 +242,8 @@ impl CheckpointReader {
     ///
     /// # Errors
     ///
-    /// Any present malformed or mismatched checkpoint is translated to the
-    /// pipeline's established hard configuration-mismatch error.
+    /// Any present malformed or mismatched checkpoint is returned as
+    /// [`BuildError::ConfigHashMismatch`].
     pub fn load(&self, index: usize) -> Result<Option<CheckpointV2>, FatalError> {
         let checkpoint = GenericCheckpointReader::<CheckpointV2, _>::for_payload(
             checkpoint_path(&self.dir, index),
@@ -388,15 +289,14 @@ impl CheckpointReader {
 }
 
 /// Process-wide SIGINT/SIGTERM interrupt flag, lazily installing the `ctrlc`
-/// handler on first access (the design-doc-mandated `ctrlc` crate).
+/// handler on first access.
 static INTERRUPTED: OnceLock<Arc<AtomicBool>> = OnceLock::new();
 
 /// Returns the process-wide interrupt flag, installing the `ctrlc` handler on
 /// first call.
 ///
-/// `OnceLock` guarantees the handler is registered exactly once even under
-/// concurrent access. A failure to install (e.g. a handler already registered
-/// in a test) is ignored — the runner then simply never observes an interrupt.
+/// A failure to install the handler is ignored; the runner then never
+/// observes a signal.
 fn interrupted_flag() -> &'static Arc<AtomicBool> {
     INTERRUPTED.get_or_init(|| {
         let flag = Arc::new(AtomicBool::new(false));
@@ -408,10 +308,8 @@ fn interrupted_flag() -> &'static Arc<AtomicBool> {
     })
 }
 
-/// Clears the interrupt flag so a prior SIGINT does not bleed into a new run.
-///
-/// Call at the start of a campaign. Exposed for tests that drive the
-/// interrupt-flush path deterministically.
+/// Clears the interrupt flag. Call at the start of a campaign so a prior
+/// request does not carry over.
 pub fn clear_interrupt() {
     interrupted_flag().store(false, Ordering::SeqCst);
 }
@@ -423,30 +321,12 @@ pub fn is_interrupted() -> bool {
     interrupted_flag().load(Ordering::SeqCst)
 }
 
-/// Programmatically requests a graceful interrupt, identical in effect to a
-/// SIGINT/SIGTERM.
+/// Requests a graceful interrupt, with the effect of a SIGINT/SIGTERM.
 ///
-/// The next chunk boundary in [`run_snr_point_checkpointed`] (or
-/// [`run_sweep_checkpointed`]) observes the request via [`is_interrupted`],
-/// having already flushed the in-progress heartbeat checkpoint with
-/// `completed = false`, and returns with `interrupted = true`. This is the
-/// programmatic equivalent of the `ctrlc` signal handler: it lets an embedder
-/// (a watchdog, a wall-clock budget, a supervising harness) drive the same
-/// checkpoint-and-stop path without an OS signal, and lets tests exercise the
-/// SIGINT-flush path deterministically. Pair with [`clear_interrupt`] before a
-/// subsequent run so the request does not bleed across runs.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::snr_checkpoint::{clear_interrupt, is_interrupted, request_interrupt};
-///
-/// clear_interrupt();
-/// assert!(!is_interrupted());
-/// request_interrupt();
-/// assert!(is_interrupted());
-/// clear_interrupt();
-/// ```
+/// [`run_snr_point_checkpointed`] and [`run_sweep_checkpointed`] observe the
+/// request at the next chunk boundary, after the chunk's checkpoint is
+/// flushed, and return with `interrupted = true`. Pair with
+/// [`clear_interrupt`] before a subsequent run.
 pub fn request_interrupt() {
     interrupted_flag().store(true, Ordering::SeqCst);
 }
@@ -457,24 +337,14 @@ pub(crate) fn set_interrupted_for_test() {
     request_interrupt();
 }
 
-/// CPU "drain" seam for the checkpoint commit contract (design doc §4).
+/// CPU counterpart of
+/// [`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint);
+/// a no-op.
 ///
-/// On the CPU path a drain is implicit: [`run_snr_point_range`] dispatches a
-/// bounded chunk of frames and its rayon `join` is the settle point — every
-/// in-flight frame completes and increments its worker's count before the call
-/// returns, so there is nothing further to synchronise. This function therefore
-/// returns immediately; it is the **named CPU counterpart** of the GPU drain
-/// [`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint)
-/// (Phase C `571c11c4`, `executor::drain`), which iterates each worker's owned
-/// HIP stream and calls the per-stream `hipStreamSynchronize()` (not
-/// `hipDeviceSynchronize()`) before the counters are latched. It is
-/// intentionally a no-op here, not a fake GPU implementation.
+/// The rayon join inside [`run_snr_point_range`] completes every in-flight
+/// frame before it returns, so the CPU path has nothing to synchronise.
 #[inline]
-pub fn drain_for_checkpoint() {
-    // CPU path: the rayon join in `run_snr_point_range` already settled all
-    // in-flight frames on a frame boundary. The GPU per-stream sync lives in
-    // `Scheduler::drain_for_checkpoint` (`571c11c4`).
-}
+pub fn drain_for_checkpoint() {}
 
 /// Microseconds-since-epoch for the `drain_committed_at_us_since_epoch` stamp.
 fn now_us() -> u128 {
@@ -486,9 +356,7 @@ fn now_us() -> u128 {
 
 /// The outcome of a checkpointed SNR-point run.
 ///
-/// Returned by [`run_snr_point_checkpointed`]. `interrupted` is `true` when the
-/// run stopped early because SIGINT/SIGTERM tripped mid-point (the final
-/// heartbeat checkpoint was flushed before returning).
+/// Returned by [`run_snr_point_checkpointed`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckpointedRun {
     /// The aggregate counters for the point (resumed partial + freshly run).
@@ -499,55 +367,26 @@ pub struct CheckpointedRun {
     pub interrupted: bool,
 }
 
-/// Runs one SNR point with heartbeat + SNR-boundary + SIGINT checkpointing
-/// (design doc §4 deliverable 2).
+/// Runs one SNR point with heartbeat, SNR-boundary and interrupt
+/// checkpointing.
 ///
-/// This is the executor-facing runner. It dispatches the point's frames in
-/// heartbeat-sized chunks over [`run_snr_point_range`], and after **each chunk
-/// settles** (the CPU drain — see [`drain_for_checkpoint`]) it:
+/// Frames are dispatched over [`run_snr_point_range`] in chunks of
+/// `config.heartbeat_every_frames` (one chunk when it is `0`). After each
+/// chunk the runner adds the chunk's counters to the total, records each
+/// worker's cumulative frame count in `worker_states[]`, and writes a
+/// [`CheckpointV2`] through `writer`. It stops at `config.max_frames`, once
+/// `errors >= config.target_errors` when that is non-zero, or when
+/// [`is_interrupted`] holds at a chunk boundary.
 ///
-/// 1. accumulates the chunk's counters into the running total,
-/// 2. latches per-worker `worker_states[]` from the authoritative per-worker
-///    frame counts (each worker's `rng_word_pos =`
-///    [`worker_offset`]`(seed, snr_index,
-///    worker_idx, frames_in_worker)`),
-/// 3. writes a [`CheckpointV2`] atomically.
+/// With `resume = Some(ckpt)` the runner continues from
+/// `ckpt.frames_completed` and folds the loaded counters into the result;
+/// `tests::test_checkpointed_resume_byte_identical_smoke` checks that the
+/// counters equal those of an uninterrupted run. A `resume` that is
+/// `completed` or has `frames_completed >= max_frames` returns its loaded
+/// counters immediately.
 ///
-/// On resume, the caller passes the loaded checkpoint as `resume`; the runner
-/// continues from `resume.frames_completed` and folds the loaded counters into
-/// the result, so the final aggregate is byte-identical to an uninterrupted
-/// run (every frame's outcome is a pure function of its global index — see
-/// [`run_snr_point_range`]).
-///
-/// Early stop: after each chunk the runner checks `target_errors` (stop once
-/// `errors_accumulated >= target_errors`) and SIGINT. On either it flushes a
-/// final checkpoint and returns.
-///
-/// # Arguments
-///
-/// * `config` — the live pipeline config (supplies `seed`, `parallelism`,
-///   `heartbeat_every_frames`, `max_frames`, `target_errors`).
-/// * `snr_index` — zero-based SNR-point index.
-/// * `esn0_db` — the point's Es/N0 (dB), recorded in the checkpoint.
-/// * `writer` — the atomic checkpoint writer.
-/// * `expected_hash` — the live [`config_hash`]; recorded in each checkpoint.
-/// * `resume` — `Some(ckpt)` to continue an interrupted point, `None` to start
-///   fresh. A `resume` whose `frames_completed >= max_frames` (or `completed`)
-///   returns immediately with the loaded counters.
-/// * `make_state` / `sim_frame` — the per-worker state factory and per-frame
-///   closure (see [`run_snr_point_range`]).
-/// * `on_heartbeat_flush` — callback `(snr_index, frames_completed)` fired
-///   **after each WITHIN-point (non-final) heartbeat checkpoint write** — i.e.
-///   the flushes where the point has not yet completed. It is **not** fired for
-///   the final SNR-boundary flush (that is the point-complete event the sweep
-///   reports). A CLI driver can use it to emit a mid-point progress marker so a
-///   parent can deliver a SIGINT while the point is still simulating; pass
-///   `|_, _| {}` if unused.
-///
-/// # Returns
-///
-/// A [`CheckpointedRun`] with the aggregate counters and the completed /
-/// interrupted flags.
+/// `on_heartbeat_flush(snr_index, frames_completed)` fires after each
+/// checkpoint write that leaves the point incomplete.
 ///
 /// # Errors
 ///
@@ -556,44 +395,6 @@ pub struct CheckpointedRun {
 /// # Complexity
 ///
 /// `O(frames_run)` frame closures across `config.parallelism` workers.
-///
-/// # Examples
-///
-/// ```no_run
-/// use std::num::NonZeroUsize;
-/// use gf2_sim::PipelineConfig;
-/// use gf2_sim::snr_checkpoint::{config_hash, run_snr_point_checkpointed, CheckpointWriter};
-/// use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
-/// use rand::Rng as _;
-///
-/// let config = PipelineConfig {
-///     seed: 7,
-///     esn0_db_points: vec![3.0],
-///     target_errors: 0,
-///     max_frames: 8,
-///     heartbeat_every_frames: 4,
-///     checkpoint_dir: Some("/tmp/snr".into()),
-///     tracing_log_path: None,
-///     parallelism: NonZeroUsize::new(2).unwrap(),
-///     gpu_enabled: false,
-///     strict_gpu: false,
-///     diagnostic_dump_dir: None,
-///     inject_gpu_oom_modulus: None,
-/// };
-/// let h = config_hash(&config);
-/// let writer = CheckpointWriter::new("/tmp/snr").unwrap();
-/// let run = run_snr_point_checkpointed(
-///     &config, 0, 3.0, &writer, &h, None,
-///     || (),
-///     |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
-///         let x: u64 = ctx.rng_mut().random();
-///         FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
-///     },
-///     |_snr, _frames| {}, // per-heartbeat-flush callback (unused here)
-/// )
-/// .unwrap();
-/// assert!(run.completed);
-/// ```
 #[allow(clippy::too_many_arguments)]
 pub fn run_snr_point_checkpointed<S, M, F, H>(
     config: &PipelineConfig,
@@ -616,20 +417,15 @@ where
     let max_frames = config.max_frames as usize;
     let target_errors = config.target_errors;
 
-    // Heartbeat chunk size (0 disables within-SNR heartbeats: one chunk to the
-    // end, with only the SNR-boundary flush).
     let chunk = if config.heartbeat_every_frames == 0 {
         max_frames
     } else {
         config.heartbeat_every_frames as usize
     };
 
-    // Resume state: start frame, folded-in counters, and the authoritative
-    // per-worker cumulative frame counts (the SSOT for `worker_states[]`,
-    // design doc §4 step 3). `cumulative[w]` is the number of frames worker `w`
-    // has completed across all chunks so far; it is NOT the analytic
-    // `0..frames_completed` distribution, because the chunked dispatch restarts
-    // its striding at each chunk's `start` (see `run_snr_point_range`).
+    // `cumulative[w]` counts the frames worker `w` completed across all
+    // chunks. It differs from a single `0..frames_completed` striding because
+    // each chunk's striding restarts at the chunk's `start`.
     let mut start = 0usize;
     let mut total = WorkerCounters::default();
     let mut cumulative = vec![0u64; num_workers];
@@ -643,10 +439,8 @@ where
         }
         start = ck.frames_completed as usize;
         total = loaded_counters(ck);
-        // Carry forward the pre-interruption per-worker counts so the resumed
-        // checkpoint's `worker_states[]` include them. A resumed run under a
-        // different worker count maps positionally by `worker_idx` (any extra
-        // workers start at 0; surplus loaded entries are ignored).
+        // Loaded entries map by `worker_idx`; entries at or above
+        // `num_workers` are ignored.
         for ws in &ck.worker_states {
             if ws.worker_idx < num_workers {
                 cumulative[ws.worker_idx] = ws.frames_in_worker;
@@ -672,12 +466,9 @@ where
             &make_state,
             &sim_frame,
         );
-        // CPU drain: rayon join above already settled every in-flight frame on
-        // a frame boundary; this is the named seam for the Phase C GPU drain.
         drain_for_checkpoint();
 
         total = WorkerCounters::reduce_in_worker_order(&[total, out.counters]);
-        // Accumulate the authoritative per-worker counts this chunk reported.
         for (w, &chunk_frames) in out.per_worker_frames.iter().enumerate() {
             cumulative[w] += chunk_frames;
         }
@@ -700,9 +491,6 @@ where
         if completed {
             break;
         }
-        // A within-point (non-final) heartbeat flush just hit disk with
-        // `0 < frames_completed < max_frames` and per-worker state. Notify the
-        // driver so it can emit a mid-point progress marker.
         on_heartbeat_flush(snr_index, total.frames);
     }
 
@@ -714,81 +502,32 @@ where
 }
 
 /// The outcome of a full checkpointed SNR sweep ([`run_sweep_checkpointed`]).
-///
-/// `per_point` holds one [`CheckpointedRun`] per SNR point actually run (a
-/// resumed sweep that skips already-completed leading points still records them
-/// from their loaded checkpoints). `interrupted` is `true` if a SIGINT/SIGTERM
-/// stopped the sweep before every point completed; in that case `per_point` is
-/// truncated at the interrupted point (whose checkpoint was already flushed).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SweepRun {
     /// One [`CheckpointedRun`] per SNR point that was run or loaded, in
-    /// SNR-point order.
+    /// SNR-point order, ending at the interrupted point if any.
     pub per_point: Vec<CheckpointedRun>,
     /// `true` if the sweep stopped early on SIGINT/SIGTERM.
     pub interrupted: bool,
 }
 
-/// Runs a full **SNR sweep** with per-point checkpoint/resume and SIGINT-aware
-/// early stop (design doc §4; issue criterion 1, deliverable 2).
+/// Runs an SNR sweep with per-point checkpoint/resume and interrupt-aware
+/// early stop.
 ///
-/// This is the sweep-level driver over [`run_snr_point_checkpointed`]. SNR
-/// points are processed **serially** (cross-SNR parallelism is deliberately not
-/// in the contract — the within-SNR frame parallelism, design doc §3, is the
-/// concurrency model). For each point `idx` with Es/N0 `config.esn0_db_points[idx]`:
+/// SNR points run serially. For point `idx` the sweep loads `snr_<idx>.json`
+/// from the writer's directory when `resume` is set (a missing file is a
+/// fresh point), obtains `(make_state, sim_frame)` from
+/// `make_point(idx, esn0_db)`, and runs [`run_snr_point_checkpointed`]. An
+/// interrupted point ends the sweep with `interrupted: true`.
 ///
-/// 1. If `resume` is set, load `<checkpoint_dir>/snr_<idx>.json` via
-///    [`CheckpointReader`] (a missing file ⇒ fresh point; a non-v2 or
-///    hash-mismatched file ⇒ the load error propagates as
-///    [`FatalError`]).
-/// 2. Build the point's per-worker state factory and per-frame closure from
-///    `make_point(idx, esn0_db)`.
-/// 3. Run [`run_snr_point_checkpointed`], which flushes a v2 checkpoint at the
-///    heartbeat cadence, at the SNR boundary, and on SIGINT.
-///
-/// If a point returns `interrupted`, the sweep stops immediately (its
-/// checkpoint was already flushed by `run_snr_point_checkpointed`) and the
-/// returned [`SweepRun`] carries `interrupted: true`. Resuming the sweep
-/// (`resume = true` with the same `checkpoint_dir`) continues byte-identically:
-/// completed points are skipped via their loaded checkpoints, the interrupted
-/// point resumes from its recorded `frames_completed`, and the per-frame
-/// outcome is a pure function of the global frame index (design doc §3), so the
-/// aggregate matches an uninterrupted run at the same seed.
-///
-/// # Arguments
-///
-/// * `config` — the live pipeline config (supplies `esn0_db_points`, `seed`,
-///   `parallelism`, `heartbeat_every_frames`, `max_frames`, `target_errors`).
-/// * `writer` — the atomic checkpoint writer (its directory must match the
-///   reader directory for resume to find prior checkpoints).
-/// * `expected_hash` — the live [`config_hash`]; recorded in each checkpoint and
-///   required of any loaded checkpoint.
-/// * `resume` — `true` to load and continue from existing checkpoints in the
-///   writer's directory; `false` to start every point fresh.
-/// * `make_point` — factory `(snr_idx, esn0_db) -> (make_state, sim_frame)`
-///   producing the point's per-worker state factory and per-frame closure. It
-///   is called once per SNR point, so each point can bind channel parameters
-///   derived from its Es/N0.
-/// * `on_point_complete` — callback `(snr_idx, esn0_db, &CheckpointedRun)` fired
-///   once per SNR point **after** its SNR-boundary checkpoint has been flushed
-///   and the point finished (it is not called for an interrupted point, whose
-///   run stops before completion). A CLI driver can use it to emit a
-///   progress marker; pass `|_, _, _| {}` if unused.
-/// * `on_heartbeat_flush` — callback `(snr_idx, frames_completed)` threaded into
-///   [`run_snr_point_checkpointed`]; fired after each within-point (non-final)
-///   heartbeat checkpoint write. A CLI driver can use it to emit a *mid-point*
-///   progress marker (so a parent can deliver a SIGINT while a point is still
-///   simulating); pass `|_, _| {}` if unused.
-///
-/// # Returns
-///
-/// A [`SweepRun`] with the per-point runs and the aggregate `interrupted` flag.
+/// `on_point_complete(snr_idx, esn0_db, &run)` fires once per point that was
+/// not interrupted; `on_heartbeat_flush` is passed to
+/// [`run_snr_point_checkpointed`].
 ///
 /// # Errors
 ///
-/// Propagates a [`FatalError`] from a checkpoint load
-/// (non-v2 schema or `config_hash` mismatch), or a [`std::io::Error`] from a
-/// checkpoint write, boxed as [`SweepError`].
+/// [`SweepError::Load`] for a present checkpoint that is malformed or
+/// mismatched, [`SweepError::Io`] for a failed checkpoint write.
 ///
 /// # Complexity
 ///
@@ -878,8 +617,6 @@ where
         .map_err(SweepError::Io)?;
 
         let was_interrupted = run.interrupted;
-        // Fire the completion callback only for a finished point (its
-        // SNR-boundary checkpoint is on disk); never for an interrupted point.
         if !was_interrupted {
             on_point_complete(idx, esn0_db, &run);
         }
@@ -896,20 +633,17 @@ where
     })
 }
 
-/// Error from [`run_sweep_checkpointed`].
-///
-/// Either a fatal checkpoint-load error (non-v2 schema or `config_hash`
-/// mismatch) or an I/O error from a checkpoint write.
+/// Error from a checkpointed sweep.
 #[derive(Debug)]
 pub enum SweepError {
     /// A loaded checkpoint was invalid (see [`CheckpointReader::load`]).
     Load(FatalError),
     /// A checkpoint write failed.
     Io(std::io::Error),
-    /// A pipeline stage faulted during a checkpointed run (the hybrid CPU+GPU
-    /// sweep, [`Scheduler::run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed),
-    /// `571c11c4`): a GPU decode fault, a failed per-stream drain, or a config
-    /// validation error (e.g. a missing `checkpoint_dir`).
+    /// A pipeline stage faulted during the hybrid CPU+GPU sweep
+    /// ([`Scheduler::run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed)):
+    /// a GPU decode fault, a failed per-stream drain, or a config validation
+    /// error (e.g. a missing `checkpoint_dir`).
     Stage(StageError),
 }
 
@@ -926,9 +660,6 @@ impl std::fmt::Display for SweepError {
 impl std::error::Error for SweepError {}
 
 /// Reconstructs the running [`WorkerCounters`] from a loaded checkpoint.
-///
-/// `pub(crate)`: the hybrid checkpointed runner (`executor::drain`, `571c11c4`)
-/// folds loaded counters with this same helper so the projection stays SSOT.
 pub(crate) fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
     WorkerCounters {
         frames: ck.frames_completed,
@@ -939,33 +670,15 @@ pub(crate) fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
     }
 }
 
-/// Builds a [`CheckpointV2`] from the running totals, latching per-worker
-/// `worker_states[]` from the **authoritative** per-worker frame counts.
+/// Builds a [`CheckpointV2`] from the running totals and the per-worker
+/// cumulative completed-frame counts.
 ///
-/// `per_worker_frames[w]` is worker `w`'s cumulative completed-frame count —
-/// the executor's authoritative counter (design doc §4 "Drain commit contract",
-/// step 3): on the CPU path, as reported by [`run_snr_point_range`] across
-/// every chunk so far; on the hybrid path (`executor::drain`, `571c11c4`), the
-/// worker's strided-partition progress latched after the GPU drain. It is
-/// recorded verbatim and is **not** recomputed from an analytic
-/// `0..frames_completed` striding, which would be wrong under the CPU chunked
-/// dispatch (the per-chunk striding restarts at each chunk's `start`, so the
-/// real per-worker distribution differs from a single-dispatch distribution).
-///
-/// Each worker's recorded `rng_word_pos` is `worker_offset(seed, snr_index,
-/// worker_idx, frames_in_worker)` — the per-worker stream position per design
-/// doc §4's drain contract. The **CPU** within-SNR path (Phase A) does not
-/// itself seek to this position on resume: it keys every frame on the *global*
-/// frame index (§3, `worker_offset(seed, snr_idx, 0, g)`) and resumes via the
-/// global `frames_completed` (§4 step 5, amended 2026-06-08). `rng_word_pos` is
-/// recorded per the v2 schema; per the 2026-06-10 §4 amendment **no executor
-/// reads it back** — the hybrid executor (`571c11c4`) restores per-worker
-/// *progress* from `frames_in_worker` and re-derives per-frame RNG positions
-/// from the global frame index.
-///
-/// `pub(crate)`: the hybrid checkpointed runner (`executor::drain`, `571c11c4`)
-/// latches its post-drain `worker_states[]` through this same constructor so
-/// the v2 schema projection stays SSOT.
+/// `per_worker_frames[w]` is recorded verbatim: under the CPU chunked dispatch
+/// the striding restarts at each chunk's `start`, so the counts differ from a
+/// single `0..frames_completed` striding
+/// (`tests::test_worker_states_record_authoritative_chunked_distribution`).
+/// Each `rng_word_pos` is
+/// [`worker_offset`]`(seed, snr_index, worker_idx, frames_in_worker)`.
 pub(crate) fn build_checkpoint(
     config: &PipelineConfig,
     snr_index: usize,
@@ -979,14 +692,6 @@ pub(crate) fn build_checkpoint(
         .iter()
         .enumerate()
         .map(|(w, &frames_in_worker)| {
-            // Record the per-worker stream position per design-doc §4's drain
-            // contract: `worker_offset(seed, snr_idx, worker_idx, frames_in_worker)`
-            // with the *physical* `worker_idx = w`. NO executor reads it back
-            // (§4 amendment 2026-06-10): every executor keys every frame on the
-            // global index (§3, `worker_offset(.., 0, g)`) — the CPU path resumes
-            // via the global `frames_completed`, the hybrid executor (`571c11c4`)
-            // via the per-worker `frames_in_worker` progress. The position is
-            // recorded for v2 schema fidelity only.
             let rng_word_pos = worker_offset(config.seed, snr_index, w, frames_in_worker as usize);
             WorkerState {
                 worker_idx: w,
@@ -1022,20 +727,10 @@ mod tests {
     use rand::Rng as _;
     use std::num::NonZeroUsize;
 
-    /// Serializes unit tests that touch the process-wide interrupt flag (the
-    /// SIGINT path read inside [`run_snr_point_checkpointed`]). Bare `cargo test`
-    /// runs a crate's unit tests multi-threaded in **one process**, so without
-    /// this guard a test that trips the global flag can bleed it into a
-    /// concurrent run that expects to complete (observed as spurious
-    /// `assertion failed: run.completed`). `nextest` runs one process per test
-    /// and is immune, but the `tests` gate uses `cargo test`.
+    /// Serializes tests that touch the process-wide interrupt flag: `cargo
+    /// test` runs a crate's unit tests multi-threaded in one process.
     static INTERRUPT_FLAG_GUARD: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-    /// Acquires [`INTERRUPT_FLAG_GUARD`] (recovering from poisoning so a single
-    /// panicking test does not cascade) and clears any stale interrupt request.
-    /// Hold the returned guard for the whole test so no other flag-touching test
-    /// runs concurrently (`MutexGuard` is itself `#[must_use]`, so a dropped
-    /// return is caught by the compiler).
     fn interrupt_test_lock() -> std::sync::MutexGuard<'static, ()> {
         let guard = INTERRUPT_FLAG_GUARD
             .lock()
@@ -1061,8 +756,6 @@ mod tests {
         }
     }
 
-    /// A synthetic stateless per-frame closure whose outcome is a pure function
-    /// of the global frame index (draws two f64s like the real channel).
     fn synth_frame(_g: usize, ctx: &mut WorkerCtx, _s: &mut ()) -> FrameOutcome {
         let u1: f64 = ctx.rng_mut().random();
         let u2: f64 = ctx.rng_mut().random();
@@ -1084,7 +777,6 @@ mod tests {
             ..cfg.clone()
         };
         assert_eq!(config_hash(&cfg), config_hash(&with_paths));
-        // A result-affecting field flips the hash.
         let diff_seed = PipelineConfig {
             seed: 1,
             ..cfg.clone()
@@ -1094,10 +786,6 @@ mod tests {
 
     #[test]
     fn test_config_hash_includes_gpu_enabled() {
-        // `gpu_enabled` IS result-affecting (`571c11c4`): the CPU and hybrid
-        // executors record differently shaped `worker_states[]` and
-        // path-specific `total_iterations`, so a checkpoint written by one path
-        // must not resume on the other. Flipping the flag must flip the hash.
         let cfg = test_config(4);
         let gpu = PipelineConfig {
             gpu_enabled: true,
@@ -1120,9 +808,7 @@ mod tests {
             total_bits: 448,
             total_bit_errors: 3,
         };
-        // The authoritative per-worker counts (8/6 for a 2-worker, 2-chunk
-        // dispatch of 14 frames — NOT the analytic 7/7); see
-        // `test_worker_states_record_authoritative_chunked_distribution`.
+        // 8/6: the 2-worker, 2-chunk distribution of 14 frames.
         let per_worker_frames = [8u64, 6u64];
         let ckpt = build_checkpoint(
             &cfg,
@@ -1136,14 +822,10 @@ mod tests {
         let json = serde_json::to_string(&ckpt).unwrap();
         let back: CheckpointV2 = serde_json::from_str(&json).unwrap();
         assert_eq!(ckpt, back);
-        // rng_word_pos serialised as a string.
         assert!(json.contains("\"rng_word_pos\":\""));
-        // worker_states required and recorded verbatim from the authoritative
-        // counts (8/6), not recomputed.
         assert_eq!(back.worker_states.len(), 2);
         assert_eq!(back.worker_states[0].frames_in_worker, 8);
         assert_eq!(back.worker_states[1].frames_in_worker, 6);
-        // Invariant: per-worker counts sum to frames_completed.
         let sum: u64 = back.worker_states.iter().map(|w| w.frames_in_worker).sum();
         assert_eq!(sum, back.frames_completed);
     }
@@ -1225,9 +907,6 @@ mod tests {
     #[test]
     fn test_reader_rejects_non_v2_shaped_file() {
         let dir = tempdir();
-        // A present file whose JSON does not match the v2 schema (missing
-        // worker_states / schema_version) is not a valid v2 checkpoint and must
-        // be rejected, never silently accepted.
         let not_v2 = r#"{ "snr_index": 0, "eb_n0_db": 1.99, "frames_completed": 100,
             "rng_word_pos": "13060800", "completed": true,
             "config_hash": "blake3:ef56" }"#;
@@ -1243,8 +922,6 @@ mod tests {
 
     #[test]
     fn test_atomic_write_no_partial_on_existing() {
-        // Writing twice leaves a complete, parseable file each time (no .tmp
-        // residue under the canonical name).
         let dir = tempdir();
         let cfg = test_config(1);
         let h = config_hash(&cfg);
@@ -1261,24 +938,16 @@ mod tests {
         let loaded = reader.load(0).unwrap().unwrap();
         assert_eq!(loaded.frames_completed, 10);
         assert!(loaded.completed);
-        // No leftover canonical-name .tmp.
         assert!(!dir.path().join("snr_0000.tmp").exists());
     }
 
     #[test]
     fn test_atomic_write_crash_mid_flush_leaves_previous_state() {
-        // Models a crash (or SIGINT) *during* the next write: the tmp file is
-        // half-written and never renamed. The canonical checkpoint must still be
-        // the complete previous state, and the v2 reader must load it cleanly —
-        // never the torn tmp. This is the structural guarantee of the
-        // tmp+fsync+rename sequence (the canonical name is only ever replaced by
-        // an atomic rename).
         let dir = tempdir();
         let cfg = test_config(1);
         let h = config_hash(&cfg);
         let writer = CheckpointWriter::new(dir.path()).unwrap();
 
-        // First, a complete previous-state checkpoint.
         let prev = WorkerCounters {
             frames: 7,
             ..Default::default()
@@ -1286,8 +955,6 @@ mod tests {
         let c_prev = build_checkpoint(&cfg, 0, 6.25, &h, &prev, &[7], false);
         writer.write(&c_prev).unwrap();
 
-        // Simulate a crash mid-flush of the *next* checkpoint: a half-written
-        // tmp sibling that was never renamed (truncated JSON).
         let tmp = dir
             .path()
             .join(format!("snr_0000.{}.tmp", std::process::id()));
@@ -1297,7 +964,6 @@ mod tests {
         )
         .unwrap();
 
-        // The canonical file is untouched and still loads as the previous state.
         let reader = CheckpointReader::new(dir.path(), h);
         let loaded = reader
             .load(0)
@@ -1305,7 +971,6 @@ mod tests {
             .expect("canonical checkpoint must exist");
         assert_eq!(loaded.frames_completed, 7);
         assert!(!loaded.completed);
-        // The torn tmp never masquerades as the checkpoint.
         assert!(
             tmp.exists(),
             "the half-written tmp is still on disk (orphaned)"
@@ -1315,8 +980,6 @@ mod tests {
     #[test]
     fn test_checkpointed_resume_byte_identical_smoke() {
         let _guard = interrupt_test_lock();
-        // Uninterrupted reference vs checkpoint-at-chunk-boundary resume must be
-        // byte-identical. Small frame counts keep the fast tier under 5 s.
         let cfg = test_config(2);
         let h = config_hash(&cfg);
 
@@ -1337,8 +1000,6 @@ mod tests {
         .unwrap();
         assert!(reference.completed);
 
-        // Interrupted run: stop after the first heartbeat chunk, then resume
-        // from the written checkpoint.
         let dir = tempdir();
         let writer = CheckpointWriter::new(dir.path()).unwrap();
         let interrupt_cfg = PipelineConfig {
@@ -1360,9 +1021,6 @@ mod tests {
         .unwrap();
         assert!(partial.completed); // hit its (reduced) max_frames
 
-        // Load the partial checkpoint, then resume under the full config.
-        // The partial checkpoint was written by `interrupt_cfg`; rewrite the
-        // recorded frames_completed under the full config for resume.
         let reader = CheckpointReader::new(dir.path(), h.clone());
         let mut loaded = reader.load(0).unwrap().unwrap();
         loaded.completed = false; // continue the point under the full budget
@@ -1389,14 +1047,12 @@ mod tests {
     #[test]
     fn test_worker_states_record_authoritative_chunked_distribution() {
         let _guard = interrupt_test_lock();
-        // The recorded worker_states[].frames_in_worker must be the AUTHORITATIVE
-        // per-worker counter (design doc §4 step 3), not an analytic recompute.
         // For 14 frames as chunks 0..7 then 7..14 with 2 workers, the per-chunk
         // striding restarts at each chunk's `start`:
         //   chunk 0..7  : worker0 = {0,2,4,6}   = 4, worker1 = {1,3,5}    = 3
         //   chunk 7..14 : worker0 = {7,9,11,13} = 4, worker1 = {8,10,12}  = 3
         //   cumulative  : worker0 = 8,             worker1 = 6
-        // => 8/6, NOT the single-dispatch analytic 7/7.
+        // where a single dispatch gives 7/7.
         let cfg = PipelineConfig {
             max_frames: 14,
             heartbeat_every_frames: 7,
@@ -1427,7 +1083,6 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(loaded.worker_states.len(), 2);
-        // Authoritative chunked distribution: 8/6, not the analytic 7/7.
         assert_eq!(
             loaded.worker_states[0].frames_in_worker, 8,
             "worker 0 must record its real chunked count (8), not the analytic 7"
@@ -1436,7 +1091,6 @@ mod tests {
             loaded.worker_states[1].frames_in_worker, 6,
             "worker 1 must record its real chunked count (6), not the analytic 7"
         );
-        // Invariant: per-worker counts sum to frames_completed.
         let sum: u64 = loaded
             .worker_states
             .iter()
@@ -1448,13 +1102,6 @@ mod tests {
 
     #[test]
     fn test_worker_states_rng_word_pos_uses_real_worker_idx() {
-        // Regression guard (design-doc §4 formula): `rng_word_pos` must be keyed
-        // on the PHYSICAL `worker_idx`, NOT hardcoded to 0. Worker 1's recorded
-        // position must equal `worker_offset(seed, snr, 1, frames_in_worker[1])`
-        // and must DIFFER from the `worker_idx = 0` projection — otherwise the
-        // prior bug (every worker collapsed onto the worker-0 axis) could
-        // silently reappear. The CPU within-SNR path itself resumes via the
-        // global `frames_completed`; this field is for the Phase C executor.
         let cfg = test_config(2);
         let h = config_hash(&cfg);
         let snr = 3usize;
@@ -1467,7 +1114,6 @@ mod tests {
         assert_eq!(ckpt.worker_states.len(), 2);
         assert_eq!(ckpt.worker_states[0].worker_idx, 0);
         assert_eq!(ckpt.worker_states[1].worker_idx, 1);
-        // Each position is the §4-formula offset keyed on the physical worker_idx.
         assert_eq!(
             ckpt.worker_states[0].rng_word_pos,
             worker_offset(cfg.seed, snr, 0, 8)
@@ -1477,7 +1123,6 @@ mod tests {
             worker_offset(cfg.seed, snr, 1, 6),
             "worker 1 must be keyed on worker_idx=1, not 0"
         );
-        // The old worker_idx=0 bug would have made this hold; assert it does NOT.
         assert_ne!(
             ckpt.worker_states[1].rng_word_pos,
             worker_offset(cfg.seed, snr, 0, 6),
@@ -1492,8 +1137,6 @@ mod tests {
         let h = config_hash(&cfg);
         let dir = tempdir();
         let writer = CheckpointWriter::new(dir.path()).unwrap();
-        // Trip the interrupt before the run: the first chunk check stops it with
-        // no chunk run and no checkpoint file (start == 0, nothing committed).
         set_interrupted_for_test();
         let run = run_snr_point_checkpointed(
             &cfg,
@@ -1516,12 +1159,6 @@ mod tests {
     #[test]
     fn test_sigint_mid_run_flushes_resumable_checkpoint() {
         let _guard = interrupt_test_lock();
-        // A SIGINT *after* the first chunk completes must (1) stop the run and
-        // (2) leave a flushed, resumable v2 checkpoint on disk carrying the
-        // first chunk's committed frames. The interrupt is tripped from inside
-        // the sim closure once the chunk's last global frame has been seen, so
-        // the next chunk-boundary check halts the loop — but only after the
-        // first chunk's checkpoint was already written.
         clear_interrupt();
         let cfg = test_config(1); // single worker, heartbeat = 7, max = 40
         let h = config_hash(&cfg);
@@ -1544,11 +1181,8 @@ mod tests {
 
         assert!(run.interrupted, "the mid-run SIGINT must stop the run");
         assert!(!run.completed);
-        // Exactly the first chunk's frames were committed before the halt.
         assert_eq!(run.counters.frames, 7);
 
-        // A resumable checkpoint was flushed: it loads, is not completed, and
-        // records the 7 committed frames.
         let loaded = CheckpointReader::new(dir.path(), h)
             .load(0)
             .unwrap()
