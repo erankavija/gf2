@@ -1,47 +1,10 @@
 //! DVB-T2 BCH outer codes on the canonical construction model.
 //!
-//! ETSI EN 302 755 defines the outer BCH code of each FECFRAME as a shortened
-//! primitive narrow-sense BCH code over the splitting field its frame size
-//! selects. [`dvb_t2_bch_code`] builds that code from the standard's tables:
-//! it constructs the mother code the standard's generator product describes
-//! and removes the leading message coordinates that shortening drops, so the
-//! result is a [`Shortened<DvbT2MotherCode>`](Shortened) carrying the
-//! canonical block-code, encoding, and matrix capabilities.
-//!
-//! [`params`] holds the ETSI EN 302 755 Tables 6a and 6b parameters and
-//! [`generators`] the standard's explicit minimal polynomials $g_1$ to
-//! $g_{12}$, which the construction is checked against.
-//!
-//! # Frame types and rates
-//!
-//! Short frames use $\mathrm{GF}(2^{14})$ with $t = 12$; normal frames use
-//! $\mathrm{GF}(2^{16})$ with $t = 12$ or $t = 10$. Both frame sizes carry
-//! the six code rates of [`CodeRate`], so twelve configurations exist.
-//!
-//! # Declared coordinate layout
-//!
-//! The standard transmits the highest-degree coefficient first, in both the
-//! message block and the parity block, so the constructor declares
-//! [`SystematicLayout::MessageParityDescending`], named [`DVB_T2_LAYOUT`]:
-//! user coordinate $u$ of the mother carries the coefficient of
-//! $x^{n - 1 - u}$, and the shortened code's coordinate $d$ is a message bit
-//! for $d < K_{bch}$ and a parity bit above it, as the standard's bit order
-//! requires.
-//!
-//! [`DvbT2MotherCode`] is the canonical mother code in a [`LayoutView`] under
-//! that declaration, so its encoder and both matrices describe the
-//! standard's order.
-//!
-//! # Concatenation with LDPC
-//!
-//! The BCH codeword is the LDPC information block:
-//!
-//! ```text
-//! BBFRAME (K_bch) -> BCH encode -> N_bch = K_ldpc -> LDPC encode -> N_ldpc
-//! ```
-//!
-//! For the normal frame at rate 1/2 that reads 32208 -> 32400 -> 64800.
-//! [`crate::ldpc::dvb_t2::concat::DvbT2Concat`] wires the two together.
+//! `@/citation/Etsi2015` defines the outer BCH code of each FECFRAME as a
+//! shortened primitive narrow-sense BCH code over the splitting field its
+//! frame size selects. [`dvb_t2_bch_code`] builds that code from the
+//! standard's tables as a [`Shortened<DvbT2MotherCode>`](Shortened) in the
+//! standard's transmission order, [`DVB_T2_LAYOUT`].
 //!
 //! # Decoding through the mother
 //!
@@ -95,7 +58,7 @@ use crate::CodeRate;
 
 /// The systematic user layout the DVB-T2 outer BCH code declares.
 ///
-/// ETSI EN 302 755 writes the message polynomial with its first information
+/// `@/citation/Etsi2015` writes the message polynomial with its first information
 /// bit at the highest degree and appends the remainder in the same order, so
 /// the standard's transmission order is
 /// [`SystematicLayout::MessageParityDescending`].
@@ -159,10 +122,6 @@ pub fn dvb_t2_bch_code(frame_size: FrameSize, rate: CodeRate) -> Result<DvbT2Bch
         })?;
     Ok(Shortened::shorten_first(mother, shortening)?)
 }
-
-// ---------------------------------------------------------------------------
-// The outer decoder
-// ---------------------------------------------------------------------------
 
 /// Reusable scratch for one [`DvbT2BchDecoder`] call.
 ///
@@ -380,10 +339,9 @@ mod tests {
     use rand::{Rng, SeedableRng};
     use std::collections::BTreeSet;
 
-    /// Seed of the payloads and error patterns these cases draw.
     const SEED: u64 = 0xAE03_BCD0;
 
-    /// The twelve configurations ETSI EN 302 755 Tables 6a and 6b define.
+    /// The twelve configurations `@/citation/Etsi2015` Tables 6a and 6b define.
     fn configurations() -> Vec<(FrameSize, CodeRate)> {
         let mut configurations = Vec::with_capacity(12);
         for frame_size in [FrameSize::Short, FrameSize::Normal] {
@@ -401,7 +359,6 @@ mod tests {
         configurations
     }
 
-    /// Returns `count` distinct coordinates below `length`, drawn from `seed`.
     fn error_positions(length: usize, count: usize, seed: u64) -> Vec<usize> {
         let mut rng = StdRng::seed_from_u64(seed);
         let mut positions = BTreeSet::new();
@@ -598,8 +555,6 @@ mod tests {
                 );
             }
 
-            // A dense error pattern leaves the bounded-distance procedure no
-            // verified correction to report.
             let mut dense = codeword.clone();
             for position in error_positions(params.n, 2 * params.t, SEED + 1) {
                 dense.set(position, !dense.get(position));

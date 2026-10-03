@@ -1,4 +1,4 @@
-//! DVB-T2 BCH code parameters from ETSI EN 302 755.
+//! DVB-T2 BCH code parameters from `@/citation/Etsi2015`.
 
 use crate::CodeRate;
 
@@ -33,24 +33,11 @@ pub struct DvbBchParams {
 
 impl DvbBchParams {
     /// Get DVB-T2 BCH parameters for a given configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::bch::dvb_t2::{DvbBchParams, FrameSize};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let params = DvbBchParams::for_code(FrameSize::Normal, CodeRate::Rate1_2);
-    /// assert_eq!(params.n, 32400);  // BCH output = k_ldpc
-    /// assert_eq!(params.k, 32208);  // BCH input = Kbch
-    /// assert_eq!(params.m, 192);    // BCH parity
-    /// assert_eq!(params.t, 12);
-    /// ```
     pub fn for_code(frame_size: FrameSize, rate: CodeRate) -> Self {
         let (n, k, t, field_m, primitive_poly) = match (frame_size, rate) {
             // Short frames: GF(2^14), x^14 + x^5 + x^3 + x + 1, t=12 for all rates
             // n = k_ldpc (BCH output = LDPC input), k = Kbch, m = BCH parity = 168
-            // From ETSI EN 302 755 Table 6a
+            // From `@/citation/Etsi2015` Table 6a
             (FrameSize::Short, CodeRate::Rate1_2) => (7200, 7032, 12, 14, 0b100000000101011),
             (FrameSize::Short, CodeRate::Rate3_5) => (9720, 9552, 12, 14, 0b100000000101011),
             (FrameSize::Short, CodeRate::Rate2_3) => (10800, 10632, 12, 14, 0b100000000101011),
@@ -60,7 +47,7 @@ impl DvbBchParams {
 
             // Normal frames: GF(2^16), x^16 + x^5 + x^3 + x^2 + 1, t=12 or t=10
             // n = k_ldpc (BCH output = LDPC input), k = Kbch, m = BCH parity = 192 or 160
-            // From ETSI EN 302 755 Table 6b
+            // From `@/citation/Etsi2015` Table 6b
             (FrameSize::Normal, CodeRate::Rate1_2) => (32400, 32208, 12, 16, 0b10000000000101101),
             (FrameSize::Normal, CodeRate::Rate3_5) => (38880, 38688, 12, 16, 0b10000000000101101),
             (FrameSize::Normal, CodeRate::Rate2_3) => (43200, 43040, 10, 16, 0b10000000000101101),

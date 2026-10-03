@@ -1,16 +1,10 @@
-//! DVB-T2 BCH generator polynomials from ETSI EN 302 755.
-//!
-//! These are the explicit generator polynomials g_1(x) through g_12(x) from the standard.
-//! The actual generator polynomial for a t-error correcting code is:
-//!
-//! g(x) = g_1(x) × g_2(x) × ... × g_t(x)
+//! DVB-T2 BCH generator polynomials g_1(x) through g_12(x) from
+//! `@/citation/Etsi2015`. The generator polynomial of a t-error-correcting
+//! code is g_1(x) × g_2(x) × ... × g_t(x).
 
 use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
 
-/// Short frame generator polynomials over GF(2^14).
-///
-/// From ETSI EN 302 755, these are g_1(x) through g_12(x).
-/// The generator for a t-error correcting code is the product of the first t polynomials.
+/// Short frame generator polynomials over GF(2^14), as exponent lists.
 pub const SHORT_GENERATORS: &[&[usize]] = &[
     &[0, 1, 3, 5, 14],
     &[0, 6, 8, 11, 14],
@@ -26,10 +20,7 @@ pub const SHORT_GENERATORS: &[&[usize]] = &[
     &[0, 1, 2, 3, 5, 6, 7, 8, 10, 13, 14],
 ];
 
-/// Normal frame generator polynomials over GF(2^16).
-///
-/// From ETSI EN 302 755, these are g_1(x) through g_12(x).
-/// The generator for a t-error correcting code is the product of the first t polynomials.
+/// Normal frame generator polynomials over GF(2^16), as exponent lists.
 pub const NORMAL_GENERATORS: &[&[usize]] = &[
     &[0, 2, 3, 5, 16],
     &[0, 1, 4, 5, 6, 8, 16],
@@ -50,17 +41,6 @@ pub const NORMAL_GENERATORS: &[&[usize]] = &[
 /// # Panics
 ///
 /// Panics if `t` is zero or exceeds `generators.len()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::Gf2mField;
-/// use gf2_coding::bch::dvb_t2::generators::{product_of_generators, SHORT_GENERATORS};
-///
-/// let field = Gf2mField::new(14, 0b100000000100001);
-/// let g = product_of_generators(&field, SHORT_GENERATORS, 2);
-/// // g = g_1 × g_2
-/// ```
 pub fn product_of_generators(field: &Gf2mField, generators: &[&[usize]], t: usize) -> Gf2mPoly {
     assert!(t > 0, "t must be positive");
     assert!(t <= generators.len(), "t exceeds available generators");
@@ -122,7 +102,6 @@ mod tests {
         let field = Gf2mField::new(14, 0b100000000100001);
         let g = product_of_generators(&field, SHORT_GENERATORS, 2);
 
-        // Should equal g_1 × g_2
         let g1 = Gf2mPoly::from_exponents(&field, SHORT_GENERATORS[0]);
         let g2 = Gf2mPoly::from_exponents(&field, SHORT_GENERATORS[1]);
         let expected = &g1 * &g2;
@@ -135,8 +114,6 @@ mod tests {
         let field = Gf2mField::new(14, 0b100000000100001);
         let g = product_of_generators(&field, SHORT_GENERATORS, 12);
 
-        // Generator for t=12 should be product of all 12 polynomials
-        // Degree should be sum of individual degrees
         let total_degree: usize = SHORT_GENERATORS[..12]
             .iter()
             .map(|g| g.iter().max().unwrap())

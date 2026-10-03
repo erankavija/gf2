@@ -6,14 +6,6 @@
 //! function convention.  For `outer.compose(&inner)`, `inner` is applied
 //! first and `outer` second, so the result is `outer \u{2218} inner`.
 //!
-//! Maps whose mapped coordinates are an increasing contiguous range are stored
-//! as a start and length, including identity maps (which use start `0`).
-//! Other all-mapped maps are stored as an explicit injective coordinate
-//! vector.  Maps containing fresh coordinates use an explicit vector of
-//! [`Option`] values: `None` means that the derived coordinate has no mother
-//! preimage.  Constructors and composition canonicalize all-mapped results,
-//! so a regular result remains a compact range.
-//!
 //! # Examples
 //!
 //! ```
