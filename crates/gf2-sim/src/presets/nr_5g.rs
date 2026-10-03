@@ -1,64 +1,32 @@
 //! 5G NR LDPC BICM preset: a typestate fluent builder over the graph API.
 //!
-//! The 5G NR sibling of the DVB-T2 preset ([`dvb_t2`](crate::presets::dvb_t2),
-//! design doc §9): a **thin wrapper** over the graph
-//! [`Chain`] that composes the 5G NR stage wrappers from
-//! [`stages::nr_5g`](crate::stages::nr_5g) — rate-matched LDPC encode, the
-//! TS 38.212 §5.4.2.2 bit interleaver, Gray-QAM map, AWGN channel, soft demap,
-//! §5.4.2.2 LLR deinterleave, and rate-matched BP decode — into a seven-stage
-//! linear pipeline. None of the LDPC / rate-matching / interleaver / QAM math
-//! is implemented here. 5G NR has **no outer code** at the LDPC layer (unlike
-//! DVB-T2's BCH+LDPC concatenation), so the chain is a single inner code.
-//!
-//! # Typestate stage ordering
-//!
-//! The required methods must be called in order —
+//! [`Pipeline::nr_5g`](crate::Pipeline::nr_5g) returns a
+//! `Builder<NeedsBaseGraph>`. The required setters are called in order,
 //! [`base_graph`](Builder::base_graph) → [`lifting_size`](Builder::lifting_size)
 //! → [`rate`](Builder::rate) → [`decoder`](Builder::decoder) →
-//! [`demap`](Builder::demap) → [`channel`](Builder::channel) — and each
-//! consumes `self`, returning a `Builder` in the next state. Calling them out
-//! of order (e.g. [`lifting_size`](Builder::lifting_size) before
-//! [`base_graph`](Builder::base_graph)) is a **compile-time** error because the
-//! method only exists on the predecessor state. The optional
-//! [`lifting_set`](Builder::lifting_set) refinement is available (only) in the
-//! same state as `lifting_size`; the non-state-advancing setters
-//! ([`parallelism`](Builder::parallelism), [`seed`](Builder::seed),
-//! [`checkpoint_dir`](Builder::checkpoint_dir)) are available on [`Ready`].
-//! Only a [`Builder<Ready>`] exposes [`build`](Builder::build).
+//! [`demap`](Builder::demap) → [`channel`](Builder::channel); each exists only
+//! on its predecessor state, and [`lifting_set`](Builder::lifting_set) only
+//! alongside `lifting_size`. A [`Builder<Ready>`] exposes the optional setters
+//! and [`build`](Builder::build), which composes the
+//! [`stages::nr_5g`](crate::stages::nr_5g) stages around an [`Awgn`] channel
+//! into a seven-stage [`Chain`]. The built pipeline carries no run plan; drive
+//! it with [`TopologyExecutor::run`](crate::TopologyExecutor::run).
 //!
-//! # Parameter scope (3GPP TS 38.212)
+//! # Supported parameters (`@/citation/ThreeGpp2017`)
 //!
 //! * **Base graph**: BG1 (46x68, K_b = 22) or BG2 (42x52, K_b = 10).
-//! * **Lifting size** `Z`: any of the 51 values of Table 5.3.2-1; the optional
+//! * **Lifting size** `Z`: any value of Table 5.3.2-1; the optional
 //!   [`lifting_set`](Builder::lifting_set) index is cross-checked against `Z`
 //!   at build time.
-//! * **Rate** (per the §7.2.2 operating region): BG1 x {1/3, 1/2, 2/3, 5/6};
-//!   BG2 x {1/3, 1/2, 2/3} (BG2 is capped at R <= 0.67, so BG2 + 5/6 is
-//!   rejected).
+//! * **Rate**: BG1 x {1/3, 1/2, 2/3, 5/6}; BG2 x {1/3, 1/2, 2/3}.
 //! * **Modulation**: QPSK / 16-QAM / 64-QAM / 256-QAM (`Q_m` ∈ {2, 4, 6, 8}).
 //!
-//! The message length is the **largest payload realising exactly the requested
-//! `Z`** ([`max_payload_for_lifting`]): `22 * Z` for BG1 and the largest
-//! self-consistent §5.2.2 band payload for BG2. The codeword length `E`
-//! (= `target_n`) is derived from the rate in the floor form of the TS 38.212
-//! §5.4.2.1 bit-selection formula (`E_r = N_L·Q_m·⌊G/(N_L·Q_m·C')⌋`), which
-//! makes `E` a multiple of `Q_m` **by construction** — the §5.4.2.2
-//! interleaver's `E mod Q_m == 0` precondition is guaranteed upstream in the
-//! standard, not rejected: `E = ⌊k·den/(num·Q_m)⌋·Q_m` for rate `num/den`.
-//! This equals the exact `k·den/num` whenever that ratio is already a
-//! `Q_m`-multiple integer (e.g. every rate at BG1 `Z = 384` under QPSK); in
-//! the fractional cases the rate is nominal (the realized `k/E` is slightly
-//! above the requested rate).
-//!
-//! # Driving the built pipeline
-//!
-//! Drive the built pipeline with the generic per-stage executor
-//! [`TopologyExecutor::run`](crate::TopologyExecutor::run) (see the
-//! [`Pipeline::nr_5g`](crate::Pipeline::nr_5g) doctest). Sweep-level
-//! [`Pipeline::run`](crate::Pipeline::run) integration (the scheduler's
-//! SNR-sweep engine, currently DVB-T2-specific on its CPU arm) is the GPU
-//! tuning / benchmark task's scope (`23d3525f`); this preset attaches no run
-//! plan.
+//! The message length is the largest payload realising exactly the requested
+//! `Z` ([`max_payload_for_lifting`]). The codeword length is
+//! `E = ⌊k·den/(num·Q_m)⌋·Q_m` for rate `num/den`, the floor form of the
+//! §5.4.2.1 bit-selection formula, so `E` is a multiple of `Q_m` as the
+//! §5.4.2.2 interleaver requires. When `k·den/num` is not a `Q_m`-multiple
+//! integer the realized rate `k/E` exceeds the requested one.
 
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
@@ -79,10 +47,7 @@ use crate::stages::nr_5g::{
 };
 use crate::PipelineConfig;
 
-/// A 5G NR LDPC base graph (3GPP TS 38.212 §5.3.2).
-///
-/// BG1 is the high-rate / large-block graph (46x68, K_b = 22); BG2 is the
-/// low-rate / small-block graph (42x52, K_b = 10).
+/// A 5G NR LDPC base graph (`@/citation/ThreeGpp2017` Section 5.3.2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BaseGraph {
     /// Base graph 1: 46x68, K_b = 22.
@@ -92,8 +57,8 @@ pub enum BaseGraph {
 }
 
 impl BaseGraph {
-    /// The TS 38.212 base-graph number (`1` or `2`), as consumed by the
-    /// `gf2-coding` `nr_5g` constructors.
+    /// The base-graph number (`1` or `2`) the `gf2-coding` `nr_5g`
+    /// constructors take.
     #[inline]
     #[must_use]
     pub fn number(self) -> u8 {
@@ -106,10 +71,7 @@ impl BaseGraph {
 
 /// A 5G NR LDPC code rate selector for the preset.
 ///
-/// The in-scope rates per base graph follow the TS 38.212 §7.2.2 operating
-/// region: BG1 x {1/3, 1/2, 2/3, 5/6}; BG2 x {1/3, 1/2, 2/3} (§7.2.2 caps BG2
-/// at R <= 0.67, so BG2 + [`R5_6`](Nr5gRate::R5_6) is rejected at
-/// [`build`](Builder::build)).
+/// [`build`](Builder::build) rejects BG2 with [`R5_6`](Nr5gRate::R5_6).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nr5gRate {
     /// Rate 1/3 (the BG1 mother-code rate).
@@ -123,7 +85,6 @@ pub enum Nr5gRate {
 }
 
 impl Nr5gRate {
-    /// The `(numerator, denominator)` of this rate.
     fn num_den(self) -> (usize, usize) {
         match self {
             Nr5gRate::R1_3 => (1, 3),
@@ -133,7 +94,6 @@ impl Nr5gRate {
         }
     }
 
-    /// Human-readable label (e.g. `"5/6"`) for error reporting.
     fn label(self) -> &'static str {
         match self {
             Nr5gRate::R1_3 => "1/3",
@@ -170,7 +130,6 @@ impl NrModulation {
         }
     }
 
-    /// Human-readable label (e.g. `"16-QAM"`) for error reporting.
     fn label(self) -> &'static str {
         match self {
             NrModulation::Qpsk => "QPSK",
@@ -183,10 +142,8 @@ impl NrModulation {
 
 /// The BP decoder configuration for the 5G NR preset.
 ///
-/// Bundles the check-node update algorithm and the per-frame iteration cap the
-/// [`Nr5gDecode`] stage runs with. Both are validated at
-/// [`build`](Builder::build) (a typed [`BuildError::InvalidNr5gParams`] instead
-/// of a downstream panic).
+/// [`build`](Builder::build) validates both fields and returns
+/// [`BuildError::InvalidNr5gParams`] for an invalid one.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Nr5gDecoderConfig {
     /// The check-node update algorithm.
@@ -198,13 +155,9 @@ pub struct Nr5gDecoderConfig {
 impl Nr5gDecoderConfig {
     /// Creates a decoder configuration.
     ///
-    /// # Arguments
-    ///
-    /// * `algorithm` — the check-node update algorithm. Validated at
-    ///   [`build`](Builder::build): `NormalizedMinSum(alpha)` requires a finite
-    ///   `alpha` in `(0.0, 1.0]`, `OffsetMinSum(beta)` a finite `beta >= 0.0`.
-    /// * `max_iterations` — the BP iteration cap; must be `>= 1` (validated at
-    ///   build).
+    /// [`build`](Builder::build) requires `max_iterations >= 1`, a finite
+    /// `alpha` in `(0.0, 1.0]` for `NormalizedMinSum(alpha)`, and a finite
+    /// `beta >= 0.0` for `OffsetMinSum(beta)`.
     #[must_use]
     pub fn new(algorithm: DecoderAlgorithm, max_iterations: usize) -> Self {
         Self {
@@ -213,19 +166,12 @@ impl Nr5gDecoderConfig {
         }
     }
 
-    /// The standard 5G NR normalized min-sum configuration (`alpha` = 0.75).
-    ///
-    /// # Arguments
-    ///
-    /// * `max_iterations` — the BP iteration cap; must be `>= 1` (validated at
-    ///   build).
+    /// Normalized min-sum with `alpha` = 0.75.
     #[must_use]
     pub fn normalized_min_sum(max_iterations: usize) -> Self {
         Self::new(DecoderAlgorithm::NormalizedMinSum(0.75), max_iterations)
     }
 
-    /// Validates the configuration the way the downstream constructors would
-    /// otherwise panic on, returning a typed error instead.
     fn validate(self) -> Result<(), BuildError> {
         if self.max_iterations == 0 {
             return Err(BuildError::InvalidNr5gParams {
@@ -252,14 +198,8 @@ impl Nr5gDecoderConfig {
     }
 }
 
-/// A channel selector for the 5G NR preset.
-///
-/// Constructs the channel [`Stage`](crate::Stage) inserted between the forward
-/// (transmit) and inverse (receive) halves of the chain at
-/// [`build`](Builder::build) time. The thin selector mirrors the DVB-T2
-/// preset's [`Channel`](crate::presets::dvb_t2::Channel); both delegate the
-/// Es/N0 → noise-variance arithmetic to the SSOT helpers in
-/// [`channels`](crate::channels), so no conversion math is duplicated.
+/// The channel [`build`](Builder::build) inserts between the forward
+/// (transmit) and inverse (receive) halves of the chain.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Channel {
     /// An AWGN channel at the given Es/N0 (dB).
@@ -271,17 +211,11 @@ pub enum Channel {
 
 impl Channel {
     /// An AWGN channel at the given Es/N0 (dB).
-    ///
-    /// # Arguments
-    ///
-    /// * `es_n0_db` — channel Es/N0 in dB.
     #[must_use]
     pub fn awgn(es_n0_db: f32) -> Self {
         Channel::Awgn { es_n0_db }
     }
 
-    /// Materialises the channel into an erased [`Awgn`] stage for
-    /// `bits_per_symbol`.
     fn into_stage(self, bits_per_symbol: usize) -> Box<dyn crate::stage::AnyStage> {
         match self {
             Channel::Awgn { es_n0_db } => erase(Awgn::new(es_n0_db, bits_per_symbol)),
@@ -289,9 +223,7 @@ impl Channel {
     }
 
     /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`) the
-    /// soft demapper must assume to be physically consistent with this channel
-    /// (the SSOT once-rounded `f64` derivation,
-    /// [`es_n0_db_to_n0`](crate::channels::es_n0_db_to_n0)).
+    /// soft demapper assumes for this channel.
     fn demap_noise_var(self) -> f32 {
         match self {
             Channel::Awgn { es_n0_db } => crate::channels::es_n0_db_to_n0(es_n0_db),
@@ -301,9 +233,7 @@ impl Channel {
     /// Validates this channel's parameters, returning the demapper `N0` it
     /// implies on success.
     ///
-    /// Rejects a non-finite Es/N0 (`NaN`/`±inf`) and any parameter whose
-    /// derived demapper noise variance is not finite and strictly positive —
-    /// exactly the inputs that would otherwise panic
+    /// The rejected inputs are those that panic
     /// [`NrGrayQamDemap::with_noise_var`].
     ///
     /// # Errors
@@ -335,77 +265,46 @@ impl Channel {
     }
 }
 
-// ===========================================================================
-// Typestate marker types
-// ===========================================================================
-
-/// Typestate marker: the base graph has not been selected yet.
-///
-/// The initial state of a fresh [`Builder`]; only [`Builder::base_graph`] is
-/// available.
+/// Typestate marker: only [`Builder::base_graph`] is available.
 #[derive(Debug)]
 pub enum NeedsBaseGraph {}
 
-/// Typestate marker: the base graph is set; the lifting size is next.
-///
-/// [`Builder::lifting_size`] advances the state; the optional
-/// [`Builder::lifting_set`] refinement is available here too.
+/// Typestate marker: [`Builder::lifting_size`] and the optional
+/// [`Builder::lifting_set`] are available.
 #[derive(Debug)]
 pub enum NeedsLifting {}
 
-/// Typestate marker: the lifting size is set; the code rate is next.
-///
-/// Only [`Builder::rate`] is available.
+/// Typestate marker: only [`Builder::rate`] is available.
 #[derive(Debug)]
 pub enum NeedsRate {}
 
-/// Typestate marker: the rate is set; the decoder configuration is next.
-///
-/// Only [`Builder::decoder`] is available.
+/// Typestate marker: only [`Builder::decoder`] is available.
 #[derive(Debug)]
 pub enum NeedsDecoder {}
 
-/// Typestate marker: the decoder is set; the modulation + demap method is next.
-///
-/// Only [`Builder::demap`] is available.
+/// Typestate marker: only [`Builder::demap`] is available.
 #[derive(Debug)]
 pub enum NeedsDemap {}
 
-/// Typestate marker: the demap is set; the channel is next.
-///
-/// Only [`Builder::channel`] is available.
+/// Typestate marker: only [`Builder::channel`] is available.
 #[derive(Debug)]
 pub enum NeedsChannel {}
 
-/// Typestate marker: every required stage is specified; the builder is ready.
-///
-/// The optional setters ([`Builder::parallelism`], [`Builder::seed`],
-/// [`Builder::checkpoint_dir`]) and [`Builder::build`] are available.
+/// Typestate marker: the optional setters and [`Builder::build`] are
+/// available.
 #[derive(Debug)]
 pub enum Ready {}
 
-// ===========================================================================
-// Builder
-// ===========================================================================
-
 /// A typestate fluent builder for the 5G NR LDPC BICM pipeline.
 ///
-/// The generic `State` parameter (one of [`NeedsBaseGraph`], [`NeedsLifting`],
-/// [`NeedsRate`], [`NeedsDecoder`], [`NeedsDemap`], [`NeedsChannel`],
-/// [`Ready`]) tracks how far the chain has been specified, so the compiler
-/// enforces the call order. Construct one via
-/// [`Pipeline::nr_5g`](crate::Pipeline::nr_5g); see the [module docs](self)
-/// for the full call sequence.
-///
-/// The required fields are stored as `Option`s populated in typestate order;
-/// each is guaranteed `Some` by the time [`Ready`] is reached, so
-/// [`build`](Builder::build) unwraps them with an internal invariant message.
+/// `State` is one of [`NeedsBaseGraph`], [`NeedsLifting`], [`NeedsRate`],
+/// [`NeedsDecoder`], [`NeedsDemap`], [`NeedsChannel`], [`Ready`]. Construct
+/// one via [`Pipeline::nr_5g`](crate::Pipeline::nr_5g); see the
+/// [module docs](self) for the call sequence.
 pub struct Builder<State> {
-    // The storage fields are deliberately NOT named after the public methods
-    // (same rationale as the DVB-T2 preset): a private field sharing a name
-    // with a method muddies the out-of-order compile error. The `cfg_` prefix
-    // keeps the compile-fail diagnostic a clean "no method named `lifting_size`
-    // ... for Builder<NeedsBaseGraph>".
+    // The `cfg_` prefix keeps field names distinct from the setter names, so
+    // an out-of-order call reports "no method named `lifting_size`" instead of
+    // "private field, not a method".
     cfg_base_graph: Option<BaseGraph>,
     cfg_lifting_set: Option<usize>,
     cfg_lifting_size: Option<usize>,
@@ -421,11 +320,8 @@ pub struct Builder<State> {
 }
 
 impl Builder<NeedsBaseGraph> {
-    /// Creates a fresh builder in the [`NeedsBaseGraph`] state.
-    ///
-    /// The default optional settings are: `parallelism = 1`, `seed = 0`, no
-    /// lifting-set refinement, and no checkpoint directory. Prefer the
-    /// [`Pipeline::nr_5g`](crate::Pipeline::nr_5g) entry point.
+    /// Defaults: `parallelism = 1`, `seed = 0`, no lifting-set index, no
+    /// checkpoint directory.
     pub(crate) fn new() -> Self {
         Self {
             cfg_base_graph: None,
@@ -445,10 +341,6 @@ impl Builder<NeedsBaseGraph> {
 
     /// Selects the base graph, advancing to [`NeedsLifting`].
     ///
-    /// # Arguments
-    ///
-    /// * `base_graph` — BG1 or BG2.
-    ///
     /// # Examples
     ///
     /// ```
@@ -463,18 +355,12 @@ impl Builder<NeedsBaseGraph> {
 }
 
 impl Builder<NeedsLifting> {
-    /// Records the expected lifting-set index `i_LS` (0..=7, TS 38.212
-    /// Table 5.3.2-1). Optional and non-state-advancing.
+    /// Records the expected lifting-set index `i_LS` (0..=7,
+    /// `@/citation/ThreeGpp2017` Table 5.3.2-1).
     ///
-    /// At [`build`](Builder::build) the recorded index is cross-checked against
-    /// the chosen [`lifting_size`](Builder::lifting_size): a mismatch (or an
-    /// index outside 0..=7) yields [`BuildError::InvalidNr5gParams`]. When this
-    /// method is not called, the set index is derived from `Z` via
-    /// [`lifting_set_index`].
-    ///
-    /// # Arguments
-    ///
-    /// * `i_ls` — the expected lifting-set index per Table 5.3.2-1.
+    /// [`build`](Builder::build) returns [`BuildError::InvalidNr5gParams`] when
+    /// the index differs from the [`lifting_set_index`] of the chosen
+    /// [`lifting_size`](Builder::lifting_size).
     ///
     /// # Examples
     ///
@@ -497,27 +383,15 @@ impl Builder<NeedsLifting> {
     }
 
     /// Selects the lifting size `Z`, advancing to [`NeedsRate`].
-    ///
-    /// `Z` must be one of the 51 valid lifting sizes of TS 38.212
-    /// Table 5.3.2-1; validated at [`build`](Builder::build).
-    ///
-    /// # Arguments
-    ///
-    /// * `z` — the lifting (expansion) size.
+    /// [`build`](Builder::build) requires a Table 5.3.2-1 lifting size.
     pub fn lifting_size(self, z: usize) -> Builder<NeedsRate> {
         self.with_state(|b| b.cfg_lifting_size = Some(z))
     }
 }
 
 impl Builder<NeedsRate> {
-    /// Selects the code rate, advancing to [`NeedsDecoder`].
-    ///
-    /// The rate must be in the chosen base graph's operating region (BG2 caps
-    /// at 2/3); validated at [`build`](Builder::build).
-    ///
-    /// # Arguments
-    ///
-    /// * `rate` — the nominal code rate.
+    /// Selects the nominal code rate, advancing to [`NeedsDecoder`].
+    /// [`build`](Builder::build) rejects BG2 with rate 5/6.
     pub fn rate(self, rate: Nr5gRate) -> Builder<NeedsDecoder> {
         self.with_state(|b| b.cfg_rate = Some(rate))
     }
@@ -525,11 +399,6 @@ impl Builder<NeedsRate> {
 
 impl Builder<NeedsDecoder> {
     /// Sets the LDPC BP decoder configuration, advancing to [`NeedsDemap`].
-    ///
-    /// # Arguments
-    ///
-    /// * `decoder` — algorithm + iteration cap; validated at
-    ///   [`build`](Builder::build).
     pub fn decoder(self, decoder: Nr5gDecoderConfig) -> Builder<NeedsDemap> {
         self.with_state(|b| b.cfg_decoder = Some(decoder))
     }
@@ -540,13 +409,7 @@ impl Builder<NeedsDemap> {
     /// [`NeedsChannel`].
     ///
     /// The modulation order `Q_m` parameterises the §5.4.2.2 interleaver, the
-    /// Gray-QAM mapper, and the soft demapper; the codeword length must be a
-    /// multiple of `Q_m` (validated at [`build`](Builder::build)).
-    ///
-    /// # Arguments
-    ///
-    /// * `modulation` — QPSK / 16-QAM / 64-QAM / 256-QAM.
-    /// * `method` — exact log-MAP or max-log demapping.
+    /// Gray-QAM mapper, and the soft demapper.
     pub fn demap(self, modulation: NrModulation, method: DemapMethod) -> Builder<NeedsChannel> {
         self.with_state(|b| {
             b.cfg_modulation = Some(modulation);
@@ -557,11 +420,6 @@ impl Builder<NeedsDemap> {
 
 impl Builder<NeedsChannel> {
     /// Sets the channel, advancing to [`Ready`].
-    ///
-    /// # Arguments
-    ///
-    /// * `channel` — the channel inserted between the forward and inverse
-    ///   halves.
     pub fn channel(self, channel: Channel) -> Builder<Ready> {
         self.with_state(|b| b.cfg_channel = Some(channel))
     }
@@ -569,35 +427,23 @@ impl Builder<NeedsChannel> {
 
 impl Builder<Ready> {
     /// Sets the number of parallel workers carried on the built pipeline's
-    /// [`PipelineConfig`]. Non-state-advancing.
-    ///
-    /// # Arguments
-    ///
-    /// * `parallelism` — the worker count.
+    /// [`PipelineConfig`].
     #[must_use]
     pub fn parallelism(mut self, parallelism: NonZeroUsize) -> Self {
         self.cfg_parallelism = parallelism;
         self
     }
 
-    /// Sets the base RNG seed carried on the built pipeline's
-    /// [`PipelineConfig`]. Non-state-advancing.
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` — the base ChaCha20 seed (design doc §3).
+    /// Sets the base ChaCha20 seed carried on the built pipeline's
+    /// [`PipelineConfig`].
     #[must_use]
     pub fn seed(mut self, seed: u64) -> Self {
         self.cfg_seed = seed;
         self
     }
 
-    /// Sets the optional checkpoint directory carried on the built pipeline's
-    /// [`PipelineConfig`]. Non-state-advancing.
-    ///
-    /// # Arguments
-    ///
-    /// * `checkpoint_dir` — the per-SNR checkpoint directory, or `None`.
+    /// Sets the optional per-SNR checkpoint directory carried on the built
+    /// pipeline's [`PipelineConfig`].
     #[must_use]
     pub fn checkpoint_dir(mut self, checkpoint_dir: Option<PathBuf>) -> Self {
         self.cfg_checkpoint_dir = checkpoint_dir;
@@ -607,50 +453,31 @@ impl Builder<Ready> {
     /// Validates the parameters and compiles the 5G NR chain into a
     /// [`Pipeline`].
     ///
-    /// Assembles the seven-stage chain — [`Nr5gEncode`] →
-    /// [`Nr5gBitInterleave`] → [`NrGrayQamMap`] → [`Awgn`] →
-    /// [`NrGrayQamDemap`] → [`Nr5gLlrDeinterleave`] → [`Nr5gDecode`] — into a
-    /// [`Chain`], connects the stages consecutively, and
-    /// returns [`Chain::build`](crate::graph::Chain::build)'s [`Pipeline`]
-    /// carrying the configured `seed`, `parallelism`, and `checkpoint_dir`.
-    ///
-    /// The soft demapper's assumed noise variance is derived from the **same**
-    /// channel (`N0 = 2 sigma^2` via the SSOT Es/N0 conversion), so the LLR
-    /// scaling is physically consistent with the injected noise.
-    ///
-    /// The code dimensions are `target_k = `[`max_payload_for_lifting`]`(BG, Z)`
-    /// and `target_n = ⌊target_k * den / (num * Q_m)⌋ * Q_m` for rate
-    /// `num/den` (the §5.4.2.1 floor form, a `Q_m` multiple by construction;
-    /// see the [module docs](self)); the built code is verified to realise
-    /// **exactly** the requested `Z`.
+    /// The chain is [`Nr5gEncode`] → [`Nr5gBitInterleave`] → [`NrGrayQamMap`]
+    /// → [`Awgn`] → [`NrGrayQamDemap`] → [`Nr5gLlrDeinterleave`] →
+    /// [`Nr5gDecode`]. The demapper's noise variance is derived from the
+    /// channel's Es/N0. The code dimensions are
+    /// `target_k = `[`max_payload_for_lifting`]`(BG, Z)` and
+    /// `target_n = ⌊target_k * den / (num * Q_m)⌋ * Q_m` for rate `num/den`
+    /// (see the [module docs](self)).
     ///
     /// # Errors
     ///
-    /// * [`BuildError::InvalidNr5gParams`] if `Z` is not a valid TS 38.212
-    ///   Table 5.3.2-1 lifting size; if a [`lifting_set`](Builder::lifting_set)
-    ///   index is inconsistent with `Z` (or outside 0..=7); if the rate is
-    ///   outside the base graph's operating region (BG2 + 5/6, §7.2.2); if the
-    ///   decoder configuration is invalid (zero iteration cap, out-of-range
-    ///   min-sum scale); if the constructed code does not realise the
-    ///   requested `Z`; or — defensively, unreachable from this builder's own
-    ///   §5.4.2.1-shaped `E` derivation — if `E` is not a multiple of `Q_m`
-    ///   or does not exceed `k`.
-    /// * [`BuildError::InvalidChannel`] if a channel parameter is invalid — a
-    ///   non-finite (`NaN`/`±inf`) AWGN Es/N0, or an Es/N0 so large that the
-    ///   derived demapper noise variance underflows to a non-positive value.
-    ///
-    /// `build()` validates every input it receives and returns one of the
-    /// above typed errors on bad input; it **never panics** on any public
-    /// input combination (the typestate guarantees the required setters were
-    /// called, and the chain wiring — a fixed seven-stage linear DAG with
-    /// type-compatible consecutive edges — is well-formed by construction).
+    /// * [`BuildError::InvalidNr5gParams`] if `Z` is not a Table 5.3.2-1
+    ///   lifting size; if a [`lifting_set`](Builder::lifting_set) index is
+    ///   inconsistent with `Z`; if the rate is 5/6 on BG2; if the decoder
+    ///   configuration is invalid (zero iteration cap, out-of-range min-sum
+    ///   scale); if the constructed code does not realise the requested `Z`;
+    ///   or if `E` is not a multiple of `Q_m` or does not exceed `k`.
+    /// * [`BuildError::InvalidChannel`] if the AWGN Es/N0 is non-finite, or so
+    ///   large that the derived demapper noise variance underflows to a
+    ///   non-positive value.
     ///
     /// # Complexity
     ///
-    /// Dominated by the one-off rate-matched mother-code construction
+    /// Dominated by the rate-matched mother-code construction
     /// ([`QuasiCyclicLdpc::nr_5g_rate_matched`]: RREF on the `N_b * Z`-column
-    /// parity-check matrix — for BG1 at `Z = 384` that is roughly a second);
-    /// the graph assembly itself is O(1) in the number of stages.
+    /// parity-check matrix).
     ///
     /// # Examples
     ///
@@ -674,26 +501,7 @@ impl Builder<Ready> {
     /// assert_eq!(pipeline.stage_count(), 7);
     /// ```
     pub fn build(self) -> Result<Pipeline, BuildError> {
-        // Panic-on-bad-input audit (this method must NEVER panic on any public
-        // input combination — it returns `Ok` or a typed `BuildError`):
-        //   .base_graph(BaseGraph)   -> closed enum, no invalid value.
-        //   .lifting_set(usize) /
-        //   .lifting_size(usize)     -> validated below (valid Z + i_LS
-        //                               consistency) -> InvalidNr5gParams;
-        //                               guards the asserts in
-        //                               max_payload_for_lifting and
-        //                               nr_5g_rate_matched.
-        //   .rate(Nr5gRate)          -> per-BG region validated below.
-        //   .decoder(Nr5gDecoderConfig) -> validated below (guards the
-        //                               DecoderConfig::new assert inside the
-        //                               decode stage's per-frame decoder).
-        //   .demap(NrModulation, DemapMethod) -> closed enums; the E % Q_m
-        //                               divisibility is validated below (guards
-        //                               the interleaver's assert).
-        //   .channel(Channel)        -> validated below -> InvalidChannel
-        //                               (guards NrGrayQamDemap::with_noise_var).
-        //   .parallelism/.seed/.checkpoint_dir -> any value valid; copied
-        //                               verbatim into the config.
+        // The required fields are `Some` by typestate.
         let base_graph = self.cfg_base_graph.expect("base graph set before Ready");
         let z = self
             .cfg_lifting_size
@@ -704,7 +512,7 @@ impl Builder<Ready> {
         let demap = self.cfg_demap.expect("demap method set before Ready");
         let channel = self.cfg_channel.expect("channel set before Ready");
 
-        // (1) Z must be a Table 5.3.2-1 lifting size; derive its set index.
+        // An out-of-`u16` Z maps to 0, which is not a lifting size.
         let actual_i_ls = lifting_set_index(u16::try_from(z).unwrap_or(0)).ok_or_else(|| {
             BuildError::InvalidNr5gParams {
                 reason: format!(
@@ -714,7 +522,6 @@ impl Builder<Ready> {
             }
         })?;
 
-        // (2) (i_LS, Z) consistency per Table 5.3.2-1.
         if let Some(requested_i_ls) = self.cfg_lifting_set {
             if requested_i_ls != actual_i_ls {
                 return Err(BuildError::InvalidNr5gParams {
@@ -727,9 +534,6 @@ impl Builder<Ready> {
             }
         }
 
-        // (3) Rate must be inside the base graph's operating region:
-        //     BG1 x {1/3, 1/2, 2/3, 5/6}; BG2 x {1/3, 1/2, 2/3} (TS 38.212
-        //     §7.2.2 caps BG2 at R <= 0.67).
         if base_graph == BaseGraph::Bg2 && rate == Nr5gRate::R5_6 {
             return Err(BuildError::InvalidNr5gParams {
                 reason: format!(
@@ -741,35 +545,19 @@ impl Builder<Ready> {
             });
         }
 
-        // (4) Decoder configuration (guards the DecoderConfig::new panic).
+        // Guards the `DecoderConfig::new` panic in the decode stage.
         decoder.validate()?;
 
-        // (5) Code dimensions. `target_k` is the largest payload realising
-        //     exactly the requested Z (max_payload_for_lifting resolves the
-        //     §5.2.2 K_b' fixed point). `target_n` (the rate-matched length E)
-        //     is the spec-shaped floor form of TS 38.212 §5.4.2.1 — the
-        //     bit-selection formula E_r = N_L * Q_m * floor(G / (N_L*Q_m*C'))
-        //     makes E a multiple of Q_m BY CONSTRUCTION in the standard, so the
-        //     §5.4.2.2 interleaver's rectangularity is guaranteed upstream,
-        //     never rejected. Here: E = floor(k*den / (num*Q_m)) * Q_m, which
-        //     equals the exact k*den/num whenever that ratio is already a
-        //     Q_m-multiple integer. The rate is therefore nominal: the realized
-        //     rate k/E is >= the requested num/den, with equality in the exact
-        //     case (the floor only ever shrinks E, so it can never exceed the
-        //     mother code's transmission budget and break the exact-Z
-        //     realization).
+        // E = floor(k*den / (num*Q_m)) * Q_m: the floor only shrinks E, so the
+        // realized rate k/E is >= num/den and E stays within the mother code's
+        // transmission budget.
         let target_k = max_payload_for_lifting(base_graph.number(), z);
         let (num, den) = rate.num_den();
         let q_m = modulation.bits_per_symbol();
         let target_n = (target_k * den) / (num * q_m) * q_m;
 
-        // (6) §5.4.2.2 interleaver precondition: E = target_n must be a
-        //     multiple of the modulation order Q_m. The derivation above
-        //     guarantees this by construction (per §5.4.2.1), so this gate is
-        //     defense-in-depth: build() is the authoritative validation gate
-        //     (the same philosophy as Chain::build re-checking edges connect()
-        //     already validated), and a future change to the E derivation must
-        //     not be able to hand the interleaver a non-rectangular length.
+        // Holds by the derivation above; checked because the §5.4.2.2
+        // interleaver asserts it.
         if !target_n.is_multiple_of(q_m) {
             return Err(BuildError::InvalidNr5gParams {
                 reason: format!(
@@ -782,10 +570,7 @@ impl Builder<Ready> {
                 ),
             });
         }
-        // Defense for the same reason: every in-scope rate is < 1 and the
-        // smallest in-scope payload (BG2, Z = 2, K_b' = 6 -> k = 12) still
-        // floors to E > k for every Q_m, but the rate-matched constructor
-        // asserts target_n > target_k, so gate it typed-ly here.
+        // The rate-matched constructor asserts target_n > target_k.
         if target_n <= target_k {
             return Err(BuildError::InvalidNr5gParams {
                 reason: format!(
@@ -798,16 +583,7 @@ impl Builder<Ready> {
             });
         }
 
-        // (7) Channel (guards NrGrayQamDemap::with_noise_var); the demapper N0
-        //     is derived from the SAME channel for physical consistency.
         let demap_noise_var = channel.validate()?;
-
-        // (8) Construct the rate-matched code. The inputs are pre-validated:
-        //     base_graph ∈ {1, 2}, target_n > target_k (every in-scope rate is
-        //     < 1), and a lifting size exists (max_payload_for_lifting's
-        //     fixed-point payload selects exactly z for every rate >= 1/3), so
-        //     none of nr_5g_rate_matched's asserts can fire. The realized Z is
-        //     still verified — a mismatch is a typed error, not a panic.
         let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(
             base_graph.number(),
             target_n,
@@ -826,9 +602,6 @@ impl Builder<Ready> {
             });
         }
 
-        // Chain wiring: encode → §5.4.2.2 interleave → QAM map → AWGN →
-        // QAM demap → §5.4.2.2 LLR deinterleave → decode. All stages are
-        // CPU-only, so no fallback registration is needed.
         let mut chain = Chain::new();
         let ids = [
             chain.add(erase(Nr5gEncode::new(code.clone()))),
@@ -868,19 +641,12 @@ impl Builder<Ready> {
             inject_gpu_oom_modulus: None,
         };
 
-        // No run plan is attached: `Pipeline::run`'s sweep engine is DVB-T2-
-        // specific on its CPU arm; drive this pipeline with `TopologyExecutor`
-        // (see the module docs). Sweep integration is `23d3525f`'s scope.
         chain.with_config(config).build()
     }
 }
 
 impl<State> Builder<State> {
     /// Re-tags the builder into the `Next` typestate after applying `mutate`.
-    ///
-    /// Moving the fields field-by-field (rather than transmuting) keeps the
-    /// state transition zero-cost while preserving the `#![deny(unsafe_code)]`
-    /// guarantee.
     fn with_state<Next>(mut self, mutate: impl FnOnce(&mut Self)) -> Builder<Next> {
         mutate(&mut self);
         Builder {
@@ -903,20 +669,13 @@ impl<State> Builder<State> {
 impl Pipeline {
     /// Starts a 5G NR LDPC preset builder in the [`NeedsBaseGraph`] state.
     ///
-    /// This is the entry point for the typestate fluent builder; the required
-    /// stages must then be specified in order
-    /// ([`base_graph`](Builder::base_graph) →
-    /// [`lifting_size`](Builder::lifting_size) → [`rate`](Builder::rate) →
-    /// [`decoder`](Builder::decoder) → [`demap`](Builder::demap) →
-    /// [`channel`](Builder::channel)), after which the optional setters and
-    /// [`build`](Builder::build) become available. See the
-    /// [module docs](crate::presets::nr_5g).
+    /// See the [module docs](crate::presets::nr_5g) for the call sequence.
     ///
     /// # Examples
     ///
-    /// The full BG1 / `Z` = 384 / rate-1/2 chain, driven end-to-end through the
-    /// generic per-stage executor — one QPSK frame at 6 dB Es/N0 decodes back
-    /// to the transmitted message:
+    /// The BG1 / `Z` = 384 / rate-1/2 chain driven through
+    /// [`TopologyExecutor::run`](crate::TopologyExecutor::run): one QPSK frame
+    /// at 6 dB Es/N0 decodes back to the transmitted message.
     ///
     /// ```
     /// use std::num::NonZeroUsize;
@@ -982,13 +741,10 @@ impl Pipeline {
 mod tests {
     use super::*;
 
-    /// The standard decoder configuration used across the tests.
     fn nms25() -> Nr5gDecoderConfig {
         Nr5gDecoderConfig::normalized_min_sum(25)
     }
 
-    /// A valid small builder (BG2, Z = 52, rate 1/3, QPSK) whose single
-    /// varied input is supplied by the caller.
     fn small_builder() -> Builder<Ready> {
         Pipeline::nr_5g()
             .base_graph(BaseGraph::Bg2)
@@ -1097,7 +853,6 @@ mod tests {
 
     #[test]
     fn test_build_rejects_bg2_rate_5_6() {
-        // TS 38.212 §7.2.2 caps BG2 at R <= 0.67 (acf9b11a amendment).
         let result = Pipeline::nr_5g()
             .base_graph(BaseGraph::Bg2)
             .lifting_size(104)
@@ -1134,11 +889,6 @@ mod tests {
         assert_eq!(pipeline.stage_count(), 7);
     }
 
-    /// The §5.4.2.1 floor-form E derivation: when the exact `k * den / num`
-    /// is not a Q_m-multiple integer, E floors to the next Q_m multiple, so
-    /// the §5.4.2.2 interleaver's `E mod Q_m == 0` precondition holds by
-    /// construction (TS 38.212 makes E a multiple of Q_m upstream — the
-    /// E_r = N_L*Q_m*floor(...) bit-selection formula — rather than rejecting).
     #[test]
     fn test_e_floors_to_qm_multiple() {
         // BG1 Z = 384 rate 5/6 16-QAM: exact n would be 8448 * 6/5 = 10137.6;
@@ -1162,8 +912,6 @@ mod tests {
         assert_eq!(encode.n() % 4, 0, "E is a Q_m multiple by construction");
     }
 
-    /// In the exact case the floor form changes nothing: BG1 Z = 384 r1/2
-    /// QPSK has E = 2k = 16896 exactly (the doctest configuration).
     #[test]
     fn test_e_exact_when_divisible() {
         let pipeline = Pipeline::nr_5g()
@@ -1199,8 +947,6 @@ mod tests {
 
     #[test]
     fn test_build_rejects_invalid_min_sum_scale_without_panicking() {
-        // alpha = 0.0 would panic DecoderConfig::new inside the decode stage's
-        // per-frame decoder; build() must reject it with a typed error first.
         let result = Pipeline::nr_5g()
             .base_graph(BaseGraph::Bg2)
             .lifting_size(52)
@@ -1254,10 +1000,6 @@ mod tests {
         assert!(matches!(result, Err(BuildError::InvalidChannel { .. })));
     }
 
-    /// Every in-scope (BG, rate) pair builds at a representative lifting size
-    /// of each BG2 K_b' band (small Z keeps this fast-tier); the §5.4.2.1
-    /// floor-form E derivation makes every tuple buildable for every
-    /// modulation order.
     #[test]
     fn test_build_all_in_scope_bg_rate_pairs() {
         let bg1_rates = [
@@ -1315,9 +1057,6 @@ mod tests {
         }
     }
 
-    /// A noisy end-to-end roundtrip through the generic per-stage executor at
-    /// a comfortable Es/N0: the chain the doctest runs at Z = 384, exercised
-    /// here at a fast small-Z configuration (BG1 Z = 16, rate 1/2, 16-QAM).
     #[test]
     fn test_chain_roundtrip_via_topology_executor() {
         use crate::batch::{BitPackedBatch, HardDecisionBatch};
@@ -1334,7 +1073,6 @@ mod tests {
             .seed(7)
             .build()
             .expect("BG1 Z=16 r1/2 16-QAM builds");
-        // k = 22 * 16 = 352, n = 704, 704 % 4 == 0.
 
         let k = 22 * 16;
         let mut msg = BitVec::with_capacity(k);
@@ -1361,9 +1099,7 @@ mod tests {
         );
     }
 
-    /// The preset realises exactly the requested Z even in the BG2 band where
-    /// the naive full payload would mis-select (Z = 52 -> 72): the built
-    /// chain's encode stage must carry the Z = 52 payload k = 8 * 52 = 416.
+    /// In this BG2 band the full payload would select Z = 72 instead of 52.
     #[test]
     fn test_bg2_small_z_realizes_requested_z() {
         let pipeline = small_builder().build().expect("BG2 Z=52 builds");
@@ -1385,10 +1121,8 @@ mod tests {
 
     #[test]
     fn test_channel_awgn_and_demap_noise_var() {
-        // Channel::awgn() constructs the enum variant correctly.
         let ch = Channel::awgn(5.0);
         assert_eq!(ch, Channel::Awgn { es_n0_db: 5.0 });
-        // demap_noise_var() returns a finite, positive N0.
         let n0 = ch.demap_noise_var();
         assert!(
             n0.is_finite() && n0 > 0.0,
@@ -1398,7 +1132,6 @@ mod tests {
 
     #[test]
     fn test_build_rejects_offset_min_sum_nan() {
-        // OffsetMinSum(NaN) fails the `beta.is_finite()` guard in validate().
         let result = Pipeline::nr_5g()
             .base_graph(BaseGraph::Bg2)
             .lifting_size(52)
