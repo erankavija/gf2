@@ -6,7 +6,7 @@
   "dependencies": [
     "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa"
   ],
-  "description": "Container archival follows tracker document references. Artifacts whose owner is established by an identifier or commit provenance but which carry no document reference are linked at their current path.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest row whose owner is established by identifier or commit provenance has a tracker document reference on that owner at the artifact's current path.\n- [hard] REQ-02: Multi-owner rows are linked to every recorded owner; rows without admissible evidence receive no link.\n- [hard] REQ-03: Tracker validation and document conformance report no new findings.\n",
+  "description": "Container archival follows tracker document references. Artifacts whose owner is established by an identifier or commit provenance but which carry no document reference are linked at their current path.\n\n## Background\n\nOwnership is admissible only from an existing tracker document reference, an unambiguous issue identifier in the path or content, or unique `jit:<short-id>` commit provenance; an artifact without admissible evidence is unassociated and goes to `dev/archive/legacy/<original-relative-path>`.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest file row whose owner is established by identifier or commit provenance has a tracker document reference on that owner at the artifact's current path. Directory rows carry no reference; the files beneath them have their own rows.\n- [hard] REQ-02: Multi-owner rows are linked to every recorded owner; rows without admissible evidence receive no link.\n- [hard] REQ-03: Tracker validation reports no new findings. New document-conformance findings are limited to multi-owner files and to files outside their owner's canonical directory, and the linked record gives the command that lists each.\n\n## Decisions\n\n- DEC-01: The owner decided on 2026-10-03 that directory rows are excluded from REQ-01, because tracker validation rejects a directory reference, and that REQ-03 admits conformance findings for multi-owner files and for files that the relocation tasks move.\n",
   "documents": [],
   "first_ready_at": "2026-10-03T14:28:38.391569272Z",
   "gates_required": [
@@ -33,5 +33,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Link unlinked owned artifacts to their issues",
-  "updated_at": "2026-10-03T16:06:09.991050777Z"
+  "updated_at": "2026-10-03T16:21:59.063696837Z"
 }

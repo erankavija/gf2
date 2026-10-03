@@ -14,6 +14,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/62ce5927-verdict-baseline.md"
     }
   ],
+  "done_at": "2026-10-03T16:21:58.837544708Z",
   "first_ready_at": "2026-10-03T15:08:42.898844593Z",
   "gates_required": [
     "cargo-ci",
@@ -33,13 +34,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T15:51:18.095027198Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T16:14:19.260854291Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T15:48:21.420376153Z",
+      "updated_at": "2026-10-03T16:08:23.552769785Z",
       "updated_by": "auto:executor"
     }
   },
@@ -50,7 +51,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Campaign declaration lookup rejects byte-identical archived copies",
-  "updated_at": "2026-10-03T15:52:50.503791585Z"
+  "updated_at": "2026-10-03T16:21:58.837544708Z"
 }
