@@ -50,8 +50,10 @@ fixture-seed derivation without timing anything:
 
 The receipt ran five fresh executions of five $250$ ms repetitions under
 `dev/scripts/ccx1-bench-flock.sh`, which holds the host benchmark mutex
-exclusively for the whole command and pins it to CPUs 6 to 11. A timed run is
-a job in the benchmark-window
+exclusively for the whole command and pins it to CPUs 6 to 11 with
+`taskset -c 6-11`. On a host with none of those CPUs `taskset` fails before
+the command starts, and the window log records the job's exit with a nonzero
+`rc`. A timed run is a job in the benchmark-window
 [queue](https://github.com/erankavija/gf2/blob/456e24fe3c6df031b7b5840b9e931e78eedbe5e5/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv), one tab-separated line of issue or job label, worktree
 relative to the clone root, estimated minutes and command. The
 [window runner](https://github.com/erankavija/gf2/blob/456e24fe3c6df031b7b5840b9e931e78eedbe5e5/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh) exports `GF2_BENCH_WINDOW=1`, which the
