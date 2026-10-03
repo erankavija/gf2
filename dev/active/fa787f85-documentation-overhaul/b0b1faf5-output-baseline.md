@@ -39,3 +39,40 @@ The captures are identical; this command prints nothing:
 ```
 diff -r "$R/b0b1faf5-before" "$R/b0b1faf5-after"
 ```
+
+## Exception `evidence-directory-paths`
+
+`evidence-directory-paths` is a named exception to
+`@/inv/no-dev-path-coupling`.
+
+### Scope
+
+The exception covers literal `dev/bench_results/` paths in the survey scripts
+that locate the shared producing manifest through `repository_files.py`. Each
+such path names an evidence directory, a source or input archive in one, or a
+campaign launcher; none of these declares an identity in its bytes, and the
+scripts write the paths into the build identities and producing manifests they
+record.
+
+This command, run from the repository root, lists every literal in scope:
+
+```
+git grep -n 'dev/bench_results' -- $(git grep -l 'repository_files\.py' -- ':(glob)**/survey/*.py' ':(exclude,glob)**/inputs/**')
+```
+
+Every other way these scripts locate a development artifact stays under the
+invariant: the shared producing manifest, a harness crate and the script's own
+directory resolve at runtime.
+
+### Rule for a move
+
+A move of an evidence directory, archive or launcher a literal names rewrites
+the literal in each script the command lists and re-runs the comparison of
+this record: the captures of `b0b1faf5-outputs.sh` before and after the
+rewrite differ only in the moved path. Snapshot copies under `inputs/` keep
+their bytes.
+
+### Convergence condition
+
+The exception ends when the listing command prints nothing while each script
+still reproduces its capture. Issue 10f23a84 tracks it.
