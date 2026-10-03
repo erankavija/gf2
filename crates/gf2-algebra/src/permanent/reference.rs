@@ -11,9 +11,7 @@ use gf2_core::gfp::Fp;
 /// formula with a self-contained Gray-code walk and scalar `i32 % 3`
 /// arithmetic.
 ///
-/// Ports `@/citation/Scheinerman2024` Algorithm 1 / Listing 1, the Julia
-/// `permanent_mod3` function, line by line. It evaluates Ryser's
-/// inclusion-exclusion formula:
+/// Evaluates Ryser's inclusion-exclusion formula:
 ///
 /// ```text
 /// perm(A) = (-1)^n * sum_{S ⊆ [n], S ≠ ∅}  (-1)^|S|  * prod_{i=0}^{n-1}  sum_{j ∈ S} A[i,j]
@@ -38,7 +36,6 @@ use gf2_core::gfp::Fp;
 /// multiplies per Gray step). Extra space is `O(n)` for the `cs` accumulator
 /// vector.
 pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
-    // Listing 1, line 1-2: signature and shape assertion.
     assert!(
         n <= 63,
         "permanent_mod3_reference: n = {} exceeds the single-u64 Gray-code register's \
@@ -54,71 +51,52 @@ pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
         n
     );
 
-    // Listing 1, line 3: empty matrix — permanent of empty product = 1.
+    // The permanent of the empty matrix is the empty product.
     if n == 0 {
         return Fp::<3>::new(1);
     }
 
-    // Listing 1, line 4: column-sum vector cs initialised to zero.
-    // i32 arithmetic as in the listing; reduced to Fp<3> only at exit.
+    // Column sums in i32, as in the listing; reduced to Fp<3> only at exit.
     let mut cs = vec![0i32; n];
 
-    // Listing 1, line 5: total = 0 accumulator.
     let mut total: i32 = 0;
 
-    // Listing 1, line 6 ("for k in 1:(2^n - 1)"): Gray-code subset walk.
     let upper: u64 = 1u64 << n;
     for k in 1..upper {
-        // Listing 1, line 7 ("flip = trailing_zeros(k)"): the column
-        // that toggles in Gray(k) vs Gray(k-1).
+        // The column that toggles between Gray(k-1) and Gray(k).
         let flip = k.trailing_zeros() as usize;
-
-        // Listing 1, line 8 ("g_k = k ⊻ (k >> 1)"): Gray-code register.
         let g_k = k ^ (k >> 1);
-
-        // Listing 1, line 9 ("if (g_k >> flip) & 1 == 1"): ADD vs SUB.
         let added = ((g_k >> flip) & 1) == 1;
 
         if added {
-            // Listing 1, lines 10-12
-            // ("for i in 1:n: cs[i] = (cs[i] + A[i, flip+1]) % 3"):
             for i in 0..n {
                 cs[i] = (cs[i] + matrix[i * n + flip].value() as i32) % 3;
             }
         } else {
-            // Listing 1, lines 13-15
-            // ("for i in 1:n: cs[i] = ((cs[i] + 3) - A[i, flip+1]) % 3"):
             for i in 0..n {
                 cs[i] = ((cs[i] - matrix[i * n + flip].value() as i32) + 3) % 3;
             }
         }
 
-        // Listing 1, lines 16-18
-        // ("prod = 1; for i in 1:n: prod = (prod * cs[i]) % 3"):
         let mut prod: i32 = 1;
         for &c in &cs {
             prod = (prod * c) % 3;
         }
 
-        // Listing 1, line 19 ("popcount(g_k) % 2"): Ryser sign
-        // (-1)^|S| with |S| = popcount(g_k).
+        // Ryser sign (-1)^|S| with |S| = popcount(g_k).
         let card = g_k.count_ones() as usize;
         if card % 2 == 1 {
-            // Listing 1, line 20 ("total = (total - prod + 3) % 3"):
             total = ((total - prod) + 3) % 3;
         } else {
-            // Listing 1, line 21 ("total = (total + prod) % 3"):
             total = (total + prod) % 3;
         }
     }
 
-    // Listing 1, lines 23-25 ("if n is odd: total = (3 - total) % 3"):
-    // the outer (-1)^n factor.
+    // The outer (-1)^n factor.
     if n % 2 == 1 {
         total = (3 - total) % 3;
     }
 
-    // Listing 1, line 26 ("return total"): cast i32 → Fp<3>.
     Fp::<3>::new(total as u64)
 }
 
