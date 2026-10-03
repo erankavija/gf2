@@ -4,14 +4,8 @@
 //! each worker owns one HIP stream and double-buffers the CPU preparation of
 //! batch `N+1` against the stream-ordered GPU LDPC decode of batch `N`.
 //! [`run_hybrid_double_buffer`] also emits the `pipeline_stage` spans, so both
-//! callers instrument identically.
-//!
-//! The callers differ only in their [`BatchHooks`]. On a recoverable GPU fault
-//! the scheduler substitutes the CPU LDPC fallback, while the checkpointed loop
-//! propagates the fault so the sweep aborts resumably: a CPU-substituted frame
-//! records a different `mean_iters` than the GPU path, which would break the
-//! same-path resume byte-identity of all four columns (`mean_iters` included).
-//! The core never makes that decision itself.
+//! callers instrument identically. The callers differ only in their
+//! [`BatchHooks`].
 
 use std::time::Instant;
 
@@ -51,23 +45,19 @@ pub(crate) struct HybridRunCtx<'a> {
     pub(crate) stream_id: usize,
     /// The SNR-point index keying the RNG seek.
     pub(crate) snr_idx: usize,
-    /// The base ChaCha20 seed.
     pub(crate) seed: u64,
     /// The overlap-attestation timeline sink. `Some` on the uncheckpointed
     /// scheduler (its overlap attestation reads the intervals); `None` on the
     /// checkpointed drain path, which never reads intervals — the
     /// `pipeline_stage` spans (always emitted) are its observable parity.
-    /// A `None` sink avoids unbounded dead interval accumulation + lock
-    /// traffic over a long checkpointed campaign point.
+    /// A `None` sink avoids unbounded interval accumulation over a long
+    /// checkpointed campaign point.
     pub(crate) timeline: Option<&'a std::sync::Mutex<OverlapTimeline>>,
     /// The run-start instant the interval microsecond stamps are relative to.
     pub(crate) run_start: Instant,
 }
 
 /// The per-batch behaviours that differ between the hybrid callers.
-///
-/// Taken by `&mut` generic so the per-batch dispatch is monomorphized (no
-/// `dyn` in the hot loop).
 pub(crate) trait BatchHooks {
     /// Decodes one already-CPU-prepped batch on the GPU and returns its
     /// per-frame hard codewords + BP iteration counts.
@@ -79,8 +69,6 @@ pub(crate) trait BatchHooks {
     /// with the [`StreamInFlight`](crate::executor::StreamInFlight) tally and
     /// **propagates** a recoverable fault unchanged (abort-resumably).
     ///
-    /// * `device` — the worker's borrowed device decoder + scratch.
-    /// * `stream` — the worker's owned HIP stream.
     /// * `batch_idx` — the worker-local batch index (0-based).
     /// * `first_global_frame` — the batch's first global frame index (the
     ///   OOM-injection keying surface, and the `FaultContext::batch_id`).
@@ -201,10 +189,9 @@ where
                 }
             });
 
-            // GPU decode of batch N on THIS worker thread, inside the
-            // GpuDecode span + interval. The caller's hook owns the failure
-            // semantics (fallback vs propagate) and any tally bracketing —
-            // the core only times and routes it.
+            // The caller's hook owns the failure semantics (fallback vs
+            // propagate) and any tally bracketing; the core only times and
+            // routes it.
             let gpu_res =
                 traced_interval(run_ctx, bi, "GpuLdpcBp", ActivityKind::GpuDecode, || {
                     hooks.decode_batch(device, stream, bi, first_global_frame, &cur_preps)
@@ -239,9 +226,7 @@ where
     Ok((counters, frames_done))
 }
 
-/// Frames per GPU decode batch (the double-buffer unit). Sized so the device
-/// LDPC kernel amortises its per-launch overhead while keeping two batches'
-/// worth of host LLR scratch modest.
+/// Frames per GPU decode batch (the double-buffer unit).
 ///
 /// SSOT for BOTH hybrid callers: the uncheckpointed scheduler and the
 /// checkpointed drain runner chunk their partitions by this exact unit, so

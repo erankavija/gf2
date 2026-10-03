@@ -4,8 +4,7 @@
 //! address before opening a sampler. [`evaluate_validation_anchor`] exposes
 //! the field-generic computation, while [`run_validation`] adds runtime
 //! provenance and no-redraw persistence. [`run_frozen_campaign_validation`]
-//! enforces the repository-specific frozen plan and refuses a wrong producing
-//! toolchain or an unusable required backend before it opens any address.
+//! enforces the repository-specific frozen plan.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;

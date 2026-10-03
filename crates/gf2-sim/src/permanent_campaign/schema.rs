@@ -3,11 +3,7 @@
 //! JSON documents use strict serde schemas: required fields cannot be omitted,
 //! unknown fields are rejected, and every document carries the version it was
 //! written with. This module writes [`SCHEMA_VERSION`] and reads every version
-//! in [`READABLE_SCHEMA_VERSIONS`]. The pooled summary is deliberately a flat
-//! CSV whose exact header is [`SUMMARY_CSV_FIELDS`]. [`conform_dataset`] is the
-//! one reader-side conformance entry point for the complete raw dataset; the
-//! cryptographic half of reading a dataset lives in
-//! [`provenance`](super::provenance).
+//! in [`READABLE_SCHEMA_VERSIONS`].
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;

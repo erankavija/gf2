@@ -75,7 +75,6 @@ pub(crate) fn manifest_with_determinant_companion() -> CampaignManifest {
     campaign
 }
 
-/// Returns the default root manifest with `revision` recorded as its source.
 pub(crate) fn manifest_at_revision(revision: &GitRevision) -> CampaignManifest {
     manifest_at_schema_version(revision, SCHEMA_VERSION)
 }
@@ -201,7 +200,6 @@ pub(crate) fn write_fixture(root: &Path) {
     write_fixture_at_revision(root, &fixture_revision());
 }
 
-/// Writes the single-field dataset with `revision` recorded as its source.
 pub(crate) fn write_fixture_at_revision(root: &Path, revision: &GitRevision) {
     write_fixture_at_schema_version(root, revision, SCHEMA_VERSION);
 }
@@ -402,7 +400,6 @@ pub(crate) fn write_halted_summary(
     .unwrap();
 }
 
-/// Returns the pooled-CSV token for a halt reason.
 fn halt_reason_token(reason: HaltReason) -> &'static str {
     match reason {
         HaltReason::AcceptanceFailure => "acceptance_failure",

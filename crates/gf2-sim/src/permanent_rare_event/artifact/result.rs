@@ -127,7 +127,6 @@ pub fn decode_exact_target_result(
     })
 }
 
-/// Renders one exact value as its canonical reduced decimal pair.
 fn decimal(value: &ExactValue) -> ExactDecimalV1 {
     ExactDecimalV1::new(value.numerator.to_string(), value.denominator.to_string())
 }

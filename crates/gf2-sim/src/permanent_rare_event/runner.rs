@@ -1,13 +1,6 @@
-//! Reusable execution of one frozen rare-event configuration.
-//!
-//! This module owns the whole run: runtime observation, attempt lifecycle,
-//! block production, checkpoint publication, reduction, and final receipt
-//! publication. A binary consuming it decodes its configuration argument,
-//! delegates here, and maps the returned status onto an exit code.
-//!
-//! A run is bounded and resumable. `GF2_RARE_EVENT_BLOCK_BUDGET` caps how many
-//! checkpoint blocks one invocation produces; the next invocation reconstructs
-//! the published prefix from the dataset directories and continues.
+//! Reusable execution of one frozen rare-event configuration: runtime
+//! observation, attempt lifecycle, block production, checkpoint publication,
+//! reduction, and final receipt publication, as bounded resumable runs.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -360,7 +353,6 @@ pub fn execute_frozen_run(
     })
 }
 
-/// Reduces the complete dataset and publishes its final receipt.
 fn publish_final_receipt(
     dataset_dir: &Path,
     identity: &RareEventDatasetIdentityV1,
@@ -386,7 +378,6 @@ fn publish_final_receipt(
     Ok(published.digest().to_owned())
 }
 
-/// Samples and records one complete immutable checkpoint block.
 fn produce_block(
     identity: &RareEventDatasetIdentityV1,
     dataset_id: &str,
@@ -488,7 +479,6 @@ fn produce_block(
     })
 }
 
-/// Parses one decimal component of a canonical block address.
 fn parse_component<T: std::str::FromStr>(
     component: Option<impl AsRef<str>>,
     name: &str,
@@ -512,7 +502,6 @@ struct RuntimeInputs {
 }
 
 impl RuntimeInputs {
-    /// Observes this process, its environment, and its host.
     fn observe(
         configuration: &RareEventConfigurationV1,
         configuration_path: &str,
@@ -630,7 +619,6 @@ impl RuntimeInputs {
     }
 }
 
-/// Records one input owned by the immutable scientific configuration.
 fn configuration_input(field: &str, value: &str) -> InputResolutionV1 {
     InputResolutionV1 {
         field: field.to_owned(),
@@ -639,7 +627,6 @@ fn configuration_input(field: &str, value: &str) -> InputResolutionV1 {
     }
 }
 
-/// Records one input taking its closed schema default.
 fn schema_default_input(field: &str, value: &str) -> InputResolutionV1 {
     InputResolutionV1 {
         field: field.to_owned(),
@@ -648,7 +635,6 @@ fn schema_default_input(field: &str, value: &str) -> InputResolutionV1 {
     }
 }
 
-/// Records one input resolved from a declared environment name.
 fn environment_input(field: &str, value: &str) -> InputResolutionV1 {
     InputResolutionV1 {
         field: field.to_owned(),
@@ -676,7 +662,6 @@ mod tests {
             .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
-    /// An environment name outside the declared inventory cannot be consulted.
     #[test]
     fn undeclared_environment_names_fail_closed() {
         let _guard = environment_guard();
@@ -691,8 +676,6 @@ mod tests {
         }
     }
 
-    /// A declared name holding bytes that are not UTF-8 is refused outright.
-    ///
     /// Reporting it absent would let a receipt record an unset input while the
     /// value was in fact set, falsifying the run's observed provenance.
     #[test]
@@ -717,7 +700,6 @@ mod tests {
             .expect("the restored environment reads cleanly");
     }
 
-    /// The declared inventory is the sorted, duplicate-free list a receipt records.
     #[test]
     fn declared_environment_inventory_is_sorted_and_unique() {
         assert!(ENVIRONMENT_INPUT_NAMES

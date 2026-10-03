@@ -1,15 +1,8 @@
-//! Source identity and integrity for published campaign datasets.
-//!
-//! [`approve_emission`] decides whether the running binary may publish into a
-//! campaign directory: it checks the executable identity named by the frozen
-//! manifest and refuses when that manifest differs from its committed content.
-//! [`verify_dataset`] decides, from the published bytes alone, whether the
-//! dataset still matches its [`INTEGRITY_FILE`] and whether the revision it
-//! names still exists.
-//!
-//! The on-disk integrity format and its `sha256sum -c` verification procedure
-//! are documented in
-//! `dev/simulation_results/permanent-zero-fraction/README.md`.
+//! Source identity and integrity for published campaign datasets:
+//! [`approve_emission`] gates publication on the executable identity the frozen
+//! manifest names, and [`verify_dataset`] re-checks published bytes against
+//! [`INTEGRITY_FILE`], whose format
+//! `dev/simulation_results/permanent-zero-fraction/README.md` documents.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -1246,7 +1239,6 @@ pub fn verify_dataset(root: &Path) -> Result<DatasetVerdict, IntegrityError> {
     })
 }
 
-/// Returns the fault that makes the root manifest untrustworthy, if any.
 fn manifest_fault(
     root: &Path,
     recorded: &BTreeMap<ArtifactPath, Sha256Digest>,
@@ -1949,7 +1941,6 @@ mod tests {
             }
         }
 
-        // The campaign root approves once only its own output dirties the tree.
         repo.git(&["checkout", "--", SOURCE_FILE]);
         let root = repo.path(&campaign);
         fs::write(root.join(SECOND_SHARD), b"{}\n").unwrap();
@@ -2161,7 +2152,6 @@ mod tests {
             "{error}"
         );
 
-        // A sidecar that omits the lost shard must not verify clean either.
         let text = fs::read_to_string(campaign.join(INTEGRITY_FILE)).unwrap();
         let entries: Vec<_> = decode_integrity_file(&text)
             .expect("the generated file parses")

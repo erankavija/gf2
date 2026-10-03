@@ -259,10 +259,6 @@ pub fn resolve_accelerator_cost_table(
 /// Returns [`AcceleratorCostTableError`] for non-UTF-8, malformed, or
 /// manifest-incomplete content.
 ///
-/// # Panics
-///
-/// Does not panic.
-///
 /// # Complexity
 ///
 /// `O(C log C + R log R)` time and `O(C + R)` space.

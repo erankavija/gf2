@@ -2,14 +2,10 @@
 //!
 //! Every lookup, check, creation, read, rename, and removal below a pinned
 //! dataset root travels through a held directory descriptor and a validated
-//! single path component, with `O_NOFOLLOW` on every open. A concurrent
-//! rename or symlink swap between a type check and the operation that relies
-//! on it cannot change which inode is used: the check runs on the descriptor
-//! that is subsequently read, written, or synchronized.
-//!
-//! Only [`DirHandle::open_root`] resolves a multi-component path, and it does
-//! so once against an operator-supplied dataset root before any artifact work
-//! begins. Everything beneath that root is descriptor-relative.
+//! single path component, with `O_NOFOLLOW` on every open, so a concurrent
+//! rename or symlink swap cannot change which inode a check and its dependent
+//! operation use. Only [`DirHandle::open_root`] resolves a multi-component
+//! path; everything beneath that root is descriptor-relative.
 
 use std::fs::File;
 use std::io::{Read, Write};
@@ -24,9 +20,7 @@ use rustix::io::Errno;
 
 use super::ArtifactError;
 
-/// Permission bits for every artifact directory this module creates.
 const DIRECTORY_MODE: u32 = 0o755;
-/// Permission bits for every artifact file this module creates.
 const FILE_MODE: u32 = 0o644;
 
 /// One validated single path component usable as a `*at` name.
@@ -39,7 +33,6 @@ const FILE_MODE: u32 = 0o644;
 pub(super) struct Component<'a>(&'a str);
 
 impl<'a> Component<'a> {
-    /// Accepts one path component or refuses it as a publication name.
     pub(super) fn new(name: &'a str) -> Result<Self, ArtifactError> {
         let acceptable = !name.is_empty()
             && name.len() <= 255
@@ -99,7 +92,6 @@ impl DirHandle {
         &self.path
     }
 
-    /// Opens one child directory through the held descriptor.
     pub(super) fn open_dir(&self, name: Component<'_>) -> Result<Self, ArtifactError> {
         let child = self.path.join(name.as_str());
         let fd = openat(
@@ -138,7 +130,6 @@ impl DirHandle {
         }
     }
 
-    /// Creates one child directory when absent and returns its descriptor.
     pub(super) fn open_or_create_dir(&self, name: Component<'_>) -> Result<Self, ArtifactError> {
         if self.create_dir(name)? {
             self.sync()?;
@@ -223,7 +214,6 @@ impl DirHandle {
         fsync(&self.fd).map_err(|error| ArtifactError::Io(error.into()))
     }
 
-    /// Renames one child to another child of the same directory without replacing.
     pub(super) fn rename_no_replace(
         &self,
         from: Component<'_>,
@@ -238,7 +228,6 @@ impl DirHandle {
         )
     }
 
-    /// Removes one child regular file.
     pub(super) fn unlink_file(&self, name: Component<'_>) -> Result<(), ArtifactError> {
         unlinkat(&self.fd, name.as_str(), AtFlags::empty())
             .map_err(|error| ArtifactError::Io(error.into()))

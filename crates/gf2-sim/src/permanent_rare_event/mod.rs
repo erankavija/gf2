@@ -15,9 +15,7 @@ use gf2_stats::sampler::{
     STREAM_INDEX_LIMIT,
 };
 
-/// Closed schemas, canonical bytes, checksums, lineage, and atomic publication.
 pub mod artifact;
-/// Reusable bounded, resumable execution of one frozen configuration.
 pub mod runner;
 
 /// Frozen campaign root shared with the manifested permanent campaign.

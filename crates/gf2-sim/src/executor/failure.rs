@@ -1,18 +1,6 @@
-//! OOM auto-fallback dispatch and hard-fail diagnostic dump.
-//!
+//! OOM auto-fallback dispatch and hard-fail diagnostic dump:
 //! [`dispatch_with_fallback`] wraps every GPU stage invocation in the hybrid
-//! scheduler loop and the topology executor's `GpuOnly` arm; its Rustdoc holds
-//! the decision tree.
-//!
-//! # Diagnostic dump
-//!
-//! On every fatal stage error the executor serialises a JSON diagnostic record
-//! to the configured `diagnostic_dump_dir` (from [`PipelineConfig`], default
-//! [`default_dump_dir`]). The file is named
-//! `<timestamp_ns>-<device_id>-<snr_idx>.json` and is written to a sibling
-//! `.tmp` file then renamed.
-//!
-//! [`PipelineConfig`]: crate::PipelineConfig
+//! scheduler loop and the topology executor's `GpuOnly` arm.
 
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -20,10 +8,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::Serialize;
 
 use crate::error::{FatalError, RecoverableError, StageError};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Diagnostic dump schema
-// ─────────────────────────────────────────────────────────────────────────────
 
 /// Failure-mode parameters threaded through GPU stage dispatch, built from the
 /// same [`PipelineConfig`](crate::PipelineConfig) fields by the topology
@@ -90,19 +74,13 @@ struct DiagnosticDump {
     event: &'static str,
     /// Timestamp in nanoseconds since UNIX epoch.
     timestamp_ns: u128,
-    /// The HIP device that faulted.
     device_id: i32,
-    /// The rayon worker that encountered the fault.
     worker_idx: usize,
-    /// The SNR-point index.
     snr_idx: usize,
-    /// The batch identifier.
     batch_id: u64,
-    /// The HIP error code (from [`FatalError::KernelLaunch`]).
+    /// The HIP error code of a [`FatalError::KernelLaunch`], `-1` otherwise.
     hip_code: i32,
-    /// The kernel name that faulted.
     kernel: &'static str,
-    /// The launch args / context string.
     args: String,
 }
 
@@ -212,10 +190,6 @@ pub fn default_dump_dir() -> PathBuf {
     PathBuf::from("dev/benchmarks/gf2-sim/diagnostic-dumps")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// dispatch_with_fallback
-// ─────────────────────────────────────────────────────────────────────────────
-
 /// Wraps a single GPU stage call with the failure-mode handling below; the
 /// single call boundary for every GPU dispatch in the hybrid scheduler loop
 /// and the topology executor's `GpuOnly` arm.
@@ -237,16 +211,6 @@ pub fn default_dump_dir() -> PathBuf {
 ///   └── Err(Fatal(_)) → write dump, emit tracing::error! → return Err(Fatal(_))
 /// ```
 ///
-/// # Arguments
-///
-/// * `gpu_result` — the `Result` returned by the GPU stage call.
-/// * `run_fallback` — closure that runs the CPU fallback stage on the same
-///   input. Called only on a recoverable error that is not promoted to fatal.
-/// * `ctx` — per-batch context for tracing events and the diagnostic dump.
-/// * `strict_gpu` — whether **OOM** is promoted to fatal (no CPU fallback).
-///   Transient errors are never promoted (see the decision tree above).
-/// * `dump_dir` — directory for JSON diagnostic dumps on hard-fail.
-///
 /// # Errors
 ///
 /// Returns the original fatal error (or `FatalError::OutOfMemory` on strict-gpu
@@ -260,27 +224,6 @@ pub fn default_dump_dir() -> PathBuf {
 /// # Complexity
 ///
 /// `O(1)` bookkeeping plus the fallback stage call when invoked.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::executor::failure::{dispatch_with_fallback, FaultContext, default_dump_dir};
-/// use gf2_sim::error::{FatalError, RecoverableError, StageError};
-///
-/// let gpu_result: Result<u32, StageError> = Err(StageError::Recoverable(
-///     RecoverableError::OutOfMemory { device_id: 0, bytes_requested: 1024 }
-/// ));
-/// let ctx = FaultContext { batch_id: 0, snr_idx: 0, device_id: 0, worker_idx: 0 };
-/// // Non-strict: the fallback is invoked and succeeds.
-/// let out = dispatch_with_fallback(
-///     gpu_result,
-///     || Ok::<u32, StageError>(42_u32),
-///     ctx,
-///     false,
-///     &std::env::temp_dir(),
-/// );
-/// assert_eq!(out.unwrap(), 42_u32);
-/// ```
 pub fn dispatch_with_fallback<T, F>(
     gpu_result: Result<T, StageError>,
     run_fallback: F,
@@ -295,8 +238,6 @@ where
         Ok(output) => Ok(output),
 
         Err(StageError::Recoverable(recoverable)) => {
-            // Extract device_id for the OOM warn event (may not be present for
-            // Transient, so fall back to ctx.device_id).
             let device_id = match &recoverable {
                 RecoverableError::OutOfMemory { device_id, .. } => *device_id,
                 RecoverableError::Transient(_) => ctx.device_id,
@@ -326,7 +267,6 @@ where
                 }
             }
 
-            // Non-strict OOM, or Transient (any mode): attempt the CPU fallback.
             tracing::warn!(
                 batch_id = ctx.batch_id,
                 snr_idx = ctx.snr_idx,
@@ -411,7 +351,6 @@ mod tests {
             }));
         let out = dispatch_with_fallback(result, || Ok(99_u32), ctx(), false, &dir);
         assert_eq!(out.unwrap(), 99, "fallback value must be returned");
-        // Non-strict OOM + successful fallback produces no dump.
         assert!(!dir.exists());
     }
 
@@ -436,9 +375,6 @@ mod tests {
         assert!(!entries.is_empty(), "at least one dump file must exist");
     }
 
-    /// `strict_gpu` promotes OOM only: a `Transient` recoverable error takes
-    /// the CPU fallback even under `strict_gpu`, and no dump is written when
-    /// the fallback succeeds.
     #[test]
     fn test_transient_under_strict_gpu_still_falls_back() {
         let (_scratch, dir) = dump_dir();
@@ -529,11 +465,8 @@ mod tests {
             matches!(out, StageError::TypeMismatch { .. }),
             "TypeMismatch must pass through unchanged"
         );
-        // TypeMismatch is not a GPU failure; no dump.
         assert!(!dir.exists());
     }
-
-    // ── injects_oom_at (free fn and FailurePolicy method) ──────────────────
 
     #[test]
     fn test_injects_oom_at_none_never_fires() {
@@ -541,7 +474,6 @@ mod tests {
         assert!(!injects_oom_at(None, 100));
     }
 
-    /// Modulus 0 is treated as "inactive" (the `m >= 1` guard).
     #[test]
     fn test_injects_oom_at_zero_modulus_never_fires() {
         assert!(!injects_oom_at(Some(0), 0));
@@ -578,8 +510,6 @@ mod tests {
         };
         assert!(!silent.injects_oom_at(0));
     }
-
-    // ── Fatal variants in write_diagnostic_dump ─────────────────────────────
 
     #[test]
     fn test_fatal_device_unavailable_propagates_and_writes_dump() {
@@ -624,8 +554,6 @@ mod tests {
         );
     }
 
-    /// A `dump_dir` that cannot be created is logged and skipped, and
-    /// `dispatch_with_fallback` still propagates the original fatal error.
     #[test]
     fn test_write_dump_silently_skips_on_unwritable_dir() {
         // /dev/null is a character device — create_dir_all("/dev/null/…")

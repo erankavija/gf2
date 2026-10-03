@@ -1,10 +1,5 @@
 //! [`SimulationResults`] — the aggregate outcome of a [`Pipeline`](crate::Pipeline)
 //! run.
-//!
-//! The per-SNR-point columns are a projection of [`WorkerCounters`], built only
-//! by [`SnrPointResult::from_counters`]: `fer = errors / frames`, `errors` is
-//! the **frame**-error count (not bit errors), and `mean_iters =
-//! total_iterations / frames`.
 
 use crate::parallel::WorkerCounters;
 
@@ -12,22 +7,6 @@ use crate::parallel::WorkerCounters;
 ///
 /// `fer` / `frames` / `errors` / `mean_iters` are byte-identical across worker
 /// counts at a fixed seed (and, for the hybrid path, run-to-run).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::executor::SnrPointResult;
-/// use gf2_sim::parallel::WorkerCounters;
-///
-/// let mut c = WorkerCounters::default();
-/// c.record_frame(true, 12, 100, 3);
-/// c.record_frame(false, 1, 100, 0);
-/// let r = SnrPointResult::from_counters(6.5, c);
-/// assert_eq!(r.frames, 2);
-/// assert_eq!(r.errors, 1);
-/// assert!((r.fer - 0.5).abs() < 1e-12);
-/// assert!((r.mean_iters - 6.5).abs() < 1e-12);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SnrPointResult {
     /// The Es/N0 (dB) this point ran at.
@@ -98,7 +77,7 @@ mod tests {
         c.record_frame(false, 4, 100, 0);
         let r = SnrPointResult::from_counters(7.0, c);
         assert_eq!(r.frames, 3);
-        assert_eq!(r.errors, 1); // one frame in error
+        assert_eq!(r.errors, 1);
         assert_eq!(r.total_bit_errors, 5);
         assert_eq!(r.total_iterations, 16);
         assert!((r.fer - 1.0 / 3.0).abs() < 1e-12);
