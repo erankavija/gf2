@@ -16,6 +16,8 @@ Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis
 
 Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
 
+- [Standards conformance](reference/standards-conformance.md): supported DVB-T2 and 5G NR code configurations, bit order and conformance evidence.
+
 ## Crates
 
 | Crate | Entry page |
