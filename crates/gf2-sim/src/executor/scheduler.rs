@@ -6,15 +6,6 @@
 //! completion per-stream (never via device-wide sync), then runs the BCH
 //! decode-tail and information-bit error count on the CPU.
 //!
-//! # Stage routing by execution class
-//!
-//! [`run`](Scheduler::run) routes by each stage's
-//! [`execution_class()`](crate::stage::AnyStage::execution_class): a
-//! [`GpuOnly`](crate::ExecutionClass) LDPC BP decode stage is downcast to its
-//! concrete type and enqueued on the worker's owned HIP stream; otherwise the
-//! point runs the CPU dispatch [`run_snr_point`]. A
-//! [`Hybrid`](crate::ExecutionClass)-class stage selects no GPU dispatch.
-//!
 //! # Determinism
 //!
 //! Each global frame `g`'s randomness is keyed on `g` alone, via the
@@ -24,15 +15,6 @@
 //! byte-identical at a fixed seed. Per-worker counters are reduced in
 //! `worker_idx` order via
 //! [`WorkerCounters::reduce_in_worker_order`](crate::WorkerCounters::reduce_in_worker_order).
-//!
-//! AWGN stays on the CPU on both paths; only the LDPC inner decode moves to
-//! the device, so the channel LLRs the device consumes are byte-identical to
-//! the CPU path's.
-//!
-//! # Without `hip`
-//!
-//! A `gpu_enabled` config logs a `tracing::warn!` at scheduler construction
-//! and the run takes the CPU-only path.
 
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
@@ -95,20 +77,9 @@ impl OverlapTimeline {
     /// toward the denominator whenever any `GpuDecode` is active. Returns `0.0`
     /// when no GPU activity was recorded (the CPU-only path).
     ///
-    /// # Examples
+    /// # Complexity
     ///
-    /// ```
-    /// use gf2_sim::executor::{ActivityInterval, ActivityKind, OverlapTimeline};
-    ///
-    /// // One GPU interval [0,10] fully covered by a CPU interval [0,10].
-    /// let tl = OverlapTimeline {
-    ///     intervals: vec![
-    ///         ActivityInterval { worker_idx: 0, stream_id: 0, kind: ActivityKind::GpuDecode, start_us: 0, end_us: 10 },
-    ///         ActivityInterval { worker_idx: 1, stream_id: 1, kind: ActivityKind::CpuPrep,  start_us: 0, end_us: 10 },
-    ///     ],
-    /// };
-    /// assert!((tl.gpu_overlap_fraction() - 1.0).abs() < 1e-9);
-    /// ```
+    /// `O(n²)` for `n` recorded intervals.
     #[must_use]
     pub fn gpu_overlap_fraction(&self) -> f64 {
         if self.intervals.is_empty() {
@@ -205,7 +176,8 @@ impl Scheduler {
     /// `gf2-kernels-hip`) of `parallelism` streams on device 0 is created so
     /// worker `i` owns stream `i % parallelism`. If the pool cannot be built (no
     /// device / unsupported arch), the scheduler logs a `tracing::warn!` and
-    /// degrades to the CPU path.
+    /// degrades to the CPU path. Without the `hip` feature a `gpu_enabled`
+    /// request logs a `tracing::warn!` and runs the CPU-only path.
     ///
     /// # Panics
     ///
@@ -279,12 +251,10 @@ impl Scheduler {
         &self.rayon_pool
     }
 
-    /// The configured worker count.
     pub(crate) fn parallelism(&self) -> NonZeroUsize {
         self.parallelism
     }
 
-    /// The base ChaCha20 seed.
     pub(crate) fn seed(&self) -> u64 {
         self.seed
     }
@@ -395,10 +365,9 @@ impl Scheduler {
 
     /// Runs one SNR point, returning its aggregate [`WorkerCounters`].
     ///
-    /// Dispatch is derived from `pipeline`'s stage list by execution class
-    /// (see the [module docs](self)): a discovered `GpuOnly`
-    /// stage routes the point to the hybrid CPU∥GPU driver; an all-`CpuOnly`
-    /// stage list routes to the pinned SSOT CPU dispatch below.
+    /// With an active GPU and a `GpuOnly` LDPC BP decode stage in `pipeline`'s
+    /// stage list the point runs on the hybrid CPU∥GPU driver; otherwise on
+    /// the CPU dispatch [`run_snr_point`].
     #[allow(clippy::too_many_arguments)]
     fn run_one_point(
         &self,
@@ -612,9 +581,6 @@ mod hybrid {
                 return Ok(WorkerCounters::default());
             }
 
-            // Per-worker simulator clone (own decoder for the CPU BCH tail), a
-            // per-worker device LDPC decoder sized for one batch, and the
-            // per-worker pinned staging the stream-ordered transfers use.
             let sim = template.clone();
             let decoder = gpu_stage.build_decoder(BATCH_FRAMES)?;
             let mut scratch = gpu_stage.build_stream_scratch(&decoder)?;
@@ -780,7 +746,6 @@ mod tests {
 
     #[test]
     fn test_overlap_fraction_half_overlap() {
-        // GPU active [0,100]; CPU active only over [0,50] → 50% overlap.
         let tl = OverlapTimeline {
             intervals: vec![
                 ActivityInterval {
@@ -819,7 +784,6 @@ mod tests {
 
     #[test]
     fn test_overlap_fraction_no_overlap_is_zero() {
-        // GPU [0,50], CPU [50,100] — disjoint, no overlap.
         let tl = OverlapTimeline {
             intervals: vec![
                 ActivityInterval {

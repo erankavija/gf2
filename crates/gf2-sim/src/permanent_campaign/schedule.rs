@@ -1,18 +1,11 @@
 //! Deterministic exact-cell scheduling primitives for permanent campaigns.
 //!
-//! Work is ordered by `(q, n, shard_id)`, each shard opens the stream address
-//! recorded by its manifest, and every matrix passes through draw, pack,
-//! evaluate, determinant, and count phases when the cell requests the
-//! determinant companion. Generic Ryser cells omit the pack phase because
-//! their row-major operands are evaluated directly. Production
-//! campaign-purpose evaluation and raw emission remain crate-private and are
-//! entered only by the persisted coordinator state machine.
-//!
-//! A `BatchParallel` cell draws each shard's matrices serially in bounded
-//! chunks, then uses a locally configured Rayon pool for packing, permanent
-//! evaluation, and optional determinant evaluation. Batch phase durations are
-//! wall-clock durations for those per-chunk pool sections; the observer and
-//! histogram updates retain input order on the caller thread.
+//! Work is ordered by `(q, n, shard_id)` and each shard opens the stream
+//! address recorded by its manifest. A `BatchParallel` cell draws each shard's
+//! matrices serially in bounded chunks and evaluates them on a locally
+//! configured Rayon pool; observer and histogram updates retain input order on
+//! the caller thread. Campaign-purpose evaluation and raw emission are
+//! crate-private and entered only by the coordinator.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -90,14 +83,6 @@ impl Default for AcceleratorCostTable {
     ///
     /// Every accelerator cell resolves to
     /// [`ScheduleError::AcceleratorCostMissing`] against it.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)` time and space.
     fn default() -> Self {
         Self {
             costs: BTreeMap::new(),
@@ -112,14 +97,6 @@ impl AcceleratorCostTable {
     /// The map is adopted without iteration or validation. In particular, a
     /// zero cost remains valid and has the unbounded-rate meaning documented by
     /// [`launch_size`].
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; ownership of the existing map is moved into the table.
     #[must_use]
     pub fn new(costs: BTreeMap<(u8, u16), Duration>, launch_cap: Duration) -> Self {
         Self { costs, launch_cap }
@@ -131,10 +108,6 @@ impl AcceleratorCostTable {
     ///
     /// Returns [`ScheduleError::AcceleratorCostMissing`] when the cell has no
     /// measured entry.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
     ///
     /// # Complexity
     ///
@@ -152,10 +125,6 @@ impl AcceleratorCostTable {
     }
 
     /// Whether the table has a measured entry for one cell.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
     ///
     /// # Complexity
     ///
@@ -207,21 +176,12 @@ impl AcceleratorCostTable {
 
 /// Chooses the number of matrices for the next accelerator launch.
 ///
-/// The rule is `clamp(floor(cap / per_matrix), 1, remaining)`. Permanent
-/// evaluation costs approximately `M · n · 2^n / W`, so holding `M` fixed
-/// while `n` rises from 20 to 24 multiplies per-launch occupancy by about
-/// 19.2; each further four-order increase costs about another factor of 19.
-/// The measured per-matrix input therefore sizes each successive launch rather
-/// than reusing one batch size across the grid. A zero measured cost is treated
-/// as an unbounded rate and selects all remaining matrices.
+/// The rule is `clamp(floor(cap / per_matrix), 1, remaining)`. A zero measured
+/// cost is treated as an unbounded rate and selects all remaining matrices.
 ///
 /// # Panics
 ///
 /// Does not panic, including for zero durations or zero remaining matrices.
-///
-/// # Complexity
-///
-/// `O(1)` time and space.
 #[must_use]
 pub fn launch_size(per_matrix: Duration, cap: Duration, remaining: u64) -> usize {
     if remaining == 0 {
@@ -330,7 +290,6 @@ struct FieldRun {
 
 #[cfg(test)]
 impl FieldRun {
-    /// Returns the field order covered by this invocation.
     #[must_use]
     pub const fn q(&self) -> u8 {
         self.q
@@ -342,7 +301,6 @@ impl FieldRun {
         &self.shards
     }
 
-    /// Returns the schema summary whose rows pool this field's shard records.
     #[must_use]
     pub const fn summary(&self) -> &FieldSummary {
         &self.summary
@@ -645,11 +603,6 @@ fn run_field_with_worker_count(
 /// no measured entry, and [`ScheduleError::AcceleratorDeviceUnavailable`] when
 /// an accelerator cell's required device is absent.
 ///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration and
-/// pool-construction failures are returned as schedule errors.
-///
 /// # Complexity
 ///
 /// Preflight is `O(S log C)` for `S` selected shards and `C` measured cells.
@@ -843,11 +796,6 @@ fn run_shard(
 /// [`ScheduleError::AcceleratorCostMissing`] when `accelerator` is `None`, and
 /// [`ScheduleError::AcceleratorDeviceUnavailable`] when no usable device is
 /// present.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration and
-/// pool-construction failures are returned as schedule errors.
 ///
 /// # Complexity
 ///
@@ -2095,8 +2043,6 @@ mod tests {
         assert_eq!(small.per_matrix_cost, Duration::from_micros(40));
         assert_eq!(large.per_matrix_cost, Duration::from_micros(770));
 
-        // The point of a per-cell table: one cap yields different launch sizes
-        // at different sizes. A single field-wide cost cannot do this.
         let small_launch = launch_size(small.per_matrix_cost, small.launch_cap, u64::MAX);
         let large_launch = launch_size(large.per_matrix_cost, large.launch_cap, u64::MAX);
         assert!(
@@ -2293,8 +2239,6 @@ mod tests {
     #[cfg(feature = "hip")]
     #[test]
     fn test_accelerator_refuses_a_cell_with_no_measured_cost_supplied() {
-        // The default scheduler entry points supply no cost, so an accelerator
-        // cell reached through them is refused.
         let campaign = manifest(vec![cell(3, 2, 4, &[(0, 29)])]);
         let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
         let mut observed = 0;

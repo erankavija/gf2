@@ -86,10 +86,6 @@ impl AcceptancePlan {
     /// [`AcceptanceError::TestCountOverflow`] when a family size exceeds
     /// `u64`.
     ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
     /// # Complexity
     ///
     /// `O(C)` time and `O(1)` extra space for `C` manifest cells.
@@ -145,14 +141,6 @@ impl AcceptancePlan {
     ///
     /// Returns [`AcceptanceError::EmptyFamily`] when the manifest predeclares
     /// no tests in the requested family.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)` time and space.
     pub fn cell_level(self, family: AcceptanceFamily) -> Result<f64, AcceptanceError> {
         let count = self.family_test_count(family);
         if count == 0 {
@@ -228,10 +216,6 @@ impl CompletedCellAssessment {
 /// exactly the manifested matrix count and valid event counts. Returns
 /// [`AcceptanceError::DeterminantPlanMismatch`] unless determinant presence and
 /// sample count exactly match [`CellSpec::determinant_companion`].
-///
-/// # Panics
-///
-/// Does not panic.
 ///
 /// # Complexity
 ///

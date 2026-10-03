@@ -39,7 +39,6 @@ pub fn observation_utc_now() -> Result<String, ArtifactError> {
     ))
 }
 
-/// Renders Unix seconds and nanoseconds as `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`.
 fn format_utc(seconds: u64, nanoseconds: u32) -> String {
     let days = (seconds / 86_400) as i64;
     let time_of_day = seconds % 86_400;
@@ -362,7 +361,6 @@ pub fn observe_host() -> Result<HostObservationV1, ArtifactError> {
     Ok(host)
 }
 
-/// Encodes exact collector bytes as immutable evidence.
 fn raw_evidence(source: &str, bytes: &[u8]) -> Result<ObservationEvidenceV1, ArtifactError> {
     Ok(ObservationEvidenceV1 {
         source: source.to_owned(),
@@ -377,7 +375,6 @@ fn read_kernel_text(path: &str) -> Result<String, ArtifactError> {
     })
 }
 
-/// Returns every value of one `/proc/cpuinfo` key in file order.
 fn cpuinfo_values(cpuinfo: &str, key: &str) -> Vec<String> {
     cpuinfo
         .lines()
@@ -391,7 +388,6 @@ fn cpuinfo_first(cpuinfo: &str, key: &str) -> Option<String> {
     cpuinfo_values(cpuinfo, key).into_iter().next()
 }
 
-/// Counts distinct values, treating an empty observation as zero.
 fn distinct_count(values: &[String]) -> u32 {
     let mut distinct: Vec<_> = values.iter().collect();
     distinct.sort();
@@ -445,7 +441,6 @@ fn parse_cpu_list(list: &str) -> Result<Vec<u32>, ArtifactError> {
     Ok(cpus)
 }
 
-/// Reads one `/proc/meminfo` kibibyte quantity.
 fn meminfo_kib(meminfo: &str, key: &str) -> Result<u64, ArtifactError> {
     meminfo
         .lines()
@@ -455,7 +450,6 @@ fn meminfo_kib(meminfo: &str, key: &str) -> Result<u64, ArtifactError> {
         .ok_or_else(|| ArtifactError::Identity(format!("kernel does not report {key}")))
 }
 
-/// Reads one unquoted `/etc/os-release` field.
 fn os_release_field(os_release: &str, key: &str) -> Option<String> {
     os_release
         .lines()
