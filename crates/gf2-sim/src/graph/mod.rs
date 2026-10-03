@@ -1,33 +1,11 @@
-//! Graph-based chain construction API (design doc §9, "Graph API").
+//! Graph-based chain construction API.
 //!
-//! Owned by `c09d3e95`. This module provides [`Chain`], the low-level
-//! graph-builder surface for composing **novel** stage topologies that the
-//! typestate DVB-T2 / 5G-NR presets (`81d05bab`) wrap. A caller [`Chain::add`]s
-//! type-erased stages, [`Chain::connect`]s producers to consumers (with a
-//! runtime connector type-check), optionally registers GPU→CPU OOM fallbacks
-//! ([`Chain::register_fallback`], design doc §8), and finally
-//! [`Chain::build`]s a topologically ordered [`Pipeline`].
-//!
-//! # Branching DAGs
-//!
-//! A stage may have multiple outgoing edges (fan-out) and multiple incoming
-//! edges (fan-in). [`Chain::build`] produces a [`Pipeline`] whose stage list is
-//! a valid topological order of the DAG; the Phase C executor (`de160fc5`)
-//! consumes that order later. This task only *produces* a correctly ordered
-//! pipeline — it does not execute it.
-//!
-//! # What `build()` checks
-//!
-//! 1. **Fallbacks** — every GPU-only stage must have a registered CPU fallback,
-//!    else [`BuildError::NoFallback`] (design doc §8).
-//! 2. **Type compatibility** — every edge's producer `output_type()` must match
-//!    its consumer `input_type()`, else [`BuildError::TypeMismatch`]. (Already
-//!    enforced eagerly by [`Chain::connect`]; re-checked at build for edges
-//!    added by other paths.)
-//! 3. **Acyclicity** — a cycle yields [`BuildError::Cyclic`].
-//! 4. **Connectivity** — the graph (over non-fallback stages) must be a single
-//!    weakly-connected component; multiple disjoint roots/sinks yield
-//!    [`BuildError::Disconnected`].
+//! A caller [`Chain::add`]s type-erased stages, [`Chain::connect`]s producers
+//! to consumers with a runtime type check, optionally registers GPU→CPU
+//! fallbacks ([`Chain::register_fallback`]), and [`Chain::build`]s a
+//! [`Pipeline`] whose stage list is a topological order of the DAG. A stage
+//! may have several outgoing and several incoming edges. [`Chain::build`]
+//! lists the conditions it checks under its `# Errors`.
 
 use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -40,21 +18,14 @@ use crate::PipelineConfig;
 /// The default per-edge batch size recorded on [`Edge`]s minted by
 /// [`Chain::connect`].
 ///
-/// The graph API joins stages by identity, not by negotiated buffer size, so a
-/// neutral non-zero default is recorded. Presets that care about exact SoA
-/// buffer sizing set per-edge sizes through their own wiring; the executor
-/// (`de160fc5`) reads [`Edge::batch_size`] when it allocates buffers.
+/// The graph API joins stages by identity, not by negotiated buffer size.
 const DEFAULT_EDGE_BATCH_SIZE: usize = 1;
 
 /// A mutable builder for a stage graph that compiles into a [`Pipeline`].
 ///
-/// Holds the type-erased stages, the directed edges joining them, and the
-/// GPU→CPU fallback registrations. See the [module docs](self) for the build
-/// contract.
-///
 /// # Examples
 ///
-/// A minimal two-stage chain built, validated, and compiled to a [`Pipeline`]:
+/// A two-stage chain compiled to a [`Pipeline`]:
 ///
 /// ```
 /// use gf2_sim::graph::Chain;
@@ -110,15 +81,12 @@ const DEFAULT_EDGE_BATCH_SIZE: usize = 1;
 /// assert_eq!(pipeline.stage_count(), 2);
 /// ```
 ///
-/// ## A DVB-T2 BICM chain, constructed step by step
+/// ## A DVB-T2 BICM chain
 ///
-/// The same graph API expresses a full DVB-T2 BICM transmit+receive chain.
-/// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) hands back the
-/// forward stages (BCH+LDPC encode → bit-interleave → Gray-QAM map) and the
-/// inverse stages (Gray-QAM demap → bit-deinterleave → LDPC decode) already
-/// type-erased; we `add` each in order, then `connect` them consecutively. The
-/// forward→inverse hop is a noiseless `SymbolBatch` pass-through, type-checked
-/// like every other edge, and `build()` topologically orders the six stages.
+/// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) returns the
+/// forward and inverse stages type-erased; each is added in order and
+/// connected to the next. The forward→inverse hop is a noiseless
+/// `SymbolBatch` edge.
 ///
 /// ```
 /// use gf2_sim::graph::Chain;
@@ -163,14 +131,11 @@ const DEFAULT_EDGE_BATCH_SIZE: usize = 1;
 /// assert_eq!(pipeline.edges().len(), 5, "five consecutive edges");
 /// ```
 pub struct Chain {
-    /// Type-erased stages indexed by their [`StageId`] (`StageId(i)` ⇒
-    /// `stages[i]`).
+    /// `StageId(i)` ⇒ `stages[i]`.
     stages: Vec<Box<dyn AnyStage>>,
-    /// Directed producer→consumer edges.
     edges: Vec<Edge>,
-    /// `(gpu_stage, cpu_fallback_stage)` registrations (design doc §8).
+    /// `(gpu_stage, cpu_fallback_stage)` registrations.
     fallbacks: Vec<(StageId, StageId)>,
-    /// Optional run configuration applied to the built [`Pipeline`].
     config: Option<PipelineConfig>,
 }
 
@@ -183,9 +148,8 @@ impl Default for Chain {
 impl Chain {
     /// Creates an empty chain.
     ///
-    /// The built [`Pipeline`] receives a neutral default [`PipelineConfig`]
-    /// (single worker, no SNR sweep) unless one is supplied via
-    /// [`Chain::with_config`].
+    /// The built [`Pipeline`] receives a default [`PipelineConfig`] (single
+    /// worker, no SNR sweep) unless one is supplied via [`Chain::with_config`].
     pub fn new() -> Self {
         Self {
             stages: Vec::new(),
@@ -195,11 +159,7 @@ impl Chain {
         }
     }
 
-    /// Sets the [`PipelineConfig`] the built [`Pipeline`] will carry.
-    ///
-    /// # Arguments
-    ///
-    /// * `config` — the run configuration to attach to the built pipeline.
+    /// Sets the [`PipelineConfig`] the built [`Pipeline`] carries.
     ///
     /// # Examples
     ///
@@ -233,51 +193,28 @@ impl Chain {
 
     /// Adds a type-erased stage and returns its [`StageId`].
     ///
-    /// The argument is a `Box<dyn AnyStage>`: a concrete `Stage<I, O>` is erased
-    /// to this form via [`erase`](crate::stage::erase). Taking the already-erased
-    /// box (rather than a generic `Stage<I, O>`) keeps the signature object-safe
-    /// and lets a chain hold a heterogeneous stage list, exactly as the
-    /// [`Pipeline`] does; it is also what the foundation's
-    /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) factory already
-    /// hands back.
-    ///
-    /// # Arguments
-    ///
-    /// * `stage` — the erased stage to insert.
+    /// A concrete `Stage<I, O>` is erased via [`erase`](crate::stage::erase).
     pub fn add(&mut self, stage: Box<dyn AnyStage>) -> StageId {
         let id = StageId(self.stages.len() as u32);
         self.stages.push(stage);
         id
     }
 
-    /// Connects a producer stage to a consumer stage, type-checking at runtime.
+    /// Connects a producer stage to a consumer stage, comparing the producer's
+    /// [`output_type()`](AnyStage::output_type) with the consumer's
+    /// [`input_type()`](AnyStage::input_type). An error records no edge.
     ///
-    /// Compares the producing stage's [`output_type()`](AnyStage::output_type)
-    /// against the consuming stage's [`input_type()`](AnyStage::input_type); a
-    /// mismatch returns [`BuildError::TypeMismatch`] and records no edge. On a
-    /// match, a directed [`Edge`] is recorded.
-    ///
-    /// # Fallback targets must not be connected
-    ///
-    /// A stage that is (or will be) registered as a CPU fallback target via
-    /// [`register_fallback`](Chain::register_fallback) is **not** a node in the
-    /// pipeline DAG and must not be connected by any edge. This method does not
-    /// know the fallback registrations (they may be added later), so it records
-    /// the edge regardless; [`build`](Chain::build) then rejects any edge
-    /// incident to a fallback target with
-    /// [`BuildError::FallbackTargetHasEdge`] rather than silently dropping it.
-    ///
-    /// # Arguments
-    ///
-    /// * `from` — the producing stage.
-    /// * `to` — the consuming stage.
+    /// A CPU fallback target of
+    /// [`register_fallback`](Chain::register_fallback) is outside the pipeline
+    /// DAG: this method records an edge to or from it, and
+    /// [`build`](Chain::build) rejects that edge with
+    /// [`BuildError::FallbackTargetHasEdge`].
     ///
     /// # Errors
     ///
     /// * [`BuildError::TypeMismatch`] if the producer output type and consumer
     ///   input type differ.
-    /// * [`BuildError::Disconnected`] if either id refers to no added stage
-    ///   (an unknown id cannot participate in a connected graph).
+    /// * [`BuildError::Disconnected`] if either id refers to no added stage.
     ///
     /// # Examples
     ///
@@ -330,39 +267,24 @@ impl Chain {
         Ok(())
     }
 
-    /// Registers a CPU fallback stage for a GPU stage (design doc §8).
+    /// Registers a CPU fallback stage for a GPU stage.
     ///
-    /// On GPU out-of-memory the executor (`42eac5cc`) substitutes the registered
-    /// CPU stage on the offending batch. [`Chain::build`] moves `cpu_stage` out
-    /// of the topologically-ordered stage list and into the pipeline's fallback
-    /// table keyed by `gpu_stage`; the CPU fallback is therefore **not** a node
-    /// in the DAG (it is a substitution target, reachable only on OOM).
+    /// [`Chain::build`] moves `cpu_stage` out of the stage list into the
+    /// pipeline's fallback table keyed by `gpu_stage`, so the CPU fallback is a
+    /// substitution target outside the DAG. This method records the pairing;
+    /// [`Chain::build`] validates it and requires that:
     ///
-    /// This method only records the pairing; all validation is deferred to
-    /// [`Chain::build`], which enforces every fallback invariant. In particular,
-    /// for the registration to build successfully:
-    ///
-    /// * `gpu_stage` must be GPU-capable (`GpuOnly` or `Hybrid`) — only such a
-    ///   stage can OOM on the GPU.
-    /// * `cpu_stage` must be CPU-capable (`CpuOnly` or `Hybrid`) — it runs on
-    ///   the CPU when the substitution fires.
-    /// * `cpu_stage` must have the same input and output element types as
+    /// * `gpu_stage` is GPU-capable (`GpuOnly` or `Hybrid`).
+    /// * `cpu_stage` is CPU-capable (`CpuOnly` or `Hybrid`).
+    /// * `cpu_stage` has the same input and output element types as
     ///   `gpu_stage`.
-    /// * each `gpu_stage` may be registered at most once, each `cpu_stage` may
-    ///   back at most one GPU stage, and no stage may appear in both roles
-    ///   (this also forbids `gpu_stage == cpu_stage`).
-    /// * `cpu_stage` must NOT be [`connect`](Chain::connect)ed by any graph edge
-    ///   — a fallback target is a substitution target reachable only on OOM, not
-    ///   a DAG node, so an incident edge is rejected rather than silently lost.
+    /// * each `gpu_stage` is registered at most once, each `cpu_stage` backs at
+    ///   most one GPU stage, and no stage appears in both roles (which forbids
+    ///   `gpu_stage == cpu_stage`).
+    /// * `cpu_stage` has no [`connect`](Chain::connect)ed edge.
     ///
-    /// See [`Chain::build`]'s `# Errors` for the exact `BuildError` returned
-    /// when any of these is violated.
-    ///
-    /// # Arguments
-    ///
-    /// * `gpu_stage` — the GPU-capable stage that may OOM.
-    /// * `cpu_stage` — the CPU-capable stage to substitute (must already be
-    ///   added; it is not separately connected by edges).
+    /// See [`Chain::build`]'s `# Errors` for the `BuildError` each violation
+    /// returns.
     ///
     /// # Examples
     ///
@@ -414,11 +336,6 @@ impl Chain {
     /// assert_eq!(pipeline.stage_count(), 1);
     /// ```
     pub fn register_fallback(&mut self, gpu_stage: StageId, cpu_stage: StageId) {
-        // Records the pairing only; every fallback invariant (in-range ids, no
-        // duplicate GPU registration, no reused CPU target, no role overlap,
-        // GPU-capability, CPU-capability, type compatibility) is enforced by
-        // [`Chain::build`], which returns a typed `BuildError` for a malformed
-        // registration rather than panicking.
         self.fallbacks.push((gpu_stage, cpu_stage));
     }
 
@@ -426,18 +343,14 @@ impl Chain {
     ///
     /// Performs, in order: fallback registration validation, edge type
     /// re-validation, a Kahn topological sort (which also detects cycles), and a
-    /// weak-connectivity check over the non-fallback stages. Branching DAGs
-    /// (fan-out / fan-in) are supported; the resulting stage order is a valid
-    /// linearisation of the DAG.
+    /// weak-connectivity check over the non-fallback stages.
     ///
     /// ## Edge `from`/`to` contract
     ///
-    /// After the topo sort each [`Edge`]'s `from` and `to` fields are remapped
-    /// to **post-sort positions** in [`Pipeline::stages()`]. An edge `from = i`
-    /// means `pipeline.stages()[i]` is the producer; `to = j` means
-    /// `pipeline.stages()[j]` is the consumer. This is the only contract
-    /// [`Pipeline::edges()`] documents; the original insertion-order
-    /// [`StageId`]s are not preserved in the built pipeline.
+    /// Each [`Edge`]'s `from` and `to` are remapped to post-sort positions in
+    /// [`Pipeline::stages()`]: `pipeline.stages()[from]` is the producer and
+    /// `pipeline.stages()[to]` the consumer. The built pipeline drops the
+    /// insertion-order [`StageId`]s.
     ///
     /// # Errors
     ///
@@ -456,9 +369,7 @@ impl Chain {
     ///   incompatible input or output types compared to the GPU stage it
     ///   substitutes.
     /// * [`BuildError::FallbackTargetHasEdge`] — a CPU fallback target was
-    ///   [`connect`](Chain::connect)ed by a graph edge (on either end); a
-    ///   fallback target is not a DAG node, so such an edge would be silently
-    ///   lost.
+    ///   [`connect`](Chain::connect)ed by a graph edge (on either end).
     /// * [`BuildError::TypeMismatch`] — an edge joins incompatible types.
     /// * [`BuildError::Cyclic`] — the graph contains a cycle.
     /// * [`BuildError::Disconnected`] — the graph is not a single
@@ -505,51 +416,11 @@ impl Chain {
     /// assert_eq!(pipeline.stage_count(), 3);
     /// ```
     pub fn build(mut self) -> Result<Pipeline, BuildError> {
-        // 0. Validate every fallback/edge invariant up front so malformed input
-        //    fails via `Result` rather than panicking or silently producing a
-        //    Pipeline whose `stages()`/`edges()`/`fallbacks` do not faithfully
-        //    represent what was registered. The materialiser below indexes
-        //    `slots[cpu]`, `take()`s each target once, looks up `new_index_of`
-        //    for each `gpu` key and each edge endpoint, and (formerly) filtered
-        //    edges — every one of those is now backed by an invariant here.
-        //    `register_fallback`/`connect` perform only minimal validation, so
-        //    EVERY malformed combination must be rejected here.
-        //
-        //    The full, EXHAUSTIVE invariant set, in evaluation order. Each names
-        //    the failure it prevents in the materialisation path:
-        //      (1) gpu id in range          — else `new_index_of[&gpu]` / slot
-        //          indexing reaches a non-existent stage.
-        //      (2) cpu id in range          — else `slots[cpu]` indexing panics.
-        //      (3) no duplicate gpu          — else the fallback HashMap silently
-        //          drops one entry while both CPU stages are moved out.
-        //      (4) no duplicate cpu target   — else `slots[cpu].take()` runs
-        //          twice (second `take()` is `None` → panic). NOTE this also
-        //          covers the degenerate `gpu == cpu` SAME-registration case
-        //          indirectly, but (5) catches `gpu == cpu` first as an overlap.
-        //      (5) no role overlap           — a stage may not be BOTH a fallback
-        //          target (a `cpu`) AND a GPU stage that has its own fallback (a
-        //          `gpu`). Includes `register_fallback(g, g)` (gpu == cpu), which
-        //          is a self-overlap. A fallback target is excluded from
-        //          `graph_nodes`, so it never enters `new_index_of`; were it also
-        //          a `gpu` key the materialiser's `new_index_of[&gpu]` would panic.
-        //      (6) gpu is GPU-capable        — only `GpuOnly`/`Hybrid` stages can
-        //          OOM on the GPU; registering a fallback for a `CpuOnly` stage
-        //          is meaningless.
-        //      (7) cpu is CPU-capable        — a `GpuOnly` stage cannot serve as a
-        //          CPU fallback (it cannot run on the CPU at all).
-        //      (8) type compatibility        — the CPU fallback must have the same
-        //          input and output element types as the GPU stage it
-        //          substitutes; else the executor hits a runtime downcast fault.
-        //      (9) no edge incident to a fallback target — a fallback target is
-        //          not a DAG node; an edge touching it would be SILENTLY DROPPED
-        //          by the materialiser's reduced-graph edge handling, losing
-        //          registered topology. Checked at step 2b below (it needs the
-        //          edge list, which the per-pair pass does not). All other edge
-        //          invariants (endpoints in range, type compatibility) are
-        //          enforced eagerly by `connect` and re-checked at step 2.
+        // The checks below back every index, `take()` and `new_index_of`
+        // lookup of the materialisation at the end of this function.
         let n_stages = self.stages.len() as u32;
 
-        // (1)+(2): bounds, checked first so all later indexing is safe.
+        // Bounds first, so all later indexing is safe.
         for &(gpu, cpu) in &self.fallbacks {
             if gpu.0 >= n_stages {
                 return Err(BuildError::Disconnected { stages: vec![gpu] });
@@ -559,18 +430,13 @@ impl Chain {
             }
         }
 
-        // The GPU keys and CPU targets across all registrations. Built up front
-        // so the role-overlap check (5) can see the complete picture before the
-        // per-pair pass; ids are already known in range from the loop above.
         let registered_gpu: HashSet<StageId> = self.fallbacks.iter().map(|&(gpu, _)| gpu).collect();
         let fallback_targets: HashSet<StageId> =
             self.fallbacks.iter().map(|&(_, cpu)| cpu).collect();
 
-        // (5): a stage cannot play both roles. Report the lowest such id for a
-        //      deterministic error. This MUST be caught before materialisation:
-        //      a fallback target is removed from `graph_nodes`, so it never
-        //      enters `new_index_of`; if it were also a `gpu` key the
-        //      `new_index_of[&gpu]` lookup in materialisation would panic.
+        // A stage cannot play both roles (this covers `gpu == cpu`): a fallback
+        // target never enters `new_index_of`, so it cannot also be a `gpu` key.
+        // The lowest such id is reported.
         if let Some(&conflict) = {
             let mut overlap: Vec<&StageId> =
                 registered_gpu.intersection(&fallback_targets).collect();
@@ -580,42 +446,30 @@ impl Chain {
             return Err(BuildError::FallbackRoleConflict { stage: conflict });
         }
 
-        // (3),(4),(6),(7),(8): the per-pair pass. Bounds (1)/(2) and overlap (5)
-        //    are already guaranteed, so all `self.stages[..]` indexing is safe.
         let mut seen_gpu: HashSet<StageId> = HashSet::new();
         let mut seen_cpu: HashSet<StageId> = HashSet::new();
         for &(gpu, cpu) in &self.fallbacks {
-            // (3) Each GPU stage may be registered at most once; a second
-            //     registration would silently overwrite the first in the
-            //     HashMap while still moving both CPU stages out of `slots`.
+            // A second registration would overwrite the first in the fallback
+            // map while both CPU stages are moved out of `slots`.
             if !seen_gpu.insert(gpu) {
                 return Err(BuildError::DuplicateFallback { gpu_stage: gpu });
             }
-            // (4) A CPU fallback backs exactly one GPU stage; otherwise the
-            //     materialiser would move the same boxed stage out twice.
+            // The materialiser moves each CPU fallback out of `slots` once.
             if !seen_cpu.insert(cpu) {
                 return Err(BuildError::Disconnected { stages: vec![cpu] });
             }
-            // (6) The GPU stage must be able to run on the GPU (and thus OOM);
-            //     registering a fallback for a `CpuOnly` stage is meaningless.
             if matches!(
                 self.stages[gpu.0 as usize].execution_class(),
                 crate::stage::ExecutionClass::CpuOnly
             ) {
                 return Err(BuildError::FallbackForCpuStage { gpu_stage: gpu });
             }
-            // (7) The CPU fallback must be able to run on the CPU; a `GpuOnly`
-            //     stage cannot substitute for the GPU stage on OOM.
             if matches!(
                 self.stages[cpu.0 as usize].execution_class(),
                 crate::stage::ExecutionClass::GpuOnly
             ) {
                 return Err(BuildError::FallbackNotCpuCapable { cpu_stage: cpu });
             }
-            // (8) The CPU fallback must have the same input and output element
-            //     types as the GPU stage it substitutes; otherwise the executor
-            //     would encounter a type-downcast failure at runtime when the
-            //     fallback is invoked.
             let gpu_in = self.stages[gpu.0 as usize].input_type();
             let gpu_out = self.stages[gpu.0 as usize].output_type();
             let cpu_in = self.stages[cpu.0 as usize].input_type();
@@ -632,9 +486,7 @@ impl Chain {
             }
         }
 
-        // 1. Fallback presence: every GPU-only stage needs a registered CPU
-        //    fallback. The set of stages that ARE fallbacks is excluded from the
-        //    graph (they are substitution targets, reachable only on OOM).
+        // Every GPU-only graph stage needs a registered CPU fallback.
         for (idx, stage) in self.stages.iter().enumerate() {
             let id = StageId(idx as u32);
             if fallback_targets.contains(&id) {
@@ -649,9 +501,8 @@ impl Chain {
             }
         }
 
-        // 2. Re-validate every edge's type compatibility (connect() already
-        //    enforces this, but build() is the authoritative gate). Edges whose
-        //    endpoints are out of range are treated as disconnected.
+        // Edge types, as in `connect`; an out-of-range endpoint is reported as
+        // disconnected.
         for edge in &self.edges {
             let from = self
                 .stage(edge.from)
@@ -675,16 +526,8 @@ impl Chain {
             }
         }
 
-        // 2b. Fallback-target edge invariant (fallback invariant 9): a CPU
-        //     fallback target is NOT a DAG node — it is excluded from
-        //     `graph_nodes` and the topological order, and the materialiser's
-        //     edge filter (below) keeps only edges fully inside the reduced
-        //     graph. An edge incident to a fallback target (on EITHER end) would
-        //     therefore be SILENTLY DROPPED, yielding a Pipeline whose `edges()`
-        //     misrepresent the registered topology. `register_fallback` documents
-        //     a fallback target as "not separately connected by edges", so reject
-        //     such an edge explicitly rather than erasing it. The lowest-id
-        //     offending edge is reported for determinism.
+        // A fallback target is outside `graph_nodes`, so an edge incident to it
+        // has no post-sort endpoint. The lowest-id offending edge is reported.
         if let Some((stage, edge_peer)) = self
             .edges
             .iter()
@@ -702,29 +545,21 @@ impl Chain {
             return Err(BuildError::FallbackTargetHasEdge { stage, edge_peer });
         }
 
-        // The graph nodes are every added stage that is NOT a fallback target.
         let graph_nodes: Vec<StageId> = (0..self.stages.len() as u32)
             .map(StageId)
             .filter(|id| !fallback_targets.contains(id))
             .collect();
 
-        // 3. Topological sort (Kahn) over graph_nodes, also detecting cycles.
         let order = topological_order(&graph_nodes, &self.edges, &fallback_targets)?;
-
-        // 4. Connectivity: the non-fallback graph must be a single
-        //    weakly-connected component. An empty graph is vacuously connected.
         if let Some(disconnected) = weakly_disconnected(&graph_nodes, &self.edges) {
             return Err(BuildError::Disconnected {
                 stages: disconnected,
             });
         }
 
-        // Materialise the pipeline: move stages into topo order, split fallbacks
-        // into the keyed map, and remap edges to post-sort positions.
         let config = self.config.take().unwrap_or_else(default_pipeline_config);
 
-        // Move every stage out of `self.stages` into an indexable slot so we can
-        // relocate by id without cloning the boxed trait objects.
+        // Indexable slots let stages be relocated by id.
         let mut slots: Vec<Option<Box<dyn AnyStage>>> = self.stages.into_iter().map(Some).collect();
 
         let ordered_stages: Vec<Box<dyn AnyStage>> = order
@@ -736,14 +571,8 @@ impl Chain {
             })
             .collect();
 
-        // Build an old-StageId → new-position map so edge endpoints can be
-        // remapped. After topo sort `order[new_pos]` is the old StageId, so
+        // `order[new_pos]` is the insertion-order StageId, so
         // `new_index_of[old_id] = new_pos`.
-        //
-        // This is the fix for Bug 1: without this remap, `Pipeline::edges()`
-        // would return edges whose `from`/`to` still carry insertion-order
-        // StageIds, which no longer index `Pipeline::stages()` correctly for
-        // any non-identity topo reorder.
         let new_index_of: HashMap<StageId, StageId> = order
             .iter()
             .enumerate()
@@ -757,11 +586,7 @@ impl Chain {
                 let stage = slots[cpu.0 as usize]
                     .take()
                     .expect("a fallback target is taken exactly once");
-                // The fallback map is keyed by the GPU stage's new post-sort
-                // position so the executor can look up by index into stages().
-                // The role-overlap check (invariant 5 above) guarantees every
-                // `gpu` key is a graph node and therefore present in
-                // `new_index_of`, so this lookup never panics on validated input.
+                // Keyed by the GPU stage's post-sort position in `stages()`.
                 let new_gpu = *new_index_of
                     .get(&gpu)
                     .expect("a GPU fallback key is a graph node (no role overlap)");
@@ -769,19 +594,10 @@ impl Chain {
             })
             .collect();
 
-        // Remap every edge to post-sort positions. No edge is dropped here:
-        // invariant (9) above already rejected any edge incident to a fallback
-        // target, so every endpoint is a graph node and is present in
-        // `new_index_of`. We therefore map (never filter) — silently filtering
-        // is exactly the topology-loss bug invariant (9) eliminates. The
-        // `.expect()` documents that the lookup cannot fail on validated input.
         let ordered_edges: Vec<Edge> = self
             .edges
             .into_iter()
             .map(|e| Edge {
-                // Remap from/to to post-sort positions so that
-                // `pipeline.stages()[edge.from.0]` is the actual producer and
-                // `pipeline.stages()[edge.to.0]` is the actual consumer.
                 from: *new_index_of
                     .get(&e.from)
                     .expect("edge endpoints are graph nodes (no fallback-target edges)"),
@@ -801,7 +617,6 @@ impl Chain {
         ))
     }
 
-    /// Returns the erased stage for `id`, if it was added to this chain.
     fn stage(&self, id: StageId) -> Option<&dyn AnyStage> {
         self.stages.get(id.0 as usize).map(|b| b.as_ref())
     }
@@ -819,7 +634,6 @@ fn topological_order(
 ) -> Result<Vec<StageId>, BuildError> {
     let node_set: HashSet<StageId> = nodes.iter().copied().collect();
 
-    // Adjacency + in-degrees over graph edges only.
     let mut indegree: HashMap<StageId, usize> = nodes.iter().map(|&n| (n, 0)).collect();
     let mut adj: HashMap<StageId, Vec<StageId>> = nodes.iter().map(|&n| (n, Vec::new())).collect();
     for e in edges {
@@ -835,8 +649,7 @@ fn topological_order(
         *indegree.get_mut(&e.to).expect("to is a graph node") += 1;
     }
 
-    // Seed the queue with all zero-in-degree nodes, ascending by id for a
-    // deterministic order.
+    // Zero-in-degree nodes ascending by id, for a deterministic order.
     let mut ready: VecDeque<StageId> = {
         let mut seeds: Vec<StageId> = nodes.iter().copied().filter(|n| indegree[n] == 0).collect();
         seeds.sort();
@@ -846,7 +659,6 @@ fn topological_order(
     let mut order: Vec<StageId> = Vec::with_capacity(nodes.len());
     while let Some(n) = ready.pop_front() {
         order.push(n);
-        // Collect newly-ready successors, sorted, for determinism.
         let mut newly_ready: Vec<StageId> = Vec::new();
         for &succ in &adj[&n] {
             let d = indegree.get_mut(&succ).expect("successor is a graph node");
@@ -862,7 +674,7 @@ fn topological_order(
     }
 
     if order.len() != nodes.len() {
-        // The unscheduled nodes (in-degree never reached zero) lie on cycles.
+        // The unscheduled nodes lie on or downstream of a cycle.
         let scheduled: HashSet<StageId> = order.iter().copied().collect();
         let mut involved: Vec<StageId> = nodes
             .iter()
@@ -887,7 +699,6 @@ fn weakly_disconnected(nodes: &[StageId], edges: &[Edge]) -> Option<Vec<StageId>
     }
     let node_set: HashSet<StageId> = nodes.iter().copied().collect();
 
-    // Undirected adjacency over graph edges.
     let mut adj: HashMap<StageId, Vec<StageId>> = nodes.iter().map(|&n| (n, Vec::new())).collect();
     for e in edges {
         if !node_set.contains(&e.from) || !node_set.contains(&e.to) {
@@ -897,7 +708,6 @@ fn weakly_disconnected(nodes: &[StageId], edges: &[Edge]) -> Option<Vec<StageId>
         adj.get_mut(&e.to).expect("to is a node").push(e.from);
     }
 
-    // BFS from the lowest-id node.
     let start = *nodes.iter().min().expect("non-empty");
     let mut seen: HashSet<StageId> = HashSet::new();
     let mut queue: VecDeque<StageId> = VecDeque::new();
@@ -924,7 +734,7 @@ fn weakly_disconnected(nodes: &[StageId], edges: &[Edge]) -> Option<Vec<StageId>
     }
 }
 
-/// The neutral [`PipelineConfig`] applied when a [`Chain`] is built without an
+/// The [`PipelineConfig`] applied when a [`Chain`] is built without an
 /// explicit config: single worker, empty SNR sweep, no checkpointing.
 fn default_pipeline_config() -> PipelineConfig {
     PipelineConfig {
@@ -951,7 +761,6 @@ mod tests {
     use crate::stage::{erase, ExecutionClass, Stage};
     use gf2_core::BitVec;
 
-    // --- Tiny test stages -------------------------------------------------
 
     /// Identity over `BitPackedBatch` (CPU).
     struct BitId;
@@ -966,7 +775,7 @@ mod tests {
         }
     }
 
-    /// BitPacked → Symbol (CPU). Produces a degenerate symbol batch.
+    /// BitPacked → Symbol (CPU), with empty symbol frames.
     struct BitToSym;
     impl Stage<BitPackedBatch, SymbolBatch> for BitToSym {
         type Scratch = ();
@@ -993,8 +802,7 @@ mod tests {
         }
     }
 
-    /// A GPU-only identity over `BitPackedBatch` (declares GpuOnly so it needs a
-    /// registered fallback).
+    /// A GPU-only identity over `BitPackedBatch`.
     struct GpuBitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for GpuBitId {
         type Scratch = ();
@@ -1007,8 +815,7 @@ mod tests {
         }
     }
 
-    /// A Hybrid identity over `BitPackedBatch` (CPU-capable AND GPU-capable, so
-    /// it is valid in either fallback role individually).
+    /// A Hybrid identity over `BitPackedBatch`, valid in either fallback role.
     struct HybridBitId;
     impl Stage<BitPackedBatch, BitPackedBatch> for HybridBitId {
         type Scratch = ();
@@ -1044,9 +851,7 @@ mod tests {
     #[test]
     fn test_connect_incompatible_types_is_type_mismatch() {
         let mut chain = Chain::new();
-        // BitToSym outputs SymbolBatch; SymToLlr consumes SymbolBatch — ok.
-        // But BitId consumes BitPackedBatch, so SymToLlr(out=Llr) → BitId is a
-        // mismatch.
+        // SymToLlr outputs LlrBatch; BitId consumes BitPackedBatch.
         let s = chain.add(erase(SymToLlr));
         let b = chain.add(erase(BitId));
         match chain.connect(s, b) {
@@ -1128,17 +933,13 @@ mod tests {
         let cpu = chain.add(erase(BitId));
         chain.register_fallback(g, cpu);
         let pipeline = chain.build().expect("gpu stage now has a fallback");
-        // Only the GPU stage is a graph node; the CPU twin is a substitution
-        // target.
+        // Only the GPU stage is a graph node.
         assert_eq!(pipeline.stage_count(), 1);
         assert_eq!(pipeline.fallback_count(), 1);
     }
 
     #[test]
     fn test_build_rejects_duplicate_fallback_target() {
-        // One CPU stage registered as the fallback for two GPU stages: the
-        // materialiser can only move the boxed CPU stage out once, so build()
-        // must reject this via `Result`, not panic on the second `take()`.
         let mut chain = Chain::new();
         let g1 = chain.add(erase(GpuBitId));
         let g2 = chain.add(erase(GpuBitId));
@@ -1154,8 +955,6 @@ mod tests {
 
     #[test]
     fn test_build_rejects_out_of_range_fallback_id() {
-        // A fallback referencing a stage id that `add()` never returned must
-        // fail via `Result`, not an out-of-bounds index panic in materialisation.
         let mut chain = Chain::new();
         let g = chain.add(erase(GpuBitId));
         let bogus = StageId(99);
@@ -1170,7 +969,6 @@ mod tests {
     #[test]
     fn test_build_branching_dag_topological_order() {
         // Fan-out then fan-in:  a → b, a → c, b → d, c → d.
-        // All edges are BitPacked → BitPacked.
         let mut chain = Chain::new();
         let a = chain.add(erase(BitId));
         let b = chain.add(erase(BitId));
@@ -1200,8 +998,6 @@ mod tests {
         assert_eq!(pipeline.stage_count(), 1);
     }
 
-    /// Sanity: a `BitVec`-carrying batch flows through the test stages so the
-    /// `gf2_core` import is genuinely exercised.
     #[test]
     fn test_bitid_processes_a_real_batch() {
         let s = BitId;
@@ -1211,23 +1007,12 @@ mod tests {
         assert_eq!(out.frames[0].len(), 8);
     }
 
-    // --- Bug 1 regression: edge StageIds are remapped to post-topo positions ---
-
-    /// Stages added in REVERSE topological order (consumer before producer).
-    ///
-    /// After `build()`, `Pipeline::edges()[0].from` must index the producer in
-    /// `Pipeline::stages()` and `.to` must index the consumer, regardless of
-    /// insertion order. Without the post-sort remap, the edge would still carry
-    /// the old insertion-order StageIds and would index the wrong stages.
+    /// Stages added in reverse topological order: each built edge's `from` and
+    /// `to` index its producer and consumer in `Pipeline::stages()`.
     #[test]
     fn test_edge_positions_remapped_after_non_topo_insertion() {
-        // Insert in REVERSE order: consumer (C), middle (M), producer (P).
-        // Connections: P → M → C.
-        // Insertion: C = StageId(0), M = StageId(1), P = StageId(2).
-        // Topo order (ascending id, zero-in-degree first): [P, M, C]
-        //   i.e. order = [StageId(2), StageId(1), StageId(0)].
-        // Post-sort positions: P→0, M→1, C→2.
-        // Edge P→M should become from=0, to=1; edge M→C should become from=1, to=2.
+        // Insertion: C = StageId(0), M = StageId(1), P = StageId(2), with
+        // P → M → C. Post-sort positions: P→0, M→1, C→2.
         let mut chain = Chain::new();
         let c = chain.add(erase(SymToLlr)); // consumer: SymbolBatch → LlrBatch
         let m = chain.add(erase(BitToSym)); // middle:   BitPackedBatch → SymbolBatch
@@ -1239,9 +1024,6 @@ mod tests {
         assert_eq!(pipeline.stage_count(), 3);
         assert_eq!(pipeline.edges().len(), 2);
 
-        // Topo order puts P first (only zero-in-degree node), then M, then C.
-        // post-sort: position 0 = P (BitPacked→BitPacked), 1 = M (BitPacked→Symbol),
-        //            2 = C (Symbol→Llr).
         use crate::batch::{BitPackedBatch, LlrBatch, SymbolBatch};
         use std::any::TypeId;
         let stages = pipeline.stages();
@@ -1252,12 +1034,7 @@ mod tests {
         assert_eq!(stages[2].input_type(), TypeId::of::<SymbolBatch>());
         assert_eq!(stages[2].output_type(), TypeId::of::<LlrBatch>());
 
-        // The P→M edge must point to position 0 → 1.
-        // The M→C edge must point to position 1 → 2.
-        // Without the remap, they would still carry the old stale ids (2→1 and 1→0),
-        // which would index the WRONG stages (C and M, instead of P, M, C).
         let edges = pipeline.edges();
-        // Sort edges by `from` for a deterministic check order.
         let mut sorted_edges = edges.to_vec();
         sorted_edges.sort_by_key(|e| e.from);
 
@@ -1283,13 +1060,6 @@ mod tests {
         );
     }
 
-    // --- Bug 2a regression: duplicate GPU stage in fallback registrations ---
-
-    /// Registering the same GPU stage with two different CPU fallbacks must
-    /// return `BuildError::DuplicateFallback`, not silently discard one entry.
-    ///
-    /// Without this check, `HashMap::collect` would silently keep only the
-    /// last mapping while still moving both CPU stages out of `slots`.
     #[test]
     fn test_build_rejects_duplicate_gpu_fallback_registration() {
         let mut chain = Chain::new();
@@ -1309,17 +1079,8 @@ mod tests {
         }
     }
 
-    // --- Bug 2b regression: type-incompatible fallback pair ---
-
-    /// A CPU fallback with a different input/output type than the GPU stage
-    /// must return `BuildError::FallbackTypeMismatch`.
-    ///
-    /// Without this check, the executor would encounter a runtime type-downcast
-    /// failure the first time GPU OOM triggers the substitution.
     #[test]
     fn test_build_rejects_type_incompatible_fallback() {
-        // GpuBitId: BitPackedBatch → BitPackedBatch (GpuOnly).
-        // SymToLlr: SymbolBatch → LlrBatch (CpuOnly) — types differ on both ends.
         let mut chain = Chain::new();
         let g = chain.add(erase(GpuBitId)); // BitPacked → BitPacked, GpuOnly
         let wrong_cpu = chain.add(erase(SymToLlr)); // Symbol → Llr, CpuOnly
@@ -1340,17 +1101,8 @@ mod tests {
         }
     }
 
-    // --- Gap 1 regression: role overlap (a stage is both gpu and cpu target) ---
-
-    /// A stage registered as BOTH a GPU stage with its own fallback AND another
-    /// GPU stage's CPU fallback target must return `BuildError::FallbackRoleConflict`,
-    /// and crucially must NOT panic.
-    ///
-    /// Without this check the overlapping stage is removed from `graph_nodes`
-    /// (as a fallback target) so it never enters `new_index_of`; the
-    /// materialiser's `new_index_of[&gpu]` lookup would then panic. We use a
-    /// Hybrid stage for the overlapping node so the role-overlap check (and not
-    /// the GPU-/CPU-capability checks) is the one that fires.
+    /// The overlapping stage is Hybrid so the role-overlap check fires before
+    /// the capability checks.
     #[test]
     fn test_build_rejects_fallback_role_overlap_without_panic() {
         let mut chain = Chain::new();
@@ -1361,7 +1113,6 @@ mod tests {
         chain.register_fallback(g, x);
         // ... and x is also a GPU stage with its own fallback c.
         chain.register_fallback(x, c);
-        // `build()` must return an error, never panic.
         match chain.build() {
             Err(BuildError::FallbackRoleConflict { stage }) => assert_eq!(stage, x),
             Err(other) => panic!("expected FallbackRoleConflict for role overlap, got {other:?}"),
@@ -1369,11 +1120,6 @@ mod tests {
         }
     }
 
-    // --- Gap 2 regression: CPU fallback is not CPU-capable ---
-
-    /// Registering a `GpuOnly` stage as a CPU fallback must return
-    /// `BuildError::FallbackNotCpuCapable` — a GpuOnly stage cannot run on the
-    /// CPU when the substitution fires.
     #[test]
     fn test_build_rejects_gpu_only_stage_as_cpu_fallback() {
         let mut chain = Chain::new();
@@ -1391,10 +1137,6 @@ mod tests {
         }
     }
 
-    // --- Invariant 6 regression: fallback registered for a CpuOnly stage ---
-
-    /// Registering a fallback for a `CpuOnly` stage (which cannot OOM on the
-    /// GPU) must return `BuildError::FallbackForCpuStage`.
     #[test]
     fn test_build_rejects_fallback_for_cpu_only_stage() {
         let mut chain = Chain::new();
@@ -1410,11 +1152,6 @@ mod tests {
         }
     }
 
-    // --- Positive: Hybrid stages are valid in either fallback role ---
-
-    /// A `Hybrid` GPU stage with a `Hybrid` CPU fallback (distinct stages, no
-    /// role overlap) builds successfully: Hybrid is both GPU-capable and
-    /// CPU-capable, so it passes invariants 6 and 7.
     #[test]
     fn test_build_accepts_hybrid_stage_and_hybrid_fallback() {
         let mut chain = Chain::new();
@@ -1424,20 +1161,11 @@ mod tests {
         let pipeline = chain
             .build()
             .expect("hybrid gpu + hybrid fallback is valid");
-        // Only the GPU stage is a graph node; the fallback is a substitution target.
+        // Only the GPU stage is a graph node.
         assert_eq!(pipeline.stage_count(), 1);
         assert_eq!(pipeline.fallback_count(), 1);
     }
 
-    // --- Gap regression: edge incident to a fallback target (silent topology loss) ---
-
-    /// An edge whose CONSUMER (`to`) end is a CPU fallback target must return
-    /// `BuildError::FallbackTargetHasEdge`, not silently drop the edge.
-    ///
-    /// Without this check, `connect(x, c)` + `register_fallback(g, c)` builds
-    /// successfully but the materialiser filters the `x → c` edge out (c is not
-    /// a graph node), producing a Pipeline whose `edges()` misrepresent the
-    /// registered topology.
     #[test]
     fn test_build_rejects_edge_into_fallback_target() {
         let mut chain = Chain::new();
@@ -1456,8 +1184,6 @@ mod tests {
         }
     }
 
-    /// An edge whose PRODUCER (`from`) end is a CPU fallback target must equally
-    /// return `BuildError::FallbackTargetHasEdge`.
     #[test]
     fn test_build_rejects_edge_out_of_fallback_target() {
         let mut chain = Chain::new();
@@ -1476,13 +1202,9 @@ mod tests {
         }
     }
 
-    /// A fallback whose target has NO incident edge still builds, and the GPU
-    /// stage's own graph edge is faithfully preserved (not dropped). This is the
-    /// counterpart confirming the invariant-9 check does not over-reject.
     #[test]
     fn test_build_accepts_fallback_with_no_incident_edge_preserving_graph_edge() {
         let mut chain = Chain::new();
-        // Graph path: src → g (GPU). g has a CPU fallback c with no edges.
         let src = chain.add(erase(BitId)); // ordinary producer
         let g = chain.add(erase(GpuBitId)); // GPU stage, in the graph
         let c = chain.add(erase(BitId)); // CPU fallback target, NOT connected
@@ -1494,7 +1216,6 @@ mod tests {
         // Two graph nodes (src, g); c is a substitution target.
         assert_eq!(pipeline.stage_count(), 2);
         assert_eq!(pipeline.fallback_count(), 1);
-        // The src → g edge SURVIVES (it was not dropped along with c's removal).
         assert_eq!(
             pipeline.edges().len(),
             1,
@@ -1502,11 +1223,6 @@ mod tests {
         );
     }
 
-    // --- Audit: gpu == cpu in a single registration is a self-overlap ---
-
-    /// `register_fallback(g, g)` (a stage as its own fallback) is a degenerate
-    /// role overlap and must be rejected with `BuildError::FallbackRoleConflict`,
-    /// never panic in materialisation.
     #[test]
     fn test_build_rejects_self_fallback() {
         let mut chain = Chain::new();
@@ -1521,7 +1237,6 @@ mod tests {
 
     #[test]
     fn test_chain_default_is_same_as_new() {
-        // Chain::default() delegates to Chain::new(); the result is an empty chain.
         let chain = Chain::default();
         let pipeline = chain.build().unwrap();
         assert_eq!(
