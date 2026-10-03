@@ -2,19 +2,10 @@
 //!
 //! The reusable layer accepts a typed preregistration and journals each
 //! address before opening a sampler. [`evaluate_validation_anchor`] exposes
-//! the field-generic computation, while [`run_validation`] adds sealed runtime
-//! provenance and no-redraw persistence. The repository-specific frozen plan
-//! is enforced separately by [`run_frozen_campaign_validation`].
-//!
-//! The frozen runner refuses a wrong producing toolchain or an unusable
-//! required backend before it opens any address, because an address opened
-//! under a refused build could not be redrawn.
-//!
-//! Exhaustive matrices are emitted once in bounded batches. Each identical
-//! batch is fanned to the independent fixed-expansion oracle result, the
-//! production determinant evaluator, and every required production permanent
-//! backend. Sampling opens a third fresh sampler at ordinal zero after the two
-//! replay samplers.
+//! the field-generic computation, while [`run_validation`] adds runtime
+//! provenance and no-redraw persistence. [`run_frozen_campaign_validation`]
+//! enforces the repository-specific frozen plan and refuses a wrong producing
+//! toolchain or an unusable required backend before it opens any address.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
@@ -76,9 +67,8 @@ const FROZEN_CONTINUATION_AUTHORIZATION_SHA256: &str =
     "dd19bb60bf07510085ab1ec06581526df710f39dbea1236e2d67273b41186094";
 /// The protocol's ten validation anchors, in address order.
 ///
-/// These cells are a protocol constant. Their enumerated counts are not: those
-/// come from the committed exact-anchor evidence the preregistration binds by
-/// content, so this tool holds no second copy of them.
+/// Their enumerated counts come from the committed exact-anchor evidence the
+/// preregistration binds by content.
 const FROZEN_ANCHOR_CELLS: &[(u8, u16)] = &[
     (3, 1),
     (3, 2),
@@ -774,10 +764,8 @@ impl std::error::Error for ValidationError {
 
 /// Returns whether a compiler version may produce frozen validation evidence.
 ///
-/// The frozen campaign pins its producing toolchain, so a receipt built with
-/// any other compiler is refused. The runner checks this before it opens the
-/// first address: discovering the mismatch afterwards would leave opened
-/// addresses that the protocol forbids redrawing.
+/// The frozen runner checks this before it opens the first address, because
+/// the protocol forbids redrawing an opened address.
 #[must_use]
 pub fn is_frozen_validation_toolchain(compiler_version: &str) -> bool {
     compiler_version.starts_with(FROZEN_TOOLCHAIN_PREFIX)
@@ -895,9 +883,9 @@ impl ValidationRunAdmission {
 /// Admits an exact producer or one explicitly authorized second producer.
 ///
 /// Runtime provenance is observed internally. [`ValidationRunMode::ExactProducer`]
-/// remains the default contract and rejects every runtime mismatch. The
-/// continuation mode accepts only a loaded, content-addressed authorization,
-/// a complete terminal prefix, and no previously opened suffix address.
+/// rejects every runtime mismatch. The continuation mode accepts only a
+/// loaded, content-addressed authorization, a complete terminal prefix, and no
+/// opened suffix address.
 pub fn admit_validation_run(
     preregistration: &ValidationPreregistration,
     preregistration_identity: ArtifactIdentity,
@@ -1035,14 +1023,10 @@ pub fn run_validation_with_mode(
 
 /// Confirms every required backend can execute before an address is opened.
 ///
-/// A backend the frozen manifest selects is required at each anchor its kernel
-/// domain covers, and one that cannot build or run fails that anchor. Because
-/// the protocol forbids redrawing a failed anchor, discovering an unusable
-/// build after the first start marker is published would block the campaign
-/// with no remedy inside this protocol. The frozen runner therefore proves each
-/// required backend on one fixed all-zero matrix first and refuses to start
-/// instead. The probe matrix is constructed, never sampled, so it consumes no
-/// stream and reads no oracle.
+/// Each selectable backend is probed at every anchor it supports on one
+/// all-zero matrix, because an unusable backend fails its anchor and the
+/// protocol forbids redrawing it. The probe matrix is constructed, never
+/// sampled, so it consumes no stream.
 ///
 /// # Errors
 ///
@@ -1270,11 +1254,7 @@ struct ValidationRunStateV2 {
     started_at: UnixTimestamp,
 }
 
-/// Read-only decoder for the exact immutable producer-0 schema-v1 evidence.
-///
-/// This is not an executable resume state. It remains after continuation
-/// admission is removed so schema-v2 receipts can always interpret and verify
-/// the historical producer-0 state they cite.
+/// The immutable producer-0 schema-v1 run state that schema-v2 receipts cite.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct FrozenProducer0RunStateV1Evidence {
@@ -1285,10 +1265,7 @@ struct FrozenProducer0RunStateV1Evidence {
     started_at: UnixTimestamp,
 }
 
-/// Decodes only the one immutable producer-0 state authorized by 02b8137c.
-///
-/// Keeping the content-identity check in this read-only decoder prevents
-/// runnable migration cleanup from weakening permanent receipt verification.
+/// Decodes only the one producer-0 state pinned by content digest.
 fn decode_frozen_producer0_run_state_v1_evidence(
     bytes: &[u8],
 ) -> Result<FrozenProducer0RunStateV1Evidence, ValidationError> {

@@ -546,9 +546,8 @@ impl CampaignCoordinator {
     ///
     /// # Errors
     ///
-    /// Applies [`Self::authorize_arm`] to a pending cell. A scheduled cell is
-    /// accepted only when its persisted arm is byte-for-byte identical. A
-    /// terminal cell refuses another execution.
+    /// Applies [`Self::authorize_arm_inner`] to a pending cell. A scheduled or
+    /// terminal cell is accepted only when its persisted arm equals `arm`.
     ///
     /// # Panics
     ///

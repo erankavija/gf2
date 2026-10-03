@@ -317,8 +317,6 @@ where
 {
     let stopped = checkpoint_trajectory::<Q>(rows, address, completed_prefix)?;
 
-    // A new process owns a fresh private stream. It replays the immutable
-    // address through the stop boundary and refuses any checkpoint mismatch.
     let mut sampler = MatrixSampler::<Q>::new(address)?;
     let mut state = CompressedRankState::initial();
     let mut exponent = 0;

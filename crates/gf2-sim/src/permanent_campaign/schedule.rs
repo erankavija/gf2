@@ -76,13 +76,9 @@ pub struct AcceleratorConfig {
 
 /// Per-cell measured accelerator costs, keyed by the frozen `(q, n)` cell.
 ///
-/// REQ-01 sizes launches from each cell's *measured* per-matrix cost. Permanent
-/// evaluation costs about `M · n · 2^n / W`, so one cost applied across a field
-/// reproduces, one level up, the fixed-batch-size error the criterion rules
-/// out: the configured cap would hold at the size the value was measured at and
-/// nowhere else. Every accelerator cell therefore carries its own entry, and a
-/// cell with no entry is refused rather than defaulted — a default would be an
-/// unmeasured cost wearing a measured cost's clothes.
+/// Permanent evaluation costs about `M · n · 2^n / W`, so a cost measured at
+/// one size holds the configured cap only at that size. Every accelerator cell
+/// carries its own entry, and a cell with no entry is refused.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AcceleratorCostTable {
     costs: BTreeMap<(u8, u16), Duration>,
@@ -93,8 +89,7 @@ impl Default for AcceleratorCostTable {
     /// An empty table at the default launch cap.
     ///
     /// Every accelerator cell resolves to
-    /// [`ScheduleError::AcceleratorCostMissing`] against it, which is what a
-    /// caller that supplied no measured costs should get.
+    /// [`ScheduleError::AcceleratorCostMissing`] against it.
     ///
     /// # Panics
     ///
@@ -595,39 +590,13 @@ pub fn enumerate_cell_work_items(
     Ok(items)
 }
 
-/// Executes every shard for one field and builds its schema summary.
-///
-/// The selected field is the only execution scope. Matrix generation uses the
-/// production ChaCha20 rejection sampler, and permanent evaluation dispatches
-/// to the backend named by each cell. The result is in memory; use
-/// [`emit_field`] to write only its shard paths and field summary. For `M`
-/// matrices of dimension `n`, the evaluation cost is the selected algebra
-/// kernel plus an optional `O(n³)` determinant per matrix; sampler and packing
-/// storage remain `O(n²)`.
+/// Executes every shard for one field with one worker and builds its schema
+/// summary in memory; [`emit_field`] writes it.
 ///
 /// Accelerator cells are refused with
-/// [`ScheduleError::AcceleratorCostMissing`] because this convenience entry
-/// point supplies no measured accelerator costs. Processor-only fields execute
-/// normally.
-///
-/// # Errors
-///
-/// Returns [`ScheduleError::FieldNotFound`] if `field` is absent,
-/// [`ScheduleError::MissingCampaignPurpose`] if the manifest has no campaign
-/// stream purpose, [`ScheduleError::InvalidWorkItem`] for invalid work-item or
-/// sampler configuration, [`ScheduleError::BackendUnavailable`] when a frozen
-/// backend is unsupported, [`ScheduleError::AcceleratorCostMissing`] when an
-/// accelerator cell has no measured cost.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration is returned
-/// as an error.
-///
-/// # Complexity
-///
-/// Linear in selected shards, with each shard dominated by its configured
-/// permanent kernel and optional `O(n³)` determinant per matrix.
+/// [`ScheduleError::AcceleratorCostMissing`] because this entry point supplies
+/// no measured accelerator costs. Errors and complexity are those of
+/// [`run_field_with_worker_count_and_accelerator`].
 #[cfg(test)]
 fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
     run_field_with_worker_count(manifest, field, 1)
@@ -636,33 +605,13 @@ fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Schedul
 /// Executes every shard for one field using the caller's configured worker
 /// count for `BatchParallel` cells.
 ///
-/// Matrix draws remain serial and deterministic. A worker count of zero is
+/// Matrix draws are serial and deterministic. A worker count of zero is
 /// rejected before any sampler is opened; positive counts build a local Rayon
-/// pool for each batch-parallel shard. Scalar, generic-Ryser, and
-/// intra-matrix-parallel cells retain their existing per-matrix dispatch.
+/// pool of exactly `worker_count` threads for each batch-parallel shard.
 /// `BatchParallel` controls how matrices are distributed, while the resolved
-/// `ProcessorPath` controls which kernel evaluates each matrix.
-///
-/// # Errors
-///
-/// Returns [`ScheduleError::FieldNotFound`] if `field` is absent,
-/// [`ScheduleError::MissingCampaignPurpose`] if the manifest has no campaign
-/// stream purpose, [`ScheduleError::InvalidWorkItem`] when `worker_count` is
-/// zero or a work item, sampler, pool, or dispatch is invalid,
-/// [`ScheduleError::BackendUnavailable`] when a frozen backend is unsupported,
-/// [`ScheduleError::AcceleratorCostMissing`] when an accelerator cell has no
-/// measured cost. The batch pool is configured exactly with `worker_count`.
-///
-/// # Panics
-///
-/// Does not intentionally panic. Invalid execution configuration and
-/// pool-construction failures are returned as schedule errors.
-///
-/// # Complexity
-///
-/// For a batch of `B` matrices of dimension `n`, raw matrix storage is bounded
-/// by the configured chunk limit and the per-matrix kernel remains the
-/// selected single-matrix cost; the sampler itself advances in input order.
+/// `ProcessorPath` controls which kernel evaluates each matrix. Accelerator
+/// cells are refused as in [`run_field`]; errors and complexity are those of
+/// [`run_field_with_worker_count_and_accelerator`].
 #[cfg(test)]
 fn run_field_with_worker_count(
     manifest: &CampaignManifest,
@@ -1087,9 +1036,7 @@ where
     D: FnMut(&[Vec<Fp<Q>>], usize) -> Result<(Vec<u64>, Duration), ScheduleError>,
     O: FnMut(&[Fp<Q>], u64, Option<u64>),
 {
-    // No measured cost, no accelerator run. A placeholder here would size this
-    // cell's launches from a number nobody measured, which is the same defect
-    // as a fixed batch size and harder to see.
+    // A default cost would size launches from an unmeasured number.
     let accelerator = accelerator.ok_or(ScheduleError::AcceleratorCostMissing {
         q: item.q,
         n: item.n,
@@ -2001,8 +1948,7 @@ pub(crate) fn emit_shard_with_durability_hook(
     Ok(path)
 }
 
-/// Canonical serialized form of a shard record, shared by emission and the
-/// resume-time adoption comparison.
+/// Canonical serialized form of a shard record.
 pub(crate) fn shard_record_bytes(record: &ShardRecord) -> Result<Vec<u8>, ScheduleError> {
     serde_json::to_vec_pretty(record).map_err(ScheduleError::Serialization)
 }
@@ -2316,9 +2262,8 @@ mod tests {
             SamplerPurpose::CampaignCell,
             &item,
             FieldOrder::F3,
-            // A measured cost is supplied, so this cell is refused for the
-            // reason REQ-04 names — the absent device — and not for a missing
-            // cost it does have.
+            // A measured cost is supplied, so the refusal is for the absent
+            // device.
             Some(AcceleratorConfig {
                 per_matrix_cost: Duration::from_micros(40),
                 launch_cap: Duration::from_millis(500),
@@ -2348,11 +2293,8 @@ mod tests {
     #[cfg(feature = "hip")]
     #[test]
     fn test_accelerator_refuses_a_cell_with_no_measured_cost_supplied() {
-        // The default scheduler entry points supply no cost. An accelerator
-        // cell reached through them must refuse rather than run against a
-        // placeholder: a fabricated per-matrix cost sizes launches from a
-        // number nobody measured, which is the defect REQ-01 rules out wearing
-        // a measured cost's clothes.
+        // The default scheduler entry points supply no cost, so an accelerator
+        // cell reached through them is refused.
         let campaign = manifest(vec![cell(3, 2, 4, &[(0, 29)])]);
         let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
         let mut observed = 0;

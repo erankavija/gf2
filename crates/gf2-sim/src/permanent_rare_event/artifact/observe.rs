@@ -258,7 +258,6 @@ pub fn observe_process_liveness(
     })
 }
 
-/// Reads the host boot identity shared by every process alive on this kernel.
 fn read_boot_identity() -> Result<String, ArtifactError> {
     let raw = fs::read_to_string(BOOT_ID_PATH).map_err(|error| {
         ArtifactError::Liveness(format!("boot identity is unobservable: {error}"))
@@ -372,7 +371,6 @@ fn raw_evidence(source: &str, bytes: &[u8]) -> Result<ObservationEvidenceV1, Art
     })
 }
 
-/// Reads one required kernel text interface.
 fn read_kernel_text(path: &str) -> Result<String, ArtifactError> {
     fs::read_to_string(Path::new(path)).map_err(|error| {
         ArtifactError::Identity(format!("host interface {path} is unobservable: {error}"))
@@ -389,7 +387,6 @@ fn cpuinfo_values(cpuinfo: &str, key: &str) -> Vec<String> {
         .collect()
 }
 
-/// Returns the first value of one `/proc/cpuinfo` key.
 fn cpuinfo_first(cpuinfo: &str, key: &str) -> Option<String> {
     cpuinfo_values(cpuinfo, key).into_iter().next()
 }
@@ -402,7 +399,6 @@ fn distinct_count(values: &[String]) -> u32 {
     distinct.len() as u32
 }
 
-/// Counts NUMA nodes exposed by the kernel.
 fn count_numa_nodes() -> u32 {
     let Ok(entries) = fs::read_dir("/sys/devices/system/node") else {
         return 0;
