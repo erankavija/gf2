@@ -24,21 +24,22 @@ rustup toolchain install 1.95.0
 ```
 
 From the root of a gf2 clone, check out the claim's measured source revision
-in a separate worktree and enter it:
+in a worktree inside the clone, since the benchmark-window runner takes job
+worktrees relative to the clone root, and enter it:
 
 ```sh
 export GF2=$PWD
-git worktree add --detach ../gf2-f3-receipt 88474a74ceee
-cd ../gf2-f3-receipt
+git worktree add --detach .agents/worktrees/f3-receipt 88474a74ceee
+cd .agents/worktrees/f3-receipt
 ```
 
 Run every following command inside this worktree: the harness takes
 `git_revision` and `source_dirty` from git queries in its working directory,
 which Cargo sets to the package root. The revision has no
-`scripts/cargo-budget.sh`, so the commands call the clone's copy through
-`$GF2`. It commits no `Cargo.lock`, so Cargo resolves dependency versions at
-build time. Build the harness and run its self-check, which asserts the size
-set, batch width and fixture-seed derivation without timing anything:
+`scripts/cargo-budget.sh`, so the commands call the clone's copy. It commits
+no `Cargo.lock`, so Cargo resolves dependency versions at build time. Build the
+harness and run its self-check, which asserts the size set, batch width and
+fixture-seed derivation without timing anything:
 
 ```sh
 "$GF2"/scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-algebra \
@@ -48,30 +49,30 @@ set, batch width and fixture-seed derivation without timing anything:
 ## Run the measurement
 
 The receipt ran five fresh executions of five $250$ ms repetitions under
-`dev/scripts/ccx1-bench-flock.sh`. The wrapper runs only with
-`GF2_BENCH_WINDOW=1` set, holds the host benchmark mutex
-(`/tmp/gf2-ccx1.lock`, overridden by `GF2_CCX1_LOCK`) exclusively for the
-whole command, and runs the command pinned to CPUs 6 to 11 under a best-effort
-`nice -n -5`. Every `cargo-budget.sh` invocation in a benchmark window takes
-that mutex shared, so builds and other measurements wait for the run. The run
-therefore sets `CARGO_CI_NO_LOCK=1` for its own cargo work, and
-`CARGO_CI_NO_NICE=1` keeps `cargo-budget.sh` from lowering its priority:
+`dev/scripts/ccx1-bench-flock.sh`, which holds the host benchmark mutex
+exclusively for the whole command and pins it to CPUs 6 to 11. A timed run is
+a job in the benchmark-window
+[queue](https://github.com/erankavija/gf2/blob/d3cca2e112004f28a11fa2c46a60e01bc0cf5637/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv), one tab-separated line of issue or job label, worktree
+relative to the clone root, estimated minutes and command. The
+[window runner](https://github.com/erankavija/gf2/blob/d3cca2e112004f28a11fa2c46a60e01bc0cf5637/dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh) exports `GF2_BENCH_WINDOW=1`, which the
+wrapper requires, and runs each job under `bash -c` from its worktree. It
+resolves worktrees against the clone root that its `repo` variable names.
+
+Append the receipt's loop as a job. The command finds the clone root from the
+worktree, runs the clone's wrapper, and sets `CARGO_CI_NO_LOCK=1` because the
+wrapper already holds the mutex that `cargo-budget.sh` would take shared;
+`CARGO_CI_NO_NICE=1` keeps `cargo-budget.sh` from lowering the run's priority:
 
 ```sh
-GF2_BENCH_WINDOW=1 "$GF2"/dev/scripts/ccx1-bench-flock.sh bash -c '
-  for e in 1 2 3 4 5; do
-    CARGO_CI_NO_LOCK=1 CARGO_CI_NO_NICE=1 "$GF2"/scripts/cargo-budget.sh \
-        cargo +1.95.0 bench -p gf2-algebra --bench batched_f3_permanent \
-        --features simd,test-support -- \
-        --execution "$e" --repetitions 5 --target-ms 250 \
-        --output /tmp/f3-repro.csv --append
-  done'
+cmd='r=$(git rev-parse --path-format=absolute --git-common-dir)/..; GF2=$r "$r"/dev/scripts/ccx1-bench-flock.sh bash -c "for e in 1 2 3 4 5; do CARGO_CI_NO_LOCK=1 CARGO_CI_NO_NICE=1 \"\$GF2\"/scripts/cargo-budget.sh cargo +1.95.0 bench -p gf2-algebra --bench batched_f3_permanent --features simd,test-support -- --execution \$e --repetitions 5 --target-ms 250 --output /tmp/f3-repro.csv --append; done"'
+printf 'f3-repro\t.agents/worktrees/f3-receipt\t15\t%s\n' "$cmd" \
+    >> "$GF2"/dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv
 ```
 
-The mutex excludes only processes that take it. On your host, reproduce the
-receipt's conditions by keeping all other load off the machine, and if CPUs 6
-to 11 do not form one idle core cluster there, replace the wrapper with
-`taskset -c` over one that does.
+The next window runs the job and records its start and exit in the window log
+and its output in a per-job file, both under `.agents/bench-window/` in the
+clone. The receipt's protocol requires the window runner and its lock on every
+host.
 
 Before timing each size, the harness asserts that the three backends return
 equal permanents on one fixture. Each row records `git_revision`,
