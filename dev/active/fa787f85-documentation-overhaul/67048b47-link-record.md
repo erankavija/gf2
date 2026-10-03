@@ -16,7 +16,10 @@ selected. Rows with evidence `doc-ref` already carry a reference and rows with
 evidence `none` have no admissible evidence.
 
 Binary files (`--binary` lists them) carry `--skip-scan` because the asset
-scan rejects non-UTF-8 content. The document type is derived from the file suffix: `tool` for source and scripts,
+scan rejects non-UTF-8 content. The script repeats a reference with
+`--skip-scan` when `jit doc add` fails, which covers paths beyond the scan's
+depth budget.
+The document type is derived from the file suffix: `tool` for source and scripts,
 `log` for `.log`, `notes` for Markdown, `figure` for images, `presentation` for
 HTML and `data` otherwise. The label is the file name.
 
