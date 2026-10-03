@@ -1,0 +1,640 @@
+crates/gf2-algebra/benches/permanent.rs:20://! amendment in JIT issue `b315564a` for the rationale (committed-seed
+crates/gf2-algebra/src/packed/bipedal3.rs:867:    /// be 0 when writing 0, even if the lane previously held an alt-zero.
+crates/gf2-algebra/src/packed/bipedal3.rs:1255:    /// Migrated from permanent/bipedal3.rs: verify that fold via
+crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:28://! Above `N_MAX_MULTIWORD = 255`, the `[u64; 4]` Gray counter can no longer
+crates/gf2-algebra/src/permanent/bipedal7.rs:16://! `u64`) exactly when `n ≤ 16`. Multi-word paths are out of scope for
+crates/gf2-algebra/src/permanent/bipedal7.rs:100:/// out of scope for this issue).
+crates/gf2-algebra/tests/cas_cross_validation.rs:6://! (issue `333028c1`, criterion 1–4).
+crates/gf2-algebra/tests/gpu_dispatcher.rs:1://! End-to-end batch GPU dispatcher tests for `gf2_algebra::gpu` (issue 2fbbdfa5).
+crates/gf2-algebra/tests/permanental_rank.rs:2://! decision (jit issue `175972df`).
+crates/gf2-coding/benches/cpu_dispatch_probe.rs:24://! The report backing JIT issue `9c37ec8c` reads the throughput figures
+crates/gf2-coding/benches/modem_cpu.rs:2://! hot-path loops (JIT issue `52112411`).
+crates/gf2-coding/benches/modem_generic_vs_fast.rs:2://! mapper and soft demapper hot paths (JIT issue `1663515c`).
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:1://! Sparse-side CSV emitter for issue 47698404 — Re-run sparse post-PPC scorecard.
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:27://! Acceptance criterion #1 of the consumer issue 47698404 requires
+crates/gf2-coding/examples/sogrand_crc_probe.rs:239:    // Baseline (legacy stop rule: exhaust max_queries or cum_prob ≈ 1).
+crates/gf2-coding/src/bch/core.rs:1742:    /// receipt of issue `c3cc5226` records a run on a named HIP host.
+crates/gf2-coding/src/channel.rs:8://! (see [`crate::modem::awgn_link`]) and by the legacy BPSK simulation
+crates/gf2-coding/src/channel.rs:37:/// the modem framework's AWGN link and the legacy BPSK simulation channel
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs:5://! (`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`, migrated to the
+crates/gf2-coding/src/fading.rs:1022:/// Legacy and framework agree: `N0 = 2 sigma^2`. The legacy formula
+crates/gf2-coding/src/fading.rs:1247:    /// The migrated fading path and `ModemChannelAdapter` both derive
+crates/gf2-coding/src/grand/orbgrand.rs:126:    /// When `None` (default), the legacy stop rule is used: exhaust
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:107:///   Short-frame Rate 3/5 is not in scope.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:160:    /// is not in scope and will panic.
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:948:    // --- QPSK identity (§6.1.3 out of scope for QPSK) ----------------------
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:953:    /// (for 16-QAM, 64-QAM and 256-QAM)" — QPSK is explicitly out of scope.
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:194:    /// construction; encoder preprocessing deferred to first
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs:2213:        // BG1 (1024, 640) at 8 dB: previously broken with column-removal approach
+crates/gf2-coding/src/modem/analysis.rs:602:    /// built via the legacy `PerBitLlrStats::new` constructor and
+crates/gf2-coding/src/modem/analysis.rs:1022:    /// Panics if this accumulator was previously stamped with a
+crates/gf2-coding/src/modem/analysis_capture.rs:96:    /// For legacy callers who do not distinguish the two methods, use
+crates/gf2-coding/src/modem/analysis_capture.rs:127:    /// Legacy constructor: builds a capture tagged with
+crates/gf2-coding/src/modem/awgn_link.rs:392:/// with the reference demapper this reproduces the legacy
+crates/gf2-coding/src/modem/awgn_link.rs:493:        // Match the legacy `AwgnChannel::from_eb_n0_db` contract: code
+crates/gf2-coding/src/modem/awgn_link.rs:731:    //! Regressions that pin the adapter to the legacy BPSK path.
+crates/gf2-coding/src/modem/awgn_link.rs:745:    //! the legacy `LLR = 2 r / sigma^2` formula.
+crates/gf2-coding/src/modem/awgn_link.rs:757:        // pre-migration implementation failed this at noise_var = sigma^2.
+crates/gf2-coding/src/modem/awgn_link.rs:900:        // sign decisions, same as the legacy path would.
+crates/gf2-coding/src/modem/builder.rs:504:        // Regression: previously `compute_scale` routed f64 coordinates
+crates/gf2-coding/src/modem/demapper.rs:12://! knobs, or mutual-information fields. Bit-channel analysis (task `e2c0f65a`)
+crates/gf2-coding/src/modem/gpu_demapper.rs:8://! JIT issue `9c37ec8c` without adding any new public traits to the
+crates/gf2-coding/src/modem/gray_qam_mapper.rs:14://! surface (task `c5cee991`).
+crates/gf2-coding/src/modem/mod.rs:103://!   preset for the legacy 1-D-noise path.
+crates/gf2-coding/src/modem/ref_demapper.rs:29:/// implementation (task `52112411`).
+crates/gf2-coding/src/modem/types.rs:197:/// Trait task `d36ae697` consumes this; it is not redefined there.
+crates/gf2-coding/src/simulation.rs:12://!   ([`SimulationRunner::run_uncoded_ber`]). The legacy entry point is
+crates/gf2-coding/src/simulation.rs:397:    // sometimes` — so a foreign first hit can no longer poison a callsite.
+crates/gf2-coding/src/simulation.rs:511:    /// Returns `1` for channels that accept any length (the BPSK legacy
+crates/gf2-coding/src/simulation.rs:535:    /// the LLR convention of the legacy BPSK/AWGN paths and the
+crates/gf2-coding/src/simulation.rs:610:        // The I-only (1-D) noise application is deliberate: legacy
+crates/gf2-coding/src/simulation.rs:1513:        // Delegate to the shared modem-backed runner so the legacy BPSK
+crates/gf2-coding/src/simulation.rs:1514:        // entry point no longer reimplements the modulate/transmit/
+crates/gf2-coding/src/simulation.rs:1516:        // `ChannelModel` for the legacy path; running through it keeps
+crates/gf2-coding/src/simulation.rs:1536:    /// BER as the legacy uncoded runner). Passing
+crates/gf2-coding/src/simulation.rs:1948:/// * `completed_points` - Info about previously completed points for ETA estimation.
+crates/gf2-coding/src/simulation.rs:2790:        // sim-observability: check for existing checkpoint before the legacy
+crates/gf2-coding/src/simulation.rs:3013:    // Legacy CSV-based resume (still honoured alongside checkpoint-based resume).
+crates/gf2-coding/src/simulation.rs:3096:        // Legacy progress JSONL.
+crates/gf2-coding/src/simulation.rs:3190:    // Legacy progress JSONL: point_complete entry.
+crates/gf2-coding/src/simulation.rs:5077:    /// legacy hard-coded BPSK path, within a small Monte Carlo tolerance.
+crates/gf2-coding/src/simulation.rs:5079:    /// The two paths differ slightly in interleaving order (legacy draws all
+crates/gf2-coding/src/simulation.rs:5092:        // Legacy BPSK path.
+crates/gf2-coding/src/simulation.rs:5456:            // Tamper the per-file config_hash field so it no longer matches.
+crates/gf2-coding/src/test_support.rs:400:/// corpus no longer describes a valid BCH code.
+crates/gf2-coding/src/traits.rs:1579:        //! Story `3931ac6f` owns removal after epic `ae03bcd0`. Its
+crates/gf2-coding/src/traits.rs:1580:        //! mechanical, auditable condition — every boundary family migrated,
+crates/gf2-coding/src/traits.rs:1585:        //! JIT issue `7a3a6738`, which is its single source of truth.
+crates/gf2-coding/tests/bch_conformance.rs:625:/// The rows whose matrix and transformation work is deferred to the slow tier.
+crates/gf2-coding/tests/bch_encode_dispatch.rs:47:/// until the shortened presentations migrate (`97410c80`). See the
+crates/gf2-coding/tests/dvb_t2_bicm_chain.rs:34://! With the IRA staircase encoder the first `concat.encode` is no longer the
+crates/gf2-coding/tests/ldpc_check_update_contract.rs:225:/// lanes; JIT issue `39cbde20` owns that kernel's contract.
+crates/gf2-coding/tests/ldpc_check_update_contract.rs:532:/// scalar reference; JIT issue `39cbde20` owns the kernel's contract. If a
+crates/gf2-coding/tests/ldpc_decode_allocations.rs:41:/// when the flag is no longer reachable.
+crates/gf2-coding/tests/modem_analysis_integration.rs:7://! 1. [`BpskAwgnChannel`] — the legacy BPSK path (`batch_alignment = 1`),
+crates/gf2-coding/tests/modem_analysis_integration.rs:335:    // Legacy new() defaults to MaxLog.
+crates/gf2-coding/tests/modem_analysis_integration.rs:346:    // be rejected up front. Previously this silently accumulated
+crates/gf2-coding/tests/modem_properties.rs:1://! Property tests for the modem surface (JIT issue `dafb938a`).
+crates/gf2-coding/tests/modem_reference_model.rs:2://! (JIT issue `0aac93c6`).
+crates/gf2-coding/tests/modem_regression.rs:2://! (JIT issue `dafb938a`).
+crates/gf2-coding/tests/modem_regression.rs:6://! optimized Gray-QAM fast path, plus the migrated compatibility entry
+crates/gf2-coding/tests/modem_regression.rs:20://! 3. **Migrated entry points** (`test_bpsk_awgn_channel_ber_locked`,
+crates/gf2-coding/tests/modem_regression.rs:338:// 3. Migrated compatibility entry points
+crates/gf2-coding/tests/modem_regression.rs:380:    // Locked-value test for the migrated Rician fading link. The legacy
+crates/gf2-core/benches/charpoly.rs:122:/// Minpoly reference sweep (issue `d1dd266c`): measures
+crates/gf2-core/benches/charpoly.rs:159:        // q^3 = 343 > n for n ≤ 342); see issue `6c926de0`.
+crates/gf2-core/benches/charpoly.rs:174:/// `charpoly/charpoly_ref` Criterion group (issue `d1dd266c`):
+crates/gf2-core/benches/charpoly.rs:185:/// (issue `b87362a3` runs the same sweep against the charpoly
+crates/gf2-core/benches/charpoly.rs:261:/// Dispatch-crossover bench (issue `1454ec2d`, refreshed in `4a59d1f9`):
+crates/gf2-core/benches/charpoly.rs:288:/// Dispatch-crossover bench for `Fp<65521>` (issue `4a59d1f9`).
+crates/gf2-core/benches/field_matrix_fusion.rs:2://! `7e6183bb`, story `d48a3cfd/T2`).
+crates/gf2-core/benches/field_matrix_fusion.rs:12://! Success criteria (issue 7e6183bb, as amended 2026-04-24):
+crates/gf2-core/benches/field_matrix_gemm.rs:3://! Matches the §5 success criterion of issue `91c06222` (epic `bb85c68a`):
+crates/gf2-core/benches/field_poly.rs:18://!   Newton-iteration fast-division primitive (issue `ae0c7e1f`,
+crates/gf2-core/benches/field_poly.rs:25://! issue `046f95c1`. On the cheap-scalar `Fp<65537>` field naive
+crates/gf2-core/benches/field_poly.rs:123:            // issue `046f95c1`.
+crates/gf2-core/benches/field_sparse_matrix.rs:3://! Matches the §4 success criterion of issue `8a90882e` (epic `bb85c68a`):
+crates/gf2-core/benches/fieldmatrix_charpoly.rs:4://! Issue `6ed7f050`. Sibling of the reference container harness's
+crates/gf2-core/benches/fieldmatrix_gemm.rs:4://! Issue `6ed7f050`. Sibling of the reference container harness
+crates/gf2-core/benches/fieldmatrix_gemm.rs:64:/// Sizes for the small-prime sweep (issue 662f7a15): n ∈ {256, 1024}.
+crates/gf2-core/benches/fieldmatrix_gemm.rs:78:/// (issue 27bb2f75). The n=64 cell is the per-call-overhead target of the
+crates/gf2-core/benches/fieldmatrix_gemm.rs:80:/// non-regression criterion (n ∈ {256, 1024, 4096}) — previously omitted,
+crates/gf2-core/benches/fieldmatrix_gemm.rs:84:// ----- Medium-prime sweep cells (issue 9e12659b R1) ------------------------
+crates/gf2-core/benches/fieldmatrix_gemm.rs:210:// ─── Small-prime sweep (issue 662f7a15): GF(11)..GF(241) ────────────────────
+crates/gf2-core/benches/fieldmatrix_gemm_delayed.rs:1://! Focused `FieldMatrix::gemm` baseline comparison for issue `e7ab802d`.
+crates/gf2-core/benches/fieldmatrix_gemm_delayed.rs:11://! cells, especially 1024/4096 and rectangular sweeps, are deferred to the
+crates/gf2-core/benches/fieldmatrix_ple.rs:5://! Issue `6ed7f050`. Sibling of the reference container harness's
+crates/gf2-core/benches/fieldmatrix_solve.rs:5://! Issue `6ed7f050`. Sibling of the reference container harness's
+crates/gf2-core/benches/fp_specialized.rs:354:// This is the criterion-1.5x gate target for issue 86c09a51. It exercises
+crates/gf2-core/benches/gf2m_mul_strategies.rs:37://! | PCLMULQDQ + Barrett | yes | yes | yes | yes | m <= 63 (multi-word support deferred to JIT issue `6fb4abad`) |
+crates/gf2-core/benches/inverse.rs:3://! Issue `ae1d1e88`. Measures the public entry points
+crates/gf2-core/benches/mersenne_gemm_regression.rs:1://! Mersenne31 GEMM regression guard — issue `3d06224c` (story
+crates/gf2-core/benches/ple.rs:3://! Issue `c3f8c1cb`. Measures the public PLE entry points at
+crates/gf2-core/benches/selector_non_regression.rs:2173:    /// moving a default leaves the set no longer straddling it and this test
+crates/gf2-core/benches/sparse_field_matmul.rs:2://! four canonical field types called out in issue `eb57f944`:
+crates/gf2-core/benches/sparse_field_matmul.rs:57:/// `(n, density)` pairs called out by issue `eb57f944` §4.
+crates/gf2-core/benches/sparse_matmul.rs:2://! sparsity regimes called out in JIT issue `2403c054`'s success
+crates/gf2-core/benches/sparse_rref.rs:2://! field types called out in issue `eb57f944` §4. RREF is generic over
+crates/gf2-core/benches/sparse_rref.rs:50:/// `(n, density)` pairs called out by issue `eb57f944` §4.
+crates/gf2-core/benches/sparse_spmv.rs:3://! arm, plus the issue `8a90882e` deliverable.
+crates/gf2-core/benches/sparse_spmv.rs:5://! Issue `6ed7f050`. Sibling of (the deferred T2 sparse arm of) the
+crates/gf2-core/benches/strassen_threshold.rs:3://! Issue `ad597ede`, story `d48a3cfd/T3`. Measures:
+crates/gf2-core/benches/triangular.rs:167:        // Fp<251> — small-prime byte-lane AVX2 cell (issue `40195c09`).
+crates/gf2-core/benches/triangular.rs:229:        // Fp<251> — small-prime byte-lane AVX2 cell (issue `40195c09`).
+crates/gf2-core/benches/tuning_calibration.rs:1535:/// Exact eight-bank fixture for one follow-on fresh child.
+crates/gf2-core/benches/tuning_calibration.rs:3025:/// Executes only the declared production operation for one timed follow-on
+crates/gf2-core/examples/bench_csv_emitter.rs:2://! every (operation, field, size, regime) cell of issue `6ed7f050`.
+crates/gf2-core/examples/bench_csv_emitter.rs:278:/// deferred to a bench-day re-run with a relaxed per-cell budget — at
+crates/gf2-core/examples/bench_csv_emitter.rs:281:/// even on Fp(7); the published amendment to issue `a9ab0a4f` records
+crates/gf2-core/src/alg/gauss.rs:327:            // *below* the pivot row, but the previously promoted pivot rows
+crates/gf2-core/src/alg/m4rm.rs:48:/// Legacy narrow-tier panel-width cap (pre-jit:bdf60780). Retained as the
+crates/gf2-core/src/alg/m4rm.rs:49:/// reference schedule that `test_production_multiply_matches_legacy_schedule_*`
+crates/gf2-core/src/bench_seed.rs:4://! Issue `6ed7f050` (story `64c88ae4`, epic `bb85c68a`). The reference
+crates/gf2-core/src/field/charpoly.rs:23://! ## Default dispatch (issue `1454ec2d`)
+crates/gf2-core/src/field/charpoly.rs:29://! issue `e47231cd` and the 4a59d1f9 post-Wave-9 reassessment for the
+crates/gf2-core/src/field/charpoly.rs:58://! **Latest measurement: 2026-05-07** (issue `4a59d1f9`, post-Wave-9
+crates/gf2-core/src/field/charpoly.rs:102://! are out of scope for `1454ec2d`'s baseline deliverable; they are
+crates/gf2-core/src/field/charpoly.rs:153://! The success criterion under issue `f01298db` ("Uses matmul + PLE —
+crates/gf2-core/src/field/charpoly.rs:223:/// Iterative-driver matvec helper (issue `d1dd266c`).
+crates/gf2-core/src/field/charpoly.rs:281:/// (issue `4a59d1f9`, post-Wave-9 kernels, 2026-05-07) confirm cubic
+crates/gf2-core/src/field/charpoly.rs:424:    // the loop below avoid re-packing per call (issue d1dd266c).
+crates/gf2-core/src/field/charpoly.rs:430:    // Issue 5a3dbd5b: track packed chain-poly availability with a single
+crates/gf2-core/src/field/charpoly.rs:526:        // `chain_poly_packed_available` flag (issue 5a3dbd5b) is what
+crates/gf2-core/src/field/charpoly.rs:577:                // Packed canonical-byte polynomial bookkeeping (issue 5a3dbd5b).
+crates/gf2-core/src/field/charpoly.rs:1138:// ─── Sub-cubic Keller–Gehrig path (issue 1454ec2d) ───────────────────────────
+crates/gf2-core/src/field/charpoly.rs:1177:    // a `[hard]` success criterion of issue `1454ec2d`.
+crates/gf2-core/src/field/charpoly.rs:1391:// ─── Wiedemann (scalar) minimal polynomial path (issue d1dd266c) ─────────────
+crates/gf2-core/src/field/charpoly.rs:1613:    // (issue d1dd266c).
+crates/gf2-core/src/field/charpoly.rs:1789:    // all `n` regimes. Issue `d1dd266c` review feedback (R4) explicitly
+crates/gf2-core/src/field/charpoly.rs:1806:/// Multi-seed scalar Wiedemann minpoly path (issue d1dd266c).
+crates/gf2-core/src/field/charpoly.rs:1969:/// The legacy quartic [`find_max_minpoly_generator`] driver is **not**
+crates/gf2-core/src/field/charpoly.rs:1984:    // Attempt 1 (issue d1dd266c): scalar Wiedemann across multiple
+crates/gf2-core/src/field/charpoly.rs:2023:    // orbits spans V) and its O(seeds · n³) cost is bounded; the legacy
+crates/gf2-core/src/field/charpoly.rs:2027:    // `O(n⁴)` cost), but the `minpoly()` hot path no longer touches it.
+crates/gf2-core/src/field/charpoly.rs:2064:/// The legacy quartic [`find_max_minpoly_generator`] path is no longer
+crates/gf2-core/src/field/charpoly.rs:2067:/// helper, but the `minpoly()` hot path no longer touches it.
+crates/gf2-core/src/field/charpoly.rs:2099:                // (issue `6c926de0`). The hook is `None` by default and
+crates/gf2-core/src/field/charpoly.rs:2117:    // dispatch from this `minpoly()` path (issue d1dd266c). The
+crates/gf2-core/src/field/charpoly.rs:2128:    /// **Dispatch shim** (issue `1454ec2d`) — internally selects between
+crates/gf2-core/src/field/charpoly.rs:2138:    /// `n = 256` post-Wave-9; see issue `4a59d1f9`).
+crates/gf2-core/src/field/charpoly.rs:2141:    /// criterion of issue `1454ec2d`: the sub-cubic path verifies its
+crates/gf2-core/src/field/charpoly.rs:2188:    /// Cubic-deterministic charpoly path (issue `f01298db`,
+crates/gf2-core/src/field/charpoly.rs:2263:    /// chain-poly arithmetic (issue 5a3dbd5b) forcibly disabled so the
+crates/gf2-core/src/field/charpoly.rs:2288:    /// (issue `1454ec2d`, Dumas–Pernet theorem 13.4). Returns
+crates/gf2-core/src/field/charpoly.rs:2358:    /// **Dispatch (issue `d1dd266c`)**: the implementation selects between
+crates/gf2-core/src/field/charpoly.rs:2378:    ///    valid for every finite field. The legacy quartic
+crates/gf2-core/src/field/charpoly.rs:2379:    ///    `find_max_minpoly_generator`-based path is no longer reached
+crates/gf2-core/src/field/charpoly.rs:2411:    /// The legacy quartic `find_max_minpoly_generator` driver is **not
+crates/gf2-core/src/field/charpoly.rs:2449:        // retry. The legacy quartic `find_max_minpoly_generator` driver is
+crates/gf2-core/src/field/charpoly.rs:2453:        // legacy signature artifact (unused by the cubic-class arms).
+crates/gf2-core/src/field/charpoly.rs:2713:/// (issue `d1dd266c`).
+crates/gf2-core/src/field/charpoly.rs:2966:    // ── Adversarial Jordan-block tests for cyclic-LCM (issue d1dd266c) ──────
+crates/gf2-core/src/field/charpoly.rs:3525:    // ── Keller–Gehrig sub-cubic path (issue 1454ec2d) ─────────────────────
+crates/gf2-core/src/field/charpoly.rs:3551:    /// Bit-exactness across paths on `Fp<MERSENNE_31>` (issue 1454ec2d
+crates/gf2-core/src/field/charpoly.rs:3603:    /// `[hard]` invariant under issue `1454ec2d`).
+crates/gf2-core/src/field/charpoly.rs:3696:        /// cubic baseline on `Fp<MERSENNE_31>` (issue 1454ec2d `[hard]`
+crates/gf2-core/src/field/charpoly.rs:3746:        /// (issue `d1dd266c` success criterion: Wiedemann path annihilates A).
+crates/gf2-core/src/field/charpoly.rs:3801:        /// sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
+crates/gf2-core/src/field/charpoly.rs:3825:        /// Montgomery path for `Fp<251>`, sizes `n ∈ 2..=32` (issue `5a3dbd5b`).
+crates/gf2-core/src/field/charpoly.rs:3850:    // ── Packed chain-poly correctness (deterministic, issue 5a3dbd5b) ─────
+crates/gf2-core/src/field/expr.rs:85://! User-facing consequence: `FieldMatrix::from(&a)` no longer bridges through
+crates/gf2-core/src/field/extension_wiedemann.rs:8://! # Algorithm (issue `6c926de0`)
+crates/gf2-core/src/field/extension_wiedemann.rs:626:            // independent random probes (review feedback: previously every
+crates/gf2-core/src/field/extension_wiedemann.rs:737:    /// previously-buggy bench cell.
+crates/gf2-core/src/field/inverse.rs:4://! Issue `ae1d1e88`. Implements Dumas–Pernet §2.3 Table 2 by composing the
+crates/gf2-core/src/field/inverse.rs:5://! PLE decomposition (issue `c3f8c1cb`) with the triangular primitives
+crates/gf2-core/src/field/inverse.rs:6://! (issue `83b1ad8b`):
+crates/gf2-core/src/field/inverse.rs:11://!   (issue `d1a5fea8`) to compose `E⁻¹ · L⁻¹` directly into `L⁻¹`'s
+crates/gf2-core/src/field/inverse.rs:58://! deficient matrices is intentionally out of scope; callers needing
+crates/gf2-core/src/field/inverse.rs:133:    /// composition variant (issue `d1a5fea8`). Computes the PLE
+crates/gf2-core/src/field/inverse.rs:205:        // Panelized fast path (issue 8df0c501, design feb15da9).
+crates/gf2-core/src/field/inverse.rs:287:    /// out of scope here (see "Non-square inputs" in the module docs).
+crates/gf2-core/src/field/inverse.rs:652:// ─── Blocked-invert driver (issue 8df0c501, design feb15da9) ─────────────────
+crates/gf2-core/src/field/inverse.rs:660:///    introduced in issue `6823c8a0`; no separate function is needed).
+crates/gf2-core/src/field/inverse.rs:668:/// dispatch to `gemm_axpy_into_view`, which (after issue `40195c09`)
+crates/gf2-core/src/field/inverse.rs:680:    // through the panelized kernel (issue 6823c8a0) for eligible fields.
+crates/gf2-core/src/field/inverse.rs:1303:    // `inv()` uses the in-place trtrm composition (issue d1a5fea8). The
+crates/gf2-core/src/field/inverse.rs:1683:    // ── SC#2 — Blocked-invert boundary sweep proptests (issue 8df0c501) ────────
+crates/gf2-core/src/field/inverse.rs:2270:    /// m×k×1 with m*k*1 < 4096, which previously bypassed the medium-prime
+crates/gf2-core/src/field/matrix.rs:47:/// (issue `d1dd266c`).
+crates/gf2-core/src/field/matrix.rs:98:/// Crate-internal trait for pre-packed matvec caches (issue `d1dd266c`).
+crates/gf2-core/src/field/matrix.rs:229:/// in issue `cdcebf6a` and implemented in `d48a3cfd`. For now it simply
+crates/gf2-core/src/field/matrix.rs:312:    /// Used by the sparse module (story `8a90882e`) to hand back a dense
+crates/gf2-core/src/field/matrix.rs:999:    /// issue `d48a3cfd`.
+crates/gf2-core/src/field/matrix.rs:1118:        // (issue `d1dd266c`). Falls through to the per-row scalar
+crates/gf2-core/src/field/matrix.rs:1792:    /// dispatcher (`crate::field::ple`, issue `6823c8a0`). Returns the
+crates/gf2-core/src/field/matrix.rs:2386:/// explicitly out of scope (that is issue `ad597ede`).
+crates/gf2-core/src/field/matrix.rs:2821:/// # Small-prime / medium-prime fast paths (issue `40195c09`)
+crates/gf2-core/src/field/matrix.rs:2922:    // Whole-GEMM small-prime fast path (issue `40195c09`): when the
+crates/gf2-core/src/field/matrix.rs:5363:    // Issue `40195c09`: bit-exact equality between the lifted
+crates/gf2-core/src/field/matrix.rs:5404:    /// `n ∈ {16, 64, 256}` cells mandated by issue `40195c09`. Builds
+crates/gf2-core/src/field/matrix.rs:5860:    // ─── gemm_axpy_into_view Mersenne31 SIMD dispatch tests (issue 6a7d4c8e) ──
+crates/gf2-core/src/field/ple.rs:4://! Issue `c3f8c1cb` (R2 rework). Implements Dumas–Pernet §2.2 algorithm
+crates/gf2-core/src/field/ple.rs:485:/// Panelized SIMD base-case dispatch helper (issue `6823c8a0`,
+crates/gf2-core/src/field/ple.rs:878:    // Panelized SIMD dispatch (issue 6823c8a0, design 2e8c5a29), in the
+crates/gf2-core/src/field/ple.rs:892:    // whole-GEMM fast path from issue 40195c09 (lift), which hits the
+crates/gf2-core/src/field/ple.rs:3639:    /// Previously-PASSing cells (ratio ≤ 1.5× before `869ce43b`):
+crates/gf2-core/src/field/ple.rs:3671:        // Previously-PASSing cells only (echelon ratio ≤ 1.5× at 38387525).
+crates/gf2-core/src/field/ple.rs:3745:        // issue `68db401b`) on any AVX2 host with the `simd` feature.
+crates/gf2-core/src/field/poly.rs:134://!   `polynomial.div_rem_fast_min_len()` (issue `ae0c7e1f`).
+crates/gf2-core/src/field/poly.rs:138://!   (task `e0b6f940`).
+crates/gf2-core/src/field/poly.rs:142://!   `polynomial.subproduct_min_len()` (issue `046f95c1`).
+crates/gf2-core/src/field/poly.rs:190://! Lagrange interpolation (task `3cff65f7`) and the radix-2 NTT (task
+crates/gf2-core/src/field/poly.rs:203://! issue `046f95c1`. Numbers are
+crates/gf2-core/src/field/poly.rs:407://! [`batch_evaluate_subproduct_auto`] build on (issue `046f95c1`): the
+crates/gf2-core/src/field/poly.rs:1269:        // [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`) into the
+crates/gf2-core/src/field/poly.rs:2143:/// [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
+crates/gf2-core/src/field/poly.rs:2158:/// tracked by issue `046f95c1`.
+crates/gf2-core/src/field/poly.rs:2362:/// Newton-iteration fast-division primitive (issue `ae0c7e1f`,
+crates/gf2-core/src/field/poly.rs:5137:    // (issue 046f95c1).
+crates/gf2-core/src/field/poly.rs:5176:    // dispatcher `FieldPoly::batch_evaluate` (issue `046f95c1`
+crates/gf2-core/src/field/poly_interpolate.rs:17://! [`FieldPoly::div_rem_auto`] primitive (issue `ae0c7e1f`,
+crates/gf2-core/src/field/poly_interpolate.rs:119:/// issue `046f95c1` after the subproduct-tree
+crates/gf2-core/src/field/poly_interpolate.rs:209:/// substrate from issue `ae0c7e1f`, subproduct-tree integration from
+crates/gf2-core/src/field/poly_interpolate.rs:210:/// issue `046f95c1`). Rust coherence forbids a second
+crates/gf2-core/src/field/poly_interpolate.rs:667:/// [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`,
+crates/gf2-core/src/field/poly_interpolate.rs:673:/// on [`TwoAdicField`] callers (issue `046f95c1`).
+crates/gf2-core/src/field/poly_interpolate.rs:778:    // cases through [`FieldPoly::div_rem_auto`] (issue `ae0c7e1f`), so
+crates/gf2-core/src/field/poly_interpolate.rs:781:    // reductions (issue `046f95c1`). By the product rule:
+crates/gf2-core/src/field/poly_interpolate.rs:1232:    // sibling dispatcher (issue `046f95c1`). Below
+crates/gf2-core/src/field/sparse_matrix.rs:7://! owns the public sparse surface promised by issue `8a90882e` of epic
+crates/gf2-core/src/field/sparse_matrix.rs:97://! # Out-of-scope (epic Non-goals)
+crates/gf2-core/src/field/sparse_matrix.rs:100://!   intentionally deferred per the epic Non-goals; the constructors leave
+crates/gf2-core/src/field/sparse_matrix.rs:2222:    // ── Sparse × sparse matmul (issue eb57f944) ──────────────────────────
+crates/gf2-core/src/field/sparse_matrix.rs:2368:    // ── Sparse RREF (issue eb57f944) ────────────────────────────────────
+crates/gf2-core/src/field/test_random_matrix.rs:4://! Issue `ae1d1e88` (R1 review). The PLE story (`c3f8c1cb`), triangular
+crates/gf2-core/src/field/traits.rs:19:/// (issue `6823c8a0`, design `2e8c5a29`).
+crates/gf2-core/src/field/traits.rs:494:    /// (issue `40195c09`).
+crates/gf2-core/src/field/traits.rs:536:    /// (issue `d1dd266c`).
+crates/gf2-core/src/field/traits.rs:564:    /// Hidden chain-polynomial arithmetic hook (issue `5a3dbd5b`).
+crates/gf2-core/src/field/traits.rs:585:    /// arithmetic hook above (issue `5a3dbd5b` review feedback).
+crates/gf2-core/src/field/traits.rs:598:    /// Hidden accelerated `axpy` hook (issue `d1dd266c`).
+crates/gf2-core/src/field/traits.rs:620:    ///   (issue `77c21ecd`). That path is safe scalar Rust and needs no
+crates/gf2-core/src/field/traits.rs:630:    /// Hidden pre-packed matvec cache hook (issue `d1dd266c`).
+crates/gf2-core/src/field/traits.rs:728:    /// polynomial path (issue `6c926de0`).
+crates/gf2-core/src/field/traits.rs:839:    /// (issue `6823c8a0`, design `2e8c5a29`).
+crates/gf2-core/src/field/traits.rs:886:    /// (issue `6823c8a0`).
+crates/gf2-core/src/field/triangular.rs:5://! [`gemm`](crate::field::matrix::gemm) (issue `91c06222`) and the dense
+crates/gf2-core/src/field/triangular.rs:112://! in-place compression in issue `c3f8c1cb` can call it directly.
+crates/gf2-core/src/field/triangular.rs:116://! Per the issue 83b1ad8b **R5 amendment** (2026-04-25), the `[hard]`
+crates/gf2-core/src/field/triangular.rs:1005:/// decomposition (issue `c3f8c1cb`): the post-pivot in-place product
+crates/gf2-core/src/field/triangular.rs:1716:/// exception in the issue 83b1ad8b R4 amendment.
+crates/gf2-core/src/field/triangular.rs:2329:        // issue 83b1ad8b contract.
+crates/gf2-core/src/field/triangular.rs:2781:    // These tests anchor the issue 83b1ad8b R5 contract — see the R5
+crates/gf2-core/src/field/vec.rs:500:        // authoritative statement of when it runs (`Fp<P>`: issue d1dd266c;
+crates/gf2-core/src/field/vec.rs:501:        // GF(2^8): `gf2m::byte_table::gf256_table_dispatch`, issue 77c21ecd).
+crates/gf2-core/src/field/winograd.rs:8://! shipped in [`crate::field::matrix::gemm`] (T1, issue `91c06222`).
+crates/gf2-core/src/gf2m/barrett.rs:27://! This widening is provided by [`BarrettReducerWide`] (JIT issue `9dd11973`),
+crates/gf2-core/src/gf2m/barrett.rs:28://! which landed as Task 3 of story `6fb4abad`. [`BarrettReducerWide`] handles
+crates/gf2-core/src/gf2m/barrett.rs:193:    /// docs for the 256-bit-arithmetic reasoning, and JIT issue `6fb4abad`
+crates/gf2-core/src/gf2m/barrett.rs:421:// and `wide_is_already_reduced` previously lived here, but have been retired:
+crates/gf2-core/src/gf2m/barrett.rs:1332:    /// widening (JIT issue `6fb4abad`, multi-word GF(2^m)) forces a
+crates/gf2-core/src/gf2m/field.rs:1136:        // Priority 3: Use SIMD combined mul+reduce if available (legacy path)
+crates/gf2-core/src/gf2m/poly_helpers.rs:23://! - [`FieldPoly::<Gf2mElement_<V>>::zero`] (field-aware legacy shim)
+crates/gf2-core/src/gf2m/poly_helpers.rs:299:    /// Legacy shim: returns the zero polynomial in the same field as
+crates/gf2-core/src/gf2m/wide.rs:10://! # Scope of this module (story 6fb4abad)
+crates/gf2-core/src/gf2m/wide.rs:2419:        // The config NAME is no longer embedded — use the field-degree prefix
+crates/gf2-core/src/gfp/mod.rs:701:    ///   (`fp_small_try_gemm_classical`, issue `40195c09`).
+crates/gf2-core/src/gfp/mod.rs:703:    ///   (`fp_medium_try_gemm_panel`, issue `74ba1cdc` R1).
+crates/gf2-core/src/gfp/mod.rs:724:        // Issue `6a7d4c8e`.
+crates/gf2-core/src/gfp/mod.rs:753:    /// reduce loop (issue `d1dd266c`). Returns `None` when no SIMD
+crates/gf2-core/src/gfp/mod.rs:765:    /// (issue `5a3dbd5b`). Returns `None` when `P > 251` or when AVX2
+crates/gf2-core/src/gfp/mod.rs:787:    /// `P ≤ 65521` (issue `d1dd266c`). Routes through the AVX2
+crates/gf2-core/src/gfp/mod.rs:799:    /// (issue `d1dd266c`). Routes through the AVX2 byte-lane batch-dot
+crates/gf2-core/src/gfp/mod.rs:856:    /// path for the supported low-cardinality primes (issue `6c926de0`).
+crates/gf2-core/src/gfp/mod.rs:876:    ///   [`crate::simd::maybe_fp_medium_ple`] (issue `68db401b`),
+crates/gf2-core/src/gfp/mod.rs:908:    /// medium-prime PLE panel kernel is registered (issue `68db401b`).
+crates/gf2-core/src/gfp/simd_ops.rs:167:// IMPORTANT — dispatch ordering invariant (Issue 3d06224c, regression guard).
+crates/gf2-core/src/gfp/simd_ops.rs:287:/// AVX2 `m31_batch_dot_fn` kernel (issue `6a7d4c8e`).
+crates/gf2-core/src/gfp/simd_ops.rs:619:// Route-A dispatch toggle (AtomicBool, issue 68cdf4c8)
+crates/gf2-core/src/gfp/simd_ops.rs:628:/// (issue 68cdf4c8). Default `false`; off by default so production
+crates/gf2-core/src/gfp/simd_ops.rs:638:/// As of issue 41096af5, route A is the production default for
+crates/gf2-core/src/gfp/simd_ops.rs:648:/// Originally added under issue 68cdf4c8 SC#1 as the "non-default
+crates/gf2-core/src/gfp/simd_ops.rs:687:// Route-C dispatch toggle (AtomicBool, issue fc182ed5)
+crates/gf2-core/src/gfp/simd_ops.rs:691:/// Goto/BLIS-style panelized micro-kernel (issue fc182ed5). Default
+crates/gf2-core/src/gfp/simd_ops.rs:750:/// **Dispatch policy (issue 41096af5):** Candidate C
+crates/gf2-core/src/gfp/simd_ops.rs:767:///    `select_f32_path` returns `true` for that cell (issue 41096af5 wire-in).
+crates/gf2-core/src/gfp/simd_ops.rs:776:/// **Route-A toggle (issue 68cdf4c8):** when [`set_route_a_gf251_enabled`] has
+crates/gf2-core/src/gfp/simd_ops.rs:781:/// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
+crates/gf2-core/src/gfp/simd_ops.rs:890:            // Route C (issue fc182ed5): pure-integer Goto/BLIS-style panelized
+crates/gf2-core/src/gfp/simd_ops.rs:1367:// (sibling issue `662f7a15`); primes `P >= 65536` route to the 64-bit
+crates/gf2-core/src/gfp/simd_ops.rs:1639:/// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`).
+crates/gf2-core/src/gfp/simd_ops.rs:1871:/// # Dispatch policy (updated 2026-05-27, issue `0749dbad`)
+crates/gf2-core/src/gfp/simd_ops.rs:1903:            // f64 cascade override (issue 0749dbad, Phase 6e). Selection
+crates/gf2-core/src/gfp/simd_ops.rs:1960:/// f64-cascade GEMM helper for medium primes (issue `0749dbad`). Pre-packs A and B^T as canonical
+crates/gf2-core/src/gfp/simd_ops.rs:2030:// Packed matvec entry points — issue d1dd266c
+crates/gf2-core/src/gfp/simd_ops.rs:2046:// calls on the same thread (issue 70766cb1). Avoids the per-call heap
+crates/gf2-core/src/gfp/simd_ops.rs:2058:    // GEMM-specific scratch buffers (issue 27bb2f75). The small-n GEMM
+crates/gf2-core/src/gfp/simd_ops.rs:2070:    // Route-A GEMM scratch (issue 68cdf4c8). Pre-packs `a` and `bt`
+crates/gf2-core/src/gfp/simd_ops.rs:2079:    // Medium-prime GEMM scratch (issue 74ba1cdc R1). Pre-packs `a`
+crates/gf2-core/src/gfp/simd_ops.rs:2090:    // f64-cascade scratch (issue 0749dbad). Pre-packs `a` and `bt` into
+crates/gf2-core/src/gfp/simd_ops.rs:2100:    // Mersenne-31 GEMM scratch (issue 6a7d4c8e). Pre-packs `a` and `bt`
+crates/gf2-core/src/gfp/simd_ops.rs:2113:/// (issue 70766cb1). Stores per-prime lookup tables for converting
+crates/gf2-core/src/gfp/simd_ops.rs:2140:    /// (issue 68cdf4c8) to replace the per-element
+crates/gf2-core/src/gfp/simd_ops.rs:2147:    /// panelized PLE base-case kernel (issue 6823c8a0) to look up the
+crates/gf2-core/src/gfp/simd_ops.rs:2191:        // Modular inverse table (issue 6823c8a0): inv_table[v] = v^{P-2}
+crates/gf2-core/src/gfp/simd_ops.rs:2229:/// # Performance notes (issue 70766cb1)
+crates/gf2-core/src/gfp/simd_ops.rs:2320:    /// future work.
+crates/gf2-core/src/gfp/simd_ops.rs:2335:                // on every call (issue 70766cb1). `resize` extends only when
+crates/gf2-core/src/gfp/simd_ops.rs:2513:// Packed cyclic-decomposition basis cache (issue d1dd266c)
+crates/gf2-core/src/gfp/simd_ops.rs:2530:        /// `fp_reduce_packed`'s inner loop (issue 52cce970); profiling
+crates/gf2-core/src/gfp/simd_ops.rs:2632:            // Per-prime Barrett constant μ = ⌊2¹⁶ / P⌋ (issue 52cce970 R1):
+crates/gf2-core/src/gfp/simd_ops.rs:2650:                // time (issue 52cce970): profiling showed Fermat-style
+crates/gf2-core/src/gfp/simd_ops.rs:2656:                // (issue 52cce970): replaces the prior `batch_mul(bcast, col)
+crates/gf2-core/src/gfp/simd_ops.rs:2693:                // time (issue 52cce970); see Small branch for rationale.
+crates/gf2-core/src/gfp/simd_ops.rs:2815:// for `cyclic_decomposition` (issue `5a3dbd5b`).
+crates/gf2-core/src/gfp/simd_ops.rs:2839:/// Used by `cyclic_decomposition` (issue `5a3dbd5b`) to replace the scalar
+crates/gf2-core/src/gfp/simd_ops.rs:2845:/// As of issue `52cce970`, `sub_scaled_into` calls a single fused AVX2
+crates/gf2-core/src/gfp/simd_ops.rs:2907:        // `build_small_prime_tables::<P>()` (issue 5a3dbd5b R5 review
+crates/gf2-core/src/gfp/simd_ops.rs:2924:        // two-call sequence (issue 52cce970): the fused kernel keeps α, μ, p
+crates/gf2-core/src/gfp/simd_ops.rs:2979:/// [`fp_small_try_gemm_classical`] (issue `40195c09`).
+crates/gf2-core/src/gfp/simd_ops.rs:3001:    // Medium-prime panel kernel (issue 74ba1cdc R1): `Fp<P>` with
+crates/gf2-core/src/gfp/simd_ops.rs:3018:/// (issue `6823c8a0`, design `2e8c5a29`).
+crates/gf2-core/src/gfp/simd_ops.rs:3048:    // kernel (issue `68db401b`). Other primes return `None` and the
+crates/gf2-core/src/gfp/simd_ops.rs:3172:/// (issue `6823c8a0`).
+crates/gf2-core/src/gfp/simd_ops.rs:3257:/// Medium-prime PLE base-case dispatch helper (issue `68db401b`,
+crates/gf2-core/src/gfp/simd_ops.rs:3552:    // Tests for the inlined / cached matvec path (issue 70766cb1).
+crates/gf2-core/src/gfp/simd_ops.rs:3641:    /// small-prime prepack matvec path (issue 70766cb1).
+crates/gf2-core/src/gfp/simd_ops.rs:3661:    /// dispatch path (issue 27bb2f75). Covers the table-lookup
+crates/gf2-core/src/gfp/simd_ops.rs:3734:    /// dispatch path (issue 27bb2f75). Covers the lengths mandated by
+crates/gf2-core/src/gfp/simd_ops.rs:3759:        /// bit-exactly. Boundary lengths from issue 27bb2f75's success
+crates/gf2-core/src/gfp/simd_ops.rs:4022:        // Reference prime named in the [hard] criterion of issue 9e12659b.
+crates/gf2-core/src/gfp/simd_ops.rs:4045:    /// Regression guard for issue `3d06224c` (story `cc5de315`, "Protect
+crates/gf2-core/src/gfpn/cubic.rs:1050:    // Wide accumulator tests (issue d11b769a)
+crates/gf2-core/src/gfpn/cubic.rs:1072:    /// For a large prime the bound is finite, proving we no longer return
+crates/gf2-core/src/gfpn/quadratic.rs:964:    // Wide accumulator tests (issue d11b769a)
+crates/gf2-core/src/gfpn/quadratic.rs:990:    /// `usize::MAX`). This proves the tower no longer returns the sentinel
+crates/gf2-core/src/io/field_matrix.rs:44://! it never guesses how to reinterpret an older or newer stream. The legacy
+crates/gf2-core/src/io/mod.rs:9://! # File Format Specification (legacy GF2DATA formats)
+crates/gf2-core/src/lib.rs:172:    /// as well as the legacy combined multiply+reduce function.
+crates/gf2-core/src/lib.rs:257:    /// any (issue `0749dbad`).
+crates/gf2-core/src/lib.rs:335:    /// kernel for `Fp<P>` with `P <= 251` (issue `6823c8a0`, design
+crates/gf2-core/src/lib.rs:350:    /// kernel for `Fp<P>` with `P ∈ (251, 65536)` (issue `68db401b`,
+crates/gf2-core/tests/bench_seed_compat.rs:4://! Issue `6ed7f050`. The reference C++ harness in
+crates/gf2-core/tests/gf2pow32_constant_drift.rs:11://! As of jit:b13799ac R2, the C++ side no longer carries a scalar
+crates/gf2-core/tests/gf2pow32_constant_drift.rs:23://! Issue: jit:b13799ac (SSOT extraction follow-on after R2 review).
+crates/gf2-core/tests/gfpn_wide_nested.rs:2://! extensions (issue d11b769a).
+crates/gf2-core/tests/phase2_prime_sweep_proptests.rs:203:    /// Issue 0749dbad SC#3: medium-prime f64-cascade dispatch at boundary
+crates/gf2-core/tests/route_a_gf251_parity.rs:1://! Route-A GF(251) f32/FMA cascade parity tests (issue 68cdf4c8).
+crates/gf2-core/tests/route_a_gf251_production_dispatch_proptests.rs:2://! wire-in (issue 41096af5).
+crates/gf2-core/tests/route_a_gf251_production_dispatch_proptests.rs:11://! Four proptest blocks, per SC#6 and SC#9 of issue 41096af5:
+crates/gf2-core/tests/route_a_gf251_production_dispatch_proptests.rs:172:    /// n=4096: extended correctness check for issue 98336ab4.
+crates/gf2-core/tests/route_c_gf251_parity.rs:1://! Route-C GF(251) integer-panel kernel parity tests (issue fc182ed5).
+crates/gf2-kernels-hip/benches/gpu_vs_cpu_gray_qam.rs:6://! issue `9c37ec8c`.
+crates/gf2-kernels-hip/build.rs:99:    // `hip/` (watched above); Phase B kernel owners adding `.cpp` sources under
+crates/gf2-kernels-hip/src/ffi.rs:180:    /// Phase E `23d3525f`).
+crates/gf2-kernels-hip/src/ffi.rs:348:// only compiles under the `hip` feature (issue `9012f8a0` criterion 6). Gating
+crates/gf2-kernels-hip/src/host/alloc.rs:59:/// selects `device_id` (saving and restoring the previously-current device)
+crates/gf2-kernels-hip/src/host/alloc.rs:65:/// The previously-current device is restored even when the query fails; if the
+crates/gf2-kernels-hip/src/host/alloc.rs:87:    // Select the requested device (saving the previously-current one) so
+crates/gf2-kernels-hip/src/host/alloc.rs:97:    // Restore the previously-current device regardless of the query outcome.
+crates/gf2-kernels-hip/src/host/alloc.rs:116:/// previously-current device so the caller can restore it.
+crates/gf2-kernels-hip/src/host/alloc.rs:180:    ///   previously-current device is restored afterward, so the recorded
+crates/gf2-kernels-hip/src/host/alloc.rs:204:        // around the allocation (restoring the previously-current device after)
+crates/gf2-kernels-hip/src/host/alloc.rs:216:        // Restore the previously-current device regardless of allocation outcome.
+crates/gf2-kernels-hip/src/host/alloc.rs:781:    /// previously-current device. On this single-GPU gfx1030 host device 0 is
+crates/gf2-kernels-hip/src/host/events.rs:50:    /// restored a different previously-current device before timing events are
+crates/gf2-kernels-hip/src/host/launch.rs:15://! These are kernel-authoring obligations (the kernels land next wave via
+crates/gf2-kernels-hip/src/host/launch.rs:24://! `LaunchDims` would alter their launch geometry and is therefore deferred to
+crates/gf2-kernels-hip/src/host/launch.rs:25://! the Phase B kernel owners, who adopt `LaunchDims` as they bring the
+crates/gf2-kernels-hip/src/host/mod.rs:4://! Phase C executor build on:
+crates/gf2-kernels-hip/src/host/streams.rs:5://! fixed index (deterministic per-worker ownership, the Phase C scheduler
+crates/gf2-kernels-hip/src/host/streams.rs:182:/// via [`get`](HipStreamPool::get) (deterministic ownership — the Phase C
+crates/gf2-kernels-hip/src/host/streams.rs:195:/// Phase C scheduler model (`75c22fa8`) sound: a *single* pool is shared by
+crates/gf2-kernels-hip/src/host/streams.rs:296:    /// [`get`](Self::get) instead (the Phase C scheduler model).
+crates/gf2-kernels-hip/src/host/streams.rs:435:    // The pool is shared by `&` across rayon workers (Phase C scheduler), so it
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:28://! executes on the legacy NULL stream and would serialize against every other
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:105:/// synchronous copy executes on the legacy NULL stream, which serializes
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:489:    /// This is the stream-aware launch the Phase C executor uses to overlap
+crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:44://! legacy NULL stream and would serialize against every other blocking stream
+crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:141:/// today. 5G NR support is a Phase E (`23d3525f`) **constructor** that expands a
+crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:196:/// synchronous copy executes on the legacy NULL stream, which serializes
+crates/gf2-kernels-hip/src/lib.rs:66:/// Only compiled when the `hip` Cargo feature is enabled (issue `9012f8a0`
+crates/gf2-kernels-hip/src/lib.rs:632:/// in JIT issue `9c37ec8c`. For exact log-MAP or arbitrary constellations,
+crates/gf2-kernels-hip/src/lib.rs:687:/// synchronous copy executes on the legacy NULL stream, which serializes
+crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs:2://! (issue `9012f8a0`, correctness ladder rungs 1-3; design doc §10).
+crates/gf2-kernels-simd/src/bipedal/framework.rs:17://! `crate::x86::bipedal_avx2_packed7` (see JIT issue `1f769232`'s
+crates/gf2-kernels-simd/src/bipedal/packed5.rs:31://! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
+crates/gf2-kernels-simd/src/bipedal/packed7.rs:29://! See JIT issue `1f769232`'s `## Amendment 2026-05-14` for the rationale.
+crates/gf2-kernels-simd/src/fp_medium.rs:7://! `Fp<P>` primes that the small-prime kernel (issue `662f7a15`) does
+crates/gf2-kernels-simd/src/fp_medium.rs:69:/// large `n` (issue `74ba1cdc`): pre-packs B once per gemm into
+crates/gf2-kernels-simd/src/fp_medium_ple.rs:2://! (251, 65536)`), issue `68db401b`, design `2e8c5a29` § 9.
+crates/gf2-kernels-simd/src/fp_medium_ple.rs:16://! See `@/issue/2e8c5a29` § 9 for the design context. Issue `68db401b` adds the
+crates/gf2-kernels-simd/src/fp_medium_ple.rs:84:/// Bundle of medium-prime panelized PLE operations (issue `68db401b`).
+crates/gf2-kernels-simd/src/fp_small.rs:156:///   integer division previously emitted as the kernel prologue. Use
+crates/gf2-kernels-simd/src/fp_small_f32.rs:11://! `crates/gf2-core/src/gfp/simd_ops.rs::select_f32_path`, issue 41096af5). The
+crates/gf2-kernels-simd/src/fp_small_f32.rs:20://! # Route A (issue 68cdf4c8)
+crates/gf2-kernels-simd/src/fp_small_f32.rs:24://! issue `68cdf4c8` (route A of `@/issue/615db3b9`). It differs from
+crates/gf2-kernels-simd/src/fp_small_f32.rs:153:    /// Route-A variant of `batch_gemm_fn` (issue 68cdf4c8). Identical
+crates/gf2-kernels-simd/src/fp_small_f32.rs:311:        // 256, 268, 1024} (issue 68cdf4c8 success criterion 2).
+crates/gf2-kernels-simd/src/fp_small_ple.rs:2://! issue `6823c8a0`, design `2e8c5a29`.
+crates/gf2-kernels-simd/src/fp_small_ple.rs:71:/// Bundle of small-prime panelized PLE operations (issue `6823c8a0`).
+crates/gf2-kernels-simd/src/gf2m_wide.rs:31://! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
+crates/gf2-kernels-simd/src/llr.rs:31:// Legacy type alias for backward compatibility
+crates/gf2-kernels-simd/src/llr.rs:54:/// Legacy detect function (returns f32 version).
+crates/gf2-kernels-simd/src/transpose.rs:43://! Issue `1c1c4242` (kernel B1 in `@/issue/babcf05e`) drives the PPC spiral for
+crates/gf2-kernels-simd/src/transpose.rs:48://! **V7** is the cache-tiling outer loop `gf2-core` drives. Issue `1d4fd63d`
+crates/gf2-kernels-simd/src/transpose.rs:111:/// so far: the `transpose-lane-selection` family of issue `1d4fd63d` measured
+crates/gf2-kernels-simd/src/transpose.rs:115:/// the receipt. Issue `63bad95d` owns the calibration of this selector.
+crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs:11://! `(MagLane, SgnLane)` framework shape (see JIT issue `1f769232`'s
+crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed5.rs:536:// Deferred per issue 1f769232 aspirational note.
+crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs:239:// nibble LUT per 4-bit operation. Deferred per issue 1f769232 aspirational
+crates/gf2-kernels-simd/src/x86/bipedal_avx512.rs:6://! `[aspirational]` criterion 4 of JIT issue `d181e95b` (T12) and to
+crates/gf2-kernels-simd/src/x86/fp_medium.rs:9://! issue `662f7a15`; primes `P ≥ 65536` are served by the generic
+crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:3://! filed under jit issue `0749dbad`.
+crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:7://! where the canonical residue range `[0, p)` no longer fits in a byte
+crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs:766:        // SC#3 (issue 0749dbad): proptest-style boundary-length sweep at
+crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:2://! `P ∈ (251, 65536)`, issue `68db401b`, design `2e8c5a29` § 9.
+crates/gf2-kernels-simd/src/x86/fp_small.rs:486:/// previously implemented as `tmp = batch_mul(α, chain_j); buf =
+crates/gf2-kernels-simd/src/x86/fp_small.rs:522:/// The Barrett constant `μ = ⌊2¹⁶ / p⌋` was previously recomputed at the
+crates/gf2-kernels-simd/src/x86/fp_small.rs:787:/// The Phase-2 SSOT (issue e8a0c47a) for vectorized modular reduction:
+crates/gf2-kernels-simd/src/x86/fp_small.rs:1113:    /// Issue `52cce970` § "Success Criteria" requires correctness at
+crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:236:    // Outer-N grouping: L3-budgeted shared helper (issue 74ba1cdc R1).
+crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:330:/// Route-A whole-gemm entry point (issue 68cdf4c8). Same f32 inputs and
+crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:388:    // Outer-N grouping: shared L3-budgeted helper (issue 74ba1cdc R1).
+crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:853:/// (issue 68cdf4c8). Applies the Phase-2 SSOT 32-bit-lane Barrett
+crates/gf2-kernels-simd/src/x86/fp_small_f32.rs:1188:    // ─── Route-A (issue 68cdf4c8) tests ─────────────────────────────────
+crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:100:/// operands with `P <= 251` (route C, issue fc182ed5).
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:4://! design `@/issue/2e8c5a29` and issue `6823c8a0`. Performs an in-place
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:51://!   `crate::x86::fp_small_panel`'s inner kernel (issue `fc182ed5`).
+crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs:10://! approach previously used by `try_gf2m_u64_batch_dot_product`. The
+crates/gf2-kernels-simd/src/x86/gf2m_wide.rs:23://! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
+crates/gf2-kernels-simd/src/x86/transpose.rs:34://! Future work (V7 cache layout, n > 8K): drive a tile-of-tiles
+crates/gf2-kernels-simd/src/x86/transpose.rs:108:    // these no longer correspond to contiguous 4-row YMM lane pairs.
+crates/gf2-sim/benches/nr_5g_realtime.rs:1://! 5G NR LDPC GPU real-time decode-rate tuning sweep (issue `23d3525f`).
+crates/gf2-sim/benches/nr_5g_realtime.rs:5://! **flat GPU LDPC BP kernel** (reused unchanged from Phase B `a930be7f`,
+crates/gf2-sim/benches/nr_5g_realtime.rs:21://! LDPC **decode** is timed (the task's scope is decoder throughput; non-goals
+crates/gf2-sim/examples/dvb_t2_graph_api.rs:26://! MODCOD, per the AMENDMENT 2026-06-11 on issue 8c8302c8).
+crates/gf2-sim/src/batch.rs:251:        // rejected by the constructor, not deferred to the demapper.
+crates/gf2-sim/src/bin/checkpoint_sweep.rs:2://! (issue `5f12e7ff`, design doc §4; criterion 1, deliverable 2).
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:10://! # Migration (jit:bbf6b6ee, wave D.2 of epic gf2-sim `f9717e7e`)
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:12://! This is the **migrated** campaign binary. It drives the simulation through
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:18://! legacy
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:24://! unambiguously from the workspace root). The legacy
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:31://! demap stages to the HIP device), so it is materially faster than the legacy
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:53://! Unlike the legacy binary (which converted Es/N0 → Eb/N0 for the legacy
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:126://!   **`mean_iters` legacy-compatibility note**: the legacy binary recorded
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:159://! The CSV schema is **identical** to the legacy binary's, so
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:904:    // JSON-lines tracing log: unconditional (matches legacy binary parity),
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:947:    // This matches the legacy binary's event name/shape used by external monitors
+crates/gf2-sim/src/bin/export_alist.rs:3://! Part of the external-library comparison harness (issue `18e69a1a`,
+crates/gf2-sim/src/bin/gpu_awgn_throughput.rs:1://! GPU AWGN noise-generation throughput benchmark (issue `f6004add`,
+crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs:1://! GPU BCH syndrome-evaluation throughput benchmark (issue `9012f8a0`,
+crates/gf2-sim/src/bin/gpu_demap_throughput.rs:1://! GPU Gray-QAM max-log demap-stage throughput benchmark (issue `d3f1616a`,
+crates/gf2-sim/src/bin/hybrid_throughput.rs:1://! Hybrid CPU+GPU pipeline throughput benchmark (issue `75c22fa8`,
+crates/gf2-sim/src/bin/ldpc_bler_sweep.rs:3://! Part of issue `18e69a1a` (`dev/benchmarks/gf2-sim/comparison/`). This is the
+crates/gf2-sim/src/bin/parallel_throughput.rs:1://! Within-SNR parallel throughput benchmark (issue `3fcb7025`).
+crates/gf2-sim/src/bin/parallel_throughput.rs:116:            // Real mean BP iterations per frame (no longer a sentinel); the same
+crates/gf2-sim/src/channels/awgn.rs:6://! per-stage [`ChannelScratch`] RNG, which the Phase C executor seeks per frame
+crates/gf2-sim/src/channels/awgn.rs:49://! executor-facing path that consumes the scratch RNG which the Phase C executor
+crates/gf2-sim/src/channels/awgn.rs:63:/// The Phase C executor seeds this RNG per frame via
+crates/gf2-sim/src/channels/mod.rs:5://! per-stage [`ChannelScratch`](awgn::ChannelScratch) RNG that the Phase C
+crates/gf2-sim/src/channels/rayleigh.rs:36://! path consuming the scratch RNG which the Phase C executor pre-seeks.
+crates/gf2-sim/src/channels/rician.rs:42://! path consuming the scratch RNG which the Phase C executor pre-seeks.
+crates/gf2-sim/src/config.rs:85:    /// **Test-only** GPU out-of-memory fault-injection hook (issue `42eac5cc`).
+crates/gf2-sim/src/config.rs:125:    /// Converts a legacy [`SimulationConfig`] into a [`PipelineConfig`].
+crates/gf2-sim/src/config.rs:137:    ///   to `false` (none has a legacy source field).
+crates/gf2-sim/src/executor/drain.rs:2://! (Phase C task `571c11c4`, design doc §4 "Drain commit contract"; shared core
+crates/gf2-sim/src/executor/drain.rs:3://! + failure-semantics integration landed in epic task `bb11c2e6`).
+crates/gf2-sim/src/executor/drain.rs:7://! The checkpointed `worker_round_hybrid` no longer transcribes the C.1
+crates/gf2-sim/src/executor/drain.rs:10://! (epic task `bb11c2e6`) — supplying only the per-batch hooks that genuinely
+crates/gf2-sim/src/executor/drain.rs:20://!   decision (epic task `bb11c2e6`): a recoverable GPU fault during a
+crates/gf2-sim/src/executor/drain.rs:32://!   resume would need a checkpoint-schema change, deferred to a lead/user
+crates/gf2-sim/src/executor/drain.rs:351:    /// failure-semantics decision of epic task `bb11c2e6`, realised in the
+crates/gf2-sim/src/executor/drain.rs:508:            //     `--resume` would double-log every previously-finished point.
+crates/gf2-sim/src/executor/drain.rs:707:    /// change deferred to a lead/user decision.)
+crates/gf2-sim/src/executor/drain.rs:997:        /// core (epic task `bb11c2e6`): it computes the worker's remaining
+crates/gf2-sim/src/executor/failure.rs:1://! OOM auto-fallback dispatch and hard-fail diagnostic dump (Phase C task
+crates/gf2-sim/src/executor/failure.rs:76:    /// **Test-only** GPU-OOM injection modulus (issue `42eac5cc` SC1). When
+crates/gf2-sim/src/executor/failure.rs:266:/// in design doc §8 and mandated by issue `42eac5cc`. It is the **single call
+crates/gf2-sim/src/executor/hybrid_core.rs:1://! The shared hybrid CPU/GPU double-buffer core (epic task `bb11c2e6`).
+crates/gf2-sim/src/executor/mod.rs:1://! Hybrid CPU/GPU executor (design doc §6 / §8, Phase C).
+crates/gf2-sim/src/executor/mod.rs:3://! Owned by Phase C. `75c22fa8` lands the foundational [`Scheduler`]: it pairs
+crates/gf2-sim/src/executor/results.rs:2://! run, the v2 successor to the legacy `gf2_coding::simulation` result rows.
+crates/gf2-sim/src/executor/results.rs:88:/// This is the type the §12 migration table's `Pipeline::run` /
+crates/gf2-sim/src/executor/results.rs:90:/// consumers (the D.3 calibration receipt, the campaign-binary migration) read
+crates/gf2-sim/src/executor/scheduler.rs:1://! The hybrid CPU/GPU pipeline scheduler (Phase C foundational task
+crates/gf2-sim/src/executor/scheduler.rs:524:/// [`hybrid_core`](crate::executor::hybrid_core) (epic task `bb11c2e6`), the
+crates/gf2-sim/src/executor/scheduler.rs:652:        /// core (epic task `bb11c2e6`): it computes the worker's strided
+crates/gf2-sim/src/executor/topology.rs:2://! (Phase C task `de160fc5`, design doc §6 / §9 / §11).
+crates/gf2-sim/src/executor/topology.rs:152:/// One completed wave member: `(stage position, output batch, returned
+crates/gf2-sim/src/executor/topology.rs:447:        // Test-only GPU-OOM fault injection (issue `42eac5cc` SC1). When the
+crates/gf2-sim/src/executor/topology.rs:818:/// The per-wave input of one stage: the run's root batch, a single producer's
+crates/gf2-sim/src/executor/topology.rs:953:    /// stages within a wave run in parallel across the scheduler's workers.
+crates/gf2-sim/src/executor/topology.rs:967:    /// wave run in parallel on the scheduler's rayon pool. A fan-in stage
+crates/gf2-sim/src/executor/topology.rs:1040:            // Prepare each wave member's input + scratch outside the parallel
+crates/gf2-sim/src/executor/topology.rs:1075:            // Run the wave in parallel on the scheduler's pool: independent
+crates/gf2-sim/src/frame_sim.rs:9://! draw that mirrors the legacy baseline harness
+crates/gf2-sim/src/frame_sim.rs:17://! The Phase A channel stages (`db9836e4`) are not yet on `main`, so the
+crates/gf2-sim/src/frame_sim.rs:157:    /// legacy baseline harness.
+crates/gf2-sim/src/gpu/awgn.rs:38://! with the *same* `es_n0_db` / `bits_per_symbol`, so the Phase C executor can
+crates/gf2-sim/src/gpu/demap.rs:58://! modulation + method + `noise_var`, so the Phase C executor can substitute it
+crates/gf2-sim/src/gpu/ldpc_bp.rs:32://! [`DecoderConfig`](gf2_coding::ldpc::DecoderConfig), so the Phase C executor
+crates/gf2-sim/src/gpu/ldpc_bp.rs:35://! # 5G NR seam (design doc §6, Phase E `23d3525f`)
+crates/gf2-sim/src/gpu/mod.rs:3://! Owned by Phase B (`36075e4c`). The HIP host infrastructure itself (stream
+crates/gf2-sim/src/gpu/mod.rs:103:    /// Phase B GPU stages stage their H2D / D2H transfers through pinned host
+crates/gf2-sim/src/gpu/mod.rs:105:    /// per stage so the kernel stages (`ed575f15` and the next-wave kernel
+crates/gf2-sim/src/gpu/mod.rs:136:    /// # Concurrency model (design § Phase C scheduler `75c22fa8`)
+crates/gf2-sim/src/gpu/mod.rs:169:        /// [`map_hip_error`] and **returned**, so the Phase C executor refuses
+crates/gf2-sim/src/gpu/mod.rs:411:        /// `DeviceBuffer` — so it is covered rather than dead code. Phase B
+crates/gf2-sim/src/gpu/mod.rs:412:        /// kernel stages (`ed575f15` and the next-wave kernel owners) and the
+crates/gf2-sim/src/gpu/mod.rs:413:        /// Phase C executor (`42eac5cc`) are the production consumers.
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:2://! kernel (design doc §6; epic `f9717e7e` Phase E `23d3525f`).
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:5://! Phase B `a930be7f`: it host-expands a 5G NR base graph + per-`i_LS` lifting
+crates/gf2-sim/src/graph/mod.rs:15://! a valid topological order of the DAG; the Phase C executor (`de160fc5`)
+crates/gf2-sim/src/graph/mod.rs:341:    /// This method only records the pairing; all validation is deferred to
+crates/gf2-sim/src/graph/mod.rs:745:        // StageIds, which no longer index `Pipeline::stages()` correctly for
+crates/gf2-sim/src/observability.rs:49:/// function returns `Ok(())` with tracing disabled (matching the legacy
+crates/gf2-sim/src/osd_campaign.rs:129:/// A wave is the unit of speculation: the protocol dispatches
+crates/gf2-sim/src/osd_campaign.rs:132:/// wastes at most one wave of block evaluations past its stopping block, once,
+crates/gf2-sim/src/osd_campaign.rs:133:/// while the wave stays long enough to amortise the fan-out over the per-block
+crates/gf2-sim/src/osd_campaign.rs:666:/// `gf2-coding` moving to `rand` 0.9; JIT issue `90a88fa9` tracks converging
+crates/gf2-sim/src/osd_campaign.rs:1403:/// Each wave covers `workers * OSD_WAVE_BLOCKS_PER_WORKER` consecutive block
+crates/gf2-sim/src/osd_campaign.rs:1406:/// order until the cell reaches the block-error target; the rest of the wave is
+crates/gf2-sim/src/parallel/mod.rs:4://! This module is the Phase A core of the `gf2-sim` parallel executor. It
+crates/gf2-sim/src/parallel/mod.rs:5://! provides the three primitives the Phase C hybrid executor (`de160fc5` /
+crates/gf2-sim/src/parallel/mod.rs:35://!   [`worker_offset`] is reserved for the Phase C executor / GPU paths, where a
+crates/gf2-sim/src/parallel/mod.rs:44://!   as the SSOT so a future migration to non-associative accumulators stays
+crates/gf2-sim/src/parallel/mod.rs:125:///   passes `0` and indexes by global frame (see module docs); the Phase C
+crates/gf2-sim/src/parallel/mod.rs:457:/// surface the Phase C executor (`de160fc5`) and channel stages (`db9836e4`)
+crates/gf2-sim/src/parallel/mod.rs:556:    /// Mirrors [`ChaCha20Rng::get_word_pos`]; exposed so consumers (the Phase C
+crates/gf2-sim/src/parallel/mod.rs:633:/// `target_errors` is a Phase C executor concern (the executor will cap the
+crates/gf2-sim/src/permanent_campaign/provenance.rs:1198:/// reported on its own rather than used to derive a file set that can no longer
+crates/gf2-sim/src/permanent_campaign/validation.rs:900:/// a complete terminal prefix, and no previously opened suffix address.
+crates/gf2-sim/src/permanent_campaign/validation.rs:1291:/// runnable migration cleanup from weakening permanent receipt verification.
+crates/gf2-sim/src/pipeline.rs:157:    /// [`SimulationResults`] (design doc §12 migration target).
+crates/gf2-sim/src/pipeline.rs:208:    /// Alias for [`run`](Pipeline::run) matching the §12 migration table name
+crates/gf2-sim/src/pipeline.rs:218:    /// Alias for [`run`](Pipeline::run) matching the §12 migration table name
+crates/gf2-sim/src/pipeline.rs:222:    /// migration call-site naming.
+crates/gf2-sim/src/pipeline.rs:232:    /// checkpointing and `--resume` support (design doc §4; task `571c11c4`).
+crates/gf2-sim/src/pipeline.rs:248:    /// failure-semantics decision of epic task `bb11c2e6` (both paths share one
+crates/gf2-sim/src/presets/dvb_t2.rs:463:    /// and drives the hybrid CPU+GPU scheduler (Phase C `75c22fa8`): each rayon
+crates/gf2-sim/src/presets/dvb_t2.rs:469:    /// (issue `42eac5cc`) intercepts every GPU stage error — an OOM with
+crates/gf2-sim/src/presets/dvb_t2.rs:626:        // GPU offload placement (Phase C `75c22fa8`, deliverable 3): with
+crates/gf2-sim/src/presets/dvb_t2.rs:796:        // Rate5_6 is out of scope; the error must report the ACTUAL rate, not a
+crates/gf2-sim/src/presets/dvb_t2.rs:814:        // QPSK is out of scope; the error must report "QPSK", not "16-QAM".
+crates/gf2-sim/src/snr_checkpoint.rs:23://! This module is the CPU half (Phase A). For the CPU path, "drain" means:
+crates/gf2-sim/src/snr_checkpoint.rs:33://! landed with Phase C task `571c11c4` in `executor::drain`; see
+crates/gf2-sim/src/snr_checkpoint.rs:72:/// the **CPU within-SNR path** (Phase A, `5f12e7ff`/`3fcb7025`) resumes via the
+crates/gf2-sim/src/snr_checkpoint.rs:73:/// global `frames_completed`, and the **Phase C hybrid executor** (`75c22fa8`,
+crates/gf2-sim/src/snr_checkpoint.rs:468:/// (Phase C `571c11c4`, `executor::drain`), which iterates each worker's owned
+crates/gf2-sim/src/snr_checkpoint.rs:676:        // a frame boundary; this is the named seam for the Phase C GPU drain.
+crates/gf2-sim/src/snr_checkpoint.rs:957:/// doc §4's drain contract. The **CPU** within-SNR path (Phase A) does not
+crates/gf2-sim/src/snr_checkpoint.rs:1457:        // global `frames_completed`; this field is for the Phase C executor.
+crates/gf2-sim/src/testutil.rs:7://! once (review SSOT rule, issue `23d3525f` finding F3), and the
+crates/gf2-sim/src/testutil.rs:11://! rule, issue `18e69a1a`). The module mirrors
+crates/gf2-sim/src/testutil.rs:41:/// harness (`dev/benchmarks/gf2-sim/comparison/`, issue `18e69a1a`).
+crates/gf2-sim/tests/build_errors.rs:1://! Build-time graph errors at `Pipeline::build()` (issue `de160fc5`,
+crates/gf2-sim/tests/build_errors.rs:9://! integration-tier coverage for `Disconnected` (previously unit-tested only
+crates/gf2-sim/tests/campaign_byte_identity.rs:1://! Within-new-pipeline byte-identity for the migrated DVB-T2 BICM AWGN
+crates/gf2-sim/tests/campaign_byte_identity.rs:2://! campaign binary (jit:bbf6b6ee, wave D.2 of epic gf2-sim `f9717e7e`).
+crates/gf2-sim/tests/campaign_byte_identity.rs:4://! Spawns the migrated `gf2-sim` campaign binary
+crates/gf2-sim/tests/campaign_byte_identity.rs:12://! Per `ec530af9` §3/§12 (user-approved Q2 on 2026-06-07), the legacy
+crates/gf2-sim/tests/campaign_byte_identity.rs:16://! Two legs, **both `#[ignore]`** because each spawns the migrated binary as a
+crates/gf2-sim/tests/campaign_byte_identity.rs:42:/// Path to the migrated campaign binary cargo built for this test.
+crates/gf2-sim/tests/campaign_byte_identity.rs:93:/// Runs the migrated campaign once, returning the parsed curve CSV rows.
+crates/gf2-sim/tests/campaign_cli_flags.rs:1://! Argv-level acceptance and rejection of the migrated DVB-T2 BICM AWGN
+crates/gf2-sim/tests/campaign_cli_flags.rs:2://! campaign binary's CLI flags (jit:bbf6b6ee, wave D.2 of epic gf2-sim).
+crates/gf2-sim/tests/campaign_cli_flags.rs:4://! Spawns the migrated `gf2-sim` campaign binary (located via
+crates/gf2-sim/tests/campaign_cli_flags.rs:13://! * the migrated parser still rejects the same bad `--decoder` / `--demap`
+crates/gf2-sim/tests/campaign_cli_flags.rs:14://!   values the legacy binary did (the migration preserves all flag semantics);
+crates/gf2-sim/tests/campaign_cli_flags.rs:199:/// End-to-end acceptance: a minimal valid argv runs the migrated pipeline and
+crates/gf2-sim/tests/campaign_cli_flags.rs:252:    // not assert legacy byte-compat of event shapes (Q2 decision) — only that
+crates/gf2-sim/tests/campaign_cli_flags.rs:279:/// legacy parity). `#[ignore]` — spawns a full-codec subprocess (heavy
+crates/gf2-sim/tests/campaign_cli_flags.rs:357:/// MEDIUM-5 (resume smoke): runs the migrated pipeline with a tiny frame
+crates/gf2-sim/tests/channels_determinism.rs:2://! channel stages (issue `db9836e4`).
+crates/gf2-sim/tests/channels_smoke.rs:2://! (issue `db9836e4`, deliverable 5 + [hard] criterion-4).
+crates/gf2-sim/tests/checkpoint_compat.rs:2://! (issue `5f12e7ff`, design doc §4).
+crates/gf2-sim/tests/common/mod.rs:5://! `frame_sim` path, issue `3fcb7025`) and [`determinism.rs`](../determinism.rs)
+crates/gf2-sim/tests/common/mod.rs:6://! (the typestate preset production path, issue `48a0db6c`) compare
+crates/gf2-sim/tests/common/mod.rs:22://! # GPU fault-injection helpers (issue `ed575f15`, design doc §8)
+crates/gf2-sim/tests/common/mod.rs:28://! injectors: `tests/gpu_fault_injection.rs` (issue `ed575f15`, deliverable 3)
+crates/gf2-sim/tests/common/mod.rs:29://! verifies they produce the expected error variants, and the Phase C executor
+crates/gf2-sim/tests/common/mod.rs:30://! substitution test (issue `42eac5cc`) reuses them by the same `mod common;`
+crates/gf2-sim/tests/common/mod.rs:61:/// # BER is excluded (issue `152388f4`, design-doc §11)
+crates/gf2-sim/tests/common/mod.rs:67:/// amendment from issue `152388f4`). Callers may *record* BER for diagnostics
+crates/gf2-sim/tests/common/mod.rs:125:    // always excluded from byte-identity (issue `152388f4`; design-doc §11
+crates/gf2-sim/tests/common/mod.rs:135:/// Shared by `tests/hybrid_resume.rs` (issue `571c11c4`, where it originated)
+crates/gf2-sim/tests/common/mod.rs:136:/// and `tests/dvb_t2_regression.rs` (issue `0d9cb8e3`).
+crates/gf2-sim/tests/common/mod.rs:164:/// byte-identical. BER is always excluded (issue `152388f4`), as in the
+crates/gf2-sim/tests/common/mod.rs:219:// Shared DVB-T2 graph-chain builder (BLOCKING-2, issue `8c8302c8`)
+crates/gf2-sim/tests/common/mod.rs:330:// GPU fault-injection helpers (issue `ed575f15`, deliverable 3; design doc §8)
+crates/gf2-sim/tests/common/mod.rs:333:// (`gpu_fault_injection.rs`) and the Phase C executor substitution test
+crates/gf2-sim/tests/dag_topology.rs:1://! DAG topology executor semantics (issue `de160fc5`, criteria 1, 3, 4).
+crates/gf2-sim/tests/dag_topology.rs:729:    // executing in the wave after {B, C}, observes the count without it.
+crates/gf2-sim/tests/determinism.rs:2://! (issue `48a0db6c`, design doc §3 / §11; closes Phase A story `bcf7776d`).
+crates/gf2-sim/tests/determinism.rs:5://! [`parallel_determinism.rs`](./parallel_determinism.rs) (issue `3fcb7025`),
+crates/gf2-sim/tests/determinism.rs:9://! [`Pipeline::dvb_t2`](gf2_sim::Pipeline::dvb_t2) (issue `81d05bab`) — see
+crates/gf2-sim/tests/determinism.rs:26://!    is recorded but never asserted — issue `152388f4`, design-doc §11). The
+crates/gf2-sim/tests/determinism.rs:193:/// dispatch drives (the Phase A frame kernel; the end-to-end `Pipeline` executor
+crates/gf2-sim/tests/determinism.rs:194:/// that walks the built stage graph is Phase C, `42eac5cc`), constructed from
+crates/gf2-sim/tests/dvb_t2_regression.rs:2://! (issue `0d9cb8e3`, Phase D close; design doc §11).
+crates/gf2-sim/tests/executor_failure_modes.rs:1://! Failure-mode wiring tests (issue `42eac5cc`, design doc §8).
+crates/gf2-sim/tests/executor_oom_fallback_run.rs:1://! Run-level OOM auto-fallback byte-identity (issue `42eac5cc` SC1; design
+crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs:2://! identity of GPU-assisted decoding (issue `9012f8a0`, correctness ladder
+crates/gf2-sim/tests/gpu_byte_identity.rs:2://! (issue `14f59c2d`, the Phase B closer; design doc §5, §6, §11).
+crates/gf2-sim/tests/gpu_byte_identity.rs:47://! # Why hand-composed (Phase C executor does not exist yet)
+crates/gf2-sim/tests/gpu_byte_identity.rs:56://! — once the Phase C executor lands — is a separate deliverable owned by D.3
+crates/gf2-sim/tests/gpu_byte_identity.rs:57://! `0d9cb8e3`; this hand-composed suite is the Phase B closer.)
+crates/gf2-sim/tests/gpu_byte_identity.rs:656:/// Phase B close (issue `14f59c2d`), r1/2 16-QAM: the three §11 columns
+crates/gf2-sim/tests/gpu_byte_identity.rs:666:/// Phase B close (issue `14f59c2d`), r2/3 64-QAM: see
+crates/gf2-sim/tests/gpu_byte_identity.rs:674:/// Phase B close (issue `14f59c2d`), r3/4 16-QAM: see
+crates/gf2-sim/tests/gpu_cpu_fallback_present.rs:1://! Verifies that every Phase B GPU stage has its `Stage::CpuFallback` properly
+crates/gf2-sim/tests/gpu_fault_injection.rs:9://! the Phase C executor substitution test (issue `42eac5cc`) reuses the SAME
+crates/gf2-sim/tests/gpu_ldpc_byte_identity.rs:2://! (issue `a930be7f`, criterion 1; design doc §11).
+crates/gf2-sim/tests/gpu_nr_5g_byte_identity.rs:2://! (issue `23d3525f`, deliverable 4 / criterion 2; design doc §11).
+crates/gf2-sim/tests/hard_fail_subprocess.rs:1://! Hard-fail path, proven by a **real subprocess** (issue `42eac5cc` SC3;
+crates/gf2-sim/tests/hybrid_resume.rs:1://! Hybrid CPU+GPU checkpoint/resume parity suite (Phase C task `571c11c4`,
+crates/gf2-sim/tests/hybrid_resume.rs:23://!   (issue `152388f4`, §11 "Always-excluded").
+crates/gf2-sim/tests/hybrid_resume.rs:69:// to `tests/common` for issue `0d9cb8e3` so it has a single home).
+crates/gf2-sim/tests/hybrid_resume.rs:583:// explicit OPTION (a) decision of epic task bb11c2e6: a recoverable GPU fault
+crates/gf2-sim/tests/hybrid_scheduler.rs:1://! Hybrid CPU+GPU scheduler integration tests (Phase C `75c22fa8`).
+crates/gf2-sim/tests/parallel_determinism.rs:1://! Within-SNR parallel determinism regression (issue `3fcb7025`, design doc
+crates/gf2-sim/tests/pipeline_run_cpu.rs:1://! CPU-path `Pipeline::run` integration tests (Phase C `75c22fa8`).
+crates/gf2-sim/tests/preset_vs_graph.rs:2://! criterion-1 of the upstream graph task `c09d3e95`).
+crates/gf2-sim/tests/preset_vs_graph.rs:412:    // no longer used). N0(default)=0.1 vs N0(7 dB)=10^-0.7≈0.1995, so the LLRs
+crates/gf2-sim/tests/preset_vs_graph_byte_identity.rs:1://! Preset-vs-graph run-level byte-identity (issue `8c8302c8`, wave D.1).
+crates/gf2-sim/tests/preset_vs_graph_byte_identity.rs:22://! `ber` is **excluded** per the status-quo amendment from issue `152388f4`
+crates/gf2-sim/tests/preset_vs_graph_byte_identity.rs:52://! AMENDMENT 2026-06-11 on issue `8c8302c8`. The original 200-frame
+crates/gf2-sim/tests/preset_vs_graph_byte_identity.rs:107:/// 2026-06-11 on issue `8c8302c8` (the one-time 200-frame completion
+crates/gf2-sim/tests/stage_driven_byte_identity.rs:16://!   deliberately excluded there, issue `152388f4`).
