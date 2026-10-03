@@ -1,72 +1,13 @@
-//! Soft-Output GRAND (SOGRAND) decoder.
+//! Soft-Output GRAND (SOGRAND, `@/citation/Yuan2025`).
 //!
-//! SOGRAND wraps an [`OrbGrand`] decoder to produce per-bit a-posteriori probability
-//! (APP) LLR outputs and extrinsic information, enabling use as a SISO (Soft-Input
-//! Soft-Output) component in turbo decoding architectures.
-//!
-//! # Algorithm
-//!
-//! Given channel LLRs (possibly combined with a-priori information), SOGRAND:
-//!
-//! 1. Runs ORBGRAND in list mode to find up to `L` codewords.
-//! 2. Computes per-block APP for each list element using Corollary 1 from the
-//!    SO-GRAND paper: the noise probability `p(z|r)` of each codeword's noise
-//!    pattern, normalized by the total probability mass.
-//! 3. Computes the "not found" probability `P(C\L)` — the probability that the
-//!    correct codeword is not in the list — using the code parameters `(n, k)`.
-//! 4. Computes per-bit APP LLRs (eq. 17): for each bit position, sums the APPs
-//!    of list codewords that have that bit as 0 or 1, then adds the fallback
-//!    "not found" term weighted by the channel bit probability.
-//! 5. Returns APP LLRs, extrinsic LLRs (`L_APP - input`), and the predicted
-//!    list BLER `P(C\L)`.
-//!
-//! # Numerical Stability
-//!
-//! All intermediate computations are performed in the log domain using
-//! log-sum-exp to avoid underflow with large block lengths.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-//! use gf2_coding::llr::Llr;
-//! use gf2_core::BitMatrix;
-//!
-//! // Hamming(7,4) parity-check matrix
-//! let h = gf2_core::bitmatrix![
-//!     1, 1, 0, 1, 1, 0, 0;
-//!     1, 0, 1, 1, 0, 1, 0;
-//!     0, 1, 1, 1, 0, 0, 1
-//! ];
-//!
-//! let config = OrbGrandConfig {
-//!     list_size: 4,
-//!     ..OrbGrandConfig::default()
-//! };
-//! let orbgrand = OrbGrand::new(h, config);
-//! let sogrand = SoGrand::new(orbgrand);
-//!
-//! // High-confidence channel LLRs for the all-zero codeword
-//! let input_llrs: Vec<Llr> = vec![Llr::new(3.0); 7];
-//! let result = sogrand.decode_siso(&input_llrs);
-//!
-//! // APP LLRs should be positive (favoring bit 0)
-//! assert!(result.app_llrs.iter().all(|l| l.value() > 0.0));
-//! assert_eq!(result.app_llrs.len(), 7);
-//! ```
-//!
-//! # References
-//!
-//! - Condo, C., et al. (2022). "Fixed Complexity Soft-Output GRAND."
-//!   *IEEE Trans. Commun.*
+//! [`SoGrand`] wraps an [`OrbGrand`] list decoder and turns its list into
+//! per-bit a-posteriori probability (APP) LLRs, extrinsic LLRs and the
+//! predicted list BLER `P(C\L)`, computed in the log domain.
 
 use super::orbgrand::{log_sum_exp, OrbGrand, OrbGrandResult};
 use crate::llr::Llr;
 
 /// Result of a SISO (Soft-Input Soft-Output) decoding operation.
-///
-/// Contains per-bit APP LLRs, extrinsic LLRs for turbo iteration, and
-/// the predicted list BLER.
 #[derive(Debug, Clone)]
 pub struct SisoResult {
     /// Per-bit APP LLRs (length n).
@@ -78,72 +19,25 @@ pub struct SisoResult {
     /// Per-bit extrinsic LLRs (length n).
     ///
     /// `extrinsic_llrs[i] = app_llrs[i] - input_llrs[i]`.
-    /// This is the new information produced by the decoder, used by turbo
-    /// iteration loops.
     pub extrinsic_llrs: Vec<Llr>,
 
     /// Predicted probability that the correct codeword is NOT in the list:
     /// `P(C\L | r^n)`.
-    ///
-    /// A key output for Fig. 2 validation: this should match the empirical
-    /// list-BLER when the APP formula is correct.
     pub list_bler_prediction: f64,
 
     /// Number of noise pattern queries performed by the underlying ORBGRAND.
     pub query_count: usize,
 }
 
-/// Soft-Output GRAND (SOGRAND) decoder.
-///
-/// Wraps an [`OrbGrand`] decoder and adds soft-output computation: per-bit
-/// APP LLRs and extrinsic information suitable for turbo decoding.
-///
-/// # Arguments
-///
-/// Constructed with an `OrbGrand` decoder (which must have `list_size >= 1`).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-/// use gf2_coding::llr::Llr;
-///
-/// let h = gf2_core::bitmatrix![
-///     1, 1, 0, 1, 1, 0, 0;
-///     1, 0, 1, 1, 0, 1, 0;
-///     0, 1, 1, 1, 0, 0, 1
-/// ];
-///
-/// let config = OrbGrandConfig {
-///     list_size: 2,
-///     ..OrbGrandConfig::default()
-/// };
-/// let orbgrand = OrbGrand::new(h, config);
-/// let sogrand = SoGrand::new(orbgrand);
-///
-/// let llrs: Vec<Llr> = vec![Llr::new(3.0); 7];
-/// let result = sogrand.decode_siso(&llrs);
-/// assert_eq!(result.app_llrs.len(), 7);
-/// assert!(result.list_bler_prediction >= 0.0);
-/// assert!(result.list_bler_prediction <= 1.0);
-/// ```
-///
-/// # Complexity
-///
-/// Same as the underlying ORBGRAND query complexity O(Q * n), plus O(L * n) for
-/// the soft-output computation over the list of L codewords and n bit positions.
+/// Soft-Output GRAND (SOGRAND) decoder: an [`OrbGrand`] list decoder plus the
+/// per-bit APP and extrinsic LLR computation.
 pub struct SoGrand {
-    /// Underlying ORBGRAND decoder.
     decoder: OrbGrand,
 }
 
 impl SoGrand {
-    /// Creates a new SOGRAND decoder wrapping the given ORBGRAND decoder.
-    ///
-    /// # Arguments
-    ///
-    /// * `decoder` - An ORBGRAND decoder configured with the desired list size,
-    ///   query limit, and code parameters.
+    /// Creates a SOGRAND decoder around `decoder`, whose configuration sets
+    /// the list size and query limit.
     pub fn new(decoder: OrbGrand) -> Self {
         Self { decoder }
     }
@@ -163,59 +57,21 @@ impl SoGrand {
         &self.decoder
     }
 
-    /// Performs SISO decoding: takes input LLRs and returns APP LLRs plus
-    /// extrinsic information.
+    /// Performs SISO decoding of `input_llrs` (channel plus a-priori LLRs,
+    /// positive favouring bit 0).
     ///
-    /// This is the main entry point for turbo decoding. The input LLRs are
-    /// typically `L_Ch + L_A` (channel LLRs plus a-priori from another decoder).
-    /// The output extrinsic LLRs are `L_E = L_APP - input_llrs`.
-    ///
-    /// # Arguments
-    ///
-    /// * `input_llrs` - Combined input LLRs (channel + a-priori), length n.
-    ///   Positive means bit 0 is more likely.
-    ///
-    /// # Returns
-    ///
-    /// A [`SisoResult`] containing APP LLRs, extrinsic LLRs, the predicted
-    /// list BLER, and the query count.
+    /// The extrinsic LLRs are `L_E = L_APP - input_llrs`; APP LLRs are
+    /// clamped to `[-20, 20]`.
     ///
     /// # Panics
     ///
     /// Panics if `input_llrs.len() != n`.
     /// Panics if any LLR has a NaN magnitude.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig, SoGrand};
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let config = OrbGrandConfig {
-    ///     list_size: 4,
-    ///     ..OrbGrandConfig::default()
-    /// };
-    /// let sogrand = SoGrand::new(OrbGrand::new(h, config));
-    ///
-    /// let llrs: Vec<Llr> = vec![Llr::new(2.0); 7];
-    /// let result = sogrand.decode_siso(&llrs);
-    ///
-    /// assert_eq!(result.app_llrs.len(), 7);
-    /// assert_eq!(result.extrinsic_llrs.len(), 7);
-    /// // All positive LLRs → all-zero codeword most likely → APP should be positive
-    /// assert!(result.app_llrs.iter().all(|l| l.value() > 0.0));
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(Q * n) for the ORBGRAND list decoding plus O(L * n) for the
-    /// soft-output computation, where Q is the query count, L is the list
-    /// size, and n is the code length.
+    /// The cost of [`OrbGrand::decode`] plus O(L × n) for a list of L
+    /// codewords.
     pub fn decode_siso(&self, input_llrs: &[Llr]) -> SisoResult {
         let n = self.n();
         let k = self.k();
@@ -227,22 +83,13 @@ impl SoGrand {
             n
         );
 
-        // Step 1: Run ORBGRAND in list mode
         let orb_result = self.decoder.decode(input_llrs);
 
-        // Step 2: Compute per-block APP and the "not found" probability.
-        // `compute_block_apps` now consults `orb_result.log_parity_cap`
-        // and `orb_result.even_code` so that the APP denominator is
-        // paper-aligned for even codes (SO-GRAND eq. (17) with
-        // `P_notGuess` initialised from the parity mass and the
-        // codebook ratio using `2^-(s-1)`).
         let (log_apps, log_p_not_in_list) = compute_block_apps(&orb_result, n, k);
 
-        // Step 3: Compute per-bit APP LLRs (eq. 17)
         let app_llrs =
             compute_per_bit_app_llrs(&orb_result, &log_apps, log_p_not_in_list, input_llrs, n);
 
-        // Step 4: Compute extrinsic LLRs: L_E = L_APP - input
         let extrinsic_llrs: Vec<Llr> = app_llrs
             .iter()
             .zip(input_llrs.iter())
@@ -263,15 +110,13 @@ impl SoGrand {
 /// Compute per-block APP (log domain) for each codeword in the list, plus
 /// the "not found" log-probability.
 ///
-/// Per Corollary 1:
+/// Per `@/citation/Yuan2025` Corollary 1, for a general (not even) code:
 /// - `p_i = p(z^{n,q_i} | r^n)` for each list codeword
 /// - `sum_list = sum of p_i` over list codewords
 /// - `sum_cumulative = sum over all tested patterns` (from ORBGRAND)
 /// - Denominator: `sum_list + (1 - sum_cumulative) * (2^k - 1) / (2^n - 1)`
 /// - `APP_i = p_i / denominator`
 /// - `P(C\L) = (1 - sum_cumulative) * (2^k - 1) / (2^n - 1) / denominator`
-///
-/// All computed in log domain for numerical stability.
 ///
 /// Returns `(log_apps, log_p_not_in_list)` where `log_apps[i]` is the log APP
 /// for the i-th list codeword.
@@ -283,7 +128,6 @@ fn compute_block_apps(orb_result: &OrbGrandResult, n: usize, k: usize) -> (Vec<f
         return (vec![], 0.0); // log(1.0) = 0.0
     }
 
-    // log(sum of noise probabilities over the list)
     let log_sum_list = codewords
         .iter()
         .map(|cw| cw.noise_log_probability)
@@ -291,10 +135,8 @@ fn compute_block_apps(orb_result: &OrbGrandResult, n: usize, k: usize) -> (Vec<f
 
     // Untested-mass ceiling is `log_parity_cap`, which is `log(1) = 0`
     // for non-even codes and `log P(parity(Z) = hard_parity)` for even
-    // codes (see `OrbGrandResult::log_parity_cap`). This is the
-    // paper-aligned `P_notGuess` initial value (SO-GRAND §III / eq.
-    // (17)): the untested pool never exceeds the parity-consistent
-    // half for even codes.
+    // codes: the initial `P_notGuess` of `@/citation/Yuan2025` § III,
+    // eq. (17).
     let log_not_tested_mass = log_cap_minus_exp(
         orb_result.cumulative_log_probability,
         orb_result.log_parity_cap,
@@ -302,30 +144,25 @@ fn compute_block_apps(orb_result: &OrbGrandResult, n: usize, k: usize) -> (Vec<f
 
     // log((2^k - 1) / (2^n - 1)) for general codes, or
     // log((2^k - 1) / (2^(n-1) - 1)) ≈ 2^-(s-1) for even codes
-    // (paper eq. (17) correction: all 2^k codewords carry the
-    // hard-decision parity while only 2^(n-1) binary words do).
+    // (`@/citation/Yuan2025` eq. (17) correction: all 2^k codewords carry
+    // the hard-decision parity while only 2^(n-1) binary words do).
     let log_codebook_ratio = log_codebook_ratio_for_code(n, k, orb_result.even_code);
 
-    // log of the "not found" unnormalized weight:
-    // log(P_notGuess * codebook_ratio)
     let log_not_found_unnorm = log_not_tested_mass + log_codebook_ratio;
 
-    // Denominator: log(sum_list + not_found_unnorm)
     let log_denominator = log_sum_exp(log_sum_list, log_not_found_unnorm);
 
-    // Per-codeword APP (log domain): log(p_i / denominator) = log(p_i) - log(denominator)
     let log_apps: Vec<f64> = codewords
         .iter()
         .map(|cw| cw.noise_log_probability - log_denominator)
         .collect();
 
-    // P(C\L) = not_found_unnorm / denominator
     let log_p_not_in_list = log_not_found_unnorm - log_denominator;
 
     (log_apps, log_p_not_in_list)
 }
 
-/// Compute per-bit APP LLRs according to eq. 17 from the SO-GRAND paper.
+/// Compute per-bit APP LLRs according to `@/citation/Yuan2025` eq. (17).
 ///
 /// For each bit position i:
 /// ```text
@@ -335,8 +172,7 @@ fn compute_block_apps(orb_result: &OrbGrandResult, n: usize, k: usize) -> (Vec<f
 /// )
 /// ```
 ///
-/// where `p(X_i=0|r_i) = 1/(1+exp(-|LLR_i|))` when `LLR_i > 0` (and the
-/// complement for bit 1).
+/// where `p(X_i=0|r_i) = 1/(1+exp(-LLR_i))` is the channel bit posterior.
 fn compute_per_bit_app_llrs(
     orb_result: &OrbGrandResult,
     log_apps: &[f64],
@@ -348,17 +184,11 @@ fn compute_per_bit_app_llrs(
 
     (0..n)
         .map(|i| {
-            // Channel bit probabilities from input LLR:
-            // LLR_i = log(P(x_i=0|r_i) / P(x_i=1|r_i))
-            // P(x_i=0|r_i) = 1 / (1 + exp(-LLR_i))  → log = -log(1+exp(-LLR_i))
-            // P(x_i=1|r_i) = 1 / (1 + exp(LLR_i))   → log = -log(1+exp(LLR_i))
             let llr_val = input_llrs[i].value() as f64;
             let log_p_bit0_channel = -ln_1_plus_exp(-llr_val);
             let log_p_bit1_channel = -ln_1_plus_exp(llr_val);
 
-            // Sum APP of list codewords with bit i = 0
             let mut log_sum_0 = f64::NEG_INFINITY;
-            // Sum APP of list codewords with bit i = 1
             let mut log_sum_1 = f64::NEG_INFINITY;
 
             for (j, cw) in codewords.iter().enumerate() {
@@ -369,34 +199,18 @@ fn compute_per_bit_app_llrs(
                 }
             }
 
-            // Add the "not found" fallback term.
-            //
-            // Paper SO-GRAND eq. (17) (`eq:LLRi`) is
-            //   L_APP,i = log [ Σ_{c ∈ L, c_i = 0} p(c | r^n)
-            //                   + p(C \\ L | r^n) · p(x_i = 0 | r_i)
-            //                 / Σ_{c ∈ L, c_i = 1} p(c | r^n)
-            //                   + p(C \\ L | r^n) · p(x_i = 1 | r_i) ]
-            // where `p(x_i = b | r_i)` is the channel bit POSTERIOR
-            // (paper § III.C defines `L_APP,i = log p_{X_i | R}(0 | r)
-            // / p_{X_i | R}(1 | r)`, i.e., the APP ratio is over
-            // posteriors, not likelihoods). `P_notL` is jointly
-            // normalised with the list APPs in `compute_block_apps`
-            // (sum_L APP + P_notL = 1), so summing the fallback over
-            // bit values yields `P_notL · (p(0|r_i) + p(1|r_i)) =
-            // P_notL`, and sum_list + P_notL = 1 — no extra factor-of-2
-            // adjustment. An earlier formulation scaled the fallback by
-            // `LN_2` under the mistaken reading that the paper's
-            // fallback used the likelihood ratio `p(y | c_i = b) / p(y)
-            // = 2 · p(c_i = b | y)`; doing so double-counts the
-            // fallback mass and pulls `L_APP,i` toward the channel in
-            // the mixed regime.
+            // `p(x_i = b | r_i)` is the channel bit posterior, not the
+            // likelihood (`@/citation/Yuan2025` § III.C). `P_notL` is
+            // jointly normalised with the list APPs in
+            // `compute_block_apps` (sum_L APP + P_notL = 1), so summing
+            // the fallback over bit values yields `P_notL · (p(0|r_i) +
+            // p(1|r_i)) = P_notL` with no factor-of-2 adjustment.
             let log_fallback_0 = log_p_not_in_list + log_p_bit0_channel;
             let log_fallback_1 = log_p_not_in_list + log_p_bit1_channel;
 
             let log_numerator = log_sum_exp(log_sum_0, log_fallback_0);
             let log_denominator_bit = log_sum_exp(log_sum_1, log_fallback_1);
 
-            // APP LLR = log(P(bit=0|r)) - log(P(bit=1|r))
             let app_llr = log_numerator - log_denominator_bit;
 
             // Clamp to avoid infinity in output
@@ -407,24 +221,17 @@ fn compute_per_bit_app_llrs(
 
 /// Compute `log(1 - exp(x))` for `x <= 0` numerically stably.
 ///
-/// This is the log of `1 - p` where `p = exp(x)` is a probability.
-/// Uses the identity:
-/// - If `x < -ln(2)` (i.e., `p < 0.5`): `log(1 - exp(x)) = log1p(-exp(x))`
-/// - If `x >= -ln(2)` (i.e., `p >= 0.5`): `log(1 - exp(x)) = log(-expm1(x))`
-///
-/// Reference: Machler (2012), "Accurately Computing log(1 - exp(-|a|))".
+/// Uses the identity of `@/citation/Machler2012`:
+/// - If `x <= -ln(2)` (`exp(x) <= 0.5`): `log(1 - exp(x)) = log1p(-exp(x))`
+/// - If `x > -ln(2)` (`exp(x) > 0.5`): `log(1 - exp(x)) = log(-expm1(x))`
 pub(super) fn log1mexp(x: f64) -> f64 {
     if x >= 0.0 {
         // cumulative probability >= 1.0 (can happen due to floating point
         // when all patterns are tested). 1 - exp(x>=0) <= 0 → log = -inf.
         f64::NEG_INFINITY
     } else if x > -std::f64::consts::LN_2 {
-        // |x| < ln(2), so exp(x) > 0.5
-        // Use expm1 for accuracy: log(-expm1(x))
         (-x.exp_m1()).ln()
     } else {
-        // |x| >= ln(2), so exp(x) <= 0.5
-        // Use log1p for accuracy: log1p(-exp(x))
         (-x.exp()).ln_1p()
     }
 }
@@ -440,20 +247,19 @@ pub(super) fn log_codebook_ratio(n: usize, k: usize) -> f64 {
         let denominator = (1u64 << n) as f64 - 1.0;
         (numerator / denominator).ln()
     } else {
-        // Approximation for large n, k
         (k as f64 - n as f64) * std::f64::consts::LN_2
     }
 }
 
-/// Paper-aligned codebook-ratio with optional even-code correction.
+/// Codebook ratio with the even-code correction of `@/citation/Yuan2025`
+/// eq. (17).
 ///
 /// For a general code the "not found" weight in the SO-GRAND APP
 /// denominator uses `(2^k − 1) / (2^n − 1) ≈ 2^−s` where `s = n − k`.
 /// For an even code (every codeword has even Hamming weight) only the
 /// parity-consistent half of the `2^n` binary words is reachable by the
 /// noise, while all `2^k` codewords still are, so the ratio doubles:
-/// `(2^k − 1) / (2^(n−1) − 1) ≈ 2^−(s−1)` — the paper's eq. (17) uses
-/// `s − 1` in the even-code exponent for exactly this reason.
+/// `(2^k − 1) / (2^(n−1) − 1) ≈ 2^−(s−1)`.
 ///
 /// In the log domain this is [`log_codebook_ratio`] + `ln(2)` (the
 /// `−1`-in-the-exponent adjustment), with a small exact correction in
@@ -480,21 +286,16 @@ pub(super) fn log_codebook_ratio_for_code(n: usize, k: usize, even_code: bool) -
 
 /// Compute `log(exp(cap) - exp(x))` stably for `x <= cap`.
 ///
-/// Paper-aligned "untested mass" helper: SO-GRAND's `P_notGuess` starts
+/// The untested mass: `P_notGuess` of `@/citation/Yuan2025` starts
 /// at `exp(cap)` (= 1 in general, `prob_parity(hard_parity, |L|)` for
 /// even codes) and decrements by the probability of each tested
 /// pattern, so after `Q` queries the remaining mass is
 /// `exp(cap) - exp(cumulative_log_prob)`.
 ///
-/// Equal to `cap + log1mexp(x - cap)` (Machler 2012 numerics), which
-/// specialises to `log1mexp(x)` when `cap = 0`.
-///
-/// # Returns
-///
-/// - `cap + log1mexp(x - cap)` when `x <= cap`.
-/// - `f64::NEG_INFINITY` when `x >= cap` (untested mass is 0 or
-///   numerically negative — can happen after floating-point noise
-///   when the scan exhausts the reachable mass).
+/// Equal to `cap + log1mexp(x - cap)` (`@/citation/Machler2012`), which
+/// specialises to `log1mexp(x)` when `cap = 0`.  Returns
+/// `f64::NEG_INFINITY` when `x >= cap`, which floating-point noise produces
+/// once the scan exhausts the reachable mass.
 pub(super) fn log_cap_minus_exp(x: f64, cap: f64) -> f64 {
     if !cap.is_finite() && cap == f64::NEG_INFINITY {
         // No reachable mass at all: degenerate. Untested = 0.
@@ -509,7 +310,6 @@ pub(super) fn log_cap_minus_exp(x: f64, cap: f64) -> f64 {
     cap + log1mexp(x - cap)
 }
 
-/// Import the numerically stable `ln(1 + exp(x))` from orbgrand.
 use super::orbgrand::ln_1_plus_exp;
 
 #[cfg(test)]
@@ -518,9 +318,6 @@ mod tests {
     use crate::grand::{OneLineIntercept, OrbGrandConfig, ScoredCodeword};
     use gf2_core::BitVec;
 
-    // =====================================================================
-    // Helper: Hamming(7,4) parity-check matrix
-    // =====================================================================
     fn hamming_7_4_h() -> gf2_core::BitMatrix {
         gf2_core::bitmatrix![
             1, 1, 0, 1, 1, 0, 0;
@@ -541,10 +338,6 @@ mod tests {
         };
         SoGrand::new(OrbGrand::new(h, config))
     }
-
-    // =====================================================================
-    // Numerical utility tests (TDD: written first)
-    // =====================================================================
 
     #[test]
     fn test_log1mexp_at_zero() {
@@ -631,7 +424,6 @@ mod tests {
 
     #[test]
     fn test_log_codebook_ratio_for_code_non_even_matches_baseline() {
-        // Non-even flag delegates to log_codebook_ratio.
         for (n, k) in [(7, 4), (16, 11), (32, 26), (64, 57)] {
             let baseline = log_codebook_ratio(n, k);
             let general = log_codebook_ratio_for_code(n, k, false);
@@ -662,7 +454,6 @@ mod tests {
 
     #[test]
     fn test_log_cap_minus_exp_cap_one_matches_log1mexp() {
-        // When cap = 0 (= log 1), log_cap_minus_exp(x, 0) = log1mexp(x).
         for x in [-10.0, -1.0, -0.5, -0.1, -0.01] {
             let cap = log_cap_minus_exp(x, 0.0);
             let base = log1mexp(x);
@@ -672,14 +463,9 @@ mod tests {
 
     #[test]
     fn test_log_cap_minus_exp_decrements_under_parity_cap() {
-        // With a parity cap at -ln 2 (≈ 0.5 total mass), untested mass
-        // starts at the cap when x = -inf and drops to -inf as x → cap.
         let cap = -std::f64::consts::LN_2;
-        // At x = -inf, untested = cap.
         assert!((log_cap_minus_exp(f64::NEG_INFINITY, cap) - cap).abs() < 1e-12);
-        // At x = cap, untested = 0 → -inf.
         assert_eq!(log_cap_minus_exp(cap, cap), f64::NEG_INFINITY);
-        // At x = cap - 0.1, untested = cap + log1p(-exp(-0.1)).
         let x = cap - 0.1;
         let val = log_cap_minus_exp(x, cap);
         let expected = cap + (1.0 - (-0.1_f64).exp()).ln();
@@ -712,12 +498,10 @@ mod tests {
     fn test_log_prob_parity_large_llr_collapses_to_even_parity() {
         // |L| large ⇒ tanh → 1 ⇒ prod tanh → 1 ⇒ P(even) → 1, P(odd) → 0.
         use crate::grand::orbgrand::log_prob_parity;
-        let absl = vec![20.0; 4]; // each bit extremely reliable
+        let absl = vec![20.0; 4];
         let even = log_prob_parity(&absl, false);
         let odd = log_prob_parity(&absl, true);
-        // log P(even) close to 0 (P = 1 − something tiny).
         assert!(even < 0.0 && even > -1e-3, "log P(even)={}", even);
-        // log P(odd) very negative.
         assert!(odd < -10.0, "log P(odd)={}", odd);
     }
 
@@ -732,7 +516,6 @@ mod tests {
         let p2 = 1.0 / (1.0 + l2.exp());
         let p_even = p1 * p2 + (1.0 - p1) * (1.0 - p2);
         let p_odd = p1 * (1.0 - p2) + (1.0 - p1) * p2;
-        // Probabilities must be non-negative and sum to 1.
         assert!((p_even + p_odd - 1.0).abs() < 1e-12);
 
         let absl = vec![l1, l2];
@@ -752,8 +535,6 @@ mod tests {
 
     #[test]
     fn test_log_prob_parity_sums_to_one() {
-        // For any |L|s, P(even) + P(odd) = 1. Check in log domain via
-        // log_sum_exp.
         use crate::grand::orbgrand::log_prob_parity;
         let absl = vec![0.1, 0.7, 1.3, 2.0, 5.0];
         let log_even = log_prob_parity(&absl, false);
@@ -761,10 +542,6 @@ mod tests {
         let sum = log_sum_exp(log_even, log_odd);
         assert!(sum.abs() < 1e-10, "log(P_even + P_odd) = {sum}, expected 0");
     }
-
-    // =====================================================================
-    // Block APP computation tests
-    // =====================================================================
 
     #[test]
     fn test_compute_block_apps_empty_list() {
@@ -778,36 +555,31 @@ mod tests {
         };
         let (log_apps, log_p_not) = compute_block_apps(&result, 7, 4);
         assert!(log_apps.is_empty());
-        // P(C\L) = 1.0 when no codewords found
         assert!((log_p_not - 0.0).abs() < 1e-10);
     }
 
     #[test]
     fn test_compute_block_apps_single_codeword_high_cumulative() {
-        // Single codeword found, cumulative probability close to 1
         let result = OrbGrandResult {
             hard_decision: BitVec::zeros(7),
             codewords: vec![ScoredCodeword {
                 codeword: BitVec::zeros(7),
-                noise_log_probability: -0.1, // high probability
+                noise_log_probability: -0.1,
                 noise_weight: 0,
             }],
             query_count: 100,
-            cumulative_log_probability: -0.01, // almost all probability mass tested
+            cumulative_log_probability: -0.01,
             log_parity_cap: 0.0,
             even_code: false,
         };
         let (log_apps, log_p_not) = compute_block_apps(&result, 7, 4);
         assert_eq!(log_apps.len(), 1);
-        // The single codeword should have high APP
         assert!(log_apps[0] > log_p_not);
-        // P(C\L) should be small since cumulative is high
         assert!(log_p_not < -1.0);
     }
 
     #[test]
     fn test_compute_block_apps_probabilities_sum_to_one() {
-        // Two codewords in list with valid log-probabilities
         // p1 = 0.3, p2 = 0.1, cumulative = 0.6
         let result = OrbGrandResult {
             hard_decision: BitVec::zeros(7),
@@ -830,7 +602,6 @@ mod tests {
         };
         let (log_apps, log_p_not) = compute_block_apps(&result, 7, 4);
 
-        // Sum of all APPs + P(C\L) should equal 1.0
         let mut log_total = log_p_not;
         for &la in &log_apps {
             log_total = log_sum_exp(log_total, la);
@@ -843,17 +614,12 @@ mod tests {
         );
     }
 
-    // =====================================================================
-    // Per-bit APP LLR tests
-    // =====================================================================
-
     #[test]
     fn test_per_bit_app_all_zero_codeword_positive_llrs() {
         let sogrand = make_sogrand(4);
         let input_llrs: Vec<Llr> = vec![Llr::new(5.0); 7];
         let result = sogrand.decode_siso(&input_llrs);
 
-        // With high-confidence LLRs for all-zero, APP should be strongly positive
         for (i, &llr) in result.app_llrs.iter().enumerate() {
             assert!(
                 llr.value() > 0.0,
@@ -871,7 +637,6 @@ mod tests {
         let input_llrs: Vec<Llr> = vec![Llr::new(-5.0); 7];
         let result = sogrand.decode_siso(&input_llrs);
 
-        // APP should be strongly negative (favoring bit 1)
         for (i, &llr) in result.app_llrs.iter().enumerate() {
             assert!(
                 llr.value() < 0.0,
@@ -891,10 +656,6 @@ mod tests {
         assert_eq!(result.app_llrs.len(), 7);
         assert_eq!(result.extrinsic_llrs.len(), 7);
     }
-
-    // =====================================================================
-    // Extrinsic LLR tests
-    // =====================================================================
 
     #[test]
     fn test_extrinsic_equals_app_minus_input() {
@@ -929,10 +690,6 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // List BLER prediction tests
-    // =====================================================================
-
     #[test]
     fn test_list_bler_between_zero_and_one() {
         let sogrand = make_sogrand(2);
@@ -953,8 +710,6 @@ mod tests {
 
     #[test]
     fn test_list_bler_high_snr_is_small() {
-        // At very high SNR with list size 4, most probability mass is on the
-        // correct codeword, so P(C\L) should be very small
         let sogrand = make_sogrand(4);
         let input_llrs: Vec<Llr> = vec![Llr::new(10.0); 7];
         let result = sogrand.decode_siso(&input_llrs);
@@ -968,7 +723,6 @@ mod tests {
 
     #[test]
     fn test_list_bler_larger_list_lower_bler() {
-        // Larger list should capture more probability mass → lower P(C\L)
         let input_llrs: Vec<Llr> = vec![
             Llr::new(0.5),
             Llr::new(0.5),
@@ -993,17 +747,12 @@ mod tests {
         );
     }
 
-    // =====================================================================
-    // SISO interface tests
-    // =====================================================================
-
     #[test]
     fn test_siso_list_size_1_works() {
         let sogrand = make_sogrand(1);
         let input_llrs: Vec<Llr> = vec![Llr::new(3.0); 7];
         let result = sogrand.decode_siso(&input_llrs);
 
-        // Even with L=1, the "not found" term provides meaningful soft output
         assert_eq!(result.app_llrs.len(), 7);
         assert!(result.app_llrs.iter().all(|l| l.value() > 0.0));
     }
@@ -1032,10 +781,6 @@ mod tests {
         sogrand.decode_siso(&input_llrs);
     }
 
-    // =====================================================================
-    // Accessor tests
-    // =====================================================================
-
     #[test]
     fn test_sogrand_n_and_k() {
         let sogrand = make_sogrand(1);
@@ -1050,10 +795,6 @@ mod tests {
         assert_eq!(sogrand.orbgrand().k(), 4);
     }
 
-    // =====================================================================
-    // Query count tracking test
-    // =====================================================================
-
     #[test]
     fn test_query_count_propagated() {
         let sogrand = make_sogrand(1);
@@ -1067,13 +808,8 @@ mod tests {
         );
     }
 
-    // =====================================================================
-    // APP LLR sign consistency test
-    // =====================================================================
-
     #[test]
     fn test_app_llr_sign_consistency_with_channel() {
-        // For a high-SNR all-zero codeword, APP LLR sign should match channel
         let sogrand = make_sogrand(4);
         let input_llrs = vec![
             Llr::new(5.0),
@@ -1098,9 +834,6 @@ mod tests {
 
     #[test]
     fn test_app_llr_magnitude_at_least_channel_at_high_snr() {
-        // At high SNR with the correct codeword clearly dominant,
-        // APP LLR magnitude should be at least as large as channel LLR
-        // (the decoder confirms the channel's decision)
         let sogrand = make_sogrand(4);
         let input_llrs: Vec<Llr> = vec![Llr::new(3.0); 7];
         let result = sogrand.decode_siso(&input_llrs);
@@ -1116,20 +849,14 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Numerical stability tests
-    // =====================================================================
-
     #[test]
     fn test_no_nan_or_inf_in_output() {
         let sogrand = make_sogrand(4);
-        // Various input conditions
         let test_cases: Vec<Vec<Llr>> = vec![
-            vec![Llr::new(0.01); 7],  // very low confidence
-            vec![Llr::new(10.0); 7],  // very high confidence
-            vec![Llr::new(-10.0); 7], // very high confidence (bit 1)
+            vec![Llr::new(0.01); 7],
+            vec![Llr::new(10.0); 7],
+            vec![Llr::new(-10.0); 7],
             vec![
-                // mixed
                 Llr::new(0.1),
                 Llr::new(-0.1),
                 Llr::new(5.0),
@@ -1169,10 +896,6 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Full encode-decode SISO roundtrip
-    // =====================================================================
-
     #[test]
     fn test_siso_roundtrip_all_messages() {
         use crate::linear::LinearBlockCode;
@@ -1190,7 +913,6 @@ mod tests {
         };
         let sogrand = SoGrand::new(OrbGrand::new(h, config));
 
-        // Test all 16 possible 4-bit messages
         for msg_val in 0u8..16 {
             let mut msg = BitVec::with_capacity(4);
             for bit in 0..4 {
@@ -1198,7 +920,6 @@ mod tests {
             }
             let codeword = code.encode(&msg);
 
-            // Create high-confidence LLRs from codeword
             let llrs: Vec<Llr> = (0..7)
                 .map(|i| {
                     if codeword.get(i) {
@@ -1211,7 +932,6 @@ mod tests {
 
             let result = sogrand.decode_siso(&llrs);
 
-            // APP LLR sign should match the codeword bits
             for i in 0..7 {
                 let expected_sign = if codeword.get(i) { -1.0 } else { 1.0 };
                 let actual_sign = if result.app_llrs[i].value() >= 0.0 {
@@ -1232,16 +952,11 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Property-based tests
-    // =====================================================================
-
     mod prop_tests {
         use super::*;
         use proptest::prelude::*;
 
         proptest! {
-            /// APP LLRs should be finite for any input LLR values in [-10, 10].
             #[test]
             fn test_app_llrs_always_finite(
                 llr_vals in proptest::collection::vec(-10.0f32..10.0f32, 7..=7)
@@ -1266,7 +981,6 @@ mod tests {
                 }
             }
 
-            /// List BLER should be in [0, 1] for any valid input.
             #[test]
             fn test_list_bler_in_valid_range(
                 llr_vals in proptest::collection::vec(-10.0f32..10.0f32, 7..=7)
@@ -1282,7 +996,6 @@ mod tests {
                 );
             }
 
-            /// Extrinsic = APP - input, verified for random inputs.
             #[test]
             fn test_extrinsic_equals_app_minus_input_proptest(
                 llr_vals in proptest::collection::vec(-5.0f32..5.0f32, 7..=7)
@@ -1307,7 +1020,6 @@ mod tests {
                 }
             }
 
-            /// Higher-confidence correct inputs should yield larger APP magnitude.
             #[test]
             fn test_higher_snr_yields_larger_app_magnitude(
                 snr_low in 0.5f32..2.0f32,
@@ -1321,7 +1033,6 @@ mod tests {
                 let result_low = sogrand.decode_siso(&llrs_low);
                 let result_high = sogrand.decode_siso(&llrs_high);
 
-                // Average APP magnitude should be higher at higher SNR
                 let avg_mag_low: f32 = result_low.app_llrs.iter()
                     .map(|l| l.magnitude())
                     .sum::<f32>() / 7.0;
@@ -1341,7 +1052,6 @@ mod tests {
 
 #[cfg(test)]
 mod fig2_validation {
-    //! Fig. 2 reproduction: compare predicted vs empirical list-BLER.
     use super::*;
     use crate::grand::orbgrand::{OneLineIntercept, OrbGrand, OrbGrandConfig};
     use crate::linear::LinearBlockCode;
@@ -1351,8 +1061,6 @@ mod fig2_validation {
     use rand::{Rng, SeedableRng};
     use rand_distr;
 
-    /// Run many frames, compute empirical list-BLER (fraction where correct
-    /// codeword is NOT in list), compare with average predicted list-BLER.
     #[test]
     fn test_predicted_vs_empirical_list_bler() {
         let code = LinearBlockCode::hamming(3); // (7,4)
@@ -1372,12 +1080,11 @@ mod fig2_validation {
 
         let mut rng = StdRng::seed_from_u64(42);
         let num_frames = 200;
-        let sigma = 0.7; // moderate noise
+        let sigma = 0.7;
         let mut empirical_misses = 0;
         let mut total_predicted_bler = 0.0;
 
         for _ in 0..num_frames {
-            // Random message
             let mut msg = BitVec::zeros(k);
             for i in 0..k {
                 if rng.gen_bool(0.5) {
@@ -1386,7 +1093,6 @@ mod fig2_validation {
             }
             let codeword = code.encode(&msg);
 
-            // BPSK + AWGN
             let llrs: Vec<Llr> = (0..n)
                 .map(|i| {
                     let symbol = if codeword.get(i) { -1.0 } else { 1.0 };
@@ -1399,7 +1105,6 @@ mod fig2_validation {
             let result = sogrand.decode_siso(&llrs);
             total_predicted_bler += result.list_bler_prediction;
 
-            // Check if correct codeword is in list (via ORBGRAND decode)
             let orb_result = OrbGrand::new(
                 code.parity_check().unwrap().clone(),
                 OrbGrandConfig {
@@ -1425,12 +1130,9 @@ mod fig2_validation {
         let empirical_bler = empirical_misses as f64 / num_frames as f64;
         let avg_predicted_bler = total_predicted_bler / num_frames as f64;
 
-        // Predicted and empirical should be in the same ballpark
-        // Allow generous tolerance since this is a Monte Carlo comparison.
-        // With correct probability accumulation, predicted BLER can be very
-        // close to 0 when the list covers most of the codebook probability.
+        // The predicted BLER can be very close to 0 when the list covers
+        // most of the codebook probability.
         if avg_predicted_bler < 0.001 && empirical_bler < 0.05 {
-            // Both are small — the model correctly predicts low list BLER.
             return;
         }
         let ratio = if empirical_bler > 0.0 {
@@ -1450,7 +1152,6 @@ mod fig2_validation {
         );
     }
 
-    /// Word-boundary test: exercise SOGRAND with code length near 64 bits.
     #[test]
     fn test_sogrand_near_64_bit_boundary() {
         use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
@@ -1482,13 +1183,11 @@ mod fig2_validation {
         };
         let sogrand = SoGrand::new(OrbGrand::new(h, config));
 
-        // Noiseless LLRs for all-zero codeword
         let llrs: Vec<Llr> = vec![Llr::new(5.0); 64];
         let result = sogrand.decode_siso(&llrs);
 
         assert_eq!(result.app_llrs.len(), 64);
         assert_eq!(result.extrinsic_llrs.len(), 64);
-        // All APP LLRs should favor bit 0 (positive)
         for i in 0..64 {
             assert!(
                 result.app_llrs[i].value() > 0.0,
@@ -1498,19 +1197,14 @@ mod fig2_validation {
         }
     }
 
-    /// Validate log_codebook_ratio approximation for moderate n.
     #[test]
     fn test_log_codebook_ratio_approximation_accuracy() {
-        // For small n/k, compare exact vs our implementation
         for (n, k) in &[(7, 4), (15, 11), (16, 11), (31, 26), (32, 26)] {
             let result = log_codebook_ratio(*n, *k);
-            // (2^k - 1) / (2^n - 1) should be a positive ratio < 1
-            // In log domain, this should be negative
             assert!(
                 result < 0.0,
                 "log_codebook_ratio({n},{k}) = {result} should be negative"
             );
-            // Rough check: result should be approximately (k-n)*ln(2)
             let approx = (*k as f64 - *n as f64) * 2.0_f64.ln();
             let error = (result - approx).abs();
             assert!(

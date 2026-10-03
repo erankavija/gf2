@@ -12,22 +12,15 @@ use super::{
 
 /// Order-`m` OSD for a code that exposes its generator matrix.
 ///
-/// The decoder snapshots `code.generator_matrix()` at construction and uses a
-/// most-reliable independent set of its columns for every immutable decode
-/// call.  Reprocessing happens in the reduced generator coordinates, while
-/// the returned bits are transformed back to the original generator domain.
-/// Consequently, the decoder does not require a systematic generator.
+/// The decoder snapshots `code.generator_matrix()` at construction.
+/// Reprocessing happens in the reduced generator coordinates and the returned
+/// bits are transformed back to the generator domain, so a systematic
+/// generator is not required.
 ///
 /// A rank-deficient generator is valid.  Its search dimension and candidate
-/// bound use the matrix rank, and the decoded bits are the deterministic
-/// preimage obtained by setting the unused reduced-row coefficients to zero
-/// before applying the elimination row transform.  Re-encoding those bits
-/// always yields the selected codeword, although another generator-domain
-/// preimage can represent the same word.
-///
-/// Construct with [`Self::new`] and use [`Self::decode`] when engine metadata
-/// is needed.  The [`SoftDecoder`] implementation returns the same decoded
-/// bits for configurations that test at least one candidate.
+/// bound use the matrix rank, and the decoded bits are the preimage obtained
+/// by setting the unused reduced-row coefficients to zero before applying the
+/// elimination row transform.
 #[derive(Clone, Debug)]
 pub struct GeneratorMatrixOsdDecoder<C> {
     code: C,
@@ -37,15 +30,10 @@ pub struct GeneratorMatrixOsdDecoder<C> {
 
 /// A generator-matrix OSD decision together with the shared engine outcome.
 ///
-/// [`Self::work`] directly exposes the shared engine's rank, theoretical
-/// candidate bound, generated-pattern count, tested-candidate count,
-/// elimination count, and termination reason.  No adapter-local search
-/// counters are maintained.
-///
 /// A zero candidate cap produces a result without a decision and with
 /// [`super::OsdTermination::CandidateCap`] metadata.  Every other successful
-/// generator-matrix run tests at least the empty pattern and therefore carries
-/// decoded bits and a selected codeword.
+/// run tests at least the empty pattern and therefore carries decoded bits
+/// and a selected codeword.
 #[derive(Clone, Debug, PartialEq)]
 pub struct GeneratorMatrixOsdResult {
     decoded_bits: Option<BitVec>,
@@ -57,10 +45,6 @@ where
     C: GeneratorMatrixAccess,
 {
     /// Creates a decoder for `code` using `config`.
-    ///
-    /// The generator matrix is requested once and retained by the decoder.
-    /// Both the order and optional cap are read directly from `config` by the
-    /// shared OSD engine on each decode.
     ///
     /// # Panics
     ///
@@ -99,17 +83,8 @@ where
     /// Decodes one LLR word and returns the generator-domain result.
     ///
     /// The LLR hard decisions form the reference word and their magnitudes
-    /// select the most-reliable independent generator columns.  The shared
-    /// engine enumerates the configured order-`m` patterns, reconstructs
-    /// codewords from the reduced generator rows, and retains the first
-    /// candidate attaining the minimum soft metric.  Canonical reliability
-    /// ordering and engine generation order make ties deterministic.
-    ///
-    /// Rank-deficient generators are accepted as described on
-    /// [`GeneratorMatrixOsdDecoder`].  A zero candidate cap returns successful
-    /// metadata with no decision; this inherent surface therefore preserves
-    /// the engine outcome even when the [`SoftDecoder`] surface cannot return
-    /// a message.
+    /// select the most-reliable independent generator columns.  The engine
+    /// retains the first candidate attaining the minimum soft metric.
     ///
     /// # Errors
     ///
@@ -124,33 +99,9 @@ where
     ///
     /// # Complexity
     ///
-    /// One ordered elimination plus the shared engine's
-    /// O(candidates × (order + n) / 64) reconstruction and ranking work.  The
-    /// decoder stores O(k × n) generator bits and each call uses O(k × n)
-    /// elimination storage plus O(k × n) candidate-delta bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::LinearBlockCode;
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::osd::{GeneratorMatrixOsdDecoder, OsdConfig, OsdTermination};
-    ///
-    /// let decoder = GeneratorMatrixOsdDecoder::new(
-    ///     LinearBlockCode::hamming(3),
-    ///     OsdConfig::new(1),
-    /// );
-    /// let llrs = [
-    ///     Llr::new(3.0), Llr::new(-2.0), Llr::new(1.0),
-    ///     Llr::new(4.0), Llr::new(-1.0), Llr::new(2.0), Llr::new(3.0),
-    /// ];
-    ///
-    /// let result = decoder.decode(&llrs).unwrap();
-    /// assert_eq!(result.decoded_bits().unwrap().len(), 4);
-    /// assert_eq!(result.codeword().unwrap().len(), 7);
-    /// assert_eq!(result.work().rank(), 4);
-    /// assert_eq!(result.work().termination(), OsdTermination::Exhaustive);
-    /// ```
+    /// One ordered elimination plus the reprocessing cost stated on
+    /// [`reprocess`].  Each call uses O(k × n) bits of elimination and
+    /// candidate-delta storage.
     pub fn decode(&self, llrs: &[Llr]) -> Result<GeneratorMatrixOsdResult, OsdEngineError> {
         let magnitudes: Vec<f32> = llrs.iter().map(|llr| llr.magnitude()).collect();
         let mut reference = BitVec::zeros(llrs.len());
@@ -181,8 +132,7 @@ impl GeneratorMatrixOsdResult {
     /// Returns the decoded generator-domain bits, if a candidate was tested.
     ///
     /// Re-encoding these bits with the decoder's generator matrix yields
-    /// [`Self::codeword`].  For a rank-deficient generator they are the
-    /// canonical preimage described on [`GeneratorMatrixOsdDecoder`].
+    /// [`Self::codeword`].
     pub fn decoded_bits(&self) -> Option<&BitVec> {
         self.decoded_bits.as_ref()
     }
@@ -296,16 +246,11 @@ where
     /// Returns the generic soft-decoder result for the same OSD decision.
     ///
     /// `iterations` records the engine elimination count and `queries` records
-    /// the tested-candidate count.  Use [`GeneratorMatrixOsdDecoder::decode`]
-    /// for the rank, uncapped bound, and termination reason.
+    /// the tested-candidate count.
     ///
     /// # Panics
     ///
-    /// Panics if `llrs.len() != self.n()`, if the configured uncapped
-    /// candidate bound does not fit in `usize`, or if the candidate cap is
-    /// zero and therefore no hard decision was tested.
-    ///
-    /// Panics if any LLR has a NaN magnitude.
+    /// Panics under the conditions of [`Self::decode_soft`].
     fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
         let result = self
             .decode(llrs)
@@ -601,9 +546,6 @@ mod tests {
         assert!(detailed.syndrome_check_passed);
     }
 
-    /// A canonical BCH code satisfies the decoder's generator-matrix bound
-    /// through the `binary-code-v1` blanket adapter, with no BCH-specific
-    /// path in this module.
     #[test]
     fn accepts_a_canonical_bch_generator_matrix() {
         use crate::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
