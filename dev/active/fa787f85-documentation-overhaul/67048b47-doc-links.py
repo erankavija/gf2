@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate or check the tracker document links for manifest rows owned by identifier or commit provenance.
 
-Run from the repository root. Reads migration/manifest.toml beside this file and
+Run from the repository root. Reads the one tracked migration/manifest.toml and
 .jit/issues/*.json of the current directory.
 
   67048b47-doc-links.py             print the idempotent link script
@@ -20,10 +20,22 @@ import sys
 import tomllib
 from pathlib import Path
 
-MANIFEST = Path(__file__).resolve().parent / "migration" / "manifest.toml"
 PROVENANCE = ("issue-id", "commit")
 CODE = {".py", ".sh", ".rs", ".c", ".cpp", ".h", ".cmd", ".lean", ".sage", ".css", ".g"}
 SUFFIX_TYPE = {".md": "notes", ".log": "log", ".html": "presentation", ".png": "figure", ".svg": "figure"}
+
+
+def manifest_path():
+    """The one tracked migration manifest, located through git under the runtime repository root."""
+    root = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True).stdout.strip()
+    found = subprocess.run(
+        ["git", "-C", root, "ls-files", "-z", "--", ":(glob)**/migration/manifest.toml"],
+        capture_output=True, text=True, check=True,
+    ).stdout.split("\0")
+    found = [f for f in found if f]
+    if len(found) != 1:
+        sys.exit(f"{len(found)} tracked migration manifests; exactly one must exist")
+    return Path(root) / found[0]
 
 
 def doc_type(path):
@@ -134,7 +146,7 @@ LISTINGS = ("--unassociated", "--absent", "--owner-missing", "--directory",
 
 
 def main(argv):
-    rows = tomllib.loads(MANIFEST.read_text())["artifacts"]
+    rows = tomllib.loads(manifest_path().read_text())["artifacts"]
     missing, absent, owner_missing, unassociated, directory = classify(rows, load_tracker())
     mode = argv[0] if argv else ""
     if mode == "--check":
