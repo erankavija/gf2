@@ -1,42 +1,46 @@
 # 112f23c6 verdict baseline
 
-Receipt acceptance verdicts and the crate test result before and after the
-shared `repository_root` resolver. The verdict lines of both runs are
-byte-identical.
+Receipt acceptance verdicts and crate test results of `tuning-campaign-support`
+before and after the shared `repository_root` resolver. Raw outputs are
+committed beside this record.
 
-Baseline commit: `6776fe30ea9af85ad509ddca95926f051421676d`.
+Baseline source: `6776fe30ea9af85ad509ddca95926f051421676d`. After source:
+`21950e7bd189258e628fb33e560c6f470eb70abd`.
 
 ## Commands
 
-Build the verifier, then evaluate scratch copies of every committed receipt
-directory that carries an `acceptance-summary.json` (the verifier writes its
-summary beside the receipt, so committed directories stay untouched):
+Run at each source state. The verifier writes its summary beside the receipt,
+so the runner evaluates scratch copies of every committed directory that
+carries an `acceptance-summary.json`:
 
 ```
 ./scripts/cargo-budget.sh cargo build -p tuning-campaign-support --bin benchmark-acceptance --profile ci-test
-dev/active/fa787f85-documentation-overhaul/112f23c6-verdicts.sh <outfile>
+dev/active/fa787f85-documentation-overhaul/112f23c6-verdicts.sh <verdict-file>
+./scripts/cargo-budget.sh --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile ci > <nextest-file> 2>&1
 ```
 
-Test execution (the subset `scripts/cargo-ci.sh` runs as
-`tuning-campaign-support-nextest`):
+The nextest invocation is the `tuning-campaign-support-nextest` step of
+`scripts/cargo-ci.sh`.
 
-```
-./scripts/cargo-budget.sh --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile ci
-```
+## Raw outputs
 
-## Results
-
-| Measure | Baseline | After |
+| State | Verdicts | Nextest |
 | --- | --- | --- |
-| Receipt directories evaluated | 147 | 147 |
-| `Accepted` | 137 | 137 |
-| `Rejected` | 9 | 9 |
-| Verifier usage error | 1 | 1 |
-| `tuning-campaign-support` tests | 208 passed, 0 failed | 208 passed, 0 failed |
+| Baseline | `112f23c6-verdicts-before.txt` | `112f23c6-nextest-before.txt` |
+| After | `112f23c6-verdicts-after.txt` | `112f23c6-nextest-after.txt` |
 
-Every evaluated directory with its verdict line is in
-`112f23c6-verdicts.txt`; the baseline and after outputs are byte-identical
-(`diff` empty). The nine `Rejected` lines include two snapshot directories
-nested under `inputs/producing/`; the usage-error line is
-`c077a88b/v3-r1-matched-confirmation-rejection`, whose scratch copy the
-verifier cannot open.
+## Equality
+
+The verdict listings are identical; this command prints nothing:
+
+```
+diff dev/active/fa787f85-documentation-overhaul/112f23c6-verdicts-before.txt dev/active/fa787f85-documentation-overhaul/112f23c6-verdicts-after.txt
+```
+
+Both nextest runs execute the same tests with the same outcomes; this command
+prints nothing:
+
+```
+r() { grep -E '^ +(PASS|FAIL)' "$1" | sed -E 's/\[ *[0-9.]+s\] \([ 0-9]+\/[0-9]+\) //' | sort; }
+diff <(r dev/active/fa787f85-documentation-overhaul/112f23c6-nextest-before.txt) <(r dev/active/fa787f85-documentation-overhaul/112f23c6-nextest-after.txt)
+```
