@@ -36,9 +36,9 @@ mod imp {
     /// [`Stage::CpuFallback`](crate::Stage) of [`GpuGrayQamDemapper`].
     ///
     /// The orphan rule forbids implementing [`Stage`] on the `gf2-coding`
-    /// `FastGrayQamDemapper`, so this wrapper carries the impl and delegates to
-    /// the shared `GrayQamDemapCore`. It emits the GPU stage's LLR layout and
-    /// serves the `ExactLogMap` method.
+    /// `FastGrayQamDemapper`, so this type carries the impl over the shared
+    /// `GrayQamDemapCore`. It emits the GPU stage's LLR layout and serves the
+    /// `ExactLogMap` method.
     pub struct CpuGrayQamDemapper {
         core: GrayQamDemapCore,
     }
@@ -83,7 +83,7 @@ mod imp {
             self.core.noise_var()
         }
 
-        /// The underlying [`FastGrayQamDemapper`] this stage delegates to.
+        /// The underlying [`FastGrayQamDemapper`].
         #[inline]
         #[must_use]
         pub fn demapper(&self) -> &FastGrayQamDemapper<f32> {
@@ -333,9 +333,9 @@ mod imp {
         type CpuFallback = CpuGrayQamDemapper;
 
         /// Demaps `input` with a device demapper built per call and sized for
-        /// the largest frame; [`DemapMethod::ExactLogMap`] delegates to
-        /// [`cpu_fallback`](Self::cpu_fallback). An empty batch builds no
-        /// device demapper.
+        /// the largest frame; [`cpu_fallback`](Self::cpu_fallback) serves
+        /// [`DemapMethod::ExactLogMap`]. An empty batch builds no device
+        /// demapper.
         ///
         /// # Errors
         ///

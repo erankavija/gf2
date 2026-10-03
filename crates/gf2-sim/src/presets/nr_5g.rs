@@ -105,7 +105,7 @@ impl Nr5gRate {
     }
 }
 
-/// A 5G NR data-channel modulation (TS 38.214): `Q_m` bits per QAM symbol.
+/// A 5G NR data-channel modulation (`@/citation/ThreeGpp2017a`): `Q_m` bits per QAM symbol.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NrModulation {
     /// QPSK (`Q_m` = 2).
