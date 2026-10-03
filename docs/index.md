@@ -8,6 +8,8 @@ Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
 
 Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 
+- [Run a simulation campaign](how-to/run-simulation-campaigns.md): configure, run, stop and resume error-rate sweeps, and locate their output.
+
 ## Concepts
 
 Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis-placement`.
