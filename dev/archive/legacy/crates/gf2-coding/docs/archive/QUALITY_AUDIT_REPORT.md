@@ -1082,13 +1082,13 @@ The following phases remain to be completed in sequence:
 
 **Link Validation**:
 All internal links verified:
-- ✅ [docs/SIMD_PERFORMANCE_GUIDE.md](docs/SIMD_PERFORMANCE_GUIDE.md) ✓
-- ✅ [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) ✓
-- ✅ [docs/DVB_T2.md](docs/DVB_T2.md) ✓
-- ✅ [docs/SDR_INTEGRATION.md](docs/SDR_INTEGRATION.md) ✓
-- ✅ [docs/LDPC_PERFORMANCE.md](docs/LDPC_PERFORMANCE.md) ✓
+- ✅ [docs/SIMD_PERFORMANCE_GUIDE.md](../SIMD_PERFORMANCE_GUIDE.md) ✓
+- ✅ [docs/PARALLELIZATION.md](../PARALLELIZATION.md) ✓
+- ✅ [docs/DVB_T2.md](../DVB_T2.md) ✓
+- ✅ [docs/SDR_INTEGRATION.md](../SDR_INTEGRATION.md) ✓
+- ✅ [docs/LDPC_PERFORMANCE.md](../LDPC_PERFORMANCE.md) ✓
 - ✅ [workspace README](../../../../../../../crates/gf2-coding/README.md) ✓
-- ✅ [ROADMAP.md](../ROADMAP.md) ✓
+- ✅ ROADMAP.md ✓
 
 **Cargo.toml Metadata** (gf2-coding):
 ```toml
