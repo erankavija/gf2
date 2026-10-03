@@ -2,7 +2,7 @@
 
 - Evidence: a tagged-commit history counts as provenance only when every commit touching the file carries one `jit:<id>`; no in-scope file qualifies, so rows without a `jit doc` reference or an id in the path carry evidence `none`.
 - Deck bundles: `epic` and destination come from the `jit doc` reference of the deck or its recorded asset; `gruvbox.css` is unrecorded and takes `issue-id` from its deck directory name. The deck directory is the own directory of every bundle member.
-- `generate_grand_comparison_plots.py` has unique commit provenance (`1eaf8d40d`, tagged `6efb756b,45649554`); it travels with figures 4-6 under bundle head `docs/presentations/6efb756b-grand-sogrand/talk.html`.
+- `generate_grand_comparison_plots.py` has unique commit provenance (`1eaf8d40d`, tagged `6efb756b,45649554`); it travels with figures 4-6 under bundle head `dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand/talk.html`.
 - Destinations mirror the source path beneath the owning archive directory, so the decks' `../figures/` links keep their depth.
 - Crate READMEs rewritten in place carry their own path as destination; the root README and `proofs/README.md` stay in place (`retained-operational`).
 - `docs/lean4-verification-pipeline.md` reaches `e095a100` through task `886af072`, whose ancestors also include `bb85c68a`; the plan names `e095a100`.
