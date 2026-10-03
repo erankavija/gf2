@@ -2,24 +2,7 @@
 //!
 //! [`BinaryBchDecoder`] decodes a canonical
 //! [`BinaryBchCode`](crate::bch::spec::BinaryBchCode) up to its witnessed
-//! correction radius:
-//!
-//! 1. **Syndromes**: evaluate the received polynomial at the witnessed
-//!    consecutive roots and one exponent per remaining Frobenius orbit of the
-//!    defining set.
-//! 2. **Berlekamp-Massey**: find the error-locator polynomial.
-//! 3. **Chien search**: find the locator's roots, the error positions.
-//! 4. **Verification**: flip those positions and recompute the syndrome.
-//!
-//! It reports a [`BchDecodeOutcome`], keeps its workspace allocation outside
-//! the per-word path, and exposes the corrected codeword, information word,
-//! and error positions only through the opt-in [`BinaryBchDecoder::decode`]
-//! diagnostic path. Coordinate `i` carries the coefficient of `x^i`.
-//!
-//! Under `--features hip`, `BinaryBchDecoder::correct_batch_gpu` runs the
-//! syndrome evaluations of a whole batch on a HIP device and the locator
-//! search on the CPU, reporting the same [`BchDecodeOutcome`] values, and
-//! leaving the same corrected words, as the per-word CPU path.
+//! correction radius. Coordinate `i` carries the coefficient of `x^i`.
 
 use crate::bch::error::BchError;
 use crate::bch::spec::BinaryBchCode;
@@ -78,16 +61,10 @@ impl BchDecodeOutcome {
 /// The reusable scratch space one [`BinaryBchDecoder`] needs per word.
 ///
 /// Every buffer is sized once, by [`BinaryBchDecoder::workspace`], from the
-/// code's syndrome count and correction radius, and is only ever overwritten
-/// in place afterwards; none is ever pushed to, resized, or replaced. Together
-/// with two further facts that gives
+/// code's syndrome count and correction radius, and is only overwritten in
+/// place afterwards, which gives
 /// [`correct_in_place`](BinaryBchDecoder::correct_in_place) its
-/// no-heap-allocation contract: the decoder itself precomputes its evaluation
-/// points and root powers at construction and holds no interior mutability,
-/// and $\mathrm{GF}(2^m)$ element arithmetic produces values that share their
-/// field by reference count rather than by allocating. The buffers here are
-/// therefore the only heap a decode could want, and the caller owns their one
-/// allocation.
+/// no-heap-allocation contract.
 ///
 /// A workspace belongs to the decoder that produced it. Every workspace
 /// carries a fingerprint of the code it was built for, and the decoder
@@ -146,17 +123,6 @@ pub struct BchDecodeWorkspace<V: UintExt = u64> {
 /// zero, which is equivalent to codeword membership (see
 /// [`workspace`](Self::workspace) for why the evaluated exponents suffice).
 /// No received word makes a decode panic.
-///
-/// # Paths
-///
-/// [`correct_in_place`](Self::correct_in_place) is the fast path: it corrects
-/// the caller's packed storage and returns status and count, with no heap
-/// allocation. [`decode`](Self::decode) is the opt-in diagnostic path: it may
-/// allocate, and returns the corrected codeword, the information word, the
-/// sorted error positions, and the count. Under `--features hip`,
-/// `correct_batch_gpu` is the fast path over a whole batch, with the syndrome
-/// evaluations on a device; it reports the same outcomes and leaves the same
-/// corrected words.
 ///
 /// # Examples
 ///
@@ -224,7 +190,6 @@ pub struct BchDecodeReport {
     error_positions: Vec<usize>,
 }
 
-/// The verified codeword a decode produced, with its information word.
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct RecoveredWord {
     codeword: BitVec,
@@ -481,7 +446,6 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         hash
     }
 
-    /// Rejects a received word or workspace that does not match this code.
     fn validate(&self, length: usize, workspace: &BchDecodeWorkspace<V>) -> Result<(), BchError> {
         if workspace.code_stamp != self.code_stamp() {
             return Err(BchError::WorkspaceMismatch {
@@ -510,7 +474,6 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         Ok(())
     }
 
-    /// Runs the locator search and verification for a nonzero syndrome.
     fn correct_nonzero_syndrome(
         &self,
         received: &mut BitVec,
@@ -704,10 +667,6 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// GPU-assisted decoding over the canonical model
-// ---------------------------------------------------------------------------
-
 /// GPU-assisted batch decoding, compiled only under `--features hip`.
 ///
 /// The device evaluates syndromes; the locator search, the verification
@@ -806,10 +765,6 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// all-zero row is therefore equivalent to the word being a codeword, the
     /// same equivalence the CPU path decides on.
     ///
-    /// # Arguments
-    ///
-    /// * `received` — the batch of received words, each of `n` coordinates.
-    ///
     /// # Returns
     ///
     /// One row per frame, in input order. An empty batch yields no rows, and a
@@ -873,11 +828,6 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// the whole batch, holds the coordinates of each applied candidate until
     /// verification, and stages the batch's coefficient streams.
     ///
-    /// # Arguments
-    ///
-    /// * `received` — the batch of received words, each of `n` coordinates,
-    ///   corrected in place.
-    ///
     /// # Returns
     ///
     /// One outcome per frame, in input order.
@@ -913,40 +863,6 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     /// the batch and again over its candidates, plus the per-word host cost of
     /// [`correct_in_place`](Self::correct_in_place) without its two syndrome
     /// evaluations.
-    ///
-    /// # Examples
-    ///
-    /// Requires a HIP/ROCm device at run time, so this is `no_run`; the body is
-    /// gated so the doctest is a no-op on a build without the feature.
-    ///
-    /// ```no_run
-    /// # #[cfg(feature = "hip")]
-    /// # fn demo() -> Result<(), gf2_coding::bch::error::BchError> {
-    /// use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
-    /// use gf2_coding::bch::{BchDecodeOutcome, BinaryBchDecoder};
-    /// use gf2_core::field::extension::BinaryPrimeExt;
-    /// use gf2_core::gf2m::Gf2mField;
-    /// use gf2_core::BitVec;
-    ///
-    /// // BCH(15, 7), so the radius is two.
-    /// let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011).with_tables())?;
-    /// let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
-    ///     extension,
-    ///     designed_distance: DesignedDistance::try_from(5)?,
-    /// })?;
-    /// let decoder = BinaryBchDecoder::new(&code);
-    ///
-    /// // The all-zero word is a codeword; give the second frame one error.
-    /// let mut batch = vec![BitVec::zeros(code.n()); 2];
-    /// batch[1].set(3, true);
-    ///
-    /// let outcomes = decoder.correct_batch_gpu(&mut batch).expect("a working device");
-    /// assert_eq!(outcomes[0], BchDecodeOutcome::NoErrors);
-    /// assert_eq!(outcomes[1], BchDecodeOutcome::Corrected { count: 1 });
-    /// assert_eq!(batch[1], BitVec::zeros(code.n()));
-    /// # Ok(())
-    /// # }
-    /// ```
     pub fn correct_batch_gpu(
         &self,
         received: &mut [BitVec],
@@ -1141,7 +1057,6 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
     }
 }
 
-/// Flips every listed coordinate of `word`.
 fn flip(word: &mut BitVec, positions: &[usize]) {
     for &position in positions {
         word.set(position, !word.get(position));
@@ -1194,9 +1109,9 @@ mod canonical_decoder_tests {
         // Two distinct primitive presentations of the same (n, delta) give
         // decoders with identical buffer geometry; the stamp must still tell
         // them apart.
-        // Designed distance 3 (t = 1) is the reviewer's sharpest case: the
-        // syndrome points x, x^2 have identical raw values in every degree-4
-        // presentation, so only the modulus separates the stamps.
+        // At designed distance 3 (t = 1) the syndrome points x, x^2 have
+        // identical raw values in every degree-4 presentation, so only the
+        // modulus separates the stamps.
         let code_a = narrow_sense(4, 0b10011, 3);
         let code_b = narrow_sense(4, 0b11001, 3);
         let decoder_a = BinaryBchDecoder::new(&code_a);
@@ -1213,7 +1128,6 @@ mod canonical_decoder_tests {
         assert!(decoder_a.correct_in_place(&mut received, &mut own).is_ok());
     }
 
-    /// The parameter points, constructed once for the whole suite.
     fn codes() -> &'static [BinaryBchCode] {
         static CODES: OnceLock<Vec<BinaryBchCode>> = OnceLock::new();
         CODES.get_or_init(|| {
@@ -1307,8 +1221,6 @@ mod canonical_decoder_tests {
         sorted
     }
 
-    // -- REQ-01/REQ-02: the error-free outcome and the two paths -----------
-
     #[test]
     fn a_codeword_decodes_to_its_information_word() {
         for code in codes() {
@@ -1336,8 +1248,6 @@ mod canonical_decoder_tests {
         }
     }
 
-    // -- REQ-03: every error count at and beyond the radius ----------------
-
     fn error_cases() -> impl Strategy<Value = (usize, Vec<bool>, Vec<usize>)> {
         (
             0..POINTS.len(),
@@ -1349,8 +1259,6 @@ mod canonical_decoder_tests {
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(32))]
 
-        /// Every error count from zero to the radius is corrected, and the
-        /// diagnostic path names exactly the injected coordinates.
         #[test]
         fn prop_errors_within_the_radius_are_corrected_at_their_exact_positions(
             (index, bits, seeds) in error_cases(),
@@ -1391,10 +1299,6 @@ mod canonical_decoder_tests {
             }
         }
 
-        /// One error past the radius leaves exactly two possibilities: no
-        /// verified correction, or a correction to a codeword other than the
-        /// transmitted one. Nothing the decoder reports is ever a false claim
-        /// about the word it produces.
         #[test]
         fn prop_one_error_beyond_the_radius_is_uncorrectable_or_a_verified_codeword(
             (index, bits, seeds) in error_cases(),
@@ -1431,10 +1335,6 @@ mod canonical_decoder_tests {
             }
         }
 
-        /// An arbitrary word never panics, and each outcome means what the
-        /// contract says: `NoErrors` exactly for codewords, `Corrected` only
-        /// for a verified codeword inside the radius, `Uncorrectable` only
-        /// with the caller's storage left intact.
         #[test]
         fn prop_arbitrary_words_decode_soundly(
             (index, bits) in (0..POINTS.len(), prop::collection::vec(any::<bool>(), 63)),
@@ -1467,9 +1367,6 @@ mod canonical_decoder_tests {
         }
     }
 
-    /// One error beyond the radius leaves exactly two possibilities, and both
-    /// occur for BCH(15, 7): the procedure reports no verified correction, or
-    /// it miscorrects to a different codeword within the radius.
     #[test]
     fn beyond_the_radius_the_outcome_is_uncorrectable_or_a_verified_miscorrection() {
         let code = narrow_sense(4, 0b10011, 5);
@@ -1574,8 +1471,6 @@ mod canonical_decoder_tests {
         assert!(report.error_positions().is_empty());
     }
 
-    // -- REQ-02: the fast path reuses one workspace ------------------------
-
     /// The lengths and capacities of every workspace buffer after a mixed run
     /// of decodes. The decoder sizes each buffer once and only overwrites it
     /// afterwards, so an unchanged snapshot witnesses that no buffer grew and
@@ -1629,8 +1524,6 @@ mod canonical_decoder_tests {
         }
     }
 
-    // -- Input validation --------------------------------------------------
-
     #[test]
     fn a_mismatched_buffer_is_rejected_before_decoding() {
         let code = narrow_sense(4, 0b10011, 5);
@@ -1649,15 +1542,11 @@ mod canonical_decoder_tests {
         );
         assert!(decoder.decode(&short).is_err());
 
-        // A workspace sized for a different code is a caller mistake the
-        // decoder reports instead of indexing past a buffer.
         let other = narrow_sense(4, 0b10011, 7);
         let mut foreign = BinaryBchDecoder::new(&other).workspace();
         let mut word = BitVec::zeros(code.n());
         assert!(decoder.correct_in_place(&mut word, &mut foreign).is_err());
     }
-
-    // -- Boundary and non-narrow-sense constructions -----------------------
 
     #[test]
     fn the_full_space_code_reports_every_word_as_a_codeword() {
@@ -1732,14 +1621,6 @@ mod canonical_decoder_tests {
         }
     }
 
-    // -- GPU-assisted decoding over the same model -------------------------
-
-    /// The device path, held against the CPU path it reproduces.
-    ///
-    /// Each test self-gates on a usable device and skips without one, and each
-    /// runs in about a tenth of a second on the small parameter points, so
-    /// they stay in the fast tier rather than behind an ignore. The committed
-    /// receipt of issue `c3cc5226` records a run on a named HIP host.
     #[cfg(feature = "hip")]
     mod gpu {
         use super::*;
@@ -1750,7 +1631,6 @@ mod canonical_decoder_tests {
             gf2_kernels_hip::host::device_mem_info().is_ok()
         }
 
-        /// Every weight-three word of a length-`length` code.
         fn weight_three_words(length: usize) -> Vec<BitVec> {
             let mut frames = Vec::new();
             for first in 0..length {
@@ -1765,8 +1645,6 @@ mod canonical_decoder_tests {
             frames
         }
 
-        /// A mixed batch over four messages: the codeword itself, then every
-        /// error count from one up to one past the radius.
         fn population(code: &BinaryBchCode) -> Vec<BitVec> {
             let mut frames = Vec::new();
             for round in 0..4 {
@@ -1786,7 +1664,6 @@ mod canonical_decoder_tests {
             frames
         }
 
-        /// The outcomes and corrected words of the per-word CPU fast path.
         fn cpu_reference(
             decoder: &BinaryBchDecoder<'_>,
             frames: &[BitVec],
@@ -1928,8 +1805,6 @@ mod canonical_decoder_tests {
             assert!(miscorrected > 0, "the device path accepts verified ones");
         }
 
-        // -- The device-failure paths ------------------------------------
-        //
         // These drive the host bookkeeping of `correct_batch_gpu` — the
         // candidates it applies before verification, and the recovery it runs
         // when a syndrome pass fails — with a synthesized `HipError` standing
@@ -1955,8 +1830,6 @@ mod canonical_decoder_tests {
         /// the coordinates applied to it.
         type AppliedBatch = (Vec<BitVec>, Vec<BitVec>, Vec<(usize, Vec<usize>)>);
 
-        /// A batch of weight-three words with every candidate applied, as the
-        /// verification pass finds it.
         fn applied_batch(decoder: &BinaryBchDecoder<'_>) -> AppliedBatch {
             let frames = weight_three_words(decoder.code.n());
             let mut words = frames.clone();
@@ -1971,10 +1844,6 @@ mod canonical_decoder_tests {
             (frames, words, candidates)
         }
 
-        /// A device failure that stays explicit propagates with the caller's
-        /// batch restored: the applied candidates are rolled back first, so a
-        /// retry decodes the original words rather than altered, unverified
-        /// ones.
         #[test]
         fn a_fatal_verification_failure_restores_the_batch() {
             let code = narrow_sense(4, 0b10011, 5);
@@ -1997,9 +1866,6 @@ mod canonical_decoder_tests {
             assert_eq!(words, frames, "the batch is the caller's own again");
         }
 
-        /// A recoverable device failure selects the CPU path instead of
-        /// erroring: the batch is restored and decoded there, so the caller
-        /// sees exactly the outcomes and words of the pure CPU path.
         #[test]
         fn a_recoverable_verification_failure_falls_back_to_the_cpu() {
             let code = narrow_sense(4, 0b10011, 5);
@@ -2043,9 +1909,6 @@ mod canonical_decoder_tests {
             .expect("a valid primitive narrow-sense spec")
         }
 
-        /// A valid code whose field carries no device tables is an unsupported
-        /// device capability, not a decoding failure: GPU-assisted correction
-        /// answers it on the CPU path rather than panicking.
         #[test]
         fn an_unsupported_presentation_corrects_on_the_cpu() {
             let code = table_free_code();
@@ -2071,8 +1934,6 @@ mod canonical_decoder_tests {
             );
         }
 
-        /// The syndrome-only API answers the same presentation with the CPU
-        /// evaluator's rows, which is the value the device reproduces.
         #[test]
         fn an_unsupported_presentation_evaluates_syndromes_on_the_cpu() {
             let code = table_free_code();
@@ -2097,9 +1958,8 @@ mod canonical_decoder_tests {
 
         /// The supported presentations stay on the device, so the fallback is
         /// selected by capability rather than taken always: the tabled
-        /// counterpart of the code above, and GF(2^16) — the DVB-T2 normal
-        /// frame's field, and the widest the kernel's u16 boundary carries,
-        /// whose device path the committed receipt measures.
+        /// counterpart of the code above, and GF(2^16), the DVB-T2 normal
+        /// frame's field and the widest the kernel's u16 boundary carries.
         #[test]
         fn a_tabled_presentation_is_device_supported() {
             for code in [
@@ -2115,9 +1975,6 @@ mod canonical_decoder_tests {
             }
         }
 
-        /// The first syndrome pass fails before any candidate is applied.
-        /// Neither arm alters the batch on its way: the fatal one returns it
-        /// untouched, and the recoverable one decodes the caller's own words.
         #[test]
         fn a_first_pass_failure_never_alters_the_batch() {
             let code = narrow_sense(4, 0b10011, 5);

@@ -21,39 +21,6 @@
 //! $(\sigma(k + j) - k, \sigma(c))$, so the view keeps both block forms:
 //! $\sigma$ maps the message coordinates onto themselves.
 //!
-//! Materialization holds no implicit cache. [`CachedMatrices`] is the explicit
-//! opt-in cache for callers that reuse these matrices. It caches successful
-//! generator and parity-check materializations independently, while its
-//! allocating access still returns a fresh matrix on every call.
-//!
-//! # Algorithm
-//!
-//! Both matrices follow from one recurrence on the parity block. Row $i$ of
-//! $P$ is $-(x^{\,r+i} \bmod g)$ in ascending degree for $r = n - k$, so row
-//! $0$ is the generator's low $r$ coefficients and every later row is its
-//! predecessor shifted one degree with one conditional subtraction of $g$:
-//! $P_{i,j} = P_{i-1,\,j-1} - P_{i-1,\,r-1}\,g_j$. Column $i$ of $H$ is
-//! $-P_i$, which is the same recurrence read on columns.
-//!
-//! Each writer carries the recurrence in its own output — the generator in
-//! the parity block of the row before, the parity check in the column before
-//! — so neither materializes the other matrix, neither holds a register
-//! beside the caller's buffer, and the caller-buffer path reaches no
-//! allocator. For the packed binary representation the generator step is one
-//! word-level shift and one conditional exclusive-or of row zero.
-//!
-//! # Representation
-//!
-//! [`SymbolMatrix`] is the storage contract and [`MatrixFill`] is the
-//! materialization contract over it. [`MatrixFill`] carries provided bodies
-//! that write both canonical matrices through the storage accessors alone, so
-//! a representation opts into canonical-matrix access with an empty
-//! implementation. The two canonical representations override them:
-//! [`BitMatrix`] with the packed word-level path that single-coordinate
-//! accessors cannot express, and [`FieldMatrix`] with a row-slice path. One
-//! canonical trait set covers both, and the specialization is by matrix
-//! representation, as the packed binary storage decision states.
-//!
 //! # Complexity
 //!
 //! The generator costs $O(k \lceil n/64 \rceil)$ word operations packed, and
@@ -61,35 +28,6 @@
 //! both are the size of the output. The parity check transposes the same
 //! recurrence one coordinate at a time, so it costs $O(kr)$ coordinate writes
 //! over its $O(rn)$ output.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::bch::matrix::CachedMatrices;
-//! use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
-//! use gf2_coding::traits::block::{BlockCode, GeneratorMatrixAccess};
-//! use gf2_core::field::extension::BinaryPrimeExt;
-//! use gf2_core::gf2m::Gf2mField;
-//!
-//! let extension = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
-//! let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
-//!     extension,
-//!     designed_distance: DesignedDistance::try_from(5).unwrap(),
-//! })
-//! .unwrap();
-//! let cached = CachedMatrices::new(code);
-//! let generator = cached.generator_matrix().unwrap();
-//!
-//! assert_eq!(generator.rows(), cached.k());
-//! assert_eq!(generator.cols(), cached.n());
-//! assert!(cached.is_systematic().unwrap());
-//! // The first k columns are the identity, so row i carries message bit i.
-//! for row in 0..cached.k() {
-//!     for col in 0..cached.k() {
-//!         assert_eq!(generator.get(row, col), row == col);
-//!     }
-//! }
-//! ```
 
 use std::any::Any;
 use std::sync::Mutex;
@@ -111,7 +49,6 @@ use crate::traits::block::{
     BlockCode, GeneratorMatrixAccess, ParityCheckMatrixAccess, SymbolMatrix, SymbolSequence,
 };
 
-/// Ensures that a caller-provided matrix has the shape required by a code.
 fn check_shape<F, M>(out: &M, expected_rows: usize, expected_cols: usize) -> Result<(), CodeError>
 where
     F: FieldIdentity,
@@ -130,7 +67,6 @@ where
     Ok(())
 }
 
-/// Copies a matrix cell-by-cell without allocating a replacement output.
 fn copy_matrix<F, M>(source: &M, out: &mut M) -> Result<(), CodeError>
 where
     F: FieldIdentity,
@@ -175,7 +111,7 @@ const IN_RANGE: &str = "the caller has checked the output shape";
 /// matrix that is not the canonical one. Reach them through the canonical
 /// accessors, which check the shape first, unless the shape is already known.
 ///
-/// Both methods carry provided bodies that run the module's recurrence one
+/// Both methods carry provided bodies that run the parity-block recurrence one
 /// coordinate at a time through [`SymbolMatrix::get`] and
 /// [`SymbolMatrix::set`] with base-field arithmetic. They are correct over
 /// every representation, so a representation opts into canonical-matrix
@@ -510,7 +446,6 @@ where
     }
 }
 
-/// Writes the systematic generator matrix of `code` into `out`.
 fn write_generator<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
 where
     X: FieldExtension,
@@ -522,7 +457,6 @@ where
     Ok(())
 }
 
-/// Writes the full-row-rank parity-check matrix of `code` into `out`.
 fn write_parity_check<X, S, M>(code: &BchCode<X, S, M>, out: &mut M) -> Result<(), CodeError>
 where
     X: FieldExtension,
@@ -533,10 +467,6 @@ where
     out.fill_parity_check(code.generator(), code.k(), &code.symbol_zero());
     Ok(())
 }
-
-// ---------------------------------------------------------------------------
-// The straightforward materialization, kept as an oracle
-// ---------------------------------------------------------------------------
 
 /// Encodes each message basis vector in turn and hands its row index and
 /// codeword to `write_row`.
@@ -664,8 +594,7 @@ where
     ///
     /// The materialization writes $G = [\,I_k \mid P\,]$ in the default user
     /// layout, so the message coordinates are the columns $0$ to $k - 1$ by
-    /// construction. This is the equivalent cheap fact the trait admits in
-    /// place of a materialize-and-inspect answer.
+    /// construction.
     fn is_systematic(&self) -> Result<bool, CodeError> {
         Ok(true)
     }
@@ -808,7 +737,6 @@ fn gather_in_place<F, M>(
     }
 }
 
-/// Decides whether `start` is the least member of its cycle under `source`.
 fn leads_its_cycle(start: usize, source: &impl Fn(usize) -> usize) -> bool {
     let mut at = source(start);
     while at != start {
@@ -827,9 +755,8 @@ fn leads_its_cycle(start: usize, source: &impl Fn(usize) -> usize) -> bool {
 /// allocating accessors return a fresh clone. `clear` drops both retained
 /// values so that the next access rebuilds them.
 ///
-/// The cache uses synchronization because the wrapper is intended to remain a
-/// usable static code value when it is shared across threads. Synchronization
-/// exists only after a caller explicitly chooses this wrapper.
+/// The cache is synchronized so that the wrapper can be shared across
+/// threads.
 pub struct CachedMatrices<C> {
     code: C,
     generator: Mutex<Option<Box<dyn Any + Send + Sync>>>,
@@ -1021,7 +948,6 @@ mod tests {
         .expect("the zero-dimensional boundary code")
     }
 
-    /// A primitive narrow-sense binary code over `GF(2^degree)`.
     fn primitive_binary(degree: usize, modulus: u64, designed_distance: u64) -> BinaryBchCode {
         let extension = BinaryPrimeExt::new(Gf2mField::new(degree, modulus))
             .expect("a primitive polynomial of the requested degree");
@@ -1033,7 +959,6 @@ mod tests {
         .expect("a valid primitive narrow-sense code")
     }
 
-    /// [`primitive_binary`]'s code in the field-generic representation.
     fn primitive_dense(
         degree: usize,
         modulus: u64,
@@ -1141,7 +1066,6 @@ mod tests {
     /// comes from [`MatrixFill`]'s provided bodies.
     impl<F> MatrixFill<F> for RowMajorMatrix<F> where F: FieldIdentity + 'static {}
 
-    /// A code whose matrices are the opting-in representation's.
     type RowMajorBchCode<X> = BchCode<
         X,
         FieldVec<<X as FieldExtension>::Base>,
@@ -1161,8 +1085,6 @@ mod tests {
         .expect("a valid BCH code in the opting-in representation")
     }
 
-    /// Asserts that two representations hold the same shape and the same
-    /// coordinate at every position.
     fn assert_same_coordinates<F, A, B>(left: &A, right: &B)
     where
         F: FieldIdentity,
@@ -1185,8 +1107,6 @@ mod tests {
         }
     }
 
-    /// Asserts that the opting-in representation's canonical matrices carry
-    /// the same coordinates as the field-generic representation's.
     fn assert_agrees_with_field_generic<X>(opting_in: &RowMajorBchCode<X>, dense: &DenseBchCode<X>)
     where
         X: FieldExtension,
@@ -1204,8 +1124,6 @@ mod tests {
         );
     }
 
-    /// Asserts that the opting-in representation's canonical matrices carry
-    /// the same coordinates as the packed binary representation's.
     fn assert_agrees_with_packed(
         opting_in: &RowMajorBchCode<BinaryPrimeExt>,
         packed: &BinaryBchCode,
@@ -1221,8 +1139,6 @@ mod tests {
         );
     }
 
-    /// Asserts that row `i` of `generator` is the codeword the default-layout
-    /// systematic encoder writes for message basis vector `i`.
     fn assert_rows_encode_basis_vectors<X, S, M>(code: &BchCode<X, S, M>, generator: &M)
     where
         X: FieldExtension,
@@ -1245,7 +1161,6 @@ mod tests {
         }
     }
 
-    /// Asserts that the first `k` columns of `generator` are the identity.
     fn assert_identity_prefix<X, S, M>(code: &BchCode<X, S, M>, generator: &M)
     where
         X: FieldExtension,
@@ -1266,9 +1181,6 @@ mod tests {
         }
     }
 
-    /// Asserts that every row of `matrix`, read back through the layout into
-    /// internal coordinates, is a multiple of the generator polynomial.
-    ///
     /// This is the polynomial-form membership oracle: it decides code
     /// membership without consulting the encoder the matrix is defined by.
     fn assert_rows_are_codewords<X, S, M>(code: &BchCode<X, S, M>, matrix: &M)
@@ -1357,8 +1269,6 @@ mod tests {
         }
     }
 
-    /// Asserts that the materialized matrices equal the ones the
-    /// basis-vector oracle writes.
     fn assert_matches_oracle<X, S, M>(code: &BchCode<X, S, M>, generator: &M, parity: &M)
     where
         X: FieldExtension,
@@ -1375,8 +1285,6 @@ mod tests {
         assert_eq!(parity, &oracle_parity, "parity check against the oracle");
     }
 
-    /// Checks the whole matrix contract of one code over the caller-buffer,
-    /// allocating, and explicit-cache access paths.
     fn assert_matrix_contract<X, S, M>(code: &BchCode<X, S, M>)
     where
         X: FieldExtension,
@@ -1490,8 +1398,6 @@ mod tests {
         assert_matrix_contract(&dense);
     }
 
-    /// The packed word boundaries the codeword length reaches.
-    ///
     /// A binary cyclic length is odd, so $n = 64$ is unreachable and the
     /// column boundaries a packed row meets are $63$ and $65$.
     #[test]
@@ -1515,9 +1421,6 @@ mod tests {
         assert_matrix_contract(&length_65);
     }
 
-    /// The packed word boundaries the redundancy reaches: the parity block of
-    /// a generator row, and the row count of the parity check, at $63$, $64$
-    /// and $65$.
     #[test]
     fn packed_word_boundary_redundancies_follow_the_contract() {
         let redundancy_63 = primitive_binary(7, 0b1000_0011, 21);
@@ -1542,13 +1445,6 @@ mod tests {
         assert_matrix_contract(&redundancy_65);
     }
 
-    /// The workload contract's binary rows B1, B2 and B3 at the exact lengths
-    /// `dev/active/4e732b56/workload-selection.md` § 2 fixes, in both
-    /// canonical representations.
-    ///
-    /// Each row runs the whole matrix contract, which includes equality with
-    /// the by-encoding oracle, so every contract row the fast tier reaches
-    /// has a packed and a field-generic equality witness.
     #[test]
     fn workload_rows_follow_the_contract_and_match_the_oracle() {
         const ROWS: &[(usize, u64, u64, usize, usize)] = &[
@@ -1567,9 +1463,6 @@ mod tests {
         }
     }
 
-    /// A representation that carries only the storage contract and an empty
-    /// materialization opt-in reaches both canonical matrices, and its
-    /// matrices are the canonical representations' coordinate by coordinate.
     #[test]
     fn an_opting_in_representation_follows_the_contract_over_every_base_field() {
         let binary = row_major_code(binary_extension(), 5);
@@ -1586,9 +1479,6 @@ mod tests {
         assert_agrees_with_field_generic(&gf81, &gf81_code(4));
     }
 
-    /// The opting-in representation over the two boundary codes: the
-    /// full-space code, whose generator is the identity and whose parity
-    /// check is empty, and the zero-dimensional code, the reverse.
     #[test]
     fn an_opting_in_representation_follows_the_contract_at_both_boundaries() {
         let full_space = row_major_code(binary_extension(), 1);
@@ -1610,12 +1500,6 @@ mod tests {
         assert_agrees_with_field_generic(&gf81_full_space, &gf81_code(1));
     }
 
-    /// The provided bodies and the field-generic override write the same
-    /// generator and the same parity check on the workload contract's binary
-    /// rows B1, B2 and B3.
-    ///
-    /// Calling both through the same code isolates the two materialization
-    /// paths from the access paths [`assert_matrix_contract`] exercises.
     #[test]
     fn the_provided_bodies_and_the_field_generic_override_agree_on_the_workload_rows() {
         const ROWS: &[(usize, u64, u64, usize, usize)] = &[
@@ -1646,9 +1530,6 @@ mod tests {
         }
     }
 
-    /// A deterministic sample of generator rows for a code whose full row
-    /// walk is too heavy for the fast tier.
-    ///
     /// The first 32 rows carry the seed row and the first reductions. The
     /// last 32 carry the rows whose identity coordinate shares a packed word
     /// with the start of the parity block, which for the DVB-T2 mother codes
@@ -1664,13 +1545,6 @@ mod tests {
             .collect()
     }
 
-    /// Asserts that the sampled generator rows are the systematic encodings
-    /// of their basis vectors and that the parity check annihilates them.
-    ///
-    /// Comparing sampled rows against the encoder and against
-    /// $G H^{\mathsf T} = 0$ decides the same contract the full comparison
-    /// does on the rows it covers, at a cost the fast tier carries. The
-    /// complete comparison of both DVB-T2 mother rows lives in the slow tier.
     fn assert_sampled_rows_are_systematic(
         code: &BinaryBchCode,
         generator: &BitMatrix,
@@ -1696,13 +1570,6 @@ mod tests {
         }
     }
 
-    /// The workload contract's T2S row at its mother length, the largest W2
-    /// cell the fast tier reaches: a $16215 \times 16383$ generator and its
-    /// $168 \times 16383$ parity check, witnessed on sampled rows.
-    ///
-    /// The canonical model reaches the DVB-T2 rows at mother length, which
-    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes as the length
-    /// this consumer measures and compares them at.
     #[test]
     fn t2s_mother_sampled_rows_are_systematic() {
         let code = primitive_binary(14, 0b100_0000_0010_1011, 25);
@@ -1712,18 +1579,6 @@ mod tests {
         assert_sampled_rows_are_systematic(&code, &generator, &parity);
     }
 
-    /// Both DVB-T2 rows at the mother lengths
-    /// `dev/active/4e732b56/workload-selection.md` § 9 fixes, generator and
-    /// parity check, over every row.
-    ///
-    /// The by-encoding oracle costs $O(k^2 r)$, which is a slow-tier cost at
-    /// these dimensions; the fast tier witnesses the T2S row on a sample.
-    /// This is the packed representation of both rows. The field-generic
-    /// representation reaches the T2S row in
-    /// [`t2s_mother_row_matches_the_oracle_field_generic`]; a
-    /// `FieldMatrix<Fp<2>>` stores eight bytes per coordinate, so the T2N row
-    /// is $65343 \times 65535 \times 8 = 34$ GB per matrix and the equality
-    /// witness would need two of them.
     #[test]
     #[ignore = "slow: the DVB-T2 mother rows materialize up to a 512 MiB generator"]
     fn dvb_t2_mother_rows_match_the_oracle() {
@@ -1742,12 +1597,6 @@ mod tests {
         }
     }
 
-    /// The T2S row at its mother length in the field-generic representation,
-    /// against the by-encoding oracle over every row.
-    ///
-    /// A `FieldMatrix<Fp<2>>` stores one element per coordinate, so this
-    /// generator is 2.1 GB where the packed one is 33 MB, and the oracle
-    /// spends $O(k^2 r)$ base-field operations reaching it.
     #[test]
     #[ignore = "slow: the T2S mother row materializes a 2.1 GB field-generic generator"]
     fn t2s_mother_row_matches_the_oracle_field_generic() {
@@ -1824,7 +1673,6 @@ mod tests {
         );
     }
 
-    /// A dirty caller buffer is overwritten rather than merged into.
     #[test]
     fn caller_buffers_are_overwritten_from_any_prior_contents() {
         let code = binary_code();
