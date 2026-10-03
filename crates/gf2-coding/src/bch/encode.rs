@@ -30,13 +30,6 @@
 //! transmission order the DVB-T2 outer BCH code declares, where the first
 //! transmitted symbol is the highest-degree coefficient.
 //!
-//! The mapping is arithmetic and is evaluated per coordinate as the codeword
-//! is written, so selecting a layout costs no permutation pass and no second
-//! buffer. [`SystematicPlan`] is the descriptor an encode call consumes: a
-//! code's generator, dimensions, and symbol-field witness together with the
-//! chosen layout. [`LayoutView`] declares one layout for a whole code, so
-//! every canonical block-code trait answers in it.
-//!
 //! # Representations
 //!
 //! Encoding runs in two representations, selected at compile time by the
@@ -75,25 +68,12 @@
 //! receives [`BchError::EncodeFamilyUnavailable`] rather than a silent
 //! substitution.
 //!
-//! This is not the SIMD feature-detection seam. That one chooses an
-//! instruction-set implementation of a fixed algorithm inside a family; this
-//! one chooses the algorithm, and a family may use the other seam internally.
-//! [`EncodeFamily::BitsliceInterleaved`] and [`EncodeFamily::ClmulFold`] are
-//! the families that do, and one bundle carries the kernels of both: they run
+//! The instruction-set choice inside a family is a separate seam:
+//! [`EncodeFamily::BitsliceInterleaved`] and [`EncodeFamily::ClmulFold`] run
 //! [`gf2_kernels_simd::bch_encode`]'s accelerated kernels where the host has
-//! every processor feature
-//! [`gf2_kernels_simd::bch_encode::detect`]'s combined predicate names, and
-//! that module's portable kernels where it does not. Both arms write the same
-//! bits, so the instruction set decides the speed of a batch and never its
-//! bytes.
-//!
-//! A family whose step advances several frames at once cannot be expressed
-//! one message at a time, so the batch entry points call
-//! [`SystematicKernel::encode_batch_family`] and a family that has nothing
-//! to gain from a batch inherits its per-message default. The parallel
-//! halving hands each partition to that method, and lane grouping is
-//! internal to a partition, so neither a worker count nor a partition
-//! boundary reaches the bytes.
+//! the processor features [`gf2_kernels_simd::bch_encode::detect`] names, and
+//! that module's portable kernels where it does not. Both write the same
+//! bits.
 //!
 //! # Complexity
 //!
@@ -120,45 +100,26 @@
 //!
 //! # Workspaces
 //!
-//! The recurrence runs over the buffers [`EncodeRegisters`] holds together:
-//! an $r$-symbol shift register, the generator's low $r$ coefficients in the
-//! same words, and whatever reduction table, lane-group scratch, or
-//! reduction constant the selected family reads. Every one of them is a
-//! function of the plan and a fixed lane width, never of a batch's length.
-//! The
-//! entry points that take no
-//! workspace — [`encode_systematic`](BchCode::encode_systematic),
+//! The recurrence runs over the buffers [`EncodeRegisters`] holds: an
+//! $r$-symbol shift register, the generator's low $r$ coefficients in the
+//! same words, and the reduction table, lane-group scratch, or reduction
+//! constant the selected family reads. Each is a function of the plan and a
+//! fixed lane width, never of a batch's length.
+//!
+//! The entry points that take no workspace —
+//! [`encode_systematic`](BchCode::encode_systematic),
 //! [`encode_systematic_into`](BchCode::encode_systematic_into),
 //! [`BlockEncoder::encode_into`], and
-//! [`encode_batch`](BchCode::encode_batch) — run over a pair the calling
-//! thread keeps for the register word type they encode in. That pair is sized
-//! on the thread's first such encode and reset in place on every one
-//! afterwards, so the buffers reach the allocator once per thread and a
-//! repeated encode reaches it only through whatever result the caller asked
-//! the code to allocate. Thread-local storage is what keeps those entry
-//! points lock-free: concurrent encodes over one shared code borrow registers
-//! no other thread can reach, so they neither serialize nor share a buffer. A
-//! thread holds one pair per register word type until it exits, keeping the
-//! allocation of the largest redundancy it has encoded in that type.
+//! [`encode_batch`](BchCode::encode_batch) — run over thread-local registers,
+//! one set per register word type. They are sized on the thread's first such
+//! encode, reset in place at $O(r)$ per call afterwards, and held until the
+//! thread exits, so concurrent encodes over one shared code take no lock.
+//! These entry points prepare the selected family alone.
 //!
-//! A workspace is prepared for every family its code's representation
-//! implements, at the moment it is built. The profile then chooses among
-//! families whose storage already exists, so a batch over a workspace
-//! reaches no allocator on its first call any more than on its later ones,
-//! and a workspace built before a profile is installed serves the selection
-//! made after it. The entry points that own no workspace prepare the
-//! selected family alone, over scratch their thread keeps and resizes in
-//! place.
-//!
-//! Resetting a pair rewrites the low coefficients, which is $O(r)$ per call.
-//! [`BchCode::encode_workspace`] pays that once for a whole sequence instead
-//! and hands the pair to the caller.
-//! [`encode_systematic_with`](BchCode::encode_systematic_with) then reuses the
-//! same [`BchEncodeWorkspace`] for every message: the register is overwritten
-//! in place and the coefficients are read, so neither is resized, replaced, or
-//! pushed to, and no other value on the path outlives a call — the plan is
-//! `usize` arithmetic over a borrowed generator, and base-field elements share
-//! their field by reference count rather than by allocating.
+//! [`BchCode::encode_workspace`] builds a caller-owned [`BchEncodeWorkspace`]
+//! prepared for every family the code's representation implements, so an
+//! encode over it reaches no allocator and a workspace built before a profile
+//! is installed serves the selection made after it.
 //!
 //! A workspace belongs to the code that produced it. It carries a fingerprint
 //! of that code, and an encode rejects a foreign workspace with
@@ -195,8 +156,7 @@
 //! changes which algorithm the batch runs.
 //!
 //! One worker runs the whole batch directly on the calling thread, so a
-//! one-worker dispatch pays no fan-out cost and is the honest sequential
-//! reference for a speedup measurement. Above one, the workspaces are halved
+//! one-worker dispatch reaches no pool. Above one, the workspaces are halved
 //! until each half holds one and the halves go to the rayon pool, whose width
 //! is [`max_parallel_batch_workers`]; a larger worker count is still valid and
 //! still produces those bytes, its partitions sharing the threads there are.
@@ -629,9 +589,8 @@ impl EncodeFamily {
     /// coefficients per step where [`TableRemainder`](Self::TableRemainder)
     /// consumes 32, and it reads one register-resident constant where the
     /// table family reads four entries of a kilobyte-scale table. No part of
-    /// that ordering is a measurement: the crossovers among the three are
-    /// unmeasured cells of the workload-selection contract, and the
-    /// conservative profile admits none of them.
+    /// that ordering is a measurement, and the conservative profile admits
+    /// none of the three.
     pub const REGISTERED: &'static [Self] = &[
         Self::BitsliceInterleaved,
         Self::ClmulFold,
@@ -639,8 +598,7 @@ impl EncodeFamily {
         Self::REFERENCE,
     ];
 
-    /// Returns this family's stable spelling, the one the workload-selection
-    /// contract registers it under.
+    /// Returns this family's stable spelling.
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
@@ -3058,9 +3016,8 @@ mod tests {
         FieldPoly::new(coefficients)
     }
 
-    /// Asserts the two properties REQ-01 fixes: the generator divides the
-    /// codeword polynomial, and the message survives in the systematic
-    /// coordinates of the layout.
+    /// Asserts that the generator divides the codeword polynomial and that
+    /// the message survives in the systematic coordinates of the layout.
     fn assert_encodes_a_codeword<X, S, M>(
         code: &BchCode<X, S, M>,
         message: &S,
@@ -3085,7 +3042,7 @@ mod tests {
         assert_eq!(&recovered, message, "the message survives encoding");
     }
 
-    // -- REQ-01: valid codewords over each base field ----------------------
+    // -- Valid codewords over each base field ------------------------------
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(16))]
@@ -3127,7 +3084,7 @@ mod tests {
         }
     }
 
-    // -- REQ-03: the descending layout is the transmission order ------------
+    // -- The descending layout is the transmission order -------------------
 
     #[test]
     fn the_descending_layout_puts_the_highest_degree_first() {
@@ -3226,7 +3183,7 @@ mod tests {
         }
     }
 
-    // -- REQ-02: the declared layouts and their mapping --------------------
+    // -- The declared layouts and their mapping ----------------------------
 
     #[test]
     fn the_layout_mapping_is_a_bijection_placing_the_message_first() {
@@ -3461,7 +3418,7 @@ mod tests {
         assert_eq!(buffer, expected, "a dirty buffer is overwritten, not mixed");
     }
 
-    // -- REQ-01/REQ-02: the workspace, batch, and parallel batch paths ------
+    // -- The workspace, batch, and parallel batch paths --------------------
 
     /// The worker counts the determinism claim covers: one, two, and the
     /// widest this process supports.
@@ -3492,10 +3449,9 @@ mod tests {
     /// Asserts that every encoding path of `code` writes the codewords the
     /// allocating single-message path writes, in input order.
     ///
-    /// This is the REQ-01 identity together with the REQ-02 worker-count
-    /// invariance: the allocating reference, the workspace single path, the
-    /// two batch paths, and the parallel batch path at each supported worker
-    /// count must agree symbol for symbol.
+    /// The allocating reference, the workspace single path, the two batch
+    /// paths, and the parallel batch path at each supported worker count must
+    /// agree symbol for symbol.
     fn assert_every_path_agrees<X, S, M>(
         code: &BchCode<X, S, M>,
         messages: &[S],
@@ -3719,7 +3675,7 @@ mod tests {
         }
     }
 
-    // -- REQ-02: worker counts choose a schedule, never a result -----------
+    // -- Worker counts choose a schedule, never a result -------------------
 
     #[test]
     fn a_batch_keeps_its_input_order_at_every_worker_count() {
@@ -3877,7 +3833,7 @@ mod tests {
         assert_eq!(codewords, messages, "k = n batches the messages unchanged");
     }
 
-    // -- REQ-01: an encode reaches no allocator --------------------------
+    // -- An encode reaches no allocator ----------------------------------
 
     /// The address, length, and capacity of each register buffer, including
     /// the reduction tables an algorithm family reads. The code sizes them
@@ -3896,9 +3852,8 @@ mod tests {
     /// That snapshot for the scratch registers the calling thread holds for
     /// `W`, or `None` before this thread has encoded in that word type.
     ///
-    /// This is what witnesses REQ-01 for the entry points that take no
-    /// workspace: those registers are the only buffers such an encode can
-    /// allocate.
+    /// Those registers are the only buffers an entry point that takes no
+    /// workspace can allocate.
     fn scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> {
         crate::bch::encode::encode_scratch_shape::<W>()
     }
@@ -4071,11 +4026,11 @@ mod tests {
 
     #[test]
     fn a_workspace_is_prepared_for_every_family_before_its_first_batch() {
-        // B3's redundancy makes the table family available, so the workspace
+        // The redundancy makes the table family available, so the workspace
         // carries its reduction tables, and the bit-sliced family's lane
-        // scratch, from the moment it is built. The first batch under it must therefore find every buffer
-        // it needs already sized: the shape read before any encode has to
-        // survive the first call, not only the calls after it.
+        // scratch, from the moment it is built. The first batch under it must
+        // therefore find every buffer it needs already sized: the shape read
+        // before any encode has to survive the first call.
         let code = binary_narrow_sense(8, 0b100011101, 9);
         let layout = SystematicLayout::default();
         assert!(code.encode_family_available(EncodeFamily::TableRemainder, layout));
@@ -4115,7 +4070,7 @@ mod tests {
 
     #[test]
     fn a_workspace_without_a_second_family_carries_no_table_storage() {
-        // B1's redundancy is below the block width the table family reduces
+        // The redundancy is below the block width the table family reduces
         // in, so the workspace pays no table storage for a family it cannot
         // run; the bit-sliced family it can run carries its own scratch.
         let code = binary_narrow_sense(4, 0b10011, 7);

@@ -45,15 +45,10 @@
 //!
 //! # Decoding through the mother
 //!
-//! [`DvbT2BchDecoder`] decodes a shortened word by writing it into a
-//! mother-length buffer whose removed coordinates carry zero symbols and
-//! running the canonical [`BinaryBchDecoder`] on that buffer. A zero symbol
-//! at a removed coordinate is never in error, so the mother's
-//! bounded-distance guarantee and its beyond-radius miscorrection semantics
-//! carry over unchanged. Generic decoding of derived codes through their
-//! coordinate maps is tracked as `@/issue/1a8f6acd`. This composition is the
-//! DVB-T2 outer decoder, and `@/invariant/library-first-generality` names it
-//! as the tracked exception.
+//! [`DvbT2BchDecoder`] decodes a shortened word through the canonical
+//! [`BinaryBchDecoder`] of the mother code. This composition is the tracked
+//! exception `@/invariant/library-first-generality` names; generic decoding
+//! of derived codes through their coordinate maps is `@/issue/1a8f6acd`.
 //!
 //! # Examples
 //!
@@ -200,9 +195,6 @@ pub struct DvbT2DecodeWorkspace {
 /// a removed coordinate, which the shortened word has no room for; the
 /// corrected shortened word is then the mother word restricted to the kept
 /// coordinates.
-///
-/// Generic decoding through a derived code's coordinate map is tracked as
-/// `@/issue/1a8f6acd`.
 #[derive(Clone, Debug)]
 pub struct DvbT2BchDecoder<'code> {
     code: &'code DvbT2BchCode,
