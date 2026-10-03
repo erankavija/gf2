@@ -128,11 +128,8 @@ impl<F: FiniteField, const N: usize> BatchExtField<F, N> {
         &self.coeffs[i]
     }
 
-    /// Returns `true` if all coefficient lanes have the same length.
-    ///
-    /// [`BatchExtField::new`] maintains this invariant; the predicate serves
-    /// callers that construct batches through a different path (e.g.
-    /// deserialization).
+    /// Returns `true` if all coefficient lanes have the same length, the
+    /// representation invariant [`BatchExtField::new`] enforces.
     pub fn is_valid(&self) -> bool {
         if N == 0 {
             return true;
@@ -348,7 +345,7 @@ impl<F: ConstField + SimdKaratsubaHook + Send + Sync> BatchExtField<F, 3> {
     /// Structure-of-Arrays order. For `Fp<P>` bases the six independent
     /// products and the surrounding adds/subs route through the shared
     /// [`crate::gfp::SimdVecOps`] hooks when they are available; otherwise the
-    /// straight-line scalar lane combine preserves the same bit-exact result.
+    /// straight-line scalar lane combine computes the same result.
     /// The cost per batch element is 6 base-field multiplications, 6
     /// additions, 7 subtractions, and two non-residue scales.
     ///

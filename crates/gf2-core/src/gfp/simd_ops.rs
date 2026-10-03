@@ -2260,7 +2260,7 @@ pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
 }
 
 /// Panelized PLE base-case fast path for `Fp<P>`. Medium primes
-/// (`P ∈ (251, 65536)`) delegate to [`fp_try_ple_panel_base_medium`].
+/// (`P ∈ (251, 65536)`) take [`fp_try_ple_panel_base_medium`].
 ///
 /// For `P <= 251`, operates on the column window `[col_lo, col_hi)` of the
 /// parent row-major matrix storage:
