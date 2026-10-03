@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-03T17:08:59.556567433Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -34,7 +35,7 @@
     "satisfies:ffc35b8c/REQ-26"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Tersify comments in the gf2-core prime-field modules",
-  "updated_at": "2026-10-03T16:21:57.184887297Z"
+  "updated_at": "2026-10-03T17:08:59.556567433Z"
 }
