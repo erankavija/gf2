@@ -1,17 +1,14 @@
 # Supported configurations
 
-Each crate's `Cargo.toml` is authoritative for the facts below; this page
-states how they combine.
-
 ## Toolchain
 
 | Component | Requirement | Source |
 |---|---|---|
-| Rust | 1.95 or newer, edition 2021 | `rust-version` in the crate manifests |
+| Rust | 1.95 or newer, edition 2021 | the workspace toolchain contract in [`AGENTS.md`](../../AGENTS.md); `rust-version` in every crate manifest except `gf2-kernels-simd`, which declares none |
 | CI compilers | stable Rust for the build, test, lint and doc battery; Rust 1.95.0 for the `gf2-sim` compile-fail guard | [`ci.yml`](../../.github/workflows/ci.yml) |
 | Lean proofs | the toolchain pinned in [`lean-toolchain`](../../proofs/lean-toolchain), installed through elan | [formal verification how-to](../how-to/formal-verification.md) |
 | Lean regeneration | patched Charon and Aeneas with a pinned Rust nightly | [formal verification how-to](../how-to/formal-verification.md) |
-| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`) | [`build.rs`](../../crates/gf2-kernels-hip/build.rs) |
+| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`); tested with ROCm 7.2 | [`build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
 
 ## Operating systems
 
@@ -51,39 +48,21 @@ device yields `HipError::NoDevice`, which `gf2-sim` reports as
 
 ## Cargo features
 
-Defaults are marked with ✓. `test-support` exposes shared test helpers and
-conformance harnesses to integration tests and downstream crates; it is
-omitted from the table.
+Each crate's `[features]` table, linked below, defines and documents its
+features. This table records the defaults and the features that enable
+features in other crates.
 
-| Crate | Feature | Default | Effect |
-|---|---|---|---|
-| `gf2-core` | `rand` | ✓ | Random vector, matrix and field-element generators |
-| `gf2-core` | `io` | ✓ | Serde serialization and checksummed `FieldMatrix` files |
-| `gf2-core` | `simd` | | Runtime SIMD detection and dispatch |
-| `gf2-core` | `parallel` | | Rayon batch operations |
-| `gf2-core` | `visualization` | | PNG export of matrices |
-| `gf2-core` | `tuning-profile` | | Versioned tuning-profile parsing and serialization |
-| `gf2-coding` | `simd` | ✓ | Enables `gf2-core/simd` |
-| `gf2-coding` | `sim-observability` | ✓ | Per-SNR JSON checkpoints, SIGINT/SIGTERM flush, JSON-lines tracing, seekable ChaCha20 RNG |
-| `gf2-coding` | `parallel` | | Rayon batch encode and decode |
-| `gf2-coding` | `llr-f64` | | `f64` LLRs in place of `f32` |
-| `gf2-coding` | `visualization` | | Enables `gf2-core/visualization` |
-| `gf2-coding` | `hip` | | GPU batch BCJR for product codes, Gray-QAM demapping and BCH syndrome evaluation |
-| `gf2-coding` | `tuning-profile` | | JSON codec for coding-owned tuning selectors |
-| `gf2-coding` | `bench-csv` | | Sparse benchmark CSV emitter support |
-| `gf2-algebra` | `simd` | ✓ | SIMD dispatch for packed F_3 arithmetic and permanents |
-| `gf2-algebra` | `parallel` | ✓ | Rayon batch permanents |
-| `gf2-algebra` | `f5` | ✓ | Packed F_5 types and permanent |
-| `gf2-algebra` | `f7` | ✓ | Packed F_7 types and permanent |
-| `gf2-algebra` | `hip` | | `gf2_algebra::gpu` batch permanents over F_3, F_5 and F_7 |
-| `gf2-algebra` | `serde` | | Serde derives on packed types |
-| `gf2-algebra` | `tuning-profile` | | JSON codec for algebra-owned tuning selectors |
-| `gf2-sim` | `hip` | | `gf2_sim::gpu` dispatch and the hybrid CPU/GPU executor; enables `hip` on `gf2-coding` and `gf2-algebra` |
-| `gf2-sim` | `llr-f64` | | Enables `gf2-coding/llr-f64` |
-| `gf2-kernels-simd` | `avx2`, `avx512` | | Gate no code; kernel selection is runtime detection |
-| `gf2-kernels-hip` | `hip` | | Adds the BCH syndrome and permanent kernels to the linked library |
+| Crate | Default | Enables in other crates |
+|---|---|---|
+| [`gf2-core`](../../crates/gf2-core/Cargo.toml) | `rand`, `io` | none |
+| [`gf2-coding`](../../crates/gf2-coding/Cargo.toml) | `simd`, `sim-observability` | `simd`, `parallel`, `visualization`, `tuning-profile` enable the same `gf2-core` feature; `bench-csv` enables `gf2-core/test-support`; `hip` enables `gf2-kernels-hip/hip` |
+| [`gf2-algebra`](../../crates/gf2-algebra/Cargo.toml) | `simd`, `parallel`, `f5`, `f7` | `simd`, `parallel`, `tuning-profile` enable the same `gf2-core` feature; `hip` enables `gf2-kernels-hip/hip` |
+| [`gf2-sim`](../../crates/gf2-sim/Cargo.toml) | none | `hip` enables `gf2-coding/hip` and `gf2-algebra/hip`; `llr-f64` enables `gf2-coding/llr-f64` |
+| [`gf2-kernels-simd`](../../crates/gf2-kernels-simd/Cargo.toml) | none | none; `avx2` and `avx512` gate no code |
+| [`gf2-kernels-hip`](../../crates/gf2-kernels-hip/Cargo.toml) | none | none |
+| [`gf2-stats`](../../crates/gf2-stats/Cargo.toml) | no features | none |
 
-`gf2-stats` has no features. List the current set with
+List the resolved set with
 `./scripts/cargo-budget.sh cargo metadata --format-version 1 --no-deps`.
 
 ## Installation
