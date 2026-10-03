@@ -1,7 +1,4 @@
 //! BitMatrix - A row-major, bit-packed boolean matrix for GF(2) operations.
-//!
-//! This module provides a memory-efficient matrix type where each element is a single bit,
-//! stored in a row-major layout with bits packed into u64 words.
 
 use crate::tuning;
 use std::fmt;
@@ -26,10 +23,7 @@ const MATVEC_SIMD_MIN_WORDS_SELECTED: usize = MATVEC_SIMD_MIN_WORDS;
 /// Conservative default definition for `bit_matrix.transpose_macro_tile_blocks`.
 ///
 /// The active profile's `transpose_macro_tile_blocks` value replaces this
-/// default at the transpose dispatch entry. It is sized so that the
-/// (input row-strip) × (output column-strip) working set of one macro-tile
-/// stays L1-resident on a Zen 3 core; the value is empirical for the B1
-/// recovery measurements.
+/// default at the transpose dispatch entry.
 pub(crate) const MACRO_TILE_BLOCKS: usize = 8;
 
 /// The selected arm of the [`BitMatrix::matvec`] dispatcher.
@@ -108,9 +102,6 @@ fn record_transpose_effective_observation(route: TransposeRoute) {
 }
 
 /// Resets the test-only completed-transpose observation.
-///
-/// This changes evidence instrumentation only. It does not reset tuning or
-/// capability detection.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_transpose_effective_observation() {
     TRANSPOSE_EFFECTIVE_MACRO_TILE_BLOCKS.store(0, Ordering::Relaxed);
@@ -192,25 +183,6 @@ fn transpose_route_resolved(
 /// - Bit at position `(r, c)` is stored at:
 ///   - Word index: `r * stride_words + (c / 64)`
 ///   - Bit offset: `c % 64`
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::matrix::BitMatrix;
-///
-/// // Create a 3x4 zero matrix
-/// let mut m = BitMatrix::zeros(3, 4);
-/// m.set(0, 0, true);
-/// m.set(1, 2, true);
-/// assert_eq!(m.get(0, 0), true);
-/// assert_eq!(m.get(1, 2), true);
-/// assert_eq!(m.get(0, 1), false);
-///
-/// // Create a 4x4 identity matrix
-/// let id = BitMatrix::identity(4);
-/// assert_eq!(id.get(0, 0), true);
-/// assert_eq!(id.get(0, 1), false);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BitMatrix {
     data: Vec<u64>,
@@ -220,19 +192,13 @@ pub struct BitMatrix {
 }
 
 impl BitMatrix {
-    /// Multiplies two matrices with the direct row-XOR accumulator.
-    ///
-    /// This is the non-M4RM fallback used when the Four Russians table would
-    /// degenerate to single-row entries. It computes each output row as the XOR
-    /// of rows of `rhs` selected by set bits in the corresponding row of `self`.
-    /// For wide output rows, the row accumulation uses the same hoisted
-    /// `LogicalFns::xor_fn` dispatch as the M4RM hot path.
+    /// Multiplies two matrices with the direct row-XOR accumulator: each output
+    /// row is the XOR of the rows of `rhs` selected by the set bits of the
+    /// corresponding row of `self`.
     ///
     /// # Complexity
     ///
-    /// O(nnz(`self`) × `rhs.cols().div_ceil(64)`) word operations. Dense inputs
-    /// should use the M4RM path; this fallback is for narrow/degenerate panels
-    /// where table precomputation does not buy reuse.
+    /// O(nnz(`self`) × `rhs.cols().div_ceil(64)`) word operations.
     #[inline(never)]
     pub(crate) fn mul_row_xor_dispatch(&self, rhs: &BitMatrix) -> BitMatrix {
         assert_eq!(
@@ -297,11 +263,6 @@ impl BitMatrix {
     }
 
     /// Creates a new zero-initialized matrix with the given dimensions.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Number of rows
-    /// * `cols` - Number of columns
     pub fn zeros(rows: usize, cols: usize) -> Self {
         let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
         let total_words = rows * stride_words;
@@ -314,10 +275,6 @@ impl BitMatrix {
     }
 
     /// Creates an n×n identity matrix.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Size of the square identity matrix
     pub fn identity(n: usize) -> Self {
         let mut m = Self::zeros(n, n);
         for i in 0..n {
@@ -327,11 +284,6 @@ impl BitMatrix {
     }
 
     /// Creates a matrix with all bits set to 1.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Number of rows
-    /// * `cols` - Number of columns
     pub fn ones(rows: usize, cols: usize) -> Self {
         let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
         let total_words = rows * stride_words;
@@ -347,7 +299,6 @@ impl BitMatrix {
 
         let mut data = vec![!0u64; total_words];
 
-        // Mask padding bits in last word of each row
         if !cols.is_multiple_of(64) {
             let used_bits = cols % 64;
             let mask = (1u64 << used_bits) - 1;
@@ -369,16 +320,6 @@ impl BitMatrix {
     ///
     /// Each bit has probability 0.5 of being set. For custom probabilities,
     /// use [`BitMatrix::random_with_probability`].
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Number of rows
-    /// * `cols` - Number of columns
-    /// * `rng` - A mutable reference to a random number generator
-    ///
-    /// # Complexity
-    ///
-    /// O(rows × stride_words) where stride_words = ⌈cols / 64⌉.
     #[cfg(feature = "rand")]
     pub fn random<R: rand::Rng>(rows: usize, cols: usize, rng: &mut R) -> Self {
         let mut m = Self::zeros(rows, cols);
@@ -389,32 +330,9 @@ impl BitMatrix {
         m
     }
 
-    /// Creates a `BitMatrix` with random bits using a seeded RNG.
-    ///
-    /// This provides deterministic random generation - the same seed
-    /// will always produce the same matrix.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Number of rows
-    /// * `cols` - Number of columns
-    /// * `seed` - Seed value for the random number generator
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let m1 = BitMatrix::random_seeded(10, 20, 0x1234);
-    /// let m2 = BitMatrix::random_seeded(10, 20, 0x1234);
-    /// assert_eq!(m1, m2); // Same seed produces same matrix
-    /// # }
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(rows × stride_words) where stride_words = ⌈cols / 64⌉.
+    /// Creates a `BitMatrix` with random bits from an RNG seeded with `seed`;
+    /// equal seeds give equal matrices
+    /// (`test_bitmatrix_random_seeded_deterministic`).
     #[cfg(feature = "rand")]
     pub fn random_seeded(rows: usize, cols: usize, seed: u64) -> Self {
         use rand::rngs::StdRng;
@@ -426,23 +344,9 @@ impl BitMatrix {
 
     /// Creates a `BitMatrix` with random bits where each bit is set with probability `p`.
     ///
-    /// For `p = 0.5`, prefer [`BitMatrix::random`] which is optimized for the uniform case.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Number of rows
-    /// * `cols` - Number of columns
-    /// * `p` - Probability in [0.0, 1.0] that each bit is set to 1
-    /// * `rng` - A mutable reference to a random number generator
-    ///
     /// # Panics
     ///
     /// Panics if `p` is not in the range [0.0, 1.0].
-    ///
-    /// # Complexity
-    ///
-    /// O(rows × cols). Note that this is slower than [`BitMatrix::random`]
-    /// for the default p=0.5 case.
     #[cfg(feature = "rand")]
     pub fn random_with_probability<R: rand::Rng>(
         rows: usize,
@@ -458,7 +362,6 @@ impl BitMatrix {
 
         let mut m = Self::zeros(rows, cols);
 
-        // Fast paths for extreme probabilities
         if p == 0.0 {
             return m;
         }
@@ -469,13 +372,9 @@ impl BitMatrix {
             m.mask_padding_bits();
             return m;
         }
-
-        // For p=0.5, use optimized word-level generation
         if (p - 0.5).abs() < 1e-10 {
             return Self::random(rows, cols, rng);
         }
-
-        // General case: generate bits individually
         for r in 0..rows {
             for c in 0..cols {
                 if rng.gen_bool(p) {
@@ -489,14 +388,6 @@ impl BitMatrix {
     /// Fills this `BitMatrix` with random bits using the provided RNG.
     ///
     /// The dimensions of the matrix remain unchanged.
-    ///
-    /// # Arguments
-    ///
-    /// * `rng` - A mutable reference to a random number generator
-    ///
-    /// # Complexity
-    ///
-    /// O(rows × stride_words).
     #[cfg(feature = "rand")]
     pub fn fill_random<R: rand::Rng>(&mut self, rng: &mut R) {
         if !self.data.is_empty() {
@@ -630,18 +521,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if row >= rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(2, 128);
-    /// m.set(0, 64, true);
-    /// let words = m.row_words(0);
-    /// assert_eq!(words.len(), 2);
-    /// assert_eq!(words[1] & 1, 1);
-    /// ```
     #[inline]
     pub fn row_words(&self, row: usize) -> &[u64] {
         assert!(
@@ -659,20 +538,6 @@ impl BitMatrix {
     /// # Panics
     ///
     /// Panics if row >= rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(2, 128);
-    /// {
-    ///     let words = m.row_words_mut(0);
-    ///     words[0] = 0xFF;
-    /// }
-    /// assert_eq!(m.get(0, 0), true);
-    /// assert_eq!(m.get(0, 7), true);
-    /// ```
     #[inline]
     pub fn row_words_mut(&mut self, row: usize) -> &mut [u64] {
         assert!(
@@ -716,19 +581,9 @@ impl BitMatrix {
 
     /// Extracts a row as a BitVec.
     ///
-    /// Creates a new BitVec containing all column values from the specified row.
-    ///
-    /// # Arguments
-    ///
-    /// * `row` - Row index (0-based)
-    ///
     /// # Panics
     ///
     /// Panics if `row >= self.rows()`
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) - iterates through all columns in the row
     pub fn row_as_bitvec(&self, row: usize) -> crate::BitVec {
         assert!(
             row < self.rows,
@@ -746,19 +601,9 @@ impl BitMatrix {
 
     /// Extracts a column as a BitVec.
     ///
-    /// Creates a new BitVec containing all row values from the specified column.
-    ///
-    /// # Arguments
-    ///
-    /// * `col` - Column index (0-based)
-    ///
     /// # Panics
     ///
     /// Panics if `col >= self.cols()`
-    ///
-    /// # Complexity
-    ///
-    /// O(rows) - iterates through all rows in the column
     pub fn col_as_bitvec(&self, col: usize) -> crate::BitVec {
         assert!(
             col < self.cols,
@@ -777,29 +622,11 @@ impl BitMatrix {
     /// Returns all columns as u32 bitmasks.
     ///
     /// For each column j, bit i of the returned u32 is set iff `self.get(i, j)`
-    /// is true. Useful for trellis-based decoders (BCJR) where each column of
-    /// the parity-check matrix defines a state transition.
+    /// is true.
     ///
     /// # Panics
     ///
     /// Panics if the matrix has more than 32 rows.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::bitmatrix;
-    ///
-    /// let m = bitmatrix![
-    ///     1, 0, 1;
-    ///     0, 1, 1
-    /// ];
-    /// let masks = m.cols_as_u32_masks();
-    /// assert_eq!(masks, vec![0b01, 0b10, 0b11]);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(rows * cols).
     pub fn cols_as_u32_masks(&self) -> Vec<u32> {
         assert!(
             self.rows <= 32,
@@ -845,20 +672,12 @@ impl BitMatrix {
         let start1 = r1 * self.stride_words;
         let start2 = r2 * self.stride_words;
 
-        // Swap words in the two rows
         for i in 0..self.stride_words {
             self.data.swap(start1 + i, start2 + i);
         }
     }
 
     /// XOR row `src` into row `dst` (word-level operation).
-    ///
-    /// Performs: `dst_row ^= src_row` over GF(2).
-    ///
-    /// # Arguments
-    ///
-    /// * `dst` - Destination row index (will be modified)
-    /// * `src` - Source row index (will be XOR'd into dst)
     ///
     /// # Panics
     ///
@@ -889,10 +708,7 @@ impl BitMatrix {
         let start_dst = dst * self.stride_words;
         let start_src = src * self.stride_words;
 
-        // Use kernel xor_inplace which automatically dispatches to SIMD when available
         use crate::kernels::ops::xor_inplace;
-
-        // Use split_at_mut to get non-overlapping slices for borrow checker
         if start_dst < start_src {
             let (left, right) = self.data.split_at_mut(start_src);
             xor_inplace(
@@ -910,12 +726,8 @@ impl BitMatrix {
 
     /// XORs row `src` into row `dst`, starting at `start_word`.
     ///
-    /// This is the row-operation kernel used by blocked elimination. Skipping
-    /// words before the active pivot is valid once earlier pivot columns have
-    /// already been cleared, and halves the average row traffic on square RREF
-    /// workloads. This intentionally uses an inline scalar loop: the RREF
-    /// target rows are short enough (4–16 words) that avoiding a backend
-    /// function call beats SIMD dispatch overhead in the measured hot loop.
+    /// Skipping words before the active pivot is valid once earlier pivot
+    /// columns are cleared. A no-op when `dst == src`.
     pub(crate) fn row_xor_from(&mut self, dst: usize, src: usize, start_word: usize) {
         debug_assert!(dst < self.rows, "dst row {} out of bounds", dst);
         debug_assert!(src < self.rows, "src row {} out of bounds", src);
@@ -955,8 +767,8 @@ impl BitMatrix {
 
     /// XORs a precomputed row slice into row `dst`, starting at `start_word`.
     ///
-    /// Used by M4RI-style Gray-table elimination where `src` is a row
-    /// combination stored outside the matrix.
+    /// Used by Gray-table elimination, where `src` is a row combination stored
+    /// outside the matrix.
     pub(crate) fn row_xor_slice_from(&mut self, dst: usize, start_word: usize, src: &[u64]) {
         debug_assert!(dst < self.rows, "dst row {} out of bounds", dst);
         debug_assert!(
@@ -986,16 +798,7 @@ impl BitMatrix {
 
     /// Find the first row >= start_row that has a 1 in the given column.
     ///
-    /// Uses word-level access for better performance than repeated get() calls.
-    ///
-    /// # Arguments
-    ///
-    /// * `col` - Column index to search
-    /// * `start_row` - First row to check (inclusive)
-    ///
-    /// # Returns
-    ///
-    /// Row index if found, None if no such row exists.
+    /// Returns `None` if no such row exists or an index is out of range.
     pub fn find_pivot_row(&self, col: usize, start_row: usize) -> Option<usize> {
         if col >= self.cols || start_row >= self.rows {
             return None;
@@ -1014,14 +817,11 @@ impl BitMatrix {
         None
     }
 
-    /// Check if a specific bit is set using word-level access (no bounds checking).
+    /// Returns the bit at `(row, col)` without the per-axis range checks of
+    /// [`Self::get`].
     ///
-    /// This is faster than get() for inner loops where bounds are already known.
-    ///
-    /// # Safety
-    ///
-    /// This is a safe function but panics in debug mode if indices are out of bounds.
-    /// In release mode, it performs no bounds checking for performance.
+    /// Out-of-range indices panic in debug builds; in release builds they read
+    /// another position of the backing store or panic on its bounds.
     #[inline]
     pub fn get_unchecked(&self, row: usize, col: usize) -> bool {
         debug_assert!(row < self.rows, "row {} out of bounds", row);
@@ -1035,62 +835,26 @@ impl BitMatrix {
 
     /// Returns the transpose of this matrix.
     ///
-    /// The transpose of an m×n matrix is an n×m matrix where element (i,j)
-    /// of the transpose equals element (j,i) of the original.
-    ///
     /// # Implementation
     ///
-    /// Uses a 64×64 bit-block transpose primitive driven from
-    /// [`gf2_kernels_simd::transpose`], whose `TransposeLane` family names
-    /// every implementation of the block contract: the scalar Hacker's
-    /// Delight bit-twiddle lane, which needs no processor feature, and the
-    /// AVX2 lanes (`avx2-bit-twiddle`, `avx2-ymm6`, `avx2-pshufb`,
-    /// `avx2-movemask`), each published only after a runtime AVX2 check.
-    /// This method resolves the production lane through
-    /// `gf2_kernels_simd::transpose::detect`, the `PRODUCTION_PREFERENCE`
-    /// order, under this crate's `simd` cargo feature; without that feature
-    /// the scalar lane is called directly. Every lane is reachable by name
-    /// through [`transpose_with_block_kernel`](Self::transpose_with_block_kernel),
-    /// which runs the same driver at the lane a caller picks.
-    ///
-    /// The outer driver tiles the matrix into 64×64 bit-blocks, calls
-    /// the kernel once per block, and writes the transposed block at
-    /// the swapped tile coordinate in the output. Compared with the
-    /// naive bit-by-bit double loop this drops the per-block cost from
-    /// O(64²) gets/sets to O(64 log 64) word ops, a ~50–100× win for
-    /// dense matrices on the order of 1024 cols.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let mut m = BitMatrix::zeros(2, 3);
-    /// m.set(0, 1, true);
-    /// m.set(1, 2, true);
-    ///
-    /// let mt = m.transpose();
-    /// assert_eq!(mt.rows(), 3);
-    /// assert_eq!(mt.cols(), 2);
-    /// assert_eq!(mt.get(1, 0), true);
-    /// assert_eq!(mt.get(2, 1), true);
-    /// ```
+    /// The driver tiles the matrix into 64×64 bit-blocks and calls a block
+    /// kernel of [`gf2_kernels_simd::transpose`] once per block. Under the
+    /// `simd` cargo feature the kernel is the lane
+    /// `gf2_kernels_simd::transpose::detect` publishes; without it the scalar
+    /// lane is called directly.
+    /// [`transpose_with_block_kernel`](Self::transpose_with_block_kernel) runs
+    /// the same driver at a caller-chosen lane.
     ///
     /// # Complexity
     ///
-    /// O((rows × cols / 64²) · 64 · log₂ 64) word operations =
-    /// O(rows · cols / 64) — linear in the bit count up to a small
-    /// constant.
+    /// O(rows · cols / 64) word operations.
     pub fn transpose(&self) -> Self {
         self.transpose_with_block_kernel(Self::resolved_block_kernel())
     }
 
-    /// The 64×64 block kernel [`Self::transpose`] resolves.
-    ///
-    /// Under this crate's `simd` cargo feature, which is not one of its
-    /// defaults, that is the lane `gf2_kernels_simd::transpose::detect`
-    /// publishes for the host's processor features. Without the feature the
-    /// portable kernel is called directly and no detection happens.
+    /// The 64×64 block kernel [`Self::transpose`] resolves: under the `simd`
+    /// cargo feature the lane `gf2_kernels_simd::transpose::detect` publishes,
+    /// otherwise the portable kernel.
     fn resolved_block_kernel() -> gf2_kernels_simd::transpose::Transpose64x64Fn {
         #[cfg(feature = "simd")]
         {
@@ -1107,13 +871,9 @@ impl BitMatrix {
 
     /// [`Self::transpose`] driven by one caller-chosen 64×64 block kernel.
     ///
-    /// [`Self::transpose`] is this function at the kernel
-    /// `resolved_block_kernel` returns, so the
-    /// tiling, the output allocation, the zero padding of a partial input
-    /// tile and the output tail mask are the same work either way and only
-    /// the block primitive differs. A caller names a kernel through
-    /// `gf2_kernels_simd::transpose::lane`, which is what pins a lane for a
-    /// benchmark arm or a contract case without a process-global override.
+    /// Tiling, output allocation, zero padding of a partial input tile and
+    /// the output tail mask are those of [`Self::transpose`]; only the block
+    /// primitive differs. `gf2_kernels_simd::transpose::lane` names a kernel.
     ///
     /// # Examples
     ///
@@ -1137,20 +897,8 @@ impl BitMatrix {
     }
 
     /// Tiled transpose driver: walks 64×64 bit-blocks and dispatches each
-    /// to `transpose_64x64`.
-    ///
-    /// Beyond the active `bit_matrix.transpose_simple_max_blocks` block
-    /// count, the driver imposes an L1-friendly outer macro-tile so
-    /// the (input row-band) × (output column-band) working set fits
-    /// in L1d. Below the threshold it uses the simple 2-level block
-    /// loop. The macro-tile size is chosen so that the input
-    /// row-strip + output column-strip fits in ~64 KiB on Zen 3
-    /// (32 KiB L1d × 2 ways shared between read + write).
-    ///
-    /// Factored out of [`Self::transpose`] so each PPC-spiral step
-    /// can instrument the outer loop (V4 — no tiling, V3 — same,
-    /// V7 — cache-tiled outer loop) without duplicating the per-block
-    /// bit-packing logic.
+    /// to `transpose_64x64`, through the outer loop [`transpose_route`]
+    /// selects.
     fn transpose_blocked(&self, transpose_64x64: fn(&[u64; 64], &mut [u64; 64])) -> Self {
         let mut out = Self::zeros(self.cols, self.rows);
         let in_stride = self.stride_words;
@@ -1177,10 +925,6 @@ impl BitMatrix {
                 );
             }
             TransposeRoute::MacroTiled { macro_tile_blocks } => {
-                // Macro-tiled outer loop: process the resolved
-                // macro_tile_blocks × macro_tile_blocks bit-blocks per
-                // macro-tile so the per-tile input/output footprint stays
-                // L1-resident.
                 let mut br_macro = 0usize;
                 while br_macro < n_row_blocks {
                     let br_end = (br_macro + macro_tile_blocks).min(n_row_blocks);
@@ -1206,11 +950,6 @@ impl BitMatrix {
                 }
             }
         }
-
-        // Mask the output's padding bits — the kernel may have written
-        // bits beyond row count `self.rows` into the high bits of the
-        // last `u64` of each output row; those must be zero per the
-        // tail-mask invariant.
         out.mask_padding_bits();
         #[cfg(any(test, feature = "test-support"))]
         record_transpose_effective_observation(route);
@@ -1218,21 +957,12 @@ impl BitMatrix {
     }
 
     /// Conservative default definition for
-    /// `bit_matrix.transpose_simple_max_blocks` (in 64×64 bit-blocks).
-    ///
-    /// The active profile's `transpose_simple_max_blocks` value controls
-    /// whether the transpose driver uses the simple two-level block loop or
-    /// the macro-tiled outer loop. This default is tuned from the recovered B1
-    /// benchmark sweep: matrices up to 16 blocks (= 1024 rows/cols) in both
-    /// dimensions use the simple loop, while larger matrices use the
-    /// macro-tiled driver.
+    /// `bit_matrix.transpose_simple_max_blocks` (in 64×64 bit-blocks): at or
+    /// below the active value in both dimensions the transpose driver uses the
+    /// simple two-level block loop, above it the macro-tiled outer loop.
     pub(crate) const TRANSPOSE_CACHE_TILE_THRESHOLD_BLOCKS: usize = 16;
 
     /// Inner loop over a (br, bc) range of 64×64 bit-blocks.
-    ///
-    /// Allocates a single tile pair on the stack per invocation;
-    /// shared across the macro-tile and direct-loop paths in
-    /// [`Self::transpose_blocked`].
     #[allow(clippy::too_many_arguments)]
     fn transpose_inner_loop(
         in_data: &[u64],
@@ -1272,11 +1002,8 @@ impl BitMatrix {
 
                 transpose_64x64(&tile_in, &mut tile_out);
 
-                // Write the transposed tile: bit (j, i) of the
-                // transposed block lives in bit `i` of `tile_out[j]`,
-                // which maps to row `(col_start + j)` and word `br` of
-                // the output. Rows beyond `block_cols` aren't written
-                // because they don't exist in the transposed matrix.
+                // Bit (j, i) of the transposed block is bit `i` of
+                // `tile_out[j]`: row `col_start + j`, word `br` of the output.
                 for (j, &word) in tile_out.iter().enumerate().take(block_cols) {
                     out_data[(col_start + j) * out_stride + br] = word;
                 }
@@ -1286,15 +1013,12 @@ impl BitMatrix {
 
     /// Converts this dense matrix to a CSR SpBitMatrix.
     ///
-    /// This scans all bits and records set columns per row. Suitable for low-density matrices.
+    /// This scans all bits and records set columns per row.
     pub fn to_sparse(&self) -> crate::sparse::SpBitMatrix {
         crate::sparse::SpBitMatrix::from_dense(self)
     }
 
     /// Masks padding bits in each row to zero.
-    ///
-    /// This maintains the invariant that bits beyond `cols` in each row
-    /// are always zero. Called internally after bulk operations.
     fn mask_padding_bits(&mut self) {
         if self.cols == 0 || self.stride_words == 0 {
             return;
@@ -1302,7 +1026,7 @@ impl BitMatrix {
 
         let used_bits_in_last_word = self.cols % 64;
         if used_bits_in_last_word == 0 {
-            return; // No padding bits
+            return;
         }
 
         let mask = (1u64 << used_bits_in_last_word) - 1;
@@ -1316,53 +1040,11 @@ impl BitMatrix {
 
     /// Compute matrix-vector product: y = A × x over GF(2).
     ///
-    /// For an m×n matrix A, computes the product with vector x (n bits).
-    /// Returns vector y of length m.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - Input bit vector of length n (must equal self.cols())
-    ///
-    /// # Returns
-    ///
-    /// Output bit vector of length m (equals self.rows())
+    /// For an m×n matrix A and an n-bit `x`, returns the m-bit vector y.
     ///
     /// # Panics
     ///
     /// Panics if x.len() != self.cols()
-    ///
-    /// # Performance
-    ///
-    /// Uses word-level operations (64-bit) for efficiency. Each row is processed
-    /// by XORing masked words from the input vector.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitMatrix, BitVec};
-    ///
-    /// let mut a = BitMatrix::zeros(2, 3);
-    /// a.set(0, 0, true);  // Row 0: [1 0 1]
-    /// a.set(0, 2, true);
-    /// a.set(1, 1, true);  // Row 1: [0 1 1]
-    /// a.set(1, 2, true);
-    ///
-    /// let mut x = BitVec::new();
-    /// x.push_bit(true);   // [1, 1, 1]
-    /// x.push_bit(true);
-    /// x.push_bit(true);
-    ///
-    /// let y = a.matvec(&x);
-    /// assert_eq!(y.len(), 2);
-    /// // Row 0: 1^0^1 = 0
-    /// assert_eq!(y.get(0), false);
-    /// // Row 1: 0^1^1 = 0
-    /// assert_eq!(y.get(1), false);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(rows × cols) in the worst case, but optimized with word-level operations.
     pub fn matvec(&self, x: &crate::BitVec) -> crate::BitVec {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
 
@@ -1416,13 +1098,9 @@ impl BitMatrix {
         acc.count_ones() & 1 == 1
     }
 
-    /// Row parities through the detected bundle's established fused
-    /// AND-population-count kernel.
-    ///
-    /// The kernel counts each row's intersection with `x` without a temporary
-    /// buffer or a second pass. The carry-save candidate is not selected
-    /// because its confirmation receipt does not qualify under the shared
-    /// measurement contract.
+    /// Row parities through the detected bundle's fused AND-population-count
+    /// kernel, which counts each row's intersection with `x` without an
+    /// intermediate buffer or a second pass.
     #[cfg(feature = "simd")]
     #[inline(never)]
     fn matvec_simd(&self, x: &crate::BitVec, fns: &gf2_kernels_simd::LogicalFns) -> crate::BitVec {
@@ -1440,79 +1118,34 @@ impl BitMatrix {
 
     /// Compute matrix-vector product with transpose: y = A^T × x over GF(2).
     ///
-    /// For an m×n matrix A, computes the product of A^T (n×m) with vector x (m bits).
-    /// Returns vector y of length n.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - Input bit vector of length m (must equal self.rows())
-    ///
-    /// # Returns
-    ///
-    /// Output bit vector of length n (equals self.cols())
+    /// For an m×n matrix A and an m-bit `x`, returns the n-bit vector y.
     ///
     /// # Panics
     ///
     /// Panics if x.len() != self.rows()
     ///
-    /// # Performance
-    ///
-    /// Processes 64 columns at a time using word-level operations. This optimization
-    /// provides 10-15× speedup over bit-by-bit column iteration by exploiting the
-    /// row-major memory layout and processing entire words at once.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::{BitMatrix, BitVec};
-    ///
-    /// let mut a = BitMatrix::zeros(2, 3);
-    /// a.set(0, 0, true);  // Row 0: [1 0 1]
-    /// a.set(0, 2, true);
-    /// a.set(1, 1, true);  // Row 1: [0 1 1]
-    /// a.set(1, 2, true);
-    ///
-    /// let mut x = BitVec::new();
-    /// x.push_bit(true);   // [1, 0]
-    /// x.push_bit(false);
-    ///
-    /// let y = a.matvec_transpose(&x);
-    /// assert_eq!(y.len(), 3);
-    /// // Col 0: [1, 0] dot [1, 0] = 1
-    /// assert_eq!(y.get(0), true);
-    /// // Col 1: [0, 1] dot [1, 0] = 0
-    /// assert_eq!(y.get(1), false);
-    /// // Col 2: [1, 1] dot [1, 0] = 1
-    /// assert_eq!(y.get(2), true);
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(rows × stride_words) - processes columns in blocks of 64.
+    /// O(rows × stride_words) word operations.
     pub fn matvec_transpose(&self, x: &crate::BitVec) -> crate::BitVec {
         assert_eq!(x.len(), self.rows, "input BitVec length must equal rows");
 
         let mut y = crate::BitVec::with_capacity(self.cols);
 
-        // Process 64 columns at a time (one word)
         for word_idx in 0..self.stride_words {
             let col_start = word_idx * 64;
             let col_end = (col_start + 64).min(self.cols);
-
-            // Accumulate XOR of all rows where x[r] = 1
             let mut block_result = 0u64;
 
             for r in 0..self.rows {
                 if !x.get(r) {
-                    continue; // Skip rows where x[r] = 0
+                    continue;
                 }
 
                 let row_offset = r * self.stride_words;
                 let word = self.data[row_offset + word_idx];
                 block_result ^= word;
             }
-
-            // Unpack block_result into individual column bits
             let num_cols_in_block = col_end - col_start;
             for bit_idx in 0..num_cols_in_block {
                 let bit = (block_result & (1u64 << bit_idx)) != 0;
@@ -1534,10 +1167,7 @@ impl fmt::Display for BitMatrix {
         // Border width: each column takes 2 chars (digit + space), plus 1 for final space
         let border_width = self.cols * 2 + 1;
 
-        // Top border
         writeln!(f, "  ┌{}┐", " ".repeat(border_width))?;
-
-        // Matrix rows
         for r in 0..self.rows {
             write!(f, "  │ ")?;
             for c in 0..self.cols {
@@ -1552,8 +1182,6 @@ impl fmt::Display for BitMatrix {
             }
             writeln!(f, " │")?;
         }
-
-        // Bottom border
         write!(f, "  └{}┘", " ".repeat(border_width))
     }
 }
@@ -1597,7 +1225,6 @@ impl crate::matrix_like::MatrixLikeMut<bool> for BitMatrix {
 impl Mul<BitMatrix> for BitMatrix {
     type Output = BitMatrix;
 
-    /// Matrix multiplication: `A * B`
     fn mul(self, rhs: BitMatrix) -> BitMatrix {
         crate::alg::matmul::multiply(&self, &rhs)
     }
@@ -1629,35 +1256,12 @@ impl Mul<&BitMatrix> for &BitMatrix {
 
 #[cfg(feature = "visualization")]
 impl BitMatrix {
-    /// Saves the matrix as a PNG image.
-    ///
-    /// Each bit is represented as a single pixel:
-    /// - Unset bits (0) → black (0, 0, 0)
-    /// - Set bits (1) → white (255, 255, 255)
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Output file path (e.g., "matrix.png")
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// let m = BitMatrix::identity(100);
-    /// m.save_image("identity.png").unwrap();
-    /// ```
+    /// Saves the matrix as a PNG image, one pixel per bit: unset bits black,
+    /// set bits white.
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - File cannot be created
-    /// - PNG encoding fails
-    ///
-    /// # Note
-    ///
-    /// To modify colors, edit the hard-coded `ZERO_COLOR` and `ONE_COLOR` constants
-    /// in the implementation.
+    /// Returns an error if the file cannot be created or PNG encoding fails.
     pub fn save_image(
         &self,
         path: impl AsRef<std::path::Path>,
@@ -1709,7 +1313,6 @@ mod tests {
         let m = BitMatrix::ones(3, 4);
         assert_eq!(m.rows(), 3);
         assert_eq!(m.cols(), 4);
-        // All bits should be set
         for r in 0..3 {
             for c in 0..4 {
                 assert!(m.get(r, c), "Bit at ({}, {}) should be 1", r, c);
@@ -1719,15 +1322,12 @@ mod tests {
 
     #[test]
     fn test_ones_edge_cases() {
-        // Single element
         let m = BitMatrix::ones(1, 1);
         assert!(m.get(0, 0));
 
         // Non-word-aligned columns
         let m = BitMatrix::ones(2, 65);
         assert!(m.get(1, 64));
-
-        // Empty matrix
         let m = BitMatrix::ones(0, 0);
         assert_eq!(m.rows(), 0);
         assert_eq!(m.cols(), 0);
@@ -1746,7 +1346,6 @@ mod tests {
 
     #[test]
     fn test_mul_operator_identity() {
-        // Test A * I = A
         let mut a = BitMatrix::zeros(3, 4);
         a.set(0, 1, true);
         a.set(1, 2, true);
@@ -1766,7 +1365,6 @@ mod tests {
 
     #[test]
     fn test_mul_operator_owned() {
-        // Test owned values: A * B
         let a = BitMatrix::identity(3);
         let b = BitMatrix::identity(3);
         let c = a * b;
@@ -1776,26 +1374,18 @@ mod tests {
 
     #[test]
     fn test_mul_operator_mixed_refs() {
-        // Test mixed references
         let a = BitMatrix::identity(2);
         let b = BitMatrix::identity(2);
-
-        // A * &B
         let c1 = a.clone() * &b;
         assert_eq!(c1, BitMatrix::identity(2));
-
-        // &A * B
         let c2 = &a * b.clone();
         assert_eq!(c2, BitMatrix::identity(2));
-
-        // &A * &B
         let c3 = &a * &b;
         assert_eq!(c3, BitMatrix::identity(2));
     }
 
     #[test]
     fn test_mul_operator_rectangular() {
-        // Test 2x3 * 3x2 = 2x2
         let mut a = BitMatrix::zeros(2, 3);
         a.set(0, 0, true);
         a.set(0, 1, true);
@@ -1811,15 +1401,11 @@ mod tests {
 
         assert_eq!(c.rows(), 2);
         assert_eq!(c.cols(), 2);
-
-        // Verify against expected result
         assert!(c.get(0, 0));
         assert!(c.get(0, 1));
         assert!(c.get(1, 0));
         assert!(c.get(1, 1));
     }
-
-    // Row/column extraction tests
 
     #[test]
     fn test_row_as_bitvec_identity() {
@@ -1935,7 +1521,6 @@ mod tests {
         m.set(2, 3, true);
         m.set(3, 2, true);
 
-        // Extract all rows and verify against original
         for r in 0..4 {
             let row = m.row_as_bitvec(r);
             for c in 0..4 {
@@ -1949,7 +1534,6 @@ mod tests {
             }
         }
 
-        // Extract all columns and verify against original
         for c in 0..4 {
             let col = m.col_as_bitvec(c);
             for r in 0..4 {

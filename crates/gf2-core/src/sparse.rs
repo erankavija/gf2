@@ -1,39 +1,6 @@
-//! Sparse matrix primitives for GF(2) with CSR/CSC representations.
-//!
-//! This module provides memory-efficient sparse matrix support for low-density
-//! matrices (< 5% density) over GF(2).
-//!
-//! # Storage Formats
-//!
-//! - **CSR (Compressed Sparse Row)**: Row-major format optimized for row iteration
-//!   and matrix-vector multiply. All nonzero values are implicitly 1 in GF(2).
-//! - **Dual (CSR+CSC)**: Stores both row and column formats for efficient bidirectional
-//!   access patterns (e.g., alternating row/column sweeps in iterative algorithms).
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::sparse::SpBitMatrix;
-//! use gf2_core::BitVec;
-//!
-//! // Build from COO (coordinate) format
-//! let coo = vec![(0, 1), (0, 3), (1, 2)];
-//! let s = SpBitMatrix::from_coo(2, 4, &coo);
-//! assert_eq!(s.nnz(), 3);
-//!
-//! // Matrix-vector multiply: x = [0, 1, 0, 1]
-//! let mut x = BitVec::new();
-//! x.push_bit(false);
-//! x.push_bit(true);
-//! x.push_bit(false);
-//! x.push_bit(true);
-//!
-//! let y = s.matvec(&x);
-//! // Row 0: x[1] ^ x[3] = 1 ^ 1 = 0
-//! // Row 1: x[2] = 0
-//! assert_eq!(y.get(0), false);
-//! assert_eq!(y.get(1), false);
-//! ```
+//! Sparse GF(2) matrices: CSR ([`SpBitMatrix`]), row-blocked CSR
+//! ([`SpBitMatrixBlockCsr`]) and dual CSR+CSC ([`SpBitMatrixDual`]). Nonzero
+//! values are implicitly 1, so only index arrays are stored.
 
 use crate::{matrix::BitMatrix, BitVec};
 use gf2_kernels_simd::prefetch_read_l1;
@@ -44,29 +11,12 @@ const DEFAULT_PREFETCH_DISTANCE: usize = 0;
 
 /// A row-major sparse matrix in Compressed Sparse Row (CSR) format over GF(2).
 ///
-/// Optimized for low-density matrices (< 5% nonzeros).
 /// All nonzero entries are implicitly 1; the values array is omitted for GF(2).
 ///
 /// # Storage Layout
 ///
 /// - `indptr`: Array of length `rows + 1`. Row r spans `indices[indptr[r]..indptr[r+1]]`.
 /// - `indices`: Packed array of column indices for nonzero entries (sorted per row).
-/// - Duplicate coordinates XOR (even count cancels) in COO construction.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::sparse::SpBitMatrix;
-///
-/// let s = SpBitMatrix::identity(3);
-/// assert_eq!(s.rows(), 3);
-/// assert_eq!(s.cols(), 3);
-/// assert_eq!(s.nnz(), 3);
-///
-/// // Iterate over nonzero columns in row 1
-/// let cols: Vec<_> = s.row_iter(1).collect();
-/// assert_eq!(cols, vec![1]);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpBitMatrix {
     rows: usize,
@@ -76,9 +26,6 @@ pub struct SpBitMatrix {
 }
 
 /// Descriptive alias for [`SpBitMatrix`].
-///
-/// All inherent methods, including [`SpBitMatrix::reorder_rcm`], are available
-/// through this alias as `SparseBitMatrix::reorder_rcm`.
 pub type SparseBitMatrix = SpBitMatrix;
 
 /// Row and column permutation produced by [`SpBitMatrix::reorder_rcm`].
@@ -125,20 +72,12 @@ impl RowPermutation {
     }
 
     /// Number of matrix rows covered by this permutation.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn rows_len(&self) -> usize {
         self.old_rows_by_new.len()
     }
 
     /// Number of matrix columns covered by this permutation.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn cols_len(&self) -> usize {
         self.old_cols_by_new.len()
@@ -146,16 +85,9 @@ impl RowPermutation {
 
     /// Returns the original row index stored at `new_row` in the reordered matrix.
     ///
-    /// This is the destination-to-source row mapping used by
-    /// [`apply_rows`](Self::apply_rows).
-    ///
     /// # Panics
     ///
     /// Panics if `new_row >= self.rows_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn old_row_for_new(&self, new_row: usize) -> usize {
         self.old_rows_by_new[new_row]
@@ -168,10 +100,6 @@ impl RowPermutation {
     /// # Panics
     ///
     /// Panics if `old_row >= self.rows_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn new_row_for_old(&self, old_row: usize) -> usize {
         self.new_rows_by_old[old_row]
@@ -179,16 +107,9 @@ impl RowPermutation {
 
     /// Returns the original column index stored at `new_col` in the reordered matrix.
     ///
-    /// This is the destination-to-source column mapping used by
-    /// [`apply_cols`](Self::apply_cols).
-    ///
     /// # Panics
     ///
     /// Panics if `new_col >= self.cols_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn old_col_for_new(&self, new_col: usize) -> usize {
         self.old_cols_by_new[new_col]
@@ -201,10 +122,6 @@ impl RowPermutation {
     /// # Panics
     ///
     /// Panics if `old_col >= self.cols_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn new_col_for_old(&self, old_col: usize) -> usize {
         self.new_cols_by_old[old_col]
@@ -215,55 +132,18 @@ impl RowPermutation {
     /// The returned vector is in reordered row order: output bit `new_row`
     /// equals input bit `old_row_for_new(new_row)`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(3, 3, &[(0, 2), (1, 1), (2, 0)]);
-    /// let (_reordered, perm) = a.reorder_rcm();
-    /// let rows = BitVec::ones(3);
-    /// assert_eq!(perm.unapply_rows(&perm.apply_rows(&rows)), rows);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `bits.len() != self.rows_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows) time and O(rows) output storage.
     pub fn apply_rows(&self, bits: &BitVec) -> BitVec {
         apply_bitvec_permutation(bits, &self.old_rows_by_new, "row")
     }
 
     /// Restores a row vector from reordered row order to original row order.
     ///
-    /// The returned vector is in original row order; use this on a reordered
-    /// matrix-vector product when callers require the same order as
-    /// [`SpBitMatrix::matvec`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (1, 2)]);
-    /// let (reordered, perm) = a.reorder_rcm();
-    /// let x = BitVec::ones(3);
-    /// let y_rcm = reordered.matvec(&perm.apply_cols(&x));
-    /// assert_eq!(perm.unapply_rows(&y_rcm), a.matvec(&x));
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `bits.len() != self.rows_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows) time and O(rows) output storage.
     pub fn unapply_rows(&self, bits: &BitVec) -> BitVec {
         unapply_bitvec_permutation(bits, &self.old_rows_by_new, "row")
     }
@@ -273,28 +153,9 @@ impl RowPermutation {
     /// The returned vector is in reordered column order: output bit `new_col`
     /// equals input bit `old_col_for_new(new_col)`.
     ///
-    /// Use this on the input vector before calling `matvec` on the matrix
-    /// returned by [`SpBitMatrix::reorder_rcm`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(2, 4, &[(0, 3), (1, 0)]);
-    /// let (_reordered, perm) = a.reorder_rcm();
-    /// let cols = BitVec::ones(4);
-    /// assert_eq!(perm.unapply_cols(&perm.apply_cols(&cols)), cols);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `bits.len() != self.cols_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) time and O(cols) output storage.
     pub fn apply_cols(&self, bits: &BitVec) -> BitVec {
         apply_bitvec_permutation(bits, &self.old_cols_by_new, "column")
     }
@@ -303,25 +164,9 @@ impl RowPermutation {
     ///
     /// This is the inverse of [`apply_cols`](Self::apply_cols).
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(2, 4, &[(0, 3), (1, 0)]);
-    /// let (_reordered, perm) = a.reorder_rcm();
-    /// let cols = BitVec::ones(4);
-    /// assert_eq!(perm.apply_cols(&perm.unapply_cols(&cols)), cols);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `bits.len() != self.cols_len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) time and O(cols) output storage.
     pub fn unapply_cols(&self, bits: &BitVec) -> BitVec {
         unapply_bitvec_permutation(bits, &self.old_cols_by_new, "column")
     }
@@ -464,24 +309,18 @@ fn rcm_bipartite_orders(csr: &SpBitMatrix) -> (Vec<usize>, Vec<usize>) {
     (old_rows_by_new, old_cols_by_new)
 }
 
-/// A row-blocked CSR representation for repeated sparse GF(2) matvecs.
-///
-/// `SpBitMatrix` keeps the classic scalar CSR path unchanged. Convert explicitly
-/// with [`block_csr_from_csr`] or [`SpBitMatrix::to_block_csr`] when an LDPC-style
-/// workload repeatedly multiplies the same sparse matrix by dense bit vectors.
+/// A row-blocked CSR representation for repeated sparse GF(2) matvecs, built
+/// with [`block_csr_from_csr`] or [`SpBitMatrix::to_block_csr`].
 ///
 /// # Storage layout
 ///
 /// Rows are partitioned into fixed-size blocks. Each block stores row offsets
 /// relative to the block's first nonzero and keeps the column stream contiguous
-/// within each block. Matvec therefore keeps the public GF(2) API clean while
-/// the hot loop avoids per-edge bounds checks and can issue best-effort L1
-/// software prefetches for future input-vector words.
+/// within each block.
 ///
 /// # Complexity
 ///
-/// Construction is O(rows + nnz). Matvec is O(rows + nnz) and preserves the same
-/// little-endian bit numbering and tail masking invariants as [`BitVec`].
+/// Construction and matvec are O(rows + nnz).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpBitMatrixBlockCsr {
     rows: usize,
@@ -493,26 +332,11 @@ pub struct SpBitMatrixBlockCsr {
     indices: Vec<usize>,
 }
 
-/// Converts a classic CSR sparse matrix into the opt-in block-CSR layout.
-///
-/// The existing [`SpBitMatrix::matvec`] path is intentionally not changed by
-/// this transformer; callers choose the blocked representation explicitly.
+/// Converts a CSR sparse matrix into the block-CSR layout.
 ///
 /// # Panics
 ///
 /// Panics if `block_rows == 0`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::sparse::{block_csr_from_csr, SpBitMatrix};
-/// use gf2_core::BitVec;
-///
-/// let a = SpBitMatrix::from_coo(2, 65, &[(0, 0), (0, 64), (1, 63)]);
-/// let blocked = block_csr_from_csr(&a, 2);
-/// let x = BitVec::ones(65);
-/// assert_eq!(blocked.matvec(&x), a.matvec(&x));
-/// ```
 ///
 /// # Complexity
 ///
@@ -556,9 +380,6 @@ pub fn block_csr_from_csr(csr: &SpBitMatrix, block_rows: usize) -> SpBitMatrixBl
 }
 
 /// Deterministic LDPC-like sparse fixture shared by sparse benches and examples.
-///
-/// This is hidden from generated API docs because it exists only to keep
-/// performance evidence harnesses on one deterministic input pattern.
 #[doc(hidden)]
 pub fn deterministic_ldpc_like_fixture(rows: usize, cols: usize, row_weight: usize) -> SpBitMatrix {
     let mut entries = Vec::with_capacity(rows * row_weight);
@@ -577,9 +398,6 @@ pub fn deterministic_ldpc_like_fixture(rows: usize, cols: usize, row_weight: usi
 }
 
 /// Deterministic input bit-vector fixture shared by sparse benches and examples.
-///
-/// This is hidden from generated API docs because it exists only to keep
-/// performance evidence harnesses on one deterministic input pattern.
 #[doc(hidden)]
 pub fn deterministic_sparse_bitvec_fixture(len: usize) -> BitVec {
     let mut x = BitVec::with_capacity(len);
@@ -623,11 +441,8 @@ impl SpBitMatrixBlockCsr {
     ///
     /// # Complexity
     ///
-    /// O(rows + nnz). The default schedule uses block-local row metadata and
-    /// direct word-level gathers without software prefetch. Call
-    /// [`matvec_with_prefetch_distance`](Self::matvec_with_prefetch_distance)
-    /// with a nonzero distance to additionally issue best-effort L1 prefetch
-    /// hints on targets supported by `gf2-kernels-simd`.
+    /// O(rows + nnz). The default schedule issues no software prefetch; see
+    /// [`matvec_with_prefetch_distance`](Self::matvec_with_prefetch_distance).
     #[inline]
     pub fn matvec(&self, x: &BitVec) -> BitVec {
         self.matvec_with_prefetch_distance(x, DEFAULT_PREFETCH_DISTANCE)
@@ -642,24 +457,9 @@ impl SpBitMatrixBlockCsr {
     ///
     /// Panics if `x.len() != self.cols()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(2, 66, &[(0, 1), (0, 65), (1, 64)]);
-    /// let blocked = a.to_block_csr(2);
-    /// let x = BitVec::ones(66);
-    ///
-    /// assert_eq!(blocked.matvec_with_prefetch_distance(&x, 0), a.matvec(&x));
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(rows + nnz) time and O(rows) output storage. A nonzero
-    /// `prefetch_distance` additionally issues best-effort L1 prefetch hints
-    /// while preserving identical GF(2) results.
+    /// O(rows + nnz) time and O(rows) output storage.
     pub fn matvec_with_prefetch_distance(&self, x: &BitVec, prefetch_distance: usize) -> BitVec {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
 
@@ -715,10 +515,6 @@ impl SpBitMatrix {
     /// # Panics
     ///
     /// Panics if `row >= rows`.
-    ///
-    /// # Complexity
-    ///
-    /// O(nnz_in_row) where nnz_in_row is the number of nonzeros in the row.
     pub fn row_iter(&self, row: usize) -> impl ExactSizeIterator<Item = usize> + '_ {
         assert!(
             row < self.rows,
@@ -753,31 +549,19 @@ impl SpBitMatrix {
     /// - Even number of duplicates → bit is 0 (cleared)
     /// - Odd number of duplicates → bit is 1 (set)
     ///
-    /// For LDPC matrices where duplicates are construction artifacts, use
-    /// [`from_coo_deduplicated`](Self::from_coo_deduplicated) instead.
+    /// [`from_coo_deduplicated`](Self::from_coo_deduplicated) keeps one entry per
+    /// coordinate instead.
     ///
-    /// # Examples
+    /// # Panics
     ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// // Two duplicates cancel via XOR
-    /// let edges = vec![(0, 1), (0, 1), (1, 2)];
-    /// let m = SpBitMatrix::from_coo(2, 3, &edges);
-    /// let d = m.to_dense();
-    /// assert_eq!(d.get(0, 1), false); // Canceled
-    /// assert_eq!(m.nnz(), 1);
-    /// ```
+    /// Panics if an entry lies outside `rows × cols`.
     pub fn from_coo(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
-        // Collect columns per row
         let mut per_row: Vec<Vec<usize>> = vec![Vec::new(); rows];
         for &(r, c) in entries {
             assert!(r < rows, "row index {} out of bounds (rows={})", r, rows);
             assert!(c < cols, "col index {} out of bounds (cols={})", c, cols);
             per_row[r].push(c);
         }
-
-        // For each row: sort, XOR-dedup, and append
         let mut indptr = Vec::with_capacity(rows + 1);
         let mut indices = Vec::new();
         indptr.push(0);
@@ -810,26 +594,13 @@ impl SpBitMatrix {
 
     /// Builds a CSR matrix from COO coordinates with deduplication.
     ///
-    /// Duplicate entries at the same (row, col) position are ignored (first occurrence wins).
-    /// This is appropriate for LDPC parity-check matrices where duplicates are typically
-    /// construction artifacts from combining information bit connections with parity structure.
+    /// Duplicate entries at the same (row, col) position are ignored.
     ///
     /// For GF(2) XOR semantics where duplicates cancel, use [`from_coo`](Self::from_coo).
     ///
-    /// # Examples
+    /// # Panics
     ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// // Duplicates are ignored (dedup, not XOR)
-    /// let edges = vec![(0, 0), (0, 1), (0, 1), (1, 2)];
-    /// let m = SpBitMatrix::from_coo_deduplicated(2, 3, &edges);
-    /// let d = m.to_dense();
-    /// assert_eq!(d.get(0, 0), true);
-    /// assert_eq!(d.get(0, 1), true); // NOT false
-    /// assert_eq!(d.get(1, 2), true);
-    /// assert_eq!(m.nnz(), 3);
-    /// ```
+    /// Panics if an entry lies outside `rows × cols`.
     ///
     /// # Complexity
     ///
@@ -897,68 +668,25 @@ impl SpBitMatrix {
         m
     }
 
-    /// Computes the reduced row echelon form (RREF) over GF(2) using a
-    /// sparse-native column-elimination algorithm with **Markowitz-degree
-    /// pivot selection** (`jit:5ce13bae`).
+    /// Computes the reduced row echelon form (RREF) over GF(2) by sparse
+    /// column elimination with Markowitz-degree pivot selection.
     ///
-    /// The output is a CSR matrix in canonical RREF: pivot rows appear at
-    /// the top in pivot-column order, followed by zero rows. The result
-    /// satisfies the standard RREF invariants — each pivot row's leading
-    /// entry is the only non-zero in its pivot column, and pivot columns
-    /// are strictly increasing top-to-bottom.
+    /// Pivot rows come first, in pivot-column order, followed by zero rows.
     ///
     /// # Algorithm
     ///
-    /// At each elimination step, picks the (row, col) pair with the
-    /// minimum **Markowitz product** `(row_nnz(r) - 1) * (col_nnz(c) - 1)`
-    /// among un-used rows, where `col` is the leading column of row `r`.
-    /// This minimises the structural upper bound on fill-in, matching
-    /// LinBox `GaussDomain::NoReordering`'s pivot-priority strategy.
-    /// Dependent rows (`row_nnz == 0`) drop out of subsequent pivot
-    /// search automatically.
-    ///
-    /// Eliminates the chosen column from every other row by XOR (the
-    /// GF(2) analogue of the GF(p) `axpy` step in
-    /// [`crate::field::sparse_matrix::SparseFieldMatrix::rref`]). Each
-    /// row is held as a sorted `Vec<usize>` of column indices; the XOR
-    /// of two sorted lists is computed as a symmetric-difference merge
-    /// in `O(|target| + |source|)`. The `row_nnz` array is maintained
-    /// incrementally during each XOR — re-scanning the matrix would
-    /// destroy the speedup. `col_nnz` is not materialised: at a fixed
-    /// pivot column `pc`, the only un-used rows that contain entries at
-    /// `pc` are those whose leading column equals `pc` (others have
-    /// entries only at columns `> pc` by the sorted-list invariant), so
-    /// `col_nnz[pc]` is constant across candidates and the full
-    /// Markowitz product collapses to "minimise `row_nnz`".
+    /// Each step takes the smallest column `pc` that leads an unused row and,
+    /// among the rows led by `pc`, pivots on the one with the fewest nonzeros.
+    /// At a fixed pivot column that row minimises the Markowitz product
+    /// `(row_nnz(r) - 1) * (col_nnz(c) - 1)`, because `col_nnz(pc)` is the
+    /// same for every candidate. The column is then eliminated from every
+    /// other row by a symmetric-difference merge of sorted column lists, in
+    /// `O(|target| + |source|)`.
     ///
     /// # Complexity
     ///
-    /// `O(r·m·w)` for bounded row-weight `w` and rank `r`, the same big-O as
-    /// straight-line elimination; Markowitz wins on the constant factor by
-    /// keeping fill-in low and skipping dependent rows in pivot search. See
-    /// `@/issue/5ce13bae` for the full design rationale.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// // 2 × 3 matrix
-    /// // [1 0 1]
-    /// // [1 1 1]
-    /// // RREF:
-    /// // [1 0 1]
-    /// // [0 1 0]
-    /// let m = SpBitMatrix::from_coo(2, 3, &[(0, 0), (0, 2), (1, 0), (1, 1), (1, 2)]);
-    /// let r = m.rref();
-    /// let d = r.to_dense();
-    /// assert_eq!(d.get(0, 0), true);
-    /// assert_eq!(d.get(0, 2), true);
-    /// assert_eq!(d.get(0, 1), false);
-    /// assert_eq!(d.get(1, 1), true);
-    /// assert_eq!(d.get(1, 0), false);
-    /// assert_eq!(d.get(1, 2), false);
-    /// ```
+    /// `O(r·m·w)` for rank `r` and row weights bounded by `w` throughout the
+    /// elimination.
     pub fn rref(&self) -> Self {
         let m = self.rows;
         let n = self.cols;
@@ -972,9 +700,7 @@ impl SpBitMatrix {
             };
         }
 
-        // Materialise each row as a sorted Vec<usize> of non-zero column
-        // indices. The CSR storage already satisfies the sorted-and-unique
-        // invariant, so this is a straightforward slice copy.
+        // CSR rows are already sorted and unique.
         let mut rows: Vec<Vec<usize>> = (0..m)
             .map(|r| {
                 let s = self.indptr[r];
@@ -983,18 +709,10 @@ impl SpBitMatrix {
             })
             .collect();
 
-        // ── Markowitz pivot bookkeeping (jit:5ce13bae) ─────────────────
-        //
-        // `row_nnz[i] = rows[i].len()` is maintained incrementally after each
-        // axpy. The Markowitz product `(row_nnz - 1) * (col_nnz - 1)` collapses
-        // to "minimise row_nnz" once the pivot column is fixed (col_nnz is the
-        // same for all candidates at that column), so we do not need to
-        // maintain col_nnz explicitly. See `@/issue/5ce13bae` § "Pivot column
-        // choice".
+        // `row_nnz[i] = rows[i].len()`, maintained after each row XOR.
         let mut row_nnz: Vec<usize> = rows.iter().map(|r| r.len()).collect();
 
-        // Symmetric difference of two sorted, strictly-ascending column
-        // lists, written into `target`. This is the GF(2) `axpy` step:
+        // Symmetric difference of two sorted, strictly ascending column lists:
         // `target ← target XOR source`.
         fn xor_into(target: &mut Vec<usize>, source: &[usize]) {
             let mut merged: Vec<usize> = Vec::with_capacity(target.len() + source.len());
@@ -1030,34 +748,12 @@ impl SpBitMatrix {
             *target = merged;
         }
 
-        // `row_used[i]` tracks whether row `i` has been chosen as a pivot.
         let mut row_used = vec![false; m];
-        // Pivots in pick order: each entry is `(original_row, pivot_col)`.
-        // Final output sorts these by `pivot_col` ascending for canonical
-        // RREF row order.
+        // Pivots in pick order, as `(original_row, pivot_col)`.
         let mut pivot_order: Vec<(usize, usize)> = Vec::new();
-
-        // Outer loop: pick `min(m, n)` pivots at most. Each iteration
-        // either picks one pivot or breaks if no eligible row remains.
         for _ in 0..m.min(n) {
-            // Markowitz pivot search subject to canonical-RREF ordering.
-            //
-            // The pivot column SET of an RREF is uniquely determined —
-            // it is the leftmost independent columns of the matrix. So
-            // at each step we must pick the smallest column `pc` that
-            // is still the leading entry of some un-used row.
-            //
-            // Among rows whose leading entry equals `pc`, Markowitz
-            // says to pick the one with minimum `(row_nnz - 1) *
-            // (col_nnz[pc] - 1)`. Since `col_nnz[pc]` is the same for
-            // all candidates at this column, this is equivalent to
-            // picking the row with minimum row_nnz — minimising fill-in
-            // generated by the upcoming axpy operations.
-            //
-            // This produces the same pivot column set as straight-line RREF
-            // (canonical) while choosing the SPARSEST row at each pivot column,
-            // which is the fill-in-minimising strategy. See `@/issue/5ce13bae`
-            // § "Pivot column choice".
+            // The pivot column set of an RREF is unique, so each step takes
+            // the smallest column that still leads an unused row.
             let mut pc: usize = usize::MAX;
             for i in 0..m {
                 if row_used[i] {
@@ -1077,8 +773,6 @@ impl SpBitMatrix {
             if pc == usize::MAX {
                 break;
             }
-            // Now find the un-used row with minimum row_nnz whose leading
-            // entry equals `pc`.
             let mut pi: Option<usize> = None;
             let mut best_rn: usize = usize::MAX;
             for i in 0..m {
@@ -1105,9 +799,8 @@ impl SpBitMatrix {
             row_used[pi] = true;
             pivot_order.push((pi, pc));
 
-            // Eliminate column `pc` from every other row that has a
-            // non-zero there. Snapshot pivot row first so xor_into can
-            // borrow rows[k] mutably without aliasing.
+            // Snapshot the pivot row so `xor_into` can borrow `rows[k]`
+            // mutably.
             let pivot_snapshot: Vec<usize> = rows[pi].clone();
             for k in 0..m {
                 if k == pi {
@@ -1120,9 +813,6 @@ impl SpBitMatrix {
                 row_nnz[k] = rows[k].len();
             }
         }
-
-        // Sort pivots by pivot column ascending for canonical RREF row
-        // order — matches dense `crate::alg::rref::rref`.
         pivot_order.sort_by_key(|&(_orig, pc)| pc);
 
         let mut ordered: Vec<Vec<usize>> = Vec::with_capacity(m);
@@ -1132,8 +822,6 @@ impl SpBitMatrix {
         while ordered.len() < m {
             ordered.push(Vec::new());
         }
-
-        // Flatten back to CSR.
         let mut indptr = Vec::with_capacity(m + 1);
         let mut indices: Vec<usize> = Vec::new();
         indptr.push(0);
@@ -1156,23 +844,19 @@ impl SpBitMatrix {
         let rows_t = self.cols;
         let cols_t = self.rows;
         let nnz = self.indices.len();
-        // Count nnz per column (which become rows in transpose)
         let mut counts = vec![0usize; rows_t];
         for r in 0..self.rows {
             for c in self.row_iter(r) {
                 counts[c] += 1;
             }
         }
-        // Exclusive prefix-sum to build indptr_t
         let mut indptr = Vec::with_capacity(rows_t + 1);
         indptr.push(0);
         for i in 0..rows_t {
             indptr.push(indptr[i] + counts[i]);
         }
         let mut indices = vec![0usize; nnz];
-        // Working offsets initialized to row starts
         let mut next = indptr.clone();
-        // Scatter
         for r in 0..self.rows {
             for c in self.row_iter(r) {
                 let pos = next[c];
@@ -1189,7 +873,7 @@ impl SpBitMatrix {
     }
 
     /// Returns an iterator over row indices that have a 1 in the given column.
-    /// Simpler baseline using a transient transpose.
+    /// Builds a transient transpose: O(nnz + rows + cols) per call.
     pub fn col_iter(&self, col: usize) -> impl IntoIterator<Item = usize> {
         assert!(
             col < self.cols,
@@ -1220,27 +904,11 @@ impl SpBitMatrix {
         self.indices.len()
     }
 
-    /// Converts this CSR matrix to the opt-in block-CSR matvec layout.
-    ///
-    /// Existing callers of [`matvec`](Self::matvec) continue to use the classic
-    /// scalar CSR path. This method is for workloads that repeatedly multiply
-    /// the same sparse matrix and can amortize the O(rows + nnz) transformation.
+    /// Converts this CSR matrix to the block-CSR matvec layout.
     ///
     /// # Panics
     ///
     /// Panics if `block_rows == 0`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(2, 66, &[(0, 1), (0, 65), (1, 64)]);
-    /// let blocked = a.to_block_csr(2);
-    /// let x = BitVec::ones(66);
-    /// assert_eq!(blocked.matvec(&x), a.matvec(&x));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1251,9 +919,6 @@ impl SpBitMatrix {
     }
 
     /// Converts this CSR matrix to the default block-CSR matvec layout.
-    ///
-    /// Uses a 32-row block, which keeps per-block row metadata compact while
-    /// preserving row order for bit-exact parity with CSR.
     ///
     /// # Complexity
     ///
@@ -1266,30 +931,11 @@ impl SpBitMatrix {
     /// Returns a Reverse Cuthill-McKee row/column reordered copy of this matrix.
     ///
     /// The ordering is computed on the bipartite graph with one node per row,
-    /// one node per column, and edges for nonzero matrix entries. The matrix
-    /// returned by this method stores both rows and columns in reverse
-    /// Cuthill-McKee (RCM) order, which tends to reduce sparse-matrix bandwidth
-    /// and improve cache reuse for repeated LDPC-style matvecs. The default CSR
-    /// layout and [`matvec`](Self::matvec) behavior are unchanged; this is an
-    /// explicit one-shot preprocessing step for workloads that can amortize the
-    /// O(rows + cols + nnz) reorder cost over many multiplies.
+    /// one node per column, and an edge per nonzero entry; both rows and
+    /// columns of the returned matrix are in that order.
     ///
     /// For an original input `x`, compute with the reordered matrix as:
     /// `perm.unapply_rows(&reordered.matvec(&perm.apply_cols(&x)))`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::BitVec;
-    ///
-    /// let a = SpBitMatrix::from_coo(3, 4, &[(0, 0), (0, 3), (1, 1), (2, 3)]);
-    /// let (reordered, perm) = a.reorder_rcm();
-    /// let x = BitVec::ones(4);
-    /// let y = a.matvec(&x);
-    /// let y_rcm = reordered.matvec(&perm.apply_cols(&x));
-    /// assert_eq!(perm.unapply_rows(&y_rcm), y);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1326,7 +972,7 @@ impl SpBitMatrix {
     }
 
     /// Matrix-vector product y = A · x over GF(2).
-    /// x length must equal cols, y length equals rows.
+    /// Panics if `x.len() != self.cols()`.
     pub fn matvec(&self, x: &BitVec) -> BitVec {
         assert_eq!(x.len(), self.cols, "input BitVec length must equal cols");
         let mut y = BitVec::with_capacity(self.rows);
@@ -1344,60 +990,27 @@ impl SpBitMatrix {
 
     /// Sparse × sparse matrix multiplication `C = A · B` over GF(2).
     ///
-    /// Both operands and the result are CSR matrices. Inner dimensions must
-    /// agree (`self.cols() == other.rows()`), and the output has shape
-    /// `self.rows() × other.cols()`. GF(2) semantics apply: contributions from
-    /// distinct `k` indices accumulate by XOR, so an even number of touches at
-    /// the same output coordinate cancels.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` — right-hand-side sparse matrix `B`. Must satisfy
-    ///   `self.cols() == other.rows()`; otherwise the call panics (see
-    ///   *Panics* below).
+    /// The output is canonical CSR: column indices within each row are sorted
+    /// ascending and free of duplicates. It equals
+    /// `SpBitMatrix::from_dense(&(self.to_dense() * other.to_dense()))`
+    /// (`proptest_matmul_matches_dense`).
     ///
     /// # Algorithm
     ///
-    /// Row-by-row CSR multiply with a dense word-packed XOR accumulator:
-    /// for each row `i` of `A`, for each nonzero column `k`, toggle every
-    /// nonzero column `j` of `B`'s row `k` in the accumulator. After all
-    /// contributions for output row `i` have been XOR-folded, the accumulator
-    /// is scanned via `trailing_zeros` to extract the canonical sorted column
-    /// indices, then the touched accumulator words are cleared in place for
-    /// reuse on the next row.
-    ///
-    /// The output is canonical CSR: column indices within each row are sorted
-    /// ascending and free of duplicates. This guarantees criterion #2 of the
-    /// API contract — the result is bit-equal to
-    /// `SpBitMatrix::from_dense(&(self.to_dense() * other.to_dense()))`.
+    /// Row-by-row CSR multiply with a dense word-packed XOR accumulator: for
+    /// each row `i` of `A` and each nonzero column `k`, every nonzero column
+    /// `j` of `B`'s row `k` is toggled in the accumulator; the touched words
+    /// are then scanned for the output row and cleared.
     ///
     /// # Panics
     ///
     /// Panics if `self.cols() != other.rows()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// // A = [[1 0 1] [0 1 0]] over GF(2)
-    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (0, 2), (1, 1)]);
-    /// // B = I_3
-    /// let b = SpBitMatrix::identity(3);
-    /// let c = a.matmul(&b);
-    /// assert_eq!(c, a);
-    ///
-    /// // Multiplying by an identity on the left also reproduces A.
-    /// let lhs = SpBitMatrix::identity(2);
-    /// assert_eq!(lhs.matmul(&a), a);
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(nnz(A · B-rows) + rows(A) · cols(B) / 64) where the first term is the
-    /// total flop work counted as `Σ_i Σ_{k ∈ A_row_i} nnz(B_row_k)` and the
-    /// second term covers the per-row accumulator scan and clear. Memory is
-    /// O(cols(B) / 64) for the accumulator plus O(nnz(C)) for the output.
+    /// O(Σ_i Σ_{k ∈ A_row_i} nnz(B_row_k)) toggles plus a sort and scan of the
+    /// touched accumulator words per output row. Memory is O(cols(B) / 64) for
+    /// the accumulator plus O(nnz(C)) for the output.
     pub fn matmul(&self, other: &Self) -> Self {
         assert_eq!(
             self.cols, other.rows,
@@ -1413,10 +1026,8 @@ impl SpBitMatrix {
         indptr.push(0);
         let mut indices: Vec<usize> = Vec::new();
 
-        // Dense word-packed XOR accumulator, reused across output rows.
         let mut acc = vec![0u64; n_words];
-        // Track which words were touched so we can clear lazily without
-        // sweeping the whole accumulator every row.
+        // Touched words, so each row clears only what it used.
         let mut touched: Vec<usize> = Vec::new();
         let mut touched_seen = vec![false; n_words];
 
@@ -1437,8 +1048,7 @@ impl SpBitMatrix {
                 }
             }
 
-            // Emit canonical, ascending column indices for output row i.
-            // Sort touched words so each row's emitted slice is monotone.
+            // Sorted touched words make the emitted column indices ascending.
             touched.sort_unstable();
             for &w in &touched {
                 let mut word = acc[w];
@@ -1464,56 +1074,22 @@ impl SpBitMatrix {
         }
     }
 
-    /// Sparse × dense matrix multiplication `C = A · B` over GF(2).
-    ///
-    /// `self` is a CSR sparse matrix; `b` is a row-major bit-packed dense
-    /// `BitMatrix`. The result is a dense `BitMatrix` of shape
-    /// `self.rows() × b.cols()`. GF(2) semantics apply: contributions from
-    /// distinct `k` indices accumulate by XOR.
-    ///
-    /// This is the canonical sparse×dense entry-point for benchmarking
-    /// against external libraries (LinBox `applyLeft`, fflas-ffpack `fspmm`).
-    /// It is bit-equal to `self.to_dense() * b` (dense×dense) but operates
-    /// directly on CSR row indices, skipping zero columns of `A` entirely.
-    ///
-    /// # Arguments
-    ///
-    /// * `b` — right-hand-side dense matrix. Must satisfy
-    ///   `self.cols() == b.rows()`; otherwise the call panics.
+    /// Sparse × dense matrix multiplication `C = A · B` over GF(2), with a
+    /// dense `self.rows() × b.cols()` result equal to `self.to_dense() * b`
+    /// (`proptest_matmat_matches_dense`).
     ///
     /// # Algorithm
     ///
-    /// For each output row `i`, walk the CSR row of `A`: for each non-zero
-    /// column `k`, XOR-accumulate the entire `k`-th row of `B` (as a packed
-    /// `&[u64]`) into the output row. This is `O(nnz(A) · stride_words(B))`
-    /// word-XOR work, equivalent in shape to the row-XOR fallback used by
-    /// dense `BitMatrix::matmul` but driven by sparse row indices.
-    ///
-    /// When `self.rows() == 0`, the result is an empty `0 × b.cols()` matrix.
-    /// When `b.cols() == 0`, the result is `self.rows() × 0`.
+    /// For each non-zero column `k` of row `i` of `A`, the `k`-th row of `B`
+    /// is XORed into output row `i`.
     ///
     /// # Panics
     ///
     /// Panics if `self.cols() != b.rows()`.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrix;
-    /// use gf2_core::matrix::BitMatrix;
-    ///
-    /// // A = [[1 0 1] [0 1 0]] over GF(2)
-    /// let a = SpBitMatrix::from_coo(2, 3, &[(0, 0), (0, 2), (1, 1)]);
-    /// // B = I_3 (dense)
-    /// let b = BitMatrix::identity(3);
-    /// let c = a.matmat(&b);
-    /// assert_eq!(c, a.to_dense());
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(nnz(A) · ⌈cols(B) / 64⌉) word-XOR operations. Memory is
-    /// O(rows(A) · ⌈cols(B) / 64⌉) for the output (no auxiliary buffers).
+    /// O(nnz(A) · ⌈cols(B) / 64⌉) word-XOR operations.
     pub fn matmat(&self, b: &BitMatrix) -> BitMatrix {
         assert_eq!(
             self.cols,
@@ -1545,44 +1121,9 @@ impl SpBitMatrix {
     }
 }
 
-/// Dual representation storing both CSR and CSC formats for efficient bidirectional access.
-///
-/// This representation stores the same sparse matrix in both row-major (CSR) and
-/// column-major (CSC) formats, enabling O(nnz_in_row/col) access for both row and
-/// column iteration patterns without transposition overhead.
-///
-/// # Use Cases
-///
-/// - Algorithms requiring alternating row and column sweeps
-/// - Iterative methods with bidirectional access patterns
-/// - Applications where both A×x and A^T×x are frequently computed
-///
-/// # Memory Trade-off
-///
-/// Uses 2× memory of single CSR representation, but still typically < dense BitMatrix
-/// at densities below 3-5%.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::sparse::SpBitMatrixDual;
-/// use gf2_core::matrix::BitMatrix;
-///
-/// let mut m = BitMatrix::zeros(3, 4);
-/// m.set(0, 1, true);
-/// m.set(1, 2, true);
-/// m.set(2, 0, true);
-///
-/// let dual = SpBitMatrixDual::from_dense(&m);
-///
-/// // Fast row iteration (no transpose)
-/// let row_cols: Vec<_> = dual.row_iter(0).collect();
-/// assert_eq!(row_cols, vec![1]);
-///
-/// // Fast column iteration (no transpose)
-/// let col_rows: Vec<_> = dual.col_iter(1).collect();
-/// assert_eq!(col_rows, vec![0]);
-/// ```
+/// Dual representation storing the same matrix in both CSR and CSC formats,
+/// so row and column iteration are O(nnz_in_row) and O(nnz_in_col) without a
+/// transposition, at twice the index storage of a single CSR.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpBitMatrixDual {
     csr: SpBitMatrix,
@@ -1591,8 +1132,6 @@ pub struct SpBitMatrixDual {
 
 impl SpBitMatrixDual {
     /// Creates a dual representation from a dense BitMatrix.
-    ///
-    /// Constructs both CSR and CSC formats in one pass.
     pub fn from_dense(m: &BitMatrix) -> Self {
         let csr = SpBitMatrix::from_dense(m);
         let csc = csr.transpose();
@@ -1611,20 +1150,7 @@ impl SpBitMatrixDual {
 
     /// Creates a dual representation from COO coordinates with deduplication.
     ///
-    /// Duplicate entries are ignored (first occurrence wins). This is appropriate for
-    /// LDPC matrices where duplicates are construction artifacts.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrixDual;
-    ///
-    /// let edges = vec![(0, 1), (0, 1), (1, 2)];
-    /// let dual = SpBitMatrixDual::from_coo_deduplicated(2, 3, &edges);
-    /// let d = dual.to_dense();
-    /// assert_eq!(d.get(0, 1), true); // NOT false (dedup, not XOR)
-    /// assert_eq!(dual.nnz(), 2);
-    /// ```
+    /// Duplicate entries are ignored.
     pub fn from_coo_deduplicated(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
         let csr = SpBitMatrix::from_coo_deduplicated(rows, cols, entries);
         let csc = csr.transpose();
@@ -1632,8 +1158,6 @@ impl SpBitMatrixDual {
     }
 
     /// Returns an iterator over set column indices in the given row.
-    ///
-    /// This uses the CSR representation for O(nnz_in_row) performance.
     ///
     /// # Panics
     ///
@@ -1644,9 +1168,6 @@ impl SpBitMatrixDual {
     }
 
     /// Returns an iterator over set row indices in the given column.
-    ///
-    /// This uses the CSC representation for O(nnz_in_col) performance
-    /// without transposition overhead.
     ///
     /// # Panics
     ///
@@ -1685,25 +1206,8 @@ impl SpBitMatrixDual {
         self.csr.matvec(x)
     }
 
-    /// Reduced row echelon form (RREF) of `self` over GF(2).
-    ///
-    /// Delegates to [`SpBitMatrix::rref`] on the inner CSR side and rebuilds
-    /// a fresh dual representation around the result. The CSC half of the
-    /// returned dual is recomputed via [`SpBitMatrix::transpose`] so both
-    /// halves stay coherent.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::sparse::SpBitMatrixDual;
-    ///
-    /// let m = SpBitMatrixDual::from_coo(2, 2, &[(0, 0), (0, 1), (1, 0)]);
-    /// let r = m.rref();
-    /// let d = r.to_dense();
-    /// // RREF of [[1,1],[1,0]] is [[1,0],[0,1]] (identity).
-    /// assert!(d.get(0, 0) && d.get(1, 1));
-    /// assert!(!d.get(0, 1) && !d.get(1, 0));
-    /// ```
+    /// Reduced row echelon form (RREF) of `self` over GF(2), computed by
+    /// [`SpBitMatrix::rref`]; the CSC half is rebuilt by transposition.
     pub fn rref(&self) -> Self {
         let csr = self.csr.rref();
         let csc = csr.transpose();
@@ -1712,8 +1216,7 @@ impl SpBitMatrixDual {
 
     /// Transpose-vector product y = A^T · x over GF(2).
     ///
-    /// Uses the CSC representation to compute the transpose-vector product
-    /// efficiently without materializing the transpose.
+    /// Panics if `x.len() != self.rows()`.
     pub fn matvec_transpose(&self, x: &BitVec) -> BitVec {
         assert_eq!(
             x.len(),
@@ -1721,7 +1224,6 @@ impl SpBitMatrixDual {
             "input BitVec length must equal rows for transpose"
         );
         let mut y = BitVec::with_capacity(self.csr.cols());
-        // CSC's row iteration is the transpose's column iteration
         for c in 0..self.csr.cols() {
             let mut acc = false;
             for r in self.col_iter(c) {
@@ -1859,35 +1361,12 @@ impl fmt::Display for SpBitMatrixDual {
 
 #[cfg(feature = "visualization")]
 impl SpBitMatrix {
-    /// Saves the sparse matrix as a PNG image.
-    ///
-    /// Each bit is represented as a single pixel:
-    /// - Unset bits (0) → black (0, 0, 0)
-    /// - Set bits (1) → white (255, 255, 255)
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Output file path (e.g., "matrix.png")
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_core::sparse::SpBitMatrix;
-    ///
-    /// let s = SpBitMatrix::identity(100);
-    /// s.save_image("identity.png").unwrap();
-    /// ```
+    /// Saves the sparse matrix as a PNG image, one pixel per bit: unset bits
+    /// black, set bits white.
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - File cannot be created
-    /// - PNG encoding fails
-    ///
-    /// # Note
-    ///
-    /// To modify colors, edit the hard-coded `ZERO_COLOR` and `ONE_COLOR` constants
-    /// in the implementation.
+    /// Returns an error if the file cannot be created or PNG encoding fails.
     pub fn save_image(
         &self,
         path: impl AsRef<std::path::Path>,
@@ -1915,31 +1394,12 @@ impl SpBitMatrix {
 
 #[cfg(feature = "visualization")]
 impl SpBitMatrixDual {
-    /// Saves the sparse matrix as a PNG image.
-    ///
-    /// Each bit is represented as a single pixel:
-    /// - Unset bits (0) → black (0, 0, 0)
-    /// - Set bits (1) → white (255, 255, 255)
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Output file path (e.g., "matrix.png")
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_core::sparse::SpBitMatrixDual;
-    ///
-    /// let coo = vec![(0, 1), (1, 2)];
-    /// let sd = SpBitMatrixDual::from_coo(3, 3, &coo);
-    /// sd.save_image("sparse_dual.png").unwrap();
-    /// ```
+    /// Saves the sparse matrix as a PNG image, one pixel per bit: unset bits
+    /// black, set bits white.
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - File cannot be created
-    /// - PNG encoding fails
+    /// Returns an error if the file cannot be created or PNG encoding fails.
     pub fn save_image(
         &self,
         path: impl AsRef<std::path::Path>,
@@ -2084,9 +1544,7 @@ mod tests {
         }
     }
 
-    /// Reference oracle: reduce sparse-sparse matmul to dense matmul on
-    /// `BitMatrix`, then back to CSR. This is the reference for criterion #2
-    /// of the matmul contract.
+    /// Reference: dense product on `BitMatrix`, converted back to CSR.
     fn dense_matmul_reference(a: &SpBitMatrix, b: &SpBitMatrix) -> SpBitMatrix {
         let prod = a.to_dense() * b.to_dense();
         SpBitMatrix::from_dense(&prod)
@@ -2178,10 +1636,7 @@ mod tests {
 
     #[test]
     fn matmul_xor_cancellation_at_output() {
-        // A · A^T where A has exactly two nonzeros in row 0 sharing the same
-        // pivot column with A^T's row 0 → contributions cancel under GF(2).
-        // A = [[1,1,0]] (1×3). A^T = [[1],[1],[0]] (3×1).
-        // (A · A^T)[0,0] = 1·1 + 1·1 + 0·0 = 0 (XOR).
+        // A = [[1,1,0]] (1×3), so (A · A^T)[0,0] = 1·1 + 1·1 + 0·0 = 0.
         let a = SpBitMatrix::from_coo(1, 3, &[(0, 0), (0, 1)]);
         let at = a.transpose();
         let c = a.matmul(&at);
@@ -2193,7 +1648,6 @@ mod tests {
 
     #[test]
     fn matmul_word_boundary_widths() {
-        // Cover output column counts spanning u64 word boundaries.
         for &(ar, ak, bc) in &[
             (2usize, 3usize, 63usize),
             (2, 3, 64),
@@ -2213,21 +1667,18 @@ mod tests {
             let c = a.matmul(&b);
             assert_csr_canonical(&c);
             assert_eq!(c, dense_matmul_reference(&a, &b));
-            // Sanity: serializing through to_dense round-trips identically.
             assert_eq!(c, SpBitMatrix::from_dense(&c.to_dense()));
         }
     }
 
     #[test]
     fn matmul_random_seeded_cases() {
-        // Three deterministic, low-density inputs of moderate size.
         let cases: &[(usize, usize, usize, u64)] = &[
             (16, 24, 20, 0xA5A5_5A5A_C3C3_3C3C),
             (37, 41, 53, 0xDEAD_BEEF_CAFE_BABE),
             (65, 66, 67, 0x1234_5678_9ABC_DEF0),
         ];
         for &(ar, ak, bc, seed) in cases {
-            // Generate sparse A and B with a fixed pseudo-random pattern.
             let mut a_entries = Vec::new();
             let mut x = seed;
             for r in 0..ar {
@@ -2311,8 +1762,6 @@ mod tests {
         }
     }
 
-    // ─── matmat (sparse × dense → dense) tests ────────────────────────────────
-
     /// Reference oracle: `a.matmat(b)` must equal `a.to_dense() * b`
     /// (dense×dense over GF(2)) bitwise.
     fn matmat_dense_reference(a: &SpBitMatrix, b: &BitMatrix) -> BitMatrix {
@@ -2320,7 +1769,8 @@ mod tests {
     }
 
     /// Build a deterministic sparse `m × n` matrix at approximate density
-    /// `density` from a SplitMix64-style stream.
+    /// `density` from an LCG stream with the multiplier of
+    /// `@/citation/Knuth1997`.
     fn matmat_sparse_from_seed(m: usize, n: usize, density: f64, seed: u64) -> SpBitMatrix {
         let mut entries: Vec<(usize, usize)> = Vec::new();
         let mut st = seed;
@@ -2343,9 +1793,8 @@ mod tests {
         SpBitMatrix::from_coo(m, n, &entries)
     }
 
-    /// Build a deterministic dense `BitMatrix` of shape `m × n` with bits
-    /// drawn from the same SplitMix64-style stream as
-    /// [`matmat_sparse_from_seed`].
+    /// Build a deterministic dense `BitMatrix` of shape `m × n` from the same
+    /// LCG stream as [`matmat_sparse_from_seed`].
     fn matmat_dense_from_seed(m: usize, n: usize, seed: u64) -> BitMatrix {
         let mut out = BitMatrix::zeros(m, n);
         let mut st = seed;
@@ -2364,23 +1813,18 @@ mod tests {
 
     #[test]
     fn test_matmat_empty() {
-        // Both axes empty: 0 × 0 sparse times 0 × 0 dense.
         let a = SpBitMatrix::zeros(0, 0);
         let b = BitMatrix::zeros(0, 0);
         let c = a.matmat(&b);
         assert_eq!(c.rows(), 0);
         assert_eq!(c.cols(), 0);
         assert_eq!(c, matmat_dense_reference(&a, &b));
-
-        // Empty rows but non-trivial inner/output cols.
         let a2 = SpBitMatrix::zeros(0, 5);
         let b2 = BitMatrix::zeros(5, 7);
         let c2 = a2.matmat(&b2);
         assert_eq!(c2.rows(), 0);
         assert_eq!(c2.cols(), 7);
         assert_eq!(c2, matmat_dense_reference(&a2, &b2));
-
-        // Zero output cols.
         let a3 = SpBitMatrix::identity(3);
         let b3 = BitMatrix::zeros(3, 0);
         let c3 = a3.matmat(&b3);
@@ -2391,17 +1835,13 @@ mod tests {
 
     #[test]
     fn test_matmat_single_bit() {
-        // 1×1 sparse × 1×k dense for k ∈ {1, 64, 65}.
         for &k in &[1usize, 64, 65] {
-            // A = [[1]] (sparse 1×1).
             let a = SpBitMatrix::from_coo(1, 1, &[(0, 0)]);
             let b = matmat_dense_from_seed(1, k, 0xA5A5_5A5A_C3C3_3C3C ^ k as u64);
             let c = a.matmat(&b);
             assert_eq!(c.rows(), 1);
             assert_eq!(c.cols(), k);
             assert_eq!(c, matmat_dense_reference(&a, &b));
-
-            // A = [[0]] (sparse 1×1, empty).
             let a_zero = SpBitMatrix::zeros(1, 1);
             let c_zero = a_zero.matmat(&b);
             assert_eq!(c_zero.rows(), 1);
@@ -2473,7 +1913,6 @@ mod tests {
 
     #[test]
     fn test_matmat_identity_left() {
-        // I_n · B == B for various n straddling word boundaries.
         for &n in &[1usize, 63, 64, 65] {
             let i = SpBitMatrix::identity(n);
             let b = matmat_dense_from_seed(n, n + 7, 0xDEAD_BEEF_DEAD_BEEF ^ n as u64);
@@ -2482,11 +1921,8 @@ mod tests {
         }
     }
 
-    // ─── RREF over GF(2) (sparse-native) ──────────────────────────────────
-
-    /// Reference oracle: dense GF(2) RREF via `crate::alg::rref::rref`,
-    /// rebuilt as a CSR. Used to cross-check the sparse-native
-    /// `SpBitMatrix::rref` output for shape and content equivalence.
+    /// Reference: dense GF(2) RREF via `crate::alg::rref::rref`, rebuilt as
+    /// CSR.
     fn dense_rref_reference(m: &SpBitMatrix) -> SpBitMatrix {
         let r = crate::alg::rref::rref(&m.to_dense(), false);
         SpBitMatrix::from_dense(&r.reduced)
@@ -2548,7 +1984,6 @@ mod tests {
         let m = SpBitMatrix::from_coo(3, 3, &entries);
         let out = m.rref();
         assert_csr_canonical(&out);
-        // Rank is 2: only first 2 rows have non-zeros after canonical reorder.
         let nnz_per_row: Vec<usize> = (0..out.rows())
             .map(|r| out.indptr[r + 1] - out.indptr[r])
             .collect();
@@ -2558,9 +1993,7 @@ mod tests {
 
     #[test]
     fn test_rref_word_boundary_n64() {
-        // Identity-ish matrix of width 64 (word-boundary edge).
         let mut entries: Vec<(usize, usize)> = (0..64).map(|i| (i, i)).collect();
-        // Add a few stray entries that depend on earlier rows.
         entries.push((0, 32));
         entries.push((32, 63));
         let m = SpBitMatrix::from_coo(64, 64, &entries);
@@ -2582,18 +2015,12 @@ mod tests {
 
     #[test]
     fn test_rref_random_seeded_n1024_matches_dense() {
-        // Matches the n=1024, density 9.77e-3 emitter cell — the cross-
-        // library comparison target. This must agree with the dense RREF
-        // path on the same input. We use the bench_seed helpers for the
-        // matrix so the seeded input is byte-identical to what the
-        // emitter's spmv-er row at n=1024 ingests.
         let n = 1024usize;
         let density = 10.0 / n as f64;
         let seed = crate::bench_seed::derive_seed(0xDEAD_BEEF, "spelim-test", 0, 0, 1);
         let m = crate::bench_seed::bitmatrix_sparse_from_seed(n, n, density, seed);
         let out = m.rref();
         assert_csr_canonical(&out);
-        // Equality with dense reference is the strict correctness oracle.
         assert_eq!(out, dense_rref_reference(&m));
     }
 
@@ -2612,11 +2039,6 @@ mod tests {
 
         #[test]
         fn proptest_matmat_matches_dense(
-            // Per the 521390db hard criterion: cover n ∈ [1, 256]. The
-            // outer dimensions (ar, ak, bc) sweep the full range so the
-            // proptest exercises the range the issue mandates. Sparse
-            // entry density is kept ~0.5% so the per-case wall time
-            // stays well under the 5 s nextest budget at the upper end.
             ar in 1usize..=256,
             ak in 1usize..=256,
             bc in 1usize..=256,
@@ -2659,12 +2081,8 @@ mod tests {
             prop_assert_eq!(out, dense_rref_reference(&m));
         }
 
-        /// Markowitz-degree RREF (`jit:5ce13bae`) byte-equality vs the
-        /// dense reference across a wider parameter range, including the
-        /// word-boundary edges (n=64, n=65) and ranges that span the
-        /// dense / very-sparse regimes. RREF is uniquely determined by
-        /// its canonical form so byte-equality must hold whether or not
-        /// the internal pivot order differs from straight-line.
+        /// RREF is unique, so equality with the dense reference holds whatever
+        /// the internal pivot order.
         #[test]
         fn proptest_rref_markowitz_byte_equality(
             rows in 0usize..=65,
@@ -2672,8 +2090,7 @@ mod tests {
             entry_count in 0usize..=200,
             seed in any::<u64>(),
         ) {
-            // Deterministic Bernoulli sample via splitmix64 for
-            // reproducibility under proptest shrinking.
+            // splitmix64, for reproducibility under proptest shrinking.
             let mut st = seed;
             fn next(st: &mut u64) -> u64 {
                 *st = st.wrapping_add(0x9E37_79B9_7F4A_7C15);
@@ -2693,9 +2110,7 @@ mod tests {
             let m = SpBitMatrix::from_coo(rows, cols, &entries);
             let out = m.rref();
             assert_csr_canonical(&out);
-            // Byte-equality vs dense reference is the strict oracle.
             prop_assert_eq!(out.clone(), dense_rref_reference(&m));
-            // Idempotence: RREF(RREF(A)) == RREF(A).
             let out2 = out.rref();
             prop_assert_eq!(out2, out);
         }

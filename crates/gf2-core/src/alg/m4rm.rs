@@ -1,29 +1,8 @@
-//! M4RM (Method of the Four Russians for Multiplication) algorithm.
-//!
-//! This module implements fast matrix multiplication over GF(2) using the M4RM algorithm.
-//! The algorithm processes the multiplication in blocks, precomputing Gray code tables
-//! of linear combinations to reduce the number of row operations.
-//!
-//! When the `simd` feature is enabled, row XOR operations automatically use AVX2
-//! vectorization for large matrices, providing significant speedups.
-//!
-//! # Gray-code table build (kernel B2)
-//!
-//! [`build_gray_table_flat`] is the B2 hot loop in the M4RM PPC spiral.  The
-//! optimized path tiles each table row into 8-word chunks and keeps one running
-//! accumulator per chunk, exposing independent XOR chains while preserving the
-//! hoisted `XorInplaceFn` dispatch used by the surrounding M4RM row updates.
-//!
-//! # Schedule selection
-//!
-//! [`multiply`] resolves the `m4rm` selector family of the active
-//! [`crate::tuning::CoreTuning`] once per multiplication and threads the
-//! resolved values into the schedule route and the register-tiled C-update
-//! gate, so no per-panel or per-row helper reads the profile.
-//! [`m4rm_schedule_route`] reports the tier, the Gray-code panel width, and the
-//! register-tiled stride gate the dispatcher uses. With no profile installed
-//! each field resolves to the conservative default this module's constants
-//! define.
+//! M4RM (Method of the Four Russians) matrix multiplication over GF(2): the
+//! product is formed in panels, each through a Gray-code table of row
+//! combinations of `B`. [`multiply`] resolves the `m4rm` selector family of
+//! the active [`crate::tuning::CoreTuning`] once per multiplication, and
+//! [`m4rm_schedule_route`] reports the schedule it selects.
 
 use crate::kernels::ops::{resolve_xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
@@ -31,11 +10,8 @@ use crate::tuning::M4rmSelectors;
 #[cfg(any(test, feature = "test-support"))]
 use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
-/// Column-word tile width for the V2 ILP Gray-table builder.
-///
-/// Eight `u64` words are 512 bits: enough independent scalar accumulators to
-/// break the single-vector dependency chain and a natural size for AVX2 codegen
-/// when LLVM batches the XOR/store loops.
+/// Column-word tile width of the Gray-table builder; each tile keeps its own
+/// running accumulator, which gives independent XOR chains.
 const B2_GRAY_TILE_WORDS: usize = 8;
 const B2_GRAY_MAX_TILES: usize = 4;
 
@@ -43,14 +19,10 @@ const B2_GRAY_MAX_TILES: usize = 4;
 /// [`crate::tuning::CoreTuning`].
 ///
 /// It is the Gray-table byte budget [`production_table_budget`] applies to the
-/// narrowest wide-tier strides, where the table stays L1-resident.
+/// narrowest wide-tier strides.
 pub(crate) const M4RM_DEFAULT_TABLE_BYTES: usize = 64 * 1024;
-/// Legacy narrow-tier panel-width cap (pre-jit:bdf60780). Retained as the
-/// reference schedule that `test_production_multiply_matches_legacy_schedule_*`
-/// compares against on the conservative table; the production small-n path uses
-/// [`choose_k_block_small_n`] under `m4rm.small_n_max_k()` instead. No profile
-/// field carries it: it is a test fixture, so an installed profile does not
-/// move it.
+/// Panel-width cap of the reference schedule a test of this module compares
+/// [`multiply`] against; a test fixture that no profile field carries.
 #[cfg_attr(not(test), allow(dead_code))]
 const M4RM_DEFAULT_MAX_K: usize = 8;
 /// Conservative default for `m4rm.mid_table_bytes()` in the active
@@ -60,14 +32,8 @@ const M4RM_DEFAULT_MAX_K: usize = 8;
 /// mid-width band between the default and wide budgets.
 pub(crate) const M4RM_MID_TABLE_BYTES: usize = 128 * 1024;
 /// Conservative default for `m4rm.wide_table_bytes()` in the active
-/// [`crate::tuning::CoreTuning`]: the wider schedule budget for
-/// LLC-streaming M4RM rows.
-///
-/// The production policy keeps rows narrower than the register-tiled threshold
-/// on the historical 64 KiB / k≤8 schedule.  At measured 1024+ column rows,
-/// same-session measurements for jit:8e305c21 show fewer, wider Gray panels
-/// recover the table-build and row-update overhead without letting the table
-/// grow beyond the 256 KiB L2 size class that regressed at small widths.
+/// [`crate::tuning::CoreTuning`]: the Gray-table byte budget
+/// [`production_table_budget`] applies to the widest strides.
 pub(crate) const M4RM_WIDE_TABLE_BYTES: usize = 256 * 1024;
 /// Conservative default for `m4rm.wide_max_k()` in the active
 /// [`crate::tuning::CoreTuning`].
@@ -93,24 +59,13 @@ pub(crate) const M4RM_TILE_WORDS: usize = 4;
 /// [`crate::tuning::CoreTuning`]: the minimum row stride (in u64 words) for
 /// the register-tiled M4RM C-update.
 ///
-/// The 8×4 YMM tile processes four output words per lane, so it needs at least
-/// [`M4RM_TILE_WORDS`] full words to fire even once. The default is defined by
-/// naming that constant rather than by restating its value, and the profile
-/// field carries the same floor. The four-word gate is measured for
-/// jit:bdf60780: at `n=256` (stride 4) the SIMD tile plus the SIMD Gray-table
-/// builder beat the scalar row-XOR schedule by ~1.7×
-/// (`2026-05-28-bdf60780-matmul-gf2-smalln.md`), closing the M4RI parity gap.
-/// Narrower strides (1..=3) fall through to the row-XOR path because there is
-/// no full 4-word tile.
+/// The 8×4 tile processes four output words per lane, so it needs at least
+/// [`M4RM_TILE_WORDS`] full words to fire; narrower strides take the
+/// row-wise panel update.
 pub(crate) const M4RM_TILED_MIN_STRIDE_WORDS: usize = M4RM_TILE_WORDS;
 /// Conservative default for `m4rm.small_n_max_k()` in the active
 /// [`crate::tuning::CoreTuning`]: the upper bound on the small-`n`
 /// (sub-wide-tier) Gray-code panel width.
-///
-/// Below the wide-row tier the table is L1-resident and the cost-balanced
-/// optimum is `~0.8·log2(min(K, n))` panels, not the maximum width the byte
-/// budget allows. Capping at 8 keeps the `k=8` panel that wins at `n=256` while
-/// the heuristic still selects `k=4..5` at `n=64`.
 pub(crate) const M4RM_SMALL_N_MAX_K: usize = 8;
 type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 
@@ -118,11 +73,11 @@ type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; M4RM_TILE_ROWS]);
 ///
 /// The tier comparison reads `m4rm.wide_tier_min_stride_words()` from the
 /// active [`crate::tuning::CoreTuning`]: a row stride at or above that value
-/// takes the byte-budgeted wide schedule, anything narrower the L1-resident
-/// small-`n` heuristic.
+/// takes the byte-budgeted wide schedule, anything narrower the small-`n`
+/// heuristic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M4rmScheduleTier {
-    /// The L1-resident small-`n` cost-balance heuristic.
+    /// The small-`n` cost-balance heuristic.
     SmallN,
     /// The byte-budgeted wide-row schedule.
     Wide,
@@ -143,10 +98,8 @@ pub enum M4rmTableBand {
 
 /// Test-only observation of the effective M4RM C-update selected by [`multiply`].
 ///
-/// This closed observation is evidence instrumentation, not a route selector or
-/// forcing mechanism. It is available only to crate tests or with the
-/// `test-support` feature and is intended for one public multiplication in a
-/// fresh, single-threaded child process. [`None`](Self::None) means no row-wise
+/// The observation is process-wide, so it attributes one multiplication in a
+/// single-threaded process. [`None`](Self::None) means no row-wise
 /// or register-tiled panel update has been selected since
 /// [`reset_m4rm_tiled_effective_observation`].
 #[cfg(any(test, feature = "test-support"))]
@@ -174,9 +127,6 @@ fn record_m4rm_tiled_effective_observation(observation: M4rmTiledEffectiveObserv
 }
 
 /// Resets the test-only effective M4RM C-update observation to `None`.
-///
-/// This resets only evidence instrumentation. It does not reset tuning,
-/// capability detection, or any production selector.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_m4rm_tiled_effective_observation() {
     M4RM_TILED_EFFECTIVE_OBSERVATION.store(0, Ordering::SeqCst);
@@ -184,9 +134,9 @@ pub fn reset_m4rm_tiled_effective_observation() {
 
 /// Reads the test-only effective M4RM C-update observation.
 ///
-/// Call this after exactly one [`multiply`] in the fresh child whose call was
-/// preceded by [`reset_m4rm_tiled_effective_observation`]. Concurrent
-/// multiplications intentionally have no attribution guarantee.
+/// Call this after exactly one [`multiply`] preceded by
+/// [`reset_m4rm_tiled_effective_observation`]. Concurrent multiplications
+/// have no attribution guarantee.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn m4rm_tiled_effective_observation() -> M4rmTiledEffectiveObservation {
@@ -312,9 +262,8 @@ fn record_m4rm_effective_schedule(
 
 /// Resets the test-only completed-schedule observation.
 ///
-/// This changes evidence instrumentation only. It does not reset tuning or
-/// capability detection. Reset the C-update observation at the same time so a
-/// later completed schedule cannot inherit evidence from an earlier call.
+/// Also resets the C-update observation, so a later completed schedule cannot
+/// inherit evidence from an earlier call.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_m4rm_effective_schedule_observation() {
     M4RM_EFFECTIVE_SCHEDULE_STATE.store(0, Ordering::Release);
@@ -331,7 +280,7 @@ pub fn reset_m4rm_effective_schedule_observation() {
 ///
 /// Call this after exactly one [`multiply`] following
 /// [`reset_m4rm_effective_schedule_observation`]. Concurrent multiplications
-/// intentionally have no attribution guarantee.
+/// have no attribution guarantee.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn m4rm_effective_schedule_observation() -> M4rmEffectiveScheduleObservation {
@@ -514,21 +463,6 @@ fn schedule_tier(wide_tier_min_stride_words: usize, stride_words: usize) -> M4rm
 
 /// Chooses the Gray-code panel width for one multiplication against an
 /// already-resolved selector family.
-///
-/// The panel width determines the size of the Gray code table (2^k entries).
-/// Each table is kept cache-sized by `m4rm.default_table_bytes()`,
-/// `m4rm.mid_table_bytes()`, and `m4rm.wide_table_bytes()`, capped by
-/// `m4rm.wide_max_k()` in the wide tier and by `m4rm.small_n_max_k()` below it.
-///
-/// # Arguments
-///
-/// * `m4rm` - Selector family resolved once by the caller
-/// * `k` - Inner dimension (A is m×k, B is k×n)
-/// * `n` - Output width (number of columns in result)
-///
-/// # Returns
-///
-/// Block size k_block (typically 6-9 on the conservative table)
 #[cfg(any(test, feature = "test-support"))]
 fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
     m4rm_schedule_route_resolved(m4rm, k, n).panel_width
@@ -538,21 +472,14 @@ fn choose_k_block(m4rm: &M4rmSelectors, k: usize, n: usize) -> usize {
 /// [`crate::tuning::CoreTuning`]: the stride threshold (in u64 words) at
 /// which the wide-row M4RM schedule applies.
 ///
-/// At and above 16 words (`n >= 1024`) the production policy keeps the
-/// register-tiled wide schedule (`8e305c21`/`974a85bd`); below it, the small-`n`
-/// L1-resident heuristic in [`choose_k_block_small_n`] selects the panel width.
+/// Below it, [`choose_k_block_small_n`] selects the panel width.
 pub(crate) const M4RM_WIDE_TIER_MIN_STRIDE_WORDS: usize = 16;
 
-/// Selects the Gray-code panel width for the small-`n` (L1-resident) regime
+/// Selects the Gray-code panel width for the small-`n` regime
 /// against an already-resolved `small_n_max_k`.
 ///
-/// Below the wide tier the whole Gray table fits in L1, so the cost-balanced
-/// optimum is governed by the panel count rather than the table byte budget. We
-/// use the M4RI cost-balance heuristic `round(0.8 · log2(min(k, n)))`, clamped
-/// to `[2, small_n_max_k]` and never above the inner dimension `k`. On the
-/// conservative table this reproduces the measured per-size optima
-/// (`2026-05-28-bdf60780-matmul-gf2-smalln.md`): `k≈5` at `n=64`, `k≈7` at
-/// `n=256`, both comfortably inside the 1.5× M4RI target.
+/// The width is `round(0.8 · log2(min(k, n)))`, clamped to
+/// `[2, small_n_max_k]` and never above the inner dimension `k`.
 fn choose_k_block_small_n(small_n_max_k: usize, k: usize, n: usize) -> usize {
     if k == 0 || n == 0 {
         return 0;
@@ -560,7 +487,6 @@ fn choose_k_block_small_n(small_n_max_k: usize, k: usize, n: usize) -> usize {
     if k == 1 {
         return 1;
     }
-    // Balance point: ~0.8 * log2(min(k, n)) bits per panel.
     let span = k.min(n) as f64;
     let target = (0.8_f64 * span.log2()).round() as usize;
     target.clamp(2, small_n_max_k).min(k)
@@ -599,7 +525,6 @@ fn choose_k_block_with_limit(
     target_table_bytes: usize,
     max_k_block: usize,
 ) -> usize {
-    // Each table entry is a row of n bits, stored in stride_words u64s
     let stride_words = if n == 0 { 0 } else { n.div_ceil(64) };
     let bytes_per_entry = stride_words * 8;
 
@@ -620,36 +545,11 @@ fn choose_k_block_with_limit(
             return k_block;
         }
     }
-
-    // Fallback to smallest block size
     1.min(k)
 }
 
-/// Builds a lookup table for all linear combinations of k_block consecutive rows from matrix B.
-///
-/// Uses Gray code ordering for efficient table generation. Each Gray code step differs
-/// by exactly one bit from the previous, requiring only a single XOR operation per entry
-/// instead of multiple XORs with binary enumeration.
-///
-/// table[i] = XOR of rows indicated by the binary representation of i
-/// For example, if k_block=3:
-///   table[0b000] = zero vector
-///   table[0b001] = row 0
-///   table[0b010] = row 1
-///   table[0b011] = row 0 XOR row 1
-///   table[0b100] = row 2
-///   ...
-///
-/// # Arguments
-///
-/// * `b` - Input matrix B
-/// * `row_start` - Starting row index in B
-/// * `k_block` - Number of rows to include in the table
-/// * `n` - Number of columns in B
-///
-/// # Returns
-///
-/// A vector of 2^k_block entries, indexed by binary representation
+/// Reference Gray-table builder: `table[i]` is the XOR of the rows of `b`,
+/// counted from `row_start`, that the bits of `i` select.
 #[cfg(test)]
 fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -> Vec<Vec<u64>> {
     let table_size = 1usize << k_block;
@@ -657,30 +557,20 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
 
     let mut table = vec![vec![0u64; stride_words]; table_size];
 
-    // Use Gray code ordering for efficient table generation
-    // Gray code: G(i) = i XOR (i >> 1)
-    // Each step differs by exactly one bit, so we only need one XOR per entry
-
+    // Gray code G(i) = i ^ (i >> 1): consecutive codes differ in one bit, so
+    // each entry costs one row XOR.
     let mut current = vec![0u64; stride_words];
     let mut prev_gray = 0usize;
-
-    // First entry (all zeros) is already initialized
     table[0].copy_from_slice(&current);
 
     for i in 1..table_size {
-        let curr_gray = i ^ (i >> 1); // Gray code formula
-
-        // Find which bit flipped between previous and current Gray code
+        let curr_gray = i ^ (i >> 1);
         let diff = prev_gray ^ curr_gray;
         let bit_pos = diff.trailing_zeros() as usize;
-
-        // XOR in (or out) the corresponding row
         if row_start + bit_pos < b.rows() {
             let row_words = b.row_words(row_start + bit_pos);
             crate::kernels::ops::xor_inplace(&mut current, row_words);
         }
-
-        // Store in table at the Gray code position
         table[curr_gray].copy_from_slice(&current);
 
         prev_gray = curr_gray;
@@ -689,30 +579,14 @@ fn build_gray_table(b: &BitMatrix, row_start: usize, k_block: usize, n: usize) -
     table
 }
 
-/// Builds a lookup table into a pre-allocated flat buffer.
+/// Builds the Gray-code table of the `k_block` rows of `b` from `row_start`
+/// into `buffer`: entry `i`, at
+/// `buffer[i * stride_words..(i + 1) * stride_words]`, is the XOR of the rows
+/// that the bits of `i` select.
 ///
-/// This is a memory-optimized version that writes directly to a flat buffer
-/// instead of allocating a Vec<Vec<u64>>. This eliminates allocation overhead
-/// when the table is rebuilt multiple times (e.g., for each panel in M4RM).
-///
-/// Uses Gray code ordering for efficient table generation.
-///
-/// # Arguments
-///
-/// * `b` - Input matrix B
-/// * `row_start` - Starting row index in B
-/// * `k_block` - Number of rows to include in the table
-/// * `n` - Number of columns in B
-/// * `buffer` - Pre-allocated flat buffer to write table into
-///   Must have length >= (2^k_block) * stride_words
-/// * `xor` - Pre-resolved row XOR operation for `stride_words`-wide rows
-///
-/// # Layout
-///
-/// The buffer stores table entries sequentially:
-/// - Entry 0: buffer[0..stride_words]
-/// - Entry 1: buffer[stride_words..2*stride_words]
-/// - Entry i: buffer[i*stride_words..(i+1)*stride_words]
+/// `buffer` must hold at least `2^k_block * stride_words` words, with
+/// `stride_words = n.div_ceil(64)`; `xor` is the row XOR resolved for that
+/// stride.
 #[doc(hidden)]
 #[inline(never)]
 pub fn build_gray_table_flat(
@@ -740,11 +614,8 @@ pub fn build_gray_table_flat(
 
     #[cfg(feature = "simd")]
     if let Some(fns) = crate::simd::maybe_simd() {
-        // Full-table SIMD builders for narrow rows: one (stride 4) or two
-        // (stride 8) YMM accumulators carry the Gray walk, eliminating the
-        // scalar per-word XOR loop that dominated small-n table build time.
-        // `k_block` panel rows are all present (panel_size <= b.rows() - row_start),
-        // so every flipped bit_pos in [0, k_block) indexes a valid B row.
+        // The full-table SIMD builders index every panel row, so they need
+        // all `k_block` rows of `b` present.
         if stride_words == 4 && row_start + k_block <= b.rows() {
             let panel = b.row_words_block(row_start, k_block);
             (fns.m4rm_gray_build4_fn)(buffer, panel, stride_words, table_size, k_block);
@@ -997,37 +868,10 @@ fn extract_bits_from_row_words(row_words: &[u64], col_start: usize, k_block: usi
 /// Multiplies two matrices over GF(2) using the M4RM algorithm.
 ///
 /// Computes C = A × B where A is m×k and B is k×n, producing C which is m×n.
-/// All arithmetic is performed over GF(2) (binary field).
-///
-/// # Arguments
-///
-/// * `a` - Left matrix (m × k)
-/// * `b` - Right matrix (k × n)
-///
-/// # Returns
-///
-/// Result matrix C = A × B (m × n)
 ///
 /// # Panics
 ///
 /// Panics if the number of columns in A doesn't match the number of rows in B.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::matrix::BitMatrix;
-/// use gf2_core::alg::m4rm::multiply;
-///
-/// let a = BitMatrix::identity(3);
-/// let mut b = BitMatrix::zeros(3, 4);
-/// b.set(0, 1, true);
-/// b.set(1, 2, true);
-///
-/// let c = multiply(&a, &b);
-/// assert_eq!(c.rows(), 3);
-/// assert_eq!(c.cols(), 4);
-/// assert_eq!(c.get(0, 1), true);
-/// ```
 pub fn multiply(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     let m = a.rows();
     let k = a.cols();
@@ -1092,25 +936,13 @@ fn multiply_with_k_block(
     multiply_rowwise_panels(a, b, k_block, stride_words, xor)
 }
 
-/// Multiplies two matrices with an experimental M4RI-style table schedule.
+/// Multiplies two matrices with an explicit Gray-table byte budget and
+/// maximum panel width in place of the profile's.
 ///
-/// This is a test-support harness, not the production M4RM schedule-selection
-/// policy. It is intended to stay bit-exact with [`multiply`] while tests and
-/// benchmarks vary the Gray-table byte budget and maximum panel width.
-///
-/// # Arguments
-///
-/// * `a` - Left-hand matrix with dimensions `m × k`.
-/// * `b` - Right-hand matrix with dimensions `k × n`.
-/// * `target_table_bytes` - Preferred byte budget for one Gray-code table panel;
-///   if no nonzero panel width fits, the helper falls back to `k_block = 1`.
-/// * `max_k_block` - Maximum candidate panel width in bits. Oversized values
-///   are safely ignored when the implied table would exceed the byte budget.
-///
-/// The two arguments replace the profile's table budgets and panel-width
-/// ceilings for this call; the register-tiled C-update gate still follows
+/// If no wider panel fits `target_table_bytes`, the panel width is 1. The
+/// register-tiled C-update gate still follows
 /// `m4rm.tiled_min_stride_words()` in the active
-/// [`crate::tuning::CoreTuning`], resolved once here.
+/// [`crate::tuning::CoreTuning`].
 ///
 /// # Panics
 ///
@@ -1180,14 +1012,9 @@ pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
     multiply_rowwise_panels(a, b, k_block, stride_words, xor)
 }
 
-/// Reports whether the register-tiled C-update schedule applies, against an
-/// already-resolved `tiled_min_stride_words`.
-///
-/// The row count is kernel shape ([`M4RM_TILE_ROWS`] full rows per tile); the
-/// stride bound is `m4rm.tiled_min_stride_words()` from the active
-/// [`crate::tuning::CoreTuning`], resolved once per multiplication by
-/// [`multiply`] and compared by [`stride_admits_tiled_schedule`], which is also
-/// what [`M4rmScheduleRoute::tiled_stride_admitted`] reports.
+/// Reports whether the register-tiled C-update schedule applies: at least
+/// [`M4RM_TILE_ROWS`] rows and a stride admitted by
+/// [`stride_admits_tiled_schedule`].
 #[inline]
 fn use_register_tiled_schedule(
     tiled_min_stride_words: usize,
@@ -1510,21 +1337,15 @@ mod tests {
 
     #[test]
     fn test_choose_k_block() {
-        // Small dimensions use the L1-resident cost-balance heuristic
-        // (~0.8·log2(min(k, n))): n=100 → round(0.8·6.64) = 5.
+        // round(0.8 · log2(100)) = round(0.8 · 6.64) = 5.
         let k1 = choose_k_block(conservative_m4rm(), 100, 100);
         assert!((4..=6).contains(&k1));
-
-        // Very large output width still resolves to a valid panel.
         let k2 = choose_k_block(conservative_m4rm(), 100, 10000);
         assert!(k2 >= 1);
     }
 
     #[test]
     fn test_choose_k_block_small_n_heuristic() {
-        // Reproduces the measured per-size optima from
-        // 2026-05-28-bdf60780-matmul-gf2-smalln.md: small k at n=64,
-        // wider panels at n=256, none above the small-n cap.
         let small_n_max_k = conservative_m4rm().small_n_max_k();
         assert_eq!(choose_k_block(conservative_m4rm(), 64, 64), 5);
         assert_eq!(choose_k_block(conservative_m4rm(), 128, 128), 6);
@@ -1535,15 +1356,12 @@ mod tests {
         // k=1 inner dim maps to the row-XOR path (k_block == 1).
         assert_eq!(choose_k_block_small_n(small_n_max_k, 1, 256), 1);
         assert_eq!(choose_k_block_small_n(small_n_max_k, 0, 256), 0);
-        // Never exceeds the small-n cap even for very wide inner dims.
         assert!(choose_k_block_small_n(small_n_max_k, 100_000, 512) <= M4RM_SMALL_N_MAX_K);
     }
 
     #[test]
     fn test_production_schedule_policy_small_n_tier_and_wide_tier_boundary() {
-        // Below the wide tier (stride_words < 16, i.e. n < 1024) the small-n
-        // L1-resident heuristic governs; it routes through choose_k_block_small_n.
-        // n <= 960 bits is at most 15 words (stride_words < 16) → small-n tier.
+        // n <= 960 is at most 15 words, below the wide tier's 16.
         let m4rm = conservative_m4rm();
         for n in [1, 63, 64, 65, 128, 129, 512, 960] {
             assert_eq!(
@@ -1554,12 +1372,7 @@ mod tests {
         }
         // n=961..1024 round up to 16 words and enter the wide tier.
         assert!(961usize.div_ceil(64) >= M4RM_WIDE_TIER_MIN_STRIDE_WORDS);
-
-        // The n=0 degenerate case still resolves to 0.
         assert_eq!(choose_k_block(m4rm, 4096, 0), 0);
-
-        // The wide tier (n >= 1024) is unchanged from the 8e305c21 / 974a85bd
-        // production policy — these are the [hard] non-regression cells.
         assert_eq!(choose_k_block(m4rm, 4096, 1024), 9);
         assert_eq!(choose_k_block(m4rm, 4096, 2048), 9);
         assert_eq!(choose_k_block(m4rm, 4096, 4096), 9);
@@ -1583,7 +1396,6 @@ mod tests {
             m4rm_schedule_route(4096, n_at).tier(),
             M4rmScheduleTier::Wide
         );
-        // The tier does not turn over again above the boundary.
         assert_eq!(
             m4rm_schedule_route(4096, boundary * 64 * 4).tier(),
             M4rmScheduleTier::Wide
@@ -1670,7 +1482,6 @@ mod tests {
         a.set(0, 1, true);
         a.set(0, 3, true);
 
-        // Extract bits 0-3: should get binary 1010 = 10
         let bits = extract_bits_from_row_words(a.row_words(0), 0, 4);
         assert_eq!(bits, 0b1010);
     }
@@ -1691,8 +1502,6 @@ mod tests {
         let a = BitMatrix::identity(4);
         let b = BitMatrix::identity(4);
         let c = multiply(&a, &b);
-
-        // I × I = I
         for i in 0..4 {
             for j in 0..4 {
                 assert_eq!(c.get(i, j), i == j);
@@ -1720,7 +1529,6 @@ mod tests {
 
     #[test]
     fn test_gray_code_table_correctness() {
-        // Verify Gray code table generates correct linear combinations
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
 
@@ -1735,8 +1543,6 @@ mod tests {
         }
 
         let table = build_gray_table(&b, 0, 8, 64);
-
-        // Verify each table entry is correct XOR of indicated rows
         for (idx, entry) in table.iter().enumerate().take(256) {
             let mut expected = vec![0u64; 1];
             for bit in 0..8 {
@@ -1752,7 +1558,6 @@ mod tests {
 
     #[test]
     fn test_flat_buffer_equivalence() {
-        // Verify flat buffer version produces same results as Vec<Vec<>>
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
 
@@ -1765,18 +1570,12 @@ mod tests {
                 }
             }
         }
-
-        // Generate with original version
         let table_vec = build_gray_table(&b, 0, 8, 128);
-
-        // Generate with flat buffer version
         let table_size = 256;
         let stride_words = 128_usize.div_ceil(64);
         let mut table_flat = vec![0u64; table_size * stride_words];
         let xor = resolve_xor_inplace(stride_words);
         build_gray_table_flat(&b, 0, 8, 128, &mut table_flat, xor);
-
-        // Compare all entries
         for (idx, vec_entry) in table_vec.iter().enumerate() {
             let entry_start = idx * stride_words;
             let entry_end = entry_start + stride_words;
@@ -1801,8 +1600,6 @@ mod tests {
         assert!(!use_register_tiled_schedule(tiled_min, 64, 1));
         assert!(!use_register_tiled_schedule(tiled_min, 64, 2));
         assert!(!use_register_tiled_schedule(tiled_min, 64, 3));
-        // jit:bdf60780: the tile gate is lowered to stride_words >= 4 so that
-        // n=256 (stride 4) and n=512 (stride 8) reach the SIMD 8×4 tile.
         assert!(use_register_tiled_schedule(tiled_min, 64, 4));
         assert!(use_register_tiled_schedule(tiled_min, 64, 8));
         assert!(use_register_tiled_schedule(tiled_min, 8, 16));
@@ -1854,13 +1651,10 @@ mod tests {
 
     #[test]
     fn test_multiply_with_flat_buffer() {
-        // End-to-end test that flat buffer version produces correct results
         use rand::rngs::StdRng;
         use rand::{Rng, SeedableRng};
 
         let mut rng = StdRng::seed_from_u64(456);
-
-        // Test various sizes
         for size in [64, 128, 256] {
             let mut a = BitMatrix::zeros(size, size);
             let mut b = BitMatrix::zeros(size, size);
@@ -1877,12 +1671,8 @@ mod tests {
             }
 
             let c = multiply(&a, &b);
-
-            // Verify result dimensions
             assert_eq!(c.rows(), size);
             assert_eq!(c.cols(), size);
-
-            // Verify a few spot checks with naive multiplication
             for i in 0..size.min(10) {
                 for j in 0..size.min(10) {
                     let mut expected = false;
