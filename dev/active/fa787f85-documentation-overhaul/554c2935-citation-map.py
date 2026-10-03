@@ -8,10 +8,10 @@ repository containing the current directory (`git rev-parse
 --show-toplevel`, `git ls-files`). A comment line is a line whose first
 non-blank characters are `//`, or the part of a code line after ` // `.
 
-Section 1 prints `key | regex | files:lines` for every ROWS entry. Section 2
-prints the same for UNRESOLVED, the citations that have no registry key.
-Section 3 prints every comment line that matches HEURISTIC, holds no
-`@/citation/` address and matches no ROWS or UNRESOLVED entry, with the
+Section 1 prints `key | regex | files:lines` for every ROWS entry. Section 2,
+"citations without a registry entry", prints the same for UNKEYED; a class
+with no remaining line prints `-`. Section 3 prints every comment line that matches HEURISTIC, holds no
+`@/citation/` address and matches no ROWS or UNKEYED entry, with the
 REASONS label that explains it or `UNEXPLAINED`. Section 4 prints the label
 counts. Every key in ROWS must exist in `.jit/references.toml`; the script
 exits non-zero otherwise.
@@ -55,6 +55,9 @@ ROWS = [
      r"5\.4\.2\.2|TS 38\.214"),
     ("ThreeGpp2017", r"§5\.4\.2\.1", r"presets/nr_5g\.rs", None),
     # Keys added by this mapping.
+    ("Ccsds2017", r"NASA/CCSDS K=7 standard", None, None),
+    ("Nist2001", r"\bAES\b", None, r"IEEE AES standard|AES/crypto"),
+    ("ThreeGpp2017a", r"TS 38\.214", None, None),
     ("Amd2020", r"AMD Zen 3 Software Optimization Guide|Software Optimization Guide",
      None, None),
     ("Bahl1974", r"Bahl, Cocke, Jelinek, Raviv|Minimizing Symbol Error Rate", None, None),
@@ -126,7 +129,7 @@ HEURISTIC = re.compile(
     r"\b[A-Z][a-zà-ÿ]+(?:[-–][A-Z][a-zà-ÿ]+)*,? \(?(?:1[89]|20)\d{2}\)?(?![-\d])"
     r"|et al\.|\be[Pp]rint\b|ar[Xx]iv|\bdoi\b|ISBN|\bIEEE (?:Trans|ISIT|AES)|\bACM\b|\bSIAM\b"
     r"|Trans\.|Proc\.|Math\. Comp|HPL-|OEIS|\bT[RS] \d{2,3}[ .]\d{3}|\bEN \d{3} \d{3}"
-    r"|\bETSI\b|\b3GPP\b|\bCCSDS\b|\bFIPS\b|\bNIST\b"
+    r"|\bETSI\b|\b3GPP\b|\bCCSDS\b|\bFIPS\b|\bNIST\b|\bAES\b|\bMMIX\b"
     r"|[A-Z][a-zà-ÿ]+(?: (?:&|and) [A-Z][a-zà-ÿ]+)? ?§"
     r"|\[[A-Z][A-Za-z]+\d{4}[a-z]?\]|Hacker's Delight|Handbook|\bKnuth\b"
     r"|ptimization Guide|\bpaper\b|\bthesis\b|https?://"
@@ -134,17 +137,15 @@ HEURISTIC = re.compile(
     r"|Plonky3|SageMath|Magma|rand_core)\b"
 )
 
-# Citations without a registry key: (what blocks the key, phrase regex, path
-# regex or None).
-UNRESOLVED = [
-    ("no work with this title and venue found", r"Condo, C\.|^\W*(?:\*IEEE Trans\. )?Commun\.\*$",
-     r"grand/(?:mod|sogrand)\.rs"),
-    ("work not identified: TAOCP volume 2 or MMIXware", r"\bKnuth\b", None),
-    ("edition not identified: no edition has this section", r"Shoup §12\.4", None),
-    ("edition not fixed by the comment or by provenance", r"TS 38\.214", None),
-    ("no such standard: AES is FIPS 197", r"IEEE AES standard", None),
-    ("document not identified", r"NASA/CCSDS K=7 standard", None),
-    ("paper not identified", r"\bpaper\b", r"gf2-coding/src/fading\.rs|ldpc_bler_check\.rs"),
+# Citations without a registry entry: (why no entry exists, phrase regex, path
+# regex or None). The comment sweep removes these source pointers.
+UNKEYED = [
+    ("no work with this title and venue exists",
+     r"Condo, C\.|^\W*(?:\*IEEE Trans\. )?Commun\.\*$", r"grand/(?:mod|sogrand)\.rs"),
+    ("constant not verified in the named work", r"\bKnuth\b|\bMMIX\b", None),
+    ("no edition of the book has this section", r"Shoup §12\.4", None),
+    ("no such standard, and the file holds no AES polynomial", r"IEEE AES standard", None),
+    ("paper not named", r"\bpaper\b", r"gf2-coding/src/fading\.rs|ldpc_bler_check\.rs"),
 ]
 
 # Labels for heuristic matches that are not citations; first match wins.
@@ -155,6 +156,7 @@ REASONS = [
      r"(?:The|See|Design|Protocol|and) §"),
     ("the verb 'paper over'", r"\bpaper over\b"),
     ("names software without attributing a method or number", r"\bMagma\b"),
+    ("CPU feature name", r"AES/crypto"),
 ]
 
 
@@ -175,7 +177,9 @@ def comment_of(line: str) -> str | None:
 def main() -> int:
     root = Path(git("rev-parse", "--show-toplevel").strip())
     files = sorted(
-        git("ls-files", "-z", "crates/**/*.rs", "dev/tools/**/*.rs").split("\0")[:-1]
+        git(
+            "-C", str(root), "ls-files", "-z", "crates/**/*.rs", "dev/tools/**/*.rs"
+        ).split("\0")[:-1]
     )
     registry = tomllib.loads((root / ".jit/references.toml").read_text(encoding="utf-8"))
     known = {r["key"] for r in registry["references"]}
@@ -186,7 +190,7 @@ def main() -> int:
     ]
     open_rows = [
         (label, re.compile(p), re.compile(f) if f else None, None)
-        for label, p, f in UNRESOLVED
+        for label, p, f in UNKEYED
     ]
     n_keyed = len(rows)
     rows += open_rows
@@ -216,7 +220,7 @@ def main() -> int:
             print("# 1. key | regex | files:lines")
         if i == n_keyed:
             print()
-            print("# 2. unresolved: blocker | regex | files:lines")
+            print("# 2. citations without a registry entry: reason | regex | files:lines")
         scope = f" [path {path.pattern}]" if path else ""
         scope += f" [unless {veto.pattern}]" if veto else ""
         where = " ".join(
