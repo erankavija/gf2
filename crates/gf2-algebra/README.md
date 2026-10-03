@@ -29,7 +29,7 @@ Packed arithmetic over F_3, F_5 and F_7 and matrix-permanent algorithms built on
 
 ## Features
 
-The [manifest](Cargo.toml) lists every feature. Defaults are `simd`, `parallel`, `f5` and `f7`.
+The `[features]` table of [`Cargo.toml`](Cargo.toml) is authoritative. Defaults are `simd`, `parallel`, `f5` and `f7`.
 
 | Feature | Effect |
 |---|---|
@@ -41,16 +41,7 @@ The [manifest](Cargo.toml) lists every feature. Defaults are `simd`, `parallel`,
 | `tuning-profile` | `AlgebraTuningCodec` |
 | `test-support` | `testutil` matrix generators and oracles |
 
-```toml
-[dependencies]
-gf2-algebra = { path = "crates/gf2-algebra" }
-
-# Scalar, F_3 only
-# gf2-algebra = { path = "crates/gf2-algebra", default-features = false }
-
-# GPU
-# gf2-algebra = { path = "crates/gf2-algebra", features = ["hip"] }
-```
+Dependency setup follows the [installation](../../docs/reference/supported-configurations.md#installation) instructions. `default-features = false` selects the scalar, F_3-only build; `hip` adds the GPU backend.
 
 ## Reference
 
