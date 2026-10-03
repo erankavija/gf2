@@ -1,25 +1,8 @@
-//! Richardson-Urbanke systematic encoding for LDPC codes.
+//! Systematic LDPC encoding from a dense parity matrix.
 //!
-//! Implements efficient systematic encoding using preprocessed matrices.
-//!
-//! # Algorithm
-//!
-//! Given parity-check matrix H (m × n), preprocessing computes encoding
-//! matrices that enable O(edges) encoding complexity:
-//!
-//! 1. **Preprocessing** (once per code):
-//!    - Apply Gaussian elimination to transform H to approximate systematic form
-//!    - Compute encoding matrices φ and ψ from the structured parts
-//!    - Cache these matrices for repeated use
-//!
-//! 2. **Encoding** (fast, repeated):
-//!    - Given message m, compute parity bits using φ and ψ
-//!    - Concatenate to form systematic codeword [m | parity]
-//!
-//! # References
-//!
-//! Richardson, T. and Urbanke, R. (2001). "Efficient encoding of low-density
-//! parity-check codes." IEEE Transactions on Information Theory, 47(2), 638-656.
+//! [`RuEncodingMatrices::preprocess`] row-reduces H (m × n) to select m parity
+//! columns and stores the parity part P of G = [I_k | P]; encoding computes
+//! `parity = P^T × message`.
 
 use gf2_core::alg::rref::rref;
 use gf2_core::sparse::SpBitMatrixDual;
@@ -49,28 +32,10 @@ impl fmt::Display for PreprocessError {
 
 impl std::error::Error for PreprocessError {}
 
-/// Preprocessed matrices for Richardson-Urbanke encoding.
+/// Preprocessed systematic-encoding matrices of one LDPC code.
 ///
-/// These matrices are computed once per LDPC code configuration and then
-/// cached for repeated encoding operations.
-///
-/// # Storage Convention
-///
-/// For systematic codes G = [I_k | P], we store ONLY the parity part P
-/// since the identity part is redundant.
-///
-/// The parity matrix is stored as **dense BitMatrix** because DVB-T2 parity
-/// matrices are 40-50% dense. Dense storage is 30× smaller and potentially
-/// faster with SIMD for high-density matrices.
-///
-/// The full generator matrix is available via `generator()` which reconstructs
-/// it on-demand by adjoining the identity part. The parity part alone is
-/// available via `parity_part()` for efficient encoding.
-///
-/// # Encoding
-///
-/// Encoding uses only the parity part: `parity = P^T × message`,
-/// then places bits in their systematic/parity positions.
+/// For G = [I_k | P] only the parity part P is stored, as a dense
+/// [`BitMatrix`]; `generator()` reconstructs G by adjoining the identity.
 #[derive(Debug, Clone)]
 pub struct RuEncodingMatrices {
     /// Message dimension k
@@ -79,10 +44,7 @@ pub struct RuEncodingMatrices {
     n: usize,
     /// Parity length r = n - k
     r: usize,
-    /// Parity matrix P (k × r) stored as DENSE bit-packed matrix
-    /// For systematic codes, this is the only stored matrix.
-    /// Dense storage used because DVB-T2 matrices are 40-50% dense.
-    /// Used to compute parity bits: parity = P^T × message
+    /// Parity matrix P (k × r): parity = P^T × message
     parity_matrix: BitMatrix,
     /// Systematic bit positions (length k)
     /// For standard systematic codes: [0, 1, ..., k-1]
@@ -95,18 +57,13 @@ pub struct RuEncodingMatrices {
 }
 
 impl RuEncodingMatrices {
-    /// Preprocess parity-check matrix for fast encoding.
+    /// Computes the parity part P of G = [I_k | P] from the parity-check
+    /// matrix `h` (m × n), which is densified for the row reduction.
     ///
-    /// Computes generator matrix G from parity-check matrix H.
-    /// For a systematic code, G = [I_k | P] where P is the parity part.
+    /// # Errors
     ///
-    /// # Arguments
-    ///
-    /// * `h` - Parity-check matrix (m × n) in sparse format
-    ///
-    /// # Returns
-    ///
-    /// Preprocessed encoding matrices, or error if preprocessing fails.
+    /// [`PreprocessError::InvalidDimensions`] if `m == 0`, `n == 0` or
+    /// `m >= n`; [`PreprocessError::RankDeficient`] if the rank of `h` is not `m`.
     ///
     /// # Examples
     ///
@@ -128,7 +85,6 @@ impl RuEncodingMatrices {
 
         eprintln!("  Converting to dense ({} × {})...", m, n);
 
-        // Convert sparse H to dense for RREF
         let mut h_dense = BitMatrix::zeros(m, n);
         for row in 0..m {
             for col_idx in h.row_iter(row) {
@@ -138,23 +94,12 @@ impl RuEncodingMatrices {
 
         eprintln!("  Running Gaussian elimination...");
 
-        // Compute parity matrix using compute_generator_matrix
         Self::compute_generator_matrix(&h_dense, k, n)
     }
 
-    /// Compute generator matrix from parity-check matrix.
-    ///
-    /// Computes G such that H·G^T = 0 using the following algorithm:
-    ///
-    /// 1. RREF (Reduced Row Echelon Form) with right-to-left pivoting to find m
-    ///    independent columns for parity positions. Uses gf2-core's optimized
-    ///    word-level RREF implementation with SIMD acceleration.
-    /// 2. **Critical**: Reorder rows so row i has its unique pivot in parity_cols[i]
-    ///    to align the identity structure correctly
-    /// 3. Build G = [I_k | P] where P[i,j] = H_work[row_order[j], message_cols[i]]
-    ///
-    /// The row reordering step ensures the transformed H has proper structure
-    /// [A | I_m], allowing correct extraction of parity relationships.
+    /// Computes G with H·G^T = 0: RREF with right-to-left pivoting selects m
+    /// independent parity columns, and G = [I_k | P] with
+    /// P[i,j] = H_work[row_order[j], message_cols[i]].
     fn compute_generator_matrix(
         h: &BitMatrix,
         k: usize,
@@ -162,7 +107,6 @@ impl RuEncodingMatrices {
     ) -> Result<Self, PreprocessError> {
         let m = h.rows();
 
-        // Use gf2-core's optimized RREF with word-level operations and SIMD acceleration
         // pivot_from_right=true to prefer parity bits on right
         eprintln!("  Running RREF (word-level + SIMD)...");
         let rref_result = rref(h, true);
@@ -175,7 +119,6 @@ impl RuEncodingMatrices {
         let h_work = rref_result.reduced;
         eprintln!("  RREF complete (rank = {})", rref_result.rank);
 
-        // Message columns are non-parity columns
         let mut message_cols = Vec::new();
         for col in 0..n {
             if !parity_cols.contains(&col) {
@@ -187,14 +130,10 @@ impl RuEncodingMatrices {
             return Err(PreprocessError::GaussianEliminationFailed);
         }
 
-        // After rref(h, true), the RREF result has rows reordered so that
-        // row i has its pivot at parity_cols[i] (both sorted in ascending column order).
-        // This is guaranteed by rref_unblocked_right_to_left's reorder step.
-        // The identity permutation is therefore always the correct row_order.
+        // rref(h, true) reorders rows so that row i has its pivot at
+        // parity_cols[i], so the identity permutation is the row order.
         let row_order: Vec<usize> = (0..m).collect();
 
-        // Debug-mode sanity check: verify the RREF invariant that row i has its
-        // pivot at parity_cols[i] and no other row has a 1 in that column.
         #[cfg(debug_assertions)]
         {
             for (i, &pcol) in parity_cols.iter().enumerate() {
@@ -207,9 +146,7 @@ impl RuEncodingMatrices {
             }
         }
 
-        // Build parity matrix P (k × r) as DENSE
-        // From H·G^T = 0, we get: P[i, j] = H_work[row_order[j], message_cols[i]]
-        // Dense storage is optimal for DVB-T2 (40-50% density)
+        // From H·G^T = 0: P[i, j] = H_work[row_order[j], message_cols[i]]
         let mut p = BitMatrix::zeros(k, m);
 
         eprintln!("  Building dense parity matrix ({} × {})...", k, m);
@@ -240,20 +177,9 @@ impl RuEncodingMatrices {
         })
     }
 
-    /// Encode a message into a systematic codeword.
-    ///
-    /// For systematic codes, the codeword is [message | parity] where
-    /// parity bits are computed as: parity = P^T × message
-    ///
-    /// Uses dense matrix-vector multiply with word-level operations.
-    ///
-    /// # Arguments
-    ///
-    /// * `message` - Message bits (length k)
-    ///
-    /// # Returns
-    ///
-    /// Systematic codeword with length n.
+    /// Encodes `message` (length k) into the length-n codeword that carries the
+    /// message at the systematic positions and P^T × message at the parity
+    /// positions.
     ///
     /// # Panics
     ///
@@ -266,19 +192,14 @@ impl RuEncodingMatrices {
             self.k
         );
 
-        // Compute parity bits: parity = P^T × message
-        // Dense matrix-vector multiply with word-level operations
         let parity = self.parity_matrix.matvec_transpose(message);
 
-        // Build codeword by placing message and parity in correct positions
         let mut codeword = BitVec::zeros(self.n);
 
-        // Place message bits in systematic positions
         for (i, &col) in self.systematic_cols.iter().enumerate() {
             codeword.set(col, message.get(i));
         }
 
-        // Place parity bits in parity positions
         for (j, &col) in self.parity_cols.iter().enumerate() {
             codeword.set(col, parity.get(j));
         }
@@ -286,19 +207,8 @@ impl RuEncodingMatrices {
         codeword
     }
 
-    /// Encodes multiple messages using ComputeBackend for parallelization.
-    ///
-    /// This method leverages the ComputeBackend's batch_matvec_transpose operation
-    /// to efficiently encode multiple messages, potentially in parallel.
-    ///
-    /// # Arguments
-    ///
-    /// * `messages` - Slice of messages to encode (each must have length k)
-    /// * `backend` - Compute backend to use for matrix operations
-    ///
-    /// # Returns
-    ///
-    /// Vector of codewords (each of length n)
+    /// Encodes each message as [`Self::encode`] does, computing the parities
+    /// through `backend.batch_matvec_transpose`.
     ///
     /// # Panics
     ///
@@ -308,7 +218,6 @@ impl RuEncodingMatrices {
         messages: &[BitVec],
         backend: &dyn gf2_core::compute::ComputeBackend,
     ) -> Vec<BitVec> {
-        // Validate all message lengths
         for msg in messages {
             assert_eq!(msg.len(), self.k, "Message length must be k = {}", self.k);
         }
@@ -317,22 +226,18 @@ impl RuEncodingMatrices {
             return vec![];
         }
 
-        // Compute all parity bits in parallel: parity_i = P^T × message_i
         let parities = backend.batch_matvec_transpose(&self.parity_matrix, messages);
 
-        // Build codewords by placing message and parity bits
         messages
             .iter()
             .zip(parities.iter())
             .map(|(message, parity)| {
                 let mut codeword = BitVec::zeros(self.n);
 
-                // Place message bits in systematic positions
                 for (i, &col) in self.systematic_cols.iter().enumerate() {
                     codeword.set(col, message.get(i));
                 }
 
-                // Place parity bits in parity positions
                 for (j, &col) in self.parity_cols.iter().enumerate() {
                     codeword.set(col, parity.get(j));
                 }
@@ -357,50 +262,25 @@ impl RuEncodingMatrices {
         self.r
     }
 
-    /// Returns the parity part of the generator matrix.
-    ///
-    /// For systematic codes G = [I_k | P], this returns P (k × r).
-    /// This is stored as a dense BitMatrix for space efficiency (DVB-T2
-    /// matrices are 40-50% dense).
-    ///
-    /// # Convention
-    ///
-    /// This is called `parity_part()` not `get_parity_part()` to follow
-    /// Rust getter naming conventions (no "get_" prefix for simple accessors).
+    /// Returns the parity part P (k × r) of G = [I_k | P].
     pub fn parity_part(&self) -> &BitMatrix {
         &self.parity_matrix
     }
 
-    /// Returns the full generator matrix G.
-    ///
-    /// For systematic codes G = [I_k | P], this reconstructs the full matrix
-    /// by adjoining the identity part. For non-systematic codes, returns the
-    /// stored generator matrix directly.
-    ///
-    /// # Performance
-    ///
-    /// For systematic codes, this allocates and constructs the full matrix.
-    /// Use `parity_part()` for encoding to avoid this overhead.
-    ///
-    /// # Convention
-    ///
-    /// Called `generator()` not `get_generator()` following Rust conventions.
+    /// Returns the full generator matrix G = [I_k | P], constructed and
+    /// allocated on each call.
     pub fn generator(&self) -> SpBitMatrixDual {
         if !self.is_systematic {
-            // For non-systematic codes, would return stored full generator
-            // Currently we only support systematic codes
+            // Both constructors produce systematic codes.
             panic!("Non-systematic codes not yet implemented");
         }
 
-        // Reconstruct full systematic generator G = [I_k | P] as sparse
         let mut edges = Vec::new();
 
-        // Add identity part: G[i, systematic_cols[i]] = 1
         for i in 0..self.k {
             edges.push((i, self.systematic_cols[i]));
         }
 
-        // Add parity part: G[i, parity_cols[j]] = P[i, j]
         for row in 0..self.k {
             for col in 0..self.r {
                 if self.parity_matrix.get(row, col) {
@@ -427,9 +307,7 @@ impl RuEncodingMatrices {
         self.is_systematic
     }
 
-    /// Returns the number of non-zero entries in the parity matrix.
-    ///
-    /// This counts the edges in the parity part P (not including the identity).
+    /// Returns the number of non-zero entries in the parity part P.
     pub fn parity_nnz(&self) -> usize {
         let mut count = 0;
         for row in 0..self.k {
@@ -442,21 +320,13 @@ impl RuEncodingMatrices {
         count
     }
 
-    /// Create encoding matrices from pre-computed components.
-    ///
-    /// This is used when loading from cache.
-    ///
-    /// # Arguments
-    ///
-    /// * `k` - Message dimension
-    /// * `n` - Codeword length
-    /// * `parity_matrix` - Parity matrix P (k × r)
-    /// * `systematic_cols` - Systematic bit positions  
-    /// * `parity_cols` - Parity bit positions
+    /// Create encoding matrices from pre-computed components, as when loading
+    /// from a cache.
     ///
     /// # Panics
     ///
-    /// Panics if dimensions don't match.
+    /// Panics if `n < k`, if `parity_matrix` is not k × (n − k), or if
+    /// `systematic_cols` and `parity_cols` do not have lengths k and n − k.
     pub fn from_components(
         k: usize,
         n: usize,
@@ -520,7 +390,6 @@ mod tests {
         let h = simple_hamming_7_4_h();
         let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
 
-        // Test all 16 messages
         for msg_val in 0u8..16 {
             let mut message = BitVec::new();
             for i in 0..4 {
@@ -530,7 +399,6 @@ mod tests {
             let codeword = matrices.encode(&message);
             assert_eq!(codeword.len(), 7);
 
-            // Verify H·c = 0
             let syndrome = h.matvec(&codeword);
             assert_eq!(
                 syndrome.count_ones(),
@@ -564,7 +432,6 @@ mod tests {
         assert_eq!(matrices.k(), 4);
         assert_eq!(matrices.n(), 7);
 
-        // Verify all codewords satisfy H·c = 0
         for msg_val in 0u8..16 {
             let mut message = BitVec::new();
             for i in 0..4 {
@@ -581,21 +448,14 @@ mod tests {
         }
     }
 
-    // Tests for parity matrix density characteristics
-
     #[test]
     fn test_generator_is_sparse() {
-        // Test that for truly sparse codes (Hamming), the parity matrix has low density
-        // Note: DVB-T2 codes are 40-50% dense, but Hamming codes are ~20% dense
         let h = simple_hamming_7_4_h();
         let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
 
-        // For [7,4] Hamming code, generator should have exactly 16 ones
-        // (4 identity bits + 12 parity bits)
         let nnz = matrices.parity_nnz();
         assert!(nnz <= 20, "Generator should be sparse, got {} edges", nnz);
 
-        // Density should be reasonable for a sparse code
         let density = nnz as f64 / (matrices.k() * matrices.n()) as f64;
         assert!(
             density < 0.7,
@@ -612,11 +472,9 @@ mod tests {
 
     #[test]
     fn test_sparse_matvec_transpose() {
-        // Test that sparse matrix-vector multiply works correctly
         let h = simple_hamming_7_4_h();
         let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
 
-        // Test zero message
         let zero_msg = BitVec::zeros(4);
         let zero_codeword = matrices.encode(&zero_msg);
         assert_eq!(
@@ -625,14 +483,12 @@ mod tests {
             "Zero message should produce zero codeword"
         );
 
-        // Test messages with single bit set
         for bit_pos in 0..4 {
             let mut message = BitVec::zeros(4);
             message.set(bit_pos, true);
 
             let codeword = matrices.encode(&message);
 
-            // Verify it's a valid codeword
             let syndrome = h.matvec(&codeword);
             assert_eq!(
                 syndrome.count_ones(),
@@ -644,8 +500,6 @@ mod tests {
 
     #[test]
     fn test_sparse_encoding_performance() {
-        // Test that sparse encoding maintains good performance
-        // This is more of a documentation test - actual performance tested in benches
         let h = simple_hamming_7_4_h();
         let matrices = RuEncodingMatrices::preprocess(&h).unwrap();
 
@@ -654,7 +508,6 @@ mod tests {
             message.push_bit(true);
         }
 
-        // Just verify it works - benchmarks will test actual performance
         let _codeword = matrices.encode(&message);
     }
 }

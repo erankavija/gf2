@@ -1,7 +1,4 @@
-//! DVB-T2 LDPC code parameters.
-//!
-//! This module defines the parameters for DVB-T2 LDPC codes as specified
-//! in ETSI EN 302 755.
+//! DVB-T2 LDPC code parameters from `@/citation/Etsi2015`.
 
 use crate::bch::CodeRate;
 
@@ -15,9 +12,6 @@ pub enum FrameSize {
 }
 
 /// DVB-T2 LDPC code parameters.
-///
-/// Parameters are derived from the frame size and code rate according to
-/// ETSI EN 302 755 standard tables.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DvbParams {
     /// Codeword length
@@ -36,11 +30,6 @@ pub struct DvbParams {
 
 impl DvbParams {
     /// Get parameters for a DVB-T2 configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `frame_size` - Short (16200) or Normal (64800) frame
-    /// * `rate` - Code rate (1/2, 3/5, 2/3, 3/4, 4/5, 5/6)
     ///
     /// # Examples
     ///
@@ -99,7 +88,6 @@ mod tests {
         assert_eq!(params.expansion_factor, 360);
         assert_eq!(params.num_info_blocks, 90);
 
-        // Verify invariants
         assert_eq!(params.n, params.k + params.m);
         assert_eq!(params.k, params.num_info_blocks * params.expansion_factor);
     }

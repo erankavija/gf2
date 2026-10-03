@@ -8,17 +8,6 @@
 ///
 /// Organized by set index i_LS (0..7). Each set contains Z values of the form
 /// `a * 2^j` where `a` is the set's base factor.
-///
-/// | i_LS | Base factor a | Z values |
-/// |------|--------------|----------|
-/// | 0 | 2 | 2, 4, 8, 16, 32, 64, 128, 256 |
-/// | 1 | 3 | 3, 6, 12, 24, 48, 96, 192, 384 |
-/// | 2 | 5 | 5, 10, 20, 40, 80, 160, 320 |
-/// | 3 | 7 | 7, 14, 28, 56, 112, 224 |
-/// | 4 | 9 | 9, 18, 36, 72, 144, 288 |
-/// | 5 | 11 | 11, 22, 44, 88, 176, 352 |
-/// | 6 | 13 | 13, 26, 52, 104, 208 |
-/// | 7 | 15 | 15, 30, 60, 120, 240 |
 pub const LIFTING_SIZE_SETS: &[&[u16]] = &[
     // i_LS = 0: a = 2
     &[2, 4, 8, 16, 32, 64, 128, 256],
@@ -38,15 +27,8 @@ pub const LIFTING_SIZE_SETS: &[&[u16]] = &[
     &[15, 30, 60, 120, 240],
 ];
 
-/// Returns the set index i_LS for a given lifting size Z.
-///
-/// # Arguments
-///
-/// * `z` - Lifting size
-///
-/// # Returns
-///
-/// The set index (0..7) if Z is a valid lifting size, or `None` otherwise.
+/// Returns the set index i_LS (0..7) of lifting size `z`, or `None` if `z` is
+/// not a valid lifting size.
 ///
 /// # Examples
 ///
@@ -59,10 +41,6 @@ pub const LIFTING_SIZE_SETS: &[&[u16]] = &[
 /// assert_eq!(lifting_set_index(7), Some(3));
 /// assert_eq!(lifting_set_index(100), None); // Not a valid lifting size
 /// ```
-///
-/// # Complexity
-///
-/// O(N) where N = 51 (total entries across all lifting size sets).
 pub fn lifting_set_index(z: u16) -> Option<usize> {
     for (i_ls, set) in LIFTING_SIZE_SETS.iter().enumerate() {
         if set.contains(&z) {
@@ -84,10 +62,6 @@ pub fn lifting_set_index(z: u16) -> Option<usize> {
 /// assert_eq!(*sizes.last().unwrap(), 384);
 /// assert_eq!(sizes.len(), 51);
 /// ```
-///
-/// # Complexity
-///
-/// O(N log N) where N = 51 (total valid lifting sizes across all sets).
 pub fn all_lifting_sizes() -> Vec<u16> {
     let mut sizes: Vec<u16> = LIFTING_SIZE_SETS
         .iter()
@@ -98,14 +72,6 @@ pub fn all_lifting_sizes() -> Vec<u16> {
 }
 
 /// Checks whether a given Z is a valid 5G NR lifting size.
-///
-/// # Arguments
-///
-/// * `z` - Candidate lifting size
-///
-/// # Complexity
-///
-/// O(N) where N = 51 (delegates to [`lifting_set_index`]).
 pub fn is_valid_lifting_size(z: u16) -> bool {
     lifting_set_index(z).is_some()
 }
@@ -132,7 +98,6 @@ mod tests {
 
     #[test]
     fn test_lifting_set_index_all_sets() {
-        // Spot check each set
         assert_eq!(lifting_set_index(5), Some(2));
         assert_eq!(lifting_set_index(320), Some(2));
         assert_eq!(lifting_set_index(7), Some(3));

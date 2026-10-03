@@ -1,6 +1,4 @@
-//! DVB-T2 sparse matrix builder from table format.
-//!
-//! Converts DVB-T2 standard tables to sparse parity-check matrix edge lists.
+//! Sparse parity-check matrix edge lists from the DVB-T2 standard tables.
 
 use super::params::DvbParams;
 
@@ -11,9 +9,9 @@ use super::params::DvbParams;
 /// Panics if:
 /// - Table row count != num_info_blocks
 /// - Any parity index >= m (out of range)
-/// - Table is placeholder (single row with single element)
+/// - Table is a single row with a single element
 fn validate_table(table: &[&[usize]], params: &DvbParams) {
-    // Check for placeholder first (provides better error message)
+    // Checked first for the more specific message.
     assert!(
         table.len() > 1 || table[0].len() > 1,
         "DVB-T2 table not yet implemented (placeholder detected)"
@@ -27,7 +25,6 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
         table.len()
     );
 
-    // Validate all parity indices in range
     for (row_idx, row) in table.iter().enumerate() {
         for &parity_idx in row.iter() {
             assert!(
@@ -58,11 +55,6 @@ fn validate_table(table: &[&[usize]], params: &DvbParams) {
 ///    - Add edge (p, k + p)              // Diagonal
 ///    - Add edge (p-1, k + p) if p > 0   // Sub-diagonal (NO wrap at p=0)
 ///
-/// # Arguments
-///
-/// * `table` - DVB table with base parity indices per info block
-/// * `params` - Code parameters (n, k, m, q, Z)
-///
 /// # Returns
 ///
 /// Edge list for sparse matrix: Vec<(check_idx, var_idx)>
@@ -80,7 +72,6 @@ pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, us
     let m = params.m;
     let k = params.k;
 
-    // 1. Information bit connections from table
     for (block_idx, base_indices) in table.iter().enumerate() {
         for &base_parity in base_indices.iter() {
             for j in 0..z {
@@ -91,24 +82,10 @@ pub fn build_dvb_edges(table: &[&[usize]], params: &DvbParams) -> Vec<(usize, us
         }
     }
 
-    // 2. Dual-diagonal parity structure (DVB-T2 standard)
-    //
-    // DVB-T2 dual-diagonal B matrix (parity-on-parity):
-    //   - Row 0: SINGLE 1 at column k+0 (diagonal only, NO sub-diagonal)
-    //   - Row p (p>0): TWO 1s at columns k+p (diagonal) and k+(p-1) (sub-diagonal)
-    //
-    // In edge representation (check, variable):
-    //   - All rows p: diagonal edge (p, k+p)
-    //   - Rows p>0: sub-diagonal edge (p, k+p-1)
-    //
-    // This creates a staircase pattern where row p connects to columns k+p and k+p-1,
-    // allowing iterative solution: p[0] = s[0], p[i] = s[i] ⊕ p[i-1] for i>0
     for p in 0..m {
-        // Diagonal: check p connected to variable k+p
         edges.push((p, k + p));
 
-        // Sub-diagonal: check p connected to variable k+p-1 (ONLY for p > 0)
-        // Row 0 has NO sub-diagonal connection (single 1 only)
+        // Row 0 has no sub-diagonal entry.
         if p > 0 {
             edges.push((p, k + p - 1));
         }
@@ -135,7 +112,7 @@ mod tests {
     #[should_panic(expected = "placeholder")]
     fn test_validate_placeholder() {
         let params = DvbParams::for_code(FrameSize::Short, CodeRate::Rate1_2);
-        let table: &[&[usize]] = &[&[0]]; // Placeholder
+        let table: &[&[usize]] = &[&[0]];
         validate_table(table, &params);
     }
 
@@ -143,7 +120,6 @@ mod tests {
     #[should_panic(expected = "must be <")]
     fn test_validate_out_of_range_index() {
         let params = DvbParams::for_code(FrameSize::Short, CodeRate::Rate1_2);
-        // Create table with 20 rows but invalid parity index
         const BAD_ROW: &[usize] = &[10000]; // Way out of range (m = 9000)
         let table: &[&[usize]] = &[
             BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW, BAD_ROW,
@@ -160,10 +136,8 @@ mod tests {
         let params = DvbParams::for_code(FrameSize::Normal, CodeRate::Rate1_2);
         let edges = build_dvb_edges(NORMAL_RATE_1_2_TABLE, &params);
 
-        // Verify we got edges
         assert!(!edges.is_empty());
 
-        // Check all edges are in valid range
         for (check, var) in &edges {
             assert!(*check < params.m, "Check index {} out of range", check);
             assert!(*var < params.n, "Variable index {} out of range", var);
