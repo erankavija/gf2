@@ -1,33 +1,11 @@
-//! Packed `F_7` element / vector encoding, chosen in `@/issue/f10152f6`.
+//! Packed `F_7` element / vector encoding.
 //!
-//! # Encoding
-//!
-//! Each `u64` packs **16 elements** at 4-bit-aligned slots. Slot `i`
-//! occupies bits `[4i .. 4i+4)`. Canonical values are `0..=6`; the high
-//! bit of each slot (bit `4i+3`) is reserved and always zero for canonical
-//! packings (since `6 = 0b0110 < 8`, the high bit is never set).
-//!
-//! # Binary operations
-//!
-//! Binary ops use a 64 KiB lookup table keyed by a packed 16-bit
-//! `(a_byte | (b_byte << 8))` index, where each input byte holds two
-//! adjacent 4-bit-slot elements. Each lookup yields a 1-byte result
-//! containing two packed 4-bit results.
-//!
-//! Per `u64` (16 F_7 ops): 8 LUT lookups + ~16 shift/mask ops.
-//!
-//! # LUTs
-//!
-//! Three 64 KiB static const arrays:
-//! - `ADD_LUT`: `(a + b) mod 7` per nibble pair.
-//! - `SUB_LUT`: `(a - b + 7) mod 7` per nibble pair.
-//! - `MUL_LUT`: `(a * b) mod 7` per nibble pair.
-//!
-//! Computed at compile time via `const fn`; no `OnceLock`, Kani-friendly.
-//! Total footprint in `.rodata`: 3 × 64 KiB = 192 KiB.
-//!
-//! Non-canonical nibble inputs (nibble value ≥ 7) produce a LUT result of 0
-//! (safe but undefined; canonical packings never produce them).
+//! Each `u64` packs 16 elements at 4-bit slots; slot `i` occupies bits
+//! `[4i .. 4i+4)` and holds a canonical value `0..=6`, so bit `4i+3` is
+//! always zero. Binary ops go through three 64 KiB compile-time lookup
+//! tables indexed by `a_byte | (b_byte << 8)`, each byte holding two adjacent
+//! slots: 8 lookups per `u64`. A byte pair containing a slot value ≥ 7 maps
+//! to 0.
 
 use core::fmt;
 
@@ -35,16 +13,6 @@ use gf2_core::gfp::Fp;
 
 use super::{PackedField, PackedFieldVec};
 
-// ---------------------------------------------------------------------------
-// Compile-time LUT construction
-// ---------------------------------------------------------------------------
-
-/// Build the `ADD_LUT` at compile time.
-///
-/// `ADD_LUT[a_byte as usize | ((b_byte as usize) << 8)]` returns a byte
-/// whose low nibble is `(a_lo + b_lo) % 7` and high nibble is
-/// `(a_hi + b_hi) % 7`, where `a_lo = a_byte & 0xf`, `a_hi = (a_byte >> 4) & 0xf`,
-/// etc. Non-canonical nibbles (≥ 7) produce 0.
 const fn build_add_lut() -> [u8; 65536] {
     let mut lut = [0u8; 65536];
     let mut ap: usize = 0;
@@ -68,11 +36,6 @@ const fn build_add_lut() -> [u8; 65536] {
     lut
 }
 
-/// Build the `SUB_LUT` at compile time.
-///
-/// `SUB_LUT[a_byte as usize | ((b_byte as usize) << 8)]` returns a byte
-/// whose low nibble is `(a_lo - b_lo + 7) % 7` and high nibble is
-/// `(a_hi - b_hi + 7) % 7`. Non-canonical nibbles (≥ 7) produce 0.
 const fn build_sub_lut() -> [u8; 65536] {
     let mut lut = [0u8; 65536];
     let mut ap: usize = 0;
@@ -96,11 +59,6 @@ const fn build_sub_lut() -> [u8; 65536] {
     lut
 }
 
-/// Build the `MUL_LUT` at compile time.
-///
-/// `MUL_LUT[a_byte as usize | ((b_byte as usize) << 8)]` returns a byte
-/// whose low nibble is `(a_lo * b_lo) % 7` and high nibble is
-/// `(a_hi * b_hi) % 7`. Non-canonical nibbles (≥ 7) produce 0.
 const fn build_mul_lut() -> [u8; 65536] {
     let mut lut = [0u8; 65536];
     let mut ap: usize = 0;
@@ -124,39 +82,19 @@ const fn build_mul_lut() -> [u8; 65536] {
     lut
 }
 
-/// Addition LUT: 64 KiB, built at compile time, resident in `.rodata`.
-///
-/// `ADD_LUT[key]` where `key = (a_byte as usize) | ((b_byte as usize) << 8)`.
-/// Low nibble of result = `(a_lo + b_lo) % 7`; high nibble = `(a_hi + b_hi) % 7`.
+/// Addition LUT, indexed by `a_byte | (b_byte << 8)`: each result nibble is
+/// `(a + b) % 7` of the matching operand nibbles; 0 when any nibble is ≥ 7.
 pub static ADD_LUT: [u8; 65536] = build_add_lut();
 
-/// Subtraction LUT: 64 KiB, built at compile time, resident in `.rodata`.
-///
-/// `SUB_LUT[key]` where `key = (a_byte as usize) | ((b_byte as usize) << 8)`.
-/// Low nibble of result = `(a_lo - b_lo + 7) % 7`; high nibble = `(a_hi - b_hi + 7) % 7`.
+/// Subtraction LUT, indexed by `a_byte | (b_byte << 8)`: each result nibble is
+/// `(a - b + 7) % 7` of the matching operand nibbles; 0 when any nibble is ≥ 7.
 pub static SUB_LUT: [u8; 65536] = build_sub_lut();
 
-/// Multiplication LUT: 64 KiB, built at compile time, resident in `.rodata`.
-///
-/// `MUL_LUT[key]` where `key = (a_byte as usize) | ((b_byte as usize) << 8)`.
-/// Low nibble of result = `(a_lo * b_lo) % 7`; high nibble = `(a_hi * b_hi) % 7`.
+/// Multiplication LUT, indexed by `a_byte | (b_byte << 8)`: each result nibble is
+/// `(a * b) % 7` of the matching operand nibbles; 0 when any nibble is ≥ 7.
 pub static MUL_LUT: [u8; 65536] = build_mul_lut();
 
-// ---------------------------------------------------------------------------
-// Core word-level operation
-// ---------------------------------------------------------------------------
-
-/// Apply a binary LUT op to a single pair of packed-F_7 `u64` words.
-///
-/// # Arguments
-///
-/// * `a` — first packed word (16 F_7 elements at 4-bit slots 0..=15).
-/// * `b` — second packed word.
-/// * `lut` — one of `ADD_LUT`, `SUB_LUT`, or `MUL_LUT`.
-///
-/// # Complexity
-///
-/// 8 LUT lookups + 8 shift/mask/OR assembler ops.
+/// Apply a binary LUT op to one pair of packed `u64` words: 8 lookups.
 #[inline]
 fn binary_op_word(a: u64, b: u64, lut: &[u8; 65536]) -> u64 {
     let mut r: u64 = 0;
@@ -171,19 +109,7 @@ fn binary_op_word(a: u64, b: u64, lut: &[u8; 65536]) -> u64 {
     r
 }
 
-// ---------------------------------------------------------------------------
-// Packed7 — fixed-width 16-lane packed F_7
-// ---------------------------------------------------------------------------
-
-/// Fixed-width packed `F_7` element encoding 16 lanes in one `u64`.
-///
-/// Each `F_7` element occupies a 4-bit-aligned slot: slot `i` (0 ≤ i < 16)
-/// lives in bits `[4i, 4i+4)`. The high bit of each slot (bit `4i+3`) is
-/// reserved and always zero for canonical values (since 6 = 0b0110 < 8).
-///
-/// Binary ops use 8 LUT lookups per `u64` word, giving 16 element results per
-/// lookup round. The LUTs are 64 KiB each and are built at compile time —
-/// no runtime initialisation, no `OnceLock`.
+/// 16 `F_7` lanes in one `u64`, encoded as in the [module docs](self).
 ///
 /// # Examples
 ///
@@ -196,11 +122,6 @@ fn binary_op_word(a: u64, b: u64, lut: &[u8; 65536]) -> u64 {
 /// let s = a.add(b);
 /// assert_eq!(s.lane(0), Fp::<7>::new(1)); // (3 + 5) % 7 = 1
 /// ```
-///
-/// # Complexity
-///
-/// All fixed-width operations are `O(1)` — a fixed number of LUT lookups
-/// and word-level ops independent of the number of lanes.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, Default)]
 pub struct Packed7 {
     w: u64,
@@ -210,15 +131,7 @@ pub struct Packed7 {
 pub const LANES: usize = 16;
 
 impl Packed7 {
-    /// Construct a `Packed7` from an array of 16 `F_7` elements.
-    ///
-    /// # Arguments
-    ///
-    /// * `values` — exactly 16 canonical `F_7` values (each in `0..=6`).
-    ///
-    /// # Complexity
-    ///
-    /// `O(LANES)`.
+    /// Pack 16 `F_7` elements, lane `i` from `values[i]`.
     #[inline]
     pub fn pack(values: &[Fp<7>; 16]) -> Self {
         let mut w = 0u64;
@@ -232,17 +145,9 @@ impl Packed7 {
 
     /// Decode lane `i` to a canonical `F_7` value.
     ///
-    /// # Arguments
-    ///
-    /// * `i` — lane index in `0..LANES`.
-    ///
     /// # Panics
     ///
     /// Panics if `i >= LANES`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn lane(self, i: usize) -> Fp<7> {
         assert!(
@@ -254,10 +159,6 @@ impl Packed7 {
     }
 
     /// Decode all 16 lanes into an array.
-    ///
-    /// # Complexity
-    ///
-    /// `O(LANES)`.
     #[inline]
     pub fn to_array(self) -> [Fp<7>; 16] {
         core::array::from_fn(|i| self.lane(i))
@@ -272,47 +173,24 @@ impl Packed7 {
     /// All-lanes-one constant.
     #[inline]
     pub fn one() -> Self {
-        // Every 4-bit slot = 1: set bit 0 of each slot.
-        // Slots at positions 4i have bit 0 = 1 when the packed nibble = 1.
-        // Pattern: 0x1111_1111_1111_1111 (each nibble = 1).
         Self {
             w: 0x1111_1111_1111_1111u64,
         }
     }
 
     /// Broadcast scalar `x` to all 16 lanes.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` — `F_7` scalar to replicate across all lanes.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn splat(x: Fp<7>) -> Self {
         let v = x.value(); // 0..=6
-                           // Replicate a single nibble v to all 16 slots.
-                           // Each nibble slot i is at bits [4i, 4i+4); we multiply v by 0x1111...
-                           // to broadcast it into every nibble position.
         let w = v.wrapping_mul(0x1111_1111_1111_1111u64);
         Self { w }
     }
 
     /// Write the canonical encoding of `x` into lane `i`, returning the updated value.
     ///
-    /// # Arguments
-    ///
-    /// * `i` — lane index in `0..LANES`.
-    /// * `x` — scalar to write into lane `i`.
-    ///
     /// # Panics
     ///
     /// Panics if `i >= LANES`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn with_lane(self, i: usize, x: Fp<7>) -> Self {
         assert!(
@@ -327,29 +205,12 @@ impl Packed7 {
     }
 
     /// Returns `true` iff every lane decodes to `F_7`'s additive identity (0).
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn all_zero(self) -> bool {
         self.w == 0
     }
 
-    /// Reduce the first `n` lanes to a single `F_7` element via the
-    /// multiplication tree.
-    ///
-    /// Lanes `n..LANES` are treated as the multiplicative identity (1) and
-    /// do not contribute to the result. An empty prefix (`n == 0`) is not
-    /// allowed; use `n >= 1`.
-    ///
-    /// This is the F_7 analogue of `Bipedal3::fold_mul_first_n`, used by
-    /// `permanent_bipedal7` at each Gray-code step to compute the row product
-    /// term.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` — number of active lanes, in `1..=LANES`.
+    /// Product of the first `n` lanes; lanes `n..LANES` are ignored.
     ///
     /// # Panics
     ///
@@ -373,7 +234,7 @@ impl Packed7 {
     ///
     /// # Complexity
     ///
-    /// `O(n)` LUT lookups (at most `LANES` = 16 iterations).
+    /// `O(n)` scalar multiplications.
     pub fn fold_mul_first_n(self, n: usize) -> Fp<7> {
         assert!(
             (1..=LANES).contains(&n),
@@ -389,109 +250,55 @@ impl Packed7 {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Inherent arithmetic wrappers (proof targets for D6 / JIT 30e98ef1).
-//
-// These methods delegate verbatim to the `PackedField<Fp<7>>` trait impl
-// below; they exist so the Charon/Aeneas verification pipeline can prove
-// `Packed7` F_7 correctness against a fixed inherent surface that is not
-// affected by trait-dispatch indirection. There is no algorithmic
-// divergence between the inherent and trait paths — the inherent body is a
-// single tail call into the trait method, which Rust inlines away.
-//
-// Per `@/issue/30e98ef1` §4, the Lean proof file
-// `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` targets these inherent
-// methods (verbatim adaptation of the `packed5.rs:326-401` pattern, itself
-// adapted from `bipedal3.rs`).
-// ---------------------------------------------------------------------------
-
 impl Packed7 {
-    /// Inherent `add` wrapper — delegates to `<Self as PackedField<Fp<7>>>::add`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// LUT-driven formula lives in the trait impl below.
+    /// [`PackedField::add`] as an inherent method: a fixed proof target for
+    /// `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean`, independent of
+    /// trait dispatch.
     #[inline]
     pub fn add_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<7>>>::add(self, rhs)
     }
 
-    /// Inherent `sub` wrapper — delegates to `<Self as PackedField<Fp<7>>>::sub`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// LUT-driven formula lives in the trait impl below.
+    /// [`PackedField::sub`] as an inherent proof target; see
+    /// [`Self::add_inherent`].
     #[inline]
     pub fn sub_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<7>>>::sub(self, rhs)
     }
 
-    /// Inherent `mul` wrapper — delegates to `<Self as PackedField<Fp<7>>>::mul`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// LUT-driven formula lives in the trait impl below.
+    /// [`PackedField::mul`] as an inherent proof target; see
+    /// [`Self::add_inherent`].
     #[inline]
     pub fn mul_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<7>>>::mul(self, rhs)
     }
 
-    /// Inherent `neg` wrapper — delegates to `<Self as PackedField<Fp<7>>>::neg`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// LUT-driven formula lives in the trait impl below.
+    /// [`PackedField::neg`] as an inherent proof target; see
+    /// [`Self::add_inherent`].
     #[inline]
     pub fn neg_inherent(self) -> Self {
         <Self as PackedField<Fp<7>>>::neg(self)
     }
 }
 
-// ---------------------------------------------------------------------------
-// PackedField<Fp<7>> for Packed7
-// ---------------------------------------------------------------------------
-
 impl PackedField<Fp<7>> for Packed7 {
-    /// Number of F_7 lanes packed into one [`Packed7`].
-    ///
-    /// Fixed at 16 to match the 4-bit-slot encoding width in a `u64`.
     const LANES: usize = LANES;
 
-    /// Returns the all-zeros `Packed7` (every lane = 0).
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn zero() -> Self {
         Packed7::zero()
     }
 
-    /// Returns the all-ones `Packed7` (every lane = 1).
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn one() -> Self {
         Packed7::one()
     }
 
-    /// Broadcasts scalar `x` to all 16 lanes.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` — `F_7` scalar to replicate across all lanes.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn splat(x: Fp<7>) -> Self {
         Packed7::splat(x)
     }
 
-    /// Lane-wise sum: `self + rhs` pointwise mod 7.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 8 LUT lookups + shift/mask ops.
     #[inline]
     fn add(self, rhs: Self) -> Self {
         Self {
@@ -499,11 +306,6 @@ impl PackedField<Fp<7>> for Packed7 {
         }
     }
 
-    /// Lane-wise difference: `self - rhs` pointwise mod 7.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 8 LUT lookups + shift/mask ops.
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self {
@@ -511,13 +313,7 @@ impl PackedField<Fp<7>> for Packed7 {
         }
     }
 
-    /// Lane-wise additive inverse: `-(self)` pointwise mod 7.
-    ///
-    /// Implemented as `0 - self` via `SUB_LUT`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 8 LUT lookups.
+    /// `0 - self` through `SUB_LUT`.
     #[inline]
     fn neg(self) -> Self {
         Self {
@@ -525,11 +321,6 @@ impl PackedField<Fp<7>> for Packed7 {
         }
     }
 
-    /// Lane-wise product: `self * rhs` pointwise mod 7.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 8 LUT lookups + shift/mask ops.
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self {
@@ -537,67 +328,29 @@ impl PackedField<Fp<7>> for Packed7 {
         }
     }
 
-    /// Decode lane `i` to a canonical `F_7` value.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — lane index in `0..16`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `i >= 16`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn lane(self, i: usize) -> Fp<7> {
         Packed7::lane(self, i)
     }
 
-    /// Write the canonical encoding of `x` into lane `i`.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — lane index in `0..16`.
-    /// * `x` — scalar to write.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `i >= 16`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn with_lane(self, i: usize, x: Fp<7>) -> Self {
         Packed7::with_lane(self, i, x)
     }
 
-    /// Returns `true` iff every lane decodes to `F_7`'s additive identity.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn all_zero(self) -> bool {
         Packed7::all_zero(self)
     }
 }
 
-// ---------------------------------------------------------------------------
-// Packed7Vec — variable-length packed F_7 vector
-// ---------------------------------------------------------------------------
-
-/// Variable-length packed `F_7` vector storing `len_lanes` elements as a
-/// `Vec<u64>` of words, each word holding 16 elements at 4-bit-aligned slots.
+/// Variable-length packed `F_7` vector: `len_lanes` elements in a `Vec<u64>`,
+/// 16 elements per word at 4-bit slots.
 ///
 /// # Mask-tail invariant
 ///
-/// Padding nibbles beyond `len_lanes` in the last word must always be zero.
-/// Every mutating operation calls `Packed7Vec::mask_tail` to enforce this
-/// invariant. This is the most critical correctness invariant in this
-/// codebase (AGENTS.md §Correctness and test policy).
+/// Slots beyond `len_lanes` in the last word are zero; every mutating
+/// operation restores this through `Packed7Vec::mask_tail`.
 ///
 /// # Examples
 ///
@@ -612,8 +365,7 @@ impl PackedField<Fp<7>> for Packed7 {
 ///
 /// # Complexity
 ///
-/// Construction and lane-wise operations are `O(ceil(len_lanes / 16))`.
-/// Individual lane access ([`get`][`Packed7Vec::get`]) is `O(1)`.
+/// Lane-wise operations are `O(ceil(len_lanes / 16))`; `get` is `O(1)`.
 #[derive(Clone)]
 pub struct Packed7Vec {
     words: Vec<u64>,
@@ -627,14 +379,7 @@ impl Packed7Vec {
         len.div_ceil(16)
     }
 
-    /// Zero out all nibbles beyond `self.len_lanes` in the last word.
-    ///
-    /// **This invariant must hold after every mutation.** Failing to call
-    /// `mask_tail` after any write violates the key correctness invariant.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// Zero all slots beyond `self.len_lanes` in the last word.
     fn mask_tail(&mut self) {
         let n = self.words.len();
         if n == 0 {
@@ -644,24 +389,15 @@ impl Packed7Vec {
         if used == 16 {
             return; // full word; no padding to mask
         }
-        // Each slot is 4 bits; `used` slots means the mask spans 4*used bits.
         let mask = (1u64 << (4 * used)) - 1;
         self.words[n - 1] &= mask;
     }
 
     /// Decode logical position `i` to a canonical `F_7` value.
     ///
-    /// # Arguments
-    ///
-    /// * `i` — logical position in `0..self.len()`.
-    ///
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     pub fn get(&self, i: usize) -> Fp<7> {
         assert!(
             i < self.len_lanes,
@@ -675,9 +411,6 @@ impl Packed7Vec {
     }
 
     /// Lane-wise in-place additive inverse: `self[i] = -self[i]` for every `i`.
-    ///
-    /// This is an inherent method (not on `PackedFieldVec`) because the frozen
-    /// trait surface (D1b §2.2) does not include `neg_assign`.
     ///
     /// # Examples
     ///
@@ -693,10 +426,6 @@ impl Packed7Vec {
     /// assert_eq!(v.get(1), Fp::<7>::new(6));  // -1 ≡ 6 mod 7
     /// assert_eq!(v.get(2), Fp::<7>::new(4));  // -3 ≡ 4 mod 7
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 16))` word-level ops.
     pub fn neg_assign(&mut self) {
         for w in self.words.iter_mut() {
             *w = binary_op_word(0u64, *w, &SUB_LUT);
@@ -704,11 +433,7 @@ impl Packed7Vec {
         self.mask_tail();
     }
 
-    /// Borrow the raw packed word slice.
-    ///
-    /// The last word may be partially filled; nibble slots at positions
-    /// `self.len() % 16 .. 15` within the last word are zero (tail-masking
-    /// invariant).
+    /// Raw packed words; slots beyond `self.len()` in the last word are zero.
     ///
     /// # Examples
     ///
@@ -720,26 +445,17 @@ impl Packed7Vec {
     /// // Lane 0 = 3 in slot 0; lane 1 = 5 in slot 1.
     /// assert_eq!(v.raw_words()[0] & 0xff, (5 << 4) | 3);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn raw_words(&self) -> &[u64] {
         &self.words
     }
 }
 
-// ---------------------------------------------------------------------------
-// Manual PartialEq / Eq — canonical-decode equality
-// ---------------------------------------------------------------------------
-
 impl PartialEq for Packed7Vec {
     /// Canonical-decode equality: two vectors are equal iff they have the
     /// same `len_lanes` and every decoded lane is equal.
     ///
-    /// The mask-tail invariant ensures padding nibbles are 0 on both sides,
-    /// so a direct word-by-word comparison is correct.
+    /// The mask-tail invariant makes the word-by-word comparison exact.
     ///
     /// # Examples
     ///
@@ -761,10 +477,6 @@ impl PartialEq for Packed7Vec {
 
 impl Eq for Packed7Vec {}
 
-// ---------------------------------------------------------------------------
-// Manual Debug
-// ---------------------------------------------------------------------------
-
 impl fmt::Debug for Packed7Vec {
     /// Formats the value as a `Vec` of decoded lane values (each 0..=6).
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -779,22 +491,9 @@ impl fmt::Debug for Packed7Vec {
     }
 }
 
-// ---------------------------------------------------------------------------
-// PackedFieldVec<Fp<7>> for Packed7Vec
-// ---------------------------------------------------------------------------
-
 impl PackedFieldVec<Fp<7>> for Packed7Vec {
     type Element = Packed7;
 
-    /// Construct a vector of `len` zero `F_7` elements.
-    ///
-    /// # Arguments
-    ///
-    /// * `len` — number of logical `F_7` positions in the result.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(len / 16))`.
     fn zeros(len: usize) -> Self {
         let n_words = Self::n_words(len);
         Self {
@@ -803,16 +502,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
         }
     }
 
-    /// Construct a vector by encoding every element of `xs`.
-    ///
-    /// # Arguments
-    ///
-    /// * `xs` — source slice; the result has `xs.len()` logical positions
-    ///   and `get(i) == xs[i]` for every `i`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(xs.len())`.
     fn from_field_slice(xs: &[Fp<7>]) -> Self {
         let len = xs.len();
         let n_words = Self::n_words(len);
@@ -830,43 +519,16 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
         out
     }
 
-    /// Number of logical `F_7` positions.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn len(&self) -> usize {
         self.len_lanes
     }
 
-    /// Decode logical position `i` to a canonical `F_7` value.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — logical position index in `0..self.len()`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `i >= self.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn get(&self, i: usize) -> Fp<7> {
         Packed7Vec::get(self, i)
     }
 
-    /// Lane-wise in-place sum: `self[i] += rhs[i]` for every `i`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 16))`.
     fn add_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.len_lanes, rhs.len_lanes,
@@ -879,15 +541,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
         self.mask_tail();
     }
 
-    /// Lane-wise in-place difference: `self[i] -= rhs[i]` for every `i`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 16))`.
     fn sub_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.len_lanes, rhs.len_lanes,
@@ -900,15 +553,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
         self.mask_tail();
     }
 
-    /// Lane-wise in-place product: `self[i] *= rhs[i]` for every `i`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `self.len() != rhs.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 16))`.
     fn mul_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.len_lanes, rhs.len_lanes,
@@ -921,45 +565,14 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
         self.mask_tail();
     }
 
-    /// Returns `true` iff every logical position decodes to `F_7`'s additive
-    /// identity. The empty vector trivially answers `true`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 16))`.
     fn all_zero(&self) -> bool {
         self.words.iter().all(|&w| w == 0)
     }
 }
 
-// ===========================================================================
-// Packed7Matrix — column-major rectangular matrix of packed F_7 values
-// ===========================================================================
-
 /// Rectangular `rows × cols` matrix of packed `F_7` values, stored
-/// **column-major** as one [`Packed7Vec`] per column.
-///
-/// Each column `j` is a [`Packed7Vec`] of length `rows`; the entry at
-/// row `i`, column `j` is `self.column(j).get(i)`.
-///
-/// # Single-word size bound
-///
-/// `permanent_bipedal7` only supports the single-word path (`n ≤ LANES = 16`),
-/// so it accepts matrices up to 16 × 16. The column-sum accumulator for n
-/// rows fits in one `Packed7` word when `n ≤ LANES`.
-///
-/// # Column-major rationale
-///
-/// Ryser's formula and the single-word permanent path iterate over columns
-/// in the inner loop, accumulating row-wise products. Storing each column
-/// as a contiguous [`Packed7Vec`] allows zero-copy `column(j)` access,
-/// matching the access pattern of `Bipedal3Matrix`.
-///
-/// # Mask-tail invariant
-///
-/// Each column is a [`Packed7Vec`] and inherits its mask-tail invariant:
-/// nibble slots beyond `rows` in the last `u64` word of each column are
-/// always zero (AGENTS.md §Correctness and test policy).
+/// column-major as one [`Packed7Vec`] of length `rows` per column, the
+/// access pattern of `permanent_bipedal7`.
 ///
 /// # Examples
 ///
@@ -974,10 +587,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
 /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
 /// assert_eq!(m.get(1, 2), Fp::<7>::new(5));
 /// ```
-///
-/// # Complexity
-///
-/// Construction is `O(rows * cols)`; column access is `O(1)`.
 #[derive(Clone)]
 pub struct Packed7Matrix {
     /// One `Packed7Vec` per column, each of length `rows`.
@@ -988,10 +597,6 @@ pub struct Packed7Matrix {
 
 impl PartialEq for Packed7Matrix {
     /// Shape-equal and per-column canonical-decode equal.
-    ///
-    /// Two matrices are equal iff they have the same `rows` and `cols`,
-    /// and every column pair compares equal under [`Packed7Vec`]'s
-    /// canonical-decode `PartialEq`.
     ///
     /// # Examples
     ///
@@ -1035,17 +640,8 @@ impl core::fmt::Debug for Packed7Matrix {
 impl Packed7Matrix {
     /// Construct a matrix from a row-major `Fp<7>` slice.
     ///
-    /// The entry at row `i`, column `j` is `data[i * cols + j]`. The slice
-    /// is re-encoded in column-major order: each column `j` becomes a
-    /// [`Packed7Vec`] of length `rows`.
-    ///
-    /// Empty matrices (`rows == 0` or `cols == 0`) are allowed.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` — row-major source slice of length `rows * cols`.
-    /// * `rows` — number of rows.
-    /// * `cols` — number of columns.
+    /// The entry at row `i`, column `j` is `data[i * cols + j]`. `rows == 0`
+    /// or `cols == 0` is allowed.
     ///
     /// # Panics
     ///
@@ -1065,10 +661,6 @@ impl Packed7Matrix {
     /// assert_eq!(m.get(0, 1), Fp::<7>::new(1));
     /// assert_eq!(m.get(1, 0), Fp::<7>::new(3));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(rows * cols)`.
     pub fn from_row_major(data: &[Fp<7>], rows: usize, cols: usize) -> Self {
         assert_eq!(
             data.len(),
@@ -1092,20 +684,12 @@ impl Packed7Matrix {
     }
 
     /// Number of rows.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Number of columns.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
@@ -1113,18 +697,9 @@ impl Packed7Matrix {
 
     /// Decode the element at row `i`, column `j`.
     ///
-    /// # Arguments
-    ///
-    /// * `i` — row index in `0..self.rows()`.
-    /// * `j` — column index in `0..self.cols()`.
-    ///
     /// # Panics
     ///
     /// Panics if `i >= self.rows()` or `j >= self.cols()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn get(&self, i: usize, j: usize) -> Fp<7> {
         assert!(
@@ -1136,14 +711,6 @@ impl Packed7Matrix {
     }
 
     /// Borrow the `j`-th column as a `&Packed7Vec` of length `rows`.
-    ///
-    /// This is the primary access pattern for column-major algorithms
-    /// (`permanent_bipedal7`): iterating `column(j)` for `j` in `0..cols`
-    /// is zero-copy.
-    ///
-    /// # Arguments
-    ///
-    /// * `j` — column index in `0..self.cols()`.
     ///
     /// # Panics
     ///
@@ -1163,10 +730,6 @@ impl Packed7Matrix {
     /// assert_eq!(m.column(1).get(0), Fp::<7>::new(2));
     /// assert_eq!(m.column(1).get(1), Fp::<7>::new(4));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn column(&self, j: usize) -> &Packed7Vec {
         assert!(
@@ -1177,10 +740,6 @@ impl Packed7Matrix {
         &self.columns[j]
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -1220,13 +779,6 @@ mod tests {
     // LUT spot-check tests
     // -----------------------------------------------------------------------
 
-    /// Verify a few hand-computed ADD_LUT entries.
-    ///
-    /// Key layout: `(a_byte as usize) | ((b_byte as usize) << 8)`.
-    /// Byte layout: low nibble = element at even slot, high nibble = element at odd slot.
-    ///
-    /// Example: a_byte = 0x35 → a_lo=5, a_hi=3; b_byte = 0x24 → b_lo=4, b_hi=2.
-    /// Result byte: low nibble = (5+4)%7=2, high nibble = (3+2)%7=5 → 0x52.
     #[test]
     fn test_add_lut_spot_check() {
         // (a_lo=3, a_hi=5) + (b_lo=4, b_hi=2) → (lo=(3+4)%7=0, hi=(5+2)%7=0) → 0x00
@@ -1241,7 +793,7 @@ mod tests {
             "add high nibble"
         );
 
-        // (a_lo=6, a_hi=6) + (b_lo=1, b_hi=1) → (0+0)=(0,0) wait: (6+1)%7=0
+        // (a_lo=6, a_hi=6) + (b_lo=1, b_hi=1) → (0, 0)
         let a2: usize = (6 << 4) | 6;
         let b2: usize = (1 << 4) | 1;
         let key2 = a2 | (b2 << 8);
@@ -1250,7 +802,6 @@ mod tests {
         assert_eq!((r2 >> 4) & 0xf, scalar_add(6, 1) as u8);
     }
 
-    /// Verify SUB_LUT entries.
     #[test]
     fn test_sub_lut_spot_check() {
         let a_byte: usize = (2 << 4) | 1; // a_hi=2, a_lo=1
@@ -1265,7 +816,6 @@ mod tests {
         );
     }
 
-    /// Verify MUL_LUT entries.
     #[test]
     fn test_mul_lut_spot_check() {
         let a_byte: usize = (4 << 4) | 3; // a_hi=4, a_lo=3
@@ -1285,27 +835,11 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Exhaustive LUT-contract cross-validation for the D6 Path-B Lean axioms.
-    //
-    // `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` axiomatises the
-    // contents of `ADD_LUT` / `SUB_LUT` / `MUL_LUT` (Path B, `@/issue/30e98ef1`
-    // §4.3). Per sketch §6 R4, those axioms are *trusted because exhaustively
-    // tested in Rust*: each Lean axiom states exactly the contract checked
-    // below over every one of the 65536 keys, so axiom ⟺ tested-Rust-contract
-    // is mechanically checkable.
-    //
-    // Contract (transcribed verbatim from `build_{add,sub,mul}_lut`):
-    //   key = (b_byte << 8) | a_byte,  a0 = key&0xf,  a1 = (key>>4)&0xf,
-    //   b0 = (key>>8)&0xf,  b1 = (key>>12)&0xf.
-    //   If a0<7 && a1<7 && b0<7 && b1<7:
-    //     ADD_LUT[key] = ((a0+b0)%7)     | (((a1+b1)%7)     << 4)
-    //     SUB_LUT[key] = ((a0+7-b0)%7)   | (((a1+7-b1)%7)   << 4)
-    //     MUL_LUT[key] = ((a0*b0)%7)     | (((a1*b1)%7)     << 4)
-    //   else: 0  (array zero-init; the `if` guard is not taken).
+    // Exhaustive LUT contract: the `{add,sub,mul}_lut_spec` axioms of
+    // `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` state exactly what
+    // these tests check over all 65536 keys.
     // -----------------------------------------------------------------------
 
-    /// Exhaustive cross-validation of `ADD_LUT` against the exact contract the
-    /// Lean `add_lut_spec` axiom (D6 Path B) transcribes.
     #[test]
     fn test_add_lut_contract_exhaustive() {
         for (key, &got) in ADD_LUT.iter().enumerate() {
@@ -1322,8 +856,6 @@ mod tests {
         }
     }
 
-    /// Exhaustive cross-validation of `SUB_LUT` against the exact contract the
-    /// Lean `sub_lut_spec` axiom (D6 Path B) transcribes.
     #[test]
     fn test_sub_lut_contract_exhaustive() {
         for (key, &got) in SUB_LUT.iter().enumerate() {
@@ -1340,8 +872,6 @@ mod tests {
         }
     }
 
-    /// Exhaustive cross-validation of `MUL_LUT` against the exact contract the
-    /// Lean `mul_lut_spec` axiom (D6 Path B) transcribes.
     #[test]
     fn test_mul_lut_contract_exhaustive() {
         for (key, &got) in MUL_LUT.iter().enumerate() {
@@ -1358,10 +888,8 @@ mod tests {
         }
     }
 
-    /// Non-canonical nibble inputs (≥ 7) produce 0 in the LUT.
     #[test]
     fn test_lut_non_canonical_yields_zero() {
-        // a_lo = 7 (non-canonical): LUT result for that nibble pair must be 0
         let a_byte: usize = 7; // a_lo=7, a_hi=0
         let b_byte: usize = 0;
         let key = a_byte | (b_byte << 8);
@@ -1407,7 +935,6 @@ mod tests {
     // Exhaustive 7×7 tests for each op
     // -----------------------------------------------------------------------
 
-    /// Exhaustive add: for all a, b ∈ {0..=6}, splat and verify all 16 lanes.
     #[test]
     fn test_exhaustive_add() {
         for a in 0u64..7 {
@@ -1427,7 +954,6 @@ mod tests {
         }
     }
 
-    /// Exhaustive sub: for all a, b ∈ {0..=6}, splat and verify all 16 lanes.
     #[test]
     fn test_exhaustive_sub() {
         for a in 0u64..7 {
@@ -1447,7 +973,6 @@ mod tests {
         }
     }
 
-    /// Exhaustive mul: for all a, b ∈ {0..=6}, splat and verify all 16 lanes.
     #[test]
     fn test_exhaustive_mul() {
         for a in 0u64..7 {
@@ -1467,7 +992,6 @@ mod tests {
         }
     }
 
-    /// Exhaustive neg: for all a ∈ {0..=6}, splat and verify all 16 lanes.
     #[test]
     fn test_exhaustive_neg() {
         for a in 0u64..7 {
@@ -1484,7 +1008,6 @@ mod tests {
     // Per-lane mixed tests
     // -----------------------------------------------------------------------
 
-    /// Pack two arrays with mixed values, run ops, verify per-lane vs scalar.
     #[test]
     fn test_per_lane_mixed_add() {
         let a_vals: [u64; 16] = [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1];
@@ -1579,7 +1102,6 @@ mod tests {
     // -----------------------------------------------------------------------
 
     fn make_vec(len: usize) -> (Packed7Vec, Packed7Vec) {
-        // Build two vecs with alternating values.
         let a_vals: Vec<Fp<7>> = (0..len).map(|i| Fp::<7>::new((i as u64 * 3) % 7)).collect();
         let b_vals: Vec<Fp<7>> = (0..len)
             .map(|i| Fp::<7>::new((i as u64 * 5 + 1) % 7))
@@ -1644,7 +1166,6 @@ mod tests {
         }
     }
 
-    /// Verify mask_tail invariant: padding nibbles in last word are always zero.
     #[test]
     fn test_packed7vec_mask_tail_invariant() {
         for &len in &[1usize, 15, 16, 17, 63, 64, 65, 127, 128, 129] {
@@ -1727,7 +1248,6 @@ mod tests {
     // fold_mul_first_n unit tests
     // -----------------------------------------------------------------------
 
-    /// fold_mul_first_n(1) returns lane 0 regardless of other lanes.
     #[test]
     fn test_fold_mul_first_n_single_lane() {
         let mut p = Packed7::one();
@@ -1735,7 +1255,6 @@ mod tests {
         assert_eq!(p.fold_mul_first_n(1), Fp::<7>::new(5));
     }
 
-    /// fold_mul_first_n(n) computes product of first n lanes against scalar reference.
     #[test]
     fn test_fold_mul_first_n_matches_scalar() {
         let vals: [u64; 16] = [3, 2, 6, 4, 1, 5, 2, 3, 4, 1, 6, 2, 3, 5, 1, 4];
@@ -1751,7 +1270,6 @@ mod tests {
         }
     }
 
-    /// fold_mul_first_n with all-ones returns 1.
     #[test]
     fn test_fold_mul_first_n_all_ones() {
         let p = Packed7::one();
@@ -1760,7 +1278,6 @@ mod tests {
         }
     }
 
-    /// fold_mul_first_n with a zero lane returns 0.
     #[test]
     fn test_fold_mul_first_n_zero_lane() {
         let mut p = Packed7::one();
@@ -1769,14 +1286,12 @@ mod tests {
         assert_eq!(p.fold_mul_first_n(4), Fp::<7>::new(0));
     }
 
-    /// fold_mul_first_n(0) panics.
     #[test]
     #[should_panic(expected = "n must satisfy 1 <= n")]
     fn test_fold_mul_first_n_panic_n0() {
         let _ = Packed7::one().fold_mul_first_n(0);
     }
 
-    /// fold_mul_first_n(17) panics.
     #[test]
     #[should_panic(expected = "n must satisfy 1 <= n")]
     fn test_fold_mul_first_n_panic_n17() {
@@ -1784,10 +1299,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Inherent wrapper methods (add_inherent / sub_inherent / mul_inherent /
-    // neg_inherent).  These delegate verbatim to the PackedField trait impl;
-    // tests confirm the delegation produces the same result as calling the
-    // trait method directly.
+    // Inherent wrappers agree with the trait methods
     // -----------------------------------------------------------------------
 
     #[test]
@@ -1943,7 +1455,6 @@ mod tests {
     // Packed7Matrix — construction, access, panics, Debug, PartialEq
     // -----------------------------------------------------------------------
 
-    /// Build a 3×4 matrix and verify rows()/cols()/get() round-trip.
     #[test]
     fn test_packed7matrix_shape_and_get() {
         let rows = 3usize;
@@ -1961,7 +1472,6 @@ mod tests {
         }
     }
 
-    /// Empty matrix (0 rows): rows()==0, cols()==5.
     #[test]
     fn test_packed7matrix_empty_rows() {
         let m = Packed7Matrix::from_row_major(&[], 0, 5);
@@ -1969,7 +1479,6 @@ mod tests {
         assert_eq!(m.cols(), 5);
     }
 
-    /// Empty matrix (0 cols): rows()==5, cols()==0.
     #[test]
     fn test_packed7matrix_empty_cols() {
         let m = Packed7Matrix::from_row_major(&[], 5, 0);
@@ -1977,7 +1486,6 @@ mod tests {
         assert_eq!(m.cols(), 0);
     }
 
-    /// column() returns the correct Packed7Vec for each column.
     #[test]
     fn test_packed7matrix_column_access() {
         let rows = 4usize;
@@ -1995,7 +1503,6 @@ mod tests {
         }
     }
 
-    /// PartialEq: same data → equal.
     #[test]
     fn test_packed7matrix_partialeq_equal() {
         let data: Vec<Fp<7>> = (0..9u64).map(|v| Fp::<7>::new(v % 7)).collect();
@@ -2004,7 +1511,6 @@ mod tests {
         assert_eq!(a, b);
     }
 
-    /// PartialEq: different values → not equal.
     #[test]
     fn test_packed7matrix_partialeq_different_values() {
         let data1: Vec<Fp<7>> = (0..4u64).map(|v| Fp::<7>::new(v % 7)).collect();
@@ -2014,7 +1520,6 @@ mod tests {
         assert_ne!(a, b);
     }
 
-    /// PartialEq: different shapes → not equal.
     #[test]
     fn test_packed7matrix_partialeq_different_shape() {
         let data: Vec<Fp<7>> = (0..4u64).map(|v| Fp::<7>::new(v % 7)).collect();
@@ -2023,7 +1528,6 @@ mod tests {
         assert_ne!(a, b);
     }
 
-    /// Debug formatting contains "rows" and "cols".
     #[test]
     fn test_packed7matrix_debug_format() {
         let data = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
@@ -2033,7 +1537,6 @@ mod tests {
         assert!(s.contains("cols"), "debug output missing 'cols': {s}");
     }
 
-    /// from_row_major panics if data.len() != rows * cols.
     #[test]
     #[should_panic(expected = "data.len()")]
     fn test_packed7matrix_from_row_major_length_mismatch_panic() {
@@ -2041,7 +1544,6 @@ mod tests {
         let _ = Packed7Matrix::from_row_major(&data, 2, 3); // needs 6, got 5
     }
 
-    /// get() panics when column index is out of range.
     #[test]
     #[should_panic(expected = "column index")]
     fn test_packed7matrix_get_col_out_of_range_panic() {
@@ -2050,7 +1552,6 @@ mod tests {
         let _ = m.get(0, 2);
     }
 
-    /// column() panics when column index is out of range.
     #[test]
     #[should_panic(expected = "out of range")]
     fn test_packed7matrix_column_out_of_range_panic() {
@@ -2059,9 +1560,6 @@ mod tests {
         let _ = m.column(2);
     }
 
-    /// Cross-check Packed7Matrix against permanent_bipedal7 and permanent_ryser:
-    /// a 3×3 known matrix validates that get() and column() feed into the
-    /// permanent algorithm correctly.
     #[test]
     fn test_packed7matrix_permanent_cross_check() {
         use crate::permanent::bipedal7::permanent_bipedal7_singleword;
