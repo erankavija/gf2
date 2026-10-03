@@ -33,23 +33,23 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "passed",
-      "updated_at": "2026-10-03T00:43:04.906562869Z",
+      "status": "failed",
+      "updated_at": "2026-10-03T01:22:53.643190323Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "passed",
-      "updated_at": "2026-10-03T00:54:16.486438772Z",
+      "status": "failed",
+      "updated_at": "2026-10-03T01:16:13.781553514Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:58:57.972188459Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T01:20:00.437028574Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:30:51.575903257Z",
+      "updated_at": "2026-10-03T01:11:37.050509796Z",
       "updated_by": "auto:executor"
     }
   },
@@ -63,5 +63,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Correct surviving source-level documentation drift",
-  "updated_at": "2026-10-03T00:58:57.972188459Z"
+  "updated_at": "2026-10-03T01:22:53.643190323Z"
 }

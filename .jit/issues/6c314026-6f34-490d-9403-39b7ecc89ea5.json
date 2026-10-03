@@ -35,6 +35,7 @@
       "path": "docs/tutorials/field-linear-algebra-at-scale.md"
     }
   ],
+  "done_at": "2026-10-03T01:23:03.807884607Z",
   "first_ready_at": "2026-10-02T14:11:27.132714370Z",
   "gates_required": [
     "doc-review",
@@ -42,8 +43,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:26:16.930013184Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T01:03:29.142290266Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -61,7 +62,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the finite-field linear algebra at scale tutorial",
-  "updated_at": "2026-10-03T01:00:41.771508332Z"
+  "updated_at": "2026-10-03T01:23:03.807884607Z"
 }

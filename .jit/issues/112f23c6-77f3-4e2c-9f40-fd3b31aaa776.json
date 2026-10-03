@@ -14,6 +14,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/112f23c6-verdict-baseline.md"
     }
   ],
+  "done_at": "2026-10-03T01:23:03.917939981Z",
   "first_ready_at": "2026-10-02T15:01:36.355826381Z",
   "gates_required": [
     "cargo-ci",
@@ -24,22 +25,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:45:54.141252624Z",
+      "updated_at": "2026-10-03T01:11:32.706797697Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:52:42.320441122Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T01:14:44.838712914Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:55:01.975328106Z",
+      "updated_at": "2026-10-03T01:15:41.534981822Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:43:08.831350154Z",
+      "updated_at": "2026-10-03T01:11:36.726238527Z",
       "updated_by": "auto:executor"
     }
   },
@@ -50,7 +51,7 @@
     "epic:documentation-overhaul"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Share one repository-root resolver across tuning-campaign tooling",
-  "updated_at": "2026-10-03T00:55:01.975328106Z"
+  "updated_at": "2026-10-03T01:23:03.917939981Z"
 }
