@@ -1310,6 +1310,10 @@ impl Nr5gRateMatchedDecoder {
     /// * `rm_code` - The rate-matched code to decode
     /// * `scale` - Min-sum scaling factor (0.0, 1.0]
     ///
+    /// # Panics
+    ///
+    /// Panics if `scale` is not finite or lies outside `(0.0, 1.0]`.
+    ///
     /// # Complexity
     ///
     /// Same as [`new`](Self::new).
@@ -1332,6 +1336,10 @@ impl Nr5gRateMatchedDecoder {
     ///
     /// * `rm_code` - The rate-matched code to decode
     /// * `algorithm` - The check-node update algorithm
+    ///
+    /// # Panics
+    ///
+    /// Panics if `algorithm` carries a parameter [`DecoderConfig::new`] rejects.
     ///
     /// # Complexity
     ///
