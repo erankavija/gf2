@@ -1,41 +1,19 @@
 //! `permanent_bipedal7` — Gray-code Ryser permanent over `F_7`.
 //!
-//! ## Single-word path (`n ≤ LANES = 16`)
-//!
-//! For `n ≤ 16` the column-sum vector fits in a single [`Packed7`] word
-//! (16 F_7 lanes in one `u64` at 4-bit-aligned slots). Each Gray-code step
-//! updates the single [`Packed7`] column-sum in-place via
-//! [`PackedField::add`] or [`PackedField::sub`], followed by a horizontal
-//! fold via [`Packed7::fold_mul_first_n`] — the LUT-based multiplication
-//! tree SSOT lives once in that method.
-//!
-//! ## Single-word size bound
-//!
-//! The matrix must satisfy `n ≤ Packed7::LANES = 16`. The column-sum
-//! accumulator for `n` rows fits in one [`Packed7`] word (16 lanes per
-//! `u64`) exactly when `n ≤ 16`. Multi-word paths are out of scope for
-//! this issue.
-//!
-//! ## Algorithm
-//!
-//! Ryser's inclusion-exclusion formula in Gray-code order:
+//! The column-sum vector is a single [`Packed7`] word (16 F_7 lanes in one
+//! `u64` at 4-bit-aligned slots), so the matrix must satisfy
+//! `n ≤ Packed7::LANES = 16`. Ryser's inclusion-exclusion formula
 //!
 //! ```text
 //! perm(A) = (-1)^n * Σ_{S ⊆ [n], S ≠ ∅} (-1)^|S| * ∏_{i=0}^{n-1} Σ_{j ∈ S} A[i,j]
 //! ```
 //!
-//! The Gray-code walk visits all `2^n - 1` non-empty subsets, updating the
-//! column-sum at each step with a single add or sub (one column entering or
-//! leaving the subset), then folding all `n` row-sums via `fold_mul_first_n`.
+//! is walked in Gray-code order over the `2^n - 1` non-empty subsets: each
+//! step updates the column-sum with one [`PackedField::add`] or
+//! [`PackedField::sub`] and folds the first `n` lanes via
+//! [`Packed7::fold_mul_first_n`].
 //!
-//! ## Feature gating
-//!
-//! Compiled only when the `f7` Cargo feature is enabled (D1c §2).
-//!
-//! # Algorithm reference
-//!
-//! `@/issue/ae82bd73` §6 (F_7 packed permanent). Mirrors the F_3 path in
-//! `crate::permanent::bipedal3`.
+//! Compiled only when the `f7` Cargo feature is enabled.
 
 use gf2_core::gfp::Fp;
 
@@ -51,19 +29,6 @@ use crate::packed::PackedField;
 /// ```text
 /// perm(A) = Σ_{σ ∈ S_n} ∏_{i=0}^{n-1} A[i, σ(i)]
 /// ```
-///
-/// Evaluated via Ryser's inclusion-exclusion formula in Gray-code order.
-/// At each of the `2^n - 1` non-empty subset steps the column-sum
-/// [`Packed7`] is updated with one lane-wise add or sub (one packed LUT
-/// op), then folded to a single `F_7` scalar via
-/// [`Packed7::fold_mul_first_n`].
-///
-/// ## Single-word size bound
-///
-/// `n` must satisfy `n ≤ LANES = 16`. [`Packed7`] packs exactly 16 lanes per
-/// `u64`; for `n ≤ 16` the row-count fits in one word and no multi-word path is
-/// needed. See [`crate::packed::Packed7`] for the encoding details
-/// (4-bit-aligned slots).
 ///
 /// # Arguments
 ///
@@ -95,9 +60,8 @@ use crate::packed::PackedField;
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
 ///
-/// Panics if `mat.cols() > LANES` (`n` must be `≤ LANES = 16`; above
-/// that the single-word accumulator overflows — multi-word support is
-/// out of scope for this issue).
+/// Panics if `mat.cols() > LANES` (`LANES = 16`, the lane count of the
+/// single-word accumulator).
 ///
 /// # Complexity
 ///
@@ -123,19 +87,8 @@ pub fn permanent_bipedal7(mat: &Packed7Matrix) -> Fp<7> {
     permanent_bipedal7_singleword(mat)
 }
 
-/// Inner single-word implementation — called by [`permanent_bipedal7`] after
-/// the shape assertions pass.
-///
-/// Exposed as `pub` so callers that always have `n ≤ LANES` can call it
-/// directly without re-checking assertions, and so tests can verify it
-/// independently (matching the `bipedal3` pattern where
-/// `permanent_bipedal3_singleword` is also `pub`).
-///
-/// # Arguments
-///
-/// * `mat` — An `n × n` [`Packed7Matrix`] (column-major, `rows == cols`),
-///   with `n ≤ LANES`. No additional assertions — the caller must have
-///   already validated the matrix shape.
+/// Single-word implementation behind [`permanent_bipedal7`], with the same
+/// shape contract.
 ///
 /// # Panics
 ///
@@ -158,17 +111,12 @@ pub fn permanent_bipedal7_singleword(mat: &Packed7Matrix) -> Fp<7> {
         "permanent_bipedal7_singleword: single-word path requires n <= {LANES}; got n = {n}"
     );
 
-    // Edge case: the 0×0 matrix has exactly one permutation (the empty
-    // one), whose product over an empty index set is the vacuous product 1.
+    // The 0×0 matrix has one permutation (the empty one), with product 1.
     if n == 0 {
         return Fp::<7>::new(1);
     }
 
-    // One-time matrix-prep: extract each column j into a Packed7 word.
-    // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..15 are 0
-    // (the additive identity, i.e. nibble value 0).
-    //
-    // Cost: O(n^2) — dominated by the O(n · 2^n) Gray walk for n >= 4.
+    // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..15 are 0.
     let mut columns: Vec<Packed7> = Vec::with_capacity(n);
     for j in 0..n {
         let col_vec = mat.column(j);
@@ -179,33 +127,22 @@ pub fn permanent_bipedal7_singleword(mat: &Packed7Matrix) -> Fp<7> {
         columns.push(col);
     }
 
-    // Column-sum accumulator as a single Packed7 word.
-    // Lane i of col_sum holds Σ_{j ∈ S} A[i,j] mod 7.
-    // Lanes n..15 stay 0 throughout (add/sub leave them at 0, and
-    // fold_mul_first_n only reads lanes 0..n).
+    // Lane i of col_sum holds Σ_{j ∈ S} A[i,j] mod 7; lanes n..15 stay 0.
     let mut col_sum = Packed7::zero();
 
-    // Running Ryser accumulator and subset-size counter.
     let mut total = Fp::<7>::new(0);
     let mut subset_size: usize = 0;
 
-    // Gray walk: enumerate all 2^n - 1 non-empty subsets of [n].
-    // At each step (flip, parity):
-    //   flip   — which column just entered or left S
-    //   parity — +1 (entered, ADD) or -1 (left, SUB)
+    // flip is the column that entered (parity +1) or left (parity -1) S.
     for (flip, parity) in gray_code_iter(n) {
         if parity == 1 {
-            // col_sum += columns[flip]: lane-wise F_7 add via ADD_LUT.
             subset_size += 1;
             col_sum = col_sum.add(columns[flip]);
         } else {
-            // col_sum -= columns[flip]: lane-wise F_7 sub via SUB_LUT.
             subset_size -= 1;
             col_sum = col_sum.sub(columns[flip]);
         }
 
-        // Horizontal fold: product of the first n lanes via MUL_LUT.
-        // fold_mul_first_n treats lanes n..15 as 1 (no contribution).
         let term = col_sum.fold_mul_first_n(n);
 
         // Ryser sign: (-1)^|S|.
@@ -216,7 +153,7 @@ pub fn permanent_bipedal7_singleword(mat: &Packed7Matrix) -> Fp<7> {
         }
     }
 
-    // Apply the outer (-1)^n factor from Ryser's formula.
+    // Outer (-1)^n factor of Ryser's formula.
     if n % 2 == 1 {
         -total
     } else {
@@ -236,7 +173,6 @@ mod tests {
     use crate::testutil::random_matrix;
     use gf2_core::gfp::Fp;
 
-    /// Wrap a row-major `Vec<Fp<7>>` into a `Packed7Matrix`.
     fn to_packed7_matrix(row_major: &[Fp<7>], n: usize) -> Packed7Matrix {
         Packed7Matrix::from_row_major(row_major, n, n)
     }
@@ -288,8 +224,6 @@ mod tests {
     }
 
     /// All-ones `n×n` matrix: permanent = `n! mod 7`.
-    ///
-    /// n! mod 7: n=1→1, n=2→2, n=3→6, n=4→24%7=3, n=5→120%7=1, n=6→720%7=720-102*7=6, n=7→5040%7=0.
     #[test]
     fn test_permanent_bipedal7_all_ones_n() {
         // n! mod 7: 1, 2, 6, 3, 1, 6, 0
@@ -310,7 +244,6 @@ mod tests {
     // Panic tests
     // -----------------------------------------------------------------------
 
-    /// Non-square matrix panics.
     #[test]
     #[should_panic(expected = "matrix must be square")]
     fn test_permanent_bipedal7_panics_on_non_square() {
@@ -319,7 +252,6 @@ mod tests {
         let _ = permanent_bipedal7(&m);
     }
 
-    /// `n > LANES` panics.
     #[test]
     #[should_panic(expected = "single-word path requires n <=")]
     fn test_permanent_bipedal7_panics_on_n_exceeding_lanes() {
@@ -330,17 +262,8 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Cross-checks: permanent_bipedal7 vs permanent_ryser<Fp<7>>
-    //
-    // Per the issue success criteria: 1000 random matrices for each
-    // n ∈ {1, …, 14} (covers epic success criterion 6).
-    //
-    // Timing analysis (release mode, dev host: 5900X):
-    //   Each Ryser call: O(n · 2^n) ops.
-    //   n=1..12: 2^12 = 4096 steps × 1000 matrices — well under 5 s.
-    //   n=13:    2^13 = 8192 steps × 1000 matrices — 0.64 s measured.
-    //   n=14:    2^14 = 16384 steps × 1000 matrices — 1.57 s measured.
-    //   All of n=1..14 fit the 5 s fast-tier budget.
+    // Cross-checks: permanent_bipedal7 vs permanent_ryser<Fp<7>>,
+    // 1000 random matrices for each n ∈ {1, …, 14}.
     // -----------------------------------------------------------------------
 
     macro_rules! cross_check_n {

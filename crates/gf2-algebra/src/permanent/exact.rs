@@ -1,10 +1,9 @@
 //! Exact probabilities and exhaustive anchors for permanent-zero events.
 //!
 //! [`ExactProbability`] is the permanent module's single arbitrary-precision
-//! count-over-total representation. The exhaustive enumerator deliberately
-//! supports only the small campaign-anchor domain; compressed propagation uses
-//! the same probability type at dimensions where matrix enumeration is
-//! impossible.
+//! count-over-total representation. The exhaustive enumerator supports only
+//! the small campaign-anchor domain; compressed propagation returns the same
+//! probability type.
 
 use gf2_core::gfp::Fp;
 use num_bigint::BigUint;
@@ -26,7 +25,6 @@ impl ExactProbability {
     /// # Panics
     ///
     /// Panics when `matrix_count` is zero or `zero_count` exceeds it.
-    ///
     #[must_use]
     pub fn from_counts(zero_count: u64, matrix_count: u64) -> Self {
         Self::from_big_counts(zero_count.into(), matrix_count.into())
@@ -105,8 +103,7 @@ impl ExactProbability {
 /// # Panics
 ///
 /// Panics unless `field_order` is 3, 5, or 7 and `dimension` is in that
-/// field's supported anchor range.  The two largest cells are intentionally
-/// suitable only for the repository's explicitly invoked slow tier.
+/// field's supported anchor range.
 ///
 /// # Complexity
 ///
@@ -132,9 +129,7 @@ pub fn enumerate_permanent_zero_probability(
 /// $\mathbb{F}_q$ is singular.
 ///
 /// The invertible matrices are the general linear group, so the singular count
-/// is $q^{n^2} - \prod_{i=0}^{n-1}(q^n - q^i)$. This closed form is exact for
-/// every prime power and is the authority the campaign's determinant evaluator
-/// must reproduce; nothing here samples or enumerates.
+/// is $q^{n^2} - \prod_{i=0}^{n-1}(q^n - q^i)$, exact for every prime power.
 ///
 /// # Panics
 ///
@@ -184,10 +179,6 @@ fn enumerate<const Q: u64>(dimension: usize) -> ExactProbability {
 /// [`enumerate_permanent_zero_probability`]; it does not call any production
 /// permanent implementation. Returning an error stops visitation immediately
 /// and forwards that error to the caller.
-///
-/// This visitor is the shared exhaustive address source for validation. It
-/// deliberately does not evaluate production backends or pool their outcomes,
-/// keeping the oracle path independent from the implementation under test.
 ///
 /// # Errors
 ///

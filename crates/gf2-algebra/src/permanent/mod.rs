@@ -1,28 +1,14 @@
 //! Permanent algorithms over small prime fields.
 //!
-//! Hosts the `Permanent` trait, the generic `permanent_ryser<F>` driver,
-//! the `permanent_mod3_reference` cross-check, the per-prime
-//! `permanent_bipedal{3,5,7}` fast paths, and the rectangular
-//! [`permanental_rank_status`] predicate that decides permanental rank
-//! deficiency by conjunction over row submatrices, and the exact
-//! [`compressed_rank`] recurrence for the three-column case. See the epic
-//! design at `@/issue/ae82bd73` §6 / §7.3 / §9 for the algorithm family, and
-//! `@/issue/9fe275d3` for the trait surface.
+//! Hosts the generic [`permanent_ryser`] driver, the
+//! [`permanent_mod3_reference`] cross-check, the per-prime
+//! `permanent_bipedal{3,5,7}` paths, the rectangular
+//! [`permanental_rank_status`] predicate, which calls [`permanent_ryser`] on
+//! each `k × k` row submatrix, and the exact [`compressed_rank`] recurrence
+//! for the three-column case.
 //!
-//! The F_5/F_7 analogues [`permanent_bipedal5`] and [`permanent_bipedal7`] are
-//! single-word paths: F_5 covers `n ≤ 63`, F_7 covers `n ≤ Packed7::LANES =
-//! 16`.
-//!
-//! The square surface is joined by [`rank`], whose
-//! [`permanental_rank_status`] decides `per-rank(A) < k` for a rectangular
-//! `n × k` matrix. It adds no numeric kernel: it enumerates row subsets and
-//! calls [`permanent_ryser`] on each `k × k` submatrix.
-//!
-//! # Re-exports
-//!
-//! [`gray`] is re-exported from [`crate::gray`] so callers can use the
-//! permanent-grouped path `gf2_algebra::permanent::gray::gray_code_iter`, while the underlying
-//! module also remains reachable as `gf2_algebra::gray` per `@/issue/6e20133d` §4.2.
+//! [`permanent_bipedal5`] and [`permanent_bipedal7`] are single-word paths:
+//! F_5 covers `n ≤ 63`, F_7 covers `n ≤ Packed7::LANES = 16`.
 
 pub mod bipedal3;
 pub mod bipedal3_multiword;
