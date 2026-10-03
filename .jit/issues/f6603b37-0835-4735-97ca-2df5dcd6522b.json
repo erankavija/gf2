@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:57:22.143116324Z",
+  "dependencies": [],
+  "description": "`HipDispatcher` in `crates/gf2-sim/src/gpu/mod.rs` binds its stream pool to a single device, so a simulation uses one GPU.\n\n## Success Criteria\n\n- [hard] REQ-01: The dispatcher holds one stream pool per selected device, and a fixed seed and configuration produce identical results for every supported device count, covered by the shared pipeline suite on a multi-device host or a tested fallback on a single-device host.\n- [hard] REQ-02: A recoverable failure on one device selects the tested fallback per `@/inv/accelerator-safe-fallback`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:57:22.143116324Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "f6603b37-0835-4735-97ca-2df5dcd6522b",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Per-device HIP stream pools for multi-GPU simulation",
+  "updated_at": "2026-10-03T18:13:55.999079705Z"
+}

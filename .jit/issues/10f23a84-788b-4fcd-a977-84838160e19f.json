@@ -18,7 +18,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Converge survey-script evidence paths on runtime-resolved locations",
-  "updated_at": "2026-10-03T17:07:24.633808949Z"
+  "updated_at": "2026-10-03T18:13:54.974670741Z"
 }

@@ -18,7 +18,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Vacuous and misnamed tests found by the comment sweep",
-  "updated_at": "2026-10-03T17:07:23.686942165Z"
+  "updated_at": "2026-10-03T18:13:55.421446929Z"
 }

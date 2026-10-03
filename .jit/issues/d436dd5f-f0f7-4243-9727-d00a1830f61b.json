@@ -18,7 +18,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "RuEncodingMatrices names an algorithm the encoder does not implement",
-  "updated_at": "2026-10-03T17:07:24.005175231Z"
+  "updated_at": "2026-10-03T18:13:55.775279824Z"
 }

@@ -18,7 +18,7 @@
     "type:enhancement"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Tile-of-tiles outer loop for the 64x64 bit-matrix transpose kernel",
-  "updated_at": "2026-10-03T16:42:05.572824797Z"
+  "updated_at": "2026-10-03T18:13:55.911141172Z"
 }

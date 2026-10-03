@@ -19,7 +19,7 @@
     "type:enhancement"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Deterministic CPU fallback for a recoverable GPU fault in a checkpointed sweep",
-  "updated_at": "2026-10-03T16:41:27.605731640Z"
+  "updated_at": "2026-10-03T18:13:55.686649537Z"
 }

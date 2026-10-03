@@ -18,7 +18,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "LdpcCode::is_systematic always returns false",
-  "updated_at": "2026-10-03T17:07:23.060029247Z"
+  "updated_at": "2026-10-03T18:13:55.108794059Z"
 }

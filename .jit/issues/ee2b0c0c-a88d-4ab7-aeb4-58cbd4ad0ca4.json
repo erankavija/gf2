@@ -16,10 +16,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T17:34:24.362360228Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T18:13:10.108972619Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T18:09:45.606937986Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:31.883606787Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T17:40:24.795419468Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
@@ -37,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the gf2-coding LDPC module",
-  "updated_at": "2026-10-03T16:22:26.227954835Z"
+  "updated_at": "2026-10-03T18:13:10.108972619Z"
 }

@@ -19,7 +19,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Scheduler::run and run_instrumented ignore their batch parameter",
-  "updated_at": "2026-10-03T16:41:29.059683912Z"
+  "updated_at": "2026-10-03T18:13:55.377249716Z"
 }

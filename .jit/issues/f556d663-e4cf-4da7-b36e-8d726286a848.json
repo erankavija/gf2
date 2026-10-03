@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:52:05.727135259Z",
+  "dependencies": [],
+  "description": "Defects in `crates/gf2-algebra`, found while sweeping comments: `permanent/bipedal3_multiword.rs` documents a panic at $n = 0$ that no assertion produces (the failure is an index out of bounds), and its `no_run` example at $n = 65$ cannot execute; `test_permanent_bipedal3_dispatch_routes_n64_to_multiword` checks only a constant, and the non-SIMD `simd_vs_scalar_cross_check` stub compares the scalar path with itself; the `permanent_bipedal5` panic message directs callers with $n > 63$ to `permanent_ryser`, which has the same bound; the `slow` arm of `cross_check_n!` in `bipedal7.rs` is unused; `benches/s1_n36_speedup.rs` and three examples embed hardware fingerprints, a Rayon version and measured figures, against `@/inv/runtime-observed-provenance`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each documented panic of the permanent entry points is produced by an explicit check, covered by a test, and each panic message names an entry point that accepts the rejected input or none.\n- [hard] REQ-02: The named tests assert the dispatch and the SIMD-versus-scalar agreement they are named for, or are removed; unused macro arms are removed.\n- [hard] REQ-03: Rustdoc examples in the module execute as doctests or are removed.\n- [hard] REQ-04: The bench and examples emit only runtime-observed host facts and their own protocol constants.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:52:05.727135259Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "f556d663-e4cf-4da7-b36e-8d726286a848",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-algebra",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Permanent module contract, test and provenance defects",
+  "updated_at": "2026-10-03T18:13:55.955220274Z"
+}

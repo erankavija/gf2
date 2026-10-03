@@ -19,7 +19,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Remove producer-0 continuation admission from permanent campaign validation",
-  "updated_at": "2026-10-03T16:41:28.373359525Z"
+  "updated_at": "2026-10-03T18:13:54.929085600Z"
 }

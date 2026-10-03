@@ -44,14 +44,19 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T17:40:06.299346876Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T16:42:48.392258522Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T17:47:31.156796956Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T16:42:48.087068382Z",
+      "updated_at": "2026-10-03T17:44:42.595000915Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -71,5 +76,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Link unlinked owned artifacts to their issues",
-  "updated_at": "2026-10-03T16:42:48.392258522Z"
+  "updated_at": "2026-10-03T17:47:31.156796956Z"
 }

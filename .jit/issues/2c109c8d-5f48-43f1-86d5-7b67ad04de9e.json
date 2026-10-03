@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:52:05.412478280Z",
+  "dependencies": [],
+  "description": "`crates/gf2-algebra/src/parallel.rs` provides a parallel permanent for $\\mathbb{F}_3$ only. The $\\mathbb{F}_5$ and $\\mathbb{F}_7$ bipedal permanents run on one thread.\n\n## Success Criteria\n\n- [hard] REQ-01: Parallel permanents for $\\mathbb{F}_5$ and $\\mathbb{F}_7$ return the single-thread result for every supported $n$, identically across worker counts, covered by the shared permanent suite.\n- [aspirational] REQ-02: A committed receipt from an uncontended host reports the scaling under the repository's benchmark protocol.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:52:05.412478280Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2c109c8d-5f48-43f1-86d5-7b67ad04de9e",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-algebra",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Parallel permanent for F_5 and F_7",
+  "updated_at": "2026-10-03T18:13:55.154802662Z"
+}

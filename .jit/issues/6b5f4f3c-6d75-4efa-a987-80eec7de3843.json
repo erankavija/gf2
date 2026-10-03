@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:54:54.830830705Z",
+  "dependencies": [],
+  "description": "`reduce_generic` behind `mul_fn` in `crates/gf2-kernels-simd/src/gf2m.rs` evaluates `(1u64 << m) - 1`, which overflows at $m = 64$, and drops generator terms shifted past bit 63. A model of the routine returns wrong products for $m = 40, 48, 63$ with dense polynomials and none for $m \\le 33$. The defect is reported from a model of the code and is unconfirmed by a failing Rust test.\n\n## Success Criteria\n\n- [hard] REQ-01: `mul_fn` returns the field product for every degree the kernel accepts, checked against the scalar reference for dense and sparse generator polynomials at degrees 34, 40, 48, 63 and 64, or the kernel rejects degrees outside its correct domain and its documentation states that domain.\n- [hard] REQ-02: The shared field-law suite runs on the kernel path for every accepted degree.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:54:54.830830705Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "6b5f4f3c-6d75-4efa-a987-80eec7de3843",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "type:bug"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Generic GF(2^m) kernel reduction returns wrong products for degrees above 33",
+  "updated_at": "2026-10-03T18:13:55.288708019Z"
+}

@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/b0b1faf5-output-baseline.md"
     }
   ],
+  "done_at": "2026-10-03T18:13:54.858884448Z",
   "first_ready_at": "2026-10-03T01:23:48.491100544Z",
   "gates_required": [
     "cargo-ci",
@@ -23,7 +24,28 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T17:37:15.351591255Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T17:50:28.745518968Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T17:46:52.449914042Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-03T17:40:28.497701662Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "b0b1faf5-382a-4be6-857e-146b804cf413",
   "labels": [
     "epic:documentation-overhaul",
@@ -32,7 +54,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Locate the shared producing manifest by identity in survey scripts",
-  "updated_at": "2026-10-03T17:08:41.006542669Z"
+  "updated_at": "2026-10-03T18:13:54.858884448Z"
 }

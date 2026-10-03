@@ -18,7 +18,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "GF(2^m) constructors and constants without effect",
-  "updated_at": "2026-10-03T17:07:22.742638126Z"
+  "updated_at": "2026-10-03T18:13:55.465931483Z"
 }

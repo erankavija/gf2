@@ -18,7 +18,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "NR rate-matched iterative decoding reads the message from the first target_k positions",
-  "updated_at": "2026-10-03T17:07:23.371053542Z"
+  "updated_at": "2026-10-03T18:13:55.198703884Z"
 }

@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:57:22.459774072Z",
+  "dependencies": [],
+  "description": "The 5G NR preset in `crates/gf2-sim/src/presets/nr_5g.rs` attaches no run plan, so `Pipeline::run` does not drive it; callers use `TopologyExecutor::run`.\n\n## Success Criteria\n\n- [hard] REQ-01: `Pipeline::run` executes the 5G NR preset over its SNR sweep with checkpoint and resume, and a fixed seed produces the result of the `TopologyExecutor::run` path, covered by a test.\n- [hard] REQ-02: The preset's Rustdoc states how it is run.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:57:22.459774072Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "54a483a3-220e-42e7-b2af-440eaed04a8a",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Sweep-level Pipeline::run for the 5G NR preset",
+  "updated_at": "2026-10-03T18:13:55.244480416Z"
+}

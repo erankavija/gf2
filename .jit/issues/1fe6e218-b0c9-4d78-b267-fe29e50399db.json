@@ -18,7 +18,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Primitive polynomial generation is unsound above degree 16 and ignores its thread count",
-  "updated_at": "2026-10-03T17:07:22.423337024Z"
+  "updated_at": "2026-10-03T18:13:55.020120871Z"
 }

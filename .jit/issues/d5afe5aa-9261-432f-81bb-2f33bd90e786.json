@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:52:20.179503759Z",
+  "dependencies": [],
+  "description": "`descend_quadratic_runtime` and `descend_cubic_runtime` in `crates/gf2-core/src/field/extension_wiedemann.rs` lift a base coefficient with zero higher components and then check that those components are zero, so the guard passes for every input. The helper `runtime_descent_synthetic_alpha_test` asserts only properties of elements it constructs itself. The defect is reported from reading the code and is unconfirmed by a failing test.\n\n## Success Criteria\n\n- [hard] REQ-01: Each descent function returns an error for an element with a nonzero higher component, covered by a test that passes such an element.\n- [hard] REQ-02: Each descent function returns the base element for an element of the base field, covered by a test whose inputs come from the public extension API.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:52:20.179503759Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "d5afe5aa-9261-432f-81bb-2f33bd90e786",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Runtime extension descent guard cannot reject a non-base element",
+  "updated_at": "2026-10-03T18:13:55.819492958Z"
+}

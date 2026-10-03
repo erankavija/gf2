@@ -18,7 +18,7 @@
     "type:bug"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Undocumented limits and a duplicated helper in the small-prime panel kernels",
-  "updated_at": "2026-10-03T16:42:06.762134678Z"
+  "updated_at": "2026-10-03T18:13:55.598859984Z"
 }

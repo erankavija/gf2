@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T18:02:20.520962500Z",
+  "dependencies": [],
+  "description": "`mersenne_reduce::<N>` in `crates/gf2-core/src/gfp/specialized.rs` asserts $N \\in 4..=62$, but its $N < 61$ branch shifts by $3N$ and $4N$, which reach 128 bits for $N \\ge 43$ and $N \\ge 32$, and it under-folds a full `u128` input for $N < 26$. Tests cover $N = 31$ and $N = 61$ only. Tests named `*_matches_montgomery` compare against a `%` reference, and a doc example states \"P must be at least 3\" where the predicate requires $n \\ge 4$. The defect is reported from reading the code and is unconfirmed by a failing test.\n\n## Success Criteria\n\n- [hard] REQ-01: `mersenne_reduce::<N>` returns $x \\bmod (2^N - 1)$ for every accepted $N$ and every `u128` input, checked against a `%` reference at each accepted Mersenne-prime exponent and at boundary inputs, or it rejects exponents outside its correct domain.\n- [hard] REQ-02: Test names state the reference they compare against, and the doc example states the predicate's bound.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T18:02:20.520962500Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "b2520e0f-76b1-4cfa-b9ce-0859c0823eb7",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "mersenne_reduce is wrong outside its tested exponents",
+  "updated_at": "2026-10-03T18:13:55.510689150Z"
+}
