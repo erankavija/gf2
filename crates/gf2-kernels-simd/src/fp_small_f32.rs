@@ -97,17 +97,6 @@
 //! The `2/n` pre-pack overhead amortises away by `n ≥ 256` (0.78%)
 //! and is invisible by `n ≥ 1024` (0.2%).
 //!
-//! **Empirical note (2026-05-06 prime-sweep):** A 5-trial criterion bench
-//! across GF(7)–GF(251) at n ∈ {256, 1024} on the Zen-3 5900X reference
-//! host showed Candidate C beating Candidate F by 5–10 % at every cell.
-//! The effective pack cost $c_F ≈ 3.4 \times c_C$ (higher than the $3\times$
-//! estimate in § 5.5 (c) of the design doc), so the pack-amortisation knee
-//! is above the measured sizes on this host. As a result, `select_f32_path`
-//! currently routes all `p ≤ 251` cells to Candidate C (`N_THRESH_PRIME =
-//! 252` in `crates/gf2-core/src/gfp/simd_ops.rs`); this kernel is compiled
-//! in as an upgrade path for future measurement on larger n or a different
-//! host. See `dev/plans/small_prime_kernel_strategy.md` § 6.1 sub-amendment.
-//!
 //! # Soundness for `p ≤ 251`
 //!
 //! For each prime, `k_C ≤ floor(2^24 / (p-1)²)`, so after `k_C` FMAs

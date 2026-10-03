@@ -709,13 +709,8 @@ static ROUTE_C_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 /// after the test to avoid cross-test interference (the flag is a
 /// process-wide `AtomicBool`).
 ///
-/// This is the dispatch surface the issue's success criterion 1 names as
-/// the "non-default dispatch toggle (cargo feature OR runtime debug
-/// switch)" exposing the panelized integer path "without changing
-/// default production behaviour."
-///
-/// Scope: only affects `P == 251`; other primes continue to use
-/// Candidate C regardless of this flag.
+/// Scope: the `P == 251` cells that route A's guard in `prime_gemm_select`
+/// leaves.
 ///
 /// # Examples
 ///
@@ -895,8 +890,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
             // Route C (issue fc182ed5): pure-integer Goto/BLIS-style panelized
             // micro-kernel for GF(251) with explicit A/B panel packing + KC
             // blocking. Selection reaches it only through
-            // `set_route_c_gf251_enabled(true)`; production dispatch is
-            // unaffected (Candidate C continues to own all `p ≤ 251` cells).
+            // `set_route_c_gf251_enabled(true)`.
             // See `@/issue/fc182ed5` for the panel-dimension derivation (MR ×
             // NR × KC = 4 × 24 × 256).
             #[cfg(any(test, feature = "test-support"))]
