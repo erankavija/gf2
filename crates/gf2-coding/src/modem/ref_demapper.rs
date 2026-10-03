@@ -1,37 +1,19 @@
-//! Correctness-first, backend-agnostic reference soft demapper.
-//!
-//! [`ReferenceSoftDemapper`] is the arbitrary-constellation path of the
-//! modem framework for soft (LLR) demapping. It works for any validated
-//! [`ModemSpec`] — Gray-QAM presets as well as custom research
-//! constellations built via [`super::ModemSpecBuilder`] — by iterating
-//! over every constellation point for every received sample and every
-//! bit position. This makes it the slow-but-audit-friendly reference
-//! against which the Gray-QAM fast path and SIMD kernels are checked.
-//!
-//! Bit ordering follows the framework-wide MSB-first intra-symbol
-//! convention: index `k = 0` is the MSB of the [`super::LabelWord`].
-//! LLR sign follows [`crate::llr::Llr`]: **positive LLR = bit 0 more
-//! likely**.
+//! Reference soft demapper for arbitrary constellations.
 
 use crate::llr::Llr;
 
 use super::{BatchSoftDemapper, DemapInput, ModemScalar, ModemSpec, ModemView};
 
-/// Correctness-first soft demapper for any validated [`ModemSpec`].
+/// Soft demapper for any validated [`ModemSpec`].
 ///
-/// Computes per-bit LLRs via the exact log-MAP formula or the max-log
-/// approximation by enumerating every constellation point for every
-/// received symbol. Arithmetic is performed in [`f64`] internally for
-/// numerical stability; the final LLRs are cast to [`f32`] (the storage
-/// format of [`crate::llr::Llr`]).
+/// Computes per-bit LLRs by the exact log-MAP formula or the max-log
+/// approximation over every constellation point, in
+/// `O(num_symbols * M * m)` for `M = 2^m` points. Arithmetic is [`f64`];
+/// the LLRs are cast to [`f32`], the storage type of [`crate::llr::Llr`].
+/// Positive LLR means bit `0` is more likely.
 ///
-/// For the optimized Gray square-QAM fast path, see the sibling demapper
-/// implementation (task `52112411`).
-///
-/// # LLR sign convention
-///
-/// Positive LLR means bit `0` is more likely. This matches
-/// [`crate::llr::Llr`].
+/// Beyond the trait's conditions, `demap_llrs` panics if a `noise_var`
+/// entry is not positive and finite.
 ///
 /// # Examples
 ///
@@ -65,25 +47,11 @@ pub struct ReferenceSoftDemapper<S: ModemScalar> {
 impl<S: ModemScalar> ReferenceSoftDemapper<S> {
     /// Takes ownership of a validated [`ModemSpec`] for use as the
     /// constellation table.
-    ///
-    /// # Arguments
-    ///
-    /// * `spec` - The owned, validated modem specification. Presets
-    ///   ([`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`]) and
-    ///   builder-produced specs are both accepted.
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     pub fn new(spec: ModemSpec<S>) -> Self {
         Self { spec }
     }
 
     /// Returns a borrowed reference to the owned [`ModemSpec`].
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn spec_ref(&self) -> &ModemSpec<S> {
         &self.spec
@@ -126,7 +94,6 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for ReferenceSoftDemapper<S> {
                 "ReferenceSoftDemapper::demap_llrs: noise_var[{k}] = {n0} must be positive and finite"
             );
 
-            // Compute noise-weighted squared distances for every point.
             for (j, p) in points.iter().enumerate() {
                 let p_i = p.i.to_f64();
                 let p_q = p.q.to_f64();
@@ -162,8 +129,6 @@ mod tests {
     use crate::llr::Llr;
     use proptest::prelude::*;
 
-    /// Thin wrapper re-exporting the shared brute-force oracle so
-    /// existing call sites in this file keep their short local name.
     #[allow(clippy::too_many_arguments)]
     fn brute_force_log_map(
         points: &[(f64, f64)],
@@ -247,7 +212,6 @@ mod tests {
     fn test_qpsk_roundtrip_high_snr() {
         let spec = ModemSpec::<f32>::gray_square_qam(4);
         let view = spec.view();
-        // Pre-compute label -> (i, q).
         let n = view.num_symbols();
         let mut lab_to_iq: Vec<(f32, f32)> = vec![(0.0, 0.0); n];
         for k in 0..n {
@@ -257,8 +221,6 @@ mod tests {
         }
         let demapper = ReferenceSoftDemapper::new(spec);
 
-        // 200 random labels at very low noise — pseudo-random via the
-        // shared SSOT modem test LCG.
         let batch = 200usize;
         let labels = label_stream(0xC0FFEE, batch, n);
         let mut rx_i = Vec::with_capacity(batch);
@@ -293,10 +255,7 @@ mod tests {
 
     /// Custom 4-point constellation with a non-Gray label permutation.
     fn custom_non_gray_4() -> ModemSpec<f64> {
-        // Unit-circle points.
         let raw = [(1.0, 0.0), (0.0, 1.0), (-1.0, 0.0), (0.0, -1.0)];
-        // Non-Gray permutation: adjacent angles get labels that differ
-        // in two bits (00 -> 11 is fine; 11 -> 01 differs in 1 bit, etc.).
         let labels_perm: [u16; 4] = [0b00, 0b11, 0b01, 0b10];
         let points: Vec<SymbolPoint<f64>> =
             raw.iter().map(|&(i, q)| SymbolPoint::new(i, q)).collect();
@@ -313,13 +272,11 @@ mod tests {
     fn test_non_gray_4_point_matches_brute_force() {
         let spec = custom_non_gray_4();
         let view = spec.view();
-        // Snapshot post-normalization points & labels in oracle form.
         let pts: Vec<(f64, f64)> = view.points().iter().map(|p| (p.i, p.q)).collect();
         let labs: Vec<u16> = view.labels().iter().map(|l| l.bits).collect();
         let bps = view.bits_per_symbol();
 
         let demapper = ReferenceSoftDemapper::new(spec);
-        // Some arbitrary received points.
         let rx_i = [0.7_f64, -0.3, 0.1, -1.1];
         let rx_q = [0.2_f64, 0.8, -0.6, 0.05];
         let nv = [0.3_f64, 0.5, 0.7, 0.4];
@@ -356,7 +313,6 @@ mod tests {
                 SymbolPoint::new(theta.cos(), theta.sin())
             })
             .collect();
-        // Non-identity permutation.
         let labels_perm: [u16; 8] = [0, 1, 3, 2, 6, 7, 5, 4]; // Gray on circle
         let labels: Vec<LabelWord> = labels_perm.iter().map(|&b| LabelWord::new(b, 3)).collect();
         ModemSpecBuilder::<f64>::new()
@@ -467,7 +423,6 @@ mod tests {
         };
         let mut out = [Llr::new(0.0); 1];
         demapper.demap_llrs(input, &mut out);
-        // High confidence in bit 0.
         assert!(
             out[0].value() > 5.0,
             "expected positive LLR, got {}",
@@ -583,9 +538,7 @@ mod tests {
             y_scale in 0.1f32..1.5f32,
         ) {
             let n = 1usize << m;
-            // Deterministic permutation via the shared SSOT modem test LCG.
             let perm = permutation(seed, n);
-            // Points on a circle.
             let points: Vec<SymbolPoint<f32>> = (0..n)
                 .map(|k| {
                     let theta = (k as f32) * core::f32::consts::TAU / (n as f32);
@@ -600,15 +553,11 @@ mod tests {
                 .labels(labels_vec)
                 .build();
             let view = spec.view();
-            // Snapshot pts and labels for the nearest-point oracle.
             let pts: Vec<(f32, f32)> = view.points().iter().map(|p| (p.i, p.q)).collect();
             let labs: Vec<u16> = view.labels().iter().map(|l| l.bits).collect();
 
             let demapper = ReferenceSoftDemapper::new(spec);
 
-            // Construct a received sample not too far from some point.
-            // Seed a separate Lcg stream (mixed from `seed`) to choose
-            // which constellation point to perturb.
             let pick = Lcg::new(seed ^ 0xD1B5_4A32_D192_ED03)
                 .next_bounded_usize(n);
             let (pi, pq) = pts[pick];
@@ -628,8 +577,6 @@ mod tests {
             let mut out = vec![Llr::new(0.0); m as usize];
             demapper.demap_llrs(input, &mut out);
 
-            // Nearest point has label `labs[pick]`. For each bit b, LLR sign
-            // must say "bit equals that of nearest point" at low noise.
             for b in 0..m {
                 let v = out[b as usize].value();
                 prop_assert!(v.is_finite(), "LLR {v} not finite");

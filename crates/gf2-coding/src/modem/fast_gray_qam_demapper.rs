@@ -1,41 +1,6 @@
-//! Fast Gray square-QAM soft demapper exploiting I/Q axis separability.
-//!
-//! [`FastGrayQamDemapper`] is the specialized [`BatchSoftDemapper`] for
-//! the Gray-coded square-QAM presets (and BPSK as the degenerate
-//! single-axis case). Because under AWGN with independent I/Q noise the
-//! per-symbol 2D log-MAP factorizes into two 1D Gray-PAM demaps of size
-//! `sqrt(M)` each, the hot-path cost drops from
-//! `O(num_symbols * M * m)` for the arbitrary-constellation
-//! [`super::ReferenceSoftDemapper`] to
-//! `O(num_symbols * sqrt(M) * m)`.
-//!
-//! # Separability with complex channel gains
-//!
-//! The demapper accepts the same optional `(gain_i, gain_q)` pair as
-//! every other backend. For a complex gain `h = h_i + j h_q`, the
-//! squared distance to the (complex) scaled constellation point `h * p`
-//! can be rewritten by multiplying through by `conj(h)`:
-//!
-//! ```text
-//! |y - h p|^2 / N0 = |z - |h|^2 p|^2 / (N0 |h|^2)
-//! ```
-//!
-//! where `z = conj(h) * y`. Expanding the right-hand side yields a sum
-//! of I-only and Q-only squared terms, so the separable kernel applies
-//! after a per-symbol pre-rotation by `conj(h)` and a rescaling of the
-//! PAM levels by `|h|^2`. With `gain_i = gain_q = None` this reduces to
-//! the identity transform and the kernel falls back to the plain AWGN
-//! path.
-//!
-//! # Bit ordering and sign convention
-//!
-//! Bit ordering follows the framework-wide MSB-first intra-symbol
-//! convention: index `k = 0` is the MSB of the [`super::LabelWord`],
-//! and for Gray square-QAM the first `m/2` MSBs are the I-axis Gray-PAM
-//! label (MSB = coarsest level) while the remaining `m/2` bits are the
-//! Q-axis label. LLR sign follows [`crate::llr::Llr`]: **positive LLR =
-//! bit 0 more likely**, exactly matching
-//! [`super::ReferenceSoftDemapper`].
+//! Gray square-QAM soft demapper. Under AWGN with independent I/Q noise the
+//! 2D log-MAP factorizes into two 1D Gray-PAM demaps of `sqrt(M)` levels
+//! each, so a batch costs `O(num_symbols * sqrt(M) * m)`.
 
 use crate::llr::Llr;
 
@@ -44,59 +9,22 @@ use super::{BatchSoftDemapper, DemapInput, DemapMethod, ModemScalar, ModemSpec, 
 use gf2_kernels_simd::modem::{self as kernel_modem, GrayPamDistanceFnsF64};
 use std::sync::OnceLock;
 
-/// Returns the cached best-available Gray-PAM distance kernel bundle.
-///
-/// Dispatch cost is amortized: the first call runs CPU-feature
-/// detection via `gf2_kernels_simd::modem::detect_f64`, and all
-/// subsequent calls return the same `&'static` bundle through a
-/// `OnceLock` read. The bundle always yields a working kernel (scalar
-/// fallback when no SIMD backend matches, AVX2 on x86_64 hosts that
-/// advertise it), so the demap hot path never needs a `None` branch
-/// and no architecture-specific `cfg` gating is required here.
+/// Scalar Gray-PAM distance kernels.
 #[inline]
 fn scalar_fns_f64_static() -> &'static GrayPamDistanceFnsF64 {
     static FNS: OnceLock<GrayPamDistanceFnsF64> = OnceLock::new();
     FNS.get_or_init(kernel_modem::scalar_fns_f64)
 }
 
+/// Gray-PAM distance kernels selected once by CPU-feature detection: AVX2
+/// where the host advertises it, scalar otherwise.
 fn kernel_fns_f64() -> &'static GrayPamDistanceFnsF64 {
     static FNS: OnceLock<GrayPamDistanceFnsF64> = OnceLock::new();
     FNS.get_or_init(kernel_modem::detect_f64)
 }
 
-/// Fast soft demapper specialized for Gray square-QAM presets.
-///
-/// Accepts BPSK (order 2, `m = 1`) and the Gray-coded square-QAM presets
-/// of orders 4, 16, 64, and 256 (`m = 2, 4, 6, 8`). The constructor
-/// validates the passed [`ModemSpec`] against the locked preset bit-channel
-/// layout and panics on any non-matching spec; use
-/// [`super::ReferenceSoftDemapper`] for arbitrary constellations.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::llr::Llr;
-/// use gf2_coding::modem::{
-///     BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, ModemSpec,
-/// };
-///
-/// let spec = ModemSpec::<f32>::bpsk();
-/// let demapper = FastGrayQamDemapper::new(spec);
-/// let rx_i = [0.8_f32];
-/// let rx_q = [0.0_f32];
-/// let noise_var = [0.5_f32];
-/// let input = DemapInput::<f32> {
-///     rx_i: &rx_i,
-///     rx_q: &rx_q,
-///     gain_i: None,
-///     gain_q: None,
-///     noise_var: &noise_var,
-///     method: DemapMethod::ExactLogMap,
-/// };
-/// let mut out = [Llr::new(0.0); 1];
-/// demapper.demap_llrs(input, &mut out);
-/// assert!(out[0].value() > 0.0);
-/// ```
+/// Soft demapper for BPSK and the Gray square-QAM presets of orders 4, 16,
+/// 64 and 256; [`super::ReferenceSoftDemapper`] covers other constellations.
 pub struct FastGrayQamDemapper<S: ModemScalar> {
     spec: ModemSpec<S>,
     /// Total bits per symbol (`log2(order)`).
@@ -105,11 +33,8 @@ pub struct FastGrayQamDemapper<S: ModemScalar> {
     m_half: u8,
     /// `true` if this is the BPSK (single-axis) preset.
     is_bpsk: bool,
-    /// PAM squared-distance kernel pointer. Normally resolved to the
-    /// runtime-best kernel (AVX2 when available, scalar otherwise) via
-    /// [`gf2_kernels_simd::modem::detect_f64`]; callers that need to pin
-    /// the scalar backend for benchmarking can construct the demapper via
-    /// [`Self::new_with_scalar_kernel`].
+    /// PAM squared-distance kernels: runtime-detected in `new`, scalar in
+    /// `new_with_scalar_kernel`.
     kernel_fns: &'static GrayPamDistanceFnsF64,
     /// Post-normalization Gray-PAM levels on each axis, indexed by the
     /// `m_half`-bit Gray label (MSB-first within the half-label). Length
@@ -118,112 +43,42 @@ pub struct FastGrayQamDemapper<S: ModemScalar> {
 }
 
 impl<S: ModemScalar> FastGrayQamDemapper<S> {
-    /// Constructs a fast Gray-QAM demapper from a Gray-square-QAM preset.
-    ///
-    /// # Arguments
-    ///
-    /// * `spec` - A [`ModemSpec`] whose metadata **and** geometry match
-    ///   the Gray-square-QAM layout. The canonical way to obtain one is
-    ///   [`ModemSpec::bpsk`], [`ModemSpec::gray_square_qam`], or their
-    ///   `*_with_scalar` variants. Custom [`super::ModemSpecBuilder`]
-    ///   specs are accepted iff they pass every check listed under
-    ///   Panics below. The constructor verifies both the metadata shape
-    ///   and the axis-separable PAM geometry, so specs that spoof the
-    ///   metadata but ship mismatched points are rejected at
-    ///   construction — there is no silent "undefined LLR" path.
+    /// Constructs the demapper with the runtime-detected distance kernel.
     ///
     /// # Panics
     ///
-    /// Panics with a descriptive message if any of the following fails:
+    /// Panics unless `spec` has the BPSK / Gray square-QAM preset layout:
     ///
-    /// - `bits_per_symbol` is not one of `1, 2, 4, 6, 8`.
-    /// - `num_symbols != 2^bits_per_symbol`.
-    /// - For BPSK, `bit_channels[0] != SingleAxisPam(0)`; for QAM, bit
-    ///   channels do not follow `m/2` `IAxisPam` entries followed by
-    ///   `m/2` `QAxisPam` entries in MSB-first order.
-    /// - Capabilities do not advertise both `ExactLogMap` and `MaxLog`.
-    /// - (QAM) Two symbols share an I-half-label but have different I
-    ///   coordinates (I-axis factorisation failed), or the analogous
-    ///   Q-half-label / Q-coordinate condition fails.
-    /// - (QAM) Some I-half-label or Q-half-label is not populated by
-    ///   any symbol.
-    /// - (QAM) The per-label Q mapping disagrees with the I mapping:
-    ///   the kernel reuses the I-derived level table for both axes, so
-    ///   `q_levels[label] == pam_levels[label]` must hold for every
-    ///   label value.
-    /// - (BPSK) The two points are not stored in label order (label 0
-    ///   at index 0, label 1 at index 1), or they do not share a common
-    ///   Q coordinate (the BPSK kernel treats `label == index` and
-    ///   drops Q as a common additive constant).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
-    ///
-    /// let demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(64));
-    /// assert_eq!(demapper.spec_ref().bits_per_symbol(), 6);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `order = M`.
+    /// - `bits_per_symbol` is one of `1, 2, 4, 6, 8`;
+    /// - bit channels are `SingleAxisPam(0)` (BPSK) or `m/2` `IAxisPam`
+    ///   entries followed by `m/2` `QAxisPam` entries (QAM);
+    /// - capabilities advertise both `ExactLogMap` and `MaxLog`;
+    /// - every point lies on the preset Gray-PAM level of its I and Q
+    ///   half-labels within `1e-6`;
+    /// - (BPSK) label `k` is stored at index `k` and both points share one
+    ///   Q coordinate.
     pub fn new(spec: ModemSpec<S>) -> Self {
         Self::new_with_kernel(spec, kernel_fns_f64())
     }
 
-    /// Builds the same fast demapper but pinned to the **scalar** PAM
-    /// distance kernel, bypassing the runtime AVX2 dispatch.
-    ///
-    /// This is a benchmarking affordance, not a production construction
-    /// path — the default [`Self::new`] constructor auto-selects the
-    /// best-available kernel (AVX2 on x86_64 hosts that advertise it,
-    /// scalar otherwise) and that remains the right choice for all
-    /// production callers. Use this method only when a benchmark needs
-    /// to measure the scalar full-demapper baseline in isolation from
-    /// whatever kernel the host would otherwise detect (see
-    /// `crates/gf2-coding/benches/cpu_dispatch_probe.rs`).
-    ///
-    /// # Arguments
-    ///
-    /// * `spec` — a validated Gray-square-QAM modem spec, as for
-    ///   [`Self::new`].
+    /// [`Self::new`] pinned to the scalar distance kernel, for measuring the
+    /// scalar path independently of the host's detected kernel.
     ///
     /// # Panics
     ///
-    /// Same invariants as [`Self::new`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
-    ///
-    /// let spec = ModemSpec::<f32>::gray_square_qam(16);
-    /// let _scalar = FastGrayQamDemapper::new_with_scalar_kernel(spec);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(M) in `order = M`.
+    /// Same conditions as [`Self::new`].
     pub fn new_with_scalar_kernel(spec: ModemSpec<S>) -> Self {
         Self::new_with_kernel(spec, scalar_fns_f64_static())
     }
 
     fn new_with_kernel(spec: ModemSpec<S>, kernel_fns: &'static GrayPamDistanceFnsF64) -> Self {
-        // SSOT validator: confirms layout, bit-channel semantics, and
-        // that every (i_label, q_label) resolves to the canonical
-        // Gray-PAM level table (ruling out permuted-level specs that
-        // would silently produce wrong LLRs through the axis-separable
-        // kernel).
         super::presets::assert_valid_gray_square_qam_spec(&spec.view());
 
         let m_total = spec.bits_per_symbol();
         let is_bpsk = m_total == 1;
         let m_half = if is_bpsk { 0u8 } else { m_total / 2 };
 
-        // SSOT Gray-PAM level derivation. The validator above has
-        // already asserted that the spec's points match this table, so
-        // there is no divergence risk from recomputing it here.
+        // The validation above pins the spec's points to this table.
         let pam_levels: Vec<f64> = super::presets::gray_pam_levels::<f64>(m_total);
 
         Self {
@@ -236,39 +91,15 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
         }
     }
 
-    /// Returns the post-normalization Gray-PAM level table shared between
-    /// the I and Q axes.
-    ///
-    /// The table is indexed by the raw Gray-PAM axis label (MSB-first
-    /// within the `m/2`-bit half-label for QAM, or the single raw bit for
-    /// BPSK) and has length `1 << (m / 2)` for QAM or exactly `2` for
-    /// BPSK. The validator in [`Self::new`] guarantees both axes use the
-    /// same level set, so GPU and alternate-backend adapters can reuse
-    /// this one table rather than rederiving it from the
-    /// [`super::ModemSpec`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::modem::{FastGrayQamDemapper, ModemSpec};
-    ///
-    /// let demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(16));
-    /// assert_eq!(demapper.pam_levels().len(), 4);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
+    /// Post-normalization Gray-PAM level table shared by the I and Q axes,
+    /// indexed by the raw Gray-PAM axis label: `1 << (m / 2)` entries for
+    /// QAM, `2` for BPSK.
     #[inline]
     pub fn pam_levels(&self) -> &[f64] {
         &self.pam_levels
     }
 
     /// Returns a borrowed reference to the owned [`ModemSpec`].
-    ///
-    /// # Complexity
-    ///
-    /// O(1).
     #[inline]
     pub fn spec_ref(&self) -> &ModemSpec<S> {
         &self.spec
@@ -276,13 +107,8 @@ impl<S: ModemScalar> FastGrayQamDemapper<S> {
 }
 
 /// Computes the 1D Gray-PAM LLR for bit `bit_idx` (MSB-first within the
-/// `m_bits`-wide half-label) given per-level squared distances `d`.
-///
-/// `d.len() == 1 << m_bits`, indexed by the raw Gray label. `method`
-/// selects exact log-MAP or max-log. The subset-reduction math itself
-/// lives in [`super::demapper::subset_log_map_llr`] — this is a thin
-/// wrapper that supplies the "label = index" mapping used on a PAM
-/// axis.
+/// `m_bits`-wide half-label) from the per-level squared distances `d`,
+/// indexed by the raw Gray label (`d.len() == 1 << m_bits`).
 #[inline]
 fn pam_axis_llr(d: &[f64], m_bits: u8, bit_idx: u8, method: DemapMethod) -> f64 {
     super::demapper::subset_log_map_llr(d, |j| j as u16, d.len(), m_bits, bit_idx, method)
@@ -293,36 +119,19 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
         self.spec.view()
     }
 
-    /// Batched, allocation-minimal Gray-QAM soft demap.
+    /// Pre-rotates each sample by `conj(h)`, fills one Gray-PAM
+    /// squared-distance slab per axis (I only for BPSK), and reduces each
+    /// slab to LLRs. A symbol with zero channel gain gets zero LLRs.
     ///
-    /// The hot path is organized as three contiguous passes over the
-    /// symbol batch:
+    /// # Panics
     ///
-    /// 1. **Pre-rotation**: walk `num_symbols` once to compute
-    ///    `z_i[s], z_q[s], g[s], inv_n0_eq[s]` into stack-friendly
-    ///    scratch `Vec<f64>` buffers (sized once, not per-symbol).
-    /// 2. **Distance kernel**: call the runtime-selected Gray-PAM
-    ///    squared-distance kernel once per axis, filling a
-    ///    `num_symbols * axis_len` contiguous distance slab. This is
-    ///    the SIMD plug-in point — the default dispatch is AVX2 on
-    ///    x86_64, scalar otherwise. For BPSK the Q axis is skipped
-    ///    (its only contribution is a common additive constant).
-    /// 3. **LLR reduction**: walk the distance slab with the shared
-    ///    subset-reduction helper (`subset_log_map_llr` in the
-    ///    crate-private `super::demapper` module) to produce the final
-    ///    LLRs in the canonical symbol-major, MSB-first layout.
-    ///
-    /// The zero-gain guard is expressed by writing `inv_n0_eq[s] = 0`
-    /// into the pre-rotation scratch; the kernel contract
-    /// (see [`gf2_kernels_simd::modem`]) emits a zero distance slab
-    /// for that symbol, and the LLR reduction naturally yields zero
-    /// on balanced Gray presets.
+    /// Panics on the [`BatchSoftDemapper::demap_llrs`] conditions and if a
+    /// `noise_var` entry is not positive and finite.
     ///
     /// # Complexity
     ///
-    /// `O(num_symbols * sqrt(M) * m)` where `M = 2^m` is the
-    /// constellation order; the distance kernel and the reduction are
-    /// both linear in the per-symbol work.
+    /// `O(num_symbols * sqrt(M) * m)` where `M = 2^m` is the constellation
+    /// order.
     fn demap_llrs(&self, input: DemapInput<'_, S>, out_llrs: &mut [Llr]) {
         let m = self.m_total as usize;
         let view = self.spec.view();
@@ -343,11 +152,6 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             1usize << self.m_half
         };
 
-        // Pass 1: build contiguous per-symbol scratch for the kernel.
-        // All four buffers are allocated exactly once per call; the
-        // per-symbol inner loop does no allocation and writes through
-        // contiguous indices so both SIMD and scalar backends see an
-        // allocation-free hot path.
         let mut z_i: Vec<f64> = Vec::with_capacity(num_symbols);
         let mut z_q: Vec<f64> = Vec::with_capacity(num_symbols);
         let mut g_scratch: Vec<f64> = Vec::with_capacity(num_symbols);
@@ -373,17 +177,10 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             z_q.push(h_i * y_q - h_q * y_i);
             g_scratch.push(g);
 
-            // Zero (or vanishingly small) channel gain: every
-            // constellation point has identical squared distance from
-            // y, so the log-MAP posterior degenerates to a label-count
-            // ratio. For our balanced presets every bit channel
-            // carries an equal count of 0- and 1-labels, so the LLR
-            // is exactly zero. Feeding `inv_n0_eq = 0` to the distance
-            // kernel makes it emit a zero distance slab for this
-            // symbol (contract defined in `gf2_kernels_simd::modem`);
-            // the subsequent subset-reduction then produces zero LLRs
-            // without touching NaN. Matches the reference demapper's
-            // behaviour at h = 0 on these presets.
+            // At zero gain every point is equidistant from y and the
+            // balanced presets give LLR 0. `inv_n0_eq = 0` makes the
+            // kernel emit a zero distance slab, which reduces to zero
+            // LLRs without NaN.
             let n0_eq = n0 * g;
             let inv = if n0_eq <= f64::EPSILON * n0 {
                 0.0
@@ -393,10 +190,7 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             inv_n0_eq.push(inv);
         }
 
-        // Pass 2: distance-kernel dispatch. I axis always, Q axis only
-        // for QAM. Levels are the same on both axes (enforced in
-        // `FastGrayQamDemapper::new`), so we reuse the single level
-        // table for both kernel calls.
+        // Both axes share one level table.
         let mut d_i: Vec<f64> = vec![0.0; num_symbols * axis_len];
         let mut d_q: Vec<f64> = if self.is_bpsk {
             Vec::new()
@@ -423,7 +217,6 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
             );
         }
 
-        // Pass 3: LLR reduction over each per-symbol distance slab.
         if self.is_bpsk {
             for k in 0..num_symbols {
                 let slab = &d_i[k * axis_len..(k + 1) * axis_len];
@@ -449,16 +242,9 @@ impl<S: ModemScalar> BatchSoftDemapper<S> for FastGrayQamDemapper<S> {
     }
 }
 
-/// Runs the Gray-PAM squared-distance kernel on a single axis.
-///
-/// Dispatches unconditionally to the runtime-selected
-/// `gf2-kernels-simd` bundle (AVX2 on x86_64 hosts that advertise the
-/// feature, scalar everywhere else). The output layout is
-/// symbol-major: `out[s * pam_levels.len() + l]` is the squared
-/// distance between the pre-rotated sample `z[s]` and the `l`-th
-/// Gray-PAM level. The zero-gain contract
-/// (`inv_n0_eq[s] == 0 ⇒ distance slab all zero`) is enforced inside
-/// the kernel by every backend.
+/// Runs the Gray-PAM squared-distance kernel on one axis:
+/// `out[s * pam_levels.len() + l]` is the distance between `z[s]` and
+/// level `l`, and all zero where `inv_n0_eq[s] == 0`.
 #[inline]
 fn run_pam_distance_kernel(
     fns: &GrayPamDistanceFnsF64,
@@ -481,7 +267,6 @@ mod tests {
     use crate::llr::Llr;
     use crate::modem::LabelWord;
 
-    /// All supported preset orders.
     const PRESET_ORDERS: [usize; 5] = [2, 4, 16, 64, 256];
 
     fn method_seed(m: DemapMethod) -> u64 {
@@ -507,8 +292,6 @@ mod tests {
         }
     }
 
-    // Deterministic LCG for test inputs is shared with the rest of the
-    // modem test surface via `crate::modem::test_oracle::Lcg`.
     use crate::modem::test_oracle::Lcg;
 
     fn assert_close_f32(a: &[Llr], b: &[Llr], tol: f32, ctx: &str) {
@@ -614,7 +397,6 @@ mod tests {
 
     #[test]
     fn test_fast_matches_reference_with_complex_gain_f64() {
-        // Exercise the conj(h) pre-rotation path with non-trivial fading.
         let methods = [DemapMethod::ExactLogMap, DemapMethod::MaxLog];
         for &order in &PRESET_ORDERS {
             for method in methods {
@@ -665,11 +447,8 @@ mod tests {
         }
     }
 
-    /// Sweep batch sizes that cross the AVX2 8-lane boundary to prove
-    /// the batched kernel dispatch is size-agnostic: every preset must
-    /// match the reference demapper for sizes 0, 1, 7, 8, 9, 15, 16,
-    /// 17, 31, 32 on both methods. The zero-length case exercises the
-    /// empty-batch short-circuit added alongside the kernel refactor.
+    /// Sizes straddle multiples of the SIMD lane width; size 0 takes the
+    /// empty-batch return.
     #[test]
     fn test_batch_size_sweep_crosses_avx2_boundary() {
         let methods = [DemapMethod::ExactLogMap, DemapMethod::MaxLog];
@@ -758,9 +537,7 @@ mod tests {
 
     #[test]
     fn test_bpsk_closed_form_high_snr() {
-        // BPSK sanity: L = 4*y / N0 at unit gain. Smoke-tests the
-        // single-axis branch beyond the cross-check against the
-        // reference.
+        // BPSK closed form at unit gain: L = 4*y / N0.
         let demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::bpsk());
         let rx_i = [0.8_f32];
         let rx_q = [0.0_f32];
@@ -844,9 +621,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "bits_per_symbol 3 is not one of")]
     fn test_unsupported_bits_per_symbol_panics() {
-        // Build a custom 8-point (m=3) spec via the public builder: it is
-        // valid as a research constellation but is not a Gray square-QAM
-        // preset, so the fast path must reject it.
         let points: Vec<SymbolPoint<f32>> = (0..8)
             .map(|k| {
                 let theta = (k as f32) * std::f32::consts::PI / 4.0;
@@ -987,9 +761,9 @@ mod tests {
     #[test]
     #[should_panic(expected = "expected canonical Gray-PAM level")]
     fn test_spoofed_iaxispam_metadata_with_non_preset_geometry_rejected() {
-        // Build a custom 4-point spec with IAxisPam/QAxisPam metadata
-        // (so validate_preset_layout accepts it) but asymmetric geometry
-        // that breaks the I/Q factorisation the fast path relies on.
+        // IAxisPam/QAxisPam metadata (so the bit-channel check accepts it)
+        // with asymmetric geometry that breaks the I/Q factorisation the
+        // fast path relies on.
         use crate::modem::{BitChannelSemantics, ModemCapabilities};
         let points: Vec<SymbolPoint<f32>> = vec![
             SymbolPoint::new(1.0, 1.0),
@@ -1021,8 +795,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "for Gray square-QAM preset")]
     fn test_non_preset_layout_panics() {
-        // 4-point spec with m=2 but non-Gray-QAM bit-channel layout is
-        // rejected. Use the Opaque semantics.
         use crate::modem::BitChannelSemantics;
         let points: Vec<SymbolPoint<f32>> = vec![
             SymbolPoint::new(1.0, 0.0),
@@ -1047,11 +819,6 @@ mod tests {
 
 #[cfg(test)]
 mod property_tests {
-    //! Property-based coverage matching the sibling
-    //! [`super::super::ref_demapper`] proptest surface: random inputs
-    //! must not produce NaN and the fast path must agree with the
-    //! reference demapper within tight tolerance across all preset
-    //! orders and both demap methods.
     use super::super::{
         BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec, ReferenceSoftDemapper,
     };
@@ -1089,8 +856,6 @@ mod property_tests {
             let fast = FastGrayQamDemapper::new(spec.clone());
             let reference = ReferenceSoftDemapper::new(spec);
 
-            // Deterministic pseudo-random samples routed through the
-            // shared SSOT modem test LCG.
             let mut rng = super::super::test_oracle::Lcg::new(y_seed | 1);
             let rx_i: Vec<f64> = (0..n_sym).map(|_| rng.next_unit_f64() * 1.5).collect();
             let rx_q: Vec<f64> = (0..n_sym).map(|_| rng.next_unit_f64() * 1.5).collect();
