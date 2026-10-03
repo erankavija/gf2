@@ -5,7 +5,15 @@
   "created_at": "2026-10-02T15:01:36.355826381Z",
   "dependencies": [],
   "description": "Give the tuning-campaign tooling one shared way to resolve the repository root at runtime.\n\n## Background\n\n`@/inv/no-dev-path-coupling` requires development artifacts to be located by content identity or through one configured repository root resolved at runtime. The tooling resolves the root through several private copies of the same `git rev-parse --show-toplevel` call: `dev/tools/tuning-campaign-support/tests/driver_launcher.rs`, `tests/addendum_schema_versions.rs`, the benchmark A/B runner, and the tuning-extent campaign driver. `tests/protocol_contracts.rs` still uses a depth-dependent `../../..` path.\n\n## Success Criteria\n\n- [hard] REQ-01: `tuning-campaign-support` exposes one public function that resolves the repository root at runtime, and every binary and test in the crate uses it in place of a private copy.\n- [hard] REQ-02: No depth-dependent relative path to the repository root remains in the crate's binaries or tests.\n- [hard] REQ-03: Every test result and committed receipt verdict is unchanged, and the Rust CI gate passes.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "research",
+      "format": "markdown",
+      "label": "Baseline record",
+      "path": "dev/active/fa787f85-documentation-overhaul/112f23c6-verdict-baseline.md"
+    }
+  ],
   "first_ready_at": "2026-10-02T15:01:36.355826381Z",
   "gates_required": [
     "cargo-ci",
@@ -44,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Share one repository-root resolver across tuning-campaign tooling",
-  "updated_at": "2026-10-02T23:49:48.825430575Z"
+  "updated_at": "2026-10-03T00:30:39.998831058Z"
 }
