@@ -646,3 +646,7 @@ doi = "10.6028/NIST.FIPS.197"
 key = "Ccsds2017"
 citation = "CCSDS 131.0-B-3 (September 2017) — TM Synchronization and Channel Coding. Recommended Standard, Blue Book, Consultative Committee for Space Data Systems. Section 3.3 specifies the basic convolutional code: rate 1/2, constraint length 7, connection vectors 171 and 133 octal."
 url = "https://ccsds.org/Pubs/131x0b3s.pdf"
+
+[[references]]
+key = "Knuth1997"
+citation = "Knuth — The Art of Computer Programming, Volume 2: Seminumerical Algorithms, 3rd edition. Addison-Wesley, 1997. ISBN 978-0-201-89684-8. The attribution of the MMIX linear-congruential multiplier 6364136223846793005 to this volume follows Steele, Vigna — Computationally easy, spectrally good multipliers for congruential pseudorandom number generators (doi:10.1002/spe.3030)."

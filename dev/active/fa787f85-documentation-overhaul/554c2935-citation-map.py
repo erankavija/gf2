@@ -83,6 +83,7 @@ ROWS = [
     ("GentlemanSande1966", r"Gentleman & Sande|^\W*\(1966\)", r"field/ntt\.rs", None),
     ("GotoGeijn2008", r"Goto-vandeGeijn 2008|\bGoto/BLIS\b", None, None),
     ("HardyWright2008", r"Hardy & Wright", None, None),
+    ("Knuth1997", r"\bKnuth\b|\bMMIX\b", None, None),
     ("Higham2002", r"Higham ?§ ?14\.1", None, None),
     ("LidlNiederreiter1996", r"Lidl & Niederreiter", None, None),
     ("LinBox2025", r"\bLinBox\b", None, None),
@@ -142,7 +143,6 @@ HEURISTIC = re.compile(
 UNKEYED = [
     ("no work with this title and venue exists",
      r"Condo, C\.|^\W*(?:\*IEEE Trans\. )?Commun\.\*$", r"grand/(?:mod|sogrand)\.rs"),
-    ("constant not verified in the named work", r"\bKnuth\b|\bMMIX\b", None),
     ("no edition of the book has this section", r"Shoup §12\.4", None),
     ("no such standard, and the file holds no AES polynomial", r"IEEE AES standard", None),
     ("paper not named", r"\bpaper\b", r"gf2-coding/src/fading\.rs|ldpc_bler_check\.rs"),
