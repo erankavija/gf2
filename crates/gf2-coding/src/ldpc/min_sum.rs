@@ -1,15 +1,13 @@
 //! Shared minimum, second-minimum and sign reduction for check-node updates.
 //!
-//! [`min_sum_check_row`] computes every outgoing message of one check node from
-//! two passes over its incoming messages, which is the whole of a check-node
-//! update in the min-sum family. It replaces one leave-one-out reduction per
-//! outgoing edge, which costs `d_c (d_c - 1)` reads for a check of degree
-//! `d_c`, with `2 d_c` reads.
+//! [`min_sum_check_row`] computes every outgoing message of a check node of
+//! degree `d_c` in `2 d_c` reads, against `d_c (d_c - 1)` for one leave-one-out
+//! reduction per outgoing edge.
 //!
 //! # Numerical contract
 //!
-//! The reduction reproduces, bit for bit, the supported scalar reference for
-//! the same excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
+//! The reduction reproduces, bit for bit, the scalar reference for the same
+//! excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
 //! without the `simd` cargo feature, and the corresponding scalar
 //! [`Llr::boxplus_normalized_minsum_n`] and [`Llr::boxplus_offset_minsum_n`].
 //! Two rules of that reference decide the cases a reduction can disagree on:
@@ -20,22 +18,16 @@
 //!   `f32::INFINITY`, which skips a NaN input; an all-NaN input set therefore
 //!   reduces to an infinite magnitude.
 //!
-//! Both rules hold whatever the check degree. This function is scalar and
-//! performs no runtime dispatch, so it is independent of the `simd` cargo
-//! feature and of the host's SIMD capabilities. `Llr::boxplus_minsum_n` keeps
-//! its own behaviour, including the AVX2 kernel it reaches under `simd`, whose
-//! vector lanes take the IEEE sign bit and propagate a NaN and so disagree with
-//! this contract; that kernel discrepancy is tracked by `@/issue/39cbde20`.
+//! This function is scalar and performs no runtime dispatch. The AVX2 kernel
+//! that `Llr::boxplus_minsum_n` reaches under `simd` takes the IEEE sign bit
+//! in its vector lanes and so disagrees with this contract.
 //!
-//! # Exactness of the shared reduction
-//!
-//! Both factors of a leave-one-out result are recovered exactly rather than
-//! approximately. A sign is `±1.0`, so removing one input's sign from the
-//! shared product is a multiplication by that same `±1.0`, which is exact in
-//! any order. The magnitude excluding input `i` is the smallest input magnitude
-//! when `i` is not at the smallest position and the second smallest when it is,
-//! which is the minimum over the other inputs even when the two smallest
-//! magnitudes are equal.
+//! Both factors of a leave-one-out result are exact. A sign is `±1.0`, so
+//! removing one input's sign from the shared product is a multiplication by
+//! that same `±1.0`. The magnitude excluding input `i` is the smallest input
+//! magnitude when `i` is not at the smallest position and the second smallest
+//! when it is, which is the minimum over the other inputs even when the two
+//! smallest magnitudes are equal.
 //!
 //! [`Llr::boxplus_minsum_n`]: crate::llr::Llr::boxplus_minsum_n
 //! [`Llr::boxplus_normalized_minsum_n`]: crate::llr::Llr::boxplus_normalized_minsum_n

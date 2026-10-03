@@ -1,48 +1,5 @@
-//! LDPC (Low-Density Parity-Check) codes with belief propagation decoding.
-//!
-//! This module provides LDPC code construction and soft-decision decoding using
-//! belief propagation algorithms over sparse parity-check matrices.
-//!
-//! # LDPC Code Structure
-//!
-//! An LDPC code is defined by a sparse parity-check matrix **H** where:
-//! - Rows represent check nodes (parity constraints)
-//! - Columns represent variable nodes (codeword bits)
-//! - **H · c = 0** for any valid codeword **c**
-//!
-//! # Tanner Graph
-//!
-//! The code can be viewed as a bipartite graph:
-//! - Check nodes ↔ Variable nodes
-//! - Edge (i,j) exists if H[i,j] = 1
-//!
-//! # Belief Propagation Decoding
-//!
-//! Iterative message-passing algorithm:
-//! 1. **Initialization**: Variable nodes initialized with channel LLRs
-//! 2. **Check-to-variable**: Compute messages using box-plus over neighbors
-//! 3. **Variable-to-check**: Update beliefs and send to check nodes
-//! 4. **Convergence**: Stop when syndrome check passes or max iterations reached
-//!
-//! # Examples
-//!
-//! ```ignore
-//! use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-//! use gf2_coding::traits::IterativeSoftDecoder;
-//! use gf2_coding::llr::Llr;
-//!
-//! // Create a regular (3,6) LDPC code
-//! let code = LdpcCode::regular(100, 200, 3, 6);
-//! let mut decoder = LdpcDecoder::new(code);
-//!
-//! // Decode received LLRs
-//! let channel_llrs: Vec<Llr> = /* ... */;
-//! let result = decoder.decode_iterative(&channel_llrs, 50);
-//!
-//! if result.converged {
-//!     println!("Decoded successfully in {} iterations", result.iterations);
-//! }
-//! ```
+//! LDPC codes over sparse parity-check matrices: code construction,
+//! belief-propagation decoding and systematic encoding.
 
 use crate::ldpc::edge_layout::EdgeLayout;
 use crate::ldpc::min_sum::{min_sum_check_row, MinSumRule};
@@ -51,13 +8,7 @@ use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::BitVec;
 
-/// An LDPC code defined by its sparse parity-check matrix.
-///
-/// The code is characterized by:
-/// - **n**: Codeword length (number of variable nodes)
-/// - **m**: Number of parity checks (check nodes)
-/// - **k**: Message dimension (k = n - m for systematic codes)
-/// - **H**: Sparse m × n parity-check matrix
+/// An LDPC code defined by its sparse m × n parity-check matrix.
 #[derive(Debug, Clone)]
 pub struct LdpcCode {
     /// Sparse parity-check matrix in dual representation
@@ -69,20 +20,14 @@ pub struct LdpcCode {
     /// Cached generator matrix (computed lazily)
     #[allow(clippy::type_complexity)]
     cached_generator: std::sync::Arc<std::sync::Mutex<Option<gf2_core::BitMatrix>>>,
-    /// Cached systematic column positions (computed lazily via RREF).
-    /// These are the k column indices in the full codeword that carry message
-    /// bits. Computed once and reused by both the generator matrix and decoder.
+    /// Cached systematic column positions: the k column indices in the full
+    /// codeword that carry message bits.
     cached_systematic_cols: std::sync::Arc<std::sync::Mutex<Option<Vec<usize>>>>,
 }
 
 impl LdpcCode {
-    /// Creates an LDPC code from a parity-check matrix in COO format.
-    ///
-    /// # Arguments
-    ///
-    /// * `m` - Number of check nodes (rows of H)
-    /// * `n` - Number of variable nodes (columns of H)
-    /// * `edges` - List of (check, variable) edges in the Tanner graph
+    /// Creates an LDPC code from the (check, variable) edges of an m × n
+    /// parity-check matrix.
     ///
     /// # Examples
     ///
@@ -151,14 +96,6 @@ impl LdpcCode {
 
     /// Creates an LDPC code from a quasi-cyclic structure.
     ///
-    /// Quasi-cyclic (QC) LDPC codes have parity-check matrices composed of
-    /// circulant submatrices. This structure is used in standards like DVB-T2,
-    /// 5G NR, and WiFi 802.11n.
-    ///
-    /// # Arguments
-    ///
-    /// * `qc` - Quasi-cyclic structure with base matrix and expansion factor
-    ///
     /// # Examples
     ///
     /// ```
@@ -179,13 +116,8 @@ impl LdpcCode {
         Self::from_edges(m, n, &edges)
     }
 
-    /// Creates a DVB-T2 short frame LDPC code.
-    ///
-    /// Short frames have n=16200 bits with expansion factor Z=360.
-    ///
-    /// # Arguments
-    ///
-    /// * `rate` - Code rate (1/2, 3/5, 2/3, 3/4, 4/5, 5/6)
+    /// Creates a DVB-T2 short frame LDPC code (n=16200) from the
+    /// `@/citation/Etsi2015` tables.
     ///
     /// # Examples
     ///
@@ -197,10 +129,6 @@ impl LdpcCode {
     /// assert_eq!(code.n(), 16200);
     /// assert_eq!(code.k(), 7200);
     /// ```
-    ///
-    /// # References
-    ///
-    /// ETSI EN 302 755 V1.4.1 (DVB-T2 standard)
     pub fn dvb_t2_short(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
@@ -218,13 +146,8 @@ impl LdpcCode {
         Self::from_edges(params.m, params.n, &edges)
     }
 
-    /// Creates a DVB-T2 normal frame LDPC code.
-    ///
-    /// Normal frames have n=64800 bits with expansion factor Z=360.
-    ///
-    /// # Arguments
-    ///
-    /// * `rate` - Code rate (1/2, 3/5, 2/3, 3/4, 4/5, 5/6)
+    /// Creates a DVB-T2 normal frame LDPC code (n=64800) from the
+    /// `@/citation/Etsi2015` tables.
     ///
     /// # Examples
     ///
@@ -236,14 +159,6 @@ impl LdpcCode {
     /// assert_eq!(code.n(), 64800);
     /// assert_eq!(code.k(), 32400);
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if the table for the requested rate is not yet implemented.
-    ///
-    /// # References
-    ///
-    /// ETSI EN 302 755 V1.4.1 (DVB-T2 standard)
     pub fn dvb_t2_normal(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
@@ -261,13 +176,9 @@ impl LdpcCode {
         Self::from_edges(params.m, params.n, &edges)
     }
 
-    /// Computes the generator matrix from the parity-check matrix.
-    ///
-    /// Uses RREF (Reduced Row Echelon Form) from gf2-core to convert H to systematic
-    /// form [P^T | I_m], then constructs G = [I_k | P] where k = n - m.
-    ///
-    /// Uses optimized word-level operations with SIMD acceleration when available.
-    /// Cached after first computation.
+    /// Computes the generator matrix (k × n) from the RREF of H with
+    /// left-to-right pivoting: the identity sits on the non-pivot columns and
+    /// the parity on the pivot columns.
     ///
     /// Returns None if H is not full rank.
     fn compute_generator_matrix(&self) -> Option<gf2_core::BitMatrix> {
@@ -281,10 +192,8 @@ impl LdpcCode {
             return Some(BitMatrix::zeros(0, self.n));
         }
 
-        // Convert sparse H to dense for RREF
         let h_dense = self.h.to_dense();
 
-        // Use gf2-core's optimized RREF with word-level operations and SIMD acceleration
         // pivot_from_right=false for left-to-right pivoting (standard order)
         let rref_result = rref(&h_dense, false);
 
@@ -308,22 +217,15 @@ impl LdpcCode {
             "Should have k systematic positions"
         );
 
-        // Build generator matrix G (k × n)
-        // For systematic codes: G = [I_k | P]
-        // where P is derived from the parity part of H
         let mut g = BitMatrix::zeros(k, self.n);
 
-        // Set identity part (systematic positions)
         for (i, &sys_col) in systematic_positions.iter().enumerate() {
             g.set(i, sys_col, true);
         }
 
-        // Set parity part
-        // For each systematic bit position, we need to find which parity checks it affects
         for (msg_idx, &sys_col) in systematic_positions.iter().enumerate() {
             for (check_idx, &parity_col) in col_permutation.iter().enumerate() {
                 if h_dense.get(check_idx, sys_col) {
-                    // This systematic bit affects this parity check
                     g.set(msg_idx, parity_col, true);
                 }
             }
@@ -334,13 +236,10 @@ impl LdpcCode {
 
     /// Computes the systematic column positions from the parity-check matrix.
     ///
-    /// Uses a fast heuristic first: if every row of H has at least one nonzero
-    /// entry in columns k..n, then columns 0..k-1 are the systematic positions.
-    /// This is O(nnz) and covers DVB-T2, random LDPC, and most standard codes.
-    ///
-    /// Falls back to full RREF with right-to-left pivoting only when needed
-    /// (e.g., 5G NR BG2 where rows 40-41 have entries only in systematic columns).
-    /// The RREF convention matches [`RuEncodingMatrices::preprocess`](crate::ldpc::encoding::RuEncodingMatrices)
+    /// If every row of H has at least one nonzero entry in columns k..n (an
+    /// O(nnz) scan), columns 0..k-1 are taken as the systematic positions.
+    /// Otherwise they are the non-pivot columns of an RREF with right-to-left
+    /// pivoting, the convention of [`RuEncodingMatrices::preprocess`](crate::ldpc::encoding::RuEncodingMatrices),
     /// so decoder message extraction is consistent with the encoder.
     ///
     /// Returns `None` if H is rank deficient (RREF path only).
@@ -352,18 +251,12 @@ impl LdpcCode {
             return Some(Vec::new());
         }
 
-        // Fast path: check if columns 0..k can serve as systematic positions.
-        // This holds when every row of H has at least one nonzero entry in
-        // columns k..n (the natural parity region). O(nnz) scan.
         let all_rows_touch_parity = (0..m).all(|row| self.h.row_iter(row).any(|col| col >= k));
 
         if all_rows_touch_parity {
-            // Standard case: systematic columns are [0, 1, ..., k-1]
             return Some((0..k).collect());
         }
 
-        // Slow path: some rows have entries only in columns 0..k.
-        // Must run full RREF to determine the actual systematic positions.
         use gf2_core::alg::rref::rref;
 
         let h_dense = self.h.to_dense();
@@ -385,11 +278,6 @@ impl LdpcCode {
 
     /// Returns the systematic column positions (cached after first computation).
     ///
-    /// These are the k column indices in the full codeword that carry message
-    /// bits when encoding with Richardson-Urbanke systematic encoding. The
-    /// positions are determined via RREF of the parity-check matrix H with
-    /// right-to-left pivoting, matching the encoder's convention.
-    ///
     /// Message bit `i` corresponds to codeword position `systematic_cols[i]`.
     ///
     /// # Panics
@@ -398,7 +286,7 @@ impl LdpcCode {
     ///
     /// # Complexity
     ///
-    /// First call: O(m * n * min(m, n)) for RREF. Subsequent calls: O(1).
+    /// First call: O(m * n * min(m, n)) when the RREF path runs.
     pub(crate) fn systematic_cols(&self) -> Vec<usize> {
         let mut cache = self.cached_systematic_cols.lock().unwrap();
         if let Some(ref cols) = *cache {
@@ -436,20 +324,12 @@ impl crate::traits::GeneratorMatrixAccess for LdpcCode {
     }
 
     fn is_systematic(&self) -> bool {
-        // LDPC codes are not naturally systematic unless specially constructed
-        // We'd need to analyze the generator matrix to determine this
-        // For now, return false conservatively
+        // Conservative: the generator matrix is not analysed.
         false
     }
 }
 
 /// A circulant matrix for quasi-cyclic LDPC codes.
-///
-/// A circulant matrix is a square matrix where each row is a right-shifted
-/// version of the previous row. In QC-LDPC codes, circulants are used as
-/// building blocks for the parity-check matrix.
-///
-/// # Structure
 ///
 /// For a Z×Z circulant with shift s, the first row has a single 1 in column s,
 /// and each subsequent row shifts right by one position (with wraparound).
@@ -480,12 +360,7 @@ pub struct CirculantMatrix {
 }
 
 impl CirculantMatrix {
-    /// Creates a new circulant matrix.
-    ///
-    /// # Arguments
-    ///
-    /// * `shift` - Right-shift amount (must be < size)
-    /// * `size` - Dimension of the square circulant matrix
+    /// Creates a `size × size` circulant with right shift `shift`.
     pub fn new(shift: usize, size: usize) -> Self {
         Self { shift, size }
     }
@@ -500,16 +375,8 @@ impl CirculantMatrix {
         self.size
     }
 
-    /// Generates edges (row, col) for this circulant block in a larger matrix.
-    ///
-    /// # Arguments
-    ///
-    /// * `base_row` - Base row index in the base matrix
-    /// * `base_col` - Base column index in the base matrix
-    ///
-    /// # Returns
-    ///
-    /// Vector of (row, col) edges representing the circulant's 1-positions
+    /// Generates the (row, col) edges of this circulant placed at block
+    /// (`base_row`, `base_col`) of a larger matrix.
     pub fn to_edges(&self, base_row: usize, base_col: usize) -> Vec<(usize, usize)> {
         let row_offset = base_row * self.size;
         let col_offset = base_col * self.size;
@@ -525,10 +392,6 @@ impl CirculantMatrix {
 }
 
 /// Quasi-cyclic LDPC code structure.
-///
-/// QC-LDPC codes have parity-check matrices composed of circulant submatrices
-/// arranged according to a base matrix. This structure enables efficient
-/// encoding/decoding and is used in modern communication standards.
 ///
 /// # Structure
 ///
@@ -568,11 +431,6 @@ pub struct QuasiCyclicLdpc {
 
 impl QuasiCyclicLdpc {
     /// Creates a new quasi-cyclic LDPC structure.
-    ///
-    /// # Arguments
-    ///
-    /// * `base_matrix` - Matrix of shift values (-1 for zero blocks)
-    /// * `expansion_factor` - Size Z of each circulant block
     ///
     /// # Panics
     ///
@@ -634,10 +492,6 @@ impl QuasiCyclicLdpc {
     ///
     /// Each entry is either `-1` (zero block) or a circulant shift in
     /// `0..expansion_factor()`. One inner `Vec` per base row.
-    ///
-    /// # Complexity
-    ///
-    /// O(1) — returns a borrowed slice.
     pub fn base_matrix(&self) -> &[Vec<i32>] {
         &self.base_matrix
     }
@@ -652,14 +506,8 @@ impl QuasiCyclicLdpc {
         self.base_cols() * self.expansion_factor
     }
 
-    /// Expands the quasi-cyclic structure to a list of edges.
-    ///
-    /// Converts the base matrix with circulant blocks into a sparse edge list
-    /// suitable for creating an LDPC code.
-    ///
-    /// # Returns
-    ///
-    /// Vector of (row, col) edges representing 1-positions in the expanded matrix
+    /// Expands the quasi-cyclic structure to the (row, col) edge list of the
+    /// expanded matrix.
     ///
     /// # Panics
     ///
@@ -671,7 +519,6 @@ impl QuasiCyclicLdpc {
         for (base_row, row) in self.base_matrix.iter().enumerate() {
             for (base_col, &shift) in row.iter().enumerate() {
                 if shift == -1 {
-                    // Zero block - no edges
                     continue;
                 }
 
@@ -696,10 +543,6 @@ impl QuasiCyclicLdpc {
 
 /// Decoder algorithm selection for LDPC belief propagation.
 ///
-/// Different check-node update rules trade off accuracy against speed.
-/// Normalized and offset min-sum variants improve upon standard min-sum
-/// by compensating for the overestimation bias inherent in the min approximation.
-///
 /// # Examples
 ///
 /// ```
@@ -719,15 +562,11 @@ pub enum DecoderAlgorithm {
     MinSum,
     /// Normalized min-sum: scales the min-sum output by a factor $\alpha \in (0, 1]$.
     ///
-    /// Reduces overestimation bias. Typical values: 0.75--0.95.
-    ///
     /// # Valid range
     ///
     /// `alpha` must be finite and in `(0.0, 1.0]`.
     NormalizedMinSum(f32),
     /// Offset min-sum: subtracts a non-negative offset $\beta$ from the min magnitude.
-    ///
-    /// Reduces overestimation bias. Typical values: 0.25--0.5.
     ///
     /// # Valid range
     ///
@@ -735,13 +574,11 @@ pub enum DecoderAlgorithm {
     OffsetMinSum(f32),
     /// Exact sum-product algorithm (box-plus).
     ///
-    /// Uses $\tanh / \text{atanh}$ computations. Most accurate but slowest.
+    /// Uses $\tanh / \text{atanh}$ computations.
     SumProduct,
 }
 
 /// Configuration for the LDPC belief propagation decoder.
-///
-/// Controls the decoding algorithm and convergence behavior.
 ///
 /// # Examples
 ///
@@ -764,12 +601,8 @@ pub struct DecoderConfig {
 }
 
 impl DecoderConfig {
-    /// Creates a new decoder configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `algorithm` - The check-node update algorithm to use
-    /// * `early_termination` - If `true`, decoding stops as soon as the syndrome check passes
+    /// Creates a new decoder configuration; with `early_termination`, decoding
+    /// stops at the first iteration whose syndrome check passes.
     ///
     /// # Panics
     ///
@@ -867,13 +700,6 @@ impl Default for DecoderConfig {
 /// $$
 ///
 /// where $L_n$ is the channel LLR for variable node $n$.
-///
-/// ## Algorithm Variants
-///
-/// - [`DecoderAlgorithm::MinSum`] — Standard min-sum (default, fastest)
-/// - [`DecoderAlgorithm::NormalizedMinSum`] — Scaled min-sum with correction factor
-/// - [`DecoderAlgorithm::OffsetMinSum`] — Min-sum with offset correction
-/// - [`DecoderAlgorithm::SumProduct`] — Exact box-plus (most accurate, slowest)
 #[derive(Debug)]
 pub struct LdpcDecoder {
     code: LdpcCode,
@@ -892,32 +718,21 @@ pub struct LdpcDecoder {
     hard_bits: Vec<bool>,
     /// Number of iterations in last decode
     last_iterations: usize,
-    /// Decoder configuration (algorithm, early termination)
     config: DecoderConfig,
     /// Systematic column positions: message bit `i` corresponds to codeword
-    /// position `systematic_cols[i]`. Computed lazily via RREF of H on first decode.
-    /// Using `Option` avoids the expensive RREF at construction time for large codes.
+    /// position `systematic_cols[i]`. Computed on the first `decode_iterative`,
+    /// so construction never runs RREF.
     systematic_cols: Option<Vec<usize>>,
 }
 
 impl LdpcDecoder {
-    /// Creates a new LDPC decoder for the given code with default configuration.
-    ///
-    /// Uses [`DecoderAlgorithm::MinSum`] with early termination enabled.
-    ///
-    /// # Arguments
-    ///
-    /// * `code` - The LDPC code to decode
+    /// Creates a new LDPC decoder for the given code with default configuration:
+    /// [`DecoderAlgorithm::MinSum`] with early termination enabled.
     pub fn new(code: LdpcCode) -> Self {
         Self::with_config(code, DecoderConfig::default())
     }
 
     /// Creates a new LDPC decoder with the given configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `code` - The LDPC code to decode
-    /// * `config` - Decoder configuration (algorithm, early termination)
     pub fn with_config(code: LdpcCode, config: DecoderConfig) -> Self {
         let n = code.n();
         let layout = EdgeLayout::from_parity_check(code.parity_check_matrix());
@@ -972,19 +787,10 @@ impl LdpcDecoder {
         &self.beliefs
     }
 
-    /// Decodes multiple LLR blocks in batch (parallel).
+    /// Decodes multiple LLR blocks in batch with the default configuration.
     ///
-    /// Each block is decoded independently using thread-local decoders.
-    /// Uses rayon for parallel decoding across CPU cores.
-    ///
-    /// # Performance
-    ///
-    /// Expected: 4-8× speedup on 8-core CPU for batches > 10 blocks.
-    ///
-    /// # Thread Safety
-    ///
-    /// Each parallel task creates its own decoder instance. The code parameter
-    /// is cloned (cheap - uses Arc internally for large matrices).
+    /// Each block is decoded independently by its own decoder, built on a
+    /// clone of `code`; under the `parallel` feature the blocks run on rayon.
     ///
     /// # Examples
     ///
@@ -1010,14 +816,7 @@ impl LdpcDecoder {
         Self::decode_batch_with_config(code, llr_blocks, max_iterations, DecoderConfig::default())
     }
 
-    /// Decodes multiple LLR blocks in batch with a custom configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `code` - The LDPC code
-    /// * `llr_blocks` - Slice of LLR vectors, one per frame
-    /// * `max_iterations` - Maximum number of BP iterations per frame
-    /// * `config` - Decoder configuration (algorithm, early termination)
+    /// As [`Self::decode_batch`], with a custom configuration.
     ///
     /// # Examples
     ///
@@ -1070,13 +869,12 @@ impl LdpcDecoder {
     ///
     /// Computes check-to-variable messages using the exact box-plus operation.
     /// Each output gathers the check's other inputs into the preallocated
-    /// buffer through the canonical layout, so the `tanh` product still
+    /// buffer through the canonical layout, so the `tanh` product
     /// accumulates in the check's own edge order.
     fn check_node_update_spa(&mut self) {
         for check in 0..self.layout.m() {
             let range = self.layout.check_range(check);
             for position in range.clone() {
-                // Reuse pre-allocated buffer
                 self.temp_inputs.clear();
                 for other in range.clone() {
                     if other != position {
@@ -1084,7 +882,6 @@ impl LdpcDecoder {
                     }
                 }
 
-                // Compute check-to-variable message using box-plus
                 let message = if self.temp_inputs.is_empty() {
                     Llr::zero()
                 } else {
@@ -1098,17 +895,10 @@ impl LdpcDecoder {
 
     /// Performs a check node update of the min-sum family.
     ///
-    /// Every check writes all of its outgoing messages from one shared
-    /// minimum, second-minimum and sign reduction over its incoming messages,
-    /// so each incoming message is read exactly twice. The reduction is
-    /// [`min_sum_check_row`], which follows the supported scalar reference's
-    /// numerical contract whatever the `simd` cargo feature and the host's SIMD
-    /// capabilities are: an input's sign is taken by comparison against zero, so
-    /// a negative zero counts as positive and a NaN counts as negative, and the
-    /// magnitude is the `f32::min` fold from infinity, which skips a NaN. The
-    /// AVX2 kernel `Llr::boxplus_minsum_n` reaches under `simd` disagrees with
-    /// both rules in its vector lanes; that kernel discrepancy is tracked by
-    /// `@/issue/39cbde20` and this update does not go through it.
+    /// Every check writes all of its outgoing messages through
+    /// [`min_sum_check_row`], whose numerical contract holds whatever the
+    /// `simd` cargo feature and the host's SIMD capabilities are; the update
+    /// does not go through the AVX2 kernel of `Llr::boxplus_minsum_n`.
     fn check_node_update_min_sum(&mut self, rule: MinSumRule) {
         for check in 0..self.layout.m() {
             let range = self.layout.check_range(check);
@@ -1120,7 +910,6 @@ impl LdpcDecoder {
         }
     }
 
-    /// Dispatches the check node update to the configured algorithm.
     fn check_node_update(&mut self) {
         match self.config.algorithm {
             DecoderAlgorithm::MinSum => self.check_node_update_min_sum(MinSumRule::Plain),
@@ -1144,7 +933,6 @@ impl LdpcDecoder {
         for (var, &channel_llr) in channel_llrs.iter().enumerate().take(self.code.n()) {
             let range = self.layout.var_range(var);
 
-            // Compute total belief: channel LLR + sum of incoming check messages
             let mut belief = channel_llr;
             for slot in range.clone() {
                 let edge = slots[slot] as usize;
@@ -1152,7 +940,6 @@ impl LdpcDecoder {
             }
             self.beliefs[var] = belief;
 
-            // Compute variable-to-check messages
             for slot in range {
                 // Message = belief - incoming message from this check
                 let edge = slots[slot] as usize;
@@ -1194,19 +981,9 @@ impl LdpcDecoder {
     /// systematic column mapping (e.g., 5G NR rate-matched codes that use
     /// natural column ordering per `docs/reference/standards-conformance.md`).
     ///
-    /// # Arguments
+    /// # Panics
     ///
-    /// * `llrs` - Channel LLRs, one per codeword position (length n)
-    /// * `max_iterations` - Maximum BP iterations
-    ///
-    /// # Returns
-    ///
-    /// A [`DecoderResult`] where `decoded_bits` contains the full n-bit
-    /// codeword (not just the k message bits).
-    ///
-    /// # Complexity
-    ///
-    /// Same as [`IterativeSoftDecoder::decode_iterative`].
+    /// Panics if `llrs.len()` differs from the code's `n`.
     pub fn decode_to_codeword(&mut self, llrs: &[Llr], max_iterations: usize) -> DecoderResult {
         let mut codeword = BitVec::with_capacity(self.code.n());
         let outcome = self.decode_codeword_into(llrs, max_iterations, &mut codeword);
@@ -1232,12 +1009,6 @@ impl LdpcDecoder {
     ///
     /// `codeword` is overwritten with all `n` hard-decided codeword bits; its
     /// previous contents and length are discarded and its capacity is kept.
-    ///
-    /// # Arguments
-    ///
-    /// * `llrs` - Channel LLRs, one per codeword position (length n)
-    /// * `max_iterations` - Maximum BP iterations
-    /// * `codeword` - Buffer receiving the `n` hard-decided bits
     ///
     /// # Panics
     ///
@@ -1360,14 +1131,10 @@ impl IterativeSoftDecoder for LdpcDecoder {
             syndrome_check_passed: syndrome_passed,
         } = outcome;
 
-        // Extract message bits from the decoded codeword at the systematic
-        // column positions determined by RREF. Message bit i is located at
-        // codeword position systematic_cols[i], which may differ from i when
-        // RREF assigns pivots to columns in the natural systematic range
-        // (e.g., for QC-LDPC codes like 5G NR BG2).
-        //
-        // Computed lazily on first decode to avoid expensive RREF at
-        // construction time for large codes (e.g., DVB-T2 normal frames).
+        // Message bit i is located at codeword position systematic_cols[i],
+        // which may differ from i when RREF assigns pivots to columns in the
+        // natural systematic range. Computed on first decode so that
+        // construction never runs RREF.
         let sys_cols = self
             .systematic_cols
             .get_or_insert_with(|| self.code.systematic_cols());
@@ -1385,7 +1152,6 @@ impl IterativeSoftDecoder for LdpcDecoder {
     }
 
     fn reset(&mut self) {
-        // Reset all messages to zero
         self.check_to_var.fill(Llr::zero());
         self.var_to_check.fill(Llr::zero());
         self.beliefs.fill(Llr::zero());
@@ -1399,12 +1165,10 @@ enum EncoderImpl {
     /// Staircase accumulator for dual-diagonal IRA codes (e.g. DVB-T2).
     /// O(edges) construction and encoding; no matrix densification.
     Ira(std::sync::Arc<crate::ldpc::encoding::IraEncoder>),
-    /// Richardson-Urbanke RREF-based encoder for general LDPC codes.
-    /// Used when the code does not have standard systematic layout (cols 0..k).
+    /// RREF-based encoder, used when the parity region is not dual-diagonal.
     Ru(std::sync::Arc<crate::ldpc::encoding::RuEncodingMatrices>),
 }
 
-// Manual Clone: Arc impls Clone so this is straightforward.
 impl Clone for EncoderImpl {
     fn clone(&self) -> Self {
         match self {
@@ -1425,15 +1189,11 @@ impl std::fmt::Debug for EncoderImpl {
 
 /// LDPC encoder for systematic encoding.
 ///
-/// Encodes messages into systematic LDPC codewords: `[message | parity]`.
-///
 /// For DVB-T2 LDPC codes (and any code whose parity-check matrix has
 /// systematic columns `0..k` and a dual-diagonal parity region), construction
-/// uses the linear-time IRA staircase accumulator — no matrix densification,
-/// no RREF. Encoder construction is O(nnz) and completes in microseconds.
-///
-/// For general LDPC codes that do not have this structure, the encoder falls
-/// back to the Richardson-Urbanke RREF-based preprocessing path.
+/// uses the linear-time IRA staircase accumulator in O(nnz), with no matrix
+/// densification and no RREF. Any other code uses the RREF-based
+/// preprocessing of [`RuEncodingMatrices`](crate::ldpc::encoding::RuEncodingMatrices).
 ///
 /// # Examples
 ///
@@ -1459,19 +1219,13 @@ pub struct LdpcEncoder {
 
 impl LdpcEncoder {
     /// Returns `true` when this encoder uses the IRA staircase accumulator.
-    ///
-    /// DVB-T2 codes always use the IRA path. Non-DVB-T2 codes with a
-    /// non-standard systematic layout use the Richardson-Urbanke path.
     pub fn is_ira(&self) -> bool {
         matches!(self.impl_, EncoderImpl::Ira(_))
     }
 
-    /// Creates a new LDPC encoder, automatically selecting the fastest path.
-    ///
-    /// For DVB-T2 codes (and any code with systematic columns `0..k`), the
-    /// IRA staircase accumulator is used. Construction is O(nnz) and completes
-    /// in microseconds. For other codes, falls back to Richardson-Urbanke
-    /// RREF preprocessing (expensive: 2-10 seconds for Normal DVB-T2 frames).
+    /// Creates a new LDPC encoder: the IRA staircase accumulator, constructed
+    /// in O(nnz), when the parity region is dual-diagonal, and RREF
+    /// preprocessing otherwise.
     ///
     /// For multiple encoders of the same non-IRA configuration, prefer
     /// [`LdpcEncoder::with_cache`] to amortise the RREF cost.
@@ -1488,7 +1242,6 @@ impl LdpcEncoder {
     ///
     /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     /// let encoder = LdpcEncoder::new(code);
-    /// // IRA path: completes in microseconds
     /// assert!(encoder.is_ira());
     /// ```
     pub fn new(code: LdpcCode) -> Self {
@@ -1502,20 +1255,18 @@ impl LdpcEncoder {
     /// - Row 0: parity columns = {k}          (single diagonal entry)
     /// - Row p (p > 0): parity columns = {k+p, k+p-1}  (diagonal + sub-diagonal)
     ///
-    /// This is O(nnz) and checked against the actual parity-check matrix.
+    /// This is O(nnz).
     fn has_dual_diagonal_parity(h: &SpBitMatrixDual, k: usize) -> bool {
         let m = h.rows();
         if m == 0 {
             return false;
         }
 
-        // Row 0: must have exactly one parity entry at column k.
         let row0_parity: Vec<usize> = h.row_iter(0).filter(|&c| c >= k).collect();
         if row0_parity != [k] {
             return false;
         }
 
-        // Rows 1..m-1: must have exactly two parity entries at {k+p, k+p-1}.
         for p in 1..m {
             let mut parity_cols: Vec<usize> = h.row_iter(p).filter(|&c| c >= k).collect();
             parity_cols.sort_unstable();
@@ -1531,9 +1282,7 @@ impl LdpcEncoder {
     /// dual-diagonal parity, build the linear-time IRA encoder. Returns
     /// `None` for codes that need the generic RREF path.
     ///
-    /// Single source of truth for IRA dispatch — shared by [`Self::new`] and
-    /// [`Self::with_cache`] so a future encoder variant only has to be added
-    /// here.
+    /// Shared by [`Self::new`] and [`Self::with_cache`].
     fn try_build_ira(code: &LdpcCode) -> Option<EncoderImpl> {
         let h = code.parity_check_matrix();
         let k = code.k();
@@ -1556,21 +1305,11 @@ impl LdpcEncoder {
         })
     }
 
-    /// Creates a new LDPC encoder WITH cache (opt-in performance boost).
+    /// Creates a new LDPC encoder that takes RREF preprocessing results from
+    /// `cache`, computing and inserting them on a miss.
     ///
-    /// Uses the provided cache to avoid expensive RREF preprocessing when
-    /// creating multiple encoders for the same LDPC code configuration.
-    /// Codes with standard systematic layout (e.g. DVB-T2) skip the RREF
-    /// entirely via the IRA path; the cache is only consulted for other codes.
-    ///
-    /// - DVB-T2 and standard-systematic codes: instant (IRA path, no cache needed)
-    /// - Other codes — first call: preprocesses and caches (2-10 seconds)
-    /// - Other codes — subsequent calls: instant (<1 μs)
-    ///
-    /// # Arguments
-    ///
-    /// * `code` - LDPC code to encode with
-    /// * `cache` - Encoding cache to use for non-IRA codes
+    /// Codes on the IRA path (e.g. DVB-T2) skip the RREF; the cache is only
+    /// consulted for other codes.
     ///
     /// # Panics
     ///
@@ -1591,8 +1330,6 @@ impl LdpcEncoder {
     /// let enc2 = LdpcEncoder::with_cache(code, &cache);
     /// ```
     pub fn with_cache(code: LdpcCode, cache: &crate::ldpc::encoding::EncodingCache) -> Self {
-        // IRA dispatch is shared with `Self::new` via `try_build_ira`; the
-        // cache is only consulted on the RREF fallback path.
         let impl_ = Self::try_build_ira(&code).unwrap_or_else(|| {
             let h = code.parity_check_matrix();
             let key = crate::ldpc::encoding::CacheKey::from_params(code.n(), code.k(), h);
@@ -1607,12 +1344,8 @@ impl LdpcEncoder {
 }
 
 impl LdpcEncoder {
-    /// Encodes multiple messages in batch.
-    ///
-    /// For IRA-encoded codes, messages are encoded sequentially (the IRA path
-    /// has no dense matrix multiply to parallelize). For RU-encoded codes,
-    /// uses the default `CpuBackend` which selects SIMD kernels and parallel
-    /// processing when the `parallel` feature is enabled.
+    /// Encodes multiple messages in batch: sequentially on the IRA path, and
+    /// through `CpuBackend::batch_matvec_transpose` on the RREF path.
     ///
     /// # Examples
     ///
@@ -1791,12 +1524,10 @@ mod decoder_tests {
 
     #[test]
     fn test_trivial_decode_no_errors() {
-        // Simple repetition code
         let edges = vec![(0, 0), (0, 1), (0, 2)];
         let code = LdpcCode::from_edges(1, 3, &edges);
         let mut decoder = LdpcDecoder::new(code);
 
-        // Strong LLRs for all-zero codeword
         let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
 
         let result = decoder.decode_iterative(&llrs, 10);
@@ -1819,10 +1550,8 @@ mod decoder_tests {
 
         let result = decoder.decode_iterative(&llrs, 20);
 
-        // Should converge to valid codeword
         if result.converged {
             assert!(result.syndrome_check_passed);
-            // Should decode to [1, 1, 0] which has even parity
             assert_eq!(result.decoded_bits.count_ones(), 2);
         }
     }
@@ -1833,21 +1562,18 @@ mod decoder_tests {
         let code = LdpcCode::from_edges(1, 3, &edges);
         let mut decoder = LdpcDecoder::new(code);
 
-        // First decode: all-zero codeword (even parity: 0+0+0=0)
         let llrs1 = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
         let result1 = decoder.decode_iterative(&llrs1, 10);
         assert!(result1.converged);
         assert!(result1.syndrome_check_passed);
         assert_eq!(result1.decoded_bits.count_ones(), 0);
 
-        // Second decode: [1,1,0] codeword (even parity: 1+1+0=0)
         let llrs2 = vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)];
         let result2 = decoder.decode_iterative(&llrs2, 10);
         assert!(result2.converged);
         assert!(result2.syndrome_check_passed);
         assert_eq!(result2.decoded_bits.count_ones(), 2);
 
-        // Third decode: back to all-zero
         let result3 = decoder.decode_iterative(&llrs1, 10);
         assert!(result3.converged);
         assert!(result3.syndrome_check_passed);
@@ -1860,16 +1586,13 @@ mod decoder_tests {
         let code = LdpcCode::from_edges(1, 3, &edges);
         let mut decoder = LdpcDecoder::new(code);
 
-        // Decode once
         let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
         let result1 = decoder.decode_iterative(&llrs, 10);
         assert!(result1.iterations > 0);
 
-        // Reset should clear iteration count
         decoder.reset();
         assert_eq!(decoder.last_iteration_count(), 0);
 
-        // Decode again - should work correctly
         let result2 = decoder.decode_iterative(&llrs, 10);
         assert!(result2.converged);
         assert_eq!(result2.decoded_bits.count_ones(), 0);
@@ -1881,7 +1604,6 @@ mod decoder_tests {
         let code = LdpcCode::from_edges(1, 3, &edges);
         let encoder = LdpcEncoder::new(code.clone());
 
-        // Create test messages
         let messages: Vec<BitVec> = vec![
             BitVec::from_bytes_le(&[0b00]),
             BitVec::from_bytes_le(&[0b01]),
@@ -1897,10 +1619,8 @@ mod decoder_tests {
         })
         .collect();
 
-        // Batch encode
         let codewords = encoder.encode_batch(&messages);
 
-        // Verify batch results match individual encodes
         assert_eq!(codewords.len(), 4);
         for (msg, cw) in messages.iter().zip(codewords.iter()) {
             let expected = encoder.encode(msg);
@@ -1916,17 +1636,14 @@ mod decoder_tests {
         let edges = vec![(0, 0), (0, 1), (0, 2)];
         let code = LdpcCode::from_edges(1, 3, &edges);
 
-        // Create test LLR blocks (all-zero and [1,1,0] codewords)
         let llr_blocks: Vec<Vec<Llr>> = vec![
             vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)], // [0,0,0]
             vec![Llr::new(-10.0), Llr::new(-10.0), Llr::new(10.0)], // [1,1,0]
             vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)], // [0,0,0]
         ];
 
-        // Batch decode
         let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
 
-        // Verify batch results
         assert_eq!(results.len(), 3);
         assert!(results[0].converged);
         assert_eq!(results[0].decoded_bits.count_ones(), 0);
@@ -1951,18 +1668,15 @@ mod decoder_tests {
         assert_eq!(results.len(), 0);
     }
 
-    /// Test that cached neighbors produce identical results to dynamic iteration
     #[test]
     fn test_cached_neighbors_correctness() {
         let code = LdpcCode::dvb_t2_normal(crate::CodeRate::Rate3_5);
         let h = code.parity_check_matrix();
 
-        // Pre-compute neighbors (what we'll cache)
         let cached: Vec<Vec<usize>> = (0..code.m())
             .map(|check| h.row_iter(check).collect())
             .collect();
 
-        // Verify against dynamic iteration
         for (check, cached_neighbors) in cached.iter().enumerate() {
             let dynamic: Vec<usize> = h.row_iter(check).collect();
             assert_eq!(
@@ -1973,22 +1687,19 @@ mod decoder_tests {
         }
     }
 
-    /// Test that decoder with cached neighbors produces same output as original
+    /// Two fresh decoders give identical results on the same input.
     #[test]
     fn test_decoder_equivalence_with_caching() {
         let code = LdpcCode::dvb_t2_normal(crate::CodeRate::Rate3_5);
 
-        // Create test LLRs (high SNR, should decode in 1-2 iterations)
         let llrs: Vec<Llr> = (0..code.n()).map(|_| Llr::new(10.0)).collect();
 
-        // Decode twice (after optimization, both paths will use cached neighbors)
         let mut decoder1 = LdpcDecoder::new(code.clone());
         let result1 = decoder1.decode_iterative(&llrs, 50);
 
         let mut decoder2 = LdpcDecoder::new(code.clone());
         let result2 = decoder2.decode_iterative(&llrs, 50);
 
-        // Results must be identical
         assert_eq!(result1.converged, result2.converged);
         assert_eq!(result1.iterations, result2.iterations);
         assert_eq!(result1.decoded_bits, result2.decoded_bits);
@@ -2054,13 +1765,11 @@ mod tests {
         let code = LdpcCode::from_edges(4, 8, &edges);
         let h = code.parity_check_matrix();
 
-        // Verify column weights
         for col in 0..8 {
             let weight = h.col_iter(col).count();
             assert_eq!(weight, 2, "Column {} should have weight 2", col);
         }
 
-        // Verify row weights
         for row in 0..4 {
             let weight = h.row_iter(row).count();
             assert_eq!(weight, 4, "Row {} should have weight 4", row);
@@ -2101,7 +1810,6 @@ mod generator_matrix_access_tests {
         let g = code.generator_matrix();
         let h = code.parity_check_matrix().to_dense();
 
-        // Verify G·H^T = 0
         let h_t = h.transpose();
         let product = &g * &h_t;
 
@@ -2128,7 +1836,6 @@ mod generator_matrix_access_tests {
         let code = LdpcCode::from_edges(3, 7, &edges);
         let g = code.generator_matrix();
 
-        // Each row of G should be a valid codeword
         for i in 0..code.k() {
             let row = g.row_as_bitvec(i);
             assert!(
@@ -2179,7 +1886,6 @@ mod generator_matrix_access_tests {
         assert_eq!(g.rows(), 2); // k = 4 - 2 = 2
         assert_eq!(g.cols(), 4);
 
-        // Verify it's a valid generator (all rows are codewords)
         for i in 0..code.k() {
             let row = g.row_as_bitvec(i);
             assert!(code.is_valid_codeword(&row));
@@ -2216,7 +1922,6 @@ mod generator_matrix_access_tests {
         assert_eq!(g.rows(), 2); // k = 6 - 4 = 2
         assert_eq!(g.cols(), 6);
 
-        // Verify orthogonality
         let h = code.parity_check_matrix().to_dense();
         let h_t = h.transpose();
         let product = &g * &h_t;
@@ -2331,7 +2036,6 @@ mod algorithm_tests {
         let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
         let mut decoder = LdpcDecoder::with_config(code, config);
 
-        // Strong all-zero codeword
         let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
         let result = decoder.decode_iterative(&llrs, 10);
         assert!(result.converged);
@@ -2345,7 +2049,6 @@ mod algorithm_tests {
         let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(0.5), true);
         let mut decoder = LdpcDecoder::with_config(code, config);
 
-        // Strong all-zero codeword
         let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
         let result = decoder.decode_iterative(&llrs, 10);
         assert!(result.converged);
@@ -2359,7 +2062,6 @@ mod algorithm_tests {
         let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
         let mut decoder = LdpcDecoder::with_config(code, config);
 
-        // Strong all-zero codeword
         let llrs = vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)];
         let result = decoder.decode_iterative(&llrs, 10);
         assert!(result.converged);
@@ -2371,7 +2073,6 @@ mod algorithm_tests {
     fn test_early_termination_reduces_iterations() {
         let code = simple_parity_code();
 
-        // With early termination (default)
         let config_early = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
         let mut decoder_early = LdpcDecoder::with_config(code.clone(), config_early);
 
@@ -2383,7 +2084,6 @@ mod algorithm_tests {
             "Should converge before max iterations"
         );
 
-        // Without early termination
         let config_no_early = DecoderConfig::new(DecoderAlgorithm::MinSum, false);
         let mut decoder_no_early = LdpcDecoder::with_config(code, config_no_early);
         let result_no_early = decoder_no_early.decode_iterative(&llrs, 50);
@@ -2431,10 +2131,8 @@ mod algorithm_tests {
         }
     }
 
-    /// Diagnostic test: sum-product vs NMS on the (256,121) 5G NR rate-matched code.
-    ///
-    /// With noiseless LLRs, NMS converges but SP produces NaN/Inf due to
-    /// numerical overflow in boxplus_n (tanh product -> 1.0 -> atanh(1.0) = Inf).
+    /// Sum-product and the default decoder both converge on noiseless LLRs of
+    /// the (256,121) 5G NR rate-matched code.
     #[test]
     fn test_sum_product_nr5g_256_121_noiseless() {
         use crate::ldpc::nr_5g::Nr5gRateMatchedDecoder;
@@ -2445,7 +2143,6 @@ mod algorithm_tests {
         let target_k = rm_code.params().target_k;
         let target_n = rm_code.params().target_n;
 
-        // Encode the zero message
         let message = BitVec::zeros(target_k);
         let codeword = rm_code.encode(&message);
         assert_eq!(codeword.len(), target_n);
@@ -2461,7 +2158,6 @@ mod algorithm_tests {
             })
             .collect();
 
-        // NMS (alpha=0.75) should converge
         let mut nms_decoder = Nr5gRateMatchedDecoder::new(rm_code.clone());
         let nms_result = nms_decoder.decode_iterative(&channel_llrs, 50);
         assert!(
@@ -2477,7 +2173,6 @@ mod algorithm_tests {
             .count();
         assert_eq!(nms_errors, 0, "NMS should have zero bit errors");
 
-        // SumProduct should also converge
         let mut sp_decoder =
             Nr5gRateMatchedDecoder::with_algorithm(rm_code.clone(), DecoderAlgorithm::SumProduct);
         let sp_result = sp_decoder.decode_iterative(&channel_llrs, 50);
@@ -2501,16 +2196,10 @@ mod algorithm_tests {
         assert_eq!(sp_errors, 0, "SP should have zero bit errors");
     }
 
-    /// Diagnostic: check that boxplus_n handles extreme LLR values without NaN/Inf.
-    ///
-    /// When var-to-check messages grow large (>~9 in f32), tanh(x/2) saturates
-    /// to exactly 1.0, making the product 1.0, and atanh(1.0) = Inf.
-    /// This propagates through the graph: Inf - Inf = NaN at variable nodes.
+    /// `boxplus_n` stays finite for extreme LLR values, where tanh(x/2)
+    /// saturates to exactly 1.0 in f32 and atanh(1.0) = Inf.
     #[test]
     fn test_boxplus_n_numerical_stability() {
-        // Simulate what happens in a check node with large messages.
-        // In the 5G rate-matched code, filler LLR=15.0 and after a few
-        // iterations, var-to-check messages can reach 20+.
         let large_msgs: Vec<Llr> = vec![
             Llr::new(15.0),
             Llr::new(12.0),
@@ -2554,7 +2243,6 @@ mod algorithm_tests {
             result.value()
         );
 
-        // Also check the first case passes after fix
         assert!(
             Llr::boxplus_n(&large_msgs).value().abs() < 20.0,
             "boxplus_n of moderate LLRs should produce a bounded result"
@@ -2623,7 +2311,6 @@ mod profiling_helpers {
             degrees.iter().sum::<usize>() as f64 / degrees.len() as f64
         );
 
-        // Histogram
         let mut histogram = std::collections::HashMap::new();
         for &deg in &degrees {
             *histogram.entry(deg).or_insert(0) += 1;
@@ -2662,30 +2349,24 @@ mod decoder_proptests {
             let edges = vec![(0, 0), (0, 1), (0, 2)];
             let code = LdpcCode::from_edges(1, 3, &edges);
 
-            // High SNR all-zero codeword
             let llrs = vec![Llr::new(snr_mag), Llr::new(snr_mag), Llr::new(snr_mag)];
 
-            // Decode with MinSum
             let config_ms = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
             let mut decoder_ms = LdpcDecoder::with_config(code.clone(), config_ms);
             let result_ms = decoder_ms.decode_iterative(&llrs, 20);
 
-            // Decode with NormalizedMinSum
             let config_nms = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(alpha), true);
             let mut decoder_nms = LdpcDecoder::with_config(code.clone(), config_nms);
             let result_nms = decoder_nms.decode_iterative(&llrs, 20);
 
-            // Decode with OffsetMinSum
             let config_oms = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(beta), true);
             let mut decoder_oms = LdpcDecoder::with_config(code, config_oms);
             let result_oms = decoder_oms.decode_iterative(&llrs, 20);
 
-            // All should converge at high SNR
             prop_assert!(result_ms.converged, "MinSum should converge");
             prop_assert!(result_nms.converged, "NormalizedMinSum should converge");
             prop_assert!(result_oms.converged, "OffsetMinSum should converge");
 
-            // All should produce the same hard decisions (all-zero)
             prop_assert_eq!(result_ms.decoded_bits.count_ones(), 0);
             prop_assert_eq!(result_nms.decoded_bits.count_ones(), 0);
             prop_assert_eq!(result_oms.decoded_bits.count_ones(), 0);
