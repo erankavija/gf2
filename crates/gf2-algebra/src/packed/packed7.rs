@@ -110,18 +110,6 @@ fn binary_op_word(a: u64, b: u64, lut: &[u8; 65536]) -> u64 {
 }
 
 /// 16 `F_7` lanes in one `u64`, encoded as in the [module docs](self).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedField, Packed7};
-/// use gf2_core::gfp::Fp;
-///
-/// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
-/// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
-/// let s = a.add(b);
-/// assert_eq!(s.lane(0), Fp::<7>::new(1)); // (3 + 5) % 7 = 1
-/// ```
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, Default)]
 pub struct Packed7 {
     w: u64,
@@ -215,22 +203,6 @@ impl Packed7 {
     /// # Panics
     ///
     /// Panics if `n == 0` or `n > LANES`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // [3, 2, 1, ...] → 3 * 2 * 1 = 6 mod 7
-    /// let mut p = Packed7::one();
-    /// p = p.with_lane(0, Fp::<7>::new(3));
-    /// p = p.with_lane(1, Fp::<7>::new(2));
-    /// assert_eq!(p.fold_mul_first_n(2), Fp::<7>::new(6));
-    ///
-    /// // all-ones, first 3 lanes: 1 * 1 * 1 = 1
-    /// assert_eq!(Packed7::one().fold_mul_first_n(3), Fp::<7>::new(1));
-    /// ```
     ///
     /// # Complexity
     ///
@@ -352,17 +324,6 @@ impl PackedField<Fp<7>> for Packed7 {
 /// Slots beyond `len_lanes` in the last word are zero; every mutating
 /// operation restores this through `Packed7Vec::mask_tail`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-/// use gf2_core::gfp::Fp;
-///
-/// let v = Packed7Vec::zeros(5);
-/// assert_eq!(v.len(), 5);
-/// assert!(v.all_zero());
-/// ```
-///
 /// # Complexity
 ///
 /// Lane-wise operations are `O(ceil(len_lanes / 16))`; `get` is `O(1)`.
@@ -373,7 +334,6 @@ pub struct Packed7Vec {
 }
 
 impl Packed7Vec {
-    /// Number of `u64` words needed to store `len` lanes.
     #[inline]
     fn n_words(len: usize) -> usize {
         len.div_ceil(16)
@@ -411,21 +371,6 @@ impl Packed7Vec {
     }
 
     /// Lane-wise in-place additive inverse: `self[i] = -self[i]` for every `i`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut v = Packed7Vec::from_field_slice(&[
-    ///     Fp::<7>::new(0), Fp::<7>::new(1), Fp::<7>::new(3),
-    /// ]);
-    /// v.neg_assign();
-    /// assert_eq!(v.get(0), Fp::<7>::new(0));  // -0 = 0
-    /// assert_eq!(v.get(1), Fp::<7>::new(6));  // -1 ≡ 6 mod 7
-    /// assert_eq!(v.get(2), Fp::<7>::new(4));  // -3 ≡ 4 mod 7
-    /// ```
     pub fn neg_assign(&mut self) {
         for w in self.words.iter_mut() {
             *w = binary_op_word(0u64, *w, &SUB_LUT);
@@ -434,17 +379,6 @@ impl Packed7Vec {
     }
 
     /// Raw packed words; slots beyond `self.len()` in the last word are zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let v = Packed7Vec::from_field_slice(&[Fp::<7>::new(3), Fp::<7>::new(5)]);
-    /// // Lane 0 = 3 in slot 0; lane 1 = 5 in slot 1.
-    /// assert_eq!(v.raw_words()[0] & 0xff, (5 << 4) | 3);
-    /// ```
     #[inline]
     pub fn raw_words(&self) -> &[u64] {
         &self.words
@@ -456,20 +390,6 @@ impl PartialEq for Packed7Vec {
     /// same `len_lanes` and every decoded lane is equal.
     ///
     /// The mask-tail invariant makes the word-by-word comparison exact.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = Packed7Vec::from_field_slice(&[Fp::<7>::new(1), Fp::<7>::new(3)]);
-    /// let b = Packed7Vec::from_field_slice(&[Fp::<7>::new(1), Fp::<7>::new(3)]);
-    /// assert_eq!(a, b);
-    ///
-    /// let c = Packed7Vec::from_field_slice(&[Fp::<7>::new(0)]);
-    /// assert_ne!(a, c); // different len_lanes
-    /// ```
     fn eq(&self, other: &Self) -> bool {
         self.len_lanes == other.len_lanes && self.words == other.words
     }
@@ -573,20 +493,6 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
 /// Rectangular `rows × cols` matrix of packed `F_7` values, stored
 /// column-major as one [`Packed7Vec`] of length `rows` per column, the
 /// access pattern of `permanent_bipedal7`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Packed7Matrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let data: Vec<Fp<7>> = (0..6u64).map(|v| Fp::<7>::new(v % 7)).collect();
-/// let m = Packed7Matrix::from_row_major(&data, 2, 3);
-/// assert_eq!(m.rows(), 2);
-/// assert_eq!(m.cols(), 3);
-/// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
-/// assert_eq!(m.get(1, 2), Fp::<7>::new(5));
-/// ```
 #[derive(Clone)]
 pub struct Packed7Matrix {
     /// One `Packed7Vec` per column, each of length `rows`.
@@ -597,21 +503,6 @@ pub struct Packed7Matrix {
 
 impl PartialEq for Packed7Matrix {
     /// Shape-equal and per-column canonical-decode equal.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data: Vec<Fp<7>> = (0..4u64).map(|v| Fp::<7>::new(v % 7)).collect();
-    /// let a = Packed7Matrix::from_row_major(&data, 2, 2);
-    /// let b = Packed7Matrix::from_row_major(&data, 2, 2);
-    /// assert_eq!(a, b);
-    ///
-    /// let c = Packed7Matrix::from_row_major(&data, 4, 1);
-    /// assert_ne!(a, c); // different shape
-    /// ```
     fn eq(&self, other: &Self) -> bool {
         self.rows == other.rows && self.cols == other.cols && self.columns == other.columns
     }
@@ -646,21 +537,6 @@ impl Packed7Matrix {
     /// # Panics
     ///
     /// Panics if `data.len() != rows * cols`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed7Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // 2×3 matrix
-    /// let data: Vec<Fp<7>> = (0..6u64).map(|v| Fp::<7>::new(v % 7)).collect();
-    /// let m = Packed7Matrix::from_row_major(&data, 2, 3);
-    /// assert_eq!(m.rows(), 2);
-    /// assert_eq!(m.cols(), 3);
-    /// assert_eq!(m.get(0, 1), Fp::<7>::new(1));
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(3));
-    /// ```
     pub fn from_row_major(data: &[Fp<7>], rows: usize, cols: usize) -> Self {
         assert_eq!(
             data.len(),
@@ -715,21 +591,6 @@ impl Packed7Matrix {
     /// # Panics
     ///
     /// Panics if `j >= self.cols()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed7Matrix};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data: Vec<Fp<7>> = vec![
-    ///     Fp::<7>::new(1), Fp::<7>::new(2),
-    ///     Fp::<7>::new(3), Fp::<7>::new(4),
-    /// ];
-    /// let m = Packed7Matrix::from_row_major(&data, 2, 2);
-    /// assert_eq!(m.column(1).get(0), Fp::<7>::new(2));
-    /// assert_eq!(m.column(1).get(1), Fp::<7>::new(4));
-    /// ```
     #[inline]
     pub fn column(&self, j: usize) -> &Packed7Vec {
         assert!(
@@ -746,10 +607,6 @@ mod tests {
     use super::*;
     use proptest::prelude::*;
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
-
     fn fp7_strat() -> impl Strategy<Value = Fp<7>> {
         (0u64..7).prop_map(Fp::<7>::new)
     }
@@ -761,7 +618,6 @@ mod tests {
         })
     }
 
-    // Scalar reference ops
     fn scalar_add(a: u64, b: u64) -> u64 {
         (a + b) % 7
     }
@@ -774,10 +630,6 @@ mod tests {
     fn scalar_neg(a: u64) -> u64 {
         (7 - a) % 7
     }
-
-    // -----------------------------------------------------------------------
-    // LUT spot-check tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_add_lut_spot_check() {
@@ -834,11 +686,9 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
     // Exhaustive LUT contract: the `{add,sub,mul}_lut_spec` axioms of
     // `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` state exactly what
     // these tests check over all 65536 keys.
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_add_lut_contract_exhaustive() {
@@ -897,10 +747,6 @@ mod tests {
         assert_eq!(ADD_LUT[key] & 0xf, 0, "non-canonical a_lo must yield 0");
     }
 
-    // -----------------------------------------------------------------------
-    // pack / lane / to_array roundtrip
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_pack_unpack_roundtrip() {
         let arr: [Fp<7>; 16] = core::array::from_fn(|i| Fp::<7>::new((i as u64) % 7));
@@ -930,10 +776,6 @@ mod tests {
     fn test_with_lane_panics_on_16() {
         let _ = Packed7::zero().with_lane(16, Fp::<7>::new(1));
     }
-
-    // -----------------------------------------------------------------------
-    // Exhaustive 7×7 tests for each op
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_exhaustive_add() {
@@ -1004,10 +846,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Per-lane mixed tests
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_per_lane_mixed_add() {
         let a_vals: [u64; 16] = [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1];
@@ -1043,10 +881,6 @@ mod tests {
             );
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Proptest cross-check against scalar Fp<7> per-lane (1000 cases each)
-    // -----------------------------------------------------------------------
 
     proptest! {
         #![proptest_config(ProptestConfig { cases: 1000, .. ProptestConfig::default() })]
@@ -1096,10 +930,6 @@ mod tests {
             }
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Packed7Vec — word-boundary tests
-    // -----------------------------------------------------------------------
 
     fn make_vec(len: usize) -> (Packed7Vec, Packed7Vec) {
         let a_vals: Vec<Fp<7>> = (0..len).map(|i| Fp::<7>::new((i as u64 * 3) % 7)).collect();
@@ -1182,7 +1012,6 @@ mod tests {
                     );
                 }
             }
-            // After from_field_slice
             let vals: Vec<Fp<7>> = (0..len).map(|i| Fp::<7>::new((i as u64) % 7)).collect();
             let v2 = Packed7Vec::from_field_slice(&vals);
             if !v2.words.is_empty() {
@@ -1199,10 +1028,6 @@ mod tests {
             }
         }
     }
-
-    // -----------------------------------------------------------------------
-    // all_zero and one
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_zero_is_all_zero() {
@@ -1225,10 +1050,6 @@ mod tests {
         assert!(z.all_zero());
     }
 
-    // -----------------------------------------------------------------------
-    // PackedField trait delegation
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_packed_field_trait_lanes() {
         assert_eq!(<Packed7 as PackedField<Fp<7>>>::LANES, 16);
@@ -1243,10 +1064,6 @@ mod tests {
         assert_eq!(a.mul(b).lane(0), Fp::<7>::new(6)); // (4*5)%7=6
         assert_eq!(a.neg().lane(0), Fp::<7>::new(3)); // (7-4)%7=3
     }
-
-    // -----------------------------------------------------------------------
-    // fold_mul_first_n unit tests
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_fold_mul_first_n_single_lane() {
@@ -1282,7 +1099,6 @@ mod tests {
     fn test_fold_mul_first_n_zero_lane() {
         let mut p = Packed7::one();
         p = p.with_lane(3, Fp::<7>::new(0));
-        // Product of lanes 0..4 contains a zero
         assert_eq!(p.fold_mul_first_n(4), Fp::<7>::new(0));
     }
 
@@ -1297,10 +1113,6 @@ mod tests {
     fn test_fold_mul_first_n_panic_n17() {
         let _ = Packed7::one().fold_mul_first_n(17);
     }
-
-    // -----------------------------------------------------------------------
-    // Inherent wrappers agree with the trait methods
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_add_inherent_matches_trait() {
@@ -1350,10 +1162,6 @@ mod tests {
             assert_eq!(via_inherent, via_trait, "neg_inherent({a})");
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Packed7Vec — PartialEq, Debug, panics, raw_words, is_empty
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_packed7vec_partialeq_equal() {
@@ -1450,10 +1258,6 @@ mod tests {
             assert_eq!(v.get(i).value(), expected, "neg_assign lane {i}");
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Packed7Matrix — construction, access, panics, Debug, PartialEq
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_packed7matrix_shape_and_get() {

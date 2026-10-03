@@ -1,14 +1,7 @@
-//! Fixed-width and variable-length packed `F_5` encoding, compiled under the
-//! `f5` Cargo feature.
-//!
-//! [`Packed5`] packs 64 independent `F_5` lanes into three `u64` bit-planes
-//! `(b0, b1, b2)`: bit `k` of a lane's canonical value `0..=4` lives in
-//! plane `bk`. Codepoints `5..=7` are redundant, are never produced by the
-//! arithmetic, and decode to 0.
-//!
-//! Each binary op decodes both operands into one-hot selectors `e_0..e_4`,
-//! gates the 5×5 cross-product into result selectors `r_1..r_4`, and encodes
-//! those back into bit-planes: 60 word ops for add/sub, 52 for mul.
+//! Packed `F_5` encoding, compiled under the `f5` Cargo feature: 64 lanes per
+//! three `u64` bit-planes `(b0, b1, b2)`, where bit `k` of a lane's canonical
+//! value `0..=4` lives in plane `bk`. Codepoints `5..=7` are redundant, are
+//! never produced by the arithmetic, and decode to 0.
 
 use core::fmt;
 
@@ -35,7 +28,6 @@ fn decode5(b0: u64, b1: u64, b2: u64) -> [u64; 5] {
     [e0, e1, e2, e3, e4]
 }
 
-/// Encode per-result selectors `r[0]..r[4]` into output bit-planes `(c0, c1, c2)`.
 #[inline]
 fn encode5(r: [u64; 5]) -> (u64, u64, u64) {
     let c0 = r[1] | r[3];
@@ -84,19 +76,6 @@ fn mul_circuit(ea: [u64; 5], eb: [u64; 5]) -> (u64, u64, u64) {
 
 /// 64 `F_5` lanes in three `u64` bit-planes `(b0, b1, b2)`, encoded as in the
 /// [module docs](self).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedField, Packed5};
-/// use gf2_core::gfp::Fp;
-///
-/// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
-/// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-/// let s = a.add(b);
-/// assert_eq!(s.lane(0), Fp::<5>::new(0)); // 2 + 3 == 0 mod 5
-/// assert_eq!(s.lane(63), Fp::<5>::new(0));
-/// ```
 #[derive(Copy, Clone)]
 pub struct Packed5 {
     b0: u64,
@@ -109,20 +88,6 @@ impl PartialEq for Packed5 {
     /// lane is equal.
     ///
     /// Non-canonical codepoints (5..=7) compare equal to 0.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{Packed5, PackedField};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
-    /// assert_eq!(a, b);
-    ///
-    /// let c = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
-    /// assert_ne!(a, c);
-    /// ```
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         // Redundant codepoints decode to all-zero selectors while canonical 0
@@ -269,15 +234,6 @@ impl PackedField<Fp<5>> for Packed5 {
         }
     }
 
-    /// Lane-wise product: `self[i] * rhs[i]` mod 5.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — the other operand; lanes are multiplied pointwise mod 5.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 52 word-level bitwise operations.
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         let ea = decode5(self.b0, self.b1, self.b2);
@@ -352,17 +308,6 @@ impl PackedField<Fp<5>> for Packed5 {
 /// Bits beyond `len_lanes` in the last word of every plane are zero; every
 /// mutating operation restores this through `Packed5Vec::mask_tail`.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-/// use gf2_core::gfp::Fp;
-///
-/// let v = Packed5Vec::zeros(5);
-/// assert_eq!(v.len(), 5);
-/// assert!(v.all_zero());
-/// ```
-///
 /// # Complexity
 ///
 /// Lane-wise operations are `O(ceil(len_lanes / 64))`; `get` is `O(1)`.
@@ -411,20 +356,6 @@ impl Packed5Vec {
 impl PartialEq for Packed5Vec {
     /// Canonical-decode equality: two vectors are equal iff they have the
     /// same `len_lanes` and every decoded lane is equal.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = Packed5Vec::from_field_slice(&[Fp::<5>::new(1), Fp::<5>::new(4)]);
-    /// let b = Packed5Vec::from_field_slice(&[Fp::<5>::new(1), Fp::<5>::new(4)]);
-    /// assert_eq!(a, b);
-    ///
-    /// let c = Packed5Vec::from_field_slice(&[Fp::<5>::new(0)]);
-    /// assert_ne!(a, c); // different len_lanes
-    /// ```
     fn eq(&self, other: &Self) -> bool {
         if self.len_lanes != other.len_lanes {
             return false;
@@ -455,17 +386,6 @@ impl fmt::Debug for Packed5Vec {
 impl PackedFieldVec<Fp<5>> for Packed5Vec {
     type Element = Packed5;
 
-    /// Construct a vector of `len` zero `F_5` elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    ///
-    /// let v = Packed5Vec::zeros(65);
-    /// assert_eq!(v.len(), 65);
-    /// assert!(v.all_zero());
-    /// ```
     fn zeros(len: usize) -> Self {
         let n_words = len.div_ceil(64);
         Self {
@@ -476,20 +396,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
         }
     }
 
-    /// Construct a vector by encoding every element of `xs`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedFieldVec, Packed5Vec};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let xs = [Fp::<5>::new(0), Fp::<5>::new(2), Fp::<5>::new(4)];
-    /// let v = Packed5Vec::from_field_slice(&xs);
-    /// for i in 0..3 {
-    ///     assert_eq!(v.get(i), xs[i]);
-    /// }
-    /// ```
     fn from_field_slice(xs: &[Fp<5>]) -> Self {
         let len = xs.len();
         let n_words = len.div_ceil(64);
@@ -617,25 +523,6 @@ impl PackedFieldVec<Fp<5>> for Packed5Vec {
 impl Packed5 {
     /// Product of the first `n` lanes; lanes `n..64` are ignored.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::{PackedField, Packed5};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Three lanes set to 2; product over F_5 = 2^3 mod 5 = 3.
-    /// let v = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
-    /// assert_eq!(v.fold_mul_first_n(3), Fp::<5>::new(3)); // 2*2*2 = 8 mod 5 = 3
-    ///
-    /// // Single lane set to 3; product = 3.
-    /// let w = <Packed5 as PackedField<Fp<5>>>::zero().with_lane(0, Fp::<5>::new(3));
-    /// assert_eq!(w.fold_mul_first_n(1), Fp::<5>::new(3));
-    ///
-    /// // Any zero lane collapses the product to 0.
-    /// let z = <Packed5 as PackedField<Fp<5>>>::zero();
-    /// assert_eq!(z.fold_mul_first_n(2), Fp::<5>::new(0));
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `n == 0` or `n > 64`.
@@ -662,23 +549,6 @@ impl Packed5 {
 /// Rectangular `rows × cols` matrix of `F_5` values, stored column-major as
 /// one [`Packed5Vec`] of length `rows` per column, the access pattern of
 /// [`crate::permanent::permanent_bipedal5`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Packed5Matrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let data: Vec<Fp<5>> = vec![
-///     Fp::<5>::new(1), Fp::<5>::new(2),
-///     Fp::<5>::new(3), Fp::<5>::new(4),
-/// ];
-/// let m = Packed5Matrix::from_row_major(&data, 2, 2);
-/// assert_eq!(m.rows(), 2);
-/// assert_eq!(m.cols(), 2);
-/// assert_eq!(m.get(0, 1), Fp::<5>::new(2));
-/// assert_eq!(m.get(1, 0), Fp::<5>::new(3));
-/// ```
 pub struct Packed5Matrix {
     /// One `Packed5Vec` per column, each of length `rows`.
     columns: Vec<Packed5Vec>,
@@ -721,23 +591,6 @@ impl Packed5Matrix {
     /// # Panics
     ///
     /// Panics if `data.len() != rows * cols`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::packed::Packed5Matrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let data: Vec<Fp<5>> = vec![
-    ///     Fp::<5>::new(0), Fp::<5>::new(1), Fp::<5>::new(2),
-    ///     Fp::<5>::new(3), Fp::<5>::new(4), Fp::<5>::new(0),
-    /// ];
-    /// let m = Packed5Matrix::from_row_major(&data, 2, 3);
-    /// assert_eq!(m.rows(), 2);
-    /// assert_eq!(m.cols(), 3);
-    /// assert_eq!(m.get(0, 2), Fp::<5>::new(2));
-    /// assert_eq!(m.get(1, 1), Fp::<5>::new(4));
-    /// ```
     pub fn from_row_major(data: &[Fp<5>], rows: usize, cols: usize) -> Self {
         assert_eq!(
             data.len(),
@@ -809,10 +662,6 @@ mod tests {
     use super::*;
     use proptest::prelude::*;
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
-
     fn fp5_strat() -> impl Strategy<Value = Fp<5>> {
         (0u64..5).prop_map(Fp::<5>::new)
     }
@@ -843,10 +692,6 @@ mod tests {
         (5 - a) % 5
     }
 
-    // -----------------------------------------------------------------------
-    // LANES constant
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_lanes_const_is_64() {
         assert_eq!(<Packed5 as PackedField<Fp<5>>>::LANES, 64);
@@ -861,10 +706,6 @@ mod tests {
             .with_lane(3, Fp::<5>::new(4));
         assert_eq!(value.to_raw_planes(), (0b0101, 0b0110, 0b1000));
     }
-
-    // -----------------------------------------------------------------------
-    // Exhaustive 5×5 tests for each binary op
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_add_exhaustive_5x5() {
@@ -940,10 +781,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Per-lane mixed tests
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_add_mixed_lanes() {
         let mut a_arr = [Fp::<5>::new(0); 64];
@@ -1004,10 +841,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
-
     #[test]
     #[should_panic(expected = "out of range")]
     fn test_lane_panics_out_of_range_64() {
@@ -1019,10 +852,6 @@ mod tests {
     fn test_with_lane_panics_out_of_range_64() {
         let _ = Packed5::zero().with_lane(64, Fp::<5>::new(1));
     }
-
-    // -----------------------------------------------------------------------
-    // all_zero
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_all_zero_canonical() {
@@ -1039,10 +868,6 @@ mod tests {
     fn test_all_zero_one_is_not_zero() {
         assert!(!Packed5::one().all_zero());
     }
-
-    // -----------------------------------------------------------------------
-    // Proptest cross-check (1000 cases) vs scalar Fp<5> per-lane
-    // -----------------------------------------------------------------------
 
     proptest! {
         #![proptest_config(ProptestConfig { cases: 1000, ..ProptestConfig::default() })]
@@ -1093,10 +918,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Packed5Vec word-boundary tests
-    // -----------------------------------------------------------------------
-
     fn make_vec(len: usize) -> Packed5Vec {
         let xs: Vec<Fp<5>> = (0..len).map(|i| Fp::<5>::new((i as u64) % 5)).collect();
         Packed5Vec::from_field_slice(&xs)
@@ -1139,13 +960,11 @@ mod tests {
             fn $name() {
                 let len = $len;
 
-                // zeros
                 let z = Packed5Vec::zeros(len);
                 assert_eq!(z.len(), len);
                 assert!(z.all_zero(), "zeros({len}) should be all_zero");
                 assert_mask_tail_invariant(&z);
 
-                // from_field_slice round-trip
                 let a = make_vec(len);
                 assert_eq!(a.len(), len);
                 assert_mask_tail_invariant(&a);
@@ -1157,7 +976,6 @@ mod tests {
                     );
                 }
 
-                // add_assign
                 let mut va = make_vec(len);
                 let vb = make_vec(len);
                 va.add_assign(&vb);
@@ -1172,7 +990,6 @@ mod tests {
                     );
                 }
 
-                // sub_assign
                 let mut va = make_vec(len);
                 let vb = make_vec(len);
                 va.sub_assign(&vb);
@@ -1187,7 +1004,6 @@ mod tests {
                     );
                 }
 
-                // mul_assign
                 let mut va = make_vec(len);
                 let vb = make_vec(len);
                 va.mul_assign(&vb);
@@ -1202,7 +1018,6 @@ mod tests {
                     );
                 }
 
-                // neg_assign
                 let mut va = make_vec(len);
                 va.neg_assign();
                 assert_mask_tail_invariant(&va);
@@ -1234,10 +1049,6 @@ mod tests {
     test_vec_word_boundary!(test_vec_len_128, 128);
     test_vec_word_boundary!(test_vec_len_129, 129);
 
-    // -----------------------------------------------------------------------
-    // Packed5Vec — length mismatch panics
-    // -----------------------------------------------------------------------
-
     #[test]
     #[should_panic(expected = "length mismatch")]
     fn test_vec_add_assign_length_mismatch() {
@@ -1262,10 +1073,6 @@ mod tests {
         a.mul_assign(&b);
     }
 
-    // -----------------------------------------------------------------------
-    // Redundant codepoints 5..=7 count as zero in all_zero and eq
-    // -----------------------------------------------------------------------
-
     /// Injects redundant codepoints that the public API cannot produce.
     fn packed5_raw(b0: u64, b1: u64, b2: u64) -> Packed5 {
         Packed5 { b0, b1, b2 }
@@ -1279,8 +1086,6 @@ mod tests {
             len_lanes,
         }
     }
-
-    // --- Packed5::all_zero ---
 
     #[test]
     fn test_all_zero_canonical_zero() {
@@ -1318,8 +1123,6 @@ mod tests {
         assert!(!raw.all_zero(), "canonical 1 must not report all_zero");
     }
 
-    // --- Packed5::eq canonicalization ---
-
     #[test]
     fn test_packed5_eq_redundant_codepoint_5_equals_canonical_zero() {
         // Lane 0 = codepoint 5 (redundant zero) vs. canonical zero.
@@ -1349,8 +1152,6 @@ mod tests {
         assert_ne!(a, b);
     }
 
-    // --- Packed5Vec::all_zero ---
-
     #[test]
     fn test_packed5vec_all_zero_zeros_is_zero() {
         assert!(Packed5Vec::zeros(1).all_zero());
@@ -1377,8 +1178,6 @@ mod tests {
             "Packed5Vec: canonical 1 must not report all_zero"
         );
     }
-
-    // --- Packed5Vec::eq canonicalization ---
 
     #[test]
     fn test_packed5vec_eq_redundant_zero_equals_canonical_zero() {
