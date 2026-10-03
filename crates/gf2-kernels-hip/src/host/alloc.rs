@@ -1,15 +1,9 @@
 //! Typed RAII device and pinned-host buffers.
 //!
-//! [`DeviceBuffer<T>`] owns a `hipMalloc` allocation of `len` `T`s and frees it
-//! on drop. [`PinnedHostBuffer<T>`] owns page-locked host memory (`hipHostMalloc`)
-//! used to stage H2D / D2H transfers that overlap with kernel execution.
-//!
-//! Both report out-of-memory as the distinguished [`HipError::OutOfMemory`]
-//! variant (carrying `device_id` and `bytes_requested`) rather than a generic
-//! error, so the `gf2-sim` executor can catch it and substitute a CPU fallback
-//! (design doc §8). The mapping to `gf2_sim::RecoverableError::OutOfMemory`
-//! happens at the `gf2-sim` boundary (`crates/gf2-sim/src/gpu/mod.rs`); this
-//! crate has no dependency on `gf2-sim`.
+//! [`DeviceBuffer<T>`] owns a `hipMalloc` allocation and [`PinnedHostBuffer<T>`]
+//! owns page-locked host memory (`hipHostMalloc`) for stream-ordered transfers.
+//! Both report out-of-memory as [`HipError::OutOfMemory`], carrying `device_id`
+//! and `bytes_requested`.
 
 use std::ffi::c_void;
 use std::marker::PhantomData;
@@ -18,22 +12,8 @@ use std::ptr;
 use crate::host::streams::HipStream;
 use crate::{ffi, HipError, HIP_ERROR_OUT_OF_MEMORY};
 
-/// Returns the free / total device memory (bytes) for the **current** device.
-///
-/// Thin safe wrapper over `hipMemGetInfo`, exposed so the allocator can
-/// pre-flight large requests and the dispatcher can report headroom. Queries
-/// whichever device the calling host thread last selected; use
-/// [`device_mem_info_for`] to query a specific device by id.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_hip::host::alloc::device_mem_info;
-///
-/// // Requires a real HIP device, so this is `no_run`.
-/// let (free, total) = device_mem_info().expect("query device memory");
-/// assert!(free <= total);
-/// ```
+/// Returns the free / total device memory (bytes) for the device the calling
+/// host thread last selected; [`device_mem_info_for`] queries a device by id.
 ///
 /// # Errors
 ///
@@ -53,48 +33,24 @@ pub fn device_mem_info() -> Result<(usize, usize), HipError> {
     }
 }
 
-/// Returns the free / total device memory (bytes) for a **specific** device.
+/// Returns the free / total device memory (bytes) for `device_id`.
 ///
-/// `hipMemGetInfo` always reports the *current* device, so this temporarily
-/// selects `device_id` (saving and restoring the previously-current device)
-/// around the query. On a multi-GPU host this is what lets
-/// [`DeviceBuffer::new_with_fallback`] pre-flight against the device it will
-/// actually allocate on, rather than whichever device happens to be current
-/// (design doc §7 multi-GPU seam).
-///
-/// The previously-current device is restored even when the query fails; if the
-/// initial save (`hipGetDevice`) fails, no device switch is performed.
-///
-/// # Arguments
-///
-/// * `device_id` - The HIP device index whose memory to query.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_hip::host::alloc::device_mem_info_for;
-///
-/// // Requires a real HIP device, so this is `no_run`.
-/// let (free, total) = device_mem_info_for(0).expect("query device 0 memory");
-/// assert!(free <= total);
-/// ```
+/// Selects `device_id` around the query and restores the device that was
+/// current even when the query fails; if the initial `hipGetDevice` fails, no
+/// device switch is performed.
 ///
 /// # Errors
 ///
 /// Returns [`HipError::Hip`] if `hipGetDevice`, `hipSetDevice`, or
 /// `hipMemGetInfo` fails.
 pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
-    // Select the requested device (saving the previously-current one) so
-    // `hipMemGetInfo` — which reports the *current* device — queries `device_id`.
     let prev = select_device(device_id)?;
 
-    // Query memory on the now-current (requested) device.
     let mut free_bytes: usize = 0;
     let mut total_bytes: usize = 0;
     // SAFETY: both out-pointers are valid; the runtime writes them on success.
     let query_code = unsafe { ffi::hip_mem_get_info(&mut free_bytes, &mut total_bytes) };
 
-    // Restore the previously-current device regardless of the query outcome.
     let restore_code = restore_device(prev);
 
     if query_code != 0 {
@@ -112,15 +68,11 @@ pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
     Ok((free_bytes, total_bytes))
 }
 
-/// Selects `device_id` as the current HIP device, returning the
-/// previously-current device so the caller can restore it.
+/// Selects `device_id` as the current HIP device and returns the device that
+/// was current, for [`restore_device`].
 ///
-/// `hipMalloc` and `hipMemGetInfo` act on whatever device is *current*, so the
-/// device-scoped allocator and memory-query paths wrap their runtime call in
-/// `select_device` / [`restore_device`] to target the requested device on a
-/// multi-GPU host (design doc §7 seam). If `hipGetDevice` fails no switch is
-/// performed; if `hipSetDevice` fails the current device is unchanged, so the
-/// caller has nothing to restore.
+/// If `hipGetDevice` fails no switch is performed; if `hipSetDevice` fails the
+/// current device is unchanged.
 pub(crate) fn select_device(device_id: i32) -> Result<i32, HipError> {
     let mut prev: i32 = 0;
     // SAFETY: `&mut prev` is a valid out-pointer the runtime writes on success.
@@ -142,10 +94,8 @@ pub(crate) fn select_device(device_id: i32) -> Result<i32, HipError> {
     Ok(prev)
 }
 
-/// Restores `prev` as the current HIP device, returning the raw status code
-/// (`0` = success) so the caller can apply its own error precedence (the
-/// primary runtime call's failure should usually take precedence over a restore
-/// failure). Paired with [`select_device`].
+/// Restores `prev` as the current HIP device and returns the raw status code
+/// (`0` = success), so the caller applies its own error precedence.
 pub(crate) fn restore_device(prev: i32) -> i32 {
     // SAFETY: `prev` was obtained from `hipGetDevice`, so it is a valid index.
     unsafe { ffi::hip_set_device(prev) }
@@ -166,29 +116,14 @@ pub struct DeviceBuffer<T> {
 impl<T> DeviceBuffer<T> {
     /// Allocates a device buffer for `len` elements of `T` on `device_id`.
     ///
-    /// On allocation failure this returns [`HipError::OutOfMemory`] when the
-    /// HIP runtime reports `hipErrorOutOfMemory`, or [`HipError::Hip`] for any
-    /// other failure. It never panics on a runtime allocation failure — that is
-    /// the contract the executor relies on for OOM substitution (design doc §8).
-    ///
-    /// # Arguments
-    ///
-    /// * `len` - Number of `T` elements. `len == 0` is permitted and yields an
-    ///   empty buffer with a null device pointer (no `hipMalloc` is issued).
-    /// * `device_id` - The HIP device to allocate on. The allocation is scoped
-    ///   to this device: it is temporarily selected for the `hipMalloc` and the
-    ///   previously-current device is restored afterward, so the recorded
-    ///   `device_id` is the genuine allocation target (correct on a multi-GPU
-    ///   host, design doc §7 seam) and the OOM error carries it.
+    /// `device_id` is selected for the `hipMalloc` and the device that was
+    /// current is restored afterward. `len == 0` yields an empty buffer with a
+    /// null device pointer and issues no `hipMalloc`.
     ///
     /// # Errors
     ///
     /// Returns [`HipError::OutOfMemory`] on `hipErrorOutOfMemory`, otherwise
     /// [`HipError::Hip`].
-    ///
-    /// # Complexity
-    ///
-    /// O(1) host-side; a device select, one `hipMalloc`, and a device restore.
     pub fn new(len: usize, device_id: i32) -> Result<Self, HipError> {
         let bytes = len.saturating_mul(std::mem::size_of::<T>());
         if len == 0 || bytes == 0 {
@@ -200,10 +135,6 @@ impl<T> DeviceBuffer<T> {
             });
         }
 
-        // `hipMalloc` allocates on the *current* device, so select `device_id`
-        // around the allocation (restoring the previously-current device after)
-        // to make the recorded `device_id` the genuine allocation target — correct
-        // on a multi-GPU host (design doc §7 seam) rather than just a label.
         let prev = select_device(device_id)?;
 
         let mut ptr: *mut c_void = ptr::null_mut();
@@ -213,7 +144,6 @@ impl<T> DeviceBuffer<T> {
         // selected above).
         let alloc_code = unsafe { ffi::hip_malloc(&mut ptr, bytes) };
 
-        // Restore the previously-current device regardless of allocation outcome.
         let restore_code = restore_device(prev);
 
         if alloc_code == HIP_ERROR_OUT_OF_MEMORY {
@@ -229,11 +159,8 @@ impl<T> DeviceBuffer<T> {
             });
         }
 
-        // Allocation succeeded on `device_id`. Bind the buffer first so that if
-        // restoring the previous device failed, dropping `buf` on the error path
-        // frees the just-allocated memory (`hipFree` is device-agnostic) rather
-        // than leaking it; we surface the restore fault instead of silently
-        // leaving the wrong device current.
+        // Bind the buffer before checking the restore status so that a failed
+        // restore frees the allocation on the error path.
         let buf = Self {
             ptr,
             len,
@@ -249,36 +176,9 @@ impl<T> DeviceBuffer<T> {
         Ok(buf)
     }
 
-    /// Allocates a device buffer, pre-flighting the request against the device's
-    /// reported free memory so an over-large request fails fast as
-    /// [`HipError::OutOfMemory`].
-    ///
-    /// The pre-flight via [`device_mem_info_for`] (scoped to `device_id`) catches
-    /// requests that exceed the device's *total* memory even when the driver
-    /// might otherwise lazily over-commit; the subsequent `hipMalloc` (also
-    /// scoped to `device_id` by [`DeviceBuffer::new`]) catches genuine pressure. Both
-    /// paths surface [`HipError::OutOfMemory`] so the executor can substitute a
-    /// CPU fallback (design doc §8) — never a panic.
-    ///
-    /// # Arguments
-    ///
-    /// * `len` - Number of `T` elements to allocate.
-    /// * `device_id` - The HIP device to allocate on.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::DeviceBuffer;
-    /// use gf2_kernels_hip::HipError;
-    ///
-    /// // An absurd request fails fast as a recoverable OOM rather than panicking.
-    /// let huge = 256usize * 1024 * 1024 * 1024;
-    /// match DeviceBuffer::<u8>::new_with_fallback(huge, 0) {
-    ///     Err(HipError::OutOfMemory { .. }) => { /* executor substitutes CPU */ }
-    ///     Err(other) => panic!("expected OOM, got a different error: {other}"),
-    ///     Ok(_) => panic!("a 256 GiB allocation should not succeed"),
-    /// }
-    /// ```
+    /// Allocates a device buffer after checking the request against the total
+    /// memory of `device_id`, so a request larger than the device fails as
+    /// [`HipError::OutOfMemory`] without reaching `hipMalloc`.
     ///
     /// # Errors
     ///
@@ -288,11 +188,8 @@ impl<T> DeviceBuffer<T> {
     pub fn new_with_fallback(len: usize, device_id: i32) -> Result<Self, HipError> {
         let bytes = len.saturating_mul(std::mem::size_of::<T>());
         if bytes > 0 {
-            // Pre-flight against `device_id`'s OWN total memory (not whichever
-            // device is current) so the check is correct on a multi-GPU host.
-            // If the request exceeds total, report OOM without troubling the
-            // driver. `hipMemGetInfo` errors are tolerated (we fall through to
-            // the real hipMalloc on `device_id`).
+            // A `hipMemGetInfo` error is tolerated: the request falls through
+            // to `hipMalloc`.
             if let Ok((_free, total)) = device_mem_info_for(device_id) {
                 if bytes > total {
                     return Err(HipError::OutOfMemory {
@@ -337,24 +234,6 @@ impl<T> DeviceBuffer<T> {
 
     /// Copies `src` (host) into this device buffer (synchronous H2D).
     ///
-    /// # Arguments
-    ///
-    /// * `src` - Host slice to upload; `src.len()` must be `<= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::DeviceBuffer;
-    ///
-    /// // Requires a real HIP device, so this is `no_run`.
-    /// let buf = DeviceBuffer::<f32>::new(4, 0).expect("allocate");
-    /// buf.copy_from_host(&[1.0, 2.0, 3.0, 4.0]).expect("upload H2D");
-    ///
-    /// let mut out = [0.0f32; 4];
-    /// buf.copy_to_host(&mut out).expect("download D2H");
-    /// assert_eq!(out, [1.0, 2.0, 3.0, 4.0]);
-    /// ```
-    ///
     /// # Panics
     ///
     /// Panics if `src.len() > self.len()`.
@@ -384,10 +263,6 @@ impl<T> DeviceBuffer<T> {
     }
 
     /// Copies this device buffer into `dst` (host, synchronous D2H).
-    ///
-    /// # Arguments
-    ///
-    /// * `dst` - Host slice to fill; `dst.len()` must be `<= self.len()`.
     ///
     /// # Panics
     ///
@@ -419,31 +294,8 @@ impl<T> DeviceBuffer<T> {
 
     /// Enqueues a stream-ordered H2D copy from a pinned host buffer.
     ///
-    /// The copy is asynchronous: it is ordered on `stream` and returns as soon
-    /// as it is enqueued. The caller must keep `src` alive and not mutate it
-    /// until the stream is synchronized (`stream.synchronize()`). Staging
-    /// through pinned host memory is what lets the transfer overlap with kernel
-    /// work on other streams (design doc §6).
-    ///
-    /// # Arguments
-    ///
-    /// * `src` - Pinned host source; `src.len()` must be `<= self.len()`.
-    /// * `stream` - The stream the copy is ordered on.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
-    ///
-    /// // Requires a real HIP device, so this is `no_run`.
-    /// let stream = HipStream::new().expect("create a stream");
-    /// let mut staging = PinnedHostBuffer::<f32>::new(4, 0).expect("pinned host");
-    /// staging.as_mut_slice().copy_from_slice(&[1.0, 2.0, 3.0, 4.0]);
-    ///
-    /// let dev = DeviceBuffer::<f32>::new(4, 0).expect("device buffer");
-    /// dev.copy_from_pinned_async(&staging, &stream).expect("enqueue H2D");
-    /// stream.synchronize().expect("wait for the transfer");
-    /// ```
+    /// Returns as soon as the copy is enqueued. The caller must keep `src`
+    /// alive and unmodified until `stream` is synchronized.
     ///
     /// # Panics
     ///
@@ -481,27 +333,8 @@ impl<T> DeviceBuffer<T> {
 
     /// Enqueues a stream-ordered D2H copy into a pinned host buffer.
     ///
-    /// Asynchronous, ordered on `stream`. The destination data is valid only
-    /// after `stream.synchronize()` returns.
-    ///
-    /// # Arguments
-    ///
-    /// * `dst` - Pinned host destination; `dst.len()` must be `<= self.len()`.
-    /// * `stream` - The stream the copy is ordered on.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
-    ///
-    /// let stream = HipStream::new().expect("create a stream");
-    /// let dev = DeviceBuffer::<f32>::new(4, 0).expect("device buffer");
-    /// let mut staging = PinnedHostBuffer::<f32>::new(4, 0).expect("pinned host");
-    ///
-    /// dev.copy_to_pinned_async(&mut staging, &stream).expect("enqueue D2H");
-    /// stream.synchronize().expect("wait for the transfer");
-    /// // `staging.as_slice()` is now valid to read.
-    /// ```
+    /// The destination data is valid only after `stream.synchronize()`
+    /// returns.
     ///
     /// # Panics
     ///
@@ -561,12 +394,9 @@ impl<T> Drop for DeviceBuffer<T> {
 // SAFETY: device pointers are opaque handles managed by the thread-safe HIP
 // runtime and never dereferenced on the host. Moving across threads is sound.
 //
-// `DeviceBuffer` is deliberately `Send`-only and NOT `Sync`: `copy_from_host`
-// and `copy_from_pinned_async` mutate device memory through a *shared* `&self`,
-// so handing two threads a `&DeviceBuffer` to the SAME buffer would allow
-// concurrent H2D writes — a genuine data race. The concurrency model is
-// per-worker-owned buffers (each worker owns its own `DeviceBuffer`, moved in
-// via `Send`), never a buffer shared by `&` across workers.
+// `DeviceBuffer` is not `Sync`: `copy_from_host` and `copy_from_pinned_async`
+// write device memory through `&self`, so two threads sharing a `&DeviceBuffer`
+// could race on H2D writes. Each worker owns its buffers.
 unsafe impl<T: Send> Send for DeviceBuffer<T> {}
 
 /// An RAII page-locked (pinned) host allocation of `len` values of `T`.
@@ -579,34 +409,16 @@ pub struct PinnedHostBuffer<T> {
 }
 
 impl<T: Copy + Default> PinnedHostBuffer<T> {
-    /// Allocates `len` pinned (page-locked) host elements, zero-initialized.
+    /// Allocates `len` pinned (page-locked) host elements, each initialized to
+    /// `T::default()`.
     ///
-    /// # Arguments
-    ///
-    /// * `len` - Number of `T` elements to page-lock. `len == 0` yields an empty
-    ///   buffer with a null pointer (no `hipHostMalloc` is issued).
-    /// * `device_id` - Recorded so an OOM error carries it.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_kernels_hip::host::PinnedHostBuffer;
-    ///
-    /// // Requires a real HIP device, so this is `no_run`.
-    /// let staging = PinnedHostBuffer::<f32>::new(256, 0).expect("pinned host alloc");
-    /// assert_eq!(staging.len(), 256);
-    /// // Freshly allocated pinned memory is zero-initialized.
-    /// assert!(staging.as_slice().iter().all(|&x| x == 0.0));
-    /// ```
+    /// `len == 0` yields an empty buffer with a null pointer and issues no
+    /// `hipHostMalloc`. `device_id` is carried by an OOM error only.
     ///
     /// # Errors
     ///
     /// Returns [`HipError::OutOfMemory`] on `hipErrorOutOfMemory`, otherwise
     /// [`HipError::Hip`].
-    ///
-    /// # Complexity
-    ///
-    /// O(`len`) to zero-initialize after a single `hipHostMalloc`.
     pub fn new(len: usize, device_id: i32) -> Result<Self, HipError> {
         let bytes = len.saturating_mul(std::mem::size_of::<T>());
         if len == 0 || bytes == 0 {
@@ -697,12 +509,8 @@ impl<T> Drop for PinnedHostBuffer<T> {
 // SAFETY: the pinned host pointer is owned exclusively by this buffer; moving
 // it across threads is sound for `T: Send` because no aliasing handle escapes.
 //
-// `PinnedHostBuffer` is deliberately `Send`-only and NOT `Sync`. It is a
-// staging buffer mutated in place (`as_mut_slice`, async D2H into it) and is
-// owned per-worker (e.g. inside a `HipDispatcher`'s `StageScratch`), never
-// shared by `&` across workers. Keeping it `Send`-only matches the buffer
-// concurrency doctrine documented on `DeviceBuffer` and keeps `HipDispatcher`
-// (which embeds one) from auto-deriving a `Sync` its scratch cannot honour.
+// `PinnedHostBuffer` is not `Sync`: it is a staging buffer mutated in place
+// and owned per worker.
 unsafe impl<T: Send> Send for PinnedHostBuffer<T> {}
 
 #[cfg(all(test, feature = "hip"))]
@@ -710,8 +518,6 @@ mod tests {
     use super::*;
     use crate::host::streams::HipStream;
 
-    /// A zero-length DeviceBuffer is a valid empty handle with no allocation
-    /// (no GPU required for the empty path).
     #[test]
     fn test_device_buffer_empty_is_null() {
         let buf = DeviceBuffer::<f32>::new(0, 0).expect("empty buffer");
@@ -720,8 +526,6 @@ mod tests {
         assert!(buf.as_ptr().is_null());
     }
 
-    /// Synchronous H2D then D2H through a DeviceBuffer round-trips the payload
-    /// byte-for-byte (Finding 7). Gated to the gfx1030 host.
     #[test]
     fn test_device_buffer_h2d_d2h_roundtrip() {
         let src: Vec<f32> = (0..64).map(|i| i as f32 * 1.5).collect();
@@ -732,8 +536,6 @@ mod tests {
         assert_eq!(src, dst, "device round-trip must be byte-identical");
     }
 
-    /// Staged async round-trip: host → pinned → device → pinned → host over a
-    /// stream, synchronized before reading back (Finding 7).
     #[test]
     fn test_pinned_async_roundtrip_over_stream() {
         let n = 32usize;
@@ -756,9 +558,6 @@ mod tests {
         );
     }
 
-    /// `new_with_fallback` pre-flights an over-large request against the target
-    /// device's total memory (via the device-scoped `device_mem_info_for`) and
-    /// reports a structured OOM (not a panic).
     #[test]
     fn test_device_buffer_oom_is_structured() {
         let huge = 256usize * 1024 * 1024 * 1024; // 256 GiB of u8
@@ -777,19 +576,13 @@ mod tests {
         }
     }
 
-    /// The device-scoped query honors its `device_id` argument and restores the
-    /// previously-current device. On this single-GPU gfx1030 host device 0 is
-    /// the only valid index; the query must agree with the current-device
-    /// `device_mem_info` and leave device 0 selected afterwards.
+    /// Assumes a single-GPU host, where device 0 is the only valid index.
     #[test]
     fn test_device_mem_info_for_honors_device_id() {
         let (free0, total0) = device_mem_info_for(0).expect("device 0 mem info");
         assert!(free0 <= total0, "free must not exceed total");
         assert!(total0 > 0, "a real GPU reports nonzero total memory");
 
-        // After the scoped query the current device is restored, so the
-        // current-device query targets the same device 0 and sees the same
-        // total memory.
         let (_free_cur, total_cur) = device_mem_info().expect("current device mem info");
         assert_eq!(
             total_cur, total0,

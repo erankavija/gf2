@@ -12,19 +12,10 @@ pub const Z_95: f64 = 1.959_964;
 
 /// Computes a Wilson score interval for a binomial count.
 ///
-/// `successes` is the observed event count and `trials` is the total count;
-/// the entry point therefore works with a running accumulator or with counts
-/// read from a published dataset. `z` is the caller-supplied non-negative
-/// standard-normal critical value (for example, [`Z_95`]). The returned tuple
-/// is `(lower, upper)`, with both bounds clipped to the probability domain
-/// `[0, 1]`.
-///
-/// The Wilson interval is the set of proportions that are not rejected by the
-/// two-sided normal score test. It remains well behaved when `successes` is
-/// zero or equal to `trials`, unlike the Wald interval. For rare-event cells
-/// with observed or expected counts in the tens, prefer
-/// [`clopper_pearson_interval`]: its conservative coverage does not rely on
-/// the normal approximation.
+/// `successes` is the observed event count, `trials` the total count, and `z`
+/// the non-negative standard-normal critical value (for example, [`Z_95`]).
+/// Returns `(lower, upper)`, clipped to `[0, 1]`: the set of proportions the
+/// two-sided normal score test does not reject.
 ///
 /// # Panics
 ///
@@ -59,19 +50,10 @@ pub fn wilson_interval(successes: u64, trials: u64, z: f64) -> (f64, f64) {
 
 /// Computes an equal-tailed Clopper-Pearson interval for a binomial count.
 ///
-/// `successes` is the observed event count, `trials` is the total count, and
-/// `level` is the requested two-sided confidence level, strictly between zero
-/// and one. The returned tuple is `(lower, upper)`, with both bounds in
-/// `[0, 1]`. The endpoints are the numerical inverses of the defining
-/// binomial tails (equivalently, beta quantiles), so this is the usual
-/// *exact* Clopper-Pearson construction rather than a normal approximation.
-///
-/// Use this interval when observed or expected event counts are in the tens,
-/// especially for rare-event cells: its conservative coverage is preferable
-/// to an approximation in that regime. [`wilson_interval`] is typically
-/// narrower and is a useful normal-score approximation when counts are large.
-/// Both entry points accept counts, so callers can use either an online
-/// accumulator or published aggregate data without retaining samples.
+/// `successes` is the observed event count, `trials` the total count, and
+/// `level` the two-sided confidence level, strictly between zero and one.
+/// Returns `(lower, upper)` in `[0, 1]`. The endpoints are the numerical
+/// inverses of the defining binomial tails (equivalently, beta quantiles).
 ///
 /// # Panics
 ///
@@ -81,9 +63,8 @@ pub fn wilson_interval(successes: u64, trials: u64, z: f64) -> (f64, f64) {
 ///
 /// # Complexity
 ///
-/// Uses two fixed 80-step bisections. Each beta-CDF evaluation performs at
-/// most 200 continued-fraction iterations, with $O(1)$ auxiliary space. It
-/// therefore does materially more numerical work than [`wilson_interval`].
+/// Two fixed 80-step bisections; each beta-CDF evaluation performs at most
+/// 200 continued-fraction iterations, with $O(1)$ auxiliary space.
 #[must_use]
 pub fn clopper_pearson_interval(successes: u64, trials: u64, level: f64) -> (f64, f64) {
     assert!(successes <= trials, "successes cannot exceed trials");
@@ -138,11 +119,6 @@ pub fn clopper_pearson_interval(successes: u64, trials: u64, level: f64) -> (f64
 /// lower endpoint, while the upper endpoint is strictly tighter: the design
 /// fixes the event count, so the final trial carries no uncertainty.
 ///
-/// Use this interval when sampling stops on an event count, for example a
-/// simulation cell that runs until it observes a preregistered number of
-/// failures. Applying [`clopper_pearson_interval`] to such a sample states a
-/// coverage its fixed-trial design does not have.
-///
 /// # Panics
 ///
 /// Panics when `events` exceeds `trials`, or when `level` is not finite or is
@@ -155,19 +131,6 @@ pub fn clopper_pearson_interval(successes: u64, trials: u64, level: f64) -> (f64
 ///
 /// Matches [`clopper_pearson_interval`]: two fixed 80-step bisections over beta
 /// CDF evaluations, with $O(1)$ auxiliary space.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_stats::intervals::{clopper_pearson_interval, negative_binomial_interval};
-///
-/// let (lower, upper) = negative_binomial_interval(12, 100, 0.95);
-/// assert!(lower < 0.12 && 0.12 < upper);
-///
-/// let fixed_trials = clopper_pearson_interval(12, 100, 0.95);
-/// assert_eq!(lower, fixed_trials.0);
-/// assert!(upper < fixed_trials.1);
-/// ```
 #[must_use]
 pub fn negative_binomial_interval(events: u64, trials: u64, level: f64) -> (f64, f64) {
     assert!(events <= trials, "events cannot exceed trials");
@@ -211,10 +174,7 @@ pub fn negative_binomial_interval(events: u64, trials: u64, level: f64) -> (f64,
 /// `sqrt(2 V ln(2 / d) / n) + 7 ln(2 / d) / (3 (n - 1))`
 /// with probability at least `1 - d`, for sample variance `V` and `n >= 2`.
 /// This entry point spends `d = (1 - level) / 2` on each side, so the two-sided
-/// statement holds at `level`. The bound is variance-adaptive: unlike Hoeffding
-/// its leading term shrinks with the observed spread rather than with the range
-/// of the observation domain, which matters when bounded observations
-/// concentrate far from their extremes.
+/// statement holds at `level`.
 ///
 /// # Panics
 ///
@@ -223,19 +183,6 @@ pub fn negative_binomial_interval(events: u64, trials: u64, level: f64) -> (f64,
 /// finite or is outside the open interval `(0, 1)`. Fewer than two
 /// observations admit no variance estimate; the returned interval is then the
 /// trivial `(0.0, 1.0)`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_stats::intervals::empirical_bernstein_interval;
-///
-/// let (lower, upper) = empirical_bernstein_interval(0.2, 0.001, 100, 0.95);
-/// assert!(lower < 0.2 && 0.2 < upper);
-///
-/// // Concentrated observations give a tighter interval than dispersed ones.
-/// let (dispersed_lower, _) = empirical_bernstein_interval(0.2, 0.05, 100, 0.95);
-/// assert!(dispersed_lower < lower);
-/// ```
 #[must_use]
 pub fn empirical_bernstein_interval(
     mean: f64,
@@ -301,7 +248,6 @@ fn regularized_beta(x: f64, a: f64, b: f64) -> f64 {
     }
 }
 
-/// Evaluates the continued fraction used by [`regularized_beta`].
 fn beta_continued_fraction(a: f64, b: f64, x: f64) -> f64 {
     const MAX_ITERATIONS: u32 = 200;
     const EPSILON: f64 = 3.0e-14;

@@ -1,57 +1,13 @@
 //! Safe host wrappers for the device LDPC belief-propagation batch decoder
-//! (`hip/ldpc_bp.hip`, design doc §6 / §10 / §11).
+//! (`hip/ldpc_bp.hip`).
 //!
-//! [`GpuLdpcBp`] owns the device-resident Tanner-graph layout (a double CSR:
-//! check-major + variable-major, with the two cross-maps that link a check-edge
-//! to its matching variable-edge) plus the reusable per-batch message and
-//! hard-decision buffers. It runs the same flooding BP schedule as the CPU
-//! `gf2_coding::ldpc::core::LdpcDecoder` — init, then alternating check-node and
-//! variable-node updates with optional per-iteration syndrome early-termination
-//! — and returns the hard-decision codeword bits (all `n` positions), which are
-//! byte-identical to the CPU decoder's hard decision (design doc §11: the
-//! hard-decision verdict is robust to the 1-3 ULP RDNA2 transcendental drift).
-//!
-//! # Early-termination = per-frame freeze (matches the CPU loop)
-//!
-//! `LdpcDecoder::decode_to_codeword(.., early_termination=true)` freezes a
-//! frame's hard decision at the FIRST iteration its syndrome passes. To
-//! reproduce that bit-for-bit across a batch (where frames converge at different
-//! iterations), the host maintains a per-frame `frame_done` flag: the moment a
-//! frame's syndrome passes it is marked done, and every subsequent kernel skips
-//! it, freezing its `hard_bits` / `v2c` / `c2v` at the first-convergence state
-//! (also a perf win). The loop stops when all frames are done or `max_iters` is
-//! reached. With early termination off no frame is frozen and all `max_iters`
-//! run (matching the CPU `early_termination == false` path).
-//!
-//! # Why the graph layout is built by the caller
-//!
-//! `gf2-kernels-hip` owns all device FFI and the SAFETY-annotated launch path,
-//! so the graph upload + iteration loop is a single reviewed unit here. The
-//! `gf2-sim` `GpuLdpcBp` stage (the §8 fallback-bearing consumer) flattens its
-//! `LdpcCode` into the [`LdpcGraphLayout`] CSR arrays and hands them to
-//! [`GpuLdpcBp::new`] without touching FFI, preserving `gf2-sim`'s
-//! `#![deny(unsafe_code)]`.
-//!
-//! # Default-stream vs stream-ordered decode (design doc §6)
-//!
-//! [`GpuLdpcBp::decode_batch`] / [`decode_batch_with_iters`] run on the
-//! **default stream** with synchronous transfers and `hipDeviceSynchronize`
-//! completion — the simple single-consumer path. The additive
-//! [`decode_batch_on_stream`] / [`decode_batch_with_iters_on_stream`] variants
-//! enqueue every kernel launch **and** every H2D / D2H transfer on a
-//! caller-owned [`HipStream`] (transfers staged through the pinned
-//! [`LdpcStreamScratch`], since a synchronous `hipMemcpy` executes on the
-//! legacy NULL stream and would serialize against every other blocking stream
-//! on the device) and await completion with per-stream
-//! [`HipStream::synchronize`] — never device-wide sync. That is what lets two
-//! workers' decode batches on different streams genuinely overlap (the §6
-//! hybrid-scheduler protocol). Both paths run the identical kernel sequence on
-//! identical inputs, so their outputs are byte-identical.
-//!
-//! [`decode_batch_with_iters`]: GpuLdpcBp::decode_batch_with_iters
-//! [`decode_batch_on_stream`]: GpuLdpcBp::decode_batch_on_stream
-//! [`decode_batch_with_iters_on_stream`]: GpuLdpcBp::decode_batch_with_iters_on_stream
-//! [`HipStream::synchronize`]: crate::host::HipStream::synchronize
+//! [`GpuLdpcBp`] runs a flooding BP schedule over a caller-built
+//! [`LdpcGraphLayout`]: init, then alternating check-node and variable-node
+//! updates, with optional per-frame early termination. The default-stream
+//! entry points use synchronous transfers; the `_on_stream` variants order
+//! every launch and transfer on a caller-owned [`HipStream`], staging transfers
+//! through pinned memory because a synchronous `hipMemcpy` executes on the NULL
+//! stream and serializes against every other blocking stream on the device.
 
 use std::ffi::c_void;
 use std::ptr;
@@ -59,21 +15,8 @@ use std::ptr;
 use crate::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
 use crate::{check_hip, ffi, HipError};
 
-/// Algorithm selector matching `gf2_coding::ldpc::DecoderAlgorithm` and the
-/// `LDPC_ALG_*` constants in `hip/ldpc_bp.hip`.
-///
-/// The min-sum family carries its correction parameter inline; SumProduct has
-/// none. The host wrapper unpacks this into the `(algorithm, alpha, beta)`
-/// triple the kernel takes.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_hip::launch_ldpc_bp::GpuBpAlgorithm;
-///
-/// let a = GpuBpAlgorithm::NormalizedMinSum(0.75);
-/// assert_eq!(a.code(), 1);
-/// ```
+/// Algorithm selector matching the `LDPC_ALG_*` constants in
+/// `hip/ldpc_bp.hip`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum GpuBpAlgorithm {
     /// Standard min-sum (sign product × min magnitude).
@@ -117,48 +60,13 @@ impl GpuBpAlgorithm {
     }
 }
 
-/// Host-side flat, standard-agnostic Tanner-graph representation the GPU LDPC BP
-/// kernel decodes.
+/// Flat Tanner-graph representation the GPU LDPC BP kernel decodes.
 ///
-/// This is the double-CSR encoding the kernel consumes (see `hip/ldpc_bp.hip`):
-/// the check-major CSR (`check_row_ptr`, `check_edge_var`), the variable-major
-/// CSC (`var_col_ptr`), and the two cross-maps (`check_edge_to_var_edge`,
-/// `var_edge_to_check_edge`) that identify the SAME Tanner edge from the two
-/// views.
-///
-/// The caller (the `gf2-sim` stage, which owns the `LdpcCode`) builds this from
-/// the canonical edge layout `gf2-coding` computes for that code, so the
-/// kernel's check-node gather order is **exactly** the CPU decoder's check-major
-/// (CSR `row_iter`) order and the variable-node belief sum order is exactly its
-/// variable-major (CSC `col_iter`) order — the basis of the CPU↔GPU
-/// byte-identity of the hard decision.
-///
-/// # Standard-agnostic by construction (design doc §6 shared binary)
-///
-/// This layout is the standard seam: the kernel decodes whatever flat Tanner
-/// graph is encoded here, with no notion of DVB-T2 vs 5G NR and no in-kernel
-/// shift parameter. DVB-T2 builds this from a fully-expanded parity-check matrix
-/// today. 5G NR support is a Phase E (`23d3525f`) **constructor** that expands a
-/// base graph + per-`i_LS` lifting-set shift table into this same flat layout
-/// host-side; the kernel binary is reused unchanged.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_hip::launch_ldpc_bp::LdpcGraphLayout;
-///
-/// // A single check connecting variables {0, 1, 2}: one CSR row of 3 edges.
-/// let layout = LdpcGraphLayout {
-///     n: 3,
-///     m: 1,
-///     check_row_ptr: vec![0, 3],
-///     check_edge_var: vec![0, 1, 2],
-///     check_edge_to_var_edge: vec![0, 1, 2],
-///     var_col_ptr: vec![0, 1, 2, 3],
-///     var_edge_to_check_edge: vec![0, 1, 2],
-/// };
-/// assert_eq!(layout.edges(), 3);
-/// ```
+/// A double CSR: the check-major CSR (`check_row_ptr`, `check_edge_var`), the
+/// variable-major CSC (`var_col_ptr`), and two cross-maps
+/// (`check_edge_to_var_edge`, `var_edge_to_check_edge`) that identify the same
+/// Tanner edge from the two views. The kernel gathers check-node inputs in CSR
+/// row order and sums variable-node beliefs in CSC column order.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LdpcGraphLayout {
     /// Codeword length (number of variable nodes).
@@ -188,52 +96,16 @@ impl LdpcGraphLayout {
     }
 }
 
-/// Pinned host staging for the stream-ordered decode path
-/// ([`GpuLdpcBp::decode_batch_on_stream`] /
-/// [`GpuLdpcBp::decode_batch_with_iters_on_stream`]).
-///
-/// The stream path must not issue synchronous (`hipMemcpy`) transfers: a
-/// synchronous copy executes on the legacy NULL stream, which serializes
-/// against every other blocking stream on the device and would destroy the
-/// cross-worker overlap the per-worker streams exist to provide (design doc
-/// §6). All H2D / D2H traffic on that path is therefore staged through these
-/// page-locked buffers with stream-ordered `hipMemcpyAsync`.
-///
-/// One scratch pairs with one [`GpuLdpcBp`] (it is sized at construction for
-/// that decoder's `max_batch` / `n` — build it via
-/// [`GpuLdpcBp::new_stream_scratch`]) and belongs to exactly one worker
-/// thread: like [`PinnedHostBuffer`] it is `Send`-only, owned per worker,
-/// never shared by `&` across threads.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_hip::launch_ldpc_bp::{GpuLdpcBp, LdpcGraphLayout};
-///
-/// // Requires a real HIP device, so this is `no_run`.
-/// let layout = LdpcGraphLayout {
-///     n: 3, m: 1,
-///     check_row_ptr: vec![0, 3],
-///     check_edge_var: vec![0, 1, 2],
-///     check_edge_to_var_edge: vec![0, 1, 2],
-///     var_col_ptr: vec![0, 1, 2, 3],
-///     var_edge_to_check_edge: vec![0, 1, 2],
-/// };
-/// let dec = GpuLdpcBp::new(&layout, 8, 0).expect("build decoder");
-/// let scratch = dec.new_stream_scratch().expect("pinned staging");
-/// assert_eq!(scratch.max_batch(), 8);
-/// ```
+/// Pinned host staging for [`GpuLdpcBp::decode_batch_on_stream`] and
+/// [`GpuLdpcBp::decode_batch_with_iters_on_stream`], sized for one decoder's
+/// `max_batch` / `n` and `Send`-only: one per worker thread.
 pub struct LdpcStreamScratch {
-    /// H2D staging for the flattened channel LLRs (`max_batch * n` f32s).
     channel: PinnedHostBuffer<f32>,
-    /// D2H staging for the hard-decision bytes (`max_batch * n`).
     hard: PinnedHostBuffer<u8>,
-    /// H2D zeros + D2H readback for the per-frame unsatisfied flags
-    /// (`max_batch`). One buffer serves both directions: the zero-fill H2D and
-    /// the post-syndrome D2H are ordered on the same stream, and the host only
-    /// touches the buffer after the per-iteration stream synchronize.
+    /// One buffer serves the zero-fill H2D and the post-syndrome D2H: both are
+    /// ordered on the same stream, and the host touches the buffer only after
+    /// the per-iteration stream synchronize.
     unsat: PinnedHostBuffer<u8>,
-    /// H2D staging for the per-frame freeze flags (`max_batch`).
     done: PinnedHostBuffer<u8>,
     max_batch: usize,
     n: usize,
@@ -255,41 +127,15 @@ impl LdpcStreamScratch {
 
 /// A reusable device-side LDPC belief-propagation batch decoder.
 ///
-/// Holds the persistent device-resident graph layout (uploaded once) plus the
-/// reusable per-batch message buffers (`v2c`, `c2v`), channel-LLR input, and
-/// hard-decision output, sized for up to `max_batch` frames at construction.
-/// Repeated [`decode_batch`](Self::decode_batch) calls reuse the same
-/// allocations.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_hip::launch_ldpc_bp::{GpuBpAlgorithm, GpuLdpcBp, LdpcGraphLayout};
-///
-/// // Requires a real HIP device, so this is `no_run`.
-/// let layout = LdpcGraphLayout {
-///     n: 3, m: 1,
-///     check_row_ptr: vec![0, 3],
-///     check_edge_var: vec![0, 1, 2],
-///     check_edge_to_var_edge: vec![0, 1, 2],
-///     var_col_ptr: vec![0, 1, 2, 3],
-///     var_edge_to_check_edge: vec![0, 1, 2],
-/// };
-/// let dec = GpuLdpcBp::new(&layout, 8, 0).expect("build decoder");
-/// let llrs = vec![vec![2.0f32, 2.0, 2.0]];
-/// let bits = dec
-///     .decode_batch(&llrs, GpuBpAlgorithm::SumProduct, 50, true)
-///     .expect("decode");
-/// assert_eq!(bits[0].len(), 3);
-/// ```
+/// The graph layout is uploaded once; the message buffers (`v2c`, `c2v`),
+/// channel-LLR input and hard-decision output are sized for `max_batch` frames
+/// at construction.
 pub struct GpuLdpcBp {
-    // Persistent graph layout (uploaded once).
     d_check_row_ptr: DeviceBuffer<i32>,
     d_check_edge_var: DeviceBuffer<i32>,
     d_check_edge_to_var_edge: DeviceBuffer<i32>,
     d_var_col_ptr: DeviceBuffer<i32>,
     d_var_edge_to_check_edge: DeviceBuffer<i32>,
-    // Per-batch reusable buffers.
     d_channel: DeviceBuffer<f32>,
     d_v2c: DeviceBuffer<f32>,
     d_c2v: DeviceBuffer<f32>,
@@ -307,16 +153,6 @@ pub struct GpuLdpcBp {
 impl GpuLdpcBp {
     /// Builds a decoder for `layout` on `device_id`, sized for up to
     /// `max_batch` frames per [`decode_batch`](Self::decode_batch).
-    ///
-    /// The graph layout is uploaded once; the per-batch message buffers
-    /// (`max_batch * edges` f32s each), channel-LLR input (`max_batch * n`),
-    /// and hard-decision output (`max_batch * n` bytes) are allocated up front.
-    ///
-    /// # Arguments
-    ///
-    /// * `layout` — the flattened Tanner-graph layout.
-    /// * `max_batch` — maximum frames per decode call (sizes device buffers).
-    /// * `device_id` — the HIP device to allocate on.
     ///
     /// # Errors
     ///
@@ -428,18 +264,12 @@ impl GpuLdpcBp {
     }
 
     /// Allocates the pinned host staging the stream-ordered decode variants
-    /// ([`decode_batch_on_stream`](Self::decode_batch_on_stream) /
-    /// [`decode_batch_with_iters_on_stream`](Self::decode_batch_with_iters_on_stream))
-    /// require, sized for this decoder's `max_batch` / `n` on its device.
-    ///
-    /// Build one scratch per worker (it is `Send`-only, owned per worker) and
-    /// reuse it across decode calls; the default-stream
-    /// [`decode_batch`](Self::decode_batch) path needs none.
+    /// require.
     ///
     /// # Errors
     ///
-    /// Returns [`HipError`] if a pinned allocation fails (an OOM is the
-    /// distinguished [`HipError::OutOfMemory`]).
+    /// Returns [`HipError`] if a pinned allocation fails (an OOM is
+    /// [`HipError::OutOfMemory`]).
     ///
     /// # Complexity
     ///
@@ -455,27 +285,12 @@ impl GpuLdpcBp {
         })
     }
 
-    /// Decodes a batch of channel-LLR frames to their hard-decision codewords.
+    /// Decodes a batch of channel-LLR frames, one length-`n` vector each, to
+    /// their `n`-bit hard-decision codewords (`true` = bit 1).
     ///
-    /// Runs the flooding BP schedule (init → alternating check / variable
-    /// updates) for up to `max_iterations`. When `early_termination` is set each
-    /// frame is **frozen** at the first iteration its syndrome passes (its
-    /// `hard_bits` / messages are not touched again), exactly matching the CPU
-    /// `decode_to_codeword` first-convergence break; the host loop stops once
-    /// every frame is frozen. The returned bits are the full `n`-bit
-    /// hard-decision codeword per frame (`true` = bit 1).
-    ///
-    /// # Arguments
-    ///
-    /// * `llr_blocks` — one channel-LLR vector of length `n` per frame.
-    /// * `algorithm` — the box-plus rule (with its correction parameter).
-    /// * `max_iterations` — BP iteration cap.
-    /// * `early_termination` — freeze each frame at first convergence and stop
-    ///   the loop once all frames are frozen.
-    ///
-    /// # Returns
-    ///
-    /// One `Vec<bool>` of length `n` per frame (the hard-decision codeword).
+    /// Runs the flooding BP schedule for up to `max_iterations`. With
+    /// `early_termination` each frame is frozen at the first iteration its
+    /// syndrome passes, and the loop stops once every frame is frozen.
     ///
     /// # Errors
     ///
@@ -489,10 +304,8 @@ impl GpuLdpcBp {
     ///
     /// # Complexity
     ///
-    /// O(`max_iterations * batch * edges`) device work (less under early
-    /// termination as frozen frames are skipped); host-side cost is the per-call
-    /// H2D of `batch * n` f32s and the D2H of `batch * n` bytes, plus one
-    /// `batch`-byte read-back per iteration when `early_termination` is set.
+    /// O(`max_iterations * batch * edges`) device work, plus one `batch`-byte
+    /// read-back per iteration when `early_termination` is set.
     pub fn decode_batch(
         &self,
         llr_blocks: &[Vec<f32>],
@@ -500,47 +313,17 @@ impl GpuLdpcBp {
         max_iterations: usize,
         early_termination: bool,
     ) -> Result<Vec<Vec<bool>>, HipError> {
-        // Delegate to the iteration-counting variant and drop the counts; the
-        // hard-decision output is byte-for-byte identical to the standalone loop.
         let (hard, _iters) =
             self.decode_batch_with_iters(llr_blocks, algorithm, max_iterations, early_termination)?;
         Ok(hard)
     }
 
-    /// Like [`decode_batch`](Self::decode_batch), but also returns the per-frame
-    /// BP iteration count.
+    /// Like [`decode_batch`](Self::decode_batch), and also returns the
+    /// per-frame BP iteration count in `1..=max_iterations`.
     ///
-    /// The hard-decision codewords are **byte-for-byte identical** to
-    /// [`decode_batch`](Self::decode_batch) (that method delegates here and
-    /// discards the counts); this is a purely additive observability API.
-    ///
-    /// # Iteration-count convention (aligned to the CPU `decode_to_codeword`)
-    ///
-    /// Each host-loop pass runs one check-node + variable-node update, then
-    /// (when `early_termination` is set) tests the syndrome — exactly the CPU
-    /// `decode_to_codeword` shape, whose reported count is `iter + 1` at the
-    /// pass that first passes the syndrome. So:
-    ///
-    /// * A frame that freezes (syndrome passes) at 0-indexed loop pass `i`
-    ///   reports `i + 1` — identical to the CPU count for the same convergence
-    ///   pass.
-    /// * A frame that never converges (or `early_termination == false`) reports
-    ///   `max_iterations`, matching the CPU loop that runs the full cap.
-    ///
-    /// The counts are diagnostic only: per design-doc §11 `mean_iters` is
-    /// EXCLUDED from CPU-vs-GPU byte-identity (RDNA2 transcendental ULP drift can
-    /// shift the convergence pass by ±1), so a caller may LOG but must not ASSERT
-    /// the CPU-vs-GPU iteration diff.
-    ///
-    /// # Arguments
-    ///
-    /// Same as [`decode_batch`](Self::decode_batch).
-    ///
-    /// # Returns
-    ///
-    /// `(hard, iters)` where `hard` is one `Vec<bool>` of length `n` per frame
-    /// (the hard-decision codeword) and `iters[f]` is frame `f`'s BP iteration
-    /// count (`1..=max_iterations`).
+    /// A frame whose syndrome first passes at 0-indexed loop pass `i` reports
+    /// `i + 1`; a frame that never converges, or any frame when
+    /// `early_termination == false`, reports `max_iterations`.
     ///
     /// # Errors
     ///
@@ -551,12 +334,6 @@ impl GpuLdpcBp {
     ///
     /// Panics if `llr_blocks.len() > max_batch`, any block length != `n`, or
     /// `max_iterations == 0`.
-    ///
-    /// # Complexity
-    ///
-    /// Identical to [`decode_batch`](Self::decode_batch); the per-frame count is
-    /// derived from the freeze bookkeeping the early-termination path already
-    /// maintains (no extra device work).
     pub fn decode_batch_with_iters(
         &self,
         llr_blocks: &[Vec<f32>],
@@ -573,24 +350,10 @@ impl GpuLdpcBp {
         )
     }
 
-    /// Like [`decode_batch`](Self::decode_batch), but with every kernel launch
-    /// **and** every H2D / D2H transfer enqueued on the caller-owned `stream`,
-    /// and completion awaited with per-stream
-    /// [`HipStream::synchronize`] (never device-wide sync).
-    ///
-    /// This is the multi-worker overlap path (design doc §6): each worker owns
-    /// one stream plus one [`LdpcStreamScratch`], so two workers' decode
-    /// batches on different streams genuinely overlap on the device. The
-    /// output is **byte-identical** to [`decode_batch`](Self::decode_batch)
-    /// (same kernel sequence, same inputs — only the queue differs).
-    ///
-    /// # Arguments
-    ///
-    /// Same as [`decode_batch`](Self::decode_batch), plus:
-    ///
-    /// * `stream` — the stream all launches and transfers are ordered on.
-    /// * `scratch` — this decoder's pinned staging (from
-    ///   [`new_stream_scratch`](Self::new_stream_scratch)).
+    /// Like [`decode_batch`](Self::decode_batch), with every kernel launch and
+    /// transfer enqueued on the caller-owned `stream` and completion awaited
+    /// with [`HipStream::synchronize`]. `scratch` comes from
+    /// [`new_stream_scratch`](Self::new_stream_scratch).
     ///
     /// # Errors
     ///
@@ -602,10 +365,6 @@ impl GpuLdpcBp {
     /// Panics if `llr_blocks.len() > max_batch`, any block length != `n`,
     /// `max_iterations == 0`, or `scratch` was sized for a different decoder
     /// (`max_batch` / `n` mismatch).
-    ///
-    /// # Complexity
-    ///
-    /// Identical to [`decode_batch`](Self::decode_batch).
     pub fn decode_batch_on_stream(
         &self,
         llr_blocks: &[Vec<f32>],
@@ -626,29 +385,13 @@ impl GpuLdpcBp {
         Ok(hard)
     }
 
-    /// Like [`decode_batch_with_iters`](Self::decode_batch_with_iters), but
-    /// stream-ordered: see [`decode_batch_on_stream`](Self::decode_batch_on_stream)
-    /// for the stream semantics and
-    /// [`decode_batch_with_iters`](Self::decode_batch_with_iters) for the
-    /// iteration-count convention. The hard decisions and counts are
-    /// **byte-identical** to the default-stream variant.
-    ///
-    /// # Arguments
-    ///
-    /// Same as [`decode_batch_on_stream`](Self::decode_batch_on_stream).
-    ///
-    /// # Errors
-    ///
-    /// Returns [`HipError`] on device memcpy, kernel launch, or stream
-    /// synchronization failure.
-    ///
-    /// # Panics
-    ///
-    /// Same as [`decode_batch_on_stream`](Self::decode_batch_on_stream).
-    ///
-    /// # Complexity
-    ///
-    /// Identical to [`decode_batch`](Self::decode_batch).
+    /// The stream-ordered form of
+    /// [`decode_batch_with_iters`](Self::decode_batch_with_iters); see
+    /// [`decode_batch_on_stream`](Self::decode_batch_on_stream) for the stream
+    /// arguments, errors and panics.
+    /// `test_decode_on_stream_matches_default_stream` checks on a two-frame
+    /// batch that it returns the hard decisions and counts of the
+    /// default-stream variant.
     pub fn decode_batch_with_iters_on_stream(
         &self,
         llr_blocks: &[Vec<f32>],
@@ -677,11 +420,8 @@ impl GpuLdpcBp {
         )
     }
 
-    /// The shared BP loop behind the default-stream and stream-ordered decode
-    /// entry points. `io == None` is the default-stream path (synchronous
-    /// transfers, `hipDeviceSynchronize` completion); `io == Some((stream,
-    /// scratch))` orders every launch and pinned-staged transfer on `stream`
-    /// and waits with `hipStreamSynchronize` only.
+    /// `io == None` is the default-stream path; `io == Some((stream,
+    /// scratch))` orders every launch and pinned-staged transfer on `stream`.
     fn decode_inner(
         &self,
         llr_blocks: &[Vec<f32>],
@@ -697,8 +437,6 @@ impl GpuLdpcBp {
             Some((s, sc)) => (Some(s), Some(sc)),
             None => (None, None),
         };
-        // The raw queue every kernel launch below is enqueued on: the caller's
-        // owned stream on the stream path, the default stream otherwise.
         let stream_raw: *mut c_void = stream.map_or(ptr::null_mut(), HipStream::as_raw);
 
         let batch = llr_blocks.len();
@@ -721,10 +459,6 @@ impl GpuLdpcBp {
             );
         }
 
-        // Flatten + upload channel LLRs (batch-major). Stream path: stage
-        // through the pinned buffer with a stream-ordered async copy (a
-        // synchronous hipMemcpy would run on the NULL stream and serialize
-        // against other workers' streams).
         let mut flat: Vec<f32> = Vec::with_capacity(batch * self.n);
         for blk in llr_blocks {
             flat.extend_from_slice(blk);
@@ -743,10 +477,8 @@ impl GpuLdpcBp {
         let edges = self.edges as i32;
         let b = batch as i32;
 
-        // The per-frame freeze flags pointer is null when early termination is
-        // off (no frame is ever frozen — all `max_iters` run, matching CPU).
-        // Otherwise the flags start cleared (all frames active) and are flipped
-        // to 1 as frames converge.
+        // `frame_done_ptr` is null when early termination is off, so no frame is
+        // skipped.
         let mut frame_done_host = vec![0u8; batch];
         let frame_done_ptr: *const u8 = if early_termination {
             match (stream, staging.as_deref_mut()) {
@@ -762,7 +494,6 @@ impl GpuLdpcBp {
             ptr::null()
         };
 
-        // Init v2c = channel LLRs.
         // SAFETY: all device pointers were allocated in `new` sized for
         // `max_batch` frames; `batch <= max_batch` and every block has length
         // `n` (asserted). The kernel writes only the leading `batch * edges`
@@ -787,15 +518,9 @@ impl GpuLdpcBp {
         let alpha = algorithm.alpha();
         let beta = algorithm.beta();
 
-        // Per-frame BP iteration count, CPU-aligned. A frame that never freezes
-        // (or with early termination off) reports the full `max_iterations`; a
-        // frame that freezes at 0-indexed pass `i` is overwritten to `i + 1`
-        // below (matching the CPU `iterations = iter + 1`).
         let mut iters = vec![max_iterations as u32; batch];
 
         for _iter in 0..max_iterations {
-            // Check-node update. Frozen frames (when early-term on) are skipped
-            // device-side via `frame_done_ptr`.
             // SAFETY: device pointers from `new`; kernel reads `v2c`, writes
             // `c2v`, both sized `>= batch * edges`. `frame_done_ptr` is either
             // null (early-term off) or the live `[batch]` flag buffer.
@@ -820,8 +545,6 @@ impl GpuLdpcBp {
                 "launch_ldpc_check_update",
             )?;
 
-            // Variable-node update (also writes the hard decision). Frozen
-            // frames keep their first-convergence `hard_bits` / `v2c`.
             // SAFETY: device pointers from `new`; kernel reads `channel`/`c2v`,
             // writes `v2c` and `hard_bits` (sized `>= batch * n`). `stream_raw`
             // is null (default stream) or the caller's stream.
@@ -845,15 +568,11 @@ impl GpuLdpcBp {
             )?;
 
             if early_termination {
-                // Clear the per-frame unsatisfied flags, run the syndrome check
-                // (frozen frames skipped — they stay satisfied), and read it
-                // back. A frame whose syndrome passes THIS iteration is frozen
-                // from the next one, so its hard decision is the first-convergence
-                // codeword — matching the CPU `is_valid_codeword` break.
-                //
-                // Stream path: the zero-fill H2D is staged through the pinned
-                // `unsat` buffer; the previous pass's stream synchronize drained
-                // any in-flight D2H into it, so the host-side refill is race-free.
+                // A frame whose syndrome passes this iteration is frozen from
+                // the next one, so its hard decision is the first-convergence
+                // codeword. The previous pass's stream synchronize drained any
+                // in-flight D2H into `unsat`, so the host-side refill is
+                // race-free.
                 match (stream, staging.as_deref_mut()) {
                     (Some(stream), Some(scratch)) => {
                         scratch.unsat.as_mut_slice()[..batch].fill(0);
@@ -882,11 +601,6 @@ impl GpuLdpcBp {
                     },
                     "launch_ldpc_syndrome",
                 )?;
-                // Wait for THIS batch's work, then read the flags back.
-                // Stream path: enqueue the stream-ordered D2H into the pinned
-                // buffer, then synchronize ONLY this stream — other workers'
-                // streams keep running (deliverable 2d). Default path:
-                // device-wide sync + synchronous copy, as before.
                 let mut flags = vec![0u8; batch];
                 match (stream, staging.as_deref_mut()) {
                     (Some(stream), Some(scratch)) => {
@@ -906,15 +620,11 @@ impl GpuLdpcBp {
                     }
                 }
 
-                // Freeze every frame whose syndrome passed this iteration (an
-                // active frame with no unsatisfied check). `frame_done` only ever
-                // transitions 0 -> 1, so a frozen frame stays frozen.
+                // `frame_done` only transitions 0 -> 1.
                 let mut all_done = true;
                 for f in 0..batch {
                     if frame_done_host[f] == 0 && flags[f] == 0 {
-                        frame_done_host[f] = 1; // converged this iteration: freeze
-                                                // CPU convention: `iterations = iter + 1` at the pass
-                                                // that first passes the syndrome.
+                        frame_done_host[f] = 1;
                         iters[f] = _iter as u32 + 1;
                     }
                     if frame_done_host[f] == 0 {
@@ -924,9 +634,7 @@ impl GpuLdpcBp {
                 if all_done {
                     break;
                 }
-                // Upload the updated freeze flags for the next iteration's
-                // kernels (stream path: pinned + stream-ordered; the stream was
-                // just synchronized above, so the refill is race-free).
+                // The stream was synchronized above, so the refill is race-free.
                 match (stream, staging.as_deref_mut()) {
                     (Some(stream), Some(scratch)) => {
                         scratch.done.as_mut_slice()[..batch].copy_from_slice(&frame_done_host);
@@ -938,10 +646,7 @@ impl GpuLdpcBp {
             }
         }
 
-        // Final wait (the early-term path already synced inside the loop, but a
-        // run that never early-terminates needs this) and hard-decision D2H.
-        // Stream path: stream-ordered D2H + per-stream synchronize only.
-        // Final use of `staging`: consume it directly (no re-deref needed).
+        // A run that never early-terminates has not synchronized yet.
         let mut hard = vec![0u8; batch * self.n];
         match (stream, staging) {
             (Some(stream), Some(scratch)) => {
@@ -968,18 +673,14 @@ impl GpuLdpcBp {
         Ok((out, iters))
     }
 
-    /// Zeroes the leading `batch` per-frame unsatisfied flags before a syndrome
-    /// launch (a small H2D of zeros — `batch` is tiny relative to a frame).
+    /// Zeroes the leading `batch` per-frame unsatisfied flags.
     fn clear_unsatisfied(&self, batch: usize) -> Result<(), HipError> {
         let zeros = vec![0u8; batch];
         self.d_unsatisfied.copy_from_host(&zeros)
     }
 }
 
-// `GpuLdpcBp` is `Send` by auto-derive (every field is a `DeviceBuffer<_>`,
-// which is `Send`, or a `Copy` scalar). It is deliberately NOT `Sync`: its
-// `decode_batch` mutates device memory through `&self`, so it follows the
-// per-worker-owned-buffer doctrine documented on `DeviceBuffer`.
+// `GpuLdpcBp` is `Send` by auto-derive; this assertion keeps it so.
 const _: fn() = || {
     fn assert_send<T: Send>() {}
     assert_send::<GpuLdpcBp>();
@@ -1178,10 +879,6 @@ mod tests {
         assert_eq!(layout.edges(), 3);
     }
 
-    /// The stream-ordered decode path must be byte-identical to the
-    /// default-stream path (same kernel sequence, same inputs — only the
-    /// queue and transfer staging differ). Gated to the gfx1030 host; a tiny
-    /// [n=3, m=1] graph keeps this well inside the fast tier.
     #[cfg(feature = "hip")]
     #[test]
     fn test_decode_on_stream_matches_default_stream() {

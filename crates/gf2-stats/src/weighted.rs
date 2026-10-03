@@ -38,19 +38,16 @@ impl Ratio {
         Ok(Self::reduced(numerator, denominator))
     }
 
-    /// Returns zero.
     #[must_use]
     fn zero() -> Self {
         Self::from_integer(0_u8)
     }
 
-    /// Returns one.
     #[must_use]
     fn one() -> Self {
         Self::from_integer(1_u8)
     }
 
-    /// Constructs an exact integer ratio.
     #[must_use]
     fn from_integer(value: impl Into<BigUint>) -> Self {
         Self {
@@ -59,7 +56,6 @@ impl Ratio {
         }
     }
 
-    /// Returns the reduced numerator.
     #[must_use]
     fn decimal_pair(&self) -> (String, String) {
         (self.numerator.to_string(), self.denominator.to_string())

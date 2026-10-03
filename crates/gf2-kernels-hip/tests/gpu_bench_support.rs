@@ -1,16 +1,11 @@
-//! Shared helpers for the GPU Gray-QAM correctness tests and crossover
-//! benchmark. Included via `#[path] mod gpu_bench_support;` from the
-//! sibling test/bench files so neither has to duplicate the
-//! modem-preset dispatch or the deterministic sample generator.
+//! Shared helpers for the GPU Gray-QAM correctness tests and benchmark,
+//! included via `#[path] mod gpu_bench_support;`.
 
 #![allow(dead_code)]
 
 use gf2_coding::modem::test_oracle::Lcg;
 use gf2_coding::modem::ModemSpec;
 
-/// Returns the `ModemSpec<f32>` for a given modulation order, routing
-/// BPSK (`order == 2`) through `ModemSpec::bpsk()` and every QAM order
-/// through `ModemSpec::gray_square_qam`.
 pub fn spec_for_order(order: usize) -> ModemSpec<f32> {
     if order == 2 {
         ModemSpec::<f32>::bpsk()
@@ -19,11 +14,9 @@ pub fn spec_for_order(order: usize) -> ModemSpec<f32> {
     }
 }
 
-/// Generates `(rx_i, rx_q, noise_var)` of length `batch` from the
-/// workspace SSOT LCG, seeded by `seed ^ (order as u64)`. Sample range
-/// is `[-2, 2]` per axis (scale covers unit-average-energy Gray-QAM
-/// constellations up to `m = 8`), noise variance is drawn uniformly
-/// from `[0.05, 2.0]`.
+/// Generates `(rx_i, rx_q, noise_var)` of length `batch`. The `[-2, 2]`
+/// sample range per axis covers unit-average-energy Gray-QAM constellations
+/// up to `m = 8`.
 pub fn gen_batch(order: usize, batch: usize, seed: u64) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
     let mut rng = Lcg::new(seed ^ (order as u64));
     let mut rx_i = Vec::with_capacity(batch);

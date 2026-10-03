@@ -1,11 +1,4 @@
 //! Device-gated event-timing coverage for the permanent launch boundary.
-//!
-//! Run on the ROCm gfx1030 host with:
-//!
-//! ```text
-//! cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --release \
-//!   --features hip -- --ignored permanent_event_timing
-//! ```
 
 #![cfg(feature = "hip")]
 
@@ -14,12 +7,6 @@ use std::time::{Duration, Instant};
 use gf2_kernels_hip::host::HipStream;
 use gf2_kernels_hip::permanent::{dispatch_permanent_batch_instrumented, PermanentField};
 
-/// One full event-instrumented F_3 dispatch yields positive H2D, kernel, and
-/// D2H durations. Their device-clock sum fits within the host wall clock of
-/// this synchronous (finish-and-read) dispatch, while the kernel-only span is
-/// strictly smaller than that enclosing end-to-end time. The separately
-/// reported launch marker span starts before host submission and ends at the
-/// C++ wrapper's event record immediately before kernel submission.
 #[test]
 #[ignore = "external: gfx1030 HIP device required for permanent event timing"]
 fn permanent_event_timing_reports_positive_phase_spans() {

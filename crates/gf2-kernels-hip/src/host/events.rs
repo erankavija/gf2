@@ -15,10 +15,6 @@ use crate::host::streams::HipStream;
 use crate::{check_hip, ffi, HipError, HIP_ERROR_NOT_READY};
 
 /// An RAII wrapper over a timing-enabled `hipEvent_t`.
-///
-/// Construction creates one HIP event and [`Drop`] destroys that exact event.
-/// If construction fails, no wrapper is returned and HIP has not transferred a
-/// resource to Rust. The opaque handle is never dereferenced by Rust.
 pub struct HipEvent {
     raw: *mut c_void,
 }
@@ -42,26 +38,16 @@ impl HipEvent {
         Ok(Self { raw })
     }
 
-    /// Creates a timing event in `device_id`'s HIP context.
-    ///
-    /// This crate-internal constructor temporarily selects `device_id` using
-    /// the allocator's canonical device-selection/restore sequence. It is
-    /// used for caller-stream instrumentation because an allocation may have
-    /// restored a different previously-current device before timing events are
-    /// created.
+    /// Creates a timing event in `device_id`'s HIP context, selecting the
+    /// device for the call and then restoring the device that was current.
     pub(crate) fn new_on_device(device_id: i32) -> Result<Self, HipError> {
         let previous = select_device(device_id)?;
         let event = Self::new();
-        // Restore regardless of creation success so scoped event setup does
-        // not perturb the caller's current HIP device.
         let restore_code = restore_device(previous);
 
         match event {
             Err(error) => Err(error),
             Ok(event) if restore_code != 0 => {
-                // The event is already owned by Rust, so release it before
-                // surfacing the restoration failure rather than leaking a
-                // context-bound HIP handle on this error path.
                 drop(event);
                 Err(HipError::Hip {
                     code: restore_code,
@@ -106,11 +92,8 @@ impl HipEvent {
         }
     }
 
-    /// Returns elapsed device time from `start` to this completed event.
-    ///
-    /// This method is intentionally crate-visible: the public
-    /// [`HipEventSpan`] preserves the important completion check, so a caller
-    /// cannot accidentally treat an unfinished stop event as a partial span.
+    /// Returns elapsed device time from `start` to this event, which the
+    /// caller has observed complete.
     fn elapsed_since(&self, start: &Self) -> Result<Duration, HipError> {
         let mut milliseconds = 0.0_f32;
         // SAFETY: `milliseconds` is a writable f32 out-pointer. Both event
@@ -141,10 +124,8 @@ impl Drop for HipEvent {
 
 /// A stream-local start/stop pair measured on HIP's device clock.
 ///
-/// The span owns both events, so a failure creating the second event drops and
-/// destroys the first one. [`elapsed`](Self::elapsed) first queries the stop
-/// event and returns `hipErrorNotReady` with an explanatory context if it has
-/// not completed; it never returns a partial duration.
+/// [`elapsed`](Self::elapsed) returns `hipErrorNotReady` until the stop event
+/// has completed; it never returns a partial duration.
 pub struct HipEventSpan {
     start: HipEvent,
     stop: HipEvent,
@@ -155,9 +136,7 @@ impl HipEventSpan {
     ///
     /// # Errors
     ///
-    /// Returns [`HipError::Hip`] if either event cannot be created. If creating
-    /// the stop event fails, the already-created start event is dropped and
-    /// destroyed before the error is returned.
+    /// Returns [`HipError::Hip`] if either event cannot be created.
     pub fn new() -> Result<Self, HipError> {
         let start = HipEvent::new()?;
         let stop = HipEvent::new()?;
@@ -165,10 +144,6 @@ impl HipEventSpan {
     }
 
     /// Creates an unrecorded event pair in `device_id`'s HIP context.
-    ///
-    /// Each owned event uses [`HipEvent::new_on_device`], so both timing
-    /// handles belong to the caller stream's device even if a preceding
-    /// device-scoped allocation restored another device as current.
     pub(crate) fn new_on_device(device_id: i32) -> Result<Self, HipError> {
         let start = HipEvent::new_on_device(device_id)?;
         let stop = HipEvent::new_on_device(device_id)?;
@@ -185,12 +160,7 @@ impl HipEventSpan {
         self.stop.record(stream)
     }
 
-    /// Returns the owned start event for a crate-internal launch wrapper.
-    ///
-    /// The returned handle remains owned by this span and is valid only while
-    /// the span is alive. The permanent FFI wrapper records it on the supplied
-    /// stream immediately before kernel submission; no public API exposes this
-    /// raw handle.
+    /// Raw handle of the start event, valid while the span is alive.
     pub(crate) fn start_raw(&self) -> *mut c_void {
         self.start.raw
     }
@@ -205,7 +175,7 @@ impl HipEventSpan {
     /// # Errors
     ///
     /// Returns [`HipError::Hip`] with code `hipErrorNotReady` if the stop event
-    /// is incomplete, rather than exposing a partially observed duration.
+    /// is incomplete.
     pub fn elapsed(&self) -> Result<Duration, HipError> {
         if !self.stop.is_complete()? {
             return Err(HipError::Hip {
@@ -217,10 +187,6 @@ impl HipEventSpan {
     }
 
     /// Returns elapsed device time from `marker` to this span's start marker.
-    ///
-    /// The permanent launch boundary uses this for the device-clock portion of
-    /// launch overhead. It is crate-visible so the public API continues to
-    /// expose only complete start/stop spans.
     pub(crate) fn elapsed_before_start(&self, marker: &HipEvent) -> Result<Duration, HipError> {
         if !self.start.is_complete()? {
             return Err(HipError::Hip {
@@ -255,12 +221,8 @@ mod tests {
             "this focused context test requires HIP devices 0 and 1"
         );
 
-        // Select device 0 for the test's ambient current device and restore
-        // whatever device the host thread had selected when the test finishes.
         let original_device = select_device(0).expect("select ambient device 0");
         let result = (|| -> Result<i32, HipError> {
-            // Create the stream on device 1, then restore device 0 to recreate
-            // the cross-device allocation/creation condition this test covers.
             let stream_previous = select_device(1)?;
             let stream_result = HipStream::new();
             let stream_restore = restore_device(stream_previous);

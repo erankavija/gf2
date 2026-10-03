@@ -121,10 +121,8 @@ pub struct MatrixAddress {
 impl MatrixAddress {
     /// Constructs the address of a stream of square matrices.
     ///
-    /// `dimension` is part of the seed, not merely the output shape: matrices
-    /// of different sizes are therefore domain-separated even when all other
-    /// address components match. Construct `stream` with [`StreamIndex::new`]
-    /// before calling this function.
+    /// `dimension` is part of the seed: matrices of different sizes are
+    /// domain-separated even when all other address components match.
     #[must_use]
     pub const fn new(
         campaign_root: u64,
@@ -175,8 +173,7 @@ impl MatrixAddress {
     /// Derives the exact 32-byte ChaCha20 seed for this address.
     ///
     /// The seed has four little-endian `u64` words: campaign root, field order,
-    /// dimension, then `(purpose.tag() << 56) | stream`. This is `O(1)` and
-    /// allocates no memory.
+    /// dimension, then `(purpose.tag() << 56) | stream`.
     #[must_use]
     pub fn seed(self) -> [u8; 32] {
         let final_word = (u64::from(self.purpose.tag()) << 56) | self.stream.get();
