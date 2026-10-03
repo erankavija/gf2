@@ -1,58 +1,17 @@
-//! Database of standard polynomials for GF(2^m).
-//!
-//! This module provides a verified database of polynomials drawn from
-//! authoritative sources including:
-//! - Lidl & Niederreiter (1997). "Finite Fields", 2nd edition
-//! - Menezes et al. (1996). "Handbook of Applied Cryptography"
-//! - ETSI EN 302 755 (DVB-T2 standard)
-//! - IEEE AES standard
-//! - 3GPP TS 38.212 (5G NR standard)
-//! - Seroussi (1998). "Table of Low-Weight Binary Irreducible Polynomials", HPL-98-135
-//! - Živković (1994). "Table of primitive binary polynomials, II", Math. Comp. 63, 301-306
-//! - FIPS PUB 186-4 (NIST Digital Signature Standard), Appendix D
-//!
-//! The generic automatic selector in [`crate::field::modulus_select`] treats
-//! this database as an adapter.  The GF(2^32) entry is the canonical Conway
-//! entry and is preferred before the other verified entries; the remaining
-//! entries retain their documented primitive or irreducibility-only
-//! guarantees below.
-//!
-//! ## Strength of the guarantee per range
-//!
-//! The database makes two distinct guarantees that callers MUST NOT confuse:
-//!
-//! - **Primitive (stronger)** — For `m = 2..=16`, [`PrimitivePolynomialDatabase::standard`]
-//!   returns a polynomial whose associated element `x` generates the full
-//!   multiplicative group of order `2^m - 1`. Every entry in this range is
-//!   checked by the multiplicative-order test
-//!   `Gf2mField::verify_primitive` via
-//!   `test_all_database_entries_are_primitive` in `gf2m/field.rs`.
-//! - **Irreducible only (weaker)** — For `m = 64..=127`,
-//!   [`PrimitivePolynomialDatabase::standard_u128`] returns a polynomial
-//!   verified only to be irreducible over GF(2) by a scalar Rabin-style
-//!   test (see `test_standard_u128_entries_are_irreducible`). Entries are
-//!   drawn from Seroussi's table, which is explicitly a table of low-weight
-//!   *irreducible* (not necessarily primitive) polynomials, and from FIPS
-//!   186-4 Appendix D. Many of these entries are expected to be primitive,
-//!   but this crate does not currently run a multiplicative-order check for
-//!   `m >= 64` because the u64-bounded `verify_primitive` would overflow.
-//!
-//! **Callers requiring primitivity for `m >= 64`** (e.g. LFSR-based random
-//! number generators, or any code that needs `x` to have multiplicative order
-//! exactly `2^m - 1`) must verify the polynomial independently. Widening
-//! `verify_primitive` to u128 storage is tracked as a future extension.
+//! Database of standard polynomials for GF(2^m), drawn from
+//! `@/citation/LidlNiederreiter1996`, `@/citation/Menezes1997`,
+//! `@/citation/Etsi2015`, `@/citation/ThreeGpp2017`,
+//! `@/citation/Seroussi1998`, `@/citation/Zivkovic1994`,
+//! `@/citation/Nist2013` Appendix D and `@/citation/Lubeck2024`. Entries for
+//! `m <= 16` are verified primitive; entries for `m = 64..=127` are verified
+//! irreducible only (see [`PrimitivePolynomialDatabase::standard_u128`]).
 
 use crate::field::extension::FieldId;
 use crate::field::modulus_select::{ModulusRegistry, RegistryEntry, RegistryProvenance};
 
-/// Database of well-known polynomials for GF(2^m) drawn from authoritative
-/// sources.
-///
-/// Historically this database contained only primitive polynomials (hence
-/// the name); the `u128` accessors added for `m = 64..=127` guarantee only
-/// irreducibility. See the module-level docs and
-/// [`Self::standard_u128_irreducibility_note`] for the exact per-range
-/// contract.
+/// Database of well-known polynomials for GF(2^m). Entries for
+/// `m = 64..=127` are irreducible but not verified primitive; see
+/// [`Self::standard_u128`].
 pub struct PrimitivePolynomialDatabase;
 
 impl ModulusRegistry for PrimitivePolynomialDatabase {
@@ -104,7 +63,7 @@ pub enum VerificationResult {
     Matches,
     /// Not in database but could be valid (needs verification)
     Unknown,
-    /// Different from database entry - WARNING!
+    /// Differs from the database entry
     Conflict,
 }
 
@@ -112,24 +71,8 @@ impl PrimitivePolynomialDatabase {
     /// Returns the standard primitive polynomial for GF(2^m).
     ///
     /// Returns `Some(poly)` if a standard polynomial is known, `None` otherwise.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
-    ///
-    /// // GF(256) primitive polynomial
-    /// assert_eq!(PrimitivePolynomialDatabase::standard(8), Some(0b100011101));
-    ///
-    /// // DVB-T2 short frames
-    /// assert_eq!(PrimitivePolynomialDatabase::standard(14), Some(0b100000000101011));
-    ///
-    /// // DVB-T2 normal frames
-    /// assert_eq!(PrimitivePolynomialDatabase::standard(16), Some(0b10000000000101101));
-    /// ```
     pub fn standard(m: usize) -> Option<u64> {
         match m {
-            // Standard primitive polynomials from authoritative sources
             2 => Some(0b111),                // x^2 + x + 1
             3 => Some(0b1011),               // x^3 + x + 1
             4 => Some(0b10011),              // x^4 + x + 1
@@ -145,66 +88,18 @@ impl PrimitivePolynomialDatabase {
             14 => Some(0b100000000101011),   // x^14 + x^5 + x^3 + x + 1 (DVB-T2)
             15 => Some(0b1000000000000011),  // x^15 + x + 1
             16 => Some(0b10000000000101101), // x^16 + x^5 + x^3 + x^2 + 1 (DVB-T2)
-            // m = 32: x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1.
-            //
-            // Source — Conway polynomial database (Frank Lübeck),
-            // <https://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/CP2.html>,
-            // table row `f_{2,32}` (constant term first; the implicit
-            // "1" at index 32 is the leading coefficient). Coefficients
-            // equal 1 at positions {0, 3, 4, 7, 9, 15, 32}; all other
-            // positions are 0.
-            //
-            // Conway polynomials are primitive by construction
-            // (Lübeck, *Conway polynomials for finite fields*, 2003), so
-            // the multiplicative-order test is automatically satisfied —
-            // x has order 2^32 - 1 = 4294967295. The polynomial is in
-            // canonical compatibility form across SageMath, Magma, GAP,
-            // and FLINT (`nmod_poly_init_conway` returns the same bits),
-            // which makes it a natural choice when interoperating with
-            // external GF(2^32) reference implementations such as NTL
-            // `mat_GF2E` or FLINT `fq_nmod_mat`.
-            //
-            // Hex form: 0x1_0000_8299u64. The leading 0x1_0000_0000
-            // carries bit 32; the low half-word 0x8299 = 0b1000_0010_1001_1001
-            // sets bits 0, 3, 4, 7, 9, 15. The polynomial fits in `u64`
-            // (degree < 64).
-            //
-            // We do not run the project's u64-based `verify_primitive`
-            // multiplicative-order check on this entry because that
-            // helper iterates 2^m - 1 elements; for m = 32 that is
-            // ~4.3 billion iterations and would dominate the test
-            // suite. The Conway-polynomial citation above is the
-            // primary correctness witness; the irreducibility test in
-            // `test_standard_m32_is_irreducible` (this module's `tests`
-            // submodule) re-verifies the irreducibility half of the
-            // contract via the same `is_irreducible_u128` helper used
-            // for the `m >= 64` entries.
+            // Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`, hence
+            // primitive; `test_standard_m32_is_irreducible` checks
+            // irreducibility only.
             32 => Some(0x1_0000_8299u64), // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1
             _ => None,
         }
     }
 
-    /// Returns all known primitive trinomials of degree m.
-    ///
-    /// Trinomials (x^m + x^k + 1) are preferred in hardware implementations
-    /// because they minimize XOR gate count in LFSR circuits.
-    ///
-    /// Returns empty vector if no primitive trinomials exist for this degree,
-    /// or if they are not in the database.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
-    ///
-    /// let trinomials = PrimitivePolynomialDatabase::trinomials(8);
-    /// assert!(!trinomials.is_empty());
-    /// // x^8 + x^4 + 1 is a primitive trinomial
-    /// assert!(trinomials.contains(&0b100010001));
-    /// ```
+    /// Returns the database's primitive trinomials of degree `m`, or an empty
+    /// vector when it holds none.
     pub fn trinomials(m: usize) -> Vec<u64> {
         match m {
-            // Known primitive trinomials (x^m + x^k + 1)
             2 => vec![0b111],                  // x^2 + x + 1
             3 => vec![0b1011],                 // x^3 + x + 1
             4 => vec![0b10011],                // x^4 + x + 1
@@ -221,25 +116,6 @@ impl PrimitivePolynomialDatabase {
     }
 
     /// Verifies a polynomial against the database.
-    ///
-    /// Returns:
-    /// - `Matches`: Polynomial matches the standard database entry
-    /// - `Unknown`: Not in database but could be valid (needs verification)
-    /// - `Conflict`: Different from database entry - WARNING!
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
-    ///
-    /// // Correct DVB-T2 polynomial
-    /// let result = PrimitivePolynomialDatabase::verify(14, 0b100000000101011);
-    /// assert_eq!(result, VerificationResult::Matches);
-    ///
-    /// // Wrong polynomial that caused the bug
-    /// let result = PrimitivePolynomialDatabase::verify(14, 0b100000000100001);
-    /// assert_eq!(result, VerificationResult::Conflict);
-    /// ```
     pub fn verify(m: usize, poly: u64) -> VerificationResult {
         match Self::standard(m) {
             Some(standard_poly) if standard_poly == poly => VerificationResult::Matches,
@@ -248,82 +124,37 @@ impl PrimitivePolynomialDatabase {
         }
     }
 
-    /// Returns a standard polynomial for GF(2^m) as a `u128`.
+    /// Returns a standard polynomial for GF(2^m) as a `u128`, with its leading
+    /// bit at position `m`.
     ///
-    /// Extends [`Self::standard`] past the `u64` limit: for `m <= 16` it
-    /// forwards to [`Self::standard`] (widening to `u128`); for
-    /// `m = 64..=127` it returns an entry drawn from Seroussi's table of
-    /// low-weight *irreducible* polynomials (plus FIPS 186-4 Appendix D).
-    /// The returned polynomial always has its leading bit set at
-    /// position `m`.
+    /// For `m <= 63` this is [`Self::standard`] widened, so degrees in
+    /// `17..=63` other than 32 return `None`; for `m = 64..=127` the entry
+    /// comes from `@/citation/Seroussi1998` or `@/citation/Nist2013`
+    /// Appendix D.
     ///
     /// # Strength of the guarantee
     ///
-    /// - For `m <= 16` the returned polynomial is **primitive** (verified by
-    ///   the multiplicative-order test in `gf2m::Gf2mField::verify_primitive`).
-    /// - For `m = 64..=127` the returned polynomial is only verified to be
-    ///   **irreducible over GF(2)** (by the Rabin-style test in
-    ///   `test_standard_u128_entries_are_irreducible`). Primitivity is NOT
-    ///   guaranteed for this range. Callers needing a primitive polynomial
-    ///   (e.g. for maximum-length LFSR or full-cycle PRNGs) must verify
-    ///   independently; see [`Self::standard_u128_irreducibility_note`] for
-    ///   the exact wording.
-    ///
-    /// Degrees `17..=63` are not currently catalogued in the `u128` view
-    /// (see the `m = 64+` companion story); callers can either use
-    /// [`Self::standard`] directly or construct their own polynomial via
-    /// [`crate::gf2m::Gf2mField::new`].
-    ///
-    /// # Arguments
-    ///
-    /// * `m` - Extension degree in the range `2..=127`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
-    ///
-    /// // GF(2^64): x^64 + x^4 + x^3 + x + 1 (a standard 5-term LFSR polynomial,
-    /// // verified irreducible; primitivity not independently checked)
-    /// let p64 = PrimitivePolynomialDatabase::standard_u128(64).unwrap();
-    /// assert_eq!(p64, (1u128 << 64) | 0b11011);
-    ///
-    /// // GF(2^127): x^127 + x + 1 (irreducible trinomial; in fact known
-    /// // primitive, but this crate verifies only irreducibility for m >= 64)
-    /// let p127 = PrimitivePolynomialDatabase::standard_u128(127).unwrap();
-    /// assert_eq!(p127, (1u128 << 127) | 0b11);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1) table lookup.
+    /// - For `m <= 16` the polynomial is **primitive**, checked by
+    ///   `test_all_database_entries_are_primitive` in `gf2m/field.rs`.
+    /// - For `m = 64..=127` the polynomial is verified only **irreducible
+    ///   over GF(2)**, by `test_standard_u128_entries_are_irreducible`.
+    ///   Callers that need a primitive polynomial verify it independently.
     pub fn standard_u128(m: usize) -> Option<u128> {
         if m <= 63 {
-            // Delegate to the u64 catalog (widened). Covers m = 2..=16
-            // (verified primitive) and returns None for m = 17..=63.
             return Self::standard(m).map(|p| p as u128);
         }
         Self::seroussi_u128(m)
     }
 
-    /// Seroussi/FIPS 186-4 table entries for GF(2^m), `m = 64..=127`. Returns
-    /// the polynomial as `u128`. Every entry is verified **irreducible over
-    /// GF(2)** (not necessarily primitive) — see the test
-    /// `test_standard_u128_entries_are_irreducible` in the `tests` module.
-    ///
-    /// Seroussi's table is explicitly a table of irreducible polynomials; the
-    /// primitivity of each specific entry has not been independently checked
-    /// by this crate. See the module-level docs and
-    /// [`Self::standard_u128_irreducibility_note`] for the caller contract.
+    /// Entries for `m = 64..=127` from `@/citation/Seroussi1998` and
+    /// `@/citation/Nist2013`, each verified irreducible over GF(2) by
+    /// `test_standard_u128_entries_are_irreducible`.
     fn seroussi_u128(m: usize) -> Option<u128> {
-        // Helper: construct x^m + x^k + 1 as u128
         let tri = |m: usize, k: usize| Some((1u128 << m) | (1u128 << k) | 1);
-        // Helper: construct x^m + x^a + x^b + x^c + 1 as u128 (pentanomial)
         let penta = |m: usize, a: usize, b: usize, c: usize| {
             Some((1u128 << m) | (1u128 << a) | (1u128 << b) | (1u128 << c) | 1)
         };
         match m {
-            // Pentanomial used by many 64-bit CRC/LFSR designs.
             64 => penta(64, 4, 3, 1), // x^64 + x^4 + x^3 + x + 1
             65 => tri(65, 18),
             66 => penta(66, 9, 8, 6), // x^66 + x^9 + x^8 + x^6 + 1
@@ -395,19 +226,6 @@ impl PrimitivePolynomialDatabase {
     /// Verifies a `u128` polynomial against the extended database (`m` up to 127).
     ///
     /// See [`Self::verify`] for the `u64` variant.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
-    ///
-    /// // GF(2^64) standard polynomial
-    /// let poly = (1u128 << 64) | 0b11011;
-    /// assert_eq!(
-    ///     PrimitivePolynomialDatabase::verify_u128(64, poly),
-    ///     VerificationResult::Matches
-    /// );
-    /// ```
     pub fn verify_u128(m: usize, poly: u128) -> VerificationResult {
         match Self::standard_u128(m) {
             Some(standard_poly) if standard_poly == poly => VerificationResult::Matches,
@@ -418,11 +236,6 @@ impl PrimitivePolynomialDatabase {
 
     /// Human-readable note clarifying the irreducibility-only guarantee for
     /// `m >= 64` entries returned by [`Self::standard_u128`].
-    ///
-    /// Intended to be embedded in log output, error messages, or upstream
-    /// documentation when a library client surfaces the u128 polynomial
-    /// database to its own users. The wording matches the module-level
-    /// contract and is stable across minor releases of this crate.
     pub const fn standard_u128_irreducibility_note() -> &'static str {
         "PrimitivePolynomialDatabase::standard_u128 entries for m = 64..=127 \
          are verified irreducible over GF(2) but are NOT independently \
@@ -620,13 +433,10 @@ mod tests {
 
     #[test]
     fn test_standard_m32_value() {
-        // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1 — Conway polynomial for
-        // GF(2^32) (Frank Lübeck's Conway polynomial database, table
-        // row `f_{2,32}`).
-        // Bits set: 0, 3, 4, 7, 9, 15, 32 → 0x1_0000_8299.
+        // `f_{2,32}` of `@/citation/Lubeck2024`:
+        // x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1.
         let poly = PrimitivePolynomialDatabase::standard(32).expect("m=32 entry");
         assert_eq!(poly, 0x1_0000_8299u64);
-        // Sanity-check the bit set against the textual form.
         let expected_bits = [0u32, 3, 4, 7, 9, 15, 32];
         let mut got_bits: Vec<u32> = (0..64).filter(|i| (poly >> i) & 1 == 1).collect();
         got_bits.sort_unstable();
@@ -635,15 +445,6 @@ mod tests {
 
     #[test]
     fn test_standard_m32_is_irreducible() {
-        // Verify the GF(2^32) Conway-polynomial entry is irreducible
-        // over GF(2). Conway polynomials are primitive by construction;
-        // primitivity implies irreducibility, so this test re-checks
-        // the weaker (but cheap-to-verify) half of the contract via the
-        // same Rabin-style helper used for the `m >= 64` entries.
-        // Running the multiplicative-order test for m = 32 would require
-        // walking 2^32 - 1 ≈ 4.3 billion elements, which is impractical
-        // in CI; the Conway citation in `standard()`'s comment carries
-        // the primitivity claim.
         let poly = PrimitivePolynomialDatabase::standard(32).expect("m=32 entry");
         assert!(
             is_irreducible_u128(poly as u128, 32),

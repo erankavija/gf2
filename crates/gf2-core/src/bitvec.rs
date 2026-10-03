@@ -4,13 +4,6 @@ use std::fmt;
 use std::sync::Mutex;
 
 /// Reverses the lowest `num_bits` bits of `x`.
-///
-/// # Examples
-///
-/// ```ignore
-/// assert_eq!(reverse_bits(0b001, 3), 0b100);
-/// assert_eq!(reverse_bits(0b1010, 4), 0b0101);
-/// ```
 #[inline]
 fn reverse_bits(mut x: usize, num_bits: usize) -> usize {
     let mut result = 0;
@@ -21,13 +14,7 @@ fn reverse_bits(mut x: usize, num_bits: usize) -> usize {
     result
 }
 
-/// Rank/Select index for efficient bit queries.
-///
-/// Uses a two-level index structure:
-/// - Superblocks: One entry per 512 bits (8 words), stores cumulative popcount
-/// - Blocks: One entry per 64 bits (1 word), stores popcount within superblock
-///
-/// This enables O(1) rank and O(log n) select queries.
+/// Two-level popcount index behind [`BitVec::rank`] and [`BitVec::select`].
 #[derive(Debug, Clone)]
 struct RankSelectIndex {
     /// Cumulative popcount at each superblock (512-bit boundary)
@@ -44,17 +31,6 @@ struct RankSelectIndex {
 /// 2. Bit `i` is stored at `data[i >> 6] & (1u64 << (i & 63))`.
 /// 3. Padding bits beyond `len_bits` in the last word are always zero.
 /// 4. `data.len() * 64 >= len_bits`, with exactly enough words allocated.
-///
-/// ## Examples
-///
-/// ```
-/// use gf2_core::BitVec;
-///
-/// let mut bv = BitVec::new();
-/// bv.push_bit(true);
-/// assert_eq!(bv.len(), 1);
-/// assert_eq!(bv.get(0), true);
-/// ```
 #[derive(Debug)]
 pub struct BitVec {
     data: Vec<u64>,
@@ -113,9 +89,6 @@ impl BitVec {
     }
 
     /// Creates a `BitVec` with `len` bits, all initialized to one.
-    ///
-    /// Padding bits beyond `len` in the last word are set to zero,
-    /// maintaining the tail masking invariant.
     pub fn ones(len: usize) -> Self {
         if len == 0 {
             return Self {
@@ -128,7 +101,6 @@ impl BitVec {
         let num_words = len.div_ceil(64);
         let mut data = vec![u64::MAX; num_words];
 
-        // Mask padding bits in the last word to maintain tail masking invariant
         let used_bits = len % 64;
         if used_bits != 0 {
             let mask = (1u64 << used_bits) - 1;
@@ -150,18 +122,6 @@ impl BitVec {
     /// # Panics
     ///
     /// Panics if `data.len() * 64 < len_bits`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let words = vec![0b1010_u64];
-    /// let bv = BitVec::from_words(words, 4);
-    /// assert_eq!(bv.len(), 4);
-    /// assert!(bv.get(1));
-    /// assert!(bv.get(3));
-    /// ```
     pub fn from_words(mut data: Vec<u64>, len_bits: usize) -> Self {
         let required_words = len_bits.div_ceil(64);
         assert!(
@@ -230,7 +190,6 @@ impl BitVec {
         // Clear the bit to maintain invariant
         self.data[word_idx] &= !(1u64 << bit_idx);
 
-        // Remove word if it was the last bit in the word
         if bit_idx == 0 && !self.data.is_empty() {
             self.data.pop();
         }
@@ -313,14 +272,13 @@ impl BitVec {
     /// processor feature. Any other `k` goes to
     /// [`crate::residual_shift`], whose kernel route needs the same cargo
     /// feature and the `bmi2` processor feature and whose fallback is the
-    /// portable funnel. Every route writes the same bits.
+    /// portable funnel.
     pub fn shift_left(&mut self, k: usize) {
         if k == 0 || self.len_bits == 0 {
             return;
         }
 
         if k >= self.len_bits {
-            // Zero all data but preserve length
             for word in self.data.iter_mut() {
                 *word = 0;
             }
@@ -331,15 +289,12 @@ impl BitVec {
         let bit_shift = k % 64;
 
         if bit_shift == 0 {
-            // Word-aligned shift - can use SIMD
             #[cfg(feature = "simd")]
             if let Some(fns) = crate::simd::maybe_simd() {
                 (fns.shift_left_words_fn)(&mut self.data, word_shift);
                 self.mask_tail();
                 return;
             }
-
-            // Scalar fallback
             for i in (word_shift..self.data.len()).rev() {
                 self.data[i] = self.data[i - word_shift];
             }
@@ -365,7 +320,6 @@ impl BitVec {
         }
 
         if k >= self.len_bits {
-            // Zero all data but preserve length
             for word in self.data.iter_mut() {
                 *word = 0;
             }
@@ -376,15 +330,12 @@ impl BitVec {
         let bit_shift = k % 64;
 
         if bit_shift == 0 {
-            // Word-aligned shift - can use SIMD
             #[cfg(feature = "simd")]
             if let Some(fns) = crate::simd::maybe_simd() {
                 (fns.shift_right_words_fn)(&mut self.data, word_shift);
                 self.mask_tail();
                 return;
             }
-
-            // Scalar fallback
             for i in 0..(self.data.len() - word_shift) {
                 self.data[i] = self.data[i + word_shift];
             }
@@ -403,15 +354,7 @@ impl BitVec {
         crate::kernels::ops::popcount(&self.data) as usize
     }
 
-    /// Computes the XOR parity of all bits in the vector.
-    ///
-    /// Returns `true` if there is an odd number of 1 bits, `false` otherwise.
-    /// This is equivalent to computing the dot product in GF(2).
-    ///
-    /// # Performance
-    ///
-    /// This method uses hardware popcount when available, which is very fast
-    /// on modern CPUs (1-3 cycles per word on x86-64).
+    /// Returns `true` if the number of set bits is odd.
     pub fn parity(&self) -> bool {
         self.data
             .iter()
@@ -435,7 +378,6 @@ impl BitVec {
             return;
         }
 
-        // One superblock per 8 words (512 bits)
         let num_superblocks = num_words.div_ceil(8);
         let mut superblocks = Vec::with_capacity(num_superblocks);
         let mut blocks = Vec::with_capacity(num_words);
@@ -466,27 +408,9 @@ impl BitVec {
 
     /// Returns the number of set bits in the range `[0..=idx]`.
     ///
-    /// This operation runs in O(1) time after the index is built (on first call).
-    /// The index is built lazily and cached for subsequent queries.
-    ///
-    /// # Arguments
-    ///
-    /// * `idx` - The bit position (0-indexed, inclusive)
-    ///
     /// # Panics
     ///
     /// Panics if `idx >= self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::from_bytes_le(&[0b00101101]); // bits: 10110100
-    /// assert_eq!(bv.rank(0), 1); // bit 0 is set
-    /// assert_eq!(bv.rank(2), 2); // bits 0, 2 are set
-    /// assert_eq!(bv.rank(5), 4); // bits 0, 2, 3, 5 are set
-    /// ```
     ///
     /// # Complexity
     ///
@@ -506,12 +430,10 @@ impl BitVec {
         let bit_idx = idx % 64;
         let sb_idx = word_idx / 8;
 
-        // Count from superblock + block + bits within word
         let mut count = index.superblocks[sb_idx];
         count += index.blocks[word_idx] as usize;
 
-        // Count bits in the current word up to bit_idx (inclusive)
-        // Special case: if bit_idx == 63, we want all 64 bits
+        // `1 << 64` overflows, so bit 63 takes the full mask.
         let mask = if bit_idx == 63 {
             u64::MAX
         } else {
@@ -526,25 +448,10 @@ impl BitVec {
     ///
     /// Returns `None` if there are fewer than `k + 1` set bits in the vector.
     ///
-    /// # Arguments
-    ///
-    /// * `k` - The rank of the set bit to find (0-indexed)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::from_bytes_le(&[0b00101101]); // bits: 10110100
-    /// assert_eq!(bv.select(0), Some(0)); // 1st set bit at position 0
-    /// assert_eq!(bv.select(1), Some(2)); // 2nd set bit at position 2
-    /// assert_eq!(bv.select(3), Some(5)); // 4th set bit at position 5
-    /// assert_eq!(bv.select(4), None);     // only 4 set bits total
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(log n) using binary search over the rank index, then O(1) for word-level selection.
+    /// O(n / 64) for the population count that bounds `k`, plus a binary
+    /// search over the rank index.
     pub fn select(&self, k: usize) -> Option<usize> {
         if k >= self.count_ones() {
             return None;
@@ -556,9 +463,8 @@ impl BitVec {
 
         let target = k + 1; // We want the position where rank equals k+1
 
-        // Binary search to find the superblock containing the target
-        // superblocks[i] stores the cumulative count BEFORE superblock i
-        // If we get an exact match at i, the target bit is in superblock i-1
+        // `superblocks[i]` is the cumulative count before superblock `i`, so an
+        // exact match at `i` places the target bit in superblock `i - 1`.
         let sb_idx = match index.superblocks.binary_search(&target) {
             Ok(i) => i.saturating_sub(1),
             Err(i) => i.saturating_sub(1),
@@ -567,35 +473,22 @@ impl BitVec {
         if sb_idx >= index.superblocks.len() {
             return None;
         }
-
-        // How many ones we've seen before this superblock
         let sb_base = index.superblocks[sb_idx];
-
-        // Linear search within superblock to find the word
         let start_word = sb_idx * 8;
         let end_word = ((sb_idx + 1) * 8).min(self.data.len());
 
         for word_idx in start_word..end_word {
-            // Total count up to (but not including) this word
             let count_before_word = sb_base + index.blocks[word_idx] as usize;
-            // Total count up to and including this word
             let count_after_word = count_before_word + self.data[word_idx].count_ones() as usize;
 
             if target <= count_before_word {
-                // Target is in a previous word, shouldn't happen with correct logic
                 continue;
             }
 
             if target > count_after_word {
-                // Target is beyond this word, continue
                 continue;
             }
-
-            // The target bit is in this word
-            // We need the (target - count_before_word)-th set bit in this word
             let in_word_target = target - count_before_word;
-
-            // Find the in_word_target-th set bit within self.data[word_idx]
             let mut word = self.data[word_idx];
             let mut count = 0;
 
@@ -646,19 +539,11 @@ impl BitVec {
     /// Finds the index of the first set bit (1).
     ///
     /// Returns `None` if the bit vector is empty or contains only zeros.
-    /// This method can benefit from SIMD acceleration when the `simd` feature is enabled.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of words, but typically much faster due to early exit.
-    /// SIMD implementations can process multiple words in parallel.
     pub fn find_first_one(&self) -> Option<usize> {
         #[cfg(feature = "simd")]
         if let Some(fns) = crate::simd::maybe_simd() {
             return (fns.find_first_one_fn)(&self.data).filter(|&pos| pos < self.len_bits);
         }
-
-        // Scalar fallback
         for (i, &word) in self.data.iter().enumerate() {
             if word != 0 {
                 let bit_in_word = word.trailing_zeros() as usize;
@@ -674,19 +559,11 @@ impl BitVec {
     /// Finds the index of the first clear bit (0).
     ///
     /// Returns `None` if the bit vector is empty or contains only ones.
-    /// This method can benefit from SIMD acceleration when the `simd` feature is enabled.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of words, but typically much faster due to early exit.
-    /// SIMD implementations can process multiple words in parallel.
     pub fn find_first_zero(&self) -> Option<usize> {
         #[cfg(feature = "simd")]
         if let Some(fns) = crate::simd::maybe_simd() {
             return (fns.find_first_zero_fn)(&self.data).filter(|&pos| pos < self.len_bits);
         }
-
-        // Scalar fallback
         for (i, &word) in self.data.iter().enumerate() {
             if word != !0u64 {
                 let bit_in_word = (!word).trailing_zeros() as usize;
@@ -701,17 +578,7 @@ impl BitVec {
 
     /// Creates a `BitVec` from a byte slice in little-endian order.
     ///
-    /// The length is set to `bytes.len() * 8`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::from_bytes_le(&[0b10101010, 0b11110000]);
-    /// assert_eq!(bv.len(), 16);
-    /// assert_eq!(bv.get(1), true); // second bit of first byte
-    /// ```
+    /// The length is `bytes.len() * 8`; bit `8 * i + j` is bit `j` of `bytes[i]`.
     pub fn from_bytes_le(bytes: &[u8]) -> Self {
         let len_bits = bytes.len() * 8;
         let num_words = len_bits.div_ceil(64);
@@ -733,23 +600,6 @@ impl BitVec {
     /// Converts the `BitVec` to a byte vector in little-endian order.
     ///
     /// The returned vector has `(self.len() + 7) / 8` bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// bv.push_bit(true);
-    /// assert_eq!(bv.to_bytes_le(), vec![0b10101010]);
-    /// ```
     pub fn to_bytes_le(&self) -> Vec<u8> {
         let num_bytes = self.len_bits.div_ceil(8);
         let mut bytes = vec![0u8; num_bytes];
@@ -761,8 +611,6 @@ impl BitVec {
                 *byte = (self.data[word_idx] >> (byte_in_word * 8)) as u8;
             }
         }
-
-        // Mask the last byte if needed
         if !self.len_bits.is_multiple_of(8) {
             let last_byte_bits = self.len_bits % 8;
             let mask = (1u8 << last_byte_bits) - 1;
@@ -842,15 +690,6 @@ impl BitVec {
     ///
     /// Each bit has probability 0.5 of being set. For custom probabilities,
     /// use [`BitVec::random_with_probability`].
-    ///
-    /// # Arguments
-    ///
-    /// * `len_bits` - The number of bits in the resulting vector
-    /// * `rng` - A mutable reference to a random number generator
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of words (`len_bits / 64`).
     #[cfg(feature = "rand")]
     pub fn random<R: rand::Rng>(len_bits: usize, rng: &mut R) -> Self {
         if len_bits == 0 {
@@ -870,31 +709,8 @@ impl BitVec {
         bv
     }
 
-    /// Creates a `BitVec` with random bits using a seeded RNG.
-    ///
-    /// This provides deterministic random generation - the same seed
-    /// will always produce the same bit vector.
-    ///
-    /// # Arguments
-    ///
-    /// * `len_bits` - The number of bits in the resulting vector
-    /// * `seed` - Seed value for the random number generator
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv1 = BitVec::random_seeded(100, 0x1234);
-    /// let bv2 = BitVec::random_seeded(100, 0x1234);
-    /// assert_eq!(bv1, bv2); // Same seed produces same bits
-    /// # }
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of words (`len_bits / 64`).
+    /// Creates a `BitVec` with random bits from an RNG seeded with `seed`; equal
+    /// seeds give equal vectors (`test_bitvec_random_seeded_deterministic`).
     #[cfg(feature = "rand")]
     pub fn random_seeded(len_bits: usize, seed: u64) -> Self {
         use rand::rngs::StdRng;
@@ -906,22 +722,9 @@ impl BitVec {
 
     /// Creates a `BitVec` with random bits where each bit is set with probability `p`.
     ///
-    /// For `p = 0.5`, prefer [`BitVec::random`] which is optimized for the uniform case.
-    ///
-    /// # Arguments
-    ///
-    /// * `len_bits` - The number of bits in the resulting vector
-    /// * `p` - Probability in [0.0, 1.0] that each bit is set to 1
-    /// * `rng` - A mutable reference to a random number generator
-    ///
     /// # Panics
     ///
     /// Panics if `p` is not in the range [0.0, 1.0].
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n = `len_bits`. Note that this is slower than [`BitVec::random`]
-    /// for the default p=0.5 case.
     #[cfg(feature = "rand")]
     pub fn random_with_probability<R: rand::Rng>(len_bits: usize, p: f64, rng: &mut R) -> Self {
         assert!(
@@ -934,7 +737,6 @@ impl BitVec {
             return Self::new();
         }
 
-        // Fast paths for extreme probabilities
         if p == 0.0 {
             return Self {
                 data: vec![0u64; len_bits.div_ceil(64)],
@@ -951,13 +753,9 @@ impl BitVec {
             bv.mask_tail();
             return bv;
         }
-
-        // For p=0.5, use optimized word-level generation
         if (p - 0.5).abs() < 1e-10 {
             return Self::random(len_bits, rng);
         }
-
-        // General case: generate bits individually
         let mut bv = Self::with_capacity(len_bits);
         for _ in 0..len_bits {
             bv.push_bit(rng.gen_bool(p));
@@ -968,14 +766,6 @@ impl BitVec {
     /// Fills this `BitVec` with random bits using the provided RNG.
     ///
     /// The length of the bit vector remains unchanged.
-    ///
-    /// # Arguments
-    ///
-    /// * `rng` - A mutable reference to a random number generator
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of words.
     #[cfg(feature = "rand")]
     pub fn fill_random<R: rand::Rng>(&mut self, rng: &mut R) {
         if !self.data.is_empty() {
@@ -997,13 +787,11 @@ impl BitVec {
         }
 
         if new_len_bits < self.len_bits {
-            // Shrinking
             self.len_bits = new_len_bits;
             let new_num_words = new_len_bits.div_ceil(64);
             self.data.truncate(new_num_words);
             self.mask_tail();
         } else {
-            // Growing
             let old_len = self.len_bits;
             let new_num_words = new_len_bits.div_ceil(64);
             self.data
@@ -1011,7 +799,6 @@ impl BitVec {
             self.len_bits = new_len_bits;
 
             if fill_bit {
-                // Set bits from old_len to new_len_bits
                 for i in old_len..new_len_bits {
                     self.set(i, true);
                 }
@@ -1036,37 +823,14 @@ impl BitVec {
         }
     }
 
-    // =========================================================================
-    // Polar Transform Operations
-    // =========================================================================
-
     /// Creates a bit-reversed copy of the first `n_bits`.
     ///
     /// Bit-reversal permutation reorders bits such that bit at position `i`
     /// moves to position with binary representation reversed.
     ///
-    /// # Arguments
-    ///
-    /// * `n_bits` - Number of bits to reverse (must be a power of 2)
-    ///
     /// # Panics
     ///
     /// Panics if `n_bits` is not a power of 2 or if `n_bits > self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let bv = BitVec::from_bytes_le(&[0b11001010]);
-    /// let reversed = bv.bit_reversed(8);
-    /// // 0b11001010 with bit-reversal permutation becomes 0b11011000
-    /// assert_eq!(reversed.to_bytes_le()[0], 216);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of bits.
     pub fn bit_reversed(&self, n_bits: usize) -> BitVec {
         assert!(
             n_bits.is_power_of_two() || n_bits == 0,
@@ -1081,17 +845,9 @@ impl BitVec {
 
     /// Bit-reverses the first `n_bits` in place.
     ///
-    /// # Arguments
-    ///
-    /// * `n_bits` - Number of bits to reverse (must be a power of 2)
-    ///
     /// # Panics
     ///
     /// Panics if `n_bits` is not a power of 2 or if `n_bits > self.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(n) where n is the number of bits.
     pub fn bit_reverse_into(&mut self, n_bits: usize) {
         assert!(
             n_bits.is_power_of_two() || n_bits == 0,
@@ -1103,14 +859,10 @@ impl BitVec {
             return;
         }
 
-        // Reverse bits by swapping pairs
-        // For n_bits, we reverse the bottom log2(n_bits) bits of the index
         let num_bits_to_reverse = n_bits.trailing_zeros() as usize;
 
         for i in 0..n_bits {
-            // Compute bit-reversed index
             let j = reverse_bits(i, num_bits_to_reverse);
-
             // Only swap if i < j to avoid double-swapping
             if i < j {
                 let bit_i = self.get(i);
@@ -1123,30 +875,9 @@ impl BitVec {
 
     /// Applies polar transform G_N = [1 0; 1 1]^⊗log2(n) to first `n` bits.
     ///
-    /// The polar transform is a recursive butterfly operation used in polar
-    /// code encoding. It performs the Fast Hadamard Transform over GF(2).
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Transform size (must be a power of 2)
-    ///
     /// # Panics
     ///
     /// Panics if `n` is not a power of 2 or if `n > self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// let transformed = bv.polar_transform(2);
-    /// // [1, 0] -> [1, 1 XOR 0] = [1, 1]
-    /// assert_eq!(transformed.get(0), true);
-    /// assert_eq!(transformed.get(1), true);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1161,10 +892,6 @@ impl BitVec {
     }
 
     /// Applies polar transform in place.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Transform size (must be a power of 2)
     ///
     /// # Panics
     ///
@@ -1181,10 +908,7 @@ impl BitVec {
             return;
         }
 
-        // Fast Hadamard Transform (FHT) via recursive butterfly
-        // G_N = [1 0; 1 1]^⊗log2(N)
         // Butterfly: (a, b) -> (a, a XOR b)
-
         let mut stride = 1;
         while stride < n {
             let mut i = 0;
@@ -1195,9 +919,6 @@ impl BitVec {
 
                     let bit_low = self.get(pos_low);
                     let bit_high = self.get(pos_high);
-
-                    // Butterfly: (a, b) -> (a, a XOR b)
-                    // pos_low stays as bit_low
                     self.set(pos_high, bit_low ^ bit_high);
                 }
                 i += 2 * stride;
@@ -1208,28 +929,9 @@ impl BitVec {
 
     /// Applies inverse polar transform to first `n` bits.
     ///
-    /// Inverts the polar transform, recovering the original bit vector.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Transform size (must be a power of 2)
-    ///
     /// # Panics
     ///
     /// Panics if `n` is not a power of 2 or if `n > self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::BitVec;
-    ///
-    /// let mut bv = BitVec::new();
-    /// bv.push_bit(true);
-    /// bv.push_bit(false);
-    /// let transformed = bv.polar_transform(2);
-    /// let recovered = transformed.polar_transform_inverse(2);
-    /// assert_eq!(recovered, bv);
-    /// ```
     ///
     /// # Complexity
     ///
@@ -1244,10 +946,6 @@ impl BitVec {
     }
 
     /// Applies inverse polar transform in place.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - Transform size (must be a power of 2)
     ///
     /// # Panics
     ///
@@ -1264,8 +962,7 @@ impl BitVec {
             return;
         }
 
-        // Inverse FHT - same as forward for GF(2) Hadamard transform
-        // The polar transform is self-inverse (involution)
+        // The polar transform is an involution.
         self.polar_transform_into(n);
     }
 }
@@ -1278,16 +975,11 @@ impl Default for BitVec {
 
 impl std::hash::Hash for BitVec {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        // Hash the length
         self.len_bits.hash(state);
-
-        // Hash all complete words
         let complete_words = self.len_bits / 64;
         for i in 0..complete_words {
             self.data[i].hash(state);
         }
-
-        // Hash the remaining bits in the last word (if any)
         let remaining_bits = self.len_bits % 64;
         if remaining_bits > 0 {
             // We know padding bits are always zero due to tail masking invariant
@@ -1405,19 +1097,15 @@ mod tests {
         let bv = BitVec::ones(65);
         assert_eq!(bv.len(), 65);
         assert_eq!(bv.count_ones(), 65);
-        // Check that padding bits are zero (tail masking invariant)
         assert_eq!(bv.data[1], 0x1); // Only bit 0 of second word should be set
     }
 
     #[test]
     fn test_ones_tail_masking() {
-        // Test that padding bits are properly masked for various lengths
         for len in [1, 7, 63, 65, 127, 129] {
             let bv = BitVec::ones(len);
             assert_eq!(bv.len(), len);
             assert_eq!(bv.count_ones(), len);
-
-            // Verify tail masking: padding bits should be zero
             if len % 64 != 0 {
                 let last_word = bv.data.last().unwrap();
                 let used_bits = len % 64;
@@ -1660,7 +1348,6 @@ mod tests {
         assert_eq!(bv.count_ones(), 4);
     }
 
-    // Edge case tests: boundary conditions
     #[test]
     fn test_boundary_63_bits() {
         let mut bv = BitVec::with_capacity(63);
@@ -1718,14 +1405,12 @@ mod tests {
         let mut bv = BitVec::from_bytes_le(&[0xFF]);
         let orig_len = bv.len();
         bv.shift_left(100);
-        assert_eq!(bv.len(), orig_len); // Length should be preserved
+        assert_eq!(bv.len(), orig_len);
         assert_eq!(bv.count_ones(), 0);
     }
 
     #[test]
     fn test_shift_left_zero_is_noop() {
-        // Covers the `if k == 0 || self.len_bits == 0 { return; }` early-return
-        // in `shift_left` when k == 0.
         let mut bv = BitVec::from_bytes_le(&[0b10101010]);
         let before = bv.to_bytes_le();
         bv.shift_left(0);
@@ -1734,8 +1419,6 @@ mod tests {
 
     #[test]
     fn test_shift_right_zero_is_noop() {
-        // Covers the `if k == 0 || self.len_bits == 0 { return; }` early-return
-        // in `shift_right` when k == 0.
         let mut bv = BitVec::from_bytes_le(&[0b11001100]);
         let before = bv.to_bytes_le();
         bv.shift_right(0);
@@ -1747,7 +1430,7 @@ mod tests {
         let mut bv = BitVec::from_bytes_le(&[0xFF]);
         let orig_len = bv.len();
         bv.shift_right(100);
-        assert_eq!(bv.len(), orig_len); // Length should be preserved
+        assert_eq!(bv.len(), orig_len);
         assert_eq!(bv.count_ones(), 0);
     }
 
@@ -1773,7 +1456,6 @@ mod tests {
             bv.push_bit(true);
         }
         bv.not_into();
-        // Verify that bits beyond len_bits are zero
         assert_eq!(bv.count_ones(), 0);
     }
 
@@ -1801,12 +1483,10 @@ mod tests {
         assert_eq!(s1.len(), 63);
         assert_eq!(s2.len(), 64);
         assert_eq!(s3.len(), 64);
-        // Spot check a few bits
         assert!(s2.get(0));
         assert_eq!(s3.get(0), bv.get(1));
     }
 
-    // Parity tests
     #[test]
     fn test_parity_empty() {
         let bv = BitVec::new();
@@ -1851,8 +1531,6 @@ mod tests {
 
     #[test]
     fn test_parity_xor_property() {
-        // parity(a XOR b) = parity(a) XOR parity(b)
-        // Test with some examples
         let bv_all_ones = BitVec::from_bytes_le(&[0xFF]); // 8 bits = even parity
         let bv_all_zeros = BitVec::from_bytes_le(&[0x00]); // 0 bits = even parity
         let bv_single = BitVec::from_bytes_le(&[0x01]); // 1 bit = odd parity
@@ -1860,9 +1538,6 @@ mod tests {
         assert!(!bv_all_ones.parity());
         assert!(!bv_all_zeros.parity());
         assert!(bv_single.parity());
-
-        // XOR of two even-parity vectors should have even parity
-        // (though we can't easily XOR BitVecs here, this tests the concept)
     }
 
     #[test]
@@ -1878,7 +1553,6 @@ mod tests {
         }
     }
 
-    // Scan operation tests
     #[test]
     fn test_find_first_one_empty() {
         let bv = BitVec::new();
@@ -1932,7 +1606,6 @@ mod tests {
     #[test]
     fn test_find_first_one_respects_length() {
         let bv = BitVec::from_bytes_le(&[0xFF]);
-        // BitVec length is 8 bits
         assert_eq!(bv.len(), 8);
         assert_eq!(bv.find_first_one(), Some(0));
     }
@@ -1977,8 +1650,6 @@ mod tests {
         assert_eq!(bv.len(), 8);
         assert_eq!(bv.find_first_zero(), Some(0));
     }
-
-    // ========== Rank Tests ==========
 
     #[test]
     fn test_rank_empty() {
@@ -2049,7 +1720,6 @@ mod tests {
         let bytes: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect();
         let bv = BitVec::from_bytes_le(&bytes);
 
-        // Verify rank is cumulative count
         let mut expected = 0;
         for i in 0..bv.len() {
             if bv.get(i) {
@@ -2077,8 +1747,6 @@ mod tests {
         let bv = BitVec::zeros(10);
         let _ = bv.rank(10);
     }
-
-    // ========== Select Tests ==========
 
     #[test]
     fn test_select_empty() {
@@ -2144,15 +1812,12 @@ mod tests {
         let bytes: Vec<u8> = (0..256).map(|i| i as u8).collect();
         let bv = BitVec::from_bytes_le(&bytes);
 
-        // Build expected positions of set bits
         let mut positions = Vec::new();
         for i in 0..bv.len() {
             if bv.get(i) {
                 positions.push(i);
             }
         }
-
-        // Verify select returns correct positions
         for (k, &pos) in positions.iter().enumerate() {
             assert_eq!(bv.select(k), Some(pos));
         }
@@ -2171,14 +1836,11 @@ mod tests {
         assert_eq!(bv.select(4), None);
     }
 
-    // ========== Rank-Select Invariant Tests ==========
-
     #[test]
     fn test_rank_select_invariant() {
         let bytes: Vec<u8> = (0..128).map(|i| (i % 256) as u8).collect();
         let bv = BitVec::from_bytes_le(&bytes);
 
-        // For all k, if select(k) = i, then rank(i) = k + 1
         for k in 0..bv.count_ones() {
             if let Some(i) = bv.select(k) {
                 assert_eq!(bv.rank(i), k + 1);
@@ -2190,11 +1852,7 @@ mod tests {
     fn test_select_rank_roundtrip() {
         let bytes: Vec<u8> = (0..128).map(|i| (i * 17) as u8).collect();
         let bv = BitVec::from_bytes_le(&bytes);
-
-        // Build all set bit positions
         let positions: Vec<usize> = (0..bv.len()).filter(|&i| bv.get(i)).collect();
-
-        // For each set bit position, select(rank(i) - 1) should equal i
         for &pos in &positions {
             let rank = bv.rank(pos);
             assert_eq!(bv.select(rank - 1), Some(pos));
@@ -2205,7 +1863,6 @@ mod tests {
     fn test_rank_is_cumulative() {
         let bv = BitVec::from_bytes_le(&[0b11010010, 0b00101101]);
 
-        // Rank should be monotonically increasing
         for i in 0..bv.len() - 1 {
             assert!(bv.rank(i) <= bv.rank(i + 1));
             assert!(bv.rank(i + 1) - bv.rank(i) <= 1);
@@ -2219,64 +1876,33 @@ mod select_edge_cases {
 
     #[test]
     fn test_select_at_superblock_boundary() {
-        // Regression test for select bug at superblock boundaries
-        // Create a bitvec where select(191) should return position 509
-        // This tests the case where the target equals a superblock boundary
-
+        // 192 ones in the first superblock make the target of `select(191)`
+        // equal to `superblocks[1]`.
         let mut bv = BitVec::zeros(1024);
-
-        // Set the first 192 bits (positions 0..192)
-        // But position 509 should be the 192nd set bit (0-indexed: select(191))
-        // So we set bits 0..191 and bit 509
-
-        // Actually, let's create the exact scenario:
-        // Set bits at positions creating the boundary condition
-        // We want 191 ones before position 509, and position 509 to be set
-
-        // Set bits 0 through 190 (191 bits)
         for i in 0..191 {
             bv.set(i, true);
         }
-
-        // Skip some bits, then set position 509
         bv.set(509, true);
-
-        // Now we have:
-        // - 191 set bits at positions 0..191
-        // - 1 set bit at position 509
-        // Total: 192 set bits
-
-        // Verify rank
         assert_eq!(bv.rank(509), 192, "rank(509) should be 192");
         assert_eq!(bv.rank(508), 191, "rank(508) should be 191");
-
-        // Test select
         assert_eq!(bv.select(190), Some(190), "select(190) should return 190");
         assert_eq!(bv.select(191), Some(509), "select(191) should return 509");
         assert_eq!(bv.select(192), None, "select(192) should return None");
 
-        // Additional edge case: set bit 518 to be the 193rd set bit
         bv.set(518, true);
         assert_eq!(bv.select(192), Some(518), "select(192) should return 518");
     }
 
     #[test]
     fn test_select_exact_superblock_match() {
-        // Test when target exactly equals a superblock cumulative count
         let mut bv = BitVec::zeros(1024);
 
         // Set exactly 512 bits in the first superblock (words 0-7)
         for i in 0..512 {
             bv.set(i, true);
         }
-
-        // select(511) should return 511 (the last bit of first superblock)
         assert_eq!(bv.select(511), Some(511));
-
-        // Add one more bit at position 600
         bv.set(600, true);
-
-        // select(512) should return 600 (first bit in second superblock)
         assert_eq!(bv.select(512), Some(600));
     }
 }
@@ -2285,10 +1911,6 @@ mod select_edge_cases {
 mod kani_proofs {
     use super::*;
 
-    /// Verify that mask_tail zeroes all padding bits above `len % 64`.
-    ///
-    /// For any last word and any length 1..=128, after masking,
-    /// no bits at or above position `len % 64` are set (when len % 64 != 0).
     #[kani::proof]
     fn mask_tail_zeros_padding() {
         let len: usize = kani::any();
@@ -2300,15 +1922,10 @@ mod kani_proofs {
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
             let masked = last_word & mask;
-            // All bits at or above bits_in_last must be zero
             assert!(masked >> bits_in_last == 0);
         }
-        // When bits_in_last == 0, the entire word is valid — no masking needed
     }
 
-    /// Verify that mask_tail preserves all valid (non-padding) bits.
-    ///
-    /// The bits below position `len % 64` must be identical before and after masking.
     #[kani::proof]
     fn mask_tail_preserves_valid_bits() {
         let len: usize = kani::any();
@@ -2320,15 +1937,10 @@ mod kani_proofs {
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
             let masked = last_word & mask;
-            // Valid bits are unchanged
             assert!((masked & mask) == (last_word & mask));
         }
     }
 
-    /// Verify that `ones()` produces a clean tail for all lengths 1..=128.
-    ///
-    /// The last word should have exactly `len % 64` bits set (or 64 if len % 64 == 0),
-    /// with no padding bits set above that position.
     #[kani::proof]
     fn ones_constructor_tail_clean() {
         let len: usize = kani::any();
@@ -2345,24 +1957,15 @@ mod kani_proofs {
         };
 
         if used_bits != 0 {
-            // No bits at or above used_bits should be set
             assert!(last_word >> used_bits == 0);
-            // All bits below used_bits should be set
             let expected_mask = (1u64 << used_bits) - 1;
             assert!(last_word == expected_mask);
         } else {
-            // Full word — all 64 bits set
             assert!(last_word == u64::MAX);
         }
-
-        // Number of words matches
         assert!(num_words == (len + 63) / 64);
     }
 
-    /// Verify that shift_left preserves the tail masking invariant (single word).
-    ///
-    /// Constructs a single-word BitVec with symbolic data, shifts left by a
-    /// symbolic amount, and checks that padding bits in the last word are zero.
     #[kani::proof]
     #[kani::unwind(2)]
     fn shift_left_preserves_invariant() {
@@ -2386,8 +1989,6 @@ mod kani_proofs {
         };
 
         bv.shift_left(k);
-
-        // Verify tail invariant after shift
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2396,9 +1997,7 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that not_into preserves the tail masking invariant.
-    ///
-    /// Bitwise NOT flips all bits including padding, so mask_tail must clean up.
+    /// NOT flips the padding bits too, so `not_into` must mask the tail.
     #[kani::proof]
     #[kani::unwind(3)]
     fn not_into_preserves_invariant() {
@@ -2411,7 +2010,6 @@ mod kani_proofs {
             *w = kani::any();
         }
 
-        // Pre-mask to establish invariant
         let bits_in_last = len % 64;
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
@@ -2425,8 +2023,6 @@ mod kani_proofs {
         };
 
         bv.not_into();
-
-        // Verify tail invariant
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2435,10 +2031,7 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that bit_xor_into preserves the tail masking invariant.
-    ///
-    /// XOR of two clean-tail words produces a clean-tail word (0 XOR 0 = 0 in padding),
-    /// so this should hold without explicit mask_tail.
+    /// XOR of two clean tails is clean, so no explicit mask is needed.
     #[kani::proof]
     #[kani::unwind(3)]
     fn bit_xor_into_preserves_invariant() {
@@ -2457,7 +2050,6 @@ mod kani_proofs {
             *w = kani::any();
         }
 
-        // Pre-mask both to establish invariant
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
             data_a[num_words - 1] &= mask;
@@ -2476,8 +2068,6 @@ mod kani_proofs {
         };
 
         a.bit_xor_into(&b);
-
-        // Verify tail invariant
         if bits_in_last != 0 {
             if let Some(&last) = a.data.last() {
                 assert!(last >> bits_in_last == 0);
@@ -2485,11 +2075,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that shift_right preserves the tail masking invariant.
-    ///
-    /// Right-shifting moves bits toward LSB and zeros fill from the left,
-    /// so padding bits should remain clean after shift. Uses single word
-    /// with shift amounts up to 128 to cover large-shift edge cases.
     #[kani::proof]
     #[kani::unwind(2)]
     fn shift_right_preserves_invariant() {
@@ -2513,8 +2098,6 @@ mod kani_proofs {
         };
 
         bv.shift_right(k);
-
-        // Verify tail invariant after shift
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2523,10 +2106,7 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that bit_and_into preserves the tail masking invariant.
-    ///
-    /// AND of two clean-tail words produces a clean tail (0 AND x = 0 in padding),
-    /// so this holds without explicit mask_tail.
+    /// AND of two clean tails is clean, so no explicit mask is needed.
     #[kani::proof]
     #[kani::unwind(3)]
     fn bit_and_into_preserves_invariant() {
@@ -2545,7 +2125,6 @@ mod kani_proofs {
             *w = kani::any();
         }
 
-        // Pre-mask both to establish invariant
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
             data_a[num_words - 1] &= mask;
@@ -2564,8 +2143,6 @@ mod kani_proofs {
         };
 
         a.bit_and_into(&b);
-
-        // Verify tail invariant
         if bits_in_last != 0 {
             if let Some(&last) = a.data.last() {
                 assert!(last >> bits_in_last == 0);
@@ -2573,10 +2150,7 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that bit_or_into preserves the tail masking invariant.
-    ///
-    /// OR of two clean-tail words produces a clean tail (0 OR 0 = 0 in padding),
-    /// so this holds without explicit mask_tail.
+    /// OR of two clean tails is clean, so no explicit mask is needed.
     #[kani::proof]
     #[kani::unwind(3)]
     fn bit_or_into_preserves_invariant() {
@@ -2595,7 +2169,6 @@ mod kani_proofs {
             *w = kani::any();
         }
 
-        // Pre-mask both to establish invariant
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
             data_a[num_words - 1] &= mask;
@@ -2614,8 +2187,6 @@ mod kani_proofs {
         };
 
         a.bit_or_into(&b);
-
-        // Verify tail invariant
         if bits_in_last != 0 {
             if let Some(&last) = a.data.last() {
                 assert!(last >> bits_in_last == 0);
@@ -2623,9 +2194,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that set preserves the tail masking invariant.
-    ///
-    /// Setting a bit at a valid index (< len_bits) should never affect padding bits.
     #[kani::proof]
     fn set_preserves_invariant() {
         let len: usize = kani::any();
@@ -2650,8 +2218,6 @@ mod kani_proofs {
         let bit: bool = kani::any();
 
         bv.set(idx, bit);
-
-        // Verify tail invariant
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2660,10 +2226,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that push_bit preserves the tail masking invariant.
-    ///
-    /// Appending a bit may cross a word boundary (push at bit 64 allocates a new word).
-    /// The tail must remain clean regardless.
     #[kani::proof]
     #[kani::unwind(3)]
     fn push_bit_preserves_invariant() {
@@ -2678,7 +2240,6 @@ mod kani_proofs {
             *w = kani::any();
         }
 
-        // Pre-mask to establish invariant
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
             data[num_words - 1] &= mask;
@@ -2692,8 +2253,6 @@ mod kani_proofs {
 
         let bit: bool = kani::any();
         bv.push_bit(bit);
-
-        // Verify tail invariant after push
         let new_bits_in_last = bv.len_bits % 64;
         if new_bits_in_last != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2702,9 +2261,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that resize (shrink) preserves the tail masking invariant.
-    ///
-    /// Shrinking changes len_bits; verify tail masking is correct at new boundary.
     #[kani::proof]
     #[kani::unwind(2)]
     fn resize_shrink_preserves_invariant() {
@@ -2729,8 +2285,6 @@ mod kani_proofs {
         kani::assume(new_len >= 1 && new_len < len);
 
         bv.resize(new_len, false);
-
-        // Verify tail invariant after resize
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2739,9 +2293,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that resize (grow with fill=false) preserves the tail masking invariant.
-    ///
-    /// Growing with zero fill should produce clean padding.
     #[kani::proof]
     #[kani::unwind(2)]
     fn resize_grow_zero_preserves_invariant() {
@@ -2766,8 +2317,6 @@ mod kani_proofs {
         kani::assume(new_len > len && new_len <= 64);
 
         bv.resize(new_len, false);
-
-        // Verify tail invariant after resize
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2776,10 +2325,7 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that resize (grow with fill=true) preserves the tail masking invariant.
-    ///
-    /// Growing with fill=true sets bits from old_len..new_len, then mask_tail cleans up.
-    /// Keep small to avoid OOM from set() loop.
+    /// Bounds are kept small to avoid OOM from the `set()` loop.
     #[kani::proof]
     #[kani::unwind(5)]
     fn resize_grow_fill_preserves_invariant() {
@@ -2804,8 +2350,6 @@ mod kani_proofs {
         kani::assume(new_len > len && new_len <= 4);
 
         bv.resize(new_len, true);
-
-        // Verify tail invariant after resize
         let bits_after = bv.len_bits % 64;
         if bits_after != 0 {
             if let Some(&last) = bv.data.last() {
@@ -2814,9 +2358,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that clear produces a valid empty BitVec.
-    ///
-    /// After clear, len_bits must be 0 and data must be empty.
     #[kani::proof]
     #[kani::unwind(3)]
     fn clear_preserves_invariant() {

@@ -20,74 +20,38 @@ pub struct RrefResult {
     /// Matrix in reduced row echelon form
     pub reduced: BitMatrix,
 
-    /// Indices of pivot columns (in order found during reduction)
+    /// Pivot column indices in ascending order; `pivot_cols[i]` pivots row `i`
     pub pivot_cols: Vec<usize>,
 
     /// Row permutation applied: reduced_row\[i\] = input_row\[row_perm\[i\]\]
     pub row_perm: Vec<usize>,
 
-    /// Rank of the matrix (number of linearly independent rows)
+    /// Rank of the matrix
     pub rank: usize,
 }
 
 /// Compute the reduced row echelon form (RREF) of a matrix over GF(2).
 ///
-/// Performs row reduction with column pivoting to transform the input matrix
-/// into reduced row echelon form. This is the standard form produced by
-/// Gaussian elimination.
-///
-/// # Arguments
-///
-/// * `matrix` - Input matrix to reduce
-/// * `pivot_from_right` - If true, search for pivots from right to left;
-///   if false, search left to right
-///
-/// # Returns
-///
-/// Result containing:
-/// - The reduced matrix in RREF
-/// - Pivot column indices (in order found)
-/// - Row permutation applied
-/// - Matrix rank
+/// With `pivot_from_right` the pivot search runs over columns right to left,
+/// otherwise left to right.
 ///
 /// # Algorithm
 ///
-/// Uses an M4RI-style blocked schedule for left-to-right pivoting: pivot rows
-/// are collected in small blocks, a Gray table of row combinations is built,
-/// and each non-pivot row clears the whole block with at most one suffix XOR.
-/// This keeps the public API unchanged while reducing dense RREF row traffic by
-/// roughly the block width. Right-to-left pivoting uses the compatible
+/// Left-to-right pivoting uses an M4RI-style (`@/citation/AlbrechtBard2026`)
+/// blocked schedule: pivot rows are collected in small blocks, a Gray table
+/// of row combinations is built, and each non-pivot row clears the whole
+/// block with at most one suffix XOR. Right-to-left pivoting uses an
 /// unblocked path.
 ///
-/// Complexity remains O(m² × n / 64) word operations for dense matrices, with a
-/// lower constant factor from Gray-table batching and suffix-only row updates.
+/// # Complexity
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_core::matrix::BitMatrix;
-/// use gf2_core::alg::rref::rref;
-///
-/// // Simple 2×3 matrix: [1 0 1]
-/// //                    [0 1 1]
-/// let mut m = BitMatrix::zeros(2, 3);
-/// m.set(0, 0, true);
-/// m.set(0, 2, true);
-/// m.set(1, 1, true);
-/// m.set(1, 2, true);
-///
-/// let result = rref(&m, false);
-/// assert_eq!(result.rank, 2);
-/// assert_eq!(result.pivot_cols, vec![0, 1]);
-/// ```
+/// O(m² × n / 64) word operations for dense `m × n` matrices.
 pub fn rref(matrix: &BitMatrix, pivot_from_right: bool) -> RrefResult {
     rref_with_block_size(matrix, pivot_from_right, default_block_size(matrix.cols()))
 }
 
-/// Test-support hook for benchmarking the same RREF implementation with a
-/// fixed M4RI block size. `block_size = 1` is the scalar baseline: it uses the
-/// same pivoting and suffix-XOR kernels as production, but disables Gray-table
-/// row-combination batching.
+/// Runs [`rref`] with a fixed block size, clamped to `1..=10`; `block_size = 1`
+/// eliminates one pivot per block.
 #[doc(hidden)]
 #[cfg(any(test, feature = "test-support"))]
 pub fn rref_with_block_size_for_test(
@@ -98,15 +62,8 @@ pub fn rref_with_block_size_for_test(
     rref_with_block_size(matrix, pivot_from_right, block_size)
 }
 
-/// Default M4RM block width for both RREF and matrix inversion over GF(2).
-///
-/// Mirrors the M4RI library's `m4ri_optk(n)` rule of thumb: 4-wide tables
-/// (16 entries) at small-to-mid sizes and 8-wide tables (256 entries) at
-/// large sizes. This gives a 256-entry table for n > 512, which is the same
-/// schedule M4RI uses at n=1024.
-///
-/// Used by `rref::rref` and `gauss::invert_m4ri` so that block-size policy
-/// lives in exactly one place.
+/// Default Gray-table block width shared by [`rref`] and
+/// `gauss::invert_m4ri`.
 pub(crate) fn default_block_size(cols: usize) -> usize {
     match cols {
         0..=64 => 4,
@@ -123,7 +80,6 @@ fn rref_with_block_size(
     let m = matrix.rows();
     let n = matrix.cols();
 
-    // Handle empty matrix
     if m == 0 || n == 0 {
         return RrefResult {
             reduced: matrix.clone(),
@@ -139,13 +95,8 @@ fn rref_with_block_size(
 
     let block_size = block_size.clamp(1, 10);
 
-    // Create working copy
     let mut work = matrix.clone();
-
-    // Track row permutation
     let mut row_perm: Vec<usize> = (0..m).collect();
-
-    // Track pivot columns
     let mut pivot_cols = Vec::new();
 
     let xor = crate::kernels::ops::resolve_xor_inplace(work.stride_words());
@@ -345,21 +296,15 @@ fn rref_unblocked_right_to_left(matrix: &BitMatrix) -> RrefResult {
     // When pivoting right-to-left, we need to reorder rows to maintain RREF invariant:
     // pivot_cols must be in ascending order with pivot_cols[i] being the pivot for row i
     if rank > 0 {
-        // Create mapping: (row_index, pivot_col) and sort by pivot_col
         let mut col_to_row: Vec<(usize, usize)> = pivot_cols.iter().copied().enumerate().collect();
         col_to_row.sort_unstable_by_key(|(_, col)| *col);
-
-        // Check if reordering is actually needed
         let needs_reorder = col_to_row.iter().enumerate().any(|(i, &(row, _))| i != row);
 
         if needs_reorder {
             let new_row_order: Vec<usize> = col_to_row.iter().map(|(row, _)| *row).collect();
             let sorted_pivot_cols: Vec<usize> = col_to_row.iter().map(|(_, col)| *col).collect();
 
-            // Build new matrix with reordered rows using word-level operations
             let mut new_work = BitMatrix::zeros(m, n);
-
-            // Copy reordered pivot rows word-by-word for performance
             for (new_row, &old_row) in new_row_order.iter().enumerate() {
                 let old_words = work.row_words(old_row);
                 let new_words = new_work.row_words_mut(new_row);
@@ -369,8 +314,6 @@ fn rref_unblocked_right_to_left(matrix: &BitMatrix) -> RrefResult {
             // Zero rows are already zero in new_work (no need to copy)
 
             work = new_work;
-
-            // Update row_perm to reflect reordering
             let old_row_perm = row_perm.clone();
             for (new_row, &old_row) in new_row_order.iter().enumerate() {
                 row_perm[new_row] = old_row_perm[old_row];
@@ -378,7 +321,6 @@ fn rref_unblocked_right_to_left(matrix: &BitMatrix) -> RrefResult {
 
             pivot_cols = sorted_pivot_cols;
         } else {
-            // No reordering needed, just sort pivot_cols
             pivot_cols.sort_unstable();
         }
     }
@@ -570,15 +512,6 @@ impl OrderedEliminationResult {
 /// the greedy independent basis under that order. Reduction is full: each
 /// selected column ends with a single set entry, in its own pivot row.
 ///
-/// The operation carries no domain policy; a caller decides what the order
-/// means, for example by ranking columns by reliability.
-///
-/// # Arguments
-///
-/// * `matrix` — input matrix `A`
-/// * `preference` — every column index in `0..matrix.cols()`, exactly once, in
-///   decreasing order of preference
-///
 /// # Errors
 ///
 /// Returns [`OrderedEliminationError::PreferenceLength`],
@@ -590,13 +523,6 @@ impl OrderedEliminationResult {
 ///
 /// Unblocked Gauss-Jordan elimination over the preference order, mirroring the
 /// row operations onto an identity matrix to accumulate the transform `U`.
-/// Rank-deficient, empty, and rectangular inputs are ordinary cases: a column
-/// that is dependent on the selected ones is skipped, and the rows below the
-/// rank end zero.
-///
-/// This loop is a tracked exception to `@/inv/convention-convergence` beside
-/// the blocked [`rref`] schedule, which requires ascending pivot columns;
-/// convergence onto a shared blocked kernel is `@/issue/c0bb2ab1`.
 ///
 /// # Complexity
 ///
@@ -757,7 +683,6 @@ mod tests {
         assert_eq!(result.rank, 2);
         assert_eq!(result.pivot_cols, vec![0, 1]);
 
-        // Result should still be identity
         assert!(result.reduced.get(0, 0));
         assert!(!result.reduced.get(0, 1));
         assert!(!result.reduced.get(1, 0));
@@ -798,7 +723,6 @@ mod tests {
         assert_eq!(result.rank, 2);
         assert_eq!(result.pivot_cols, vec![0, 1]);
 
-        // Check RREF form
         assert!(result.reduced.get(0, 0));
         assert!(!result.reduced.get(0, 1));
         assert!(result.reduced.get(0, 2));
@@ -824,12 +748,10 @@ mod tests {
         assert_eq!(result.rank, 1);
         assert_eq!(result.pivot_cols, vec![0]);
 
-        // First row should be [1 0 1]
         assert!(result.reduced.get(0, 0));
         assert!(!result.reduced.get(0, 1));
         assert!(result.reduced.get(0, 2));
 
-        // Second row should be all zeros
         assert!(!result.reduced.get(1, 0));
         assert!(!result.reduced.get(1, 1));
         assert!(!result.reduced.get(1, 2));
@@ -843,7 +765,6 @@ mod tests {
         assert_eq!(result.rank, 0);
         assert!(result.pivot_cols.is_empty());
 
-        // Should remain all zeros
         for r in 0..3 {
             for c in 0..4 {
                 assert!(!result.reduced.get(r, c));
@@ -875,16 +796,8 @@ mod tests {
         }
     }
 
-    /// Production-scale equivalence test for `block_size = 8`.
-    ///
-    /// `default_block_size` returns `8` only for `cols > 512`. The
-    /// boundary test above caps at `n=129` (block 4) and the proptests
-    /// cap at `cols < 20` (block 4), so neither exercises the
-    /// production `block_size = 8` path that ships at scale and that the
-    /// jit:8e305c21 / 366dbbcd target rows measure. This test covers
-    /// `n in {513, 1024}` so the `8`-wide block is asserted equal to
-    /// the unblocked baseline (`block_size = 1`) on both full-rank and
-    /// rank-deficient inputs.
+    /// `default_block_size` returns 8 only for `cols > 512`, which the
+    /// boundary test and the proptests do not reach.
     #[test]
     fn test_blocked_rref_block_size_8_equivalence() {
         for n in [513usize, 1024] {
@@ -945,7 +858,6 @@ mod tests {
     fn test_rref_pivot_from_right() {
         // Matrix: [1 1 0]
         //         [0 1 1]
-        // When pivoting from right, should prefer rightmost pivots
         let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 0, true);
         m.set(0, 1, true);
@@ -955,8 +867,6 @@ mod tests {
         let result = rref(&m, true);
 
         assert_eq!(result.rank, 2);
-        // With right-to-left pivoting, should select columns 2, 1 (in that search order)
-        // But pivot_cols should still be ordered by when found
     }
 
     #[test]
@@ -980,7 +890,6 @@ mod tests {
         assert!(result.reduced.get(1, 64));
     }
 
-    // Property-based tests
     proptest! {
         #[test]
         fn prop_rref_rank_bounded(rows in 1..20usize, cols in 1..20usize, seed in any::<u64>()) {
@@ -1000,10 +909,8 @@ mod tests {
 
             let result = rref(&m, false);
 
-            // Rank must be at most min(rows, cols)
             prop_assert!(result.rank <= rows.min(cols));
 
-            // Number of pivot columns must equal rank
             prop_assert_eq!(result.pivot_cols.len(), result.rank);
         }
 
@@ -1026,7 +933,6 @@ mod tests {
             let result1 = rref(&m, false);
             let result2 = rref(&result1.reduced, false);
 
-            // RREF of RREF should be the same (idempotent)
             prop_assert_eq!(result1.reduced, result2.reduced);
             prop_assert_eq!(result1.rank, result2.rank);
         }
