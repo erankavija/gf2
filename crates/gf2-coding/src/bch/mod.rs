@@ -101,7 +101,7 @@
 //!   `gf2-core`: coordinate $i$ is bit $i \bmod 64$ of word $\lfloor i/64
 //!   \rfloor$.
 //!
-//! `crates/gf2-coding/docs/SYSTEMATIC_ENCODING_CONVENTION.md` relates these
+//! `docs/reference/standards-conformance.md` relates these
 //! layouts to the `[message | parity]` convention of the other code
 //! families.
 //!
