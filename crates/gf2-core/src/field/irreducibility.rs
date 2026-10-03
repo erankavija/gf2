@@ -1,9 +1,9 @@
 //! Complete irreducibility validation for finite-field polynomials.
 //!
-//! The implementation uses Rabin's criterion over the field named by the
-//! coefficient witness.  Its certificate records the canonical base-field
-//! identity and modulus, so a quotient-field constructor can reuse the
-//! validation without running the decision procedure again.
+//! The implementation uses Rabin's criterion (`@/citation/Rabin1980`) over the
+//! field named by the coefficient witness.  Its certificate records the
+//! canonical base-field identity and modulus, so a quotient-field constructor
+//! can reuse the validation without running the decision procedure again.
 
 use std::sync::Arc;
 
@@ -72,7 +72,7 @@ impl IrreducibilityCertificate {
 /// Complete algorithms that can provide irreducibility evidence.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum IrreducibilityMethod {
-    /// Rabin's finite-field irreducibility criterion.
+    /// Rabin's finite-field irreducibility criterion (`@/citation/Rabin1980`).
     Rabin,
     /// Distinct-degree factor detection.
     DistinctDegree,
@@ -95,25 +95,6 @@ pub enum IrreducibilityMethod {
 /// gcd is reported as either a base-field root or a proper factor; when the
 /// final Rabin equality fails, a distinct-degree scan supplies the witness
 /// factor class.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::{prove_irreducible, ConstField, FieldPoly, IrreducibilityMethod};
-/// use gf2_core::gfp::Fp;
-///
-/// let base = Fp::<5>::zero();
-/// let modulus = FieldPoly::new(vec![
-///     Fp::<5>::new(1),
-///     Fp::<5>::new(1),
-///     Fp::<5>::new(0),
-///     Fp::<5>::new(1),
-/// ]);
-/// let certificate = prove_irreducible(&modulus, &base)?;
-/// assert_eq!(certificate.method(), IrreducibilityMethod::Rabin);
-/// assert_eq!(certificate.modulus().degree(), 3);
-/// # Ok::<(), gf2_core::field::FieldError>(())
-/// ```
 ///
 /// # Errors
 ///
@@ -578,11 +559,8 @@ mod tests {
 
     #[test]
     fn ext_config_moduli_are_irreducible() {
-        // These are the modulus values declared by the in-tree field-bearing
-        // ExtConfig implementations: ext_config.rs, the quadratic/cubic
-        // field tests, extension.rs tower tests, and the Wiedemann configs.
-        // Repeating a value is intentional where independent configs declare
-        // the same modulus; it verifies each declaration's carrier shape.
+        // The moduli declared by the in-tree `ExtConfig` implementations. A
+        // value repeats where independent configs declare the same modulus.
         assert_binomial_irreducible::<Gf7Beta6Config>(2);
         assert_binomial_irreducible::<Gf7Beta3Config>(2);
         assert_binomial_irreducible::<Gf13Beta2Config>(2);
@@ -605,7 +583,6 @@ mod tests {
         }
         assert_binomial_irreducible::<Fp65537QuadraticConfig>(2);
 
-        // Exercise the relative GF(3²) base used by the GF(3⁴) tower.
         let tower_witness = Gf9::zero();
         let tower_beta = Gf9::new(Fp::<3>::new(1), Fp::<3>::new(1));
         let tower_modulus = FieldPoly::new(vec![

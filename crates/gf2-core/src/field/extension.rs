@@ -1,12 +1,13 @@
 //! Relative field extensions, algebraic field identity, and validation
 //! certificates.
 //!
-//! This module supplies one relation, one identity, and one conversion rule
-//! for "the field $B$ sits inside the field $E$", and it subsumes the three
-//! unrelated presentations the crate carries otherwise: the binomial towers
-//! configured through [`ExtConfig`], the runtime
+//! [`FieldId`] names a field presentation, a [`FieldExtension`] value
+//! witnesses "the field $B$ sits inside the field $E$", and an
+//! [`ExtensionCertificate`] memoizes the validation of such a pair. The
+//! binomial towers configured through [`ExtConfig`], the runtime
 //! [`Gf2mField_`] parameters, and the absolute Frobenius on
-//! [`FiniteFieldExt`].
+//! [`FiniteFieldExt`] share this one relation. Every fallible operation
+//! reports [`FieldError`].
 //!
 //! # Canonical prime coordinates
 //!
@@ -29,130 +30,6 @@
 //! The **canonical index** $\iota(a) = \sum_{k<d} c_k\, p^{k}$ is a bijection
 //! $F \to [0, |F|)$. For $\mathrm{GF}(2^m)$ it is the stored integer value of
 //! a [`Gf2mElement_`], and for $\mathrm{GF}(p)$ it is [`Fp::value`].
-//!
-//! # Identity
-//!
-//! [`FieldId`] is a hash-consed algebraic description of a field
-//! *presentation*: two carriers denote the same field exactly when their
-//! identities are equal. Equality is presentation equality, not abstract
-//! isomorphism — $\mathbb{F}_2\lbrack x\rbrack/(x^4+x+1)$ and
-//! $\mathbb{F}_4\lbrack y\rbrack/(y^2+y+\omega)$ are isomorphic and carry different
-//! identities. That is deliberate: the coordinates a matrix file stores are
-//! basis-dependent, so identity has to pin the basis for a load to be sound.
-//! Equal identity implies a canonical isomorphism, which is exactly the map
-//! [`convert_element`] performs.
-//!
-//! [`FieldId`] says *which field*; [`ElementRepr`] says *how the bytes of one
-//! element are laid out*. They version independently and neither contains the
-//! other.
-//!
-//! # The extension relation
-//!
-//! An extension is a **value**, not a type-level relation: for
-//! [`Gf2mElement_`] the base and the extension can share a Rust type while
-//! denoting different fields, and the embedding needs the runtime field
-//! parameters to produce elements at all. [`FieldExtension`] is that witness.
-//! Its required surface is small — a certificate, the zero of $B$, the
-//! embedding, and the checked restriction — and everything else is derived:
-//!
-//! ```
-//! use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension};
-//! use gf2_core::field::FiniteField;
-//! use gf2_core::gf2m::Gf2mField;
-//! use gf2_core::gfp::Fp;
-//!
-//! // GF(2) inside GF(2^4) presented by x^4 + x + 1.
-//! let field = Gf2mField::new(4, 0b10011);
-//! let ext = BinaryPrimeExt::new(field.clone())?;
-//!
-//! assert_eq!(ext.base_degree(), 1);
-//! assert_eq!(ext.ext_degree(), 4);
-//! assert_eq!(ext.relative_degree(), 4);
-//! assert_eq!(ext.ext_order(), Some(16));
-//! assert_eq!(ext.ext_unit_group_order(), Some(15));
-//!
-//! // The embedding carries GF(2) onto the two Frobenius-fixed elements.
-//! assert_eq!(ext.embed(&Fp::<2>::new(1)), field.one());
-//! assert!(ext.contains(&field.element(1)));
-//! assert!(!ext.contains(&field.element(2)));
-//! assert_eq!(ext.try_restrict(&field.element(2)), None);
-//!
-//! // The relative Frobenius is x -> x^(|B|^k), with k taken modulo r.
-//! let a = field.element(0b1011);
-//! assert_eq!(ext.relative_frobenius(&a, 1), a.clone() * a.clone());
-//! assert_eq!(ext.relative_frobenius(&a, 4), a);
-//! # Ok::<(), gf2_core::field::extension::FieldError>(())
-//! ```
-//!
-//! # Certificates
-//!
-//! Validating a field presentation is expensive, and callers construct over
-//! the same presentation again and again. A certificate is the **memo** of
-//! that validation: [`ExtensionCertificate`] is `Arc`-backed, carries the two
-//! [`FieldId`]s it covers, and is matched by identity comparison
-//! ([`ExtensionCertificate::matches`]) rather than by re-deriving anything.
-//! [`CertificateBasis`] records which validation the memo stands for.
-//!
-//! Two constructors validate, and two reuse the memo:
-//!
-//! - [`BinaryPrimeExt::new`] decides the runtime field's defining polynomial
-//!   with [`prove_irreducible`] and records
-//!   [`CertificateBasis::Proved`]. Deciding is `O(m³)`.
-//! - [`ConstExt::new`] records [`CertificateBasis::Declared`], the basis for
-//!   an [`ExtConfig`] non-residue, which the type fixes rather than decides.
-//! - [`BinaryPrimeExt::from_certificate_unchecked`] and
-//!   [`ConstExt::from_certificate_unchecked`] take a memo the caller already
-//!   holds and skip the validation entirely. This is what makes repeated
-//!   construction over one presentation cheap.
-//!
-//! The `_unchecked` suffix carries the contract, as it does elsewhere in
-//! Rust: no memory safety is at stake and no `unsafe` is involved, but the
-//! caller promises the memo really does stand for the pair the witness names.
-//! Both reuse paths check only that the certificate's identities match —
-//! a structural comparison linear in the modulus degree, and in particular
-//! free of any decision procedure — which catches an honest mix-up; neither
-//! re-derives. A memo of
-//! something else yields a mathematically invalid witness, the same way wrong
-//! parameters do anywhere else. This is the shape
-//! `@/inv/caller-trusted-fast-paths` fixes for the whole project: validation
-//! catches mistakes and amortizes cost, a path that skips it for performance
-//! is a distinct `_unchecked` method with its precondition documented, and a
-//! violated precondition is caller error rather than grounds for hardening.
-//!
-//! [`crate::field::irreducibility`] is the other producer: proving a
-//! polynomial irreducible yields an [`IrreducibilityCertificate`](crate::field::irreducibility::IrreducibilityCertificate), and
-//! [`IrreducibilityCertificate::extension_certificate`](crate::field::irreducibility::IrreducibilityCertificate::extension_certificate) promotes it to the
-//! memo the two reuse constructors take. [`TrivialExt`] has no such
-//! constructor because it performs no validation to memoize: $E = B$ holds
-//! for any carrier by construction.
-//!
-//! ```
-//! use gf2_core::field::extension::{BinaryPrimeExt, CertificateBasis, FieldExtension};
-//! use gf2_core::gf2m::Gf2mField;
-//!
-//! // Validation happens once.
-//! let field = Gf2mField::new(4, 0b10011);
-//! let decided = BinaryPrimeExt::new(field.clone())?;
-//! assert_eq!(decided.certificate().basis(), CertificateBasis::Proved);
-//!
-//! // Every later construction over the same presentation reuses the memo.
-//! let memo = decided.certificate().clone();
-//! assert!(memo.matches(decided.base_id(), decided.ext_id()));
-//! let reused = BinaryPrimeExt::from_certificate_unchecked(field, memo)?;
-//! assert_eq!(reused, decided);
-//! # Ok::<(), gf2_core::field::extension::FieldError>(())
-//! ```
-//!
-//! [`OrderCertificate`] follows the same shape for multiplicative order:
-//! factoring $|E^{*}|$ once serves every divisor, through
-//! [`OrderCertificate::divisor`].
-//!
-//! # Errors
-//!
-//! Every fallible operation in this module reports [`FieldError`], one
-//! variant per distinguishable condition. Invalid input never panics; the
-//! panics that do exist are documented and fire only when an implementation
-//! violates a contract this crate states elsewhere.
 
 use std::fmt;
 use std::marker::PhantomData;
@@ -163,10 +40,6 @@ use crate::field::{ConstField, FieldPoly, FiniteField, FiniteFieldExt};
 use crate::gf2m::{Gf2mElement_, Gf2mField_, Gf2mWide, Gf2mWideConfig, UintExt};
 use crate::gfp::Fp;
 use crate::gfpn::{CubicExt, ExtConfig, QuadraticExt};
-
-// ---------------------------------------------------------------------------
-// Errors
-// ---------------------------------------------------------------------------
 
 /// Failure conditions of the algebra layer: identity construction, coordinate
 /// conversion, extension validation, and identity encoding.
@@ -442,15 +315,10 @@ fn shift_coordinate_index(error: FieldError, offset: usize) -> FieldError {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Algebraic field identity
-// ---------------------------------------------------------------------------
-
 /// Which $\mathbb{F}_p$-basis the coordinates of a quotient field name.
 ///
-/// Identity has to pin basis semantics for a stored coordinate vector to be
-/// interpretable, so a future normal-basis carrier cannot silently share an
-/// identity with a polynomial-basis one.
+/// Identity pins basis semantics so that a stored coordinate vector is
+/// interpretable.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Basis {
@@ -491,19 +359,6 @@ impl ModulusId {
     /// # Complexity
     ///
     /// Linear in the number of coordinates.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::{FieldId, ModulusId};
-    ///
-    /// // x^4 + x + 1 over GF(2), constant term first.
-    /// let base = FieldId::prime(2)?;
-    /// let modulus = ModulusId::new(&base, vec![1, 1, 0, 0, 1])?;
-    /// assert_eq!(modulus.degree(), 4);
-    /// assert_eq!(modulus.coefficient(1), &[1]);
-    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
-    /// ```
     pub fn new(base: &FieldId, coeffs: Vec<u64>) -> Result<Self, FieldError> {
         let base_degree = base.degree();
         let characteristic = base.characteristic();
@@ -593,30 +448,6 @@ enum FieldIdRepr {
 ///    non-monic leading coefficient and any coordinate outside $[0, p)$.
 /// 3. **Degrees are minimal by construction.** A modulus of degree
 ///    $r \ge 2$ stores all $r + 1$ coefficients.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{Basis, FieldId, ModulusId};
-///
-/// let gf2 = FieldId::prime(2)?;
-/// let modulus = ModulusId::new(&gf2, vec![1, 1, 0, 0, 1])?; // x^4 + x + 1
-/// let gf16 = FieldId::quotient(gf2.clone(), modulus, Basis::Polynomial)?;
-///
-/// assert_eq!(gf16.degree(), 4);
-/// assert_eq!(gf16.order(), Some(16));
-/// assert_eq!(gf16.base(), Some(&gf2));
-/// assert!(gf16.is_tower_over(&gf2));
-///
-/// // A degree-one quotient is the base field itself.
-/// let collapsed = FieldId::quotient(
-///     gf2.clone(),
-///     ModulusId::new(&gf2, vec![1, 1])?,
-///     Basis::Polynomial,
-/// )?;
-/// assert_eq!(collapsed, gf2);
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FieldId(Arc<FieldIdRepr>);
 
@@ -784,16 +615,6 @@ impl FieldId {
     /// # Complexity
     ///
     /// Linear in the total number of modulus coordinates in the tower.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::FieldId;
-    ///
-    /// let gf2 = FieldId::prime(2)?;
-    /// assert_eq!(FieldId::decode(&gf2.encode())?, gf2);
-    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
-    /// ```
     pub fn encode(&self) -> Vec<u8> {
         let mut out = vec![FIELD_ID_ENCODING_VERSION];
         self.encode_node(&mut out);
@@ -952,10 +773,6 @@ fn decode_node(cursor: &mut ByteCursor<'_>, depth: usize) -> Result<FieldId, Fie
     }
 }
 
-// ---------------------------------------------------------------------------
-// Element wire representation
-// ---------------------------------------------------------------------------
-
 /// Version byte of the [`ElementRepr`] vocabulary.
 ///
 /// [`FieldId`] and [`ElementRepr`] version independently: adding a packing
@@ -978,10 +795,6 @@ pub enum ElementRepr {
         coord_width: u8,
     },
 }
-
-// ---------------------------------------------------------------------------
-// Identity on the element types
-// ---------------------------------------------------------------------------
 
 /// A finite field that knows its algebraic identity and its canonical
 /// $\mathbb{F}_p$-coordinates.
@@ -1265,8 +1078,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> FieldIdentity for Gf2mWide<N, Cfg> 
 }
 
 /// The identity of a quadratic tower element is the quotient of its base by
-/// $x^{2} - \beta$, so the [`ExtConfig`] non-residue *is* the modulus and no
-/// parallel configuration concept appears.
+/// $x^{2} - \beta$, with $\beta$ the [`ExtConfig`] non-residue.
 impl<C: ExtConfig> FieldIdentity for QuadraticExt<C>
 where
     C::BaseField: FieldIdentity,
@@ -1357,10 +1169,6 @@ fn non_residue<C: ExtConfig>() -> C::BaseField {
     C::mul_by_non_residue(<C::BaseField as ConstField>::one())
 }
 
-// ---------------------------------------------------------------------------
-// Certificates
-// ---------------------------------------------------------------------------
-
 /// What an extension's validity rests on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum CertificateBasis {
@@ -1390,30 +1198,6 @@ struct ExtensionCertificateRepr {
 /// comparison rather than by re-derivation: a constructor that holds a
 /// certificate asks [`matches`](Self::matches) instead of re-running the
 /// validation that produced it.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{
-///     Basis, CertificateBasis, ExtensionCertificate, FieldId, ModulusId,
-/// };
-///
-/// let gf2 = FieldId::prime(2)?;
-/// let gf16 = FieldId::quotient(
-///     gf2.clone(),
-///     ModulusId::new(&gf2, vec![1, 1, 0, 0, 1])?,
-///     Basis::Polynomial,
-/// )?;
-///
-/// let certificate =
-///     ExtensionCertificate::from_parts(gf2.clone(), gf16.clone(), CertificateBasis::Registry)?;
-/// assert_eq!(certificate.relative_degree(), 4);
-/// assert!(certificate.matches(&gf2, &gf16));
-///
-/// // Reuse is an identity comparison, never a re-derivation.
-/// assert!(!certificate.matches(&gf16, &gf2));
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExtensionCertificate(Arc<ExtensionCertificateRepr>);
 
@@ -1523,25 +1307,6 @@ struct OrderCertificateRepr {
 /// [`divisor`](Self::divisor) derives a certificate for any divisor of the
 /// recorded order by filtering it. Factoring once therefore serves every
 /// $n \mid |E^{*}|$.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{FieldIdentity, OrderCertificate};
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// // |GF(2^4)*| = 15 = 3 * 5.
-/// let gf16 = Gf2mField::new(4, 0b10011).zero().field_id();
-/// assert_eq!(gf16.unit_group_order(), Some(15));
-///
-/// let certificate = OrderCertificate::new(gf16, 15, vec![3, 5])?;
-/// assert_eq!(certificate.order(), 15);
-///
-/// let five = certificate.divisor(5).expect("5 divides 15");
-/// assert_eq!(five.prime_factors(), &[5]);
-/// assert!(certificate.divisor(4).is_none());
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderCertificate(Arc<OrderCertificateRepr>);
 
@@ -1653,10 +1418,6 @@ impl OrderCertificate {
         })))
     }
 }
-
-// ---------------------------------------------------------------------------
-// Exact multiplicative orders
-// ---------------------------------------------------------------------------
 
 /// Returns the canonical-index element with the requested index.
 fn element_at_canonical_index<X: FieldExtension>(
@@ -1964,10 +1725,6 @@ pub fn element_of_exact_order<X: FieldExtension>(
     Ok((element, certificate))
 }
 
-// ---------------------------------------------------------------------------
-// Cyclotomic cosets
-// ---------------------------------------------------------------------------
-
 /// A deterministic partition of residues modulo a cyclotomic modulus.
 ///
 /// Cosets are ordered by their smallest representative. Each coset starts at
@@ -1987,10 +1744,6 @@ impl CosetPartition {
     /// The outer order is by smallest representative. The first member of
     /// every inner vector is that representative, and later members follow
     /// the multiplication orbit rather than numeric sorting.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`; the returned slice borrows the partition.
     pub fn cosets(&self) -> &[Vec<u64>] {
         &self.cosets
     }
@@ -2021,17 +1774,6 @@ impl CosetPartition {
     /// # Complexity
     ///
     /// `O(k)` in the number of stored residues.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
-    ///
-    /// let partition = cyclotomic_cosets_mod(2, 15)?;
-    /// assert!(partition.contains(12));
-    /// assert!(partition.contains(27));
-    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
-    /// ```
     pub fn contains(&self, exponent: u64) -> bool {
         let residue = exponent % self.n;
         self.cosets.iter().any(|coset| coset.contains(&residue))
@@ -2046,17 +1788,6 @@ impl CosetPartition {
     /// # Complexity
     ///
     /// `O(k)` in the number of stored residues.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::cyclotomic_cosets_mod;
-    ///
-    /// let partition = cyclotomic_cosets_mod(2, 15)?;
-    /// assert_eq!(partition.coset_of(3), Some(2));
-    /// assert_eq!(partition.coset_of(18), Some(2));
-    /// # Ok::<(), gf2_core::field::extension::FieldError>(())
-    /// ```
     pub fn coset_of(&self, exponent: u64) -> Option<usize> {
         let residue = exponent % self.n;
         self.cosets
@@ -2083,19 +1814,6 @@ impl CosetPartition {
 ///
 /// `O(n)` arithmetic steps and `O(n)` memory for the visited table and the
 /// returned partition.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{cyclotomic_cosets, BinaryPrimeExt};
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let ext = BinaryPrimeExt::new(field)?;
-/// let partition = cyclotomic_cosets(&ext, 15)?;
-/// assert_eq!(partition.cosets()[1], vec![1, 2, 4, 8]);
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 pub fn cyclotomic_cosets<X: FieldExtension>(ext: &X, n: u64) -> Result<CosetPartition, FieldError> {
     let q_mod_n = base_order_mod(ext, n)?;
     cyclotomic_cosets_mod(q_mod_n, n)
@@ -2116,19 +1834,6 @@ pub fn cyclotomic_cosets<X: FieldExtension>(ext: &X, n: u64) -> Result<CosetPart
 ///
 /// `O(n + n s)` in the straightforward scan, where `s` is the number of
 /// supplied seeds, and `O(n)` memory for the full partition plus the result.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{cyclotomic_closure, BinaryPrimeExt};
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let ext = BinaryPrimeExt::new(field)?;
-/// let closure = cyclotomic_closure(&ext, 15, &[3, 5])?;
-/// assert_eq!(closure.defining_set(), vec![3, 5, 6, 9, 10, 12]);
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 pub fn cyclotomic_closure<X: FieldExtension>(
     ext: &X,
     n: u64,
@@ -2259,10 +1964,6 @@ fn base_order_mod<X: FieldExtension>(ext: &X, n: u64) -> Result<u64, FieldError>
     ))
 }
 
-// ---------------------------------------------------------------------------
-// Relative-field derived operations
-// ---------------------------------------------------------------------------
-
 /// Returns the conjugate orbit of `x` under the relative Frobenius.
 ///
 /// The returned orbit starts with `x` and contains each distinct element in
@@ -2280,22 +1981,6 @@ fn base_order_mod<X: FieldExtension>(ext: &X, n: u64) -> Result<u64, FieldError>
 /// Panics if the relative Frobenius repeats an element other than the initial
 /// element or does not return to it within `r` steps. Either case means the
 /// `FieldExtension` witness violates its finite-field orbit contract.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{conjugates, BinaryPrimeExt, FieldExtension};
-/// use gf2_core::field::FiniteFieldExt;
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let ext = BinaryPrimeExt::new(field.clone())?;
-/// let orbit = conjugates(&ext, &field.element(2));
-/// assert_eq!(orbit.len(), 4);
-/// assert_eq!(orbit[0], field.element(2));
-/// assert_eq!(orbit[1], field.element(2).square());
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 pub fn conjugates<X: FieldExtension>(ext: &X, x: &X::Ext) -> Vec<X::Ext> {
     let relative_degree = ext.relative_degree();
     let mut orbit = Vec::with_capacity(relative_degree);
@@ -2339,24 +2024,6 @@ pub fn conjugates<X: FieldExtension>(ext: &X, x: &X::Ext) -> Vec<X::Ext> {
 ///
 /// `O(r²)` extension-field operations with the generic polynomial product,
 /// plus `O(r)` checked restrictions, where `r = ext.relative_degree()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{minimal_polynomial, BinaryPrimeExt};
-/// use gf2_core::gf2m::Gf2mField;
-/// use gf2_core::gfp::Fp;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let ext = BinaryPrimeExt::new(field.clone())?;
-/// let polynomial = minimal_polynomial(&ext, &field.element(2))?;
-/// let coefficients: Vec<_> = (0..=polynomial.degree().unwrap())
-///     .map(|i| polynomial.coeff(i))
-///     .collect();
-/// assert_eq!(coefficients, vec![Fp::<2>::new(1), Fp::<2>::new(1),
-///     Fp::<2>::new(0), Fp::<2>::new(0), Fp::<2>::new(1)]);
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 pub fn minimal_polynomial<X: FieldExtension>(
     ext: &X,
     x: &X::Ext,
@@ -2392,20 +2059,6 @@ pub fn minimal_polynomial<X: FieldExtension>(
 ///
 /// `O(r)` relative-Frobenius applications and extension-field additions, plus
 /// one checked restriction, where `r = ext.relative_degree()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{relative_trace, BinaryPrimeExt};
-/// use gf2_core::gf2m::Gf2mField;
-/// use gf2_core::gfp::Fp;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let ext = BinaryPrimeExt::new(field.clone())?;
-/// let trace = relative_trace(&ext, &field.element(2))?;
-/// assert_eq!(trace, Fp::<2>::new(0));
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 pub fn relative_trace<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base, FieldError> {
     ensure_extension_element(ext, x)?;
     let mut trace = x.zero_like();
@@ -2439,20 +2092,6 @@ pub fn relative_trace<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base,
 ///
 /// `O(r)` relative-Frobenius applications and extension-field multiplications,
 /// plus one checked restriction, where `r = ext.relative_degree()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{relative_norm, BinaryPrimeExt};
-/// use gf2_core::gf2m::Gf2mField;
-/// use gf2_core::gfp::Fp;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let ext = BinaryPrimeExt::new(field.clone())?;
-/// let norm = relative_norm(&ext, &field.element(2))?;
-/// assert_eq!(norm, Fp::<2>::new(1));
-/// # Ok::<(), gf2_core::field::extension::FieldError>(())
-/// ```
 pub fn relative_norm<X: FieldExtension>(ext: &X, x: &X::Ext) -> Result<X::Base, FieldError> {
     ensure_extension_element(ext, x)?;
     let mut norm = x.one_like();
@@ -2483,10 +2122,6 @@ fn restrict_invariant<X: FieldExtension>(ext: &X, x: &X::Ext) -> X::Base {
     }
 }
 
-// ---------------------------------------------------------------------------
-// The extension relation
-// ---------------------------------------------------------------------------
-
 /// The relation "$E$ is an extension of $B$", witnessed by a value.
 ///
 /// Implementors are cheap to clone. Equality compares the certificate and any
@@ -2505,9 +2140,7 @@ fn restrict_invariant<X: FieldExtension>(ext: &X, x: &X::Ext) -> X::Base {
 /// [`ext_id`](Self::ext_id). Passing a carrier value from an unrelated field
 /// is outside the contract.
 ///
-/// The trait is not object-safe, and static dispatch is the point; a
-/// type-erased handle is a separate concern that does not constrain this
-/// surface.
+/// The trait is not object-safe; dispatch is static.
 pub trait FieldExtension: Clone + fmt::Debug + Eq {
     /// Element type of the base field $B$.
     type Base: FieldIdentity;
@@ -2633,10 +2266,6 @@ pub trait FieldExtension: Clone + fmt::Debug + Eq {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Conversion between carriers of one field
-// ---------------------------------------------------------------------------
-
 /// Transports `src` into the field witnessed by `dst_witness`.
 ///
 /// Because [`FieldId`] pins the basis, this is the identity map on coordinate
@@ -2707,10 +2336,6 @@ where
     convert_element(src, &D::zero())
 }
 
-// ---------------------------------------------------------------------------
-// Concrete witnesses
-// ---------------------------------------------------------------------------
-
 /// The extension $\mathrm{GF}(2) \subset \mathrm{GF}(2^m)$ for a runtime
 /// binary field.
 ///
@@ -2747,19 +2372,6 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     ///   [`Gf2mField_::new`].
     /// - [`FieldError::ReducibleModulus`] with a [`FactorWitness`] when the
     ///   defining polynomial factors, so the carrier is not a field.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::extension::{BinaryPrimeExt, FieldError};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// // x^4 + 1 = (x + 1)^4 is monic of degree four, and not a field modulus.
-    /// assert!(matches!(
-    ///     BinaryPrimeExt::new(Gf2mField::new(4, 0b10001)),
-    ///     Err(FieldError::ReducibleModulus { .. })
-    /// ));
-    /// ```
     pub fn new(field: Gf2mField_<V>) -> Result<Self, FieldError> {
         let base = FieldId::prime(2)?;
         let modulus = gf2m_modulus_id(&field)?;
@@ -2777,28 +2389,16 @@ impl<V: UintExt> BinaryPrimeExt<V> {
     /// Builds the witness from a certificate the caller already holds, doing
     /// no validation of its own.
     ///
-    /// The certificate is a **memo** of validation performed earlier. The
-    /// irreducibility decision that [`new`](Self::new) runs is `O(m³)`, so a
-    /// caller constructing repeatedly over one presentation runs it once and
-    /// presents the result here. This method skips that decision entirely:
-    /// its only check is the identity comparison below — structural, linear
-    /// in the modulus degree, free of any decision procedure — which is there
-    /// to catch an honest mix-up, not to re-derive anything.
+    /// The irreducibility decision of [`new`](Self::new) is skipped: the only
+    /// check is the structural identity comparison, linear in the modulus
+    /// degree.
     ///
     /// # Contract
     ///
-    /// The caller promises that the certificate really does memoize a
-    /// validation of the pair `field` names. Nothing here confirms it. A
-    /// certificate that memoizes something else — a modulus that was never
-    /// decided, or one that was decided and found reducible — produces a
-    /// witness over a carrier that is not a field, and every result computed
-    /// through it is meaningless. That is caller error in the same way that
-    /// passing wrong parameters to any other `_unchecked` API is: nothing in
-    /// this crate can detect it after the fact, which is precisely why the
-    /// name says so. `@/inv/caller-trusted-fast-paths` fixes this contract
-    /// shape project-wide.
-    ///
-    /// Use [`new`](Self::new) when the modulus has not already been decided.
+    /// The caller promises that the certificate memoizes a validation of the
+    /// pair `field` names. A certificate that memoizes something else produces
+    /// a witness over a carrier that is not a field, with unspecified
+    /// mathematical results (`@/inv/caller-trusted-fast-paths`).
     ///
     /// # Errors
     ///
@@ -2869,8 +2469,7 @@ impl<V: UintExt> FieldExtension for BinaryPrimeExt<V> {
 /// base.
 ///
 /// [`QuadraticExt`] and [`CubicExt`] implement it by forwarding to their
-/// existing inherent `from_base`, so the binomial towers gain the extension
-/// relation without a second configuration concept.
+/// inherent `from_base`.
 pub trait ConstSimpleExtension: ConstField + FieldIdentity {
     /// Element type of the compile-time base field.
     type ConstBase: ConstField + FieldIdentity;
@@ -3060,23 +2659,6 @@ impl<E: ConstSimpleExtension> FieldExtension for ConstExt<E> {
 /// $r = 1$ is legal and required: a splitting field can coincide with its
 /// base, and then the embedding and the restriction are identities and the
 /// relative Frobenius is the identity for every $k$.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::extension::{FieldExtension, TrivialExt};
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::gf256();
-/// let ext = TrivialExt::new(field.zero());
-///
-/// assert_eq!(ext.relative_degree(), 1);
-/// assert_eq!(ext.base_id(), ext.ext_id());
-///
-/// let a = field.element(0x53);
-/// assert!(ext.contains(&a));
-/// assert_eq!(ext.relative_frobenius(&a, 7), a);
-/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TrivialExt<F: FieldIdentity> {
     zero: F,
@@ -3088,10 +2670,8 @@ impl<F: FieldIdentity> TrivialExt<F> {
     ///
     /// The value of `witness` is ignored; only its field matters.
     ///
-    /// There is no certificate-consuming counterpart, because there is no
-    /// validation to reuse: $E = B$ holds for any carrier by construction, so
-    /// [`ExtensionCertificate::trivial`] decides nothing and the witness makes
-    /// no claim about the irreducibility of whatever modulus `F` presents.
+    /// [`ExtensionCertificate::trivial`] decides nothing: the witness makes no
+    /// claim about the irreducibility of the modulus `F` presents.
     pub fn new(witness: F) -> Self {
         let certificate = ExtensionCertificate::trivial(witness.field_id());
         Self {
@@ -3126,10 +2706,6 @@ impl<F: FieldIdentity> FieldExtension for TrivialExt<F> {
 mod tests {
     use super::*;
     use crate::gf2m::{Gf2mField, Gf2mWideConfig};
-
-    // -----------------------------------------------------------------------
-    // Test configurations
-    // -----------------------------------------------------------------------
 
     /// GF(7²) as GF(7)[u]/(u² − 3).
     struct Gf49Config;
@@ -3177,10 +2753,8 @@ mod tests {
     }
 
     /// GF(2^256) with the irreducible pentanomial
-    /// `x^256 + x^10 + x^5 + x^2 + 1`, cited from Seroussi, "Table of
-    /// Low-Weight Binary Irreducible Polynomials", HP Laboratories technical
-    /// report HPL-98-135 (1998), Table 1 row m = 256 — the same entry
-    /// [`crate::gf2m::Gf2mWide`] documents.
+    /// `x^256 + x^10 + x^5 + x^2 + 1` (`@/citation/Seroussi1998`, Table 1 row
+    /// m = 256), the same entry [`crate::gf2m::Gf2mWide`] documents.
     struct Gf2m256TestConfig;
 
     impl Gf2mWideConfig<4> for Gf2m256TestConfig {
@@ -3193,10 +2767,6 @@ mod tests {
         let modulus = ModulusId::new(&base, vec![1, 1, 0, 0, 1]).unwrap();
         FieldId::quotient(base, modulus, Basis::Polynomial).unwrap()
     }
-
-    // -----------------------------------------------------------------------
-    // FieldId construction and normalization
-    // -----------------------------------------------------------------------
 
     #[test]
     fn prime_rejects_characteristics_outside_the_representable_range() {
@@ -3299,10 +2869,6 @@ mod tests {
         assert_eq!(gf16_id().coordinate_width(), 1);
     }
 
-    // -----------------------------------------------------------------------
-    // ModulusId validation
-    // -----------------------------------------------------------------------
-
     #[test]
     fn modulus_rejects_a_length_that_is_not_a_multiple_of_the_base_degree() {
         let gf9 = <QuadraticExt<Gf9Config> as FieldIdentity>::field_id_hint().unwrap();
@@ -3387,10 +2953,6 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Identity encoding
-    // -----------------------------------------------------------------------
-
     #[test]
     fn encoding_round_trips_through_a_nested_tower() {
         let gf81 = <QuadraticExt<Gf81Config> as FieldIdentity>::field_id_hint().unwrap();
@@ -3469,10 +3031,6 @@ mod tests {
         bytes[12..16].copy_from_slice(&u32::MAX.to_le_bytes());
         assert_eq!(FieldId::decode(&bytes), Err(FieldError::MalformedEncoding));
     }
-
-    // -----------------------------------------------------------------------
-    // Canonical coordinates
-    // -----------------------------------------------------------------------
 
     #[test]
     fn gf2m_coordinates_are_the_bits_of_the_stored_value() {
@@ -3558,10 +3116,6 @@ mod tests {
         assert_eq!(gf343.modulus().unwrap().coefficients(), &[4, 0, 0, 1]);
     }
 
-    // -----------------------------------------------------------------------
-    // Conversion between carriers
-    // -----------------------------------------------------------------------
-
     #[test]
     fn convert_element_rejects_a_different_presentation() {
         let narrow = Gf2mField::gf256();
@@ -3582,14 +3136,9 @@ mod tests {
             convert_into_const(&runtime.element(0b1011)).unwrap();
         assert_eq!(converted.words(), &[0b1011]);
 
-        // Transporting back reproduces the original element.
         let back: Gf2mElement_<u128> = convert_element(&converted, &runtime.zero()).unwrap();
         assert_eq!(back, runtime.element(0b1011));
     }
-
-    // -----------------------------------------------------------------------
-    // Certificates
-    // -----------------------------------------------------------------------
 
     #[test]
     fn trivial_certificate_records_a_relative_degree_of_one() {
@@ -3634,13 +3183,11 @@ mod tests {
             ExtensionCertificate::from_parts(gf2.clone(), gf16.clone(), CertificateBasis::Registry)
                 .unwrap();
 
-        // Cloning shares the allocation, and the clone still covers the pair.
         let held = certificate.clone();
         assert_eq!(held, certificate);
         assert!(held.matches(&gf2, &gf16));
         assert_eq!(held.basis(), CertificateBasis::Registry);
 
-        // A construction over an unrelated pair does not reuse it.
         assert!(!held.matches(&gf16, &gf2));
     }
 
@@ -3649,13 +3196,10 @@ mod tests {
         let first = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
         let held = first.certificate().clone();
 
-        // A second witness over the same presentation, built independently, is
-        // already covered: reuse is a comparison, not a revalidation.
         let second = BinaryPrimeExt::new(Gf2mField::new(4, 0b10011)).unwrap();
         assert!(held.matches(second.base_id(), second.ext_id()));
         assert_eq!(&held, second.certificate());
 
-        // A different presentation of a field of the same size is not.
         let other = BinaryPrimeExt::new(Gf2mField::new(4, 0b11001)).unwrap();
         assert!(!held.matches(other.base_id(), other.ext_id()));
     }
@@ -3704,10 +3248,6 @@ mod tests {
         assert!(certificate.divisor(0).is_none());
     }
 
-    // -----------------------------------------------------------------------
-    // Exact multiplicative orders
-    // -----------------------------------------------------------------------
-
     #[test]
     fn exact_order_derivation_validates_order_exactness() {
         let field = Gf2mField::new(4, 0b10011);
@@ -3719,8 +3259,6 @@ mod tests {
         assert!(element.pow(5).is_one());
         assert!(!element.pow(5 / 5).is_one());
 
-        // The full-order helper uses the same exact-order validation and
-        // agrees with the existing table-backed primitive for this field.
         let (generator, certificate) = canonical_generator(&ext).unwrap();
         assert_eq!(generator, field.element(2));
         assert_eq!(certificate.order(), 15);
@@ -3786,7 +3324,6 @@ mod tests {
         assert_eq!(again, narrow_element);
         assert_eq!(again_certificate, narrow_certificate);
 
-        // The same rule is deterministic for a nonbinary carrier as well.
         let first = ConstExt::<QuadraticExt<Gf49Config>>::new();
         let second = TrivialExt::new(QuadraticExt::<Gf49Config>::new(Fp::new(0), Fp::new(0)));
         let (first_element, first_certificate) = element_of_exact_order(&first, 8).unwrap();
@@ -3839,10 +3376,6 @@ mod tests {
             Err(FieldError::OrderFactorizationUnavailable { order: u128::MAX })
         );
     }
-
-    // -----------------------------------------------------------------------
-    // Relative-field derived operations
-    // -----------------------------------------------------------------------
 
     fn assert_coset_partition_properties(partition: &CosetPartition, full: bool) {
         let mut seen = Vec::new();
@@ -4191,10 +3724,6 @@ mod tests {
         ));
     }
 
-    // -----------------------------------------------------------------------
-    // Witnesses
-    // -----------------------------------------------------------------------
-
     #[test]
     fn binary_prime_ext_reports_the_worked_example() {
         let field = Gf2mField::new(4, 0b10011).with_tables();
@@ -4382,10 +3911,6 @@ mod tests {
             assert_eq!(ext.relative_frobenius(&a, k), a);
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Errors
-    // -----------------------------------------------------------------------
 
     #[test]
     fn errors_render_their_distinguishing_data() {
