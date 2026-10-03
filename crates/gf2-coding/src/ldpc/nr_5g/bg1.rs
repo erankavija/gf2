@@ -1,18 +1,6 @@
-//! 5G NR LDPC Base Graph 1 (BG1) from 3GPP TS 38.212 Table 5.3.2-2.
-//!
-//! BG1 is a 46x68 base matrix used for higher code rates and larger blocks.
-//! - Systematic columns: 0..21 (K_b = 22)
-//! - Parity columns: 22..67 (46 columns)
-//! - Total: 68 columns, 46 rows
-//!
-//! Each entry is either -1 (no connection) or a shift value V >= 0.
-//! For a given lifting size Z, the actual shift is V mod Z.
-//!
-//! The shift values depend on the lifting set index i_LS (0..7), determined
-//! by the lifting size Z. There are 8 separate shift tables, one per i_LS.
-//!
-//! The first 4 rows form the "core" matrix with higher connectivity.
-//! Rows 4-45 form the "extension" with lower connectivity.
+//! 5G NR LDPC Base Graph 1 (BG1) from `@/citation/ThreeGpp2017` Table 5.3.2-2:
+//! one 46x68 shift table per lifting set index i_LS, with -1 for no
+//! connection and a shift `V mod Z` at lifting size Z for an entry V >= 0.
 
 /// Number of rows in BG1.
 pub const BG1_ROWS: usize = 46;
@@ -25,25 +13,15 @@ pub const BG1_KB: usize = 22;
 
 /// Returns the full BG1 base matrix for a given lifting size as a `Vec<Vec<i32>>`.
 ///
-/// Determines the lifting set index i_LS from Z using 3GPP TS 38.212 Table 5.3.2-1,
-/// selects the corresponding shift table from Table 5.3.2-2, and applies `V mod Z`
-/// to each non-negative entry.
+/// Determines the lifting set index i_LS from Z using `@/citation/ThreeGpp2017`
+/// Table 5.3.2-1, selects the corresponding shift table from Table 5.3.2-2,
+/// and applies `V mod Z` to each non-negative entry.
 ///
 /// This is suitable for passing to [`QuasiCyclicLdpc::new()`](super::super::QuasiCyclicLdpc::new).
 ///
 /// # Panics
 ///
 /// Panics if `z` is not a valid 5G NR lifting size.
-///
-/// # Examples
-///
-/// ```ignore
-/// // bg1 module is pub(crate); use via QuasiCyclicLdpc::nr_5g(1, z) instead
-/// let matrix = bg1::bg1_base_matrix(256); // Z=256, i_LS=0
-/// assert_eq!(matrix.len(), 46);           // 46 rows
-/// assert_eq!(matrix[0].len(), 68);        // 68 columns
-/// assert_eq!(matrix[0][0], 250);          // i_LS=0 shift value for (0,0)
-/// ```
 pub fn bg1_base_matrix(z: usize) -> Vec<Vec<i32>> {
     let i_ls = super::require_lifting_set_index(z);
     super::reduce_shifts(&BG1_SHIFTS[i_ls], z)
@@ -51,7 +29,7 @@ pub fn bg1_base_matrix(z: usize) -> Vec<Vec<i32>> {
 
 /// Returns the raw (un-reduced) BG1 shift table for lifting set `i_ls`.
 ///
-/// Entries are the verbatim `V` values from 3GPP TS 38.212 Table 5.3.2-2
+/// Entries are the verbatim `V` values from `@/citation/ThreeGpp2017` Table 5.3.2-2
 /// (`-1` = no connection); no `mod Z` reduction is applied.
 ///
 /// # Panics

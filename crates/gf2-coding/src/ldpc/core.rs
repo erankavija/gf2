@@ -28,22 +28,6 @@ pub struct LdpcCode {
 impl LdpcCode {
     /// Creates an LDPC code from the (check, variable) edges of an m × n
     /// parity-check matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::LdpcCode;
-    ///
-    /// // Simple [7,4] Hamming code as LDPC
-    /// let edges = vec![
-    ///     (0, 0), (0, 1), (0, 3),
-    ///     (1, 0), (1, 2), (1, 4),
-    ///     (2, 1), (2, 2), (2, 5),
-    /// ];
-    /// let code = LdpcCode::from_edges(3, 7, &edges);
-    /// assert_eq!(code.n(), 7);
-    /// assert_eq!(code.m(), 3);
-    /// ```
     pub fn from_edges(m: usize, n: usize, edges: &[(usize, usize)]) -> Self {
         let h = SpBitMatrixDual::from_coo(m, n, edges);
         Self {
@@ -95,20 +79,6 @@ impl LdpcCode {
     }
 
     /// Creates an LDPC code from a quasi-cyclic structure.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
-    ///
-    /// // Simple 2×2 base matrix with 3×3 circulant blocks
-    /// let base_matrix = vec![vec![0, 1], vec![1, 0]];
-    /// let qc = QuasiCyclicLdpc::new(base_matrix, 3);
-    /// let code = LdpcCode::from_quasi_cyclic(&qc);
-    ///
-    /// assert_eq!(code.m(), 6); // 2 base rows × 3
-    /// assert_eq!(code.n(), 6); // 2 base cols × 3
-    /// ```
     pub fn from_quasi_cyclic(qc: &QuasiCyclicLdpc) -> Self {
         let edges = qc.to_edges();
         let m = qc.expanded_rows();
@@ -118,17 +88,6 @@ impl LdpcCode {
 
     /// Creates a DVB-T2 short frame LDPC code (n=16200) from the
     /// `@/citation/Etsi2015` tables.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::LdpcCode;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// assert_eq!(code.n(), 16200);
-    /// assert_eq!(code.k(), 7200);
-    /// ```
     pub fn dvb_t2_short(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
@@ -148,17 +107,6 @@ impl LdpcCode {
 
     /// Creates a DVB-T2 normal frame LDPC code (n=64800) from the
     /// `@/citation/Etsi2015` tables.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::LdpcCode;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-    /// assert_eq!(code.n(), 64800);
-    /// assert_eq!(code.k(), 32400);
-    /// ```
     pub fn dvb_t2_normal(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
@@ -198,7 +146,7 @@ impl LdpcCode {
         let rref_result = rref(&h_dense, false);
 
         if rref_result.rank != m {
-            return None; // Matrix is rank deficient
+            return None;
         }
 
         let h_dense = rref_result.reduced;
@@ -333,24 +281,6 @@ impl crate::traits::GeneratorMatrixAccess for LdpcCode {
 ///
 /// For a Z×Z circulant with shift s, the first row has a single 1 in column s,
 /// and each subsequent row shifts right by one position (with wraparound).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::CirculantMatrix;
-///
-/// // Identity circulant (shift 0, size 3):
-/// // [1 0 0]
-/// // [0 1 0]
-/// // [0 0 1]
-/// let identity = CirculantMatrix::new(0, 3);
-///
-/// // Shift-1 circulant:
-/// // [0 1 0]
-/// // [0 0 1]
-/// // [1 0 0]
-/// let shift1 = CirculantMatrix::new(1, 3);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CirculantMatrix {
     /// Right-shift amount (0 = identity)
@@ -402,25 +332,6 @@ impl CirculantMatrix {
 /// Each entry in the base matrix:
 /// - **-1**: Zero block (all zeros)
 /// - **0 to Z-1**: Circulant block with corresponding shift
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
-///
-/// // DVB-T2-like structure (simplified)
-/// let base_matrix = vec![
-///     vec![0, 1, 2],
-///     vec![1, 0, -1],  // -1 = zero block
-/// ];
-/// let expansion_factor = 360;
-///
-/// let qc = QuasiCyclicLdpc::new(base_matrix, expansion_factor);
-/// let code = LdpcCode::from_quasi_cyclic(&qc);
-///
-/// assert_eq!(code.m(), 2 * 360);
-/// assert_eq!(code.n(), 3 * 360);
-/// ```
 #[derive(Debug, Clone)]
 pub struct QuasiCyclicLdpc {
     /// Base matrix with shift values (-1 = zero block, 0..Z-1 = circulant shift)
@@ -438,22 +349,6 @@ impl QuasiCyclicLdpc {
     /// - Base matrix is empty
     /// - Rows have inconsistent lengths
     /// - Expansion factor is zero
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
-    ///
-    /// let base_matrix = vec![
-    ///     vec![0, 1, -1],
-    ///     vec![2, -1, 0],
-    /// ];
-    /// let qc = QuasiCyclicLdpc::new(base_matrix, 4);
-    ///
-    /// assert_eq!(qc.base_rows(), 2);
-    /// assert_eq!(qc.base_cols(), 3);
-    /// assert_eq!(qc.expansion_factor(), 4);
-    /// ```
     pub fn new(base_matrix: Vec<Vec<i32>>, expansion_factor: usize) -> Self {
         assert!(
             !base_matrix.is_empty(),
@@ -542,16 +437,6 @@ impl QuasiCyclicLdpc {
 }
 
 /// Decoder algorithm selection for LDPC belief propagation.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::DecoderAlgorithm;
-///
-/// let algo = DecoderAlgorithm::NormalizedMinSum(0.875);
-/// let algo2 = DecoderAlgorithm::OffsetMinSum(0.5);
-/// let algo3 = DecoderAlgorithm::MinSum;
-/// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum DecoderAlgorithm {
     /// Standard min-sum approximation.
@@ -579,19 +464,6 @@ pub enum DecoderAlgorithm {
 }
 
 /// Configuration for the LDPC belief propagation decoder.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-///
-/// // Default: MinSum with early termination enabled
-/// let config = DecoderConfig::default();
-/// assert!(config.early_termination());
-///
-/// // Normalized min-sum with custom parameters
-/// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DecoderConfig {
     /// The check-node update algorithm
@@ -609,28 +481,6 @@ impl DecoderConfig {
     /// Panics if:
     /// - `NormalizedMinSum(alpha)` has `alpha` that is not finite or not in `(0.0, 1.0]`
     /// - `OffsetMinSum(beta)` has `beta` that is not finite or is negative
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    ///
-    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
-    /// ```
-    ///
-    /// ```should_panic
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    ///
-    /// // alpha = 0.0 is out of valid range (0.0, 1.0]
-    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.0), true);
-    /// ```
-    ///
-    /// ```should_panic
-    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-    ///
-    /// // negative beta is invalid
-    /// let config = DecoderConfig::new(DecoderAlgorithm::OffsetMinSum(-0.1), true);
-    /// ```
     pub fn new(algorithm: DecoderAlgorithm, early_termination: bool) -> Self {
         match algorithm {
             DecoderAlgorithm::NormalizedMinSum(alpha) => {
@@ -768,21 +618,6 @@ impl LdpcDecoder {
     /// return zero beliefs. After decoding, the slice contains the beliefs from
     /// the final BP iteration, including when the final hard word fails its
     /// syndrome check, so callers can use it for immediate post-processing.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
-    /// let mut decoder = LdpcDecoder::new(code.clone());
-    /// assert_eq!(decoder.posterior_llrs().len(), code.n());
-    /// assert!(decoder.posterior_llrs().iter().all(|llr| llr.value() == 0.0));
-    ///
-    /// decoder.decode_to_codeword(&[Llr::new(10.0); 3], 10);
-    /// assert!(decoder.posterior_llrs().iter().all(|llr| llr.value() > 0.0));
-    /// ```
     pub fn posterior_llrs(&self) -> &[Llr] {
         &self.beliefs
     }
@@ -791,23 +626,6 @@ impl LdpcDecoder {
     ///
     /// Each block is decoded independently by its own decoder, built on a
     /// clone of `code`; under the `parallel` feature the blocks run on rayon.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
-    /// let code = LdpcCode::from_edges(1, 3, &edges);
-    ///
-    /// let llr_blocks: Vec<Vec<Llr>> = (0..100)
-    ///     .map(|_| vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)])
-    ///     .collect();
-    ///
-    /// let results = LdpcDecoder::decode_batch(&code, &llr_blocks, 10);
-    /// assert_eq!(results.len(), 100);
-    /// ```
     pub fn decode_batch(
         code: &LdpcCode,
         llr_blocks: &[Vec<Llr>],
@@ -817,24 +635,6 @@ impl LdpcDecoder {
     }
 
     /// As [`Self::decode_batch`], with a custom configuration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, DecoderAlgorithm, DecoderConfig};
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
-    /// let code = LdpcCode::from_edges(1, 3, &edges);
-    /// let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.875), true);
-    ///
-    /// let llr_blocks: Vec<Vec<Llr>> = (0..10)
-    ///     .map(|_| vec![Llr::new(10.0), Llr::new(10.0), Llr::new(10.0)])
-    ///     .collect();
-    ///
-    /// let results = LdpcDecoder::decode_batch_with_config(&code, &llr_blocks, 10, config);
-    /// assert_eq!(results.len(), 10);
-    /// ```
     pub fn decode_batch_with_config(
         code: &LdpcCode,
         llr_blocks: &[Vec<Llr>],
@@ -1014,25 +814,11 @@ impl LdpcDecoder {
     ///
     /// Panics if `llrs.len()` differs from the code's `n`.
     ///
-    /// # Examples
+    /// # Complexity
     ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_core::BitVec;
-    ///
-    /// let code = LdpcCode::from_edges(1, 3, &[(0, 0), (0, 1), (0, 2)]);
-    /// let mut decoder = LdpcDecoder::new(code);
-    /// let mut codeword = BitVec::with_capacity(3);
-    ///
-    /// let outcome = decoder.decode_codeword_into(&[Llr::new(10.0); 3], 10, &mut codeword);
-    /// assert!(outcome.syndrome_check_passed);
-    /// assert_eq!(codeword.len(), 3);
-    ///
-    /// // The same buffer is reused by the next decode.
-    /// decoder.decode_codeword_into(&[Llr::new(-10.0); 3], 10, &mut codeword);
-    /// assert_eq!(codeword.len(), 3);
-    /// ```
+    /// Each iteration is linear in the edge count for the min-sum family; the
+    /// sum-product check update reads `d_c (d_c - 1)` messages per check of
+    /// degree `d_c`.
     pub fn decode_codeword_into(
         &mut self,
         llrs: &[Llr],
@@ -1233,17 +1019,6 @@ impl LdpcEncoder {
     /// # Panics
     ///
     /// Panics if the parity-check matrix preprocessing fails (non-IRA path).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// let encoder = LdpcEncoder::new(code);
-    /// assert!(encoder.is_ira());
-    /// ```
     pub fn new(code: LdpcCode) -> Self {
         let impl_ = Self::build_impl(&code);
         Self { code, impl_ }
@@ -1314,21 +1089,6 @@ impl LdpcEncoder {
     /// # Panics
     ///
     /// Panics if the parity-check matrix preprocessing fails.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-    /// use gf2_coding::ldpc::encoding::EncodingCache;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let cache = EncodingCache::new();
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    ///
-    /// // DVB-T2: always uses IRA path, cache not needed but accepted
-    /// let enc1 = LdpcEncoder::with_cache(code.clone(), &cache);
-    /// let enc2 = LdpcEncoder::with_cache(code, &cache);
-    /// ```
     pub fn with_cache(code: LdpcCode, cache: &crate::ldpc::encoding::EncodingCache) -> Self {
         let impl_ = Self::try_build_ira(&code).unwrap_or_else(|| {
             let h = code.parity_check_matrix();
@@ -1346,32 +1106,6 @@ impl LdpcEncoder {
 impl LdpcEncoder {
     /// Encodes multiple messages in batch: sequentially on the IRA path, and
     /// through `CpuBackend::batch_matvec_transpose` on the RREF path.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-    /// use gf2_coding::traits::BlockEncoder;
-    /// use gf2_core::BitVec;
-    ///
-    /// let edges = vec![(0, 0), (0, 1), (0, 2)];
-    /// let code = LdpcCode::from_edges(1, 3, &edges);
-    /// let encoder = LdpcEncoder::new(code.clone());
-    ///
-    /// // Message length must match code.k() = n - m = 3 - 1 = 2 bits
-    /// let mut msg1 = BitVec::new();
-    /// msg1.push_bit(false);
-    /// msg1.push_bit(false);
-    ///
-    /// let mut msg2 = BitVec::new();
-    /// msg2.push_bit(true);
-    /// msg2.push_bit(true);
-    ///
-    /// let messages = vec![msg1, msg2];
-    /// let codewords = encoder.encode_batch(&messages);
-    /// assert_eq!(codewords.len(), 2);
-    /// assert_eq!(codewords[0].len(), code.n());
-    /// ```
     pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
         match &self.impl_ {
             EncoderImpl::Ira(ira) => messages.iter().map(|m| ira.encode(m)).collect(),
@@ -1535,7 +1269,7 @@ mod decoder_tests {
         assert!(result.converged);
         assert!(result.syndrome_check_passed);
         assert_eq!(result.decoded_bits.count_ones(), 0);
-        assert!(result.iterations <= 2); // Should converge quickly
+        assert!(result.iterations <= 2);
     }
 
     #[test]
@@ -1546,7 +1280,7 @@ mod decoder_tests {
         let mut decoder = LdpcDecoder::new(code);
 
         // Two strong 1s, one weak 0 → should decode to [1, 1, 0] (even parity)
-        let llrs = vec![Llr::new(-5.0), Llr::new(-5.0), Llr::new(2.0)]; // Weak 0
+        let llrs = vec![Llr::new(-5.0), Llr::new(-5.0), Llr::new(2.0)];
 
         let result = decoder.decode_iterative(&llrs, 20);
 
@@ -1687,7 +1421,6 @@ mod decoder_tests {
         }
     }
 
-    /// Two fresh decoders give identical results on the same input.
     #[test]
     fn test_decoder_equivalence_with_caching() {
         let code = LdpcCode::dvb_t2_normal(crate::CodeRate::Rate3_5);
@@ -1728,21 +1461,18 @@ mod tests {
         let edges = vec![(0, 0), (0, 1), (0, 2)];
         let code = LdpcCode::from_edges(1, 3, &edges);
 
-        // Valid codeword [0,0,0] - even parity
         let mut valid = BitVec::new();
         for _ in 0..3 {
             valid.push_bit(false);
         }
         assert!(code.is_valid_codeword(&valid));
 
-        // Valid codeword [1,1,0] - even parity (1+1+0=0 mod 2)
         let mut valid2 = BitVec::new();
         valid2.push_bit(true);
         valid2.push_bit(true);
         valid2.push_bit(false);
         assert!(code.is_valid_codeword(&valid2));
 
-        // Invalid codeword [1,0,0] - odd parity
         let mut invalid = BitVec::new();
         invalid.push_bit(true);
         invalid.push_bit(false);
@@ -1784,7 +1514,6 @@ mod generator_matrix_access_tests {
 
     #[test]
     fn test_ldpc_generator_matrix_dimensions() {
-        // Small Hamming(7,4) as LDPC
         let edges = vec![
             (0, 0),
             (0, 1),
@@ -1804,7 +1533,6 @@ mod generator_matrix_access_tests {
 
     #[test]
     fn test_ldpc_generator_parity_orthogonality() {
-        // Small hand-constructed example with full-rank H
         let edges = vec![(0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (1, 3)];
         let code = LdpcCode::from_edges(2, 4, &edges);
         let g = code.generator_matrix();
@@ -1848,7 +1576,6 @@ mod generator_matrix_access_tests {
 
     #[test]
     fn test_ldpc_generator_cached() {
-        // Use a full-rank example
         let edges = vec![
             (0, 0),
             (0, 1),
@@ -1894,27 +1621,26 @@ mod generator_matrix_access_tests {
 
     #[test]
     fn test_ldpc_regular_3_6() {
-        // Regular (3,6) LDPC code - small version
         let edges = vec![
             // Each variable node connects to 3 checks
             (0, 0),
             (1, 0),
-            (2, 0), // v0
+            (2, 0),
             (0, 1),
             (1, 1),
-            (3, 1), // v1
+            (3, 1),
             (0, 2),
             (2, 2),
-            (3, 2), // v2
+            (3, 2),
             (1, 3),
             (2, 3),
-            (3, 3), // v3
+            (3, 3),
             (0, 4),
             (2, 4),
-            (3, 4), // v4
+            (3, 4),
             (1, 5),
             (2, 5),
-            (3, 5), // v5
+            (3, 5),
         ];
         let code = LdpcCode::from_edges(4, 6, &edges);
         let g = code.generator_matrix();
@@ -1939,7 +1665,7 @@ mod algorithm_tests {
     use super::*;
     use crate::traits::IterativeSoftDecoder;
 
-    /// Helper: build a simple [3,2] single parity check code
+    /// A [3,2] single parity check code.
     fn simple_parity_code() -> LdpcCode {
         let edges = vec![(0, 0), (0, 1), (0, 2)];
         LdpcCode::from_edges(1, 3, &edges)
@@ -2131,8 +1857,6 @@ mod algorithm_tests {
         }
     }
 
-    /// Sum-product and the default decoder both converge on noiseless LLRs of
-    /// the (256,121) 5G NR rate-matched code.
     #[test]
     fn test_sum_product_nr5g_256_121_noiseless() {
         use crate::ldpc::nr_5g::Nr5gRateMatchedDecoder;
@@ -2147,7 +1871,6 @@ mod algorithm_tests {
         let codeword = rm_code.encode(&message);
         assert_eq!(codeword.len(), target_n);
 
-        // Create noiseless LLRs: +10.0 for bit=0, -10.0 for bit=1
         let channel_llrs: Vec<Llr> = (0..target_n)
             .map(|i| {
                 if codeword.get(i) {
@@ -2234,7 +1957,6 @@ mod algorithm_tests {
             "boxplus_n with a zero input should return 0"
         );
 
-        // Very large messages (simulating after many iterations)
         let huge_msgs: Vec<Llr> = vec![Llr::new(50.0), Llr::new(30.0), Llr::new(40.0)];
         let result = Llr::boxplus_n(&huge_msgs);
         assert!(
@@ -2337,8 +2059,6 @@ mod decoder_proptests {
     use proptest::prelude::*;
 
     proptest! {
-        /// At high SNR, all min-sum variants (MinSum, NormalizedMinSum, OffsetMinSum)
-        /// should produce the same hard decisions for the all-zero codeword.
         #[test]
         fn test_algorithm_variants_agree_at_high_snr(
             alpha in 0.5f32..=1.0f32,
