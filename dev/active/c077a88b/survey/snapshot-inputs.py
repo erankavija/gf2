@@ -12,6 +12,7 @@ import io
 import json
 import pathlib
 import subprocess
+import sys
 import tarfile
 
 p = argparse.ArgumentParser()
@@ -39,8 +40,12 @@ archive(a.external / 'inputs', archives / 'recorded-inputs.tar.gz', set())
 # Pin the surveyed source (without radio-stack builds) for review of exclusions.
 for name in ['srsran', 'xdsopl-ldpc', 'oai', 'simde']:
     archive(a.external / name, archives / (name + '-source.tar.gz'), {'.git', 'build', 'build-ldpc', '__pycache__'})
-base = json.loads(pathlib.Path('dev/active/f547c394/producing-inputs.json').read_text())
-survey = pathlib.Path('dev/active/c077a88b/survey')
+root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip()
+helper = subprocess.check_output(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard',
+                                  '--', ':(glob)**/repository_files.py'], text=True).strip()
+base = json.loads(pathlib.Path(subprocess.check_output(
+    [sys.executable, '-B', str(pathlib.Path(root, helper)), 'shared-producing-manifest'], text=True).strip()).read_text())
+survey = pathlib.Path(__file__).resolve().parent.relative_to(root)
 behavior = [str(p) for p in survey.rglob('*') if p.is_file() and p.suffix in {'.rs', '.cpp', '.py', '.sh'} and 'target' not in p.parts]
 # Cargo's resolved local dependency graph is the source of the producing closure.
 # This includes transitive gf2-sim dependencies rather than a private crate list.

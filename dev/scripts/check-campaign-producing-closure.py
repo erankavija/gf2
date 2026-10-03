@@ -36,7 +36,13 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from repository_files import repository_root, tracked_files
+from repository_files import (
+    PROTOCOL_OPENING,
+    SHARED_PRODUCING_MANIFEST,
+    package_directory,
+    repository_root,
+    shared_producing_manifest,
+)
 
 PACKAGE = "tuning-campaign-support"
 RUNNER = "src/bin/benchmark-ab-runner.rs"
@@ -47,35 +53,7 @@ SCHEMA = "tuning-campaign-producing-inputs-v1"
 REQUIRED_SECTIONS = ("behavior_sources", "build_inputs")
 
 MODULE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
-CLOSURE = "producing-inputs.json"
-PROTOCOL_OPENING = b"# Zen 3 benchmark protocol\n\nProtocol `zen3-benchmark-protocol` version "
 FEATURE_GATE = re.compile(r'^\s*#\[cfg\(feature\s*=\s*"([^"]+)"\)\]\s*$')
-
-
-def locate_crate(root: Path) -> str:
-    """The root-relative directory of the one live package named `PACKAGE`."""
-    matches = []
-    for manifest in tracked_files(root, "Cargo.toml"):
-        package = tomllib.loads((root / manifest).read_text()).get("package", {})
-        if package.get("name") == PACKAGE:
-            matches.append(str(Path(manifest).parent))
-    if len(matches) != 1:
-        raise SystemExit(f"{len(matches)} live packages are named {PACKAGE}; exactly one must be")
-    return matches[0]
-
-
-def closure_path(root: Path) -> str:
-    """The root-relative shared closure, beside the live protocol documents."""
-    directories = {
-        str(Path(path).parent)
-        for path in tracked_files(root, "protocol*.md")
-        if (root / path).read_bytes().startswith(PROTOCOL_OPENING)
-    }
-    if len(directories) != 1:
-        raise SystemExit(
-            f"protocol documents lie in {len(directories)} directories; exactly one must"
-        )
-    return str(Path(directories.pop()) / CLOSURE)
 
 
 def default_features(manifest: Path) -> set[str]:
@@ -123,7 +101,7 @@ def declared_modules(source: Path, features: set[str]) -> list[str]:
 
 def runner_sources(root: Path) -> list[str]:
     """Every campaign-tools source the runner binary compiles, root-relative."""
-    crate = root / locate_crate(root)
+    crate = root / package_directory(root, PACKAGE)
     features = default_features(crate / "Cargo.toml")
     library = crate / "src/lib.rs"
     sources = [crate / RUNNER, library]
@@ -158,7 +136,7 @@ def omissions(closure: dict, sources: list[str]) -> list[str]:
 
 def check(root: Path) -> list[str]:
     """Reports every defect of the shared closure under `root`."""
-    closure_file = closure_path(root)
+    closure_file = shared_producing_manifest(root)
     try:
         closure = json.loads((root / closure_file).read_text())
     except (OSError, json.JSONDecodeError) as error:
@@ -190,7 +168,7 @@ def write_fixture(root: Path, name_arm: bool) -> None:
     named = [f"{FIXTURE_CRATE}/src/lib.rs", f"{FIXTURE_CRATE}/{RUNNER}"]
     if name_arm:
         named.append(f"{FIXTURE_CRATE}/src/arm.rs")
-    (root / FIXTURE_PROTOCOL).with_name(CLOSURE).write_text(
+    (root / FIXTURE_PROTOCOL).with_name(SHARED_PRODUCING_MANIFEST).write_text(
         json.dumps(
             {
                 "schema": SCHEMA,
@@ -248,8 +226,12 @@ def main() -> int:
     if arguments.self_test:
         return self_test()
     root = repository_root(Path(__file__).resolve())
-    closure_file = closure_path(root)
-    findings = check(root)
+    try:
+        closure_file = shared_producing_manifest(root)
+        findings = check(root)
+    except LookupError as error:
+        print(error, file=sys.stderr)
+        return 1
     if findings:
         print(f"{closure_file} does not enumerate the runner's sources:", file=sys.stderr)
         for finding in findings:

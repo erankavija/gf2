@@ -24,12 +24,11 @@ import hashlib
 import json
 import pathlib
 import subprocess
+import sys
 
 ISSUE = "3be770d5"
-SURVEY = pathlib.Path("dev/active") / ISSUE / "survey"
 PREPARATION = pathlib.Path("dev/bench_results") / ISSUE / "preparation"
 C077 = pathlib.Path("dev/bench_results/c077a88b/v3-preparation")
-SHIM = pathlib.Path("dev/active/c077a88b/survey/harness/cpp/aff3ct_shim.cpp")
 EXECUTABLES = ["gf2-throughput-arm", "aff3ct-throughput-arm", "ldpc-profile", "ldpc-plan-check",
                "ldpc-alloc-census", "ldpc-throughput-validate"]
 NOT_BEHAVIOR = {"make-addenda.py", "record-preparation.py", "summarize-profile.py",
@@ -46,6 +45,19 @@ def sha(path):
 
 def output(command, **kwargs):
     return subprocess.run(command, check=True, capture_output=True, text=True, **kwargs).stdout.strip()
+
+
+def located(*query):
+    """Root-relative path the repository-file helper prints for `query`."""
+    helper = output(["git", "-C", ROOT, "ls-files", "--cached", "--others", "--exclude-standard",
+                     "--", ":(glob)**/repository_files.py"])
+    return pathlib.Path(output([sys.executable, "-B", str(pathlib.Path(ROOT, helper)), *query]))
+
+
+ROOT = output(["git", "rev-parse", "--show-toplevel"])
+SURVEY = pathlib.Path(__file__).resolve().parent.relative_to(ROOT)
+C077_HARNESS = located("package-directory", "ldpc-survey-harness")
+SHIM = C077_HARNESS / "cpp/aff3ct_shim.cpp"
 
 
 def build_identity(args):
@@ -67,7 +79,7 @@ def build_identity(args):
             "CARGO_CI_NO_SCCACHE=1 GF2_AFF3CT_ROOT=<aff3ct root> "
             "CARGO_TARGET_DIR=\"$PWD/target/ldpc-throughput\" RUSTFLAGS='-C target-cpu=native' "
             "./scripts/cargo-budget.sh cargo +1.95 build --offline --release --features aff3ct "
-            "--manifest-path dev/active/3be770d5/survey/harness/Cargo.toml"),
+            f"--manifest-path {SURVEY / 'harness/Cargo.toml'}"),
         "aff3ct": {
             "root": str(args.aff3ct),
             "commit": output(["git", "-C", str(args.aff3ct), "rev-parse", "HEAD"]),
@@ -83,7 +95,7 @@ def build_identity(args):
             "included": str(SHIM),
             "included_sha256": sha(SHIM),
             "flags": ["-std=gnu++11", "-O3", "-march=native", "-g1", "-DNDEBUG"],
-            "definitions_source": "dev/active/3be770d5/survey/harness/build.rs AFF3CT_DEFINITIONS",
+            "definitions_source": f"{SURVEY / 'harness/build.rs'} AFF3CT_DEFINITIONS",
             "build_rs_sha256": hashlib.sha256(build_rs.encode()).hexdigest(),
         },
         "executables": {name: sha(args.bin_dir / name) for name in EXECUTABLES},
@@ -92,8 +104,8 @@ def build_identity(args):
                         "sha256": sha(C077 / "source-inputs/recorded-inputs.tar.gz")},
             "extracted_to": str(args.inputs),
             "bundles": bundles,
-            "generator": "dev/active/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs",
-            "generator_sha256": sha("dev/active/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs"),
+            "generator": str(C077_HARNESS / "src/bin/ldpc-make-inputs.rs"),
+            "generator_sha256": sha(C077_HARNESS / "src/bin/ldpc-make-inputs.rs"),
             "rng": ("channel noise: gf2_sim::testutil::AwgnLlrSource, an in-repository SplitMix64 "
                     "stream (crates/gf2-sim/src/testutil.rs) seeded with the manifest seed; random "
                     "messages: the generator's own LCG seeded with seed ^ 0x6C64706D73677367. "
@@ -105,7 +117,7 @@ def build_identity(args):
 
 
 def producing_inputs():
-    base = json.loads(pathlib.Path("dev/active/f547c394/producing-inputs.json").read_text())
+    base = json.loads(located("shared-producing-manifest").read_text())
     behavior = [str(path) for path in SURVEY.rglob("*")
                 if path.is_file() and "target" not in path.parts
                 and path.suffix in {".rs", ".cpp", ".py", ".sh", ".json"}

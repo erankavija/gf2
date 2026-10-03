@@ -1,0 +1,8 @@
+command: ./dev/active/a203a23c/reevaluate-receipts.sh 5e300cc92a79dbc7a2b054a181af443169b6bfa8 target/b0b1faf5-outputs/receipt-reevaluation.json
+exit: 0
+stdout:
+{"receipts": 144, "reproduces": 139, "skipped": 1}
+stderr:
+    Finished `release` profile [optimized] target(s) in <duration>
+written:
+b4dc94f8da9a2078787290f85a5b41852d25013b08c12c86be6adb5c9ce3d673  target/b0b1faf5-outputs/receipt-reevaluation.json

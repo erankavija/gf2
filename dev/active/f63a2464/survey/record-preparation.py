@@ -26,8 +26,6 @@ import subprocess
 import sys
 import time
 
-SURVEY = pathlib.Path("dev/active/f63a2464/survey")
-BASE_MANIFEST = pathlib.Path("dev/active/f547c394/producing-inputs.json")
 TOOLCHAIN = "1.95"
 RUSTFLAGS = "-C target-cpu=native"
 
@@ -41,6 +39,22 @@ def digest(path):
 
 def run(command, **kwargs):
     return subprocess.run(command, check=True, capture_output=True, text=True, **kwargs).stdout
+
+
+def output(command):
+    return run(command).strip()
+
+
+def located(*query):
+    """Root-relative path the repository-file helper prints for `query`."""
+    helper = output(["git", "-C", ROOT, "ls-files", "--cached", "--others", "--exclude-standard",
+                     "--", ":(glob)**/repository_files.py"])
+    return pathlib.Path(output([sys.executable, "-B", str(pathlib.Path(ROOT, helper)), *query]))
+
+
+ROOT = output(["git", "rev-parse", "--show-toplevel"])
+SURVEY = pathlib.Path(__file__).resolve().parent.relative_to(ROOT)
+ARMS = SURVEY / "arms/Cargo.toml"
 
 
 def local_closure(manifest_path, features):
@@ -76,8 +90,7 @@ def main():
     parser.add_argument("--candidate-dir", required=True)
     args = parser.parse_args()
 
-    repo = pathlib.Path(run(["git", "rev-parse", "--show-toplevel"]).strip())
-    if pathlib.Path.cwd() != repo:
+    if pathlib.Path.cwd() != pathlib.Path(ROOT):
         sys.exit("invoke from the worktree root")
 
     baseline = pathlib.Path(args.baseline_dir)
@@ -91,6 +104,7 @@ def main():
     static_library = next(
         pathlib.Path(args.aff3ct_root).rglob("libaff3ct*.a"), None
     )
+    baseline_harness = located("package-directory", "ldpc-throughput-harness")
     identity = {
         "schema": "ldpc-candidate-build-identity-v1",
         "observed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -103,12 +117,12 @@ def main():
                 f"CARGO_CI_NO_SCCACHE=1 GF2_AFF3CT_ROOT=<aff3ct root> "
                 f"CARGO_TARGET_DIR=\"$PWD/{baseline.parent.name}\" RUSTFLAGS='{RUSTFLAGS}' "
                 f"./scripts/cargo-budget.sh cargo +{TOOLCHAIN} build --offline --release "
-                "--features aff3ct --manifest-path dev/active/3be770d5/survey/harness/Cargo.toml"
+                f"--features aff3ct --manifest-path {baseline_harness / 'Cargo.toml'}"
             ),
             "candidate": (
                 f"CARGO_TARGET_DIR=\"$PWD/{candidate.parent.name}\" RUSTFLAGS='{RUSTFLAGS}' "
                 f"./scripts/cargo-budget.sh cargo +{TOOLCHAIN} build --offline --release "
-                "--manifest-path dev/active/f63a2464/survey/arms/Cargo.toml"
+                f"--manifest-path {ARMS}"
             ),
         },
         "directories": {"baseline": str(baseline), "candidate": str(candidate)},
@@ -138,15 +152,15 @@ def main():
         json.dumps(identity, indent=2) + "\n", encoding="utf-8"
     )
 
-    base = json.loads(BASE_MANIFEST.read_text(encoding="utf-8"))
+    base = json.loads(located("shared-producing-manifest").read_text(encoding="utf-8"))
     survey_sources = [
         str(path)
         for path in SURVEY.rglob("*")
         if path.is_file() and path.suffix in {".rs", ".py", ".sh"} and "target" not in path.parts
     ]
-    behavior, manifests = local_closure("dev/active/f63a2464/survey/arms/Cargo.toml", None)
+    behavior, manifests = local_closure(ARMS, None)
     baseline_behavior, baseline_manifests = local_closure(
-        "dev/active/3be770d5/survey/harness/Cargo.toml", "aff3ct"
+        baseline_harness / "Cargo.toml", "aff3ct"
     )
     behavior += baseline_behavior + survey_sources
     manifests += baseline_manifests
@@ -159,7 +173,7 @@ def main():
         | set(behavior)
         | set(manifests)
         | {
-            "dev/active/3be770d5/survey/harness/Cargo.lock",
+            str(baseline_harness / "Cargo.lock"),
             str(args.out_dir / "build-identity.json"),
             identity["inputs"]["archive"],
         }
