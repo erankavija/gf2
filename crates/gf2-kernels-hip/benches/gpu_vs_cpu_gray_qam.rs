@@ -1,19 +1,6 @@
-//! CPU/GPU crossover benchmark for the Gray square-QAM max-log demapper.
-//!
-//! Compares `FastGrayQamDemapper<f32>` (CPU) against `GpuGrayQamSoftDemapper`
-//! (HIP/ROCm) across a range of batch sizes and modulation orders. This is
-//! the ready-made driver for the crossover measurement tracked in JIT
-//! issue `9c37ec8c`.
-//!
-//! Run with:
-//!
-//! ```text
-//! cargo bench --manifest-path crates/gf2-kernels-hip/Cargo.toml \
-//!     --bench gpu_vs_cpu_gray_qam
-//! ```
-//!
-//! The GPU demapper is warmed up once before timed iterations so the
-//! first-launch JIT/driver cost is not attributed to the measurement.
+//! CPU/GPU benchmark of the Gray square-QAM max-log demapper:
+//! `FastGrayQamDemapper<f32>` against `GpuGrayQamSoftDemapper` across batch
+//! sizes and modulation orders.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
