@@ -1,18 +1,9 @@
-//! Host-side HIP infrastructure for the `gf2-sim` pipeline (design doc §6).
-//!
-//! This module stands up the host plumbing the GPU pipeline stages and the
-//! Phase C executor build on:
-//!
-//! | Submodule | Contents |
-//! |-----------|----------|
-//! | [`streams`] | [`HipStream`] (RAII over `hipStream_t`) and [`HipStreamPool`] |
-//! | [`events`] | [`HipEvent`] and [`HipEventSpan`] timing resources |
-//! | [`alloc`]   | [`DeviceBuffer<T>`] and [`PinnedHostBuffer<T>`] |
-//! | [`launch`]  | deterministic kernel-launch helpers (fixed grid/block) |
-//! | [`arch`]    | [`GfxTarget`] enum + runtime [`GfxTarget::detect`] |
-//!
-//! All `unsafe` FFI is encapsulated behind safe wrappers here; each call site
-//! carries a `// SAFETY:` comment, satisfying the kernel-crate isolation rule.
+//! Host-side HIP infrastructure: [`HipStream`] and [`HipStreamPool`]
+//! ([`streams`]), [`HipEvent`] and [`HipEventSpan`] timing resources
+//! ([`events`]), [`DeviceBuffer<T>`] and [`PinnedHostBuffer<T>`] ([`alloc`]),
+//! fixed launch geometry ([`launch`]), and [`GfxTarget`] detection ([`arch`]).
+//! Every `unsafe` FFI call sits behind a safe wrapper with a `// SAFETY:`
+//! comment.
 //!
 //! [`HipStream`]: streams::HipStream
 //! [`HipStreamPool`]: streams::HipStreamPool
@@ -21,7 +12,6 @@
 //! [`DeviceBuffer<T>`]: alloc::DeviceBuffer
 //! [`PinnedHostBuffer<T>`]: alloc::PinnedHostBuffer
 //! [`GfxTarget`]: arch::GfxTarget
-//! [`GfxTarget::detect`]: arch::GfxTarget::detect
 
 pub mod alloc;
 pub mod arch;

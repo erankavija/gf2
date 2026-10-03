@@ -1,7 +1,6 @@
-//! Raw FFI bindings to the HIP BCJR kernel.
-//!
-//! These functions are implemented in `hip/bcjr_kernel.hip` and compiled
-//! by hipcc via `build.rs`. All pointers are device pointers unless noted.
+//! Raw FFI bindings to the device kernels and host-runtime wrappers under
+//! `hip/`, compiled by hipcc via `build.rs`. All pointers are device pointers
+//! unless noted.
 
 use std::ffi::c_void;
 use std::os::raw::c_int;
@@ -96,10 +95,8 @@ extern "C" {
     /// Launch the device ChaCha20 raw-word stream kernel.
     ///
     /// Writes `n_words` consecutive 32-bit ChaCha20 keystream words starting at
-    /// absolute stream position `base_word_pos` into `out`. The keystream is
-    /// the one a host `ChaCha20Rng::seed_from_u64(seed)` produces (the `key`
-    /// is the 8-word little-endian seed derived by rand_core's PCG32
-    /// expansion). One device thread per word.
+    /// absolute stream position `base_word_pos` into `out`. One device thread
+    /// per word.
     ///
     /// # Arguments
     /// - `key`: device ptr, `[8]` u32 little-endian ChaCha key words.
@@ -122,9 +119,7 @@ extern "C" {
     ///
     /// Writes `n_samples` f32 standard-normal `N(0, 1)` samples into `out`,
     /// one thread per sample. Sample `s` consumes the 4 ChaCha words at
-    /// `base_word_pos + 4*s` (u1 from words 0,1; u2 from words 2,3), matching
-    /// the CPU `draw_standard_normal` order. The samples agree with the CPU
-    /// Box-Muller transform to <= 1 ulp f32 (design doc §11).
+    /// `base_word_pos + 4*s` (u1 from words 0,1; u2 from words 2,3).
     ///
     /// # Arguments
     /// - `key`: device ptr, `[8]` u32 little-endian ChaCha key words.
@@ -172,12 +167,10 @@ extern "C" {
     ///
     /// `frame_done`: per-frame freeze flags (`[batch]`), or null when early
     /// termination is off. A frame with `frame_done[b] != 0` is skipped so its
-    /// `c2v` stays at the first-convergence state (design §11 byte-identity).
+    /// `c2v` stays at the first-convergence state.
     ///
-    /// The kernel is standard-agnostic: any per-`i_LS` cyclic shift is folded
-    /// into the flat CSR layout host-side (design §6), so there is no in-kernel
-    /// shift parameter (5G NR reuses this binary via host-side expansion in
-    /// Phase E `23d3525f`).
+    /// The kernel has no shift parameter: a quasi-cyclic code reaches it as a
+    /// flat CSR layout expanded host-side.
     ///
     /// # Returns
     /// 0 on success (hipSuccess), nonzero on error.
@@ -252,8 +245,6 @@ extern "C" {
     pub fn hip_memcpy_d2h(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
     pub fn hip_device_synchronize() -> c_int;
 
-    // ---- Host-runtime wrappers (hip/host_runtime.hip) --------------------
-    // Stream management.
     pub fn hip_stream_create(stream: *mut *mut c_void) -> c_int;
     pub fn hip_stream_destroy(stream: *mut c_void) -> c_int;
     pub fn hip_stream_synchronize(stream: *mut c_void) -> c_int;
@@ -307,15 +298,12 @@ extern "C" {
         stop: *mut c_void,
     ) -> c_int;
 
-    // Device selection / introspection.
     pub fn hip_set_device(device_id: c_int) -> c_int;
     pub fn hip_get_device(device_id: *mut c_int) -> c_int;
     pub fn hip_device_get_count(count: *mut c_int) -> c_int;
     /// Writes the device's GCN arch name (`hipDeviceProp_t.gcnArchName`, e.g.
     /// `"gfx1030"`, `"gfx940"`, `"gfx942"`) into `buf` (capacity `buf_len`
-    /// bytes), NUL-terminated. This is the authoritative kernel-blob
-    /// discriminator (design doc §6); compute capability cannot distinguish
-    /// gfx940 from gfx942.
+    /// bytes), NUL-terminated.
     pub fn hip_device_get_arch_name(
         device_id: c_int,
         buf: *mut std::os::raw::c_char,
@@ -323,11 +311,9 @@ extern "C" {
     ) -> c_int;
     pub fn hip_mem_get_info(free_bytes: *mut usize, total_bytes: *mut usize) -> c_int;
 
-    // Pinned host memory.
     pub fn hip_host_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
     pub fn hip_host_free(ptr: *mut c_void) -> c_int;
 
-    // Stream-ordered transfers.
     pub fn hip_memcpy_h2d_async(
         dst: *mut c_void,
         src: *const c_void,
@@ -342,12 +328,8 @@ extern "C" {
     ) -> c_int;
 }
 
-// ---- BCH syndrome device kernels (hip/bch_syndrome.hip) -------------------
-//
-// These two externs resolve against `hip/bch_syndrome.hip`, which `build.rs`
-// only compiles under the `hip` feature (issue `9012f8a0` criterion 6). Gating
-// the declarations keeps the default (non-`hip`) build from referencing symbols
-// the static lib does not contain.
+// `build.rs` compiles `hip/bch_syndrome.hip` only under the `hip` feature, so
+// these declarations carry the same gate.
 #[cfg(feature = "hip")]
 extern "C" {
     /// Launch the batch BCH syndrome evaluator.
@@ -355,8 +337,7 @@ extern "C" {
     /// For each frame and each evaluation point `β_i` (`i = 0..two_t-1`),
     /// computes the syndrome `S_i = r(β_i)` by Horner's rule over
     /// GF(2^m) using the uploaded `exp` / `log` tables. One device thread per
-    /// `(frame, point)`. Byte-identical to the CPU syndrome evaluation of
-    /// `gf2_coding::bch::BinaryBchDecoder` (design doc §5, §6, §10).
+    /// `(frame, point)`.
     ///
     /// # Arguments
     /// - `d_coeffs`: device ptr, `[batch_size * words_per_frame]` u64 packed
@@ -393,9 +374,8 @@ extern "C" {
     /// Launch the standalone device `gf_mul` test kernel.
     ///
     /// Computes `d_out[j] = gf_mul(d_a[j], d_b[j])` over GF(2^m) using the
-    /// uploaded `exp` / `log` tables — the SAME multiply the syndrome kernel
-    /// uses. Exposed for the exhaustive GF(2^m) correctness rung (design doc
-    /// §10 rung 1). One device thread per pair.
+    /// uploaded `exp` / `log` tables, with the multiply the syndrome kernel
+    /// uses. One device thread per pair.
     ///
     /// # Arguments
     /// - `d_a` / `d_b`: device ptrs, `[count]` u16 operands.

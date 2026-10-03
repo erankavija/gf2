@@ -1,7 +1,4 @@
 //! Cross-validation: GPU BCJR vs CPU BCJR.
-//!
-//! Compares GPU batch BCJR output against the reference CPU implementation
-//! in `gf2-coding::bcjr` to verify numerical correctness.
 
 use gf2_coding::bcjr::BcjrDecoder;
 use gf2_coding::drm::DrmCode;
@@ -21,7 +18,6 @@ fn test_gpu_cpu_hamming74_crosscheck() {
     let cpu = BcjrDecoder::new(&h);
     let gpu = GpuBcjrBatch::new(&h_cols, 7, 4, 32).unwrap();
 
-    // 25 deterministic test vectors (acceptance criterion requires 25)
     let test_vectors: Vec<Vec<f32>> = vec![
         vec![5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0],
         vec![-5.0, -5.0, -5.0, -5.0, -5.0, -5.0, -5.0],
@@ -50,10 +46,8 @@ fn test_gpu_cpu_hamming74_crosscheck() {
         vec![3.0, 3.0, 3.0, -3.0, -3.0, -3.0, 0.0],
     ];
 
-    // Batch all on GPU
     let (gpu_app, _gpu_ext) = gpu.decode_batch(&test_vectors).unwrap();
 
-    // Compare each against CPU
     for (idx, llrs) in test_vectors.iter().enumerate() {
         let cpu_input: Vec<Llr> = llrs.iter().map(|&v| Llr::new(v)).collect();
         let cpu_result = cpu.decode_siso(&cpu_input);
@@ -85,7 +79,6 @@ fn test_gpu_cpu_drm32_noiseless_crosscheck() {
     let cpu = BcjrDecoder::new(h);
     let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
 
-    // Test with 10 different codewords (noiseless)
     let mut inputs = Vec::new();
     for seed in 0..10u64 {
         let mut msg = BitVec::with_capacity(21);
@@ -121,7 +114,6 @@ fn test_gpu_cpu_drm32_noiseless_crosscheck() {
                 diff
             );
 
-            // Hard decisions must match
             let gpu_hard = *gpu_val < 0.0;
             let cpu_hard = cpu_llr.hard_decision();
             assert_eq!(
@@ -141,7 +133,6 @@ fn test_gpu_cpu_drm32_noisy_crosscheck() {
     let cpu = BcjrDecoder::new(h);
     let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 16).unwrap();
 
-    // 10 moderate-SNR test vectors (acceptance criterion requires 10)
     let test_vectors: Vec<Vec<f32>> = vec![
         (0..32).map(|j| 1.5 * ((j % 3) as f32 - 1.0)).collect(),
         (0..32)
@@ -196,7 +187,6 @@ fn test_gpu_batch64_matches_serial_cpu() {
     let cpu = BcjrDecoder::new(h);
     let gpu = GpuBcjrBatch::new(&h_cols, 32, 21, 64).unwrap();
 
-    // Build 64 diverse inputs
     let inputs: Vec<Vec<f32>> = (0..64)
         .map(|idx| {
             (0..32)
@@ -271,12 +261,9 @@ fn test_gpu_turbo_ebch16_convergence() {
     );
 }
 
-// ---- Property-based tests ----
-
 use proptest::prelude::*;
 
 proptest! {
-    /// GPU BCJR on Hamming(7,4) matches CPU for arbitrary LLR inputs.
     #[test]
     fn prop_gpu_cpu_hamming74_equivalence(
         llrs in proptest::collection::vec(-10.0f32..10.0f32, 7..=7)
@@ -311,7 +298,6 @@ proptest! {
         }
     }
 
-    /// GPU batch of N decodes matches N individual CPU decodes for dRM(32,21).
     #[test]
     fn prop_gpu_batch_matches_serial_cpu(
         batch_size in 1usize..=16,

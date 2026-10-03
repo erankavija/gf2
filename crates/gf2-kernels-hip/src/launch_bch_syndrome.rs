@@ -1,43 +1,9 @@
 //! Safe host wrapper for the device batch BCH syndrome evaluator
-//! (`hip/bch_syndrome.hip`, design doc §5 / §6 / §7 / §10).
+//! (`hip/bch_syndrome.hip`).
 //!
-//! [`GpuBchSyndrome`] owns the device-resident field tables (`exp` / `log`,
-//! uploaded once) and the `2t` syndrome evaluation points, plus the reusable
-//! per-batch packed-coefficient input and syndrome-output buffers. It runs the
-//! same Horner syndrome evaluation as the CPU path of
-//! `gf2_coding::bch::BinaryBchDecoder` —
-//! `S_i = r(β_i)` over GF(2^m) at each evaluation point `β_i` — and returns the `2t` u16 field-element
-//! syndromes per frame, **byte-identical** to the CPU table-backed arithmetic
-//! (design doc §5: the GPU multiply is the uploaded CPU `exp`/`log` table, so
-//! equality is exact and total — no ULP drift, unlike the LDPC f32 path).
-//!
-//! # Evaluator, not a pipeline stage (design doc §1)
-//!
-//! BCH syndrome evaluation maps received bits to `2t` syndromes, an
-//! *intermediate* decode sub-step, so it is not a natural full-decode
-//! `Stage<In, Out>` like [`GpuLdpcBp`](crate::GpuLdpcBp). Berlekamp-Massey and
-//! Chien search remain on the CPU; the `gf2-coding`
-//! `BinaryBchDecoder::{compute_syndromes_batch_gpu, correct_batch_gpu}` hooks
-//! (under `--features hip`) drive this wrapper and rehydrate the u16
-//! syndromes into `Gf2mElement`s.
-//!
-//! # Coefficient layout — packed bits (design doc §6)
-//!
-//! Each received frame is a little-endian bit stream of `n` bits
-//! ([`words_per_frame`](GpuBchSyndrome::words_per_frame) u64 words) in which
-//! bit `i` is the coefficient of `x^i`. A canonical `gf2_core::BitVec` word of
-//! the construction model is already in that order, so its words are the
-//! stream. The kernel runs a pure Horner pass with no knowledge of the
-//! parity/message split.
-//!
-//! # Default-stream path (design doc §7)
-//!
-//! [`evaluate_batch`](GpuBchSyndrome::evaluate_batch) runs on the **default
-//! stream** with synchronous transfers and `hipDeviceSynchronize` completion —
-//! the simple single-consumer path. A stream-ordered seam (matching the LDPC /
-//! demapper precedent) can be added later without reworking this API; the field
-//! tables are uploaded once at construction and excluded from the per-batch
-//! transfer cost.
+//! [`GpuBchSyndrome`] evaluates `S_i = r(β_i)` over GF(2^m) at each of `2t`
+//! evaluation points by Horner's rule, using `exp` / `log` tables uploaded
+//! from the CPU field. Berlekamp-Massey and Chien search stay on the CPU.
 
 use std::ptr;
 
@@ -46,30 +12,10 @@ use crate::{check_hip, ffi, HipError};
 
 /// The GF(2^m) `exp` / `log` tables a [`GpuBchSyndrome`] uploads to the device.
 ///
-/// These are the EXACT tables from the live CPU `Gf2mField` (obtained via its
-/// `exp_table()` / `log_table()` accessors), so the device multiply is
-/// bit-identical to the CPU table path by construction (design doc §5). The
-/// caller never re-derives them.
-///
 /// # Invariants
 ///
 /// * `exp.len() == order` (`= 2^m - 1`), `log.len() == 1 << m`.
 /// * `order == (1 << m) - 1`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_kernels_hip::launch_bch_syndrome::BchFieldTables;
-///
-/// // GF(2^4): exp has 15 entries, log has 16.
-/// let exp: Vec<u16> = vec![1, 2, 4, 8, 3, 6, 12, 11, 5, 10, 7, 14, 15, 13, 9];
-/// let mut log = vec![0u16; 16];
-/// for (i, &e) in exp.iter().enumerate() {
-///     log[e as usize] = i as u16;
-/// }
-/// let tables = BchFieldTables::new(4, exp, log);
-/// assert_eq!(tables.order(), 15);
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BchFieldTables {
     m: usize,
@@ -79,13 +25,8 @@ pub struct BchFieldTables {
 }
 
 impl BchFieldTables {
-    /// Builds the field-table bundle for GF(2^m) from its `exp` / `log` tables.
-    ///
-    /// # Arguments
-    ///
-    /// * `m` — the extension degree.
-    /// * `exp` — the antilog table (`α^i`), exactly `2^m - 1` entries.
-    /// * `log` — the discrete-log table, exactly `2^m` entries.
+    /// Builds the field-table bundle for GF(2^m) from its antilog table `exp`
+    /// (`α^i`) and discrete-log table `log`.
     ///
     /// # Panics
     ///
@@ -141,37 +82,13 @@ impl BchFieldTables {
 
 /// A reusable device-side batch BCH syndrome evaluator.
 ///
-/// Holds the persistent device-resident field tables (`exp` / `log`) and the
-/// `2t` evaluation points (uploaded once), plus the reusable per-batch
-/// packed-coefficient input and u16 syndrome-output buffers, sized for up to
-/// `max_batch` frames at construction. Repeated
-/// [`evaluate_batch`](Self::evaluate_batch) calls reuse the same allocations.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_hip::launch_bch_syndrome::{BchFieldTables, GpuBchSyndrome};
-///
-/// // Requires a real HIP device, so this is `no_run`.
-/// // GF(2^4), a tiny BCH(15) with 2t = 4 syndromes.
-/// let exp: Vec<u16> = vec![1, 2, 4, 8, 3, 6, 12, 11, 5, 10, 7, 14, 15, 13, 9];
-/// let mut log = vec![0u16; 16];
-/// for (i, &e) in exp.iter().enumerate() {
-///     log[e as usize] = i as u16;
-/// }
-/// let tables = BchFieldTables::new(4, exp, log);
-/// let points = vec![2u16, 4, 8, 3]; // α^1..α^4, any four points work
-/// let mut ev = GpuBchSyndrome::new(&tables, &points, 15, 2, 8, 0).expect("build");
-/// // One all-zero frame (1 u64 word covers 15 bits): all syndromes zero.
-/// let syndromes = ev.evaluate_batch(&[0u64], 1).expect("evaluate");
-/// assert_eq!(syndromes, vec![0u16; 4]);
-/// ```
+/// The field tables and the `2t` evaluation points are uploaded once; the
+/// per-batch input and output buffers are sized for `max_batch` frames at
+/// construction.
 pub struct GpuBchSyndrome {
-    // Persistent field tables + evaluation points (uploaded once).
     d_log: DeviceBuffer<u16>,
     d_exp: DeviceBuffer<u16>,
     d_points: DeviceBuffer<u16>,
-    // Per-batch reusable buffers.
     d_coeffs: DeviceBuffer<u64>,
     d_syndromes: DeviceBuffer<u16>,
     n: usize,
@@ -186,25 +103,14 @@ impl GpuBchSyndrome {
     /// Builds an evaluator on `device_id`, sized for up to `max_batch` frames
     /// per [`evaluate_batch`](Self::evaluate_batch).
     ///
-    /// The field tables and the `2t` evaluation points are uploaded once; the
-    /// per-batch packed-coefficient input (`max_batch * ceil(n/64)` u64 words)
-    /// and the syndrome output (`max_batch * 2t` u16) are allocated up front.
-    ///
-    /// # Arguments
-    ///
-    /// * `tables` — the GF(2^m) `exp` / `log` tables (from the live CPU field).
-    /// * `eval_points` — the syndrome evaluation points (as u16 field values),
-    ///   length `2t`. `BinaryBchDecoder` passes one orbit representative per
-    ///   Frobenius orbit of its defining set.
-    /// * `n` — codeword length (coefficient count per frame).
-    /// * `t` — error-correction capability (`2t` syndromes per frame).
-    /// * `max_batch` — maximum frames per evaluate call (sizes device buffers).
-    /// * `device_id` — the HIP device to allocate on.
+    /// `eval_points` holds the `2t` syndrome evaluation points as u16 field
+    /// values; `n` is the codeword length and `t` the error-correction
+    /// capability.
     ///
     /// # Errors
     ///
     /// Returns [`HipError`] if any device allocation or upload fails (an OOM is
-    /// the distinguished [`HipError::OutOfMemory`]).
+    /// [`HipError::OutOfMemory`]).
     ///
     /// # Panics
     ///
@@ -288,17 +194,14 @@ impl GpuBchSyndrome {
         self.device_id
     }
 
-    /// Evaluates the `2t` BCH syndromes for a batch of `batch` frames.
+    /// Evaluates the `2t` BCH syndromes for a batch of `batch` frames on the
+    /// default stream.
     ///
     /// `coeff_streams` is `batch * words_per_frame` u64 words: frame `f`'s
     /// packed coefficient stream is `coeff_streams[f * wpf .. (f+1) * wpf]`,
-    /// little-endian bit order with bit `i` the coefficient of `x^i`. Runs on the default stream with
-    /// synchronous H2D / D2H and `hipDeviceSynchronize` completion.
-    ///
-    /// # Returns
-    ///
-    /// `batch * 2t` u16 syndromes, row-major per frame: frame `f`'s syndromes
-    /// `S_1..S_{2t}`, one per evaluation point in upload order, are `out[f * 2t .. (f+1) * 2t]`.
+    /// little-endian bit order with bit `i` the coefficient of `x^i`. Returns
+    /// `batch * 2t` u16 syndromes, row-major per frame, one per evaluation
+    /// point in upload order.
     ///
     /// # Errors
     ///
@@ -312,10 +215,7 @@ impl GpuBchSyndrome {
     ///
     /// # Complexity
     ///
-    /// O(`batch * 2t * n`) device work (the per-(frame, point) Horner chain);
-    /// host-side cost is the per-call H2D of `batch * words_per_frame` u64 words
-    /// and the D2H of `batch * 2t` u16 syndromes (the field tables are uploaded
-    /// once at construction, not per call).
+    /// O(`batch * 2t * n`) device work.
     pub fn evaluate_batch(
         &mut self,
         coeff_streams: &[u64],
@@ -337,10 +237,8 @@ impl GpuBchSyndrome {
             batch * self.words_per_frame
         );
 
-        // H2D: upload the packed coefficient streams for this batch.
         self.d_coeffs.copy_from_host(coeff_streams)?;
 
-        // Launch the syndrome kernel on the default stream.
         // SAFETY: all device pointers were allocated in `new` sized for
         // `max_batch` frames; `batch <= max_batch` and
         // `coeff_streams.len() == batch * words_per_frame` (both asserted). The
@@ -373,31 +271,14 @@ impl GpuBchSyndrome {
             "hipDeviceSynchronize",
         )?;
 
-        // D2H: read back the syndromes for this batch.
         let mut out = vec![0u16; batch * self.two_t];
         self.d_syndromes.copy_to_host(&mut out)?;
         Ok(out)
     }
 }
 
-/// Computes `out[j] = a[j] * b[j]` over GF(2^m) on the device, using the
-/// uploaded `exp` / `log` tables — the SAME `gf_mul` the syndrome kernel runs.
-///
-/// This is the exhaustive-correctness harness for design-doc §10 rung 1: it
-/// exercises the real device multiply for arbitrary `(a, b)` operands (the
-/// Horner syndrome path alone cannot, since BCH coefficients are binary). The
-/// result is byte-identical to the CPU `Gf2mField` table multiply by
-/// construction (the device uses the uploaded CPU tables).
-///
-/// # Arguments
-///
-/// * `tables` — the GF(2^m) `exp` / `log` tables.
-/// * `a` / `b` — equal-length operand slices (u16 field values).
-/// * `device_id` — the HIP device to run on.
-///
-/// # Returns
-///
-/// `a.len()` u16 products.
+/// Computes `out[j] = a[j] * b[j]` over GF(2^m) on the device with the
+/// `gf_mul` of the syndrome kernel. The tables are uploaded on each call.
 ///
 /// # Errors
 ///
@@ -406,28 +287,6 @@ impl GpuBchSyndrome {
 /// # Panics
 ///
 /// Panics if `a.len() != b.len()`.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_kernels_hip::launch_bch_syndrome::{gf_mul_device_batch, BchFieldTables};
-///
-/// // Requires a real HIP device, so this is `no_run`.
-/// let exp: Vec<u16> = vec![1, 2, 4, 8, 3, 6, 12, 11, 5, 10, 7, 14, 15, 13, 9];
-/// let mut log = vec![0u16; 16];
-/// for (i, &e) in exp.iter().enumerate() {
-///     log[e as usize] = i as u16;
-/// }
-/// let tables = BchFieldTables::new(4, exp, log);
-/// let out = gf_mul_device_batch(&tables, &[2, 3], &[2, 3], 0).unwrap();
-/// assert_eq!(out, vec![4, 5]); // α^1*α^1 = α^2 = 4; 3*3 = α^4*α^4 = α^8 = 5
-/// ```
-///
-/// # Complexity
-///
-/// O(`a.len()`) device work; one H2D of the two operand slices and one D2H of
-/// the products (the tables are uploaded per call — this is a test harness, not
-/// a hot path).
 pub fn gf_mul_device_batch(
     tables: &BchFieldTables,
     a: &[u16],
@@ -486,10 +345,7 @@ pub fn gf_mul_device_batch(
     Ok(out)
 }
 
-// `GpuBchSyndrome` is `Send` by auto-derive (every field is a `DeviceBuffer<_>`,
-// which is `Send`, or a `Copy` scalar). It is deliberately NOT `Sync`: its
-// `evaluate_batch` mutates device memory through `&mut self`, following the
-// per-worker-owned-buffer doctrine documented on `DeviceBuffer`.
+// `GpuBchSyndrome` is `Send` by auto-derive; this assertion keeps it so.
 const _: fn() = || {
     fn assert_send<T: Send>() {}
     assert_send::<GpuBchSyndrome>();

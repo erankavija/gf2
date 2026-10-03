@@ -3,9 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-/// The multi-arch gfx target list (design doc §6). Kept in sync with
-/// `GfxTarget::ALL` in `src/host/arch.rs`. gfx1030 (the first entry) is the
-/// only target whose blob compilation is mandatory; the rest are best-effort.
+/// Kept in sync with `GfxTarget::ALL` in `src/host/arch.rs`. gfx1030 (the first
+/// entry) is the only target whose blob compilation is mandatory; the rest are
+/// best-effort.
 const GFX_TARGETS: &[&str] = &[
     "gfx1030", "gfx1100", "gfx1200", "gfx90a", "gfx940", "gfx942",
 ];
@@ -14,13 +14,8 @@ fn main() {
     let rocm_path = env::var("ROCM_PATH").unwrap_or_else(|_| "/opt/rocm".to_string());
     let hipcc = format!("{rocm_path}/bin/hipcc");
 
-    // --- Static library: host-runtime FFI + device kernels (gfx1030) --------
-    //
-    // The host-runtime wrappers (`host_runtime.hip`) and the BCJR / Gray-QAM
-    // kernels are compiled into one static lib linked into the Rust crate.
-    // These are unconditional (the crate is excluded from the default
-    // workspace on non-ROCm hosts). The `hip` feature adds the permanent
-    // kernels on top.
+    // The static library is compiled for gfx1030 only; the `hip` feature adds
+    // the BCH syndrome and permanent kernels.
     let mut build = cc::Build::new();
     build
         .compiler(&hipcc)
@@ -47,33 +42,21 @@ fn main() {
         .cpp(true)
         .compile("gf2_kernels_hip");
 
-    // --- Per-arch kernel blobs (design doc §6) ------------------------------
-    //
-    // For each gfx target, compile every `kernels/<target>/*.cpp` source into a
-    // `kernels/<target>/<name>.co` blob via `hipcc --offload-arch=<target>`.
-    // The kernel sources are owned by the next wave (f6004add / a930be7f /
-    // d3f1616a); until they land, each `kernels/<target>/` directory holds only
-    // a `probe.cpp` no-op so the multi-arch compile path is exercised and a
-    // gfx1030 blob exists for `GfxTarget::load_blob` to find.
-    //
-    // gfx1030 MUST compile (it is the CI target). Other archs are best-effort:
-    // a hipcc failure for them (e.g. missing device libs) is logged via
-    // `cargo:warning` and skipped — it does NOT fail the build.
+    // gfx1030 blobs must compile. A hipcc failure for any other arch is
+    // reported through `cargo:warning` and that arch is skipped.
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let kernels_root = manifest_dir.join("kernels");
     let compiled = compile_arch_blobs(&hipcc, &kernels_root);
 
-    // Record which arches THIS build actually produced a usable blob for, so
-    // `GfxTarget::has_compiled_blob` consults a build-accurate manifest rather
-    // than scanning the gitignored `kernels/` output dir (where STALE residue
-    // from a prior build could wrongly report support). Comma-separated
-    // `as_str()` names; an empty string when none compiled.
+    // `GfxTarget::has_compiled_blob` reads this manifest instead of scanning
+    // the gitignored `kernels/` output directory, where residue of another
+    // build could report support this build lacks. Comma-separated `as_str()`
+    // names; empty when none compiled.
     println!(
         "cargo:rustc-env=GF2_HIP_COMPILED_ARCHS={}",
         compiled.join(",")
     );
 
-    // --- Link + rerun triggers ---------------------------------------------
     let lib_path = format!("{rocm_path}/lib");
     println!("cargo:rustc-link-search=native={lib_path}");
     println!("cargo:rustc-link-lib=dylib=amdhip64");
@@ -91,14 +74,9 @@ fn main() {
         println!("cargo:rerun-if-changed=hip/permanent/gray_update_micro.hip");
         println!("cargo:rerun-if-changed=hip/permanent/horizontal_product_micro.hip");
     }
-    // NOTE: do NOT `rerun-if-changed=kernels`. `compile_arch_blobs` WRITES the
-    // generated `<name>.co` blobs (and any best-effort probe) into
-    // `kernels/<target>/`, so watching that directory makes this script
-    // self-invalidating — every build mutates a watched path and forces the
-    // next build to recompile the arch blobs. Real kernel sources live under
-    // `hip/` (watched above); Phase B kernel owners adding `.cpp` sources under
-    // `kernels/<target>/` must emit `rerun-if-changed` for those specific
-    // SOURCE files only, never the output directory.
+    // `kernels/` is not watched: `compile_arch_blobs` writes its `.co` output
+    // there, so watching the directory would invalidate every build. Each
+    // `.cpp` source in it is watched individually by `compile_arch_blobs`.
     println!("cargo:rerun-if-env-changed=ROCM_PATH");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -106,13 +84,8 @@ fn main() {
     let _ = out_dir; // suppress unused warning
 }
 
-/// Compiles the per-arch kernel blobs. gfx1030 is mandatory; others best-effort.
-///
-/// Returns the list of target names (`as_str()` form) for which at least one
-/// `.co` blob compiled successfully THIS build. gfx1030 is always present
-/// (mandatory; a failure panics); best-effort arches appear only when hipcc
-/// succeeded for every one of their sources. The caller emits this set as the
-/// `GF2_HIP_COMPILED_ARCHS` env manifest consulted by `has_compiled_blob`.
+/// Returns the targets for which every source compiled in this build, in
+/// `as_str()` form. A gfx1030 failure panics.
 fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
     let mut compiled: Vec<String> = Vec::new();
     for (idx, target) in GFX_TARGETS.iter().enumerate() {
@@ -127,11 +100,8 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
             continue;
         }
 
-        // Ensure at least the probe source exists so the path is exercised even
-        // before real kernel sources land next wave.
         ensure_probe_source(&target_dir, mandatory);
 
-        // Gather every `*.cpp` source in this arch's directory.
         let sources = collect_cpp_sources(&target_dir);
         if sources.is_empty() {
             // Nothing to compile (probe write failed on a best-effort arch).
@@ -180,8 +150,6 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
             }
         }
 
-        // Record this target as supported only when EVERY source compiled.
-        // gfx1030 always reaches here (any failure above panicked).
         if all_ok {
             compiled.push((*target).to_string());
         }
@@ -189,9 +157,8 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
     compiled
 }
 
-/// Writes a minimal no-op probe source if the arch directory has no `*.cpp`
-/// sources yet. Real kernels (next wave) drop their `.cpp` here and the probe
-/// can be removed at that point.
+/// Writes a no-op probe source when the arch directory holds no `*.cpp`
+/// source, so each target compiles at least one blob.
 fn ensure_probe_source(target_dir: &Path, mandatory: bool) {
     let has_cpp = collect_cpp_sources(target_dir).iter().any(|_| true);
     if has_cpp {
@@ -201,9 +168,8 @@ fn ensure_probe_source(target_dir: &Path, mandatory: bool) {
     if probe.exists() {
         return;
     }
-    // A trivial empty HIP device kernel — compiles to a valid `.co` on every
-    // gfx target without pulling in any host-side dependencies. Documents the
-    // expected source location for the next wave.
+    // An empty HIP device kernel compiles to a valid `.co` on every gfx target
+    // without host-side dependencies.
     let body = "// Auto-generated build probe for gf2-kernels-hip multi-arch dispatch.\n\
                 // Real kernels (f6004add / a930be7f / d3f1616a) land their *.cpp here\n\
                 // next wave; this no-op keeps the per-arch .co compile path green.\n\
@@ -217,7 +183,6 @@ fn ensure_probe_source(target_dir: &Path, mandatory: bool) {
     }
 }
 
-/// Collects all `*.cpp` source paths directly under `dir` (non-recursive).
 fn collect_cpp_sources(dir: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     if let Ok(rd) = fs::read_dir(dir) {

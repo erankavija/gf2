@@ -1,19 +1,5 @@
-//! GPU bit-identity tests for F_5 HIP permanent kernel (b43cdf33).
-//!
-//! Verifies that `permanent_bipedal5_hip_batch` produces results
-//! bit-identical to the CPU reference `permanent_bipedal5_singleword` on
-//! random matrices for n ∈ {8, 12} (success criterion 2 of b43cdf33).
-//!
-//! All tests carry `#[ignore = "external: gfx1030 device required"]`.
-//! Run them only on the dev host with ROCm
-//! installed:
-//!
-//! ```text
-//! cargo nextest run -p gf2-kernels-hip \
-//!     --features hip \
-//!     --run-ignored ignored-only \
-//!     -E 'test(test_permanent_bipedal5_gpu_bit_identity)'
-//! ```
+//! GPU bit-identity tests for the F_5 HIP permanent kernel against the CPU
+//! reference `permanent_bipedal5_singleword`, for n ∈ {8, 12}.
 
 #![cfg(feature = "hip")]
 
@@ -27,42 +13,29 @@ use gf2_core::gfp::Fp;
 use gf2_kernels_hip::permanent::compute_permanent_gf5_batch;
 use std::os::raw::c_int;
 
-/// Generate one random GF(5) value (0, 1, 2, 3, or 4) from the PRNG state.
 fn rand_fp5(state: &mut u64) -> u8 {
-    // Rejection-free: draw from {0,1,2,3,4} via modulo 5.
-    // Bias is negligible (2^64 mod 5 = 1, so the rejection region is at most 1 value).
+    // 2^64 mod 5 = 1, so the modulo bias is negligible.
     (xorshift64(state) % 5) as u8
 }
 
-// ---------------------------------------------------------------------------
-// Core test helper: runs M matrices of size n×n through the GPU batch kernel
-// and compares each result to the CPU reference.
-// ---------------------------------------------------------------------------
-
-/// Run `m_count` random n×n GF(5) matrices through the GPU batch kernel and
-/// compare against `permanent_bipedal5_singleword`. Panics on any mismatch.
-///
-/// `seed` is the xorshift64 initial state; choosing distinct seeds per test
-/// ensures each test exercises a different random draw.
+/// Compares `m_count` random n×n GF(5) matrices, drawn from xorshift64 state
+/// `seed`, between the GPU batch kernel and `permanent_bipedal5_singleword`.
 ///
 /// # Safety
 ///
-/// This function allocates and frees device memory. It must only be called on
-/// a host with a live ROCm/HIP context (gfx1030 device present).
+/// Must only be called on a host with a live ROCm/HIP context.
 unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
     assert!((1..=63).contains(&n), "n must be in 1..=63");
     assert!(m_count >= 1, "m_count must be >= 1");
 
     let mat_bytes = n * n; // bytes per matrix (one u8 per GF(5) element)
 
-    // Generate random matrices on the host.
     let mut rng = seed;
     let mut host_matrices: Vec<u8> = Vec::with_capacity(m_count * mat_bytes);
     for _ in 0..(m_count * n * n) {
         host_matrices.push(rand_fp5(&mut rng));
     }
 
-    // Compute CPU reference permanents.
     let cpu_results: Vec<u64> = (0..m_count)
         .map(|i| {
             let slice = &host_matrices[i * mat_bytes..(i + 1) * mat_bytes];
@@ -72,7 +45,6 @@ unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
         })
         .collect();
 
-    // Run the GPU batch kernel via the shared alloc/H2D/launch/D2H/free helper.
     // SAFETY: requires a live HIP device context; host_matrices has m_count*n*n bytes.
     let gpu_results = run_with_device_buffers(&host_matrices, n, m_count, |d_in, d_out| {
         // SAFETY: d_in/d_out are valid device allocations; n,m_count validated above.
@@ -80,7 +52,6 @@ unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
         assert_eq!(rc, 0, "permanent_bipedal5_hip_batch failed: code {rc}");
     });
 
-    // Bit-identity check.
     for i in 0..m_count {
         assert_eq!(
             gpu_results[i], cpu_results[i],
@@ -90,13 +61,6 @@ unsafe fn run_bit_identity_check(n: usize, m_count: usize, seed: u64) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests — one per n ∈ {8, 12} (success criterion 2 of b43cdf33).
-// All gated on `#[cfg(feature = "hip")]` (inherited from the module-level
-// cfg) and `#[ignore = "external: gfx1030 device required"]`.
-// ---------------------------------------------------------------------------
-
-/// n=8: 100 matrices, 2^8 = 256 ops each — completes in < 1 s on gfx1030.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn test_permanent_bipedal5_gpu_bit_identity_n8() {
@@ -104,7 +68,6 @@ fn test_permanent_bipedal5_gpu_bit_identity_n8() {
     unsafe { run_bit_identity_check(8, 100, 0xF5CA_FEDE_ADBE_EF08u64) }
 }
 
-/// n=12: 100 matrices, 2^12 = 4096 ops each — completes in < 1 s on gfx1030.
 #[test]
 #[ignore = "external: gfx1030 device required"]
 fn test_permanent_bipedal5_gpu_bit_identity_n12() {

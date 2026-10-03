@@ -1,14 +1,5 @@
-//! Cross-validation: GPU Gray-QAM max-log demapper vs CPU fast path.
-//!
-//! The GPU kernel implements the max-log variant. Comparison is against
-//! `FastGrayQamDemapper` with `DemapMethod::MaxLog`, which is the CPU
-//! numerical oracle for the same algorithm. Tolerance is set tightly
-//! (1e-3) because both sides are arithmetically identical up to f32
-//! rounding on the distance computation.
-//!
-//! The throughput measurement lives as a `criterion` benchmark under
-//! `benches/gpu_vs_cpu_gray_qam.rs`; this file keeps only the correctness
-//! tests so `cargo test` has no silent-no-assertion probes.
+//! Cross-validation: GPU Gray-QAM max-log demapper vs the CPU
+//! `FastGrayQamDemapper` with `DemapMethod::MaxLog`.
 
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::{
@@ -63,11 +54,7 @@ fn test_gpu_gray_qam_matches_cpu_fast_path_max_log_awgn() {
         assert_close(
             &out_gpu,
             &out_cpu,
-            // Max-log is purely min-of-squared-distances plus one
-            // subtraction; host and device do the same f32 arithmetic.
-            // A tolerance of 1e-3 absorbs the one-place differences
-            // that come out of the f64-vs-f32 distance path on the CPU
-            // fast side (CPU does distance math in f64, GPU in f32).
+            // The CPU fast path computes distances in f64 and the GPU in f32.
             1e-3,
             &format!("order={order}"),
         );
@@ -76,7 +63,6 @@ fn test_gpu_gray_qam_matches_cpu_fast_path_max_log_awgn() {
 
 #[test]
 fn test_gpu_gray_qam_matches_cpu_fast_path_with_fading_gains() {
-    // Complex-gain pre-rotation contract: compare with non-trivial h.
     let order = 16usize;
     let spec = spec_for_order(order);
     let m = spec.bits_per_symbol() as usize;
@@ -131,17 +117,8 @@ fn test_gpu_gray_qam_empty_batch() {
     assert!(out.is_empty());
 }
 
-/// Regression test: the GPU adapter must refuse `DemapMethod::ExactLogMap`.
-///
-/// The underlying HIP kernel implements only max-log. The adapter encodes
-/// that limitation by narrowing the advertised [`super::ModemCapabilities`]
-/// via [`BatchSoftDemapper::spec`] so the *shared*
-/// `validate_demap_input` pre-flight rejects `ExactLogMap` with the
-/// canonical "method not advertised" message. This test pins that
-/// behavior: building a Gray-QAM preset via the public constructor,
-/// handing it to the GPU adapter, and asking for `ExactLogMap` must
-/// panic through the validator, not through any adapter-specific
-/// special case.
+/// The adapter narrows its advertised capabilities, so the shared
+/// `validate_demap_input` pre-flight rejects `ExactLogMap`.
 #[test]
 #[should_panic(expected = "spec does not advertise ExactLogMap support")]
 fn test_gpu_gray_qam_rejects_exact_log_map() {
@@ -161,9 +138,6 @@ fn test_gpu_gray_qam_rejects_exact_log_map() {
     gpu.demap_llrs(input, &mut out);
 }
 
-/// Positive metadata test: after construction the adapter's advertised
-/// capabilities honestly reflect the kernel's support matrix — MaxLog
-/// only, ExactLogMap withheld.
 #[test]
 fn test_gpu_gray_qam_spec_capabilities_advertise_max_log_only() {
     let spec = ModemSpec::<f32>::gray_square_qam(16);
