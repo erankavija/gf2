@@ -1,19 +1,4 @@
 //! Opt-in cache of preprocessed LDPC encoding matrices.
-//!
-//! ```no_run
-//! use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-//! use gf2_coding::ldpc::encoding::EncodingCache;
-//! use gf2_coding::CodeRate;
-//!
-//! let cache = EncodingCache::new();
-//!
-//! // First call: preprocesses and caches
-//! let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-//! let enc1 = LdpcEncoder::with_cache(code.clone(), &cache);
-//!
-//! // Second call: cache hit
-//! let enc2 = LdpcEncoder::with_cache(code, &cache);
-//! ```
 
 use super::{PreprocessError, RuEncodingMatrices};
 use gf2_core::io::IoError;
@@ -69,22 +54,6 @@ impl CacheKey {
 /// Cache of preprocessed LDPC encoding matrices, keyed by [`CacheKey`].
 ///
 /// Thread-safe; each entry is an `Arc<RuEncodingMatrices>`.
-///
-/// # Examples
-///
-/// ```no_run
-/// use gf2_coding::ldpc::encoding::EncodingCache;
-/// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
-/// use gf2_coding::CodeRate;
-///
-/// let cache = EncodingCache::new();
-/// cache.precompute_dvb_t2();
-///
-/// let encoder = LdpcEncoder::with_cache(
-///     LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
-///     &cache
-/// );
-/// ```
 #[derive(Default)]
 pub struct EncodingCache {
     cache: RwLock<HashMap<CacheKey, Arc<RuEncodingMatrices>>>,
@@ -101,27 +70,13 @@ impl EncodingCache {
     /// Look up encoding matrices without computing them on a miss, for a
     /// caller that treats a miss as an error, e.g. when verifying a cache
     /// loaded from disk with [`Self::from_directory`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::ldpc::encoding::{CacheKey, EncodingCache};
-    /// use gf2_coding::ldpc::LdpcCode;
-    /// use gf2_coding::CodeRate;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// let key = CacheKey::from_params(code.n(), code.k(), code.parity_check_matrix());
-    ///
-    /// let cache = EncodingCache::new();
-    /// assert!(cache.get(&key).is_none()); // empty cache: miss, no preprocessing
-    /// ```
     pub fn get(&self, key: &CacheKey) -> Option<Arc<RuEncodingMatrices>> {
         let cache_read = self.cache.read().unwrap();
         cache_read.get(key).map(Arc::clone)
     }
 
-    /// Returns the cached matrices for `key`; on a miss, preprocesses `h` and
-    /// caches the result.
+    /// Returns the cached matrices for `key`; on a miss, preprocesses `h` at
+    /// the cost of [`RuEncodingMatrices::preprocess`] and caches the result.
     ///
     /// # Errors
     ///
@@ -148,15 +103,6 @@ impl EncodingCache {
 
     /// Preprocesses the encoding matrices of every DVB-T2 frame size and code
     /// rate into the cache.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::encoding::EncodingCache;
-    ///
-    /// let cache = EncodingCache::new();
-    /// cache.precompute_dvb_t2();
-    /// ```
     pub fn precompute_dvb_t2(&self) {
         use crate::bch::CodeRate;
         use crate::ldpc::dvb_t2::FrameSize;
@@ -223,17 +169,6 @@ impl EncodingCache {
     /// # Errors
     ///
     /// Returns error if directory creation or file writing fails.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::encoding::EncodingCache;
-    /// use std::path::Path;
-    ///
-    /// let cache = EncodingCache::new();
-    /// // ... populate cache ...
-    /// cache.save_to_directory(Path::new("cache_data")).unwrap();
-    /// ```
     pub fn save_to_directory(&self, path: &Path) -> Result<(), CacheIoError> {
         std::fs::create_dir_all(path).map_err(CacheIoError::IoError)?;
 
@@ -262,15 +197,6 @@ impl EncodingCache {
     ///
     /// Returns error if the directory does not exist or cannot be read, or a
     /// file is corrupted.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::encoding::EncodingCache;
-    /// use std::path::Path;
-    ///
-    /// let cache = EncodingCache::from_directory(Path::new("cache_data")).unwrap();
-    /// ```
     pub fn from_directory(path: &Path) -> Result<Self, CacheIoError> {
         let cache = Self::new();
 
@@ -329,21 +255,6 @@ impl EncodingCache {
     /// # Errors
     ///
     /// Returns error if file writing fails.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::ldpc::encoding::EncodingCache;
-    /// use std::path::Path;
-    ///
-    /// EncodingCache::precompute_and_save_dvb_t2(
-    ///     Path::new("data/ldpc/dvb_t2")
-    /// ).unwrap();
-    ///
-    /// let cache = EncodingCache::from_directory(
-    ///     Path::new("data/ldpc/dvb_t2")
-    /// ).unwrap();
-    /// ```
     pub fn precompute_and_save_dvb_t2(output_dir: &Path) -> Result<(), CacheIoError> {
         let cache = Self::new();
         cache.precompute_dvb_t2();
@@ -449,7 +360,6 @@ mod tests {
         let h1 = simple_hamming_h();
         let k1 = CacheKey::from_params(7, 4, &h1);
 
-        // Different Hamming code
         let edges2 = vec![
             (0, 0),
             (0, 1),

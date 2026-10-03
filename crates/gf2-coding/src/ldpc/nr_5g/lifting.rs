@@ -1,10 +1,8 @@
-//! 5G NR LDPC lifting size table from 3GPP TS 38.212 Table 5.3.2-1.
-//!
-//! The lifting size Z determines the expansion factor for the quasi-cyclic
-//! LDPC code. Each Z belongs to one of 8 sets (i_LS = 0..7), which determines
-//! which column of the base matrix shift table to use.
+//! 5G NR LDPC lifting sizes from `@/citation/ThreeGpp2017` Table 5.3.2-1: each
+//! lifting size Z belongs to one of 8 sets (i_LS = 0..7), which selects the
+//! shift table of the base graph.
 
-/// All valid lifting sizes from 3GPP TS 38.212 Table 5.3.2-1.
+/// All valid lifting sizes from `@/citation/ThreeGpp2017` Table 5.3.2-1.
 ///
 /// Organized by set index i_LS (0..7). Each set contains Z values of the form
 /// `a * 2^j` where `a` is the set's base factor.
@@ -29,18 +27,6 @@ pub const LIFTING_SIZE_SETS: &[&[u16]] = &[
 
 /// Returns the set index i_LS (0..7) of lifting size `z`, or `None` if `z` is
 /// not a valid lifting size.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::lifting_set_index;
-///
-/// assert_eq!(lifting_set_index(2), Some(0));
-/// assert_eq!(lifting_set_index(384), Some(1));
-/// assert_eq!(lifting_set_index(320), Some(2));
-/// assert_eq!(lifting_set_index(7), Some(3));
-/// assert_eq!(lifting_set_index(100), None); // Not a valid lifting size
-/// ```
 pub fn lifting_set_index(z: u16) -> Option<usize> {
     for (i_ls, set) in LIFTING_SIZE_SETS.iter().enumerate() {
         if set.contains(&z) {
@@ -51,17 +37,6 @@ pub fn lifting_set_index(z: u16) -> Option<usize> {
 }
 
 /// Returns all valid lifting sizes in ascending order.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::ldpc::nr_5g::all_lifting_sizes;
-///
-/// let sizes = all_lifting_sizes();
-/// assert_eq!(sizes[0], 2);
-/// assert_eq!(*sizes.last().unwrap(), 384);
-/// assert_eq!(sizes.len(), 51);
-/// ```
 pub fn all_lifting_sizes() -> Vec<u16> {
     let mut sizes: Vec<u16> = LIFTING_SIZE_SETS
         .iter()
@@ -82,7 +57,6 @@ mod tests {
 
     #[test]
     fn test_lifting_set_index_set0() {
-        // i_LS = 0: powers of 2
         for &z in &[2, 4, 8, 16, 32, 64, 128, 256] {
             assert_eq!(lifting_set_index(z), Some(0), "Z={z} should be in set 0");
         }
@@ -90,7 +64,6 @@ mod tests {
 
     #[test]
     fn test_lifting_set_index_set1() {
-        // i_LS = 1: multiples of 3 * powers of 2
         for &z in &[3, 6, 12, 24, 48, 96, 192, 384] {
             assert_eq!(lifting_set_index(z), Some(1), "Z={z} should be in set 1");
         }
@@ -124,7 +97,6 @@ mod tests {
     #[test]
     fn test_all_lifting_sizes_count() {
         let sizes = all_lifting_sizes();
-        // 8 + 8 + 7 + 6 + 6 + 6 + 5 + 5 = 51
         assert_eq!(sizes.len(), 51);
     }
 
