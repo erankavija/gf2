@@ -1,10 +1,8 @@
 //! Bit-matrix transpose kernels.
 //!
-//! This module owns the 64×64 bit-block transpose: the register-tiled scalar
-//! kernel that needs no processor feature, the AVX2 lanes isolated in
-//! `crate::x86::transpose`, and the one dispatch that publishes a lane to
-//! callers. Every lane answers the same contract, so a caller picks a lane and
-//! gets the same output words; only the instruction mix differs.
+//! The 64×64 bit-block transpose: a scalar kernel that needs no processor
+//! feature, the AVX2 lanes in `crate::x86::transpose`, and the one dispatch
+//! that publishes a lane to callers. Every lane answers the same contract.
 //!
 //! # The block contract
 //!
@@ -20,34 +18,10 @@
 //! [`TransposeLane`] names every implementation of that contract and
 //! [`lane`] maps a name to the safe function pointer, or to `None` where the
 //! host lacks the processor feature the lane needs. [`detect`] resolves the
-//! production lane through [`PRODUCTION_PREFERENCE`], the measured order, and
-//! is what `gf2_core::BitMatrix::transpose` and
-//! [`crate::bch_encode`]'s bit-slicing reach. There is no second dispatch and
-//! no private copy of a lane: a caller that wants a specific implementation
-//! names it through [`TransposeLane`].
-//!
-//! | Lane | Mechanism |
-//! |---|---|
-//! | [`TransposeLane::Scalar`] | six mask-shift-XOR stages over general-purpose words (Hacker's Delight ch. 7-3) |
-//! | [`TransposeLane::Avx2BitTwiddle`] | the four wide stages in YMM registers over a stack copy of the block, the two narrow stages in words |
-//! | [`TransposeLane::Avx2Ymm6`] | all six stages in YMM registers, the first writing the caller's output directly, so the block is never copied to a stack scratch |
-//! | [`TransposeLane::Avx2Pshufb`] | 8×8 byte tiles through a `vpshufb` bit-reversal lookup |
-//! | [`TransposeLane::Avx2Movemask`] | a byte transpose through the SSE interleave ladder, then `vpmovmskb` bit-plane extraction |
-//!
-//! The AVX2 lanes need the `avx2` processor feature, which [`lane`] tests at
-//! run time. The whole module is reachable from `gf2-core` only when that
-//! crate's `simd` cargo feature is on; `simd` is not one of its defaults.
-//!
-//! # PPC-spiral context
-//!
-//! Issue `1c1c4242` (kernel B1 in `@/issue/babcf05e`) drives the PPC spiral for
-//! `gf2_core::BitMatrix::transpose`: **V0** is the criterion baseline of
-//! `crates/gf2-core/benches/matrix_transpose.rs`, **V4** is
-//! [`TransposeLane::Scalar`], **V3a** and **V3b** are
-//! [`TransposeLane::Avx2Pshufb`] and [`TransposeLane::Avx2BitTwiddle`], and
-//! **V7** is the cache-tiling outer loop `gf2-core` drives. Issue `1d4fd63d`
-//! adds [`TransposeLane::Avx2Ymm6`] and [`TransposeLane::Avx2Movemask`] and
-//! the lane family that measures all of them against each other.
+//! production lane through [`PRODUCTION_PREFERENCE`] and is what
+//! `gf2_core::BitMatrix::transpose` and [`crate::bch_encode`]'s bit-slicing
+//! reach. The AVX2 lanes need the `avx2` processor feature, which [`lane`]
+//! tests at run time.
 
 /// Safe 64×64 bit-block transpose function pointer.
 pub type Transpose64x64Fn = fn(&[u64; 64], &mut [u64; 64]);
@@ -55,9 +29,8 @@ pub type Transpose64x64Fn = fn(&[u64; 64], &mut [u64; 64]);
 /// One implementation of the 64×64 bit-block transpose contract.
 ///
 /// [`lane`] turns a variant into the callable kernel, and [`name`](Self::name)
-/// into the tag receipts and benchmark records report. The variants are the
-/// candidates the `1d4fd63d` lane family measures; [`detect`] publishes the
-/// one [`PRODUCTION_PREFERENCE`] names first among those the host supports.
+/// into the tag receipts and benchmark records report. [`detect`] publishes
+/// the one [`PRODUCTION_PREFERENCE`] names first among those the host supports.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum TransposeLane {
     /// Six mask-shift-XOR stages over general-purpose words. Available on
@@ -107,19 +80,16 @@ impl TransposeLane {
 ///
 /// The first entry whose [`lane`] is available on the host wins.
 /// [`TransposeLane::Scalar`] is last and always available, so the walk always
-/// ends in a usable kernel. The order above it is unchanged by the evidence
-/// so far: the `transpose-lane-selection` family of issue `1d4fd63d` measured
-/// every AVX2 candidate against this entry, its confirmation receipt qualified
-/// no candidate for production selection under the frozen rule, and
-/// `dev/active/1d4fd63d/findings.md` (§ Adoption) states that rule and names
-/// the receipt. Issue `63bad95d` owns the calibration of this selector.
+/// ends in a usable kernel. `dev/active/1d4fd63d/findings.md` (§ Adoption)
+/// states the selection rule and names the confirmation receipt, which
+/// qualifies no other AVX2 candidate for production selection.
 pub const PRODUCTION_PREFERENCE: [TransposeLane; 2] =
     [TransposeLane::Avx2BitTwiddle, TransposeLane::Scalar];
 
 /// Bundle of dispatched bit-matrix-transpose kernels.
 ///
-/// Currently exposes a single 64×64 block primitive. Callers tile
-/// arbitrary `rows × cols` matrices on top of this primitive.
+/// Exposes one 64×64 block primitive; callers tile arbitrary `rows × cols`
+/// matrices on top of it.
 #[derive(Copy, Clone)]
 pub struct TransposeFns {
     /// 64×64 bit-block transpose, reading from 64 input words and writing 64
@@ -214,10 +184,6 @@ pub fn detect() -> Option<TransposeFns> {
     })
 }
 
-// ---------------------------------------------------------------------------
-// Safe function-pointer wrappers
-// ---------------------------------------------------------------------------
-
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn transpose_64x64_avx2_safe(input: &[u64; 64], output: &mut [u64; 64]) {
     // SAFETY: `lane` publishes this pointer only when
@@ -248,29 +214,16 @@ fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
     transpose_64x64_scalar(input, output)
 }
 
-// ---------------------------------------------------------------------------
-// Public scalar reference (V4): Hacker's Delight ch. 7-3
-// ---------------------------------------------------------------------------
-
-/// In-place 64×64 bit-block transpose using the recursive
-/// bit-interleave / mask-and-shift pattern (Hacker's Delight ch. 7-3).
+/// 64×64 bit-block transpose using the recursive bit-interleave /
+/// mask-and-shift pattern (Hacker's Delight ch. 7-3).
 ///
 /// `input[r]` is interpreted as the `r`-th row, with bit `c` carrying
 /// the matrix entry `(r, c)`. After the call, `output[c]` is the
 /// transposed row, with bit `r` carrying `(r, c)`.
 ///
-/// This is the V4 register-tiled scalar reference: 6 stages of
-/// mask-and-XOR-swap, halving the swap distance each stage. The
-/// algorithm runs in O(N log N) bit operations on N×N tiles —
-/// dramatically better than the O(N²) naive double-loop.
-///
-/// # Algorithm sketch
-///
-/// The 64×64 bit matrix is viewed as a recursive partition into 32×32
-/// quadrants, then 16×16, etc. At each stage the kernel swaps the
-/// off-diagonal sub-quadrants of each pair using a mask-shift-XOR
-/// idiom that interchanges bit columns at distance `j` with bit rows
-/// at distance `j` simultaneously across all pairs.
+/// Six stages of mask-shift-XOR swap the off-diagonal sub-quadrants of a
+/// recursive 32×32, 16×16, ... partition, halving the swap distance each
+/// stage: `64 · log₂ 64` word operations.
 ///
 /// # Examples
 ///
@@ -285,13 +238,7 @@ fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
 /// transpose_64x64_scalar(&input, &mut output);
 /// assert_eq!(input, output);
 /// ```
-///
-/// # Complexity
-///
-/// O(64 · log₂ 64) = O(384) word operations. Bench numbers under
-/// `dev/scripts/ppc-baselines.json` entry `B1`.
 pub fn transpose_64x64_scalar(input: &[u64; 64], output: &mut [u64; 64]) {
-    // Copy input into a scratch buffer; we mutate it in place.
     let mut buf: [u64; 64] = *input;
 
     // Stage masks. Each mask is a 64-bit pattern selecting alternating
@@ -346,10 +293,6 @@ pub fn transpose_64x64_scalar(input: &[u64; 64], output: &mut [u64; 64]) {
     *output = buf;
 }
 
-// ---------------------------------------------------------------------------
-// The shared block contract
-// ---------------------------------------------------------------------------
-
 /// Contracts every lane of the family answers, run against one kernel.
 ///
 /// The module's own tests run [`contract::assert_block_contract`] over
@@ -362,7 +305,7 @@ pub mod contract {
 
     /// Deterministic block generator, so a failure names a reproducible case.
     ///
-    /// SplitMix64 [Steele2014], the same mixer the campaign harnesses use.
+    /// SplitMix64 (`@/citation/Steele2014`).
     pub fn block(seed: u64) -> [u64; 64] {
         let mut state = seed;
         let mut out = [0u64; 64];

@@ -1,28 +1,14 @@
 //! SIMD batch kernels for `Fp<65537>` arithmetic.
 //!
-//! `P = 65537 = 2^16 + 1` is the fifth Fermat prime. Its algebraic shape
-//! (`2^16 ≡ -1 (mod P)`) makes the modular reduction exceptionally tight
-//! on SIMD: a packed 33-bit product splits on the 16-bit boundary, one
-//! subtract folds the halves, and a single conditional subtract
-//! canonicalises. The result is a per-element cost dominated by the
-//! multiply itself — and because AVX2 processes eight u32 lanes per
-//! 256-bit vector, the amortised cost beats a sequential Montgomery mul
-//! by a large factor on Zen 3 and newer.
-//!
-//! All unsafe intrinsics are isolated in `x86/fp65537.rs`; this module
-//! exposes only safe function-pointer wrappers through the
-//! [`Fp65537Fns`] table returned by [`detect`]. Callers without AVX2
-//! receive `None` and must fall back to scalar loops.
+//! `P = 65537 = 2^16 + 1` satisfies `2^16 ≡ -1 (mod P)`, so a product splits
+//! on the 16-bit boundary, one subtract folds the halves, and a conditional
+//! subtract canonicalises. [`detect`] returns safe function-pointer wrappers
+//! in [`Fp65537Fns`], or `None` without AVX2.
 
 /// Lane-wise batch multiply for `Fp<65537>`.
 ///
 /// Computes `out[i] = a[i] * b[i] mod 65537` for all `i < a.len()`.
 /// Input values must already be canonical (`< 65537`).
-///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical `Fp<65537>` values (same length).
-/// * `out` — output slice (same length).
 ///
 /// # Panics
 ///
@@ -61,9 +47,7 @@ pub type Fp65537BatchSubFn = fn(&[u32], &[u32], &mut [u32]);
 /// out_c1[i] = cross_i - v0_i - v1_i
 /// ```
 ///
-/// with all intermediates kept in AVX2 registers, eliminating the
-/// intermediate heap buffers that a `batch_mul_fn` + `batch_add_fn`
-/// composition would otherwise need.
+/// with all intermediates kept in AVX2 registers.
 ///
 /// # Panics
 ///
@@ -76,14 +60,6 @@ pub type Fp65537BatchKaratsubaFn = fn(&[u32], &[u32], &[u32], &[u32], u32, &mut 
 /// Computes six independent base-field products per element and writes the
 /// three output coefficient lanes in SoA order for
 /// `Fp<65537>[X] / (X^3 - beta)`.
-///
-/// # Arguments
-///
-/// * `a0`, `a1`, `a2` - The three input coefficient lanes for the left batch.
-/// * `b0`, `b1`, `b2` - The three input coefficient lanes for the right batch.
-/// * `beta` - The cubic non-residue used by the extension-field configuration.
-/// * `out_c0`, `out_c1`, `out_c2` - Output coefficient lanes; each must have
-///   the same length as `a0`.
 ///
 /// # Examples
 ///
@@ -110,19 +86,12 @@ pub type Fp65537BatchKaratsubaFn = fn(&[u32], &[u32], &[u32], &[u32], u32, &mut 
 /// # Panics
 ///
 /// Panics if any input or output slice has a different length from `a0`.
-///
-/// # Complexity
-///
-/// `O(n)` modular operations, processed in 8-lane AVX2 chunks with a scalar
-/// tail for lengths that are not multiples of eight.
 pub type Fp65537BatchCubicKaratsubaFn =
     fn(&[u32], &[u32], &[u32], &[u32], &[u32], &[u32], u32, &mut [u32], &mut [u32], &mut [u32]);
 
 /// Bundle of `Fp<65537>` SIMD batch operations.
 ///
-/// Populated at runtime by [`detect`] when AVX2 is available. All entries
-/// are plain function pointers (not trait objects) so they remain usable
-/// under a `#![deny(unsafe_code)]` regime in callers.
+/// Populated at runtime by [`detect`] when AVX2 is available.
 ///
 /// # Examples
 ///
@@ -143,12 +112,7 @@ pub struct Fp65537Fns {
     pub batch_add_fn: Fp65537BatchAddFn,
     /// Lane-wise batch subtraction for `Fp<65537>`.
     pub batch_sub_fn: Fp65537BatchSubFn,
-    /// Fused Karatsuba combine for `GF(p²) / Fp<65537>`. This is the
-    /// hot-loop entry point used by
-    /// `gf2_core::gfpn::BatchExtField::batch_mul_quadratic` — keeping
-    /// all intermediates in AVX2 registers avoids the nine heap
-    /// allocations that a pass-per-op composition would otherwise need,
-    /// and is the main source of the measured throughput win.
+    /// Fused Karatsuba combine for `GF(p²) / Fp<65537>`.
     pub batch_karatsuba_fn: Fp65537BatchKaratsubaFn,
     /// Fused Karatsuba-3 combine for `GF(p³) / Fp<65537>`.
     pub batch_cubic_karatsuba_fn: Fp65537BatchCubicKaratsubaFn,

@@ -1,23 +1,11 @@
 //! SIMD batch kernels for medium primes `Fp<P>` with `P < 2^16`.
 //!
-//! This module covers the `word-fits-in-u16` family of prime fields,
-//! whose canonical residues fit in a single 16-bit lane. The reference
-//! prime is `P = 65521` (the largest prime below `2^16`); the kernel
-//! accepts any odd prime in `(251, 65535]` — the upper boundary of
-//! `Fp<P>` primes that the small-prime kernel (issue `662f7a15`) does
-//! not already cover.
-//!
-//! The unsafe AVX2 implementation lives in `crate::x86::fp_medium`;
-//! this module exposes only safe function-pointer wrappers through the
-//! [`MediumPrimeFns`] table returned by [`detect`]. Callers without AVX2
-//! receive `None` and must fall back to scalar loops.
+//! Canonical residues occupy one 16-bit lane; the kernels accept any odd
+//! prime in `(251, 65535]`. [`detect`] returns safe function-pointer wrappers
+//! in [`MediumPrimeFns`], or `None` without AVX2.
 
-/// Computes the Barrett magic constant `m = floor(2^32 / p)` for a
-/// medium prime `p ∈ (1, 2^16)`.
-///
-/// This `const fn` lets callers compute the constant at compile time
-/// for use with [`MediumPrimeBatchMulFn`] without depending on the
-/// architecture-specific module.
+/// Computes the Barrett magic constant `m = floor(2^32 / p)` that
+/// [`MediumPrimeBatchMulFn`] takes, for a medium prime `p ∈ (1, 2^16)`.
 ///
 /// # Examples
 ///
@@ -35,9 +23,8 @@ pub const fn barrett_m32(p: u16) -> u32 {
 /// Lane-wise batch multiply for medium-prime `Fp<P>`.
 ///
 /// Computes `out[i] = (a[i] * b[i]) mod p` for all `i`. Inputs must be
-/// canonical (`< p`); the Barrett magic constant `barrett_m =
-/// floor(2^32 / p)` must be supplied by the caller (typically computed
-/// at compile time via [`barrett_m32`]).
+/// canonical (`< p`); the caller supplies `barrett_m = floor(2^32 / p)`
+/// ([`barrett_m32`]).
 pub type MediumPrimeBatchMulFn = fn(&[u16], &[u16], u16, u32, &mut [u16]);
 
 /// Lane-wise batch addition for medium-prime `Fp<P>`.
@@ -64,19 +51,11 @@ pub type MediumPrimeSpmmRowFn = fn(&[u16], &[usize], &[u16], usize, usize, u16, 
 /// 65535]`. Computes `c[i*n + j] = (∑_t a[i*k + t] * bt[j*k + t]) mod p`
 /// for every `(i, j) ∈ [0, m) × [0, n)`. Inputs are canonical u16
 /// residues. The transpose `bt` is `n × k` row-major.
-///
-/// Closes the per-cell `MediumPrimeBatchDotFn` dispatch overhead at
-/// large `n` (issue `74ba1cdc`): pre-packs B once per gemm into
-/// `NR = 16` u16-wide N-major panels, then sweeps each `MR = 2` row
-/// block of A against every panel with 8 u64-lane accumulators
-/// resident across the full k axis.
 pub type MediumPrimeGemmPanelFn = fn(&[u16], &[u16], usize, usize, usize, u16, &mut [u16]);
 
 /// Bundle of AVX2 batch operations for medium-prime `Fp<P>`.
 ///
-/// Populated at runtime by [`detect`] when AVX2 is available. All
-/// entries are plain function pointers, usable from `#![deny(unsafe_code)]`
-/// callers.
+/// Populated at runtime by [`detect`] when AVX2 is available.
 ///
 /// # Examples
 ///
@@ -104,8 +83,7 @@ pub struct MediumPrimeFns {
     pub batch_dot_fn: MediumPrimeBatchDotFn,
     /// Sparse-times-dense row kernel.
     pub spmm_row_fn: MediumPrimeSpmmRowFn,
-    /// Whole-GEMM panel kernel (`jit:74ba1cdc` — replaces per-cell
-    /// `batch_dot_fn` dispatch in the GEMM caller).
+    /// Whole-GEMM panel kernel.
     pub gemm_panel_fn: MediumPrimeGemmPanelFn,
 }
 

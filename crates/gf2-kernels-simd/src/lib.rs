@@ -112,10 +112,8 @@ pub struct LogicalFns {
     /// instruction when the host reports it, and with the portable
     /// `u64::count_ones` lowering otherwise.
     ///
-    /// This route holds no vector state. It is the measured scalar comparator
-    /// of the count family: no `gf2-core` route selects it, because a resolved
-    /// call to it loses to the scalar backend's portable count at the widths
-    /// where it would apply (`dev/active/5cbb6545/findings.md`). `gf2-core`'s
+    /// This route holds no vector state and is a comparator that `gf2-core`'s
+    /// automatic dispatch does not select. `gf2-core`'s
     /// `tests/popcount_routes.rs` holds it to the same counts as every other
     /// route.
     pub popcnt_scalar_fn: fn(&[u64]) -> u64,

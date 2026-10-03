@@ -1,10 +1,5 @@
-//! Safe software-prefetch wrappers for hot GF(2) kernels.
-//!
-//! The functions in this module intentionally expose a tiny, architecture-neutral
-//! API: callers may pass any readable pointer and receive a best-effort L1 data
-//! prefetch on targets that support it, or a no-op elsewhere. This keeps unsafe
-//! architecture intrinsics isolated in `gf2-kernels-simd` while allowing safe
-//! crates to schedule look-ahead table fetches.
+//! Safe software-prefetch wrappers, so that safe crates can schedule
+//! look-ahead table fetches.
 
 /// Issues a best-effort temporal L1 data prefetch for `ptr`.
 ///

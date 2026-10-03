@@ -1,91 +1,49 @@
-//! Accelerator interface for Gray square-QAM batch demapping kernels.
+//! Gray-PAM squared-distance kernels for Gray square-QAM batch demapping.
 //!
-//! The exact log-MAP and max-log demappers over a Gray-coded square-QAM
-//! constellation factorize cleanly into two independent 1D Gray-PAM
-//! problems (see the `modem::fast_gray_qam_demapper` module in
-//! `gf2-coding` for the derivation). The dominant cost in that factorized
-//! path is the per-symbol per-level squared-distance computation along
-//! each axis — an arithmetic-bound inner loop over contiguous `f32` / `f64`
-//! slices that maps cleanly onto SIMD lanes.
+//! Log-MAP and max-log demapping over a Gray-coded square-QAM constellation
+//! factorizes into two independent 1D Gray-PAM problems. This module exposes
+//! the per-symbol per-level squared-distance loop of that path as a
+//! function-pointer bundle with a scalar and an AVX2 backend.
 //!
-//! This module exposes that inner loop as a backend-pluggable **kernel
-//! bundle**: a small struct of function pointers with a scalar fallback
-//! and (on x86 with AVX2) a vectorized implementation. The bundle shape
-//! is deliberately minimal and allocation-free so future accelerator
-//! backends — AVX-512, AArch64 NEON, or a GPU dispatch — drop in without
-//! any API churn in the coding crate.
-//!
-//! # Research-grade accelerator surface
-//!
-//! `gf2` positions itself against specialized computer-algebra systems
-//! (Magma, Sage) for coding-theory research, so the accelerator seam
-//! lives in the public API: a researcher plugging in an experimental
-//! kernel only needs to provide a matching `GrayPamDistanceFns*`
-//! implementation and runtime detector. The bundle itself never
-//! allocates, never panics, and never blocks — it reads contiguous
-//! input slices and writes a contiguous output slice, nothing else.
-//!
-//! # Invariants imposed on every backend
+//! # Kernel contract
 //!
 //! For a call `pam_sq_distances_fn(z, g, inv_n0_eq, pam_levels, out)`:
 //!
-//! * `z.len() == g.len() == inv_n0_eq.len() == num_symbols`.
-//! * `pam_levels.len() == axis_len` where `axis_len ∈ {2, 4, 8, 16}`.
+//! * `z.len() == g.len() == inv_n0_eq.len() == num_symbols` and
+//!   `pam_levels.len() == axis_len`.
 //! * `out.len() == num_symbols * axis_len`, laid out symbol-major:
 //!   `out[s * axis_len + l] = (z[s] - g[s] * pam_levels[l])² * inv_n0_eq[s]`.
 //! * When `inv_n0_eq[s] == 0.0` the entire `out[s*axis_len .. (s+1)*axis_len]`
-//!   slice is written as zeros — this is the canonical zero-gain /
-//!   infinite-noise guard and the numerical contract relied on by
-//!   `gf2_coding::modem::FastGrayQamDemapper` to avoid NaN propagation.
-//! * No allocation, no panic, no global state: the kernel is reentrant
-//!   and safe to call from multiple threads simultaneously.
-//!
-//! These invariants are exercised by parity tests in this module and by
-//! property tests in `gf2_coding::modem::fast_gray_qam_demapper`.
+//!   slice is written as zeros: the zero-gain / infinite-noise guard that
+//!   `gf2_coding::modem::FastGrayQamDemapper` relies on to avoid NaN
+//!   propagation.
+//! * The kernel does not allocate and holds no global state.
 
 /// Signature of the `f32` Gray-PAM squared-distance kernel.
 ///
-/// Extracted into a named alias so the kernel bundle fields stay
-/// readable and every backend that implements the kernel names the
-/// same type. All implementations must conform to the module-level
-/// invariants (contiguous symbol-major output, zero-gain contract,
-/// no allocation, no panic).
+/// Invoked as `f(z, g, inv_n0_eq, pam_levels, out)` under the module-level
+/// kernel contract:
 ///
-/// # Arguments
-///
-/// The function pointer is invoked as
-/// `f(z, g, inv_n0_eq, pam_levels, out)` where:
-///
-/// * `z` — pre-rotated received samples on one axis, length `num_symbols`.
-/// * `g` — per-symbol squared channel gain `|h|^2`, length `num_symbols`.
+/// * `z` — pre-rotated received samples on one axis.
+/// * `g` — per-symbol squared channel gain `|h|^2`.
 /// * `inv_n0_eq` — `1 / (n0 * |h|^2)` per symbol, or `0.0` for the
-///   zero-gain guard. Length `num_symbols`.
-/// * `pam_levels` — post-normalization Gray-PAM axis levels, length
-///   `axis_len ∈ {2, 4, 8, 16}`.
-/// * `out` — symbol-major distance slab, length `num_symbols * axis_len`.
+///   zero-gain guard.
+/// * `pam_levels` — post-normalization Gray-PAM axis levels.
+/// * `out` — symbol-major distance slab.
 pub type PamSqDistancesF32Fn =
     fn(z: &[f32], g: &[f32], inv_n0_eq: &[f32], pam_levels: &[f32], out: &mut [f32]);
 
 /// Signature of the `f64` Gray-PAM squared-distance kernel.
 ///
-/// See [`PamSqDistancesF32Fn`] for the detailed argument contract.
-/// The double-precision variant is what `gf2_coding::modem` uses for
-/// its internal scratch (to match the reference log-MAP path's
-/// numerical behaviour), regardless of the user-facing scalar type.
+/// See [`PamSqDistancesF32Fn`] for the argument contract.
 pub type PamSqDistancesF64Fn =
     fn(z: &[f64], g: &[f64], inv_n0_eq: &[f64], pam_levels: &[f64], out: &mut [f64]);
 
 /// Gray-PAM squared-distance kernel bundle for `f32` scratch.
 ///
-/// Bundles the single hot-loop primitive of the Gray-QAM fast demap
-/// path: compute per-level squared distances on one axis for an entire
-/// batch of pre-rotated received samples.
-///
-/// The bundle is plain data (a function pointer) so it is trivially
-/// `Copy`, thread-safe, and cheap to cache in a `OnceLock`. Scalar and
-/// SIMD backends share the same signature, so the dispatch site in
-/// `gf2-coding` selects at startup and then calls the chosen function
-/// through the pointer with no further branching.
+/// Computes per-level squared distances on one axis for a batch of
+/// pre-rotated received samples. Scalar and SIMD backends share the
+/// signature.
 ///
 /// # Examples
 ///
@@ -122,9 +80,6 @@ pub struct GrayPamDistanceFnsF32 {
 /// Gray-PAM squared-distance kernel bundle for `f64` scratch.
 ///
 /// Same semantics as [`GrayPamDistanceFnsF32`] but double-precision.
-/// `gf2_coding` uses the `f64` bundle for its internal scratch
-/// regardless of the user-facing scalar type, to match the numerical
-/// precision of the reference log-MAP path.
 #[derive(Copy, Clone)]
 pub struct GrayPamDistanceFnsF64 {
     /// See [`GrayPamDistanceFnsF32::pam_sq_distances_fn`] for the contract.
@@ -133,31 +88,14 @@ pub struct GrayPamDistanceFnsF64 {
 
 /// Scalar reference implementation of the `f32` Gray-PAM distance kernel.
 ///
-/// Serves as both the non-SIMD fallback and the parity oracle for the
-/// AVX2 backend's test suite. Honors the zero-gain contract documented
-/// on [`GrayPamDistanceFnsF32`]. Available on every target; no SIMD
-/// feature detection is required to call this directly.
-///
-/// # Arguments
-///
-/// * `z` — pre-rotated received samples, length `num_symbols`.
-/// * `g` — per-symbol squared channel gain, length `num_symbols`.
-/// * `inv_n0_eq` — per-symbol inverse effective noise variance, length
-///   `num_symbols`. Pass `0.0` to force a zero distance slab for that
-///   symbol (zero-gain guard).
-/// * `pam_levels` — Gray-PAM axis levels, length `axis_len`.
-/// * `out` — symbol-major distance slab, length `num_symbols * axis_len`.
+/// The non-SIMD fallback and the parity oracle for the AVX2 backend, under
+/// the module-level kernel contract ([`PamSqDistancesF32Fn`]).
 ///
 /// # Panics
 ///
-/// In debug builds, `debug_assert_eq!` panics if `g.len()`,
-/// `inv_n0_eq.len()`, or `out.len()` does not match the derived
-/// contract lengths. Release builds trust the caller to uphold the
-/// contract and skip the checks.
-///
-/// # Complexity
-///
-/// O(`num_symbols * axis_len`).
+/// Debug builds panic if `g.len()`, `inv_n0_eq.len()`, or `out.len()` does
+/// not match the contract lengths; release builds panic only on an
+/// out-of-bounds index.
 pub fn scalar_pam_sq_distances_f32(
     z: &[f32],
     g: &[f32],
@@ -191,25 +129,12 @@ pub fn scalar_pam_sq_distances_f32(
 
 /// Scalar reference implementation of the `f64` Gray-PAM distance kernel.
 ///
-/// Double-precision counterpart of [`scalar_pam_sq_distances_f32`];
-/// same contract and invariants apply. Always available without any
-/// SIMD feature detection.
-///
-/// # Arguments
-///
-/// See [`scalar_pam_sq_distances_f32`] for the full argument contract.
-/// All slices are `f64` here; lengths must satisfy
-/// `z.len() == g.len() == inv_n0_eq.len() == num_symbols` and
-/// `out.len() == num_symbols * pam_levels.len()`.
+/// Double-precision counterpart of [`scalar_pam_sq_distances_f32`], with
+/// the same contract.
 ///
 /// # Panics
 ///
-/// In debug builds, `debug_assert_eq!` panics on length mismatches;
-/// release builds trust the caller.
-///
-/// # Complexity
-///
-/// O(`num_symbols * axis_len`).
+/// As [`scalar_pam_sq_distances_f32`].
 pub fn scalar_pam_sq_distances_f64(
     z: &[f64],
     g: &[f64],
@@ -242,13 +167,6 @@ pub fn scalar_pam_sq_distances_f64(
 }
 
 /// Returns the scalar-only `f32` kernel bundle.
-///
-/// The scalar bundle is always available and is the portable baseline
-/// used on architectures without a SIMD backend compiled in.
-///
-/// # Complexity
-///
-/// O(1).
 pub fn scalar_fns_f32() -> GrayPamDistanceFnsF32 {
     GrayPamDistanceFnsF32 {
         pam_sq_distances_fn: scalar_pam_sq_distances_f32,
@@ -256,10 +174,6 @@ pub fn scalar_fns_f32() -> GrayPamDistanceFnsF32 {
 }
 
 /// Returns the scalar-only `f64` kernel bundle.
-///
-/// # Complexity
-///
-/// O(1).
 pub fn scalar_fns_f64() -> GrayPamDistanceFnsF64 {
     GrayPamDistanceFnsF64 {
         pam_sq_distances_fn: scalar_pam_sq_distances_f64,
@@ -269,10 +183,8 @@ pub fn scalar_fns_f64() -> GrayPamDistanceFnsF64 {
 /// Detects the best-available `f32` Gray-PAM kernel bundle for the
 /// current CPU.
 ///
-/// Returns the AVX2 bundle on x86_64 hosts that advertise `avx2`, and
-/// the scalar bundle everywhere else. Never returns `None` — callers
-/// always get a working kernel, which simplifies the dispatch site
-/// relative to the `LogicalFns` pattern.
+/// Returns the AVX2 bundle on x86 hosts that advertise `avx2`, and
+/// the scalar bundle everywhere else.
 ///
 /// # Examples
 ///
@@ -284,11 +196,6 @@ pub fn scalar_fns_f64() -> GrayPamDistanceFnsF64 {
 /// (fns.pam_sq_distances_fn)(&[0.8], &[1.0], &[1.0], &pam, &mut out);
 /// assert!(out[1] < out[0]);
 /// ```
-///
-/// # Complexity
-///
-/// O(1) after first call (CPU feature probes are cached by the
-/// platform).
 pub fn detect_f32() -> GrayPamDistanceFnsF32 {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -304,12 +211,7 @@ pub fn detect_f32() -> GrayPamDistanceFnsF32 {
 /// Detects the best-available `f64` Gray-PAM kernel bundle for the
 /// current CPU.
 ///
-/// Double-precision counterpart of [`detect_f32`]; same never-`None`
-/// guarantee and the same runtime dispatch strategy.
-///
-/// # Complexity
-///
-/// O(1) after first call.
+/// Double-precision counterpart of [`detect_f32`].
 pub fn detect_f64() -> GrayPamDistanceFnsF64 {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -326,25 +228,18 @@ pub fn detect_f64() -> GrayPamDistanceFnsF64 {
 mod avx2 {
     //! AVX2 `f32` / `f64` implementations of the Gray-PAM distance kernel.
     //!
-    //! Processes the inner level loop in 8-wide (`f32`) / 4-wide (`f64`)
-    //! chunks. The outer symbol loop is scalar — each symbol broadcasts
-    //! its `z`, `g`, and `inv_n0_eq` into vector registers and runs a
-    //! single vector pass over `pam_levels`.
+    //! The inner level loop runs in 8-wide (`f32`) / 4-wide (`f64`) chunks;
+    //! the outer symbol loop is scalar.
 
     /// Safe wrapper around the AVX2 `f32` kernel.
     ///
-    /// Callable through the [`super::GrayPamDistanceFnsF32`] function
-    /// pointer on any AVX2-capable host. Validates the public slice
-    /// contract before dispatching, so the unsafe inner function's
-    /// length invariants are guaranteed by the wrapper rather than the
-    /// caller.
+    /// Validates the slice contract before dispatching, so the unsafe inner
+    /// function's length invariants hold.
     ///
     /// # Panics
     ///
     /// Panics if `g.len()`, `inv_n0_eq.len()`, or `out.len()` does not
     /// match the lengths derived from `z.len()` and `pam_levels.len()`.
-    /// The panic happens before any unsafe pointer arithmetic, so
-    /// contract violations never reach raw SIMD code.
     pub fn pam_sq_distances_f32_avx2_safe(
         z: &[f32],
         g: &[f32],
@@ -376,9 +271,7 @@ mod avx2 {
     ///
     /// # Panics
     ///
-    /// Panics on the same slice-length contract violations as
-    /// [`pam_sq_distances_f32_avx2_safe`]; see its `# Panics` section
-    /// for the full contract.
+    /// As [`pam_sq_distances_f32_avx2_safe`].
     pub fn pam_sq_distances_f64_avx2_safe(
         z: &[f64],
         g: &[f64],
@@ -450,10 +343,8 @@ mod avx2 {
 
             for c in 0..chunks {
                 let v_lv = _mm256_loadu_ps(levels_ptr.add(c * 8));
-                // e = z - g * level
                 let v_gl = _mm256_mul_ps(v_g, v_lv);
                 let v_e = _mm256_sub_ps(v_z, v_gl);
-                // e * e * inv_n0
                 let v_e2 = _mm256_mul_ps(v_e, v_e);
                 let v_d = _mm256_mul_ps(v_e2, v_inv);
                 _mm256_storeu_ps(out_ptr.add(c * 8), v_d);

@@ -1,43 +1,10 @@
 //! Panelized GF(2^m) GEMM dispatch for `m ∈ {8, 16, 32}`.
 //!
-//! Exposes a safe function-pointer bundle ([`Gf2mGemmFns`]) and the
-//! [`detect`] function that picks the best available implementation at
-//! runtime.
-//!
-//! # Algorithm
-//!
-//! The panelized algorithm replaces the per-output-cell scratch-buffer
-//! approach of `try_gf2m_u64_batch_dot_product`. Instead of K
-//! element-wise multiplies per (i, j) output cell, the outer loop is
-//! re-ordered to (i, k, j):
-//!
-//! ```text
-//! out = 0
-//! for i in 0..M:
-//!   for k in 0..K:
-//!     // a_ik is scalar; multiply it by the entire k-th row of B
-//!     for j in 0..N:
-//!       out[i,j] ^= clmul_barrett(a[i,k], b[k,j])
-//! ```
-//!
-//! The inner (k,j) step — "broadcast scalar a_ik × row of B, XOR into
-//! accumulator row" — is vectorised with VPCLMULQDQ: a_ik is broadcast
-//! into both lanes of a YMM register and 4 b-values are multiplied per
-//! VPCLMULQDQ instruction.
-//!
-//! # Layout contract
-//!
-//! * `a_flat`: m × k row-major slice (no padding).
-//! * `b_flat`: k × n row-major slice — `b_flat[k_idx * n + j] = B[k_idx, j]`.
-//!   This is the **original** B matrix layout (not B^T). The caller is
-//!   responsible for pre-extracting B elements from `FieldMatrix` storage.
-//! * `out`:    m × n row-major, zeroed before the call.
-//!
-//! # Lane selection
-//!
-//! 1. **AVX2 + VPCLMULQDQ** — primary path on Zen 3.
-//! 2. `None` — callers fall back to the existing
-//!    `try_gf2m_u64_batch_dot_product` per-cell path.
+//! The loop order is `(i, k, j)`: each scalar `a[i,k]` is broadcast and
+//! multiplied against row `k` of B with VPCLMULQDQ, and the Barrett-reduced
+//! products are XORed into output row `i`. `b_flat` is B itself in row-major
+//! layout (`b_flat[k * n + j] = B[k, j]`), and `out` must be zeroed before the
+//! call. [`detect`] returns `None` without AVX2 and VPCLMULQDQ.
 
 /// Kernel signature for the panelized GF(2^m) GEMM.
 ///
@@ -176,12 +143,11 @@ mod tests {
         let mut got = vec![0u64; m * n];
         (fns.gemm_fn)(&a, &b, &mut got, m, k, n, mu, poly, degree);
 
-        // Cross-check with scalar triple loop.
         for i in 0..m {
             for j in 0..n {
                 let mut acc = 0u64;
                 for ki in 0..k {
-                    // Pure-Rust schoolbook GF(2^8) multiply (no SIMD).
+                    // Schoolbook GF(2^8) multiply.
                     let mut a_val = a[i * k + ki];
                     let mut b_val = b[ki * n + j];
                     let mut prod = 0u64;

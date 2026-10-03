@@ -1,16 +1,7 @@
-//! SIMD-accelerated LLR (Log-Likelihood Ratio) operations for soft-decision decoding.
+//! Horizontal min-sum and max-abs operations over LLR slices for
+//! soft-decision decoding.
 //!
-//! Provides horizontal min/max operations over f32 slices, used in:
-//! - LDPC belief propagation (min-sum approximation)
-//! - Viterbi decoder (ACS operations)
-//! - Turbo codes (MAP/BCJR algorithm)
-//!
-//! # LLR Sign Convention
-//!
-//! LLRs represent log(P(bit=0) / P(bit=1)):
-//! - Positive LLR → likely bit=0
-//! - Negative LLR → likely bit=1
-//! - Magnitude = confidence
+//! An LLR is `log(P(bit=0) / P(bit=1))`: positive means bit 0 is more likely.
 
 /// LLR operation function bundle for f32.
 pub struct LlrFnsF32 {
@@ -28,7 +19,6 @@ pub struct LlrFnsF64 {
     pub maxabs_fn: fn(&[f64]) -> f64,
 }
 
-// Legacy type alias for backward compatibility
 pub type LlrFns = LlrFnsF32;
 
 /// Detect and return the best available f32 LLR function bundle.
@@ -51,7 +41,7 @@ pub fn detect_f64() -> Option<LlrFnsF64> {
     None
 }
 
-/// Legacy detect function (returns f32 version).
+/// Same as [`detect_f32`].
 pub fn detect() -> Option<LlrFns> {
     detect_f32()
 }
@@ -84,27 +74,27 @@ fn detect_x86_f64() -> Option<LlrFnsF64> {
     }
 }
 
-/// Safe wrapper for AVX2 min-sum (f32).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn minsum_avx2_f32_safe(inputs: &[f32]) -> f32 {
+    // SAFETY: `detect_x86_f32` publishes this pointer only with AVX2.
     unsafe { minsum_avx2_f32(inputs) }
 }
 
-/// Safe wrapper for AVX2 max absolute value (f32).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn maxabs_avx2_f32_safe(inputs: &[f32]) -> f32 {
+    // SAFETY: `detect_x86_f32` publishes this pointer only with AVX2.
     unsafe { maxabs_avx2_f32(inputs) }
 }
 
-/// Safe wrapper for AVX2 min-sum (f64).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn minsum_avx2_f64_safe(inputs: &[f64]) -> f64 {
+    // SAFETY: `detect_x86_f64` publishes this pointer only with AVX2.
     unsafe { minsum_avx2_f64(inputs) }
 }
 
-/// Safe wrapper for AVX2 max absolute value (f64).
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 fn maxabs_avx2_f64_safe(inputs: &[f64]) -> f64 {
+    // SAFETY: `detect_x86_f64` publishes this pointer only with AVX2.
     unsafe { maxabs_avx2_f64(inputs) }
 }
 
@@ -131,26 +121,21 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
     // Sign mask: 0x80000000 in each lane (sign bit of f32)
     let sign_mask = _mm256_set1_ps(-0.0f32);
 
-    // Initialize accumulators
     let mut vec_min = _mm256_set1_ps(f32::INFINITY);
     let mut vec_sign = _mm256_setzero_ps(); // Accumulate XOR of sign bits
 
-    // Process 8 floats at a time
     let chunks = n / 8;
     for i in 0..chunks {
         let ptr = inputs.as_ptr().add(i * 8);
         let vals = _mm256_loadu_ps(ptr);
 
-        // Extract absolute values: vals & ~sign_mask
         let abs_vals = _mm256_andnot_ps(sign_mask, vals);
         vec_min = _mm256_min_ps(vec_min, abs_vals);
 
-        // Extract sign bits and XOR accumulate
         let signs = _mm256_and_ps(vals, sign_mask);
         vec_sign = _mm256_xor_ps(vec_sign, signs);
     }
 
-    // Horizontal reduction: extract scalar minimum from vector
     let mut temp = [0.0f32; 8];
     _mm256_storeu_ps(temp.as_mut_ptr(), vec_min);
     let mut min_abs = f32::INFINITY;
@@ -158,17 +143,14 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
         min_abs = min_abs.min(val);
     }
 
-    // Extract final sign: count negative signs in vector
     _mm256_storeu_ps(temp.as_mut_ptr(), vec_sign);
     let mut sign_product = 1.0f32;
     for &s in &temp {
-        // Check if sign bit is set (negative)
         if s.to_bits() & 0x8000_0000 != 0 {
             sign_product = -sign_product;
         }
     }
 
-    // Handle remainder scalarly
     for &val in &inputs[chunks * 8..] {
         min_abs = min_abs.min(val.abs());
         if val < 0.0 {
@@ -199,7 +181,6 @@ unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
     let sign_mask = _mm256_set1_ps(-0.0f32);
     let mut vec_max = _mm256_setzero_ps();
 
-    // Process 8 floats at a time
     let chunks = n / 8;
     for i in 0..chunks {
         let ptr = inputs.as_ptr().add(i * 8);
@@ -208,7 +189,6 @@ unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
         vec_max = _mm256_max_ps(vec_max, abs_vals);
     }
 
-    // Horizontal reduction
     let mut temp = [0.0f32; 8];
     _mm256_storeu_ps(temp.as_mut_ptr(), vec_max);
     let mut max_val = 0.0f32;
@@ -216,7 +196,6 @@ unsafe fn maxabs_avx2_f32(inputs: &[f32]) -> f32 {
         max_val = max_val.max(val);
     }
 
-    // Handle remainder scalarly
     for &val in &inputs[chunks * 8..] {
         max_val = max_val.max(val.abs());
     }
@@ -247,7 +226,6 @@ unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
     let mut vec_min = _mm256_set1_pd(f64::INFINITY);
     let mut vec_sign = _mm256_setzero_pd();
 
-    // Process 4 f64 at a time with AVX2
     let chunks = n / 4;
     for i in 0..chunks {
         let ptr = inputs.as_ptr().add(i * 4);
@@ -258,7 +236,6 @@ unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
         vec_sign = _mm256_xor_pd(vec_sign, signs);
     }
 
-    // Horizontal reduction
     let mut temp = [0.0f64; 4];
     _mm256_storeu_pd(temp.as_mut_ptr(), vec_min);
     let mut min_abs = f64::INFINITY;
@@ -274,7 +251,6 @@ unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
         }
     }
 
-    // Handle remainder
     for &val in &inputs[chunks * 4..] {
         min_abs = min_abs.min(val.abs());
         if val < 0.0 {
@@ -330,7 +306,6 @@ unsafe fn maxabs_avx2_f64(inputs: &[f64]) -> f64 {
 mod tests {
     use super::*;
 
-    /// Reference scalar implementation for testing.
     fn scalar_minsum(inputs: &[f32]) -> f32 {
         if inputs.is_empty() {
             return 0.0;
@@ -349,7 +324,6 @@ mod tests {
         sign_product * min_abs
     }
 
-    /// Reference scalar implementation for testing.
     fn scalar_maxabs(inputs: &[f32]) -> f32 {
         inputs.iter().map(|x| x.abs()).fold(0.0f32, f32::max)
     }
@@ -481,7 +455,7 @@ mod tests {
         }
 
         let fns = detect().unwrap();
-        // Test with > 8 elements to exercise AVX2 vector path + remainder
+        // More than 8 elements: AVX2 vector path plus remainder.
         let inputs: Vec<f32> = (1..=20)
             .map(|i| if i % 3 == 0 { -(i as f32) } else { i as f32 })
             .collect();
@@ -575,7 +549,6 @@ mod tests {
 
         let fns = detect().unwrap();
 
-        // Test multiple random-ish patterns
         let test_cases = vec![
             vec![1.5, -2.3, 4.7, -0.8, 9.2],
             vec![-1.1, -2.2, -3.3, -4.4, -5.5, -6.6],
