@@ -174,7 +174,7 @@ Test-suite wall-clock budget is 60 seconds. If it takes longer, something is wro
 
 ## Formal verification
 
-`proofs/` contains a self-contained Lean4 package that proves correctness of the Rust implementations of `Fp<P>` (Montgomery), the quadratic/cubic tower extensions, and the `gf2-algebra` bipedal F_3 arithmetic. Lean sources are auto-generated from the live Rust via a Charon/Aeneas pipeline (`scripts/verify-lean.sh`), committed to the repo, and backed by hand-written proofs under `proofs/Gf2Core/Proofs/` and `proofs/Gf2Algebra/Proofs/`. Headline theorems include Montgomery roundtrip, REDC correctness, `CommRing`/`Field` instances via equivalence with `ZMod P.val`, and all four bipedal F_3 operations (add/sub/mul/neg) correct against their `Fp<3>` reference semantics. See [proofs/README.md](proofs/README.md) for the full pipeline and prerequisites.
+`proofs/` contains a self-contained Lean4 package that proves correctness of the Rust implementations of `Fp<P>` (Montgomery), the quadratic/cubic tower extensions, and the `gf2-algebra` bipedal F_3 arithmetic. Lean sources are auto-generated from the live Rust via a Charon/Aeneas pipeline (`scripts/verify-lean.sh`), committed to the repo, and backed by hand-written proofs under `proofs/Gf2Core/Proofs/` and `proofs/Gf2Algebra/Proofs/`. Headline theorems include Montgomery roundtrip, REDC correctness, `CommRing`/`Field` instances via equivalence with `ZMod P.val`, and all four bipedal F_3 operations (add/sub/mul/neg) correct against their `Fp<3>` reference semantics. See [Run and extend the Lean 4 proofs](docs/how-to/formal-verification.md) for the pipeline and prerequisites.
 
 ## Design notes
 
