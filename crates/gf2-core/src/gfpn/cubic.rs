@@ -1,32 +1,11 @@
 //! Cubic extension field arithmetic: elements `c0 + c1·v + c2·v²` where `v³ = β`.
 //!
-//! [`CubicExt<C>`] implements a degree-3 extension of any base field that
+//! [`CubicExt<C>`] is a degree-3 extension of any base field that
 //! implements [`ConstField`], parameterized by an [`ExtConfig`] specifying the
-//! non-residue β.
-//!
-//! # Multiplication
-//!
-//! Uses the Karatsuba-style 6-mul formula (6 base-field multiplications instead
-//! of 9 schoolbook):
-//!
-//! ```text
-//! v0 = a0·b0,  v1 = a1·b1,  v2 = a2·b2
-//! x  = (a1+a2)(b1+b2) − v1 − v2          // a1·b2 + a2·b1
-//! y  = (a0+a1)(b0+b1) − v0 − v1          // a0·b1 + a1·b0
-//! z  = (a0+a2)(b0+b2) − v0 + v1 − v2     // a0·b2 + a1·b1 + a2·b0
-//! c0 = v0 + β·x
-//! c1 = y  + β·v2
-//! c2 = z
-//! ```
-//!
-//! Reference: Devegili, O hEigeartaigh, Scott, Dahab (ePrint 2006/471).
-//!
-//! # Inversion
-//!
-//! Uses the adjugate/norm method: compute cofactors s0, s1, s2, then
-//! `a⁻¹ = (s0, s1, s2) / norm(a)` with a single base-field inversion.
-//!
-//! Reference: Beuchat et al. (ePrint 2010/354).
+//! non-residue β. Multiplication is the Karatsuba-style formula with 6
+//! base-field multiplications (Devegili, O hEigeartaigh, Scott, Dahab, ePrint
+//! 2006/471); inversion is the adjugate/norm method with a single base-field
+//! inversion (Beuchat et al., ePrint 2010/354).
 //!
 //! # Examples
 //!
@@ -67,15 +46,10 @@ use super::ExtConfig;
 
 /// Wide accumulator for [`CubicExt`]: three base-field wide components.
 ///
-/// Stores the coefficients `(c0, c1, c2)` of a cubic-extension product using
-/// the base field's `Wide` type. Multiple products may be accumulated via
-/// `+=` before a single [`FiniteField::reduce_wide`] call reduces back into
-/// the field. The per-component limit is inherited from
+/// `W` is the base field's `Wide` type (e.g., `u128` for `Fp<P>`). Multiple
+/// products may be accumulated via `+=` before a single
+/// [`FiniteField::reduce_wide`] call; the per-component limit is
 /// [`FiniteField::max_unreduced_additions`] on the base field.
-///
-/// # Type Parameters
-///
-/// * `W` — The base field's wide type (e.g., `u128` for `Fp<P>`).
 ///
 /// # Examples
 ///
@@ -110,12 +84,6 @@ pub struct CubicExtWide<W> {
 
 impl<W> CubicExtWide<W> {
     /// Creates a new wide accumulator from three component-wise wide values.
-    ///
-    /// # Arguments
-    ///
-    /// * `c0` — Wide value for the constant coefficient.
-    /// * `c1` — Wide value for the coefficient of `v`.
-    /// * `c2` — Wide value for the coefficient of `v²`.
     #[inline]
     pub const fn new(c0: W, c1: W, c2: W) -> Self {
         Self { c0, c1, c2 }
@@ -273,12 +241,6 @@ impl<C: ExtConfig> Hash for CubicExt<C> {
 
 impl<C: ExtConfig> CubicExt<C> {
     /// Creates a new element `c0 + c1·v + c2·v²`.
-    ///
-    /// # Arguments
-    ///
-    /// * `c0` - The constant component.
-    /// * `c1` - The coefficient of `v`.
-    /// * `c2` - The coefficient of `v²`.
     #[inline]
     pub const fn new(c0: C::BaseField, c1: C::BaseField, c2: C::BaseField) -> Self {
         Self { c0, c1, c2 }
@@ -403,10 +365,6 @@ impl<C: ExtConfig> Add for CubicExt<C> {
     type Output = Self;
 
     /// Component-wise addition: `(a0+b0) + (a1+b1)·v + (a2+b2)·v²`.
-    ///
-    /// # Complexity
-    ///
-    /// 3 base-field additions.
     #[inline]
     fn add(self, rhs: Self) -> Self {
         Self::new(self.c0 + rhs.c0, self.c1 + rhs.c1, self.c2 + rhs.c2)
@@ -417,10 +375,6 @@ impl<C: ExtConfig> Sub for CubicExt<C> {
     type Output = Self;
 
     /// Component-wise subtraction: `(a0−b0) + (a1−b1)·v + (a2−b2)·v²`.
-    ///
-    /// # Complexity
-    ///
-    /// 3 base-field subtractions.
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self::new(self.c0 - rhs.c0, self.c1 - rhs.c1, self.c2 - rhs.c2)
@@ -431,10 +385,6 @@ impl<C: ExtConfig> Neg for CubicExt<C> {
     type Output = Self;
 
     /// Component-wise negation: `(−a0) + (−a1)·v + (−a2)·v²`.
-    ///
-    /// # Complexity
-    ///
-    /// 3 base-field negations.
     #[inline]
     fn neg(self) -> Self {
         Self::new(-self.c0, -self.c1, -self.c2)
@@ -664,10 +614,10 @@ impl<C: ExtConfig> FiniteField for CubicExt<C> {
     }
 
     /// Karatsuba-style multiplication at the tower level followed by
-    /// component-wise widening (Option 1 of the design plan). Individual
-    /// products are fully reduced in the base field, but the result is stored
-    /// in a three-component wide accumulator so that sums of products can be
-    /// accumulated without per-product reduction.
+    /// component-wise widening. Individual products are fully reduced in the
+    /// base field, but the result is stored in a three-component wide
+    /// accumulator so that sums of products can be accumulated without
+    /// per-product reduction.
     ///
     /// # Complexity
     ///
@@ -758,7 +708,7 @@ mod tests {
     type Fq3 = CubicExt<Fq3Config>;
 
     // -----------------------------------------------------------------------
-    // Axiom test harness (required for success)
+    // Axiom test harness
     // -----------------------------------------------------------------------
 
     #[test]
@@ -1047,7 +997,7 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Wide accumulator tests (issue d11b769a)
+    // Wide accumulator tests
     // -----------------------------------------------------------------------
 
     /// Wide is a real three-component accumulator, not an alias for `Self`.
@@ -1069,8 +1019,7 @@ mod tests {
         assert_eq!(k, base);
     }
 
-    /// For a large prime the bound is finite, proving we no longer return
-    /// the `usize::MAX` sentinel that the old `Wide = Self` placeholder used.
+    /// For a large prime the bound is finite (not `usize::MAX`).
     #[test]
     fn test_max_unreduced_additions_finite_for_large_prime() {
         // GF(Mersenne61³) with β = 3.
@@ -1106,9 +1055,8 @@ mod tests {
     /// `reduce_wide(mul_to_wide(a, b)) == a * b` — representative subset.
     #[test]
     fn test_mul_to_wide_consistency_representative() {
-        // Full exhaustive would be 343² = 117649 pairs; that's fine but slow.
-        // Representative sweep already validates the path; the proptest below
-        // provides the randomised coverage.
+        // A subset of the 343² pairs; the proptest below adds randomised
+        // coverage.
         for a0 in 0..7u64 {
             for a1 in 0..7u64 {
                 for a2 in 0..7u64 {
