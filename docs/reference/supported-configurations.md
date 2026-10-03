@@ -9,8 +9,8 @@ states how they combine.
 |---|---|---|
 | Rust | 1.95 or newer, edition 2021 | `rust-version` in the crate manifests |
 | CI compilers | stable Rust for the build, test, lint and doc battery; Rust 1.95.0 for the `gf2-sim` compile-fail guard | [`ci.yml`](../../.github/workflows/ci.yml) |
-| Lean proofs | the toolchain pinned in [`lean-toolchain`](../../proofs/lean-toolchain), installed through elan | [`proofs/README.md`](../../proofs/README.md) |
-| Lean regeneration | patched Charon and Aeneas with a pinned Rust nightly | [`proofs/README.md`](../../proofs/README.md) |
+| Lean proofs | the toolchain pinned in [`lean-toolchain`](../../proofs/lean-toolchain), installed through elan | [formal verification how-to](../how-to/formal-verification.md) |
+| Lean regeneration | patched Charon and Aeneas with a pinned Rust nightly | [formal verification how-to](../how-to/formal-verification.md) |
 | GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`) | [`build.rs`](../../crates/gf2-kernels-hip/build.rs) |
 
 ## Operating systems
@@ -84,7 +84,7 @@ omitted from the table.
 | `gf2-kernels-hip` | `hip` | | Adds the BCH syndrome and permanent kernels to the linked library |
 
 `gf2-stats` has no features. List the current set with
-`cargo metadata --format-version 1 --no-deps`.
+`./scripts/cargo-budget.sh cargo metadata --format-version 1 --no-deps`.
 
 ## Installation
 
@@ -105,10 +105,10 @@ Pin a `rev` for reproducible builds.
 
 `gf2-kernels-hip` is excluded from the default workspace because its build
 script requires `hipcc`. Build it directly with
-`cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml`. The `hip`
-features of `gf2-coding`, `gf2-algebra` and `gf2-sim` depend on it by path, so
-`cargo build --workspace --all-features` also requires ROCm; without ROCm,
-select features explicitly, as
+`./scripts/cargo-budget.sh cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml`.
+The `hip` features of `gf2-coding`, `gf2-algebra` and `gf2-sim` depend on it
+by path, so `./scripts/cargo-budget.sh cargo build --workspace --all-features`
+also requires ROCm; without ROCm, select features explicitly, as
 [`scripts/cargo-ci.sh`](../../scripts/cargo-ci.sh) does.
 
 ## Limitations
@@ -119,5 +119,5 @@ select features explicitly, as
   device architecture.
 - `gf2_algebra::gpu` exists only with the `hip` feature and panics on a HIP
   runtime failure; callers without a device use the CPU permanents directly.
-- Lean proofs cover the code paths listed in
-  [`proofs/README.md`](../../proofs/README.md).
+- Lean proofs cover the functions `scripts/verify-lean.sh` extracts; see
+  [Run and extend the Lean 4 proofs](../how-to/formal-verification.md).
