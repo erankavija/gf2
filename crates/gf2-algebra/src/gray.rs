@@ -69,10 +69,8 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 ///   same widening shape is used downstream. Iteration cost is `O(2^n)`, so
 ///   practical callers stay at or below `n = 36` (`@/issue/ae82bd73` §7.3). For
 ///   `n >= 64` use the multi-word path (`permanent_bipedal3_multiword`) which
-///   carries its own 256-bit counter. The narrowing from the prior `n <= 64` to
-///   `n <= 63` is wallclock-driven: 2^64 Gray steps is computationally
-///   infeasible on either CPU or GPU; the contract was always implicitly
-///   bounded by feasibility, and is now bounded explicitly.
+///   carries its own 256-bit counter. The bound reflects feasibility: 2^64
+///   Gray steps is infeasible on CPU or GPU.
 ///
 /// # Examples
 ///
@@ -93,8 +91,7 @@ pub fn gray_code_index_to_subset(k: u64) -> u64 {
 /// # Panics
 ///
 /// Panics if `n >= 64`. The singleword permanent boundary (`n <= 63`)
-/// gates upstream callers, and the 2026-05-15 CPU/GPU consistency
-/// narrowing fixed the upper bound at `n = 63`. For `n == 0` the
+/// gates upstream callers. For `n == 0` the
 /// iterator yields zero items (the empty universe has only the empty
 /// subset, which is excluded).
 ///
@@ -123,12 +120,9 @@ pub fn gray_code_iter(n: usize) -> impl Iterator<Item = (usize, i8)> {
         n <= 63,
         "gray_code_iter: n must satisfy n <= 63; got n = {n}"
     );
-    // u128 bound is retained from the pre-2026-05-15 implementation; the
-    // narrowing to n <= 63 makes `1u128 << n` always fit in u64, but the
-    // u128 shape avoids touching dependent code that already monomorphises
-    // against `u128` arithmetic. The 2026-05-15 narrowing is wallclock-
-    // driven (n=64 takes ~600 years on either CPU or GPU), not a
-    // correctness fix at the u128 widening.
+    // `1u128 << n` fits in u64 for n <= 63; the u128 shape matches dependent
+    // code that monomorphises against `u128` arithmetic. The n <= 63 bound
+    // is wallclock-driven (n=64 takes ~600 years on CPU or GPU).
     let upper: u128 = 1u128 << n;
     (1u128..upper).map(|k| {
         let flip = k.trailing_zeros() as usize;
