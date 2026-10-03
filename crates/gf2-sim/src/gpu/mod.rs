@@ -1,17 +1,9 @@
-//! HIP/ROCm host-side GPU dispatch (design doc §5/§6, `feature = "hip"`).
+//! HIP/ROCm host-side GPU dispatch (`feature = "hip"`).
 //!
-//! Owned by Phase B (`36075e4c`). The HIP host infrastructure itself (stream
-//! pool, allocator wrappers, deterministic-launch helpers, multi-arch
-//! detection) lives in the `gf2-kernels-hip` kernel crate so that all `unsafe`
-//! FFI is isolated there. This module is the `gf2-sim`-side consumer: it owns a
-//! `HipDispatcher` (a stream pool plus per-stage scratch) and translates the
-//! kernel crate's `HipError` into the pipeline's [`StageError`] hierarchy.
-//!
-//! The item bodies are gated on `feature = "hip"`; the module home itself is
-//! declared unconditionally in `lib.rs` so the crate builds (and documents)
-//! cleanly with the feature off. (`HipDispatcher` is a plain code span rather
-//! than an intra-doc link because the type exists only under `feature = "hip"`,
-//! so the link would be unresolved on the default no-hip documentation build.)
+//! The `unsafe` HIP FFI lives in the `gf2-kernels-hip` kernel crate. This
+//! module owns a `HipDispatcher` (a stream pool plus per-stage scratch) and
+//! translates the kernel crate's `HipError` into the pipeline's
+//! [`StageError`] hierarchy.
 //!
 //! [`StageError`]: crate::error::StageError
 
@@ -29,36 +21,19 @@ mod imp {
 
     /// Maps a kernel-crate `HipError` to the pipeline's [`StageError`].
     ///
-    /// This is the single boundary where the HIP-local error vocabulary becomes
-    /// the pipeline vocabulary (design doc §8). The mapping:
-    ///
     /// - `HipError::OutOfMemory` → [`RecoverableError::OutOfMemory`] (wrapped in
-    ///   [`StageError::Recoverable`]) so the executor can substitute a CPU
-    ///   fallback on the offending batch and continue. The `--strict-gpu`
-    ///   promotion to [`FatalError::OutOfMemory`] is the executor's job
-    ///   (`42eac5cc`), not this function's.
+    ///   [`StageError::Recoverable`]).
     /// - `HipError::UnsupportedArch` → [`RecoverableError::Transient`] (wrapped
-    ///   in [`StageError::Recoverable`]) **after** a `tracing::warn!`, so the
-    ///   executor falls back to the CPU-equivalent stage rather than aborting
-    ///   (design doc §6: an arch with no kernel blob warns + falls back, the
-    ///   same response as OOM). It is **not** a fatal `KernelLaunch`.
+    ///   in [`StageError::Recoverable`]) after a `tracing::warn!`.
     /// - `HipError::NoDevice` → [`FatalError::DeviceUnavailable`] (wrapped in
-    ///   [`StageError::Fatal`]) — a host with no GPU aborts construction; the
-    ///   user re-runs with `--cpu-only` (design doc §8).
+    ///   [`StageError::Fatal`]).
     /// - `HipError::BlobLoad` → [`FatalError::KernelLaunch`] (wrapped in
-    ///   [`StageError::Fatal`]) — a missing/unreadable kernel blob for the
-    ///   *active* arch is a build/configuration fault, not a transient or
-    ///   OOM condition, so it aborts the run. The blob's `hipErrorFileNotFound`
-    ///   sentinel (301) and the offending path are preserved for diagnostics.
+    ///   [`StageError::Fatal`]) carrying `HipError::code()` and the blob path.
     /// - `HipError::Hip` → [`FatalError::KernelLaunch`] (wrapped in
-    ///   [`StageError::Fatal`]) — any other HIP failure aborts the run with
-    ///   the raw `hipError_t` code preserved for diagnostics.
+    ///   [`StageError::Fatal`]) carrying the raw `hipError_t` code.
     ///
-    /// # Arguments
-    ///
-    /// * `err` - The error returned by a `gf2-kernels-hip` call.
-    /// * `kernel` - A static name for the failing operation, recorded in the
-    ///   resulting [`FatalError::KernelLaunch`] for generic HIP errors.
+    /// `kernel` names the failing operation in the resulting
+    /// [`FatalError::KernelLaunch`].
     pub fn map_hip_error(err: HipError, kernel: &'static str) -> StageError {
         match err {
             HipError::OutOfMemory {
@@ -84,8 +59,7 @@ mod imp {
                 ref path,
                 ref source,
             } => StageError::Fatal(FatalError::KernelLaunch {
-                // `code()` returns the hipErrorFileNotFound sentinel (301) for a
-                // BlobLoad — never the fabricated `0` the old path emitted.
+                // `code()` is the hipErrorFileNotFound sentinel (301) for a BlobLoad.
                 hip_code: e.code(),
                 kernel,
                 args: format!("blob load failed for '{}': {source}", path.display()),
@@ -99,12 +73,6 @@ mod imp {
     }
 
     /// Per-stage staging scratch held by the dispatcher.
-    ///
-    /// Phase B GPU stages stage their H2D / D2H transfers through pinned host
-    /// buffers for overlap (design doc §6). The dispatcher owns one staging area
-    /// per stage so the kernel stages (`ed575f15` and the next-wave kernel
-    /// owners) borrow it rather than re-allocating per batch. This is a minimal
-    /// v1 holder; the kernel stages extend it with their concrete typed buffers.
     pub struct StageScratch {
         /// Pinned host staging buffer for LLR / symbol payloads (f32 lanes).
         pub staging: PinnedHostBuffer<f32>,
@@ -128,31 +96,19 @@ mod imp {
 
     /// Owns the HIP host resources a pipeline run shares across its GPU stages.
     ///
-    /// A `HipDispatcher` holds the `HipStreamPool` (one stream per worker, handed
-    /// out round-robin / oldest-idle) and the per-stage [`StageScratch`]. v1 is
-    /// single-device; the design doc §7 multi-GPU seam replaces the single pool
-    /// with a per-device map without changing this type's stage-facing API.
+    /// A `HipDispatcher` holds one `HipStreamPool` bound to a single device and
+    /// the per-stage [`StageScratch`].
     ///
-    /// # Concurrency model (design § Phase C scheduler `75c22fa8`)
+    /// # Concurrency model
     ///
-    /// The dispatcher is **owned by the orchestrator thread**, not shared by
-    /// `&` across rayon workers — its [`StageScratch`] embeds a
-    /// `PinnedHostBuffer`, which is `Send`-only (a staging buffer mutated in
-    /// place, never aliased across threads), so `HipDispatcher` is itself
-    /// `Send` but not `Sync`.
-    ///
-    /// What *is* shared by reference across workers is the **stream pool**: the
-    /// orchestrator borrows it once via [`streams`](HipDispatcher::streams) and
-    /// hands the resulting `&HipStreamPool` to the worker pool. `HipStreamPool`
-    /// is `Sync` (its streams are `Sync` opaque HIP handles), so each worker can
-    /// call `acquire` / `acquire_idle` concurrently to obtain a *distinct*
-    /// stream from the shared atomic round-robin cursor. Per-worker device and
-    /// pinned buffers are owned (moved in via `Send`), never shared by `&`.
+    /// The dispatcher is owned by the orchestrator thread: its
+    /// [`StageScratch`] embeds a `Send`-only `PinnedHostBuffer`, so
+    /// `HipDispatcher` is `Send` but not `Sync`. The stream pool is `Sync`; the
+    /// orchestrator borrows it via [`streams`](HipDispatcher::streams) and
+    /// workers call `acquire` / `acquire_idle` on the shared `&HipStreamPool`.
     pub struct HipDispatcher {
         device_id: i32,
-        /// The gfx target detected at construction (design doc §6). Stored for
-        /// diagnostics — kept so a future kernel stage can select the matching
-        /// blob without re-probing.
+        /// The gfx target detected at construction.
         target: GfxTarget,
         streams: HipStreamPool,
         scratch: Vec<StageScratch>,
@@ -161,22 +117,12 @@ mod imp {
     impl HipDispatcher {
         /// Builds a dispatcher with `n_streams` streams on `device_id`.
         ///
-        /// Construction first **detects** the device's gfx target via
-        /// [`GfxTarget::detect_device`] (design doc §6) — this is the production
-        /// invocation of detection, so the documented warn+fallback path is
-        /// actually exercised. On an unsupported arch (no compiled kernel blob)
-        /// or an absent device the detection error is mapped through
-        /// [`map_hip_error`] and **returned**, so the Phase C executor refuses
-        /// to build the dispatcher and receives the recoverable/fatal signal
-        /// (`UnsupportedArch` → recoverable CPU fallback; `NoDevice` → fatal
-        /// `DeviceUnavailable`). Only after a successful detect is the stream
-        /// pool created.
+        /// Detects the device's gfx target via [`GfxTarget::detect_device`]
+        /// before creating the stream pool.
         ///
-        /// # Arguments
+        /// # Panics
         ///
-        /// * `device_id` - The HIP device to detect and bind the stream pool to.
-        /// * `n_streams` - Number of streams (typically the worker count). Must
-        ///   be non-zero (delegated to `HipStreamPool::new`).
+        /// Panics if `n_streams` is zero.
         ///
         /// # Errors
         ///
@@ -185,8 +131,6 @@ mod imp {
         /// cannot be created. An OOM is surfaced as recoverable; any other HIP
         /// failure as fatal.
         pub fn new(device_id: i32, n_streams: usize) -> Result<Self, StageError> {
-            // Production detect: refuse to build on an unsupported/absent GPU and
-            // hand the executor the recoverable/fatal fallback signal (design §6/§8).
             let target = GfxTarget::detect_device(device_id)
                 .map_err(|e| map_hip_error(e, "GfxTarget::detect_device"))?;
             let streams = HipStreamPool::new(device_id, n_streams)
@@ -216,9 +160,7 @@ mod imp {
             self.device_id
         }
 
-        /// The gfx target detected for this dispatcher's device at construction
-        /// (design doc §6). Exposed for diagnostics and for a future kernel
-        /// stage to select the matching blob without re-probing.
+        /// The gfx target detected for this dispatcher's device at construction.
         pub fn target(&self) -> GfxTarget {
             self.target
         }
@@ -248,12 +190,8 @@ mod imp {
         }
     }
 
-    /// Compile-time enforcement of the concurrency contract documented on
-    /// [`HipDispatcher`]: the shared `HipStreamPool` must be `Send + Sync` (it is
-    /// handed to rayon workers by `&`), while the dispatcher itself is `Send`
-    /// (orchestrator-owned, moved between threads) but NOT required to be `Sync`
-    /// — it embeds `Send`-only pinned scratch. These assertions fail to compile
-    /// if a future change breaks the documented bounds.
+    /// Compile-time check of the concurrency contract documented on
+    /// [`HipDispatcher`].
     #[cfg(test)]
     mod sync_contract {
         use super::*;
@@ -310,11 +248,8 @@ mod imp {
             }
         }
 
-        /// Finding 1: an unsupported arch must NOT abort as fatal. It maps to a
-        /// recoverable error (warn + CPU fallback per design §6), so the
-        /// end-to-end "warn + fall back" path is expressible at this boundary.
-        /// Simulated by constructing the typed error directly (this host is a
-        /// gfx1030, so real detection never produces UnsupportedArch here).
+        /// The typed error is constructed directly because detection on a
+        /// supported device never produces `UnsupportedArch`.
         #[test]
         fn test_map_unsupported_arch_is_recoverable_not_fatal() {
             let err = HipError::UnsupportedArch {
@@ -331,11 +266,9 @@ mod imp {
             }
         }
 
-        /// Round-2 Finding B: a blob-load I/O failure maps to a fatal
-        /// `KernelLaunch` (missing blob for the active arch is a configuration
-        /// fault, not OOM/CPU-fallback). The hip_code must be the real
-        /// `hipErrorFileNotFound` sentinel (301), never the fabricated `0`, and
-        /// the offending path must survive into the diagnostic `args`.
+        /// A blob-load I/O failure maps to a fatal `KernelLaunch` whose
+        /// `hip_code` is the `hipErrorFileNotFound` sentinel (301) and whose
+        /// `args` carry the offending path.
         #[test]
         fn test_map_blob_load_is_fatal_kernel_launch() {
             let err = HipError::BlobLoad {
@@ -396,8 +329,6 @@ mod imp {
             }
         }
 
-        /// Finding 1: a host with no GPU maps to the dedicated
-        /// `DeviceUnavailable` fatal, not a generic `KernelLaunch`.
         #[test]
         fn test_map_no_device_is_device_unavailable() {
             match map_hip_error(HipError::NoDevice, "detect") {
@@ -406,11 +337,6 @@ mod imp {
             }
         }
 
-        /// Exercise `HipDispatcher` end-to-end on an available supported device —
-        /// build it, acquire a stream from its pool, and allocate a small
-        /// `DeviceBuffer` — so it is covered rather than dead code. Phase B
-        /// kernel stages (`ed575f15` and the next-wave kernel owners) and the
-        /// Phase C executor (`42eac5cc`) are the production consumers.
         #[test]
         fn test_dispatcher_acquires_stream_and_allocates() {
             use gf2_kernels_hip::host::DeviceBuffer;
@@ -428,10 +354,7 @@ mod imp {
             assert_eq!(disp.target(), target);
             assert_eq!(disp.streams().len(), 4);
 
-            // Acquire a stream from the shared pool (round-robin path).
             let _stream = disp.streams().acquire();
-
-            // Reserve per-stage scratch and allocate a small device buffer.
             let idx = disp.add_stage_scratch(128).expect("pinned scratch");
             assert_eq!(disp.scratch(idx).staging.len(), 128);
 
@@ -439,18 +362,10 @@ mod imp {
             assert_eq!(buf.len(), 256);
         }
 
-        /// Finding (round 6): `HipDispatcher::new` runs detection at
-        /// construction and returns the mapped `StageError` on a bad device — an
-        /// UnsupportedArch yields a recoverable CPU-fallback signal and a
-        /// NoDevice yields a fatal `DeviceUnavailable`. This CI host is a healthy
-        /// gfx1030, so we cannot force a bad device here; instead we assert the
-        /// exact mapping arms `new` routes detection errors through, documenting
-        /// the production fallback/fatal contract without depending on absent
-        /// hardware.
+        /// Asserts the mapping arms `HipDispatcher::new` routes detection
+        /// errors through; a bad device cannot be forced on a healthy host.
         #[test]
         fn test_dispatcher_new_detect_error_mapping() {
-            // UnsupportedArch (no compiled blob for the active arch) → recoverable
-            // CPU fallback, NOT fatal — so a production caller continues on CPU.
             let unsupported = HipError::UnsupportedArch {
                 gcn_arch_name: "gfx908".to_string(),
             };
@@ -464,8 +379,6 @@ mod imp {
                 other => panic!("expected recoverable fallback from detect, got {other:?}"),
             }
 
-            // NoDevice (no GPU visible) → fatal DeviceUnavailable — construction
-            // aborts and the user re-runs with --cpu-only.
             match map_hip_error(HipError::NoDevice, "GfxTarget::detect_device") {
                 StageError::Fatal(FatalError::DeviceUnavailable) => {}
                 other => panic!("expected fatal DeviceUnavailable from detect, got {other:?}"),
@@ -478,12 +391,9 @@ mod imp {
         fn test_forced_oom_returns_recoverable_not_panic() {
             use gf2_kernels_hip::host::{device_mem_info, DeviceBuffer};
 
-            // `new_with_fallback` only GUARANTEES a structured OOM when it can
-            // first read total device memory via `device_mem_info`. On a host
-            // built with `feature = "hip"` but no usable GPU, that pre-flight
-            // fails and the request would fall through to `hipMalloc`, yielding
-            // a non-OOM HIP error instead. Skip rather than spuriously panic so
-            // the assertion is only made where it is actually guaranteed.
+            // `new_with_fallback` guarantees a structured OOM only when it can
+            // read total device memory via `device_mem_info`; without a usable
+            // GPU the request falls through to `hipMalloc` and a non-OOM error.
             if device_mem_info().is_err() {
                 eprintln!(
                     "skipping test_forced_oom_returns_recoverable_not_panic: \
@@ -492,9 +402,7 @@ mod imp {
                 return;
             }
 
-            // Request far more than any GPU has (256 GiB of u8).
-            // `new_with_fallback` pre-flights against total device memory and
-            // returns OOM.
+            // 256 GiB of u8 exceeds total device memory.
             let huge: usize = 256 * 1024 * 1024 * 1024;
             let result = DeviceBuffer::<u8>::new_with_fallback(huge, 0);
             let err = result.err().expect("256 GiB alloc must fail");
