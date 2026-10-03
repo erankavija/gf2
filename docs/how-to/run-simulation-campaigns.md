@@ -74,18 +74,22 @@ GLDPC curve concurrently and the frames of a product-code curve concurrently.
 |---|---|
 | `<name>.csv` | One row per finished point: `eb_n0_db`, `ber`, `bler`, bit and frame counts, `avg_iterations`, `avg_queries_per_bit`. Appended as each point finishes and rewritten in configured point order when the curve ends. |
 | `<name>.json` | The same rows as a JSON array, written when the curve ends. |
-| `<name>.progress.jsonl` | Progress and `point_complete` records, one JSON object per line. |
+| `<name>.progress.jsonl` | Progress and `point_complete` records, one JSON object per line. Absent for product-code curves run with `--parallel`. |
 
 ## Stop and resume
 
-The CSV is the campaign's checkpoint. Rerunning the same command reuses every
-row whose frame-error count reached `min_errors` and simulates the remaining
-points; a point that ended at `max_frames` is simulated again. Product-code
-curves run with `--parallel` recompute every point.
+`sim_runner` writes no checkpoint files; its CSV is the resume record. A
+stopped run keeps the rows of finished points and loses all progress of
+in-flight points. Rerunning the same command reuses every row whose
+frame-error count reached `min_errors` and simulates the remaining points from
+their start; a point that ended at `max_frames` is simulated again. Product-code
+curves run with `--parallel` reuse no rows and recompute every point.
 
-- Stop a run with `kill -KILL <pid>`. The runner's interrupt handler lets
-  in-flight points finish, so SIGINT can keep it running for a full point
-  budget.
+- On LDPC, GLDPC and sequential product-code curves, SIGINT and SIGTERM do
+  not interrupt an in-flight point. With `--parallel` the run exits with
+  status 1 once its in-flight points finish; a sequential run continues.
+  Ending the process otherwise, for example with `kill -KILL <pid>`, flushes
+  nothing and discards in-flight points as described above.
 - Reused rows are keyed by Eb/N0 alone. After changing a curve's parameters,
   delete its CSV or change `output_dir`.
 - With `--parallel`, each point draws from its own stream derived from
