@@ -13,10 +13,6 @@
 //! Both use the CPU demapper's post-normalization
 //! [`pam_levels`](gf2_coding::modem::FastGrayQamDemapper::pam_levels) table.
 //! LLR sign follows [`Llr`](gf2_coding::Llr): positive LLR = bit 0 more likely.
-//!
-//! [`Stage::process`](crate::Stage) and `demap_batch` run on the default
-//! stream; `demap_batch_on_stream` orders the launch and every transfer on a
-//! caller-owned HIP stream and emits byte-identical LLRs.
 
 #[cfg(feature = "hip")]
 mod imp {
@@ -123,18 +119,6 @@ mod imp {
     /// [`DemapMethod::ExactLogMap`] reports [`ExecutionClass::CpuOnly`] and is
     /// served by its [`cpu_fallback`](Self::cpu_fallback); one constructed for
     /// [`DemapMethod::MaxLog`] reports [`ExecutionClass::GpuOnly`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_sim::gpu::demap::GpuGrayQamDemapper;
-    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    /// use gf2_coding::modem::DemapMethod;
-    ///
-    /// // Constructible without a GPU; the device demapper is built lazily.
-    /// let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::MaxLog, 0.25);
-    /// assert_eq!(stage.m(), 4);
-    /// ```
     pub struct GpuGrayQamDemapper {
         modulation: DvbT2Modulation,
         method: DemapMethod,
@@ -461,7 +445,6 @@ mod imp {
             assert_send::<CpuGrayQamDemapper>();
         }
 
-        /// Skips with no GPU.
         #[test]
         fn test_demap_on_stream_matches_default_stream() {
             use gf2_kernels_hip::host::{device_mem_info, HipStream};

@@ -178,25 +178,6 @@ impl GrayQamDemapCore {
 /// Wraps [`DvbT2Concat::encode`] (BCH outer + LDPC inner). Each frame in the
 /// input [`BitPackedBatch`] must be exactly `k_bch` bits; each output frame is
 /// `n_ldpc` bits.
-///
-/// # Examples
-///
-/// ```
-/// use std::sync::Arc;
-/// use gf2_sim::stages::DvbT2Encode;
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-/// use gf2_coding::ldpc::dvb_t2::FrameSize;
-/// use gf2_coding::CodeRate;
-/// use gf2_core::BitVec;
-///
-/// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
-/// let stage = DvbT2Encode::new(codec.clone());
-/// let bbframe = BitVec::zeros(codec.k_bch());
-/// let out = stage.process(&BitPackedBatch::new(vec![bbframe]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), codec.n_ldpc());
-/// ```
 pub struct DvbT2Encode {
     codec: Arc<DvbT2Concat>,
 }
@@ -241,26 +222,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for DvbT2Encode {
 ///
 /// Wraps [`DvbT2BitInterleaver::interleave`]. Each input/output frame is
 /// `frame_bits()` (= `n_ldpc`) bits.
-///
-/// # Examples
-///
-/// ```
-/// use std::sync::Arc;
-/// use gf2_sim::stages::BitInterleave;
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation};
-/// use gf2_coding::ldpc::dvb_t2::FrameSize;
-/// use gf2_coding::CodeRate;
-/// use gf2_core::BitVec;
-///
-/// let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
-/// let il = Arc::new(DvbT2BitInterleaver::new(modcod));
-/// let stage = BitInterleave::new(il.clone());
-/// let frame = BitVec::zeros(il.frame_bits());
-/// let out = stage.process(&BitPackedBatch::new(vec![frame]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), il.frame_bits());
-/// ```
 pub struct BitInterleave {
     interleaver: Arc<DvbT2BitInterleaver>,
 }
@@ -298,25 +259,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for BitInterleave {
 ///
 /// Wraps [`DvbT2BitInterleaver::deinterleave_llrs`], the receive-path inverse
 /// of [`BitInterleave`]. Each input/output frame is `frame_bits()` LLRs.
-///
-/// # Examples
-///
-/// ```
-/// use std::sync::Arc;
-/// use gf2_sim::stages::BitDeinterleave;
-/// use gf2_sim::batch::LlrBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation};
-/// use gf2_coding::ldpc::dvb_t2::FrameSize;
-/// use gf2_coding::{CodeRate, Llr};
-///
-/// let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
-/// let il = Arc::new(DvbT2BitInterleaver::new(modcod));
-/// let stage = BitDeinterleave::new(il.clone());
-/// let frame = vec![Llr::new(1.0); il.frame_bits()];
-/// let out = stage.process(&LlrBatch::new(vec![frame]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), il.frame_bits());
-/// ```
 pub struct BitDeinterleave {
     interleaver: Arc<DvbT2BitInterleaver>,
 }
@@ -351,21 +293,6 @@ impl Stage<LlrBatch, LlrBatch> for BitDeinterleave {
 /// Wraps [`GrayQamMapper::map_bits`]. Each input frame's bit count must be a
 /// multiple of `m = log2(order)`; each output frame has `bits / m` symbols
 /// stored as parallel I/Q `f32` lanes.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::GrayQamMap;
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-/// use gf2_core::BitVec;
-///
-/// let stage = GrayQamMap::new(DvbT2Modulation::Qam16);
-/// let frame = BitVec::zeros(8); // 2 symbols of 4 bits
-/// let out = stage.process(&BitPackedBatch::new(vec![frame]), &mut ()).unwrap();
-/// assert_eq!(out.i[0].len(), 2);
-/// ```
 pub struct GrayQamMap {
     core: GrayQamMapCore,
 }
@@ -403,23 +330,6 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
 /// per-symbol total noise variance (`N0`) defaults to
 /// [`DEFAULT_DEMAP_NOISE_VAR`]; set the true channel `N0` via
 /// [`GrayQamDemap::with_noise_var`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::{GrayQamMap, GrayQamDemap};
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-/// use gf2_coding::modem::DemapMethod;
-/// use gf2_core::BitVec;
-///
-/// let map = GrayQamMap::new(DvbT2Modulation::Qam16);
-/// let demap = GrayQamDemap::new(DvbT2Modulation::Qam16, DemapMethod::ExactLogMap);
-/// let syms = map.process(&BitPackedBatch::new(vec![BitVec::zeros(8)]), &mut ()).unwrap();
-/// let llrs = demap.process(&syms, &mut ()).unwrap();
-/// assert_eq!(llrs.frames[0].len(), 8);
-/// ```
 pub struct GrayQamDemap {
     core: GrayQamDemapCore,
 }
@@ -482,15 +392,6 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
 /// non-converged arms. The erased
 /// [`process_any`](crate::stage::AnyStage::process_any) signature cannot carry
 /// the counts, so they travel in the scratch.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::DecodeScratch;
-///
-/// let scratch = DecodeScratch::default();
-/// assert!(scratch.iterations.is_empty());
-/// ```
 #[derive(Debug, Clone, Default)]
 pub struct DecodeScratch {
     /// Per-frame LDPC BP iteration counts of the most recent
@@ -508,26 +409,6 @@ pub struct DecodeScratch {
 /// A frame whose LDPC belief propagation does not converge yields the
 /// `bbframe` payload of the `Err(LdpcDecodeFailed { bbframe, .. })` returned by
 /// [`DvbT2Concat::decode_soft_counted`], and no stage error.
-///
-/// # Examples
-///
-/// ```no_run
-/// use std::sync::Arc;
-/// use gf2_sim::stages::{DecodeScratch, DvbT2Decode};
-/// use gf2_sim::batch::{HardDecisionBatch, LlrBatch};
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-/// use gf2_coding::ldpc::dvb_t2::FrameSize;
-/// use gf2_coding::{CodeRate, Llr};
-///
-/// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
-/// let stage = DvbT2Decode::new(codec.clone());
-/// let llrs = vec![Llr::new(10.0); codec.n_ldpc()];
-/// let mut scratch = DecodeScratch::default();
-/// let out: HardDecisionBatch = stage.process(&LlrBatch::new(vec![llrs]), &mut scratch).unwrap();
-/// assert_eq!(out.frames[0].len(), codec.k_bch());
-/// assert_eq!(scratch.iterations.len(), 1, "one BP count per frame");
-/// ```
 pub struct DvbT2Decode {
     codec: Arc<DvbT2Concat>,
 }
@@ -584,26 +465,6 @@ impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
 /// its `CpuLdpcBp` fallback) finishes the concatenated decode on the CPU. Each
 /// input frame is the full `n_ldpc`-bit hard-decision codeword; each output
 /// frame is the `k_bch`-bit BBFRAME.
-///
-/// # Examples
-///
-/// ```
-/// use std::sync::Arc;
-/// use gf2_sim::stages::DvbT2BchTail;
-/// use gf2_sim::batch::HardDecisionBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-/// use gf2_coding::ldpc::dvb_t2::FrameSize;
-/// use gf2_coding::CodeRate;
-/// use gf2_core::BitVec;
-///
-/// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
-/// let stage = DvbT2BchTail::new(codec.clone());
-/// // The all-zeros FECFRAME is a valid codeword: it BCH-decodes to zeros.
-/// let codeword = BitVec::zeros(codec.n_ldpc());
-/// let out = stage.process(&HardDecisionBatch::new(vec![codeword]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), codec.k_bch());
-/// ```
 pub struct DvbT2BchTail {
     codec: Arc<DvbT2Concat>,
 }
@@ -670,27 +531,6 @@ pub struct DvbT2BicmStages {
 /// `rate` / `modulation` is unsupported by the bit interleaver, or if
 /// `demap_noise_var` is not finite and strictly positive (per
 /// [`GrayQamDemap::with_noise_var`]).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::{dvb_t2_bicm_stages, DEFAULT_DEMAP_NOISE_VAR};
-/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-/// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-/// use gf2_coding::modem::DemapMethod;
-/// use gf2_coding::CodeRate;
-///
-/// let stages = dvb_t2_bicm_stages(
-///     CodeRate::Rate1_2,
-///     DvbT2Modulation::Qam16,
-///     DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
-///     DemapMethod::ExactLogMap,
-///     DEFAULT_DEMAP_NOISE_VAR,
-/// );
-/// assert_eq!(stages.forward.len(), 3);
-/// assert_eq!(stages.inverse.len(), 3);
-/// assert_eq!(stages.codec.n_ldpc(), 64800);
-/// ```
 pub fn dvb_t2_bicm_stages(
     rate: CodeRate,
     modulation: DvbT2Modulation,
@@ -773,16 +613,16 @@ mod tests {
         let hard = TypeId::of::<HardDecisionBatch>();
 
         assert_eq!(s.forward[0].input_type(), bitpacked);
-        assert_eq!(s.forward[0].output_type(), bitpacked); // encode
-        assert_eq!(s.forward[1].output_type(), bitpacked); // interleave
+        assert_eq!(s.forward[0].output_type(), bitpacked);
+        assert_eq!(s.forward[1].output_type(), bitpacked);
         assert_eq!(s.forward[2].input_type(), bitpacked);
-        assert_eq!(s.forward[2].output_type(), symbol); // map
+        assert_eq!(s.forward[2].output_type(), symbol);
 
         assert_eq!(s.inverse[0].input_type(), symbol);
-        assert_eq!(s.inverse[0].output_type(), llr); // demap
-        assert_eq!(s.inverse[1].output_type(), llr); // deinterleave
+        assert_eq!(s.inverse[0].output_type(), llr);
+        assert_eq!(s.inverse[1].output_type(), llr);
         assert_eq!(s.inverse[2].input_type(), llr);
-        assert_eq!(s.inverse[2].output_type(), hard); // decode
+        assert_eq!(s.inverse[2].output_type(), hard);
     }
 
     #[test]

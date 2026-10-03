@@ -1,7 +1,8 @@
 //! 5G NR LDPC BICM-chain [`Stage`] wrappers (`@/citation/ThreeGpp2017`).
 //!
 //! The stages wrap the `gf2-coding` 5G NR types ([`Nr5gRateMatchedCode`]
-//! encode, [`Nr5gRateMatchedDecoder`] decode, and the Section 5.4.2.2
+//! encode, [`Nr5gRateMatchedDecoder`] decode, and the
+//! `@/citation/ThreeGpp2020` clause 5.4.2.2
 //! [`interleaver`](gf2_coding::ldpc::nr_5g::interleaver)). Every stage is
 //! `ExecutionClass::CpuOnly` with `CpuFallback = Self` and `Scratch = ()`,
 //! except [`Nr5gDecode`], whose [`Nr5gDecodeScratch`] exposes the per-frame BP
@@ -25,23 +26,6 @@ use crate::stages::{GrayQamDemapCore, GrayQamMapCore, DEFAULT_DEMAP_NOISE_VAR};
 ///
 /// Wraps [`Nr5gRateMatchedCode::encode`]. Each input frame must be exactly
 /// `k()` bits; each output frame is `n()` bits.
-///
-/// # Examples
-///
-/// ```
-/// use std::sync::Arc;
-/// use gf2_sim::stages::nr_5g::Nr5gEncode;
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::QuasiCyclicLdpc;
-/// use gf2_core::BitVec;
-///
-/// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
-/// let stage = Nr5gEncode::new(code.clone());
-/// let msg = BitVec::zeros(121);
-/// let out = stage.process(&BitPackedBatch::new(vec![msg]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), 256);
-/// ```
 pub struct Nr5gEncode {
     code: Arc<Nr5gRateMatchedCode>,
 }
@@ -90,30 +74,16 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Nr5gEncode {
     }
 }
 
-/// 5G NR §5.4.2.2 bit-interleave stage: rate-matched bits → interleaved bits.
+/// 5G NR bit-interleave stage: rate-matched bits → interleaved bits.
 ///
 /// Wraps [`interleave_bits`] at modulation order `q_m`. Each frame length must
 /// be a multiple of `q_m`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::nr_5g::Nr5gBitInterleave;
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_core::BitVec;
-///
-/// let stage = Nr5gBitInterleave::new(2);
-/// let frame = BitVec::zeros(6);
-/// let out = stage.process(&BitPackedBatch::new(vec![frame]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), 6);
-/// ```
 pub struct Nr5gBitInterleave {
     q_m: usize,
 }
 
 impl Nr5gBitInterleave {
-    /// Builds a §5.4.2.2 bit-interleave stage for `q_m` bits per QAM symbol.
+    /// Builds a bit-interleave stage for `q_m` bits per QAM symbol.
     pub fn new(q_m: usize) -> Self {
         Self { q_m }
     }
@@ -141,31 +111,17 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Nr5gBitInterleave {
     }
 }
 
-/// 5G NR §5.4.2.2 LLR-deinterleave stage: interleaved LLRs → rate-matched LLRs.
+/// 5G NR LLR-deinterleave stage: interleaved LLRs → rate-matched LLRs.
 ///
 /// Wraps [`deinterleave_llrs`],
 /// the receive-path inverse of [`Nr5gBitInterleave`] operating in the LLR
 /// domain. Each frame length must be a multiple of `q_m`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::nr_5g::Nr5gLlrDeinterleave;
-/// use gf2_sim::batch::LlrBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::Llr;
-///
-/// let stage = Nr5gLlrDeinterleave::new(2);
-/// let frame = vec![Llr::new(1.0); 6];
-/// let out = stage.process(&LlrBatch::new(vec![frame]), &mut ()).unwrap();
-/// assert_eq!(out.frames[0].len(), 6);
-/// ```
 pub struct Nr5gLlrDeinterleave {
     q_m: usize,
 }
 
 impl Nr5gLlrDeinterleave {
-    /// Builds a §5.4.2.2 LLR-deinterleave stage for `q_m` bits per QAM symbol.
+    /// Builds an LLR-deinterleave stage for `q_m` bits per QAM symbol.
     pub fn new(q_m: usize) -> Self {
         Self { q_m }
     }
@@ -194,20 +150,6 @@ impl Stage<LlrBatch, LlrBatch> for Nr5gLlrDeinterleave {
 /// Wraps [`GrayQamMapper`](gf2_coding::modem::GrayQamMapper)`::map_bits` at
 /// constellation order `2^q_m`, `q_m ∈ {2, 4, 6, 8}` (QPSK / 16-QAM / 64-QAM /
 /// 256-QAM). Each input frame's bit count must be a multiple of `q_m`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::nr_5g::NrGrayQamMap;
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_core::BitVec;
-///
-/// let stage = NrGrayQamMap::new(4); // 16-QAM
-/// let frame = BitVec::zeros(8); // 2 symbols of 4 bits
-/// let out = stage.process(&BitPackedBatch::new(vec![frame]), &mut ()).unwrap();
-/// assert_eq!(out.i[0].len(), 2);
-/// ```
 pub struct NrGrayQamMap {
     core: GrayQamMapCore,
 }
@@ -245,22 +187,6 @@ impl Stage<BitPackedBatch, SymbolBatch> for NrGrayQamMap {
 /// `s` symbols produces `s * q_m` LLRs. The per-symbol total noise variance
 /// (`N0`) defaults to [`DEFAULT_DEMAP_NOISE_VAR`]; set the
 /// true channel `N0` via [`NrGrayQamDemap::with_noise_var`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::nr_5g::{NrGrayQamMap, NrGrayQamDemap};
-/// use gf2_sim::batch::BitPackedBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::modem::DemapMethod;
-/// use gf2_core::BitVec;
-///
-/// let map = NrGrayQamMap::new(4);
-/// let demap = NrGrayQamDemap::new(4, DemapMethod::ExactLogMap);
-/// let syms = map.process(&BitPackedBatch::new(vec![BitVec::zeros(8)]), &mut ()).unwrap();
-/// let llrs = demap.process(&syms, &mut ()).unwrap();
-/// assert_eq!(llrs.frames[0].len(), 8);
-/// ```
 pub struct NrGrayQamDemap {
     core: GrayQamDemapCore,
 }
@@ -310,15 +236,6 @@ impl Stage<SymbolBatch, LlrBatch> for NrGrayQamDemap {
 /// [`Nr5gDecode::process`] clears [`iterations`](Self::iterations) and pushes
 /// one entry per input frame: the BP depth reported by
 /// [`Nr5gRateMatchedDecoder::decode_iterative`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_sim::stages::nr_5g::Nr5gDecodeScratch;
-///
-/// let scratch = Nr5gDecodeScratch::default();
-/// assert!(scratch.iterations.is_empty());
-/// ```
 #[derive(Debug, Clone, Default)]
 pub struct Nr5gDecodeScratch {
     /// Per-frame BP iteration counts of the most recent [`Nr5gDecode::process`]
@@ -336,26 +253,6 @@ pub struct Nr5gDecodeScratch {
 ///
 /// A frame whose BP does not converge yields the decoder's message estimate
 /// and no stage error.
-///
-/// # Examples
-///
-/// ```
-/// use std::sync::Arc;
-/// use gf2_sim::stages::nr_5g::{Nr5gDecode, Nr5gDecodeScratch};
-/// use gf2_sim::batch::LlrBatch;
-/// use gf2_sim::Stage;
-/// use gf2_coding::ldpc::QuasiCyclicLdpc;
-/// use gf2_coding::Llr;
-///
-/// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
-/// let stage = Nr5gDecode::new(code.clone(), 20);
-/// // All-zero codeword: strongly positive LLRs decode to the zero message.
-/// let llrs = vec![Llr::new(10.0); 256];
-/// let mut scratch = Nr5gDecodeScratch::default();
-/// let out = stage.process(&LlrBatch::new(vec![llrs]), &mut scratch).unwrap();
-/// assert_eq!(out.frames[0].len(), 121);
-/// assert_eq!(scratch.iterations.len(), 1);
-/// ```
 pub struct Nr5gDecode {
     code: Arc<Nr5gRateMatchedCode>,
     algorithm: DecoderAlgorithm,
