@@ -402,7 +402,7 @@ pub(crate) fn write_halted_summary(
     .unwrap();
 }
 
-/// Returns the pooled-CSV token for a halt reason, via its own serialization.
+/// Returns the pooled-CSV token for a halt reason.
 fn halt_reason_token(reason: HaltReason) -> &'static str {
     match reason {
         HaltReason::AcceptanceFailure => "acceptance_failure",
