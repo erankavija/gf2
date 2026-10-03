@@ -73,7 +73,7 @@
      "short_id": "12907582",
      "title": "Correct surviving source-level documentation drift",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -204,7 +204,7 @@
      "short_id": "5a25717c",
      "title": "Locate receipt-pinned campaign inputs by content identity",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
@@ -232,7 +232,7 @@
      "short_id": "7bac1303",
      "title": "Make the first survey-harness crates' tool dependency depth-independent",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "8434e0e1-859d-4b18-ad3c-2942ae248b60",
@@ -330,7 +330,7 @@
      "short_id": "b16d013a",
      "title": "Write the gf2-sim README as its entry page",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
@@ -358,7 +358,7 @@
      "short_id": "fb209a81",
      "title": "Move presentation decks into their epics' archive dirs",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
@@ -440,14 +440,14 @@
      "short_id": "ee50e270",
      "title": "Rewrite the SIMD kernel and statistics crate READMEs",
      "classification": "documentation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "629e0ff0-29ce-4450-83a0-f56bb1fda15b",
      "short_id": "629e0ff0",
      "title": "Correct gf2-coding standards-conformance doc and test drift",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "18858de1",
@@ -461,7 +461,7 @@
      "short_id": "e3ff339a",
      "title": "Reduce the gf2-core, gf2-coding and gf2-algebra READMEs to purpose and links",
      "classification": "documentation",
-     "status": "pending"
+     "status": "dispatched"
     }
    ]
   },
