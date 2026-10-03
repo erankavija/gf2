@@ -5,13 +5,6 @@
 //! implementation (here [`crate::gf2m::Gf2mWide`]) with the compile-time
 //! constants that define the irreducible polynomial and the extension degree.
 //!
-//! # Design
-//!
-//! The config is a zero-sized marker type — no runtime state, no per-element
-//! overhead. The irreducible polynomial and the extension degree are
-//! associated constants, which keeps `Gf2mWide<N, Cfg>` `Copy` and
-//! `ConstField`-friendly in downstream tasks.
-//!
 //! # Representation
 //!
 //! The irreducible polynomial is stored as its **low-order `M` bits** in
@@ -43,9 +36,6 @@
 //!     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
 //! }
 //! ```
-//!
-//! See [`crate::gf2m::wide::Gf2mWide`] for the element type that consumes
-//! this configuration.
 
 /// Zero-sized configuration specifying an irreducible polynomial for
 /// GF(2^M), packed into `N` little-endian `u64` words.
@@ -54,24 +44,6 @@
 ///
 /// * `N` - Number of `u64` words used to store a field element. Must satisfy
 ///   `64 * (N - 1) < M <= 64 * N`.
-///
-/// # Constants
-///
-/// * [`M`](Self::M) - Extension degree; the field has `2^M` elements.
-/// * [`MODULUS`](Self::MODULUS) - Low-order `M` bits of the irreducible
-///   polynomial, with bit `M` implicit = 1. Encoded little-endian across `N`
-///   words.
-///
-/// # Overridable helpers
-///
-/// [`MODULUS_HIGH_BIT_WORD`](Self::MODULUS_HIGH_BIT_WORD) and
-/// [`MODULUS_HIGH_BIT_MASK`](Self::MODULUS_HIGH_BIT_MASK) default to values
-/// derived from `M`. Implementations rarely need to override them; they are
-/// exposed so downstream tasks (multiplication, Barrett reduction) can reach
-/// cached constants without re-deriving at each call site.
-///
-/// [`NAME`](Self::NAME) defaults to `"Gf2mWide"` and is used by the manual
-/// `Debug` implementation on `Gf2mWide` to tag the field name.
 ///
 /// # Irreducibility contract
 ///
@@ -114,11 +86,6 @@ pub trait Gf2mWideConfig<const N: usize>: 'static {
     const MODULUS: [u64; N];
 
     /// Index into a `[u64; N]` element at which the highest reduced bit lives.
-    ///
-    /// For a reduced element of degree at most `M - 1`, the top bit occupies
-    /// word `(M - 1) >> 6` at mask `1u64 << ((M - 1) & 63)`. This constant
-    /// caches the word index for fast tail-masking and shift-accumulator
-    /// paths in downstream code.
     const MODULUS_HIGH_BIT_WORD: usize = (Self::M - 1) >> 6;
 
     /// Mask selecting the highest bit of a reduced element within

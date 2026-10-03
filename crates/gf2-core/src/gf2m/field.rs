@@ -1,84 +1,20 @@
 //! # GF(2^m) - Binary Extension Field Arithmetic
 //!
-//! This module provides arithmetic over binary extension fields GF(2^m), which are fundamental
-//! for algebraic error-correcting codes such as BCH and Reed-Solomon codes.
-//!
-//! ## Mathematical Background
-//!
-//! ### What is a Finite Field?
-//!
-//! A **field** is an algebraic structure with two operations (addition and multiplication)
-//! that satisfy familiar properties:
-//! - Both operations are associative and commutative
-//! - Both have identity elements (0 for addition, 1 for multiplication)
-//! - Every element has an additive inverse (a + (-a) = 0)
-//! - Every non-zero element has a multiplicative inverse (a · a⁻¹ = 1)
-//! - Multiplication distributes over addition
-//!
-//! A **finite field** (or Galois field) has a finite number of elements. The number of
-//! elements is always a prime power p^m, where p is prime and m ≥ 1.
-//!
-//! ### Binary Extension Fields GF(2^m)
-//!
-//! When the base field is GF(2) = {0, 1} with XOR addition and AND multiplication, we can
-//! construct extension fields GF(2^m) with 2^m elements. These fields are particularly
-//! efficient for computer implementation because:
-//! - Addition is just XOR (no carries!)
-//! - Elements fit naturally into binary representations
-//! - Hardware acceleration available (CLMUL instructions)
-//!
-//! ### Polynomial Representation
-//!
-//! Elements of GF(2^m) are represented as polynomials over GF(2) with degree less than m:
-//!
-//! ```text
-//! a(x) = a_{m-1}·x^{m-1} + a_{m-2}·x^{m-2} + ... + a_1·x + a_0
-//! ```
-//!
-//! where each coefficient aᵢ ∈ {0, 1}.
-//!
-//! Since coefficients are binary, we can represent an element as a bit vector:
-//! - Polynomial: x³ + x + 1
-//! - Binary vector: (1, 0, 1, 1) reading from x³ down to x⁰
-//! - Binary number: 0b1011 = 11 (decimal)
-//!
-//! ### Arithmetic Operations
-//!
-//! **Addition**: XOR the binary representations (add polynomials coefficient-wise mod 2)
-//! ```text
-//! (x² + 1) + (x³ + x²) = x³ + 1
-//! Binary: 0101 ⊕ 1100 = 1001
-//! ```
-//!
-//! **Multiplication**: Multiply polynomials, then reduce modulo an irreducible
-//! polynomial of degree m
-//! ```text
-//! In GF(2^4) with irreducible polynomial p(x) = x⁴ + x + 1 (also primitive):
-//! (x + 1) · (x² + 1) = x³ + x² + x + 1
-//! ```
-//!
-//! **Defining polynomial**: An **irreducible** polynomial of degree m is
-//! sufficient to define the field structure of GF(2^m) — irreducibility ensures
-//! that the quotient `GF(2)[x] / ⟨p(x)⟩` is a field. A **primitive** polynomial
-//! is an irreducible polynomial whose root generates the full multiplicative
-//! group; primitivity is additionally needed for log/exp tables and discrete-log
-//! constructions.
+//! An **irreducible** defining polynomial of degree m defines GF(2^m) and is
+//! all that field arithmetic requires. A **primitive** polynomial is an
+//! irreducible polynomial whose root generates the full multiplicative group.
 //!
 //! Polynomials returned by [`PrimitivePolynomialDatabase::standard`] (m ≤ 16)
 //! are verified **primitive**. Polynomials returned by
 //! [`PrimitivePolynomialDatabase::standard_u128`] for m = 64..=127 are verified
 //! only **irreducible** (see
-//! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]); this is
-//! sufficient for correctness of arithmetic operations (add, sub, mul, inv,
-//! div) but not for primitive-element or discrete-log operations.
+//! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]).
 //!
 //! [`PrimitivePolynomialDatabase::standard`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard
 //! [`PrimitivePolynomialDatabase::standard_u128`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128
 //! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128_irreducibility_note
 //!
 //! ## Example: Computing in GF(2^4)
-//!
-//! Let's work through arithmetic in GF(16) using primitive polynomial p(x) = x⁴ + x + 1.
 //!
 //! ```
 //! use gf2_core::gf2m::Gf2mField;
@@ -135,19 +71,11 @@ use super::uint_ext::UintExt;
 /// A binary extension field GF(2^m) with a specified defining polynomial.
 ///
 /// The defining polynomial must be **irreducible** over GF(2) of degree `m`.
-/// Irreducibility alone is sufficient for field arithmetic (add, sub, mul,
-/// inv, div). Log/exp tables and primitive-element operations additionally
-/// require the polynomial to be **primitive**, which is a strictly stronger
-/// property. See the module-level docs for the distinction and
-/// [`crate::primitive_polys::PrimitivePolynomialDatabase`] for which catalog
-/// accessors guarantee each property.
+/// See [`crate::primitive_polys::PrimitivePolynomialDatabase`] for which
+/// catalog accessors guarantee irreducibility and which primitivity.
 ///
-/// The type parameter `V` controls the underlying integer representation for
-/// field elements. Use [`Gf2mField`] (alias for `Gf2mField_<u64>`) for
-/// the common case.
-///
-/// This type defines the field structure and parameters. Individual field elements
-/// are created via [`Gf2mField::element`].
+/// `V` is the integer representation of field elements; [`Gf2mField`] is the
+/// `u64` case. Elements are created via [`Gf2mField::element`].
 #[derive(Clone, Debug)]
 pub struct Gf2mField_<V: UintExt = u64> {
     params: Arc<FieldParams_<V>>,
@@ -175,13 +103,12 @@ struct FieldParams_<V: UintExt = u64> {
     // SIMD multiplication function (if available) — combined mul+reduce path
     #[cfg(feature = "simd")]
     simd_mul_fn: Option<simd_gf2m::Gf2mMulFn>,
-    // Raw SIMD carry-less multiply (no reduction) + Barrett reducer for the split path.
-    // When both are present, multiplication uses PCLMULQDQ for the raw product
-    // and Barrett reduction for the modular step.
+    // Raw SIMD carry-less multiply for the split path: PCLMULQDQ product, then
+    // Barrett reduction.
     #[cfg(feature = "simd")]
     clmul_fn: Option<simd_gf2m::ClmulFn>,
-    // All-in-one PCLMULQDQ + Barrett reduce kernel (3 clmul ops in one target_feature scope).
-    // When available, replaces the split clmul_fn + Barrett path for better performance.
+    // All-in-one PCLMULQDQ + Barrett reduce kernel; preferred over the split path
+    // when present.
     #[cfg(feature = "simd")]
     clmul_barrett_fn: Option<simd_gf2m::ClmulBarrettFn>,
     barrett_reducer: Option<BarrettReducer>,
@@ -214,23 +141,10 @@ pub type Gf2mElement = Gf2mElement_<u64>;
 impl<V: UintExt> Gf2mField_<V> {
     /// Creates a new GF(2^m) field with the specified defining polynomial.
     ///
-    /// The polynomial must be **irreducible** over GF(2) of degree `m`.
-    /// Irreducibility is sufficient for arithmetic correctness (add, sub,
-    /// mul, inv, div). [`Self::with_tables`] builds log/exp tables for
-    /// `m <= 16` from a generator found by search, so any irreducible
-    /// polynomial yields tables, primitive or not. Callers can
-    /// obtain verified-primitive polynomials for `m <= 16` from
-    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard`]
-    /// and verified-irreducible (but not necessarily primitive) polynomials
-    /// for `m = 64..=127` from
-    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128`].
-    ///
-    /// # Arguments
-    ///
-    /// * `m` - Extension degree (field has 2^m elements, must satisfy `m < V::BITS`)
-    /// * `primitive_poly` - Defining polynomial of degree m in binary representation.
-    ///   The parameter is named `primitive_poly` for historical/API-stability
-    ///   reasons; irreducibility is the strictly necessary property.
+    /// `primitive_poly` is the defining polynomial of degree `m`, with its
+    /// leading coefficient explicit at bit `m`. It must be **irreducible**;
+    /// primitivity is not required, since [`Self::with_tables`] builds its
+    /// tables from a generator found by search.
     ///
     /// # Panics
     ///
@@ -240,7 +154,7 @@ impl<V: UintExt> Gf2mField_<V> {
         Self::new_internal(m, primitive_poly)
     }
 
-    /// Creates a field without database verification warnings (internal use).
+    /// Crate-internal equivalent of [`Self::new`].
     pub(crate) fn new_unchecked(m: usize, primitive_poly: V) -> Self {
         Self::new_internal(m, primitive_poly)
     }
@@ -315,25 +229,14 @@ impl<V: UintExt> Gf2mField_<V> {
         V::ONE << (self.params.m as u32)
     }
 
-    /// Returns the defining polynomial of the field.
-    ///
-    /// For `m <= 16` fields constructed from
-    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard`], this
-    /// is a verified primitive polynomial. For `m = 64..=127` fields
-    /// constructed from
-    /// [`crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128`],
-    /// this is only verified irreducible — not necessarily primitive. The
-    /// method name is retained for API stability; see the struct-level docs
-    /// for the full contract.
+    /// Returns the defining polynomial of the field. Despite the name, the
+    /// polynomial is only required to be irreducible.
     pub fn primitive_polynomial(&self) -> V {
         self.params.primitive_poly
     }
 
-    /// Creates a field element from a binary representation.
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - Binary representation where bit i is the coefficient of x^i
+    /// Creates a field element from a binary representation: bit i of `value` is
+    /// the coefficient of x^i.
     ///
     /// # Panics
     ///
@@ -365,10 +268,9 @@ impl<V: UintExt> Gf2mField_<V> {
         }
     }
 
-    /// Creates a new field with precomputed log/antilog tables for fast multiplication.
+    /// Returns this field with precomputed log/antilog tables.
     ///
-    /// Tables are only generated for fields with m ≤ 16 (memory limit).
-    /// For larger fields, this is equivalent to `new()`.
+    /// Tables are generated only for m ≤ 16; a larger field is returned unchanged.
     ///
     /// # Example
     ///
@@ -426,8 +328,7 @@ impl<V: UintExt> Gf2mField_<V> {
             return None;
         }
 
-        // The primitive element is typically x (value = 2)
-        // But we verify it's actually stored in exp_table[1]
+        // exp_table[1] = α^1 is the generator the tables were built from.
         self.params
             .exp_table
             .as_ref()
@@ -508,10 +409,6 @@ impl<V: UintExt> Gf2mField_<V> {
     /// assert_eq!(exp.len(), (1 << 4) - 1); // 15 entries
     /// assert_eq!(exp[0], 1); // α^0 = 1
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)` — returns a borrow of the stored table.
     pub fn exp_table(&self) -> Option<&[u16]> {
         self.params.exp_table.as_deref()
     }
@@ -536,10 +433,6 @@ impl<V: UintExt> Gf2mField_<V> {
     /// assert_eq!(log.len(), 1 << 4); // 16 entries
     /// assert_eq!(log[1], 0); // log(1) = 0
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)` — returns a borrow of the stored table.
     pub fn log_table(&self) -> Option<&[u16]> {
         self.params.log_table.as_deref()
     }
@@ -583,10 +476,8 @@ impl<V: UintExt> Gf2mField_<V> {
         (log_table, exp_table)
     }
 
-    /// Finds a primitive element for GF(2^m).
     fn find_primitive_element(m: usize, primitive_poly: V, order: usize) -> V {
-        // Try candidates starting from 2 (which represents x)
-        // Only works for m ≤ 64 (table generation limit is m ≤ 16)
+        // Candidates start at 2 (the element x); callers have m ≤ 16.
         for candidate_usize in 2..(1u64 << m) {
             let candidate = V::from_u64(candidate_usize);
             if Self::is_primitive(candidate, m, primitive_poly, order) {
@@ -645,15 +536,11 @@ impl Gf2mField_ {
         1u64 << self.params.m
     }
 
-    /// Verifies that the polynomial is actually primitive for GF(2^m).
+    /// Verifies that the defining polynomial is primitive: irreducible, with
+    /// `x` of multiplicative order 2^m - 1.
     ///
-    /// A polynomial p(x) of degree m is primitive if:
-    /// 1. It is irreducible over GF(2)
-    /// 2. There exists a primitive element (generator of the full multiplicative group)
-    ///
-    /// # Algorithm
-    ///
-    /// Uses Rabin's irreducibility test combined with primitive element search.
+    /// Uses Rabin's irreducibility test, then checks x^((2^m-1)/q) ≠ 1 for each
+    /// prime factor q of 2^m - 1 found by trial division.
     ///
     /// # Complexity
     ///
@@ -673,7 +560,6 @@ impl Gf2mField_ {
     /// assert!(!gf2_reducible.verify_primitive());
     /// ```
     pub fn verify_primitive(&self) -> bool {
-        // First check irreducibility
         if !self.is_irreducible_rabin() {
             return false;
         }
@@ -715,7 +601,6 @@ impl Gf2mField_ {
         let m = self.params.m;
         let p = self.params.primitive_poly;
 
-        // Convert primitive polynomial to Gf2mPoly for GCD computation
         let p_poly = self.poly_from_binary(p, m);
 
         // Test 1: gcd(p(x), x^(2^i) - x) = 1 for i = 1..m/2
@@ -743,14 +628,11 @@ impl Gf2mField_ {
         let exp = 1u64 << m;
         let x_power_mod_p = self.compute_x_power_value(exp);
 
-        // x^(2^m) should equal x (value 2)
         x_power_mod_p == 2u64
     }
 
-    /// Returns prime factors of 2^m - 1 (Mersenne number factorization).
-    ///
-    /// For small m, we use trial division with small primes.
-    /// This is sufficient for verification purposes up to m=16.
+    /// Returns prime factors of 2^m - 1 by trial division with the primes up to
+    /// 229; the remaining cofactor is taken as prime, which holds for m ≤ 16.
     fn prime_factors_of_order_static(m: usize) -> Vec<u64> {
         let order = (1u64 << m) - 1;
         let mut factors = Vec::new();
@@ -835,12 +717,6 @@ impl<V: UintExt> Gf2mElement_<V> {
 
     /// Returns the field this element belongs to.
     ///
-    /// Elements carry their field parameters, so this recovers the extension
-    /// degree, the defining polynomial, and the ability to build sibling
-    /// elements from an element alone. The
-    /// [`FieldIdentity`](crate::field::extension::FieldIdentity)
-    /// implementation for this type reads its modulus through this accessor.
-    ///
     /// # Complexity
     ///
     /// `O(1)`: the returned field clones the shared `Arc` holding the
@@ -891,7 +767,7 @@ impl<V: UintExt> Gf2mElement_<V> {
         self.value == V::ONE
     }
 
-    /// Computes the multiplicative inverse of this element using the Extended Euclidean Algorithm.
+    /// Computes the multiplicative inverse of this element as `a^(2^m - 2)`.
     ///
     /// Returns `None` if this element is zero (which has no multiplicative inverse).
     ///
@@ -920,11 +796,9 @@ impl<V: UintExt> Gf2mElement_<V> {
             });
         }
 
-        // Use field multiplication to compute inverse via exponentiation
-        // In GF(2^m), a^(2^m - 1) = 1 for all non-zero a
-        // Therefore a^(-1) = a^(2^m - 2)
+        // a^(2^m - 1) = 1 for all non-zero a, so a^(-1) = a^(2^m - 2).
         let m = self.params.m;
-        // 2^m - 2 = (2^m - 1) XOR 1 in GF(2)
+        // 2^m - 2 = (2^m - 1) XOR 1
         let exp = V::low_mask(m as u32) ^ V::ONE;
 
         let mut result = Gf2mElement_ {
@@ -934,7 +808,6 @@ impl<V: UintExt> Gf2mElement_<V> {
         let mut base = self.clone();
         let mut e = exp;
 
-        // Square-and-multiply algorithm
         let mut bit_pos = 0u32;
         while bit_pos < V::BITS {
             if e.bit(0) {
@@ -951,24 +824,9 @@ impl<V: UintExt> Gf2mElement_<V> {
         Some(result)
     }
 
-    /// Computes the minimal polynomial of this field element over GF(2).
-    ///
-    /// The minimal polynomial is the monic polynomial of smallest degree that has
-    /// this element as a root. For an element α in GF(2^m), the minimal polynomial
-    /// has degree d where d divides m, and its roots are the conjugates of α:
-    /// {α, α^2, α^4, ..., α^(2^(d-1))}.
-    ///
-    /// # Properties
-    ///
-    /// - The minimal polynomial is always monic (leading coefficient = 1)
-    /// - Its degree divides the extension degree m
-    /// - The element is a root: m_α(α) = 0
-    /// - It's the product (x - α)(x - α^2)(x - α^4)...(x - α^(2^(d-1)))
-    ///
-    /// # Algorithm
-    ///
-    /// Uses repeated squaring to find conjugates, then builds the polynomial
-    /// as the product of (x - conjugate) for each unique conjugate.
+    /// Computes the minimal polynomial of this field element over GF(2): the
+    /// product of (x - c) over the conjugates c ∈ {α, α^2, α^4, ..., α^(2^(d-1))},
+    /// of degree d dividing m. The minimal polynomial of zero is x.
     ///
     /// # Complexity
     ///
@@ -1020,7 +878,6 @@ impl<V: UintExt> Gf2mElement_<V> {
             current = &current * &current;
         }
 
-        // Build minimal polynomial as product of (x - conjugate) terms
         let one = Gf2mElement_ {
             value: V::ONE,
             params: Arc::clone(&self.params),
@@ -1042,7 +899,6 @@ impl<V: UintExt> Gf2mElement_<V> {
     }
 }
 
-// Addition in GF(2^m) is XOR
 impl<V: UintExt> Add for &Gf2mElement_<V> {
     type Output = Gf2mElement_<V>;
 
@@ -1066,7 +922,6 @@ impl<V: UintExt> Add for Gf2mElement_<V> {
     }
 }
 
-// Multiplication in GF(2^m) - polynomial multiplication with reduction
 impl<V: UintExt> Mul for &Gf2mElement_<V> {
     type Output = Gf2mElement_<V>;
 
@@ -1083,7 +938,7 @@ impl<V: UintExt> Mul for &Gf2mElement_<V> {
             };
         }
 
-        // Priority 1: Use table-based multiplication if available (fastest for small m)
+        // Priority 1: table-based multiplication.
         if let (Some(log_table), Some(exp_table)) = (
             self.params.log_table.as_ref(),
             self.params.exp_table.as_ref(),
@@ -1099,8 +954,8 @@ impl<V: UintExt> Mul for &Gf2mElement_<V> {
             };
         }
 
-        // Priority 2a: All-in-one PCLMULQDQ + Barrett kernel (3 clmul ops in one
-        // target_feature scope — eliminates function-pointer call overhead).
+        // Priority 2a: all-in-one PCLMULQDQ + Barrett kernel (3 clmul ops in one
+        // target_feature scope).
         #[cfg(feature = "simd")]
         if let (Some(clmul_barrett_fn), Some(barrett)) = (
             self.params.clmul_barrett_fn,
@@ -1133,7 +988,7 @@ impl<V: UintExt> Mul for &Gf2mElement_<V> {
             };
         }
 
-        // Priority 3: Use SIMD combined mul+reduce if available (legacy path)
+        // Priority 3: SIMD combined mul+reduce.
         #[cfg(feature = "simd")]
         if let Some(simd_mul_fn) = self.params.simd_mul_fn {
             let result = simd_mul_fn(
@@ -1169,7 +1024,6 @@ impl<V: UintExt> Mul for Gf2mElement_<V> {
     }
 }
 
-// Division in GF(2^m) - multiply by multiplicative inverse
 impl<V: UintExt> Div for &Gf2mElement_<V> {
     type Output = Gf2mElement_<V>;
 
@@ -1296,7 +1150,6 @@ impl<V: UintExt> AddAssign<&Gf2mElement_<V>> for Gf2mElement_<V> {
     }
 }
 
-// FiniteField trait implementation for GF(2^m)
 impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
     type Characteristic = u64;
 
@@ -1354,18 +1207,12 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
     }
 
     /// Routes a GF(2^8) fused multiply-add through the cached byte product
-    /// table.
+    /// table, in place and without allocation.
     ///
-    /// The mechanism is one indexed load and one XOR per element over the
-    /// coefficient's row of the process-wide table for this field's reduction
-    /// polynomial, written into each destination element's value in place, so
-    /// the call allocates nothing and clones no field handle. No cargo feature
-    /// and no processor capability takes part; the exact predicate that
-    /// selects this lane is
-    /// `crate::gf2m::byte_table::gf256_table_dispatch`, which also declines
-    /// when the operands do not all share the coefficient's field context, so
-    /// a mixed-context call reaches the caller's scalar loop and its
-    /// field-context assertion exactly as it does without this override.
+    /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
+    /// that selects this lane; it declines when the operands do not all share
+    /// the coefficient's field context, so a mixed-context call reaches the
+    /// caller's scalar loop and its field-context assertion.
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
         let Some(table) = crate::gf2m::byte_table::gf256_table_dispatch(
             a.params.m,
@@ -1393,16 +1240,9 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         true
     }
 
-    /// Routes a dense GF(2^8) product through the cached byte product table.
-    ///
-    /// The mechanism is one region multiply-accumulate per left-hand
-    /// coefficient over that coefficient's row of the process-wide table for
-    /// this field's reduction polynomial, so every product costs one indexed
-    /// load and one XOR and every coefficient is reused across a whole output
-    /// row. Results are written into each destination element's value in
-    /// place, so no field handle is cloned. No cargo feature and no processor
-    /// capability takes part; the exact predicate that selects this lane is
-    /// `crate::gf2m::byte_table::gf256_table_dispatch`.
+    /// Routes a dense GF(2^8) product through the cached byte product table;
+    /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
+    /// that selects this lane.
     ///
     /// The destination joins the operands in the field-context check because
     /// writing values in place keeps the destination's own handles, which the
@@ -1587,7 +1427,6 @@ mod tests {
         let a = field.element(0b0101);
         let zero = field.zero();
 
-        // In GF(2^m), every element is its own additive inverse
         assert_eq!(&a + &a, zero);
     }
 
@@ -1675,7 +1514,6 @@ mod tests {
         let a = field.element(0x53);
         let b = field.element(0xCA);
 
-        // Addition is XOR
         let sum = a + b;
         assert_eq!(sum.value(), 0x99);
     }
@@ -1704,7 +1542,6 @@ mod tests {
     #[test]
     fn test_inverse_exists_for_nonzero() {
         let field = Gf2mField::new(4, 0b10011);
-        // Test all non-zero elements
         for i in 1..16 {
             let elem = field.element(i);
             let inv = elem
@@ -1813,7 +1650,6 @@ mod tests {
         let field_with_tables = Gf2mField::new(4, 0b10011).with_tables();
         let field_no_tables = Gf2mField::new(4, 0b10011);
 
-        // Test all pairs of non-zero elements
         for i in 1..16 {
             for j in 1..16 {
                 let a_t = field_with_tables.element(i);
@@ -1836,15 +1672,14 @@ mod tests {
     fn test_primitive_element_generates_field() {
         let field = Gf2mField::new(4, 0b10011).with_tables();
 
-        // A primitive element should generate all non-zero elements
         // The multiplicative group has order 2^4 - 1 = 15
         if let Some(alpha) = field.primitive_element() {
-            let mut power = field.one(); // Start with α^0 = 1
+            let mut power = field.one();
             let mut seen = std::collections::HashSet::new();
 
             for i in 0..15 {
                 seen.insert(power.value());
-                power = &power * &alpha; // Compute next power
+                power = &power * &alpha;
 
                 if i < 14 {
                     assert!(
@@ -1855,7 +1690,6 @@ mod tests {
                 }
             }
 
-            // After 15 multiplications, we have α^15, which should equal α^0 = 1
             assert_eq!(power, field.one(), "α^15 should equal 1 in GF(2^4)");
             assert_eq!(
                 seen.len(),
@@ -1869,7 +1703,6 @@ mod tests {
     fn test_exp_log_inverse_property() {
         let field = Gf2mField::new(4, 0b10011).with_tables();
 
-        // For all non-zero elements: exp[log[a]] = a
         for i in 1..16 {
             let elem = field.element(i);
             if let Some(log_val) = field.discrete_log(&elem) {
@@ -1907,7 +1740,6 @@ mod tests {
 
     #[test]
     fn test_verify_primitive_gf256() {
-        // Standard primitive polynomial for GF(256)
         let field = Gf2mField::new(8, 0b100011101);
         assert!(field.verify_primitive());
     }
@@ -1928,18 +1760,15 @@ mod tests {
 
     #[test]
     fn test_verify_not_primitive_wrong_dvb_t2() {
-        // The bug: wrong polynomial 0b100000000100001 (x^14 + x^5 + 1) was used
-        // This polynomial is irreducible but NOT primitive (x does not generate full group)
-        // The correct DVB-T2 standard is 0b100000000101011 (x^14 + x^5 + x^3 + x + 1)
+        // x^14 + x^5 + 1 is not primitive; the DVB-T2 polynomial is
+        // x^14 + x^5 + x^3 + x + 1.
         let field = Gf2mField::new(14, 0b100000000100001);
 
-        // This polynomial is NOT primitive - it caused BCH decoding failures
         assert!(
             !field.verify_primitive(),
             "x^14 + x^5 + 1 is NOT primitive (caused the BCH bug)"
         );
 
-        // And it doesn't match the DVB-T2 standard
         use crate::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
         assert_eq!(
             PrimitivePolynomialDatabase::verify(14, 0b100000000100001),
@@ -2242,18 +2071,15 @@ mod tests {
         let poly = PrimitivePolynomialDatabase::standard_u128(64).unwrap();
         let field = Gf2mField_::<u128>::new(64, poly);
 
-        // Multiplicative identity
         let a_val: u128 = 0xDEAD_BEEF_CAFE_BABE_0123_4567_89AB_CDEF;
         let mask: u128 = (1u128 << 64) - 1;
         let a = field.element(a_val & mask);
         let one = field.one();
         assert_eq!((&a * &one).value(), a.value(), "a * 1 != a");
 
-        // Zero annihilation
         let zero = field.zero();
         assert_eq!((&a * &zero).value(), 0, "a * 0 != 0");
 
-        // Commutativity
         let b = field.element(0x0123_4567_89AB_CDEF);
         let ab = (&a * &b).value();
         let ba = (&b * &a).value();
@@ -2267,21 +2093,11 @@ mod tests {
 
 /// A polynomial with coefficients in GF(2^m).
 ///
-/// `Gf2mPoly_<V>` is a **type alias** for
-/// [`FieldPoly<Gf2mElement_<V>>`](crate::field::FieldPoly). It exists
-/// purely to preserve the pre-existing BCH / DVB-T2 / Reed–Solomon
-/// call-site vocabulary; all algorithmic code — `Add`, `Sub`,
-/// `Mul` (schoolbook + Karatsuba dispatch), `div_rem`, `gcd`,
-/// Horner `eval`, `eval_batch`, `from_roots`, `product`, `monomial`
-/// — lives on
-/// [`FieldPoly`](crate::field::FieldPoly) and is inherited through
-/// this alias.
-///
-/// Binary-field-specific extras (conversions to/from `BitVec`,
-/// construction from exponent lists, the indeterminate `x(field)`)
-/// are declared as inherent methods on
-/// `FieldPoly<Gf2mElement_<V>>` in [`crate::gf2m::poly_helpers`] and
-/// are consequently available through this alias.
+/// A type alias for [`FieldPoly<Gf2mElement_<V>>`](crate::field::FieldPoly),
+/// which carries the generic polynomial algorithms. Binary-field-specific
+/// extras (`BitVec` conversions, construction from exponent lists, the
+/// indeterminate `x(field)`) are inherent methods declared in
+/// [`crate::gf2m::poly_helpers`].
 ///
 /// # Examples
 ///
@@ -2301,11 +2117,6 @@ pub type Gf2mPoly_<V = u64> = crate::field::FieldPoly<Gf2mElement_<V>>;
 
 /// Convenience alias: `Gf2mPoly` is `Gf2mPoly_<u64>`.
 pub type Gf2mPoly = Gf2mPoly_<u64>;
-
-// All generic polynomial methods live on `FieldPoly<F>` in
-// `crate::field::poly`. Binary-field-specific helpers live in
-// `crate::gf2m::poly_helpers` and are inherent on
-// `FieldPoly<Gf2mElement_<V>>` — i.e. reachable through this alias.
 
 #[cfg(test)]
 mod poly_tests {
@@ -2411,16 +2222,9 @@ mod poly_tests {
         assert_eq!(product.coeff(2).value(), 1); // 1*1
     }
 
-    // Karatsuba multiplication tests
-
     // Karatsuba vs schoolbook cross-verification lives on the generic
-    // `FieldPoly<F>` tests in `crate::field::poly` (SSOT): see
-    // `tests::test_karatsuba_matches_schoolbook_fp7`,
-    // `tests::test_karatsuba_matches_schoolbook_gf16`, and the
-    // `prop_karatsuba_matches_schoolbook_fp7` proptest. Those cover this
-    // alias automatically. A standalone multiplicative-annihilation
-    // check on the alias surface is kept below to confirm the alias
-    // itself still exposes `Mul` correctly.
+    // `FieldPoly<F>` tests in `crate::field::poly`; this checks that the alias
+    // exposes `Mul`.
     #[test]
     fn test_mul_with_zero_on_alias() {
         let field = Gf2mField::gf256();
@@ -2505,7 +2309,6 @@ mod poly_tests {
         // Should divide exactly
         assert!(remainder.is_zero() || remainder.degree() == Some(0));
 
-        // Verify: quotient * divisor + remainder = dividend
         let check = &(&quotient * &divisor) + &remainder;
         assert_eq!(check, dividend);
     }
@@ -2536,7 +2339,6 @@ mod poly_tests {
     #[test]
     fn test_poly_div_rem_roundtrip() {
         let field = Gf2mField::new(4, 0b10011);
-        // Test with various polynomials
         for a in 1..8 {
             for b in 1..8 {
                 for c in 1..8 {
@@ -2546,7 +2348,6 @@ mod poly_tests {
 
                     let (quotient, remainder) = dividend.div_rem(&divisor);
 
-                    // Verify: quotient * divisor + remainder = dividend
                     let check = &(&quotient * &divisor) + &remainder;
                     assert_eq!(
                         check, dividend,
@@ -2554,7 +2355,6 @@ mod poly_tests {
                         a, b, c
                     );
 
-                    // Verify remainder degree < divisor degree
                     if let Some(rem_deg) = remainder.degree() {
                         assert!(rem_deg < divisor.degree().unwrap());
                     }
@@ -2596,7 +2396,6 @@ mod poly_tests {
 
         assert_eq!(results.len(), 3);
 
-        // Verify each result matches single eval
         for (point, result) in points.iter().zip(results.iter()) {
             let expected = poly.eval(point);
             assert_eq!(*result, expected);
@@ -2620,7 +2419,6 @@ mod poly_tests {
         let results = poly.eval_batch(&points);
         assert_eq!(results.len(), 4);
 
-        // Each should match single eval
         for (point, result) in points.iter().zip(results.iter()) {
             assert_eq!(*result, poly.eval(point));
         }
@@ -2968,7 +2766,6 @@ mod poly_tests {
 
     #[test]
     fn test_reversed_vs_standard_conversion() {
-        // Verify reversed is truly the reverse of standard conversion
         let field = Gf2mField::new(4, 0b10011);
         let mut bits = BitVec::new();
         bits.push_bit(true); // bit 0
@@ -2989,7 +2786,6 @@ mod poly_tests {
         assert!(poly_reversed.coeff(1).is_zero());
         assert!(poly_reversed.coeff(2).is_one());
 
-        // Test with asymmetric pattern
         let mut asym = BitVec::new();
         asym.push_bit(true);
         asym.push_bit(false);
@@ -3103,11 +2899,9 @@ mod poly_tests {
 
             let (q, r) = dividend.div_rem(&divisor);
 
-            // Verify: quotient * divisor + remainder = dividend
             let check = &(&q * &divisor) + &r;
             prop_assert_eq!(check, dividend);
 
-            // Verify: degree(remainder) < degree(divisor)
             if let Some(r_deg) = r.degree() {
                 prop_assert!(r_deg < divisor.degree().unwrap());
             }
@@ -3152,7 +2946,6 @@ mod poly_tests {
             let gcd = Gf2mPoly_::gcd(&p1, &p2);
 
             if !gcd.is_zero() && gcd.degree().is_some() {
-                // GCD should divide both polynomials
                 let (_, r1) = p1.div_rem(&gcd);
                 let (_, r2) = p2.div_rem(&gcd);
 
@@ -3160,16 +2953,6 @@ mod poly_tests {
                 prop_assert!(r2.is_zero() || r2.degree() == Some(0) && r2.coeff(0).is_zero());
             }
         }
-
-        // Karatsuba vs schoolbook cross-verification is covered
-        // generically on the SSOT side by
-        // `prop_karatsuba_matches_schoolbook_fp7` and
-        // `prop_karatsuba_matches_schoolbook_gf16` in
-        // `crate::field::poly`, plus the matching unit tests
-        // `test_karatsuba_matches_schoolbook_fp7` / `_gf16`. Those use
-        // the private `mul_schoolbook_impl` so the two sides of the
-        // assertion cannot collapse to the same dispatch. No alias-side
-        // duplicate of those properties is needed.
     }
 
     mod reversed_conversion_proptests {
@@ -3198,13 +2981,11 @@ mod poly_tests {
             ) {
                 let field = Gf2mField::new(4, 0b10011);
 
-                // Create asymmetric bit pattern
                 let mut bits = crate::BitVec::new();
                 for i in 0..len {
                     bits.push_bit((i * seed as usize).is_multiple_of(3));
                 }
 
-                // Skip symmetric patterns
                 let is_palindrome = (0..len).all(|i| bits.get(i) == bits.get(len - 1 - i));
                 if is_palindrome {
                     return Ok(());
@@ -3213,7 +2994,6 @@ mod poly_tests {
                 let poly_std = Gf2mPoly_::from_bitvec(&bits, &field);
                 let poly_rev = Gf2mPoly_::from_bitvec_reversed(&bits, &field);
 
-                // They should differ for non-palindromic patterns
                 let differs = (0..=len).any(|i| {
                     poly_std.coeff(i).value() != poly_rev.coeff(i).value()
                 });
@@ -3234,7 +3014,6 @@ mod poly_tests {
                 let poly = Gf2mPoly_::from_bitvec_reversed(&bits, &field);
 
                 if let Some(lowest) = lowest_set {
-                    // Lowest set bit i maps to degree (len-1-i)
                     let expected_degree = bits.len() - 1 - lowest;
                     prop_assert_eq!(poly.degree(), Some(expected_degree));
                 } else {
@@ -3249,7 +3028,6 @@ mod poly_tests {
             ) {
                 let field = Gf2mField::new(4, 0b10011);
 
-                // Create polynomial
                 let coeffs: Vec<_> = (0..=deg)
                     .map(|i| {
                         if (i as u64 * seed).is_multiple_of(3) {
@@ -3288,13 +3066,11 @@ mod poly_tests {
 
                 prop_assert_eq!(extended_bits.len(), extended_len);
 
-                // Leading bits (corresponding to high degrees) should be zero
                 for i in 0..extra_len {
                     prop_assert!(!extended_bits.get(i),
                         "Extended bit {} should be zero", i);
                 }
 
-                // Original bits should match
                 for i in 0..bits.len() {
                     prop_assert_eq!(bits.get(i), extended_bits.get(extra_len + i),
                         "Original bit {} should be preserved", i);
@@ -3346,12 +3122,10 @@ mod poly_tests {
 
     #[test]
     fn test_minimal_polynomial_is_root() {
-        // For any element α, α should be a root of its minimal polynomial
         let field = Gf2mField::new(4, 0b10011);
         let alpha = field.element(0b0110); // Some random element
         let min_poly = alpha.minimal_polynomial();
 
-        // Evaluate min_poly at alpha, should give zero
         let result = min_poly.eval(&alpha);
         assert!(
             result.is_zero(),
@@ -3361,7 +3135,6 @@ mod poly_tests {
 
     #[test]
     fn test_minimal_polynomial_degree_divides_m() {
-        // The degree of minimal polynomial of any element in GF(2^m) divides m
         let field = Gf2mField::gf256(); // m = 8
 
         for value in [0x00, 0x01, 0x02, 0x53, 0xFF] {
@@ -3380,7 +3153,6 @@ mod poly_tests {
 
     #[test]
     fn test_minimal_polynomial_monic() {
-        // Minimal polynomial should be monic (leading coefficient = 1)
         let field = Gf2mField::new(4, 0b10011);
 
         for value in 0..16 {
@@ -3400,8 +3172,6 @@ mod poly_tests {
 
     #[test]
     fn test_minimal_polynomial_gf16_known_values() {
-        // Test against known minimal polynomials in GF(2^4)
-        // Using primitive polynomial x^4 + x + 1
         let field = Gf2mField::new(4, 0b10011);
 
         // Elements in GF(2) have minimal polynomial x or x+1
@@ -3535,7 +3305,7 @@ mod poly_tests {
     }
 
     // ========================================================================
-    // Primitive Polynomial Verification Tests (Phase 9 - TDD)
+    // Primitive Polynomial Verification Tests
     // ========================================================================
 
     #[test]
@@ -3558,7 +3328,6 @@ mod poly_tests {
 
     #[test]
     fn test_verify_primitive_gf256() {
-        // Standard primitive polynomial for GF(256)
         let field = Gf2mField::new(8, 0b100011101);
         assert!(field.verify_primitive());
     }
@@ -3579,7 +3348,7 @@ mod poly_tests {
 
     #[test]
     fn test_verify_not_primitive_wrong_dvb_t2() {
-        // The bug: wrong polynomial used initially
+        // x^14 + x^5 + 1 is not primitive.
         let field = Gf2mField::new(14, 0b100000000100001);
         assert!(
             !field.verify_primitive(),
@@ -3619,7 +3388,6 @@ mod poly_tests {
     #[test]
     fn test_all_database_entries_are_primitive() {
         use crate::primitive_polys::PrimitivePolynomialDatabase;
-        // Every polynomial in the database must verify as primitive
         for m in 2..=16 {
             if let Some(poly) = PrimitivePolynomialDatabase::standard(m) {
                 let field = Gf2mField::new(m, poly);
@@ -3650,7 +3418,6 @@ mod poly_tests {
     }
 }
 
-/// Tests for polynomial construction utilities
 #[cfg(test)]
 mod poly_construction_tests {
     use super::*;
@@ -3689,7 +3456,6 @@ mod poly_construction_tests {
         // x^2 + x^2 = 0 in GF(2)
         let poly = Gf2mPoly_::from_exponents(&field, &[2, 2]);
 
-        // Should result in zero polynomial after normalization
         assert!(poly.is_zero());
         assert_eq!(poly.degree(), None);
     }
@@ -3835,7 +3601,6 @@ mod poly_construction_tests {
     fn test_x_basic() {
         let field = Gf2mField::new(4, 0b10011);
 
-        // x should be the polynomial with degree 1
         let x = Gf2mPoly_::x(&field);
 
         assert_eq!(x.degree(), Some(1));
@@ -3847,7 +3612,6 @@ mod poly_construction_tests {
     fn test_x_multiply() {
         let field = Gf2mField::new(4, 0b10011);
 
-        // Multiplying by x should shift polynomial
         let p = Gf2mPoly_::from_exponents(&field, &[0, 2]); // 1 + x^2
         let x = Gf2mPoly_::x(&field);
         let result = &p * &x;
@@ -3886,7 +3650,6 @@ mod poly_construction_tests {
 
         assert_eq!(poly.degree(), Some(2));
 
-        // Verify roots
         assert!(poly.eval(&alpha).is_zero());
         assert!(poly.eval(&alpha2).is_zero());
     }
@@ -3904,7 +3667,6 @@ mod poly_construction_tests {
 
         assert_eq!(poly.degree(), Some(3));
 
-        // Verify all roots
         assert!(poly.eval(&alpha).is_zero());
         assert!(poly.eval(&alpha2).is_zero());
         assert!(poly.eval(&alpha3).is_zero());
@@ -3920,7 +3682,6 @@ mod poly_construction_tests {
 
         assert_eq!(poly.degree(), Some(2));
 
-        // Should still be a root
         assert!(poly.eval(&alpha).is_zero());
     }
 
@@ -3948,7 +3709,6 @@ mod poly_construction_tests {
 
         assert_eq!(poly.degree(), Some(12));
 
-        // Verify all roots
         for root in &roots {
             assert!(poly.eval(root).is_zero());
         }
@@ -3960,7 +3720,6 @@ mod poly_construction_tests {
         let field = Gf2mField::new(4, 0b10011);
         let p = Gf2mPoly_::from_exponents(&field, &[0, 1, 2]);
 
-        // Product of single polynomial should return clone
         let result = Gf2mPoly_::product(std::slice::from_ref(&p));
 
         assert_eq!(result.degree(), p.degree());
@@ -4068,7 +3827,6 @@ fn test_matches_gf2_coding_workaround() {
 
     let poly_manual = Gf2mPoly_::new(coeffs_manual);
 
-    // Verify they're identical
     assert_eq!(poly_new.degree(), poly_manual.degree());
     if let Some(d) = poly_new.degree() {
         for i in 0..=d {
@@ -4200,7 +3958,6 @@ mod generic_width_tests {
             let order = 1u64 << m;
             let one = field.one();
 
-            // Collect test elements: exhaustive for m<=8, sampled for m>8
             let elements: Vec<u64> = if m <= 8 {
                 (0..order).collect()
             } else {
@@ -4326,14 +4083,12 @@ mod kani_table_validation {
         let poly = PrimitivePolynomialDatabase::standard(8).unwrap();
         assert_eq!(poly, 0b100011101);
         let (log_table, exp_table) = Gf2mField_::<u64>::generate_tables(8, poly);
-        // Spot-check key entries against the Kani pre-computed constants
         assert_eq!(exp_table[0], 1); // α^0 = 1
         assert_eq!(exp_table[1], 2); // α = 2 (primitive element)
         assert_eq!(exp_table.len(), 255);
         assert_eq!(log_table.len(), 256);
         assert_eq!(log_table[1], 0); // log(1) = 0
         assert_eq!(log_table[2], 1); // log(α) = 1
-                                     // Full comparison against Kani constants
         #[rustfmt::skip]
         let kani_exp: [u16; 255] = [
             1, 2, 4, 8, 16, 32, 64, 128, 29, 58, 116, 232, 205, 135, 19, 38,
@@ -4382,16 +4137,12 @@ mod kani_proofs {
     use super::*;
     use crate::gf2m::mul_raw::gf2m_mul_raw;
 
-    // Polynomials from PrimitivePolynomialDatabase::standard() — hardcoded here
-    // to avoid pulling the database match statement into the GOTO program.
-    // The companion #[test] kani_table_validation verifies these match.
+    // Polynomials from PrimitivePolynomialDatabase::standard(), hardcoded to
+    // keep the database match statement out of the GOTO program; the
+    // companion #[test] kani_table_validation verifies they match.
     //
-    // CBMC limitation: the full Gf2mElement API (Arc, trait dispatch, multi-path
-    // Mul impl with SIMD/Barrett/table branches) exceeds CBMC's memory capacity
-    // even for GF(16). Harnesses therefore call generate_tables() directly
-    // (production table generation code) and verify table properties + cross-check
-    // against gf2m_mul_raw (production schoolbook multiplication). This is the
-    // deepest production code path CBMC can handle.
+    // Harnesses call generate_tables() and gf2m_mul_raw() directly, bypassing
+    // the Gf2mElement API (Arc, trait dispatch, multi-path Mul).
 
     // GF(2^4): PrimitivePolynomialDatabase::standard(4)
     const M4: usize = 4;
