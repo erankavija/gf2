@@ -877,24 +877,15 @@ mod tests {
     /// that [`DvbT2Concat::encode`] reproduces TP06 from TP04 for the first
     /// block of the first frame.
     #[test]
-    #[ignore = "external: requires DVB-T2 test vectors at $DVB_TEST_VECTORS_PATH or ~/dvb_test_vectors"]
+    #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
     fn test_tp04_to_tp06_via_concat() {
-        use std::path::PathBuf;
+        use crate::test_support::{dvb_vectors_path, parse_tp_blocks, tp_path};
 
-        // Locate test vectors.
-        let base_path = std::env::var("DVB_TEST_VECTORS_PATH")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| {
-                PathBuf::from(std::env::var("HOME").expect("HOME not set")).join("dvb_test_vectors")
-            });
-
-        let config_dir = base_path.join("VV001-CR35_CSP");
+        let config_dir = dvb_vectors_path().join("VV001-CR35_CSP");
         if !config_dir.exists() {
             eprintln!("Test vectors not found at {:?}, skipping", config_dir);
             return;
         }
-
-        use crate::test_support::{parse_tp_blocks, tp_path};
 
         let tp04_blocks = parse_tp_blocks(&tp_path(&config_dir, "04"));
         let tp06_blocks = parse_tp_blocks(&tp_path(&config_dir, "06"));
