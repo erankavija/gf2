@@ -8,11 +8,6 @@
 //! A run is bounded and resumable. `GF2_RARE_EVENT_BLOCK_BUDGET` caps how many
 //! checkpoint blocks one invocation produces; the next invocation reconstructs
 //! the published prefix from the dataset directories and continues.
-//!
-//! All environment access that can affect execution passes through one
-//! instrumented layer: `read_declared_environment` refuses any name outside
-//! `ENVIRONMENT_INPUT_NAMES`, each declared name is read exactly once, and the
-//! start receipt's environment record is derived from those same reads.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -52,10 +47,7 @@ pub const BLOCK_BUDGET_ENVIRONMENT: &str = "GF2_RARE_EVENT_BLOCK_BUDGET";
 pub const WORKER_ENVIRONMENT: &str = "RAYON_NUM_THREADS";
 /// Artifact-root-relative exact target result a completing target run reads.
 ///
-/// The issue that executes a target campaign commits these bytes before its
-/// first draw; the final receipt then cites them by path and digest. No such
-/// file is committed for this issue, which exercises the estimator rather than
-/// executing a campaign.
+/// The final receipt cites these bytes by path and digest.
 pub const EXACT_TARGET_RESULT_FILE: &str = "exact-target-result.json";
 
 /// Every environment name this runner may consult.
@@ -76,11 +68,6 @@ pub const ENVIRONMENT_INPUT_NAMES: [&str; 2] = [BLOCK_BUDGET_ENVIRONMENT, WORKER
 /// An absent name reads as `None`, which a receipt records as unset. A name
 /// holding bytes that are not UTF-8 is refused rather than reported absent,
 /// because a receipt may record only an exact UTF-8 value or an exact absence.
-///
-/// # Errors
-///
-/// Refuses a name this runner has not declared, and a declared name whose
-/// value is not UTF-8.
 fn read_declared_environment(name: &str) -> Result<Option<String>, RunError> {
     if !ENVIRONMENT_INPUT_NAMES.contains(&name) {
         return Err(RunError::Configuration(format!(
@@ -253,7 +240,6 @@ pub fn execute_frozen_run(
     configuration_path: &str,
     configuration: &RareEventConfigurationV1,
 ) -> Result<RunOutcome, RunError> {
-    // Every acceptance check runs before the first filesystem effect.
     let identity = dataset_identity(configuration, configuration_path)?;
     let dataset_id = dataset_id(&identity)?;
     let dataset_dir = create_dataset_directory(&configuration.artifact_root, &dataset_id)?;
@@ -266,7 +252,6 @@ pub fn execute_frozen_run(
         ));
     }
 
-    // Close whatever an interrupted process left open before extending the chain.
     let attempts = reconstruct_attempt_chain(&dataset_dir, &identity)?;
     if let Some(open_start) = attempts.open_start() {
         recover_interrupted_attempt(
