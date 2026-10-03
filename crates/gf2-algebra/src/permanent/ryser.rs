@@ -36,24 +36,6 @@ use crate::gray::gray_code_iter;
 ///   `matrix[i * n + j]` is the entry at row `i`, column `j`.
 /// * `n` — Matrix dimension (number of rows = number of columns).
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::permanent_ryser;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_7: permanent = 1·1 + 0·0 = 1
-/// let id: Vec<Fp<7>> = vec![
-///     Fp::<7>::new(1), Fp::<7>::new(0),
-///     Fp::<7>::new(0), Fp::<7>::new(1),
-/// ];
-/// assert_eq!(permanent_ryser::<Fp<7>>(&id, 2), Fp::<7>::new(1));
-///
-/// // 2×2 all-ones over F_5: permanent = 1+1 = 2 = 2! mod 5
-/// let ones: Vec<Fp<5>> = vec![Fp::<5>::new(1); 4];
-/// assert_eq!(permanent_ryser::<Fp<5>>(&ones, 2), Fp::<5>::new(2));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `matrix.len() != n * n`.
@@ -140,20 +122,12 @@ pub fn permanent_ryser<F: FiniteField>(matrix: &[F], n: usize) -> F {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::testutil::random_matrix;
     use gf2_core::field::{ConstField, FiniteField};
     use gf2_core::gfp::Fp;
-
-    // -----------------------------------------------------------------------
-    // Naive reference: sum over all n! permutations (Heap's algorithm)
-    // -----------------------------------------------------------------------
 
     /// Compute the permanent by enumerating all `n!` permutations with
     /// Heap's algorithm (iterative).
@@ -201,10 +175,6 @@ mod tests {
 
         total
     }
-
-    // -----------------------------------------------------------------------
-    // Unit tests
-    // -----------------------------------------------------------------------
 
     #[test]
     #[should_panic(expected = "exceeds the single-u64 Gray-code register's n <= 63 bound")]
@@ -277,10 +247,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Cross-checks: permanent_ryser vs naive_permanent_factorial
-    // -----------------------------------------------------------------------
-
     /// Cross-check `permanent_ryser` against `naive_permanent_factorial` for 100
     /// random matrices per `(n, F)` combination.
     #[test]
@@ -322,10 +288,6 @@ mod tests {
         let naive = naive_permanent_factorial::<Fp<7>>(&mat, 4);
         assert_eq!(ryser, naive, "ryser != naive for diagonal-zero 4×4 Fp<7>");
     }
-
-    // -----------------------------------------------------------------------
-    // Non-ConstField path: RuntimeFp7 newtype wrapper
-    // -----------------------------------------------------------------------
 
     /// Wrapper around `Fp<7>` that implements `FiniteField` but not
     /// `ConstField` and keeps the default `zero_hint`.

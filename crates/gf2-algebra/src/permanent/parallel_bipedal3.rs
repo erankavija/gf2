@@ -3,8 +3,7 @@
 //! Each chunk of the `2^n - 1` subset walk rebuilds its starting column sum
 //! via [`gray_code_index_to_subset`] (`O(n)`) and then walks in Gray order;
 //! the partial Ryser sums are added in F_3. [`permanent_bipedal3_parallel`]
-//! reads its chunk length from [`permanent_chunk_len`]. Sweep rows for n=28:
-//! `dev/benchmarks/gf2_algebra_permanent/parallel_chunk_sweep-2026-05-11.csv`.
+//! reads its chunk length from [`permanent_chunk_len`].
 //!
 //! # Determinism
 //!
@@ -138,27 +137,6 @@ pub fn last_effective_partition() -> Option<PermanentPartitionObservation> {
 /// `permanent_bipedal3` on the same matrix for every thread count and
 /// schedule.
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal3_parallel;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_3: permanent = 1
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal3_parallel(&m), Fp::<3>::new(1));
-///
-/// // 2×2 all-ones over F_3: permanent = 2! mod 3 = 2
-/// let ones: Vec<Fp<3>> = vec![Fp::<3>::new(1); 4];
-/// let m2 = Bipedal3Matrix::from_row_major(&ones, 2, 2);
-/// assert_eq!(permanent_bipedal3_parallel(&m2), Fp::<3>::new(2));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
@@ -182,22 +160,10 @@ pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
 ///
 /// Panics on non-square matrices, `n > 63`, or `chunk_subsets == 0`.
 ///
-/// # Examples
+/// # Complexity
 ///
-/// ```
-/// use gf2_algebra::packed::Bipedal3Matrix;
-/// use gf2_algebra::permanent::parallel_bipedal3::permanent_bipedal3_parallel_with_chunk;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_3 with chunk_subsets = 2 (covers the full 2^2 - 1 = 3
-/// // non-empty subsets in 2 chunks of 2/1 entries).
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// let m = Bipedal3Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal3_parallel_with_chunk(&m, 2), Fp::<3>::new(1));
-/// ```
+/// As [`permanent_bipedal3_parallel`], with `ceil((2^n - 1) / chunk_subsets)`
+/// chunk starts.
 pub fn permanent_bipedal3_parallel_with_chunk(mat: &Bipedal3Matrix, chunk_subsets: usize) -> Fp<3> {
     let n = mat.cols();
     assert_eq!(
@@ -310,10 +276,6 @@ fn process_chunk(columns: &[Bipedal3], n: usize, start: u64, end: u64) -> Fp<3> 
     partial
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -326,10 +288,6 @@ mod tests {
     fn to_bipedal3_matrix(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
         Bipedal3Matrix::from_row_major(row_major, n, n)
     }
-
-    // -----------------------------------------------------------------------
-    // Hand-checked vectors (mirrors bipedal3.rs)
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_parallel_permanent_empty_matrix() {
@@ -386,10 +344,6 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
-
     #[test]
     #[should_panic(expected = "matrix must be square")]
     fn test_parallel_permanent_panics_on_non_square() {
@@ -405,10 +359,6 @@ mod tests {
         let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal3_parallel(&m);
     }
-
-    // -----------------------------------------------------------------------
-    // Direct coverage for permanent_bipedal3_parallel_with_chunk.
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_parallel_with_chunk_matches_default_wrapper() {
@@ -450,10 +400,6 @@ mod tests {
         let m = Bipedal3Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal3_parallel_with_chunk(&m, 1024);
     }
-
-    // -----------------------------------------------------------------------
-    // Cross-checks: parallel vs serial (fast tier)
-    // -----------------------------------------------------------------------
 
     macro_rules! cross_check_parallel_n {
         ($name:ident, $n:expr) => {

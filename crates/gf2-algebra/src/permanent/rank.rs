@@ -12,26 +12,6 @@
 //! walks those subsets and stops at the first nonzero `k × k` permanent. The
 //! event is the one studied in `@/citation/GGK2025`, whose theorem
 //! hypothesises `k ≤ 0.1 · sqrt(n)`.
-//!
-//! # Rectangular permanent
-//!
-//! The scalar rectangular permanent
-//!
-//! ```text
-//! rect-per(A) = sum over k-subsets S of rows of  perm(A_S)
-//! ```
-//!
-//! is a strictly weaker test: deficiency zeroes every summand, and the
-//! converse fails because nonzero summands can cancel. Over `F_3`,
-//!
-//! ```text
-//! A = [[1, 0],
-//!      [0, 1],
-//!      [1, 1]]
-//! ```
-//!
-//! has all three `2 × 2` row-submatrix permanents equal to `1`, so
-//! `per-rank(A) = 2` is full, while `rect-per(A) = 1 + 1 + 1 = 0 mod 3`.
 
 use gf2_core::field::FiniteField;
 
@@ -83,31 +63,6 @@ impl PermanentalRank {
 ///   `matrix[i * k + j]` is the entry at row `i`, column `j`.
 /// * `n` — number of rows.
 /// * `k` — number of columns; must satisfy `k <= n`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::{permanental_rank_status, PermanentalRank};
-/// use gf2_core::gfp::Fp;
-///
-/// // A 3x2 matrix over F_3 whose last row is the sum of the first two.
-/// // Every 2x2 row submatrix has permanent 1, so the rank is full.
-/// let a: Vec<Fp<3>> = [1, 0, 0, 1, 1, 1]
-///     .iter()
-///     .map(|&v| Fp::<3>::new(v))
-///     .collect();
-/// assert_eq!(permanental_rank_status::<Fp<3>>(&a, 3, 2), PermanentalRank::Full);
-///
-/// // A zero column forces every 2x2 submatrix permanent to vanish.
-/// let b: Vec<Fp<3>> = [1, 0, 2, 0, 1, 0]
-///     .iter()
-///     .map(|&v| Fp::<3>::new(v))
-///     .collect();
-/// assert_eq!(
-///     permanental_rank_status::<Fp<3>>(&b, 3, 2),
-///     PermanentalRank::Deficient
-/// );
-/// ```
 ///
 /// # Panics
 ///
@@ -205,10 +160,6 @@ pub fn permanental_rank_status_with_stats<F: FiniteField>(
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {

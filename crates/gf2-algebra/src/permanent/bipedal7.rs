@@ -2,16 +2,9 @@
 //!
 //! The column-sum vector is a single [`Packed7`] word (16 F_7 lanes in one
 //! `u64` at 4-bit-aligned slots), so the matrix must satisfy
-//! `n ≤ Packed7::LANES = 16`. Ryser's inclusion-exclusion formula
-//!
-//! ```text
-//! perm(A) = (-1)^n * Σ_{S ⊆ [n], S ≠ ∅} (-1)^|S| * ∏_{i=0}^{n-1} Σ_{j ∈ S} A[i,j]
-//! ```
-//!
-//! is walked in Gray-code order over the `2^n - 1` non-empty subsets: each
-//! step updates the column-sum with one [`PackedField::add`] or
-//! [`PackedField::sub`] and folds the first `n` lanes via
-//! [`Packed7::fold_mul_first_n`].
+//! `n ≤ Packed7::LANES = 16`. Each Gray-code step updates it with one
+//! [`PackedField::add`] or [`PackedField::sub`] and folds the first `n` lanes
+//! via [`Packed7::fold_mul_first_n`].
 //!
 //! Compiled only when the `f7` Cargo feature is enabled.
 
@@ -28,32 +21,6 @@ use crate::packed::PackedField;
 ///
 /// ```text
 /// perm(A) = Σ_{σ ∈ S_n} ∏_{i=0}^{n-1} A[i, σ(i)]
-/// ```
-///
-/// # Arguments
-///
-/// * `mat` — An `n × n` [`Packed7Matrix`] (column-major, `rows == cols`),
-///   with `n ≤ LANES`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Packed7Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal7;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_7: permanent = 1
-/// let id: Vec<Fp<7>> = vec![
-///     Fp::<7>::new(1), Fp::<7>::new(0),
-///     Fp::<7>::new(0), Fp::<7>::new(1),
-/// ];
-/// let m = Packed7Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal7(&m), Fp::<7>::new(1));
-///
-/// // 2×2 all-ones over F_7: permanent = 2! mod 7 = 2
-/// let ones: Vec<Fp<7>> = vec![Fp::<7>::new(1); 4];
-/// let m2 = Packed7Matrix::from_row_major(&ones, 2, 2);
-/// assert_eq!(permanent_bipedal7(&m2), Fp::<7>::new(2));
 /// ```
 ///
 /// # Panics
@@ -161,10 +128,6 @@ pub fn permanent_bipedal7_singleword(mat: &Packed7Matrix) -> Fp<7> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -176,10 +139,6 @@ mod tests {
     fn to_packed7_matrix(row_major: &[Fp<7>], n: usize) -> Packed7Matrix {
         Packed7Matrix::from_row_major(row_major, n, n)
     }
-
-    // -----------------------------------------------------------------------
-    // Hand-checked vectors
-    // -----------------------------------------------------------------------
 
     /// `permanent_bipedal7` of the 0×0 matrix is `Fp::<7>::new(1)` (vacuous product).
     #[test]
@@ -239,10 +198,6 @@ mod tests {
             );
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
 
     #[test]
     #[should_panic(expected = "matrix must be square")]

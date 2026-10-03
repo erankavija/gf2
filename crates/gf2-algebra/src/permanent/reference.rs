@@ -3,8 +3,7 @@
 //!
 //! [`permanent_mod3_reference`] is a scalar `i32` implementation of Ryser's
 //! formula specialised to `F_3`, with explicit `% 3` reductions and a
-//! self-contained Gray walk. It is the baseline against which the
-//! `permanent_bipedal3` kernels are benchmarked.
+//! self-contained Gray walk.
 
 use gf2_core::gfp::Fp;
 
@@ -26,34 +25,6 @@ use gf2_core::gfp::Fp;
 ///   `matrix[i * n + j]` is the entry at row `i`, column `j`.
 /// * `n` — Matrix dimension (number of rows = number of columns).
 ///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::permanent_mod3_reference;
-/// use gf2_core::gfp::Fp;
-///
-/// // 0×0 matrix: permanent = 1 (vacuous product)
-/// assert_eq!(permanent_mod3_reference(&[], 0), Fp::<3>::new(1));
-///
-/// // 1×1 matrix [2]: permanent = 2
-/// assert_eq!(permanent_mod3_reference(&[Fp::<3>::new(2)], 1), Fp::<3>::new(2));
-///
-/// // 2×2 identity over F_3: permanent = 1
-/// let id: Vec<Fp<3>> = vec![
-///     Fp::<3>::new(1), Fp::<3>::new(0),
-///     Fp::<3>::new(0), Fp::<3>::new(1),
-/// ];
-/// assert_eq!(permanent_mod3_reference(&id, 2), Fp::<3>::new(1));
-///
-/// // 2×2 all-ones over F_3: permanent = 2! mod 3 = 2
-/// let ones: Vec<Fp<3>> = vec![Fp::<3>::new(1); 4];
-/// assert_eq!(permanent_mod3_reference(&ones, 2), Fp::<3>::new(2));
-///
-/// // 3×3 all-ones over F_3: permanent = 3! mod 3 = 0
-/// let ones3: Vec<Fp<3>> = vec![Fp::<3>::new(1); 9];
-/// assert_eq!(permanent_mod3_reference(&ones3, 3), Fp::<3>::new(0));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `n > 63`: the Gray-code loop bound is the single `u64`
@@ -67,7 +38,7 @@ use gf2_core::gfp::Fp;
 /// multiplies per Gray step). Extra space is `O(n)` for the `cs` accumulator
 /// vector.
 pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
-    // Paper Listing 1, line 1-2: signature and shape assertion.
+    // Listing 1, line 1-2: signature and shape assertion.
     assert!(
         n <= 63,
         "permanent_mod3_reference: n = {} exceeds the single-u64 Gray-code register's \
@@ -83,77 +54,73 @@ pub fn permanent_mod3_reference(matrix: &[Fp<3>], n: usize) -> Fp<3> {
         n
     );
 
-    // Paper Listing 1, line 3: empty matrix — permanent of empty product = 1.
+    // Listing 1, line 3: empty matrix — permanent of empty product = 1.
     if n == 0 {
         return Fp::<3>::new(1);
     }
 
-    // Paper Listing 1, line 4: column-sum vector cs initialised to zero.
+    // Listing 1, line 4: column-sum vector cs initialised to zero.
     // i32 arithmetic as in the listing; reduced to Fp<3> only at exit.
     let mut cs = vec![0i32; n];
 
-    // Paper Listing 1, line 5: total = 0 accumulator.
+    // Listing 1, line 5: total = 0 accumulator.
     let mut total: i32 = 0;
 
-    // Paper Listing 1, line 6 ("for k in 1:(2^n - 1)"): Gray-code subset walk.
+    // Listing 1, line 6 ("for k in 1:(2^n - 1)"): Gray-code subset walk.
     let upper: u64 = 1u64 << n;
     for k in 1..upper {
-        // Paper Listing 1, line 7 ("flip = trailing_zeros(k)"): the column
+        // Listing 1, line 7 ("flip = trailing_zeros(k)"): the column
         // that toggles in Gray(k) vs Gray(k-1).
         let flip = k.trailing_zeros() as usize;
 
-        // Paper Listing 1, line 8 ("g_k = k ⊻ (k >> 1)"): Gray-code register.
+        // Listing 1, line 8 ("g_k = k ⊻ (k >> 1)"): Gray-code register.
         let g_k = k ^ (k >> 1);
 
-        // Paper Listing 1, line 9 ("if (g_k >> flip) & 1 == 1"): ADD vs SUB.
+        // Listing 1, line 9 ("if (g_k >> flip) & 1 == 1"): ADD vs SUB.
         let added = ((g_k >> flip) & 1) == 1;
 
         if added {
-            // Paper Listing 1, lines 10-12
+            // Listing 1, lines 10-12
             // ("for i in 1:n: cs[i] = (cs[i] + A[i, flip+1]) % 3"):
             for i in 0..n {
                 cs[i] = (cs[i] + matrix[i * n + flip].value() as i32) % 3;
             }
         } else {
-            // Paper Listing 1, lines 13-15
+            // Listing 1, lines 13-15
             // ("for i in 1:n: cs[i] = ((cs[i] + 3) - A[i, flip+1]) % 3"):
             for i in 0..n {
                 cs[i] = ((cs[i] - matrix[i * n + flip].value() as i32) + 3) % 3;
             }
         }
 
-        // Paper Listing 1, lines 16-18
+        // Listing 1, lines 16-18
         // ("prod = 1; for i in 1:n: prod = (prod * cs[i]) % 3"):
         let mut prod: i32 = 1;
         for &c in &cs {
             prod = (prod * c) % 3;
         }
 
-        // Paper Listing 1, line 19 ("popcount(g_k) % 2"): Ryser sign
+        // Listing 1, line 19 ("popcount(g_k) % 2"): Ryser sign
         // (-1)^|S| with |S| = popcount(g_k).
         let card = g_k.count_ones() as usize;
         if card % 2 == 1 {
-            // Paper Listing 1, line 20 ("total = (total - prod + 3) % 3"):
+            // Listing 1, line 20 ("total = (total - prod + 3) % 3"):
             total = ((total - prod) + 3) % 3;
         } else {
-            // Paper Listing 1, line 21 ("total = (total + prod) % 3"):
+            // Listing 1, line 21 ("total = (total + prod) % 3"):
             total = (total + prod) % 3;
         }
     }
 
-    // Paper Listing 1, lines 23-25 ("if n is odd: total = (3 - total) % 3"):
+    // Listing 1, lines 23-25 ("if n is odd: total = (3 - total) % 3"):
     // the outer (-1)^n factor.
     if n % 2 == 1 {
         total = (3 - total) % 3;
     }
 
-    // Paper Listing 1, line 26 ("return total"): cast i32 → Fp<3>.
+    // Listing 1, line 26 ("return total"): cast i32 → Fp<3>.
     Fp::<3>::new(total as u64)
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -181,10 +148,6 @@ mod tests {
             );
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Hand-checked test vectors
-    // -----------------------------------------------------------------------
 
     /// n=0: permanent of the 0×0 matrix is 1 (vacuous product).
     #[test]
@@ -244,11 +207,6 @@ mod tests {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
-
-    /// Panics when n > 63 (Gray-code register overflow).
     #[test]
     #[should_panic(
         expected = "permanent_mod3_reference: n = 64 exceeds the single-u64 Gray-code register's n <= 63 bound"
@@ -258,7 +216,6 @@ mod tests {
         let _ = permanent_mod3_reference(&matrix, 64);
     }
 
-    /// Panics when matrix.len() != n * n.
     #[test]
     #[should_panic(
         expected = "permanent_mod3_reference: matrix.len() (3) must equal n * n (4) where n = 2"

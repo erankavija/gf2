@@ -38,17 +38,6 @@ impl ExactProbability {
     /// # Panics
     ///
     /// Panics when `matrix_count` is zero or `zero_count` exceeds it.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_algebra::permanent::ExactProbability;
-    /// use num_bigint::BigUint;
-    ///
-    /// let scale = BigUint::from(1_u8) << 200;
-    /// let probability = ExactProbability::from_big_counts(&scale * 2_u8, &scale * 6_u8);
-    /// assert_eq!(probability.reduced_decimal(), ("1".into(), "3".into()));
-    /// ```
     #[must_use]
     pub fn from_big_counts(zero_count: BigUint, matrix_count: BigUint) -> Self {
         assert!(
@@ -135,17 +124,6 @@ pub fn enumerate_permanent_zero_probability(
 ///
 /// Panics when `field_order` is below two, when `dimension` is zero, or when
 /// $q^{n^2}$ exceeds `u64`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::determinant_singular_probability;
-///
-/// // Over F_3 the 2x2 singular matrices are 33 of the 81 matrices.
-/// let probability = determinant_singular_probability(3, 2);
-/// assert_eq!(probability.zero_count().to_string(), "33");
-/// assert_eq!(probability.matrix_count().to_string(), "81");
-/// ```
 ///
 /// # Complexity
 ///

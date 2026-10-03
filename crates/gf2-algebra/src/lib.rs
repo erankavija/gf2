@@ -9,14 +9,6 @@
 //! every SIMD or GPU path it dispatches through lives in the dedicated
 //! `gf2-kernels-simd` and `gf2-kernels-hip` crates
 //! (`@/inv/unsafe-kernel-isolation`).
-//!
-//! # Features
-//!
-//! The crate manifest is the feature catalogue: `parallel` (default on) gates
-//! the `parallel` module and `hip` (default off) gates the `gpu` module.
-//! `crates/gf2-algebra/scripts/check-feature-matrix.sh` checks the feature
-//! combinations, including the non-default `tuning-profile` codec overlay.
-//! Typed algebra selectors and active access are always built.
 
 pub mod gray;
 pub mod packed;
@@ -36,7 +28,6 @@ pub mod testutil;
 
 #[cfg(test)]
 mod tests {
-    /// Verifies the crate compiles and links into a test binary.
     #[test]
     fn test_skeleton_compiles_smoke() {}
 }

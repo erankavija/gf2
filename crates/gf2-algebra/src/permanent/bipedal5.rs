@@ -28,32 +28,6 @@ use crate::packed::{PackedField, PackedFieldVec};
 /// perm(A) = (-1)^n * sum_{S ⊆ [n], S ≠ ∅} (-1)^|S| * prod_{i=0}^{n-1} sum_{j ∈ S} A[i,j]
 /// ```
 ///
-/// # Arguments
-///
-/// * `mat` — An `n × n` [`Packed5Matrix`] (column-major, `rows == cols`),
-///   with `n ≤ 63`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Packed5Matrix;
-/// use gf2_algebra::permanent::permanent_bipedal5;
-/// use gf2_core::gfp::Fp;
-///
-/// // 2×2 identity over F_5: permanent = 1
-/// let id: Vec<Fp<5>> = vec![
-///     Fp::<5>::new(1), Fp::<5>::new(0),
-///     Fp::<5>::new(0), Fp::<5>::new(1),
-/// ];
-/// let m = Packed5Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal5(&m), Fp::<5>::new(1));
-///
-/// // 2×2 all-ones over F_5: permanent = 2! mod 5 = 2
-/// let ones: Vec<Fp<5>> = vec![Fp::<5>::new(1); 4];
-/// let m2 = Packed5Matrix::from_row_major(&ones, 2, 2);
-/// assert_eq!(permanent_bipedal5(&m2), Fp::<5>::new(2));
-/// ```
-///
 /// # Panics
 ///
 /// Panics if `mat.rows() != mat.cols()` (matrix must be square).
@@ -90,25 +64,6 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
 
 /// Single-word implementation behind [`permanent_bipedal5`], with the same
 /// shape contract.
-///
-/// # Arguments
-///
-/// * `mat` — An `n × n` [`Packed5Matrix`], with `n ≤ 63`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::packed::Packed5Matrix;
-/// use gf2_algebra::permanent::bipedal5::permanent_bipedal5_singleword;
-/// use gf2_core::gfp::Fp;
-///
-/// let id: Vec<Fp<5>> = vec![
-///     Fp::<5>::new(1), Fp::<5>::new(0),
-///     Fp::<5>::new(0), Fp::<5>::new(1),
-/// ];
-/// let m = Packed5Matrix::from_row_major(&id, 2, 2);
-/// assert_eq!(permanent_bipedal5_singleword(&m), Fp::<5>::new(1));
-/// ```
 ///
 /// # Panics
 ///
@@ -183,10 +138,6 @@ pub fn permanent_bipedal5_singleword(mat: &Packed5Matrix) -> Fp<5> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -198,10 +149,6 @@ mod tests {
     fn to_packed5_matrix(row_major: &[Fp<5>], n: usize) -> Packed5Matrix {
         Packed5Matrix::from_row_major(row_major, n, n)
     }
-
-    // -----------------------------------------------------------------------
-    // Hand-checked test vectors
-    // -----------------------------------------------------------------------
 
     /// `permanent_bipedal5` of the 0×0 matrix is `Fp::<5>::new(1)` (vacuous product).
     #[test]
@@ -275,10 +222,6 @@ mod tests {
         assert_eq!(permanent_bipedal5(&m), Fp::<5>::new(0));
     }
 
-    // -----------------------------------------------------------------------
-    // Panic tests
-    // -----------------------------------------------------------------------
-
     #[test]
     #[should_panic(expected = "matrix must be square")]
     fn test_permanent5_panics_on_non_square() {
@@ -294,11 +237,6 @@ mod tests {
         let m = Packed5Matrix::from_row_major(&data, 64, 64);
         let _ = permanent_bipedal5(&m);
     }
-
-    // -----------------------------------------------------------------------
-    // Cross-checks: permanent_bipedal5 vs permanent_ryser<Fp<5>>
-    // Per-n tests with 1000 random matrices each.
-    // -----------------------------------------------------------------------
 
     macro_rules! cross_check_n {
         ($name:ident, $n:expr) => {

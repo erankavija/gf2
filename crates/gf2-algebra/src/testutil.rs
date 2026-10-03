@@ -17,17 +17,6 @@ use crate::permanent::PermanentalRank;
 ///
 /// Each entry is one [`Lcg::next_u64`] draw from a fresh [`Lcg`] seeded with
 /// `seed`, reduced modulo `P`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::testutil::random_matrix;
-///
-/// let mat = random_matrix::<3>(4, 0xdead_beef);
-/// assert_eq!(mat.len(), 16);
-/// // Same seed reproduces bit-identical output.
-/// assert_eq!(mat, random_matrix::<3>(4, 0xdead_beef));
-/// ```
 pub fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
     let mut rng = Lcg::new(seed);
     (0..n * n)
@@ -38,18 +27,6 @@ pub fn random_matrix<const P: u64>(n: usize, seed: u64) -> Vec<Fp<P>> {
 /// Same as [`random_matrix`] but draws its `n * n` words from an existing
 /// [`Lcg`] stream rather than reseeding, so callers can produce multiple
 /// independent matrices from a single deterministic stream.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::testutil::random_matrix_with_rng;
-/// use gf2_core::rng::Lcg;
-///
-/// let mut rng = Lcg::new(0xfeed_face);
-/// let m1 = random_matrix_with_rng::<3>(&mut rng, 4);
-/// let m2 = random_matrix_with_rng::<3>(&mut rng, 4);
-/// assert_ne!(m1, m2); // independent draws from the same stream
-/// ```
 pub fn random_matrix_with_rng<const P: u64>(rng: &mut Lcg, n: usize) -> Vec<Fp<P>> {
     (0..n * n)
         .map(|_| Fp::<P>::new(rng.next_u64() % P))
@@ -74,21 +51,6 @@ pub fn random_matrix_with_rng<const P: u64>(rng: &mut Lcg, n: usize) -> Vec<Fp<P
 ///
 /// The only thing it shares with the predicate is the [`PermanentalRank`]
 /// return vocabulary, so that the two decisions compare directly.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::permanent::PermanentalRank;
-/// use gf2_algebra::testutil::permanental_rank_bruteforce;
-/// use gf2_core::gfp::Fp;
-///
-/// // A zero column makes every 2x2 row-submatrix permanent vanish.
-/// let a: Vec<Fp<5>> = [1, 0, 2, 0, 3, 0].iter().map(|&v| Fp::<5>::new(v)).collect();
-/// assert_eq!(
-///     permanental_rank_bruteforce::<Fp<5>>(&a, 3, 2),
-///     PermanentalRank::Deficient
-/// );
-/// ```
 ///
 /// # Panics
 ///
@@ -192,19 +154,6 @@ fn permanent_permutation_sum<F: FiniteField>(matrix: &[F], k: usize) -> F {
 /// dates.
 ///
 /// Inlined to keep `chrono`/`time` out of the crate's dependencies.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::testutil::unix_secs_to_ymd;
-///
-/// assert_eq!(unix_secs_to_ymd(0), (1970, 1, 1));
-/// assert_eq!(unix_secs_to_ymd(946_684_800), (2000, 1, 1));
-/// // 2026-05-11 UTC midnight = 1_778_457_600 seconds.
-/// assert_eq!(unix_secs_to_ymd(1_778_457_600), (2026, 5, 11));
-/// // Leap-day handling
-/// assert_eq!(unix_secs_to_ymd(951_782_400), (2000, 2, 29));
-/// ```
 pub fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
     let days = secs.div_euclid(86_400);
     let z = days + 719_468;
@@ -222,22 +171,6 @@ pub fn unix_secs_to_ymd(secs: i64) -> (i32, u32, u32) {
 
 /// Format today's UTC date as `YYYY-MM-DD`. Respects the `SA_DATE` env
 /// variable for reproducible benchmark output paths.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_algebra::testutil::today_yyyy_mm_dd;
-///
-/// // Override via env var:
-/// std::env::set_var("SA_DATE", "2026-05-11");
-/// assert_eq!(today_yyyy_mm_dd(), "2026-05-11");
-/// std::env::remove_var("SA_DATE");
-/// // Without override returns today's UTC date; format invariant verified.
-/// let today = today_yyyy_mm_dd();
-/// assert_eq!(today.len(), 10);
-/// assert_eq!(&today[4..5], "-");
-/// assert_eq!(&today[7..8], "-");
-/// ```
 pub fn today_yyyy_mm_dd() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     if let Ok(s) = std::env::var("SA_DATE") {
