@@ -22,10 +22,9 @@ use std::fmt;
 /// complete symbol sum zero.
 ///
 /// The appended coordinate is the final coordinate, at position `n` in the
-/// derived coordinate space.  Encoding first delegates to the mother and
-/// then appends `-sum(codeword)`.  Thus the binary specialization appends the
-/// overall parity bit as the last `[message | parity | overall-parity]`
-/// coordinate.
+/// derived coordinate space.  Encoding appends `-sum(codeword)` to the
+/// mother's codeword.  Thus the binary specialization appends the overall
+/// parity bit as the last `[message | parity | overall-parity]` coordinate.
 ///
 /// The wrapper preserves the mother's dimension: its parameters are
 /// `(n + 1, k)`.  It does not compute a minimum distance.  Hamming distance
@@ -269,8 +268,8 @@ where
         self.mother.is_systematic()
     }
 
-    /// Delegates to the mother, whose coordinates keep their positions: the
-    /// zero-sum coordinate is appended after all of them.
+    /// The mother's coordinates keep their positions: the zero-sum coordinate
+    /// is appended after all of them.
     fn has_canonical_message_order(&self) -> Result<bool, CodeError> {
         self.mother.has_canonical_message_order()
     }
