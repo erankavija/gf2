@@ -366,6 +366,13 @@
           "title": "Share one repository-root resolver across tuning-campaign tooling",
           "classification": "implementation",
           "status": "pending"
+        },
+        {
+          "id": "",
+          "short_id": "b0b1faf5",
+          "title": "Locate the shared producing manifest by identity in survey scripts",
+          "classification": "implementation",
+          "status": "pending"
         }
       ]
     },
@@ -399,12 +406,7 @@
           "title": "Locate BCH receipt-renderer inputs through the configured repository root",
           "classification": "implementation",
           "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 8,
-      "issues": [
+        },
         {
           "id": "01c20b61-4dce-4437-baab-9c9d03d1d2c1",
           "short_id": "01c20b61",
@@ -419,6 +421,32 @@
           "classification": "implementation",
           "status": "pending"
         },
+        {
+          "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
+          "short_id": "8a9156fc",
+          "title": "Write the acceleration selection how-to",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
+          "short_id": "cdba4e71",
+          "title": "Write the coded-modulation link simulation tutorial",
+          "classification": "documentation",
+          "status": "pending"
+        },
+        {
+          "id": "ee50e270-74ea-4566-a0a7-69791af66e8a",
+          "short_id": "ee50e270",
+          "title": "Rewrite the SIMD kernel and statistics crate READMEs",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 8,
+      "issues": [
         {
           "id": "13dfe1a5-a770-4910-b6b3-36e4b2a91cca",
           "short_id": "13dfe1a5",
@@ -497,13 +525,6 @@
           "status": "pending"
         },
         {
-          "id": "8a9156fc-3015-47c7-8a7f-2e549962252d",
-          "short_id": "8a9156fc",
-          "title": "Write the acceleration selection how-to",
-          "classification": "documentation",
-          "status": "pending"
-        },
-        {
           "id": "8a9db61a-115b-4f07-9baf-97e6545525a5",
           "short_id": "8a9db61a",
           "title": "Tersify comments in the gf2-coding modem module",
@@ -567,13 +588,6 @@
           "status": "pending"
         },
         {
-          "id": "cdba4e71-4444-41e0-b34e-904f3fb20ab4",
-          "short_id": "cdba4e71",
-          "title": "Write the coded-modulation link simulation tutorial",
-          "classification": "documentation",
-          "status": "pending"
-        },
-        {
           "id": "eba21481-61e7-4e27-b2e0-4701f08c4f5a",
           "short_id": "eba21481",
           "title": "Tersify comments in gf2-core tests, benches and examples",
@@ -584,13 +598,6 @@
           "id": "ee2b0c0c-a88d-4ab7-aeb4-58cbd4ad0ca4",
           "short_id": "ee2b0c0c",
           "title": "Tersify comments in the gf2-coding LDPC module",
-          "classification": "documentation",
-          "status": "pending"
-        },
-        {
-          "id": "ee50e270-74ea-4566-a0a7-69791af66e8a",
-          "short_id": "ee50e270",
-          "title": "Rewrite the SIMD kernel and statistics crate READMEs",
           "classification": "documentation",
           "status": "pending"
         },
