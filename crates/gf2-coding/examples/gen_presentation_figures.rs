@@ -1,26 +1,8 @@
-//! Generates the SVG figures embedded in the `d4851c3d-modem-framework`
-//! reveal.js presentation by running actual Monte Carlo simulations
-//! through the modem framework.
-//!
-//! Run with:
-//!
-//! ```bash
-//! cargo run -p gf2-coding --example gen_presentation_figures --release
-//! ```
-//!
-//! Output (relative to the workspace root):
-//! - `docs/presentations/figures/ber_curves.svg` — uncoded BER vs Eb/N0
-//!   for BPSK, QPSK, 16-QAM, 64-QAM.
-//! - `docs/presentations/figures/per_bit_mi_16qam.svg` — per-bit
-//!   Gaussian-approximation mutual information vs Eb/N0 for 16-QAM
-//!   (one curve per bit position, showing the outer-vs-inner PAM-bit
-//!   reliability gap that Gray-QAM is known for).
-//! - `docs/presentations/figures/llr_histograms_16qam.svg` — per-bit
-//!   conditional LLR histograms at Eb/N0 = 8 dB, showing the
-//!   near-Gaussian outer-bit and bimodal inner-bit distributions.
-//!
-//! Every number in the figures comes from a fresh simulation over the
-//! shared modem framework — no hand-coded or extrapolated values.
+//! Renders three SVG figures from Monte Carlo runs over the modem framework:
+//! uncoded BER against Eb/N0 for BPSK and Gray QAM, per-bit mutual information
+//! for 16-QAM, and per-bit conditional LLR histograms for 16-QAM. The figures
+//! land in the directory given by `--output-dir <path>`, which defaults to
+//! `target/presentation_figures` under the working directory.
 
 use gf2_coding::modem::analysis::{HistogramConfig, PerBitChannelStats, PerBitLlrStats};
 use gf2_coding::modem::{
@@ -36,7 +18,7 @@ use std::num::NonZeroUsize;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let out_dir = workspace_root()?.join("docs/presentations/figures");
+    let out_dir = parse_args();
     std::fs::create_dir_all(&out_dir)?;
 
     eprintln!("[1/3] Running BER Monte Carlo sweeps...");
@@ -55,22 +37,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {
-    // Walk up from the current manifest directory until we find the
-    // workspace-level Cargo.toml (the one containing `[workspace]`).
-    let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).canonicalize()?;
-    loop {
-        let toml = dir.join("Cargo.toml");
-        if toml.is_file() {
-            let txt = std::fs::read_to_string(&toml)?;
-            if txt.contains("[workspace]") {
-                return Ok(dir);
+fn parse_args() -> PathBuf {
+    let mut args = std::env::args().skip(1);
+    let mut out_dir = PathBuf::from("target/presentation_figures");
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--output-dir" => {
+                out_dir = PathBuf::from(args.next().expect("--output-dir requires a path"));
             }
-        }
-        if !dir.pop() {
-            return Err("could not locate workspace root".into());
+            other => panic!("unknown argument: {other}"),
         }
     }
+    out_dir
 }
 
 // --------------------------------------------------------------------
