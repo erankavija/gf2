@@ -1273,8 +1273,6 @@ mod canonical_decoder_tests {
         sorted
     }
 
-    // -- The error-free outcome and the two paths --------------------------
-
     #[test]
     fn a_codeword_decodes_to_its_information_word() {
         for code in codes() {
@@ -1301,8 +1299,6 @@ mod canonical_decoder_tests {
             assert_eq!(report.error_count(), Some(0));
         }
     }
-
-    // -- Every error count at and beyond the radius ------------------------
 
     fn error_cases() -> impl Strategy<Value = (usize, Vec<bool>, Vec<usize>)> {
         (
@@ -1539,8 +1535,6 @@ mod canonical_decoder_tests {
         assert_eq!(report.error_count(), None);
         assert!(report.error_positions().is_empty());
     }
-
-    // -- The fast path reuses one workspace --------------------------------
 
     /// The lengths and capacities of every workspace buffer after a mixed run
     /// of decodes. The decoder sizes each buffer once and only overwrites it
