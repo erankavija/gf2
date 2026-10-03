@@ -1,21 +1,4 @@
 //! Primitive polynomial generation for GF(2^m).
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_core::gf2m::generation::{PrimitiveGenerator, GenerationStrategy};
-//!
-//! // Find first primitive polynomial for GF(2^8)
-//! let gen = PrimitiveGenerator::new(8);
-//! let poly = gen.find_first().expect("primitive polynomial exists");
-//! println!("Found: {:#b}", poly);
-//!
-//! // Find all primitives for small fields
-//! let gen = PrimitiveGenerator::new(5)
-//!     .with_strategy(GenerationStrategy::Exhaustive);
-//! let all = gen.find_all();
-//! println!("Found {} primitive polynomials", all.len());
-//! ```
 
 use super::Gf2mField;
 
@@ -30,22 +13,12 @@ pub enum GenerationStrategy {
     Pentanomial,
     /// Exhaustive search on the rayon pool with the `parallel` feature, sequential without it.
     ParallelExhaustive {
-        /// Number of threads to use for parallel search
+        /// Unused: the search runs on the global rayon pool.
         threads: usize,
     },
 }
 
 /// Generator for primitive polynomials of a given degree.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::generation::PrimitiveGenerator;
-///
-/// let gen = PrimitiveGenerator::new(4);
-/// let poly = gen.find_first().unwrap();
-/// assert_eq!(poly, 0b10011); // x^4 + x + 1
-/// ```
 pub struct PrimitiveGenerator {
     degree: usize,
     strategy: GenerationStrategy,
@@ -76,15 +49,6 @@ impl PrimitiveGenerator {
     /// Find the first primitive polynomial of degree m.
     ///
     /// Returns `None` when the strategy's search space holds no primitive polynomial.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::generation::PrimitiveGenerator;
-    ///
-    /// let gen = PrimitiveGenerator::new(2);
-    /// assert_eq!(gen.find_first(), Some(0b111)); // x^2 + x + 1
-    /// ```
     pub fn find_first(&self) -> Option<u64> {
         match self.strategy {
             GenerationStrategy::Exhaustive | GenerationStrategy::ParallelExhaustive { .. } => {
@@ -102,17 +66,6 @@ impl PrimitiveGenerator {
     /// # Panics
     ///
     /// Panics if strategy is not `Exhaustive` or `ParallelExhaustive`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::generation::{PrimitiveGenerator, GenerationStrategy};
-    ///
-    /// let gen = PrimitiveGenerator::new(3)
-    ///     .with_strategy(GenerationStrategy::Exhaustive);
-    /// let all = gen.find_all();
-    /// assert_eq!(all.len(), 2); // x^3+x+1 and x^3+x^2+1
-    /// ```
     pub fn find_all(&self) -> Vec<u64> {
         match self.strategy {
             GenerationStrategy::Exhaustive | GenerationStrategy::ParallelExhaustive { .. } => {
@@ -181,7 +134,7 @@ impl PrimitiveGenerator {
 
         for k in 1..m {
             // x^m + x^k + 1 is a polynomial in x^gcd(m, k), so not primitive when
-            // gcd(m, k) > 1, and is reducible when 8 | m (Swan's theorem).
+            // gcd(m, k) > 1, and is reducible when 8 | m (`@/citation/Swan1962`).
             if gcd(m, k) > 1 {
                 continue;
             }
@@ -270,7 +223,7 @@ fn gcd(mut a: usize, mut b: usize) -> usize {
 mod tests {
     use super::*;
 
-    // Primitive-polynomial counts per degree: OEIS A011260.
+    // Primitive-polynomial counts per degree: `@/citation/Oeis2026` (A011260).
 
     #[test]
     fn test_generate_m2_first() {
@@ -348,7 +301,7 @@ mod tests {
     fn test_trinomial_search_m3() {
         let gen = PrimitiveGenerator::new(3).with_strategy(GenerationStrategy::Trinomial);
         let poly = gen.find_first().unwrap();
-        assert_eq!(poly.count_ones(), 3); // trinomial has 3 terms
+        assert_eq!(poly.count_ones(), 3);
         let field = Gf2mField::new(3, poly);
         assert!(field.verify_primitive());
     }

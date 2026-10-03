@@ -2,60 +2,9 @@
 //!
 //! An **irreducible** defining polynomial of degree m defines GF(2^m) and is
 //! all that field arithmetic requires. A **primitive** polynomial is an
-//! irreducible polynomial whose root generates the full multiplicative group.
-//!
-//! Polynomials returned by [`PrimitivePolynomialDatabase::standard`] (m ≤ 16)
-//! are verified **primitive**. Polynomials returned by
-//! [`PrimitivePolynomialDatabase::standard_u128`] for m = 64..=127 are verified
-//! only **irreducible** (see
-//! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]).
-//!
-//! [`PrimitivePolynomialDatabase::standard`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard
-//! [`PrimitivePolynomialDatabase::standard_u128`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128
-//! [`PrimitivePolynomialDatabase::standard_u128_irreducibility_note`]: crate::primitive_polys::PrimitivePolynomialDatabase::standard_u128_irreducibility_note
-//!
-//! ## Example: Computing in GF(2^4)
-//!
-//! ```
-//! use gf2_core::gf2m::Gf2mField;
-//!
-//! // Create GF(2^4) with primitive polynomial x^4 + x + 1 (binary 10011)
-//! let field = Gf2mField::new(4, 0b10011);
-//!
-//! // Elements represented as polynomials over GF(2)
-//! // x² + 1 is binary 0101 = 5
-//! let a = field.element(0b0101);
-//! // x³ + x is binary 1010 = 10  
-//! let b = field.element(0b1010);
-//!
-//! // Addition is XOR: (x² + 1) + (x³ + x) = x³ + x² + x + 1
-//! let sum = &a + &b;  // 0101 ⊕ 1010 = 1111
-//! assert_eq!(sum.value(), 0b1111);
-//!
-//! // Multiplication with reduction modulo p(x)
-//! // (x² + 1) · (x³ + x) mod (x⁴ + x + 1)
-//! let product = &a * &b;
-//! // (x² + 1) · (x³ + x) = x⁵ + x³ + x³ + x = x⁵ + x  (x³+x³=0 in GF(2))
-//! // x⁵ = x · x⁴ = x · (x + 1) = x² + x  (since x⁴ ≡ x + 1 mod p(x))
-//! // Final: (x²+x) + x = x²  (x+x=0 in GF(2))
-//! // Result: x² = 0b0100
-//! assert_eq!(product.value(), 0b0100);
-//! ```
-//!
-//! ## Standard Field Presets
-//!
-//! ```
-//! use gf2_core::gf2m::Gf2mField;
-//!
-//! // GF(2^8) with primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D)
-//! let gf256 = Gf2mField::gf256();
-//!
-//! // Compute with bytes
-//! let a = gf256.element(0x53);  // 01010011
-//! let b = gf256.element(0xCA);  // 11001010
-//! let sum = a + b;               // XOR
-//! assert_eq!(sum.value(), 0x99); // 10011001
-//! ```
+//! irreducible polynomial whose root generates the full multiplicative group;
+//! [`crate::primitive_polys::PrimitivePolynomialDatabase`] states which of its
+//! accessors guarantee which property.
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -271,15 +220,6 @@ impl<V: UintExt> Gf2mField_<V> {
     /// Returns this field with precomputed log/antilog tables.
     ///
     /// Tables are generated only for m ≤ 16; a larger field is returned unchanged.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::gf256().with_tables();
-    /// assert!(field.has_tables());
-    /// ```
     pub fn with_tables(self) -> Self {
         if self.params.m > 16 {
             return self;
@@ -398,17 +338,6 @@ impl<V: UintExt> Gf2mField_<V> {
     /// (`gf2-kernels-hip`): handing the *live* table to the device guarantees
     /// the GPU multiply is bit-identical to the CPU table path
     /// ([`Gf2mField`] `Mul`), with no on-device table regeneration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011).with_tables();
-    /// let exp = field.exp_table().unwrap();
-    /// assert_eq!(exp.len(), (1 << 4) - 1); // 15 entries
-    /// assert_eq!(exp[0], 1); // α^0 = 1
-    /// ```
     pub fn exp_table(&self) -> Option<&[u16]> {
         self.params.exp_table.as_deref()
     }
@@ -422,17 +351,6 @@ impl<V: UintExt> Gf2mField_<V> {
     ///
     /// Paired with [`exp_table`](Self::exp_table), this is the exact
     /// device-upload source for the GPU `gf_mul` kernel.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011).with_tables();
-    /// let log = field.log_table().unwrap();
-    /// assert_eq!(log.len(), 1 << 4); // 16 entries
-    /// assert_eq!(log[1], 0); // log(1) = 0
-    /// ```
     pub fn log_table(&self) -> Option<&[u16]> {
         self.params.log_table.as_deref()
     }
@@ -527,7 +445,6 @@ impl<V: UintExt> Gf2mField_<V> {
     }
 }
 
-// Methods specific to u64 fields (database verification, presets, primitivity testing)
 impl Gf2mField_ {
     /// Returns the number of elements in the field (2^m).
     ///
@@ -539,33 +456,20 @@ impl Gf2mField_ {
     /// Verifies that the defining polynomial is primitive: irreducible, with
     /// `x` of multiplicative order 2^m - 1.
     ///
-    /// Uses Rabin's irreducibility test, then checks x^((2^m-1)/q) ≠ 1 for each
-    /// prime factor q of 2^m - 1 found by trial division.
+    /// Uses the irreducibility test of `@/citation/Rabin1980`, then checks
+    /// x^((2^m-1)/q) ≠ 1 for each prime factor q of 2^m - 1 found by trial
+    /// division.
     ///
     /// # Complexity
     ///
     /// O(m³) for degree-m polynomial using fast exponentiation.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// // DVB-T2 standard polynomial
-    /// let gf14 = Gf2mField::new(14, 0b100000000101011);
-    /// assert!(gf14.verify_primitive());
-    ///
-    /// // Reducible polynomial (x+1)^2 = x^2 + 1
-    /// let gf2_reducible = Gf2mField::new(2, 0b101);
-    /// assert!(!gf2_reducible.verify_primitive());
-    /// ```
     pub fn verify_primitive(&self) -> bool {
         if !self.is_irreducible_rabin() {
             return false;
         }
 
         let m = self.params.m;
-        let order = (1u64 << m) - 1; // 2^m - 1
+        let order = (1u64 << m) - 1;
 
         // Step 1: Verify x^(2^m-1) = 1 (Fermat's little theorem)
         let x_to_order = self.compute_x_power_value(order);
@@ -587,16 +491,11 @@ impl Gf2mField_ {
         true
     }
 
-    /// Tests irreducibility using Rabin's test.
+    /// Tests irreducibility using the test of `@/citation/Rabin1980`.
     ///
     /// A polynomial p(x) of degree m is irreducible if and only if:
     /// - gcd(p(x), x^(2^i) - x) = 1 for all i = 1, 2, ..., ⌊m/2⌋
     /// - x^(2^m) ≡ x (mod p(x))
-    ///
-    /// # References
-    ///
-    /// Rabin, M. O. (1980). "Probabilistic algorithms in finite fields."
-    /// SIAM Journal on Computing, 9(2), 273-280.
     pub fn is_irreducible_rabin(&self) -> bool {
         let m = self.params.m;
         let p = self.params.primitive_poly;
@@ -770,20 +669,6 @@ impl<V: UintExt> Gf2mElement_<V> {
     /// Computes the multiplicative inverse of this element as `a^(2^m - 2)`.
     ///
     /// Returns `None` if this element is zero (which has no multiplicative inverse).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(0b0101);
-    /// let inv = a.inverse().expect("non-zero element has inverse");
-    ///
-    /// // a * a^(-1) = 1
-    /// let product = &a * &inv;
-    /// assert_eq!(product, field.one());
-    /// ```
     pub fn inverse(&self) -> Option<Gf2mElement_<V>> {
         if self.is_zero() {
             return None;
@@ -834,20 +719,6 @@ impl<V: UintExt> Gf2mElement_<V> {
     /// (`d = degree of the minimal polynomial, with d | m`), plus `O(d^2)`
     /// base-field operations to build the product polynomial. In practice
     /// `d ≤ m`, so total work is bounded by `O(m^2)` GF(2^m) operations.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let alpha = field.element(0b0010); // x
-    /// let min_poly = alpha.minimal_polynomial();
-    ///
-    /// // Verify alpha is a root
-    /// let result = min_poly.eval(&alpha);
-    /// assert!(result.is_zero());
-    /// ```
     pub fn minimal_polynomial(&self) -> Gf2mPoly_<V> {
         // Special case: minimal polynomial of 0 is x
         if self.is_zero() {
@@ -1095,7 +966,6 @@ impl<V: UintExt> Sub for Gf2mElement_<V> {
     }
 }
 
-// Mixed-receiver operators: owned + &ref
 impl<V: UintExt> Add<&Gf2mElement_<V>> for Gf2mElement_<V> {
     type Output = Gf2mElement_<V>;
 
@@ -1390,8 +1260,6 @@ mod tests {
         field.element(0b10000); // 16 is too large for GF(2^4)
     }
 
-    // Field Axiom Tests
-
     #[test]
     fn test_addition_commutative() {
         let field = Gf2mField::new(4, 0b10011);
@@ -1476,11 +1344,8 @@ mod tests {
         let b = field.element(0b0011);
         let c = field.element(0b1100);
 
-        // a * (b + c) = (a * b) + (a * c)
         assert_eq!(&a * &(&b + &c), &(&a * &b) + &(&a * &c));
     }
-
-    // Specific GF(2^4) worked examples from documentation
 
     #[test]
     fn test_gf16_addition_example() {
@@ -1529,14 +1394,12 @@ mod tests {
         assert_eq!(product.value(), 0x06); // binary 110 = x² + x
     }
 
-    // Division and Multiplicative Inverse Tests
-
     #[test]
     fn test_inverse_of_one() {
         let field = Gf2mField::new(4, 0b10011);
         let one = field.one();
         let inv = one.inverse().expect("one should have inverse");
-        assert_eq!(inv, one); // 1^(-1) = 1
+        assert_eq!(inv, one);
     }
 
     #[test]
@@ -1621,8 +1484,6 @@ mod tests {
         assert_eq!(quotient, a);
     }
 
-    // Log/Antilog Table Tests
-
     #[test]
     fn test_table_generation_gf16() {
         let field = Gf2mField::new(4, 0b10011).with_tables();
@@ -1637,7 +1498,6 @@ mod tests {
 
     #[test]
     fn test_tables_not_generated_for_large_field() {
-        // m=17 is too large for tables by default
         let field = Gf2mField::new(17, 0b100000000000001001);
         assert!(
             !field.has_tables(),
@@ -1718,8 +1578,6 @@ mod tests {
         }
     }
 
-    // Primitive polynomial verification tests
-
     #[test]
     fn test_verify_primitive_gf4() {
         let field = Gf2mField::new(2, 0b111); // x^2 + x + 1
@@ -1746,21 +1604,21 @@ mod tests {
 
     #[test]
     fn test_verify_primitive_dvb_t2_gf14() {
-        // Correct DVB-T2 polynomial
+        // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for short frames
         let field = Gf2mField::new(14, 0b100000000101011);
         assert!(field.verify_primitive());
     }
 
     #[test]
     fn test_verify_primitive_dvb_t2_gf16() {
-        // Correct DVB-T2 polynomial for normal frames
+        // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for normal frames
         let field = Gf2mField::new(16, 0b10000000000101101);
         assert!(field.verify_primitive());
     }
 
     #[test]
     fn test_verify_not_primitive_wrong_dvb_t2() {
-        // x^14 + x^5 + 1 is not primitive; the DVB-T2 polynomial is
+        // x^14 + x^5 + 1 is not primitive; `@/citation/Etsi2015` (DVB-T2) uses
         // x^14 + x^5 + x^3 + x + 1.
         let field = Gf2mField::new(14, 0b100000000100001);
 
@@ -1795,8 +1653,6 @@ mod tests {
         assert!(!field.is_irreducible_rabin());
     }
 
-    // --- Hash tests ---
-
     #[test]
     fn test_hash_equal_elements_have_equal_hash() {
         use std::hash::{DefaultHasher, Hash, Hasher};
@@ -1828,7 +1684,6 @@ mod tests {
     #[test]
     fn test_hash_ignores_field_context() {
         use std::hash::{DefaultHasher, Hash, Hasher};
-        // Two independently-constructed GF(2^8) fields
         let field1 = Gf2mField::gf256();
         let field2 = Gf2mField::gf256();
         let a = field1.element(42);
@@ -1840,8 +1695,6 @@ mod tests {
         b.hash(&mut hb);
         assert_eq!(ha.finish(), hb.finish());
     }
-
-    // --- Sub tests ---
 
     #[test]
     fn test_subtraction_equals_addition() {
@@ -1875,8 +1728,6 @@ mod tests {
         }
     }
 
-    // --- Neg tests ---
-
     #[test]
     fn test_negation_is_identity() {
         let field = Gf2mField::new(4, 0b10011);
@@ -1901,8 +1752,6 @@ mod tests {
             assert_eq!(-(-&a), a);
         }
     }
-
-    // Property-based tests using proptest
 
     use proptest::prelude::*;
 
@@ -1975,7 +1824,6 @@ mod tests {
             let elem_b = field.element(b);
             let elem_c = field.element(c);
 
-            // a * (b + c) = (a * b) + (a * c)
             let left = &elem_a * &(&elem_b + &elem_c);
             let right = &(&elem_a * &elem_b) + &(&elem_a * &elem_c);
 
@@ -2000,13 +1848,9 @@ mod tests {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Known-answer tests for Gf2mElement_<u128> (GF(2^64) and up)
-    // -----------------------------------------------------------------------
-
     /// Known-answer multiplication test vectors for GF(2^64) with the
     /// standard irreducible polynomial p(x) = x^64 + x^4 + x^3 + x + 1
-    /// (from Seroussi's table, `PrimitivePolynomialDatabase::standard_u128(64)`;
+    /// (`@/citation/Seroussi1998`, via `PrimitivePolynomialDatabase::standard_u128(64)`;
     /// see that accessor's doc for the exact strength of the guarantee).
     ///
     /// # Test vectors
@@ -2087,10 +1931,6 @@ mod tests {
     }
 }
 
-// ============================================================================
-// Polynomial Operations over GF(2^m)
-// ============================================================================
-
 /// A polynomial with coefficients in GF(2^m).
 ///
 /// A type alias for [`FieldPoly<Gf2mElement_<V>>`](crate::field::FieldPoly),
@@ -2098,21 +1938,6 @@ mod tests {
 /// extras (`BitVec` conversions, construction from exponent lists, the
 /// indeterminate `x(field)`) are inherent methods declared in
 /// [`crate::gf2m::poly_helpers`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let coeffs = vec![
-///     field.element(1),  // constant term
-///     field.element(2),  // x term
-///     field.element(3),  // x^2 term
-/// ];
-/// let poly = Gf2mPoly::new(coeffs);
-/// assert_eq!(poly.degree(), Some(2));
-/// ```
 pub type Gf2mPoly_<V = u64> = crate::field::FieldPoly<Gf2mElement_<V>>;
 
 /// Convenience alias: `Gf2mPoly` is `Gf2mPoly_<u64>`.
@@ -2163,7 +1988,7 @@ mod poly_tests {
         ];
         let poly = Gf2mPoly_::new(coeffs);
 
-        assert_eq!(poly.degree(), Some(1)); // Leading zeros removed
+        assert_eq!(poly.degree(), Some(1));
     }
 
     #[test]
@@ -2174,7 +1999,7 @@ mod poly_tests {
         assert_eq!(poly.coeff(0).value(), 1);
         assert_eq!(poly.coeff(1).value(), 2);
         assert_eq!(poly.coeff(2).value(), 3);
-        assert_eq!(poly.coeff(10).value(), 0); // Beyond degree returns zero
+        assert_eq!(poly.coeff(10).value(), 0);
     }
 
     #[test]
@@ -2195,9 +2020,7 @@ mod poly_tests {
     #[test]
     fn test_poly_multiplication_simple() {
         let field = Gf2mField::new(4, 0b10011);
-        // p1(x) = 2
         let p1 = Gf2mPoly_::constant(field.element(2));
-        // p2(x) = 3
         let p2 = Gf2mPoly_::constant(field.element(3));
 
         let product = &p1 * &p2;
@@ -2235,8 +2058,6 @@ mod poly_tests {
         assert_eq!(&zero * &p1, zero);
     }
 
-    // Evaluation tests
-
     #[test]
     fn test_poly_eval_constant() {
         let field = Gf2mField::new(4, 0b10011);
@@ -2244,7 +2065,7 @@ mod poly_tests {
         let x = field.element(7);
 
         let result = poly.eval(&x);
-        assert_eq!(result.value(), 5); // Constant polynomial
+        assert_eq!(result.value(), 5);
     }
 
     #[test]
@@ -2278,8 +2099,6 @@ mod poly_tests {
         assert_eq!(result, expected);
     }
 
-    // Division with remainder tests
-
     #[test]
     fn test_poly_div_rem_simple() {
         let field = Gf2mField::new(4, 0b10011);
@@ -2306,7 +2125,6 @@ mod poly_tests {
 
         let (quotient, remainder) = dividend.div_rem(&divisor);
 
-        // Should divide exactly
         assert!(remainder.is_zero() || remainder.degree() == Some(0));
 
         let check = &(&quotient * &divisor) + &remainder;
@@ -2424,8 +2242,6 @@ mod poly_tests {
         }
     }
 
-    // GCD tests
-
     #[test]
     fn test_gcd_coprime() {
         let field = Gf2mField::new(4, 0b10011);
@@ -2438,7 +2254,7 @@ mod poly_tests {
 
         // Coprime polynomials, GCD should be constant (degree 0)
         assert_eq!(gcd.degree(), Some(0));
-        assert!(gcd.coeff(0).is_one()); // Monic GCD
+        assert!(gcd.coeff(0).is_one());
     }
 
     #[test]
@@ -2459,7 +2275,7 @@ mod poly_tests {
 
         // GCD should be (x + 1) up to scalar multiple
         assert_eq!(gcd.degree(), Some(1));
-        assert!(gcd.coeff(1).is_one()); // Monic
+        assert!(gcd.coeff(1).is_one());
     }
 
     #[test]
@@ -2471,7 +2287,7 @@ mod poly_tests {
 
         // GCD of polynomial with itself is the polynomial (made monic)
         assert_eq!(gcd.degree(), poly.degree());
-        assert!(gcd.coeff(gcd.degree().unwrap()).is_one()); // Monic
+        assert!(gcd.coeff(gcd.degree().unwrap()).is_one());
     }
 
     #[test]
@@ -2485,8 +2301,6 @@ mod poly_tests {
         // GCD with zero is the non-zero polynomial (made monic)
         assert_eq!(gcd.degree(), poly.degree());
     }
-
-    // BitVec conversion tests
 
     #[test]
     fn test_from_bitvec_empty() {
@@ -2560,11 +2374,11 @@ mod poly_tests {
 
         let bits = poly.to_bitvec(5);
         assert_eq!(bits.len(), 5);
-        assert!(bits.get(0)); // x^0 present
-        assert!(!bits.get(1)); // x^1 absent
-        assert!(bits.get(2)); // x^2 present
-        assert!(!bits.get(3)); // x^3 absent (beyond degree)
-        assert!(!bits.get(4)); // x^4 absent (beyond degree)
+        assert!(bits.get(0));
+        assert!(!bits.get(1));
+        assert!(bits.get(2));
+        assert!(!bits.get(3));
+        assert!(!bits.get(4));
     }
 
     #[test]
@@ -2592,8 +2406,6 @@ mod poly_tests {
         assert_eq!(bits.len(), 0);
     }
 
-    // Tests for reversed BitVec conversion (DVB-T2 compliance)
-
     #[test]
     fn test_from_bitvec_reversed_empty() {
         let field = Gf2mField::new(4, 0b10011);
@@ -2613,9 +2425,9 @@ mod poly_tests {
 
         let poly = Gf2mPoly_::from_bitvec_reversed(&bits, &field);
         assert_eq!(poly.degree(), Some(2));
-        assert!(poly.coeff(0).is_one()); // x^0 term
-        assert!(poly.coeff(1).is_zero()); // x^1 term
-        assert!(poly.coeff(2).is_one()); // x^2 term
+        assert!(poly.coeff(0).is_one());
+        assert!(poly.coeff(1).is_zero());
+        assert!(poly.coeff(2).is_one());
     }
 
     #[test]
@@ -2642,9 +2454,9 @@ mod poly_tests {
 
         let poly = Gf2mPoly_::from_bitvec_reversed(&bits, &field);
         assert_eq!(poly.degree(), Some(2));
-        assert!(poly.coeff(0).is_one()); // x^0
-        assert!(poly.coeff(1).is_zero()); // x^1
-        assert!(poly.coeff(2).is_one()); // x^2
+        assert!(poly.coeff(0).is_one());
+        assert!(poly.coeff(1).is_zero());
+        assert!(poly.coeff(2).is_one());
     }
 
     #[test]
@@ -2661,11 +2473,11 @@ mod poly_tests {
         // Expected: [0, 0, 1, 0, 1]
         let bits = poly.to_bitvec_reversed(5);
         assert_eq!(bits.len(), 5);
-        assert!(!bits.get(0)); // x^4 absent
-        assert!(!bits.get(1)); // x^3 absent
-        assert!(bits.get(2)); // x^2 present
-        assert!(!bits.get(3)); // x^1 absent
-        assert!(bits.get(4)); // x^0 present
+        assert!(!bits.get(0));
+        assert!(!bits.get(1));
+        assert!(bits.get(2));
+        assert!(!bits.get(3));
+        assert!(bits.get(4));
     }
 
     #[test]
@@ -2680,9 +2492,9 @@ mod poly_tests {
         // For len=3 (exactly degree+1): [x^2, x^1, x^0] = [1, 0, 1]
         let bits = poly.to_bitvec_reversed(3);
         assert_eq!(bits.len(), 3);
-        assert!(bits.get(0)); // x^2
-        assert!(!bits.get(1)); // x^1
-        assert!(bits.get(2)); // x^0
+        assert!(bits.get(0));
+        assert!(!bits.get(1));
+        assert!(bits.get(2));
     }
 
     #[test]
@@ -2737,11 +2549,11 @@ mod poly_tests {
     fn test_bch_systematic_codeword_pattern() {
         // Simulates BCH systematic encoding: [message | parity]
         // Message: k bits (0..k-1), Parity: r bits (k..n-1)
-        // DVB-T2: bit 0 is highest coefficient
+        // `@/citation/Etsi2015` (DVB-T2): bit 0 is highest coefficient
         let field = Gf2mField::new(4, 0b10011);
         let k = 3;
         let r = 2;
-        let _n = k + r; // 5 total
+        let _n = k + r;
 
         let mut codeword = BitVec::new();
         // Message bits [0, 1, 2]: 1, 0, 1
@@ -2755,7 +2567,6 @@ mod poly_tests {
         // Convert using reversed: bit 0 -> x^4, ..., bit 4 -> x^0
         let poly = Gf2mPoly_::from_bitvec_reversed(&codeword, &field);
 
-        // Verify structure: x^4 + x^2 + x^0
         assert_eq!(poly.degree(), Some(4));
         assert!(poly.coeff(0).is_one()); // bit 4 -> x^0
         assert!(poly.coeff(1).is_zero()); // bit 3 -> x^1
@@ -2768,9 +2579,9 @@ mod poly_tests {
     fn test_reversed_vs_standard_conversion() {
         let field = Gf2mField::new(4, 0b10011);
         let mut bits = BitVec::new();
-        bits.push_bit(true); // bit 0
-        bits.push_bit(false); // bit 1
-        bits.push_bit(true); // bit 2
+        bits.push_bit(true);
+        bits.push_bit(false);
+        bits.push_bit(true);
 
         let poly_standard = Gf2mPoly_::from_bitvec(&bits, &field);
         let poly_reversed = Gf2mPoly_::from_bitvec_reversed(&bits, &field);
@@ -2867,8 +2678,6 @@ mod poly_tests {
         }
     }
 
-    // Property-based tests for polynomials
-
     use proptest::prelude::*;
 
     proptest! {
@@ -2930,7 +2739,6 @@ mod poly_tests {
             let p2 = Gf2mPoly_::new(vec![field.element(b), field.element(1)]);
             let x = field.element(x_val);
 
-            // (p1 * p2)(x) = p1(x) * p2(x)
             let left = (&p1 * &p2).eval(&x);
             let right = &p1.eval(&x) * &p2.eval(&x);
 
@@ -3039,7 +2847,6 @@ mod poly_tests {
                     .collect();
                 let poly1 = Gf2mPoly_::new(coeffs);
 
-                // to_bitvec_reversed -> from_bitvec_reversed should be identity
                 let len = poly1.degree().map(|d| d + 1).unwrap_or(1);
                 let bits = poly1.to_bitvec_reversed(len);
                 let poly2 = Gf2mPoly_::from_bitvec_reversed(&bits, &field);
@@ -3079,8 +2886,6 @@ mod poly_tests {
         }
     }
 
-    // ===== Minimal Polynomial Tests =====
-
     #[test]
     fn test_minimal_polynomial_zero() {
         let field = Gf2mField::new(4, 0b10011);
@@ -3089,8 +2894,8 @@ mod poly_tests {
 
         // Minimal polynomial of 0 is x
         assert_eq!(min_poly.degree(), Some(1));
-        assert_eq!(min_poly.coeff(0).value(), 0); // Constant term is 0
-        assert_eq!(min_poly.coeff(1).value(), 1); // x^1 coefficient is 1
+        assert_eq!(min_poly.coeff(0).value(), 0);
+        assert_eq!(min_poly.coeff(1).value(), 1);
     }
 
     #[test]
@@ -3101,8 +2906,8 @@ mod poly_tests {
 
         // Minimal polynomial of 1 is x + 1
         assert_eq!(min_poly.degree(), Some(1));
-        assert_eq!(min_poly.coeff(0).value(), 1); // Constant term is 1
-        assert_eq!(min_poly.coeff(1).value(), 1); // x^1 coefficient is 1
+        assert_eq!(min_poly.coeff(0).value(), 1);
+        assert_eq!(min_poly.coeff(1).value(), 1);
     }
 
     #[test]
@@ -3115,15 +2920,15 @@ mod poly_tests {
         let min_poly = alpha.minimal_polynomial();
 
         assert_eq!(min_poly.degree(), Some(2));
-        assert_eq!(min_poly.coeff(0).value(), 1); // +1
-        assert_eq!(min_poly.coeff(1).value(), 1); // +x
-        assert_eq!(min_poly.coeff(2).value(), 1); // +x^2
+        assert_eq!(min_poly.coeff(0).value(), 1);
+        assert_eq!(min_poly.coeff(1).value(), 1);
+        assert_eq!(min_poly.coeff(2).value(), 1);
     }
 
     #[test]
     fn test_minimal_polynomial_is_root() {
         let field = Gf2mField::new(4, 0b10011);
-        let alpha = field.element(0b0110); // Some random element
+        let alpha = field.element(0b0110);
         let min_poly = alpha.minimal_polynomial();
 
         let result = min_poly.eval(&alpha);
@@ -3304,10 +3109,6 @@ mod poly_tests {
         }
     }
 
-    // ========================================================================
-    // Primitive Polynomial Verification Tests
-    // ========================================================================
-
     #[test]
     fn test_verify_primitive_gf4() {
         let field = Gf2mField::new(2, 0b111); // x^2 + x + 1
@@ -3334,14 +3135,14 @@ mod poly_tests {
 
     #[test]
     fn test_verify_primitive_dvb_t2_gf14() {
-        // Correct DVB-T2 polynomial
+        // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for short frames
         let field = Gf2mField::new(14, 0b100000000101011);
         assert!(field.verify_primitive());
     }
 
     #[test]
     fn test_verify_primitive_dvb_t2_gf16() {
-        // Correct DVB-T2 polynomial for normal frames
+        // `@/citation/Etsi2015` (DVB-T2) BCH field polynomial for normal frames
         let field = Gf2mField::new(16, 0b10000000000101101);
         assert!(field.verify_primitive());
     }
@@ -3498,7 +3299,7 @@ mod poly_construction_tests {
 
     #[test]
     fn test_from_exponents_dvb_t2_g1() {
-        // Real-world example: DVB-T2 short frame g_1(x)
+        // `@/citation/Etsi2015` (DVB-T2) short-frame BCH generator g_1(x)
         let field = Gf2mField::new(14, 0b100000000100001);
 
         let g1 = Gf2mPoly_::from_exponents(&field, &[0, 1, 3, 5, 14]);
@@ -3520,7 +3321,6 @@ mod poly_construction_tests {
     fn test_from_exponents_constant() {
         let field = Gf2mField::new(4, 0b10011);
 
-        // Just the constant term: 1
         let poly = Gf2mPoly_::from_exponents(&field, &[0]);
 
         assert_eq!(poly.degree(), Some(0));
@@ -3540,13 +3340,11 @@ mod poly_construction_tests {
         assert_eq!(poly.coeff(100), field.one());
         assert_eq!(poly.coeff(1000), field.one());
 
-        // Verify sparsity - check a few random intermediate points
         assert_eq!(poly.coeff(5), field.zero());
         assert_eq!(poly.coeff(50), field.zero());
         assert_eq!(poly.coeff(500), field.zero());
     }
 
-    // Tests for monomial()
     #[test]
     fn test_monomial_zero_degree() {
         let field = Gf2mField::new(4, 0b10011);
@@ -3596,7 +3394,6 @@ mod poly_construction_tests {
         assert_eq!(poly.coeff(10), field.one());
     }
 
-    // Tests for x()
     #[test]
     fn test_x_basic() {
         let field = Gf2mField::new(4, 0b10011);
@@ -3624,18 +3421,15 @@ mod poly_construction_tests {
         assert_eq!(result.coeff(3), field.one());
     }
 
-    // Tests for from_roots()
     #[test]
     fn test_from_roots_single() {
         let field = Gf2mField::gf256().with_tables();
         let alpha = field.primitive_element().unwrap();
 
-        // (x - α) should have degree 1
         let poly = Gf2mPoly_::from_roots(std::slice::from_ref(&alpha));
 
         assert_eq!(poly.degree(), Some(1));
 
-        // Verify root: p(α) = 0
         assert!(poly.eval(&alpha).is_zero());
     }
 
@@ -3697,7 +3491,7 @@ mod poly_construction_tests {
         let field = Gf2mField::gf256().with_tables();
         let alpha = field.primitive_element().unwrap();
 
-        // Create polynomial with 12 consecutive roots (DVB-T2 t=12 worst case)
+        // 12 consecutive roots, the `@/citation/Etsi2015` (DVB-T2) BCH t = 12 case
         let mut roots = Vec::new();
         let mut power = alpha.clone();
         for _ in 0..12 {
@@ -3714,7 +3508,6 @@ mod poly_construction_tests {
         }
     }
 
-    // Tests for product()
     #[test]
     fn test_product_single() {
         let field = Gf2mField::new(4, 0b10011);
@@ -3763,7 +3556,7 @@ mod poly_construction_tests {
     fn test_product_dvb_t2_simulation() {
         let field = Gf2mField::new(14, 0b100000000100001);
 
-        // Simulate DVB-T2 BCH t=3: multiply first 3 generator polynomials
+        // First three `@/citation/Etsi2015` (DVB-T2) short-frame BCH generators
         let g1 = Gf2mPoly_::from_exponents(&field, &[0, 1, 3, 5, 14]);
         let g2 = Gf2mPoly_::from_exponents(&field, &[0, 6, 8, 11, 14]);
         let g3 = Gf2mPoly_::from_exponents(&field, &[0, 1, 2, 6, 9, 10, 14]);
@@ -3791,7 +3584,6 @@ fn test_matches_gf2_coding_workaround() {
     let r = 2;
     let n = k + r;
 
-    // Create a test codeword [message | parity]
     let mut codeword = crate::BitVec::new();
     codeword.push_bit(true); // message bit 0
     codeword.push_bit(false); // message bit 1
@@ -3799,10 +3591,8 @@ fn test_matches_gf2_coding_workaround() {
     codeword.push_bit(false); // parity bit 0
     codeword.push_bit(true); // parity bit 1
 
-    // Method 1: from_bitvec_reversed
     let poly_new = Gf2mPoly_::from_bitvec_reversed(&codeword, &field);
 
-    // Method 2: manual reordering
     let mut coeffs_manual = Vec::new();
 
     // Parity polynomial p(x): degrees 0..r-1
@@ -3845,14 +3635,12 @@ mod generic_width_tests {
     use super::*;
     use crate::field::FiniteField;
 
-    // GF(2^4) with u8 backing — same field, smaller container
     #[test]
     fn test_gf16_u8() {
         let field = Gf2mField_::<u8>::new(4, 0b10011);
         let a = field.element(5);
         let b = field.element(3);
         assert_eq!((a.clone() + b.clone()).value(), 5u8 ^ 3);
-        // a * inv(a) == 1
         assert!((a.clone() * a.inv().unwrap()).is_one());
     }
 
@@ -3865,7 +3653,6 @@ mod generic_width_tests {
         assert!((a.clone() * a.inv().unwrap()).is_one());
     }
 
-    // GF(2^4) with u16
     #[test]
     fn test_gf16_u16() {
         let field = Gf2mField_::<u16>::new(4, 0b10011);
@@ -3874,7 +3661,6 @@ mod generic_width_tests {
         assert_eq!((a.clone() + b.clone()).value(), 5u16 ^ 3);
     }
 
-    // GF(2^4) with u128 — wide container for small field
     #[test]
     fn test_gf16_u128() {
         let field = Gf2mField_::<u128>::new(4, 0b10011);
@@ -3884,10 +3670,8 @@ mod generic_width_tests {
         assert!((a.clone() * a.inv().unwrap()).is_one());
     }
 
-    // Cross-width consistency: same field ops produce same results
     #[test]
     fn test_cross_width_consistency() {
-        // GF(2^4) with poly x^4+x+1 across u8, u16, u64, u128
         let f8 = Gf2mField_::<u8>::new(4, 0b10011);
         let f16 = Gf2mField_::<u16>::new(4, 0b10011);
         let f64 = Gf2mField::new(4, 0b10011);
@@ -3910,7 +3694,6 @@ mod generic_width_tests {
         }
     }
 
-    // m == V::BITS should be rejected
     #[test]
     #[should_panic(expected = "must be strictly less than")]
     fn test_m_equals_bits_rejected_u8() {
@@ -3923,7 +3706,6 @@ mod generic_width_tests {
         Gf2mField_::<u64>::new(64, 0);
     }
 
-    // order_v works for all types
     #[test]
     fn test_order_v() {
         let f8 = Gf2mField_::<u8>::new(4, 0b10011);
@@ -3933,7 +3715,6 @@ mod generic_width_tests {
         assert_eq!(f128.order_v(), 16u128);
     }
 
-    // Display uses binary format
     #[test]
     fn test_display_binary_format() {
         let field = Gf2mField::new(4, 0b10011);
@@ -3942,11 +3723,8 @@ mod generic_width_tests {
         assert_eq!(s, "0b1010");
     }
 
-    /// Exhaustive (m<=8) or sampled (m>8) field axiom verification for all m=2..16.
-    ///
-    /// This test verifies that multiplication (which may use SIMD PCLMULQDQ when
-    /// available) produces correct results by checking field axioms:
-    /// commutativity, associativity, distributivity, identity, and inverse.
+    /// Exhaustive for m ≤ 8, sampled above; multiplication takes whichever lane
+    /// the host dispatches.
     #[test]
     fn test_mul_field_axioms_all_m_2_to_16() {
         use crate::primitive_polys::PrimitivePolynomialDatabase;
@@ -3973,7 +3751,6 @@ mod generic_width_tests {
                 elems
             };
 
-            // Identity: a * 1 == a, 1 * a == a
             for &a_val in &elements {
                 let a = field.element(a_val);
                 assert_eq!(
@@ -3988,7 +3765,6 @@ mod generic_width_tests {
                 );
             }
 
-            // Zero: a * 0 == 0
             let zero = field.zero();
             for &a_val in &elements {
                 let a = field.element(a_val);
@@ -3998,7 +3774,6 @@ mod generic_width_tests {
                 );
             }
 
-            // Commutativity, associativity, distributivity on pairs/triples
             let test_elems: Vec<u64> = if m <= 4 {
                 (0..order).collect()
             } else if m <= 8 {
@@ -4028,7 +3803,6 @@ mod generic_width_tests {
                     let a = field.element(a_val);
                     let b = field.element(b_val);
 
-                    // Commutativity: a * b == b * a
                     let ab = (a.clone() * b.clone()).value();
                     let ba = (b.clone() * a.clone()).value();
                     assert_eq!(ab, ba, "m={m}: {a_val}*{b_val} != {b_val}*{a_val}");
@@ -4045,7 +3819,6 @@ mod generic_width_tests {
                 }
             }
 
-            // Inverse: a * inv(a) == 1 for all nonzero a
             for &a_val in &elements {
                 if a_val == 0 {
                     continue;
@@ -4057,10 +3830,6 @@ mod generic_width_tests {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// Kani bounded model checking harnesses for log/exp table verification
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod kani_table_validation {
@@ -4083,12 +3852,12 @@ mod kani_table_validation {
         let poly = PrimitivePolynomialDatabase::standard(8).unwrap();
         assert_eq!(poly, 0b100011101);
         let (log_table, exp_table) = Gf2mField_::<u64>::generate_tables(8, poly);
-        assert_eq!(exp_table[0], 1); // α^0 = 1
-        assert_eq!(exp_table[1], 2); // α = 2 (primitive element)
+        assert_eq!(exp_table[0], 1);
+        assert_eq!(exp_table[1], 2);
         assert_eq!(exp_table.len(), 255);
         assert_eq!(log_table.len(), 256);
-        assert_eq!(log_table[1], 0); // log(1) = 0
-        assert_eq!(log_table[2], 1); // log(α) = 1
+        assert_eq!(log_table[1], 0);
+        assert_eq!(log_table[2], 1);
         #[rustfmt::skip]
         let kani_exp: [u16; 255] = [
             1, 2, 4, 8, 16, 32, 64, 128, 29, 58, 116, 232, 205, 135, 19, 38,
@@ -4162,11 +3931,6 @@ mod kani_proofs {
         Gf2mField_::<u64>::generate_tables(M8, POLY8)
     }
 
-    // -- GF(2^4) harnesses --
-
-    /// Verify exp_table and log_table are mutual inverses for GF(2^4).
-    /// Uses production generate_tables(). Checks exp_table[0] = 1 (α^0)
-    /// and exp_table[1] = primitive element.
     #[kani::proof]
     #[kani::unwind(20)]
     fn table_consistency_gf16() {
@@ -4192,8 +3956,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify table-based multiplication matches schoolbook for GF(2^4).
-    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(20)]
     fn table_mul_matches_schoolbook_gf16() {
@@ -4213,8 +3975,6 @@ mod kani_proofs {
         assert_eq!(table_result, schoolbook_result);
     }
 
-    /// Verify table-based inverse: a * inv(a) == 1 for all nonzero a in GF(2^4).
-    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(20)]
     fn table_inverse_correct_gf16() {
@@ -4230,11 +3990,6 @@ mod kani_proofs {
         assert_eq!(product, 1);
     }
 
-    // -- GF(2^8) harnesses --
-
-    /// Verify exp_table and log_table are mutual inverses for GF(2^8).
-    /// Uses production generate_tables(). Checks exp_table[0] = 1 (α^0)
-    /// and exp_table[1] = primitive element.
     #[kani::proof]
     #[kani::unwind(260)]
     fn table_consistency_gf256() {
@@ -4260,8 +4015,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify table-based multiplication matches schoolbook for GF(2^8).
-    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(260)]
     fn table_mul_matches_schoolbook_gf256() {
@@ -4280,8 +4033,6 @@ mod kani_proofs {
         assert_eq!(table_result, schoolbook_result);
     }
 
-    /// Verify table-based inverse: a * inv(a) == 1 for all nonzero a in GF(2^8).
-    /// Uses production generate_tables() + production gf2m_mul_raw().
     #[kani::proof]
     #[kani::unwind(260)]
     fn table_inverse_correct_gf256() {

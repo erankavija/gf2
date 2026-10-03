@@ -1,49 +1,15 @@
 //! Configuration trait for multi-word GF(2^m) extensions.
 //!
 //! [`Gf2mWideConfig`] is the multi-word analogue of
-//! [`crate::gfpn::ExtConfig`]: a zero-sized marker type parameterises a field
-//! implementation (here [`crate::gf2m::Gf2mWide`]) with the compile-time
-//! constants that define the irreducible polynomial and the extension degree.
-//!
-//! # Representation
-//!
-//! The irreducible polynomial is stored as its **low-order `M` bits** in
-//! `MODULUS`, packed little-endian across `N` `u64` words (bit `i` lives in
-//! `MODULUS[i >> 6]` at position `1u64 << (i & 63)`). The leading coefficient
-//! at bit `M` is **implicit and always 1**. The single-word carrier
-//! [`crate::gf2m::Gf2mField_::new`] differs: its polynomial stores the
-//! leading term explicitly at bit `m` (`x^4 + x + 1` is `0b10011`), and
-//! [`crate::field::extension::BinaryPrimeExt::new`] reads that bit to build
-//! the monic modulus. The field identity of a `Gf2mWide` appends the implicit
-//! leading coefficient, so both carriers name the same monic modulus. The
-//! invariant
-//! `64 * (N - 1) < M <= 64 * N` ensures every `[u64; N]` modulus word is
-//! meaningful and that no bit of a reduced element sits above the top word.
-//!
-//! # Example
-//!
-//! ```
-//! use gf2_core::gf2m::Gf2mWideConfig;
-//!
-//! /// GF(2^256) with the irreducible pentanomial x^256 + x^10 + x^5 + x^2 + 1.
-//! /// Cited from Seroussi, "Table of Low-Weight Binary Irreducible Polynomials",
-//! /// HP Laboratories technical report HPL-98-135 (1998), Table 1 row m = 256.
-//! struct Gf2m256Config;
-//!
-//! impl Gf2mWideConfig<4> for Gf2m256Config {
-//!     const M: usize = 256;
-//!     // x^10 + x^5 + x^2 + 1 = 0b100_0010_0101 = 0x425
-//!     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
-//! }
-//! ```
+//! [`crate::gfpn::ExtConfig`]: a zero-sized marker type parameterises
+//! [`crate::gf2m::Gf2mWide`] with the extension degree and the irreducible
+//! polynomial. `MODULUS` leaves the leading coefficient at bit `M` implicit,
+//! whereas [`crate::gf2m::Gf2mField_::new`] takes it explicit at bit `m`; the
+//! field identity of a `Gf2mWide` appends it, so both carriers name the same
+//! monic modulus.
 
 /// Zero-sized configuration specifying an irreducible polynomial for
 /// GF(2^M), packed into `N` little-endian `u64` words.
-///
-/// # Type Parameter
-///
-/// * `N` - Number of `u64` words used to store a field element. Must satisfy
-///   `64 * (N - 1) < M <= 64 * N`.
 ///
 /// # Irreducibility contract
 ///
