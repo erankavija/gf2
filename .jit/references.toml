@@ -384,3 +384,250 @@ url = "https://ccsds.org/Pubs/130x1g3e1.pdf"
 key = "Sionna2026"
 citation = "NVIDIA — Sionna, an open-source 5G NR physical-layer library (Apache-2.0); default branch `main` at commit 04ddb9312116b408093b9d3ad363a3df355093a6, fetched 2026-06-12. The TS 38.212 base-graph tables are `src/sionna/phy/fec/ldpc/codes/5G_bg1.csv` and `5G_bg2.csv`."
 url = "https://github.com/NVlabs/sionna"
+
+[[references]]
+key = "Seroussi1998"
+citation = "Seroussi — Table of Low-Weight Binary Irreducible Polynomials. HP Laboratories Technical Report HPL-98-135, 1998, 15 pages."
+url = "https://www.hpl.hp.com/techreports/98/HPL-98-135.html"
+
+[[references]]
+key = "Rabin1980"
+citation = "Rabin — Probabilistic Algorithms in Finite Fields. SIAM J. Comput. 9(2):273–280, 1980."
+doi = "10.1137/0209024"
+
+[[references]]
+key = "Swan1962"
+citation = "Swan — Factorization of polynomials over finite fields. Pacific J. Math. 12(3):1099–1106, 1962."
+doi = "10.2140/pjm.1962.12.1099"
+
+[[references]]
+key = "Oeis2026"
+citation = "OEIS Foundation Inc. — Sequence A011260: Number of primitive polynomials of degree n over GF(2). The On-Line Encyclopedia of Integer Sequences, entry by N. J. A. Sloane, accessed 2026."
+url = "https://oeis.org/A011260"
+
+[[references]]
+key = "DumasPernet2012"
+citation = "Dumas, Pernet — Computational linear algebra over finite fields. arXiv:1204.3735v1 (2012); published in Mullen, Panario (eds.), Handbook of Finite Fields, Chapman and Hall/CRC, 2013, pp. 514–528. Section, algorithm, theorem and table numbers cited in this repository follow the arXiv version."
+arxiv = "1204.3735"
+
+[[references]]
+key = "DumasPernetSultan2017"
+citation = "Dumas, Pernet, Sultan — Fast computation of the rank profile matrix and the generalized Bruhat decomposition. J. Symbolic Comput. 83:187–210, 2017. arXiv:1601.01798."
+doi = "10.1016/j.jsc.2016.11.011"
+arxiv = "1601.01798"
+
+[[references]]
+key = "DumasGiorgiPernet2008"
+citation = "Dumas, Giorgi, Pernet — Dense Linear Algebra over Word-Size Prime Fields: the FFLAS and FFPACK Packages. ACM Trans. Math. Softw. 35(3), article 19, pp. 1–42, 2008. arXiv:cs/0601133."
+doi = "10.1145/1391989.1391992"
+arxiv = "cs/0601133"
+
+[[references]]
+key = "MollerGranlund2011"
+citation = "Möller, Granlund — Improved Division by Invariant Integers. IEEE Trans. Comput. 60(2):165–175, 2011."
+doi = "10.1109/TC.2010.143"
+
+[[references]]
+key = "Devegili2006"
+citation = "Devegili, Ó hÉigeartaigh, Scott, Dahab — Multiplication and Squaring on Pairing-Friendly Fields. IACR Cryptology ePrint Archive, Paper 2006/471, 2006."
+eprint = "2006/471"
+
+[[references]]
+key = "Beuchat2010"
+citation = "Beuchat, González-Díaz, Mitsunari, Okamoto, Rodríguez-Henríquez, Teruya — High-Speed Software Implementation of the Optimal Ate Pairing over Barreto–Naehrig Curves. IACR Cryptology ePrint Archive, Paper 2010/354; Pairing-Based Cryptography – Pairing 2010, Lecture Notes in Computer Science, Springer, 2010, pp. 21–39."
+eprint = "2010/354"
+doi = "10.1007/978-3-642-17455-1_2"
+
+[[references]]
+key = "GentlemanSande1966"
+citation = "Gentleman, Sande — Fast Fourier Transforms: for fun and profit. Proc. AFIPS '66 Fall Joint Computer Conference, San Francisco, November 7–10, 1966, from p. 563."
+doi = "10.1145/1464291.1464352"
+
+[[references]]
+key = "Warren2012"
+citation = "Warren — Hacker's Delight, 2nd edition. Addison-Wesley Professional, 2012. ISBN 978-0-321-84268-8. Section 7-3 is Transposing a Bit Matrix."
+url = "https://www.informit.com/store/hackers-delight-9780321842688"
+
+[[references]]
+key = "GotoGeijn2008"
+citation = "Goto, van de Geijn — Anatomy of High-Performance Matrix Multiplication. ACM Trans. Math. Softw. 34(3):1–25, 2008."
+doi = "10.1145/1356052.1356053"
+
+[[references]]
+key = "VanZee2015"
+citation = "Van Zee, van de Geijn — BLIS: A Framework for Rapidly Instantiating BLAS Functionality. ACM Trans. Math. Softw. 41(3):1–33, 2015."
+doi = "10.1145/2764454"
+
+[[references]]
+key = "Amd2020"
+citation = "Advanced Micro Devices — Software Optimization Guide for AMD Family 19h Processors. Publication No. 56665, Revision 3.00, November 2020."
+
+[[references]]
+key = "Proth1878"
+citation = "Proth — Théorèmes sur les nombres premiers. C. R. Acad. Sci. Paris 87:926, 1878."
+
+[[references]]
+key = "CrandallPomerance2005"
+citation = "Crandall, Pomerance — Prime Numbers: A Computational Perspective, 2nd edition. Springer, 2005. ISBN 978-0-387-25282-7."
+doi = "10.1007/0-387-28979-8"
+
+[[references]]
+key = "HardyWright2008"
+citation = "Hardy, Wright — An Introduction to the Theory of Numbers, 6th edition. Oxford University Press, 2008. ISBN 978-0-19-921986-5."
+
+[[references]]
+key = "RichardsonUrbanke2001"
+citation = "Richardson, Urbanke — Efficient encoding of low-density parity-check codes. IEEE Trans. Inf. Theory 47(2):638–656, 2001."
+doi = "10.1109/18.910579"
+
+[[references]]
+key = "ThreeGpp2020"
+citation = "3GPP TS 38.212 V16.4.0 (2020-12) — 3rd Generation Partnership Project; Technical Specification Group Radio Access Network; NR; Multiplexing and channel coding (Release 16). Published by ETSI as ETSI TS 138 212 V16.4.0 (2021-01)."
+url = "https://www.etsi.org/deliver/etsi_ts/138200_138299/138212/16.04.00_60/ts_138212v160400p.pdf"
+
+[[references]]
+key = "Etsi2012"
+citation = "ETSI TS 102 831 V1.2.1 (2012-08) — Digital Video Broadcasting (DVB); Implementation guidelines for a second generation digital terrestrial television broadcasting system (DVB-T2). Table 44 gives the required raw (C/N)0 for BER = 1e-7 after LDPC decoding."
+url = "https://www.etsi.org/deliver/etsi_ts/102800_102899/102831/01.02.01_60/ts_102831v010201p.pdf"
+
+[[references]]
+key = "Bahl1974"
+citation = "Bahl, Cocke, Jelinek, Raviv — Optimal Decoding of Linear Codes for Minimizing Symbol Error Rate. IEEE Trans. Inf. Theory 20(2):284–287, 1974."
+doi = "10.1109/TIT.1974.1055186"
+
+[[references]]
+key = "Wolf1978"
+citation = "Wolf — Efficient Maximum Likelihood Decoding of Linear Block Codes Using a Trellis. IEEE Trans. Inf. Theory 24(1):76–80, 1978."
+doi = "10.1109/TIT.1978.1055821"
+
+[[references]]
+key = "McEliece1996"
+citation = "McEliece — On the BCJR Trellis for Linear Block Codes. IEEE Trans. Inf. Theory 42(4):1072–1092, 1996."
+doi = "10.1109/18.508834"
+
+[[references]]
+key = "Yuan2025"
+citation = "Yuan, Médard, Galligan, Duffy — Soft-Output (SO) GRAND and Iterative Decoding to Outperform LDPC Codes. IEEE Trans. Wireless Commun. 24(4):3386–3399, 2025. arXiv:2310.10737."
+doi = "10.1109/TWC.2025.3530880"
+arxiv = "2310.10737"
+
+[[references]]
+key = "CoskunPfister2022"
+citation = "Coşkun, Pfister — An Information-Theoretic Perspective on Successive Cancellation List Decoding and Polar Code Design. IEEE Trans. Inf. Theory 68(9):5779–5791, 2022. arXiv:2103.16680."
+doi = "10.1109/TIT.2022.3173152"
+arxiv = "2103.16680"
+
+[[references]]
+key = "Duffy2019"
+citation = "Duffy, Li, Médard — Capacity-Achieving Guessing Random Additive Noise Decoding. IEEE Trans. Inf. Theory 65(7):4023–4040, 2019."
+doi = "10.1109/TIT.2019.2896110"
+
+[[references]]
+key = "Solomon2020"
+citation = "Solomon, Duffy, Médard — Soft Maximum Likelihood Decoding using GRAND. Proc. IEEE International Conference on Communications (ICC), 2020, pp. 1–6."
+doi = "10.1109/ICC40277.2020.9149208"
+
+[[references]]
+key = "Duffy2022"
+citation = "Duffy, An, Médard — Ordered Reliability Bits Guessing Random Additive Noise Decoding. IEEE Trans. Signal Process. 70:4528–4542, 2022."
+doi = "10.1109/TSP.2022.3203251"
+
+[[references]]
+key = "Machler2012"
+citation = "Mächler — Accurately Computing log(1 − exp(−|a|)) Assessed by the Rmpfr package. ETH Zurich, 2012; vignette of the R package Rmpfr."
+url = "https://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf"
+
+[[references]]
+key = "TenBrink2001"
+citation = "ten Brink — Convergence Behavior of Iteratively Decoded Parallel Concatenated Codes. IEEE Trans. Commun. 49(10):1727–1737, 2001."
+doi = "10.1109/26.957394"
+
+[[references]]
+key = "Chase1972"
+citation = "Chase — A Class of Algorithms for Decoding Block Codes with Channel Measurement Information. IEEE Trans. Inf. Theory 18(1):170–182, 1972."
+doi = "10.1109/TIT.1972.1054746"
+
+[[references]]
+key = "Pyndiah1998"
+citation = "Pyndiah — Near-Optimum Decoding of Product Codes: Block Turbo Codes. IEEE Trans. Commun. 46(8):1003–1010, 1998."
+doi = "10.1109/26.705396"
+
+[[references]]
+key = "Montgomery1987"
+citation = "Montgomery — Speeding the Pollard and Elliptic Curve Methods of Factorization. Math. Comp. 48(177):243–264, 1987."
+doi = "10.1090/S0025-5718-1987-0866113-7"
+
+[[references]]
+key = "Massey1969"
+citation = "Massey — Shift-Register Synthesis and BCH Decoding. IEEE Trans. Inf. Theory 15(1):122–127, 1969."
+doi = "10.1109/TIT.1969.1054260"
+
+[[references]]
+key = "LidlNiederreiter1996"
+citation = "Lidl, Niederreiter — Finite Fields, 2nd edition. Cambridge University Press, 1996. ISBN 978-0-521-39231-0."
+doi = "10.1017/CBO9780511525926"
+
+[[references]]
+key = "Menezes1997"
+citation = "Menezes, van Oorschot, Vanstone — Handbook of Applied Cryptography. CRC Press, copyright 1997, 810 pages. ISBN 978-0-8493-8523-0."
+url = "https://cacr.uwaterloo.ca/hac/"
+
+[[references]]
+key = "Zivkovic1994"
+citation = "Živković — Table of Primitive Binary Polynomials. II. Math. Comp. 63(207):301–306, 1994."
+doi = "10.1090/S0025-5718-1994-1240662-8"
+
+[[references]]
+key = "Nist2013"
+citation = "National Institute of Standards and Technology — Digital Signature Standard (DSS). Federal Information Processing Standards Publication FIPS PUB 186-4, July 2013. Appendix D lists the recommended binary-field reduction polynomials."
+doi = "10.6028/NIST.FIPS.186-4"
+
+[[references]]
+key = "Lubeck2024"
+citation = "Lübeck — Conway polynomials for finite fields. Online database, RWTH Aachen, last updated 2024-05-06; the characteristic-2 table is CP2.html."
+url = "https://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/index.html"
+
+[[references]]
+key = "Higham2002"
+citation = "Higham — Accuracy and Stability of Numerical Algorithms, 2nd edition. SIAM, 2002. ISBN 978-0-89871-521-7."
+doi = "10.1137/1.9780898718027"
+
+[[references]]
+key = "Vigna2015"
+citation = "Vigna — splitmix64.c, public-domain reference implementation of the SplitMix64 generator, written in 2015."
+url = "https://prng.di.unimi.it/splitmix64.c"
+
+[[references]]
+key = "FflasFfpack2021"
+citation = "The FFLAS-FFPACK group — FFLAS-FFPACK, dense linear algebra over finite fields, version 2.5.0, released 2021-12-14."
+url = "https://github.com/linbox-team/fflas-ffpack"
+
+[[references]]
+key = "LinBox2025"
+citation = "The LinBox group — LinBox: exact linear algebra over the integers and finite fields, version 1.7.1, released 2025-07-24."
+url = "https://github.com/linbox-team/linbox"
+
+[[references]]
+key = "Shoup2025"
+citation = "Shoup — NTL: A Library for doing Number Theory, version 11.6.0, released 2025-11-07."
+url = "https://libntl.org"
+
+[[references]]
+key = "Flint2026"
+citation = "The FLINT team — FLINT: Fast Library for Number Theory, version 3.5.0, released 2026-04-24."
+url = "https://flintlib.org"
+
+[[references]]
+key = "OpenBlas2022"
+citation = "The OpenBLAS project — OpenBLAS: an optimized BLAS library, version 0.3.21, released 2022-08-07."
+url = "https://github.com/OpenMathLib/OpenBLAS"
+
+[[references]]
+key = "Plonky2026"
+citation = "Plonky3 project — Plonky3, a toolkit for polynomial IOPs; source of the BabyBear and KoalaBear field constants, accessed 2026."
+url = "https://github.com/Plonky3/Plonky3"
+
+[[references]]
+key = "RandCore2025"
+citation = "rust-random project — rand_core 0.9.3 (core random number generator traits for Rust). crates.io registry release, published 2025-03-01, checksum 99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38."
+url = "https://crates.io/crates/rand_core/0.9.3"
