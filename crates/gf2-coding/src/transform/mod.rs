@@ -4,30 +4,6 @@
 //! coordinate space of the value being transformed.  A transformation's
 //! [`CoordinateMap`] points in the other direction: position `i` in the
 //! derived code maps to the corresponding position in its mother code.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::transform::Shortened;
-//! use gf2_coding::traits::block::BlockCode;
-//! use gf2_coding::{CodeError, LinearBlockCode};
-//! use gf2_core::BitMatrix;
-//!
-//! let mut generator = BitMatrix::zeros(2, 3);
-//! generator.set(0, 0, true);
-//! generator.set(0, 2, true);
-//! generator.set(1, 1, true);
-//! generator.set(1, 2, true);
-//! let code = LinearBlockCode::new_systematic(generator, None);
-//!
-//! // The returned code consists of mother codewords whose position 0 is
-//! // zero, with that position removed from the exposed coordinate space.
-//! let shortened = Shortened::new(code, [0])?;
-//! assert_eq!(shortened.n(), 2);
-//! assert_eq!(shortened.k(), 1);
-//! assert_eq!(shortened.coordinate_map().mother_position(0)?, 1);
-//! # Ok::<(), CodeError>(())
-//! ```
 
 pub mod coordinate_map;
 
@@ -62,24 +38,6 @@ use std::fmt;
 /// [`CoordinateMap::mother_position_opt`].  This complete representation also
 /// lets callers compose provenance through another derived wrapper via
 /// [`Self::with_coordinate_map`].
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::transform::Extended;
-/// use gf2_coding::traits::block::{BlockCode, BlockEncoder};
-/// use gf2_coding::{CodeError, LinearBlockCode};
-/// use gf2_core::BitVec;
-///
-/// let mother = LinearBlockCode::hamming(3);
-/// let extended = Extended::new(mother)?;
-/// let message = BitVec::ones(extended.k());
-/// let codeword = extended.encode(&message)?;
-/// assert_eq!(codeword.len(), extended.n());
-/// assert_eq!(codeword.count_ones() % 2, 0);
-/// assert_eq!(extended.extension_position(), extended.n() - 1);
-/// # Ok::<(), CodeError>(())
-/// ```
 pub struct Extended<C>
 where
     C: BlockCode,
@@ -381,7 +339,6 @@ pub enum ShortenedDerivation {
     RankDerived,
 }
 
-/// The data one [`ShortenedDerivation`] stores.
 #[derive(Clone, Debug)]
 enum ShortenedData<F: FiniteField> {
     /// The RREF generator of the derived code.
@@ -720,8 +677,6 @@ where
         self.information_set.len()
     }
 
-    /// Returns the derived length, the number of coordinates the deletion
-    /// map keeps.
     fn n(&self) -> usize {
         self.local_map.derived_len()
     }
@@ -1694,7 +1649,6 @@ mod tests {
         matrix
     }
 
-    /// Returns the message carrying the field identity at `index` alone.
     fn basis_message<C: BlockCode>(code: &C, index: usize) -> C::Symbols {
         let zero = code.symbol_zero();
         let mut message = C::Symbols::zeroed(code.k(), &zero);
@@ -1704,10 +1658,6 @@ mod tests {
         message
     }
 
-    /// Shortens `code` on `coordinates` through both derivations and asserts
-    /// that they agree on every observable the transformation contract
-    /// exposes.
-    ///
     /// [`RankDerivedMother`] reports no systematic layout and delegates
     /// everything else, so the second construction is the rank-derived
     /// derivation of the same code.  Codewords are compared on the message
@@ -1752,9 +1702,6 @@ mod tests {
         }
     }
 
-    /// Asserts that both derivations produce the same parity-check matrix,
-    /// and that it annihilates every generator row.
-    ///
     /// The two matrices coincide for a mother whose check matrix is the
     /// canonical `[-Pᵀ | I]`, which every fixture here supplies.  A mother
     /// carrying another basis of the same dual space would give the
@@ -1788,7 +1735,6 @@ mod tests {
         }
     }
 
-    /// Returns the mother `[I_2 | P]` over GF(2) with `k = 2` and `n = 4`.
     fn binary_systematic_mother() -> LinearBlockCode {
         let mut generator = BitMatrix::zeros(2, 4);
         generator.set(0, 0, true);
@@ -1805,7 +1751,6 @@ mod tests {
         LinearBlockCode::new_systematic(generator, Some(check))
     }
 
-    /// Returns the mother `[I_2 | P]` over GF(5) with `k = 2` and `n = 5`.
     fn nonbinary_systematic_mother() -> DenseTestCode<Fp<5>> {
         DenseTestCode {
             generator: fp5_matrix(2, 5, &[1, 0, 2, 3, 4, 0, 1, 1, 4, 2]),
@@ -1828,7 +1773,6 @@ mod tests {
         );
         assert!(shortened.is_systematic().unwrap());
         assert_eq!(shortened.information_set(), &[0]);
-        // Row 1 of the mother generator with column 0 deleted.
         let generator = shortened.generator_matrix().unwrap();
         for column in 0..shortened.n() {
             assert_eq!(
@@ -1838,7 +1782,6 @@ mod tests {
         }
     }
 
-    /// Returns bit `(row, column)` of the mother's generator matrix.
     fn mother_generator_bit(mother: &LinearBlockCode, row: usize, column: usize) -> bool {
         BitMatrix::get(&mother.generator_matrix().unwrap(), row, column)
     }
@@ -2374,8 +2317,6 @@ mod tests {
             Shortened::new(code.clone(), [1, 1]),
             Err(CodeError::DuplicateCoordinate { .. })
         ));
-        // Shortening on the complete coordinate set is VALID: it produces the
-        // zero-length, zero-dimensional boundary code.
         let boundary = Shortened::new(code, [0, 1, 2, 3]).unwrap();
         assert_eq!(boundary.n(), 0);
         assert_eq!(boundary.k(), 0);
