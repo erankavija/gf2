@@ -1,16 +1,10 @@
 //! 5G NR rate-matching bit interleaver — 3GPP TS 38.212 clause 5.4.2.2.
 //!
-//! After bit selection (clause 5.4.2.1, embodied in this crate by the
-//! [`Nr5gRateMatchedCode`](super::Nr5gRateMatchedCode) rate-matching surface),
-//! the length-`E` rate-matched bit sequence `e_0, e_1, ..., e_{E-1}` is
-//! interleaved into `f_0, f_1, ..., f_{E-1}` by a block interleaver
-//! parameterised by the modulation order `Q_m` (bits per QAM symbol). This
-//! reduces the dependency between adjacent coded bits mapped to the same QAM
-//! symbol in a bit-interleaved coded-modulation (BICM) chain.
-//!
-//! # The mapping (TS 38.212 §5.4.2.2, verbatim)
-//!
-//! The spec defines, for `Q_m` the modulation order:
+//! After bit selection (clause 5.4.2.1,
+//! [`Nr5gRateMatchedCode`](super::Nr5gRateMatchedCode)), the length-`E`
+//! rate-matched bit sequence `e_0, e_1, ..., e_{E-1}` is interleaved into
+//! `f_0, f_1, ..., f_{E-1}` by a block interleaver parameterised by the
+//! modulation order `Q_m` (bits per QAM symbol):
 //!
 //! ```text
 //! for j = 0 to E/Q_m - 1
@@ -23,24 +17,12 @@
 //! Equivalently, the `E` input bits are written **row by row** into a
 //! `Q_m × (E/Q_m)` matrix (row `i`, column `j` holds `e_{i*(E/Q_m)+j}`) and read
 //! out **column by column** (`f_{i + j*Q_m}` is row `i` of column `j`). `E` must
-//! be divisible by `Q_m` for the matrix to be rectangular; this is guaranteed
-//! when `E = target_n` is a multiple of the modulation's bits-per-symbol.
+//! be divisible by `Q_m`.
 //!
 //! [`output_interleaver`] materialises the **gather permutation** `perm` with
-//! `perm[i + j*Q_m] = i*(E/Q_m) + j`, so that `f[p] = e[perm[p]]`.
-//!
-//! # External validation
-//!
-//! The `perm[i + j*Q_m] = i*(E/Q_m) + j` gather index is byte-for-byte the
+//! `perm[i + j*Q_m] = i*(E/Q_m) + j`, so that `f[p] = e[perm[p]]`; this is the
 //! `generate_out_int` routine in `@/citation/Sionna2026`
-//! (`src/sionna/phy/fec/ldpc/encoding.py`, `LDPC5GEncoder.generate_out_int`,
-//! main branch as of 2026-06; Apache-2.0), which builds the same permutation
-//! with `perm_seq[i + j*num_bits_per_symbol] = i*(n/num_bits_per_symbol) + j`
-//! and the inverse via `np.argsort(perm_seq)`. Sionna is the same reference the
-//! BG1/BG2 shift tables under `data/ldpc/nr_5g/` are validated against
-//! (`data/ldpc/nr_5g/PROVENANCE.md`). The worked example in this module's tests
-//! (`Q_m = 2`, `E = 6` → `perm = [0, 3, 1, 4, 2, 5]`) is derived directly from
-//! the spec loop above and reproduces Sionna's `generate_out_int(6, 2)`.
+//! (`LDPC5GEncoder.generate_out_int`).
 
 use crate::llr::Llr;
 use gf2_core::BitVec;
@@ -52,17 +34,6 @@ use gf2_core::BitVec;
 /// `perm[i + j*q_m] = i*(e_len/q_m) + j` for `j ∈ [0, e_len/q_m)`,
 /// `i ∈ [0, q_m)`. Interleaving is the gather `f[p] = e[perm[p]]`; the spec
 /// formula is `f_{i + j*Q_m} = e_{i*(E/Q_m) + j}`.
-///
-/// # Arguments
-///
-/// * `e_len` — the rate-matched sequence length `E`. Must be a positive
-///   multiple of `q_m`.
-/// * `q_m` — the modulation order `Q_m` (bits per QAM symbol), e.g. `2` (QPSK),
-///   `4` (16-QAM), `6` (64-QAM), `8` (256-QAM). Must be non-zero.
-///
-/// # Returns
-///
-/// The length-`e_len` gather permutation.
 ///
 /// # Panics
 ///
@@ -77,10 +48,6 @@ use gf2_core::BitVec;
 /// // Q_m = 2, E = 6: rows = 2, cols = 3. Spec loop yields perm[0,3,1,4,2,5].
 /// assert_eq!(output_interleaver(6, 2), vec![0, 3, 1, 4, 2, 5]);
 /// ```
-///
-/// # Complexity
-///
-/// O(`e_len`).
 #[must_use]
 pub fn output_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
     assert!(q_m != 0, "modulation order Q_m must be non-zero");
@@ -105,16 +72,6 @@ pub fn output_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
 /// `perm`. Deinterleaving an interleaved sequence `f` recovers `e` via the
 /// gather `e[p] = f[inv[p]]`.
 ///
-/// # Arguments
-///
-/// * `e_len` — the rate-matched sequence length `E`. Must be a positive
-///   multiple of `q_m`.
-/// * `q_m` — the modulation order `Q_m`. Must be non-zero.
-///
-/// # Returns
-///
-/// The length-`e_len` inverse (deinterleaver) gather permutation.
-///
 /// # Panics
 ///
 /// Panics under the same conditions as [`output_interleaver`].
@@ -131,10 +88,6 @@ pub fn output_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
 ///     assert_eq!(inv[perm[p]], p);
 /// }
 /// ```
-///
-/// # Complexity
-///
-/// O(`e_len`).
 #[must_use]
 pub fn inverse_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
     let perm = output_interleaver(e_len, q_m);
@@ -149,15 +102,6 @@ pub fn inverse_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
 ///
 /// Returns `f` where `f[p] = e[perm[p]]` and `perm = output_interleaver(E, q_m)`
 /// with `E = e.len()`.
-///
-/// # Arguments
-///
-/// * `e` — the rate-matched codeword bits (length `E`, a multiple of `q_m`).
-/// * `q_m` — the modulation order `Q_m`.
-///
-/// # Returns
-///
-/// The interleaved length-`E` bit sequence.
 ///
 /// # Panics
 ///
@@ -177,10 +121,6 @@ pub fn inverse_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
 /// let bits: Vec<bool> = (0..6).map(|i| f.get(i)).collect();
 /// assert_eq!(bits, vec![true, true, false, true, false, false]);
 /// ```
-///
-/// # Complexity
-///
-/// O(`E`).
 #[must_use]
 pub fn interleave_bits(e: &BitVec, q_m: usize) -> BitVec {
     let perm = output_interleaver(e.len(), q_m);
@@ -193,21 +133,9 @@ pub fn interleave_bits(e: &BitVec, q_m: usize) -> BitVec {
 
 /// Deinterleaves an LLR sequence per the inverse of TS 38.212 §5.4.2.2.
 ///
-/// The receive path carries soft LLRs, so the deinterleaver operates on `Llr`
-/// values: it recovers the rate-matched-order LLRs `e_llr` from the
-/// interleaved-order LLRs `f_llr` via `e_llr[p] = f_llr[inv[p]]` where
-/// `inv = inverse_interleaver(E, q_m)`. Composing [`interleave_bits`] (forward,
-/// in the bit domain) with this inverse (in the LLR domain) is the identity on
-/// the bit/LLR positions.
-///
-/// # Arguments
-///
-/// * `f_llr` — the interleaved-order LLRs (length `E`, a multiple of `q_m`).
-/// * `q_m` — the modulation order `Q_m`.
-///
-/// # Returns
-///
-/// The deinterleaved (rate-matched-order) length-`E` LLR sequence.
+/// Recovers the rate-matched-order LLRs `e_llr` from the interleaved-order
+/// LLRs `f_llr` via `e_llr[p] = f_llr[inv[p]]` where
+/// `inv = inverse_interleaver(E, q_m)`.
 ///
 /// # Panics
 ///
@@ -225,10 +153,6 @@ pub fn interleave_bits(e: &BitVec, q_m: usize) -> BitVec {
 /// let vals: Vec<f32> = e.iter().map(|l| l.value()).collect();
 /// assert_eq!(vals, vec![10.0, 12.0, 14.0, 11.0, 13.0, 15.0]);
 /// ```
-///
-/// # Complexity
-///
-/// O(`E`).
 #[must_use]
 pub fn deinterleave_llrs(f_llr: &[Llr], q_m: usize) -> Vec<Llr> {
     let inv = inverse_interleaver(f_llr.len(), q_m);
@@ -326,11 +250,8 @@ mod tests {
         ) {
             let e_len = q_m * cols;
             let perm = output_interleaver(e_len, q_m);
-            // Build a distinct-valued LLR sequence as the rate-matched-order e.
             let e: Vec<Llr> = (0..e_len).map(|v| Llr::new(v as f32)).collect();
-            // Interleave (gather with perm), as the bit interleaver does.
             let f: Vec<Llr> = perm.iter().map(|&src| e[src]).collect();
-            // Deinterleave with the LLR inverse.
             let recovered = deinterleave_llrs(&f, q_m);
             for p in 0..e_len {
                 prop_assert_eq!(recovered[p].value(), e[p].value());
@@ -348,7 +269,6 @@ mod tests {
             e.set(i, true);
         }
         let f = interleave_bits(&e, q_m);
-        // Deinterleave the bits using the inverse permutation directly.
         let inv = inverse_interleaver(e_len, q_m);
         let recovered: BitVec = {
             let mut bv = BitVec::with_capacity(e_len);
