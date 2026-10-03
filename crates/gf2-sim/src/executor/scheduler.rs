@@ -1,67 +1,38 @@
-//! The hybrid CPU/GPU pipeline scheduler (Phase C foundational task
-//! `75c22fa8`, design doc §6 / §8 / §11).
+//! The hybrid CPU/GPU pipeline scheduler behind
+//! [`Pipeline::run`](crate::Pipeline::run). Each rayon worker owns a strided
+//! partition of the SNR point's global frames (worker `w` of `W` takes
+//! `w, w+W, w+2W, …`) and one HIP stream: it enqueues the GPU LDPC decode of
+//! batch `N` on that stream, prepares batch `N+1` on the CPU meanwhile, awaits
+//! completion per-stream (never via device-wide sync), then runs the BCH
+//! decode-tail and information-bit error count on the CPU.
 //!
-//! [`Scheduler`] is the engine [`Pipeline::run`](crate::Pipeline::run) drives.
-//! It pairs each rayon worker with one HIP stream and overlaps CPU preparation
-//! of batch `N+1` against GPU execution of batch `N`:
+//! # Stage routing by execution class
 //!
-//! 1. each worker owns a fixed strided partition of the SNR point's global
-//!    frames (worker `w` of `W` takes frames `w, w+W, w+2W, …`); within its
-//!    partition it processes frames in **batches**;
-//! 2. for each batch `N` the worker (a) holds the CPU-prepared LLRs of batch
-//!    `N`, (b) enqueues the GPU LDPC belief-propagation decode of batch `N` —
-//!    every kernel launch **and** every pinned-staged H2D/D2H transfer — on
-//!    its owned stream, and (c) prepares batch `N+1` on the CPU **while**
-//!    batch `N` decodes on the GPU; completion is awaited **per-stream**
-//!    (`hipStreamSynchronize` inside the decode call), never via device-wide
-//!    sync, so two workers' batches on different streams genuinely overlap;
-//! 3. once batch `N`'s device codewords come back, the worker runs the SSOT BCH
-//!    decode-tail + information-bit error count on the CPU and records the
-//!    per-worker counters.
+//! [`run`](Scheduler::run) routes by each stage's
+//! [`execution_class()`](crate::stage::AnyStage::execution_class): a
+//! [`GpuOnly`](crate::ExecutionClass) LDPC BP decode stage is downcast to its
+//! concrete type and enqueued on the worker's owned HIP stream; otherwise the
+//! point runs the CPU dispatch [`run_snr_point`]. A
+//! [`Hybrid`](crate::ExecutionClass)-class stage selects no GPU dispatch.
 //!
-//! # Stage routing by execution class (deliverable 3)
-//!
-//! [`run`](Scheduler::run) derives its dispatch from the **pipeline's stage
-//! list**: it walks [`Pipeline::stages`](crate::Pipeline::stages) matching each
-//! stage's [`execution_class()`](crate::stage::AnyStage::execution_class).
-//! A discovered [`GpuOnly`](crate::ExecutionClass) stage (the LDPC BP decode
-//! the DVB-T2 preset places under `with_gpu(true)`) is downcast to its
-//! concrete type and enqueued on the worker's owned HIP stream; every
-//! [`CpuOnly`](crate::ExecutionClass) stage (encode, interleave, QAM map,
-//! AWGN, demap, BCH decode-tail, error count) runs on the rayon worker — an
-//! all-`CpuOnly` pipeline therefore routes to the pinned SSOT CPU dispatch
-//! ([`run_snr_point`]), the byte-identity-pinned CpuOnly routing outcome. The
-//! DVB-T2 BICM chain has no [`Hybrid`](crate::ExecutionClass)-class stage
-//! today (a hybrid stage would split each batch between CPU and GPU); the
-//! routing match arm for it is present so a future hybrid stage slots in
-//! without reopening the loop.
-//!
-//! # Determinism (design doc §3 / §11; this task's criterion 3)
+//! # Determinism
 //!
 //! Each global frame `g`'s randomness is keyed on `g` alone, via the
 //! within-SNR seek [`worker_offset`](crate::parallel::worker_offset)`(seed,
-//! snr_idx, 0, g)` (the §3 "logical worker 0" convention — `worker_idx` is
-//! reserved but **not** used to key the stream, so the per-frame outcome is a
-//! pure function of `g` regardless of which physical worker, or how many,
-//! processed it). This keeps the byte-identity across worker counts that
-//! `3fcb7025` established intact, and makes the hybrid path **run-to-run
-//! byte-identical** at a fixed seed (the same device path twice — so
-//! `mean_iters` is deterministic here, even though it is EXCLUDED from
-//! CPU-vs-GPU byte-identity per §11). Per-worker counters are reduced in
+//! snr_idx, 0, g)`, so the per-frame outcome is independent of which physical
+//! worker, or how many, processed it, and the hybrid path is run-to-run
+//! byte-identical at a fixed seed. Per-worker counters are reduced in
 //! `worker_idx` order via
 //! [`WorkerCounters::reduce_in_worker_order`](crate::WorkerCounters::reduce_in_worker_order).
 //!
-//! AWGN stays on the CPU on **both** the CPU-only and hybrid paths (the heavy,
-//! GPU-worth stage is LDPC decode); only the LDPC inner decode moves to the
-//! device. The channel LLRs the device consumes are therefore byte-identical to
-//! the CPU path's, so the only CPU-vs-GPU difference is the §11 BP-convergence
-//! ULP drift (which does not change the frame verdict).
+//! AWGN stays on the CPU on both paths; only the LDPC inner decode moves to
+//! the device, so the channel LLRs the device consumes are byte-identical to
+//! the CPU path's.
 //!
-//! # Graceful degradation without `hip`
+//! # Without `hip`
 //!
-//! Built without the `hip` feature, the scheduler has no device backend: a
-//! `gpu_enabled` config is honoured as a one-shot `tracing::warn!` and the run
-//! falls back to the CPU-only path (deliverable: documented degrade).
+//! A `gpu_enabled` config logs a `tracing::warn!` at scheduler construction
+//! and the run takes the CPU-only path.
 
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
@@ -107,9 +78,7 @@ pub struct ActivityInterval {
 /// A timeline of CPU/GPU activity intervals, used to attest CPU↔GPU overlap.
 ///
 /// The hybrid scheduler records one [`ActivityInterval`] per CPU-prep and per
-/// GPU-decode span (the same boundaries the `tracing` spans mark), so a smoke
-/// test can compute the fraction of GPU-active wall-time that overlaps some
-/// CPU-active wall-time (deliverable 4 / criterion 1).
+/// GPU-decode span (the same boundaries the `tracing` spans mark).
 #[derive(Debug, Clone, Default)]
 pub struct OverlapTimeline {
     /// All recorded intervals, in completion order.
@@ -145,7 +114,6 @@ impl OverlapTimeline {
         if self.intervals.is_empty() {
             return 0.0;
         }
-        // Collect and sort the unique endpoints.
         let mut points: Vec<u128> = Vec::with_capacity(self.intervals.len() * 2);
         for iv in &self.intervals {
             points.push(iv.start_us);
@@ -186,13 +154,13 @@ impl OverlapTimeline {
 }
 
 /// How a built [`Pipeline`] is run: the parameters the scheduler needs to drive
-/// frames (the DVB-T2 BICM preset is the only run plan today).
+/// frames. The DVB-T2 BICM preset is the only run plan.
 ///
 /// Attached to the [`Pipeline`] by the preset builder ([`Pipeline::dvb_t2`]) so
-/// [`Pipeline::run`] can reconstruct the validated [`DvbT2BicmFrameSim`] kernel
-/// per SNR point. (Stage **routing** is separate: the scheduler walks the
-/// type-erased stage list by execution class — deliverable 3 — while the
-/// per-frame CPU work runs through this plan's frame kernel.)
+/// [`Pipeline::run`] can reconstruct the [`DvbT2BicmFrameSim`] kernel per SNR
+/// point. Stage routing is separate: the scheduler walks the type-erased stage
+/// list by execution class, while the per-frame CPU work runs through this
+/// plan's frame kernel.
 ///
 /// [`Pipeline::dvb_t2`]: crate::Pipeline::dvb_t2
 /// [`Pipeline::run`]: crate::Pipeline::run
@@ -236,16 +204,8 @@ impl Scheduler {
     /// Under the `hip` feature with `gpu_enabled`, a `HipStreamPool` (from
     /// `gf2-kernels-hip`) of `parallelism` streams on device 0 is created so
     /// worker `i` owns stream `i % parallelism`. If the pool cannot be built (no
-    /// device / unsupported arch), the error is mapped and the scheduler
-    /// degrades to the CPU path after a `tracing::warn!` (the
-    /// OOM/unsupported-arch policy is the executor's, design doc §8; here we
-    /// simply fall back so a run never aborts for lack of a GPU).
-    ///
-    /// # Arguments
-    ///
-    /// * `parallelism` — worker count (and stream count under `hip`).
-    /// * `gpu_enabled` — whether to offload the GPU-bound stages.
-    /// * `seed` — the base ChaCha20 seed (design doc §3).
+    /// device / unsupported arch), the scheduler logs a `tracing::warn!` and
+    /// degrades to the CPU path.
     ///
     /// # Panics
     ///
@@ -313,18 +273,18 @@ impl Scheduler {
         }
     }
 
-    /// The scheduler's rayon worker pool (crate-internal: the topology
-    /// executor `de160fc5` dispatches its waves and sweep workers inside it).
+    /// The scheduler's rayon worker pool; the topology executor dispatches its
+    /// waves and sweep workers inside it.
     pub(crate) fn rayon_pool(&self) -> &rayon::ThreadPool {
         &self.rayon_pool
     }
 
-    /// The configured worker count (crate-internal, for the topology executor).
+    /// The configured worker count.
     pub(crate) fn parallelism(&self) -> NonZeroUsize {
         self.parallelism
     }
 
-    /// The base ChaCha20 seed (crate-internal, for the topology executor).
+    /// The base ChaCha20 seed.
     pub(crate) fn seed(&self) -> u64 {
         self.seed
     }
@@ -332,7 +292,7 @@ impl Scheduler {
     /// The HIP stream worker `worker_idx` deterministically owns, with its id
     /// (`worker_idx % n_streams`), or `None` when no GPU pool is active.
     ///
-    /// Crate-internal: the topology executor (`de160fc5`) routes a `GpuOnly`
+    /// The topology executor routes a `GpuOnly`
     /// stage's launches onto this stream. Selection is by fixed index
     /// (`HipStreamPool::get`), never `acquire()` — the pool's round-robin
     /// cursor advances in call order, which is scheduler-dependent under a
@@ -354,8 +314,7 @@ impl Scheduler {
     /// Runs `pipeline` over its configured SNR sweep, driving the stages through
     /// the worker pool with double-buffered async CPU/GPU overlap.
     ///
-    /// `batch` selects the first SNR point's [`BatchHandle::snr_idx`] as the
-    /// sweep's starting point context; the full sweep is taken from the
+    /// `batch` is unused: the full sweep is taken from the
     /// pipeline's [`PipelineConfig`](crate::PipelineConfig) (`esn0_db_points`,
     /// `max_frames`, `seed`, `parallelism`, `gpu_enabled`, `strict_gpu`).
     ///
@@ -366,12 +325,6 @@ impl Scheduler {
     /// [`FatalError::OutOfMemory`](crate::FatalError::OutOfMemory)). Fatal
     /// errors write a JSON diagnostic dump to the configured
     /// `diagnostic_dump_dir` and propagate.
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` — the built pipeline (must carry a [`RunPlan`], i.e. have
-    ///   been built via the DVB-T2 preset).
-    /// * `batch` — the batch handle identifying the run's starting batch/SNR.
     ///
     /// # Errors
     ///
@@ -391,8 +344,7 @@ impl Scheduler {
         Ok(results)
     }
 
-    /// Like [`run`](Self::run) but also returns the [`OverlapTimeline`] for the
-    /// overlap-attestation smoke test (deliverable 4 / criterion 1).
+    /// Like [`run`](Self::run) but also returns the [`OverlapTimeline`].
     ///
     /// # Errors
     ///
@@ -444,7 +396,7 @@ impl Scheduler {
     /// Runs one SNR point, returning its aggregate [`WorkerCounters`].
     ///
     /// Dispatch is derived from `pipeline`'s stage list by execution class
-    /// (deliverable 3, see the [module docs](self)): a discovered `GpuOnly`
+    /// (see the [module docs](self)): a discovered `GpuOnly`
     /// stage routes the point to the hybrid CPU∥GPU driver; an all-`CpuOnly`
     /// stage list routes to the pinned SSOT CPU dispatch below.
     #[allow(clippy::too_many_arguments)]
@@ -471,8 +423,7 @@ impl Scheduler {
 
         #[cfg(feature = "hip")]
         if self.gpu_active() {
-            // Deliverable 3: route by the stage list's execution classes. The
-            // hybrid loop's GPU stage comes FROM the pipeline (the preset
+            // The hybrid loop's GPU stage comes FROM the pipeline (the preset
             // placed it there with its fallback registered), never from a
             // template reconstruction.
             if let Some(gpu_stage) = hybrid::find_gpu_ldpc_stage(pipeline) {
@@ -498,8 +449,8 @@ impl Scheduler {
                           // apply on the GPU path.
         let _ = (strict_gpu, dump_dir, inject_oom_modulus);
 
-        // CpuOnly routing outcome: the within-SNR frame-parallel dispatch (SSOT
-        // `3fcb7025`), running inside this scheduler's rayon pool so the worker
+        // CpuOnly routing outcome: the within-SNR frame-parallel dispatch,
+        // running inside this scheduler's rayon pool so the worker
         // count is honoured. Byte-identical to the `run_snr_point` contract
         // (pinned by `tests/pipeline_run_cpu.rs`).
         let _ = (timeline, run_start); // unused on the CPU path
@@ -517,12 +468,8 @@ impl Scheduler {
     }
 }
 
-/// The hybrid module's GPU-stage discovery, re-exported for the checkpointed
-/// hybrid runner (`executor::drain`, `571c11c4`) so the drain path shares the
-/// exact same routing as this uncheckpointed scheduler. The shared batch unit
-/// `BATCH_FRAMES` and the double-buffer core live in
-/// [`hybrid_core`](crate::executor::hybrid_core) (epic task `bb11c2e6`), the
-/// single SSOT both callers import directly.
+/// GPU-stage discovery, re-exported so the checkpointed hybrid runner
+/// (`executor::drain`) shares this scheduler's routing.
 #[cfg(feature = "hip")]
 pub(crate) use hybrid::find_gpu_ldpc_stage;
 
@@ -537,7 +484,7 @@ mod hybrid {
     use gf2_kernels_hip::host::HipStream;
     use rayon::prelude::*;
 
-    /// Routes `pipeline`'s stage list by [`ExecutionClass`] (deliverable 3) and
+    /// Routes `pipeline`'s stage list by [`ExecutionClass`] and
     /// returns the discovered `GpuOnly` LDPC BP decode stage, if any.
     ///
     /// The three routing arms:
@@ -549,10 +496,8 @@ mod hybrid {
     ///   HIP stream. The only `GpuOnly` stage the DVB-T2 preset places is the
     ///   LDPC BP decode, downcast back to its concrete type via
     ///   [`stage_as_any`](crate::stage::AnyStage::stage_as_any).
-    /// * [`Hybrid`](ExecutionClass::Hybrid) — would split each batch between
-    ///   CPU and GPU. No `Hybrid`-class stage exists in the DVB-T2 BICM chain
-    ///   today; the arm is present so a future hybrid stage slots into the
-    ///   routing without reopening this loop.
+    /// * [`Hybrid`](ExecutionClass::Hybrid) — contributes no GPU dispatch
+    ///   here; the DVB-T2 BICM chain has no `Hybrid`-class stage.
     pub(crate) fn find_gpu_ldpc_stage(
         pipeline: &Pipeline,
     ) -> Option<&crate::gpu::ldpc_bp::GpuLdpcBp> {
@@ -564,17 +509,14 @@ mod hybrid {
                 ExecutionClass::GpuOnly => stage
                     .stage_as_any()
                     .and_then(|s| s.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>()),
-                // No Hybrid-class stage exists today (see the routing doc
-                // above); a future hybrid stage adds its per-batch CPU/GPU
-                // split here.
                 ExecutionClass::Hybrid => None,
             })
     }
 
     impl Scheduler {
-        /// The hybrid CPU+GPU per-SNR-point driver (design doc §6 overlap
-        /// protocol). Each worker owns one HIP stream and double-buffers CPU prep
-        /// of batch `N+1` against the GPU LDPC decode of batch `N`.
+        /// The hybrid CPU+GPU per-SNR-point driver. Each worker owns one HIP
+        /// stream and double-buffers CPU prep of batch `N+1` against the GPU
+        /// LDPC decode of batch `N`.
         ///
         /// `gpu_stage` is the pipeline-discovered `GpuOnly` LDPC decode stage
         /// (from [`find_gpu_ldpc_stage`]); each worker builds its own device
@@ -607,16 +549,11 @@ mod hybrid {
                         .into_par_iter()
                         .map(|worker_idx| {
                             let stream_id = worker_idx % n_streams;
-                            // Deliverable 1: worker i OWNS stream i % n_streams,
-                            // selected by deterministic index — `pool.acquire()`
-                            // would hand out streams in racy call order under
+                            // Worker i owns stream i % n_streams, selected by
+                            // deterministic index — `pool.acquire()` would hand
+                            // out streams in racy call order under
                             // `into_par_iter`, desynchronising the recorded
-                            // `stream_id` from the stream actually used. ALL of
-                            // this worker's GPU work (launches + pinned
-                            // transfers) is enqueued on this stream, and
-                            // completion is awaited per-stream
-                            // (`hipStreamSynchronize` inside the decode call),
-                            // never via device-wide sync.
+                            // `stream_id` from the stream actually used.
                             let stream = pool.get(stream_id);
                             self.worker_partition_hybrid(
                                 template,
@@ -647,23 +584,11 @@ mod hybrid {
 
         /// One worker's strided frame partition, double-buffered CPU/GPU.
         ///
-        /// A thin wrapper over the shared
-        /// [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer)
-        /// core (epic task `bb11c2e6`): it computes the worker's strided
-        /// partition, builds the per-worker device decoder + pinned staging,
-        /// and supplies the **uncheckpointed failure semantics** via
-        /// [`SchedulerBatchHooks`] — every GPU decode wrapped in
-        /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
-        /// (OOM → CPU fallback unless `strict_gpu`) plus the test-only OOM
-        /// injection (`42eac5cc`). The double-buffer overlap, per-frame RNG
-        /// seek, BCH decode-tail, and `pipeline_stage` instrumentation all live
-        /// in the shared core.
-        ///
-        /// `stream` is the worker's owned HIP stream: the GPU decode of every
-        /// batch is enqueued on it (launches + pinned transfers) and awaited
-        /// per-stream inside
-        /// [`decode_batch_with_iters_on_stream`](crate::gpu::ldpc_bp::GpuLdpcBp::decode_batch_with_iters_on_stream)
-        /// (deliverables 2b / 2d).
+        /// A thin wrapper over
+        /// [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer):
+        /// it computes the worker's strided partition, builds the per-worker
+        /// device decoder + pinned staging, and supplies the uncheckpointed
+        /// failure semantics via [`SchedulerBatchHooks`].
         #[allow(clippy::too_many_arguments)]
         fn worker_partition_hybrid(
             &self,
@@ -682,7 +607,6 @@ mod hybrid {
             inject_oom_modulus: Option<u64>,
         ) -> Result<WorkerCounters, StageError> {
             let num_workers = self.parallelism.get();
-            // The worker's global frames: worker_idx, +num_workers, … < max_frames.
             let my_frames: Vec<usize> = (worker_idx..max_frames).step_by(num_workers).collect();
             if my_frames.is_empty() {
                 return Ok(WorkerCounters::default());
@@ -731,14 +655,12 @@ mod hybrid {
         }
     }
 
-    /// The uncheckpointed scheduler's per-batch decode dispatch (`bb11c2e6`
-    /// deliverable 1): every GPU decode wrapped in
+    /// The uncheckpointed scheduler's per-batch decode dispatch: every GPU
+    /// decode wrapped in
     /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
     /// (substitute the CPU LDPC fallback on a recoverable fault unless
-    /// `strict_gpu`), plus the `42eac5cc` test-only OOM injection. This is the
-    /// failure-semantics half of the shared-core hook — the **substitute**
-    /// policy, contrasted with the checkpointed drain loop's **propagate**
-    /// policy (see `executor/drain.rs`).
+    /// `strict_gpu`), plus the test-only OOM injection. The checkpointed drain
+    /// loop propagates the fault instead (see `executor/drain.rs`).
     struct SchedulerBatchHooks<'a> {
         gpu_stage: &'a crate::gpu::ldpc_bp::GpuLdpcBp,
         strict_gpu: bool,
@@ -760,10 +682,6 @@ mod hybrid {
             use crate::executor::failure::{dispatch_with_fallback, FailurePolicy, FaultContext};
             use crate::stage::Stage as _;
 
-            // The result is wrapped by `dispatch_with_fallback` (issue
-            // `42eac5cc`): a recoverable OOM triggers a `tracing::warn!` and
-            // re-runs the batch on the CPU LDPC fallback; a fatal error writes a
-            // JSON diagnostic dump and propagates.
             let llr_batch_for_fallback =
                 crate::batch::LlrBatch::new(preps.iter().map(|p| p.llrs.clone()).collect());
             let fault_ctx = FaultContext {
@@ -777,14 +695,10 @@ mod hybrid {
                 dump_dir: self.dump_dir,
                 inject_gpu_oom_modulus: self.inject_oom_modulus,
             };
-            // Test-only OOM injection (`42eac5cc`): force a recoverable OOM when
-            // the modulus fires on this batch's first global frame index,
-            // driving the production `dispatch_with_fallback` path as a genuine
-            // device OOM would. The batch's first global frame index keys the
-            // modulus — only the batch's first frame index is checked; the whole
-            // batch is injected (or not) as one unit. This is the documented
-            // batch-first-frame keying for `PipelineConfig::inject_gpu_oom_modulus`
-            // (the checkpointed drain hook keys identically but PROPAGATES).
+            // Test-only OOM injection: the batch's first global frame index
+            // keys the modulus and the whole batch is injected (or not) as one
+            // unit, driving the production `dispatch_with_fallback` path as a
+            // genuine device OOM would.
             let raw: GpuBatchResult = if policy.injects_oom_at(first_global_frame) {
                 Err(StageError::Recoverable(
                     crate::error::RecoverableError::OutOfMemory {
@@ -807,12 +721,10 @@ mod hybrid {
                 || {
                     // CPU fallback: run the registered CpuLdpcBp on the same LLR
                     // batch. The per-frame iteration count is recorded as
-                    // `max_iterations` (the stage's cap), the shared
-                    // fallback-iters convention (L1) documented at the topology
-                    // executor's `gpu_ldpc_max_iters` helper: since `mean_iters`
-                    // is §11-excluded from the CPU-vs-GPU contract on a
-                    // mixed-path run, any consistent value is acceptable; the cap
-                    // is the documented convention so the two surfaces agree.
+                    // `max_iterations` (the stage's cap), the convention shared
+                    // with the topology executor's `gpu_ldpc_max_iters`;
+                    // `mean_iters` is excluded from the CPU-vs-GPU
+                    // byte-identity contract.
                     let max_iters = self.gpu_stage.max_iterations() as u32;
                     let fb = self.gpu_stage.cpu_fallback().ok_or_else(|| {
                         StageError::Fatal(crate::error::FatalError::CpuFallbackAlsoFailed {
@@ -931,8 +843,6 @@ mod tests {
 
     #[test]
     fn test_scheduler_cpu_only_runs_without_gpu() {
-        // A CPU-only scheduler (gpu_enabled=false) must report gpu_active=false
-        // and build cleanly.
         let sched = Scheduler::new(NonZeroUsize::new(2).unwrap(), false, 7);
         assert!(!sched.gpu_active());
     }

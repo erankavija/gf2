@@ -1,52 +1,29 @@
-//! GPU drain-for-checkpoint and the checkpointed hybrid CPU+GPU sweep
-//! (Phase C task `571c11c4`, design doc §4 "Drain commit contract"; shared core
-//! + failure-semantics integration landed in epic task `bb11c2e6`).
-//!
-//! # Shared double-buffer core, ONE remaining failure-semantics divergence
-//!
-//! The checkpointed `worker_round_hybrid` no longer transcribes the C.1
-//! double-buffer protocol: it drives the SAME shared core as the uncheckpointed
-//! scheduler — [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer)
-//! (epic task `bb11c2e6`) — supplying only the per-batch hooks that genuinely
-//! differ. The two earlier `571c11c4` divergences are now resolved:
-//!
-//! * **`traced_interval` spans** — the instrumentation moved INTO the shared
-//!   core, so the checkpointed path now emits the same `pipeline_stage` spans
-//!   as the scheduler (the `OverlapTimeline` interval sink is `None` here:
-//!   this path never reads intervals, and a dead sink would accumulate
-//!   unboundedly over a long campaign point — the spans are the parity).
-//! * **Failure semantics** — now an EXPLICIT per-caller hook
-//!   ([`DrainBatchHooks::decode_batch`]), not an omission. The OPTION (a)
-//!   decision (epic task `bb11c2e6`): a recoverable GPU fault during a
-//!   checkpointed sweep is **propagated**, aborting the sweep *resumably* (via
-//!   [`SweepError::Stage`](crate::snr_checkpoint::SweepError::Stage)), instead of
-//!   substituting the CPU fallback like the uncheckpointed scheduler does.
-//!   Substituting would record a different `mean_iters`/decode for the faulted
-//!   frames, breaking the §11 four-column (`mean_iters` INCLUDED) same-path
-//!   resume byte-identity contract. The fault leaves the last committed
-//!   heartbeat checkpoint intact, and a subsequent resume continues from it
-//!   byte-identically. (OPTION (b) — deterministic fallback-in-checkpointed-
-//!   sweep — is deliberately not implemented: the result-affecting
-//!   `inject_gpu_oom_modulus` is excluded from
-//!   [`config_hash`](crate::snr_checkpoint::config_hash), so a CPU-substituted
-//!   resume would need a checkpoint-schema change, deferred to a lead/user
-//!   decision.) This behaviour is regression-guarded by
-//!   `tests/hybrid_resume.rs::hybrid_checkpointed_recoverable_fault_aborts_resumably`.
-//!
-//! This module adds checkpoint/resume to the hybrid scheduler (`75c22fa8`):
+//! GPU drain-for-checkpoint and the checkpointed hybrid CPU+GPU sweep.
 //!
 //! * [`StreamInFlight`] — the per-stream "in-flight batches" tally, so the
 //!   drain knows when every stream is idle.
-//! * [`Scheduler::drain_for_checkpoint`] — §4 steps 1–2: per-stream
-//!   `hipStreamSynchronize()` on each **owned** stream (never
-//!   `hipDeviceSynchronize()`, which would block unrelated contexts), then a
-//!   tally check enforcing the no-partial-batches commit contract.
+//! * [`Scheduler::drain_for_checkpoint`] — per-stream `hipStreamSynchronize()`
+//!   on each **owned** stream (never `hipDeviceSynchronize()`, which would
+//!   block unrelated contexts), then a tally check enforcing the
+//!   no-partial-batches commit contract.
 //! * [`Scheduler::run_sweep_checkpointed`] — the checkpointed SNR sweep over
-//!   the hybrid (or, without a GPU, the unchanged CPU `5f12e7ff`) executor;
+//!   the hybrid executor or, without a GPU, the CPU runner;
 //!   [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed) is the
 //!   convenience entry point.
 //!
-//! # The §4 drain commit contract, as implemented
+//! # Failure semantics
+//!
+//! A recoverable GPU fault during a checkpointed sweep is **propagated**
+//! ([`SweepError::Stage`](crate::snr_checkpoint::SweepError::Stage)), aborting
+//! the sweep resumably, where the uncheckpointed scheduler substitutes the CPU
+//! fallback. Substituting would record a different `mean_iters`/decode for the
+//! faulted frames, breaking the same-path resume byte-identity of all four
+//! columns (`mean_iters` included). The fault leaves the last committed
+//! heartbeat checkpoint intact, and a subsequent resume continues from it
+//! byte-identically; regression-guarded by
+//! `tests/hybrid_resume.rs::hybrid_checkpointed_recoverable_fault_aborts_resumably`.
+//!
+//! # Drain commit contract
 //!
 //! At every heartbeat boundary (and at the SIGINT stop):
 //!
@@ -59,52 +36,27 @@
 //!    batches are ever recorded;
 //! 3. the per-worker `frames_in_worker` counts are latched **after** the drain
 //!    and written atomically via
-//!    [`CheckpointWriter`](crate::snr_checkpoint::CheckpointWriter) (the
-//!    `rng_word_pos` each [`WorkerState`](crate::snr_checkpoint::WorkerState)
-//!    records is the §4-formula position with the real `worker_idx`, kept for
-//!    v2 schema fidelity — no executor reads it back).
+//!    [`CheckpointWriter`](crate::snr_checkpoint::CheckpointWriter).
 //!
-//! # The hybrid resume model (§4 amendment 2026-06-10)
+//! # Batch alignment
 //!
-//! The landed C.1 scheduler distributes **strided** partitions (worker `w` of
-//! `W` owns global frames `w, w+W, …`) and keys every frame's RNG on the
-//! global frame index (`worker_offset(seed, snr_idx, 0, g)`, the §3
-//! logical-worker-0 convention). Resume therefore restores each worker's
-//! **progress** from `worker_states[].frames_in_worker` — worker `w` continues
-//! at global frame `w + frames_in_worker·W` — and folds the saved counters;
-//! per-frame RNG positions are re-derived from the global index exactly as in
-//! an uninterrupted run, so byte-identity holds by construction at the same
-//! seed and worker count.
+//! Heartbeat rounds are sized in whole per-worker batches of `BATCH_FRAMES`,
+//! and a SIGINT stops workers at a **batch boundary**. Every batch the
+//! checkpointed runner launches is therefore the same `chunks(BATCH_FRAMES)`
+//! slice of the worker's partition that the uncheckpointed scheduler launches
+//! — across interrupts and resumes — so the per-frame GPU decode results (hard
+//! codewords **and** BP iteration counts) match it batch for batch.
 //!
-//! # Batch alignment (byte-identity of `mean_iters` vs the C.1 reference)
+//! # Cross-path resume
 //!
-//! Heartbeat rounds are sized in whole per-worker batches of
-//! `BATCH_FRAMES` (the C.1 double-buffer unit), and a SIGINT stops workers at
-//! a **batch boundary**. Every batch the checkpointed runner ever launches is
-//! therefore the same `chunks(BATCH_FRAMES)` slice of the worker's partition
-//! that the uncheckpointed scheduler launches — across interrupts and resumes
-//! — so the per-frame GPU decode results (hard codewords **and** BP iteration
-//! counts) match the C.1 hybrid reference exactly, batch for batch.
-//!
-//! # Same-host scope (criterion 2) and cross-path resume
-//!
-//! Resume byte-identity is asserted on the **same host** (the single-gfx1030
-//! CI): the v2 checkpoint JSON itself is host-independent, but §11 only
-//! relaxes CPU-vs-GPU byte-identity to three columns, so a checkpoint written
-//! by one device path and resumed on different silicon is *portable* yet not
-//! *bit-attested*. Cross-**path** resume (CPU-written → hybrid-resumed or vice
-//! versa) is rejected up front: `gpu_enabled` is part of
-//! [`config_hash`](crate::snr_checkpoint::config_hash), because the two executors
-//! record differently shaped `worker_states[]` and path-specific
-//! `total_iterations`. The residual gap — a `gpu_enabled` config that degraded
-//! to the CPU path (no device) and is later resumed where a device exists — is
-//! guarded by the per-worker **batch-alignment check** in the hybrid runner
-//! (`run_point_hybrid_checkpointed`): a CPU-written checkpoint records each
-//! worker's `frames_in_worker` from the CPU chunk dispatch (not necessarily
-//! `BATCH_FRAMES`-aligned), whereas a genuine hybrid checkpoint always stops on
-//! a batch boundary. A misaligned `done[w]` would cause a silent byte-identity
-//! break, so the alignment check rejects it with a typed `ExecutionValidation`
-//! error. Same-host resume, the asserted scope, never hits it.
+//! `gpu_enabled` is part of [`config_hash`](crate::snr_checkpoint::config_hash),
+//! so a CPU-written checkpoint is rejected by a hybrid resume and vice versa:
+//! the two executors record differently shaped `worker_states[]` and
+//! path-specific `total_iterations`. A `gpu_enabled` config that degraded to
+//! the CPU path (no device) and is resumed where a device exists is guarded by
+//! the per-worker batch-alignment check in `run_point_hybrid_checkpointed`,
+//! which rejects a `frames_in_worker` that is neither `BATCH_FRAMES`-aligned
+//! nor the partition end with a typed `ExecutionValidation` error.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -119,7 +71,7 @@ use crate::snr_checkpoint::{
     CheckpointedRun, SweepError,
 };
 
-/// Per-stream "in-flight GPU batches" tally (design doc §4, deliverable 1).
+/// Per-stream "in-flight GPU batches" tally.
 ///
 /// Each hybrid worker increments its owned stream's slot immediately before
 /// enqueuing a batch's stream-ordered GPU work and decrements it once the
@@ -127,8 +79,7 @@ use crate::snr_checkpoint::{
 /// off the device). [`Scheduler::drain_for_checkpoint`] consults the tally to
 /// know every stream is idle before the checkpoint is written: a non-zero
 /// count after the worker join means a worker abandoned a batch mid-flight (a
-/// fault path), and the drain refuses to commit — the §4 "no partial batches"
-/// contract.
+/// fault path), and the drain refuses to commit (no partial batches).
 ///
 /// Purely host-side bookkeeping (atomics, no `unsafe`, no HIP types), so it is
 /// available — and the drain's tally check runs — on every build.
@@ -153,10 +104,6 @@ pub struct StreamInFlight {
 
 impl StreamInFlight {
     /// Creates a tally for `n_streams` streams, all idle.
-    ///
-    /// # Arguments
-    ///
-    /// * `n_streams` — the stream-pool size (one slot per stream id).
     #[must_use]
     pub fn new(n_streams: usize) -> Self {
         Self {
@@ -220,13 +167,11 @@ impl StreamInFlight {
 /// `results.per_point` holds one [`SnrPointResult`] per SNR point reached, in
 /// sweep order; when `interrupted` is `true` the sweep stopped early on
 /// SIGINT/SIGTERM and the **last** entry is the interrupted point's partial
-/// aggregate. **Whether a resumable checkpoint was flushed depends on timing:**
-/// if the point completed at least one heartbeat round before the interrupt,
-/// its latest heartbeat checkpoint is on disk and resume continues from it; if
-/// the interrupt landed before the first round committed (0 frames recorded on
-/// that point), no checkpoint was written and resume restarts the point fresh
-/// (the `run_point_hybrid_checkpointed` loop exits with `completed = false` and
-/// `interrupted = true` before any flush). In either case, resume with
+/// aggregate. If the point completed at least one heartbeat round before the
+/// interrupt, its latest heartbeat checkpoint is on disk and resume continues
+/// from it; if the interrupt landed before the first round committed, no
+/// checkpoint was written and resume restarts the point fresh. In either case,
+/// resume with
 /// [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)`(true)`.
 ///
 /// # Examples
@@ -257,37 +202,28 @@ fn execution_validation(reason: String) -> StageError {
 }
 
 impl Scheduler {
-    /// Drains the GPU for a checkpoint flush (design doc §4 steps 1–2,
-    /// deliverable 1): synchronizes each **owned** HIP stream per-stream and
-    /// verifies the [`StreamInFlight`] tally shows every stream idle.
+    /// Drains the GPU for a checkpoint flush: synchronizes each **owned** HIP
+    /// stream per-stream and verifies the [`StreamInFlight`] tally shows every
+    /// stream idle.
     ///
-    /// Stream synchronization is **per-stream** (the `gf2-kernels-hip`
-    /// `HipStream::synchronize`, i.e. `hipStreamSynchronize()`) — never
-    /// `hipDeviceSynchronize()`, which
-    /// would block unrelated contexts (§4). The owned streams are the ones the
-    /// hybrid workers select by fixed index (`worker_idx % n_streams` via
-    /// `HipStreamPool::get`, never `acquire()`); each is synchronized exactly
-    /// once. On a CPU-only scheduler (or a build without the `hip` feature)
-    /// there are no streams to drain and only the tally check runs.
+    /// Synchronization is per-stream (`HipStream::synchronize`, i.e.
+    /// `hipStreamSynchronize()`), never `hipDeviceSynchronize()`, which would
+    /// block unrelated contexts. The owned streams are the ones the hybrid
+    /// workers select by fixed index (`worker_idx % n_streams`); each is
+    /// synchronized exactly once. On a CPU-only scheduler (or a build without
+    /// the `hip` feature) only the tally check runs.
     ///
     /// Call **after** the worker join and **before** latching `worker_states[]`
     /// / writing the checkpoint, so the recorded per-worker progress reflects
-    /// only fully completed batches (the §4 "no partial batches" commit
-    /// contract).
-    ///
-    /// # Arguments
-    ///
-    /// * `tally` — the run's per-stream in-flight tally. A non-zero count here
-    ///   (after the join, no worker can still be running) means a worker
-    ///   abandoned a batch mid-flight, and the drain refuses to commit.
+    /// only fully completed batches.
     ///
     /// # Errors
     ///
     /// * A mapped [`StageError`] if a per-stream synchronize faults
     ///   (via the crate's `gpu::map_hip_error`).
     /// * [`FatalError::BuildError`]`(`[`BuildError::ExecutionValidation`]`)` if
-    ///   any stream still shows in-flight batches — the checkpoint must not be
-    ///   written in that state.
+    ///   any stream still shows in-flight batches after the join: a worker
+    ///   abandoned a batch mid-flight, and the checkpoint must not be written.
     ///
     /// # Examples
     ///
@@ -307,9 +243,8 @@ impl Scheduler {
     /// One `hipStreamSynchronize` per owned stream (blocking until that
     /// stream's enqueued work completes), plus an `O(streams)` tally scan.
     pub fn drain_for_checkpoint(&self, tally: &StreamInFlight) -> Result<(), StageError> {
-        // §4 step 2: per-stream synchronize on every OWNED stream, each exactly
-        // once (worker_idx -> worker_idx % n_streams can map several workers to
-        // one stream).
+        // Each owned stream exactly once (worker_idx % n_streams can map
+        // several workers to one stream).
         #[cfg(feature = "hip")]
         if self.gpu_active() {
             let mut synced = std::collections::HashSet::new();
@@ -324,9 +259,9 @@ impl Scheduler {
             }
         }
 
-        // §4 "no partial batches": after the worker join every enqueued batch
-        // must have completed. A non-zero tally cannot recover here (no worker
-        // is running), so refuse to commit rather than record partial progress.
+        // After the worker join every enqueued batch must have completed. A
+        // non-zero tally cannot recover here (no worker is running), so refuse
+        // to commit rather than record partial progress.
         for stream_id in 0..tally.streams() {
             let in_flight = tally.in_flight(stream_id);
             if in_flight != 0 {
@@ -342,56 +277,46 @@ impl Scheduler {
     }
 
     /// Runs `pipeline`'s configured SNR sweep with heartbeat + SNR-boundary +
-    /// SIGINT checkpointing and `--resume` support (deliverables 2–3).
+    /// SIGINT checkpointing and resume support.
     ///
     /// Unlike [`Pipeline::run`](crate::Pipeline::run), a recoverable GPU fault
     /// aborts the checkpointed sweep (resumably, returning a
     /// [`SweepError::Stage`]) instead of substituting the CPU fallback, for
-    /// checkpoint byte-identity determinism. This is the **explicit** OPTION (a)
-    /// failure-semantics decision of epic task `bb11c2e6`, realised in the
-    /// checkpointed caller's per-batch decode hook (`DrainBatchHooks` —
-    /// propagate, not substitute); the uncheckpointed scheduler shares the same
-    /// double-buffer core but supplies the substitute-the-fallback hook. The
-    /// last committed heartbeat checkpoint survives the abort, so a subsequent
-    /// resume continues byte-identically.
+    /// checkpoint byte-identity determinism. The last committed heartbeat
+    /// checkpoint survives the abort, so a subsequent resume continues
+    /// byte-identically.
     ///
     /// Per SNR point: when this scheduler is GPU-active and the pipeline
     /// carries a `GpuOnly` LDPC stage, the point runs on the **checkpointed
     /// hybrid executor** (strided partitions, double-buffered CPU prep ∥ GPU
     /// decode, per-stream drain before every flush); otherwise it runs on the
-    /// unchanged CPU runner
+    /// CPU runner
     /// [`run_snr_point_checkpointed`](crate::snr_checkpoint::run_snr_point_checkpointed)
-    /// (`5f12e7ff` semantics: resume via the global `frames_completed`).
+    /// (resume via the global `frames_completed`).
     ///
     /// With `resume`, each point's `<checkpoint_dir>/snr_<NNNN>.json` is loaded
     /// first: completed points fold their saved counters and are skipped; a
     /// partial point resumes — on the hybrid path by restoring each worker's
-    /// strided-partition progress from `worker_states[].frames_in_worker` (the
-    /// §4 2026-06-10 amendment; `rng_word_pos` is never read back). The
+    /// strided-partition progress from `worker_states[].frames_in_worker`
+    /// (worker `w` of `W` continues at global frame `w + frames_in_worker·W`;
+    /// `rng_word_pos` is never read back). The
     /// resumed aggregate is byte-identical to an uninterrupted run at the same
     /// seed and worker count because every frame's outcome is a pure function
     /// of its global frame index.
     ///
     /// On SIGINT (or [`request_interrupt`](crate::snr_checkpoint::request_interrupt))
     /// the in-flight GPU batches complete, the streams are drained, a resumable
-    /// checkpoint is flushed, and the sweep returns with `interrupted = true`
-    /// (criterion 1).
+    /// checkpoint is flushed, and the sweep returns with `interrupted = true`.
     ///
-    /// As each SNR point completes, this emits one `snr_point_completed`
-    /// `tracing` event **live** at the point boundary (carrying `es_n0_db`,
-    /// `fer`, `frames`, `errors`, `mean_iters`), so a monitor tailing the
-    /// campaign's `tracing.jsonl` observes completed points as the sweep
-    /// advances rather than only after the whole run returns. The campaign
-    /// binary therefore does NOT re-emit these post-sweep on the checkpointed
-    /// path (the non-checkpointed calibration path keeps its own post-run
-    /// emission, as it never runs through this loop).
+    /// As each SNR point completes in this process, one `snr_point_completed`
+    /// `tracing` event is emitted at the point boundary (carrying `es_n0_db`,
+    /// `fer`, `ber`, `frames`, `errors`, `mean_iters`, `wall_seconds`).
     ///
     /// # Arguments
     ///
     /// * `pipeline` — the built pipeline; must carry a
     ///   [`RunPlan`](crate::executor::RunPlan) (preset-built) and a
     ///   `checkpoint_dir` in its config.
-    /// * `resume` — `true` to load and continue from existing checkpoints.
     /// * `frame_observer` — called once per frame as `(snr_idx, global_frame)`
     ///   while the point is simulating (hybrid path: after the frame's CPU
     ///   prep, from either the main worker thread or the double-buffer helper
@@ -404,10 +329,6 @@ impl Scheduler {
     ///   recorded; they are re-observed (and recorded) on the subsequent resume
     ///   run. The observer may therefore fire for the same `global_frame` twice
     ///   across an interrupted + resumed run pair.
-    ///
-    /// # Returns
-    ///
-    /// A [`CheckpointedSweep`]; see its docs for the `interrupted` semantics.
     ///
     /// # Errors
     ///
@@ -469,10 +390,9 @@ impl Scheduler {
             } else {
                 None
             };
-            // Was this point already COMPLETE in the loaded checkpoint? If so,
-            // `run_point_checkpointed` folds + skips it and returns
-            // `completed = true` without doing any work this process — it must
-            // NOT be (re-)logged here. Captured before `loaded` is moved.
+            // A point already COMPLETE in the loaded checkpoint is folded and
+            // skipped with `completed = true`; it must not be logged again
+            // below. Captured before `loaded` is moved.
             let was_loaded_complete = loaded.as_ref().is_some_and(|c| c.completed);
             let template = DvbT2BicmFrameSim::new(rate, modulation, es_n0_db, decoder, demap);
             let point_start = std::time::Instant::now();
@@ -489,31 +409,11 @@ impl Scheduler {
             )?;
             let point_wall_seconds = point_start.elapsed().as_secs_f64();
             let point = SnrPointResult::from_counters(es_n0_db, run.counters);
-            // Emit one `snr_point_completed` tracing event LIVE at this SNR-point
-            // boundary, the moment the point's aggregate is available (not
-            // post-sweep). This is the tailable per-point liveness record:
-            // monitors `jq`-filtering `tracing.jsonl` on `snr_point_completed`
-            // see each completed point as the checkpointed sweep advances,
-            // rather than only after the whole run returns.
-            //
-            // EXACTLY-ONCE-AT-COMPLETION: emit only when the point genuinely
-            // completed in THIS process. Three cases must NOT log:
-            //   * an INTERRUPTED point (`run.interrupted`, partial counters,
-            //     `run.completed == false`) — it did not finish;
-            //   * (defensively) any non-completed point;
-            //   * a point already COMPLETE in the loaded checkpoint
-            //     (`was_loaded_complete`) — it was logged by the earlier process
-            //     that completed it, and `run.completed` is `true` only because
-            //     the loaded aggregate was folded, so without this guard a
-            //     `--resume` would double-log every previously-finished point.
-            // The event carries the full `snr_point_completed` field schema the
-            // campaign binary's post-sweep emission used (`es_n0_db`, `fer`,
-            // `ber`, `frames`, `errors`, `mean_iters`, `wall_seconds`) so
-            // existing `jq`/parsers keep working. `ber` is derived from the
-            // point's bit counters exactly as `point_to_csv_row` does;
-            // `wall_seconds` is this point's measured wall time (the executor
-            // sees each point boundary, so it is the true per-point wall, where
-            // the binary's CSV uses the sweep-averaged `wall_per_point`).
+            // Emit `snr_point_completed` only for a point that completed in
+            // THIS process: an interrupted point did not finish, and a point
+            // already complete in the loaded checkpoint was logged by the
+            // process that completed it. `wall_seconds` is this point's
+            // measured wall time.
             let ber = if point.total_bits > 0 {
                 point.total_bit_errors as f64 / point.total_bits as f64
             } else {
@@ -534,8 +434,7 @@ impl Scheduler {
             }
             per_point.push(point);
             if run.interrupted {
-                // The interrupted point's resumable checkpoint is already on
-                // disk; stop the sweep (mirrors `checkpoint::run_sweep_checkpointed`).
+                // Stop the sweep at the interrupted point.
                 interrupted = true;
                 break;
             }
@@ -548,8 +447,7 @@ impl Scheduler {
     }
 
     /// Runs one checkpointed SNR point, routing to the hybrid executor when a
-    /// GPU stage is active and to the unchanged CPU `5f12e7ff` runner
-    /// otherwise.
+    /// GPU stage is active and to the CPU runner otherwise.
     #[allow(clippy::too_many_arguments)]
     fn run_point_checkpointed(
         &self,
@@ -582,9 +480,8 @@ impl Scheduler {
         #[cfg(not(feature = "hip"))]
         let _ = pipeline; // no device backend: every point routes to the CPU runner
 
-        // CPU arm: the 5f12e7ff checkpointed runner, semantics UNCHANGED
-        // (resume via the global `frames_completed`; chunk-restart striding).
-        // Runs inside this scheduler's rayon pool so `parallelism` is honoured.
+        // CPU arm (resume via the global `frames_completed`), run inside this
+        // scheduler's rayon pool so `parallelism` is honoured.
         self.rayon_pool()
             .install(|| {
                 run_snr_point_checkpointed(
@@ -627,13 +524,11 @@ mod hybrid_checkpoint {
     /// Validates that every worker's `done[w]` from a resumed checkpoint is
     /// `BATCH_FRAMES`-aligned or at the complete partition end.
     ///
-    /// Called immediately after the sum check in the resume-restore block of
-    /// [`Scheduler::run_point_hybrid_checkpointed`]. A misaligned count means
-    /// the checkpoint was written by the CPU executor (which records per-chunk
-    /// progress, not batch-aligned progress) — resuming it on the hybrid path
-    /// would start `worker_round_hybrid` mid-batch, making the batch composition
-    /// diverge from the C.1 scheduler and silently breaking `mean_iters`
-    /// byte-identity. This check catches that gap.
+    /// A misaligned count means the checkpoint was written by the CPU executor
+    /// (which records per-chunk progress, not batch-aligned progress) —
+    /// resuming it on the hybrid path would start `worker_round_hybrid`
+    /// mid-batch, making the batch composition diverge from the uncheckpointed
+    /// scheduler and silently breaking `mean_iters` byte-identity.
     ///
     /// Returns the first violation found, naming the worker, its `done` value,
     /// and the expected alignment.
@@ -681,30 +576,12 @@ mod hybrid_checkpoint {
         scratch: LdpcStreamScratch,
     }
 
-    /// The checkpointed drain loop's per-batch decode dispatch (`bb11c2e6`
-    /// deliverable 1 + the OPTION (a) failure-semantics decision). It brackets
+    /// The checkpointed drain loop's per-batch decode dispatch: it brackets
     /// the stream-ordered GPU decode with the
     /// [`StreamInFlight`](crate::executor::StreamInFlight) tally and
-    /// **propagates** a recoverable GPU fault unchanged — the explicit
-    /// abort-resumably policy, contrasted with the uncheckpointed scheduler's
-    /// `dispatch_with_fallback` substitute policy.
-    ///
-    /// # Why propagate, not substitute (the explicit OPTION (a) decision)
-    ///
-    /// Substituting the CPU LDPC fallback for a faulted GPU batch (the
-    /// uncheckpointed scheduler's behaviour) would record a different
-    /// `mean_iters` (the fallback records the BP cap, not the GPU iteration
-    /// count) and a different decode for the faulted frames than the GPU path.
-    /// The checkpointed sweep's resume contract is §11 **four-column**,
-    /// `mean_iters` INCLUDED (a same-path resume-vs-uninterrupted comparison),
-    /// so a silent CPU substitution would break byte-identity on resume.
-    /// Propagating the fault aborts the sweep *resumably*: the last committed
-    /// heartbeat checkpoint stays on disk and a subsequent resume continues
-    /// from it byte-identically. (OPTION (b) — a deterministic
-    /// fallback-in-checkpointed-sweep — is intentionally **not** implemented:
-    /// it would require folding the result-affecting `inject_gpu_oom_modulus`
-    /// into [`config_hash`](crate::snr_checkpoint::config_hash), a checkpoint-schema
-    /// change deferred to a lead/user decision.)
+    /// **propagates** a recoverable GPU fault unchanged, where the
+    /// uncheckpointed scheduler's `dispatch_with_fallback` substitutes the CPU
+    /// fallback (see the module docs for the reason).
     struct DrainBatchHooks<'a> {
         gpu_stage: &'a crate::gpu::ldpc_bp::GpuLdpcBp,
         tally: &'a crate::executor::StreamInFlight,
@@ -712,10 +589,9 @@ mod hybrid_checkpoint {
         /// **Test-only** GPU-OOM injection modulus (mirrors
         /// [`PipelineConfig::inject_gpu_oom_modulus`](crate::PipelineConfig::inject_gpu_oom_modulus)),
         /// keyed on the batch's first global frame index exactly as the
-        /// uncheckpointed scheduler keys it. On the checkpointed path the
-        /// injected recoverable OOM is **propagated** (the OPTION (a)
-        /// abort-resumably policy), driving the production fault path a genuine
-        /// device OOM would.
+        /// uncheckpointed scheduler keys it. The injected recoverable OOM is
+        /// **propagated**, driving the production fault path a genuine device
+        /// OOM would.
         inject_oom_modulus: Option<u64>,
     }
 
@@ -730,7 +606,7 @@ mod hybrid_checkpoint {
         ) -> GpuBatchResult {
             use crate::executor::failure::injects_oom_at;
 
-            // Deliverable 1: the tally brackets the stream-ordered decode.
+            // The tally brackets the stream-ordered decode:
             // `enqueued` before the launch; `completed` once the per-stream
             // synchronize inside the decode call has returned (the batch is off
             // the device). On a device fault the slot stays non-zero, so a later
@@ -738,12 +614,8 @@ mod hybrid_checkpoint {
             self.tally.enqueued(self.stream_id);
             let gpu_res: GpuBatchResult =
                 if injects_oom_at(self.inject_oom_modulus, first_global_frame) {
-                    // Test-only OOM injection: force the recoverable OOM a genuine
-                    // device OOM would raise so the checkpointed propagate-path is
-                    // exercised. Keyed on the batch's FIRST global frame index
-                    // (matching the scheduler hybrid loop's batch keying) — but
-                    // unlike the other two surfaces the fault is PROPAGATED here,
-                    // not dispatched to a fallback (OPTION (a)).
+                    // Test-only OOM injection, keyed on the batch's FIRST global
+                    // frame index and propagated as a genuine device OOM would be.
                     Err(StageError::Recoverable(
                         crate::error::RecoverableError::OutOfMemory {
                             device_id: 0,
@@ -766,16 +638,11 @@ mod hybrid_checkpoint {
             if gpu_res.is_ok() {
                 self.tally.completed(self.stream_id);
             }
-            // A recoverable GPU fault is PROPAGATED here (no
-            // `dispatch_with_fallback`): the checkpointed sweep aborts
-            // resumably (see the type-level docs above for the OPTION (a)
-            // rationale). The non-zero tally on a fault makes a later
-            // `drain_for_checkpoint` refuse to commit.
             gpu_res
         }
 
         fn stop_after_batch(&self, _batch_idx: usize) -> bool {
-            // §4 SIGINT at a batch boundary: the in-flight batch COMPLETED and
+            // SIGINT at a batch boundary: the in-flight batch COMPLETED and
             // was recorded; stop before enqueuing another. The already-prepped
             // next batch is discarded — its frames were never recorded, and
             // resume re-preps them byte-identically from the global-frame-keyed
@@ -785,15 +652,15 @@ mod hybrid_checkpoint {
     }
 
     impl Scheduler {
-        /// The checkpointed hybrid per-SNR-point driver (deliverables 2–3).
+        /// The checkpointed hybrid per-SNR-point driver.
         ///
         /// Processes the point in heartbeat **rounds**. A round covers the
         /// aligned global-frame range up to the next multiple of
         /// `R = ceil(heartbeat / (BATCH_FRAMES·W)) · BATCH_FRAMES · W`
         /// (`heartbeat_every_frames = 0` ⇒ one round to `max_frames`), so
         /// every checkpoint boundary lands on whole per-worker batches and the
-        /// batch composition matches the uncheckpointed C.1 scheduler exactly
-        /// (see the module docs). Within a round each worker runs the C.1
+        /// batch composition matches the uncheckpointed scheduler exactly
+        /// (see the module docs). Within a round each worker runs the
         /// double-buffer (CPU prep of batch `N+1` ∥ stream-ordered GPU decode
         /// of batch `N` on its owned stream), checking
         /// [`is_interrupted`](crate::snr_checkpoint::is_interrupted) at each batch
@@ -803,8 +670,8 @@ mod hybrid_checkpoint {
         /// byte-identically from the global-frame-keyed RNG).
         ///
         /// After every round: worker faults propagate,
-        /// [`drain_for_checkpoint`](Scheduler::drain_for_checkpoint) runs
-        /// (§4 steps 1–2), the counters and per-worker `frames_in_worker` are
+        /// [`drain_for_checkpoint`](Scheduler::drain_for_checkpoint) runs,
+        /// the counters and per-worker `frames_in_worker` are
         /// latched **after** the drain, and the v2 checkpoint is written
         /// atomically.
         #[allow(clippy::too_many_arguments)]
@@ -836,10 +703,10 @@ mod hybrid_checkpoint {
                 batches_per_worker * BATCH_FRAMES * num_workers
             };
 
-            // Resume restore (§4 amendment 2026-06-10): fold the saved
-            // counters and restore each worker's strided-partition PROGRESS
-            // from `frames_in_worker`. `rng_word_pos` is NOT read back —
-            // per-frame RNG positions are re-derived from the global index.
+            // Resume restore: fold the saved counters and restore each
+            // worker's strided-partition PROGRESS from `frames_in_worker`.
+            // `rng_word_pos` is NOT read back — per-frame RNG positions are
+            // re-derived from the global index.
             let mut total = WorkerCounters::default();
             let mut done: Vec<u64> = vec![0; num_workers];
             if let Some(ref ck) = resume {
@@ -877,13 +744,10 @@ mod hybrid_checkpoint {
             }
 
             // Per-worker device state, built lazily on each worker's first
-            // round and persisted across rounds (decoder + pinned staging are
-            // expensive; the C.1 scheduler also builds them once per point).
+            // round and persisted across rounds.
             let mut states: Vec<Option<WorkerGpuState>> = (0..num_workers).map(|_| None).collect();
             let tally = StreamInFlight::new(num_workers);
 
-            // The shared double-buffer core (`bb11c2e6`) emits the same
-            // `pipeline_stage` spans on every hybrid path (deliverable 3).
             // The checkpointed sweep never reads `OverlapTimeline` intervals,
             // so it passes NO interval sink (`timeline: None` below) — a dead
             // sink would accumulate unboundedly over a long campaign point.
@@ -935,7 +799,7 @@ mod hybrid_checkpoint {
                     });
 
                 // Propagate a worker fault first (no checkpoint is written for
-                // a faulted round), then drain (§4 steps 1-2) BEFORE latching.
+                // a faulted round), then drain BEFORE latching.
                 let mut round: Vec<(WorkerCounters, u64)> = Vec::with_capacity(num_workers);
                 for r in per_worker {
                     round.push(r.map_err(SweepError::Stage)?);
@@ -943,7 +807,7 @@ mod hybrid_checkpoint {
                 self.drain_for_checkpoint(&tally)
                     .map_err(SweepError::Stage)?;
 
-                // §4 step 3: latch AFTER the drain. Reduce the round's counters
+                // Latch AFTER the drain. Reduce the round's counters
                 // in worker_idx order (the SSOT order), fold into the total,
                 // and advance the authoritative per-worker progress.
                 let round_counters: Vec<WorkerCounters> = round.iter().map(|(c, _)| *c).collect();
@@ -958,7 +822,7 @@ mod hybrid_checkpoint {
                 let reached_target = target_errors > 0 && total.errors >= target_errors;
                 completed = total.frames as usize >= max_frames || reached_target;
 
-                // §4 step 4: latch worker_states[] from the SSOT and write the
+                // Latch worker_states[] from the SSOT and write the
                 // v2 JSON atomically (tmp + fsync + rename + dir-fsync).
                 let ckpt = build_checkpoint(
                     config,
@@ -992,19 +856,12 @@ mod hybrid_checkpoint {
         /// frames `< round_end` not yet done, double-buffered CPU prep ∥ GPU
         /// decode on the worker's owned stream.
         ///
-        /// A thin wrapper over the shared
-        /// [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer)
-        /// core (epic task `bb11c2e6`): it computes the worker's remaining
-        /// round partition, lazily builds the persisted per-worker device
-        /// state, and supplies the **checkpointed failure semantics** via
-        /// [`DrainBatchHooks`] — every GPU decode bracketed by the
-        /// [`StreamInFlight`] tally with a recoverable fault **propagated**
-        /// (abort-resumably), and an [`is_interrupted`] stop at each batch
-        /// boundary. The campaign `frame_observer` is wired through the core's
-        /// per-frame observation hook. The double-buffer overlap, per-frame RNG
-        /// seek, BCH decode-tail, and `pipeline_stage` instrumentation
-        /// (deliverable 3 — now shared with the uncheckpointed scheduler) all
-        /// live in the shared core.
+        /// A thin wrapper over
+        /// [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer):
+        /// it computes the worker's remaining round partition, lazily builds
+        /// the persisted per-worker device state, supplies
+        /// [`DrainBatchHooks`], and wires the campaign `frame_observer`
+        /// through the core's per-frame observation hook.
         ///
         /// Returns the worker's round counters and the number of frames it
         /// completed (a whole number of batches, except the partition tail).
@@ -1138,8 +995,8 @@ mod tests {
 
     #[test]
     fn test_drain_refuses_in_flight_batches() {
-        // §4 "no partial batches": a non-zero tally after the join is a
-        // contract violation and the drain must refuse to commit.
+        // A non-zero tally after the join is a contract violation and the
+        // drain must refuse to commit.
         let sched = Scheduler::new(NonZeroUsize::new(2).unwrap(), false, 7);
         let tally = StreamInFlight::new(2);
         tally.enqueued(1);
@@ -1159,9 +1016,8 @@ mod tests {
         }
     }
 
-    /// Unit test for `validate_batch_alignment` (MEDIUM-3): verifies that a
-    /// misaligned `done[w]` (from a CPU-written checkpoint) is rejected with a
-    /// typed `ExecutionValidation` error naming the offending worker, and that
+    /// A misaligned `done[w]` (from a CPU-written checkpoint) is rejected with
+    /// a typed `ExecutionValidation` error naming the offending worker;
     /// batch-aligned and partition-complete values are accepted.
     #[cfg(feature = "hip")]
     #[test]
@@ -1175,19 +1031,16 @@ mod tests {
         // Valid states: done=0 (not started), done=16 (one batch), done=17 (partition end).
         // Invalid: done=5 (neither 0, nor BATCH_FRAMES-aligned, nor partition-complete).
 
-        // All-zero: always valid (no worker has started).
         assert!(
             validate_batch_alignment(&[0, 0], 2, 34).is_ok(),
             "all-zero is valid"
         );
 
-        // Batch-aligned: valid.
         assert!(
             validate_batch_alignment(&[BATCH_FRAMES as u64, BATCH_FRAMES as u64], 2, 34).is_ok(),
             "batch-aligned is valid"
         );
 
-        // Partition-complete tail: valid.
         assert!(
             validate_batch_alignment(&[17, 17], 2, 34).is_ok(),
             "partition-complete tail is valid"
@@ -1236,8 +1089,7 @@ mod tests {
     }
 
     /// A pipeline without a `RunPlan` (built via `from_parts`, not a preset)
-    /// must be rejected with an `ExecutionValidation` error at the first guard
-    /// in `run_sweep_checkpointed` (lines 441-445).
+    /// must be rejected with an `ExecutionValidation` error.
     #[test]
     fn test_run_sweep_checkpointed_rejects_missing_run_plan() {
         let scratch = gf2_core::test_scratch::scratch("gf2-drain-no-plan");
@@ -1275,7 +1127,7 @@ mod tests {
     }
 
     /// A pipeline WITH a `RunPlan` but WITHOUT a `checkpoint_dir` must be
-    /// rejected at the second guard in `run_sweep_checkpointed` (lines 447-452).
+    /// rejected.
     #[test]
     fn test_run_sweep_checkpointed_rejects_missing_checkpoint_dir() {
         use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
@@ -1317,9 +1169,7 @@ mod tests {
     }
 
     /// A properly configured pipeline with no `esn0_db_points` must complete
-    /// immediately, returning an empty sweep with `interrupted = false`
-    /// (exercises the for-loop setup and the `Ok(CheckpointedSweep { … })`
-    /// return path, lines 453-465, 542-548).
+    /// immediately, returning an empty sweep with `interrupted = false`.
     #[test]
     fn test_run_sweep_checkpointed_empty_points_returns_immediately() {
         use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
@@ -1357,12 +1207,11 @@ mod tests {
         );
     }
 
-    /// A checkpointed CPU sweep over one SNR point with one frame must complete
-    /// successfully (exercises `run_sweep_checkpointed` lines 466-548 and the
-    /// CPU arm of `run_point_checkpointed` lines 554-607).
+    /// A checkpointed CPU sweep over one SNR point with one frame must
+    /// complete successfully.
     ///
     /// Uses `gpu_enabled = false` so the CPU arm runs on both HIP and non-HIP
-    /// builds. Fast tier: one DVB-T2 frame at high SNR decodes well under 5 s.
+    /// builds.
     #[test]
     fn test_run_sweep_checkpointed_cpu_single_frame_completes() {
         use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;

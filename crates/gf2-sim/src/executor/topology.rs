@@ -1,95 +1,59 @@
-//! DAG topology executor: per-stage-driven execution in topological order
-//! (Phase C task `de160fc5`, design doc §6 / §9 / §11).
-//!
-//! [`TopologyExecutor`] consumes a built [`Pipeline`] graph and dispatches its
-//! stages in topologically correct order, with:
+//! DAG topology executor: [`TopologyExecutor`] dispatches a built [`Pipeline`]
+//! graph's stages in topological order, with:
 //!
 //! * **fan-in** — a stage with `k > 1` in-edges waits on *all* its producers,
 //!   then receives their outputs concatenated frame-wise in in-edge order;
 //! * **fan-out** — a stage output referenced by `k > 1` consumers is shared by
 //!   reference and reference-counted: the executor drops the intermediate
 //!   buffer as soon as its last consumer has run;
-//! * **per-stage-driven execution** — every stage executes via its type-erased
+//! * **per-stage routing** — every stage executes via its type-erased
 //!   [`AnyStage`] object from [`Pipeline::stages`], routed by
 //!   [`execution_class()`](AnyStage::execution_class):
 //!   [`CpuOnly`](ExecutionClass::CpuOnly) runs on the rayon worker via
 //!   [`process_any`](AnyStage::process_any); [`GpuOnly`](ExecutionClass::GpuOnly)
-//!   is enqueued on the worker's deterministically owned HIP stream
-//!   (`worker_idx % n_streams`, selected by fixed index — never the pool's
-//!   call-order cursor) via the stage's stream-aware entry point — the three
-//!   known GpuOnly stage types are dispatched by downcast
-//!   ([`GpuLdpcBp`](crate::gpu::ldpc_bp::GpuLdpcBp) →
-//!   `decode_batch_with_iters_on_stream`,
-//!   [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) → `apply_on_stream`,
-//!   [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper) →
-//!   `demap_batch_on_stream`), and an **unknown** GpuOnly stage type while a
-//!   stream pool is active is a typed [`BuildError::ExecutionValidation`]
-//!   (wrapped in [`StageError::Fatal`]) rather than a silent default-stream
-//!   `process_any`, so the stream-routing contract cannot rot when a new
-//!   GpuOnly stage lands without executor wiring (with **no** active stream
-//!   pool — GPU disabled or unavailable — every GpuOnly arm degrades to
-//!   `process_any` after a `tracing::warn!`);
+//!   is enqueued on the worker's owned HIP stream (`worker_idx % n_streams`,
+//!   selected by fixed index) via the stream-aware entry point of
+//!   [`GpuLdpcBp`](crate::gpu::ldpc_bp::GpuLdpcBp),
+//!   [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) or
+//!   [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper). Any other
+//!   GpuOnly stage type while a stream pool is active is a typed
+//!   [`BuildError::ExecutionValidation`] (wrapped in [`StageError::Fatal`]);
+//!   with **no** active stream pool (GPU disabled or unavailable) every
+//!   GpuOnly arm degrades to `process_any` after a `tracing::warn!`;
 //!   [`Hybrid`](ExecutionClass::Hybrid) is split per-batch
 //!   (see [`Hybrid split`](#hybrid-split-per-batch) below);
 //! * **per-stage tracing spans** — every stage start/end emits a
 //!   `pipeline_stage` span carrying
 //!   `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)`, with
-//!   `wall_us` recorded just before close (the same six-field shape as the
-//!   `75c22fa8` scheduler's dispatch-unit spans, now at per-stage granularity).
+//!   `wall_us` recorded just before close.
 //!
-//! # Defensive execution-start validation (design doc §9)
+//! # Execution-start validation
 //!
-//! Cyclic and disconnected graphs **cannot reach execution**: they are
-//! rejected at [`Chain::build`](crate::graph::Chain::build)
-//! ([`BuildError::Cyclic`] / [`BuildError::Disconnected`], amendment
-//! 2026-06-10a), and `build()` is the only public constructor of a runnable
-//! [`Pipeline`]. [`TopologyExecutor::validate`] is the defense-in-depth net:
-//! it re-checks the connector lineage at execution start — every edge must go
-//! *forward* in the stage list (i.e. the stored order is a topological
-//! linearisation), reference in-range stages, and join type-compatible
-//! endpoints — and reports any inconsistency **panic-free** as a typed
+//! Cyclic and disconnected graphs are rejected at
+//! [`Chain::build`](crate::graph::Chain::build) ([`BuildError::Cyclic`] /
+//! [`BuildError::Disconnected`]). [`TopologyExecutor::validate`] re-checks the
+//! connector lineage at execution start — every edge must go *forward* in the
+//! stage list (i.e. the stored order is a topological linearisation), reference
+//! in-range stages, and join type-compatible endpoints — and reports any
+//! inconsistency **panic-free** as a typed
 //! [`BuildError::ExecutionValidation`] / [`BuildError::TypeMismatch`] wrapped
 //! in [`StageError::Fatal`].
 //!
 //! # Hybrid split per-batch
 //!
-//! No production `Hybrid`-class stage exists today (the DVB-T2 chain is
-//! `CpuOnly` + the `GpuOnly` LDPC BP decode). The routing arm is nonetheless
-//! real: a `Hybrid` stage's input batch is split into two frame sub-batches
-//! (first `ceil(n/2)` frames, then the rest), each sub-batch is processed via
-//! the stage object, and the two outputs are re-concatenated in order. Today
-//! both halves run through [`process_any`](AnyStage::process_any) on the
-//! worker; a production hybrid stage plugs its device dispatch into the second
-//! half without changing the split/re-concat structure. Single-frame or
-//! non-splittable batches are processed whole (a split of one frame is
-//! meaningless).
+//! A `Hybrid` stage's input batch is split into two frame sub-batches (first
+//! `ceil(n/2)` frames, then the rest), each sub-batch is processed via
+//! [`process_any`](AnyStage::process_any) on the worker, and the two outputs
+//! are re-concatenated in order. Single-frame or non-splittable batches are
+//! processed whole.
 //!
-//! # Stage-driven DVB-T2 sweep and byte-identity (design doc §11)
-//!
-//! [`TopologyExecutor::run_dvb_t2_snr_point`] drives the DVB-T2 BICM chain
-//! per-stage over one SNR point and reproduces the SSOT
-//! ([`run_snr_point`](crate::parallel::run_snr_point) +
-//! [`DvbT2BicmFrameSim`](crate::frame_sim::DvbT2BicmFrameSim)) draw order
-//! **exactly**: per global frame `g` the worker reseeks to
-//! `worker_offset(seed, snr_idx, 0, g)`, mints the random BBFRAME with the
-//! same `random_bitvec` helper, then hands the channel stage a scratch RNG
-//! positioned at the post-message stream offset so the AWGN stage's planar
-//! draw (all I, then all Q — the SSOT contract) reproduces the frame kernel's
-//! noise realisation bit-for-bit. The resulting four columns
-//! (`fer`/`frames`/`errors`/`mean_iters`) are byte-identical to the SSOT path
-//! on the CPU-only chain; with the GPU LDPC stage in the chain the three
-//! columns `fer`/`frames`/`errors` are byte-identical (§11 relaxed contract;
-//! `mean_iters` excluded). Regression-guarded by
-//! `tests/stage_driven_byte_identity.rs`.
-//!
-//! # Throughput caveat (not the campaign path)
+//! # Throughput caveat
 //!
 //! The stage chain shares one [`DvbT2Concat`] codec behind its stages' `Arc`,
 //! and the codec's LDPC decoder sits behind a `Mutex` — so the stage-driven
-//! sweep's decodes serialise across workers. The SSOT scheduler path
-//! ([`Pipeline::run`](crate::Pipeline::run) → per-worker cloned frame kernels)
-//! remains the throughput path; this executor is the correctness surface for
-//! arbitrary DAG topologies.
+//! sweep's decodes serialise across workers. The scheduler path
+//! ([`Pipeline::run`](crate::Pipeline::run)) uses per-worker cloned frame
+//! kernels instead.
 //!
 //! [`DvbT2Concat`]: gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat
 //! [`BuildError::Cyclic`]: crate::error::BuildError::Cyclic
@@ -127,9 +91,9 @@ fn exec_err(reason: impl Into<String>) -> StageError {
 ///
 /// The DVB-T2 sweep's iteration accounting must distinguish a **genuine
 /// CPU-fallback substitution** (which legitimately surfaces no per-frame
-/// count — `mean_iters` is §11-excluded on GPU-bearing chains) from a
-/// degrade/no-source execution (which must remain the hard error it always
-/// was, never silently defaulted) — the MEDIUM-3 provenance split.
+/// count — `mean_iters` is excluded from byte-identity on GPU-bearing chains)
+/// from a degrade/no-source execution (which is a hard error, never silently
+/// defaulted).
 #[cfg_attr(not(feature = "hip"), allow(dead_code))] // Gpu/CpuFallback are
                                                     // constructed only by the hip GpuOnly dispatch arms.
 enum StageIters {
@@ -280,18 +244,15 @@ fn stream_id_for(scheduler: &Scheduler, worker_idx: usize, route: &WorkerRoute<'
     NO_STREAM
 }
 
-/// The shared CPU-fallback arm body (the L2 SSOT — every `dispatch_with_fallback`
-/// call in [`execute_gpu_stage`] passes `|| run_registered_cpu_fallback(...)`
-/// as its fallback closure): runs the stage's registered fallback via the
+/// The shared CPU-fallback closure body of every `dispatch_with_fallback` call
+/// in [`execute_gpu_stage`]: runs the stage's registered fallback via the
 /// erased [`cpu_fallback_process_any`](AnyStage::cpu_fallback_process_any)
 /// hook, mapping a missing registration to the typed validation error.
 ///
 /// Returns [`StageIters::CpuFallback`] provenance — no per-frame iteration
-/// counts cross the erased fallback boundary, and `mean_iters` is §11-excluded
-/// on GPU-bearing chains. A stateful-scratch fallback (the GpuAwgn shape) is
-/// refused inside the erased hook itself with a typed error (the HIGH-1 §11
-/// guard in `stage.rs`), which `dispatch_with_fallback` then escalates to
-/// `CpuFallbackAlsoFailed`.
+/// counts cross the erased fallback boundary. A stateful-scratch fallback (the
+/// GpuAwgn shape) is refused inside the erased hook itself with a typed error,
+/// which `dispatch_with_fallback` then escalates to `CpuFallbackAlsoFailed`.
 #[cfg(feature = "hip")]
 fn run_registered_cpu_fallback(
     stage: &dyn AnyStage,
@@ -311,12 +272,12 @@ fn run_registered_cpu_fallback(
 
 /// The `max_iterations` cap of the GPU LDPC BP stage at `pos`, used as the
 /// recorded iteration count for a frame whose GPU dispatch was **substituted**
-/// by the registered CPU LDPC fallback (the `42eac5cc` OOM substitution leaves
-/// no per-frame count, and `mean_iters` is §11-excluded from the CPU-vs-GPU
-/// contract). This is the documented fallback-iters convention, shared with
-/// the C.1 scheduler hybrid loop's fallback arm (L1). The caller only reaches
-/// it on [`StageIters::CpuFallback`] provenance from the GPU LDPC stage, which
-/// only the hip dispatch arms produce.
+/// by the registered CPU LDPC fallback (the substitution leaves no per-frame
+/// count, and `mean_iters` is excluded from the CPU-vs-GPU byte-identity
+/// contract). The scheduler hybrid loop's fallback arm uses the same
+/// convention. The caller only reaches it on [`StageIters::CpuFallback`]
+/// provenance from the GPU LDPC stage, which only the hip dispatch arms
+/// produce.
 fn gpu_ldpc_max_iters(stages: &[Box<dyn AnyStage>], pos: usize) -> Result<u64, StageError> {
     #[cfg(feature = "hip")]
     {
@@ -401,7 +362,7 @@ fn execute_stage(
 ///
 /// Every GPU-stage call — including the no-stream degrades — is wrapped with
 /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
-/// (`42eac5cc`): OOM → registered CPU fallback substitution (or hard-fail when
+/// OOM → registered CPU fallback substitution (or hard-fail when
 /// `strict_gpu`); fatal errors → diagnostic dump + propagate.
 #[cfg(feature = "hip")]
 #[allow(clippy::too_many_arguments)]
@@ -444,13 +405,10 @@ fn execute_gpu_stage(
                 StageIters::Gpu(Vec::new()),
             ));
         }
-        // Test-only GPU-OOM fault injection (issue `42eac5cc` SC1). When the
-        // config requests it, force a recoverable OOM on the selected frames so
-        // it flows through the production `dispatch_with_fallback` path below
-        // exactly as a genuine device OOM would (CPU fallback when `!strict_gpu`,
-        // hard-fail when `strict_gpu`). `None` in production: the kernel runs.
-        // Each topology dispatch is one frame, keyed on its global frame index
-        // (`batch_id == g`).
+        // Test-only GPU-OOM fault injection: force a recoverable OOM on the
+        // selected frames so it flows through the `dispatch_with_fallback`
+        // path below as a genuine device OOM would. Each topology dispatch is
+        // one frame, keyed on its global frame index (`batch_id == g`).
         let injected_oom: Option<StageError> = failure.injects_oom_at(batch_id).then(|| {
             StageError::Recoverable(crate::error::RecoverableError::OutOfMemory {
                 device_id: ctx.device_id,
@@ -509,13 +467,10 @@ fn execute_gpu_stage(
             );
         }
         // No active stream pool (GPU disabled or unavailable): degrade to the
-        // erased path, which surfaces the mapped device fault if there is
-        // genuinely no device. The degrade is wrapped like every other GPU-stage
-        // call (MEDIUM-4): a recoverable error substitutes the registered CPU
-        // fallback; a fatal error writes the diagnostic dump and propagates.
-        // A SUCCESSFUL degrade reports `StageIters::NotASource` — not
-        // `CpuFallback` — so the sweep's iteration accounting cannot mistake a
-        // degrade for a substitution (MEDIUM-3 provenance).
+        // erased path, wrapped like every other GPU-stage call. A SUCCESSFUL
+        // degrade reports `StageIters::NotASource` — not `CpuFallback` — so
+        // the sweep's iteration accounting cannot mistake a degrade for a
+        // substitution.
         tracing::warn!(
             stage = stage.name(),
             "GpuOnly LDPC stage with no active HIP stream pool; degrading to process_any"
@@ -535,13 +490,12 @@ fn execute_gpu_stage(
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::awgn::GpuAwgn>())
     {
-        // Run the GPU call FIRST (consuming the `scratch` borrow for the GPU
-        // path); the fallback closure only captures `scratch` when it is
-        // actually called by `dispatch_with_fallback` on a recoverable error.
-        // NOTE: GpuAwgn's registered fallback (`Awgn`) has STATEFUL scratch, so
-        // the erased hook refuses the substitution with a typed §11 error
-        // (HIGH-1) — the wrapper then escalates to `CpuFallbackAlsoFailed`
-        // rather than ever drawing default-seeded noise.
+        // Run the GPU call FIRST: the fallback closure borrows `scratch` only
+        // when `dispatch_with_fallback` invokes it. GpuAwgn's registered
+        // fallback (`Awgn`) has STATEFUL scratch, so the erased hook refuses
+        // the substitution with a typed error and the wrapper escalates to
+        // `CpuFallbackAlsoFailed` rather than ever drawing default-seeded
+        // noise.
         let raw = execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
         return dispatch_with_fallback(
             raw,
@@ -565,12 +519,10 @@ fn execute_gpu_stage(
             failure.dump_dir,
         );
     }
-    // An UNKNOWN GpuOnly stage type. With an owned stream available, refusing
-    // is mandatory: silently falling through to `process_any` would dispatch
-    // device work on the DEFAULT stream, rotting the "GpuOnly → the worker's
-    // owned HIP stream" contract without any test failing. A future GpuOnly
-    // stage type must be wired into this dispatch (with a stream-aware entry
-    // point) before the topology executor will run it.
+    // An UNKNOWN GpuOnly stage type. With an owned stream available it is
+    // refused: falling through to `process_any` would dispatch device work on
+    // the DEFAULT stream, breaking the "GpuOnly → the worker's owned HIP
+    // stream" contract without any test failing.
     if scheduler.worker_stream(worker_idx).is_some() {
         return Err(exec_err(format!(
             "GpuOnly stage `{}` has no stream-aware dispatch in the topology executor: \
@@ -580,9 +532,8 @@ fn execute_gpu_stage(
             stage.name()
         )));
     }
-    // No active stream pool: the documented graceful degrade (matching the
-    // known-stage arms above), wrapped like every other GPU-stage call
-    // (MEDIUM-4) so a fatal device fault still produces a diagnostic dump.
+    // No active stream pool: degrade like the known-stage arms above, wrapped
+    // so a fatal device fault still produces a diagnostic dump.
     tracing::warn!(
         stage = stage.name(),
         "GpuOnly stage with no active HIP stream pool; degrading to process_any"
@@ -834,8 +785,7 @@ enum WaveInput {
 pub struct TopologyExecutor;
 
 impl TopologyExecutor {
-    /// Defensive execution-start validation of the connector lineage
-    /// (deliverable 2; design doc §9).
+    /// Defensive execution-start validation of the connector lineage.
     ///
     /// Cycles and disconnection are build()-time errors and cannot occur on a
     /// built [`Pipeline`]; this re-checks, panic-free, that the built stage
@@ -846,10 +796,6 @@ impl TopologyExecutor {
     ///   the stored stage order is a topological linearisation of the edges;
     /// * every edge's `element_type` equals both its producer's
     ///   `output_type()` and its consumer's `input_type()`.
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` — the built pipeline to validate.
     ///
     /// # Errors
     ///
@@ -931,16 +877,13 @@ impl TopologyExecutor {
     }
 
     /// Runs one input batch through the pipeline DAG in topologically correct
-    /// order (deliverable 1), returning the sink outputs.
+    /// order, returning the sink outputs.
     ///
     /// Equivalent to [`run_with_handle`](Self::run_with_handle) with a fresh
     /// `BatchHandle::new(0, 0)` (the span fields `batch_id`/`snr_idx` are 0).
     ///
     /// # Arguments
     ///
-    /// * `pipeline` — the built pipeline.
-    /// * `scheduler` — supplies the rayon worker pool (and the HIP stream pool
-    ///   under `hip`).
     /// * `batch` — the root input, delivered to every in-degree-0 stage.
     ///
     /// # Errors
@@ -971,15 +914,6 @@ impl TopologyExecutor {
     /// buffer). Every stage executes via its [`AnyStage`] object, routed by
     /// [`execution_class()`](AnyStage::execution_class) (see the
     /// [executor module docs](crate::executor)).
-    ///
-    /// # Arguments
-    ///
-    /// * `pipeline` — the built pipeline.
-    /// * `scheduler` — supplies the rayon worker pool (and the HIP stream pool
-    ///   under `hip`).
-    /// * `batch` — the root input, delivered to every in-degree-0 stage.
-    /// * `handle` — the batch handle whose `batch_id` / `snr_idx` annotate the
-    ///   per-stage spans.
     ///
     /// # Errors
     ///
@@ -1170,15 +1104,14 @@ impl TopologyExecutor {
     }
 
     /// Drives the DVB-T2 BICM chain **per-stage** over one SNR point,
-    /// returning the `worker_idx`-ordered aggregate [`WorkerCounters`]
-    /// (deliverable 4: the stage-driven byte-identity surface).
+    /// returning the `worker_idx`-ordered aggregate [`WorkerCounters`].
     ///
     /// Global frames `0..max_frames` are fanned across the scheduler's
     /// `parallelism` workers (worker `w` takes frames `w, w+W, …`, the same
     /// strided partition as the SSOT dispatch). Per frame `g` the worker:
     ///
     /// 1. reseeks its [`WorkerCtx`] to `worker_offset(seed, snr_idx, 0, g)`
-    ///    (global-frame keying, §3) and mints the random BBFRAME with the SSOT
+    ///    (global-frame keying) and mints the random BBFRAME with the SSOT
     ///    `random_bitvec` helper — the identical message draw to
     ///    [`DvbT2BicmFrameSim::simulate_frame`](crate::frame_sim::DvbT2BicmFrameSim::simulate_frame);
     /// 2. hands the chain's AWGN channel stage a scratch RNG positioned at the
@@ -1193,7 +1126,7 @@ impl TopologyExecutor {
     ///    [`DecodeScratch`] (CPU chain) or the GPU LDPC stage's per-frame
     ///    counts (GPU chain).
     ///
-    /// Per design doc §11 the four columns derived from the returned counters
+    /// The four columns derived from the returned counters
     /// are byte-identical to the SSOT [`run_snr_point`](crate::parallel::run_snr_point)
     /// path on the all-CPU chain, and the three columns
     /// `fer`/`frames`/`errors` are byte-identical with the GPU LDPC stage in
@@ -1207,14 +1140,6 @@ impl TopologyExecutor {
     /// wiring). Any other shape yields a typed
     /// [`BuildError::ExecutionValidation`].
     ///
-    /// # Arguments
-    ///
-    /// * `pipeline` — the built DVB-T2 chain.
-    /// * `scheduler` — supplies seed, worker count, the rayon pool, and (under
-    ///   `hip`) the stream pool.
-    /// * `snr_idx` — the SNR-point index keying the §3 RNG seek.
-    /// * `max_frames` — the number of global frames to simulate.
-    ///
     /// # Errors
     ///
     /// * the [`validate`](Self::validate) errors;
@@ -1225,10 +1150,8 @@ impl TopologyExecutor {
     ///
     /// # Complexity
     ///
-    /// `O(max_frames)` frame chains across the workers. NOTE the chain's
-    /// shared codec serialises LDPC decodes on its internal lock (see the
-    /// [executor module docs](crate::executor)); this is the correctness surface, not the
-    /// campaign throughput path.
+    /// `O(max_frames)` frame chains across the workers; the chain's shared
+    /// codec serialises LDPC decodes on its internal lock.
     ///
     /// # Examples
     ///
@@ -1336,7 +1259,6 @@ impl TopologyExecutor {
         let seed = scheduler.seed();
         let num_workers = scheduler.parallelism().get();
 
-        // Build the failure policy for `dispatch_with_fallback` wiring (`42eac5cc`).
         let dump_dir_buf_dvb = pipeline
             .config()
             .diagnostic_dump_dir
@@ -1353,7 +1275,7 @@ impl TopologyExecutor {
                 (0..num_workers)
                     .into_par_iter()
                     .map(|worker_idx| -> Result<WorkerCounters, StageError> {
-                        // Logical worker 0 for the RNG (§3 global-frame keying);
+                        // Logical worker 0 for the RNG (global-frame keying);
                         // the physical worker_idx only selects WHICH frames this
                         // worker runs (and annotates the spans).
                         let mut ctx = WorkerCtx::new(seed, snr_idx, 0);
@@ -1418,9 +1340,9 @@ impl TopologyExecutor {
 
                             // 3. Per-stage-driven chain execution. Iteration
                             //    provenance is tracked at the GPU LDPC stage
-                            //    position ONLY (MEDIUM-3): an AWGN/demap
-                            //    fallback substitution must not masquerade as
-                            //    a BP-iteration source.
+                            //    position ONLY: an AWGN/demap fallback
+                            //    substitution must not masquerade as a
+                            //    BP-iteration source.
                             let mut cur: Box<dyn TypedBatch> =
                                 Box::new(BitPackedBatch::new(vec![message.clone()]));
                             let mut gpu_iters: Option<u64> = None;
@@ -1477,17 +1399,12 @@ impl TopologyExecutor {
                                                 )
                                             })?
                                     } else if bp_fellback {
-                                        // ATTESTED substitution provenance
-                                        // (MEDIUM-3): this frame's GPU LDPC
-                                        // dispatch was replaced by the
-                                        // registered CPU fallback
-                                        // (OOM/transient, `42eac5cc`), whose
-                                        // erased boundary surfaces no per-frame
-                                        // count. `mean_iters` is §11-EXCLUDED
-                                        // from the CPU-vs-GPU contract, so
-                                        // record the stage's `max_iterations`
-                                        // cap (the shared fallback-iters
-                                        // convention, L1) — the verdict columns
+                                        // This frame's GPU LDPC dispatch was
+                                        // replaced by the registered CPU
+                                        // fallback, whose erased boundary
+                                        // surfaces no per-frame count: record
+                                        // the stage's `max_iterations` cap. The
+                                        // verdict columns
                                         // (`fer`/`frames`/`errors`) are
                                         // unaffected.
                                         let pos = gpu_bp_pos.ok_or_else(|| {
@@ -1501,8 +1418,8 @@ impl TopologyExecutor {
                                         // No iteration source ran — e.g. the
                                         // GPU LDPC stage degraded to
                                         // `process_any` (no stream) without a
-                                        // substitution. The prior hard error,
-                                        // never a silent default (MEDIUM-3).
+                                        // substitution: a hard error, never a
+                                        // silent default.
                                         return Err(exec_err(
                                             "no BP-iteration source ran for this frame \
                                              (no DvbT2Decode stage, no GPU LDPC counts, \
@@ -1521,7 +1438,7 @@ impl TopologyExecutor {
                     .collect()
             });
 
-        // Reduce in worker_idx order — the SSOT aggregation order (§3).
+        // Reduce in worker_idx order — the SSOT aggregation order.
         let mut all = Vec::with_capacity(per_worker.len());
         for r in per_worker {
             all.push(r?);
