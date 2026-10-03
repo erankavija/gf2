@@ -11,10 +11,7 @@
 //! Check `c` owns the canonical edge ids `check_range(c)`, in the parity-check
 //! matrix's CSR [`row_iter`](gf2_core::SpBitMatrixDual::row_iter) order.
 //! Variable `v` owns the variable-major slots `var_range(v)`, in the CSC
-//! [`col_iter`](gf2_core::SpBitMatrixDual::col_iter) order. Those are the two
-//! orders the LDPC decoder's message arrays have always followed, so a message
-//! occupies the same position within its node as it did before the layout
-//! existed, and the arithmetic order of a node update is unchanged.
+//! [`col_iter`](gf2_core::SpBitMatrixDual::col_iter) order.
 //!
 //! # Storage
 //!
@@ -241,8 +238,6 @@ mod tests {
     use super::*;
     use crate::ldpc::LdpcCode;
 
-    /// The layout's orders are the parity-check matrix's own row and column
-    /// orders, which is what keeps a message in the position it had before.
     #[test]
     fn orders_match_the_matrix_views() {
         let code = LdpcCode::dvb_t2_short(crate::CodeRate::Rate1_2);
@@ -289,7 +284,6 @@ mod tests {
         }
     }
 
-    /// The degrees the layout reports are the matrix's degrees.
     #[test]
     fn degrees_match_the_matrix() {
         let code = LdpcCode::from_edges(3, 4, &[(0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3)]);

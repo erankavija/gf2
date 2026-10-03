@@ -1,48 +1,22 @@
 //! Linear-time IRA (Irregular Repeat-Accumulate) staircase encoder.
 //!
-//! Exploits the dual-diagonal parity structure of DVB-T2 LDPC codes to encode
-//! in O(number of edges) time with no matrix densification or RREF.
-//!
-//! # Algorithm
-//!
-//! DVB-T2 LDPC codes are systematic: `c = [info (k bits) | parity (m bits)]`,
-//! where the parity part of H is dual-diagonal:
-//!
-//! - Row 0: single 1 at parity column `k+0`
-//! - Row p (p > 0): 1s at parity columns `k+p` and `k+p-1`
-//!
-//! Each check equation therefore reads:
-//!
-//! ```text
-//! s[0] XOR par[0]              = 0   (row 0)
-//! s[p] XOR par[p] XOR par[p-1] = 0   (row p > 0)
-//! ```
-//!
-//! where `s[p]` is the XOR of the info bits in check row `p`. Solving gives
-//! the staircase recursion:
+//! The codeword is systematic, `c = [info (k bits) | parity (m bits)]`, and the
+//! parity part of H is dual-diagonal: row 0 has a single 1 at column `k`, and
+//! row `p > 0` has 1s at columns `k+p` and `k+p-1`. With `s[p]` the XOR of the
+//! info bits in check row `p`, the parity bits follow the staircase recursion:
 //!
 //! ```text
 //! par[0] = s[0]
 //! par[p] = s[p] XOR par[p-1]   for p = 1 .. m-1
 //! ```
 //!
-//! # Preconditions
-//!
-//! This encoder requires that:
-//! - Systematic bits occupy columns `0 .. k` (standard DVB-T2 layout)
-//! - Parity bits occupy columns `k .. n` (standard DVB-T2 layout)
-//! - The parity part of H is dual-diagonal (DVB-T2 by construction)
-//!
-//! Use [`IraEncoder::new`] to build the encoder from any `LdpcCode` that
-//! satisfies these preconditions. Construction fails fast if they are not met.
+//! [`IraEncoder::new`] checks only `m + k == n`; the dual-diagonal parity part
+//! is the caller's precondition.
 
 use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::BitVec;
 
 /// Precomputed staircase encoder for dual-diagonal IRA codes (e.g. DVB-T2).
-///
-/// Constructed once per code configuration; encoding is then O(edges) with
-/// no allocations beyond the output codeword.
 ///
 /// # Examples
 ///
@@ -68,33 +42,18 @@ pub struct IraEncoder {
     k: usize,
     /// Parity bit count m = n - k.
     m: usize,
-    /// `check_info_vars[p]` — sorted list of information-bit column indices
-    /// (< k) connected to check row p in H.
-    ///
-    /// XOR of `info[v]` over `v` in `check_info_vars[p]` gives `s[p]`.
+    /// `check_info_vars[p]`: the information columns (`< k`) of check row `p`,
+    /// whose XOR over `info` is `s[p]`.
     check_info_vars: Vec<Vec<usize>>,
 }
 
 impl IraEncoder {
-    /// Constructs an `IraEncoder` from a parity-check matrix.
-    ///
-    /// Iterates the rows of `h` once to collect the info-column indices
-    /// per check (columns `< k`). This is O(nnz) and allocates one `Vec<usize>`
-    /// per check row.
-    ///
-    /// # Arguments
-    ///
-    /// * `h` - Sparse parity-check matrix (m × n).
-    /// * `k` - Number of information bits (systematic columns `0..k`).
+    /// Builds the encoder from the parity-check matrix `h` (m × n) of a code
+    /// with systematic columns `0..k`, in O(nnz) time and storage.
     ///
     /// # Panics
     ///
-    /// Panics if `h.rows() + k != h.cols()` (dimensions inconsistent with
-    /// a systematic code having `m = n - k`).
-    ///
-    /// # Complexity
-    ///
-    /// O(nnz) construction time; O(nnz) storage.
+    /// Panics if `h.rows() + k != h.cols()`.
     pub fn new(h: &SpBitMatrixDual, k: usize) -> Self {
         let m = h.rows();
         let n = h.cols();
@@ -104,8 +63,7 @@ impl IraEncoder {
             "IraEncoder requires m + k == n (got m={m}, k={k}, n={n})"
         );
 
-        // For each check row, collect the info-column indices (< k).
-        // Parity-column entries (>= k) are handled implicitly by the staircase.
+        // Parity-column entries (>= k) are implicit in the staircase.
         let check_info_vars: Vec<Vec<usize>> = (0..m)
             .map(|check| h.row_iter(check).filter(|&col| col < k).collect())
             .collect();
@@ -118,26 +76,12 @@ impl IraEncoder {
         }
     }
 
-    /// Encodes `info` (k bits) into a systematic codeword (n bits).
-    ///
-    /// The codeword layout is `[info | parity]`: the first k bits are the
-    /// verbatim information bits and the last m bits are the computed parity.
-    ///
-    /// # Arguments
-    ///
-    /// * `info` - Information bit vector of length `k`.
-    ///
-    /// # Returns
-    ///
-    /// Systematic codeword of length `n = k + m`.
+    /// Encodes `info` (k bits) into the systematic codeword `[info | parity]`
+    /// (n bits) in O(nnz).
     ///
     /// # Panics
     ///
     /// Panics if `info.len() != k`.
-    ///
-    /// # Complexity
-    ///
-    /// O(nnz) — one pass over all info-column edges plus one pass over m parity bits.
     pub fn encode(&self, info: &BitVec) -> BitVec {
         assert_eq!(
             info.len(),
@@ -147,7 +91,6 @@ impl IraEncoder {
             self.k
         );
 
-        // Step 1: accumulate s[p] = XOR of info bits connected to check p.
         let mut s = vec![false; self.m];
         for (p, vars) in self.check_info_vars.iter().enumerate() {
             let mut acc = false;
@@ -157,19 +100,15 @@ impl IraEncoder {
             s[p] = acc;
         }
 
-        // Step 2: staircase recursion.
-        //   par[0] = s[0]
-        //   par[p] = s[p] XOR par[p-1]   for p = 1..m-1
         let mut par = vec![false; self.m];
         par[0] = s[0];
         for p in 1..self.m {
             par[p] = s[p] ^ par[p - 1];
         }
 
-        // Step 3: assemble codeword [info | parity].
         let mut cw = BitVec::with_capacity(self.n);
         for i in 0..self.k {
-            cw.push_bit(info.get(i)); // clippy: index is needed (BitVec random access)
+            cw.push_bit(info.get(i));
         }
         for &bit in &par {
             cw.push_bit(bit);
@@ -201,19 +140,7 @@ mod tests {
     use super::*;
     use gf2_core::sparse::SpBitMatrixDual;
 
-    /// Build the tiny dual-diagonal H used as a unit-test fixture.
-    ///
-    /// For k=3, m=3, n=6:
-    ///
-    /// ```text
-    ///        v0 v1 v2 | p0 p1 p2
-    /// c0  [  1  1  0  |  1  0  0  ]
-    /// c1  [  0  1  1  |  1  1  0  ]
-    /// c2  [  1  0  1  |  0  1  1  ]
-    /// ```
-    ///
-    /// Staircase columns: p0→c0; p1→c0,c1 (wait — this is just a fixture, not
-    /// the exact DVB-T2 structure). Let's make it exactly dual-diagonal:
+    /// A dual-diagonal H fixture.
     fn make_mini_ira_h() -> (SpBitMatrixDual, usize) {
         // k=4, m=4, n=8
         // Info-bit edges (arbitrary):
@@ -272,7 +199,6 @@ mod tests {
         // Zero info → all s[p] = 0 → all par[p] = 0
         assert_eq!(cw.count_ones(), 0);
 
-        // Verify H·c = 0
         let syndrome = h.matvec(&cw);
         assert_eq!(syndrome.count_ones(), 0, "Zero codeword must satisfy H·c=0");
     }
@@ -302,7 +228,6 @@ mod tests {
         let (h, k) = make_mini_ira_h();
         let enc = IraEncoder::new(&h, k);
 
-        // Exhaustively test all 2^4 = 16 messages
         for msg_val in 0u8..16 {
             let mut info = BitVec::with_capacity(k);
             for bit in 0..k {
@@ -312,7 +237,6 @@ mod tests {
 
             assert_eq!(cw.len(), enc.n());
 
-            // Systematic property: first k bits equal the message
             for i in 0..k {
                 assert_eq!(
                     cw.get(i),
@@ -321,7 +245,6 @@ mod tests {
                 );
             }
 
-            // Parity-check property: H·c = 0
             let syndrome = h.matvec(&cw);
             assert_eq!(
                 syndrome.count_ones(),
@@ -340,9 +263,6 @@ mod tests {
         assert!(result.is_err(), "Should panic on dimension mismatch");
     }
 
-    /// Verify the encoder against the DVB-T2 Short Rate 1/2 code
-    /// (k=7200, m=9000, n=16200). Only checks syndrome for a few random messages
-    /// since full bit-identity comparison with RREF takes > 5 s.
     #[test]
     fn test_ira_encoder_dvb_t2_short_rate_1_2_syndrome() {
         use crate::ldpc::LdpcCode;
@@ -357,14 +277,12 @@ mod tests {
         assert_eq!(enc.k(), code.k());
         assert_eq!(enc.m(), code.m());
 
-        // Test zero message
         let info = BitVec::zeros(k);
         let cw = enc.encode(&info);
         assert_eq!(cw.len(), code.n());
         let syn = code.syndrome(&cw);
         assert_eq!(syn.count_ones(), 0, "Zero message: syndrome must be zero");
 
-        // Test a few deterministic non-zero messages
         for seed in 0u8..5 {
             let mut info = BitVec::with_capacity(k);
             for i in 0..k {

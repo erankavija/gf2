@@ -1,18 +1,9 @@
-//! DVB-T2 LDPC code construction from standard tables.
+//! DVB-T2 LDPC codes built from the `@/citation/Etsi2015` tables, and the
+//! DVB-T2 BICM (Bit-Interleaved Coded Modulation) components.
 //!
-//! This module implements DVB-T2 LDPC codes by directly building sparse
-//! parity-check matrices from ETSI EN 302 755 standard tables, and exposes
-//! the full DVB-T2 BICM (Bit-Interleaved Coded Modulation) component pieces.
+//! # BICM chain composition
 //!
-//! DVB-T2 supports two frame sizes:
-//! - **Short frames**: n=16200, Z=360
-//! - **Normal frames**: n=64800, Z=360
-//!
-//! Both support 6 code rates: 1/2, 3/5, 2/3, 3/4, 4/5, 5/6
-//!
-//! # Canonical BICM chain composition
-//!
-//! The three BICM component pieces compose as follows (ETSI EN 302 755 §6):
+//! The BICM components compose as follows (`@/citation/Etsi2015` §6):
 //!
 //! ```text
 //! BBFRAME → BCH encode → LDPC encode → bit interleave → QAM map
@@ -130,14 +121,6 @@
 //! independent Gaussian noise of variance `sigma^2` on each of I and Q,
 //! pass `2 * sigma^2`. See [`crate::modem::awgn_link`] for the canonical
 //! `Eb/N0 → sigma^2` conversion helper.
-//!
-//! ## In-scope configurations
-//!
-//! The three in-scope configurations for this BICM composition are:
-//! Normal × {Rate 1/2, 2/3, 3/4} × {16-QAM, 64-QAM} (6 combinations total).
-//! All six pass the roundtrip integration test in
-//! `crates/gf2-coding/tests/dvb_t2_bicm_chain.rs` (slow tier, requires
-//! the LDPC encoder).
 //!
 //! A complete runnable example lives in
 //! `crates/gf2-coding/examples/dvb_t2_bicm_chain.rs`.
