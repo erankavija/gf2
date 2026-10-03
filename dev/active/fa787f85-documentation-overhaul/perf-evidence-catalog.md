@@ -196,7 +196,7 @@ as projected or target.
 | `benches/field_matrix_fusion_results.md` | fused vs eager ≈1.00–1.02 | partial | commit `e94eb23`, Mersenne-31, single core; host model absent |
 | `benches/strassen_threshold_results.md` | Winograd ≥1.2× over classical at threshold | partial | see file; also `dev/bench_results/2026-04-29-strassen-matmul-crossover.md` |
 
-### 4.5 `crates/gf2-coding/README.md` and `crates/gf2-coding/docs/`
+### 4.5 `crates/gf2-coding/README.md` and `dev/archive/legacy/crates/gf2-coding/docs/`
 
 | File:line | Claim | Status | Evidence |
 |---|---|---|---|

@@ -258,9 +258,9 @@ simulation test’s construction/decode path (`gpu_bch_syndrome_byte_identity.rs
 
 Documentation, campaign, data, presentation, and development references:
 
-`crates/gf2-coding/README.md`, `ROADMAP.md`, `docs/PARALLELIZATION.md`,
-`docs/SYSTEMATIC_ENCODING_CONVENTION.md`,
-`docs/archive/QUALITY_AUDIT_REPORT.md`,
+`crates/gf2-coding/README.md`, `ROADMAP.md`, `dev/archive/legacy/crates/gf2-coding/docs/PARALLELIZATION.md`,
+`dev/archive/legacy/crates/gf2-coding/docs/SYSTEMATIC_ENCODING_CONVENTION.md`,
+`dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md`,
 `crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md`,
 `dev/campaigns/cp_ebch_sanity.toml`, `dev/campaigns/ebch32_vs_drm32.toml`,
 `dev/campaigns/ebch_bcjr_compare.toml`, all `dev/campaigns/phase*.toml`,
@@ -343,7 +343,7 @@ Runtime/read-write consumers are:
 `crates/gf2-coding/src/ldpc/encoding/cache.rs:317-429` (writes parity
 matrices and reloads them), `crates/gf2-coding/tests/ldpc_cache_io.rs:38-79`,
 `crates/gf2-coding/tests/common/mod.rs:84-93` (cache location/gating),
-`crates/gf2-coding/docs/SDR_INTEGRATION.md`, and `benchmarks/analyze.py`.
+`dev/archive/legacy/crates/gf2-coding/docs/SDR_INTEGRATION.md`, and `benchmarks/analyze.py`.
 The only exact production `.gf2` round trip is the LDPC encoding cache;
 `BitMatrix`’s own tests live in `crates/gf2-core/src/io/matrix.rs`.
 

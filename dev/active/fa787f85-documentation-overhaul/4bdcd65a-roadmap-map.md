@@ -34,7 +34,7 @@ Dispositions: `tracked` (named issue), `delivered` (named code or evidence path)
 | 168 | Open-source reproducible benchmark suites | delivered: `6ed7f050`; `dev/benchmarks/` |
 | 169 | Conference targets (ISIT, ICC, Globecom) | obsolete: venue selection is an author decision with no repository artifact; results reach papers through the committed receipts under `dev/benchmarks/` |
 | 170 | Journal targets (IEEE Trans. IT, Trans. Comm) | obsolete: same reason as line 169 |
-| 173 | DVB-T2 bit-exact compliance | delivered: `4cdaf1c5` (202/202 chain vectors); `crates/gf2-coding/docs/DVB_T2.md` |
+| 173 | DVB-T2 bit-exact compliance | delivered: `4cdaf1c5` (202/202 chain vectors); `dev/archive/legacy/crates/gf2-coding/docs/DVB_T2.md` |
 | 174 | 5G NR polar vs 3GPP test vectors | tracked: `b81c239c` (5G NR LDPC vectors delivered: `dd22a099`, `acf9b11a`) |
 | 175 | Decode real-world DVB-T2 captures | tracked: `fcb09e6f`, `dfca71b8` |
 | 176 | Compete with commercial SDR implementations | obsolete: no commercial comparator is available to the project; open-source baselines are covered by `18e69a1a`, `1a379447` |
