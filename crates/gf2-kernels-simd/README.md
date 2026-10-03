@@ -7,9 +7,11 @@ layer; application code calls the safe APIs of `gf2-core`, `gf2-algebra` and
 
 ## Role
 
-Each kernel family exports a safe `detect()` that returns a bundle of function
-pointers, or `None` when the host lacks a required CPU extension. Consuming
-crates cache the bundle and fall back to scalar code on `None`. The families
+Each kernel family exports a safe `detect` function that returns a bundle of
+function pointers. All families except `modem` return `Option` and yield `None`
+when the host lacks a required CPU extension; consuming crates cache the bundle
+and run scalar code on `None`. The `modem` detectors always return a bundle
+that holds scalar or AVX2 entries. The families
 cover logical bit operations and population counts, $\mathrm{GF}(p)$ and
 $\mathrm{GF}(2^m)$ arithmetic, BCH encoding, LLR and modem arithmetic, and
 packed $\mathbb{F}_3$/$\mathbb{F}_5$/$\mathbb{F}_7$ operations. The
