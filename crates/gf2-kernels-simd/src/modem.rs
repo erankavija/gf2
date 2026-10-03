@@ -220,10 +220,8 @@ mod avx2 {
     //! The inner level loop runs in 8-wide (`f32`) / 4-wide (`f64`) chunks;
     //! the outer symbol loop is scalar.
 
-    /// Safe wrapper around the AVX2 `f32` kernel.
-    ///
-    /// Validates the slice contract before dispatching, so the unsafe inner
-    /// function's length invariants hold.
+    /// AVX2 `f32` kernel under the module-level kernel contract, with the
+    /// slice lengths checked.
     ///
     /// # Panics
     ///
@@ -256,7 +254,7 @@ mod avx2 {
         unsafe { pam_sq_distances_f32_avx2(z, g, inv_n0_eq, pam_levels, out) }
     }
 
-    /// Safe wrapper around the AVX2 `f64` kernel.
+    /// AVX2 `f64` counterpart of [`pam_sq_distances_f32_avx2_safe`].
     ///
     /// # Panics
     ///

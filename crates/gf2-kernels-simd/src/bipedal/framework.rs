@@ -1,8 +1,8 @@
 //! Generic `BatchedBipedalLike<C>` framework.
 //!
 //! `C: BipedalLikeConfig` supplies the lane types and the lane-level
-//! add/sub/mul/neg formulas of one prime; [`BatchedBipedalLike`] delegates to
-//! them. Every method is `#[inline(always)]` so that it inlines into the
+//! add/sub/mul/neg formulas of one prime, which [`BatchedBipedalLike`]
+//! exposes. Every method is `#[inline(always)]` so that it inlines into the
 //! `#[target_feature(enable = "avx2")]` batch entry points in
 //! `crate::x86::bipedal_avx2`.
 
@@ -93,7 +93,7 @@ pub trait BipedalLikeConfig {
 
 /// Generic batched bipedal-like SIMD framework.
 ///
-/// Zero-sized; all operations are associated functions that delegate to the
+/// Zero-sized; its associated functions are the lane operations of the
 /// per-prime recipe `C`.
 ///
 /// # Safety
@@ -108,7 +108,7 @@ impl<C> BatchedBipedalLike<C>
 where
     C: BipedalLikeConfig,
 {
-    /// Delegates to `C::add_lane`.
+    /// Lane-wise sum `(m1, s1) + (m2, s2)` in the field of `C`.
     ///
     /// # Safety
     ///
@@ -125,7 +125,7 @@ where
         unsafe { C::add_lane(m1, s1, m2, s2) }
     }
 
-    /// Delegates to `C::sub_lane`.
+    /// Lane-wise difference `(m1, s1) - (m2, s2)` in the field of `C`.
     ///
     /// # Safety
     ///
@@ -142,7 +142,7 @@ where
         unsafe { C::sub_lane(m1, s1, m2, s2) }
     }
 
-    /// Delegates to `C::mul_lane`.
+    /// Lane-wise product `(m1, s1) * (m2, s2)` in the field of `C`.
     ///
     /// # Safety
     ///
@@ -159,7 +159,7 @@ where
         unsafe { C::mul_lane(m1, s1, m2, s2) }
     }
 
-    /// Delegates to `C::neg_lane`.
+    /// Lane-wise negation of `(m, s)` in the field of `C`.
     ///
     /// # Safety
     ///

@@ -1,13 +1,10 @@
 //! AVX2 pure-integer panelized GEMM kernel for small `Fp<P>` with
-//! `P <= 251`, in the style of `@/citation/GotoGeijn2008` and
-//! `@/citation/VanZee2015`.
+//! `P <= 251`, after `@/citation/GotoGeijn2008`, `@/citation/VanZee2015` and
+//! `@/citation/Amd2020`.
 //!
 //! Safe wrapper layer over `crate::x86::fp_small_panel`, operating on
 //! canonical bytes (each element in `[0, p)`). [`detect`] returns `None`
-//! without AVX2. Implemented from `@/citation/GotoGeijn2008`,
-//! `@/citation/VanZee2015` and `@/citation/Amd2020`; no
-//! `@/citation/FflasFfpack2021` source, comments, or autotuning tables
-//! consulted.
+//! without AVX2.
 
 /// Cache-blocking factor along the k-axis, chosen to fit L1d. The u32
 /// accumulator bound `k ≤ 2³² / (p − 1)²` (`68 719` at `p = 251`) is not

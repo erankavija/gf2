@@ -30,8 +30,7 @@ pub use lanes::Avx2Lane;
 pub mod avx2 {
     use crate::bipedal::Config3;
 
-    /// `Config3`-monomorphised wrapper over
-    /// `crate::x86::bipedal_avx2::run_add_batch`.
+    /// F_3 sum `(mag1, sgn1) + (mag2, sgn2)` over canonical u64-word streams.
     ///
     /// # Safety
     ///
@@ -55,8 +54,7 @@ pub mod avx2 {
         }
     }
 
-    /// `Config3`-monomorphised wrapper over
-    /// `crate::x86::bipedal_avx2::run_sub_batch`.
+    /// F_3 difference `(mag1, sgn1) - (mag2, sgn2)` over canonical u64-word streams.
     ///
     /// # Safety
     ///
@@ -80,8 +78,7 @@ pub mod avx2 {
         }
     }
 
-    /// `Config3`-monomorphised wrapper over
-    /// `crate::x86::bipedal_avx2::run_mul_batch`.
+    /// F_3 product `(mag1, sgn1) * (mag2, sgn2)` over canonical u64-word streams.
     ///
     /// # Safety
     ///
@@ -105,8 +102,7 @@ pub mod avx2 {
         }
     }
 
-    /// `Config3`-monomorphised wrapper over
-    /// `crate::x86::bipedal_avx2::run_neg_batch`.
+    /// F_3 negation of `(mag, sgn)` over canonical u64-word streams.
     ///
     /// # Safety
     ///
