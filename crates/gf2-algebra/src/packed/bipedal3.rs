@@ -1,11 +1,8 @@
 //! Fixed-width packed `F_3` element encoding ("bipedal3").
 //!
-//! [`Bipedal3`] packs exactly **64** independent `F_3` lanes into two
-//! `u64` words (`mag` and `sgn`).  Arithmetic follows the bitwise
-//! formulas of Scheinerman 2024 (arXiv 2407.20205v2, Theorem 2.1).
-//! The implementation is extractable by Charon/Aeneas:
-//! every operation is a flat, straight-line expression — no closures,
-//! no iterators, no helper traits.
+//! [`Bipedal3`] packs 64 independent `F_3` lanes into two `u64` words
+//! (`mag` and `sgn`). Arithmetic follows the bitwise formulas of
+//! `@/citation/Scheinerman2024` (Theorem 2.1).
 //!
 //! # Encoding
 //!
@@ -16,30 +13,13 @@
 //! |  0  |     0     |     0     | canonical zero             |
 //! |  1  |     1     |     0     |                            |
 //! |  2  |     1     |     1     | `≡ −1 (mod 3)`            |
-//! | alt |     0     |     1     | **alternative zero** — same field value as |
-//! |     |           |           | canonical zero; arithmetic respects the |
-//! |     |           |           | equivalence classes and can produce `(0,1)`; |
-//! |     |           |           | `lane`, `all_zero`, and `Eq` treat it as 0. |
+//! |  0  |     0     |     1     | alternative zero           |
 //!
-//! The encoding uses equivalence classes: a clear `mag` bit is field zero
-//! regardless of the `sgn` bit, so `(0,0)` and `(0,1)` represent the same
-//! field value. The formulas respect these classes and do not canonicalise
-//! every result.
+//! A clear `mag` bit is field zero regardless of the `sgn` bit. The formulas
+//! respect these classes and can produce `(0,1)`; `lane`, `all_zero`, and
+//! `Eq` treat it as 0.
 //!
 //! Bit `s` of `mag` and bit `s` of `sgn` encode lane `s`.
-//!
-//! # Op cost (per `Bipedal3` = 64 `F_3` elements)
-//!
-//! - **add**: 6 word-level ops (CSE: 2 temporaries).
-//! - **sub**: 6 word-level ops (paper §2.2 formula).
-//! - **mul**: 2 word-level ops.
-//! - **neg**: 1 word-level op.
-//!
-//! # Cross-check oracle
-//!
-//! [`super::ScalarPackedFp3`] is the canonical reference; the proptest
-//! suite in this module routes random inputs through both and asserts
-//! per-lane equality for all four operations.
 
 use core::fmt;
 
@@ -47,24 +27,12 @@ use gf2_core::gfp::Fp;
 
 use super::{PackedField, PackedFieldVec};
 
-/// Fixed-width packed `F_3` element encoding 64 lanes in a `(mag, sgn)`
-/// `u64` pair using the bitwise formulas of Scheinerman 2024.
+/// 64 `F_3` lanes in a `(mag, sgn)` `u64` pair; lane `i` occupies bit `i` of
+/// each word, encoded as in the [module docs](self).
 ///
-/// Each lane `i` (0 ≤ `i` < 64) stores one `F_3` element in the pair of
-/// bits `(mag >> i) & 1` and `(sgn >> i) & 1`, using the encoding:
-///
-/// | `F_3` value | `mag` bit | `sgn` bit |
-/// |-------------|-----------|-----------|
-/// |      0      |     0     |     0     |
-/// |      1      |     1     |     0     |
-/// |      2      |     1     |     1     |
-///
-/// The encoding uses equivalence classes: a clear `mag` bit is field zero
-/// regardless of the `sgn` bit, so `(mag=0, sgn=0)` and `(mag=0, sgn=1)`
-/// represent the same value. The arithmetic formulas respect these classes
-/// and can produce `(mag=0, sgn=1)` from canonical inputs in `add`, `sub`,
-/// and `mul`. [`Bipedal3::lane`], [`Bipedal3::all_zero`], and the `PartialEq`
-/// / `Eq` implementations all treat it as zero.
+/// `add`, `sub`, and `mul` can produce the alternative-zero codeword
+/// `(mag=0, sgn=1)` from canonical inputs; [`Bipedal3::lane`],
+/// [`Bipedal3::all_zero`], and `Eq` treat it as zero.
 ///
 /// # Examples
 ///
@@ -78,31 +46,11 @@ use super::{PackedField, PackedFieldVec};
 /// assert_eq!(s.lane(0), Fp::<3>::new(0)); // 1 + 2 == 0 mod 3
 /// assert!(s.all_zero());
 /// ```
-///
-/// # Complexity
-///
-/// All operations are `O(1)` — a fixed number of word-level bitwise
-/// instructions independent of the number of lanes.
 #[derive(Clone, Copy)]
 pub struct Bipedal3 {
     mag: u64,
     sgn: u64,
 }
-
-// ---------------------------------------------------------------------------
-// Manual PartialEq / Eq — canonical-decode equality.
-//
-// Two `Bipedal3` values are equal iff every lane decodes to the same
-// `F_3` value.  Because the alternative-zero codeword `(mag=0, sgn=1)`
-// decodes to 0, the `sgn` bit for a lane is irrelevant whenever the
-// corresponding `mag` bit is 0.  Concretely:
-//
-//   a == b  iff  a.mag == b.mag
-//                && (a.sgn ^ b.sgn) & a.mag == 0
-//
-// This is equivalent to per-lane `lane(i) == other.lane(i)` for all i,
-// but faster: two comparisons and one AND instead of 64 scalar decodes.
-// ---------------------------------------------------------------------------
 
 impl PartialEq for Bipedal3 {
     /// Canonical-decode equality: two values are equal iff every decoded
@@ -138,15 +86,8 @@ impl PartialEq for Bipedal3 {
 
 impl Eq for Bipedal3 {}
 
-// ---------------------------------------------------------------------------
-// Manual Debug — print lane values (0/1/2) as an array, not raw bits.
-// ---------------------------------------------------------------------------
-
 impl fmt::Debug for Bipedal3 {
-    /// Formats the value as a 64-element array of decoded lane values
-    /// (each in `{0, 1, 2}`), matching the style of
-    /// [`ScalarPackedFp3`](super::ScalarPackedFp3)'s `Debug` impl for stable `assert_eq!`
-    /// messages.
+    /// Formats as a 64-element array of decoded lane values in `{0, 1, 2}`.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Bipedal3")
             .field(
@@ -167,80 +108,28 @@ impl fmt::Debug for Bipedal3 {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Internal constructors used by tests (same module — struct fields visible).
-// ---------------------------------------------------------------------------
-
 impl Bipedal3 {
-    /// Construct a `Bipedal3` from raw `(mag, sgn)` words.
-    ///
-    /// This is a low-level escape hatch for unit tests that need to
-    /// inject specific bit patterns (e.g. the alternative-zero
-    /// codeword).  Production code should use [`PackedField::splat`],
-    /// [`PackedField::with_lane`], or the arithmetic ops.
-    ///
-    /// # Arguments
-    ///
-    /// * `mag` — raw magnitude word; bit `i` is the `mag` bit of lane `i`.
-    /// * `sgn` — raw sign word; bit `i` is the `sgn` bit of lane `i`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// Construct from raw `(mag, sgn)` words; bit `i` of each word is the
+    /// corresponding bit of lane `i`.
     #[inline]
     pub fn from_raw(mag: u64, sgn: u64) -> Self {
         Self { mag, sgn }
     }
 
-    /// Return the raw magnitude word.
-    ///
-    /// Bit `i` of the returned `u64` is the `mag_bit` of lane `i`.
-    /// Used by the multi-word streaming permanent kernel
-    /// (`permanent_bipedal3_multiword`) to extract the word-level result
-    /// of a `Bipedal3::add` or `sub` back into the column-sum buffer.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// Raw magnitude word; bit `i` is the `mag` bit of lane `i`.
     #[inline]
     pub fn mag(self) -> u64 {
         self.mag
     }
 
-    /// Return the raw sign word.
-    ///
-    /// Bit `i` of the returned `u64` is the `sgn_bit` of lane `i`.
-    /// Used by the multi-word streaming permanent kernel
-    /// (`permanent_bipedal3_multiword`) to extract the word-level result
-    /// of a `Bipedal3::add` or `sub` back into the column-sum buffer.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// Raw sign word; bit `i` is the `sgn` bit of lane `i`.
     #[inline]
     pub fn sgn(self) -> u64 {
         self.sgn
     }
 
-    /// Broadcast a single `(mag_bit, sgn_bit)` pair to all 64 lanes.
-    ///
-    /// A helper for internal tests; `splat_raw(1, 0)` gives all-1s,
-    /// `splat_raw(1, 1)` gives all-2s, and `splat_raw(0, 0)` gives
-    /// all-zeros.
-    ///
-    /// # Arguments
-    ///
-    /// * `mag_bit` — 0 or 1; broadcast to every lane's `mag` bit.
-    /// * `sgn_bit` — 0 or 1; broadcast to every lane's `sgn` bit.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic; values outside 0/1 simply saturate to 0 or 1 via
-    /// the mask.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// Broadcast a single `(mag_bit, sgn_bit)` pair to all 64 lanes; only
+    /// bit 0 of each argument is used.
     #[inline]
     pub fn splat_raw(mag_bit: u64, sgn_bit: u64) -> Self {
         Self {
@@ -250,19 +139,10 @@ impl Bipedal3 {
     }
 
     /// Product of the first `n` lanes via the bipedal-multiplication-tree
-    /// halving fold (Scheinerman 2024 §3.3).
+    /// halving fold (`@/citation/Scheinerman2024` §3.3).
     ///
-    /// Inactive lanes (indices `n..64`) are padded with the multiplicative
-    /// identity (`mag=1`, `sgn=0`) before the fold, so they contribute 1
-    /// and do not perturb the product.  The fold then halves the 64-lane
-    /// word pair six times (32, 16, 8, 4, 2, 1) using the paper's mul
-    /// formula `mag' = mag & (mag >> step)`, `sgn' = sgn ^ (sgn >> step)`.
-    /// Bit 0 of the result encodes the product of all `n` active lanes;
-    /// it is decoded to a canonical `Fp<3>` via the standard mapping.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` — number of active lanes (must satisfy `1 <= n <= 64`).
+    /// Lanes `n..64` are padded with the multiplicative identity
+    /// (`mag=1`, `sgn=0`) before the six halving steps.
     ///
     /// # Examples
     ///
@@ -282,25 +162,15 @@ impl Bipedal3 {
     /// # Panics
     ///
     /// Panics if `n == 0` or `n > 64`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 6 halving-fold steps (12 word-level bitwise ops), plus a
-    /// constant-time bit-0 decode.
     #[inline]
     pub fn fold_mul_first_n(self, n: usize) -> Fp<3> {
         assert!(
             (1..=64).contains(&n),
             "Bipedal3::fold_mul_first_n: n must satisfy 1 <= n <= 64; got n = {n}"
         );
-        // `used_mask` has bits 0..n-1 set; for n==64 all 64 bits are set.
         let used_mask: u64 = if n < 64 { (1u64 << n) - 1 } else { u64::MAX };
-        // Pad inactive lanes (n..63) to multiplicative identity: mag=1, sgn=0.
         let mut acc_m = self.mag | !used_mask; // set mag=1 for bits n..63
         let mut acc_s = self.sgn & used_mask; // clear sgn for bits n..63
-                                              // Six halving-fold steps.  Each step uses the paper's mul formula:
-                                              //   mag' = mag & (mag >> step)
-                                              //   sgn' = sgn ^ (sgn >> step)
         let mut step: u32 = 32;
         while step > 0 {
             acc_m &= acc_m >> step;
@@ -308,10 +178,6 @@ impl Bipedal3 {
             step >>= 1;
         }
         // Bit 0 of (acc_m, acc_s) encodes the product of the n active lanes.
-        // Decode via the canonical Bipedal3 mapping:
-        //   acc_m bit 0 = 0 → Fp<3>(0)
-        //   acc_m bit 0 = 1, acc_s bit 0 = 0 → Fp<3>(1)
-        //   acc_m bit 0 = 1, acc_s bit 0 = 1 → Fp<3>(2)
         if acc_m & 1 == 0 {
             Fp::<3>::new(0)
         } else if acc_s & 1 == 0 {
@@ -321,83 +187,44 @@ impl Bipedal3 {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Inherent arithmetic wrappers (proof targets for D2 / JIT f05ffbe1).
-    //
-    // These methods delegate verbatim to the `PackedField<Fp<3>>` trait impl
-    // below; they exist so the Charon/Aeneas verification pipeline can prove
-    // bipedal F_3 correctness against a fixed inherent surface that is not
-    // affected by trait-dispatch indirection. There is no algorithmic
-    // divergence between the inherent and trait paths — the inherent body
-    // is a single tail call into the trait method, which Rust inlines away.
-    //
-    // Per `@/issue/a0c0a45f` §5, the Lean proof file
-    // `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` targets these
-    // inherent methods (Option A in the dispatch prompt).
-    // -----------------------------------------------------------------------
-
-    /// Inherent `add` wrapper — delegates to `<Self as PackedField<Fp<3>>>::add`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// formula lives in the trait impl below.
+    /// [`PackedField::add`] as an inherent method: a fixed proof target for
+    /// `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean`, independent of
+    /// trait dispatch.
     #[inline]
     pub fn add_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<3>>>::add(self, rhs)
     }
 
-    /// Inherent `sub` wrapper — delegates to `<Self as PackedField<Fp<3>>>::sub`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// formula lives in the trait impl below.
+    /// [`PackedField::sub`] as an inherent proof target; see
+    /// [`Self::add_inherent`].
     #[inline]
     pub fn sub_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<3>>>::sub(self, rhs)
     }
 
-    /// Inherent `mul` wrapper — delegates to `<Self as PackedField<Fp<3>>>::mul`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// formula lives in the trait impl below.
+    /// [`PackedField::mul`] as an inherent proof target; see
+    /// [`Self::add_inherent`].
     #[inline]
     pub fn mul_inherent(self, rhs: Self) -> Self {
         <Self as PackedField<Fp<3>>>::mul(self, rhs)
     }
 
-    /// Inherent `neg` wrapper — delegates to `<Self as PackedField<Fp<3>>>::neg`.
-    ///
-    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
-    /// formula lives in the trait impl below.
+    /// [`PackedField::neg`] as an inherent proof target; see
+    /// [`Self::add_inherent`].
     #[inline]
     pub fn neg_inherent(self) -> Self {
         <Self as PackedField<Fp<3>>>::neg(self)
     }
 }
 
-// ---------------------------------------------------------------------------
-// PackedField<Fp<3>>
-// ---------------------------------------------------------------------------
-
 impl PackedField<Fp<3>> for Bipedal3 {
-    /// Number of independent `F_3` lanes packed into one `Bipedal3`.
-    ///
-    /// Fixed at 64 to match the `u64`-pair encoding width.
     const LANES: usize = 64;
 
-    /// Returns the all-zeros `Bipedal3` (every lane = 0).
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn zero() -> Self {
         Self { mag: 0, sgn: 0 }
     }
 
-    /// Returns the all-ones `Bipedal3` (every lane = 1).
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn one() -> Self {
         Self {
@@ -406,40 +233,21 @@ impl PackedField<Fp<3>> for Bipedal3 {
         }
     }
 
-    /// Broadcasts scalar `x` to all 64 lanes.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` — scalar `F_3` value to replicate across all lanes.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     fn splat(x: Fp<3>) -> Self {
         let v = x.value(); // 0, 1, or 2
-                           // Encoding: 0 → (0,0), 1 → (1,0), 2 → (1,1).
         let mag_bit = if v != 0 { 1u64 } else { 0u64 };
         let sgn_bit = if v == 2 { 1u64 } else { 0u64 };
         Self::splat_raw(mag_bit, sgn_bit)
     }
 
-    /// Lane-wise sum using Scheinerman 2024 Theorem 2.1 (6 ops, CSE).
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — the other operand; lanes are added pointwise mod 3.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 6 word-level bitwise operations.
+    /// `@/citation/Scheinerman2024` Theorem 2.1: 6 word-level operations.
     #[inline]
     fn add(self, rhs: Self) -> Self {
         let am = self.mag;
         let asg = self.sgn;
         let bm = rhs.mag;
         let bsg = rhs.sgn;
-        // Theorem 2.1 (6 ops with CSE).
         let t = am ^ asg ^ bsg;
         let u = bm & t;
         Self {
@@ -448,25 +256,13 @@ impl PackedField<Fp<3>> for Bipedal3 {
         }
     }
 
-    /// Lane-wise difference: `self - rhs` pointwise mod 3.
-    ///
-    /// Paper §2.2 / Theorem 2.1 subtraction: `t = s1 ⊕ s2; u = m1 ∧ t; m_- = u
-    /// | (m1 ⊕ m2); s_- = u ⊕ (m2 ⊕ s2)` — 6 word-level bitwise operations.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — the operand subtracted lane-by-lane from `self`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 6 word-level bitwise operations.
+    /// `@/citation/Scheinerman2024` §2.2: 6 word-level operations.
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         let am = self.mag;
         let asg = self.sgn;
         let bm = rhs.mag;
         let bsg = rhs.sgn;
-        // Canonical paper §2.2 / Theorem 2.1 sub transliteration. 6 ops total.
         let t = asg ^ bsg; // op 1
         let u = am & t; // op 2
         Self {
@@ -475,13 +271,7 @@ impl PackedField<Fp<3>> for Bipedal3 {
         }
     }
 
-    /// Lane-wise additive inverse: `−self` mod 3.
-    ///
-    /// For `x ∈ F_3`: `neg(0)=0`, `neg(1)=2`, `neg(2)=1`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 1 word-level XOR.
+    /// `sgn ^= mag` swaps 1 and 2 and leaves every `mag = 0` lane zero.
     #[inline]
     fn neg(self) -> Self {
         Self {
@@ -490,15 +280,7 @@ impl PackedField<Fp<3>> for Bipedal3 {
         }
     }
 
-    /// Lane-wise product using Scheinerman 2024 (2 ops).
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — the other operand; lanes are multiplied pointwise mod 3.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: 2 word-level bitwise operations.
+    /// `@/citation/Scheinerman2024` product: 2 word-level operations.
     #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self {
@@ -507,22 +289,11 @@ impl PackedField<Fp<3>> for Bipedal3 {
         }
     }
 
-    /// Decode lane `i` to a canonical `F_3` value.
-    ///
-    /// The alternative-zero codeword `(mag=0, sgn=1)` is canonicalised
-    /// to `Fp::<3>::new(0)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — lane index in `0..64`.
+    /// Decodes the alternative-zero codeword `(mag=0, sgn=1)` to 0.
     ///
     /// # Panics
     ///
     /// Panics if `i >= 64`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: two bit-extracts and a decode.
     #[inline]
     fn lane(self, i: usize) -> Fp<3> {
         assert!(
@@ -533,9 +304,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
         );
         let m = (self.mag >> i) & 1;
         let g = (self.sgn >> i) & 1;
-        // (mag=0, sgn=*) → 0 (canonicalises alt-zero)
-        // (mag=1, sgn=0) → 1
-        // (mag=1, sgn=1) → 2
         if m == 0 {
             Fp::<3>::new(0)
         } else if g == 0 {
@@ -545,16 +313,8 @@ impl PackedField<Fp<3>> for Bipedal3 {
         }
     }
 
-    /// Write the canonical encoding of `x` into lane `i`.
-    ///
-    /// Always writes the canonical codeword for `x`; any pre-existing
-    /// alternative-zero codeword at lane `i` is overwritten with the
-    /// canonical encoding (D1b §3.5).
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — lane index in `0..64`.
-    /// * `x` — scalar `F_3` value to write into lane `i`.
+    /// Writes the canonical codeword for `x`, overwriting an
+    /// alternative-zero codeword at lane `i`.
     ///
     /// # Panics
     ///
@@ -571,10 +331,6 @@ impl PackedField<Fp<3>> for Bipedal3 {
     /// assert_eq!(v.lane(7), Fp::<3>::new(2));
     /// assert_eq!(v.lane(0), Fp::<3>::new(0));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: constant number of bit-mask and bit-set operations.
     #[inline]
     fn with_lane(self, i: usize, x: Fp<3>) -> Self {
         assert!(
@@ -589,17 +345,12 @@ impl PackedField<Fp<3>> for Bipedal3 {
         let mask = 1u64 << i;
         Self {
             mag: (self.mag & !mask) | (mag_bit << i),
-            // Always write canonical sgn; clear old sgn bit first.
             sgn: (self.sgn & !mask) | (sgn_bit << i),
         }
     }
 
-    /// Returns `true` iff every lane decodes to 0.
-    ///
-    /// Implemented as `self.mag == 0`: since a lane's value is zero iff
-    /// its `mag` bit is 0 (the `sgn` bit is irrelevant when `mag=0`),
-    /// testing `mag` alone suffices.  This also correctly handles the
-    /// alternative-zero codeword `(mag=0, sgn=1)`.
+    /// `mag == 0` suffices: a lane is zero iff its `mag` bit is clear,
+    /// whatever its `sgn` bit.
     ///
     /// # Examples
     ///
@@ -615,19 +366,11 @@ impl PackedField<Fp<3>> for Bipedal3 {
     /// let v = <Bipedal3 as PackedField<Fp<3>>>::zero().with_lane(3, Fp::<3>::new(1));
     /// assert!(!v.all_zero());
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`: one 64-bit comparison.
     #[inline]
     fn all_zero(self) -> bool {
         self.mag == 0
     }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -639,13 +382,10 @@ mod tests {
     // Helpers
     // -----------------------------------------------------------------------
 
-    /// Strategy: a single `Fp<3>` element drawn uniformly from `{0, 1, 2}`.
     fn fp3_strat() -> impl Strategy<Value = Fp<3>> {
         (0u64..3).prop_map(Fp::<3>::new)
     }
 
-    /// Strategy: a `Bipedal3` with every lane independently drawn from
-    /// `{0, 1, 2}`.
     fn bipedal_strat() -> impl Strategy<Value = Bipedal3> {
         prop::collection::vec(fp3_strat(), 64).prop_map(|v| {
             let mut p = Bipedal3::zero();
@@ -656,15 +396,11 @@ mod tests {
         })
     }
 
-    /// Strategy: a `Bipedal3` where some lanes may be the alternative-zero
-    /// codeword `(mag=0, sgn=1)`.
     fn bipedal_with_alt_zero_strat() -> impl Strategy<Value = Bipedal3> {
         // Build a canonical Bipedal3 first, then independently set each
         // sgn bit to 0 or 1 for lanes where mag=0 (injecting alt-zeros).
         bipedal_strat().prop_flat_map(|b| {
-            // For lanes where mag=0, independently choose sgn=0 or sgn=1.
             (any::<u64>()).prop_map(move |extra_sgn| {
-                // extra_sgn bits apply only to mag=0 lanes.
                 let zero_lanes = !b.mag; // bits set where lane is 0
                 Bipedal3 {
                     mag: b.mag,
@@ -674,8 +410,6 @@ mod tests {
         })
     }
 
-    /// Strategy: a matching `ScalarPackedFp3` that has the same per-lane
-    /// values as a `Bipedal3`, used for cross-checking.
     fn scalar_from_bipedal(b: &Bipedal3) -> ScalarPackedFp3 {
         let mut s = ScalarPackedFp3::zero();
         for i in 0..64 {
@@ -697,7 +431,6 @@ mod tests {
     // Truth-table tests for all 9 (a,b) pairs
     // -----------------------------------------------------------------------
 
-    /// Add truth table: all 9 pairs from {0,1,2}^2.
     #[test]
     fn test_add_truth_table() {
         // F_3 addition table.
@@ -722,7 +455,6 @@ mod tests {
         }
     }
 
-    /// Sub truth table: all 9 pairs from {0,1,2}^2.
     #[test]
     fn test_sub_truth_table() {
         // F_3 subtraction table (a - b mod 3).
@@ -746,7 +478,6 @@ mod tests {
         }
     }
 
-    /// Mul truth table: all 9 pairs from {0,1,2}^2.
     #[test]
     fn test_mul_truth_table() {
         // F_3 multiplication table.
@@ -809,7 +540,6 @@ mod tests {
         assert_eq!(result.lane(0), Fp::<3>::new(0));
     }
 
-    /// Neg truth table: all 3 single inputs.
     #[test]
     fn test_neg_truth_table() {
         // F_3 negation: -0=0, -1=2, -2=1.
@@ -830,10 +560,8 @@ mod tests {
     // Alt-zero codeword
     // -----------------------------------------------------------------------
 
-    /// `lane(i)` canonicalises the alt-zero codeword `(mag=0, sgn=1)` to 0.
     #[test]
     fn test_lane_canonicalises_alt_zero() {
-        // Construct directly — field access allowed within the same module.
         let v = Bipedal3 {
             mag: 0,
             sgn: 1 << 5,
@@ -849,7 +577,6 @@ mod tests {
         }
     }
 
-    /// `Bipedal3::zero() == Bipedal3 { mag: 0, sgn: u64::MAX }`.
     #[test]
     fn test_eq_alt_zero_equals_canonical_zero() {
         let canon = Bipedal3::zero();
@@ -863,20 +590,14 @@ mod tests {
         );
     }
 
-    /// `with_lane` always writes canonical encoding; the raw `sgn` bit must
-    /// be 0 when writing 0, even if the lane previously held an alt-zero.
     #[test]
     fn test_with_lane_canonicalises() {
-        // Start from a value where lane 0 is alt-zero (mag=0, sgn=1).
         let start = Bipedal3 {
             mag: u64::MAX, // all lanes = 1
             sgn: 0,
         };
-        // Write 0 into lane 0.
         let result = start.with_lane(0, Fp::<3>::new(0));
-        // mag bit 0 must be 0 (not nonzero).
         assert_eq!(result.mag & 1, 0, "mag bit 0 must be cleared");
-        // sgn bit 0 must be 0 (canonical encoding of 0).
         assert_eq!(result.sgn & 1, 0, "sgn bit 0 must be canonical (0)");
         // Other lanes unaffected.
         for i in 1..64 {
@@ -884,7 +605,6 @@ mod tests {
         }
     }
 
-    /// Round-trip: `with_lane(i, lane(i))` is idempotent.
     #[test]
     fn test_with_lane_roundtrip() {
         let mut v = Bipedal3::zero();
@@ -954,7 +674,6 @@ mod tests {
     // Alt-zero through every op (non-randomised, explicit)
     // -----------------------------------------------------------------------
 
-    /// Alt-zero inputs through add must produce the same result as canonical zero.
     #[test]
     fn test_alt_zero_through_add() {
         // alt_zero in all lanes: mag=0, sgn=u64::MAX.
@@ -974,7 +693,6 @@ mod tests {
         assert_eq!(r_alt2, r_can, "one + alt_zero != one + canonical_zero");
     }
 
-    /// Alt-zero inputs through sub.
     #[test]
     fn test_alt_zero_through_sub() {
         let alt = Bipedal3 {
@@ -992,7 +710,6 @@ mod tests {
         assert_eq!(r2.lane(0).value(), 1, "alt_zero - 2 lane 0 must be 1");
     }
 
-    /// Alt-zero inputs through mul.
     #[test]
     fn test_alt_zero_through_mul() {
         let alt = Bipedal3 {
@@ -1010,7 +727,6 @@ mod tests {
         assert!(r2.all_zero(), "alt_zero * 2 must be 0");
     }
 
-    /// Alt-zero inputs through neg.
     #[test]
     fn test_alt_zero_through_neg() {
         let alt = Bipedal3 {
@@ -1022,7 +738,6 @@ mod tests {
         //   mag' = 0, sgn' = u64::MAX ^ 0 = u64::MAX
         // which is still alt-zero, which decodes to 0.
         let r = alt.neg();
-        // All lanes must decode to 0.
         for i in 0..64 {
             assert_eq!(
                 r.lane(i),
@@ -1039,7 +754,6 @@ mod tests {
     proptest! {
         #![proptest_config(ProptestConfig { cases: 1000, .. ProptestConfig::default() })]
 
-        /// add: Bipedal3 agrees with ScalarPackedFp3 on every lane.
         #[test]
         fn test_proptest_add_matches_scalar(
             a in bipedal_strat(),
@@ -1057,7 +771,6 @@ mod tests {
             }
         }
 
-        /// sub: Bipedal3 agrees with ScalarPackedFp3 on every lane.
         #[test]
         fn test_proptest_sub_matches_scalar(
             a in bipedal_strat(),
@@ -1075,7 +788,6 @@ mod tests {
             }
         }
 
-        /// mul: Bipedal3 agrees with ScalarPackedFp3 on every lane.
         #[test]
         fn test_proptest_mul_matches_scalar(
             a in bipedal_strat(),
@@ -1093,7 +805,6 @@ mod tests {
             }
         }
 
-        /// neg: Bipedal3 agrees with ScalarPackedFp3 on every lane.
         #[test]
         fn test_proptest_neg_matches_scalar(a in bipedal_strat()) {
             let sa = scalar_from_bipedal(&a);
@@ -1107,7 +818,6 @@ mod tests {
             }
         }
 
-        /// add with alt-zero codewords agrees with ScalarPackedFp3.
         #[test]
         fn test_proptest_add_alt_zero_matches_scalar(
             a in bipedal_with_alt_zero_strat(),
@@ -1125,7 +835,6 @@ mod tests {
             }
         }
 
-        /// sub with alt-zero codewords agrees with ScalarPackedFp3.
         #[test]
         fn test_proptest_sub_alt_zero_matches_scalar(
             a in bipedal_with_alt_zero_strat(),
@@ -1143,7 +852,6 @@ mod tests {
             }
         }
 
-        /// mul with alt-zero codewords agrees with ScalarPackedFp3.
         #[test]
         fn test_proptest_mul_alt_zero_matches_scalar(
             a in bipedal_with_alt_zero_strat(),
@@ -1161,7 +869,6 @@ mod tests {
             }
         }
 
-        /// neg with alt-zero codewords agrees with ScalarPackedFp3.
         #[test]
         fn test_proptest_neg_alt_zero_matches_scalar(
             a in bipedal_with_alt_zero_strat(),
@@ -1183,8 +890,6 @@ mod tests {
     // -----------------------------------------------------------------------
 
     /// All lanes equal to 2 for n=1..=8: product = 2^n mod 3 (period-2).
-    ///
-    /// n=1 → 2, n=2 → 1, n=3 → 2, n=4 → 1, etc.
     #[test]
     fn test_fold_mul_first_n_all_twos() {
         for n in 1usize..=8 {
@@ -1202,7 +907,6 @@ mod tests {
         }
     }
 
-    /// A zero in any active lane forces the product to zero.
     #[test]
     fn test_fold_mul_first_n_zero_lane_kills_product() {
         // Lane 2 = 0; all others = 1.  Product over n=4 active lanes = 0.
@@ -1230,7 +934,6 @@ mod tests {
         assert_eq!(got, Fp::<3>::new(2), "1*2*1 must be 2, got {got:?}");
     }
 
-    /// Single lane n=1: only lane 0 participates.
     #[test]
     fn test_fold_mul_first_n_single_lane() {
         for v in 0u64..3 {
@@ -1244,7 +947,6 @@ mod tests {
         }
     }
 
-    /// Full 64-lane fold: all lanes = 1 → product = 1.
     #[test]
     fn test_fold_mul_first_n_full_64_lanes_all_ones() {
         let v = Bipedal3::splat(Fp::<3>::new(1));
@@ -1252,8 +954,6 @@ mod tests {
         assert_eq!(got, Fp::<3>::new(1), "all-1s fold over 64 lanes must be 1");
     }
 
-    /// Migrated from permanent/bipedal3.rs: verify that fold via
-    /// `Bipedal3::fold_mul_first_n` matches the expected per-lane scalar product.
     #[test]
     fn test_bipedal_mul_tree_matches_scalar_fold() {
         // Case 1: all lanes = 2 for n=1..=8 (period-2: 2,1,2,1,...).
@@ -1292,14 +992,12 @@ mod tests {
         }
     }
 
-    /// Panic test: n=0 is rejected.
     #[test]
     #[should_panic(expected = "n must satisfy 1 <= n <= 64")]
     fn test_fold_mul_first_n_panics_on_zero() {
         let _ = Bipedal3::zero().fold_mul_first_n(0);
     }
 
-    /// Panic test: n=65 is rejected.
     #[test]
     #[should_panic(expected = "n must satisfy 1 <= n <= 64")]
     fn test_fold_mul_first_n_panics_on_65() {
@@ -1307,41 +1005,22 @@ mod tests {
     }
 }
 
-// ===========================================================================
-// Bipedal3Vec — variable-length packed F_3 vector
-// ===========================================================================
-
-/// Variable-length packed `F_3` vector storing `len_lanes` elements as
-/// two parallel `Vec<u64>` words (`mag` and `sgn`), each of length
-/// `ceil(len_lanes / 64)`.
+/// Variable-length packed `F_3` vector: `len_lanes` elements in two parallel
+/// `Vec<u64>` planes (`mag` and `sgn`) of `ceil(len_lanes / 64)` words.
 ///
-/// The encoding of each element matches [`Bipedal3`]: element at logical
-/// position `i` lives in word `i >> 6` at bit `i & 63` of both `mag` and
-/// `sgn`.
+/// Element `i` lives in word `i >> 6` at bit `i & 63` of both planes, in the
+/// [`Bipedal3`] encoding. [`get`][`Bipedal3Vec::get`],
+/// [`all_zero`][`PackedFieldVec::all_zero`], and [`PartialEq`] treat the
+/// alternative-zero codeword `(mag=0, sgn=1)` as zero.
 ///
 /// # Mask-tail invariant
 ///
-/// Bits beyond `len_lanes` in the last word of both `mag` and `sgn` must
-/// always be zero. Every mutating operation calls `Bipedal3Vec::mask_tail`
-/// to enforce this invariant — it is the most critical correctness invariant
-/// in this codebase (AGENTS.md §Correctness and test policy).
-///
-/// # Encoding summary
-///
-/// | `F_3` value | `mag` bit | `sgn` bit |
-/// |-------------|-----------|-----------|
-/// |      0      |     0     |     0     |
-/// |      1      |     1     |     0     |
-/// |      2      |     1     |     1     |
-///
-/// The alternative-zero codeword `(mag=0, sgn=1)` is treated as canonical
-/// zero in [`get`][`Bipedal3Vec::get`], [`all_zero`][`PackedFieldVec::all_zero`],
-/// and [`PartialEq`].
+/// Bits beyond `len_lanes` in the last word of both planes are zero; every
+/// mutating operation restores this through `Bipedal3Vec::mask_tail`.
 ///
 /// # Complexity
 ///
-/// Construction and lane-wise operations are `O(ceil(len_lanes / 64))`.
-/// Individual lane access ([`get`][`Bipedal3Vec::get`]) is `O(1)`.
+/// Lane-wise operations are `O(ceil(len_lanes / 64))`; `get` is `O(1)`.
 #[derive(Clone)]
 pub struct Bipedal3Vec {
     mag: Vec<u64>,
@@ -1349,24 +1028,11 @@ pub struct Bipedal3Vec {
     len_lanes: usize,
 }
 
-// ---------------------------------------------------------------------------
-// mask_tail
-// ---------------------------------------------------------------------------
-
 impl Bipedal3Vec {
-    /// Zero out all bits beyond `self.len_lanes` in the last word of both
-    /// `mag` and `sgn`.
+    /// Zero all bits beyond `self.len_lanes` in the last word of both planes.
     ///
-    /// **This invariant must hold after every mutation.** Failing to call
-    /// `mask_tail` after any write violates the project's key correctness
-    /// invariant (AGENTS.md §Correctness and test policy). Arithmetic
-    /// operations use word-parallel formulas over the full word including
-    /// padding bits; without masking, stray padding bits silently corrupt
-    /// `all_zero`, `add_assign`, `sub_assign`, `mul_assign`, and `fold_mul`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// The word-parallel formulas also operate on padding bits; unmasked
+    /// padding corrupts `all_zero` and equality.
     fn mask_tail(&mut self) {
         let n_words = self.mag.len();
         if n_words == 0 {
@@ -1382,18 +1048,8 @@ impl Bipedal3Vec {
         self.sgn[last] &= mask;
     }
 
-    /// Reduce all `len_lanes` packed `F_3` elements to a single `Fp<3>` via
-    /// the bipedal multiplication tree.
-    ///
-    /// The reduction applies the bipedal `mul` formula
-    /// (`mag' = am & bm; sgn' = asg ^ bsg`) word-by-word to accumulate a
-    /// 64-lane running product, then horizontally reduces those 64 lanes to
-    /// a single scalar. Padding bits in the last word are set to the
-    /// multiplicative identity `(mag=1, sgn=0)` so they do not perturb the
-    /// result.
-    ///
-    /// An empty vector (`len_lanes == 0`) returns the multiplicative identity
-    /// `Fp::<3>::new(1)`.
+    /// Product of all `len_lanes` elements via the bipedal multiplication
+    /// tree; the empty vector yields `Fp::<3>::new(1)`.
     ///
     /// # Examples
     ///
@@ -1411,14 +1067,8 @@ impl Bipedal3Vec {
     /// let empty = Bipedal3Vec::zeros(0);
     /// assert_eq!(empty.fold_mul(), Fp::<3>::new(1));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(len_lanes / 64))` word-level ops for the cross-word reduction,
-    /// plus `O(64)` scalar lane decodes for the final horizontal reduction.
     pub fn fold_mul(&self) -> Fp<3> {
         if self.len_lanes == 0 {
-            // Empty product = multiplicative identity.
             return Fp::<3>::new(1);
         }
         let n_words = self.mag.len();
@@ -1439,15 +1089,12 @@ impl Bipedal3Vec {
         } else {
             (1u64 << used) - 1
         };
-        // Padding lanes contribute mag=1 (identity) so they don't zero out acc_mag.
         let last_m = self.mag[n_words - 1] | !used_mask;
-        // Padding lanes contribute sgn=0 (identity) so they don't perturb acc_sgn.
         let last_s = self.sgn[n_words - 1] & used_mask;
         acc_mag &= last_m;
         acc_sgn ^= last_s;
 
         // Horizontal reduce 64-lane (acc_mag, acc_sgn) to single Fp<3>.
-        // Each lane contributes its decoded value to the running product.
         let mut result = Fp::<3>::new(1);
         for lane in 0..64u64 {
             let m = (acc_mag >> lane) & 1;
@@ -1466,13 +1113,6 @@ impl Bipedal3Vec {
 
     /// Lane-wise in-place additive inverse: `self[i] = -self[i]` for every `i`.
     ///
-    /// Applies the bipedal `neg` formula per word: `mag' = mag; sgn' = sgn ^ mag`.
-    /// `neg_assign` is **inherent on `Bipedal3Vec`**, not on `PackedFieldVec`,
-    /// because the frozen `PackedFieldVec` trait surface (D1b §2.2) does not
-    /// include a `neg_assign` method — the trait carries `add_assign`,
-    /// `sub_assign`, `mul_assign`, and `all_zero` only, with negation expressed
-    /// at the element level via `PackedField::neg`.
-    ///
     /// # Examples
     ///
     /// ```
@@ -1487,28 +1127,15 @@ impl Bipedal3Vec {
     /// assert_eq!(v.get(1), Fp::<3>::new(2)); // -1 ≡ 2 mod 3
     /// assert_eq!(v.get(2), Fp::<3>::new(1)); // -2 ≡ 1 mod 3
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 64))` word-level XOR operations.
     pub fn neg_assign(&mut self) {
         for w in 0..self.mag.len() {
-            // Paper neg formula: mag stays, sgn XORed with mag.
             self.sgn[w] ^= self.mag[w];
         }
         self.mask_tail();
     }
 
-    /// Borrow the raw magnitude word slice (`mag` leg).
-    ///
-    /// Each `u64` in the returned slice packs 64 `F_3` element magnitude bits
-    /// (`mag_bit` per lane), following the bipedal encoding in the module-level
-    /// docs. The last word may be partially filled; bits at positions
-    /// `self.len() % 64 .. 63` are zero (the tail-masking invariant).
-    ///
-    /// This method exists for the multi-word streaming permanent
-    /// (`permanent_bipedal3_multiword`) and SIMD kernels that need direct
-    /// word-level access without per-lane decoding overhead.
+    /// Raw `mag` plane: bit `i & 63` of word `i >> 6` is the `mag` bit of
+    /// element `i`; bits beyond `self.len()` are zero.
     ///
     /// # Examples
     ///
@@ -1520,25 +1147,13 @@ impl Bipedal3Vec {
     /// // Lane 0 = 1 → mag bit 0 = 1; lane 1 = 2 → mag bit 1 = 1.
     /// assert_eq!(v.raw_mag()[0] & 0b11, 0b11);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn raw_mag(&self) -> &[u64] {
         &self.mag
     }
 
-    /// Borrow the raw sign word slice (`sgn` leg).
-    ///
-    /// Each `u64` in the returned slice packs 64 `F_3` element sign bits
-    /// (`sgn_bit` per lane), following the bipedal encoding in the module-level
-    /// docs. The last word may be partially filled; bits at positions
-    /// `self.len() % 64 .. 63` are zero (the tail-masking invariant).
-    ///
-    /// This method exists for the multi-word streaming permanent
-    /// (`permanent_bipedal3_multiword`) and SIMD kernels that need direct
-    /// word-level access without per-lane decoding overhead.
+    /// Raw `sgn` plane: bit `i & 63` of word `i >> 6` is the `sgn` bit of
+    /// element `i`; bits beyond `self.len()` are zero.
     ///
     /// # Examples
     ///
@@ -1550,32 +1165,17 @@ impl Bipedal3Vec {
     /// // Lane 0 = 1 → sgn bit 0 = 0; lane 1 = 2 → sgn bit 1 = 1.
     /// assert_eq!(v.raw_sgn()[0] & 0b11, 0b10);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn raw_sgn(&self) -> &[u64] {
         &self.sgn
     }
 }
 
-// ---------------------------------------------------------------------------
-// Manual PartialEq / Eq — canonical-decode equality
-// ---------------------------------------------------------------------------
-
 impl PartialEq for Bipedal3Vec {
     /// Canonical-decode equality: two vectors are equal iff they have the
     /// same `len_lanes` and every decoded lane is equal.
     ///
-    /// Because the alternative-zero codeword `(mag=0, sgn=1)` decodes to 0,
-    /// the `sgn` bit of a lane is irrelevant when its `mag` bit is 0.
-    /// Concretely, per word `w`:
-    ///   equal iff `self.mag[w] == other.mag[w]`
-    ///          and `(self.sgn[w] ^ other.sgn[w]) & self.mag[w] == 0`
-    ///
-    /// The mask-tail invariant ensures padding bits are 0 on both sides,
-    /// so the per-word test is safe.
+    /// The mask-tail invariant makes the per-word comparison exact.
     ///
     /// # Examples
     ///
@@ -1608,14 +1208,8 @@ impl PartialEq for Bipedal3Vec {
 
 impl Eq for Bipedal3Vec {}
 
-// ---------------------------------------------------------------------------
-// Manual Debug — print decoded lane values
-// ---------------------------------------------------------------------------
-
 impl fmt::Debug for Bipedal3Vec {
-    /// Formats the value as a `Vec` of decoded lane values (each `0`, `1`,
-    /// or `2`), matching the style of [`ScalarPackedFp3Vec`](super::ScalarPackedFp3Vec)'s `Debug`
-    /// impl for stable `assert_eq!` messages.
+    /// Formats as the list of decoded lane values in `{0, 1, 2}`.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let lanes: Vec<u64> = (0..self.len_lanes)
             .map(|i| {
@@ -1638,22 +1232,9 @@ impl fmt::Debug for Bipedal3Vec {
     }
 }
 
-// ---------------------------------------------------------------------------
-// PackedFieldVec<Fp<3>>
-// ---------------------------------------------------------------------------
-
 impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     type Element = Bipedal3;
 
-    /// Construct a vector of `len` zero `F_3` elements.
-    ///
-    /// # Arguments
-    ///
-    /// * `len` — number of logical `F_3` positions in the result.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(len / 64))`.
     fn zeros(len: usize) -> Self {
         let n_words = len.div_ceil(64);
         Self {
@@ -1663,20 +1244,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
         }
     }
 
-    /// Construct a vector by encoding every element of `xs`.
-    ///
-    /// Position `i` is set to the canonical bipedal encoding of `xs[i]`.
-    /// `mask_tail` is called defensively at the end to enforce the
-    /// zero-padding invariant.
-    ///
-    /// # Arguments
-    ///
-    /// * `xs` — source slice; the result has `xs.len()` logical positions
-    ///   and `get(i) == xs[i]` for every `i`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(xs.len())`.
     fn from_field_slice(xs: &[Fp<3>]) -> Self {
         let len = xs.len();
         let n_words = len.div_ceil(64);
@@ -1702,31 +1269,15 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
         result
     }
 
-    /// Number of logical `F_3` positions held by this vector.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     fn len(&self) -> usize {
         self.len_lanes
     }
 
-    /// Decode logical position `i` to a canonical `F_3` value.
-    ///
-    /// The alternative-zero codeword `(mag=0, sgn=1)` is canonicalised to
-    /// `Fp::<3>::new(0)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — logical position index in `0..self.len()`.
+    /// Decodes the alternative-zero codeword `(mag=0, sgn=1)` to 0.
     ///
     /// # Panics
     ///
     /// Panics if `i >= self.len()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     fn get(&self, i: usize) -> Fp<3> {
         assert!(
             i < self.len_lanes,
@@ -1747,14 +1298,7 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
         }
     }
 
-    /// Lane-wise in-place sum: `self[i] += rhs[i]` for every `i`.
-    ///
-    /// Applies the Scheinerman 2024 Theorem 2.1 add formula per word:
-    /// `t = am ^ asg ^ bsg; u = bm & t; mag' = u | (am ^ bm); sgn' = u ^ asg`
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — operand of equal length; positions are added pointwise.
+    /// Per-word `@/citation/Scheinerman2024` Theorem 2.1 sum.
     ///
     /// # Panics
     ///
@@ -1772,10 +1316,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     /// assert_eq!(a.get(0), Fp::<3>::new(0)); // 1 + 2 = 0 mod 3
     /// assert_eq!(a.get(1), Fp::<3>::new(1)); // 2 + 2 = 1 mod 3
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 64))`.
     fn add_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.len_lanes, rhs.len_lanes,
@@ -1787,7 +1327,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
             let asg = self.sgn[w];
             let bm = rhs.mag[w];
             let bsg = rhs.sgn[w];
-            // Scheinerman 2024 Theorem 2.1 — 6 bitwise ops per word.
             let t = am ^ asg ^ bsg;
             let u = bm & t;
             self.mag[w] = u | (am ^ bm);
@@ -1796,14 +1335,7 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
         self.mask_tail();
     }
 
-    /// Lane-wise in-place difference: `self[i] -= rhs[i]` for every `i`.
-    ///
-    /// Applies the canonical paper §2.2 sub formula per word:
-    /// `t = asg ^ bsg; u = am & t; mag' = u | (am ^ bm); sgn' = u ^ (bm ^ bsg)`
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — operand of equal length; subtracted pointwise from `self`.
+    /// Per-word `@/citation/Scheinerman2024` §2.2 difference.
     ///
     /// # Panics
     ///
@@ -1820,10 +1352,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     /// a.sub_assign(&b);
     /// assert_eq!(a.get(0), Fp::<3>::new(2)); // 0 - 1 = 2 mod 3
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 64))`.
     fn sub_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.len_lanes, rhs.len_lanes,
@@ -1835,7 +1363,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
             let asg = self.sgn[w];
             let bm = rhs.mag[w];
             let bsg = rhs.sgn[w];
-            // Canonical paper §2.2 sub transliteration — 6 bitwise ops per word.
             let t = asg ^ bsg; // op 1
             let u = am & t; // op 2
             self.mag[w] = u | (am ^ bm); // ops 3+4
@@ -1844,14 +1371,7 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
         self.mask_tail();
     }
 
-    /// Lane-wise in-place product: `self[i] *= rhs[i]` for every `i`.
-    ///
-    /// Applies the bipedal mul formula per word:
-    /// `mag' = am & bm; sgn' = asg ^ bsg`
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — operand of equal length; multiplied pointwise into `self`.
+    /// Per-word `@/citation/Scheinerman2024` product.
     ///
     /// # Panics
     ///
@@ -1868,10 +1388,6 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
     /// a.mul_assign(&b);
     /// assert_eq!(a.get(0), Fp::<3>::new(1)); // 2 * 2 = 1 mod 3
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 64))`.
     fn mul_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.len_lanes, rhs.len_lanes,
@@ -1879,40 +1395,23 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
             self.len_lanes, rhs.len_lanes
         );
         for w in 0..self.mag.len() {
-            // Paper mul: 2 bitwise ops per word.
             self.mag[w] &= rhs.mag[w];
             self.sgn[w] ^= rhs.sgn[w];
         }
         self.mask_tail();
     }
 
-    /// Returns `true` iff every logical position decodes to `F_3`'s
-    /// additive identity (0).
-    ///
-    /// Implemented as `self.mag.iter().all(|&w| w == 0)`: a lane's value
-    /// is zero iff its `mag` bit is 0 (the `sgn` bit is irrelevant when
-    /// `mag=0`), so testing `mag` alone suffices. The alternative-zero
-    /// codeword `(mag=0, sgn=1)` is correctly reported as zero.
-    ///
-    /// # Complexity
-    ///
-    /// `O(ceil(self.len() / 64))`.
+    /// Tests the `mag` plane only: a lane is zero iff its `mag` bit is clear.
     fn all_zero(&self) -> bool {
         self.mag.iter().all(|&w| w == 0)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Bipedal3Vec tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod vec_tests {
     use super::super::ScalarPackedFp3Vec;
     use super::*;
     use proptest::prelude::*;
-
-    // (No shared helpers needed — proptest strategies are inlined below.)
 
     // -----------------------------------------------------------------------
     // zeros / all_zero / len — word-boundary lengths
@@ -1954,7 +1453,6 @@ mod vec_tests {
         ($name:ident, $len:expr) => {
             #[test]
             fn $name() {
-                // Build a deterministic test vector: lane i = (i * 7) % 3
                 let xs: Vec<Fp<3>> = (0..$len)
                     .map(|i| Fp::<3>::new((i * 7 % 3) as u64))
                     .collect();
@@ -2134,7 +1632,6 @@ mod vec_tests {
 
     #[test]
     fn test_neg_assign_truth_table() {
-        // Build vec [0, 1, 2], negate, assert [0, 2, 1].
         let mut v =
             Bipedal3Vec::from_field_slice(&[Fp::<3>::new(0), Fp::<3>::new(1), Fp::<3>::new(2)]);
         v.neg_assign();
@@ -2147,7 +1644,6 @@ mod vec_tests {
         ($name:ident, $len:expr) => {
             #[test]
             fn $name() {
-                // Deterministic pattern: lane i = (i * 7 + 3) % 3.
                 let vals: Vec<Fp<3>> = (0..$len)
                     .map(|i| Fp::<3>::new(((i * 7 + 3) % 3) as u64))
                     .collect();
@@ -2188,7 +1684,6 @@ mod vec_tests {
     // mask_tail invariant — non-multiple-of-64 lengths
     // -----------------------------------------------------------------------
 
-    /// Helper: check mask_tail invariant for a given partial-word length.
     fn check_mask_tail(len: usize) {
         assert!(
             !len.is_multiple_of(64),
@@ -2315,10 +1810,7 @@ mod vec_tests {
 
     #[test]
     fn test_eq_alt_zero_vs_canonical() {
-        // Length-5 vec: canonical zero
         let canon = Bipedal3Vec::zeros(5);
-        // Manually construct alt-zero in lane 2: mag=0, sgn=1<<2
-        // (mag is 0, sgn has bit 2 set — this is the alt-zero codeword)
         let mut alt = Bipedal3Vec::zeros(5);
         alt.sgn[0] = 1 << 2; // inject alt-zero at lane 2
         assert_eq!(canon, alt, "canonical zero and alt-zero must compare equal");
@@ -2368,7 +1860,6 @@ mod vec_tests {
     proptest! {
         #![proptest_config(ProptestConfig { cases: 200, .. ProptestConfig::default() })]
 
-        /// add_assign: Bipedal3Vec agrees with ScalarPackedFp3Vec lane-by-lane.
         #[test]
         fn test_proptest_add_assign_matches_scalar(
             len in 0usize..200,
@@ -2390,7 +1881,6 @@ mod vec_tests {
             }
         }
 
-        /// sub_assign: Bipedal3Vec agrees with ScalarPackedFp3Vec lane-by-lane.
         #[test]
         fn test_proptest_sub_assign_matches_scalar(
             len in 0usize..200,
@@ -2411,7 +1901,6 @@ mod vec_tests {
             }
         }
 
-        /// mul_assign: Bipedal3Vec agrees with ScalarPackedFp3Vec lane-by-lane.
         #[test]
         fn test_proptest_mul_assign_matches_scalar(
             len in 0usize..200,
@@ -2432,7 +1921,6 @@ mod vec_tests {
             }
         }
 
-        /// fold_mul: Bipedal3Vec::fold_mul agrees with scalar per-lane product.
         #[test]
         fn test_proptest_fold_mul_matches_scalar_fold(
             len in 0usize..200,
@@ -2450,9 +1938,6 @@ mod vec_tests {
     // -----------------------------------------------------------------------
 
     /// Decompose a `Bipedal3Vec` into per-word `(Bipedal3, used_lanes)` pairs.
-    ///
-    /// Each element is a `(Bipedal3, usize)` where the `usize` is the number
-    /// of valid lanes in that chunk (always 64 except possibly the final chunk).
     fn chunks_of(v: &Bipedal3Vec) -> Vec<(Bipedal3, usize)> {
         let n_words = v.mag.len();
         if n_words == 0 {
@@ -2461,7 +1946,6 @@ mod vec_tests {
         let mut chunks = Vec::with_capacity(n_words);
         for w in 0..n_words {
             let used = if w + 1 == n_words {
-                // Last word: may be partial.
                 v.len_lanes - 64 * w
             } else {
                 64
@@ -2491,7 +1975,6 @@ mod vec_tests {
     proptest! {
         #![proptest_config(ProptestConfig { cases: 200, .. ProptestConfig::default() })]
 
-        /// add_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::add.
         #[test]
         fn test_proptest_add_chunked_matches_vec(
             len in 0usize..200,
@@ -2520,7 +2003,6 @@ mod vec_tests {
             prop_assert_eq!(direct, chunked_decoded, "add chunked vs vec mismatch (len={})", len);
         }
 
-        /// sub_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::sub.
         #[test]
         fn test_proptest_sub_chunked_matches_vec(
             len in 0usize..200,
@@ -2549,7 +2031,6 @@ mod vec_tests {
             prop_assert_eq!(direct, chunked_decoded, "sub chunked vs vec mismatch (len={})", len);
         }
 
-        /// mul_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::mul.
         #[test]
         fn test_proptest_mul_chunked_matches_vec(
             len in 0usize..200,
@@ -2578,7 +2059,6 @@ mod vec_tests {
             prop_assert_eq!(direct, chunked_decoded, "mul chunked vs vec mismatch (len={})", len);
         }
 
-        /// neg_assign: Bipedal3Vec direct path matches per-chunk Bipedal3::neg.
         #[test]
         fn test_proptest_neg_chunked_matches_vec(
             len in 0usize..200,
@@ -2604,29 +2084,9 @@ mod vec_tests {
     }
 }
 
-// ===========================================================================
-// Bipedal3Matrix — column-major rectangular matrix of packed F_3 values
-// ===========================================================================
-
 /// Rectangular `rows × cols` matrix of packed `F_3` values, stored
-/// **column-major** as one [`Bipedal3Vec`] per column.
-///
-/// Each column `j` is a [`Bipedal3Vec`] of length `rows`; the entry at
-/// row `i`, column `j` is `self.column(j).get(i)`.
-///
-/// # Column-major rationale
-///
-/// Ryser's formula and the single-word permanent path iterate over columns in
-/// the inner loop, accumulating row-wise products. Storing each column as a
-/// contiguous [`Bipedal3Vec`] allows those algorithms to `column(j)` without
-/// scatter-gather, matching the access pattern of the multi-word streaming
-/// design (`@/issue/60c30e2d` §2.1).
-///
-/// # Mask-tail invariant
-///
-/// Each column is a [`Bipedal3Vec`] and inherits its mask-tail invariant:
-/// bits beyond `rows` in the last `u64` word of both `mag` and `sgn`
-/// vectors are always zero (AGENTS.md §Correctness and test policy).
+/// column-major as one [`Bipedal3Vec`] of length `rows` per column, so the
+/// column-iterating permanent kernels borrow a column without copying.
 ///
 /// # Examples
 ///
@@ -2641,11 +2101,6 @@ mod vec_tests {
 /// assert_eq!(m.get(0, 0), Fp::<3>::new(0));
 /// assert_eq!(m.get(1, 2), Fp::<3>::new(2));
 /// ```
-///
-/// # Complexity
-///
-/// Construction is `O(rows * cols)`; column access is `O(1)`;
-/// row reconstruction is `O(cols)`; transpose is `O(rows * cols)`.
 #[derive(Clone)]
 pub struct Bipedal3Matrix {
     /// One `Bipedal3Vec` per column, each of length `rows`.
@@ -2654,17 +2109,8 @@ pub struct Bipedal3Matrix {
     cols: usize,
 }
 
-// ---------------------------------------------------------------------------
-// Manual PartialEq / Eq — shape + per-column canonical-decode equality
-// ---------------------------------------------------------------------------
-
 impl PartialEq for Bipedal3Matrix {
     /// Shape-equal and per-column canonical-decode equal.
-    ///
-    /// Two matrices are equal iff they have the same `rows` and `cols`,
-    /// and every column pair compares equal under [`Bipedal3Vec`]'s
-    /// canonical-decode `PartialEq` (which handles alternative-zero
-    /// codewords transparently).
     ///
     /// # Examples
     ///
@@ -2687,16 +2133,9 @@ impl PartialEq for Bipedal3Matrix {
 
 impl Eq for Bipedal3Matrix {}
 
-// ---------------------------------------------------------------------------
-// Manual Debug — print row-by-row for human readability
-// ---------------------------------------------------------------------------
-
 impl core::fmt::Debug for Bipedal3Matrix {
-    /// Formats as `Bipedal3Matrix { rows, cols, data: [[row 0], [row 1], ...] }`
-    /// with each row printed as a `Vec<u64>` of decoded lane values (`{0, 1, 2}`).
-    ///
-    /// Rows are listed top-to-bottom for human readability, even though the
-    /// internal storage is column-major.
+    /// Formats as `Bipedal3Matrix { rows, cols, data }` with `data` listed
+    /// row by row.
     ///
     /// # Examples
     ///
@@ -2711,7 +2150,6 @@ impl core::fmt::Debug for Bipedal3Matrix {
     /// assert!(s.contains("cols"));
     /// ```
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // Decode row by row so the output is human-readable top-to-bottom.
         let data: Vec<Vec<u64>> = (0..self.rows)
             .map(|i| {
                 (0..self.cols)
@@ -2727,26 +2165,11 @@ impl core::fmt::Debug for Bipedal3Matrix {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Bipedal3Matrix inherent methods
-// ---------------------------------------------------------------------------
-
 impl Bipedal3Matrix {
     /// Construct a matrix from a row-major `Fp<3>` slice.
     ///
-    /// The entry at row `i`, column `j` is `data[i * cols + j]`. The slice
-    /// is re-encoded in column-major order: each column `j` becomes a
-    /// [`Bipedal3Vec`] of length `rows` containing `data[0*cols+j]`,
-    /// `data[1*cols+j]`, ..., `data[(rows-1)*cols+j]`.
-    ///
-    /// Empty matrices (`rows == 0` or `cols == 0`) are allowed: they
-    /// produce zero columns or zero-length columns respectively.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` — row-major source slice of length `rows * cols`.
-    /// * `rows` — number of rows.
-    /// * `cols` — number of columns.
+    /// The entry at row `i`, column `j` is `data[i * cols + j]`. `rows == 0`
+    /// or `cols == 0` is allowed.
     ///
     /// # Panics
     ///
@@ -2769,10 +2192,6 @@ impl Bipedal3Matrix {
     /// assert_eq!(m.get(0, 1), Fp::<3>::new(1));
     /// assert_eq!(m.get(1, 0), Fp::<3>::new(2));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(rows * cols)`.
     pub fn from_row_major(data: &[Fp<3>], rows: usize, cols: usize) -> Self {
         assert_eq!(
             data.len(),
@@ -2782,7 +2201,6 @@ impl Bipedal3Matrix {
             rows,
             cols
         );
-        // Build each column as a Bipedal3Vec.
         let columns: Vec<Bipedal3Vec> = (0..cols)
             .map(|j| {
                 let col_data: Vec<Fp<3>> = (0..rows).map(|i| data[i * cols + j]).collect();
@@ -2799,9 +2217,6 @@ impl Bipedal3Matrix {
     /// Inverse of [`from_row_major`][Self::from_row_major]: returns a row-major
     /// decoded `Vec<Fp<3>>` of length `rows * cols`.
     ///
-    /// The entry at output index `i * cols + j` corresponds to matrix position
-    /// `(i, j)`.
-    ///
     /// # Examples
     ///
     /// ```
@@ -2813,10 +2228,6 @@ impl Bipedal3Matrix {
     /// let out = m.to_row_major();
     /// assert_eq!(out, data);
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(rows * cols)`.
     pub fn to_row_major(&self) -> Vec<Fp<3>> {
         let mut out = Vec::with_capacity(self.rows * self.cols);
         for i in 0..self.rows {
@@ -2828,34 +2239,18 @@ impl Bipedal3Matrix {
     }
 
     /// Number of rows.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Number of columns.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
     /// Borrow the `j`-th column as a `&Bipedal3Vec` of length `rows`.
-    ///
-    /// This is the primary access pattern for column-major algorithms (Ryser,
-    /// single-word permanent): iterating `column(j)` for `j` in `0..cols` is
-    /// zero-copy.
-    ///
-    /// # Arguments
-    ///
-    /// * `j` — column index in `0..self.cols()`.
     ///
     /// # Panics
     ///
@@ -2876,10 +2271,6 @@ impl Bipedal3Matrix {
     /// assert_eq!(m.column(1).get(0), Fp::<3>::new(2));
     /// assert_eq!(m.column(1).get(1), Fp::<3>::new(1));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     #[inline]
     pub fn column(&self, j: usize) -> &Bipedal3Vec {
         assert!(
@@ -2893,12 +2284,7 @@ impl Bipedal3Matrix {
 
     /// Reconstruct the `i`-th row as an owned `Bipedal3Vec` of length `cols`.
     ///
-    /// Lane `j` of the returned vector equals `self.column(j).get(i)`.
-    /// Row access requires reading from each column, so it is `O(cols)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `i` — row index in `0..self.rows()`.
+    /// Lane `j` of the result equals `self.column(j).get(i)`; `O(cols)`.
     ///
     /// # Panics
     ///
@@ -2921,10 +2307,6 @@ impl Bipedal3Matrix {
     /// assert_eq!(row1.get(1), Fp::<3>::new(0));
     /// assert_eq!(row1.get(2), Fp::<3>::new(1));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(cols)`.
     pub fn row(&self, i: usize) -> Bipedal3Vec {
         assert!(
             i < self.rows,
@@ -2938,18 +2320,9 @@ impl Bipedal3Matrix {
 
     /// Read the entry at row `i`, column `j`.
     ///
-    /// # Arguments
-    ///
-    /// * `i` — row index in `0..self.rows()`.
-    /// * `j` — column index in `0..self.cols()`.
-    ///
     /// # Panics
     ///
     /// Panics if `i >= self.rows()` or `j >= self.cols()`.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     pub fn get(&self, i: usize, j: usize) -> Fp<3> {
         assert!(
             i < self.rows,
@@ -2967,15 +2340,6 @@ impl Bipedal3Matrix {
     }
 
     /// Transpose: returns a `cols × rows` matrix where `transposed.get(j, i) == self.get(i, j)`.
-    ///
-    /// The result is built by materialising a row-major `Vec<Fp<3>>` buffer
-    /// via [`to_row_major`][Self::to_row_major] and then transposing the
-    /// index mapping before calling [`from_row_major`][Self::from_row_major]
-    /// with swapped dimensions. This is obviously correct and `O(rows * cols)`.
-    ///
-    /// A performance-optimised path (direct column-to-row scatter) may be
-    /// added in a later task if profiling identifies the `to_row_major`
-    /// intermediary as a bottleneck.
     ///
     /// # Examples
     ///
@@ -2995,10 +2359,6 @@ impl Bipedal3Matrix {
     /// assert_eq!(t.get(2, 0), m.get(0, 2));
     /// assert_eq!(t.get(0, 1), m.get(1, 0));
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(rows * cols)`.
     pub fn transpose(&self) -> Self {
         let rm = self.to_row_major();
         let mut tm = Vec::with_capacity(self.cols * self.rows);
@@ -3010,10 +2370,6 @@ impl Bipedal3Matrix {
         Self::from_row_major(&tm, self.cols, self.rows)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Bipedal3Matrix tests
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod matrix_tests {
@@ -3257,18 +2613,12 @@ mod matrix_tests {
     proptest! {
         #![proptest_config(ProptestConfig { cases: 100, .. ProptestConfig::default() })]
 
-        /// transpose().transpose() == self for random shapes and random data.
-        ///
-        /// Generates `rows ∈ 0..130`, `cols ∈ 0..130`, and a random seed to
-        /// build a deterministic `Vec<Fp<3>>` of `rows * cols` values.
-        /// The double-transpose must equal the original matrix.
         #[test]
         fn test_proptest_transpose_roundtrip_random_shapes(
             rows in 0usize..130,
             cols in 0usize..130,
             seed in 0u64..u64::MAX,
         ) {
-            // Build a seeded-deterministic data vector.
             let n = rows * cols;
             let data: Vec<Fp<3>> = (0..n)
                 .map(|k| {
@@ -3285,14 +2635,4 @@ mod matrix_tests {
             prop_assert_eq!(m, tt, "transpose roundtrip failed for {}x{}", rows, cols);
         }
     }
-
-    // -----------------------------------------------------------------------
-    // Word-boundary coverage confirmation
-    //
-    // The round-trip macro tests above already cover all word-boundary
-    // leg values {1, 63, 64, 65} for both rows and cols via the combinations:
-    //   1×1, 1×64, 64×1, 63×63, 63×64, 64×63, 64×64, 64×65, 65×64, 65×65.
-    // The transpose tests add: 63×65, 64×100, 130×17.
-    // No additional tests are needed to satisfy criterion 5.
-    // -----------------------------------------------------------------------
 }
