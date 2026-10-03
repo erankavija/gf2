@@ -18,6 +18,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/eb2a833d-link-scan.txt"
     }
   ],
+  "done_at": "2026-10-03T15:08:42.623537676Z",
   "first_ready_at": "2026-10-03T02:12:11.519541425Z",
   "gates_required": [
     "cargo-ci",
@@ -32,18 +33,18 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T14:18:58.645668847Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T14:58:16.367564354Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-03T14:17:25.835414610Z",
+      "updated_at": "2026-10-03T15:02:58.942430132Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T13:55:47.838052833Z",
+      "updated_at": "2026-10-03T14:46:04.921143816Z",
       "updated_by": "auto:executor"
     }
   },
@@ -55,7 +56,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Move gf2-coding crate guides into the legacy mirror",
-  "updated_at": "2026-10-03T14:41:32.580178389Z"
+  "updated_at": "2026-10-03T15:08:42.623537676Z"
 }

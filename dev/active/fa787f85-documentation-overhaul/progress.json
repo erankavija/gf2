@@ -73,7 +73,7 @@
      "short_id": "12907582",
      "title": "Correct surviving source-level documentation drift",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "41e1d47d-046e-4808-a424-83898cf9b1ee",
@@ -204,7 +204,7 @@
      "short_id": "5a25717c",
      "title": "Locate receipt-pinned campaign inputs by content identity",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "5c0b9635-86f6-4e9b-8ff9-e12af604395a",
@@ -232,7 +232,7 @@
      "short_id": "7bac1303",
      "title": "Make the first survey-harness crates' tool dependency depth-independent",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "done"
     },
     {
      "id": "8434e0e1-859d-4b18-ad3c-2942ae248b60",
@@ -330,7 +330,7 @@
      "short_id": "b16d013a",
      "title": "Write the gf2-sim README as its entry page",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "da120b98-4a6b-44f4-9597-a9dc55a667f9",
@@ -351,14 +351,14 @@
      "short_id": "ec7d2aec",
      "title": "Widen the docs policy to manage archival sources",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "fb209a81-59cf-4bb1-86c9-597637a4bba2",
      "short_id": "fb209a81",
      "title": "Move presentation decks into their epics' archive dirs",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "rework"
     },
     {
      "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
@@ -384,7 +384,7 @@
      "short_id": "62f0d0e6",
      "title": "Record the pre-sweep comment census",
      "classification": "implementation",
-     "status": "pending"
+     "status": "rework"
     },
     {
      "id": "c84ac71a-b9e8-4b10-9ebb-b433f7077dae",
@@ -412,7 +412,7 @@
      "short_id": "01c20b61",
      "title": "Write the evidence reproduction how-to",
      "classification": "documentation",
-     "status": "pending"
+     "status": "rework"
     },
     {
      "id": "130d5fd7-4540-4a29-9bd5-67d755bae78c",
@@ -447,21 +447,28 @@
      "short_id": "629e0ff0",
      "title": "Correct gf2-coding standards-conformance doc and test drift",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "gating"
     },
     {
      "id": "18858de1",
      "short_id": "18858de1",
      "title": "Resolve the repository root at runtime in the bench-window runner",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "e3ff339a",
      "short_id": "e3ff339a",
      "title": "Reduce the gf2-core, gf2-coding and gf2-algebra READMEs to purpose and links",
      "classification": "documentation",
-     "status": "merged_gating"
+     "status": "done"
+    },
+    {
+     "id": "62ce5927",
+     "short_id": "62ce5927",
+     "title": "Campaign declaration lookup rejects byte-identical archived copies",
+     "classification": "implementation",
+     "status": "dispatched"
     }
    ]
   },
@@ -667,7 +674,7 @@
      "short_id": "eb2a833d",
      "title": "Move gf2-coding crate guides into the legacy mirror",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "f0dd63f1-e326-406b-a7b3-6f68e43d2143",
@@ -1021,6 +1028,30 @@
    "id": "58a4bb51",
    "epic": "b4b4b9ee",
    "reason": "convergence condition of the harness-path-dependencies exception"
+  },
+  {
+   "id": "62ce5927",
+   "reason": "cargo-ci fails on main: archive of 6dc81018 left a byte-identical copy of the dbd8787d campaign declaration; lookup rejects duplicates"
+  },
+  {
+   "id": "1015ae73",
+   "epic": "b4b4b9ee",
+   "reason": "fixed taskset CPU list (found by 01c20b61 rework)"
+  },
+  {
+   "id": "0afbd34a",
+   "epic": "b4b4b9ee",
+   "reason": "host-specific follower unit default"
+  },
+  {
+   "id": "0d1e9536",
+   "epic": "b4b4b9ee",
+   "reason": "stale harness lockfiles (found by 7bac1303)"
+  },
+  {
+   "id": "18db6e3d",
+   "epic": "b4b4b9ee",
+   "reason": "non-vocabulary ignore reasons (found by 629e0ff0)"
   }
  ],
  "escalations": [
@@ -1108,6 +1139,21 @@
    "issue": "7bac1303",
    "question": "[patch] form breaks --locked for the root lockfile and 29 of 31 tracked harness lockfiles (cargo 1.95 trials). Accept repo-wide effect, separate --config file, fixed workspace, or named exception?",
    "resolution": "Owner chose a named, tracked exception (harness-path-dependencies): moves rewrite the paths. 7bac1303 rewritten to record the exception (DEC-02); c84ac71a rejected obsolete; f79bcba3, 198aafa3, 7039d680 criteria amended; convergence tracked by 58a4bb51 under b4b4b9ee (2026-10-03)."
+  },
+  {
+   "issue": "01c20b61",
+   "question": "Rework limit exceeded; new doc-review findings (pooled.py never saved; fixed append-only /tmp output path).",
+   "resolution": "Owner approved one more rework (2026-10-03)."
+  },
+  {
+   "issue": "fb209a81",
+   "question": "Rework limit exceeded; code-review: CWD-relative default can write under docs/; doc-review: archived GRAND figure script resolves the root by parents[3].",
+   "resolution": "Owner approved one more rework fixing both (2026-10-03)."
+  },
+  {
+   "issue": "session-4",
+   "question": "Main dirty from an external archive of 6dc81018; commit ab6b6b09b swept in its tracker state.",
+   "resolution": "Owner committed the archive moves (66717006f) and said to continue (2026-10-03)."
   }
  ],
  "rework_counts": {
@@ -1132,7 +1178,11 @@
   "12907582": 4,
   "5a25717c": 1,
   "ee50e270": 1,
-  "01c20b61": 2
+  "01c20b61": 4,
+  "fb209a81": 3,
+  "62f0d0e6": 1,
+  "629e0ff0": 1,
+  "eb2a833d": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1204,6 +1254,16 @@
    "issue": "1fca3739",
    "finding": "perf-evidence-catalog.md read comparator ratios inverted.",
    "disposition": "resolved: \u00a76 correction appended (falsification-preserved)"
+  },
+  {
+   "issue": "629e0ff0",
+   "finding": "Single DVB-T2 vector default is $DVB_TEST_VECTORS_PATH else ~/dvb_test_vectors; on this host ~/dvb_test_vectors holds only VV001-CR35 while the full tree is /data/specs/dvb/t2/streams, so ignored slow-tier vector tests need the variable or a re-pointed symlink.",
+   "disposition": "owner host action; reported in session summary"
+  },
+  {
+   "issue": "157c305c",
+   "finding": "629e0ff0 rework states the filler LLR 15.0 and its reason in public Rustdoc; 157c305c REQ-01 met, REQ-02 not (prose value beside a private const).",
+   "disposition": "157c305c is label-only (outside the DAG); owner decides"
   }
  ],
  "notes": [
@@ -1235,6 +1295,9 @@
   "Cache-pool seeding copies target/ with absolute paths of other worktrees baked in; tests reading CARGO_MANIFEST_DIR and cargo doc search.index fail. Fix: cargo clean -p <crate> and rm target/doc in the worktree, CARGO_CI_NO_SCCACHE=1.",
   "jit issue create for orphan tasks needs --orphan; filed roadmap issues default to ready, set backlog explicitly.",
   "Do not add a dependency from a new task onto a story: deps define containment.",
-  "jit issue create --orphan does not satisfy repository integrity: a new issue with no dependency edge fails jit validate (isolated issue). Wire every filed issue into a container immediately; parenting into another epic needs owner approval."
+  "jit issue create --orphan does not satisfy repository integrity: a new issue with no dependency edge fails jit validate (isolated issue). Wire every filed issue into a container immediately; parenting into another epic needs owner approval.",
+  "Never `git add .jit` blindly: another session's tracker writes ride along (ab6b6b09b swept in the 6dc81018 archive). Inspect `git status --short .jit` and stage only this epic's files plus events.jsonl/index.",
+  "A container archive copies documents that a non-terminal issue also owns; content-identity lookups then see duplicates (62ce5927). Run cargo-ci after any archive lands on main.",
+  "Reviewer recomputation can be wrong (62f0d0e6 F2 pattern counts; an independent grep confirmed the record). Do not argue: make the record reproducible at the named commit so the reviewer runs the script itself."
  ]
 }

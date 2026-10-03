@@ -31,17 +31,17 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T14:07:58.795038722Z",
+      "updated_at": "2026-10-03T14:55:22.722069392Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "passed",
-      "updated_at": "2026-10-03T14:05:13.644472213Z",
+      "status": "failed",
+      "updated_at": "2026-10-03T15:00:38.643112301Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T13:55:36.660974308Z",
+      "updated_at": "2026-10-03T14:46:01.198573045Z",
       "updated_by": "auto:executor"
     }
   },
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Move presentation decks into their epics' archive dirs",
-  "updated_at": "2026-10-03T14:07:58.795038722Z"
+  "updated_at": "2026-10-03T15:00:38.643112301Z"
 }

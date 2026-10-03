@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T15:08:43.210255822Z",
+  "dependencies": [],
+  "description": "`dev/scripts/ccx1-bench-flock.sh` pins every measured command with `taskset -c 6-11`. On a host without those CPUs `taskset` fails before the command starts, so a documented reproduction cannot run there.\n\n## Success Criteria\n\n- [hard] REQ-01: The wrapper takes its CPU list from one documented configuration point, with the committed list as the default for the reference host.\n- [hard] REQ-02: The lock protocol and the recorded host observation are unchanged for the default configuration, shown by an ignore-whitespace diff review.\n- [hard] REQ-03: `docs/how-to/reproduce-performance-evidence.md` states the configuration point.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T15:08:43.210255822Z",
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "1015ae73-ce41-4004-bc2d-d57ee8c3c881",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:tooling",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Benchmark lock wrapper pins to a fixed CPU list",
+  "updated_at": "2026-10-03T15:08:43.367357394Z"
+}

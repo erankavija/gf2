@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T15:08:43.848605858Z",
+  "dependencies": [],
+  "description": "Three tracked survey-harness lockfiles do not match their manifests: `cargo metadata --locked` fails with `cannot update the lock file` for `19513245/survey/field-laws`, `4e732b56/baseline-survey/gf2-side` and `6c6b09b1/survey/field-laws` under `dev/active/`.\n\n## Background\n\nThe control section of the harness path-dependency trial output linked to the documentation-overhaul epic lists the status of every tracked lockfile.\n\n## Success Criteria\n\n- [hard] REQ-01: Every tracked harness lockfile resolves under `--locked` on Rust 1.95.\n- [hard] REQ-02: Lockfiles that a committed receipt pins by digest keep their bytes; a pinned stale lockfile is listed with its pinning receipt in a linked record.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T15:08:43.848605858Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "0d1e9536-a858-494d-b204-1f47a7aacc76",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:tooling",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Three tracked harness lockfiles fail --locked resolution",
+  "updated_at": "2026-10-03T15:08:44.001143155Z"
+}

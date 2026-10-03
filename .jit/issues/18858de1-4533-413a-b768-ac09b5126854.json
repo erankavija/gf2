@@ -32,6 +32,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/18858de1-root-resolution.md"
     }
   ],
+  "done_at": "2026-10-03T15:08:42.810364395Z",
   "first_ready_at": "2026-10-03T13:10:22.754028121Z",
   "gates_required": [
     "code-review",
@@ -45,13 +46,13 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T14:23:57.261619029Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T14:53:56.894686152Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T13:55:59.133382970Z",
+      "updated_at": "2026-10-03T14:45:53.653149538Z",
       "updated_by": "auto:executor"
     }
   },
@@ -62,7 +63,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Resolve the repository root at runtime in the bench-window runner",
-  "updated_at": "2026-10-03T14:23:57.261619029Z"
+  "updated_at": "2026-10-03T15:08:42.810364395Z"
 }

@@ -1,0 +1,27 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-03T15:09:02.374506600Z",
+  "context": {},
+  "created_at": "2026-10-03T15:08:42.898844593Z",
+  "dependencies": [],
+  "description": "`CampaignDeclaration::for_campaign` fails with \"several campaign declarations name issue\" when container archival leaves a byte-identical copy of a declaration under the archive root. The Rust CI gate fails on every tree that holds such a copy.\n\n## Background\n\nThe lookup in `dev/tools/tuning-campaign-support/src/campaign.rs` identifies a declaration by content. The archive of a terminal epic copies documents that a non-terminal issue also owns, so `dev/active/dbd8787d/campaign-declaration.json` has an identical copy under `dev/archive/`. Failing CI steps: `test`, `tuning-campaign-support-nextest` and `tuning-campaign-validator`.\n\n## Success Criteria\n\n- [hard] REQ-01: Declarations with identical bytes count as one declaration in every lookup that selects a campaign declaration by issue or campaign identity, in the Rust tooling and in the campaign validator.\n- [hard] REQ-02: Two declarations that name the same issue with different bytes remain an error, covered by a test.\n- [hard] REQ-03: A test fails before the change on a tree holding a byte-identical copy and passes after it.\n- [hard] REQ-04: The benchmark-acceptance verdict of every committed `zen3-benchmark-receipt-v1` receipt is identical before and after the change, shown in a linked record.\n- [hard] REQ-05: The lookup contains no hard-coded `dev/` path or archive-path exclusion list; code review checks the change against `@/inv/no-dev-path-coupling`. The Rust CI gate passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T15:08:42.898844593Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "62ce5927-c37e-439f-80e0-d5ce05349f5a",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:tooling",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "in_progress",
+  "title": "Campaign declaration lookup rejects byte-identical archived copies",
+  "updated_at": "2026-10-03T15:09:02.374506600Z"
+}

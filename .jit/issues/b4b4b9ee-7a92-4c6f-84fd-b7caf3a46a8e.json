@@ -5,7 +5,10 @@
   "dependencies": [
     "0657c9fa-0f07-4175-addf-9baf7aefdfa9",
     "07a1813a-bcfc-4fd0-9611-6d3c6928776e",
+    "0afbd34a-17c3-4f9a-9871-27a6aa7a3f96",
     "0b45a5fa-ca47-4e32-a7a8-04a13d65c348",
+    "0d1e9536-a858-494d-b204-1f47a7aacc76",
+    "1015ae73-ce41-4004-bc2d-d57ee8c3c881",
     "18db6e3d-7657-4b94-8662-06e989e6deb0",
     "1c29a70e-36d4-4dc9-bf83-6f6f97f4f72d",
     "33057520-37ef-4340-83bf-f11dd26b8125",
@@ -49,5 +52,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Technical debt assessment remediation (2026-06-30)",
-  "updated_at": "2026-10-03T13:28:52.666924745Z"
+  "updated_at": "2026-10-03T15:08:44.099246066Z"
 }

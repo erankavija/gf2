@@ -9,6 +9,7 @@
     "4bdcd65a-e338-488b-b42e-19bee4a875a9",
     "60652fe4-d6dd-49e9-97f1-db99b4c73111",
     "629e0ff0-29ce-4450-83a0-f56bb1fda15b",
+    "62ce5927-c37e-439f-80e0-d5ce05349f5a",
     "84db2984-3373-43a3-bd0c-8f55700652cb",
     "875914b3-38c8-4ec2-a13f-009fc620f7d4",
     "af84619e-a2e1-4b3d-af9e-4120a43e4130",
@@ -105,5 +106,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-03T13:10:23.428712254Z"
+  "updated_at": "2026-10-03T15:08:43.143166925Z"
 }

@@ -26,10 +26,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-03T15:07:53.841851699Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T14:49:53.685466793Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T14:49:09.238269328Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:24.395021767Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T14:45:46.091616513Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "62f0d0e6-0d54-44a6-a5d7-31b09c33976d",
@@ -43,5 +58,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Record the pre-sweep comment census",
-  "updated_at": "2026-10-03T14:41:31.389411891Z"
+  "updated_at": "2026-10-03T15:07:53.841851699Z"
 }
