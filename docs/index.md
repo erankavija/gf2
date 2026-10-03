@@ -16,6 +16,8 @@ Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis
 
 Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
 
+- [Performance evidence](reference/performance-evidence.md): measurement methodology and commit-pinned evidence for each performance claim.
+
 ## Crates
 
 | Crate | Entry page |
