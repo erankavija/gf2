@@ -16,6 +16,8 @@ Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis
 
 Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
 
+- [Supported configurations](reference/supported-configurations.md): toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations.
+
 ## Crates
 
 | Crate | Entry page |
