@@ -249,3 +249,16 @@ as projected or target.
   gf2-coding cache-generation timings have no committed evidence.
 - `relocate-bench-narrative` (REQ-14) moves `dev/bench_results/*.md`; links
   from the evidence page must target the post-move paths or pin the commit.
+
+## 6. Correction: direction of comparator estimates
+
+The estimate column of §2.2 is the ratio of arm medians, median(gf2) / median(comparator), so an estimate above 1 means the comparator is faster. Sections 2.2 and 5 read several of these cells in the opposite direction. The original text stands above; this section records the contradiction (`@/inv/falsification-preserved`), established while authoring `docs/reference/performance-evidence.md` (1fca3739) from the receipts' acceptance summaries.
+
+| Cell | Catalog reading | Receipt reading |
+|---|---|---|
+| LDPC decode, fixed-iteration and check-node update vs AFF3CT | gf2 faster | AFF3CT faster; estimates 1.74–2.57 |
+| NR rate-matched LDPC encode vs srsRAN | gf2 faster | srsRAN faster at every size; estimates 6.89–151 |
+| NR LLR de-rate-matching vs AFF3CT | "aff3ct faster" | gf2 faster; estimates 0.32–0.35 |
+| ISA-L XOR, M4RI BCH and DVB-T2 interleave cells listed as regressions | gf2 slower | gf2 faster where the estimate is below 1 |
+
+`docs/reference/performance-evidence.md` states each claim from its receipt, not from this catalog.

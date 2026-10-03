@@ -50,6 +50,7 @@
       "path": "docs/concepts/finite-field-arithmetic.md"
     }
   ],
+  "done_at": "2026-10-03T00:55:25.929557295Z",
   "first_ready_at": "2026-10-02T14:11:26.688560640Z",
   "gates_required": [
     "doc-review",
@@ -57,13 +58,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:22:58.409354347Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T00:34:05.124430059Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:18:52.218511911Z",
+      "updated_at": "2026-10-03T00:30:52.046317987Z",
       "updated_by": "auto:executor"
     }
   },
@@ -75,7 +76,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the finite-field arithmetic concepts page",
-  "updated_at": "2026-10-03T00:22:58.409354347Z"
+  "updated_at": "2026-10-03T00:55:25.929557295Z"
 }

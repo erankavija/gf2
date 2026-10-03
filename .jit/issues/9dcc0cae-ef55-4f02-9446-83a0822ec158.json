@@ -42,6 +42,7 @@
       "path": "docs/how-to/run-simulation-campaigns.md"
     }
   ],
+  "done_at": "2026-10-03T00:55:26.392639723Z",
   "first_ready_at": "2026-10-02T14:11:27.357904968Z",
   "gates_required": [
     "doc-review",
@@ -49,13 +50,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:26:17.656648971Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T00:37:05.804194442Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:23:02.698007401Z",
+      "updated_at": "2026-10-03T00:34:28.368694707Z",
       "updated_by": "auto:executor"
     }
   },
@@ -67,7 +68,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the simulation campaign how-to",
-  "updated_at": "2026-10-03T00:26:17.656648971Z"
+  "updated_at": "2026-10-03T00:55:26.392639723Z"
 }

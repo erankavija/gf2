@@ -8,6 +8,7 @@
   ],
   "description": "Researchers running heavy workloads need to choose SIMD targets, GPU offload and thread parallelism for their case.\n\n## Background\n\nPermanent pages target researchers evaluating or adopting gf2 and assume technical competence. Explanatory prose is freshly authored; only independently verified code, commands, equations, identifiers and empirical data are reused from prior material. Pages state current supported behavior only.\n\n## Success Criteria\n\n- [hard] REQ-01: A page under `docs/how-to/` shows how to select and enable SIMD targets, HIP GPU offload and parallel execution for gf2-core and gf2-coding workloads, verified against current code, manifests and tests.\n- [hard] REQ-02: Its prose and structure are freshly authored; reused items from `crates/gf2-coding/docs/SIMD_PERFORMANCE_GUIDE.md`, `PARALLELIZATION.md` and `LDPC_PERFORMANCE.md` are limited to verified code, commands, equations, identifiers and data.\n- [hard] REQ-03: It contains no elementary primer, historical narration, migration language, speculation, future promise, marketing language or performance figure.\n- [hard] REQ-04: Statements about relative speed link to anchors on the performance evidence page instead of stating figures.\n- [hard] REQ-05: The page is listed in `docs/index.md`, and its links, anchors and citations resolve.\n",
   "documents": [],
+  "first_ready_at": "2026-10-03T00:55:26.230391283Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
@@ -27,7 +28,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Write the acceleration selection how-to",
-  "updated_at": "2026-10-02T09:56:21.673093507Z"
+  "updated_at": "2026-10-03T00:55:26.230391283Z"
 }

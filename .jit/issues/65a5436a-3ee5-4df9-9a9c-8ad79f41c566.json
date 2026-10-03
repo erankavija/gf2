@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/65a5436a-check-baseline.md"
     }
   ],
+  "done_at": "2026-10-03T00:55:26.621721158Z",
   "first_ready_at": "2026-10-02T11:05:37.823683612Z",
   "gates_required": [
     "cargo-ci",
@@ -24,10 +25,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T00:48:42.055744216Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T00:51:42.159506238Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T00:52:51.078473219Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:24.529811957Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:45:57.865937165Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "65a5436a-3ee5-4df9-9a9c-8ad79f41c566",
@@ -38,7 +54,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Resolve campaign CI check inputs through the configured repository root",
-  "updated_at": "2026-10-03T00:30:40.247626048Z"
+  "updated_at": "2026-10-03T00:55:26.621721158Z"
 }

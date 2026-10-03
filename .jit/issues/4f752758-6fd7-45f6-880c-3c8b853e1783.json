@@ -66,6 +66,7 @@
       "path": "crates/gf2-algebra/README.md"
     }
   ],
+  "done_at": "2026-10-03T00:55:20.517827767Z",
   "first_ready_at": "2026-10-02T14:11:26.799806786Z",
   "gates_required": [
     "doc-review",
@@ -73,13 +74,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:27:59.103197121Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T00:34:31.022028479Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:25:40.392192986Z",
+      "updated_at": "2026-10-03T00:32:17.389675305Z",
       "updated_by": "auto:executor"
     }
   },
@@ -92,7 +93,7 @@
     "satisfies:fa787f85/REQ-05"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Rewrite the gf2-algebra README as its entry page",
-  "updated_at": "2026-10-03T00:27:59.103197121Z"
+  "updated_at": "2026-10-03T00:55:20.517827767Z"
 }

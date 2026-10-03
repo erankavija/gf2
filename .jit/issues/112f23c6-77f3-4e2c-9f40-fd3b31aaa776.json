@@ -23,24 +23,24 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_at": "2026-10-02T20:35:47.328545163Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:45:54.141252624Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-10-02T20:35:47.362755503Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-10-03T00:52:42.320441122Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-10-02T20:35:47.391919534Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:55:01.975328106Z",
+      "updated_by": "auto:executor"
     },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T20:35:47.421624748Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T00:43:08.831350154Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Share one repository-root resolver across tuning-campaign tooling",
-  "updated_at": "2026-10-03T00:30:39.998831058Z"
+  "updated_at": "2026-10-03T00:55:01.975328106Z"
 }

@@ -66,6 +66,7 @@
       "path": "docs/reference/supported-configurations.md"
     }
   ],
+  "done_at": "2026-10-03T00:55:25.732942341Z",
   "first_ready_at": "2026-10-02T14:11:26.576247148Z",
   "gates_required": [
     "doc-review",
@@ -73,13 +74,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:23:25.830909266Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T00:32:12.127370643Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:18:39.879968280Z",
+      "updated_at": "2026-10-03T00:30:51.759678009Z",
       "updated_by": "auto:executor"
     }
   },
@@ -92,7 +93,7 @@
     "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the supported configurations reference page",
-  "updated_at": "2026-10-03T00:23:25.830909266Z"
+  "updated_at": "2026-10-03T00:55:25.732942341Z"
 }

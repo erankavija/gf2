@@ -82,6 +82,7 @@
       "path": "docs/reference/performance-evidence.md"
     }
   ],
+  "done_at": "2026-10-03T00:55:26.118875657Z",
   "first_ready_at": "2026-10-02T14:11:26.468400371Z",
   "gates_required": [
     "doc-review",
@@ -89,13 +90,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T00:23:14.620737627Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T00:34:40.969109460Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:18:46.034837297Z",
+      "updated_at": "2026-10-03T00:30:51.819009585Z",
       "updated_by": "auto:executor"
     }
   },
@@ -107,7 +108,7 @@
     "satisfies:fa787f85/REQ-06"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Write the performance evidence reference page",
-  "updated_at": "2026-10-03T00:23:14.620737627Z"
+  "updated_at": "2026-10-03T00:55:26.118875657Z"
 }
