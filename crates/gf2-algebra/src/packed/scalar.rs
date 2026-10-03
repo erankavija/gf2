@@ -1,36 +1,6 @@
 //! Scalar reference implementations of [`PackedField<Fp<3>>`] and
-//! [`PackedFieldVec<Fp<3>>`].
-//!
-//! [`ScalarPackedFp3`] is the F_3 *correctness oracle* against which the
-//! optimised `Bipedal3` impl is cross-checked. (F_5 and F_7 packed types
-//! `Packed5` / `Packed7` use their own scalar `Fp<5>` / `Fp<7>` oracles
-//! per-lane rather than going through `ScalarPackedFp3`, which is F_3-
-//! specific by name and trait signature.) The implementation is intentionally
-//! one-`Fp<3>`-per-lane: no SIMD, no bit-packing, no popcount tricks.
-//! Every method is the literal lane-wise composition of the underlying
-//! `Fp<3>` operator.
-//!
-//! [`ScalarPackedFp3Vec`] is the matching variable-length oracle for
-//! [`PackedFieldVec<Fp<3>>`]: a `Vec<Fp<3>>` with one `Fp<3>` per
-//! logical position. It is used by [`super::Bipedal3Vec`]'s cross-check
-//! tests in the same way `ScalarPackedFp3` is used for the fixed-width
-//! `Bipedal3` element. Both types satisfy the literal-element-wise
-//! semantics of the trait, which is why they are useful as oracles.
-//!
-//! # LANES choice
-//!
-//! `LANES = 64` matches the bipedal3 lane count fixed in the parent epic design
-//! (`@/issue/ae82bd73` §7.1) and the D1b §4 stub conformance walk-through.
-//! Choosing the same width makes a 1:1 cross-check loop trivially writable: a
-//! test routes the same 64-lane input through both [`ScalarPackedFp3`] and the
-//! optimised `Bipedal3`, then compares `lane(i)` for `i` in `0..64`.
-//!
-//! # Boundary against optimised impls
-//!
-//! [`ScalarPackedFp3`] is **not** a perf path. It exists exclusively
-//! to anchor correctness. Production callers (Ryser, the `permanent_*`
-//! family) reach for `Bipedal3`; this oracle is only reached through
-//! unit tests and `proptest` cross-checks.
+//! [`PackedFieldVec<Fp<3>>`]: one `Fp<3>` per lane, used as the F_3
+//! correctness oracle for `Bipedal3` and [`super::Bipedal3Vec`].
 
 use core::fmt;
 
@@ -38,20 +8,8 @@ use gf2_core::gfp::Fp;
 
 use super::{PackedField, PackedFieldVec};
 
-/// Scalar reference implementation of [`PackedField<Fp<3>>`] over a
-/// fixed `LANES = 64` array of `Fp<3>` elements.
-///
-/// One `Fp<3>` per lane. No bit-packing, no SIMD, no encoding tricks.
-/// This is the F_3 correctness oracle for the optimised `Bipedal3`
-/// impl; it is cross-checked via per-lane equality. F_5 / F_7 impls
-/// (`Packed5` / `Packed7`) are F_3-incompatible by type and cross-
-/// check against their own scalar `Fp<5>` / `Fp<7>` per-lane oracles,
-/// not against this type.
-///
-/// `LANES = 64` is fixed to match the `Bipedal3` lane count from the parent
-/// epic design (`@/issue/ae82bd73` §7.1) and the D1b §4 conformance
-/// walk-through. The choice makes per-lane cross-checks 1:1 with no resampling
-/// logic.
+/// Scalar reference implementation of [`PackedField<Fp<3>>`]: one `Fp<3>`
+/// per lane, with `LANES = 64` to match `Bipedal3` lane for lane.
 ///
 /// # Examples
 ///
@@ -72,13 +30,8 @@ pub struct ScalarPackedFp3 {
 
 impl fmt::Debug for ScalarPackedFp3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Print lanes in canonical-decode form (the `value()` of each
-        // `Fp<3>`) so the output is independent of the underlying
-        // Montgomery / canonical storage choice for `Fp<3>`. This keeps
-        // `assert_eq!` panic messages stable and human-readable, which
-        // matters because this type is the cross-check oracle and
-        // mismatches between optimised impls and the oracle are the
-        // primary debug surface.
+        // Print canonical `value()`s so the output is independent of
+        // `Fp<3>`'s storage form.
         f.debug_struct("ScalarPackedFp3")
             .field(
                 "lanes",
@@ -154,32 +107,15 @@ impl PackedField<Fp<3>> for ScalarPackedFp3 {
     }
 
     fn all_zero(self) -> bool {
-        // `Fp::<3>` is `Eq`, so this is canonical-decode equality
-        // automatically: every codeword is canonical for `Fp<3>` (no
-        // alt-zero redundancy at the scalar level). This satisfies
-        // D1b §3.5 trivially.
         self.lanes.iter().all(|&x| x == Fp::<3>::new(0))
     }
 }
 
-/// Scalar reference implementation of [`PackedFieldVec<Fp<3>>`] over
-/// a `Vec<Fp<3>>` with one `Fp<3>` per logical position.
+/// Scalar reference implementation of [`PackedFieldVec<Fp<3>>`]: a
+/// `Vec<Fp<3>>` with one element per logical position.
 ///
-/// This is the variable-length companion of [`ScalarPackedFp3`]:
-/// where the fixed-width oracle anchors `PackedField` correctness for
-/// SIMD-batched packed types, this variable-length oracle anchors
-/// `PackedFieldVec` correctness for sequence-shaped impls such as
-/// [`super::Bipedal3Vec`]. The storage is the simplest possible
-/// representation — no bit-packing, no SIMD, no chunking — so that
-/// cross-check tests can route the same input through both impls and
-/// compare element-by-element via [`PackedFieldVec::get`].
-///
-/// `Self::Element` is set to [`ScalarPackedFp3`] purely to satisfy
-/// the trait's `type Element: PackedField<Fp<3>>` bound; the storage
-/// is `Vec<Fp<3>>` directly and never materialises an `Element`
-/// internally. The optimised [`super::Bipedal3Vec`] stores two
-/// parallel `Vec<u64>` bit-planes and uses the associated type
-/// seriously.
+/// `Self::Element` is [`ScalarPackedFp3`] only to satisfy the trait bound;
+/// the storage never materialises an `Element`.
 ///
 /// # Examples
 ///
@@ -268,10 +204,6 @@ impl PackedFieldVec<Fp<3>> for ScalarPackedFp3Vec {
     }
 
     fn all_zero(&self) -> bool {
-        // `Fp::<3>` is `Eq` and canonical, so this is canonical-decode
-        // equality (D1b §3.5 trivially). Empty vectors answer `true`
-        // because `Iterator::all` on an empty iterator returns `true`,
-        // matching the documented contract on `PackedFieldVec::all_zero`.
         self.elements.iter().all(|&x| x == Fp::<3>::new(0))
     }
 }
@@ -281,13 +213,10 @@ mod tests {
     use super::*;
     use proptest::prelude::*;
 
-    /// Strategy: a single `Fp<3>` element drawn from `{0, 1, 2}`.
     fn fp3_strat() -> impl Strategy<Value = Fp<3>> {
         (0u64..3).prop_map(Fp::<3>::new)
     }
 
-    /// Strategy: a `ScalarPackedFp3` with every lane independently
-    /// drawn from `{0, 1, 2}`.
     fn packed_strat() -> impl Strategy<Value = ScalarPackedFp3> {
         prop::collection::vec(fp3_strat(), 64).prop_map(|v| {
             let mut p = ScalarPackedFp3::zero();
@@ -313,25 +242,19 @@ mod tests {
 
     #[test]
     fn test_one_splat_with_lane_lane_roundtrip() {
-        // one(): every lane decodes to 1.
         let o = <ScalarPackedFp3 as PackedField<Fp<3>>>::one();
         for i in 0..<ScalarPackedFp3 as PackedField<Fp<3>>>::LANES {
             assert_eq!(o.lane(i), Fp::<3>::new(1));
         }
         assert!(!o.all_zero());
 
-        // splat(2): every lane decodes to 2.
         let two = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
         for i in 0..<ScalarPackedFp3 as PackedField<Fp<3>>>::LANES {
             assert_eq!(two.lane(i), Fp::<3>::new(2));
         }
 
-        // with_lane / lane round-trip at word-boundary indices.
-        // AGENTS.md §Correctness and test policy requires {0, 1, 63, 64, 65}; for a
-        // single 64-lane oracle we cover the in-range subset
-        // {0, 1, 16, 31, 32, 63} and exercise out-of-range (64, 65)
-        // in `test_lane_panics_out_of_range_*`. See test docstrings
-        // for the rationale on the substitution.
+        // In-range word-boundary indices; 64 and 65 are covered by
+        // `test_lane_panics_out_of_range_*`.
         let mut v = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         for &i in &[0usize, 1, 16, 31, 32, 63] {
             v = v.with_lane(i, Fp::<3>::new(2));
@@ -405,7 +328,6 @@ mod tests {
 
     #[test]
     fn test_mul_zero_absorbs() {
-        // Multiplying anything by zero produces all-zero.
         let z = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
         let one = <ScalarPackedFp3 as PackedField<Fp<3>>>::one();
         let two = <ScalarPackedFp3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
@@ -458,12 +380,8 @@ mod tests {
 
     #[test]
     fn test_with_lane_word_boundary_indices() {
-        // AGENTS.md §Correctness and test policy requires word-boundary cases at
-        // {0, 1, 63, 64, 65}. The 64-lane oracle's in-range slice is
-        // {0, 1, 16, 31, 32, 63}; 64 and 65 are out-of-range and the
-        // panic behaviour is verified in
-        // `test_lane_panics_out_of_range_*`. See the issue spec
-        // section "Concrete deliverables" item 3 for the rationale.
+        // In-range word-boundary indices; 64 and 65 are covered by
+        // `test_lane_panics_out_of_range_*`.
         for &i in &[0usize, 1, 16, 31, 32, 63] {
             let v = <ScalarPackedFp3 as PackedField<Fp<3>>>::zero();
             let v = v.with_lane(i, Fp::<3>::new(2));
@@ -521,25 +439,22 @@ mod tests {
     }
 
     // ----------------------------------------------------------------
-    // Property tests (1000 cases each per issue spec)
+    // Property tests
     // ----------------------------------------------------------------
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(1000))]
 
-        /// Add commutativity: `a + b == b + a` for all `a`, `b`.
         #[test]
         fn test_add_commutativity_proptest(a in packed_strat(), b in packed_strat()) {
             prop_assert_eq!(a.add(b), b.add(a));
         }
 
-        /// Sub undoes add: `(a + b) - b == a` for all `a`, `b`.
         #[test]
         fn test_sub_undoes_add_proptest(a in packed_strat(), b in packed_strat()) {
             prop_assert_eq!(a.add(b).sub(b), a);
         }
 
-        /// Mul distributes over add: `a * (b + c) == a*b + a*c`.
         #[test]
         fn test_mul_distributivity_proptest(
             a in packed_strat(),
@@ -551,7 +466,6 @@ mod tests {
             prop_assert_eq!(lhs, rhs);
         }
 
-        /// Negation is involutive: `-(-a) == a` for all `a`.
         #[test]
         fn test_neg_involution_proptest(a in packed_strat()) {
             prop_assert_eq!(a.neg().neg(), a);
@@ -561,38 +475,26 @@ mod tests {
 
 #[cfg(test)]
 mod vec_tests {
-    //! `ScalarPackedFp3Vec` test surface covering the issue criterion's
-    //! explicit `{1, 16, 63, 64, 65}`-element lengths.
-    //!
-    //! The fixed-width [`super::ScalarPackedFp3`] caps at 64 lanes, so
-    //! the literal "65 elements" requirement of the success criterion
-    //! is covered by the variable-length [`super::ScalarPackedFp3Vec`]
-    //! per the user resolution recorded in the rework dispatch (Option
-    //! C, 2026-05-09): the criterion targets `PackedFieldVec` length
-    //! semantics, where 65 elements is naturally representable.
+    //! `ScalarPackedFp3Vec` tests at lengths `{1, 16, 63, 64, 65}`; 65
+    //! exceeds the fixed 64-lane [`super::ScalarPackedFp3`].
     use super::*;
     use proptest::prelude::*;
 
-    /// Strategy: a single `Fp<3>` element drawn from `{0, 1, 2}`.
     fn fp3_strat() -> impl Strategy<Value = Fp<3>> {
         (0u64..3).prop_map(Fp::<3>::new)
     }
 
-    /// The five lengths required by the issue criterion's
-    /// `{1, 16, 63, 64, 65}` boundary set.
+    /// Lengths around the 64-element word boundary.
     const REQUIRED_LENGTHS: &[usize] = &[1, 16, 63, 64, 65];
 
-    /// Build a vector of the given length whose i-th element is
-    /// `Fp::<3>::new((i as u64) % 3)`. Deterministic so tests can
-    /// recompute expected values.
+    /// Element `i` is `Fp::<3>::new(i % 3)`.
     fn deterministic_vec(len: usize) -> ScalarPackedFp3Vec {
         let xs: Vec<Fp<3>> = (0..len).map(|i| Fp::<3>::new((i as u64) % 3)).collect();
         ScalarPackedFp3Vec::from_field_slice(&xs)
     }
 
-    /// In-place set of position `i` to value `x`. Convenience helper
-    /// because the trait does not expose a public mutator analogue of
-    /// `with_lane`; we use `add_assign` with a one-position delta.
+    /// Sets position `i` to `x` by adding a one-position delta; the trait
+    /// has no per-position mutator.
     fn set_position(v: &mut ScalarPackedFp3Vec, i: usize, x: Fp<3>) {
         let cur = v.get(i);
         let mut delta = ScalarPackedFp3Vec::zeros(v.len());
@@ -607,7 +509,6 @@ mod vec_tests {
 
     #[test]
     fn test_zeros_then_get_returns_zero_at_each_required_length() {
-        // Zero-length and the criterion's five required lengths.
         for &len in &[0, 1, 16, 63, 64, 65] {
             let v = ScalarPackedFp3Vec::zeros(len);
             assert_eq!(v.len(), len);
@@ -638,9 +539,7 @@ mod vec_tests {
 
     #[test]
     fn test_is_empty_default_impl_calls_len() {
-        // Non-empty constructions must not be empty. The trait's
-        // default `is_empty` is `self.len() == 0`; this asserts that
-        // the default does not get accidentally overridden.
+        // Guards the trait's default `is_empty` against an override.
         for &len in REQUIRED_LENGTHS {
             let v = ScalarPackedFp3Vec::zeros(len);
             assert!(!v.is_empty(), "len = {}", len);
@@ -805,13 +704,7 @@ mod vec_tests {
     }
 
     // ---------------------------------------------------------------
-    // neg via sub-from-zero at each required length
-    //
-    // `PackedFieldVec` does not expose `neg`, but the issue criterion
-    // names `neg` alongside the vec ops. The user-resolution dispatch
-    // says: derive neg as `0 - self` and verify it matches per-element
-    // `Fp<3>::neg`. This covers the spirit of the criterion at lengths
-    // {1, 16, 63, 64, 65}.
+    // neg as `0 - self` (`PackedFieldVec` has no `neg`)
     // ---------------------------------------------------------------
 
     #[test]
@@ -830,7 +723,6 @@ mod vec_tests {
             let v = deterministic_vec(len);
             let mut zero = ScalarPackedFp3Vec::zeros(len);
             zero.sub_assign(&v);
-            // Expected: per-element -Fp<3>::new(i % 3).
             for i in 0..len {
                 let expected = -Fp::<3>::new((i as u64) % 3);
                 assert_eq!(zero.get(i), expected, "len = {}, i = {}", len, i);
@@ -839,12 +731,8 @@ mod vec_tests {
     }
 
     // ---------------------------------------------------------------
-    // splat (constructed via from_field_slice with a constant slice)
-    // and "with_lane" (covered by set_position helper using the
-    // add_assign-by-delta technique). The criterion lists splat and
-    // with_lane on the trait; PackedFieldVec exposes neither directly,
-    // but both are exercisable through the public surface and we
-    // cover them at every required length.
+    // splat via a constant slice; with_lane via `set_position`
+    // (`PackedFieldVec` exposes neither)
     // ---------------------------------------------------------------
 
     #[test]
@@ -861,11 +749,6 @@ mod vec_tests {
 
     #[test]
     fn test_with_lane_via_add_assign_at_each_required_length() {
-        // The criterion includes `with_lane` at lengths {1,16,63,64,65}.
-        // PackedFieldVec doesn't expose `with_lane` directly, but the
-        // same effect is built from the public surface using
-        // add-by-delta. We verify the round-trip at each required
-        // length and at the boundary positions inside that length.
         for &len in REQUIRED_LENGTHS {
             let mut v = ScalarPackedFp3Vec::zeros(len);
             // Hit a representative set of positions: first, last, and
@@ -907,7 +790,7 @@ mod vec_tests {
 
     #[test]
     fn test_all_zero_on_zeros_constructor_at_each_required_length() {
-        // Zero-length included for completeness — empty vec is all-zero.
+        // The empty vector is all-zero.
         for &len in &[0usize, 1, 16, 63, 64, 65] {
             let v = ScalarPackedFp3Vec::zeros(len);
             assert!(v.all_zero(), "len = {}", len);
@@ -917,8 +800,6 @@ mod vec_tests {
     #[test]
     fn test_all_zero_false_after_setting_one_position_nonzero_at_each_required_length() {
         for &len in REQUIRED_LENGTHS {
-            // For every required length, set a different boundary
-            // position to a non-zero value and assert all_zero is false.
             let mut v = ScalarPackedFp3Vec::zeros(len);
             set_position(&mut v, len - 1, Fp::<3>::new(1));
             assert!(!v.all_zero(), "len = {}", len);
@@ -972,8 +853,7 @@ mod vec_tests {
     }
 
     // ---------------------------------------------------------------
-    // proptest cross-check: arithmetic distributes / inverts
-    // exactly like per-element Fp<3>, at the criterion lengths
+    // proptest: field laws at length 65
     // ---------------------------------------------------------------
 
     fn vec_strat(len: usize) -> impl Strategy<Value = ScalarPackedFp3Vec> {
