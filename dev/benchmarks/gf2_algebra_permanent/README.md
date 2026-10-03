@@ -23,7 +23,7 @@ backend, or override a newer receipt with complete provenance.
 This qualification records the empirical-receipt requirement from the
 [2026-08-07 external research-methodology review](../../active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md):
 research receipts must cite exact figures and configurations. The subsequent
-[feasibility-study review RCA](../../sessions/2026-08-08-b488f02c-review-rca.md#recommendations)
+[feasibility-study review RCA](../../active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md#recommendations)
 also requires receipts to carry data and mechanical provenance rather than
 interpretive authority. The current feasibility-study measurements are the
 evidence for present comparative conclusions; see

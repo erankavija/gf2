@@ -328,7 +328,7 @@ Five standing facts from the study that constrain the plan:
    campaign choosing that cell's backend should re-measure."
 5. **DEC-01/DEC-02 fix the receipt set**; no regeneration.
 
-**`dev/sessions/2026-08-08-b488f02c-review-rca.md`** — the RCA for the 11
+**`dev/active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md`** — the RCA for the 11
 research-review / 14 doc-review round loop. Its five root causes translate into
 concrete plan obligations:
 
@@ -348,7 +348,7 @@ concrete plan obligations:
   `stale` and the fix is blocked on a profile-package conflict. Expect that
   finding to persist through the epic; it is not caused by this work.
 
-**`dev/sessions/2026-08-07-research-frontier-handoff.md`** — standing decisions
+**`dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md`** — standing decisions
 not to re-litigate (`:53-66`): citation registry and `cites:` labels;
 research-review pinned to `gpt-5.6-sol` at xhigh with the other AI gates on
 `gpt-5.6-terra` at high; 12 h campaign wall-clock budget; harness location. Its

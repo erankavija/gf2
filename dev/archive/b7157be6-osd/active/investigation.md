@@ -203,7 +203,7 @@ or JIT state was changed for this report.
   while the handover records the campaign and receipt paths
   (`dev/archive/6efb756b-grand/active/6efb756b-session-handover.md:29-40`).
 - The prior research handoff explicitly places b7157be6 OSD before the
-  quantum-LDPC consumer (`dev/sessions/2026-08-07-research-frontier-handoff.md:70-77`).
+  quantum-LDPC consumer (`dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md:70-77`).
   The quantum epic description says it expects an arbitrary-syndrome BP+OSD
   baseline (`.jit/issues/cce5da8c-acba-47f2-a629-ecc6cb7f593c.json:5-8`).
 - The citation registry contains resolving entries for `Yue2022`,
