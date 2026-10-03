@@ -26,10 +26,12 @@ only detection and dispatch.
 ## SIMD dispatch
 
 Each kernel family in `gf2-kernels-simd` exports a `detect` function that
-returns `Option` of a bundle of function pointers, such as `LogicalFns` for
-bitwise and population-count operations or `gf2m_batch::Gf2mBatchFns` for
-batched GF(2^m) multiplication. `None` means the host lacks an instruction set
-extension the bundle requires, and the caller runs its scalar code. The
+returns a bundle of function pointers, such as `LogicalFns` for bitwise and
+population-count operations or `gf2m_batch::Gf2mBatchFns` for batched
+GF(2^m) multiplication. Every family except `modem` wraps the bundle in
+`Option`: `None` means the host lacks an instruction set extension the bundle
+requires, and the caller runs its scalar code. The `modem` detectors always
+return a bundle of scalar or AVX2 entries. The
 consuming crate caches each bundle in a process-wide `OnceLock` or `LazyLock`,
 so CPU feature probing runs once per bundle per process. In `gf2-core` these
 caches sit behind one accessor per bundle (`maybe_simd`, `maybe_gf2m_batch`,
