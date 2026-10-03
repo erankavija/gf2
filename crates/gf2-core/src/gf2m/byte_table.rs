@@ -1,54 +1,20 @@
 //! Cached GF(2^8) byte product tables and the region kernel that reads them.
 //!
-//! Byte-oriented GF(2^8) arithmetic multiplies by a reused coefficient with
-//! one indexed load and accumulates with one XOR. The table of every byte pair
-//! under one degree-8 reduction polynomial is what makes that possible, and
-//! building it takes 256 initialisation stores and 65024 doubling-recurrence
-//! steps, so it is built once per polynomial and shared for the life of the
-//! process.
+//! One table holds the product of every byte pair under one degree-8
+//! reduction polynomial, so multiplying by a reused coefficient is one indexed
+//! load. [`gf256_table_dispatch`] is the one function that selects between the
+//! table lane and the consumer's scalar element loop.
 //!
-//! # Walkthrough
+//! The cache key is the low eight bits of the reduction polynomial: a degree-8
+//! modulus is eight low bits plus an implicit leading one, so the key is
+//! collision-free over every field a table can serve.
 //!
-//! A caller with a single-word GF(2^8) representation offers its degree, its
-//! backing width and the low eight bits of its reduction polynomial to
-//! [`gf256_table_dispatch`], the one function that selects between the table
-//! lane and the consumer's scalar element loop. Accepting yields a
-//! `&'static Gf256ProductTable`; [`Gf256ProductTable::row`] then narrows it to
-//! the 256 products of the caller's coefficient, and [`axpy_region`] walks the
-//! operands against that row:
-//!
-//! ```ignore
-//! let table = gf256_table_dispatch(8, true, 0x1d, || true).expect("the table lane");
-//! let row = table.row(coefficient);
-//! axpy_region(y, x, row, |e| byte_of(e), |d, product| xor_into(d, product));
-//! ```
-//!
-//! The dense product calls [`gemm_region`], which reuses that same kernel once
-//! per left-hand coefficient so each coefficient drives a whole output row.
-//!
-//! # Layout and key
-//!
-//! `T[256 * c + v]` is the product `c * v` reduced by the field's own modulus,
-//! so the products of a fixed coefficient are contiguous and one row is a
-//! 256-byte window. The cache key is the low eight bits of the reduction
-//! polynomial: a degree-8 modulus is eight low bits plus an implicit leading
-//! one, so the key is total and collision-free over every field this table can
-//! serve, and the runtime-context element and the compile-time-configured wide
-//! value derive it without a conversion.
-//!
-//! # Footprint
-//!
-//! One table occupies 65536 bytes. The registry is 256 lazily initialised
-//! slots, one per low-byte key, and `gf256_table_dispatch` accepts every
-//! degree-8 key its callers present, so a process holds one table per distinct
-//! degree-8 modulus it has used and at most 16 MiB. Tables are never evicted,
-//! which is what makes the amortisation unconditional.
-//!
-//! # Determinism and sharing
+//! One table occupies 65536 bytes. The registry holds one lazily built table
+//! per distinct key used, at most 16 MiB, and never evicts.
 //!
 //! A table's contents are a function of its key alone and it holds no interior
-//! mutability, so it is `Send + Sync`, and identical inputs give identical
-//! results across worker counts, scheduling and lane switches.
+//! mutability, so identical inputs give identical results across worker
+//! counts, scheduling and lane switches.
 
 use std::sync::OnceLock;
 
@@ -79,13 +45,7 @@ impl Gf256ProductTable {
     ///
     /// Each row is the doubling recurrence over that polynomial: `c * 0` is
     /// zero, `c * 1` is `c`, an even multiple is [`xtime`] of half of it, and
-    /// an odd multiple is the even one below it XOR `c`. Every entry therefore
-    /// costs one shift-and-conditional-XOR or one XOR, and the construction
-    /// names no other arithmetic in this crate.
-    ///
-    /// # Complexity
-    ///
-    /// `O(65536)` byte operations.
+    /// an odd multiple is the even one below it XOR `c`.
     fn build(reduction_low: u8) -> Self {
         let mut entries = [0u8; TABLE_ENTRIES];
         for coefficient in 0..256usize {
@@ -103,10 +63,6 @@ impl Gf256ProductTable {
     }
 
     /// Returns the 256 products of `coefficient` with every byte.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     pub(crate) fn row(&self, coefficient: u8) -> &ProductRow {
         let start = usize::from(coefficient) << 8;
         self.entries[start..start + 256]
@@ -137,10 +93,6 @@ static TABLES: [OnceLock<Gf256ProductTable>; REGISTRY_SLOTS] =
 /// The first caller for a key builds the table, concurrent callers for the
 /// same key block until it is published, and every later caller takes the
 /// published reference with no lock.
-///
-/// # Complexity
-///
-/// `O(65536)` byte operations on the first touch of a key, `O(1)` afterwards.
 pub(crate) fn product_table(reduction_low: u8) -> &'static Gf256ProductTable {
     TABLES[usize::from(reduction_low)].get_or_init(|| {
         record_table_build();
@@ -148,7 +100,7 @@ pub(crate) fn product_table(reduction_low: u8) -> &'static Gf256ProductTable {
     })
 }
 
-/// XORs the products of one coefficient row into `y`.
+/// XORs the products of one coefficient row into `y`, reading `x` of the same length.
 ///
 /// `source_byte` reads the GF(2^8) value out of a source element and
 /// `accumulate` XORs one product into a destination element, so the same
@@ -156,19 +108,6 @@ pub(crate) fn product_table(reduction_low: u8) -> &'static Gf256ProductTable {
 /// wide value without either representation packing its operands into bytes.
 /// The kernel allocates nothing and reads `x` while writing `y`, which the
 /// caller's borrows keep disjoint.
-///
-/// # Arguments
-///
-/// * `y` — destination elements, updated in place.
-/// * `x` — source elements, the same length as `y`.
-/// * `row` — the coefficient's row from [`Gf256ProductTable::row`].
-/// * `source_byte` — the source element's GF(2^8) value.
-/// * `accumulate` — XORs one product into a destination element.
-///
-/// # Complexity
-///
-/// `O(n)` indexed loads and XORs, in steps of [`AXPY_UNROLL`] with a scalar
-/// remainder.
 pub(crate) fn axpy_region<Y, X>(
     y: &mut [Y],
     x: &[X],
@@ -221,12 +160,8 @@ pub(crate) struct GemmShape {
 ///
 /// * `a` — left operand, `m × k` row-major, `m * k` elements.
 /// * `b_t` — transposed right operand, `n × k` row-major, `n * k` elements.
-/// * `shape` — the three dimensions.
 /// * `out` — destination, `m × n` row-major, overwritten rather than
 ///   accumulated into.
-/// * `table` — the cached table for the operands' reduction polynomial.
-/// * `byte_of` — an operand element's GF(2^8) value.
-/// * `store` — writes one result byte into a destination element.
 ///
 /// # Complexity
 ///
@@ -315,25 +250,6 @@ pub const GF256_SCALAR_LANE: &str = "gf256-table-declined";
 ///
 /// Either lane records itself through the witness
 /// [`last_gf256_table_lane`] reads.
-///
-/// # Arguments
-///
-/// * `degree` — the extension degree of the caller's field.
-/// * `single_u64_word` — whether the representation is one `u64`-backed word.
-/// * `reduction_low` — the low eight bits of the reduction polynomial, which
-///   is the cache key.
-/// * `shared_field_context` — whether every operand shares the coefficient's
-///   field context.
-///
-/// # Returns
-///
-/// The cached table for `reduction_low` when the table lane runs, `None` when
-/// the caller runs its scalar element loop.
-///
-/// # Complexity
-///
-/// `O(1)` beyond `shared_field_context`, plus one table build on the first
-/// touch of a key.
 pub(crate) fn gf256_table_dispatch(
     degree: usize,
     single_u64_word: bool,

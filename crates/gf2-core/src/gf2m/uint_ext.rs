@@ -22,12 +22,6 @@ mod private {
 /// This trait is sealed — only `u8`, `u16`, `u32`, `u64`, and `u128` implement it.
 /// It provides the minimal set of operations needed for GF(2^m) arithmetic:
 /// bitwise operations, shifts, and conversions.
-///
-/// # Design
-///
-/// - **Sealed**: Only primitive unsigned integers make sense as Galois field representations.
-/// - **`as_u64_truncated`**: Lossy cast for SIMD dispatch (identity for u64, truncating for u128).
-/// - **`from_u64`**: Truncating conversion for smaller types, widening for larger.
 pub trait UintExt:
     Copy
     + Clone
@@ -68,7 +62,7 @@ pub trait UintExt:
     ///
     /// # Panics
     ///
-    /// Panics if `bits > Self::BITS`.
+    /// Panics in debug builds if `bits > Self::BITS`.
     fn low_mask(bits: u32) -> Self;
 
     /// Returns the number of ones in the binary representation.

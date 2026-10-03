@@ -1,39 +1,17 @@
-//! Batch element-wise GF(2^m) multiply / square for `m ∈ {8, 16, 32}`.
+//! Batch element-wise GF(2^m) multiply / square.
 //!
 //! These free functions wrap the SIMD-dispatched batch kernel
-//! (`crate::simd::maybe_gf2m_batch`) introduced for `jit:ec286cee` (kernel
-//! C1, gf2-core PPC-spiral epic). Callers receive a SIMD-accelerated path
-//! when the runtime CPU advertises `avx2 + vpclmulqdq + sse4.1`, and an
-//! equivalent scalar fallback otherwise. Both paths use Barrett reduction
-//! and produce bit-exact results.
+//! (`crate::simd::maybe_gf2m_batch`). Callers receive a SIMD path when the
+//! runtime CPU advertises `avx2 + vpclmulqdq + pclmulqdq + sse4.1`, and an
+//! equivalent scalar fallback otherwise. Both paths produce identical results.
 //!
-//! # When to use
+//! The batched product is faster than the per-element
+//! [`crate::gf2m::Gf2mField`] loop at a batch of eight: cell
+//! `field-batch-mul-8` in `dev/bench_results/53c5a8c0/tables.md`. Shorter
+//! batches are unmeasured.
 //!
-//! * **Batch-shaped workloads** — Reed-Solomon syndrome computation,
-//!   BCH error-locator evaluation, network-coding GEMV, AES-GCM-Kuznyechik
-//!   sponge mixing — where many independent (`a[i] · b[i]`) products are
-//!   computed against the same field. Per-element [`crate::gf2m::Gf2mField`]
-//!   `mul` already routes through PCLMULQDQ + Barrett but is bounded by the
-//!   per-call dispatch overhead; the batched kernel amortises that cost
-//!   across 4 elements per outer iteration.
-//!
-//! * **Single multiplications** still use [`crate::gf2m::Gf2mField`]
-//!   directly: one product has no batch to amortise the kernel's setup over.
-//!   The batched path's advantage does not, however, begin only at some larger
-//!   length. The `jit:53c5a8c0` confirmation records the batched product as
-//!   materially faster than the per-element loop at a batch of eight, and that
-//!   study's pilot extends the same direction at thirty-two and at a thousand
-//!   and twenty-four; the cell `field-batch-mul-8` and its interval are in
-//!   `dev/bench_results/53c5a8c0/tables.md`, and the explanation is
-//!   `dev/active/53c5a8c0/findings.md`. Batches shorter than eight are
-//!   unmeasured, so this module states no boundary below that.
-//!
-//! # Restrictions
-//!
-//! Both functions accept canonical inputs (each element `< 2^m`) and only
-//! support `m ∈ {8, 16, 32}` because the Barrett constants `mu` and
-//! `modulus` must each fit in a single 64-bit YMM lane. For `m > 32` use
-//! [`crate::gf2m::wide::Gf2mWide`] (multi-word VPCLMULQDQ kernel).
+//! Inputs are canonical (each element `< 2^m`). The SIMD path covers
+//! `m ∈ {8, 16, 32}`; other degrees take the scalar path.
 //!
 //! # Examples
 //!
@@ -59,18 +37,9 @@ use crate::gf2m::Gf2mField;
 
 /// Batch element-wise multiply: `out[i] = a[i] * b[i] mod P(x)`.
 ///
-/// Routes through the SIMD-dispatched VPCLMULQDQ-on-YMM batch kernel when
-/// available, falling back to an allocation-free raw schoolbook loop. All
-/// slices must be the same length; otherwise the function panics.
-///
-/// # Arguments
-///
-/// * `field` — `Gf2mField` whose primitive polynomial defines the
-///   reduction. Must have `m ∈ {8, 16, 32}` for the SIMD path; other `m`
-///   transparently falls through to the per-element scalar path.
-/// * `a`, `b` — input slices of canonical field elements (`< 2^m`).
-/// * `out` — output slice; written in-place. Must have the same length as
-///   `a` and `b`.
+/// Uses the SIMD batch kernel when it is available and `field` has
+/// `m ∈ {8, 16, 32}`, and a raw schoolbook loop otherwise. Elements of `a`
+/// and `b` are canonical (`< 2^m`).
 ///
 /// # Panics
 ///
@@ -93,11 +62,6 @@ use crate::gf2m::Gf2mField;
 ///     assert_eq!(out[i], expected);
 /// }
 /// ```
-///
-/// # Complexity
-///
-/// O(n) field multiplications; the SIMD path completes 4 per outer
-/// iteration on AVX2 + VPCLMULQDQ hosts.
 pub fn batch_mul(field: &Gf2mField, a: &[u64], b: &[u64], out: &mut [u64]) {
     batch_mul_raw(field.degree(), field.primitive_polynomial(), a, b, out);
 }
@@ -134,9 +98,7 @@ pub(crate) fn batch_mul_raw(m: usize, primitive_poly: u64, a: &[u64], b: &[u64],
         }
     }
 
-    // Scalar fallback — allocation-free raw schoolbook multiplication.
-    // `Gf2mField::Mul` may have faster per-element table paths for tiny m, but
-    // the raw path is the most predictable fallback for matrix hot loops.
+    // Scalar fallback: allocation-free raw schoolbook multiplication.
     for i in 0..a.len() {
         out[i] = crate::gf2m::mul_raw::gf2m_mul_raw(a[i], b[i], m, primitive_poly);
     }
@@ -144,17 +106,8 @@ pub(crate) fn batch_mul_raw(m: usize, primitive_poly: u64, a: &[u64], b: &[u64],
 
 /// Batch element-wise square: `out[i] = a[i] * a[i] mod P(x)`.
 ///
-/// SIMD-accelerated specialisation of [`batch_mul`] for the `b == a` case,
-/// sharing the same AVX2 + VPCLMULQDQ dispatch path and scalar fallback.
-/// Falls back to per-element scalar `field.element(a[i]) * field.element(a[i])`
-/// when no SIMD path is available.
-///
-/// # Arguments
-///
-/// * `field` — same as [`batch_mul`].
-/// * `a` — input slice of canonical field elements.
-/// * `out` — output slice; written in-place. Must have the same length as
-///   `a`.
+/// Uses the SIMD batch kernel under the same condition as [`batch_mul`], and
+/// per-element [`Gf2mField`] multiplication otherwise.
 ///
 /// # Panics
 ///
@@ -175,11 +128,6 @@ pub(crate) fn batch_mul_raw(m: usize, primitive_poly: u64, a: &[u64], b: &[u64],
 ///
 /// assert_eq!(squared, multiplied);
 /// ```
-///
-/// # Complexity
-///
-/// O(n) field squarings; the SIMD path completes 4 per outer iteration on
-/// AVX2 + VPCLMULQDQ hosts.
 pub fn batch_square(field: &Gf2mField, a: &[u64], out: &mut [u64]) {
     assert_eq!(
         a.len(),
@@ -305,7 +253,6 @@ mod tests {
 
     #[test]
     fn batch_mul_word_boundary_lengths() {
-        // Tail handling at length 0/1/3/4/5/7/8/9.
         let field = Gf2mField::gf256();
         let m = 8u32;
         let poly = 0b100011101u64;
