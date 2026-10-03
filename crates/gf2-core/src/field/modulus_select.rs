@@ -1,18 +1,10 @@
 //! Deterministic selection of irreducible extension-field moduli.
 //!
 //! A selected modulus is a [`FieldPoly`] whose coefficients belong to the
-//! supplied field witness.  Consequently, selecting over a prime field and
-//! selecting over a tower field produce different, relative presentations;
-//! the latter is never flattened to a polynomial over the prime field.
+//! supplied field witness: selecting over a tower field produces a relative
+//! presentation, never one flattened to the prime field.
 //!
-//! # Selection rule
-//!
-//! [`select_modulus`] first asks the built-in registry for a Conway entry and
-//! then for another entry carrying the registry's verification evidence.  A
-//! registry entry is accepted as-is: its provenance is the same kind of
-//! evidence documented by [`crate::primitive_polys`].  The binary adapter is
-//! the existing `u64`/`u128` registry, so its public accessors remain the
-//! source-compatible way to inspect those entries.
+//! # Candidate order
 //!
 //! If no registry entry applies, the selector searches the complete finite
 //! candidate range in this exact order.  For a base field of order `q` and a
@@ -92,8 +84,7 @@ impl RegistryEntry {
 /// `conway` is queried before `verified`.  An implementation with several
 /// entries for one `(base, degree)` pair must return the canonical Conway
 /// entry from `conway`; the selector then never lets a non-Conway entry shadow
-/// it.  Both methods default to no entry, making a registry-less search easy
-/// to use in tests and in future adapters.
+/// it.  Both methods default to no entry.
 pub trait ModulusRegistry {
     /// Returns the canonical Conway entry for `(base, degree)`, if present.
     fn conway(&self, _base: &FieldId, _degree: usize) -> Option<RegistryEntry> {
@@ -297,9 +288,7 @@ pub trait SelectExtension: FieldExtension + Sized {
     /// `base` witnesses and constructs the validated extension witness.
     ///
     /// The same base presentation and degree always produce the same modulus
-    /// presentation. The selection follows the Conway, verified-registry, and
-    /// deterministic verified-search rule documented at the top of this
-    /// module.
+    /// presentation, selected as by [`select_modulus`].
     ///
     /// # Errors
     ///
@@ -318,17 +307,6 @@ pub trait SelectExtension: FieldExtension + Sized {
 }
 
 impl<F: FieldIdentity> SelectExtension for QuotientField<F> {
-    /// Selects and validates a relative quotient-field presentation.
-    ///
-    /// Equal base identities and degrees select equal presentations, following
-    /// the deterministic rule documented at the top of this module. The
-    /// selected modulus and quotient validation are linear in the modulus
-    /// coordinates outside the irreducibility decision.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ModulusSelectionError`] when selection or quotient-field
-    /// validation rejects the requested presentation.
     fn select(base: F, degree: usize) -> Result<Self, ModulusSelectionError> {
         let base_id = base.field_id();
         let modulus = select_modulus(&base, degree)?;
@@ -341,17 +319,8 @@ impl<F: FieldIdentity> SelectExtension for QuotientField<F> {
 }
 
 impl<V: UintExt> SelectExtension for BinaryPrimeExt<V> {
-    /// Selects and validates a binary extension presentation.
-    ///
-    /// Equal base identities and degrees select equal binary moduli, following
-    /// the deterministic rule documented at the top of this module. The
-    /// selected modulus is packed in linear time before the extension witness
-    /// performs its irreducibility validation.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ModulusSelectionError`] when selection cannot produce a
-    /// representable modulus or the binary extension validation fails.
+    /// Returns [`ModulusSelectionError::UnsupportedSize`] when
+    /// `degree >= V::BITS`.
     fn select(base: Fp<2>, degree: usize) -> Result<Self, ModulusSelectionError> {
         let base_id = base.field_id();
         if degree >= V::BITS as usize {

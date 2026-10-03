@@ -1,84 +1,18 @@
 //! Radix-2 Number Theoretic Transform (NTT) over a [`TwoAdicField`].
 //!
-//! This module provides the low-level forward / inverse NTT primitive
-//! [`ntt_inplace`] used by the fast polynomial multiplication path
-//! [`FieldPoly::mul_ntt`](crate::field::FieldPoly::mul_ntt) (a.k.a. the
-//! free function [`mul_fast`](crate::field::poly::mul_fast)).
-//!
-//! # Algorithm
-//!
-//! Classical **decimation-in-time** (DIT) radix-2 NTT, identical in shape
-//! to the Cooley–Tukey FFT. For a length `n = 2^k` with `k ≤ F::TWO_ADICITY`:
-//!
-//! 1. **Bit-reversal permutation** — reorder `data` so that position `i`
-//!    after the permutation contains the element originally at position
-//!    `bit_reverse(i, k)`.
-//! 2. **Butterflies** — for each stage `s = 1 .. k`, the half-length
-//!    `m/2 = 2^(s-1)` block is combined with its partner via
-//!    `(u, v) → (u + ω·v, u − ω·v)`, where `ω` iterates the powers of
-//!    the primitive `m`-th root of unity `ω_m = F::two_adic_root_of_unity(s)`.
-//!
-//! The inverse transform uses `ω_m^{-1}` everywhere; callers that need
-//! the usual `F(F^{-1}(x)) = x` identity must additionally scale by
-//! `n^{-1}` after the inverse pass.
-//! [`FieldPoly::mul_ntt`](crate::field::poly::FieldPoly::mul_ntt) does that
-//! scaling internally.
-//!
-//! # Why radix-2 suffices
-//!
-//! The [`TwoAdicField`] contract guarantees a primitive `2^k`-th root of
-//! unity for every `k ≤ TWO_ADICITY`. A radix-2 transform length is
-//! therefore always available up to that cap; on `Fp<65537>` that's
-//! `n ≤ 2^16 = 65_536` — far beyond any realistic polynomial size we
-//! feed through `FieldPoly::mul_ntt`.
-//!
-//! # NTT-vs-Karatsuba benchmark on `Fp<65537>`
-//!
-//! Measured on the repo's reference host with
-//! `cargo bench -p gf2-core --bench field_poly -- --quick`. Each cell
-//! is the median wall-clock time for one call on *two* polynomials of
-//! length `n` (degree `n − 1`), so the output length is `2n − 1`. The
-//! `speedup` column is `karatsuba_mul / ntt_mul`; values above 1 mean
-//! NTT wins.
-//!
-//! | `n`   | Karatsuba (via `Mul`) | NTT (`mul_ntt`) | speedup |
-//! |------:|----------------------:|----------------:|--------:|
-//! |    64 |              13.62 µs |        12.89 µs |   1.06× |
-//! |   128 |              43.03 µs |        27.68 µs |   1.55× |
-//! |   256 |             132.23 µs |        59.82 µs |   2.21× |
-//! |   512 |             403.43 µs |       129.20 µs |   3.12× |
-//! |  1024 |               1.22 ms |       279.85 µs |   4.37× |
-//!
-//! Crossover is effectively at `n = 64` — NTT already ties Karatsuba
-//! on that size and wins decisively from `n = 128` onwards. The conservative
-//! default of 128 does not sit at the measured crossover: the committed
-//! `dev/benchmarks/tuning_profiles/2026-08-19-procedure-verification.md`
-//! §Falsification record reports `mul_fast` at 3,793 ns for `out_len` 127
-//! on the `FieldPoly::mul` arm and 12,057 ns for `out_len` 129 on the NTT
-//! arm. The active `polynomial.karatsuba_max_out_len()` profile value
-//! controls whether [`FieldPoly::mul_ntt`](crate::field::poly::FieldPoly::mul_ntt)
-//! is selected. Regenerate the table
-//! with `cargo bench -p gf2-core --bench field_poly -- --quick`.
+//! [`ntt_inplace`] is the decimation-in-time (Cooley–Tukey) transform behind
+//! [`FieldPoly::mul_ntt`](crate::field::FieldPoly::mul_ntt): a bit-reversal
+//! permutation, then per stage `s` the butterflies
+//! `(u, v) → (u + ω·v, u − ω·v)` over the powers of
+//! `F::two_adic_root_of_unity(s)`.
 
 use crate::field::TwoAdicField;
 
 /// In-place radix-2 decimation-in-time NTT over a [`TwoAdicField`].
 ///
-/// Runs the forward transform when `inverse = false` and the unscaled
-/// inverse transform when `inverse = true`. The inverse variant performs
-/// the butterfly pass with `ω^{-1}` but **does not** scale the result by
-/// `n^{-1}` — callers that want the round-trip identity
-/// `inv(forward(x)) = x` must divide each element by `n` afterwards.
-/// [`FieldPoly::mul_ntt`](crate::field::FieldPoly::mul_ntt) handles the
-/// `n^{-1}` scaling internally.
-///
-/// # Arguments
-///
-/// * `data` — slice of length `n` where `n` is a power of two and
-///   `n ≤ 2^F::TWO_ADICITY`. Overwritten in place with the transform.
-///   `n = 1` is the identity (and `n = 0` is a no-op).
-/// * `inverse` — `false` for the forward transform, `true` for the
-///   unscaled inverse transform.
+/// `inverse = true` runs the butterflies with `ω^{-1}` and leaves the result
+/// unscaled: the round trip `inv(forward(x)) = x` needs a division of each
+/// element by `n`. Lengths 0 and 1 are left unchanged.
 ///
 /// # Examples
 ///
@@ -116,7 +50,6 @@ use crate::field::TwoAdicField;
 pub fn ntt_inplace<F: TwoAdicField>(data: &mut [F], inverse: bool) {
     let n = data.len();
     if n <= 1 {
-        // Length 0: no-op; length 1: the transform is the identity.
         return;
     }
     assert!(
@@ -130,11 +63,8 @@ pub fn ntt_inplace<F: TwoAdicField>(data: &mut [F], inverse: bool) {
         F::TWO_ADICITY,
     );
 
-    // Step 1: bit-reversal permutation. Standard iterative algorithm
-    // using the "reverse-increment" counter; see e.g. Gentleman & Sande
-    // (1966). Each element swaps with its bit-reversed partner exactly
-    // once; we guard with `i < j` to skip the self-swap (`j = i`) and
-    // the duplicate-swap (`j < i`) cases.
+    // Bit-reversal permutation by reverse-increment counter
+    // (`@/citation/GentlemanSande1966`); `i < j` swaps each pair once.
     let mut j = 0usize;
     for i in 1..n {
         let mut bit = n >> 1;
@@ -148,19 +78,12 @@ pub fn ntt_inplace<F: TwoAdicField>(data: &mut [F], inverse: bool) {
         }
     }
 
-    // Step 2: butterflies. Stage `s` (for `s = 1 ..= log_n`) merges
-    // blocks of size `m = 2^s`. The twiddle for that stage is the
-    // primitive `m`-th root of unity — for the inverse transform we use
-    // its multiplicative inverse (the primitive `m`-th root of unity in
-    // the opposite direction is `ω_m^{-1} = ω_m^{m-1}`).
+    // Stage `s` merges blocks of size `m = 2^s`; the twiddle is the primitive
+    // `m`-th root of unity, inverted for the inverse transform.
     let mut m = 2usize;
     while m <= n {
         let s = m.trailing_zeros();
         let w_m = if inverse {
-            // ω_m^{-1}: either invert directly, or equivalently raise
-            // ω_m to the `m − 1`-th power. We invert because
-            // `F::inv` is typically cheaper for fields with a fast
-            // extended-Euclidean or Fermat-little-theorem implementation.
             F::two_adic_root_of_unity(s)
                 .inv()
                 .expect("two-adic root of unity is always invertible (non-zero)")
@@ -169,7 +92,6 @@ pub fn ntt_inplace<F: TwoAdicField>(data: &mut [F], inverse: bool) {
         };
 
         let half = m >> 1;
-        // Process each m-sized block.
         let mut k = 0usize;
         while k < n {
             let mut w = data[0].one_like();
@@ -195,8 +117,6 @@ mod tests {
     use crate::field::FieldPoly;
     use crate::gfp::Fp;
     use proptest::prelude::*;
-
-    // --- Length guards ---
 
     #[test]
     fn test_ntt_inplace_noop_on_empty() {
@@ -230,8 +150,6 @@ mod tests {
         let mut data: Vec<Fp<65537>> = vec![Fp::<65537>::new(0); n];
         ntt_inplace(&mut data, false);
     }
-
-    // --- Concrete round-trip ---
 
     fn ntt_roundtrip_recovers<F: TwoAdicField + Clone>(data: Vec<F>) {
         let original = data.clone();
@@ -281,8 +199,6 @@ mod tests {
         ntt_roundtrip_recovers(data);
     }
 
-    // --- Proptest: roundtrip recovers the input up to the 1/n scaling. ---
-
     proptest! {
         #![proptest_config(ProptestConfig { cases: 32, ..ProptestConfig::default() })]
 
@@ -300,12 +216,8 @@ mod tests {
         }
     }
 
-    // --- Agreement with Karatsuba via FieldPoly::mul_ntt / mul_fast ---
-
     #[test]
     fn test_mul_fast_agrees_with_mul_small() {
-        // A couple of hand-picked cases that exercise zero / constant /
-        // small non-trivial operands.
         let zero: FieldPoly<Fp<65537>> = FieldPoly::zero_like(&Fp::<65537>::new(0));
         let p = FieldPoly::new(vec![
             Fp::<65537>::new(1),
@@ -352,8 +264,6 @@ mod tests {
             let a = FieldPoly::new(a_coeffs);
             let b = FieldPoly::new(b_coeffs);
 
-            // `mul` uses schoolbook / Karatsuba; `mul_ntt` uses the NTT
-            // path when both sides are non-empty.
             let reference = a.mul(&b);
             let via_ntt = if a.is_zero() || b.is_zero() {
                 FieldPoly::zero_like(&Fp::<65537>::new(0))
