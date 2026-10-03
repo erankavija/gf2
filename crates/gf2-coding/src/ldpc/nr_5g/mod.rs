@@ -100,7 +100,7 @@ pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 ///
 /// This is the table-level single source of truth behind the constructor
 /// surface; it exists so external reference data (e.g. the committed
-/// Sionna CSV tables under `data/ldpc/nr_5g/`) can be compared bit-exactly
+/// `@/citation/Sionna2026` tables under `data/ldpc/nr_5g/`) can be compared bit-exactly
 /// against the compiled-in constants.
 ///
 /// # Arguments
