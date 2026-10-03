@@ -11,7 +11,7 @@ Self-tests:
     python3 -m unittest discover -s dev/active/fa787f85-documentation-overhaul/migration -p '*_test.py'
 
 The manifest holds two arrays of inline tables, one row per line, sorted by
-their first field. `ARTIFACT_FIELDS` and `POLICY_FIELDS` define the row schema.
+their leading fields (`path`; `key` then `value` for policy). `ARTIFACT_FIELDS` and `POLICY_FIELDS` define the row schema.
 Row assertions against the working tree:
 - pending artifact: `path` exists.
 - complete deletion: `path` is absent.
@@ -79,11 +79,11 @@ def well_typed(value: object, kind: type) -> bool:
     return isinstance(value, kind) and (kind is not list or all(isinstance(x, str) for x in value))
 
 
-def schema_rows(rows: object, fields: dict[str, tuple], name: str, out: list[str]) -> list[dict]:
+def schema_rows(rows: object, fields: dict[str, tuple], name: str, out: list[str], order: int = 1) -> list[dict]:
     if not isinstance(rows, list):
         out.append(f"{name}: not an array")
         return []
-    valid, first = [], next(iter(fields))
+    valid, lead = [], list(fields)[:order]
     for i, row in enumerate(rows):
         label = f"{name}[{i}]"
         if not isinstance(row, dict) or set(row) != set(fields):
@@ -92,9 +92,9 @@ def schema_rows(rows: object, fields: dict[str, tuple], name: str, out: list[str
             out.append(f"{label}: wrong type for {', '.join(bad)}")
         else:
             valid.append(row)
-    keys = [r[first] for r in valid]
+    keys = [tuple(r[f] for f in lead) for r in valid]
     if keys != sorted(keys) or len(set(keys)) != len(keys):
-        out.append(f"{name}: rows must be unique and sorted by {first}")
+        out.append(f"{name}: rows must be unique and sorted by {', '.join(lead)}")
     return valid
 
 
@@ -174,7 +174,7 @@ def check(manifest: Path, root: Path) -> tuple[list[str], dict[str, list[int]]]:
     if set(data) != {"artifacts", "policy"}:
         out.append(f"{manifest}: top level must be exactly artifacts and policy")
     artifacts = schema_rows(data.get("artifacts", []), ARTIFACT_FIELDS, "artifacts", out)
-    policy = schema_rows(data.get("policy", []), POLICY_FIELDS, "policy", out)
+    policy = schema_rows(data.get("policy", []), POLICY_FIELDS, "policy", out, order=2)
     heads = {r["path"] for r in artifacts if not r["bundle"]}
     counts = {d: [0, 0] for d in DISPOSITIONS}
     for row in artifacts:
