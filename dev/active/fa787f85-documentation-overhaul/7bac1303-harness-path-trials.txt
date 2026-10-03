@@ -1,0 +1,352 @@
+# toolchain
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+rustc 1.95.0 (59807616e 2026-04-14)
+# source: a9688c2d39fe10b5fe89864a17c457427dd2ba95
+
+# harness manifests
+dev/active/04b85d10/survey/gf2-side/Cargo.toml
+dev/active/07ca8585/survey/arms/Cargo.toml
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml
+dev/active/19513245/survey/consumer/Cargo.toml
+dev/active/19513245/survey/field-laws/Cargo.toml
+dev/active/1c602857/arms/Cargo.toml
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml
+dev/active/1d4fd63d/arms/Cargo.toml
+dev/active/1d4fd63d/external-arms/Cargo.toml
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml
+dev/active/26465e6c/survey/gf2-side/Cargo.toml
+dev/active/3be770d5/survey/harness/Cargo.toml
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml
+dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml
+dev/active/53c5a8c0/survey/arms/Cargo.toml
+dev/active/5cbb6545/survey/gf2-side/Cargo.toml
+dev/active/6c6b09b1/survey/analysis/Cargo.toml
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml
+dev/active/c077a88b/survey/harness/Cargo.toml
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml
+dev/active/eda07788/survey/analysis/Cargo.toml
+dev/active/eda07788/survey/gf2-side/Cargo.toml
+dev/active/eda07788/survey/nr-derate/Cargo.toml
+dev/active/f63a2464/survey/arms/Cargo.toml
+dev/active/f63a2464/survey/prototypes/Cargo.toml
+dev/active/f8dd4dde/msrv-validation/Cargo.toml
+
+# control: --locked resolution of every tracked lockfile, repository unchanged
+Cargo.toml rc=0 unused=[] 
+dev/active/04b85d10/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml rc=0 unused=[] 
+dev/active/19513245/survey/consumer/Cargo.toml rc=0 unused=[] 
+dev/active/19513245/survey/field-laws/Cargo.toml rc=101 unused=[] error: cannot update the lock file dev/active/19513245/survey/field-laws/Cargo.lock because --locked was passed to prevent this
+dev/active/1c602857/arms/Cargo.toml rc=0 unused=[] 
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml rc=0 unused=[] 
+dev/active/1d4fd63d/arms/Cargo.toml rc=0 unused=[] 
+dev/active/1d4fd63d/external-arms/Cargo.toml rc=0 unused=[] 
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml rc=0 unused=[] 
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml rc=0 unused=[] 
+dev/active/26465e6c/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/3be770d5/survey/harness/Cargo.toml rc=0 unused=[] 
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml rc=101 unused=[] error: failed to download `r-efi v6.0.0`
+dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml rc=101 unused=[] error: cannot update the lock file dev/active/4e732b56/baseline-survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/53c5a8c0/survey/arms/Cargo.toml rc=0 unused=[] 
+dev/active/5cbb6545/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/6c6b09b1/survey/analysis/Cargo.toml rc=0 unused=[] 
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml rc=0 unused=[] 
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml rc=0 unused=[] 
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml rc=101 unused=[] error: cannot update the lock file dev/active/6c6b09b1/survey/field-laws/Cargo.lock because --locked was passed to prevent this
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml rc=101 unused=[] error: failed to download `r-efi v6.0.0`
+dev/active/c077a88b/survey/harness/Cargo.toml rc=0 unused=[] 
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/eda07788/survey/analysis/Cargo.toml rc=0 unused=[] 
+dev/active/eda07788/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/eda07788/survey/nr-derate/Cargo.toml rc=0 unused=[] 
+dev/active/f63a2464/survey/arms/Cargo.toml rc=0 unused=[] 
+dev/active/f63a2464/survey/prototypes/Cargo.toml rc=0 unused=[] 
+dev/active/f8dd4dde/msrv-validation/Cargo.toml rc=101 unused=[] error: failed to download `r-efi v6.0.0`
+dev/tools/tuning-profile-compose/Cargo.toml rc=0 unused=[] 
+control: 27 of 33 resolve
+
+# form 1: [patch.crates-io] table appended to .cargo/config.toml
+
+[patch.crates-io]
+byte-field-arm-common = { path = "dev/active/6c6b09b1/survey/arm-common" }
+bytefield-consumer = { path = "dev/active/19513245/survey/consumer" }
+byte-field-gf2-side = { path = "dev/active/6c6b09b1/survey/gf2-side" }
+gf256-axpy-arm = { path = "dev/active/ad2a6a58/survey/axpy-arm" }
+gf2-coding = { path = "crates/gf2-coding" }
+gf2-core = { path = "crates/gf2-core" }
+gf2-kernels-simd = { path = "crates/gf2-kernels-simd" }
+gf2-sim = { path = "crates/gf2-sim" }
+ldpc-candidate-prototypes = { path = "dev/active/f63a2464/survey/prototypes" }
+ldpc-survey-harness = { path = "dev/active/c077a88b/survey/harness" }
+ldpc-throughput-harness = { path = "dev/active/3be770d5/survey/harness" }
+tuning-campaign-support = { path = "dev/tools/tuning-campaign-support" }
+Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file Cargo.lock because --locked was passed to prevent this
+dev/active/04b85d10/survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/04b85d10/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/12fdeb5b/survey/nr-encode/Cargo.lock because --locked was passed to prevent this
+dev/active/19513245/survey/consumer/Cargo.toml rc=101 unused=[gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/19513245/survey/consumer/Cargo.lock because --locked was passed to prevent this
+dev/active/19513245/survey/field-laws/Cargo.toml rc=101 unused=[gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/19513245/survey/field-laws/Cargo.lock because --locked was passed to prevent this
+dev/active/1c602857/arms/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/1c602857/arms/Cargo.lock because --locked was passed to prevent this
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.lock because --locked was passed to prevent this
+dev/active/1d4fd63d/arms/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/1d4fd63d/arms/Cargo.lock because --locked was passed to prevent this
+dev/active/1d4fd63d/external-arms/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/1d4fd63d/external-arms/Cargo.lock because --locked was passed to prevent this
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.lock because --locked was passed to prevent this
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.lock because --locked was passed to prevent this
+dev/active/26465e6c/survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/26465e6c/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/3be770d5/survey/harness/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes] error: cannot update the lock file dev/active/3be770d5/survey/harness/Cargo.lock because --locked was passed to prevent this
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml rc=101 unused=[bytefield-consumer gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/4c1e441f/survey/gemm-arm/Cargo.lock because --locked was passed to prevent this
+dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness tuning-campaign-support] error: cannot update the lock file dev/active/4e732b56/baseline-survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/53c5a8c0/survey/arms/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/53c5a8c0/survey/arms/Cargo.lock because --locked was passed to prevent this
+dev/active/5cbb6545/survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/5cbb6545/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/6c6b09b1/survey/analysis/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-kernels-simd gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/6c6b09b1/survey/analysis/Cargo.lock because --locked was passed to prevent this
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml rc=101 unused=[bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-kernels-simd gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/6c6b09b1/survey/arm-common/Cargo.lock because --locked was passed to prevent this
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml rc=101 unused=[bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-kernels-simd gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/6c6b09b1/survey/ext-side/Cargo.lock because --locked was passed to prevent this
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml rc=101 unused=[bytefield-consumer gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/6c6b09b1/survey/field-laws/Cargo.lock because --locked was passed to prevent this
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml rc=101 unused=[bytefield-consumer gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/6c6b09b1/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/6fb89a3c/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml rc=101 unused=[bytefield-consumer gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/ad2a6a58/survey/axpy-arm/Cargo.lock because --locked was passed to prevent this
+dev/active/c077a88b/survey/harness/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes ldpc-throughput-harness] error: cannot update the lock file dev/active/c077a88b/survey/harness/Cargo.lock because --locked was passed to prevent this
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/c7113c5a/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/eda07788/survey/analysis/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/eda07788/survey/analysis/Cargo.lock because --locked was passed to prevent this
+dev/active/eda07788/survey/gf2-side/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/eda07788/survey/gf2-side/Cargo.lock because --locked was passed to prevent this
+dev/active/eda07788/survey/nr-derate/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: cannot update the lock file dev/active/eda07788/survey/nr-derate/Cargo.lock because --locked was passed to prevent this
+dev/active/f63a2464/survey/arms/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm] error: cannot update the lock file dev/active/f63a2464/survey/arms/Cargo.lock because --locked was passed to prevent this
+dev/active/f63a2464/survey/prototypes/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-throughput-harness] error: cannot update the lock file dev/active/f63a2464/survey/prototypes/Cargo.lock because --locked was passed to prevent this
+dev/active/f8dd4dde/msrv-validation/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness tuning-campaign-support] error: cannot update the lock file dev/active/f8dd4dde/msrv-validation/Cargo.lock because --locked was passed to prevent this
+dev/tools/tuning-profile-compose/Cargo.toml rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness tuning-campaign-support] error: cannot update the lock file dev/tools/tuning-profile-compose/Cargo.lock because --locked was passed to prevent this
+form 1: 0 of 33 resolve
+form 1 lockfile diff of the root manifest after resolution without --locked:
+Cargo.toml rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+1766a1767,1794
+> 
+> [[patch.unused]]
+> name = "byte-field-arm-common"
+> version = "0.0.0"
+> 
+> [[patch.unused]]
+> name = "byte-field-gf2-side"
+> version = "0.0.0"
+> 
+> [[patch.unused]]
+> name = "bytefield-consumer"
+> version = "0.0.0"
+> 
+> [[patch.unused]]
+> name = "gf256-axpy-arm"
+> version = "0.0.0"
+> 
+> [[patch.unused]]
+> name = "ldpc-candidate-prototypes"
+> version = "0.0.0"
+> 
+> [[patch.unused]]
+> name = "ldpc-survey-harness"
+> version = "0.0.0"
+> 
+> [[patch.unused]]
+> name = "ldpc-throughput-harness"
+> version = "0.0.0"
+
+# form 2: the same table in .cargo/harness-paths.toml, passed with --config
+harness manifests declare each such dependency as version = "*":
+dev/active/04b85d10/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/04b85d10/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/07ca8585/survey/arms/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/07ca8585/survey/arms/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes] 
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/19513245/survey/consumer/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-arm-common` found
+dev/active/19513245/survey/consumer/Cargo.toml with-flag rc=0 unused=[gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/19513245/survey/field-laws/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-gf2-side` found
+dev/active/19513245/survey/field-laws/Cargo.toml with-flag rc=101 unused=[gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: failed to download `r-efi v6.0.0`
+dev/active/1c602857/arms/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/1c602857/arms/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/1d4fd63d/arms/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/1d4fd63d/arms/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/1d4fd63d/external-arms/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-kernels-simd` found
+dev/active/1d4fd63d/external-arms/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/26465e6c/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/26465e6c/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/3be770d5/survey/harness/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/3be770d5/survey/harness/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes] 
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-arm-common` found
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml with-flag rc=101 unused=[bytefield-consumer gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: failed to download `r-efi v6.0.0`
+dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness tuning-campaign-support] 
+dev/active/53c5a8c0/survey/arms/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/53c5a8c0/survey/arms/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/5cbb6545/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/5cbb6545/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/6c6b09b1/survey/analysis/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `tuning-campaign-support` found
+dev/active/6c6b09b1/survey/analysis/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-kernels-simd gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `tuning-campaign-support` found
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml with-flag rc=0 unused=[bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-kernels-simd gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-arm-common` found
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml with-flag rc=0 unused=[bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-core gf2-kernels-simd gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-gf2-side` found
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml with-flag rc=101 unused=[bytefield-consumer gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: failed to download `r-efi v6.0.0`
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-arm-common` found
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[bytefield-consumer gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `byte-field-arm-common` found
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml with-flag rc=101 unused=[bytefield-consumer gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] error: failed to download `r-efi v6.0.0`
+dev/active/c077a88b/survey/harness/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/c077a88b/survey/harness/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes ldpc-throughput-harness] 
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/eda07788/survey/analysis/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/eda07788/survey/analysis/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/eda07788/survey/gf2-side/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/eda07788/survey/gf2-side/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/eda07788/survey/nr-derate/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/eda07788/survey/nr-derate/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness] 
+dev/active/f63a2464/survey/arms/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/f63a2464/survey/arms/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm] 
+dev/active/f63a2464/survey/prototypes/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-coding` found
+dev/active/f63a2464/survey/prototypes/Cargo.toml with-flag rc=0 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm ldpc-throughput-harness] 
+dev/active/f8dd4dde/msrv-validation/Cargo.toml without-flag rc=101 unused=[] error: no matching package named `gf2-core` found
+dev/active/f8dd4dde/msrv-validation/Cargo.toml with-flag rc=101 unused=[byte-field-arm-common bytefield-consumer byte-field-gf2-side gf256-axpy-arm gf2-coding gf2-sim ldpc-candidate-prototypes ldpc-survey-harness ldpc-throughput-harness tuning-campaign-support] error: failed to download `r-efi v6.0.0`
+form 2 without flag: 0 of 32 resolve
+form 2 with flag: 27 of 32 resolve
+form 2 root manifest, no flag:
+Cargo.toml rc=0 unused=[] 
+form 2 tracked scripts of the active tree that invoke cargo build, run or test,
+with the number of tracked JSON files that hold the script's SHA-256:
+dev/active/00dd43c3/survey/run-campaign.sh sha256=1a00f7fe6cc283bded717761957c16750166941c5c0b1de971e0264727b5fb48 pinned_in=9
+dev/active/04b85d10/survey/run-profile.sh sha256=2411c74f4fd02ed156bca67933efec0293c5141bed4ac8559c7a4d1221a86e2f pinned_in=1
+dev/active/07ca8585/survey/record-allocation-counter.sh sha256=cf4b82d7d1ef97493df5b5c72940f9936b8d60cc662a6c10b936aa9b9047df2b pinned_in=0
+dev/active/07ca8585/survey/record-kernel-preparation.py sha256=df3b9e6ad6401dd15b2109f3a438bd15c42074922cc6c1ec600e7f1254a9ac36 pinned_in=0
+dev/active/07ca8585/survey/record-preparation.py sha256=d442a4c3d6bf82869cfa5ea639cba84ba5f3774d907d1691b49d4ca963ba6edf pinned_in=0
+dev/active/07ca8585/survey/run-device-conformance.py sha256=00aa35688c0b176e823fc0efac08126895c43c47c1178b3d72a88d22d9aac34c pinned_in=0
+dev/active/12fdeb5b/survey/nr-encode-build.sh sha256=d79b90f81cceffe985ffe0581a8851f40e09d98fe54fa2170b18f3b3d03b451f pinned_in=17
+dev/active/12fdeb5b/survey/record-build-evidence.py sha256=5337d6ae38235c9e909bbeef602602b8c3aa8e32543395d9a675c76d69994faf pinned_in=0
+dev/active/19513245/survey/run-profile.sh sha256=a77c9f62c2f16a571a007d5a0c54f3fb581b9913c736778ed0d9e07b6f56b50d pinned_in=0
+dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh sha256=0a72d64daa508a70a617fde893b2f1eef004118fe19c56a214fb104fe728fd04 pinned_in=0
+dev/active/1c602857/run-public-clmul.sh sha256=b494cbf3e1b8d9fc9600bd14faa9ac247987efc861a4ba3ab28f7ed4e05f7074 pinned_in=10
+dev/active/1c602857/run-validation.sh sha256=4f96d14bd80f2c10831f2a70f95f1d4f5ebe8aecdd03457d3e93cb8af16a1d81 pinned_in=0
+dev/active/1d0da41f/survey/build-arms.sh sha256=fd99da6a1c17441adb93d02dd1efd36a39002d101e1643b35dc25ca35e579cbb pinned_in=17
+dev/active/1d4fd63d/run-validation.sh sha256=3aa37a33a4dba69f81ddd32eecbf8142c54862877e36bf6e6246180b080147f8 pinned_in=0
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/build-isal-arm.sh sha256=54269300766efdd9c242c01a580b57626ea8d59f41fba8a049bbd5df781383c7 pinned_in=20
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/render-logical-tables.sh sha256=d697aafaa951c1b4554920f9385f0ef4fd9382fa52552bab0dd76ceeea5baab4 pinned_in=0
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh sha256=ecc50e332bb9d8ab5d61f18f9dfa2fe6f62d4b179371e3e464d1c22f9f0867d3 pinned_in=1
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-harness.sh sha256=aa1493f0e97cf344e14178bc6edf516a2dd2825048dbbc97c381dae44c974d9b pinned_in=16
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh sha256=a746db336c86e91e8287bf7300f51c70fe27145f68d53a2f5a83ca60c5555507 pinned_in=1
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-m4ri-matvec-probe.sh sha256=d1d8eeac58070975ba930cd1d60db94f96417fc1b8600dd2aef698e3a565b498 pinned_in=10
+dev/active/26465e6c/superseded/v1/survey/fetch-build.sh sha256=2e9c220a6436453c14d3538348b1886fc79b21f93666e5773c3e4928cc3e18a0 pinned_in=1
+dev/active/26465e6c/superseded/v1/survey/record-provenance.sh sha256=759ecc1fa25cba41f6d34a64b220d4562cea53a0c137e8a382f18ac4da41c3a6 pinned_in=1
+dev/active/34d85cb9/extraction/trim-logs.sh sha256=d3557b27a6a3ec62bb03aaabb00166f4825fb7e4cf0b9c3dd6a4835ae685f38e pinned_in=0
+dev/active/3be770d5/survey/record-preparation.py sha256=de8d8971279739edd10ae163777997c66644f9889e659e501eadc43c3d219910 pinned_in=1
+dev/active/4e732b56/baseline-survey/fetch-build.sh sha256=5605021332626f42a064ba47d729794b873459cc03b711e7d2b3025e1c935fda pinned_in=0
+dev/active/53c5a8c0/survey/build-arms.sh sha256=0e628b8e36984093b1588a2189c7e790427e1ce0d419a2df37991851a35fb9c8 pinned_in=0
+dev/active/5cbb6545/run-count-campaign.sh sha256=a6aea82161d129d505b03a252671da750c6b2954f3ce308234239201509b279f pinned_in=19
+dev/active/5cbb6545/run-validation.sh sha256=6172e546657c26bb2b1ee8faa6d10783e69e78fd16fed535b46222327ca2c9f8 pinned_in=1
+dev/active/6fb89a3c/survey/fetch-build.sh sha256=141973f1fc34c5b73046b5411b7ce405f6dc0ca0545c4e1fb869da9f9e7b9f20 pinned_in=52
+dev/active/7d7c647c/probes/trim-logs.sh sha256=9286a7f1c404b8d98a8e806cdffca01b17d298e79c5f80d2c493c743b1489723 pinned_in=0
+dev/active/a203a23c/reevaluate-receipts.sh sha256=88b82bdc2d1ed491055a37b6aa2c1722e984b3a154f1a919b0024d495ff75df8 pinned_in=0
+dev/active/ae03bcd0-general-bch/oracle/run.sh sha256=61da20d80ff3a610472f2b6ff33d4323e8dd2a6638bc0103ec50ec8269bd2028 pinned_in=1
+dev/active/bc091474/run-candidate.sh sha256=d14393f3febef99464cb5ed1d852c326872b06b438f78e484ce66168034efb28 pinned_in=16
+dev/active/bdc507a3/compare-acceptance-verdicts.sh sha256=642c81d44f61a977aedc05e588b525d61d11d7c4abac4a42fc18534da5f41750 pinned_in=0
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/build-dvb-harness.sh sha256=705311af9be5f7485393004918a79a1d865f192ba127aeeee94d16a064347de7 pinned_in=4
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-dvb-campaign.sh sha256=701e7f962bdf5aa6873d0c9c47df79d45d9ac66d17e8c09c31438da41d6344a7 pinned_in=4
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/run-shift-profile.sh sha256=aacd94139ca275bf10dd2fd5f00a88671eb135bbc112595a9a0b4fa60503caa4 pinned_in=0
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-dvb-arms.sh sha256=2dd91078454198b0f3102241d484b6f76ee4a4898208f4844e1698a29f104be9 pinned_in=1
+dev/active/c04dd4ac-zen3-shifts-and-permutations/survey/smoke-shift-arms.sh sha256=3eb6d625f5daf92a0ff70068044ea2481f358ba0e55a4fabc3b4549c85627d37 pinned_in=1
+dev/active/c077a88b/survey/fetch-build.sh sha256=02747be559e6439df85d945b7d05b0675d9d27b1193873bcd0d5b63b76a0d37a pinned_in=13
+dev/active/c077a88b/survey/make-inputs.sh sha256=a72b435e87857654ea86d0494be9a0682988c226c573b05fd381e00cd18e1832 pinned_in=13
+dev/active/c7113c5a/survey/fetch-build.sh sha256=851e71615886c4246d52daba68e61a6dc473db4d8487218de0a59b24270f23ae pinned_in=19
+dev/active/c7113c5a/survey/run-baseline.sh sha256=66858bcfb4211b122f117fb5ef6ea95b064260d8512caf611b3fbd34a4bde9de pinned_in=0
+dev/active/e6ea0dde/extraction/trim-logs.sh sha256=7ed6062f4ba2af4bade29c4963dd8b1c96b3a522cf92262a1088cbdcf6f255e0 pinned_in=0
+dev/active/eda07788/survey/fetch-build.sh sha256=2454bcf3e2b109a0fad8ae259b8c12297e5b54d2502af95a2ebae4857cafe511 pinned_in=22
+dev/active/eda07788/survey/nr-derate-build.sh sha256=b5d4ace26b2465e11f29471beb151a16a60ecd11876ff54149a7155df555e0fe pinned_in=9
+dev/active/eda07788/survey/run-analysis.sh sha256=df6248c265fc89285f91d66bf8556e7fea1b978c6d326226f11e049c4f07a35e pinned_in=0
+dev/active/f63a2464/survey/record-intrinsic-feasibility.py sha256=651354a189a22098dfb06739455b1113591b8333b296c084eb554fe472da1877 pinned_in=13
+dev/active/f63a2464/survey/record-preparation.py sha256=c9997e2fcd71cd6903b9701b9a4ad9a2e84c7543ccb7e1a96b30cf185afb2fa5 pinned_in=13
+dev/active/f8dd4dde/validate-msrv.sh sha256=f40ec1c22d49cc0ccfcd33a24db283a723b16751b189933f717391872ca9407b pinned_in=0
+dev/active/fd9d5416/tests/test_render_receipt.py sha256=753d63266085c6067008b8d582623267323c863d30bedef41219946bda4d2a13 pinned_in=1
+form 2: 30 of 51 scripts are digest-pinned
+
+# form 3: harness workspace at the fixed location dev/active
+member under trial: dev/active/04b85d10/survey/gf2-side/Cargo.toml
+[workspace] tables of the harness manifests:
+dev/active/04b85d10/survey/gf2-side/Cargo.toml:9:[workspace]
+dev/active/07ca8585/survey/arms/Cargo.toml:19:[workspace]
+dev/active/12fdeb5b/survey/nr-encode/Cargo.toml:9:[workspace]
+dev/active/19513245/survey/consumer/Cargo.toml:15:[workspace]
+dev/active/19513245/survey/field-laws/Cargo.toml:8:[workspace]
+dev/active/1c602857/arms/Cargo.toml:13:[workspace]
+dev/active/1d0da41f/survey/ymm-clmul-arm/Cargo.toml:10:[workspace]
+dev/active/1d4fd63d/arms/Cargo.toml:16:[workspace]
+dev/active/1d4fd63d/external-arms/Cargo.toml:20:[workspace]
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-harness/Cargo.toml:14:[workspace]
+dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/Cargo.toml:13:[workspace]
+dev/active/26465e6c/survey/gf2-side/Cargo.toml:10:[workspace]
+dev/active/3be770d5/survey/harness/Cargo.toml:12:[workspace]
+dev/active/4c1e441f/survey/gemm-arm/Cargo.toml:14:[workspace]
+dev/active/4e732b56/baseline-survey/gf2-side/Cargo.toml:7:[workspace]
+dev/active/53c5a8c0/survey/arms/Cargo.toml:9:[workspace]
+dev/active/5cbb6545/survey/gf2-side/Cargo.toml:12:[workspace]
+dev/active/6c6b09b1/survey/analysis/Cargo.toml:8:[workspace]
+dev/active/6c6b09b1/survey/arm-common/Cargo.toml:9:[workspace]
+dev/active/6c6b09b1/survey/ext-side/Cargo.toml:8:[workspace]
+dev/active/6c6b09b1/survey/field-laws/Cargo.toml:8:[workspace]
+dev/active/6c6b09b1/survey/gf2-side/Cargo.toml:9:[workspace]
+dev/active/6fb89a3c/survey/gf2-side/Cargo.toml:9:[workspace]
+dev/active/ad2a6a58/survey/axpy-arm/Cargo.toml:11:[workspace]
+dev/active/c077a88b/survey/harness/Cargo.toml:12:[workspace]
+dev/active/c7113c5a/survey/gf2-side/Cargo.toml:9:[workspace]
+dev/active/eda07788/survey/analysis/Cargo.toml:9:[workspace]
+dev/active/eda07788/survey/gf2-side/Cargo.toml:6:[workspace]
+dev/active/eda07788/survey/nr-derate/Cargo.toml:9:[workspace]
+dev/active/f63a2464/survey/arms/Cargo.toml:16:[workspace]
+dev/active/f63a2464/survey/prototypes/Cargo.toml:12:[workspace]
+dev/active/f8dd4dde/msrv-validation/Cargo.toml:9:[workspace]
+workspace manifest:
+[workspace]
+members = ["04b85d10/survey/gf2-side"]
+resolver = "2"
+
+[workspace.dependencies]
+byte-field-arm-common = { path = "6c6b09b1/survey/arm-common" }
+bytefield-consumer = { path = "19513245/survey/consumer" }
+byte-field-gf2-side = { path = "6c6b09b1/survey/gf2-side" }
+gf256-axpy-arm = { path = "ad2a6a58/survey/axpy-arm" }
+gf2-coding = { path = "../../crates/gf2-coding" }
+gf2-core = { path = "../../crates/gf2-core" }
+gf2-kernels-simd = { path = "../../crates/gf2-kernels-simd" }
+gf2-sim = { path = "../../crates/gf2-sim" }
+ldpc-candidate-prototypes = { path = "f63a2464/survey/prototypes" }
+ldpc-survey-harness = { path = "c077a88b/survey/harness" }
+ldpc-throughput-harness = { path = "3be770d5/survey/harness" }
+tuning-campaign-support = { path = "../tools/tuning-campaign-support" }
+member manifest keeps its [workspace] table, path dependencies as workspace = true:
+dev/active/04b85d10/survey/gf2-side/Cargo.toml rc=101 unused=[] error: failed to parse manifest at `dev/active/04b85d10/survey/gf2-side/Cargo.toml`
+error: failed to parse manifest at `dev/active/04b85d10/survey/gf2-side/Cargo.toml`
+
+Caused by:
+  error inheriting `gf2-coding` from workspace root manifest's `workspace.dependencies.gf2-coding`
+
+Caused by:
+  `workspace.dependencies` was not defined
+member manifest without its [workspace] table; the lockfile it resolves into:
+dev/active/04b85d10/survey/gf2-side/Cargo.toml rc=0 unused=[] 
+dev/active/Cargo.lock
+the same member copied one directory level deeper:
+dev/active/04b85d10/survey/gf2-side.deeper/gf2-side/Cargo.toml rc=101 unused=[] error: current package believes it's in a workspace when it's not:
+error: current package believes it's in a workspace when it's not:
+current:   dev/active/04b85d10/survey/gf2-side.deeper/gf2-side/Cargo.toml
+workspace: dev/active/Cargo.toml
+
