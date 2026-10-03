@@ -18,9 +18,9 @@ Every field implementation passes the shared field-law suite exposed as `field::
 
 ## When to choose gf2-core
 
-- Dense or sparse GF(2) matrices that exceed what a general-purpose bitset library offers: elimination, inversion and multiplication on bit-packed storage.
+- Dense or sparse GF(2) matrices with elimination, inversion and multiplication on bit-packed storage.
 - Generic algorithms over a `FiniteField` that must run unchanged over GF(2^m), `Fp<P>` and tower extensions.
-- A dependency-light math layer with `#![deny(unsafe_code)]`; unsafe SIMD lives in `gf2-kernels-simd`.
+- A math layer with `#![deny(unsafe_code)]`; unsafe SIMD lives in `gf2-kernels-simd`.
 
 Codes, modems and channels are in `gf2-coding`; packed F_3/F_5/F_7 arithmetic and permanents are in `gf2-algebra`.
 
