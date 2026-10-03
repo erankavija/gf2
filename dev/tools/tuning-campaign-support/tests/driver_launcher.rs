@@ -65,7 +65,6 @@ fn declare(repo: &Path, issue: &str, directory: &str) {
     fs::copy(source, target).unwrap();
 }
 
-/// Writes `content` as the campaign declaration under `directory` of `repo`.
 fn write_declaration(repo: &Path, directory: &str, content: &str) {
     fs::create_dir_all(repo.join(directory)).unwrap();
     fs::write(repo.join(directory).join(DECLARATION_FILE), content).unwrap();
