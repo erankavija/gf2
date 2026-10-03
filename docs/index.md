@@ -20,6 +20,8 @@ Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 
 Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis-placement`.
 
+- [Finite-field arithmetic](concepts/finite-field-arithmetic.md): field families, representations, multiplication strategy and defining-polynomial choice.
+
 ## Reference
 
 Supported configurations, limitations, evidence methodology and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
