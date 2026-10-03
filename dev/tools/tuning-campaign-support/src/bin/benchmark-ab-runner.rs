@@ -46,6 +46,7 @@ use tuning_campaign_support::receipt::{
     CellRecord, CellStatus, CheckpointRecord, ExecutionRecord, LockRecord, LogRecord, PairRecord,
     SourceIdentity, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
+use tuning_campaign_support::repository::repository_root;
 
 fn invalid(message: impl ToString) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message.to_string())
@@ -59,14 +60,9 @@ fn command_text(program: &str, args: &[&str], cwd: &Path) -> io::Result<String> 
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
 }
 
-fn repository_root() -> io::Result<PathBuf> {
+fn invocation_root() -> io::Result<PathBuf> {
     let cwd = fs::canonicalize(".")?;
-    let top = fs::canonicalize(command_text(
-        "git",
-        &["rev-parse", "--show-toplevel"],
-        &cwd,
-    )?)?;
-    if top != cwd {
+    if repository_root()? != cwd {
         return Err(invalid(
             "the runner must be invoked from the repository root",
         ));
@@ -814,7 +810,7 @@ fn measure_cell(session: &mut Session, index: usize) -> io::Result<()> {
 /// at it; the next resumes from the checkpoints without repeating a completed
 /// cell. Exit code 3 reports the pause.
 fn run_session(stage: &Path, plan_path: &Path, dispatch: SessionDispatch) -> io::Result<i32> {
-    let root = repository_root()?;
+    let root = invocation_root()?;
     let mut session = open_session(&root, stage, plan_path, dispatch)?;
     let budget = session.plan.max_cells_per_session;
     let mut measured = 0u32;
@@ -969,7 +965,7 @@ fn staged_record(stage: &Path) -> io::Result<SmokeRecord> {
 }
 
 fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
-    let root = repository_root()?;
+    let root = invocation_root()?;
     let staged = open_stage(stage)?;
     if staged.validation {
         return Err(invalid(format!(
@@ -1170,7 +1166,7 @@ fn check(plan_path: &Path) -> io::Result<i32> {
 fn smoke(plan_path: &Path, record_path: Option<&Path>, stage: Option<&Path>) -> io::Result<i32> {
     let (code, record) = match stage {
         None => {
-            let root = repository_root()?;
+            let root = invocation_root()?;
             (
                 0,
                 Some(tuning_campaign_support::arm::smoke(&root, plan_path)?),

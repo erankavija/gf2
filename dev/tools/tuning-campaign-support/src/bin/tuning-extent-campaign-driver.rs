@@ -3155,30 +3155,28 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tuning_campaign_support::repository::repository_root;
     use tuning_campaign_support::scratch::{scratch, Scratch};
 
     /// A recorded declaration path distinct from the located one: receipts
     /// and evidence indexes name the declaration as the campaign recorded it.
     const RECORDED_DECLARATION: &str = "recorded/campaign-declaration.json";
 
-    fn repository_root() -> PathBuf {
-        let output = Command::new("git")
-            .args(["rev-parse", "--show-toplevel"])
-            .current_dir(env!("CARGO_MANIFEST_DIR"))
-            .output()
-            .unwrap();
-        assert!(output.status.success());
-        PathBuf::from(String::from_utf8(output.stdout).unwrap().trim_end())
-    }
     /// The committed declaration of the published extent campaign.
     fn extent_declaration() -> CampaignDeclaration {
-        CampaignDeclaration::for_campaign(&repository_root(), "gf2-a83583e0-19700101t000000z-1")
-            .unwrap()
+        CampaignDeclaration::for_campaign(
+            &repository_root().unwrap(),
+            "gf2-a83583e0-19700101t000000z-1",
+        )
+        .unwrap()
     }
     /// The committed declaration of the seam calibration campaign.
     fn seam_declaration() -> CampaignDeclaration {
-        CampaignDeclaration::for_campaign(&repository_root(), "gf2-dbd8787d-19700101t000000z-1")
-            .unwrap()
+        CampaignDeclaration::for_campaign(
+            &repository_root().unwrap(),
+            "gf2-dbd8787d-19700101t000000z-1",
+        )
+        .unwrap()
     }
 
     #[test]
@@ -3849,8 +3847,9 @@ mod tests {
     #[test]
     fn campaign_stage_policy_accepts_the_launcher_minted_id() {
         let launcher = fs::read_to_string(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../../../dev/scripts/tuning-extent-campaign.sh"),
+            repository_root()
+                .unwrap()
+                .join("dev/scripts/tuning-extent-campaign.sh"),
         )
         .unwrap();
         let format = launcher
@@ -3876,7 +3875,7 @@ mod tests {
 
     #[test]
     fn declarations_select_owners_counts_imports_and_publication() {
-        let root = repository_root();
+        let root = repository_root().unwrap();
         let extent = extent_declaration();
         assert_eq!(extent.prefix(), "gf2-a83583e0-");
         assert_eq!(extent.total_cells(), 717);
@@ -3931,7 +3930,7 @@ mod tests {
 
     #[test]
     fn producing_input_manifest_rejects_authority_and_path_mutations() {
-        let root = repository_root();
+        let root = repository_root().unwrap();
         for declaration in [extent_declaration(), seam_declaration()] {
             let manifest: ProducingInputs = serde_json::from_slice(
                 &fs::read(root.join(&declaration.producing_manifest)).unwrap(),
@@ -4048,7 +4047,7 @@ mod tests {
             let imported = declaration.imported("algebra").cloned();
             let algebra = imported.as_ref().map_or_else(
                 || b"{\"owner\":\"algebra\"}".to_vec(),
-                |imported| imported.envelope.read(&repository_root()).unwrap(),
+                |imported| imported.envelope.read(&repository_root().unwrap()).unwrap(),
             );
             let mut files: Vec<(String, Vec<u8>)> = [
                 ("core-owner.json", &b"{\"owner\":\"core\"}"[..]),
@@ -4155,8 +4154,9 @@ mod tests {
                 working_directory: root.clone(),
             };
             let validator = fs::canonicalize(
-                Path::new(env!("CARGO_MANIFEST_DIR"))
-                    .join("../../scripts/validate-tuning-extent-campaign.py"),
+                repository_root()
+                    .unwrap()
+                    .join("dev/scripts/validate-tuning-extent-campaign.py"),
             )
             .unwrap();
             let evidence_index = declaration.evidence_index.then(|| {
@@ -4194,7 +4194,11 @@ mod tests {
             for imported in &self.declaration.imported_owners {
                 let target = repository.join(&imported.envelope.path);
                 fs::create_dir_all(target.parent().unwrap()).unwrap();
-                fs::write(target, imported.envelope.read(&repository_root()).unwrap()).unwrap();
+                fs::write(
+                    target,
+                    imported.envelope.read(&repository_root().unwrap()).unwrap(),
+                )
+                .unwrap();
             }
             repository
         }
@@ -4347,7 +4351,7 @@ mod tests {
         let archive = |relative: &str| format!("{}/{relative}", layout.archive());
         assert_eq!(
             fs::read(repository.join(archive("algebra-owner.json"))).unwrap(),
-            imported.envelope.read(&repository_root()).unwrap()
+            imported.envelope.read(&repository_root().unwrap()).unwrap()
         );
         let index = fs::read(repository.join(layout.evidence_index())).unwrap();
         assert_eq!(Some(&index), fixture.evidence_index.as_ref());
@@ -4714,8 +4718,9 @@ mod tests {
             declaration.imported_owners[0].envelope.path
         )));
         let validator = fs::canonicalize(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../../scripts/validate-tuning-extent-campaign.py"),
+            repository_root()
+                .unwrap()
+                .join("dev/scripts/validate-tuning-extent-campaign.py"),
         )
         .unwrap();
         let check = || {
@@ -4759,7 +4764,7 @@ mod tests {
         let declaration = seam_declaration();
         let imported = declaration.imported("algebra").unwrap().clone();
         let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
-        let reference = repository_root().join(&imported.complete.path);
+        let reference = repository_root().unwrap().join(&imported.complete.path);
         let composer_path = root.join("composer");
         fs::write(
             &composer_path,
@@ -4788,7 +4793,7 @@ mod tests {
         let revision = "0".repeat(40);
         fs::write(root.join("reject"), b"").unwrap();
         let refused = import_owner(
-            &repository_root(),
+            &repository_root().unwrap(),
             &channels,
             &campaign,
             &revision,
@@ -4803,7 +4808,7 @@ mod tests {
         );
         fs::remove_file(root.join("reject")).unwrap();
         let evidence = import_owner(
-            &repository_root(),
+            &repository_root().unwrap(),
             &channels,
             &campaign,
             &revision,
@@ -4818,7 +4823,7 @@ mod tests {
         let mut drifted = imported.clone();
         drifted.envelope.sha256 = Sha256Digest::of(b"other");
         assert!(import_owner(
-            &repository_root(),
+            &repository_root().unwrap(),
             &channels,
             &campaign,
             &revision,
@@ -4839,8 +4844,9 @@ mod tests {
         )
         .unwrap();
         let validator = fs::canonicalize(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../../scripts/validate-tuning-extent-campaign.py"),
+            repository_root()
+                .unwrap()
+                .join("dev/scripts/validate-tuning-extent-campaign.py"),
         )
         .unwrap();
         let check = || {
@@ -4968,8 +4974,9 @@ mod tests {
         let path = scratch_root.path().join("fixture.json");
         fs::write(&path, serde_json::to_vec(&fixture).unwrap()).unwrap();
         let validator = fs::canonicalize(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../../scripts/validate-tuning-extent-campaign.py"),
+            repository_root()
+                .unwrap()
+                .join("dev/scripts/validate-tuning-extent-campaign.py"),
         )
         .unwrap();
         let output = Command::new("python3")

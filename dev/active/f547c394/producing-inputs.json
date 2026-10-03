@@ -16,6 +16,7 @@
     "dev/tools/tuning-campaign-support/src/protocol.rs",
     "dev/tools/tuning-campaign-support/src/provenance.rs",
     "dev/tools/tuning-campaign-support/src/receipt.rs",
+    "dev/tools/tuning-campaign-support/src/repository.rs",
     "dev/tools/tuning-campaign-support/src/schema.rs",
     "dev/tools/tuning-campaign-support/src/seed.rs",
     "dev/tools/tuning-campaign-support/src/statistics.rs",
@@ -32,6 +33,7 @@
     "dev/tools/tuning-campaign-support/src/protocol.rs",
     "dev/tools/tuning-campaign-support/src/provenance.rs",
     "dev/tools/tuning-campaign-support/src/receipt.rs",
+    "dev/tools/tuning-campaign-support/src/repository.rs",
     "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
   ],
   "build_inputs": [
@@ -54,6 +56,7 @@
     "dev/tools/tuning-campaign-support/src/protocol.rs",
     "dev/tools/tuning-campaign-support/src/provenance.rs",
     "dev/tools/tuning-campaign-support/src/receipt.rs",
+    "dev/tools/tuning-campaign-support/src/repository.rs",
     "dev/tools/tuning-campaign-support/src/schema.rs",
     "dev/tools/tuning-campaign-support/src/seed.rs",
     "dev/tools/tuning-campaign-support/src/statistics.rs",
