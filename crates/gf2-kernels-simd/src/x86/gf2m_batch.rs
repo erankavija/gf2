@@ -1,19 +1,9 @@
 //! AVX2 + VPCLMULQDQ batch element-wise GF(2^m) multiply/square kernels for
 //! `m ∈ {8, 16, 32}`.
 //!
-//! The kernel processes 4 elements per outer iteration (two YMM
-//! registers × two 128-bit lanes per register). All Barrett reduction
-//! state is kept inside YMM registers across the multiply, q, and qp
-//! phases — there are no per-element extracts on the hot path. This is
-//! the load-bearing optimisation versus a scalar-extract design and
-//! gives the kernel its ≥1.5× speedup over the per-element single-shot
-//! `clmul_barrett_reduce`.
-//!
-//! # YMM-resident reduction (`m ∈ {8, 16, 32}`)
-//!
-//! For `m ≤ 32`, the carry-less product `a · b` fits in 2m ≤ 64 bits, so
-//! every per-element 128-bit clmul output occupies only the low 64 bits of
-//! its 128-bit lane. The reduction
+//! Each outer iteration processes 4 elements (two YMM registers × two
+//! 128-bit lanes). For `m ≤ 32` the carry-less product fits in the low 64
+//! bits of its lane, so the Barrett reduction
 //!
 //!   `c_high = product >> m`
 //!   `q_full = c_high · mu`
@@ -21,22 +11,15 @@
 //!   `qp = q · modulus`
 //!   `r = product XOR qp`
 //!
-//! decomposes into byte-aligned shifts (`_mm256_srli_si256<m/8>`) and three
-//! VPCLMULQDQ instructions per pair of elements. The 4-way outer unroll
-//! keeps four independent reduction chains in flight, exposing the AMD
-//! Zen 3 / Zen 4 issue ports to enough ILP that VPCLMULQDQ's 4-cycle
-//! latency stops being the bottleneck.
-//!
-//! Tail elements (count not a multiple of 4) are handled by a scalar
-//! PCLMULQDQ fallback inlined in the same `#[target_feature]` scope to
-//! avoid call-site overhead.
-//!
-//! # Safety / feature detection
+//! stays in YMM registers as byte-aligned shifts (`_mm256_srli_si256<m/8>`)
+//! and three VPCLMULQDQ instructions per pair of elements. Tail elements go
+//! through a scalar PCLMULQDQ path inlined in the same `#[target_feature]`
+//! scope.
 //!
 //! All entry points carry `#[target_feature(enable = "avx2", enable =
-//! "vpclmulqdq", enable = "pclmulqdq", enable = "sse4.1")]`. The
-//! `crate::gf2m_batch::detect_x86` accessor only publishes function
-//! pointers when all four features are present at runtime.
+//! "vpclmulqdq", enable = "pclmulqdq", enable = "sse4.1")]`;
+//! `crate::gf2m_batch::detect` publishes function pointers only when all
+//! four features are present at runtime.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -46,27 +29,10 @@ use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
-// ---------------------------------------------------------------------------
-// Shared Barrett-reduction helpers live in `super::gf2m_common`; both this
-// module and `super::gf2m_gemm` import them from there. The single source
-// of truth for the algorithm is `gf2m_common::clmul_barrett_scalar` /
-// `ymm_barrett_reduce` / `correct`.
-// ---------------------------------------------------------------------------
-
 use super::gf2m_common::{clmul_barrett_scalar as clmul_barrett_reduce_inline, ymm_barrett_reduce};
 
-// ---------------------------------------------------------------------------
-// YMM-resident Barrett reduction core.
-//
-// Each input is a `__m256i` holding two 128-bit lanes; each lane carries a
-// 64-bit field element in its low half. `_mm256_clmulepi64_epi128` then
-// produces a `__m256i` with two 128-bit products (one per lane); since
-// `m ≤ 32`, the product fits in the low 64 bits of each lane.
-// ---------------------------------------------------------------------------
-
 /// Load 2 elements into a `__m256i` placing each in the low 64 bits of its
-/// 128-bit lane. Used for both the input pack and the c_high/q repack
-/// phases.
+/// 128-bit lane.
 #[inline(always)]
 unsafe fn pack_pair(x0: u64, x1: u64) -> __m256i {
     _mm256_set_epi64x(0, x1 as i64, 0, x0 as i64)
@@ -79,8 +45,7 @@ unsafe fn pack_quad(x0: u64, x1: u64, x2: u64, x3: u64) -> (__m256i, __m256i) {
     (pack_pair(x0, x1), pack_pair(x2, x3))
 }
 
-/// Extract the low 64 bits of each 128-bit lane of two YMM registers as the
-/// 4 final results, applying the field mask.
+/// Extract the low 64 bits of each 128-bit lane of two YMM registers.
 #[inline(always)]
 unsafe fn extract_quad_lo(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) {
     let lane0 = _mm256_extracti128_si256::<0>(r_lo);
@@ -95,9 +60,7 @@ unsafe fn extract_quad_lo(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) 
     )
 }
 
-/// Extract the high 64 bits of each lane (the c_high half of each product
-/// when 2m > 64). Currently unused for `m ≤ 32` but kept for future
-/// extension to `m ∈ (32, 64]`.
+/// Extract the high 64 bits of each 128-bit lane of two YMM registers.
 #[allow(dead_code)]
 #[inline(always)]
 unsafe fn extract_quad_hi(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) {
@@ -112,10 +75,6 @@ unsafe fn extract_quad_hi(r_lo: __m256i, r_hi: __m256i) -> (u64, u64, u64, u64) 
         _mm_extract_epi64::<1>(lane3) as u64,
     )
 }
-
-// ---------------------------------------------------------------------------
-// Public kernels
-// ---------------------------------------------------------------------------
 
 /// Inner loop body: process one block of 4 elements via YMM-resident
 /// reduction and the static byte-shift `SHIFT`. Caller selects `SHIFT` from
@@ -143,10 +102,6 @@ unsafe fn process_quad_mul<const SHIFT: i32>(
     let (r_lo, r_hi) = ymm_barrett_reduce::<SHIFT>(prod_lo, prod_hi, mu_ymm, mod_ymm);
 
     let (r0, r1, r2, r3) = extract_quad_lo(r_lo, r_hi);
-    // The Barrett step leaves `r` in `[0, 2P)`; one subtraction-style
-    // correction lands it in `[0, P)`. We use bit-mask correction: r ^=
-    // modulus iff r >= 2^m. With `mask = (1<<m) - 1`, the check becomes
-    // `(r >> m) != 0`.
     [
         correct(r0, modulus_from_ymm(mod_ymm), SHIFT, mask),
         correct(r1, modulus_from_ymm(mod_ymm), SHIFT, mask),
@@ -168,17 +123,9 @@ use super::gf2m_common::correct;
 
 /// Batch element-wise multiply, 4-way unrolled YMM-resident Barrett.
 ///
-/// Processes blocks of 4 elements per outer iteration. The dependent
-/// reduction step stays in YMM registers, reducing the per-element cost
-/// to:
-/// * 6× VPCLMULQDQ per 4 elements (0.25 + 0.5 + 0.5 = 1.5 per element)
-/// * 6× YMM byte-shift / XOR per 4 elements
-/// * 4× `_mm_extract_epi64` to write the final results
-///
-/// This is ~3× fewer extracts than a per-element scalar-Barrett path, and
-/// ~2× fewer than the prior YMM-multiply / scalar-Barrett intermediate.
-///
-/// Tail elements are handled by [`clmul_barrett_reduce_inline`].
+/// Processes blocks of 4 elements per outer iteration with the reduction
+/// kept in YMM registers. Tail elements are handled by
+/// [`clmul_barrett_reduce_inline`].
 ///
 /// # Safety
 /// Requires `avx2`, `vpclmulqdq`, `pclmulqdq`, and `sse4.1` CPU features,
@@ -316,9 +263,6 @@ pub unsafe fn gf2m_batch_square_ymm_unroll4(
         "gf2m_batch kernel only supports m ∈ {{8, 16, 32}}; got {degree}"
     );
 
-    // The square kernel mirrors the multiply path with `b = a`. Re-using
-    // the multiply implementation keeps both kernels tested via the same
-    // YMM-resident Barrett core.
     gf2m_batch_mul_ymm_unroll4(a, a, out, mu, modulus, degree);
 }
 

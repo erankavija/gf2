@@ -1,29 +1,14 @@
 //! AVX2 / PCLMULQDQ kernels for fixed-size schoolbook carry-less
 //! multiplication used by `Gf2mWide`.
 //!
-//! The public surface contains `clmul_wide4_*` (GF(2^256)) and
-//! `clmul_wide9_*` (GF(2^571), stored in 9 limbs). Each function computes the
-//! full unreduced carry-less product. Barrett reduction is applied by the
-//! caller.
-//!
-//! # Lanes
-//!
-//! - [`clmul_wide4_ymm`] — uses VPCLMULQDQ on YMM (256-bit) registers via AVX2.
-//!   Each VPCLMULQDQ instruction computes two 64×64 carry-less multiplies
-//!   (one per 128-bit lane). The 16 scalar products of the 4×4 schoolbook
-//!   fold into 8 YMM multiplies. **Primary path on Zen 3.**
-//!
-//! - [`clmul_wide4_xmm`] — uses PCLMULQDQ on XMM (128-bit) registers. One
-//!   _mm_clmulepi64_si128 per scalar product. Universal x86_64 fallback.
-//!
-//! Every function writes the same little-endian limb layout as the scalar
-//! `clmul_wide_slice_portable::<N>` helper: partial product `a[i] · b[j]` contributes
-//! its low/high halves to `out[i + j]` / `out[i + j + 1]`.
-//!
-//! A ZMM (AVX-512VL + VPCLMULQDQ) lane is out of scope while the test host
-//! is AVX2-only (Zen 3); the required `_mm512_*` carry-less-multiply and
-//! 128-bit-lane extraction intrinsics are stable since Rust 1.89, available
-//! under the current MSRV (1.95).
+//! `clmul_wide4_*` (GF(2^256)) and `clmul_wide9_*` (GF(2^571), stored in 9
+//! limbs) compute the full unreduced carry-less product; the caller applies
+//! Barrett reduction. The `_ymm` lanes use VPCLMULQDQ on 256-bit registers,
+//! two 64×64 products per instruction; the `_xmm` lanes use one PCLMULQDQ
+//! per product. Every function writes the little-endian limb layout of the
+//! scalar `clmul_wide_slice_portable::<N>` helper: partial product
+//! `a[i] · b[j]` contributes its low/high halves to `out[i + j]` /
+//! `out[i + j + 1]`.
 
 #![allow(clippy::missing_safety_doc)]
 
@@ -48,12 +33,10 @@ use core::arch::x86_64::*;
 /// Requires the `pclmulqdq` and `sse4.1` CPU features.
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
 pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
-    // Zero out the accumulator.
     for slot in out.iter_mut() {
         *slot = 0;
     }
 
-    // 16 scalar PCLMULQDQ calls, matching the scalar schoolbook order.
     for i in 0..4 {
         let ai = _mm_set_epi64x(0, a[i] as i64);
         for j in 0..4 {
@@ -88,8 +71,6 @@ pub unsafe fn clmul_wide4_xmm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
 /// Requires the `avx2` and `vpclmulqdq` CPU features.
 #[target_feature(enable = "avx2", enable = "vpclmulqdq")]
 pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
-    // Zero-initialise the 8-limb accumulator. We hold it in a stack-allocated
-    // array; the inner loop extracts YMM lane halves and XORs them in.
     for slot in out.iter_mut() {
         *slot = 0;
     }
@@ -103,11 +84,9 @@ pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     for i in 0..4 {
         let a_vec = _mm256_set_epi64x(0, a[i] as i64, 0, a[i] as i64);
 
-        // j = 0, 1 paired; j = 2, 3 paired.
         for jp in (0..4).step_by(2) {
             let b_vec = _mm256_set_epi64x(0, b[jp + 1] as i64, 0, b[jp] as i64);
 
-            // One VPCLMULQDQ produces two 128-bit products, one per lane.
             let product = _mm256_clmulepi64_epi128::<0x00>(a_vec, b_vec);
 
             // Lane 0 is a[i] · b[jp]; lane 1 is a[i] · b[jp + 1].

@@ -1,36 +1,15 @@
-//! AVX2 batch multiply-reduce kernels for Mersenne primes.
-//!
-//! This module provides SIMD batch multiplication over small Mersenne prime
-//! fields — specifically `M31 = 2^31 - 1`. The kernel operates on packed
-//! `u32` lanes (8 lanes per 256-bit vector) and amortises the modular
-//! reduction across all lanes, beating scalar Montgomery for bulk
-//! multiplication workloads.
-//!
-//! # Algorithm (M31)
+//! AVX2 batch multiply-reduce kernels for the Mersenne prime
+//! `M31 = 2^31 - 1`, on packed `u32` lanes (8 per 256-bit vector).
 //!
 //! For `a, b ∈ [0, 2^31 - 1)`, the product `a·b` fits in 62 bits. Writing
 //! `p = a·b = hi · 2^31 + lo` with `lo < 2^31`, the identity `2^31 ≡ 1
-//! (mod 2^31 - 1)` gives
+//! (mod 2^31 - 1)` gives `a·b ≡ lo + hi (mod 2^31 - 1)`. AVX2 has no
+//! `u32 × u32 → u32` widening multiply, so `_mm256_mul_epu32` multiplies the
+//! even 32-bit lanes into four 64-bit products, the odd lanes follow after
+//! `_mm256_srli_epi64`, and the two reduced vectors are recombined.
 //!
-//! ```text
-//! a·b ≡ lo + hi  (mod 2^31 - 1),
-//! ```
-//!
-//! with `lo + hi ≤ 2·(2^31 - 2) < 2^32` — one conditional subtract
-//! canonicalises to `[0, 2^31 - 1)`.
-//!
-//! AVX2 lacks a native `u32 × u32 → u32` widening multiply. We use
-//! `_mm256_mul_epu32`, which multiplies the even-indexed 32-bit lanes of
-//! two 256-bit vectors and produces four 64-bit products. We apply the
-//! reduction to that vector of four products, then repeat for the odd
-//! lanes (shifted into even position via `_mm256_srli_epi64`).  Finally
-//! we blend the two result vectors back into eight 32-bit lanes.
-//!
-//! # Safety
-//!
-//! All public functions here are `unsafe` — callers must ensure AVX2 is
-//! available at runtime. The safe, dispatched entry points live in
-//! `gf2-core` via the `MersenneFns` table returned by [`detect`].
+//! All public functions are `unsafe`: callers must ensure AVX2 is available
+//! at runtime. `crate::mersenne::detect` returns the safe dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 
@@ -48,7 +27,6 @@ use core::arch::x86_64::*;
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_m31_64(p: __m256i) -> __m256i {
-    // 2^31 - 1 in the low 32 bits of every 64-bit lane.
     let p31 = _mm256_set1_epi64x((1i64 << 31) - 1);
     // First fold: p = hi·2^31 + lo ⇒ r = lo + hi (mod M31), r < 2^32.
     let lo = _mm256_and_si256(p, p31);
@@ -67,8 +45,7 @@ unsafe fn reduce_m31_64(p: __m256i) -> __m256i {
     // ge = (r >= M31); we compute this as !(r < M31). AVX2 lacks unsigned
     // compare, but all values fit in 33 bits ≪ 2^63 so signed 64-bit cmp
     // is correct.
-    let lt = _mm256_cmpgt_epi64(p31_vec, r); // lt mask where M31 > r (i.e. r < M31)
-                                             // mask_sub is -1 where we must subtract, 0 otherwise.
+    let lt = _mm256_cmpgt_epi64(p31_vec, r);
     let ones = _mm256_set1_epi64x(-1);
     let ge_mask = _mm256_xor_si256(lt, ones);
     let to_sub = _mm256_and_si256(ge_mask, p31_vec);
@@ -97,10 +74,7 @@ pub unsafe fn mersenne31_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
     let prod_odd = _mm256_mul_epu32(a_odd, b_odd);
     let red_odd = reduce_m31_64(prod_odd);
 
-    // Blend: red_even has results in low-32 of each 64-bit lane (lanes
-    // 0, 2, 4, 6). red_odd has results in low-32 of each 64-bit lane
-    // (should populate lanes 1, 3, 5, 7). Shift red_odd left 32 bits and
-    // OR with red_even.
+    // Odd results move to the high 32 bits of each 64-bit lane.
     let odd_shifted = _mm256_slli_epi64(red_odd, 32);
     _mm256_or_si256(red_even, odd_shifted)
 }
@@ -112,12 +86,6 @@ pub unsafe fn mersenne31_batch_mul8(a: __m256i, b: __m256i) -> __m256i {
 /// Batch lane-wise multiplication for `Fp<2^31 - 1>`.
 ///
 /// Computes `out[i] = a[i] * b[i] mod (2^31 - 1)` for all `i`.
-///
-/// # Arguments
-///
-/// * `a`, `b` — input slices of canonical M31 values (`< 2^31 - 1`).
-///   Must have the same length.
-/// * `out` — output slice (same length as `a` and `b`).
 ///
 /// # Safety
 ///
@@ -147,11 +115,9 @@ pub unsafe fn mersenne31_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
         _mm256_storeu_si256(o_ptr.add(i), rv);
     }
 
-    // Scalar tail for `n % 8` remaining elements.
     let tail_start = nvec * 8;
     for i in tail_start..n {
         let prod = (*a.get_unchecked(i) as u64) * (*b.get_unchecked(i) as u64);
-        // One fold suffices because prod < 2^62.
         let lo = (prod as u32) & ((1u32 << 31) - 1);
         let hi = (prod >> 31) as u32;
         let s = lo.wrapping_add(hi);
@@ -163,9 +129,8 @@ pub unsafe fn mersenne31_batch_mul(a: &[u32], b: &[u32], out: &mut [u32]) {
 
 /// Batch lane-wise multiply-and-accumulate for `Fp<2^31 - 1>`.
 ///
-/// Computes `acc[i] += a[i] * b[i] mod (2^31 - 1)`. Useful for dot-product
-/// style reductions where a running sum is maintained. Each accumulator
-/// lane is reduced after every update.
+/// Computes `acc[i] += a[i] * b[i] mod (2^31 - 1)`; each accumulator lane is
+/// reduced after every update.
 ///
 /// # Safety
 ///
@@ -198,13 +163,9 @@ pub unsafe fn mersenne31_batch_mul_add(a: &[u32], b: &[u32], acc: &mut [u32]) {
         let bv = _mm256_loadu_si256(b_ptr.add(i));
         let cv = _mm256_loadu_si256(c_ptr.add(i));
         let rv = mersenne31_batch_mul8(av, bv);
-        // Add in 32-bit lanes (each < 2^31), then canonicalise. The sum
-        // is at most 2·(2^31 - 2) < 2^32, so a single conditional subtract
-        // suffices. Implement the conditional as `min_u32(sum, sum - M31)`:
-        // when `sum >= M31`, `sum - M31 < sum` (valid unsigned); when
-        // `sum < M31`, `sum - M31` wraps to a very large u32 so `min`
-        // keeps the original `sum`. Both branches are branchless and use
-        // only AVX2 intrinsics.
+        // The 32-bit lane sum is at most 2·(2^31 - 2) < 2^32, so one
+        // conditional subtract canonicalises it, as `min_u32(sum, sum - M31)`:
+        // `sum - M31` wraps above `sum` exactly when `sum < M31`.
         let sum = _mm256_add_epi32(rv, cv);
         let minned = _mm256_min_epu32(sum, _mm256_sub_epi32(sum, p31_vec));
         _mm256_storeu_si256(c_ptr.add(i), minned);
@@ -247,10 +208,8 @@ pub unsafe fn mersenne31_batch_dot(a: &[u32], b: &[u32]) -> u32 {
     let a_ptr = a.as_ptr() as *const __m256i;
     let b_ptr = b.as_ptr() as *const __m256i;
 
-    // We accumulate 8 reduced u32 results into 4 pairs of 64-bit lanes.
-    // Each reduced value is < 2^31, so summing up to 2^33 of them in each
-    // 64-bit accumulator is safe. Since nvec ≤ len/8 ≤ 2^60 in practice,
-    // we just reduce each step to be safe.
+    // Each reduced value is < 2^31, so a 64-bit lane accumulates 2^33 of
+    // them without overflow.
     let mut acc_lo = _mm256_setzero_si256();
     let mut acc_hi = _mm256_setzero_si256();
 
@@ -259,31 +218,24 @@ pub unsafe fn mersenne31_batch_dot(a: &[u32], b: &[u32]) -> u32 {
         let av = _mm256_loadu_si256(a_ptr.add(i));
         let bv = _mm256_loadu_si256(b_ptr.add(i));
         let rv = mersenne31_batch_mul8(av, bv);
-        // rv has 8 canonical u32 values. Split into even/odd halves as u64
-        // and accumulate.
         let even64 = _mm256_and_si256(rv, mask32);
         let odd64 = _mm256_srli_epi64(rv, 32);
         acc_lo = _mm256_add_epi64(acc_lo, even64);
         acc_hi = _mm256_add_epi64(acc_hi, odd64);
     }
 
-    // Sum of acc_lo + acc_hi across all 4 lanes, then reduce.
     let combined = _mm256_add_epi64(acc_lo, acc_hi);
-    // Horizontal sum of 4×u64 lanes into a single u64. acc is at most
-    // 2^32 per lane × 2^32 iterations ≤ 2^64 worst case, but in practice
-    // n ≤ 2^30 so we are safe well below u64 overflow.
+    // The total is below 2^31 · n, within u64 for n < 2^33.
     let lo128 = _mm256_castsi256_si128(combined);
     let hi128 = _mm256_extracti128_si256(combined, 1);
     let sum128 = _mm_add_epi64(lo128, hi128);
 
-    // Extract two 64-bit halves.
     let s0 = _mm_cvtsi128_si64(sum128) as u64;
     let sum128_hi = _mm_srli_si128(sum128, 8);
     let s1 = _mm_cvtsi128_si64(sum128_hi) as u64;
 
     let mut total: u64 = s0.wrapping_add(s1);
 
-    // Reduce total modulo M31 via iterated fold.
     let p31: u64 = (1u64 << 31) - 1;
     while total >= (1u64 << 31) {
         total = (total & p31) + (total >> 31);
@@ -292,7 +244,6 @@ pub unsafe fn mersenne31_batch_dot(a: &[u32], b: &[u32]) -> u32 {
         total -= p31;
     }
 
-    // Tail: add scalar products.
     let tail_start = nvec * 8;
     for i in tail_start..n {
         let prod = (*a.get_unchecked(i) as u64) * (*b.get_unchecked(i) as u64);
