@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:22.586870977Z",
+  "dependencies": [],
+  "description": "In `crates/gf2-core/src/gf2m/`: `new_unchecked` in `field.rs` is identical to `new`, so the `_unchecked` name promises a skipped validation that does not exist; `BarrettReducerWide::new` in `barrett.rs` accepts $m \\le 64(N-1)$, where `field_mask` underflows; `NAME` and the `MODULUS_HIGH_BIT_*` constants in `wide_config.rs` have no consumer.\n\n## Success Criteria\n\n- [hard] REQ-01: `new_unchecked` skips a validation that `new` performs and documents its precondition per `@/inv/caller-trusted-fast-paths`, or it is removed.\n- [hard] REQ-02: `BarrettReducerWide::new` rejects every degree it cannot reduce, covered by a boundary test.\n- [hard] REQ-03: Constants without a consumer are removed.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:22.586870977Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "a44566c0-ddb2-4c18-91f6-6697e41d056f",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "GF(2^m) constructors and constants without effect",
+  "updated_at": "2026-10-03T17:07:22.742638126Z"
+}

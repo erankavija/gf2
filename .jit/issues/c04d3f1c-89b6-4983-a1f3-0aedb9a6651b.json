@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T16:41:27.238572641Z",
+  "dependencies": [],
+  "description": "A recoverable GPU fault during a checkpointed hybrid sweep aborts the sweep resumably, while the uncheckpointed scheduler substitutes the CPU path. A deterministic fallback inside the checkpointed sweep needs the fault-injection modulus, which affects results, in the checkpoint identity.\n\n## Background\n\n`crates/gf2-sim/src/executor/drain.rs` propagates the fault because `inject_gpu_oom_modulus` is outside `snr_checkpoint::config_hash`, so a CPU-substituted resume would not be byte-identical. `@/inv/accelerator-safe-fallback` and `@/inv/deterministic-seeded-execution` both apply.\n\n## Success Criteria\n\n- [hard] REQ-01: A recoverable GPU fault in a checkpointed sweep completes through the CPU path, and a resumed run reproduces the uninterrupted run's result columns byte for byte at a fixed seed, covered by a test.\n- [hard] REQ-02: The checkpoint identity covers every input that affects which path decodes a frame; a checkpoint written under a different value is refused on resume, covered by a test.\n- [hard] REQ-03: Existing checkpoints remain readable or are refused with an explicit error; the choice is recorded in the issue.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T16:41:27.238572641Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "c04d3f1c-89b6-4983-a1f3-0aedb9a6651b",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Deterministic CPU fallback for a recoverable GPU fault in a checkpointed sweep",
+  "updated_at": "2026-10-03T16:41:27.605731640Z"
+}

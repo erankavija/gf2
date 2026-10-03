@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:22.273136956Z",
+  "dependencies": [],
+  "description": "Three defects in `crates/gf2-core/src/gf2m/`: `verify_primitive` in `field.rs` treats the cofactor left by trial division as prime, which holds only for $m \\le 16$, while `generation.rs` calls it up to $m = 64$; `PrimitiveGenerator::new` accepts degree 64, where the searches evaluate `1u64 << 64`; `ParallelExhaustive { threads }` ignores `threads`, and its documentation says otherwise.\n\n## Success Criteria\n\n- [hard] REQ-01: `verify_primitive` returns the correct verdict for every supported degree, checked against the primitive-polynomial database and against known non-primitive irreducible polynomials above degree 16.\n- [hard] REQ-02: Degree 64 either works or is rejected at construction with a documented error; no shift overflows.\n- [hard] REQ-03: `ParallelExhaustive` uses its `threads` value, with results identical across thread counts, or the field is removed.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:22.273136956Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "1fe6e218-b0c9-4d78-b267-fe29e50399db",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Primitive polynomial generation is unsound above degree 16 and ignores its thread count",
+  "updated_at": "2026-10-03T17:07:22.423337024Z"
+}

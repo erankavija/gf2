@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T16:42:05.379039995Z",
+  "dependencies": [],
+  "description": "The AVX2 transpose kernel in `crates/gf2-kernels-simd/src/x86/transpose.rs` processes one $64 \\times 64$ block per call. For matrices beyond the L1-resident range, an outer loop in `gf2-core` that groups blocks into cache-sized tiles is the remaining cache-layout step.\n\n## Success Criteria\n\n- [hard] REQ-01: The transpose of a matrix larger than the first-level cache runs through a tiled outer loop whose results equal the scalar transpose for word-boundary and large sizes, covered by the shared behavioral suite.\n- [aspirational] REQ-02: A committed receipt from an uncontended host shows the tiled loop's throughput against the current loop under the repository's benchmark protocol.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T16:42:05.379039995Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "ebd26779-46fb-4103-acdf-c2197d6dd8dc",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Tile-of-tiles outer loop for the 64x64 bit-matrix transpose kernel",
+  "updated_at": "2026-10-03T16:42:05.572824797Z"
+}

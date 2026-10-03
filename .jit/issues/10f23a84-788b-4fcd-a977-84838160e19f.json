@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:24.481862721Z",
+  "dependencies": [],
+  "description": "Survey scripts under `dev/active/` name evidence directories, tarballs and launchers under `dev/bench_results/` by literal path, the named exception `evidence-directory-paths` to `@/inv/no-dev-path-coupling`. The artifacts carry no identity in their bytes, and the literals are written into recorded output.\n\n## Success Criteria\n\n- [hard] REQ-01: Each survey script locates its evidence directories through one runtime-resolved repository root and an identity or an explicit argument, with no literal `dev/` path.\n- [hard] REQ-02: Recorded outputs of the scripts on committed inputs are unchanged, or the change is recorded with the receipts it affects.\n- [hard] REQ-03: The exception record states that the exception has ended.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:24.481862721Z",
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "10f23a84-788b-4fcd-a977-84838160e19f",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:tooling",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Converge survey-script evidence paths on runtime-resolved locations",
+  "updated_at": "2026-10-03T17:07:24.633808949Z"
+}

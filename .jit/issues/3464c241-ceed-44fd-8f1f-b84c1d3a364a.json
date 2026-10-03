@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:23.223653020Z",
+  "dependencies": [],
+  "description": "`Nr5gRateMatchedDecoder::decode_iterative` in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs` returns positions `0..target_k` of the decoded word as the message, while the encoder and `extract_message` use `systematic_cols[i]`. The two differ wherever the mother-code reduction swaps a systematic column below `target_k`. The defect is reported from reading the code and is unconfirmed by a failing test.\n\n## Success Criteria\n\n- [hard] REQ-01: A test encodes and decodes through `decode_iterative` for a base graph and lifting size whose `systematic_cols` differ from the identity prefix, and the returned message equals the encoded message.\n- [hard] REQ-02: `decode_iterative` and `extract_message` read the message through one shared mapping.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:23.223653020Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "3464c241-ceed-44fd-8f1f-b84c1d3a364a",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "NR rate-matched iterative decoding reads the message from the first target_k positions",
+  "updated_at": "2026-10-03T17:07:23.371053542Z"
+}

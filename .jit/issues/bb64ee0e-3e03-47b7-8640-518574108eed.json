@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T16:42:06.177316673Z",
+  "dependencies": [],
+  "description": "The AVX2 packed $\\mathbb{F}_7$ bipedal kernel in `crates/gf2-kernels-simd/src/x86/bipedal_avx2_packed7.rs` has no `vpshufb` 16-byte nibble-lookup path; it uses the generic lane arithmetic.\n\n## Success Criteria\n\n- [hard] REQ-01: A `vpshufb` nibble-lookup path computes the same results as the current kernel on the shared packed-field suite, with the scalar fallback retained.\n- [aspirational] REQ-02: A committed receipt from an uncontended host compares the two paths under the repository's benchmark protocol.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T16:42:06.177316673Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "bb64ee0e-3e03-47b7-8640-518574108eed",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "type:enhancement"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "AVX2-native nibble-LUT path for the packed F_7 bipedal kernel",
+  "updated_at": "2026-10-03T16:42:06.371855639Z"
+}

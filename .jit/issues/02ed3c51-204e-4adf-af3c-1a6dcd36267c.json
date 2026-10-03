@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T16:41:28.014418272Z",
+  "dependencies": [],
+  "description": "`crates/gf2-sim/src/permanent_campaign/validation.rs` still admits continuation of the producer-0 schema-1 run state. Schema-2 receipts need only the read-only decoder of that state as evidence; the executable admission path is a superseded representation under `@/inv/canonical-cutover`.\n\n## Success Criteria\n\n- [hard] REQ-01: No code path resumes or continues a producer-0 schema-1 run state.\n- [hard] REQ-02: The read-only decoder `FrozenProducer0RunStateV1Evidence` and its content-identity check remain, and every committed schema-2 receipt that cites the state still verifies, covered by the existing validation tests.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T16:41:28.014418272Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "02ed3c51-204e-4adf-af3c-1a6dcd36267c",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Remove producer-0 continuation admission from permanent campaign validation",
+  "updated_at": "2026-10-03T16:41:28.373359525Z"
+}

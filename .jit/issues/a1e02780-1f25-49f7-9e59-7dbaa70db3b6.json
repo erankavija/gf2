@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:23.536736117Z",
+  "dependencies": [],
+  "description": "Tests that do not check what their names state: `test_cached_neighbors_correctness` in `crates/gf2-coding/src/ldpc/core.rs` compares `row_iter` with itself; `test_with_lane_canonicalises` in `crates/gf2-algebra/src/packed/bipedal3.rs` starts from a lane that is already canonical, so it never overwrites an alternate-zero lane.\n\n## Success Criteria\n\n- [hard] REQ-01: Each named test asserts the property in its name against an independent reference, and fails when that property is broken (shown by a temporary mutation recorded in the commit message).\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:23.536736117Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "a1e02780-1f25-49f7-9e59-7dbaa70db3b6",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Vacuous and misnamed tests found by the comment sweep",
+  "updated_at": "2026-10-03T17:07:23.686942165Z"
+}

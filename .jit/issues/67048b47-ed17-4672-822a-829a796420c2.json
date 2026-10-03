@@ -46,17 +46,17 @@
   "gates_status": {
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T16:39:02.766030994Z",
+      "updated_at": "2026-10-03T16:42:48.392258522Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-10-03T16:37:14.778945313Z",
+      "updated_at": "2026-10-03T16:42:48.087068382Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T16:32:32.461459366Z",
+      "updated_at": "2026-10-03T16:39:54.259018909Z",
       "updated_by": "auto:executor"
     }
   },
@@ -71,5 +71,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Link unlinked owned artifacts to their issues",
-  "updated_at": "2026-10-03T16:39:24.786462326Z"
+  "updated_at": "2026-10-03T16:42:48.392258522Z"
 }

@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T16:41:28.753774208Z",
+  "dependencies": [],
+  "description": "`Scheduler::run` and `Scheduler::run_instrumented` in `crates/gf2-sim/src/executor/scheduler.rs` accept a `batch` argument and do not use it; the full sweep is taken from the pipeline's configuration.\n\n## Success Criteria\n\n- [hard] REQ-01: The parameter is removed from both methods and every caller, or it selects the batch the methods process, covered by a test.\n- [hard] REQ-02: Public Rustdoc of both methods states the resulting contract.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T16:41:28.753774208Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "8342487d-9899-42c7-a30c-f5618bb0ee74",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Scheduler::run and run_instrumented ignore their batch parameter",
+  "updated_at": "2026-10-03T16:41:29.059683912Z"
+}

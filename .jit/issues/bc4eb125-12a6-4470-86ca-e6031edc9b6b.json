@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T16:42:06.579556810Z",
+  "dependencies": [],
+  "description": "Three defects in `crates/gf2-kernels-simd/src/x86/`: `fp_small_panel_gemm` reduces its u32 accumulators only after the full $k$ axis, so they overflow for $k > 2^{32} / (p-1)^2$, and no public documentation or check states the bound; the panel kernels in `fp_small_ple.rs` and `fp_medium_ple.rs` panic on a slice index when `win - 1 > PANEL_SCRATCH_COLS`, and their documentation lists no panic; `pack_i32x8_to_u8_local` in `fp_small_panel.rs` duplicates `fp_small_f32::pack_i32x8_to_u8`.\n\n## Success Criteria\n\n- [hard] REQ-01: `fp_small_panel_gemm` rejects or correctly handles every $k$ beyond its accumulator bound, covered by a test at the boundary, and its documentation states the supported domain.\n- [hard] REQ-02: The panel kernels' window limit is a documented precondition checked at the safe boundary, or the kernels handle wider windows; the behavior is covered by a test.\n- [hard] REQ-03: One pack helper serves both kernels, per `@/inv/convention-convergence`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T16:42:06.579556810Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "bc4eb125-12a6-4470-86ca-e6031edc9b6b",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Undocumented limits and a duplicated helper in the small-prime panel kernels",
+  "updated_at": "2026-10-03T16:42:06.762134678Z"
+}

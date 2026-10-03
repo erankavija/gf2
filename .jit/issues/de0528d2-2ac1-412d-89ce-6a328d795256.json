@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:24.168299692Z",
+  "dependencies": [],
+  "description": "The comment sweep leaves process narration that lives outside comments: panic and assert strings such as \"not yet implemented (placeholder detected)\", \"not in scope\", \"caused the BCH bug\", \"forward-compat stub\", \"(design doc §4 drain commit contract)\"; test and module names that carry tracker ids or \"today\"; and `#[ignore]` attributes with a timing figure or no reason.\n\n## Background\n\nReported per sweep unit in the execution record of the documentation-overhaul epic: `crates/gf2-coding/src/ldpc/` (`dvb_t2/builder.rs`, `dvb_t2/bit_interleaver.rs`, `encoding/richardson_urbanke.rs`, `core.rs`, `nr_5g/mod.rs`), `crates/gf2-core/src/gf2m/field.rs`, `crates/gf2-kernels-simd/src/x86/` (`bipedal_avx512.rs`, `fp_small_f32.rs`, `fp_small.rs`), `crates/gf2-sim/src/executor/drain.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: No panic, assert or log string in `crates/` narrates history, process or planned work; each states the violated condition.\n- [hard] REQ-02: No test or module name carries a tracker id or a time-relative word.\n- [hard] REQ-03: Every `#[ignore]` carries a tier-vocabulary reason without a timing figure.\n- [hard] REQ-04: Unreachable placeholder branches are removed.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:24.168299692Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "de0528d2-2ac1-412d-89ce-6a328d795256",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Narration and placeholders in string literals, test names and ignore reasons",
+  "updated_at": "2026-10-03T17:07:24.317657325Z"
+}

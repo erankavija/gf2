@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:23.854550651Z",
+  "dependencies": [],
+  "description": "`crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs` and `RuEncodingMatrices` are named after Richardson-Urbanke encoding, while the code reduces the parity-check matrix to RREF and stores a dense parity matrix.\n\n## Success Criteria\n\n- [hard] REQ-01: The module and type names describe the implemented method, or the module implements Richardson-Urbanke encoding with its approximate-lower-triangular preprocessing, cited through the citation registry.\n- [hard] REQ-02: No superseded alias remains, per `@/inv/canonical-cutover`.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:23.854550651Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "d436dd5f-f0f7-4243-9727-d00a1830f61b",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "RuEncodingMatrices names an algorithm the encoder does not implement",
+  "updated_at": "2026-10-03T17:07:24.005175231Z"
+}

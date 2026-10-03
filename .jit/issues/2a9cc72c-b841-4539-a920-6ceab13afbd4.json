@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T17:07:22.909191776Z",
+  "dependencies": [],
+  "description": "`LdpcCode::is_systematic` in `crates/gf2-coding/src/ldpc/core.rs` returns `false` for every code; it does not inspect the code's structure.\n\n## Success Criteria\n\n- [hard] REQ-01: `is_systematic` returns whether the code's layout places the message bits at identified codeword positions, covered by tests on a systematic and a non-systematic code.\n- [hard] REQ-02: Its Rustdoc states the definition of systematic that it decides.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T17:07:22.909191776Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2a9cc72c-b841-4539-a920-6ceab13afbd4",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "LdpcCode::is_systematic always returns false",
+  "updated_at": "2026-10-03T17:07:23.060029247Z"
+}
