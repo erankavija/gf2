@@ -752,13 +752,13 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// kernel for every output cell against the cached packs. Unpacks the
 /// output and writes it through `out` (`m × n` row-major).
 ///
-/// **Dispatch policy (updated 2026-05-25, issue 41096af5):** Candidate C
-/// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells except the new
-/// GF(251)/n ≥ 512 production default (route A). `select_f32_path` returns `true` for `P == 251 && n >= 512`
-/// (the pack-cost amortisation threshold of the route-selection decision,
-/// `@/issue/41096af5`); the conservative `prime_route.f32_min_prime` and
-/// `prime_route.f32_min_cols` defaults (251 and 512) route exactly the cell `P
-/// == 251 && n >= 512` through route A; all other in-scope primes have `P <
+/// **Dispatch policy (issue 41096af5):** Candidate C
+/// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells except the
+/// GF(251)/n ≥ 512 production default (route A). `select_f32_path` returns
+/// `true` for `P == 251 && n >= 512` (the pack-cost amortisation threshold of
+/// the route-selection decision, `@/issue/41096af5`); the conservative
+/// `prime_route.f32_min_prime` and `prime_route.f32_min_cols` defaults (251
+/// and 512) route exactly the cell `P == 251 && n >= 512` through route A; all other in-scope primes have `P <
 /// 251` and stay on Candidate C. [`prime_gemm_route`] reports the arm for any
 /// cell.
 ///

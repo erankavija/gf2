@@ -5,8 +5,8 @@
 //! (`crate::fp_small`) is selected over F at every in-scope cell except
 //! GF(251)/n ≥ 512, where the route-A variant
 //! ([`SmallPrimeF32Fns::batch_gemm_route_a_fn`]) is selected once the pack
-//! cost amortises. Production routes GF(251)/n ≥
-//! 512 through route A and every other `P ≤ 251` cell through Candidate C
+//! cost amortises. Production routes GF(251)/n ≥ 512
+//! through route A and every other `P ≤ 251` cell through Candidate C
 //! (`N_THRESH_PRIME = 251` combined with `n ≥ 512` in
 //! `crates/gf2-core/src/gfp/simd_ops.rs::select_f32_path`, issue 41096af5). The
 //! `batch_gemm_fn` body is compiled in but not selected at runtime.

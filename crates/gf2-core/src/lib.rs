@@ -336,9 +336,8 @@ pub(crate) mod simd {
     ///
     /// The kernel is not selected by automatic dispatch; it is exposed only via
     /// the GF(251)-only opt-in toggle
-    /// [`crate::gfp::simd_ops::set_route_c_gf251_enabled`]. Default
-    /// production dispatch uses Candidate C ([`maybe_fp_small`]) owns all `p ≤
-    /// 251` cells.
+    /// [`crate::gfp::simd_ops::set_route_c_gf251_enabled`]. Automatic
+    /// dispatch uses Candidate C ([`maybe_fp_small`]) for every `p ≤ 251`.
     ///
     /// Returns `None` on non-AVX2 hardware; callers must fall back to
     /// [`maybe_fp_small`] (the production Candidate C row-panel
