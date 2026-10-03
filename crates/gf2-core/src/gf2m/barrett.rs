@@ -1,86 +1,15 @@
 //! Barrett reduction for GF(2^m) polynomial arithmetic.
 //!
-//! Barrett reduction replaces the standard shift-and-XOR reduction loop with a
-//! precomputed-reciprocal approach. Given the irreducible polynomial P(x) of degree m,
-//! the Barrett constant `mu = x^(2m) / P(x)` is precomputed once. Reduction of a
-//! product c(x) of degree ≤ 2(m-1) then requires two carry-less multiplications
-//! and a possible single correction, rather than an O(m) loop of conditional XORs.
+//! Given the irreducible polynomial P(x) of degree m, the Barrett constant
+//! `mu = x^(2m) / P(x)` is precomputed once. Reduction of a product c(x) of
+//! degree ≤ 2(m-1) then takes two carry-less multiplications and at most two
+//! XOR corrections.
 //!
-//! All arithmetic here is over GF(2): addition is XOR, and multiplication is
-//! carry-less (no carries propagate between bit positions).
-//!
-//! # Width limitation (`m <= 63`) — [`BarrettReducer`]
-//!
-//! **[`BarrettReducer`] deliberately caps the supported degree at `m <= 63`.**
-//!
-//! The implementation represents both the Barrett constant
-//! `mu = x^(2m) / P(x)` (up to `m+1` bits) and the dividend `x^(2m)` (up to
-//! `2m + 1` bits) in a single `u128`, which caps `2m + 1 <= 128`, i.e.
-//! `m <= 63`. Extending Barrett to `m = 64..=127` requires true 256-bit
-//! intermediate arithmetic:
-//!
-//! - the product `c(x)` has degree up to `2m - 2` (252 bits at `m = 127`);
-//! - the Barrett constant `mu` has degree up to `m` (up to 128 bits);
-//! - the two carry-less multiplications `c_high * mu` and `q * P` then
-//!   produce 256-bit intermediates.
-//!
-//! This widening is provided by [`BarrettReducerWide`] (JIT issue `9dd11973`),
-//! which landed as Task 3 of story `6fb4abad`. [`BarrettReducerWide`] handles
-//! arbitrary `N`-word fields (e.g. `m = 127` with `N = 2`, `m = 256` with
-//! `N = 4`) using multi-word carry-less multiplication through
-//! `wide::clmul_wide_dispatch`, the canonical selection this crate's
-//! wide products share.
-//!
-//! # Multi-word Barrett reduction — [`BarrettReducerWide`]
-//!
-//! [`BarrettReducerWide`] is the N-word sibling. Key design decisions:
-//!
-//! ## `[u64; 2*N]` and the stable-Rust const-generics caveat
-//!
-//! On stable Rust, `[u64; 2 * N]` is not permitted as an array-length
-//! expression in a function signature (the `generic_const_exprs` feature
-//! remains nightly-only). The same workaround as
-//! [`super::wide::clmul_wide`] is used throughout this module:
-//!
-//! - **Pattern (a): two const parameters with a compile-time assertion.**
-//!   [`BarrettReducerWide::reduce`] is declared as
-//!   `fn reduce<const M: usize>(&self, product: &[u64; M]) -> [u64; N]` and
-//!   asserts `M == 2 * N` at the call site via `const { assert!(M == 2 * N) }`.
-//!   Callers supply the turbofish: `reducer.reduce::<{2 * N}>(&product)`.
-//!
-//! This matches the pattern established by `clmul_wide::<N, {2*N}>` and keeps
-//! the API purely functional (no `&mut` out-parameters).
-//!
-//! ## `mu` storage
-//!
-//! The Barrett constant `mu = floor(x^(2m) / P(x))` has degree exactly `m`, so
-//! it needs `m + 1` bits. Because `m` occupies the same `N` words as the field
-//! elements (with `64*(N-1) < m <= 64*N`), the degree-`m` bit of `mu` may spill
-//! into a hypothetical `N`-th word (0-indexed). To avoid the `N+1`-word
-//! allocation problem, `mu` is stored as `[u64; N]` with its **implicit leading
-//! bit at position m handled explicitly** during reduction — exactly the same
-//! convention used by `Gf2mWideConfig::MODULUS`.
-//!
-//! ## Internal arithmetic
-//!
-//! All multi-word carry-less multiplications go through
-//! `wide::clmul_wide_dispatch`, whose rustdoc states the exact dispatch
-//! predicate; when it holds, `GF(2^256)` and `GF(2^571)` reduce through the
-//! kernels of `gf2-kernels-simd`, and every other case runs the portable
-//! schoolbook. Internal helpers operate on `&[u64]` slices
-//! with `debug_assert!` bounds checks when the output size cannot be expressed
-//! as a compile-time constant directly in that context.
+//! [`BarrettReducer`] holds `mu` and the dividend `x^(2m)` in a `u128` and
+//! supports `m <= 63`. [`BarrettReducerWide`] supports `N`-word fields; its
+//! carry-less products go through `wide::clmul_wide_dispatch`.
 
 /// Carry-less multiplication of two GF(2) polynomials.
-///
-/// Computes the product `a(x) * b(x)` over GF(2), where each bit of `a` and `b`
-/// represents a coefficient. The result can have degree up to `deg(a) + deg(b)`,
-/// fitting in a `u128`.
-///
-/// # Arguments
-///
-/// * `a` - First polynomial (up to 64 bits).
-/// * `b` - Second polynomial (up to 64 bits).
 ///
 /// # Examples
 ///
@@ -93,10 +22,6 @@
 /// // x * x = x^2
 /// assert_eq!(clmul(0b10, 0b10), 0b100);
 /// ```
-///
-/// # Complexity
-///
-/// O(n) where n is the number of set bits in `b`.
 pub fn clmul(a: u64, b: u64) -> u128 {
     // SSOT: the bit-by-bit scalar algorithm lives in `gf2-kernels-simd`
     // so production callers and test-only reference oracles share a
@@ -106,9 +31,7 @@ pub fn clmul(a: u64, b: u64) -> u128 {
 
 /// Carry-less multiplication of two `u128` GF(2) polynomials, returning a `u128`.
 ///
-/// This is a truncating variant — the caller must ensure the result fits in 128 bits
-/// (i.e., `deg(a) + deg(b) < 128`). Used internally for Barrett reduction steps
-/// where operand degrees are bounded.
+/// Truncating: the caller ensures `deg(a) + deg(b) < 128`.
 fn clmul128_trunc(a: u128, b: u128) -> u128 {
     let mut result: u128 = 0;
     let mut b_remaining = b;
@@ -123,35 +46,16 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 
 /// Precomputed Barrett reduction constants for a specific irreducible polynomial.
 ///
-/// Barrett reduction converts the modular reduction step of GF(2^m) multiplication
-/// from an O(m) conditional-XOR loop into two carry-less multiplications plus a
-/// possible single correction. The tradeoff is worthwhile when reducing many
-/// products by the same modulus (e.g., during field multiplication tables or
-/// repeated arithmetic).
-///
-/// # Width limitation (`degree <= 63`)
-///
-/// **Warning:** This reducer is restricted to `degree <= 63` and will panic
-/// in [`BarrettReducer::new`] for any larger degree. The restriction exists
-/// because both the Barrett constant `mu = x^(2m) / P(x)` and the dividend
-/// `x^(2m)` are stored in a single `u128`, capping `2m` at 128 bits.
-///
-/// The SIMD dispatch in [`crate::gf2m::Gf2mField_`] mirrors that cap —
-/// Barrett is only wired in when the backing type is `u64`. For wider
-/// fields (`m = 64..=127`, `m = 128..=255`, etc.) use
-/// [`BarrettReducerWide`], which handles arbitrary `N`-word fields by
-/// operating through `wide::clmul_wide_dispatch` and explicit
-/// multi-word shift helpers. For u128-backed fields at `m >= 64`,
-/// `Gf2mField_<u128>` transparently falls back to the generic schoolbook
-/// primitive, so correctness is preserved — only the PCLMULQDQ + Barrett
-/// fast path is unavailable at those degrees via this reducer.
+/// Both the Barrett constant `mu = x^(2m) / P(x)` and the dividend `x^(2m)`
+/// are held in a `u128`, so `degree <= 63`. [`BarrettReducerWide`] covers
+/// wider fields.
 ///
 /// # Examples
 ///
 /// ```
 /// use gf2_core::gf2m::barrett::BarrettReducer;
 ///
-/// // GF(2^8) with AES polynomial x^8 + x^4 + x^3 + x^2 + 1 = 0x11B
+/// // GF(2^8) with AES polynomial x^8 + x^4 + x^3 + x + 1 = 0x11B
 /// let reducer = BarrettReducer::new(0x11B, 8);
 ///
 /// // Reduce a product back to the field
@@ -159,11 +63,6 @@ fn clmul128_trunc(a: u128, b: u128) -> u128 {
 /// let reduced = reducer.reduce(product);
 /// assert!(reduced < 256); // result fits in 8 bits
 /// ```
-///
-/// # Panics
-///
-/// Panics if `degree` is 0 or greater than 63, or if the leading coefficient
-/// of `irreducible_poly` is not at position `degree`.
 #[derive(Debug)]
 pub struct BarrettReducer {
     /// The irreducible polynomial P(x), degree m.
@@ -177,21 +76,12 @@ pub struct BarrettReducer {
 impl BarrettReducer {
     /// Precompute Barrett constants for the given irreducible polynomial.
     ///
-    /// Computes `mu = x^(2m) / P(x)` via polynomial long division over GF(2).
-    ///
-    /// # Arguments
-    ///
-    /// * `irreducible_poly` - The irreducible polynomial P(x) as a bitmask.
-    ///   Bit `i` represents the coefficient of x^i. Must have degree exactly `degree`.
-    /// * `degree` - The degree m of the irreducible polynomial.
+    /// `irreducible_poly` is a bitmask: bit `i` is the coefficient of x^i.
     ///
     /// # Panics
     ///
     /// Panics if `degree` is 0 or greater than 63, or if the polynomial does not
-    /// have its leading bit at position `degree`. The upper bound of 63 is a
-    /// deliberate contract, not a bug — see the struct-level and module-level
-    /// docs for the 256-bit-arithmetic reasoning, and JIT issue `6fb4abad`
-    /// for the planned extension to `m = 64..=127`.
+    /// have its leading bit at position `degree`.
     ///
     /// # Complexity
     ///
@@ -205,12 +95,9 @@ impl BarrettReducer {
         );
 
         // Compute mu = x^(2m) / P(x) via polynomial long division over GF(2).
-        // Dividend is x^(2m) = 1 << (2*m). We divide by P(x).
         let m = degree;
         let p = irreducible_poly;
 
-        // Long division: process bits from degree 2m down to degree m.
-        // The quotient has degree m.
         let mut remainder: u128 = 1u128 << (2 * m); // x^(2m)
         let mut quotient: u128 = 0;
 
@@ -218,7 +105,6 @@ impl BarrettReducer {
         // if the corresponding bit of the remainder is set, set the quotient bit
         // and XOR in P shifted to that position.
         for i in (0..=m).rev() {
-            // We're looking at degree (m + i) in the remainder
             let bit_pos = m + i;
             if (remainder >> bit_pos) & 1 == 1 {
                 quotient |= 1u128 << i;
@@ -234,17 +120,6 @@ impl BarrettReducer {
     }
 
     /// Reduce a polynomial product of degree ≤ 2(m-1) to an m-bit field element.
-    ///
-    /// Applies Barrett reduction: given `c(x)` with `deg(c) < 2m`, computes
-    /// `c(x) mod P(x)` using the precomputed Barrett constant.
-    ///
-    /// # Arguments
-    ///
-    /// * `product` - The polynomial to reduce, with degree at most `2m - 2`.
-    ///
-    /// # Returns
-    ///
-    /// The remainder `c(x) mod P(x)` as a `u64`, fitting in m bits.
     ///
     /// # Examples
     ///
@@ -263,12 +138,11 @@ impl BarrettReducer {
     ///
     /// # Complexity
     ///
-    /// O(m²) for two carry-less multiplications of m-bit polynomials.
+    /// Two carry-less multiplications, each a loop over the set bits of one operand.
     pub fn reduce(&self, product: u128) -> u64 {
         let m = self.degree;
         let field_mask = (1u128 << m) - 1;
 
-        // If already reduced, return immediately
         if product >> m == 0 {
             return product as u64;
         }
@@ -281,12 +155,11 @@ impl BarrettReducer {
         let qp = clmul128_trunc(q, self.modulus);
         let r = product ^ qp;
 
-        // Step 3: if deg(r) >= m, correct by XORing with P once
+        // Step 3: correct by XORing with P while deg(r) >= m (at most twice)
         let mut result = r;
         if result >> m != 0 {
             result ^= self.modulus;
         }
-        // One more correction may be needed in edge cases
         if result >> m != 0 {
             result ^= self.modulus;
         }
@@ -294,21 +167,11 @@ impl BarrettReducer {
         (result & field_mask) as u64
     }
 
-    /// Reduce using an externally-provided carry-less multiplication function.
+    /// Reduce using an externally-provided carry-less multiplication function,
+    /// e.g. a PCLMULQDQ kernel, for the two internal products.
     ///
-    /// This allows using SIMD PCLMULQDQ for the two internal carry-less
-    /// multiplications instead of the scalar fallback, turning Barrett reduction
-    /// from O(m²) into O(1) (two hardware `PCLMULQDQ` instructions).
-    ///
-    /// # Arguments
-    ///
-    /// * `product` - The polynomial to reduce, with degree at most `2m - 2`.
-    /// * `clmul` - A carry-less multiplication function `(u64, u64) -> u128`.
-    ///   Both operands in the Barrett steps fit in `u64` for `m ≤ 63`.
-    ///
-    /// # Returns
-    ///
-    /// The remainder `c(x) mod P(x)` as a `u64`, fitting in m bits.
+    /// `product` has degree at most `2m - 2`. Both operands of each `clmul`
+    /// call fit in `u64` because `m ≤ 63`.
     ///
     /// # Examples
     ///
@@ -326,16 +189,10 @@ impl BarrettReducer {
     /// let reduced = reducer.reduce_with_clmul(product, clmul);
     /// assert!(reduced < 16); // fits in 4 bits
     /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1) when `clmul` is a hardware PCLMULQDQ instruction (two multiplications
-    /// plus constant-time correction). O(m) when `clmul` is the scalar fallback.
     pub fn reduce_with_clmul(&self, product: u128, clmul: fn(u64, u64) -> u128) -> u64 {
         let m = self.degree;
         let field_mask = (1u128 << m) - 1;
 
-        // If already reduced, return immediately
         if product >> m == 0 {
             return product as u64;
         }
@@ -382,13 +239,8 @@ impl BarrettReducer {
 
 /// Naive polynomial reduction over GF(2) by repeated subtraction (XOR).
 ///
-/// Used as a reference implementation for testing Barrett reduction correctness.
-///
-/// # Arguments
-///
-/// * `product` - The polynomial to reduce.
-/// * `modulus` - The irreducible polynomial P(x) of degree `degree`.
-/// * `degree` - The degree of the modulus.
+/// Reference implementation for testing Barrett reduction; `modulus` has degree
+/// `degree`.
 ///
 /// # Examples
 ///
@@ -399,13 +251,8 @@ impl BarrettReducer {
 /// // Actually: x^5 XOR (x^4+x+1)<<1 = 0b100000 XOR 0b100110 = 0b000110
 /// assert_eq!(naive_reduce(0b100000, 0b10011, 4), 0b0110);
 /// ```
-///
-/// # Complexity
-///
-/// O(m) shift-and-XOR operations.
 pub fn naive_reduce(product: u128, modulus: u128, degree: u32) -> u64 {
     let mut r = product;
-    // Find the degree of r
     for bit in (degree..128).rev() {
         if (r >> bit) & 1 == 1 {
             r ^= modulus << (bit - degree);
@@ -416,14 +263,6 @@ pub fn naive_reduce(product: u128, modulus: u128, degree: u32) -> u64 {
 
 // ---------------------------------------------------------------------------
 // Multi-word Barrett reduction helpers (used by BarrettReducerWide)
-//
-// The array-based versions of `wide_shr_2n_to_n`, `clmul_wide_with_implicit_high`,
-// and `wide_is_already_reduced` previously lived here, but have been retired:
-// `BarrettReducerWide::reduce<M>` now delegates to `reduce_slice`, and the
-// slice-based private helpers (`slice_wide_shr_2n_to_n`,
-// `slice_clmul_wide_with_implicit_high`, `slice_wide_is_already_reduced`)
-// below are the single source of truth for the reduction algorithm. Keeping
-// both sets of helpers invited the SSOT violation that code-review flagged.
 // ---------------------------------------------------------------------------
 
 /// Compute `mu = floor(x^(2m) / P(x))` over GF(2) via polynomial long division.
@@ -443,20 +282,13 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
         n64 = 64 * N
     );
 
-    // We perform long division of x^(2m) by P(x) over GF(2).
-    // The dividend starts as x^(2m) and we reduce it degree by degree.
-    // The quotient collects the bits from degree 2m down to m (yielding m+1
-    // bits total for the full mu, but we drop the leading 1).
-    //
-    // Implementation: maintain the remainder as a 2N+1-word array (2m+1 bits).
-    // For MSRV we cannot write [u64; 2*N+1], so we use a Vec<u64> here; this
-    // is called only at construction time (precomputation), so the allocation
-    // cost is incurred once.
+    // Long division of x^(2m) by P(x) over GF(2). The remainder needs 2m+1
+    // bits; `[u64; 2*N+1]` is not expressible on stable Rust, so it is a Vec,
+    // allocated once per reducer construction.
     let total_bits = 2 * m as usize + 1;
     let total_words = total_bits.div_ceil(64);
 
     let mut remainder = vec![0u64; total_words];
-    // Set bit 2m.
     let top_word = (2 * m as usize) / 64;
     let top_bit = (2 * m as usize) % 64;
     remainder[top_word] |= 1u64 << top_bit;
@@ -480,12 +312,8 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
                 let qb = (i as usize) % 64;
                 quotient[qw] |= 1u64 << qb;
             }
-            // XOR in P shifted to align its degree at bit_pos.
-            // P(x) has its implicit high bit at position m; total degree m.
-            // Shifting P so that its high bit lands at bit_pos = m + i means
-            // shifting by i positions.
+            // XOR in P << i, aligning its implicit high bit with bit_pos.
             let p_shift = i as usize;
-            // XOR the stored low bits of P (shifted by p_shift).
             let p_word_shift = p_shift / 64;
             let p_bit_shift = (p_shift % 64) as u32;
             #[allow(clippy::needless_range_loop)]
@@ -499,15 +327,10 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
                     remainder[dst + 1] ^= modulus_words[j] >> (64 - p_bit_shift);
                 }
             }
-            // XOR the implicit high bit of P (bit m) shifted by p_shift = i
-            // positions, which lands at bit m + i = bit_pos (already handled
-            // by the `if` condition above — the bit was set, and XOR with 1
-            // clears it).
+            // XOR the implicit high bit of P, which lands at bit_pos and clears it.
             if p_bit_shift == 0 {
                 remainder[w] ^= 1u64 << b;
             } else {
-                // The implicit high bit contribution was: 1 << (m + i).
-                // We need to XOR that in.
                 let hi_word = bit_pos / 64;
                 let hi_bit = bit_pos % 64;
                 if hi_word < remainder.len() {
@@ -526,11 +349,7 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
 
 /// Precomputed Barrett reduction constants for an N-word GF(2^m) field.
 ///
-/// `BarrettReducerWide<N>` is the multi-word sibling of [`BarrettReducer`]:
-/// whereas [`BarrettReducer`] is limited to `m ≤ 63` (fitting within `u128`
-/// intermediates), `BarrettReducerWide<N>` handles extension degrees
-/// `64*(N-1) < m ≤ 64*N`, enabling fields like GF(2^127) (`N = 2`) or
-/// GF(2^256) (`N = 4`).
+/// The multi-word sibling of [`BarrettReducer`], for `64*(N-1) < m ≤ 64*N`.
 ///
 /// # Algorithm
 ///
@@ -543,28 +362,6 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
 /// 4. `r = c XOR (q3 * P)` — subtract the estimated multiple of P.
 ///
 /// The result `r` has `deg(r) < m` after at most two XOR corrections.
-///
-/// # MSRV caveat — `[u64; 2*N]` in function signatures
-///
-/// Stable Rust does not yet permit const arithmetic in array-length
-/// positions (the `generic_const_exprs` feature remains nightly-only).
-/// [`BarrettReducerWide::reduce`] therefore takes a
-/// second const parameter `M` with a compile-time assertion `M == 2 * N`:
-///
-/// ```text
-/// reducer.reduce::<{2 * N}>(&product)
-/// ```
-///
-/// This matches the pattern of [`super::wide::clmul_wide`] and avoids `&mut`
-/// out-parameters.
-///
-/// # `mu` storage convention
-///
-/// The Barrett constant `mu = floor(x^(2m) / P(x))` has degree exactly `m`,
-/// requiring `m + 1` bits. The **implicit leading bit at position m** is dropped
-/// from the stored representation, exactly as `Gf2mWideConfig::MODULUS` drops
-/// the implicit high bit of the irreducible polynomial. The stored `mu` field
-/// holds only the low `m` bits of the Barrett constant.
 ///
 /// # Examples
 ///
@@ -581,13 +378,6 @@ fn compute_mu_wide<const N: usize>(modulus_words: &[u64; N], m: u32) -> [u64; N]
 /// // Result fits in 63 bits (bit 63 and above are zero).
 /// assert_eq!(reduced[0] >> 63, 0, "high bit must be zero after reduction");
 /// ```
-///
-/// # Panics
-///
-/// [`BarrettReducerWide::new`] panics if `m` is 0, greater than `64 * N`, or if
-/// the implicit leading bit of `modulus` at position `m` is inconsistent with `N`.
-///
-/// [`BarrettReducerWide::reduce`] panics (at compile time) if `M != 2 * N`.
 #[derive(Debug, Clone)]
 pub struct BarrettReducerWide<const N: usize> {
     /// The low m bits of the irreducible polynomial P(x), in `N` little-endian
@@ -603,31 +393,19 @@ pub struct BarrettReducerWide<const N: usize> {
 impl<const N: usize> BarrettReducerWide<N> {
     /// Precompute Barrett constants for the given irreducible polynomial.
     ///
-    /// The modulus is given as its **low m bits** in `N` little-endian `u64`
-    /// words; the implicit leading bit at position `m` must not be included
-    /// (same convention as `Gf2mWideConfig::MODULUS`).
-    ///
-    /// Internally, this function performs polynomial long division of `x^(2m)`
-    /// by `P(x)` over GF(2) to obtain `mu = floor(x^(2m) / P(x))`.
-    ///
-    /// # Arguments
-    ///
-    /// * `modulus` - The low `m` bits of the irreducible polynomial in `N`
-    ///   little-endian `u64` words. The implicit leading bit at bit `m` must
-    ///   not be set.
-    /// * `m` - The extension degree. Must satisfy `1 <= m <= 64 * N`.
-    ///   Typical callers have `64*(N-1) < m <= 64*N` (the natural per-word
-    ///   range), but any value in `1..=64*N` is accepted.
+    /// `modulus` holds the **low m bits** in `N` little-endian `u64` words; the
+    /// implicit leading bit at position `m` must not be included (same
+    /// convention as `Gf2mWideConfig::MODULUS`). `m` must satisfy
+    /// `64*(N-1) < m <= 64*N`.
     ///
     /// # Panics
     ///
-    /// Panics if `m` is 0, greater than `64 * N`, or if bit `m` (the
-    /// implicit leading bit of the polynomial) is set in `modulus`
-    /// (the leading bit must be implicit, not stored).
+    /// Panics if `m` is 0, greater than `64 * N`, or if bit `m` is set in
+    /// `modulus`.
     ///
     /// # Complexity
     ///
-    /// O(m²) for the polynomial long division used to compute mu.
+    /// O(m · N) word operations for the long division that computes mu.
     ///
     /// # Examples
     ///
@@ -662,32 +440,17 @@ impl<const N: usize> BarrettReducerWide<N> {
         BarrettReducerWide { modulus, mu, m }
     }
 
-    /// Reduce an unreduced product of degree `< 2m` back to an `m`-bit element.
+    /// Reduce an unreduced product of degree at most `2m - 2` back to an
+    /// `m`-bit element.
     ///
-    /// Applies multi-word Barrett reduction: given `c(x)` with `deg(c) < 2m`,
-    /// returns `c(x) mod P(x)` as `N` little-endian `u64` words.
-    ///
-    /// # MSRV caveat: second const parameter `M`
-    ///
-    /// Because `[u64; 2 * N]` is not legal as an array-length expression on
-    /// stable Rust, the product is passed as `&[u64; M]` where `M` is a
-    /// separate const parameter. A compile-time assertion `M == 2 * N` is
-    /// enforced. Callers must supply the turbofish:
-    /// `reducer.reduce::<{2 * N}>(&product)`.
-    ///
-    /// # Arguments
-    ///
-    /// * `product` - The polynomial to reduce, as `M = 2 * N` little-endian
-    ///   `u64` words. Must have `deg(product) < 2m`; higher bits are ignored.
-    ///
-    /// # Returns
-    ///
-    /// The remainder `c(x) mod P(x)` as `N` little-endian `u64` words, with
-    /// all bits at positions `>= m` equal to zero.
+    /// `product` is `M = 2 * N` little-endian `u64` words; `[u64; 2 * N]` is
+    /// not expressible on stable Rust, so `M` is a separate const parameter
+    /// and callers write `reducer.reduce::<{2 * N}>(&product)`. The result has
+    /// all bits at positions `>= m` zero.
     ///
     /// # Panics
     ///
-    /// Panics at compile time if `M != 2 * N`.
+    /// Fails to compile if `M != 2 * N`.
     ///
     /// # Complexity
     ///
@@ -712,29 +475,13 @@ impl<const N: usize> BarrettReducerWide<N> {
     /// ```
     pub fn reduce<const M: usize>(&self, product: &[u64; M]) -> [u64; N] {
         const { assert!(M == 2 * N, "BarrettReducerWide::reduce: M must equal 2 * N") }
-        // Thin wrapper over the slice-based implementation so there is a
-        // single source of truth for the Barrett-reduction algorithm.
-        // The const-generic `M == 2 * N` assertion above guarantees the
-        // slice length invariant that `reduce_slice` checks at runtime.
+        // `M == 2 * N` guarantees the slice length `reduce_slice` asserts.
         self.reduce_slice(&product[..])
     }
 
-    /// Slice-taking variant of [`BarrettReducerWide::reduce`] for callers that
-    /// cannot construct a `[u64; 2 * N]` array at the call site.
-    ///
-    /// Under stable Rust, generic const expressions of the form `{2 * N}`
-    /// are not accepted in array-length position from a generic context, so
-    /// callers that parameterise over `N` alone (notably
-    /// [`crate::gf2m::Gf2mWide::mul_ref`]) cannot directly invoke the
-    /// array-typed `reduce`. This method accepts a `&[u64]` slice of length
-    /// exactly `2 * N` and performs the same Barrett reduction; the
-    /// array-typed [`BarrettReducerWide::reduce`] is a thin wrapper around
-    /// this method, so both share a single implementation.
-    ///
-    /// # Arguments
-    ///
-    /// * `product` — 2N-word carry-less product to reduce. Panics if
-    ///   `product.len() != 2 * N`.
+    /// Slice-taking form of [`BarrettReducerWide::reduce`], for callers generic
+    /// over `N` alone (notably [`crate::gf2m::Gf2mWide::mul_ref`]) that cannot
+    /// name `[u64; 2 * N]`.
     ///
     /// # Panics
     ///
@@ -761,7 +508,6 @@ impl<const N: usize> BarrettReducerWide<N> {
         let q1: [u64; N] = slice_wide_shr_2n_to_n::<N>(product, m - 1);
 
         // Step 2: q2 = q1 * mu (with implicit leading bit of mu at position m).
-        // Accumulate into a 2N-length buffer on the stack-like Vec.
         let mut q2 = vec![0u64; 2 * N];
         slice_clmul_wide_with_implicit_high::<N>(&q1, &self.mu, m, &mut q2);
 
@@ -831,14 +577,10 @@ fn is_high_bit_set<const N: usize>(a: &[u64; N], m: u32) -> bool {
         return false;
     }
     let top_mask = field_mask::<N>(m);
-    // Any word above the top-field word must be zero in a reduced value.
-    // The top-field word must have no bits above the mask.
     a[N - 1] & !top_mask != 0
 }
 
-/// Slice-based equivalent of [`wide_is_already_reduced`] for callers that
-/// cannot produce a `[u64; 2 * N]` under stable-Rust generics. Asserts
-/// `product.len() == 2 * N` as a debug check.
+/// Returns `true` if the `2 * N`-word `product` has no bit at position `>= m`.
 #[inline]
 fn slice_wide_is_already_reduced<const N: usize>(product: &[u64], m: u32) -> bool {
     debug_assert_eq!(product.len(), 2 * N);
@@ -852,7 +594,7 @@ fn slice_wide_is_already_reduced<const N: usize>(product: &[u64], m: u32) -> boo
     product[N - 1] & !top_mask == 0
 }
 
-/// Slice-based equivalent of [`wide_shr_2n_to_n`].
+/// Returns the low `N` words of the `2 * N`-word `a` shifted right by `shift` bits.
 #[inline]
 fn slice_wide_shr_2n_to_n<const N: usize>(a: &[u64], shift: u32) -> [u64; N] {
     debug_assert_eq!(a.len(), 2 * N);
@@ -878,8 +620,7 @@ fn slice_wide_shr_2n_to_n<const N: usize>(a: &[u64], shift: u32) -> [u64; N] {
     out
 }
 
-/// Slice-based equivalent of [`clmul_wide_with_implicit_high`] — writes the
-/// product into `out: &mut [u64]` (length `2 * N`).
+/// Writes `a * (b_stored + x^b_implicit_bit)`, truncated to `2 * N` words, into `out`.
 #[inline]
 fn slice_clmul_wide_with_implicit_high<const N: usize>(
     a: &[u64; N],
@@ -888,11 +629,7 @@ fn slice_clmul_wide_with_implicit_high<const N: usize>(
     out: &mut [u64],
 ) {
     debug_assert_eq!(out.len(), 2 * N);
-    // Main product a * b_stored via the shared wide-product helper. This keeps
-    // the Barrett algorithm and polynomial handling unchanged while allowing
-    // fixed-size SIMD clmul kernels (currently N = 4 and N = 9) to accelerate
-    // the two reduction multiplications as well as the caller's initial
-    // product.
+    // Main product a * b_stored through the dispatch shared with the wide field product.
     super::wide::clmul_wide_dispatch::<N>(a, b_stored, out, super::wide::ProductWrite::Overwrite);
     // Add contribution from implicit leading bit: a * x^b_implicit_bit.
     let word_shift = (b_implicit_bit / 64) as usize;
@@ -914,7 +651,6 @@ fn slice_clmul_wide_with_implicit_high<const N: usize>(
 /// into `r` in place.
 #[inline]
 fn xor_modulus_into<const N: usize>(r: &mut [u64; N], modulus: &[u64; N], m: u32) {
-    // XOR in the low bits of P.
     for i in 0..N {
         r[i] ^= modulus[i];
     }
@@ -924,39 +660,15 @@ fn xor_modulus_into<const N: usize>(r: &mut [u64; N], modulus: &[u64; N], m: u32
     if mw < N {
         r[mw] ^= 1u64 << mb;
     }
-    // If mw >= N, the high bit is above all stored words — it lives in the
-    // 2N space but r only has N words. Since deg(r) was < 2m and we XOR P
-    // of degree m, the leading bit of P at position m cancels the leading bit
-    // of r (which must equal the leading bit of P for the correction to make
-    // sense). When m == 64*N, position m is word N (out of range), but the
-    // is_high_bit_set check would not have triggered (top_mask == u64::MAX),
-    // so this branch is unreachable in practice.
+    // When m == 64*N the implicit bit lies above r; `is_high_bit_set` is then
+    // never true, so no caller reaches this case.
 }
 
-/// Naive O(m) shift-and-XOR polynomial reduction over GF(2) for multi-word
-/// operands. Used only in tests as a reference oracle against which
-/// [`BarrettReducerWide`] is checked.
+/// Naive shift-and-XOR polynomial reduction for multi-word operands: the
+/// reference oracle for [`BarrettReducerWide`].
 ///
-/// This function is only compiled in test builds (`#[cfg(test)]`). It is
-/// kept outside the `tests` module so that hypothetical integration tests in
-/// the same crate can reach it, but callers outside of test code should use
-/// [`BarrettReducerWide::reduce`] instead.
-///
-/// # Arguments
-///
-/// * `product` - The unreduced polynomial as `M = 2 * N` little-endian u64 words.
-///   Must have `deg(product) < 2m`.
-/// * `modulus` - The low m bits of the irreducible polynomial as `N` words.
-///   The implicit leading bit at position `m` is not stored.
-/// * `m` - The extension degree. Must satisfy `1 <= m <= 64 * N`.
-///
-/// # Panics
-///
-/// Panics at compile time if `M != 2 * N`.
-///
-/// # Complexity
-///
-/// O(m · N) — up to m shift-and-XOR passes, each O(N) words.
+/// `product` has `deg < 2m`; `modulus` holds the low m bits of the polynomial
+/// (leading bit at `m` implicit); `1 <= m <= 64 * N`.
 #[cfg(test)]
 pub(crate) fn reference_reduce_wide<const N: usize, const M: usize>(
     product: &[u64; M],
@@ -964,12 +676,10 @@ pub(crate) fn reference_reduce_wide<const N: usize, const M: usize>(
     m: u32,
 ) -> [u64; N] {
     const { assert!(M == 2 * N, "reference_reduce_wide: M must equal 2 * N") }
-    // Work in a 2N-word mutable scratch buffer.
     let mut r = *product;
 
-    // Total bits to scan: 2m down to m (exclusive).
-    // For each bit position `bit` from 2m-2 down to m, if that bit is set in r,
-    // XOR in P shifted so its degree-m term aligns with bit.
+    // For each set bit from 2m-1 down to m, XOR in P shifted so its degree-m
+    // term aligns with it.
     let max_bit = 2 * m as usize;
     for bit in (m as usize..max_bit).rev() {
         let w = bit / 64;
@@ -978,12 +688,9 @@ pub(crate) fn reference_reduce_wide<const N: usize, const M: usize>(
             continue;
         }
         if (r[w] >> b) & 1 == 1 {
-            // XOR in P << (bit - m): low bits of P are in modulus[], implicit
-            // high bit at position m, so P << (bit-m) has high bit at position bit.
             let shift = bit - m as usize;
             let wshift = shift / 64;
             let bshift = (shift % 64) as u32;
-            // XOR in stored low bits.
             #[allow(clippy::needless_range_loop)]
             for j in 0..N {
                 let dst = j + wshift;
@@ -1000,7 +707,6 @@ pub(crate) fn reference_reduce_wide<const N: usize, const M: usize>(
         }
     }
 
-    // Extract the low N words.
     let mut out = [0u64; N];
     out[..N].copy_from_slice(&r[..N]);
     out
@@ -1016,7 +722,6 @@ mod tests {
 
     #[test]
     fn test_clmul_identity() {
-        // a * 1 = a
         assert_eq!(clmul(0b1010, 1), 0b1010);
         assert_eq!(clmul(1, 0b1010), 0b1010);
     }
@@ -1049,8 +754,6 @@ mod tests {
         assert_eq!(reducer.degree(), 4);
         assert_eq!(reducer.modulus(), 0b10011);
 
-        // mu = x^8 / (x^4 + x + 1)
-        // Verify: mu * P should give x^8 + remainder of degree < 4
         let mu_times_p = clmul128_trunc(reducer.mu(), reducer.modulus());
         // x^(2m) = mu * P + remainder, and remainder has degree < m
         let x_2m: u128 = 1u128 << 8;
@@ -1091,12 +794,11 @@ mod tests {
 
     #[test]
     fn test_reduce_gf2_8_aes() {
-        // GF(2^8) with AES polynomial: x^8 + x^4 + x^3 + x^2 + 1 = 0x11B
+        // GF(2^8) with AES polynomial: x^8 + x^4 + x^3 + x + 1 = 0x11B
         let poly: u128 = 0x11B;
         let m = 8;
         let reducer = BarrettReducer::new(poly, m);
 
-        // Test a sampling of products
         let test_cases: Vec<u128> = vec![
             0, 1, 0xFF, 0x100,  // x^8
             0x1FE,  // near-max for single element
@@ -1120,7 +822,6 @@ mod tests {
         let m = 8;
         let reducer = BarrettReducer::new(poly, m);
 
-        // Product with all bits set up to degree 14
         let max_product: u128 = (1u128 << 15) - 1; // 0x7FFF
         let barrett = reducer.reduce(max_product);
         let naive = naive_reduce(max_product, poly, m);
@@ -1130,12 +831,10 @@ mod tests {
 
     #[test]
     fn test_barrett_all_primitive_polys() {
-        // Test Barrett reduction matches naive for all primitive polynomials m=2..16
         for m in 2u32..=16 {
             let poly = PrimitivePolynomialDatabase::standard(m as usize).unwrap() as u128;
             let reducer = BarrettReducer::new(poly, m);
 
-            // Test a range of products
             let max_product_deg = 2 * m - 2;
             let num_tests = if max_product_deg <= 12 {
                 1u128 << (max_product_deg + 1) // exhaustive for small fields
@@ -1145,8 +844,7 @@ mod tests {
 
             for product in 0..num_tests {
                 let p = if max_product_deg > 12 {
-                    // Use a pseudo-random sampling for larger fields
-                    // Mix bits to get good coverage
+                    // Pseudo-random sampling for larger fields.
                     let p = product
                         .wrapping_mul(0x9E3779B97F4A7C15)
                         .wrapping_add(product ^ 0xDEAD);
@@ -1167,21 +865,17 @@ mod tests {
 
     #[test]
     fn test_barrett_multiplication_roundtrip() {
-        // Verify that clmul followed by Barrett reduce gives correct field multiplication
-        // in GF(2^8) with AES polynomial
         let poly: u128 = 0x11B;
         let m: u32 = 8;
         let reducer = BarrettReducer::new(poly, m);
         let mask = (1u64 << m) - 1;
 
-        // Multiply all pairs of small elements
         for a in 0u64..16 {
             for b in 0u64..16 {
                 let product = clmul(a, b);
                 let result = reducer.reduce(product);
                 assert!(result <= mask, "result {result:#x} exceeds field size");
 
-                // Verify commutativity
                 let product_rev = clmul(b, a);
                 let result_rev = reducer.reduce(product_rev);
                 assert_eq!(result, result_rev, "commutativity failed for {a} * {b}");
@@ -1196,8 +890,6 @@ mod tests {
 
         // x^5 mod (x^4 + x + 1):
         // x^5 = x * x^4 = x * (x+1) = x^2 + x = 0b110
-        // Via naive: bit 5 is set, XOR poly<<1 = 0b100110
-        // 0b100000 ^ 0b100110 = 0b000110 = 6
         assert_eq!(naive_reduce(0b100000, 0b10011, 4), 0b0110);
     }
 
@@ -1243,7 +935,6 @@ mod tests {
             let poly = PrimitivePolynomialDatabase::standard(m as usize).unwrap() as u128;
             let reducer = BarrettReducer::new(poly, m);
             let max_product_bits = 2 * m - 1;
-            // Test with max value
             let product = (1u128 << max_product_bits) - 1;
             let result = reducer.reduce(product);
             prop_assert!(result < (1u64 << m), "result {result} >= 2^{m}");
@@ -1251,8 +942,7 @@ mod tests {
 
         #[test]
         fn test_barrett_clmul_reduce_matches_naive_gf2_8(a in 0u64..256, b in 0u64..256) {
-            // Generate random field elements, multiply, then verify Barrett == naive
-            let poly: u128 = 0x11B; // x^8 + x^4 + x^3 + x^2 + 1
+            let poly: u128 = 0x11B; // x^8 + x^4 + x^3 + x + 1
             let m: u32 = 8;
             let reducer = BarrettReducer::new(poly, m);
             let product = clmul(a, b);
@@ -1263,7 +953,6 @@ mod tests {
 
         #[test]
         fn test_barrett_clmul_reduce_matches_naive_gf2_16(a in 0u64..65536, b in 0u64..65536) {
-            // Generate random field elements, multiply, then verify Barrett == naive
             let poly: u128 = 0b10000000000101101; // x^16 + x^5 + x^3 + x^2 + 1
             let m: u32 = 16;
             let reducer = BarrettReducer::new(poly, m);
@@ -1290,12 +979,7 @@ mod tests {
         }
     }
 
-    /// Verify BarrettReducer handles the maximum-width boundary (m=63) correctly.
-    ///
-    /// At m=63 the Barrett constant mu has degree 63 (fits in u128) and the
-    /// dividend x^(2m) = x^126 is the largest we can store in a u128. Any
-    /// arithmetic bug at this edge would produce a reducer that disagrees with
-    /// the naive reference.
+    /// m = 63 is the largest degree whose dividend x^(2m) fits in a `u128`.
     #[test]
     fn test_reduce_at_m_equals_63_boundary() {
         // x^63 + x + 1 is a primitive trinomial for GF(2^63).
@@ -1326,29 +1010,17 @@ mod tests {
         }
     }
 
-    /// Pins the current `degree <= 63` boundary of [`BarrettReducer::new`].
-    ///
-    /// This test intentionally asserts the panic message, so any future
-    /// widening (JIT issue `6fb4abad`, multi-word GF(2^m)) forces a
-    /// deliberate update here — it is NOT a latent bug. See the module-
-    /// level docs for the underlying 256-bit arithmetic requirement that
-    /// extending Barrett to `m >= 64` would entail.
-    ///
-    /// Removing this test (rather than relaxing the bound after a proper
-    /// 256-bit Barrett implementation lands) would silently change the
-    /// dispatch contract and is explicitly discouraged.
+    /// Pins the `degree <= 63` bound of [`BarrettReducer::new`] by its panic message.
     #[test]
     #[should_panic(expected = "degree must be in 1..=63")]
     fn test_new_rejects_degree_64_today() {
-        // GF(2^64) standard polynomial — degree 64 not supported by Barrett yet.
+        // GF(2^64) standard polynomial.
         let poly: u128 = (1u128 << 64) | 0b11011;
         let _ = BarrettReducer::new(poly, 64);
     }
 
     #[test]
     fn test_reduce_with_clmul_matches_reduce_all_primitive_polys() {
-        // Verify that reduce_with_clmul using the scalar clmul produces identical
-        // results to reduce() for all primitive polynomials m=2..16.
         for m in 2u32..=16 {
             let poly = PrimitivePolynomialDatabase::standard(m as usize).unwrap() as u128;
             let reducer = BarrettReducer::new(poly, m);
@@ -1399,30 +1071,19 @@ mod tests {
     // N = 1, m = 63: cross-check against BarrettReducer (oracle)
     // -------------------------------------------------------------------------
 
-    /// Cross-check BarrettReducerWide<1> at m=63 against BarrettReducer
-    /// (the existing single-word oracle).
-    ///
-    /// The test uses the exact polynomial and sample products from the existing
-    /// [`test_reduce_at_m_equals_63_boundary`] test, treating BarrettReducer
-    /// as ground truth. Any divergence between the two implementations
-    /// indicates a bug in BarrettReducerWide.
     #[test]
     fn test_wide_n1_m63_cross_check_against_barrett_reducer() {
-        // Same polynomial as the existing m=63 oracle test.
         // P(x) = x^63 + x + 1; low bits = 0b11 = 3.
         let poly_u128: u128 = (1u128 << 63) | 0b11;
         let poly_u64: u64 = 0b11; // low 63 bits (implicit leading bit dropped)
         let m: u32 = 63;
 
-        // Oracle: BarrettReducer (single-word path).
         let oracle = BarrettReducer::new(poly_u128, m);
-        // Subject: BarrettReducerWide<1>.
         let wide = BarrettReducerWide::<1>::new([poly_u64], m);
 
         assert_eq!(wide.degree(), 63);
         assert_eq!(wide.modulus(), &[poly_u64]);
 
-        // Same products used by test_reduce_at_m_equals_63_boundary.
         let max_deg_mask: u128 = (1u128 << 125) - 1;
         let samples: [u128; 8] = [
             0,
@@ -1447,8 +1108,6 @@ mod tests {
         }
     }
 
-    /// Additional known-value cross-check for N=1, m=63: verify several products
-    /// also agree with naive_reduce.
     #[test]
     fn test_wide_n1_m63_matches_naive_reduce() {
         let poly_u128: u128 = (1u128 << 63) | 0b11;
@@ -1482,14 +1141,8 @@ mod tests {
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
 
-        /// Proptest: BarrettReducerWide<2> at m=127 agrees with reference_reduce_wide.
-        ///
-        /// Polynomial: P(x) = x^127 + x + 1 (primitive trinomial for GF(2^127)).
-        /// This is a well-known primitive polynomial and has been verified independently.
-        ///
-        /// Products are 256-bit random values (4 u64 words) with degree masked to
-        /// ≤ 253 bits (2m-1 = 253; the algorithm tolerates degree 2m-1 for m=127
-        /// since bit 127 fits within 2 u64 words).
+        /// Products are masked to degree ≤ 253 (2m-1), which the reduction tolerates
+        /// at m = 127 because bit 127 lies within the 2 words.
         #[test]
         #[allow(renamed_and_removed_lints, clippy::arithmetic_side_effects)]
         fn prop_wide_n2_m127_matches_reference(
@@ -1498,9 +1151,7 @@ mod tests {
             p2 in 0u64..=(1u64 << 62) - 1,  // keep degree < 2*127 = 254 bits (max bit 253)
             p3 in 0u64..=(1u64 << 62) - 1,
         ) {
-            // GF(2^127) with P(x) = x^127 + x + 1.
-            // Low 127 bits = 0b11 (bits 1 and 0 set), split across 2 words:
-            // word 0 = 3, word 1 = 0 (bit 127 is implicit, not stored).
+            // P(x) = x^127 + x + 1; bit 127 is implicit.
             let modulus = [3u64, 0u64];
             let m: u32 = 127;
             let wide = BarrettReducerWide::<2>::new(modulus, m);
@@ -1523,20 +1174,11 @@ mod tests {
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
 
-        /// Proptest: BarrettReducerWide<4> at m=256 agrees with reference_reduce_wide.
-        ///
-        /// Polynomial: P(x) = x^256 + x^10 + x^5 + x^2 + 1 (Seroussi HPL-98-135,
-        /// Table 1 row m=256). Low bits = x^10 + x^5 + x^2 + 1 = 0x425.
-        ///
-        /// Valid products from field multiplication have degree ≤ 2*256 - 2 = 510.
-        /// Bit 510 is word 7 bit 62, so word 7 must have its high bit (bit 63)
-        /// clear. The constraint `p7 in 0..=i64::MAX as u64` enforces this.
-        ///
-        /// Note: the Barrett algorithm works for degree ≤ 2m-2 (the actual output
-        /// of `clmul_wide` on two m-bit inputs). Inputs with degree 2m-1 would
-        /// require one extra bit of precision in the q1 computation for the
-        /// m = 64*N case (e.g. m=256), but such inputs cannot arise from valid
-        /// field multiplication and are therefore not required to reduce correctly.
+        /// P(x) = x^256 + x^10 + x^5 + x^2 + 1 (Seroussi HPL-98-135, Table 1 row
+        /// m=256). Products are limited to degree ≤ 2m-2 = 510, the range
+        /// `clmul_wide` produces from two m-bit inputs; a degree-2m-1 input at
+        /// m = 64*N needs one more bit of precision in q1 and is outside the
+        /// reduction's contract.
         #[test]
         #[allow(renamed_and_removed_lints, clippy::arithmetic_side_effects)]
         fn prop_wide_n4_m256_matches_reference(
@@ -1547,13 +1189,10 @@ mod tests {
             p4 in proptest::num::u64::ANY,
             p5 in proptest::num::u64::ANY,
             p6 in proptest::num::u64::ANY,
-            // bit 510 = word-7 bit 62; word 7 bit 63 = bit 511 = 2m-1 is outside
-            // the valid product range (products have degree ≤ 2m-2 = 510).
+            // Word 7 bit 63 is bit 511 = 2m-1, outside the valid product range.
             p7 in 0u64..=(i64::MAX as u64),
         ) {
-            // GF(2^256) with P(x) = x^256 + x^10 + x^5 + x^2 + 1.
-            // Low bits: 0x425 = 2^10 + 2^5 + 2^2 + 1 = 1024 + 32 + 4 + 1.
-            // Implicit high bit at position 256 (word 4) is NOT stored.
+            // 0x425 = x^10 + x^5 + x^2 + 1; the bit at position 256 is implicit.
             let modulus = [0x425u64, 0u64, 0u64, 0u64];
             let m: u32 = 256;
             let wide = BarrettReducerWide::<4>::new(modulus, m);
@@ -1585,7 +1224,6 @@ mod tests {
 
     #[test]
     fn test_wide_reduce_one_is_unchanged_n2_m127() {
-        // 1 is already reduced (degree 0 < 127).
         let wide = BarrettReducerWide::<2>::new([3u64, 0u64], 127);
         let product = [1u64, 0u64, 0u64, 0u64];
         assert_eq!(wide.reduce::<4>(&product), [1u64, 0u64]);
@@ -1600,7 +1238,6 @@ mod tests {
 
     #[test]
     fn test_wide_reduce_result_fits_in_field_n2_m127() {
-        // Any reduced result must have bits >= m cleared.
         let wide = BarrettReducerWide::<2>::new([3u64, 0u64], 127);
         let product = [u64::MAX, u64::MAX, u64::MAX, u64::MAX];
         let r = wide.reduce::<4>(&product);
@@ -1610,12 +1247,8 @@ mod tests {
 
     #[test]
     fn test_wide_reduce_result_fits_in_field_n4_m256() {
-        // m = 256 means all 256 bits in 4 words are valid; any result must be < 2^256.
-        // Valid products have degree ≤ 2*256-2 = 510, so the top bit of word 7
-        // (bit 511 = 2m-1) must be zero.  Use a product with all bits set except
-        // the top bit of word 7 to exercise the near-maximum case.
+        // Product with every bit up to degree 510 = 2m-2 set.
         let wide = BarrettReducerWide::<4>::new([0x425u64, 0u64, 0u64, 0u64], 256);
-        // [u64::MAX; 7] for words 0..6, then u64::MAX >> 1 for word 7 (clears bit 63 = bit 511).
         let product = [
             u64::MAX,
             u64::MAX,
@@ -1627,7 +1260,6 @@ mod tests {
             u64::MAX >> 1,
         ];
         let r = wide.reduce::<8>(&product);
-        // Compare against the naive reference — both must agree.
         let reference = reference_reduce_wide::<4, 8>(&product, &[0x425u64, 0u64, 0u64, 0u64], 256);
         assert_eq!(
             r, reference,
@@ -1637,7 +1269,6 @@ mod tests {
 
     #[test]
     fn test_wide_n1_m63_proptest_configurations() {
-        // Proptest config: ≤100 cases.
         use proptest::test_runner::{Config, TestRunner};
         let mut runner = TestRunner::new(Config {
             cases: 100,
