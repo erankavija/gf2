@@ -7,10 +7,11 @@
 - Non-blank line: a line containing a non-whitespace character.
 - Share: comment lines divided by non-blank lines.
 - Pattern lines: comment lines matching the sweep pattern, a Python `re` expression applied with `re.IGNORECASE` (`\b` is a word boundary); the expression is the `PATTERN` constant in the script and equals the sweep pattern of issue 62f0d0e6.
-- The record commit adds only files under `dev/active/`, which the census does not read; the measured commit is the first line of the block below and contains the script. Check from the repository root at the record commit (empty output):
+- The census reads only files under `crates/`. The measured commit is the first line of the block below and contains the script; the commit that records the output file leaves every file under `crates/` as the measured commit has it. Check from the root of a checkout holding this record (empty output):
 
   ```sh
-  git diff --stat "$(sed -n 's/^commit: //p;q' dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.txt)" HEAD -- crates
+  F=dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.txt
+  git diff --stat "$(sed -n 's/^commit: //p;q' "$F")" "$(git log -1 --format=%H -- "$F")" -- crates
   ```
 
 ## Command
@@ -20,25 +21,30 @@ python3 dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.py \
   dev/active/fa787f85-documentation-overhaul/62f0d0e6-pattern-matches.txt
 ```
 
-Run from the repository root at the measured commit. The script prints `git rev-parse HEAD` as the first output line, so the output there equals `62f0d0e6-comment-census.txt` byte for byte, and the matching `path:line:text` lines equal `62f0d0e6-pattern-matches.txt`. To reproduce, check out the measured commit in a clean working tree, run the command with the matches file written to a scratch path, and compare:
+Run from a repository root, the script reads that checkout's working tree, prints its `git rev-parse HEAD` as the first output line, and writes the matching `path:line:text` lines to the file named by its argument. `62f0d0e6-comment-census.txt` and `62f0d0e6-pattern-matches.txt` are its two outputs in a clean checkout of the measured commit. To reproduce them, run this block from the root of a checkout holding this record; it runs the script in a detached scratch worktree of the measured commit and compares both outputs with the committed files of the checkout it starts in:
 
 ```sh
-python3 dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.py /tmp/matches.txt > /tmp/census.txt
-diff /tmp/census.txt dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.txt
-diff /tmp/matches.txt dev/active/fa787f85-documentation-overhaul/62f0d0e6-pattern-matches.txt
+D=dev/active/fa787f85-documentation-overhaul
+M=$(sed -n 's/^commit: //p;q' "$D/62f0d0e6-comment-census.txt")
+T=$(mktemp -d)
+git worktree add --quiet --detach "$T/tree" "$M"
+(cd "$T/tree" && python3 "$D/62f0d0e6-comment-census.py" "$T/matches.txt" > "$T/census.txt")
+diff "$T/census.txt" "$D/62f0d0e6-comment-census.txt"
+diff "$T/matches.txt" "$D/62f0d0e6-pattern-matches.txt"
+git worktree remove "$T/tree" && rm -r "$T"
 ```
 
-Both `diff` commands print nothing. The script is `62f0d0e6-comment-census.py`.
+The block prints nothing: the script at the measured commit regenerates both committed files byte for byte. The script is `62f0d0e6-comment-census.py`.
 
 ## Pattern cross-check
 
-`62f0d0e6-pattern-crosscheck.sh` counts, per crate, comment lines matching the sweep pattern with `git grep -P -i` over the committed tree of the commit given as its argument, independent of the Python script. Its output is `62f0d0e6-pattern-crosscheck.txt`; from the repository root at the record commit:
+`62f0d0e6-pattern-crosscheck.sh` counts, per crate, comment lines matching the sweep pattern with `git grep -P -i` over the committed tree of the commit given as its argument, independent of the Python script. Its output for the measured commit is `62f0d0e6-pattern-crosscheck.txt`; from the root of a checkout holding this record:
 
 ```sh
-cd dev/active/fa787f85-documentation-overhaul
-M=$(sed -n 's/^commit: //p;q' 62f0d0e6-comment-census.txt)
-sh 62f0d0e6-pattern-crosscheck.sh "$M" | diff - 62f0d0e6-pattern-crosscheck.txt
-diff <(awk 'NR>3 && $1!="total" {print $1, $NF}' 62f0d0e6-comment-census.txt) <(tail -n +2 62f0d0e6-pattern-crosscheck.txt)
+D=dev/active/fa787f85-documentation-overhaul
+M=$(sed -n 's/^commit: //p;q' "$D/62f0d0e6-comment-census.txt")
+sh "$D/62f0d0e6-pattern-crosscheck.sh" "$M" | diff - "$D/62f0d0e6-pattern-crosscheck.txt"
+diff <(awk 'NR>3 && $1!="total" {print $1, $NF}' "$D/62f0d0e6-comment-census.txt") <(tail -n +2 "$D/62f0d0e6-pattern-crosscheck.txt")
 ```
 
 Both `diff` commands print nothing: the cross-check output reproduces, and its per-crate counts equal the pattern column of the census.
