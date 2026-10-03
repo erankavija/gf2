@@ -34,6 +34,14 @@ fn git(directory: &Path, arguments: &[&str]) -> String {
         .to_owned()
 }
 
+/// Copies the committed campaign launcher to `target`.
+fn install_launcher(target: &Path) {
+    let source = repository_root()
+        .unwrap()
+        .join("dev/scripts/tuning-extent-campaign.sh");
+    fs::copy(source, target).unwrap();
+}
+
 /// An empty git checkout below `root` in which the launcher runs.
 fn checkout(root: &Path) -> PathBuf {
     let repo = root.join("repo");
@@ -111,11 +119,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
         "#!/usr/bin/env python3\nimport json,os,sys\nif sys.argv[1]=='discover-preparation': os.execv(os.environ['TEST_REAL_DRIVER'],[os.environ['TEST_REAL_DRIVER']]+sys.argv[1:])\nif sys.argv[1]=='prepare-session':\n    open(os.environ['TEST_PREPARE_CAPTURE'],'w').write(json.dumps(sys.argv[2:]))\n    sys.exit(73)\nsys.exit(92)\n",
     );
     let launcher = root.join("launcher.sh");
-    fs::write(
-        &launcher,
-        include_str!("../../../scripts/tuning-extent-campaign.sh"),
-    )
-    .unwrap();
+    install_launcher(&launcher);
     let capture = root.join("prepare.json");
     let build_capture = root.join("build-called");
     let result = Command::new("bash")
@@ -161,11 +165,7 @@ fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_
 fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
     let root = scratch("gf2-launcher-declaration");
     let launcher = root.join("launcher.sh");
-    fs::write(
-        &launcher,
-        include_str!("../../../scripts/tuning-extent-campaign.sh"),
-    )
-    .unwrap();
+    install_launcher(&launcher);
     let repo = checkout(&root);
     for directory in ["first", "second"] {
         fs::create_dir(repo.join(directory)).unwrap();
@@ -213,11 +213,7 @@ fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
 fn launcher_rejects_arbitrary_stage_paths_before_creating_them() {
     let root = scratch("gf2-launcher-stage-policy");
     let launcher = root.join("launcher.sh");
-    fs::write(
-        &launcher,
-        include_str!("../../../scripts/tuning-extent-campaign.sh"),
-    )
-    .unwrap();
+    install_launcher(&launcher);
     let forbidden = root.join("repository-adjacent-stage");
     let result = Command::new("bash")
         .arg(&launcher)
@@ -253,11 +249,7 @@ fn launcher_resumes_publication_before_preparing_another_session() {
         let repo = checkout(&root);
         declare(&repo, "a83583e0", "relocated/extent");
         let launcher = root.join("launcher.sh");
-        fs::write(
-            &launcher,
-            include_str!("../../../scripts/tuning-extent-campaign.sh"),
-        )
-        .unwrap();
+        install_launcher(&launcher);
         let publish_capture = root.join("published");
         let prepare_capture = root.join("prepared");
         let result = Command::new("bash")
