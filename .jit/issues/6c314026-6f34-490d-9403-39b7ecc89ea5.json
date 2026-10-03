@@ -48,7 +48,7 @@
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-03T00:22:45.665725818Z",
+      "updated_at": "2026-10-03T01:00:41.771508332Z",
       "updated_by": "auto:executor"
     }
   },
@@ -63,5 +63,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Write the finite-field linear algebra at scale tutorial",
-  "updated_at": "2026-10-03T00:26:16.930013184Z"
+  "updated_at": "2026-10-03T01:00:41.771508332Z"
 }
