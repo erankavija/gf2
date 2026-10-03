@@ -14,6 +14,63 @@
       "format": "markdown",
       "label": "Baseline record",
       "path": "dev/active/fa787f85-documentation-overhaul/5a25717c-verdict-baseline.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "4cc897ed267e40a8bfa1fbc18950e6539c4456d0e22a6b84d42d9dab43132117",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol-v1.md",
+          "resolved_path": "dev/active/f547c394/protocol-v1.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f6b3993077550a9b22f84f37974a299a06dbfa04a2cdb54e6ec55a12d8990eec",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/src/receipt.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/receipt.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "944f58ceda8e2a2bda75a6f93952c2eb29a54edcfe0320ffb0140a32be93eea3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../fa787f85-documentation-overhaul/5a25717c-verdict-baseline.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/5a25717c-verdict-baseline.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e0f67e4e8b80ae2baadcd93291dd086b033285d20521980b8daf218eab1401ad",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "protocol.md",
+          "resolved_path": "dev/active/f547c394/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f39bb44920da399bd077ebaa6c12632c001181c02497d8f61f65b5260be48dc7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/tests/protocol_contracts.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/tests/protocol_contracts.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6a5e0266a60795403d7d4402b0ce8c70c9f01a2c05c0ca08fa164a356b8c7c76",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../tools/tuning-campaign-support/src/protocol.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/protocol.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "P-02 amendment record",
+      "path": "dev/active/f547c394/amendment-p02.md"
     }
   ],
   "first_ready_at": "2026-10-02T11:05:37.712044871Z",
@@ -55,5 +112,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Locate receipt-pinned campaign inputs by content identity",
-  "updated_at": "2026-10-03T02:15:28.803460895Z"
+  "updated_at": "2026-10-03T13:23:23.605674861Z"
 }
