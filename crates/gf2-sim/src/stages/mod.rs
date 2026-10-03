@@ -1,41 +1,12 @@
-//! Shared DVB-T2 codec + modem [`Stage`] wrappers.
+//! DVB-T2 codec and modem [`Stage`] wrappers.
 //!
-//! This neutral module supplies the DVB-T2 BICM-chain [`Stage`] adapters that
-//! the parallel-dispatch (`3fcb7025`), graph-API (`c09d3e95`), and preset
-//! (`81d05bab`) waves all reuse, plus a single [`dvb_t2_bicm_stages`] wiring
-//! factory so those consumers never re-derive the stage order. Per design-doc
-//! §9, the wrappers wrap the **existing validated** `gf2-coding` codec / modem
-//! types ([`DvbT2Concat`], [`GrayQamMapper`], [`FastGrayQamDemapper`],
-//! [`DvbT2BitInterleaver`]); none of the BCH / LDPC / QAM / interleaver math is
-//! reimplemented here.
-//!
-//! # Stage inventory
-//!
-//! | Stage | Wraps | Direction |
-//! |-------|-------|-----------|
-//! | [`DvbT2Encode`] | [`DvbT2Concat::encode`] | [`BitPackedBatch`] → [`BitPackedBatch`] |
-//! | [`BitInterleave`] | [`DvbT2BitInterleaver::interleave`] | [`BitPackedBatch`] → [`BitPackedBatch`] |
-//! | [`GrayQamMap`] | [`GrayQamMapper::map_bits`] | [`BitPackedBatch`] → [`SymbolBatch`] |
-//! | [`GrayQamDemap`] | [`FastGrayQamDemapper::demap_llrs`] | [`SymbolBatch`] → [`LlrBatch`] |
-//! | [`BitDeinterleave`] | [`DvbT2BitInterleaver::deinterleave_llrs`] | [`LlrBatch`] → [`LlrBatch`] |
-//! | [`DvbT2Decode`] | [`DvbT2Concat::decode_soft_counted`] | [`LlrBatch`] → [`HardDecisionBatch`] |
-//! | [`DvbT2BchTail`] | [`DvbT2Concat::decode_bch_from_ldpc_codeword`] | [`HardDecisionBatch`] → [`HardDecisionBatch`] |
-//!
-//! Every stage is pure-CPU: `CpuFallback = Self`,
-//! `execution_class() == ExecutionClass::CpuOnly` (design-doc §1, §8), and
-//! `Scratch = ()` — except [`DvbT2Decode`], whose scratch is [`DecodeScratch`]
-//! so the per-frame LDPC BP iteration counts are observable by the stage-driven
-//! executor (`de160fc5`; the `mean_iters` byte-identity column needs them).
-//! [`DvbT2BchTail`] is the outer-decode tail the GPU-offload preset pairs with
-//! the `GpuOnly` LDPC decode stage; the all-CPU chain uses the combined
-//! [`DvbT2Decode`] instead.
-//!
-//! # BICM order
-//!
-//! The forward chain follows the canonical DVB-T2 BICM order also realised by
-//! `gf2_coding::dvb_t2_bicm_harness`: encode → bit-interleave → QAM-map →
-//! (channel) → QAM-demap → bit-deinterleave → decode. The inverse (receive)
-//! half is demap + deinterleave + decode.
+//! The stages wrap the `gf2-coding` types [`DvbT2Concat`], [`GrayQamMapper`],
+//! [`FastGrayQamDemapper`] and [`DvbT2BitInterleaver`];
+//! [`dvb_t2_bicm_stages`] wires them in BICM order: encode → bit-interleave →
+//! QAM-map → (channel) → QAM-demap → bit-deinterleave → decode. Every stage is
+//! `ExecutionClass::CpuOnly` with `CpuFallback = Self` and `Scratch = ()`,
+//! except [`DvbT2Decode`], whose [`DecodeScratch`] exposes the per-frame LDPC
+//! BP iteration counts.
 
 pub mod nr_5g;
 
@@ -61,31 +32,17 @@ use crate::stage::{erase, AnyStage, ExecutionClass, Stage};
 /// Default per-symbol total noise variance (`N0 = 2 sigma^2`) used by
 /// [`GrayQamDemap`] when none is supplied.
 ///
-/// Small but strictly positive so the noiseless forward+inverse roundtrip
-/// produces high-confidence, correct-sign LLRs without the `exp`/`ln` log-MAP
-/// reduction underflowing. Callers that simulate a channel pass the true `N0`
-/// via [`GrayQamDemap::with_noise_var`].
+/// Callers that simulate a channel pass the true `N0` via
+/// [`GrayQamDemap::with_noise_var`].
 pub const DEFAULT_DEMAP_NOISE_VAR: f32 = 0.1;
 
-/// Maps a [`DvbT2Modulation`] to its bits-per-QAM-symbol (`m`).
-///
-/// 16-QAM → 4, 64-QAM → 6, QPSK → 2. This is the modem `bits_per_symbol`, used
-/// to size the constellation order (`1 << m`) the [`GrayQamMapper`] /
-/// [`FastGrayQamDemapper`] presets are built from.
 fn bits_per_symbol(modulation: DvbT2Modulation) -> usize {
     modulation.bits_per_cell()
 }
 
-// ===========================================================================
-// Shared Gray-QAM map / demap kernels
-// ===========================================================================
-
-/// Shared Gray-QAM **map** kernel: the single per-frame symbol loop turning a
-/// [`BitPackedBatch`] into a [`SymbolBatch`] via [`GrayQamMapper::map_bits`].
-///
-/// The DVB-T2 [`GrayQamMap`] stage and the 5G NR
-/// [`NrGrayQamMap`](nr_5g::NrGrayQamMap) stage are thin standard-specific
-/// constructors over this core, so the frame loop exists exactly once.
+/// Gray-QAM map kernel shared by [`GrayQamMap`] and
+/// [`NrGrayQamMap`](nr_5g::NrGrayQamMap): [`BitPackedBatch`] →
+/// [`SymbolBatch`] via [`GrayQamMapper::map_bits`].
 pub(crate) struct GrayQamMapCore {
     mapper: GrayQamMapper<f32>,
     bits_per_symbol: usize,
@@ -101,8 +58,6 @@ impl GrayQamMapCore {
         }
     }
 
-    /// Maps every frame's bits to I/Q symbol lanes (the shared frame loop).
-    ///
     /// Each input frame's bit count must be a multiple of `bits_per_symbol`;
     /// each output frame has `bits / bits_per_symbol` symbols.
     pub(crate) fn map_batch(&self, input: &BitPackedBatch) -> SymbolBatch {
@@ -121,14 +76,11 @@ impl GrayQamMapCore {
     }
 }
 
-/// Shared Gray-QAM **soft-demap** kernel: the single per-frame loop turning a
-/// [`SymbolBatch`] into an [`LlrBatch`] via [`FastGrayQamDemapper::demap_llrs`]
-/// under AWGN with a constant per-symbol noise variance (`N0 = 2 sigma^2`).
-///
-/// The DVB-T2 [`GrayQamDemap`] stage, the 5G NR
-/// [`NrGrayQamDemap`](nr_5g::NrGrayQamDemap) stage, and the hip-gated
-/// `gpu::demap::CpuGrayQamDemapper` GPU fallback are thin standard-specific
-/// constructors over this core, so the frame loop exists exactly once.
+/// Gray-QAM soft-demap kernel shared by [`GrayQamDemap`],
+/// [`NrGrayQamDemap`](nr_5g::NrGrayQamDemap) and the hip-gated
+/// `gpu::demap::CpuGrayQamDemapper`: [`SymbolBatch`] → [`LlrBatch`] via
+/// [`FastGrayQamDemapper::demap_llrs`] under AWGN with a constant per-symbol
+/// noise variance (`N0 = 2 sigma^2`).
 pub(crate) struct GrayQamDemapCore {
     demapper: FastGrayQamDemapper<f32>,
     method: DemapMethod,
@@ -140,8 +92,7 @@ impl GrayQamDemapCore {
     /// Builds the demap core for a Gray square-QAM constellation of
     /// `2^bits_per_symbol` points.
     ///
-    /// `stage_name` labels the panic diagnostic so each wrapping stage keeps
-    /// its historical message prefix.
+    /// `stage_name` prefixes the panic message.
     ///
     /// # Panics
     ///
@@ -172,9 +123,6 @@ impl GrayQamDemapCore {
     }
 
     /// The demap method (exact log-MAP or max-log).
-    ///
-    /// Consumed only by the hip-gated `gpu::demap::CpuGrayQamDemapper`
-    /// wrapper, hence the feature gate (dead otherwise).
     #[cfg(feature = "hip")]
     #[inline]
     pub(crate) fn method(&self) -> DemapMethod {
@@ -182,9 +130,6 @@ impl GrayQamDemapCore {
     }
 
     /// The bits-per-symbol (`m`) this core demaps.
-    ///
-    /// Consumed only by the hip-gated `gpu::demap::CpuGrayQamDemapper`
-    /// wrapper, hence the feature gate (dead otherwise).
     #[cfg(feature = "hip")]
     #[inline]
     pub(crate) fn bits_per_symbol(&self) -> usize {
@@ -192,10 +137,6 @@ impl GrayQamDemapCore {
     }
 
     /// The underlying [`FastGrayQamDemapper`] this core delegates to.
-    ///
-    /// Consumed only by the hip-gated `gpu::demap::CpuGrayQamDemapper`
-    /// wrapper (the GPU stage shares its Gray-PAM level table), hence the
-    /// feature gate (dead otherwise).
     #[cfg(feature = "hip")]
     #[inline]
     pub(crate) fn demapper(&self) -> &FastGrayQamDemapper<f32> {
@@ -221,7 +162,6 @@ impl GrayQamDemapCore {
         out
     }
 
-    /// Demaps every frame in the batch (the shared frame loop).
     pub(crate) fn demap_batch(&self, input: &SymbolBatch) -> LlrBatch {
         let frames = input
             .i
@@ -233,9 +173,6 @@ impl GrayQamDemapCore {
     }
 }
 
-// ===========================================================================
-// DvbT2Encode
-// ===========================================================================
 
 /// FEC-encode stage: BBFRAME info bits → FECFRAME coded bits.
 ///
@@ -267,19 +204,11 @@ pub struct DvbT2Encode {
 
 impl DvbT2Encode {
     /// Builds an encode stage over a shared [`DvbT2Concat`] codec.
-    ///
-    /// # Arguments
-    ///
-    /// * `codec` — the concatenated BCH+LDPC codec to encode with.
     pub fn new(codec: Arc<DvbT2Concat>) -> Self {
         Self { codec }
     }
 
     /// The BBFRAME information-bit count `k_bch` this stage encodes.
-    ///
-    /// Exposed so the stage-driven executor (`de160fc5`) can mint the
-    /// per-frame random BBFRAME input of the correct width after downcasting
-    /// the chain's source stage via [`AnyStage::stage_as_any`].
     #[inline]
     #[must_use]
     pub fn k_bch(&self) -> usize {
@@ -309,9 +238,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for DvbT2Encode {
     }
 }
 
-// ===========================================================================
-// BitInterleave / BitDeinterleave
-// ===========================================================================
 
 /// Bit-interleave stage: FECFRAME coded bits → interleaved coded bits.
 ///
@@ -343,10 +269,6 @@ pub struct BitInterleave {
 
 impl BitInterleave {
     /// Builds a bit-interleave stage over a shared interleaver.
-    ///
-    /// # Arguments
-    ///
-    /// * `interleaver` — the DVB-T2 bit interleaver for this MODCOD.
     pub fn new(interleaver: Arc<DvbT2BitInterleaver>) -> Self {
         Self { interleaver }
     }
@@ -403,10 +325,6 @@ pub struct BitDeinterleave {
 
 impl BitDeinterleave {
     /// Builds a bit-deinterleave stage over a shared interleaver.
-    ///
-    /// # Arguments
-    ///
-    /// * `interleaver` — the DVB-T2 bit interleaver for this MODCOD.
     pub fn new(interleaver: Arc<DvbT2BitInterleaver>) -> Self {
         Self { interleaver }
     }
@@ -430,9 +348,6 @@ impl Stage<LlrBatch, LlrBatch> for BitDeinterleave {
     }
 }
 
-// ===========================================================================
-// GrayQamMap
-// ===========================================================================
 
 /// Gray-QAM map stage: interleaved coded bits → IQ symbols.
 ///
@@ -460,10 +375,6 @@ pub struct GrayQamMap {
 
 impl GrayQamMap {
     /// Builds a Gray-QAM map stage for a DVB-T2 modulation.
-    ///
-    /// # Arguments
-    ///
-    /// * `modulation` — DVB-T2 modulation order (QPSK / 16-QAM / 64-QAM).
     pub fn new(modulation: DvbT2Modulation) -> Self {
         Self {
             core: GrayQamMapCore::new(bits_per_symbol(modulation)),
@@ -488,9 +399,6 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
     }
 }
 
-// ===========================================================================
-// GrayQamDemap
-// ===========================================================================
 
 /// Gray-QAM soft-demap stage: IQ symbols → soft LLRs.
 ///
@@ -521,24 +429,13 @@ pub struct GrayQamDemap {
 }
 
 impl GrayQamDemap {
-    /// Builds a Gray-QAM demap stage with the default demap noise variance.
-    ///
-    /// # Arguments
-    ///
-    /// * `modulation` — DVB-T2 modulation order.
-    /// * `method` — exact log-MAP or max-log demapping.
+    /// Builds a Gray-QAM demap stage with [`DEFAULT_DEMAP_NOISE_VAR`].
     pub fn new(modulation: DvbT2Modulation, method: DemapMethod) -> Self {
         Self::with_noise_var(modulation, method, DEFAULT_DEMAP_NOISE_VAR)
     }
 
-    /// Builds a Gray-QAM demap stage with an explicit per-symbol noise variance.
-    ///
-    /// # Arguments
-    ///
-    /// * `modulation` — DVB-T2 modulation order.
-    /// * `method` — exact log-MAP or max-log demapping.
-    /// * `noise_var` — per-symbol total complex AWGN noise variance
-    ///   (`N0 = 2 sigma^2`); must be strictly positive.
+    /// Builds a Gray-QAM demap stage with the per-symbol total complex AWGN
+    /// noise variance `noise_var` (`N0 = 2 sigma^2`).
     ///
     /// # Panics
     ///
@@ -560,9 +457,6 @@ impl GrayQamDemap {
 
     /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`) this
     /// demapper assumes when computing LLRs.
-    ///
-    /// Exposed so consumers (e.g. the DVB-T2 preset's regression test) can
-    /// verify the demapper's `N0` was wired to the channel's true `N0`.
     #[inline]
     #[must_use]
     pub fn noise_var(&self) -> f32 {
@@ -583,21 +477,16 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
     }
 }
 
-// ===========================================================================
-// DvbT2Decode
-// ===========================================================================
 
 /// Per-stage scratch for [`DvbT2Decode`]: the per-frame LDPC BP iteration
 /// counts of the most recent `process` call.
 ///
 /// [`DvbT2Decode::process`] clears [`iterations`](Self::iterations) and pushes
-/// one entry per input frame (in frame order): the genuine BP depth reported by
+/// one entry per input frame, in frame order: the BP depth reported by
 /// [`DvbT2Concat::decode_soft_counted`] on both the converged and
-/// non-converged arms. The stage-driven executor (`de160fc5`) reads the counts
-/// back after each frame so the aggregated `mean_iters` column is byte-identical
-/// to the SSOT frame kernel's (design doc §11) — the erased
+/// non-converged arms. The erased
 /// [`process_any`](crate::stage::AnyStage::process_any) signature cannot carry
-/// them, and scratch is the sanctioned per-stage side channel.
+/// the counts, so they travel in the scratch.
 ///
 /// # Examples
 ///
@@ -621,12 +510,9 @@ pub struct DecodeScratch {
 /// `k_bch` recovered BBFRAME bits. The per-frame BP iteration counts are
 /// recorded into the [`DecodeScratch`] (see its docs).
 ///
-/// A frame whose LDPC belief propagation does not converge is still passed
-/// through using its best-effort (BCH-corrected) BBFRAME estimate, matching the
-/// `Err(LdpcDecodeFailed { bbframe, .. })` payload of
-/// [`DvbT2Concat::decode_soft_counted`]; the simulation's frame-error
-/// accounting compares the recovered bits against the transmitted BBFRAME
-/// rather than relying on a hard decode error here.
+/// A frame whose LDPC belief propagation does not converge yields the
+/// `bbframe` payload of the `Err(LdpcDecodeFailed { bbframe, .. })` returned by
+/// [`DvbT2Concat::decode_soft_counted`], and no stage error.
 ///
 /// # Examples
 ///
@@ -653,10 +539,6 @@ pub struct DvbT2Decode {
 
 impl DvbT2Decode {
     /// Builds a decode stage over a shared [`DvbT2Concat`] codec.
-    ///
-    /// # Arguments
-    ///
-    /// * `codec` — the concatenated BCH+LDPC codec to decode with.
     pub fn new(codec: Arc<DvbT2Concat>) -> Self {
         Self { codec }
     }
@@ -674,22 +556,14 @@ impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
         scratch.iterations.clear();
         let mut frames: Vec<BitVec> = Vec::with_capacity(input.frames.len());
         for llrs in &input.frames {
-            // `decode_soft_counted` is the SSOT decode call the frame kernel
-            // (`frame_sim`) makes, so the recorded iteration counts (and the
-            // best-effort BBFRAME on the non-converged arm) are identical to
-            // the SSOT path's.
             let (bbframe, iterations) = match self.codec.decode_soft_counted(llrs) {
                 Ok((bbframe, iterations)) => (bbframe, iterations as u64),
-                // Non-convergence is not a stage error: keep the best-effort
-                // BBFRAME estimate so frame-error accounting can compare it
-                // against the transmitted bits (see stage doc).
+                // Non-convergence is not a stage error (see stage doc).
                 Err(gf2_coding::ldpc::dvb_t2::concat::ConcatError::LdpcDecodeFailed {
                     bbframe,
                     iterations,
                 }) => (bbframe, iterations as u64),
-                // `decode_soft_counted` only ever returns `LdpcDecodeFailed`;
-                // any other variant (currently unreachable) is surfaced as a
-                // transient error so the executor can decide policy.
+                // `decode_soft_counted` returns no other variant.
                 Err(other) => {
                     return Err(StageError::Recoverable(
                         crate::error::RecoverableError::Transient(Box::new(other)),
@@ -707,22 +581,15 @@ impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
     }
 }
 
-// ===========================================================================
-// DvbT2BchTail
-// ===========================================================================
 
 /// BCH outer-decode tail stage: LDPC hard-decision FECFRAME codewords →
 /// recovered BBFRAME bits.
 ///
-/// Wraps [`DvbT2Concat::decode_bch_from_ldpc_codeword`] — the factored-out
-/// outer-decode tail of [`DvbT2Concat::decode_soft`] — so a pipeline whose
-/// inner LDPC decode runs elsewhere (the `ExecutionClass::GpuOnly`
-/// `gpu::ldpc_bp::GpuLdpcBp` stage under `feature = "hip"`, or its registered
-/// `CpuLdpcBp` fallback) can finish the concatenated decode on the CPU. Each
+/// Wraps [`DvbT2Concat::decode_bch_from_ldpc_codeword`], so a pipeline whose
+/// inner LDPC decode runs in a separate stage (`gpu::ldpc_bp::GpuLdpcBp` or
+/// its `CpuLdpcBp` fallback) finishes the concatenated decode on the CPU. Each
 /// input frame is the full `n_ldpc`-bit hard-decision codeword; each output
-/// frame is the `k_bch`-bit BBFRAME. The DVB-T2 preset places this stage after
-/// the GPU LDPC decode when GPU offload is enabled; the all-CPU chain keeps
-/// the combined [`DvbT2Decode`] instead.
+/// frame is the `k_bch`-bit BBFRAME.
 ///
 /// # Examples
 ///
@@ -749,10 +616,6 @@ pub struct DvbT2BchTail {
 
 impl DvbT2BchTail {
     /// Builds a BCH outer-decode tail stage over a shared [`DvbT2Concat`] codec.
-    ///
-    /// # Arguments
-    ///
-    /// * `codec` — the concatenated BCH+LDPC codec whose BCH outer decode to run.
     pub fn new(codec: Arc<DvbT2Concat>) -> Self {
         Self { codec }
     }
@@ -780,25 +643,15 @@ impl Stage<HardDecisionBatch, HardDecisionBatch> for DvbT2BchTail {
     }
 }
 
-// ===========================================================================
-// Wiring factory
-// ===========================================================================
-
-/// The ordered DVB-T2 BICM stage wiring shared by every consumer wave.
-///
-/// Returned by [`dvb_t2_bicm_stages`]. The two `Vec<Box<dyn AnyStage>>` halves
-/// are the forward (transmit) and inverse (receive) stage chains in execution
-/// order, plus the shared codec / interleaver handles so a consumer can read
-/// frame dimensions (`k_bch`, `n_ldpc`, `frame_bits`) without rebuilding them.
+/// The ordered DVB-T2 BICM stage wiring returned by [`dvb_t2_bicm_stages`].
 ///
 /// * `forward` — `[DvbT2Encode, BitInterleave, GrayQamMap]`
 ///   (`BitPackedBatch` → `BitPackedBatch` → `BitPackedBatch` → `SymbolBatch`).
 /// * `inverse` — `[GrayQamDemap, BitDeinterleave, DvbT2Decode]`
 ///   (`SymbolBatch` → `LlrBatch` → `LlrBatch` → `HardDecisionBatch`).
 ///
-/// A channel stage (owned by `db9836e4`) slots between `forward` and `inverse`
-/// (`SymbolBatch` → `SymbolBatch`); this factory deliberately emits no channel
-/// so noiseless composition is possible.
+/// A channel stage (`SymbolBatch` → `SymbolBatch`) slots between `forward` and
+/// `inverse`.
 pub struct DvbT2BicmStages {
     /// Forward (transmit) chain in execution order.
     pub forward: Vec<Box<dyn AnyStage>>,
@@ -812,38 +665,15 @@ pub struct DvbT2BicmStages {
 
 /// Builds the ordered DVB-T2 BICM forward + inverse stage chains for a MODCOD.
 ///
-/// This is the single wiring source the graph-API (`c09d3e95`), preset
-/// (`81d05bab`), and parallel-dispatch (`3fcb7025`) waves reuse, so the stage
-/// order is defined in exactly one place. The codec is constructed for
-/// [`FrameSize::Normal`] (n=64800) — the in-scope DVB-T2 FECFRAME — and the
-/// supplied `decoder` configuration is applied to it.
-///
-/// # Arguments
-///
-/// * `rate` — DVB-T2 LDPC code rate (1/2, 2/3, or 3/4 are the in-scope rates).
-/// * `modulation` — DVB-T2 modulation order (16-QAM or 64-QAM in scope).
-/// * `decoder` — LDPC belief-propagation decoder configuration applied to the
-///   shared codec.
-/// * `demap` — soft-demap method ([`DemapMethod::ExactLogMap`] or
-///   [`DemapMethod::MaxLog`]).
-/// * `demap_noise_var` — the per-symbol total complex AWGN noise variance
-///   (`N0 = 2 sigma^2`) the soft demapper assumes. For a physically consistent
-///   chain this **must** equal the channel's true `N0`; the preset derives it
-///   from the channel's Es/N0 via the crate-private `es_n0_db_to_sigma` helper.
-///   Noiseless
-///   callers (those that connect [`GrayQamMap`] straight to [`GrayQamDemap`]
-///   with no channel) pass [`DEFAULT_DEMAP_NOISE_VAR`].
-///
-/// # Returns
-///
-/// A [`DvbT2BicmStages`] holding the forward and inverse erased-stage chains
-/// plus the shared codec / interleaver handles.
+/// The codec is constructed for [`FrameSize::Normal`] (n=64800) with the
+/// `decoder` configuration applied. `demap_noise_var` is the per-symbol total
+/// complex AWGN noise variance (`N0 = 2 sigma^2`) the soft demapper assumes;
+/// a chain with no channel passes [`DEFAULT_DEMAP_NOISE_VAR`].
 ///
 /// # Panics
 ///
-/// Panics if the `(FrameSize::Normal, rate)` pair cannot construct a codec
-/// (every in-scope DVB-T2 rate constructs successfully), if `rate` /
-/// `modulation` is out of the bit-interleaver's supported scope, or if
+/// Panics if the `(FrameSize::Normal, rate)` pair cannot construct a codec, if
+/// `rate` / `modulation` is unsupported by the bit interleaver, or if
 /// `demap_noise_var` is not finite and strictly positive (per
 /// [`GrayQamDemap::with_noise_var`]).
 ///
@@ -934,7 +764,6 @@ mod tests {
 
     #[test]
     fn test_factory_forward_chain_type_threading() {
-        // Forward chain types must thread: BitPacked -> BitPacked -> BitPacked -> Symbol.
         let s = dvb_t2_bicm_stages(
             CodeRate::Rate1_2,
             DvbT2Modulation::Qam16,
@@ -955,7 +784,6 @@ mod tests {
         assert_eq!(s.forward[2].input_type(), bitpacked);
         assert_eq!(s.forward[2].output_type(), symbol); // map
 
-        // Inverse chain: Symbol -> Llr -> Llr -> HardDecision.
         assert_eq!(s.inverse[0].input_type(), symbol);
         assert_eq!(s.inverse[0].output_type(), llr); // demap
         assert_eq!(s.inverse[1].output_type(), llr); // deinterleave
