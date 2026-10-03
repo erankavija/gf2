@@ -1,16 +1,5 @@
 //! Primitive polynomial generation for GF(2^m).
 //!
-//! This module provides algorithms to generate primitive polynomials over GF(2),
-//! which are essential for constructing binary extension fields GF(2^m).
-//!
-//! # Generation Strategies
-//!
-//! Different strategies are optimal for different field sizes:
-//! - **Exhaustive**: Test all monic polynomials (m ≤ 16)
-//! - **Trinomial**: Search for x^m + x^k + 1 forms (hardware-efficient)
-//! - **Pentanomial**: Fallback when trinomials don't exist
-//! - **Parallel**: Multi-core exhaustive search using rayon
-//!
 //! # Examples
 //!
 //! ```
@@ -39,7 +28,7 @@ pub enum GenerationStrategy {
     Trinomial,
     /// Search for pentanomials x^m + x^a + x^b + x^c + 1
     Pentanomial,
-    /// Parallel exhaustive search with rayon (not yet implemented)
+    /// Exhaustive search on the rayon pool with the `parallel` feature, sequential without it.
     ParallelExhaustive {
         /// Number of threads to use for parallel search
         threads: usize,
@@ -86,7 +75,7 @@ impl PrimitiveGenerator {
 
     /// Find the first primitive polynomial of degree m.
     ///
-    /// Returns `None` if no primitive polynomial exists (which shouldn't happen for valid m).
+    /// Returns `None` when the strategy's search space holds no primitive polynomial.
     ///
     /// # Examples
     ///
@@ -108,7 +97,7 @@ impl PrimitiveGenerator {
 
     /// Find all primitive polynomials of degree m.
     ///
-    /// This is only practical for small m (≤ 16) with exhaustive search.
+    /// Visits each of the `2^m` monic degree-`m` candidates.
     ///
     /// # Panics
     ///
@@ -133,7 +122,6 @@ impl PrimitiveGenerator {
         }
     }
 
-    /// Exhaustive search for first primitive polynomial.
     fn exhaustive_search_first(&self) -> Option<u64> {
         #[cfg(feature = "parallel")]
         if matches!(self.strategy, GenerationStrategy::ParallelExhaustive { .. }) {
@@ -143,12 +131,10 @@ impl PrimitiveGenerator {
         let m = self.degree;
         let high_bit = 1u64 << m;
 
-        // Lower bits can be anything from 0 to 2^m - 1
         for lower_bits in 0..(1u64 << m) {
             let candidate = high_bit | lower_bits;
 
-            // Skip even-weight polynomials
-            // Primitive polynomials must have odd weight
+            // Even weight means x + 1 divides the candidate.
             let weight = candidate.count_ones();
             if weight.is_multiple_of(2) {
                 continue;
@@ -162,7 +148,6 @@ impl PrimitiveGenerator {
         None
     }
 
-    /// Exhaustive search for all primitive polynomials.
     fn exhaustive_search_all(&self) -> Vec<u64> {
         #[cfg(feature = "parallel")]
         if matches!(self.strategy, GenerationStrategy::ParallelExhaustive { .. }) {
@@ -176,7 +161,6 @@ impl PrimitiveGenerator {
         for lower_bits in 0..(1u64 << m) {
             let candidate = high_bit | lower_bits;
 
-            // Skip even-weight polynomials
             let weight = candidate.count_ones();
             if weight.is_multiple_of(2) {
                 continue;
@@ -190,17 +174,14 @@ impl PrimitiveGenerator {
         primitives
     }
 
-    /// Search for primitive trinomials x^m + x^k + 1.
     fn trinomial_search(&self) -> Option<u64> {
         let m = self.degree;
         let high_bit = 1u64 << m;
         let constant = 1u64;
 
-        // Try all possible middle terms x^k where 1 ≤ k < m
         for k in 1..m {
-            // Swan's theorem: trinomial x^m + x^k + 1 is reducible if:
-            // - gcd(m, k) > 1, OR
-            // - m ≡ 0 (mod 8) and k is odd
+            // x^m + x^k + 1 is a polynomial in x^gcd(m, k), so not primitive when
+            // gcd(m, k) > 1, and is reducible when 8 | m (Swan's theorem).
             if gcd(m, k) > 1 {
                 continue;
             }
@@ -218,13 +199,11 @@ impl PrimitiveGenerator {
         None
     }
 
-    /// Search for primitive pentanomials x^m + x^a + x^b + x^c + 1.
     fn pentanomial_search(&self) -> Option<u64> {
         let m = self.degree;
         let high_bit = 1u64 << m;
         let constant = 1u64;
 
-        // Try all combinations where m > a > b > c > 0
         for a in (1..m).rev() {
             for b in (1..a).rev() {
                 for c in 1..b {
@@ -240,10 +219,7 @@ impl PrimitiveGenerator {
         None
     }
 
-    /// Test if a polynomial is primitive using our existing verification.
     fn is_primitive_poly(&self, poly: u64) -> bool {
-        // Create a field with this polynomial without database warnings
-        // (we're testing many polynomials, most won't be in database)
         let field = Gf2mField::new_unchecked(self.degree, poly);
         field.verify_primitive()
     }
@@ -281,7 +257,6 @@ impl PrimitiveGenerator {
     }
 }
 
-/// Compute GCD using Euclidean algorithm.
 fn gcd(mut a: usize, mut b: usize) -> usize {
     while b != 0 {
         let temp = b;
@@ -295,12 +270,10 @@ fn gcd(mut a: usize, mut b: usize) -> usize {
 mod tests {
     use super::*;
 
-    // Known primitive polynomials from OEIS A011260 and authoritative sources
-    // Used to validate our generation algorithms
+    // Primitive-polynomial counts per degree: OEIS A011260.
 
     #[test]
     fn test_generate_m2_first() {
-        // x^2 + x + 1 is the only primitive polynomial for m=2
         let gen = PrimitiveGenerator::new(2);
         let poly = gen.find_first();
         assert_eq!(poly, Some(0b111));
@@ -308,26 +281,21 @@ mod tests {
 
     #[test]
     fn test_generate_m3_first() {
-        // x^3 + x + 1 is primitive (0b1011)
         let gen = PrimitiveGenerator::new(3);
         let poly = gen.find_first().unwrap();
-        // Could be x^3+x+1 (0b1011) or x^3+x^2+1 (0b1101)
         assert!(poly == 0b1011 || poly == 0b1101);
     }
 
     #[test]
     fn test_generate_m4_first() {
-        // x^4 + x + 1 is primitive (0b10011)
         let gen = PrimitiveGenerator::new(4);
         let poly = gen.find_first().unwrap();
-        // Verify it's actually primitive
         let field = Gf2mField::new(4, poly);
         assert!(field.verify_primitive());
     }
 
     #[test]
     fn test_generate_m5_first() {
-        // x^5 + x^2 + 1 is primitive (0b100101)
         let gen = PrimitiveGenerator::new(5);
         let poly = gen.find_first().unwrap();
         let field = Gf2mField::new(5, poly);
@@ -336,7 +304,6 @@ mod tests {
 
     #[test]
     fn test_generate_m2_all() {
-        // m=2 has exactly 1 primitive polynomial
         let gen = PrimitiveGenerator::new(2).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 1);
@@ -345,7 +312,6 @@ mod tests {
 
     #[test]
     fn test_generate_m3_all() {
-        // m=3 has exactly 2 primitive polynomials
         let gen = PrimitiveGenerator::new(3).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 2);
@@ -355,7 +321,6 @@ mod tests {
 
     #[test]
     fn test_generate_m4_all() {
-        // m=4 has exactly 2 primitive polynomials
         let gen = PrimitiveGenerator::new(4).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 2);
@@ -365,12 +330,10 @@ mod tests {
 
     #[test]
     fn test_generate_m5_all() {
-        // m=5 has exactly 6 primitive polynomials (OEIS A011260)
         let gen = PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Exhaustive);
         let all = gen.find_all();
         assert_eq!(all.len(), 6);
 
-        // Verify all are actually primitive
         for &poly in &all {
             let field = Gf2mField::new(5, poly);
             assert!(
@@ -383,7 +346,6 @@ mod tests {
 
     #[test]
     fn test_trinomial_search_m3() {
-        // x^3 + x + 1 is a primitive trinomial
         let gen = PrimitiveGenerator::new(3).with_strategy(GenerationStrategy::Trinomial);
         let poly = gen.find_first().unwrap();
         assert_eq!(poly.count_ones(), 3); // trinomial has 3 terms
@@ -393,7 +355,6 @@ mod tests {
 
     #[test]
     fn test_trinomial_search_m5() {
-        // x^5 + x^2 + 1 is a primitive trinomial
         let gen = PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Trinomial);
         let poly = gen.find_first().unwrap();
         assert_eq!(poly.count_ones(), 3);
@@ -417,7 +378,6 @@ mod tests {
         let all = gen.find_all();
         assert_eq!(all.len(), 6);
 
-        // Should match sequential results
         let sequential_gen =
             PrimitiveGenerator::new(5).with_strategy(GenerationStrategy::Exhaustive);
         let sequential_all = sequential_gen.find_all();
@@ -431,7 +391,6 @@ mod tests {
             .with_strategy(GenerationStrategy::ParallelExhaustive { threads: 4 });
         let poly = gen.find_first().unwrap();
 
-        // Verify it's actually primitive
         let field = Gf2mField::new_unchecked(6, poly);
         assert!(field.verify_primitive());
     }
