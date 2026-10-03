@@ -1,65 +1,11 @@
-//! Ordered Reliability Bits GRAND (ORBGRAND) decoder.
+//! Ordered Reliability Bits GRAND (ORBGRAND, `@/citation/Duffy2022`).
 //!
-//! ORBGRAND is a soft-input universal decoder that works with any linear block code.
-//! It generates noise patterns in order of decreasing likelihood, using the
-//! logistic-weight ordering derived from channel soft information (LLRs).
-//!
-//! # Algorithm
-//!
-//! 1. Compute hard decisions from LLRs to form the received word `y`.
-//! 2. Sort bit positions by reliability (`|LLR|`), producing a permutation `pi`.
-//! 3. Generate noise patterns in logistic-weight order: weight-1 patterns on the
-//!    least reliable bits first, then weight-2 combinations, etc.
-//! 4. For each noise pattern `z`, check if `y XOR z` is a valid codeword via
-//!    syndrome check: `H * (y XOR z) = 0`.
-//! 5. Return the first valid codeword found (ML decoding for the code).
-//!
-//! # Logistic Weight
-//!
-//! The logistic weight of a noise pattern `z` is defined as the sum of the
-//! reliability indices of the flipped bit positions. If the bits are sorted by
-//! increasing reliability (least reliable = index 1), then the logistic weight
-//! of a pattern flipping positions `{i_1, ..., i_w}` is `i_1 + ... + i_w`.
-//! Patterns with smaller logistic weight are more likely.
-//!
-//! # List Decoding
-//!
-//! ORBGRAND supports list decoding: after finding the first valid codeword,
-//! it can continue to find up to `L` codewords. Each codeword is annotated
-//! with its noise pattern log-probability `ln p(z|r)`. Use
-//! [`ScoredCodeword::noise_probability()`] for the linear-domain value `p(z|r)`.
-//!
-//! # Even Code Optimization
-//!
-//! If all codewords have even Hamming weight (an *even code*), noise patterns
-//! whose weight parity does not match the received word's parity can be skipped.
-//! This halves the query space.
-//!
-//! # Examples
-//!
-//! ```
-//! use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-//! use gf2_coding::llr::Llr;
-//! use gf2_core::BitMatrix;
-//!
-//! // Hamming(7,4) parity-check matrix
-//! let h = gf2_core::bitmatrix![
-//!     1, 1, 0, 1, 1, 0, 0;
-//!     1, 0, 1, 1, 0, 1, 0;
-//!     0, 1, 1, 1, 0, 0, 1
-//! ];
-//!
-//! let config = OrbGrandConfig::default();
-//! let decoder = OrbGrand::new(h, config);
-//!
-//! // Soft-input: high confidence in all bits (a valid all-zero codeword)
-//! let llrs = vec![
-//!     Llr::new(5.0), Llr::new(5.0), Llr::new(5.0), Llr::new(5.0),
-//!     Llr::new(5.0), Llr::new(5.0), Llr::new(5.0),
-//! ];
-//! let result = decoder.decode(&llrs);
-//! assert!(result.success());
-//! ```
+//! A soft-input decoder for any linear block code.  It flips the hard
+//! decisions by noise patterns in ascending combined weight `IC·w + lw`, where
+//! `w` is the Hamming weight and the logistic weight `lw` is the sum of the
+//! 1-based reliability ranks (least reliable first) of the flipped positions,
+//! and collects the patterns with zero syndrome, each annotated with its noise
+//! log-probability `ln p(z|r)`.
 
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, SoftDecoder};
@@ -68,29 +14,6 @@ use gf2_core::BitMatrix;
 use gf2_core::BitVec;
 
 /// Configuration for the ORBGRAND decoder.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::grand::OrbGrandConfig;
-///
-/// // Default: list size 1, 1M queries, not even code
-/// let config = OrbGrandConfig::default();
-/// assert_eq!(config.list_size, 1);
-/// assert_eq!(config.max_queries, 1_000_000);
-/// assert!(!config.even_code);
-///
-/// // Custom configuration
-/// use gf2_coding::grand::OneLineIntercept;
-/// let config = OrbGrandConfig {
-///     max_queries: 10_000,
-///     list_size: 5,
-///     even_code: true,
-///     systematic: true,
-///     list_bler_stop_threshold: Some(1e-4),
-///     one_line_intercept: OneLineIntercept::Auto,
-/// };
-/// ```
 #[derive(Debug, Clone)]
 pub struct OrbGrandConfig {
     /// Maximum number of noise patterns to test before giving up.
@@ -114,21 +37,20 @@ pub struct OrbGrandConfig {
     /// extract message bits according to the code's structure.
     pub systematic: bool,
 
-    /// Paper-aligned early-stop criterion on the running list-BLER estimate.
+    /// Early-stop criterion on the running list-BLER estimate
+    /// (`@/citation/Yuan2025`).
     ///
     /// When `Some(t)`, the search terminates as soon as the list has at
     /// least one codeword AND `P(C \ L) < t`, OR the list has `list_size`
     /// codewords (whichever fires first), in addition to the `max_queries`
-    /// backstop. This matches the rule used in Yuan–Médard–Galligan–Duffy
-    /// SO-GRAND: "lists are added to until L=4 OR the predicted list-BLER
-    /// is below 1e-4" (Figs 1/3/8; 1e-5 for the GLDPC configuration).
+    /// backstop.
     ///
-    /// When `None` (default), the legacy stop rule is used: exhaust
-    /// `max_queries` or reach cumulative probability ≈ 1 with
-    /// `list_size` codewords.
+    /// When `None` (default), the search stops at `max_queries`, or once
+    /// `list_size` codewords are found and the cumulative probability
+    /// reaches its cap.
     pub list_bler_stop_threshold: Option<f64>,
 
-    /// 1-line ORBGRAND intercept (`IC` in Duffy–An–Médard 2022).
+    /// 1-line ORBGRAND intercept (`IC` in `@/citation/Duffy2022`).
     ///
     /// Controls the combined-weight enumeration order
     /// `wt = IC·w + lw` where `w` is the Hamming weight of a test
@@ -142,7 +64,7 @@ pub struct OrbGrandConfig {
     ///   pins a user-chosen intercept.
     /// - [`OneLineIntercept::Auto`] (default) recomputes `IC` from
     ///   the sorted `|LLR|` distribution on every decode, using the
-    ///   slope heuristic from the paper:
+    ///   slope heuristic of that work:
     ///   `β = (|L|_{(n/2)} − |L|_{(1)}) / (n/2 − 1)`,
     ///   `IC = max(round(|L|_{(1)} / β − 1), 0)`.
     pub one_line_intercept: OneLineIntercept,
@@ -152,8 +74,7 @@ pub struct OrbGrandConfig {
 /// [`OrbGrandConfig::one_line_intercept`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OneLineIntercept {
-    /// Recompute `IC` from the sorted `|LLR|` distribution per decode
-    /// (paper default).
+    /// Recompute `IC` from the sorted `|LLR|` distribution per decode.
     Auto,
     /// Basic ORBGRAND: `IC = 0`. Patterns are enumerated by pure
     /// ascending logistic weight.
@@ -176,7 +97,7 @@ impl Default for OrbGrandConfig {
 }
 
 /// Compute the 1-line ORBGRAND intercept from a sorted-ascending slice of
-/// `|LLR|` magnitudes, using the slope heuristic from Duffy–An–Médard 2022.
+/// `|LLR|` magnitudes, using the slope heuristic of `@/citation/Duffy2022`.
 ///
 /// `β = (|L|_{(n/2)} − |L|_{(1)}) / (n/2 − 1)`,
 /// `IC = max(round(|L|_{(1)} / β − 1), 0)`.
@@ -221,20 +142,13 @@ pub struct ScoredCodeword {
 }
 
 impl ScoredCodeword {
-    /// Returns the noise probability in the linear domain: `exp(noise_log_probability)`.
-    ///
-    /// This is `p(z | r)`, the probability of the noise pattern that produced
-    /// this codeword given the received signal.
+    /// Returns `p(z | r) = exp(noise_log_probability)`.
     pub fn noise_probability(&self) -> f64 {
         self.noise_log_probability.exp()
     }
 }
 
 /// Result of an ORBGRAND decoding operation.
-///
-/// Contains the hard-decision vector, the list of found codewords (ordered by
-/// decreasing noise log-probability), the number of queries performed, and
-/// cumulative log-probability information.
 #[derive(Debug, Clone)]
 pub struct OrbGrandResult {
     /// Hard-decision vector `y` derived from input LLRs (length n).
@@ -252,8 +166,6 @@ pub struct OrbGrandResult {
     /// that are eligible under the parity constraint (all patterns for
     /// non-even codes, only patterns matching `hard_parity` for even codes).
     /// This is `ln(sum_z p(z|r))` summed over the eligible tested patterns.
-    /// Use [`cumulative_probability()`](Self::cumulative_probability) for
-    /// the linear-domain value.
     pub cumulative_log_probability: f64,
 
     /// Log of the total probability mass the noise can physically realise.
@@ -274,9 +186,7 @@ pub struct OrbGrandResult {
 }
 
 impl OrbGrandResult {
-    /// Returns the cumulative probability in the linear domain: `exp(cumulative_log_probability)`.
-    ///
-    /// This is `sum_z p(z|r)` over all tested noise patterns.
+    /// Returns `exp(cumulative_log_probability)`.
     pub fn cumulative_probability(&self) -> f64 {
         self.cumulative_log_probability.exp()
     }
@@ -292,61 +202,21 @@ impl OrbGrandResult {
     }
 }
 
-/// Ordered Reliability Bits GRAND (ORBGRAND) decoder.
-///
-/// A universal soft-input decoder for linear block codes that achieves
-/// near-maximum-likelihood decoding by testing noise patterns in weight-tiered
-/// logistic-weight order, using soft reliability information from LLRs.
-///
-/// # Arguments
-///
-/// The decoder is constructed with a parity-check matrix `H` and a
-/// configuration struct controlling query limits and list size.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-/// use gf2_coding::llr::Llr;
-/// use gf2_core::BitMatrix;
-///
-/// // Hamming(7,4) parity-check matrix
-/// let h = gf2_core::bitmatrix![
-///     1, 1, 0, 1, 1, 0, 0;
-///     1, 0, 1, 1, 0, 1, 0;
-///     0, 1, 1, 1, 0, 0, 1
-/// ];
-///
-/// let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-/// assert_eq!(decoder.n(), 7);
-/// ```
-///
-/// # Complexity
-///
-/// Worst-case query complexity is O(2^n) but in practice, for codes at
-/// moderate SNR, convergence is much faster. The logistic-weight ordering
-/// ensures the most likely patterns are tested first.
+/// Ordered Reliability Bits GRAND (ORBGRAND) decoder for the linear block
+/// code of a parity-check matrix.
 pub struct OrbGrand {
-    /// Sparse parity-check matrix for efficient syndrome computation.
     h_sparse: SpBitMatrix,
 
-    /// Number of codeword bits.
     n: usize,
 
-    /// Number of check (redundancy) bits: rows of H.
+    /// Rows of H.
     n_minus_k: usize,
 
-    /// Decoder configuration.
     config: OrbGrandConfig,
 }
 
 impl OrbGrand {
-    /// Creates a new ORBGRAND decoder.
-    ///
-    /// # Arguments
-    ///
-    /// * `h` - Parity-check matrix (r x n) where r = n - k.
-    /// * `config` - Decoder configuration controlling query limits and list size.
+    /// Creates a decoder from the `(n − k) × n` parity-check matrix `h`.
     ///
     /// # Panics
     ///
@@ -374,48 +244,21 @@ impl OrbGrand {
         self.n - self.n_minus_k
     }
 
-    /// Decodes a received word given soft-input LLRs.
+    /// Decodes one word of `n` LLRs, where a positive LLR favours bit 0.
     ///
-    /// # Arguments
-    ///
-    /// * `llrs` - Log-likelihood ratios for each of the `n` codeword bit positions.
-    ///   Positive LLR means bit 0 is more likely; negative means bit 1 is more likely.
-    ///
-    /// # Returns
-    ///
-    /// An [`OrbGrandResult`] containing the hard-decision vector, the list of
-    /// found codewords (up to `list_size`) sorted by decreasing noise
-    /// log-probability, the total query count, and cumulative log-probability.
+    /// The result lists every codeword found before a stop rule fired, sorted
+    /// by decreasing noise log-probability; the list can exceed `list_size`.
     ///
     /// # Panics
     ///
     /// Panics if `llrs.len() != n`.
     /// Panics if any LLR has a NaN magnitude.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
-    /// use gf2_coding::llr::Llr;
-    ///
-    /// let h = gf2_core::bitmatrix![
-    ///     1, 1, 0, 1, 1, 0, 0;
-    ///     1, 0, 1, 1, 0, 1, 0;
-    ///     0, 1, 1, 1, 0, 0, 1
-    /// ];
-    /// let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-    ///
-    /// // All-zero codeword with high confidence
-    /// let llrs: Vec<Llr> = vec![Llr::new(5.0); 7];
-    /// let result = decoder.decode(&llrs);
-    /// assert!(result.success());
-    /// assert_eq!(result.codewords[0].noise_weight, 0);
-    /// ```
-    ///
     /// # Complexity
     ///
-    /// O(Q * n) where Q is the number of noise patterns tested and n is the
-    /// code length. Each query requires a syndrome computation costing O(nnz(H)).
+    /// Setup costs `n` sparse matrix–vector products.  A query of Hamming
+    /// weight `w` costs O(w × (n − k) / 64) word operations, plus the pattern
+    /// enumeration.
     pub fn decode(&self, llrs: &[Llr]) -> OrbGrandResult {
         assert_eq!(
             llrs.len(),
@@ -425,7 +268,6 @@ impl OrbGrand {
             self.n
         );
 
-        // Step 1: Hard decisions
         let mut hard = BitVec::zeros(self.n);
         for (i, &llr) in llrs.iter().enumerate() {
             if llr.hard_decision() {
@@ -433,14 +275,12 @@ impl OrbGrand {
             }
         }
 
-        // Step 2: Sort bit positions by reliability (ascending |LLR|)
         // pi[j] = the j-th least reliable bit position (0-indexed)
         let pi = Llr::reliability_permutation(llrs).ascending().to_vec();
 
-        // Pre-compute syndrome of hard-decision word: s = H * y
         let base_syndrome = self.h_sparse.matvec(&hard);
 
-        // Pre-compute syndrome columns: syndrome_col[j] = H * e_j (column j of H)
+        // syndrome_cols[j] = H * e_j (column j of H)
         let syndrome_cols: Vec<BitVec> = (0..self.n)
             .map(|j| {
                 let mut ej = BitVec::zeros(self.n);
@@ -449,7 +289,6 @@ impl OrbGrand {
             })
             .collect();
 
-        // Pre-compute log-probabilities for bit flips
         // log p(flip bit i | LLR_i) = -ln(1 + exp(|LLR_i|))
         // log p(no flip bit i | LLR_i) = -ln(1 + exp(-|LLR_i|))
         let flip_log_probs: Vec<f64> = llrs
@@ -468,19 +307,15 @@ impl OrbGrand {
             })
             .collect();
 
-        // Base log-probability: all bits unflipped
         let base_log_prob: f64 = no_flip_log_probs.iter().sum();
 
-        // Even code optimization: determine required parity of noise pattern
-        let hard_parity = hard.parity(); // true if odd weight
+        let hard_parity = hard.parity();
 
-        // Paper-aligned P_notGuess initialisation (Duffy–An–Médard 2022,
-        // SO-GRAND §V). For even codes the noise parity is constrained to
-        // match `hard_parity`, so the reachable pattern mass is
-        // `P(parity(Z) = hard_parity | |L|)` — at most ≈ 1/2 for balanced
-        // noise, not 1. We stop accumulating probability for
-        // parity-skipped patterns below, so this cap is the correct
-        // ceiling for `cumulative_log_prob`.
+        // `P_notGuess` initialisation (`@/citation/Duffy2022`,
+        // `@/citation/Yuan2025` § V). For even codes the noise parity is
+        // constrained to match `hard_parity`, so the reachable pattern mass
+        // is `P(parity(Z) = hard_parity | |L|)`, the ceiling of
+        // `cumulative_log_prob`.
         let log_parity_cap = if self.config.even_code {
             let absl: Vec<f64> = llrs.iter().map(|l| l.magnitude() as f64).collect();
             log_prob_parity(&absl, hard_parity)
@@ -492,9 +327,6 @@ impl OrbGrand {
         let mut query_count: usize = 0;
         let mut cumulative_log_prob = f64::NEG_INFINITY;
 
-        // Resolve the 1-line ORBGRAND intercept. `Auto` uses the slope
-        // heuristic on the sorted `|LLR|` distribution; `Basic` forces
-        // IC=0 (basic ORBGRAND); `Fixed(k)` pins a user-supplied value.
         let ic = match self.config.one_line_intercept {
             OneLineIntercept::Basic => 0u32,
             OneLineIntercept::Fixed(k) => k,
@@ -505,30 +337,17 @@ impl OrbGrand {
             }
         };
 
-        // Generate noise patterns in ascending combined-weight order
-        // (`wt = IC·w + lw`). With IC=0 this is basic ORBGRAND.
         let pattern_iter = LogisticWeightPatternIter::with_ic(self.n, ic);
 
-        // Test all patterns up to max_queries. All found codewords are
-        // collected (the list grows beyond list_size). Cumulative probability
-        // is accumulated for all tested patterns. This matches the SO-GRAND
-        // paper: both the list L and cumulative S_Q reflect the same set of
-        // Q tested patterns, keeping P(C\L) consistent.
-        //
-        // list_size controls early termination for hard-decision-only callers:
-        // when at least list_size codewords are found AND cumulative probability
-        // is near 1.0, we can stop early. For SOGRAND callers, max_queries
-        // is the primary budget control unless `list_bler_stop_threshold` is set.
+        // The list L and the cumulative S_Q reflect the same set of Q tested
+        // patterns (`@/citation/Yuan2025`), keeping P(C\L) consistent, so the
+        // list grows beyond list_size until a stop rule fires.
         let mut has_min_list = false;
 
-        // Paper-aligned stopping: when `list_bler_stop_threshold` is set,
-        // track the running list-BLER incrementally so we can stop as soon
-        // as `P(C \ L) < threshold` with a non-empty list, or the list has
-        // filled to `list_size`.
-        // The codebook-ratio absorbs the even-code correction (paper eq.
-        // (17) uses `2^-(s-1)` for even codes rather than `2^-s`): only
-        // half the `2^n` binary words carry the matching parity, and all
-        // `2^k` codewords of an even code do.
+        // The codebook-ratio absorbs the even-code correction
+        // (`@/citation/Yuan2025` eq. (17) uses `2^-(s-1)` for even codes
+        // rather than `2^-s`): only half the `2^n` binary words carry the
+        // matching parity, and all `2^k` codewords of an even code do.
         let log_codebook_ratio =
             super::sogrand::log_codebook_ratio_for_code(self.n, self.k(), self.config.even_code);
         let mut log_sum_list = f64::NEG_INFINITY;
@@ -537,14 +356,9 @@ impl OrbGrand {
             if query_count >= self.config.max_queries {
                 break;
             }
-            // Early exit when we have enough codewords AND cumulative
-            // probability is at the cap (no reachable patterns left).
             if has_min_list && cumulative_log_prob > log_parity_cap - 1e-6 {
                 break;
             }
-            // Paper-aligned early exit: list has ≥ list_size codewords,
-            // or predicted list-BLER has dropped below the configured
-            // threshold with a non-empty list.
             if let Some(threshold) = self.config.list_bler_stop_threshold {
                 if codewords.len() >= self.config.list_size {
                     break;
@@ -561,16 +375,12 @@ impl OrbGrand {
                 }
             }
 
-            // pattern is a sorted list of indices into pi (1-based logistic indices)
-            // Convert to actual bit positions
             let bit_positions: Vec<usize> = pattern.iter().map(|&idx| pi[idx]).collect();
             let noise_weight = bit_positions.len();
 
-            // Even code optimization: skip parity-mismatched patterns entirely.
-            // Under the paper-aligned P_notGuess semantics the untested pool
-            // is the parity-consistent half of the pattern space, so
-            // mismatched patterns are not "tested" probability mass — we
-            // neither accumulate nor query-count them.
+            // Parity-mismatched patterns lie outside the mass capped by
+            // `log_parity_cap`: they are neither accumulated nor counted as
+            // queries.
             if self.config.even_code {
                 let noise_parity = noise_weight % 2 == 1;
                 if hard_parity ^ noise_parity {
@@ -578,9 +388,6 @@ impl OrbGrand {
                 }
             }
 
-            // Compute noise log-probability for each eligible pattern
-            // (needed for cumulative probability accounting in SOGRAND
-            // soft output and for codeword scoring).
             let noise_log_prob = compute_noise_log_prob(
                 &bit_positions,
                 &flip_log_probs,
@@ -588,26 +395,19 @@ impl OrbGrand {
                 base_log_prob,
             );
 
-            // Accumulate cumulative probability over the eligible tested
-            // patterns. Both the codeword list and cumulative probability
-            // reflect the same set of tested patterns so that
-            // `P(C\L)` stays consistent with `log_parity_cap` as the cap.
             cumulative_log_prob = log_sum_exp(cumulative_log_prob, noise_log_prob);
 
             query_count += 1;
 
-            // Compute syndrome of y XOR z incrementally:
             // H*(y XOR z) = H*y XOR H*z = base_syndrome XOR (XOR of H columns for flipped bits)
             let mut syndrome = base_syndrome.clone();
             for &pos in &bit_positions {
                 syndrome.bit_xor_into(&syndrome_cols[pos]);
             }
 
-            // Check if syndrome is zero (valid codeword)
             let is_zero = syndrome.count_ones() == 0;
 
             if is_zero {
-                // Construct the codeword y XOR z
                 let mut codeword = hard.clone();
                 for &pos in &bit_positions {
                     let current = codeword.get(pos);
@@ -627,7 +427,6 @@ impl OrbGrand {
             }
         }
 
-        // Sort codewords by noise_log_probability descending (most likely first)
         codewords.sort_by(|a, b| {
             b.noise_log_probability
                 .partial_cmp(&a.noise_log_probability)
@@ -654,15 +453,13 @@ impl SoftDecoder for OrbGrand {
         self.n()
     }
 
-    /// Decodes using soft information (LLRs) and returns message bits.
-    ///
-    /// Extracts the first `k` bits of the best codeword as the decoded message.
+    /// Returns the first `k` bits of the best codeword, or the hard decisions
+    /// of the first `k` LLRs when the search found no codeword.
     ///
     /// # Panics
     ///
-    /// Panics if the decoder was configured with `systematic: false`.
-    /// Panics if any LLR has a NaN magnitude.
-    /// Use [`OrbGrand::decode`] directly for non-systematic codes.
+    /// Panics if the decoder was configured with `systematic: false`, if
+    /// `llrs.len() != n`, or if any LLR has a NaN magnitude.
     fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
         assert!(
             self.config.systematic,
@@ -671,7 +468,6 @@ impl SoftDecoder for OrbGrand {
         );
         let result = self.decode(llrs);
         if let Some(best) = result.best_codeword() {
-            // Extract first k bits (assumes systematic code)
             let k = self.k();
             let mut msg = BitVec::with_capacity(k);
             for i in 0..k {
@@ -679,7 +475,6 @@ impl SoftDecoder for OrbGrand {
             }
             msg
         } else {
-            // Fall back to hard decision on first k bits
             let mut msg = BitVec::with_capacity(self.k());
             for llr in llrs.iter().take(self.k()) {
                 msg.push_bit(llr.hard_decision());
@@ -688,12 +483,12 @@ impl SoftDecoder for OrbGrand {
         }
     }
 
-    /// Decodes using soft information and returns detailed result metadata.
+    /// As [`Self::decode_soft`], with the query count in `queries`; a search
+    /// that found no codeword is reported as a failure.
     ///
     /// # Panics
     ///
-    /// Panics if the decoder was configured with `systematic: false`.
-    /// Panics if any LLR has a NaN magnitude.
+    /// Panics under the conditions of [`Self::decode_soft`].
     fn decode_soft_with_result(&self, llrs: &[Llr]) -> DecoderResult {
         assert!(
             self.config.systematic,
@@ -750,7 +545,8 @@ pub fn log_sum_exp(a: f64, b: f64) -> f64 {
 }
 
 /// Compute `log P(parity(noise) = target | |L|)` for independent bit
-/// flips with flip probability `p_i = 1 / (1 + exp(|L_i|))`.
+/// flips with flip probability `p_i = 1 / (1 + exp(|L_i|))`
+/// (`@/citation/Duffy2022` § III.C).
 ///
 /// Using the characteristic-function identity `E[(-1)^{sum X_i}] =
 /// prod (1 - 2 p_i) = prod tanh(|L_i|/2)`:
@@ -765,32 +561,11 @@ pub fn log_sum_exp(a: f64, b: f64) -> f64 {
 /// log tanh(x/2) = log1p(-exp(-x)) − log1p(exp(-x))   for x > 0.
 /// ```
 ///
-/// This is the `prob_parity` helper from Duffy–An–Médard 2022 (§III.C,
-/// 1-line ORBGRAND): SO-GRAND uses it to initialise the `P_notGuess`
-/// total probability cap for even codes, capturing the fact that the
-/// noise pattern is constrained to match the hard-decision parity.
-///
-/// # Arguments
-///
-/// * `abs_llrs` — per-bit |LLR| values (non-negative; `abs()` is applied
-///   to each entry defensively).
-/// * `target_is_odd` — if `true`, return `log P(odd parity)`;
-///   if `false`, return `log P(even parity)`.
-///
-/// # Returns
-///
-/// A value in `(-inf, 0]`. Returns `-ln 2` when all `|L_i| = 0`
-/// (uniform parity), and approaches `-inf` for the opposite-parity
-/// target when the per-bit LLRs are uniformly large.
-///
-/// # Complexity
-///
-/// `O(n)` where `n = abs_llrs.len()`.
+/// `target_is_odd` selects `log P(odd parity)`.  The result is `-ln 2` when
+/// any `|L_i| = 0` (uniform parity).
 pub fn log_prob_parity(abs_llrs: &[f64], target_is_odd: bool) -> f64 {
     let ln2 = std::f64::consts::LN_2;
-    // log T = sum log |tanh(|L_i|/2)|. Each contribution lies in
-    // (-inf, 0]. If any bit has |L| = 0 the product is zero
-    // (uniform parity), short-circuit to -ln 2.
+    // If any bit has |L| = 0 the product is zero (uniform parity).
     let mut log_t = 0.0;
     for &absl in abs_llrs {
         let abs_l = absl.abs();
@@ -798,7 +573,6 @@ pub fn log_prob_parity(abs_llrs: &[f64], target_is_odd: bool) -> f64 {
             return -ln2;
         }
         let e = (-abs_l).exp();
-        // log tanh(|L|/2) = log1p(-exp(-|L|)) - log1p(exp(-|L|))
         log_t += (-e).ln_1p() - e.ln_1p();
     }
     if log_t == f64::NEG_INFINITY {
@@ -806,7 +580,6 @@ pub fn log_prob_parity(abs_llrs: &[f64], target_is_odd: bool) -> f64 {
     }
     if target_is_odd {
         // log(0.5 * (1 - T)) = -ln 2 + log1p(-exp(log_t))
-        // Delegate to the shared log1mexp for numerical stability.
         -ln2 + super::sogrand::log1mexp(log_t)
     } else {
         // log(0.5 * (1 + T)) = -ln 2 + log1p(exp(log_t))
@@ -833,8 +606,8 @@ fn compute_noise_log_prob(
 }
 
 /// Iterator that generates noise patterns in ascending **combined weight**
-/// `wt = IC·w + lw`, matching the 1-line ORBGRAND enumeration of
-/// Duffy–An–Médard 2022 (*IEEE Trans. Signal Proc.* 70, 4528–4542).
+/// `wt = IC·w + lw`, the 1-line ORBGRAND enumeration of
+/// `@/citation/Duffy2022`.
 ///
 /// For each `wt = 1, 2, …`, all valid `(w, partition)` pairs are yielded,
 /// where:
@@ -851,30 +624,24 @@ fn compute_noise_log_prob(
 /// logistic weight, Hamming weights freely interleaved). With `ic > 0`
 /// the intercept penalises higher Hamming weights so that low-weight
 /// patterns get priority, which is the 1-line variant used in
-/// Yuan–Médard–Galligan–Duffy SO-GRAND (§ V).
+/// `@/citation/Yuan2025` § V.
 ///
 /// The empty pattern `{}` is yielded first (wt = 0), representing the
 /// no-flip hypothesis, and every other pattern of Hamming weight in
 /// `{1, …, n}` follows exactly once.
 struct LogisticWeightPatternIter {
     n: usize,
-    /// 1-line ORBGRAND intercept (`IC` in the paper). 0 = basic ORBGRAND.
+    /// 1-line ORBGRAND intercept `IC`. 0 = basic ORBGRAND.
     ic: u32,
-    /// Current `wt = IC·w + lw` being enumerated. Starts at `usize::MAX`
-    /// until the empty pattern is yielded, then rolls over to 1.
+    /// Current `wt = IC·w + lw` being enumerated.
     current_wt: usize,
-    /// Buffer of patterns for the current `wt`, to be yielded one at a time.
+    /// Patterns of the current `wt`.
     buffer: Vec<Vec<usize>>,
-    /// Cursor into `buffer`.
     buffer_idx: usize,
-    /// Whether the empty pattern has already been yielded.
     emitted_empty: bool,
 }
 
 impl LogisticWeightPatternIter {
-    /// Convenience constructor for basic ORBGRAND (IC = 0). Identical to
-    /// `LogisticWeightPatternIter::with_ic(n, 0)`. Retained for tests and
-    /// proptest harnesses; production decodes call `with_ic` directly.
     #[cfg(test)]
     fn new(n: usize) -> Self {
         Self::with_ic(n, 0)
@@ -891,19 +658,18 @@ impl LogisticWeightPatternIter {
         }
     }
 
-    /// Minimum logistic weight for a pattern of Hamming weight `w` over `n` positions.
-    /// Choosing the `w` smallest 1-based indices: 1 + 2 + ... + w = w*(w+1)/2.
+    /// Minimum logistic weight for a pattern of Hamming weight `w`: the `w`
+    /// smallest 1-based indices, 1 + 2 + ... + w.
     fn min_lw_for_weight(w: usize) -> usize {
         w * (w + 1) / 2
     }
 
-    /// Maximum logistic weight for a pattern of Hamming weight `w` over `n` positions.
-    /// Choosing the `w` largest 1-based indices: (n-w+1) + ... + n.
+    /// Maximum logistic weight for a pattern of Hamming weight `w` over `n`
+    /// positions: the `w` largest 1-based indices, (n-w+1) + ... + n.
     fn max_lw_for_weight(n: usize, w: usize) -> usize {
         if w == 0 {
             return 0;
         }
-        // sum from (n-w+1) to n = w*n - w*(w-1)/2
         w * n - w * (w - 1) / 2
     }
 
@@ -957,12 +723,10 @@ impl LogisticWeightPatternIter {
             return;
         }
 
-        // Upper bound for the current element
         let max_val = remaining_sum
             .saturating_sub(remaining_count * (remaining_count - 1) / 2)
             .min(n);
         for val in min_val..=max_val {
-            // Check remaining can still be satisfied
             let new_remaining = remaining_sum - val;
             let new_count = remaining_count - 1;
             if new_count > 0 {
@@ -973,7 +737,7 @@ impl LogisticWeightPatternIter {
             } else if new_remaining != 0 {
                 continue;
             }
-            current.push(val - 1); // Convert to 0-based
+            current.push(val - 1);
             Self::enumerate_subsets_exact(n, new_count, new_remaining, val + 1, current, result);
             current.pop();
         }
@@ -984,22 +748,18 @@ impl Iterator for LogisticWeightPatternIter {
     type Item = Vec<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Special-case the empty pattern (wt = 0, w = 0).
         if !self.emitted_empty {
             self.emitted_empty = true;
             return Some(Vec::new());
         }
 
         loop {
-            // Drain the buffer for the current `wt`.
             if self.buffer_idx < self.buffer.len() {
                 let pattern = self.buffer[self.buffer_idx].clone();
                 self.buffer_idx += 1;
                 return Some(pattern);
             }
 
-            // Advance to the next `wt` and rebuild the buffer with all
-            // valid `(w, lw)` pairs for it.
             self.current_wt += 1;
             let wt = self.current_wt;
 
@@ -1013,8 +773,6 @@ impl Iterator for LogisticWeightPatternIter {
             self.buffer.clear();
             self.buffer_idx = 0;
 
-            // For this wt, enumerate over Hamming weight w.
-            // Constraint: lw = wt - IC·w ∈ [w(w+1)/2, w·n − w(w−1)/2].
             for w in 1..=self.n {
                 let ic_contrib = (self.ic as usize) * w;
                 if ic_contrib > wt {
@@ -1022,10 +780,7 @@ impl Iterator for LogisticWeightPatternIter {
                 }
                 let lw = wt - ic_contrib;
                 if lw < Self::min_lw_for_weight(w) {
-                    // The residual logistic weight is smaller than the
-                    // minimum achievable with this w. Higher w will only
-                    // make the IC contribution larger, so the residual
-                    // would shrink further — break out.
+                    // Higher w only shrinks the residual further.
                     break;
                 }
                 if lw > Self::max_lw_for_weight(self.n, w) {
@@ -1044,9 +799,6 @@ mod tests {
     use crate::test_support::generic_ebch_16_11;
     use crate::traits::block::ParityCheckMatrixAccess;
 
-    // =====================================================================
-    // Helper: Hamming(7,4) parity-check matrix
-    // =====================================================================
     fn hamming_7_4_h() -> BitMatrix {
         gf2_core::bitmatrix![
             1, 1, 0, 1, 1, 0, 0;
@@ -1089,8 +841,6 @@ mod tests {
 
     #[test]
     fn test_decode_tied_signed_zero_and_infinite_reliabilities() {
-        // Equal magnitudes, including signed zero, retain original index
-        // order. Infinite confidence remains the most reliable position.
         let h = gf2_core::bitmatrix![1, 0, 0, 0, 0];
         let llrs = [
             Llr::new(-1.0),
@@ -1120,10 +870,6 @@ mod tests {
         assert!(!result.best_codeword().unwrap().codeword.get(0));
     }
 
-    // =====================================================================
-    // Logistic weight pattern iterator tests (TDD: written first)
-    // =====================================================================
-
     #[test]
     fn test_logistic_weight_iter_first_pattern_is_empty() {
         let mut iter = LogisticWeightPatternIter::new(4);
@@ -1133,12 +879,10 @@ mod tests {
 
     #[test]
     fn test_logistic_weight_iter_weight_1_patterns() {
-        // For n=4 basic ORBGRAND (IC=0), patterns are enumerated by
-        // ascending logistic weight, not by Hamming weight. So after the
-        // initial single-bit run, weight-2 patterns with small LW appear
-        // before high-rank weight-1 patterns.
+        // With IC=0, weight-2 patterns with small LW precede high-rank
+        // weight-1 patterns.
         let mut iter = LogisticWeightPatternIter::new(4);
-        let _ = iter.next(); // Skip empty pattern (wt=0)
+        let _ = iter.next();
 
         assert_eq!(iter.next().unwrap(), vec![0]); // wt=1, w=1
         assert_eq!(iter.next().unwrap(), vec![1]); // wt=2, w=1
@@ -1163,10 +907,8 @@ mod tests {
         let iter = LogisticWeightPatternIter::new(3);
         let patterns: Vec<Vec<usize>> = iter.collect();
 
-        assert_eq!(patterns.len(), 8); // 2^3 = 8 patterns total
+        assert_eq!(patterns.len(), 8);
 
-        // Logistic weight (sum of 1-based ranks) must be non-decreasing —
-        // this is the defining invariant of basic ORBGRAND.
         for i in 1..patterns.len() {
             let lw_prev: usize = patterns[i - 1].iter().map(|&x| x + 1).sum();
             let lw_curr: usize = patterns[i].iter().map(|&x| x + 1).sum();
@@ -1183,11 +925,7 @@ mod tests {
 
     #[test]
     fn test_one_line_ic_reorders_by_weight_penalty() {
-        // With IC=2 and n=4, the combined weight is wt = 2w + lw. A weight-2
-        // pattern {0,1} has lw=3 but wt = 2·2+3 = 7, so it comes AFTER
-        // {3} (w=1, lw=4, wt=0+4=4) and even after {0,1,2} (w=3, lw=6,
-        // wt=6+6=12)? No, wt(0,1,2)=6+6=12; wt(0,1)=4+3=7; wt(3)=2+4=6.
-        // So ordering for first few patterns: {} (wt=0), {0} (wt=3),
+        // With IC=2 and n=4, wt = 2w + lw: {} (wt=0), {0} (wt=3),
         // {1} (wt=4), {2} (wt=5), {3} (wt=6), {0,1} (wt=7), {0,2} (wt=8), …
         let mut iter = LogisticWeightPatternIter::with_ic(4, 2);
         assert!(iter.next().unwrap().is_empty());
@@ -1200,12 +938,10 @@ mod tests {
 
     #[test]
     fn test_logistic_weight_patterns_at_weight_and_lw() {
-        // Weight 1, LW=3 with n=4: single-bit pattern {2} (1-based: {3})
         let patterns_w1 = LogisticWeightPatternIter::generate_patterns_for_weight_and_lw(4, 1, 3);
         assert_eq!(patterns_w1.len(), 1);
         assert_eq!(patterns_w1[0], vec![2]);
 
-        // Weight 2, LW=3 with n=4: two-bit pattern {0,1} (1-based: {1,2})
         let patterns_w2 = LogisticWeightPatternIter::generate_patterns_for_weight_and_lw(4, 2, 3);
         assert_eq!(patterns_w2.len(), 1);
         assert_eq!(patterns_w2[0], vec![0, 1]);
@@ -1213,7 +949,6 @@ mod tests {
 
     #[test]
     fn test_logistic_weight_total_patterns() {
-        // For n bits, total patterns should be 2^n
         for n in 0..=5 {
             let iter = LogisticWeightPatternIter::new(n);
             let count = iter.count();
@@ -1229,23 +964,17 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Syndrome check tests
-    // =====================================================================
-
     #[test]
     fn test_decode_all_zero_codeword_high_confidence() {
         let h = hamming_7_4_h();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // All-zero codeword with high confidence (positive LLRs → bit 0)
         let llrs: Vec<Llr> = vec![Llr::new(5.0); 7];
         let result = decoder.decode(&llrs);
 
         assert!(result.success());
         let best = result.best_codeword().unwrap();
         assert_eq!(best.noise_weight, 0);
-        // All bits should be 0
         for i in 0..7 {
             assert!(!best.codeword.get(i), "Bit {} should be 0", i);
         }
@@ -1260,7 +989,6 @@ mod tests {
         let h = code.parity_check().unwrap().clone();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // Encode message [1,0,1,0] to get a valid codeword
         let mut msg = BitVec::with_capacity(4);
         msg.push_bit(true);
         msg.push_bit(false);
@@ -1268,7 +996,6 @@ mod tests {
         msg.push_bit(false);
         let codeword = code.encode(&msg);
 
-        // Create LLRs matching the codeword: negative for 1-bits, positive for 0-bits
         let llrs: Vec<Llr> = (0..7)
             .map(|i| {
                 if codeword.get(i) {
@@ -1286,9 +1013,6 @@ mod tests {
             best.noise_weight, 0,
             "No errors, so noise weight should be 0"
         );
-        // The codeword is found on the first query, but ORBGRAND continues
-        // testing patterns up to max_queries to collect additional codewords
-        // and accumulate cumulative probability for SOGRAND soft output.
         assert!(result.query_count >= 1, "Should have at least one query");
     }
 
@@ -1297,24 +1021,20 @@ mod tests {
         let h = hamming_7_4_h();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // True codeword: [0,0,0,0,0,0,0] (all-zero)
-        // Received with error on bit 2: [0,0,1,0,0,0,0]
-        // LLRs: bit 2 has low confidence (small positive = almost flipped)
         let llrs = vec![
-            Llr::new(5.0),  // bit 0: high confidence 0
-            Llr::new(5.0),  // bit 1: high confidence 0
+            Llr::new(5.0),
+            Llr::new(5.0),
             Llr::new(-0.5), // bit 2: slightly negative → hard decision is 1 (error)
-            Llr::new(5.0),  // bit 3: high confidence 0
-            Llr::new(5.0),  // bit 4: high confidence 0
-            Llr::new(5.0),  // bit 5: high confidence 0
-            Llr::new(5.0),  // bit 6: high confidence 0
+            Llr::new(5.0),
+            Llr::new(5.0),
+            Llr::new(5.0),
+            Llr::new(5.0),
         ];
 
         let result = decoder.decode(&llrs);
         assert!(result.success());
         let best = result.best_codeword().unwrap();
 
-        // Should correct to all-zero codeword
         for i in 0..7 {
             assert!(!best.codeword.get(i), "Bit {} should be 0", i);
         }
@@ -1329,7 +1049,6 @@ mod tests {
         let llrs: Vec<Llr> = vec![Llr::new(5.0); 7];
         let result = decoder.decode(&llrs);
 
-        // The all-zero codeword with positive LLRs should be found immediately
         assert!(result.query_count >= 1);
     }
 
@@ -1346,8 +1065,6 @@ mod tests {
         };
         let decoder = OrbGrand::new(h, config);
 
-        // Use LLRs that produce a non-codeword hard decision
-        // so the decoder has to search
         let llrs = vec![
             Llr::new(-0.1),
             Llr::new(-0.1),
@@ -1360,10 +1077,6 @@ mod tests {
         let result = decoder.decode(&llrs);
         assert!(result.query_count <= 5, "Should respect max_queries limit");
     }
-
-    // =====================================================================
-    // List decoding tests
-    // =====================================================================
 
     #[test]
     fn test_list_decode_returns_multiple_codewords() {
@@ -1378,7 +1091,6 @@ mod tests {
         };
         let decoder = OrbGrand::new(h, config);
 
-        // Low confidence on all bits — many patterns are plausible
         let llrs = vec![
             Llr::new(0.5),
             Llr::new(0.5),
@@ -1390,10 +1102,8 @@ mod tests {
         ];
         let result = decoder.decode(&llrs);
 
-        // Hamming(7,4) has 16 codewords. With max_queries=100K (covering all
-        // 128 patterns for n=7), ORBGRAND finds all 16. The list grows beyond
-        // list_size because ORBGRAND collects all codewords found during the
-        // full query sweep for accurate SOGRAND soft output.
+        // The list grows beyond list_size: max_queries covers all 128
+        // patterns for n=7, which contain the 16 codewords of Hamming(7,4).
         assert!(
             result.codewords.len() >= 2,
             "Expected at least 2 codewords in list mode, got {}",
@@ -1417,7 +1127,6 @@ mod tests {
         };
         let decoder = OrbGrand::new(h, config);
 
-        // High confidence: all bits are 0
         let llrs = vec![
             Llr::new(3.0),
             Llr::new(2.0),
@@ -1429,12 +1138,10 @@ mod tests {
         ];
         let result = decoder.decode(&llrs);
 
-        // First codeword should be the most likely (all-zero, since all LLRs positive)
         assert!(result.success());
         let best = result.best_codeword().unwrap();
         assert_eq!(best.noise_weight, 0);
 
-        // Should find all 16 codewords of Hamming(7,4)
         assert_eq!(
             result.codewords.len(),
             16,
@@ -1442,7 +1149,6 @@ mod tests {
             result.codewords.len()
         );
 
-        // First codeword (all-zero) should have highest log probability
         for cw in &result.codewords[1..] {
             assert!(
                 best.noise_log_probability >= cw.noise_log_probability - 1e-10,
@@ -1451,17 +1157,9 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Even code optimization tests
-    // =====================================================================
-
     #[test]
     fn test_even_code_reduces_queries() {
-        // All Hamming(7,4) codewords have weight 0, 3, 4, or 7 —
-        // not all even, so Hamming(7,4) is NOT an even code.
-        // Let's test with a code that IS even.
-        // Extended Hamming(8,4): add an overall parity bit.
-        // H matrix for extended Hamming(8,4):
+        // Extended Hamming(8,4) is an even code.
         let h_ext = gf2_core::bitmatrix![
             1, 1, 0, 1, 1, 0, 0, 0;
             1, 0, 1, 1, 0, 1, 0, 0;
@@ -1492,7 +1190,6 @@ mod tests {
         };
         let decoder_even = OrbGrand::new(h_ext, config_even);
 
-        // Use LLRs with varied reliabilities so patterns span many weights
         let llrs = vec![
             Llr::new(-0.3),
             Llr::new(0.4),
@@ -1507,12 +1204,9 @@ mod tests {
         let result_normal = decoder_normal.decode(&llrs);
         let result_even = decoder_even.decode(&llrs);
 
-        // Both should find all 16 codewords
         assert_eq!(result_normal.codewords.len(), 16);
         assert_eq!(result_even.codewords.len(), 16);
 
-        // Even code optimization should roughly halve the number of queries
-        // (it skips patterns with wrong parity)
         assert!(
             result_even.query_count > 0 && result_normal.query_count > 0,
             "Both decoders should perform at least one query"
@@ -1527,10 +1221,6 @@ mod tests {
             ratio
         );
     }
-
-    // =====================================================================
-    // Probability tracking tests
-    // =====================================================================
 
     #[test]
     fn test_noise_log_probability_zero_pattern() {
@@ -1581,23 +1271,17 @@ mod tests {
         ];
         let result = decoder.decode(&llrs);
 
-        // Cumulative log probability should be finite (not -inf) after queries
         assert!(
             result.cumulative_log_probability > f64::NEG_INFINITY,
             "Cumulative probability should be > -inf after queries"
         );
     }
 
-    // =====================================================================
-    // SoftDecoder trait implementation tests
-    // =====================================================================
-
     #[test]
     fn test_soft_decoder_trait_decode() {
         let h = hamming_7_4_h();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // Use SoftDecoder trait
         let soft_decoder: &dyn SoftDecoder = &decoder;
         assert_eq!(soft_decoder.k(), 4);
         assert_eq!(soft_decoder.n(), 7);
@@ -1605,7 +1289,6 @@ mod tests {
         let llrs: Vec<Llr> = vec![Llr::new(5.0); 7];
         let decoded = soft_decoder.decode_soft(&llrs);
         assert_eq!(decoded.len(), 4);
-        // All-zero message
         for i in 0..4 {
             assert!(!decoded.get(i));
         }
@@ -1624,17 +1307,13 @@ mod tests {
         assert_eq!(result.decoded_bits.len(), 4);
     }
 
-    // =====================================================================
-    // Edge cases
-    // =====================================================================
-
     #[test]
     #[should_panic(expected = "LLR vector length")]
     fn test_decode_wrong_length_panics() {
         let h = hamming_7_4_h();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        let llrs: Vec<Llr> = vec![Llr::new(1.0); 5]; // Wrong length
+        let llrs: Vec<Llr> = vec![Llr::new(1.0); 5];
         decoder.decode(&llrs);
     }
 
@@ -1671,10 +1350,6 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // ML decoding correctness test
-    // =====================================================================
-
     #[test]
     fn test_ml_decoding_picks_closest_codeword() {
         use crate::linear::LinearBlockCode;
@@ -1684,7 +1359,6 @@ mod tests {
         let h = code.parity_check().unwrap().clone();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // Encode a known message to get a valid codeword
         let mut msg = BitVec::with_capacity(4);
         msg.push_bit(true);
         msg.push_bit(true);
@@ -1692,16 +1366,13 @@ mod tests {
         msg.push_bit(true);
         let codeword = code.encode(&msg);
 
-        // Simulate single error on bit 0: flip it in the LLRs
-        // Bit 0 gets wrong hard decision with low confidence
         let llrs: Vec<Llr> = (0..7)
             .map(|i| {
                 if i == 0 {
-                    // Error: flip decision with low confidence
                     if codeword.get(i) {
-                        Llr::new(0.2) // Was 1, received as barely-0
+                        Llr::new(0.2)
                     } else {
-                        Llr::new(-0.2) // Was 0, received as barely-1
+                        Llr::new(-0.2)
                     }
                 } else if codeword.get(i) {
                     Llr::new(-5.0)
@@ -1715,7 +1386,6 @@ mod tests {
         assert!(result.success());
         let best = result.best_codeword().unwrap();
 
-        // The ML codeword should match the original codeword (correcting the error)
         for i in 0..7 {
             assert_eq!(
                 best.codeword.get(i),
@@ -1727,21 +1397,14 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Numerical utility tests
-    // =====================================================================
-
     #[test]
     fn test_ln_1_plus_exp_accuracy() {
-        // For small x, ln(1+exp(x)) ≈ ln(2)
         let val = ln_1_plus_exp(0.0);
         assert!((val - 2.0_f64.ln()).abs() < 1e-10);
 
-        // For large x, ln(1+exp(x)) ≈ x
         let val = ln_1_plus_exp(100.0);
         assert!((val - 100.0).abs() < 1e-10);
 
-        // For very negative x, ln(1+exp(x)) ≈ 0
         let val = ln_1_plus_exp(-100.0);
         assert!(val.abs() < 1e-10);
     }
@@ -1753,14 +1416,9 @@ mod tests {
         let result = log_sum_exp(a, b);
         assert!((result - 5.0_f64.ln()).abs() < 1e-10);
 
-        // Identity: log_sum_exp(-inf, x) = x
         assert_eq!(log_sum_exp(f64::NEG_INFINITY, 1.0), 1.0);
         assert_eq!(log_sum_exp(1.0, f64::NEG_INFINITY), 1.0);
     }
-
-    // =====================================================================
-    // Full encode-decode roundtrip with LinearBlockCode
-    // =====================================================================
 
     #[test]
     fn test_roundtrip_hamming_7_4_all_messages() {
@@ -1772,7 +1430,6 @@ mod tests {
 
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // Test all 16 possible 4-bit messages
         for msg_val in 0u8..16 {
             let mut msg = BitVec::with_capacity(4);
             for bit in 0..4 {
@@ -1782,13 +1439,12 @@ mod tests {
             let codeword = code.encode(&msg);
             assert_eq!(codeword.len(), 7);
 
-            // Create LLRs from codeword (high confidence, no noise)
             let llrs: Vec<Llr> = (0..7)
                 .map(|i| {
                     if codeword.get(i) {
-                        Llr::new(-5.0) // bit 1
+                        Llr::new(-5.0)
                     } else {
-                        Llr::new(5.0) // bit 0
+                        Llr::new(5.0)
                     }
                 })
                 .collect();
@@ -1803,7 +1459,6 @@ mod tests {
                 msg_val
             );
 
-            // Verify the decoded codeword matches
             for i in 0..7 {
                 assert_eq!(
                     best.codeword.get(i),
@@ -1825,7 +1480,6 @@ mod tests {
         let h = code.parity_check().unwrap().clone();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        // Message [1,0,1,1]
         let mut msg = BitVec::with_capacity(4);
         msg.push_bit(true);
         msg.push_bit(false);
@@ -1833,18 +1487,15 @@ mod tests {
         msg.push_bit(true);
         let codeword = code.encode(&msg);
 
-        // Test single error at each position
         for error_pos in 0..7 {
-            // Create LLRs: all high confidence except the error position
             let llrs: Vec<Llr> = (0..7)
                 .map(|i| {
                     let bit = codeword.get(i);
                     if i == error_pos {
-                        // Error: flip the bit with low confidence
                         if bit {
-                            Llr::new(0.3) // Was 1, received as 0 (barely)
+                            Llr::new(0.3)
                         } else {
-                            Llr::new(-0.3) // Was 0, received as 1 (barely)
+                            Llr::new(-0.3)
                         }
                     } else if bit {
                         Llr::new(-5.0)
@@ -1874,28 +1525,21 @@ mod tests {
         }
     }
 
-    // =====================================================================
-    // Property-based tests
-    // =====================================================================
-
     mod prop_tests {
         use super::*;
         use proptest::prelude::*;
         use std::collections::HashSet;
 
         proptest! {
-            /// For small n (3-5), the iterator produces ALL 2^n patterns exactly once.
             #[test]
             fn test_iterator_produces_all_patterns_exactly_once(n in 3usize..=5) {
                 let iter = LogisticWeightPatternIter::new(n);
                 let patterns: Vec<Vec<usize>> = iter.collect();
 
-                // Should produce exactly 2^n patterns
                 let expected_count = 1usize << n;
                 prop_assert_eq!(patterns.len(), expected_count,
                     "Expected {} patterns, got {}", expected_count, patterns.len());
 
-                // Convert to sets for uniqueness check
                 let mut seen = HashSet::new();
                 for pattern in &patterns {
                     let key: Vec<usize> = pattern.clone();
@@ -1903,7 +1547,6 @@ mod tests {
                         "Duplicate pattern found: {:?}", pattern);
                 }
 
-                // Verify every subset of {0..n-1} appears
                 for mask in 0..(1u32 << n) {
                     let expected: Vec<usize> = (0..n).filter(|&i| mask & (1 << i) != 0).collect();
                     prop_assert!(seen.contains(&expected),
@@ -1911,13 +1554,8 @@ mod tests {
                 }
             }
 
-            /// For small n (3-5), within each weight class patterns are ordered by
-            /// logistic weight sum (non-decreasing).
             #[test]
             fn test_logistic_weight_ordering(n in 3usize..=5) {
-                // Basic ORBGRAND (IC=0) enumerates patterns by ascending
-                // logistic weight, NOT by Hamming weight. The defining
-                // invariant is: lw(pattern_i) ≤ lw(pattern_{i+1}).
                 let iter = LogisticWeightPatternIter::new(n);
                 let patterns: Vec<Vec<usize>> = iter.collect();
 
@@ -1952,11 +1590,9 @@ mod tests {
         };
         let decoder = OrbGrand::new(h, config);
 
-        // Encode the all-zero message
         let msg = BitVec::zeros(11);
         let codeword = ebch.encode(&msg);
 
-        // Introduce a single error at each position
         for error_pos in 0..16 {
             let mut received = codeword.clone();
             let bit = received.get(error_pos);
@@ -1998,11 +1634,6 @@ mod tests {
         }
     }
 
-    /// Paper-aligned stopping rule: with `list_bler_stop_threshold = Some(t)`,
-    /// the decoder must stop as soon as the predicted list-BLER drops below
-    /// `t` with at least one codeword found. At high SNR this fires almost
-    /// immediately — query count should be a tiny fraction of `max_queries`
-    /// and the recovered codeword must still match the transmitted one.
     #[test]
     fn test_list_bler_stop_threshold_reduces_queries_at_high_snr() {
         use crate::traits::BlockEncoder;
@@ -2015,15 +1646,11 @@ mod tests {
         let msg = BitVec::zeros(11);
         let codeword = ebch.encode(&msg);
 
-        // High-reliability channel: strong +ve LLRs for zero bits (flipped for
-        // the single noise bit at position 3). ORBGRAND should find the
-        // correct codeword within a handful of queries.
         let llrs: Vec<Llr> = (0..16)
             .map(|i| {
                 let is_error = i == 3;
                 let mag = 6.0_f32;
                 if is_error {
-                    // Bit was transmitted as 0, received as 1 → negative LLR.
                     Llr::new(-mag)
                 } else {
                     Llr::new(mag)

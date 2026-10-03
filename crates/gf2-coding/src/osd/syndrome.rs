@@ -1,14 +1,10 @@
 //! Syndrome-domain ordered-statistics decoding for parity-check matrices.
 //!
 //! The adapter computes `s = H yᵀ`, solves `H eᵀ = s`, and searches error
-//! patterns with ascending-magnitude pivots.  Free coordinates are enumerated
-//! in deterministic order, equal-cost ties keep enumeration order, and
-//! candidates have cost `sum_i e_i |L_i|`.  The global order-`m` minimum is
-//! attained only in an uncapped exhaustive configuration.
-//!
-//! Only the parity-check semantics live here.  The ordered elimination, the
-//! bounded pattern enumeration, the soft ranking, and the work metadata all
-//! come from the shared [`MostReliableBasis`] and [`reprocess`] engine.
+//! patterns with ascending-magnitude pivots over the shared
+//! [`MostReliableBasis`] and [`reprocess`] engine.  Candidates have cost
+//! `sum_i e_i |L_i|`; the global order-`m` minimum is attained only in an
+//! uncapped exhaustive configuration.
 
 use std::fmt;
 
@@ -23,8 +19,7 @@ use super::{
 
 /// Parity-check-domain OSD correction of a failed hard word.
 ///
-/// The corrector holds one parity-check matrix `H` and an [`OsdConfig`].  For a
-/// failed hard word `y` and posterior LLRs `L` it forms the syndrome
+/// For a failed hard word `y` and posterior LLRs `L` it forms the syndrome
 /// `s = H yᵀ` and searches the affine solution set of `H eᵀ = s`.  The shared
 /// engine pivots its ordered elimination on ascending posterior magnitude, so
 /// the pivots are the least reliable coordinates and the reprocessed free
@@ -42,9 +37,6 @@ use super::{
 /// [`super::OsdTermination::InconsistentTransform`], and a zero candidate cap.
 /// A rank-deficient `H` with a consistent syndrome stays searchable: rank `r`
 /// leaves `n - r` free coordinates, which carry the whole coset search.
-///
-/// Use [`Self::correct`] for a failed hard word and [`Self::solve`] for a
-/// caller-supplied syndrome.
 #[derive(Clone, Debug)]
 pub struct SyndromeOsdCorrector {
     parity_check: BitMatrix,
@@ -98,37 +90,9 @@ impl SyndromeOsdCorrector {
     ///
     /// # Complexity
     ///
-    /// One ordered elimination plus the shared engine's O(candidates ×
-    /// (order + n) / 64) reconstruction and ranking work.  The corrector
-    /// stores O(rows × n) matrix bits and each call uses O(rows × n)
-    /// elimination storage plus O((n − rank) × n) candidate-delta bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::osd::{OsdConfig, OsdTermination, SyndromeOsdCorrector};
-    /// use gf2_coding::LinearBlockCode;
-    /// use gf2_core::BitVec;
-    ///
-    /// // Hamming(7,4): the all-zero codeword with coordinate 4 flipped, and a
-    /// // posterior that is least confident exactly there.
-    /// let code = LinearBlockCode::hamming(3);
-    /// let corrector =
-    ///     SyndromeOsdCorrector::new(code.parity_check().unwrap().clone(), OsdConfig::new(1));
-    ///
-    /// let mut llrs = [Llr::new(2.0); 7];
-    /// llrs[4] = Llr::new(-0.5);
-    /// let mut hard_word = BitVec::zeros(7);
-    /// hard_word.set(4, true);
-    ///
-    /// let result = corrector.correct(&hard_word, &llrs).unwrap();
-    /// assert_eq!(result.corrected_word().unwrap(), &BitVec::zeros(7));
-    /// assert_eq!(result.error_pattern().unwrap().count_ones(), 1);
-    /// assert_eq!(result.work().rank(), 3);
-    /// assert_eq!(result.work().theoretical_candidates(), 5); // 1 + (7 - 3)
-    /// assert_eq!(result.work().termination(), OsdTermination::Exhaustive);
-    /// ```
+    /// One ordered elimination plus the reprocessing cost stated on
+    /// [`reprocess`].  Each call uses O(rows × n) bits of elimination storage
+    /// plus O((n − rank) × n) candidate-delta bits.
     pub fn correct(
         &self,
         hard_word: &BitVec,
@@ -158,12 +122,9 @@ impl SyndromeOsdCorrector {
 
     /// Returns the shared-engine outcome of solving `H eᵀ = syndrome`.
     ///
-    /// This is the general syndrome-domain surface, for a syndrome that does
-    /// not come from a hard word of its own — a measured one, for instance.
-    /// The best candidate's word is the lowest-cost error pattern `e` and
-    /// [`OsdOutcome::work`] carries the search metadata.  A syndrome the row
-    /// transform places outside the reachable row space has no solution, so
-    /// the run generates nothing and reports
+    /// The best candidate's word is the lowest-cost error pattern `e`.  A
+    /// syndrome the row transform places outside the reachable row space has
+    /// no solution, so the run generates nothing and reports
     /// [`super::OsdTermination::InconsistentTransform`].
     ///
     /// # Errors
@@ -181,27 +142,7 @@ impl SyndromeOsdCorrector {
     ///
     /// # Complexity
     ///
-    /// One ordered elimination plus the shared engine's O(candidates ×
-    /// (order + n) / 64) reconstruction and ranking work, with O(rows × n)
-    /// elimination storage and O((n − rank) × n) candidate-delta storage.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::llr::Llr;
-    /// use gf2_coding::osd::{OsdConfig, OsdTermination, SyndromeOsdCorrector};
-    /// use gf2_core::BitVec;
-    ///
-    /// let matrix = gf2_core::bitmatrix![1, 0, 1; 0, 1, 1; 1, 1, 0];
-    /// let mut syndrome = BitVec::zeros(3);
-    /// syndrome.set(2, true);
-    /// let result = SyndromeOsdCorrector::new(matrix, OsdConfig::new(1))
-    ///     .solve(&syndrome, &[Llr::new(1.0); 3])
-    ///     .unwrap();
-    /// assert!(result.best().is_none());
-    /// assert_eq!(result.work().rank(), 2);
-    /// assert_eq!(result.work().termination(), OsdTermination::InconsistentTransform);
-    /// ```
+    /// As for [`Self::correct`].
     pub fn solve(&self, syndrome: &BitVec, llrs: &[Llr]) -> Result<OsdOutcome, SyndromeOsdError> {
         let magnitudes: Vec<f32> = llrs.iter().map(|llr| llr.magnitude()).collect();
         let zero_word = BitVec::zeros(self.n());
@@ -218,15 +159,8 @@ impl SyndromeOsdCorrector {
 
 /// A syndrome-domain OSD decision together with the shared engine outcome.
 ///
-/// [`Self::work`] directly exposes the engine's rank, uncapped candidate
-/// bound, generated-pattern count, tested-candidate count, elimination count,
-/// and termination reason.  No adapter-local search counters are maintained.
-///
-/// [`Self::syndrome`] is the syndrome of the failed hard word,
-/// [`Self::error_pattern`] the selected solution `e` of `H eᵀ = s`, and
-/// [`Self::corrected_word`] their combination `y ⊕ e`.  The decision is absent
-/// exactly in the two runs [`SyndromeOsdCorrector`] describes: an inconsistent
-/// transform and a zero candidate cap.
+/// The decision is absent exactly in the two runs [`SyndromeOsdCorrector`]
+/// describes: an inconsistent transform and a zero candidate cap.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SyndromeOsdResult {
     corrected_word: Option<BitVec>,

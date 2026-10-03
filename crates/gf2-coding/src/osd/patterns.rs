@@ -1,14 +1,12 @@
 use std::fmt;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-/// Baseline OSD search policy.
+/// OSD search policy.
 ///
 /// The search visits every subset of the information set whose Hamming weight
 /// is at most [`Self::order`].  A candidate cap limits the number of patterns
-/// visited, but the theoretical uncapped bound is still checked when an
-/// enumerator is constructed.  This keeps a bounded run from silently
-/// accepting a configuration whose exhaustive baseline cannot be represented
-/// by the work metadata.
+/// visited; the uncapped bound is still checked when an enumerator is
+/// constructed.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct OsdConfig {
     /// Maximum Hamming weight of an error pattern.
@@ -32,23 +30,19 @@ impl OsdConfig {
         self
     }
 
-    /// Returns the checked uncapped candidate bound for an information-set
-    /// dimension of `dimension`.
-    ///
-    /// The bound is `sum(binomial(dimension, weight))` for weights from zero
-    /// through `min(order, dimension)`.  A configured candidate cap does not
-    /// change this calculation.
+    /// Returns the checked uncapped candidate bound for an information set of
+    /// `dimension` bits: `sum(binomial(dimension, weight))` for weights from
+    /// zero through `min(order, dimension)`, independent of the candidate cap.
     pub fn candidate_bound(&self, dimension: usize) -> Result<usize, PatternEnumerationError> {
         checked_candidate_bound(dimension, self.order)
     }
 }
 
-/// Computes the checked exhaustive order-`order` OSD candidate bound.
+/// Computes the number of subsets of `0..dimension` having weights from zero
+/// through `min(order, dimension)`.
 ///
-/// The result is the number of subsets of `0..dimension` having weights from
-/// zero through `min(order, dimension)`.  The calculation uses exact
-/// cancellation before each multiplication, so it accepts every bound that
-/// fits in `usize` without allocating a table of binomial coefficients.
+/// Exact cancellation precedes each multiplication, so every bound that fits
+/// in `usize` is accepted.
 pub fn checked_candidate_bound(
     dimension: usize,
     order: usize,
@@ -68,16 +62,11 @@ pub fn checked_candidate_bound(
     Ok(total)
 }
 
-/// One deterministic Hamming-weight segment in the OSD pattern stream.
+/// One Hamming-weight segment in the OSD pattern stream.
 ///
 /// The theoretical range is the complete lexicographic group for `weight`.
-/// The generated range is that group clipped by the configured candidate cap.
-/// Consequently, a capped policy can retain descriptors for empty tail
-/// segments without changing the pattern source's order or candidate identity.
-///
-/// # Panics
-///
-/// Constructing or copying a descriptor does not panic.
+/// The generated range is that group clipped by the candidate cap, and may be
+/// empty.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PatternSegment {
     weight: usize,
@@ -89,81 +78,44 @@ pub struct PatternSegment {
 
 impl PatternSegment {
     /// Returns the Hamming weight of patterns in this segment.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn weight(&self) -> usize {
         self.weight
     }
 
-    /// Returns the complete uncapped stream range for this segment.
-    ///
-    /// The range is half-open and uses the same zero-based generation indices
-    /// as [`PatternEnumerator::generated`].
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the uncapped stream range of this segment, in the zero-based
+    /// generation indices of [`PatternEnumerator::generated`].
     pub const fn theoretical_range(&self) -> std::ops::Range<usize> {
         self.theoretical_start..self.theoretical_end
     }
 
-    /// Returns the stream range available under the configured candidate cap.
-    ///
-    /// The range is half-open.  It is empty when the cap ends before this
-    /// segment begins, which preserves a descriptor for every possible weight
-    /// while making the cap boundary explicit.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the stream range available under the candidate cap; empty when
+    /// the cap ends before this segment begins.
     pub const fn generated_range(&self) -> std::ops::Range<usize> {
         self.generated_start..self.generated_end
     }
 
     /// Returns the number of uncapped patterns in this segment.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn theoretical_pattern_count(&self) -> usize {
         self.theoretical_end - self.theoretical_start
     }
 
-    /// Returns the number of patterns generated in this segment after the cap.
-    ///
-    /// This is the complexity metric exposed to a discard-threshold consumer;
-    /// it is a planned count, not a count of candidates accepted by an adapter.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the number of patterns in this segment after the cap,
+    /// independent of what an adapter accepts.
     pub const fn generated_pattern_count(&self) -> usize {
         self.generated_end - self.generated_start
     }
 
     /// Reports whether the configured cap leaves this segment empty.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn is_empty(&self) -> bool {
         self.generated_start == self.generated_end
     }
 }
 
-/// Deterministic segmentation policy for one bounded OSD pattern source.
+/// Weight segmentation of one bounded OSD pattern source.
 ///
 /// There is one descriptor for each weight from zero through
 /// `min(order, dimension)`.  The descriptors are ordered by increasing weight,
 /// and each descriptor's generated range is a prefix of its theoretical range.
-/// This is the public policy representation a threshold evaluator can inspect
-/// before deciding whether to retain or discard a complete weight segment.
-///
-/// # Panics
-///
-/// Constructing or copying a policy does not panic for a valid checked bound.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PatternSegmentation {
     dimension: usize,
@@ -174,20 +126,13 @@ pub struct PatternSegmentation {
 }
 
 impl PatternSegmentation {
-    /// Builds the deterministic weight segmentation for `config`.
-    ///
-    /// The checked uncapped candidate bound is computed even when a cap is
-    /// present.  A cap clips only generated ranges; it never changes the
-    /// theoretical ranges or the order-m search definition.
+    /// Builds the weight segmentation for `config`.  A cap clips only the
+    /// generated ranges.
     ///
     /// # Errors
     ///
     /// Returns [`PatternEnumerationError::CandidateBoundOverflow`] when the
     /// uncapped order-m bound cannot be represented by `usize`.
-    ///
-    /// # Panics
-    ///
-    /// This constructor never panics for any `dimension` or [`OsdConfig`].
     pub fn new(dimension: usize, config: OsdConfig) -> Result<Self, PatternEnumerationError> {
         let theoretical_candidates = checked_candidate_bound(dimension, config.order)?;
         let max_weight = config.order.min(dimension);
@@ -205,9 +150,8 @@ impl PatternSegmentation {
                 )?;
             }
             let theoretical_end = theoretical_start + coefficient;
-            // The generated range is always a (possibly empty) prefix of the
-            // theoretical range: a cap that ends in an earlier segment leaves
-            // an empty range at this segment's own boundary, never at the cap.
+            // `max` puts an empty tail range at this segment's own boundary,
+            // not at the cap.
             let generated_start = theoretical_start;
             let generated_end = config.candidate_cap.map_or(theoretical_end, |cap| {
                 theoretical_end.min(cap).max(theoretical_start)
@@ -232,67 +176,36 @@ impl PatternSegmentation {
     }
 
     /// Returns the information-set dimension used to construct the policy.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn dimension(&self) -> usize {
         self.dimension
     }
 
     /// Returns the largest pattern weight represented by this policy.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn max_weight(&self) -> usize {
         self.max_weight
     }
 
     /// Returns the checked uncapped number of patterns in the search.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn theoretical_candidates(&self) -> usize {
         self.theoretical_candidates
     }
 
     /// Returns the candidate cap applied to generated ranges.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn candidate_cap(&self) -> Option<usize> {
         self.candidate_cap
     }
 
     /// Returns all weight descriptors, including empty capped tail segments.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub fn segments(&self) -> &[PatternSegment] {
         &self.segments
     }
 
     /// Returns the descriptor at `index`, if it exists.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics for any index.
     pub fn segment(&self, index: usize) -> Option<&PatternSegment> {
         self.segments.get(index)
     }
 
     /// Returns whether no pattern is available under the configured cap.
-    ///
-    /// The policy can still contain nonempty theoretical ranges when this is
-    /// true, for example for a zero candidate cap.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub fn is_empty(&self) -> bool {
         self.segments.iter().all(PatternSegment::is_empty)
     }
@@ -309,10 +222,8 @@ impl PatternSegmentation {
 
 /// Computes `binomial(dimension, weight)` from the preceding coefficient.
 ///
-/// The denominator is cancelled against both factors before multiplying.  In
-/// this recurrence the remaining denominator must be one because each
-/// binomial coefficient is integral; retaining the check makes the arithmetic
-/// failure explicit if the recurrence is changed in the future.
+/// The denominator is cancelled against both factors before multiplying; the
+/// remaining denominator is one because the coefficient is integral.
 fn next_binomial_coefficient(dimension: usize, weight: usize, previous: usize) -> Option<usize> {
     let mut numerator = dimension - weight + 1;
     let mut denominator = weight;
@@ -377,10 +288,6 @@ pub enum PatternControl {
 }
 
 /// Why an OSD run stopped.
-///
-/// A pattern run reports the three reasons a pattern source can observe.
-/// [`Self::InconsistentTransform`] belongs to the reprocessing engine, which
-/// rejects a system with no solution before generating anything.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OsdTermination {
     /// Every subset through the configured order was generated.
@@ -394,15 +301,7 @@ pub enum OsdTermination {
     InconsistentTransform,
 }
 
-/// Counters for one deterministic pattern segment.
-///
-/// The descriptor identifies the segment and the counters describe the
-/// generated prefix actually visited by a segmented source.  `tested` counts
-/// callbacks, matching [`PatternEnumerationReport::tested`].
-///
-/// # Panics
-///
-/// Constructing or copying a report does not panic.
+/// Counters for the visited prefix of one pattern segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PatternSegmentReport {
     segment: PatternSegment,
@@ -412,38 +311,22 @@ pub struct PatternSegmentReport {
 
 impl PatternSegmentReport {
     /// Returns the descriptor for this report.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn segment(&self) -> PatternSegment {
         self.segment
     }
 
     /// Returns the number of patterns generated in this segment.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn generated(&self) -> usize {
         self.generated
     }
 
     /// Returns the number of generated patterns passed to the visitor.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn tested(&self) -> usize {
         self.tested
     }
 }
 
 /// Counters and termination metadata for a segmented pattern run.
-///
-/// # Panics
-///
-/// Constructing or copying a report does not panic.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PatternSegmentEnumerationReport {
     theoretical_candidates: usize,
@@ -456,58 +339,31 @@ pub struct PatternSegmentEnumerationReport {
 
 impl PatternSegmentEnumerationReport {
     /// Returns the checked uncapped candidate bound.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn theoretical_candidates(&self) -> usize {
         self.theoretical_candidates
     }
 
     /// Returns the number of patterns emitted by the source.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn generated(&self) -> usize {
         self.generated
     }
 
     /// Returns the number of generated patterns passed to the visitor.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn tested(&self) -> usize {
         self.tested
     }
 
     /// Returns the number of nonempty segments visited before termination.
-    ///
-    /// Empty capped tail segments are present in [`Self::segment_reports`]
-    /// but do not contribute to this counter.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn segments(&self) -> usize {
         self.segments
     }
 
     /// Returns the reason the segmented source stopped.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub const fn termination(&self) -> OsdTermination {
         self.termination
     }
 
     /// Returns one report for every policy descriptor, including empty tails.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
     pub fn segment_reports(&self) -> &[PatternSegmentReport] {
         &self.segment_reports
     }
@@ -551,11 +407,6 @@ impl PatternEnumerationReport {
 /// for example, dimension four and order two yield `[]`, `[0]`, `[1]`,
 /// `[2]`, `[3]`, `[0, 1]`, `[0, 2]`, and so on.  The source stores only the
 /// current combination and never allocates the complete candidate set.
-///
-/// Construct with [`PatternEnumerator::new`].  Use the [`Iterator`] surface
-/// when the caller owns testing and stopping, or [`PatternEnumerator::run`]
-/// when generated and tested counters plus cancellation metadata should be
-/// returned together.
 pub struct PatternEnumerator {
     dimension: usize,
     max_weight: usize,
@@ -570,11 +421,9 @@ pub struct PatternEnumerator {
 }
 
 impl PatternEnumerator {
-    /// Creates a streaming source for an information set of `dimension` bits.
-    ///
-    /// Construction performs the complete checked uncapped bound calculation,
-    /// even when `config` has a candidate cap.  It returns an error instead of
-    /// constructing a source with unrepresentable counters.
+    /// Creates a streaming source for an information set of `dimension` bits,
+    /// or an error when the uncapped candidate bound overflows `usize`, with
+    /// or without a candidate cap.
     pub fn new(dimension: usize, config: OsdConfig) -> Result<Self, PatternEnumerationError> {
         let segmentation = PatternSegmentation::new(dimension, config)?;
         let theoretical_candidates = segmentation.theoretical_candidates();
@@ -606,14 +455,7 @@ impl PatternEnumerator {
         self.theoretical_candidates
     }
 
-    /// Returns the deterministic weight segmentation used by this source.
-    ///
-    /// The policy is fixed at construction and remains unchanged as the
-    /// iterator advances.
-    ///
-    /// # Panics
-    ///
-    /// This accessor never panics.
+    /// Returns the weight segmentation fixed at construction.
     pub fn segmentation(&self) -> &PatternSegmentation {
         &self.segmentation
     }
@@ -623,10 +465,8 @@ impl PatternEnumerator {
         self.generated
     }
 
-    /// Returns the number of patterns passed to a visitor by
-    /// [`Self::run`].  Direct [`Iterator`] use does not increment this
-    /// counter because the iterator does not test candidates on the caller's
-    /// behalf.
+    /// Returns the number of patterns passed to a visitor.  Direct
+    /// [`Iterator`] use does not increment this counter.
     pub const fn tested(&self) -> usize {
         self.tested
     }
@@ -652,12 +492,10 @@ impl PatternEnumerator {
     /// cancelled by the visitor.
     ///
     /// The visitor is called exactly once for every pattern generated during
-    /// this invocation.  Each callback is counted as one tested candidate.  A
-    /// [`PatternControl::Cancel`]
-    /// response stops immediately after that candidate and reports
-    /// [`OsdTermination::Cancelled`].  If that candidate also reaches the
-    /// configured cap, cancellation still takes precedence over
-    /// [`OsdTermination::CandidateCap`].
+    /// this invocation.  A [`PatternControl::Cancel`] response stops
+    /// immediately after that candidate and reports
+    /// [`OsdTermination::Cancelled`], which takes precedence over
+    /// [`OsdTermination::CandidateCap`] reached by the same candidate.
     pub fn run<F>(&mut self, mut visitor: F) -> PatternEnumerationReport
     where
         F: FnMut(&[usize]) -> PatternControl,
@@ -678,34 +516,11 @@ impl PatternEnumerator {
         self.run_with_cancellation(Some(&mut visitor), Some(cancellation))
     }
 
-    /// Visits the existing deterministic pattern stream with weight-segment
-    /// accounting.
+    /// Visits the pattern stream with weight-segment accounting.
     ///
-    /// The callback receives the descriptor for the generated pattern's
-    /// weight segment and the pattern itself.  Callback order is identical to
-    /// [`Self::run`], so a run with no active discard decision yields the same
-    /// patterns and candidate order as the baseline source.  Empty capped
+    /// The callback receives the descriptor of the pattern's weight segment
+    /// and the pattern, in the callback order of [`Self::run`].  Empty capped
     /// tail descriptors receive zero counters in the returned report.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::osd::{OsdConfig, PatternControl, PatternEnumerator};
-    ///
-    /// let mut source = PatternEnumerator::new(3, OsdConfig::new(1)).unwrap();
-    /// let report = source.run_segmented(|segment, pattern| {
-    ///     assert_eq!(segment.weight(), pattern.len());
-    ///     PatternControl::Continue
-    /// });
-    /// assert_eq!(report.segments(), 2);
-    /// assert_eq!(report.generated(), 4);
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if the source's internal generation counter does not map a
-    /// generated pattern to one of its policy segments.  A source constructed
-    /// by [`Self::new`] maintains this invariant.
     pub fn run_segmented<F>(&mut self, mut visitor: F) -> PatternSegmentEnumerationReport
     where
         F: FnMut(&PatternSegment, &[usize]) -> PatternControl,
@@ -715,11 +530,6 @@ impl PatternEnumerator {
 
     /// Like [`Self::run_segmented`], but observes a caller-owned cancellation
     /// flag before every generated pattern.
-    ///
-    /// # Panics
-    ///
-    /// Panics under the same internal-invariant condition as
-    /// [`Self::run_segmented`].
     pub fn run_segmented_with_cancellation<F>(
         &mut self,
         cancellation: &AtomicBool,
