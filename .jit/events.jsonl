@@ -15764,3 +15764,6 @@
 {"from":"ready","id":"7f0ab5ca-b360-414e-87a7-780e5c07dac3","issue_id":"18858de1-4533-413a-b768-ac09b5126854","timestamp":"2026-10-03T13:16:33.170112709Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"acba264c-e3cf-451d-8c53-98c99dc20c5a","issue_id":"18858de1-4533-413a-b768-ac09b5126854","timestamp":"2026-10-03T13:16:33.170112709Z","type":"issue_claimed"}
 {"id":"4530f613-f164-4192-a209-a03e559eda26","isolated_torn_tail":false,"operation":"upgrade","profiles":[{"id":"jit-default","status":"upgraded","variables":[]}],"timestamp":"2026-10-03T13:19:55.794635492Z","type":"profile_lifecycle"}
+{"gate_key":"docs-mechanical","id":"effb1027-71e4-4a44-9dcc-8048471b460c","issue_id":"ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa","timestamp":"2026-10-03T13:20:22.585533838Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"ready","id":"32049ad1-c79f-4632-8251-3bb8ebec5986","issue_id":"eb2a833d-75b4-45b7-89ea-b8aafcd36cb1","timestamp":"2026-10-03T13:20:45.996250758Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"a97ef062-9172-4e97-94e9-0b4f754aafcf","issue_id":"eb2a833d-75b4-45b7-89ea-b8aafcd36cb1","timestamp":"2026-10-03T13:20:45.996250758Z","type":"issue_claimed"}

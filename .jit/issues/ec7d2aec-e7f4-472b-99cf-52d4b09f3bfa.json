@@ -23,9 +23,9 @@
   ],
   "gates_status": {
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:31.752270576Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-03T13:20:22.585533838Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "ec7d2aec-e7f4-472b-99cf-52d4b09f3bfa",
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Widen the docs policy to manage archival sources",
-  "updated_at": "2026-10-03T13:10:21.636485708Z"
+  "updated_at": "2026-10-03T13:20:22.585533838Z"
 }

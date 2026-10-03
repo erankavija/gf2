@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-03T13:20:45.996250758Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -32,7 +33,7 @@
     "satisfies:fa787f85/REQ-12"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Move gf2-coding crate guides into the legacy mirror",
-  "updated_at": "2026-10-03T02:12:11.519541425Z"
+  "updated_at": "2026-10-03T13:20:45.996250758Z"
 }
