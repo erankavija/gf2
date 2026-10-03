@@ -1,68 +1,20 @@
 //! AVX2 panelized PLE base-case kernel for medium `Fp<P>` with
-//! `P ∈ (251, 65536)`, issue `68db401b`, design `2e8c5a29` § 9.
+//! `P ∈ (251, 65536)`.
 //!
-//! Implements the u16-lane analogue of the byte-lane panel-base
-//! kernel in [`crate::x86::fp_small_ple`]. Performs an in-place
-//! rank-revealing PLE decomposition on a column-window panel of
-//! canonical u16 storage, with a row-major axpy-style Schur update
-//! that uses the SSOT [`crate::x86::fp_small::barrett_reduce_lane32`]
-//! reducer at panel tile boundaries.
-//!
-//! # Algorithm
-//!
-//! For each column `col` in `[0, win)` of the panel:
-//! 1. Pivot search: linear scan rows `rank..m` for the first non-zero
-//!    entry at column `col`.
-//! 2. Row swap: if pivot row != `rank`, swap **both** the scratch
-//!    window's rows and the kernel-local `row_perm` tracker. The
-//!    caller is responsible for propagating the final `row_perm` to
-//!    the parent matrix's cells **outside** the window.
-//! 3. Fused scale + Schur update (row-major axpy form): compute `inv =
-//!    pivot^{-1} mod p` once. For each row `k in (rank+1)..m`,
-//!    (a) compute the L-multiplier `mult = window[k, col] * inv mod p`
-//!    (scalar mod-mul, written back to `window[k, col]`);
-//!    (b) update `window[k, col+1..win] -= mult * window[rank,
-//!    col+1..win]` (mod p) via AVX2: 8-lane u32 MUL + SSOT
-//!    `barrett_reduce_lane32` + branchless cond-sub pack.
-//! 4. Record the pivot column offset.
-//!
-//! The row-major form of the Schur update (one row of `y` per outer
-//! iteration, against a fixed `x` = pivot row slice and scalar `mult`
-//! = L-multiplier in row `k`) is algorithmically equivalent to the
-//! column-major form used by `ple_base_direct` (Dumas-Pernet §2.2 Alg.
-//! 2.5): same writes, just re-ordered loop nesting. No in-place
-//! aliasing changes because each row `k > rank` is written
+//! The u16-lane analogue of [`crate::x86::fp_small_ple`]: an in-place
+//! rank-revealing PLE decomposition of a column-window panel of canonical
+//! u16 storage. Per pivot column the kernel searches rows `rank..m` for the
+//! first non-zero entry, swaps it into row `rank` (in the window and in
+//! `row_perm`), and runs a fused scale + row-major Schur update in tiles of
+//! 8 u16 lanes widened to u32 and reduced by
+//! [`crate::x86::fp_small::barrett_reduce_lane32`]. The row-major update
+//! performs the same writes as the column-major form of `ple_base_direct`
+//! (Dumas-Pernet §2.2 Alg. 2.5), each row `k > rank` being written
 //! independently.
 //!
-//! # Lane width
-//!
-//! The kernel operates on **canonical u16** lanes (not Montgomery
-//! storage). One AVX2 ymm holds 16 u16 lanes; for the Schur update we
-//! widen 8 of these to u32 per tile (via `_mm256_cvtepu16_epi32`),
-//! multiply against the broadcast multiplier (also 8 u32 lanes), call
-//! `barrett_reduce_lane32`, and pack 8 u32 → 8 u16 via
-//! `_mm256_packus_epi32` (clamping is a no-op since reduced values are
-//! in `[0, p) ⊂ [0, 2^16)`).
-//!
-//! Choosing an 8-lane tile (rather than 16) matches the SSOT
-//! `barrett_reduce_lane32` primitive's 8-u32-lane shape; processing 16
-//! u16 lanes per outer iteration would need two reduces and is no
-//! faster on Zen 3 because the multiply throughput is the same.
-//!
-//! # Safety
-//!
-//! All public functions are `unsafe`. Caller must ensure AVX2 is
-//! available at runtime, `p` is an odd prime in `(251, 65536)`, and
-//! all input u16 lanes are canonical (`< p`).
-//!
-//! # SSOT reuse
-//!
-//! - Barrett reduction at panel-step boundaries reuses
-//!   [`crate::x86::fp_small::barrett_reduce_lane32`] (SSOT issued by
-//!   `e8a0c47a`). No new reducer.
-//! - Lane shape matches `crate::x86::fp_medium::fp_medium_batch_mul16`
-//!   (the medium-prime u32 widening + Barrett pack pattern, issue
-//!   `9e12659b`).
+//! All public functions are `unsafe`. Caller must ensure AVX2 is available
+//! at runtime, `p` is an odd prime in `(251, 65536)`, and all input u16
+//! lanes are canonical (`< p`).
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -77,27 +29,15 @@ pub use crate::fp_medium_ple::PANEL_SCRATCH_COLS;
 
 /// Panelized PLE base-case elimination on canonical u16 storage.
 ///
-/// See module docs for algorithm. Performs in-place rank-revealing
-/// PLE on the `m × win` canonical u16 panel `window` (row-major,
-/// `window[r * win + c]` is the cell at row `r`, column `c`).
+/// Performs in-place rank-revealing PLE on the `m × win` canonical u16
+/// panel `window` (row-major, `window[r * win + c]` is the cell at row `r`,
+/// column `c`) and returns the number of pivots found.
 ///
-/// # Returns
-///
-/// Number of pivots found (rank contribution from this panel).
-///
-/// # Arguments
-///
-/// * `window` — `m * win` canonical u16 panel storage.
-/// * `m` — row count.
-/// * `win` — column count of the panel.
-/// * `p` — odd prime, `252 <= p <= 65535`.
-/// * `inv_table` — length `p`; `inv_table[v]` is the modular inverse
-///   of `v` for `v ∈ [1, p)`. `inv_table[0]` is unused.
-/// * `row_perm` — length `m`, mutated to track row swaps performed by
-///   the kernel. The caller is responsible for propagating the final
-///   `row_perm` to the parent matrix's cells outside the column window.
-/// * `pivot_cols_local` — pivot column offsets within `[0, win)` are
-///   pushed in left-to-right order.
+/// `inv_table` has length `p`; `inv_table[v]` is the modular inverse of `v`
+/// for `v ∈ [1, p)`. `row_perm` (length `m`) tracks the row swaps; the
+/// caller propagates it to the parent matrix's cells outside the column
+/// window. Pivot column offsets within `[0, win)` are pushed to
+/// `pivot_cols_local` in left-to-right order.
 ///
 /// # Safety
 ///
@@ -138,9 +78,8 @@ pub unsafe fn ple_panel_base_canonical_u16(
 
     let p_u32 = p as u32;
     let mu32 = ((1u64 << 32) / p_u32 as u64) as u32;
-    // The SSOT `barrett_reduce_lane32` reads only the low 32 bits of
-    // each 64-bit lane internally, so `_mm256_set1_epi64x(mu32 as i64)`
-    // is the canonical broadcast shape (matches `fp_small.rs:840`).
+    // `barrett_reduce_lane32` reads only the low 32 bits of each 64-bit
+    // lane of `mu_vec`, where the `epi64x` broadcast places `mu32`.
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
     let p_vec32 = _mm256_set1_epi32(p_u32 as i32);
 
@@ -169,17 +108,7 @@ pub unsafe fn ple_panel_base_canonical_u16(
             row_perm.swap(rank, piv);
         }
 
-        // Step 3+4: fused scale + Schur update.
-        //
-        // For each row `k in (rank+1)..m`:
-        //   - Compute multiplier `mult = window[k, col] * inv mod p`
-        //     and write back to `window[k, col]` (L-multiplier).
-        //   - Update tail `window[k, col+1..win] -= mult *
-        //     window[rank, col+1..win]` (mod p) via AVX2 axpy.
-        //
-        // Fusing eliminates the separate column-strided scalar scale
-        // pass and lets us keep the multiplier `mult` in a register
-        // across the SIMD tail update.
+        // Fused scale + Schur update; see `fused_scale_and_schur_u16`.
         let pivot_val = *window.get_unchecked(rank * win + col);
         debug_assert!(pivot_val != 0, "panel base: zero pivot post-search");
         let inv = *inv_table.get_unchecked(pivot_val as usize) as u32;
@@ -188,8 +117,6 @@ pub unsafe fn ple_panel_base_canonical_u16(
             fused_scale_and_schur_u16(window, win, col, rank, m, p, inv, mu_vec, p_vec32);
         }
 
-        // Step 5: record this pivot's column offset (local within
-        // window) and advance the rank.
         pivot_cols_local.push(col);
         rank += 1;
     }
@@ -198,10 +125,6 @@ pub unsafe fn ple_panel_base_canonical_u16(
 }
 
 /// Swap two rows of the row-major window panel.
-///
-/// Uses 16-byte (8-u16) and 32-byte (16-u16) AVX2 chunks where
-/// possible; the panel rows are at most [`KC_U16`] u16 wide
-/// (256 bytes), so the swap is cheap.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn swap_panel_rows_u16(window: &mut [u16], win: usize, r1: usize, r2: usize) {
@@ -210,7 +133,6 @@ unsafe fn swap_panel_rows_u16(window: &mut [u16], win: usize, r1: usize, r2: usi
     }
     let base1 = r1 * win;
     let base2 = r2 * win;
-    // SIMD-aligned 16-u16 chunks (32 bytes) where possible.
     let mut off = 0usize;
     while off + 16 <= win {
         let a_ptr = window.as_mut_ptr().add(base1 + off) as *mut __m256i;
@@ -233,21 +155,11 @@ unsafe fn swap_panel_rows_u16(window: &mut [u16], win: usize, r1: usize, r2: usi
 ///
 /// For each row `k in (rank+1)..m`:
 ///   1. Compute the L-multiplier `mult = window[k, col] * inv mod p`
-///      and write it back into `window[k, col]`. This replaces the
-///      separate column-strided scale loop.
+///      and write it back into `window[k, col]`.
 ///   2. Update the tail `window[k, col+1..win] -= mult *
-///      window[rank, col+1..win]` (mod p) via AVX2 axpy:
-///      - widen 8 pivot u16 lanes to u32 (`_mm256_cvtepu16_epi32`),
-///      - multiply by `mult` (8 × u32 mul; exact since
-///        `(p-1)^2 < 2^32`),
-///      - SSOT Barrett reduce 8 u32 → 8 u32 in `[0, p)`,
-///      - subtract from y (widened to u32), conditional-add p,
-///      - pack 8 u32 → 8 u16 via `_mm256_packus_epi32`.
-///
-/// Fusing keeps `mult` in a register and removes the separate scalar
-/// pass over the pivot column below the pivot row, cutting the
-/// per-pivot scalar work from `O(m)` mod-muls to one mod-mul per row
-/// (still required for the multiplier computation).
+///      window[rank, col+1..win]` (mod p): widen 8 u16 lanes to u32,
+///      multiply by `mult` (exact since `(p-1)^2 < 2^32`), Barrett-reduce,
+///      subtract with a conditional correction, and pack back to u16.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fused_scale_and_schur_u16(
@@ -265,9 +177,8 @@ unsafe fn fused_scale_and_schur_u16(
     let tail_len = win - tail_start;
 
     // Snapshot the pivot row's tail into a stack buffer so the inner
-    // loop can broadcast contiguous lanes without aliasing the
-    // mutable `window` slice. The scratch capacity is the structural bound
-    // this function itself enforces; callers may tune `win` independently.
+    // loop reads contiguous lanes without aliasing the mutable `window`
+    // slice.
     let mut pivot_buf = [0u16; PANEL_SCRATCH_COLS];
     debug_assert!(
         tail_len <= PANEL_SCRATCH_COLS,
@@ -283,9 +194,7 @@ unsafe fn fused_scale_and_schur_u16(
 
     let p_u32 = p as u32;
 
-    // For each row k in (rank+1..m).
     for k in (rank + 1)..m {
-        // Step 1: compute multiplier and write back as L-multiplier.
         let v = *window.get_unchecked(k * win + col) as u32;
         let mult = (v * inv) % p_u32;
         *window.get_unchecked_mut(k * win + col) = mult as u16;
@@ -296,55 +205,33 @@ unsafe fn fused_scale_and_schur_u16(
 
         let y_base = k * win + tail_start;
 
-        // 8-lane batches (8 u16 in, 8 u16 out per iteration).
         let mut off = 0usize;
         while off + LANE_U32 <= tail_len {
-            // Load 8 canonical u16 from pivot row → 8 u32 lanes.
             let pivot_ptr = pivot_slice.as_ptr().add(off);
             let pivot_lo = _mm_loadu_si128(pivot_ptr as *const __m128i);
             let pivot_u32 = _mm256_cvtepu16_epi32(pivot_lo);
 
-            // Compute mult * pivot per lane: 8 × u32 multiply. Exact
-            // because `(p-1)^2 < 2^32` for any `p < 2^16`.
             let prod = _mm256_mullo_epi32(pivot_u32, mult_vec);
 
-            // Reduce mod p via SSOT lane32 Barrett reducer.
             let reduced = super::fp_small::barrett_reduce_lane32(prod, mu_vec, p_vec32);
 
-            // Load 8 canonical u16 from row k → u32 lanes.
             let y_ptr = window.as_mut_ptr().add(y_base + off);
             let y_lo = _mm_loadu_si128(y_ptr as *const __m128i);
             let y_u32 = _mm256_cvtepu16_epi32(y_lo);
 
-            // y_new = (y - reduced + p) mod p
-            // Compute y + p first, then subtract reduced, then
-            // conditionally subtract p if the result is >= p.
             let y_plus_p = _mm256_add_epi32(y_u32, p_vec32);
             let diff = _mm256_sub_epi32(y_plus_p, reduced);
-            // `diff` is now in `[1, 2p-1]` (since y < p and reduced < p
-            // so y + p - reduced ∈ [1, 2p-1]). One conditional subtract
-            // via _mm256_min_epu32 returns the canonical value:
-            // min(diff, diff - p) — if diff >= p, diff - p < diff so
-            // min picks diff - p; otherwise diff - p underflows huge so
-            // min picks diff.
+            // `diff = y + p - reduced ∈ [1, 2p-1]`; `min(diff, diff - p)`
+            // is the conditional subtract, since `diff - p` wraps above
+            // `diff` exactly when `diff < p`.
             let canon = _mm256_min_epu32(diff, _mm256_sub_epi32(diff, p_vec32));
 
-            // Pack 8 i32 lanes → 8 u16. `_mm256_packus_epi32` saturates
-            // negative inputs to zero, but our `canon` is already in
-            // `[0, p) ⊂ [0, 2^16)` so saturation never engages. The
-            // packus interleaves the two 128-bit halves; for a single
-            // 8-lane source vector we self-pack and extract the low 8
-            // u16 lanes.
+            // `canon` is in `[0, p) ⊂ [0, 2^16)`, so `packus_epi32` never
+            // saturates. It packs per 128-bit half, leaving the 8 results in
+            // u16 lanes 0..3 and 8..11; `permute4x64<0xD8>` gathers them into
+            // the low 128 bits.
             let packed16 = _mm256_packus_epi32(canon, canon);
-            // After packus, lanes 0..3 are canon lanes 0..3 (low half),
-            // lanes 4..7 are canon lanes 0..3 again (low-half dup),
-            // lanes 8..11 are canon lanes 4..7 (high half), lanes 12..15
-            // are canon lanes 4..7 dup. We need lanes 0..3 from the low
-            // 128 and 8..11 from the high 128 → permute4x64<0xD8>
-            // swizzles 64-bit lanes [0,1,2,3] → [0,2,1,3].
             let permuted = _mm256_permute4x64_epi64::<0xD8>(packed16);
-            // Now the low 128 of `permuted` holds 8 contiguous u16 lanes
-            // in canonical order. Store via the low half.
             let lower = _mm256_castsi256_si128(permuted);
             let dst_ptr = window.as_mut_ptr().add(y_base + off) as *mut __m128i;
             _mm_storeu_si128(dst_ptr, lower);

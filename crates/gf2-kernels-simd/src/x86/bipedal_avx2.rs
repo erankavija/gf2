@@ -2,28 +2,16 @@
 //! [`crate::bipedal::framework::BatchedBipedalLike`] framework.
 //!
 //! Each `run_*_batch::<C>` function is `#[target_feature(enable = "avx2")]`
-//! and generic over the per-prime [`BipedalLikeConfig`] impl `C`. The F_3
-//! instantiation `C = Config3` is the only one wired here; F_5 and F_7
-//! ship via dedicated, non-generic AVX2 entry points in
+//! and generic over the per-prime [`BipedalLikeConfig`] impl `C`, whose two
+//! lane types must both be `Avx2Lane`. `Config3` (F_3) satisfies the bound;
+//! the F_5 3-plane and F_7 LUT encodings do not fit the 2-stream
+//! `(MagLane, SgnLane)` shape and have dedicated entry points in
 //! [`crate::x86::bipedal_avx2_packed5`] and
-//! [`crate::x86::bipedal_avx2_packed7`] because their R1 Candidate D
-//! (3-plane) and R2 Candidate A (LUT) encodings do not fit the 2-stream
-//! `(MagLane, SgnLane)` framework shape (see JIT issue `1f769232`'s
-//! `## Amendment 2026-05-14`). R4 §4.1 documents the 12-34x regression
-//! that occurs without the `#[target_feature]` discipline.
+//! [`crate::x86::bipedal_avx2_packed7`]. [`run_permanent4`] keeps four F_3
+//! matrices in those lanes for an entire Ryser/Gray walk.
 //!
-//! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment.
-//! AVX2 availability is the dynamic precondition every caller must
-//! runtime-detect via `is_x86_feature_detected!("avx2")` before invoking.
-//!
-//! These are the only files in the bipedal stack that actually emit AVX2
-//! instructions; everything in `crate::bipedal::*` is plumbing that
-//! inlines into them.
-//!
-//! [`run_permanent4`] is the F_3 consumer that keeps four matrices in those
-//! lanes for an entire Ryser/Gray walk. Its packed-column ABI is concrete
-//! rather than generic because only [`crate::bipedal::Bipedal3x4`] currently
-//! has a single-word permanent representation.
+//! Every caller detects AVX2 at runtime with
+//! `is_x86_feature_detected!("avx2")` before invoking a function here.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::_mm256_srli_epi64;
@@ -34,32 +22,10 @@ use crate::bipedal::framework::{BatchedBipedalLike, BipedalLikeConfig};
 use crate::bipedal::lanes::{Avx2Lane, BipedalLogicalLanes};
 use crate::bipedal::Bipedal3x4;
 
-// The `where C: BipedalLikeConfig<MagLane = Avx2Lane, SgnLane = Avx2Lane>`
-// bound on each entry point spells out the lane-shape contract: both lane
-// types of the per-prime config must resolve to `Avx2Lane`. F_3's
-// `Config3` satisfies this; F_5 / F_7 do not (their encodings need a
-// different shape — see this module's top-of-file note) and ship through
-// `bipedal_avx2_packed5` / `bipedal_avx2_packed7` instead.
-
 /// Apply a bipedal-like add over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// Generic over the per-prime [`BipedalLikeConfig`] `C`. One AVX2 lane
-/// consumes 4 × `u64` (256 bits = 256 logical lanes). All six slices
-/// must be the same length and a multiple of 4. An empty input
-/// (length 0) is allowed and is a no-op.
-///
-/// # Type parameters
-///
-/// * `C` — per-prime arithmetic recipe. Today only [`crate::bipedal::Config3`]
-///   is instantiated through this generic entry point; F_5 / F_7 use
-///   dedicated entry points in [`crate::x86::bipedal_avx2_packed5`] /
-///   [`crate::x86::bipedal_avx2_packed7`].
-///
-/// # Arguments
-///
-/// * `mag1`, `sgn1` — first operand `(mag, sgn)` streams.
-/// * `mag2`, `sgn2` — second operand `(mag, sgn)` streams.
-/// * `out_mag`, `out_sgn` — output buffers.
+/// One AVX2 lane consumes 4 × `u64` (256 logical lanes). All six slices
+/// must be the same length and a multiple of 4; an empty input is a no-op.
 ///
 /// # Safety
 ///
@@ -125,16 +91,8 @@ pub unsafe fn run_add_batch<C>(
 
 /// Apply a bipedal-like sub over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// Generic over [`BipedalLikeConfig`] `C`. See [`run_add_batch`] for the
+/// Computes `(mag1, sgn1) - (mag2, sgn2)`; see [`run_add_batch`] for the
 /// slice-shape contract.
-///
-/// # Type parameters
-///
-/// * `C` — per-prime arithmetic recipe.
-///
-/// # Arguments
-///
-/// Same shape as [`run_add_batch`]; `(mag1, sgn1) - (mag2, sgn2)`.
 ///
 /// # Safety
 ///
@@ -181,16 +139,8 @@ pub unsafe fn run_sub_batch<C>(
 
 /// Apply a bipedal-like mul over canonical `(mag, sgn)` u64-word streams via AVX2.
 ///
-/// Generic over [`BipedalLikeConfig`] `C`. See [`run_add_batch`] for the
+/// Computes `(mag1, sgn1) * (mag2, sgn2)`; see [`run_add_batch`] for the
 /// slice-shape contract.
-///
-/// # Type parameters
-///
-/// * `C` — per-prime arithmetic recipe.
-///
-/// # Arguments
-///
-/// Same shape as [`run_add_batch`]; `(mag1, sgn1) * (mag2, sgn2)`.
 ///
 /// # Safety
 ///
@@ -236,18 +186,6 @@ pub unsafe fn run_mul_batch<C>(
 }
 
 /// Apply a bipedal-like neg over canonical `(mag, sgn)` u64-word streams via AVX2.
-///
-/// Generic over [`BipedalLikeConfig`] `C`. Two input slices and two
-/// output slices, all the same length and a multiple of 4.
-///
-/// # Type parameters
-///
-/// * `C` — per-prime arithmetic recipe.
-///
-/// # Arguments
-///
-/// * `mag`, `sgn` — input `(mag, sgn)` streams.
-/// * `out_mag`, `out_sgn` — output buffers.
 ///
 /// # Safety
 ///

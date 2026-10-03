@@ -1,54 +1,18 @@
 //! AVX2 panelized PLE base-case kernel for small `Fp<P>` (`P <= 251`).
 //!
-//! Implements the panel-base path of the recursive PLE algorithm described in
-//! design `@/issue/2e8c5a29` and issue `6823c8a0`. Performs an in-place
-//! rank-revealing PLE decomposition on a column-window panel of canonical-byte
-//! storage, with a row-major axpy-style Schur update that uses the SSOT
-//! [`crate::x86::fp_small::barrett_reduce_lane32`] reducer at panel
-//! tile boundaries.
+//! An in-place rank-revealing PLE decomposition of a column-window panel of
+//! canonical-byte storage. Per pivot column the kernel searches rows
+//! `rank..m` for the first non-zero entry, swaps it into row `rank` (in the
+//! window and in `row_perm`), and runs a fused scale + row-major Schur
+//! update in tiles of 8 u32 lanes reduced by
+//! [`crate::x86::fp_small::barrett_reduce_lane32`]. The row-major update
+//! performs the same writes as the column-major form of `ple_base_direct`
+//! (Dumas-Pernet §2.2 Alg. 2.5), each row `k > rank` being written
+//! independently.
 //!
-//! # Algorithm
-//!
-//! For each column `col` in `[0, win)` of the panel:
-//! 1. Pivot search: linear scan rows `rank..m` for the first non-zero
-//!    entry at column `col`.
-//! 2. Row swap: if pivot row != `rank`, swap **both** the scratch
-//!    window's rows and the kernel-local `row_perm` tracker. The
-//!    caller is responsible for propagating the final `row_perm` to
-//!    the parent matrix's cells **outside** the window.
-//! 3. Scale: compute `inv = pivot^{-1} mod p` via the precomputed
-//!    `inv_table` (one L1 table load per pivot). Then for each row
-//!    `k in (rank+1)..m`, replace `scratch[k, col]` with
-//!    `(scratch[k, col] * inv) mod p` — these are the L-multipliers.
-//! 4. Schur update (row-major axpy form): for each row `k in
-//!    (rank+1)..m`, perform
-//!    `scratch[k, col+1..win] -= scratch[k, col] * scratch[rank, col+1..win]`
-//!    via an AVX2 axpy lane: 8 × u32 lanes per inner step,
-//!    accumulate `_mm256_madd_epi16` products, reduce mod p via
-//!    `barrett_reduce_lane32`, then subtract (with conditional add
-//!    mod p) and write back as canonical u8.
-//! 5. Record the pivot column offset.
-//!
-//! The row-major form of the Schur update (one row of `y` per outer
-//! iteration, against a fixed `x` = pivot row slice and scalar `mult`
-//! = L-multiplier in row `k`) is algorithmically equivalent to the
-//! column-major form used by `ple_base_direct` (Dumas-Pernet §2.2
-//! Alg. 2.5) — same writes, just re-ordered loop nesting; no in-place
-//! aliasing changes because each row `k > rank` is written independently.
-//!
-//! # Safety
-//!
-//! All public functions are `unsafe`. Caller must ensure AVX2 is
-//! available at runtime, `p` is an odd prime in `[3, 251]`, and all
-//! input bytes are canonical (`< p`).
-//!
-//! # SSOT reuse
-//!
-//! - Barrett reduction at panel-step boundaries reuses
-//!   [`crate::x86::fp_small::barrett_reduce_lane32`] (SSOT issued by
-//!   `e8a0c47a`). No new reducer.
-//! - Lane width and `_mm256_madd_epi16` MAC shape match
-//!   `crate::x86::fp_small_panel`'s inner kernel (issue `fc182ed5`).
+//! All public functions are `unsafe`. Caller must ensure AVX2 is available
+//! at runtime, `p` is an odd prime in `[3, 251]`, and all input bytes are
+//! canonical (`< p`).
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -63,27 +27,15 @@ pub use crate::fp_small_ple::PANEL_SCRATCH_COLS;
 
 /// Panelized PLE base-case elimination on canonical-byte storage.
 ///
-/// See module docs for algorithm. Performs in-place rank-revealing
-/// PLE on the `m × win` canonical-byte panel `window` (row-major,
-/// `window[r * win + c]` is the cell at row `r`, column `c`).
+/// Performs in-place rank-revealing PLE on the `m × win` canonical-byte
+/// panel `window` (row-major, `window[r * win + c]` is the cell at row `r`,
+/// column `c`) and returns the number of pivots found.
 ///
-/// # Returns
-///
-/// Number of pivots found (rank contribution from this panel).
-///
-/// # Arguments
-///
-/// * `window` — `m * win` canonical-byte panel storage.
-/// * `m` — row count.
-/// * `win` — column count of the panel.
-/// * `p` — odd prime, `3 <= p <= 251`.
-/// * `inv_table` — length `p`; `inv_table[v]` is the modular inverse
-///   of `v` for `v ∈ [1, p)`. `inv_table[0]` is unused.
-/// * `row_perm` — length `m`, mutated to track row swaps performed by
-///   the kernel. The caller is responsible for propagating the final
-///   `row_perm` to the parent matrix's cells outside the column window.
-/// * `pivot_cols_local` — pivot column offsets within `[0, win)` are
-///   pushed in left-to-right order.
+/// `inv_table` has length `p`; `inv_table[v]` is the modular inverse of `v`
+/// for `v ∈ [1, p)`. `row_perm` (length `m`) tracks the row swaps; the
+/// caller propagates it to the parent matrix's cells outside the column
+/// window. Pivot column offsets within `[0, win)` are pushed to
+/// `pivot_cols_local` in left-to-right order.
 ///
 /// # Safety
 ///
@@ -151,17 +103,7 @@ pub unsafe fn ple_panel_base_canonical(
             row_perm.swap(rank, piv);
         }
 
-        // Step 3+4: fused scale + Schur update.
-        //
-        // For each row `k in (rank+1)..m`:
-        //   - Compute multiplier `mult = window[k, col] * inv mod p`
-        //     and write back to `window[k, col]` (L-multiplier).
-        //   - Update tail `window[k, col+1..win] -= mult *
-        //     window[rank, col+1..win]` (mod p) via AVX2 axpy.
-        //
-        // Fusing eliminates the separate column-strided scalar scale
-        // pass and lets us keep the multiplier `mult` in a register
-        // across the SIMD tail update.
+        // Fused scale + Schur update; see `fused_scale_and_schur`.
         let pivot_val = *window.get_unchecked(rank * win + col);
         debug_assert!(pivot_val != 0, "panel base: zero pivot post-search");
         let inv = *inv_table.get_unchecked(pivot_val as usize) as u32;
@@ -170,8 +112,6 @@ pub unsafe fn ple_panel_base_canonical(
             fused_scale_and_schur(window, win, col, rank, m, p, inv, mu_vec, p_vec32);
         }
 
-        // Step 5: record this pivot's column offset (local within
-        // window) and advance the rank.
         pivot_cols_local.push(col);
         rank += 1;
     }
@@ -180,9 +120,6 @@ pub unsafe fn ple_panel_base_canonical(
 }
 
 /// Swap two rows of the row-major window panel.
-///
-/// Uses byte-wise memcpy through a stack temporary; the panel rows
-/// are at most `KC = 256` bytes wide, so the swap is cheap.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn swap_panel_rows(window: &mut [u8], win: usize, r1: usize, r2: usize) {
@@ -191,7 +128,6 @@ unsafe fn swap_panel_rows(window: &mut [u8], win: usize, r1: usize, r2: usize) {
     }
     let base1 = r1 * win;
     let base2 = r2 * win;
-    // SIMD-aligned 32-byte chunks where possible.
     let mut off = 0usize;
     while off + 32 <= win {
         let a_ptr = window.as_mut_ptr().add(base1 + off) as *mut __m256i;
@@ -214,16 +150,10 @@ unsafe fn swap_panel_rows(window: &mut [u8], win: usize, r1: usize, r2: usize) {
 ///
 /// For each row `k in (rank+1)..m`:
 ///   1. Compute the L-multiplier `mult = window[k, col] * inv mod p`
-///      and write it back into `window[k, col]`. This replaces the
-///      separate column-strided scale loop.
+///      and write it back into `window[k, col]`.
 ///   2. Update the tail `window[k, col+1..win] -= mult *
 ///      window[rank, col+1..win]` (mod p) via AVX2 axpy: 8-lane u32
-///      MUL + SSOT `barrett_reduce_lane32` + conditional-subtract pack.
-///
-/// Fusing keeps `mult` in a register and removes the separate scalar
-/// pass over the pivot column below the pivot row, cutting the
-/// per-pivot scalar work from `O(m)` to one scalar-mod-mul per row
-/// (still required for the multiplier computation).
+///      MUL + `barrett_reduce_lane32` + conditional-subtract pack.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fused_scale_and_schur(
@@ -241,9 +171,8 @@ unsafe fn fused_scale_and_schur(
     let tail_len = win - tail_start;
 
     // Snapshot the pivot row's tail into a stack buffer so the inner
-    // loop can broadcast contiguous lanes without aliasing the
-    // mutable `window` slice. The tail length is at most
-    // `PANEL_SCRATCH_COLS`.
+    // loop reads contiguous lanes without aliasing the mutable `window`
+    // slice.
     let mut pivot_buf = [0u8; PANEL_SCRATCH_COLS];
     debug_assert!(tail_len <= PANEL_SCRATCH_COLS);
     if tail_len > 0 {
@@ -257,9 +186,7 @@ unsafe fn fused_scale_and_schur(
     let p_u32 = p as u32;
     let p_vec_sub = p_vec32; // alias for clarity below
 
-    // For each row k in (rank+1..m).
     for k in (rank + 1)..m {
-        // Step 1: compute multiplier and write back as L-multiplier.
         let v = *window.get_unchecked(k * win + col) as u32;
         let mult = (v * inv) % p_u32;
         *window.get_unchecked_mut(k * win + col) = mult as u8;
@@ -270,46 +197,33 @@ unsafe fn fused_scale_and_schur(
 
         let y_base = k * win + tail_start;
 
-        // 8-lane batches.
         let mut off = 0usize;
         while off + LANE_U32 <= tail_len {
-            // Load 8 canonical bytes from pivot row → u32 lanes.
             let pivot_ptr = pivot_slice.as_ptr().add(off);
             let pivot_lo = _mm_loadl_epi64(pivot_ptr as *const __m128i);
             let pivot_u32 = _mm256_cvtepu8_epi32(pivot_lo);
 
-            // Compute mult * pivot per lane: 8 × u32 multiply.
             let prod = _mm256_mullo_epi32(pivot_u32, mult_vec);
 
-            // Reduce mod p via SSOT lane32 Barrett reducer.
             let reduced = super::fp_small::barrett_reduce_lane32(prod, mu_vec, p_vec_sub);
 
-            // Load 8 canonical bytes from row k → u32 lanes.
             let y_ptr = window.as_mut_ptr().add(y_base + off);
             let y_lo = _mm_loadl_epi64(y_ptr as *const __m128i);
             let y_u32 = _mm256_cvtepu8_epi32(y_lo);
 
-            // y_new = (y - reduced + p) mod p
-            // Compute y + p first, then subtract reduced, then conditionally
-            // subtract p if the result is >= p.
             let y_plus_p = _mm256_add_epi32(y_u32, p_vec_sub);
             let diff = _mm256_sub_epi32(y_plus_p, reduced);
-            // `diff` is now in `[0, 2p)` (since y < p and reduced < p so
-            // y + p - reduced ∈ (0, 2p)). One conditional subtract via
-            // _mm256_min_epu32 returns the canonical value:
-            // min(diff, diff - p) — if diff >= p, diff - p < diff so min
-            // picks diff - p; otherwise diff - p underflows huge so min
-            // picks diff.
+            // `diff = y + p - reduced ∈ [1, 2p-1]`; `min(diff, diff - p)`
+            // is the conditional subtract, since `diff - p` wraps above
+            // `diff` exactly when `diff < p`.
             let canon = _mm256_min_epu32(diff, _mm256_sub_epi32(diff, p_vec_sub));
 
-            // Pack 8 i32 lanes → 8 u8 bytes (same SSOT 3-step pack used
-            // by route C: packus_epi32 → permute4x64 → packus_epi16,
-            // then extract the low 8 bytes).
+            // Pack 8 u32 lanes → 8 bytes: packus_epi32 → permute4x64 →
+            // packus_epi16, then the low 8 bytes.
             let packed16 = _mm256_packus_epi32(canon, canon);
             let permuted = _mm256_permute4x64_epi64::<0xD8>(packed16);
             let packed8 = _mm256_packus_epi16(permuted, permuted);
             let lower = _mm256_castsi256_si128(packed8);
-            // Extract the low 8 bytes and store.
             let mut tmp = [0u8; 16];
             _mm_storeu_si128(tmp.as_mut_ptr() as *mut __m128i, lower);
             let dst_ptr = window.as_mut_ptr().add(y_base + off);
@@ -374,7 +288,6 @@ mod tests {
     ) -> usize {
         let p_u32 = p as u32;
         let mut rank = 0usize;
-        // Build inverse table on the fly (Fermat).
         let inv_table = build_inv_table(p);
 
         for col in 0..win {
@@ -390,7 +303,6 @@ mod tests {
             }
             let Some(piv) = pivot_row else { continue };
             if piv != rank {
-                // Swap rows in window.
                 for c in 0..win {
                     window.swap(rank * win + c, piv * win + c);
                 }

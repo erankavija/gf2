@@ -1,33 +1,13 @@
 //! AVX2 batch entry points for the F_7 4-bit-packed encoding.
 //!
-//! These are the actual SIMD-emitting functions for the F_7 kernel (R2
-//! Candidate A). They operate on single `&[u64]` word streams — one word holds
-//! 16 F_7 elements at 4-bit-aligned slots — and step by 4 u64 words (one AVX2
-//! lane = 4 × u64 = 64 F_7 elements) per iteration.
+//! One `u64` holds 16 F_7 elements in 4-bit slots; one iteration consumes 4
+//! words (64 elements). Each lane's words are extracted, passed through the
+//! 64 KiB scalar LUTs of [`crate::bipedal::packed7`], and reassembled. The
+//! private helpers are `#[inline(always)]` without `#[target_feature]` and
+//! inherit AVX2 from the `#[target_feature(enable = "avx2")]` entry points.
 //!
-//! The 64 KiB compile-time LUTs from [`crate::bipedal::packed7`] are used
-//! scalar-per-u64 inside each AVX2 lane (extract 4 u64s via `_mm256_extract_epi64`,
-//! look them up, reassemble via `_mm256_set_epi64x`). This is the "per-lane
-//! scalar LUT fallback inside a SIMD wrapper" option noted in the issue: it
-//! reduces loop overhead and enables the framework's batch calling convention
-//! while using the proven LUT for correctness.
-//!
-//! An AVX2-native approach using `_mm256_shuffle_epi8` (vpshufb) for 4-bit
-//! lookups within a 16-byte nibble table would be faster but requires a
-//! different LUT layout (16 × 16 nibble table vs 64 KiB byte-pair table) and
-//! is deferred. AVX-512 gather paths (`_mm512_i32gather_epi32`) are also
-//! deferred.
-//!
-//! Each `run_*7_batch` function is `#[target_feature(enable = "avx2")]`;
-//! private helpers inherit the target feature from their callers via inlining
-//! (`#[inline(always)]` only, no `#[target_feature]` — Rust 1.95 does not
-//! allow combining both per issue #145574).
-//!
-//! ## Slice contract
-//!
-//! All three slices for binary ops (two inputs, one output) must have the same
-//! length `n` where `n % 4 == 0`. Unary neg uses two slices. Empty slices
-//! (`n = 0`) are allowed (no-op).
+//! All slices of one call share a length `n` with `n % 4 == 0`; `n = 0` is a
+//! no-op.
 
 use crate::bipedal::packed7::{binary7_op_word, neg7_word, ADD7_LUT, MUL7_LUT, SUB7_LUT};
 
@@ -42,16 +22,12 @@ use core::arch::x86_64::*;
 
 /// Apply a binary F_7 LUT op to 4 u64 words packed in one AVX2 register.
 ///
-/// Extracts 4 u64 values from `a` and `b`, applies `lut` per word, and
-/// reassembles into an AVX2 register.
-///
 /// # Safety
 ///
 /// AVX2 must be available at runtime (caller's precondition via inlining into
 /// a `#[target_feature(enable = "avx2")]` function).
 #[inline(always)]
 unsafe fn binary7_avx2_lane(a: __m256i, b: __m256i, lut: &[u8; 65536]) -> __m256i {
-    // Extract 4 u64 elements from each register.
     let a0 = _mm256_extract_epi64(a, 0) as u64;
     let a1 = _mm256_extract_epi64(a, 1) as u64;
     let a2 = _mm256_extract_epi64(a, 2) as u64;
@@ -60,7 +36,6 @@ unsafe fn binary7_avx2_lane(a: __m256i, b: __m256i, lut: &[u8; 65536]) -> __m256
     let b1 = _mm256_extract_epi64(b, 1) as u64;
     let b2 = _mm256_extract_epi64(b, 2) as u64;
     let b3 = _mm256_extract_epi64(b, 3) as u64;
-    // Apply the scalar LUT word-by-word.
     let r0 = binary7_op_word(a0, b0, lut) as i64;
     let r1 = binary7_op_word(a1, b1, lut) as i64;
     let r2 = binary7_op_word(a2, b2, lut) as i64;
@@ -112,12 +87,6 @@ unsafe fn store256(dst: &mut [u64], offset: usize, v: __m256i) {
 /// Each AVX2 lane covers 4 u64 words (= 64 F_7 elements). All three slices
 /// (`a`, `b`, `out`) must have the same length `n` where `n % 4 == 0`. Empty
 /// input is allowed (no-op).
-///
-/// # Arguments
-///
-/// * `a` — first operand packed word slice (16 F_7 elements per word).
-/// * `b` — second operand packed word slice.
-/// * `out` — output packed word slice.
 ///
 /// # Safety
 ///
@@ -207,8 +176,6 @@ pub unsafe fn run_mul7_batch(a: &[u64], b: &[u64], out: &mut [u64]) {
 
 /// Apply F_7 neg over packed word streams via AVX2.
 ///
-/// All two slices (`a`, `out`) must have the same length `n` where `n % 4 == 0`.
-///
 /// # Safety
 ///
 /// AVX2 must be available at runtime. Both slices share the same length
@@ -232,9 +199,3 @@ pub unsafe fn run_neg7_batch(a: &[u64], out: &mut [u64]) {
         i += 4;
     }
 }
-
-// AVX-512 gather paths (deferred). A `#[cfg(target_feature = "avx512f")]`
-// block could use `_mm512_i32gather_epi32` with a scatter-gather index built
-// from the nibble pairs, or better, use `vpshufb` with a reformatted 16-byte
-// nibble LUT per 4-bit operation. Deferred per issue 1f769232 aspirational
-// criterion note.

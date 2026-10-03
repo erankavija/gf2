@@ -1,26 +1,12 @@
 //! Population-count and fused AND-population-count kernels for x86-64.
 //!
-//! Four routes serve the count family, three of which share one nibble-lookup
-//! core:
-//!
-//! - [`popcnt_words`] counts one word at a time with the scalar `POPCNT`
-//!   instruction, and [`count_ones_words`] is the same loop for a host without
-//!   `POPCNT`. Both are measured comparators for buffers too short for a
-//!   vector kernel: on the surveyed host a resolved call to either loses to
-//!   the scalar count `gf2-core` already runs there, so no `gf2-core` route
-//!   selects them (`dev/active/5cbb6545/findings.md`).
-//! - `avx2_popcnt` in the sibling `avx2` module counts every vector through a
-//!   `VPSHUFB` nibble lookup summed by `VPSADBW`. It is the established
-//!   mid-range route and stays unchanged.
-//! - [`avx2_popcnt_csa`] and [`avx2_and_popcnt_csa`] fold sixteen vectors
-//!   through Harley-Seal carry-save adders before one lookup, trading fifteen
-//!   lookups for fifteen bitwise triples per block [Mula2018].
-//!
-//! The carry-save loop is not selected by `gf2-core`'s automatic dispatch: its
-//! confirmation receipt does not qualify under the shared measurement
-//! contract. It remains in the bundle as a measured comparator with shared
-//! correctness coverage. Its block is 512 bytes, so a buffer shorter than one
-//! block reaches only the per-vector remainder.
+//! [`popcnt_words`] counts word by word with the scalar `POPCNT` instruction
+//! and [`count_ones_words`] is the same loop for a host without it;
+//! [`avx2_popcnt_csa`] and [`avx2_and_popcnt_csa`] fold sixteen vectors
+//! through Harley-Seal carry-save adders before one nibble lookup [Mula2018].
+//! The per-vector nibble-lookup route is `avx2_popcnt` in the sibling `avx2`
+//! module. A buffer shorter than one 512-byte block reaches only the
+//! per-vector remainder of the carry-save kernels.
 
 use core::arch::x86_64::*;
 

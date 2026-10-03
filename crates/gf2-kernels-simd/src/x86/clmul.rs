@@ -1,21 +1,12 @@
 //! Raw carry-less multiplication kernels using PCLMULQDQ and VPCLMULQDQ.
 //!
-//! These kernels perform the raw polynomial multiplication step only (no reduction).
-//! Reduction is handled by the caller (e.g., Barrett reduction in `gf2-core`).
+//! `clmul_u64` and the batch lanes return the unreduced product;
+//! `clmul_barrett_reduce` multiplies and reduces modulo a field polynomial.
 
 /// Raw carry-less multiplication of two 64-bit GF(2) polynomials.
 ///
 /// Returns the full 128-bit product `a(x) * b(x)` with no modular reduction.
 /// The result can have degree up to `deg(a) + deg(b)` (at most 126 for two 63-degree inputs).
-///
-/// # Arguments
-///
-/// * `a` - First polynomial (up to 64 bits).
-/// * `b` - Second polynomial (up to 64 bits).
-///
-/// # Returns
-///
-/// The full 128-bit carry-less product.
 ///
 /// # Safety
 ///
@@ -57,12 +48,6 @@ pub unsafe fn clmul_u64(a: u64, b: u64) -> u128 {
 /// Computes `out[i] = a[i] * b[i]` (carry-less, no reduction) for each index.
 /// Lane selection belongs to [`crate::gf2m::detect`]; this entry point
 /// executes the sequential lane without a per-call feature check.
-///
-/// # Arguments
-///
-/// * `a` - First operand slice.
-/// * `b` - Second operand slice. Must have the same length as `a`.
-/// * `out` - Output slice. Must have the same length as `a`.
 ///
 /// # Panics
 ///
@@ -143,7 +128,6 @@ unsafe fn clmul_batch_sequential(a: &[u64], b: &[u64], out: &mut [u128]) {
 
 /// VPCLMULQDQ batch carry-less multiplication, two products per instruction.
 ///
-/// Processes 2 carry-less multiplications per 256-bit VPCLMULQDQ instruction.
 /// Each `__m256i` holds two 64-bit operands in the low halves of its 128-bit
 /// lanes. An odd trailing element goes through [`clmul_u64`].
 ///
@@ -170,18 +154,12 @@ pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128])
     let n = a.len();
     let mut i = 0;
 
-    // Process 2 elements at a time using 256-bit VPCLMULQDQ.
-    // Each __m256i has two 128-bit lanes; we put one operand pair in each lane.
     while i + 2 <= n {
-        // Pack two operand pairs into __m256i:
-        // lane 0: a[i], lane 1: a[i+1]  (each in the low 64 bits of 128-bit lane)
         let a_vec = _mm256_set_epi64x(0, a[i + 1] as i64, 0, a[i] as i64);
         let b_vec = _mm256_set_epi64x(0, b[i + 1] as i64, 0, b[i] as i64);
 
-        // VPCLMULQDQ: carry-less multiply low 64 bits of each 128-bit lane
         let product = _mm256_clmulepi64_epi128::<0x00>(a_vec, b_vec);
 
-        // Extract results from each 128-bit lane
         let lo_lane = _mm256_extracti128_si256::<0>(product);
         let hi_lane = _mm256_extracti128_si256::<1>(product);
 
@@ -196,7 +174,6 @@ pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128])
         i += 2;
     }
 
-    // Handle remaining element (if odd count)
     while i < n {
         out[i] = clmul_u64(a[i], b[i]);
         i += 1;
@@ -216,10 +193,6 @@ pub(crate) unsafe fn clmul_batch_vpclmul(a: &[u64], b: &[u64], out: &mut [u128])
 /// * `mu` - Barrett constant `x^(2m) / P(x)`, fits in `u64` for `m <= 63`.
 /// * `modulus` - Irreducible polynomial `P(x)`, fits in `u64` for `m <= 63`.
 /// * `degree` - Field degree m.
-///
-/// # Returns
-///
-/// The reduced product `a(x) * b(x) mod P(x)`, fitting in m bits.
 ///
 /// # Safety
 ///
@@ -261,7 +234,6 @@ pub unsafe fn clmul_barrett_reduce(a: u64, b: u64, mu: u64, modulus: u64, degree
     let prod_hi = _mm_extract_epi64::<1>(product_reg) as u64;
     let product = (prod_hi as u128) << 64 | prod_lo as u128;
 
-    // Early return if already reduced
     if product >> degree == 0 {
         return product as u64;
     }

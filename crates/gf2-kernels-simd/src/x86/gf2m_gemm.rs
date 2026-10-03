@@ -1,36 +1,13 @@
 //! Panelized GF(2^m) GEMM kernel using AVX2 + VPCLMULQDQ.
 //!
-//! Exposes a single public entry point:
-//! [`gf2m_gemm_broadcast_xor_row`] — multiply a scalar `a_ik` by every
-//! element of `b_row`, XOR-accumulate into `acc_row`. The caller loops
-//! over rows (i) and inner columns (k) to build the full matrix product.
+//! [`gf2m_broadcast_mul_xor`] multiplies a scalar `a_ik` by every element of
+//! a row of `B` and XOR-accumulates into an output row;
+//! [`gf2m_gemm_panelized`] loops it over rows `i` and inner columns `k`.
+//! Output rows are zeroed by the caller.
 //!
-//! This "broadcast-multiply-accumulate" inner kernel is the hot path for
-//! the panelized GEMM that replaces the per-output-cell scratch-buffer
-//! approach previously used by `try_gf2m_u64_batch_dot_product`. The
-//! algorithm:
-//!
-//! ```text
-//! for i in 0..M:
-//!     for k in 0..K:
-//!         broadcast_mul_xor(a[i,k], b[k, 0..N], &mut out[i, 0..N])
-//! ```
-//!
-//! produces the same `out = A · B` as the triple-loop, but all K
-//! multiply-accumulate steps for output row `i` share one contiguous
-//! pass over `out[i, 0..N]`.
-//!
-//! # Layout contract
-//!
-//! * `b_row`: `b[k, 0..N]` — the k-th row of B, stored contiguously.
-//! * `acc_row`: `out[i, 0..N]` — the i-th output row, XOR-accumulated
-//!   in place. Must be zeroed by the caller before the first k=0 step.
-//!
-//! # Safety / feature detection
-//!
-//! All entry points carry `#[target_feature(enable = "avx2", ...)]`.
-//! The safe wrapper in `crate::gf2m_gemm` only publishes the function
-//! pointer when the CPU supports the necessary feature set.
+//! All entry points carry `#[target_feature(enable = "avx2", ...)]`; the
+//! safe wrapper in `crate::gf2m_gemm` publishes the function pointer only
+//! when the CPU supports the feature set.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
@@ -39,12 +16,6 @@
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
-
-// ---------------------------------------------------------------------------
-// Shared Barrett-reduction helpers live in `super::gf2m_common`; both this
-// module and `super::gf2m_batch` import them from there. Single source of
-// truth for the carry-less multiply + Barrett reduce algorithm.
-// ---------------------------------------------------------------------------
 
 use super::gf2m_common::{clmul_barrett_scalar, correct, ymm_barrett_reduce};
 
@@ -89,15 +60,12 @@ pub unsafe fn gf2m_broadcast_mul_xor<const SHIFT: i32>(
         (1u64 << degree) - 1
     };
 
-    // Broadcast a_ik to both 128-bit lanes so VPCLMULQDQ can multiply it
-    // against two b-values simultaneously.
     let a_ymm = _mm256_set_epi64x(0, a_ik as i64, 0, a_ik as i64);
     let mu_ymm = _mm256_set_epi64x(0, mu as i64, 0, mu as i64);
     let mod_ymm = _mm256_set_epi64x(0, modulus as i64, 0, modulus as i64);
 
     let mut j = 0usize;
 
-    // Unrolled 4-way loop: process 4 b-elements per iteration.
     while j + 4 <= n {
         let b_lo = _mm256_set_epi64x(0, b_row[j + 1] as i64, 0, b_row[j] as i64);
         let b_hi = _mm256_set_epi64x(0, b_row[j + 3] as i64, 0, b_row[j + 2] as i64);
@@ -171,11 +139,8 @@ pub unsafe fn gf2m_gemm_panelized(
 
     macro_rules! run {
         ($shift:expr) => {{
-            // Tiled rows: I_TILE at a time.
             let mut i = 0usize;
             while i + I_TILE <= m {
-                // For each inner-dimension step ki, load b_row once and
-                // apply it to all I_TILE accumulator rows.
                 for ki in 0..k {
                     let b_row = &b_flat[ki * n..(ki + 1) * n];
                     // SAFETY: acc slices do not overlap (different output rows).
@@ -197,7 +162,6 @@ pub unsafe fn gf2m_gemm_panelized(
                 }
                 i += I_TILE;
             }
-            // Tail rows not covered by the I_TILE loop.
             while i < m {
                 let acc_row = &mut out[i * n..(i + 1) * n];
                 for ki in 0..k {
