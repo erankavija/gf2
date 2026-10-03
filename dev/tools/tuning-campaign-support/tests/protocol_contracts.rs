@@ -87,6 +87,37 @@ fn live(input: SharedInput, identity: &str) -> (String, Vec<u8>) {
     (path, bytes)
 }
 
+#[test]
+fn byte_identical_shared_document_copies_are_one_live_document() {
+    let root = scratch("shared-copies");
+    let identity = SharedInput::contract_identity();
+    let contract = format!("# {identity}\n");
+    for directory in ["live", "copies/first"] {
+        put(
+            &root,
+            &format!("{directory}/measurement-contract.md"),
+            contract.as_bytes(),
+        );
+    }
+    git(&root, &["init", "-q"]);
+    assert_eq!(
+        SharedInput::Contract.locate(&root, &identity).unwrap(),
+        "copies/first/measurement-contract.md"
+    );
+    put(
+        &root,
+        "edited/measurement-contract.md",
+        format!("{contract}\nEdited.\n").as_bytes(),
+    );
+    assert_eq!(
+        SharedInput::Contract
+            .locate(&root, &identity)
+            .unwrap_err()
+            .to_string(),
+        "2 live measurement-contract.md files carry the identity, not one"
+    );
+}
+
 /// The directory of the one committed receipt of `campaign_id`.
 fn committed_receipt(campaign_id: &str) -> PathBuf {
     let root = repository_root().unwrap();
