@@ -810,7 +810,7 @@
      "short_id": "616e1d7c",
      "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "blocked"
     },
     {
      "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
@@ -1653,6 +1653,17 @@
    ],
    "recommendation": "first option: one policy entry, same class as the owner-approved temporary `dev/archive` entry (ec7d2aec DEC-01)",
    "resolution": ""
+  },
+  {
+   "issue": "616e1d7c",
+   "question": "OPEN: every remaining flat entry of this unit is owned by epic 6dc81018, which is archived; none resolves to the open co-owner 86b9c719. 220cab0b, 3fa7c9d0, 7d824b2f, 9162956b, 972e2b88, eaae1b56 and fc976a80 are byte-identical copies of archived files; 34d85cb9, 389aa4de, 50b47eae, 7d7c647c, e6ea0dde and eb9b324c (402 files) have no archive copy. `jit doc dir 6dc81018 dev/active` still resolves `dev/active/6dc81018-field-capability-dispatch/`. A re-archive preview of 6dc81018 is eligible with 402 real moves, 7 of them under `dev/active/a83583e0`, the code-pinned entry the issue excludes. Where do the 13 entries go?",
+   "options": [
+    "re-archive 6dc81018 through container archival after the a83583e0 references are pinned or the entry is decoupled (f694f59a)",
+    "move them under dev/active/6dc81018-field-capability-dispatch/ as the manifest rows name (material under an archived epic's active directory)",
+    "amend REQ-01 so entries of an archived epic are collected by a re-archive unit"
+   ],
+   "recommendation": "first option, sequenced after f694f59a; worker record: branch worktree-agent-616e1d7c commit 1c56283ea (unmerged)",
+   "resolution": ""
   }
  ],
  "rework_counts": {
@@ -1708,7 +1719,8 @@
   "eba21481": 1,
   "50201002": 1,
   "545b113f": 1,
-  "3fd3db5e": 1
+  "3fd3db5e": 1,
+  "103a792a": 1
  },
  "surfaced_pitfalls": [
   {
