@@ -9,7 +9,7 @@
 [profile]
 manifest-version = 1
 id = "jit-default"
-version = "1.0.1"
+version = "1.0.2"
 jit = ">=1.0.0, <2.0.0"
 
 # =============================================================================
@@ -223,7 +223,7 @@ identity = "decision"
 
 [contribution.value]
 section = "decisions"
-id-pattern = "D-[0-9]+"
+id-pattern = "D(EC)?-[0-9]+"
 markers = []
 link-namespaces = ["per"]
 scope = "issue"
