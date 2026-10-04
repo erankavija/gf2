@@ -16,11 +16,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7e63dcdbea437747dd5b2415af44b0e30f206e6a96cfda9775ba86cf61c02697",
+          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
           "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "host-lscpu.txt",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/schema1/host-lscpu.txt"
+          "mime_type": null,
+          "original_path": "../../../reference_data/osd_ebch_128_64_fossorier1994.csv",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
         },
         {
           "asset_type": "local",
@@ -32,27 +32,27 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
+          "content_hash": "7e63dcdbea437747dd5b2415af44b0e30f206e6a96cfda9775ba86cf61c02697",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../reference_data/osd_ebch_128_64_fossorier1994.csv",
-          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
+          "mime_type": "text/plain",
+          "original_path": "host-lscpu.txt",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/schema1/host-lscpu.txt"
         }
       ],
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "provenance",
       "format": "markdown",
       "label": "Schema-1 campaign provenance record (superseded)",
       "path": "dev/simulation_results/osd-ebch-128-64/schema1/README.md"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "receipt",
       "label": "Schema-1 campaign receipt (superseded)",
       "path": "dev/simulation_results/osd-ebch-128-64/schema1/ebch_osd_awgn.json"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "receipt",
       "label": "Schema-2 campaign receipt",
       "path": "dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json"
@@ -61,27 +61,19 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.csv",
-          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "acacfaa6183c3f37f5a0ca4627e066be1374e1e774a2c6d00d76b61650ca7fae",
+          "content_hash": "18ae1a66b56d39845e54e1c4b1ef16aaaa0081927af38c75503f32c91b8f7f1b",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.md",
-          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
+          "original_path": "../../bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
+          "resolved_path": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "5dcf3a77389038d75fb65765ae21745036799cd0e7629c26c004490b41d4010e",
+          "content_hash": "2b07b984e25bec698ecf6a5428c4aea211d48998fb75e071f05894e6883807d0",
           "is_shared": false,
-          "mime_type": "image/png",
-          "original_path": "order1_controls.png",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order1_controls.png"
+          "mime_type": null,
+          "original_path": "plot.py",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/plot.py"
         },
         {
           "asset_type": "directory",
@@ -101,6 +93,14 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.csv",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "8e3da8afa6308eb356f44090046433a4287804cc19f453c1bc44db627e8dbe86",
           "is_shared": false,
           "mime_type": "image/png",
@@ -109,27 +109,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "0ed4346b7580e474d69b935e9fd90a39e9afed22d6a2db88934f3cbd683cf519",
+          "content_hash": "5581d13b1a5aceccd747bde239fb46113802b2ddb3f8338b72767810f5677d51",
           "is_shared": false,
           "mime_type": "image/svg+xml",
-          "original_path": "order1_controls.svg",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order1_controls.svg"
+          "original_path": "order2_ber_comparison.svg",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order2_ber_comparison.svg"
         },
         {
           "asset_type": "local",
-          "content_hash": "2b07b984e25bec698ecf6a5428c4aea211d48998fb75e071f05894e6883807d0",
+          "content_hash": "5dcf3a77389038d75fb65765ae21745036799cd0e7629c26c004490b41d4010e",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "plot.py",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/plot.py"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b72ee2a45775f3461d3c7ef3366fd681cbb256de1a69f74f59c5f2a3d1698a0f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md",
-          "resolved_path": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
+          "mime_type": "image/png",
+          "original_path": "order1_controls.png",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order1_controls.png"
         },
         {
           "asset_type": "local",
@@ -141,40 +133,48 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "5581d13b1a5aceccd747bde239fb46113802b2ddb3f8338b72767810f5677d51",
+          "content_hash": "acacfaa6183c3f37f5a0ca4627e066be1374e1e774a2c6d00d76b61650ca7fae",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../reference_data/osd_ebch_128_64_fossorier1994.md",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0ed4346b7580e474d69b935e9fd90a39e9afed22d6a2db88934f3cbd683cf519",
           "is_shared": false,
           "mime_type": "image/svg+xml",
-          "original_path": "order2_ber_comparison.svg",
-          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order2_ber_comparison.svg"
+          "original_path": "order1_controls.svg",
+          "resolved_path": "dev/simulation_results/osd-ebch-128-64/order1_controls.svg"
         }
       ],
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "provenance",
       "format": "markdown",
       "label": "Schema-2 campaign provenance record",
       "path": "dev/simulation_results/osd-ebch-128-64/README.md"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "script",
       "format": "markdown",
       "label": "Comparison and figure generation script",
       "path": "dev/simulation_results/osd-ebch-128-64/plot.py"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "figure",
       "label": "Order-2 BER: simulation vs published",
       "path": "dev/simulation_results/osd-ebch-128-64/order2_ber_comparison.svg"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "figure",
       "label": "Order-1 internal control series",
       "path": "dev/simulation_results/osd-ebch-128-64/order1_controls.svg"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "results",
       "label": "Machine-readable acceptance comparison",
       "path": "dev/simulation_results/osd-ebch-128-64/comparison.json"
@@ -210,5 +210,5 @@
   "priority": "high",
   "state": "done",
   "title": "eBCH OSD curve reproduction",
-  "updated_at": "2026-10-01T22:41:56.404091375Z"
+  "updated_at": "2026-10-04T19:53:10.948506880Z"
 }

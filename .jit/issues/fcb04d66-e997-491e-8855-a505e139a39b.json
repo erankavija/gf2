@@ -13,295 +13,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "837f46074442b44a368cc89c56cfe3e34294701dbc048090d19703f2ac969b7f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../bc091474/pilot-outcome.md",
-          "resolved_path": "dev/active/bc091474/pilot-outcome.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../bc091474/candidate-tables.md",
-          "resolved_path": "dev/active/bc091474/candidate-tables.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/2037941f/isal-base-gap-outcome.md",
-          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a21bd78422559ed708c9824eb3281351a2012fcdd92109a6a0951b4eab3465df",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "verification.md",
-          "resolved_path": "dev/active/fcb04d66/verification.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "15959197a280dcbb81f1aa1a644c929a95de97db9eb0baab6e49106542ba9efe",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/source-evidence.json",
-          "resolved_path": "dev/active/fcb04d66/survey/source-evidence.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../bc091474/readiness.md",
-          "resolved_path": "dev/active/bc091474/readiness.md"
-        }
-      ],
-      "commit": null,
-      "doc_type": "reference",
-      "format": "markdown",
-      "label": "Logical-buffer production no-adoption verdict and criterion map",
-      "path": "dev/active/fcb04d66/no-change-outcome.md"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "2cbb67820673a4451d815e05fe034b3e36114824eed4982851084a08c0e18632",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../bc091474/asm/unroll4-avx2-xor.asm.txt",
-          "resolved_path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "40a52fc9233bf9b5111794cd13220c91ab4f94292ed4f7f06ae72fdbc97eaf22",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../bc091474/asm/baseline-avx2-xor.asm.txt",
-          "resolved_path": "dev/active/bc091474/asm/baseline-avx2-xor.asm.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "15959197a280dcbb81f1aa1a644c929a95de97db9eb0baab6e49106542ba9efe",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/source-evidence.json",
-          "resolved_path": "dev/active/fcb04d66/survey/source-evidence.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../bc091474/readiness.md",
-          "resolved_path": "dev/active/bc091474/readiness.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "fa61d7da1809a672b48d21c74066f8071cc3cc7909eddc3dd9b45476f7293631",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../bc091474/asm/unroll2-avx2-xor.asm.txt",
-          "resolved_path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt"
-        }
-      ],
-      "commit": null,
-      "doc_type": "evidence",
-      "format": "markdown",
-      "label": "Rust 1.95 semantic checks and unchanged production diff",
-      "path": "dev/active/fcb04d66/verification.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "evidence",
-      "label": "Pinned source claims for dispatch, kernel safety, and bit invariants",
-      "path": "dev/active/fcb04d66/survey/source-evidence.json"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "68629ee5ff0a534cb577ce874244c159ec2d058909f4fe481e95d0530e902fdc",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/bc091474/profile-unroll2/profile-summary.md",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/profile-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "56061bffb276fbbe3627f83fe2e224983d8479015d19924fff545d1302e92031",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/bc091474/profile-unroll4/cases.txt",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/cases.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "095deb55202c80bda2b2eb0b3362f524ab77891f4f05da7c549e7b3f8053e824",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../tools/tuning-campaign-support/src/abtest.rs",
-          "resolved_path": "dev/tools/tuning-campaign-support/src/abtest.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "75d580a8ca245d483f07cfdbdd816f4c0f4414cd20d1252082c55e446a86c209",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "64e0306a14d82c5580a17d0e3913e31b20c15522be1ac86475336b55752ac4d7",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/bc091474/profile-unroll4/host.txt",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/host.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a746db336c86e91e8287bf7300f51c70fe27145f68d53a2f5a83ca60c5555507",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "ccc5d38a3e5ba075bf3621316ea92b7d9eadbee769ca0df152b923ef71d484d9",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll4/invocations.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/invocations.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "6dce8a126b373df7e10cce5e9092fd626667ec031f1ffde4239491752d653280",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/bc091474/profile-unroll2/host.txt",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/host.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7c9775c2902fc2a40ae4ca8f477fecbbb95952947c2c4fde7d683cff0c7f82e0",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll4/rep-01/invocations.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/rep-01/invocations.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b9c8f39df3497d91a9e6ebc262bf6f7a73efc2bf06ae78cceb61cbf0da22f5e1",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll2/rep-09/invocations.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/rep-09/invocations.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "6b7649dac2b81acc40dc2d755dca8d36d3449a02b0f3e0d8176d3236dae1b761",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/bc091474/profile-unroll2/recorded-cases.txt",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/recorded-cases.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b57b71f18ea82ba2fb4e9014faa17ac30028e71c283063987f7390298b1f1710",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll2/invocations.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/invocations.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4d3fd27d41e2bd354b4d4716daeca078b1a7ddedefd741ed08b58f9d931e74aa",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll2/rep-01/invocations.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/rep-01/invocations.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "bfb66df1548cde5e4d11768728e5fe8f70aa780c60118231b1d20a6b1c168dbf",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9e4957f4605950d3705a430a4b5deaa2d87140b32f915a5620e79090d0544cdb",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/fixture.rs",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/fixture.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c0b15fd40fcfd02816c9dc04d4569e748c1367b9270e162dff2ebec8a70e0831",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll4/repetitions.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/repetitions.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "289f59aad179a11acc036538744449e1309eebbd89969ddc787eebe01ae46fc9",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll2/repetitions.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/repetitions.log"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "6b7649dac2b81acc40dc2d755dca8d36d3449a02b0f3e0d8176d3236dae1b761",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/bc091474/profile-unroll4/recorded-cases.txt",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/recorded-cases.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "30bf7fb7278d08ee1c374f2579e270c62d0706071403e14597b0e1ca9ae38278",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/bc091474/profile-unroll4/profile-summary.md",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "56061bffb276fbbe3627f83fe2e224983d8479015d19924fff545d1302e92031",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/bc091474/profile-unroll2/cases.txt",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/cases.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "51e611d9acd043dd5fc4381f41603dd702822491cbd6fde4f34c68eb796cd276",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/bc091474/profile-unroll4/rep-09/invocations.log",
-          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/rep-09/invocations.log"
-        }
-      ],
-      "commit": null,
-      "doc_type": "evidence",
-      "format": "markdown",
-      "label": "Candidate profile commands and source-derived fixture identity",
-      "path": "dev/active/fcb04d66/profile-provenance.md"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "local",
           "content_hash": "703ed1e84d8a8b55d6757f1675566683b6655bc4943ceff0c104e3793d69e338",
           "is_shared": false,
           "mime_type": null,
@@ -338,6 +49,303 @@
       "format": "markdown",
       "label": "Final lead review",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/fcb04d66-r1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d90564ea8a47bf41469d7bce011ccdc33b7b1f23ad31aa9eed1dd8d8a42fa01b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "verification.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/verification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "61458b953c3938827f7bf7591759aa55fd4e3eecad7b5f97cf4ca203f85cb6ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/candidate-tables.md",
+          "resolved_path": "dev/active/bc091474/candidate-tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "703ed1e84d8a8b55d6757f1675566683b6655bc4943ceff0c104e3793d69e338",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c6a9259da965e4d1abd928fa23c252db7144e1acaa542adb93150445865bb51e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "profile-provenance.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/profile-provenance.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "837f46074442b44a368cc89c56cfe3e34294701dbc048090d19703f2ac969b7f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/pilot-outcome.md",
+          "resolved_path": "dev/active/bc091474/pilot-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "909480be82af8d3ee8640eb432620e0a140fba938f70a4b1bcbb074a907d6a4e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/isal-base-gap-outcome.md",
+          "resolved_path": "dev/bench_results/2037941f/isal-base-gap-outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "reference",
+      "format": "markdown",
+      "label": "Logical-buffer production no-adoption verdict and criterion map",
+      "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/no-change-outcome.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "703ed1e84d8a8b55d6757f1675566683b6655bc4943ceff0c104e3793d69e338",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "40a52fc9233bf9b5111794cd13220c91ab4f94292ed4f7f06ae72fdbc97eaf22",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bc091474/asm/baseline-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/baseline-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2cbb67820673a4451d815e05fe034b3e36114824eed4982851084a08c0e18632",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bc091474/asm/unroll4-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll4-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa61d7da1809a672b48d21c74066f8071cc3cc7909eddc3dd9b45476f7293631",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../bc091474/asm/unroll2-avx2-xor.asm.txt",
+          "resolved_path": "dev/active/bc091474/asm/unroll2-avx2-xor.asm.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9ea644d04ba9aeee6639a9c44a6e2b12a76ac80bddd3cddcc91e6bbcf5f592bc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bc091474/readiness.md",
+          "resolved_path": "dev/active/bc091474/readiness.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Rust 1.95 semantic checks and unchanged production diff",
+      "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/verification.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Pinned source claims for dispatch, kernel safety, and bit invariants",
+      "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/survey/source-evidence.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "b57b71f18ea82ba2fb4e9014faa17ac30028e71c283063987f7390298b1f1710",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/invocations.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2ecceabf3d13e17deb3c22c5a36116b2f816fddc958f738b7b817eed96441501",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../tools/tuning-campaign-support/src/abtest.rs",
+          "resolved_path": "dev/tools/tuning-campaign-support/src/abtest.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ccc5d38a3e5ba075bf3621316ea92b7d9eadbee769ca0df152b923ef71d484d9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/invocations.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "289f59aad179a11acc036538744449e1309eebbd89969ddc787eebe01ae46fc9",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/repetitions.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/repetitions.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0b15fd40fcfd02816c9dc04d4569e748c1367b9270e162dff2ebec8a70e0831",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/repetitions.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/repetitions.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "75d580a8ca245d483f07cfdbdd816f4c0f4414cd20d1252082c55e446a86c209",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/cells.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bfb66df1548cde5e4d11768728e5fe8f70aa780c60118231b1d20a6b1c168dbf",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/bin/logical-profile.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "56061bffb276fbbe3627f83fe2e224983d8479015d19924fff545d1302e92031",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/cases.txt",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/cases.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6b7649dac2b81acc40dc2d755dca8d36d3449a02b0f3e0d8176d3236dae1b761",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/recorded-cases.txt",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/recorded-cases.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9e4957f4605950d3705a430a4b5deaa2d87140b32f915a5620e79090d0544cdb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/fixture.rs",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/harness/src/fixture.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6b7649dac2b81acc40dc2d755dca8d36d3449a02b0f3e0d8176d3236dae1b761",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/recorded-cases.txt",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/recorded-cases.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a746db336c86e91e8287bf7300f51c70fe27145f68d53a2f5a83ca60c5555507",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-logical-profile.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "68629ee5ff0a534cb577ce874244c159ec2d058909f4fe481e95d0530e902fdc",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4d3fd27d41e2bd354b4d4716daeca078b1a7ddedefd741ed08b58f9d931e74aa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/rep-01/invocations.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/rep-01/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "56061bffb276fbbe3627f83fe2e224983d8479015d19924fff545d1302e92031",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/cases.txt",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/cases.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7c9775c2902fc2a40ae4ca8f477fecbbb95952947c2c4fde7d683cff0c7f82e0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/rep-01/invocations.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/rep-01/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "51e611d9acd043dd5fc4381f41603dd702822491cbd6fde4f34c68eb796cd276",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/rep-09/invocations.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/rep-09/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b9c8f39df3497d91a9e6ebc262bf6f7a73efc2bf06ae78cceb61cbf0da22f5e1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/rep-09/invocations.log",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/rep-09/invocations.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "30bf7fb7278d08ee1c374f2579e270c62d0706071403e14597b0e1ca9ae38278",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/profile-summary.md",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6dce8a126b373df7e10cce5e9092fd626667ec031f1ffde4239491752d653280",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/bc091474/profile-unroll2/host.txt",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll2/host.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "64e0306a14d82c5580a17d0e3913e31b20c15522be1ac86475336b55752ac4d7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/bc091474/profile-unroll4/host.txt",
+          "resolved_path": "dev/bench_results/bc091474/profile-unroll4/host.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Candidate profile commands and source-derived fixture identity",
+      "path": "dev/active/1a379447-zen3-cpu-performance/fcb04d66/profile-provenance.md"
     }
   ],
   "done_at": "2026-09-27T21:01:11.010943810Z",
@@ -392,5 +400,5 @@
   "priority": "high",
   "state": "done",
   "title": "Implement and confirm the logical-buffer outcome",
-  "updated_at": "2026-10-01T22:42:07.422084294Z"
+  "updated_at": "2026-10-04T19:57:39.344820323Z"
 }

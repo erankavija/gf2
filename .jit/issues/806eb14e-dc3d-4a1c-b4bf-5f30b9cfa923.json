@@ -38,13 +38,6 @@
       "format": "markdown",
       "label": "HIP/ROCm GPU prototype wave plan",
       "path": "dev/archive/806eb14e-hip-gpu-prototype/plans/hip_gpu_prototype_wave.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "notes",
-      "format": "markdown",
-      "label": "hip_gpu_prototype_wave.md",
-      "path": "dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md"
     }
   ],
   "done_at": "2026-06-17T23:10:51.461782890Z",
@@ -81,5 +74,5 @@
   "priority": "high",
   "state": "archived",
   "title": "Prototype GPU acceleration for belief propagation",
-  "updated_at": "2026-10-03T16:30:28.211010834Z"
+  "updated_at": "2026-10-04T21:23:18.238777879Z"
 }

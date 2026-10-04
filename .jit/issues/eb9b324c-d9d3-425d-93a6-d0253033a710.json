@@ -77,34 +77,34 @@
       "commit": null,
       "doc_type": "log",
       "label": "build.log",
-      "path": "dev/active/eb9b324c/pilot/build.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/build.log"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "pilot-analyse.py",
-      "path": "dev/active/eb9b324c/pilot/pilot-analyse.py"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/pilot-analyse.py"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "pilot-build.sh",
-      "path": "dev/active/eb9b324c/pilot/pilot-build.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/pilot-build.sh"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "pilot-run.sh",
-      "path": "dev/active/eb9b324c/pilot/pilot-run.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/pilot-run.sh"
     },
     {
       "commit": null,
       "doc_type": "data",
       "label": "slots.tsv",
-      "path": "dev/active/eb9b324c/pilot/slots.tsv"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/eb9b324c/pilot/slots.tsv"
     },
     {
       "commit": null,
@@ -160,5 +160,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Resolve the attributable regression at the mul_fast dispatch cells before any next measured session",
-  "updated_at": "2026-10-03T16:31:05.072630317Z"
+  "updated_at": "2026-10-04T21:28:34.370819760Z"
 }

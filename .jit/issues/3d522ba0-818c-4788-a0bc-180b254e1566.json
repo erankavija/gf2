@@ -19,7 +19,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Test-Conventions Breakdown Manifest",
-      "path": "dev/active/3d522ba0/3d522ba0-test-conventions-breakdown.json"
+      "path": "dev/active/b4b4b9ee-tech-debt-2026-06-30/3d522ba0/3d522ba0-test-conventions-breakdown.json"
     }
   ],
   "gates_required": [
@@ -48,5 +48,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Fix test-convention violations and add missing proptest coverage",
-  "updated_at": "2026-08-07T12:53:04.999156867Z"
+  "updated_at": "2026-10-04T20:00:42.568946383Z"
 }

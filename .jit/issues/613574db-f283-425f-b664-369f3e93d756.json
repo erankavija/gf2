@@ -7,21 +7,28 @@
   "description": "Turn the positive 19513245 consumer evidence into a reviewed library-layer design before any production implementation ships.\n\n## Background\n\nThe completed byte-field assessment confirms consumer benefit for\n`FieldVec::axpy` and dense `FieldMatrix` product, while attributing a large part\nof the current cost to repeated table construction and per-element dispatch.\nIt does not confirm `FieldMatrix::matvec`, and it does not justify a public byte\nregion API or byte-packed storage redesign.\n\n## Success Criteria\n\n- [hard] REQ-01: Publish and link a reviewed design for a byte product table cached per field or compile-time field configuration, plus canonical `FieldVec` and `FieldMatrix` hooks for the confirmed axpy and dense-product consumers.\n- [hard] REQ-02: Preserve the representations callers already hold, the one canonical dispatch abstraction, a tested scalar fallback, and existing overlap and allocation contracts; the design introduces no public byte-region API or storage redesign.\n- [hard] REQ-03: Specify conformance for every byte coefficient, zero and one, unaligned inputs, tails, both 0x11B and 0x11D polynomials, cache lifetime and thread safety; production unsafe code remains isolated to the kernel crates.\n- [hard] REQ-04: Create reviewed worker-sized JIT implementation and confirmation scope before shipping, pinned to the 19513245 profile and confirmation receipts. `FieldMatrix::matvec` remains excluded until a separate paired consumer campaign confirms it.\n\n## Notes\n\nThe source decision and measurements are linked from `@/issue/19513245`.\n",
   "documents": [
     {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 1",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/613574db-r1.md"
+    },
+    {
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "7ca7ed5cc21a7fd5f7af4211ce7b7e07e03950a389340966b0f946276ea4abe1",
+          "content_hash": "4d51c637ac47cdd1c6082f6f363ce1cda14ab5aeb85a405ce4a44bcb0e2a365b",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "breakdown.md",
-          "resolved_path": "dev/active/613574db/breakdown.md"
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/613574db/breakdown.md"
         },
         {
           "asset_type": "local",
           "content_hash": "212311c6df83580d91c92801073ff406518ab10189d0157575c463d7ce2ba8c0",
           "is_shared": false,
           "mime_type": "text/plain",
-          "original_path": "../19513245/conformance/msrv-intrinsics.txt",
+          "original_path": "../../19513245/conformance/msrv-intrinsics.txt",
           "resolved_path": "dev/active/19513245/conformance/msrv-intrinsics.txt"
         },
         {
@@ -29,7 +36,7 @@
           "content_hash": "6df30e3f26282e8b5754cc77022fbd318ad49b454f5fa5e6325cee2915440449",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../19513245/findings.md",
+          "original_path": "../../19513245/findings.md",
           "resolved_path": "dev/active/19513245/findings.md"
         }
       ],
@@ -37,31 +44,24 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Cached GF(2^8) product tables and consumer hooks",
-      "path": "dev/active/613574db/design.md"
+      "path": "dev/active/1a379447-zen3-cpu-performance/613574db/design.md"
     },
     {
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "eb8f577f2a7c6449e4369a6fc5103fd11147130e97feff1bdb0bc15692960e8b",
+          "content_hash": "c13f27eaf1899ffc9cb50f66208d838b64f7d8fc50ba2d148075c94a98a25e44",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "design.md",
-          "resolved_path": "dev/active/613574db/design.md"
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/613574db/design.md"
         }
       ],
       "commit": null,
       "doc_type": "breakdown",
       "format": "markdown",
       "label": "Implementation and confirmation leaf manifest",
-      "path": "dev/active/613574db/breakdown.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "review",
-      "format": "markdown",
-      "label": "Lead review round 1",
-      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/613574db-r1.md"
+      "path": "dev/active/1a379447-zen3-cpu-performance/613574db/breakdown.md"
     }
   ],
   "done_at": "2026-09-16T12:18:01.070928274Z",
@@ -98,5 +98,5 @@
   "priority": "high",
   "state": "done",
   "title": "Design cached GF(2^8) tables and consumer hooks",
-  "updated_at": "2026-10-01T22:41:33.319268314Z"
+  "updated_at": "2026-10-04T19:57:38.274702775Z"
 }

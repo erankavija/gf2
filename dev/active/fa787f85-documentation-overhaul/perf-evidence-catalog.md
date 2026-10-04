@@ -35,7 +35,7 @@ digest instead of SHA), `-` absent.
 | gf2-sim receipts | `dev/benchmarks/gf2-sim/*.md`, `dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/*.md` | + | ~ command | + | + | + | ~ (`9e983ae26e`, `ec30b3e1` in prose; GPU BCH receipt has none) | Sections 3.6, 3.7. |
 | DVB-T2 AWGN campaign | `dev/benchmarks/dvb_t2_awgn/*.csv`, `dev/archive/2928ccce-dvb-t2-awgn-campaign/` | ~ | ~ | + | - | ~ | - | Conformance curves, not throughput. |
 | Raw criterion / perf-stat dumps | `dev/benchmarks/<id>-criterion.txt`, `*-perf-stat.txt` | - | - | ~ | - | - | - | Usable only via the report that cites them. |
-| Crate-local tables | `crates/gf2-core/docs/BENCHMARKS.md`, `crates/gf2-core/benches/*_results.md`, `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` | ~ | ~ | + | + | - | ~ (`179be78`, `e94eb23` short SHAs in benches md) | Section 4 rates each claim. |
+| Crate-local tables | `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md`, `dev/archive/legacy/crates/gf2-core/benches/*_results.md`, `dev/archive/legacy/crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` | ~ | ~ | + | + | - | ~ (`179be78`, `e94eb23` short SHAs in benches md) | Section 4 rates each claim. |
 
 ## 2. zen3 receipt.json inventory
 
@@ -121,15 +121,15 @@ Ratios are stated as the source states them.
 | GF(2^m) scalar / SIMD field kernels | `dev/archive/e095a100-gfpm-arithmetic/active/e095a100-completion-report.md`; zen3 receipts `dev/bench_results/1c602857/` (public clmul), `6c6b09b1/` (byte field) | AVX2+VPCLMULQDQ `Gf2mWide<4>` 6.4× vs scalar; SoA SIMD 7.91× at N=1000 | ~ ("Zen 3") | - | ~ | scalar | + (2026-04) | ~ branch tip `e00d775b` | Figures live in report prose; no standalone kernel receipt; zen3 receipts in section 2 are the reproducible replacement. |
 | GF(p^m) kernels | same report | no separate figure | | | | | | | No standalone GF(p^m) benchmark exists. |
 | GF(2^m) FieldMatrix GEMM vs M4RIE / NTL | `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md` | GF(2^16) 148.5× / 35.6× / 0.614× vs M4RIE at n=64/256/1024; GF(2^32) 5.7–6.7× vs NTL `mat_GF2E`; GF(2^8) 0.015–0.393× vs M4RIE (passes only under an `[aspirational]` amendment) | + | + (`target-cpu=native`) | + | + (M4RIE 20250128, NTL 11.6.0) | + | - | No commit; GF(2^8) result is a documented shortfall. |
-| GF(p) FieldMatrix GEMM vs FFLAS-FFPACK | `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`; `2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md`; n=4096: `2026-05-28-98336ab4-fgemm-n4096*.csv` + `run_98336ab4_fgemm_n4096_bench.sh` | 7a106fe4: GF(7) 0.578 / 0.679 / 0.708 of fflas wall time at n=64/256/1024; n=4096 all six cells pass at ≤1.5× (GF(251) 1.466×, GF(65521) 1.283×) | + (CCX1 pinning) | 2598b981 + ; 7a106fe4 and 98336ab4 - | + | + (fflas 2.5.0, Givaro 4.2.0, image sha in `benchmarks/image.lock`) | + | 2598b981 + (`a355a2fad29e`); others - | Flags and commit missing on the current evidence; small-n cells amended. |
+| GF(p) FieldMatrix GEMM vs FFLAS-FFPACK | `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`; `dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md`; n=4096: `2026-05-28-98336ab4-fgemm-n4096*.csv` + `run_98336ab4_fgemm_n4096_bench.sh` | 7a106fe4: GF(7) 0.578 / 0.679 / 0.708 of fflas wall time at n=64/256/1024; n=4096 all six cells pass at ≤1.5× (GF(251) 1.466×, GF(65521) 1.283×) | + (CCX1 pinning) | 2598b981 + ; 7a106fe4 and 98336ab4 - | + | + (fflas 2.5.0, Givaro 4.2.0, image sha in `benchmarks/image.lock`) | + | 2598b981 + (`a355a2fad29e`); others - | Flags and commit missing on the current evidence; small-n cells amended. |
 | Cross-family dense LA scorecard (FFLAS, M4RI, M4RIE, NTL, LinBox) | `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md`; reference CSVs `dev/bench_results/2026-05-04-*-reference.csv` + `-host.txt` + `-perf-stat.txt` | Every cell PASS, AMENDED or EXCLUDED; GF(2) matmul 1.213× (n=64), 1.070× (n=256) of M4RI; GF(251) invert n=1024 3.217× (amended) | + (`host.txt`: lscpu) | - | + | + (all five libraries with versions) | + (2026-05-28) | ~ (`93dc5125`, `6c31fb87` in completion report) | Several PASS results are amendments; GF(2) pluq/solve_left unimplemented at that HEAD; extension-field GEMM design-only. |
-| GF(2) BitMatrix GEMM vs M4RI (Strassen) | `dev/bench_results/2026-04-29-strassen-matmul-crossover.md`; `2026-05-06-380e041a-m4ri-gray-schedule-criterion.txt`; `2026-05-28-bdf60780-matmul-gf2-smalln.csv` | Forced Strassen 0.83–0.91× of M4RM at n=2048–8192; auto dispatch n=1024 0.42× of M4RI | - | + | + | + | + | - | Supersedes `BENCHMARKS.md` "5–7× slower" but no host or commit. |
+| GF(2) BitMatrix GEMM vs M4RI (Strassen) | `dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-strassen-matmul-crossover.md`; `2026-05-06-380e041a-m4ri-gray-schedule-criterion.txt`; `2026-05-28-bdf60780-matmul-gf2-smalln.csv` | Forced Strassen 0.83–0.91× of M4RM at n=2048–8192; auto dispatch n=1024 0.42× of M4RI | - | + | + | + | + | - | Supersedes `BENCHMARKS.md` "5–7× slower" but no host or commit. |
 | LDPC decode CPU | `dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/cpu-foundation-receipts.md`, `parallelism-receipts.md`, `baseline-single-thread.md`; `dev/benchmarks/gf2-sim/baseline-single-thread.csv`; zen3 receipts `dev/bench_results/3be770d5/`, `07ca8585/`, `f63a2464/` | 21.44 ± 0.22 fps at 24 threads = 13.22× over 1.6216 fps single-thread (DVB-T2 r1/2 16-QAM) | + | - | + | + | + (2026-06-08) | + (`9e983ae26e`, `ec30b3e1`; CSV has a per-row `commit_sha` column) | No RUSTFLAGS. |
 | LDPC decode GPU (HIP) | `dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/gpu-stages-receipts.md`; `dev/archive/806eb14e-hip-gpu-prototype/active/806eb14e-feasibility-report.md` | GPU decode 28.98× CPU-24T (639.10 / 22.06 fps), 253.51× CPU-1T | + | ~ (hipcc `-O3 --offload-arch=gfx1030`, no RUSTFLAGS) | + | + | + (2026-06-09..18) | + (`f3f0aaa5`, `cba9e8d9`) | Receipts missing from `dev/benchmarks/gf2-sim/` though its README lists them. |
 | gf2-sim hybrid executor | `dev/archive/2928ccce-dvb-t2-awgn-campaign/benchmarks/gf2-sim/hybrid-executor-receipts.md` | CPU+GPU 123.03 ± 9.16 fps = 5.74× CPU-24T | + | - | + | + | + | ~ | Lives under the DVB-T2 archive, not the gf2-sim one. |
 | gf2-sim 5G NR real-time | `dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/5g-nr-realtime.md` | 17.45 ± 0.03 Mbps, ~11.5× short of the 200 Mbps target (target amended) | + (host load recorded) | - | + | + (TS 38.214 ≈ 91.7 Mbps) | + | ~ ("merged HEAD" in prose) | Headline is a shortfall; projections (50–83 Mbps) are estimates. |
 | BCH syndrome GPU | `dev/benchmarks/gf2-sim/gpu-bch-syndrome-receipt.md` | GPU 7267.9 fps vs best CPU 82.7 fps (1T) = 87.88×; 625× vs 24T is context only (24T path is Arc-contended) | + | ~ (`--release`, hipcc `-O3`) | + (DVB-T2 Normal r1/2, 1024 frames, 5 repeats) | + | + (2026-06-17) | - | No commit SHA. |
-| BCH / OSD | `dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md`; `dev/archive/b7157be6-osd/active/b7157be6-completion-report.md`; correctness under `dev/simulation_results/osd-ebch-128-64/` | eBCH(128,64) OSD: 12.40× at 24 workers (51.6% efficiency), 6.28× at 8, byte-identical output across worker counts; reproduces Fossorier 1994 order-2 curve | + | - (rustc 1.97.0 only) | + (120 000 blocks, Eb/N0 1.55 dB) | 1 worker | + | + (`1e2d4885`) | No RUSTFLAGS. |
+| BCH / OSD | `dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md`; `dev/archive/b7157be6-osd/active/b7157be6-completion-report.md`; correctness under `dev/simulation_results/osd-ebch-128-64/` | eBCH(128,64) OSD: 12.40× at 24 workers (51.6% efficiency), 6.28× at 8, byte-identical output across worker counts; reproduces Fossorier 1994 order-2 curve | + | - (rustc 1.97.0 only) | + (120 000 blocks, Eb/N0 1.55 dB) | 1 worker | + | + (`1e2d4885`) | No RUSTFLAGS. |
 | Permanents F_3 (CPU) | `dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md` (+ `.csv`); `backend-selection-v1.md`; historical `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` | Batched AVX2 3.57–6.17× over scalar at n=8..28; S1 historical 9.42× (n=32), 10.64× (n=36), ~6.9× (n=24) over `permanent_mod3_reference` | + | + (rustc 1.95.0, binary SHA-256) | + (seed, fixtures) | + | + (2026-08-10) | + (`88474a74ceee`) | Only area with all six fields. S1 n=32/36 rest on one sample; S3, S5 marked non-authoritative by `gf2_algebra_permanent/README.md`. |
 | Permanents GPU | `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`; `dev/studies/b488f02c/feasibility-study.md` | GPU 28.65× / 30.32× over sequential AVX2 at n=24/28, M=256; 0.46× / 0.44× against best CPU path | + | - | + | + | + | ~ (`13b9143a`, harness uncommitted) | Corroboration only. |
 | DVB-T2 conformance | `dev/archive/2928ccce-dvb-t2-awgn-campaign/benchmarks/dvb_t2_awgn/CLOSURE.md`; curves `dev/benchmarks/dvb_t2_awgn/curve_*.csv`; byte-identity `dev/benchmarks/gf2-sim/dvb-t2-regression-receipts.md`; aff3ct `dev/benchmarks/gf2-sim/comparison/README.md` | Gap to ETSI TS 102 831 Table 44 at FER 1e-4: 16-QAM 0.117 / 0.167 / 0.224 dB, 64-QAM 0.51–0.61 dB (gate amended to ≤0.5 / ≤0.65 dB); aff3ct v4.4.0 agreement 0.016 dB (DVB-T2), 0.003 dB (5G NR) at FER 1e-2 | + (GPU) | - | + (seed 42) | ETSI / aff3ct | + (2026-06-13) | - | Conformance, not throughput; regression receipt names RX 6900 XT while all other files name RX 6950 XT. |
@@ -161,7 +161,7 @@ as projected or target.
 
 | Line | Claim | Status | Evidence |
 |---|---|---|---|
-| 125 | 3.4–3.6× SIMD speedup for bulk logical ops and popcount on operands >512 bytes | partial | `crates/gf2-core/docs/BENCHMARKS.md` Phase 3 table ("x86_64 with AVX2", no date/commit); `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md` (simd_min_words=4, host, commit) remeasures the threshold, not the 3.4–3.6× figure; zen3 popcount receipts `dev/bench_results/5cbb6545/`, `26465e6c/` |
+| 125 | 3.4–3.6× SIMD speedup for bulk logical ops and popcount on operands >512 bytes | partial | `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md` Phase 3 table ("x86_64 with AVX2", no date/commit); `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md` (simd_min_words=4, host, commit) remeasures the threshold, not the 3.4–3.6× figure; zen3 popcount receipts `dev/bench_results/5cbb6545/`, `26465e6c/` |
 | 155 | BENCHMARKS.md gives performance vs M4RI / NTL / FLINT | partial | see 4.4 |
 
 ### 4.3 `crates/gf2-algebra/README.md`
@@ -174,7 +174,7 @@ as projected or target.
 | 224 | debug 10–100× slower | unbacked (rule of thumb) | none |
 | lib.rs:40 | reference oracle used as the "50× speedup denominator" | partial | same S1 csv |
 
-### 4.4 `crates/gf2-core/docs/`
+### 4.4 `dev/archive/legacy/crates/gf2-core/docs/`
 
 | File:line | Claim | Status | Evidence |
 |---|---|---|---|
@@ -192,9 +192,9 @@ as projected or target.
 | `POLY_UTILITIES_PERFORMANCE.md:9-10,68-70,198-213,241-242` | 13–18× vs NTL; 100–1000× vs SageMath; per-function 50–500× | estimate / unbacked | document is a design plan; figures are targets and "expected", no measurements committed |
 | `POLAR_IMPLEMENTATION_PLAN.md:66,150,199` | FHT 12×/28×/81× vs naive at N=64/256/1024 | unbacked | no committed table or receipt found |
 | `QUALITY_AUDIT_PLAN.md:236,293-296` | SIMD 2.57× avg, 3.4–3.5× peak; BitVec 8–17 GiB/s | partial | audit narrative; no receipt |
-| `benches/BENCHMARK_RESULTS.md` | Montgomery vs naive 1.8×/2.7×/3.0×/2.6× (Mersenne-61) | partial | commit `179be78`; "AMD Ryzen / Intel x86-64" (ambiguous host), no date/flags |
-| `benches/field_matrix_fusion_results.md` | fused vs eager ≈1.00–1.02 | partial | commit `e94eb23`, Mersenne-31, single core; host model absent |
-| `benches/strassen_threshold_results.md` | Winograd ≥1.2× over classical at threshold | partial | see file; also `dev/bench_results/2026-04-29-strassen-matmul-crossover.md` |
+| `dev/archive/legacy/crates/gf2-core/benches/BENCHMARK_RESULTS.md` | Montgomery vs naive 1.8×/2.7×/3.0×/2.6× (Mersenne-61) | partial | commit `179be78`; "AMD Ryzen / Intel x86-64" (ambiguous host), no date/flags |
+| `dev/archive/legacy/crates/gf2-core/benches/field_matrix_fusion_results.md` | fused vs eager ≈1.00–1.02 | partial | commit `e94eb23`, Mersenne-31, single core; host model absent |
+| `dev/archive/legacy/crates/gf2-core/benches/strassen_threshold_results.md` | Winograd ≥1.2× over classical at threshold | partial | see file; also `dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-strassen-matmul-crossover.md` |
 
 ### 4.5 `crates/gf2-coding/README.md` and `dev/archive/legacy/crates/gf2-coding/docs/`
 
@@ -218,7 +218,7 @@ as projected or target.
 | `crates/gf2-sim` (no README; `src/lib.rs`) | none | — |
 | `benchmarks/README.md` | defines `throughput_ops` and the external-library protocol; no figures | — |
 | `docs/lean4-verification-pipeline.md` | none | — |
-| `crates/gf2-core/src/lib.rs:286` | Mersenne backend gives 2× the throughput of generic Montgomery | partial; `benches/BENCHMARK_RESULTS.md` and `dev/bench_results/2026-05-05-3d06224c-mersenne-baseline.csv` |
+| `crates/gf2-core/src/lib.rs:286` | Mersenne backend gives 2× the throughput of generic Montgomery | partial; `dev/archive/legacy/crates/gf2-core/benches/BENCHMARK_RESULTS.md` and `dev/bench_results/2026-05-05-3d06224c-mersenne-baseline.csv` |
 
 ## 5. Gaps across the board
 

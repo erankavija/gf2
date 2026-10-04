@@ -18,405 +18,405 @@
       "doc_type": "data",
       "format": "markdown",
       "label": ".gitignore",
-      "path": "dev/active/e6ea0dde/.gitignore"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/.gitignore"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "Statements.lean",
-      "path": "dev/active/e6ea0dde/elaboration/Statements.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/Statements.lean"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "elaborate.log",
-      "path": "dev/active/e6ea0dde/elaboration/elaborate.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.log"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "elaborate.sh",
-      "path": "dev/active/e6ea0dde/elaboration/elaborate.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.sh"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AQ1.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AQ1.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ1.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ1_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ1_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ1_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ1_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ1_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ1_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AQ3.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AQ3.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ3.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ3_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ3_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ3_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ3_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ3_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ3_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AQ4.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AQ4.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ4.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ4_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ4_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AQ5.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AQ5.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ5.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ5_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ5_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ5_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ5_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ5_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ5_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AQ6.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AQ6.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ6.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ6_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ6_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ6_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ6_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AQ6_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AQ6_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AX1.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AX1.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX1.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX1_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX1_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX1_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX1_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX1_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX1_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AX2.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AX2.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX2.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX2_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX2_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX2_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX2_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX2_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX2_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "AX3.cmd",
-      "path": "dev/active/e6ea0dde/extraction/AX3.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Funs.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX3_lean/Funs.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/Funs.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "FunsExternal_Template.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX3_lean/FunsExternal_Template.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/FunsExternal_Template.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Types.lean",
-      "path": "dev/active/e6ea0dde/extraction/AX3_lean/Types.lean"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/Types.lean"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Q1.cmd",
-      "path": "dev/active/e6ea0dde/extraction/Q1.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q1.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Q2.cmd",
-      "path": "dev/active/e6ea0dde/extraction/Q2.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q2.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Q3.cmd",
-      "path": "dev/active/e6ea0dde/extraction/Q3.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q3.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Q4.cmd",
-      "path": "dev/active/e6ea0dde/extraction/Q4.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q4.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Q5.cmd",
-      "path": "dev/active/e6ea0dde/extraction/Q5.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q5.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "Q6.cmd",
-      "path": "dev/active/e6ea0dde/extraction/Q6.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/Q6.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "X1.cmd",
-      "path": "dev/active/e6ea0dde/extraction/X1.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/X1.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "X2.cmd",
-      "path": "dev/active/e6ea0dde/extraction/X2.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/X2.cmd"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "label": "X3.cmd",
-      "path": "dev/active/e6ea0dde/extraction/X3.cmd"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/X3.cmd"
     },
     {
       "commit": null,
       "doc_type": "data",
       "format": "markdown",
       "label": "toolchain-versions.txt",
-      "path": "dev/active/e6ea0dde/extraction/excerpts/toolchain-versions.txt"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/excerpts/toolchain-versions.txt"
     },
     {
       "commit": null,
       "doc_type": "data",
       "format": "markdown",
       "label": "tree-summary.txt",
-      "path": "dev/active/e6ea0dde/extraction/excerpts/tree-summary.txt"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/excerpts/tree-summary.txt"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "run.sh",
-      "path": "dev/active/e6ea0dde/extraction/run.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/run.sh"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "tree-summary.sh",
-      "path": "dev/active/e6ea0dde/extraction/tree-summary.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/tree-summary.sh"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "trim-logs.sh",
-      "path": "dev/active/e6ea0dde/extraction/trim-logs.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/trim-logs.sh"
     },
     {
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "versions.sh",
-      "path": "dev/active/e6ea0dde/extraction/versions.sh"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/versions.sh"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AQ1.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AQ1.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AQ1.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AQ3.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AQ3.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AQ3.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AQ4.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AQ4.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AQ4.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AQ5.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AQ5.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AQ5.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AQ6.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AQ6.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AQ6.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AX1.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AX1.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AX1.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AX2.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AX2.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AX2.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "AX3.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/AX3.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/AX3.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "Q1.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/Q1.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/Q1.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "Q2.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/Q2.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/Q2.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "Q3.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/Q3.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/Q3.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "Q4.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/Q4.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/Q4.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "Q5.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/Q5.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/Q5.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "Q6.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/Q6.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/Q6.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "X1.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/X1.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/X1.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "X2.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/X2.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/X2.log"
     },
     {
       "commit": null,
       "doc_type": "log",
       "label": "X3.log",
-      "path": "dev/active/e6ea0dde/logs-trimmed/X3.log"
+      "path": "dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/logs-trimmed/X3.log"
     }
   ],
   "done_at": "2026-08-22T21:49:37.987142334Z",
@@ -453,5 +453,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Record a clean-exit extraction of the loop-free generic operations",
-  "updated_at": "2026-10-03T16:31:01.386797796Z"
+  "updated_at": "2026-10-04T21:28:34.370819760Z"
 }

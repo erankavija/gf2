@@ -28,7 +28,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "phase4_comparison_report.md",
-      "path": "dev/simulation_results/phase4_comparison_report.md"
+      "path": "dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md"
     }
   ],
   "done_at": "2026-04-15T21:52:59.420048933Z",
@@ -71,5 +71,5 @@
   "priority": "low",
   "state": "done",
   "title": "Run Phase 4 fading channel simulations: Figs 8-10",
-  "updated_at": "2026-10-03T16:30:28.264565396Z"
+  "updated_at": "2026-10-04T21:25:21.569825461Z"
 }

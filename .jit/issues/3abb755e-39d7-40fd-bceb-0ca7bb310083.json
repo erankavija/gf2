@@ -43,7 +43,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-04-29-3abb755e-benchmark-gap-closure.md",
-      "path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
     }
   ],
   "done_at": "2026-04-29T22:38:36.778666275Z",
@@ -80,5 +80,5 @@
   "priority": "high",
   "state": "done",
   "title": "Close algorithmic benchmark gaps from 64c88ae4",
-  "updated_at": "2026-10-03T16:30:08.640874613Z"
+  "updated_at": "2026-10-04T19:51:23.054236140Z"
 }

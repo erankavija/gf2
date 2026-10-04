@@ -71,13 +71,6 @@
     },
     {
       "commit": null,
-      "doc_type": "notes",
-      "format": "markdown",
-      "label": "babcf05e-handoff-5.md",
-      "path": "dev/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md"
-    },
-    {
-      "commit": null,
       "doc_type": "tool",
       "format": "markdown",
       "label": "gruvbox.css",
@@ -118,5 +111,5 @@
   "priority": "normal",
   "state": "archived",
   "title": "gf2-core PPC-spiral performance sweep",
-  "updated_at": "2026-10-03T22:09:27.046303387Z"
+  "updated_at": "2026-10-04T19:50:40.124660606Z"
 }

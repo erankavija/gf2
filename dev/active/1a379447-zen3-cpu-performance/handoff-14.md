@@ -146,7 +146,7 @@
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`
-- Design docs: `dev/active/613574db/design.md`, `dev/active/613574db/breakdown.md`,
+- Design docs: `dev/active/1a379447-zen3-cpu-performance/613574db/design.md`, `dev/active/1a379447-zen3-cpu-performance/613574db/breakdown.md`,
   `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md`,
   `.../logical-harness.md`, `.../m4ri-operation-match.md`
 - Planning docs: `progress.json`, `handoff-13.md`

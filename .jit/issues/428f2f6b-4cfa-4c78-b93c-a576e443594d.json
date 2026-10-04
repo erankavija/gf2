@@ -8,31 +8,6 @@
   "documents": [
     {
       "commit": null,
-      "doc_type": "report",
-      "label": "c077a88b quantitative-statement inventory",
-      "path": "dev/active/428f2f6b/inventory-c077a88b.json"
-    },
-    {
-      "commit": null,
-      "doc_type": "report",
-      "label": "1d0da41f quantitative-statement inventory",
-      "path": "dev/active/428f2f6b/inventory-1d0da41f.json"
-    },
-    {
-      "commit": null,
-      "doc_type": "report",
-      "label": "eda07788 quantitative-statement inventory",
-      "path": "dev/active/428f2f6b/inventory-eda07788.json"
-    },
-    {
-      "commit": null,
-      "doc_type": "report",
-      "format": "markdown",
-      "label": "Citation-pass corrections record",
-      "path": "dev/active/428f2f6b/corrections.md"
-    },
-    {
-      "commit": null,
       "doc_type": "reference",
       "format": "markdown",
       "label": "YMM dispatch table generator",
@@ -51,6 +26,31 @@
       "format": "markdown",
       "label": "428f2f6b lead review round 1",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/428f2f6b-r1.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "c077a88b quantitative-statement inventory",
+      "path": "dev/active/1a379447-zen3-cpu-performance/428f2f6b/inventory-c077a88b.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "1d0da41f quantitative-statement inventory",
+      "path": "dev/active/1a379447-zen3-cpu-performance/428f2f6b/inventory-1d0da41f.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "eda07788 quantitative-statement inventory",
+      "path": "dev/active/1a379447-zen3-cpu-performance/428f2f6b/inventory-eda07788.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Citation-pass corrections record",
+      "path": "dev/active/1a379447-zen3-cpu-performance/428f2f6b/corrections.md"
     }
   ],
   "done_at": "2026-09-13T06:48:25.651535012Z",
@@ -86,5 +86,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Replace hand-copied numbers in closed survey reports with citations",
-  "updated_at": "2026-09-13T06:48:25.651535012Z"
+  "updated_at": "2026-10-04T19:57:37.662014041Z"
 }

@@ -14,7 +14,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-05-26-869ce43b-blocked-echelon.md",
-      "path": "dev/bench_results/2026-05-26-869ce43b-blocked-echelon.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-26-869ce43b-blocked-echelon.md"
     }
   ],
   "done_at": "2026-05-27T00:17:55.979533301Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement blocked GF(p) echelon / RREF (026fc832 Phase 6)",
-  "updated_at": "2026-10-03T16:30:28.313551333Z"
+  "updated_at": "2026-10-04T19:53:01.754882015Z"
 }

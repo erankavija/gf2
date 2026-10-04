@@ -8,6 +8,7 @@
   ],
   "description": "The flat `dev/active/` entries d1b4f85e and 591a1c5e hold smoke-run records that the BCH receipt renderer in `dev/active/fd9d5416/` reads. Once the renderer no longer hard-codes those paths, the three entries move together under the general BCH epic's directory.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until issues d1b4f85e and 591a1c5e are done or rejected; issue fd9d5416 may be open. The worker checks the three states against the tracker when the move starts and records them in the commit message.\n- [hard] REQ-02: The move runs in a window with no in-flight edits to the general BCH epic's `dev/active` directory.\n- [hard] REQ-03: The three entries live under the canonical directory of epic ae03bcd0, and the move commit changes no renderer code beyond self-path literals, because the renderer locates its inputs through the configured repository root.\n- [hard] REQ-04: The renderer test output recorded in the baseline, repeated after the move, is identical; the repeat run is appended to that record.\n- [hard] REQ-05: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n- [hard] REQ-06: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-07: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that the documentation overhaul performs this move while fd9d5416 is open (DEC-01 of issue 3fd3db5e). Finding F1 of the fd9d5416 `doc-review` run of 2026-10-04 names the directory this move replaces.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T21:23:08.276311312Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -29,7 +30,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move the BCH smoke-run and receipt-renderer entries under the general BCH epic dir",
-  "updated_at": "2026-10-04T12:06:29.195305916Z"
+  "updated_at": "2026-10-04T21:23:08.276311312Z"
 }

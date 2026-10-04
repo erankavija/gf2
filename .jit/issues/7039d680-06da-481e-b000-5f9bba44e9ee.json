@@ -10,6 +10,7 @@
   ],
   "description": "The flat `dev/active/` entries 26465e6c, eda07788 and 5cbb6545 hold versioned addendum fixtures and survey harness crates. Once the fixture test no longer depends on its location, they move under the Zen 3 CPU performance epic's directory, and the move rewrites the harness path dependencies.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (26465e6c, eda07788, 5cbb6545) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The three entries live under the canonical directory of epic 1a379447, and the move commit changes no consumer code because the fixture test locates fixtures through the configured repository root or by content identity.\n- [hard] REQ-03: The addendum fixture test results recorded in the baseline, repeated after the move, are identical; the repeat run is appended to that record.\n- [hard] REQ-04: Each survey harness crate in a moved entry builds after the move; the move rewrites its relative Cargo path dependencies to the new depth (path text only) under the named exception `harness-path-dependencies`, and the commit message records each edit. The benchmark-acceptance run recorded in the receipt verdict baseline, repeated after the move, yields identical verdicts and findings.\n- [hard] REQ-05: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n- [hard] REQ-06: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-07: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T20:20:34.835216505Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -31,7 +32,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move the addendum fixture entries under the zen3 epic dir",
-  "updated_at": "2026-10-03T13:27:47.896637825Z"
+  "updated_at": "2026-10-04T20:20:34.835216505Z"
 }

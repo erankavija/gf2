@@ -8,7 +8,58 @@
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
   "description": "Terminal stories under the archived epic 026fc832 still hold 65 artifacts outside `dev/archive/`. Re-running container archival on an archived epic collects its terminal stories' documents into the epic's existing marker-backed archive.\n\n## Background\n\nPer-epic story and artifact counts come from the 2026-10-01 preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`, which also showed a re-run on an archived epic previewing eligible into its existing directory.\n\n## Success Criteria\n\n- [hard] REQ-01: Before execution, the archive preview of each listed epic reports it eligible with its existing marker-backed destination and no blocker.\n- [hard] REQ-02: Each listed epic is re-archived through container archival, and its archive directory keeps a marker naming the epic's full identifier.\n- [hard] REQ-03: Byte verification passes for every moved artifact, and each tracker document reference names the artifact's archive path.\n- [hard] REQ-04: In-file citations to each moved path in READMEs, `AGENTS.md`, Rustdoc and `dev/active/` documents are repointed in the same change, because archival rewrites only document references; receipt directories and digest-pinned inputs keep their bytes.\n- [hard] REQ-05: A rerun of each archive reports no change, a link scan of each archive directory and each repointed file reports no unresolved local link, and the manifest records each row as complete.\n\n## Notes\n\nTerminal stories under open epics are out of scope; they archive with their epic when it becomes terminal.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f29a9225-identities.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "040804e02239715c8464f5055e1634ef974681cab32b8f7b48767796319a314f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "f29a9225-identities.tsv",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f29a9225-identities.tsv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5000395f44d87190337fb8b5cf533f27bdc9d534c057c16272e3113d4b746682",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "f29a9225-verify.txt",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f29a9225-verify.txt"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f29a9225-rearchive.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f29a9225-verify.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f29a9225-verify.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Archive rerun results",
+      "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T19:25:41.029446560Z",
   "gates_required": [
     "cargo-ci",
@@ -17,10 +68,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T21:03:02.955291480Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T21:19:53.560926809Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T21:22:46.234064093Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:32.519656613Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T21:16:12.308967466Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b",
@@ -34,5 +100,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-archive epic 026fc832 to collect its terminal stories",
-  "updated_at": "2026-10-04T19:29:40.758976926Z"
+  "updated_at": "2026-10-04T21:22:46.234064093Z"
 }

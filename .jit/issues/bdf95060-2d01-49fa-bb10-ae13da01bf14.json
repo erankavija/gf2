@@ -15,7 +15,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "bdf95060_breakdown.md",
-      "path": "dev/plans/bdf95060_breakdown.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/bdf95060_breakdown.md"
     }
   ],
   "done_at": "2026-04-21T02:43:55.730573719Z",
@@ -51,5 +51,5 @@
   "priority": "low",
   "state": "done",
   "title": "Implement batch polynomial operations for extension fields",
-  "updated_at": "2026-10-03T16:30:33.490625997Z"
+  "updated_at": "2026-10-04T21:23:58.437528345Z"
 }

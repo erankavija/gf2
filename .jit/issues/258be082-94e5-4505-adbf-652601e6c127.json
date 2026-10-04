@@ -13,7 +13,7 @@
       "doc_type": "benchmark-receipt",
       "format": "markdown",
       "label": "Worker-scaling benchmark receipt",
-      "path": "dev/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
+      "path": "dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md"
     }
   ],
   "done_at": "2026-08-27T12:57:23.350762041Z",
@@ -49,5 +49,5 @@
   "priority": "high",
   "state": "done",
   "title": "OSD campaign protocol evaluates blocks single-threaded, idling 23 of 24 host threads",
-  "updated_at": "2026-08-27T12:57:23.350762041Z"
+  "updated_at": "2026-10-04T19:56:14.055399145Z"
 }

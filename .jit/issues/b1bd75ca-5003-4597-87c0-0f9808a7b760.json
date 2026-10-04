@@ -9,31 +9,6 @@
   "description": "Implement the sketch's Lean obligation that the constructed generator polynomial lies in the base field and vanishes on every requested root.\n\n## Success Criteria\n\n- [hard] REQ-01: The generator-correctness lemmas are proven and `lake build` passes with no new untracked assumptions.\n- [hard] REQ-02: The obligation binds to the construction production path exactly as the approved sketch assigns, with refinement evidence landed where assigned.\n",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/extension-design.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/plan.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
-        }
-      ],
-      "commit": null,
-      "doc_type": "design",
-      "format": "markdown",
-      "label": "Formal-proof sketch: O-4 generator base-field membership and root correctness (anchor rows)",
-      "path": "dev/active/64fd3afd/proof-sketch.md"
-    },
-    {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
@@ -46,6 +21,31 @@
       "format": "markdown",
       "label": "dispatch-b1bd75ca.md",
       "path": "dev/active/ae03bcd0-general-bch/session-9-prompts/dispatch-b1bd75ca.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../extension-design.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e8cfea52e20fc1d562ea22ea3936b5a1ebd709b51b446b03184e749ef36b8e1a",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Formal-proof sketch: O-4 generator base-field membership and root correctness (anchor rows)",
+      "path": "dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md"
     }
   ],
   "done_at": "2026-10-01T07:07:53.945662942Z",
@@ -83,5 +83,5 @@
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: generator base-field membership and root correctness",
-  "updated_at": "2026-10-03T16:30:31.832165379Z"
+  "updated_at": "2026-10-04T20:00:43.142781320Z"
 }

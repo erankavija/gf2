@@ -12,29 +12,29 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "0d434843622a46cadd19b8e82b3098756d719058bebbea064f510ce123ada7d1",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "unpaywall_10.1109_18.412683.json",
-          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/unpaywall_10.1109_18.412683.json"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "afc9616c423b95ce720c16972d6adcc4a8f44225d431690241d8dcbd327d7548",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "researchgate_lead_identification.md",
           "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/researchgate_lead_identification.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0d434843622a46cadd19b8e82b3098756d719058bebbea064f510ce123ada7d1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "unpaywall_10.1109_18.412683.json",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/unpaywall_10.1109_18.412683.json"
         }
       ],
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "notes",
       "format": "markdown",
       "label": "README.md",
       "path": "dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/README.md"
     },
     {
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "notes",
       "format": "markdown",
       "label": "researchgate_lead_identification.md",
@@ -44,22 +44,22 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "270af70fcb7d163ed3acf903dda0614c4229fab074e8ede861541863fdd3efed",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "yue2022_fig1_receipt.json",
-          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_receipt.json"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "de77bf60944be7dd4050017894f628a54ae0146b840c7bc0b459c35faa9c4ffc",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../osd_ebch_128_64_fossorier1994.csv",
           "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "270af70fcb7d163ed3acf903dda0614c4229fab074e8ede861541863fdd3efed",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "yue2022_fig1_receipt.json",
+          "resolved_path": "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_receipt.json"
         }
       ],
-      "commit": null,
+      "commit": "744aa9b037c8c5c0c61e75dffab0f2e891ba926a",
       "doc_type": "notes",
       "format": "markdown",
       "label": "README.md",
@@ -98,5 +98,5 @@
   "priority": "high",
   "state": "done",
   "title": "Published eBCH OSD curve dataset",
-  "updated_at": "2026-10-03T16:30:28.731851386Z"
+  "updated_at": "2026-10-04T19:53:11.128365569Z"
 }

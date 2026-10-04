@@ -12,8 +12,28 @@
     "8b42d23b-d94b-4c2b-84a5-9776619123c5",
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
-  "description": "The gf2-core crate guides and benchmark result notes served as fact sources for the permanent pages. Once mined, they leave the crate and are preserved in the legacy mirror.\n\n## Background\n\nInbound citations include the crate README, Rustdoc in `src/field/winograd.rs` and `src/field/expr.rs`, bench headers and several `dev/active/` documents (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5).\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/docs/` and the Markdown notes under `crates/gf2-core/benches/` live under `dev/archive/legacy/<original-relative-path>`, moved with history preserved, and the original paths no longer exist.\n- [hard] REQ-02: Each inbound citation outside the mirror points to the permanent page covering the topic, to the mirror path, or is removed as design-history provenance.\n- [hard] REQ-03: A link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n",
-  "documents": [],
+  "description": "The gf2-core crate guides and benchmark result notes served as fact sources for the permanent pages. Once mined, they leave the crate and are preserved in the legacy mirror.\n\n## Background\n\nInbound citations include the crate README, Rustdoc in `src/field/winograd.rs` and `src/field/expr.rs`, bench headers and several `dev/active/` documents (`dev/active/fa787f85-documentation-overhaul/investigation.md` §3.5).\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-core/docs/` and the Markdown notes under `crates/gf2-core/benches/` live under `dev/archive/legacy/<original-relative-path>`, moved with history preserved, and the original paths no longer exist.\n- [hard] REQ-02: Each inbound citation outside the mirror points to the permanent page covering the topic, to the mirror path, or is removed as design-history provenance; digest-pinned machine inputs keep their bytes.\n- [hard] REQ-03: A link scan of the touched files reports no unresolved local link, and the Rust CI gate passes.\n- [hard] REQ-04: The manifest records each row as complete.\n\n## Decisions\n\n- DEC-01: The owner ruled on 2026-10-04 that digest-pinned machine inputs keep their bytes (REQ-02 carries the amendment), and that the descriptions of terminal tracker issues are historical records that keep their text: a path of a moved file inside such a description is outside REQ-02.\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/103a792a-legacy-move.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/103a792a-link-scan.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/103a792a-link-scan.txt"
+    }
+  ],
   "first_ready_at": "2026-10-04T19:25:40.604382907Z",
   "gates_required": [
     "cargo-ci",
@@ -22,10 +42,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T21:01:47.615018695Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T21:13:13.869634118Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T21:16:08.529866788Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:19.111420852Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T21:10:26.043726833Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "103a792a-4168-44d5-9a0f-9373e002b793",
@@ -38,5 +73,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Move gf2-core crate guides into the legacy mirror",
-  "updated_at": "2026-10-04T19:29:41.542636365Z"
+  "updated_at": "2026-10-04T21:16:08.529866788Z"
 }

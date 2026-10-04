@@ -12,61 +12,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "d865245aa0f8fe4c6e020498e0e34b2539c5ce9a3e07ccdc9a174c81351107a3",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "../../bench_results/2037941f/logical-profile/cases.txt",
-          "resolved_path": "dev/bench_results/2037941f/logical-profile/cases.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "86ea6b97e4655091c42e78e9fa85a52863bcc3d3d341c4000fad1c9e891582db",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c29eff5fc2696ef9d471fead473f7428a5eff445655b902acc91837f765078b2",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/2037941f/logical-profile/profile-summary.md",
-          "resolved_path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "8ded5a3c62702c10184dcda6326066473334c9b74865ccaa1d20ffa166c2c101",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md",
-          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "5e3130047a3b93cacf67db18cb33d134c1bc99e7395a4409db4de721795cdc1a",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "survey/source-evidence.json",
-          "resolved_path": "dev/active/a1ad6d4e/survey/source-evidence.json"
-        }
-      ],
-      "commit": null,
-      "doc_type": "implementation",
-      "format": "markdown",
-      "label": "Private BitSlice zero-copy no-candidate outcome",
-      "path": "dev/active/a1ad6d4e/outcome.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "evidence",
-      "label": "BitSlice source and callsite evidence",
-      "path": "dev/active/a1ad6d4e/survey/source-evidence.json"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "local",
           "content_hash": "bea1a202ede5a94cee01d51c96ae227aafbdc35d13db81b26f3d4da52d59f6a1",
           "is_shared": false,
           "mime_type": "text/markdown",
@@ -87,6 +32,61 @@
       "format": "markdown",
       "label": "Final lead review",
       "path": "dev/active/1a379447-zen3-cpu-performance/reviews/a1ad6d4e-r1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "d865245aa0f8fe4c6e020498e0e34b2539c5ce9a3e07ccdc9a174c81351107a3",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../../../bench_results/2037941f/logical-profile/cases.txt",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/cases.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8ded5a3c62702c10184dcda6326066473334c9b74865ccaa1d20ffa166c2c101",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-baselines.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "86ea6b97e4655091c42e78e9fa85a52863bcc3d3d341c4000fad1c9e891582db",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md",
+          "resolved_path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/logical-buffer-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c29eff5fc2696ef9d471fead473f7428a5eff445655b902acc91837f765078b2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../bench_results/2037941f/logical-profile/profile-summary.md",
+          "resolved_path": "dev/bench_results/2037941f/logical-profile/profile-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5e3130047a3b93cacf67db18cb33d134c1bc99e7395a4409db4de721795cdc1a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/source-evidence.json",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/a1ad6d4e/survey/source-evidence.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Private BitSlice zero-copy no-candidate outcome",
+      "path": "dev/active/1a379447-zen3-cpu-performance/a1ad6d4e/outcome.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "BitSlice source and callsite evidence",
+      "path": "dev/active/1a379447-zen3-cpu-performance/a1ad6d4e/survey/source-evidence.json"
     }
   ],
   "done_at": "2026-09-27T20:43:47.111917764Z",
@@ -128,5 +128,5 @@
   "priority": "high",
   "state": "done",
   "title": "Freeze, measure and select the private BitSlice zero-copy candidate",
-  "updated_at": "2026-10-01T22:41:46.377194072Z"
+  "updated_at": "2026-10-04T19:57:38.741057349Z"
 }

@@ -11,7 +11,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-05-27-d36cc414-gf251-n64-borderline.md",
-      "path": "dev/bench_results/2026-05-27-d36cc414-gf251-n64-borderline.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-d36cc414-gf251-n64-borderline.md"
     }
   ],
   "done_at": "2026-05-27T05:37:31.368000423Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "GF(251)/n=64 borderline investigation (wave-7b rows 23, 37, 40, 51, 52)",
-  "updated_at": "2026-10-03T16:30:38.288706091Z"
+  "updated_at": "2026-10-04T19:53:01.754882015Z"
 }

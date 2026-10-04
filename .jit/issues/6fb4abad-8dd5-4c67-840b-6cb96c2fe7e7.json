@@ -14,7 +14,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "6fb4abad_breakdown.md",
-      "path": "dev/plans/6fb4abad_breakdown.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/6fb4abad_breakdown.md"
     }
   ],
   "done_at": "2026-04-20T18:54:12.467151214Z",
@@ -50,5 +50,5 @@
   "priority": "low",
   "state": "done",
   "title": "Support multi-word GF(2^m) for field degrees m > 128",
-  "updated_at": "2026-10-03T16:30:20.587826851Z"
+  "updated_at": "2026-10-04T21:23:58.437528345Z"
 }

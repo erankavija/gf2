@@ -11,7 +11,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "README.md",
-      "path": "dev/benchmarks/gf2-sim/README.md"
+      "path": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/README.md"
     }
   ],
   "done_at": "2026-06-06T23:26:45.916320138Z",
@@ -41,5 +41,5 @@
   "priority": "high",
   "state": "done",
   "title": "gf2-sim crate scaffolding (Pipeline, Stage, Connector primitives)",
-  "updated_at": "2026-10-03T16:27:52.088590347Z"
+  "updated_at": "2026-10-04T19:51:45.621337972Z"
 }

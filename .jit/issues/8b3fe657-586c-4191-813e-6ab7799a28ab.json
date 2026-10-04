@@ -18,7 +18,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "SSOT Breakdown Manifest",
-      "path": "dev/active/8b3fe657/8b3fe657-ssot-breakdown.json"
+      "path": "dev/active/b4b4b9ee-tech-debt-2026-06-30/8b3fe657/8b3fe657-ssot-breakdown.json"
     }
   ],
   "gates_required": [
@@ -47,5 +47,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Eliminate SSOT duplication across the workspace",
-  "updated_at": "2026-08-07T12:53:04.888653719Z"
+  "updated_at": "2026-10-04T20:00:42.682558300Z"
 }

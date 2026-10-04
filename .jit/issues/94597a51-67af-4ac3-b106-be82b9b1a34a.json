@@ -15,7 +15,7 @@
           "content_hash": "e8cfea52e20fc1d562ea22ea3936b5a1ebd709b51b446b03184e749ef36b8e1a",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/plan.md",
+          "original_path": "../plan.md",
           "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
         },
         {
@@ -23,7 +23,7 @@
           "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/extension-design.md",
+          "original_path": "../extension-design.md",
           "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
         }
       ],
@@ -31,7 +31,7 @@
       "doc_type": null,
       "format": "markdown",
       "label": "Proof sketch (O-5)",
-      "path": "dev/active/64fd3afd/proof-sketch.md"
+      "path": "dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md"
     }
   ],
   "done_at": "2026-10-01T08:40:08.791170357Z",
@@ -69,5 +69,5 @@
   "priority": "high",
   "state": "done",
   "title": "Lean proofs: systematic encoding correctness",
-  "updated_at": "2026-10-01T22:41:44.132644085Z"
+  "updated_at": "2026-10-04T20:00:43.026420958Z"
 }

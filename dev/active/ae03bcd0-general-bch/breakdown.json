@@ -1801,7 +1801,7 @@
       "crates/gf2-coding/README.md",
       "docs/SYSTEMATIC_ENCODING_CONVENTION.md",
       "docs/PARALLELIZATION.md",
-      "crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md"
+      "dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md"
      ]
     }
    },

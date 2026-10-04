@@ -8,7 +8,66 @@
     "ffc35b8c-5f2a-4a37-8eef-905b362b615d"
   ],
   "description": "Epic b7157be6 was moved into `dev/archive/b7157be6-osd/` by plain git: the directory has no container marker, the epic's state is done rather than archived, and it still links a review file shared with four open epics. Its archive preview is blocked by a destination conflict on that unmarked directory, with 31 artifacts in scope.\n\n## Background\n\nArchival adopts only a markerless bare `<short8>/` directory, so the slugged markerless directory may raise a destination conflict that needs resolution first. Evidence: `dev/active/fa787f85-documentation-overhaul/investigation.md` §0 finding 7 and §1.1, and the archive preview record `dev/active/fa787f85-documentation-overhaul/archive-preview-results.md`.\n\n## Success Criteria\n\n- [hard] REQ-01: The unmarked hand archive is resolved first (adopted into, or reconciled with, the planner's destination with no file lost), after which the archive preview reports the epic eligible with no destination conflict.\n- [hard] REQ-02: The epic's archive directory carries a container marker with the epic's full identifier, and the epic's state is archived.\n- [hard] REQ-03: The shared external-review file stays at its live path for the open epics, and the archived epic holds a byte-verified copy.\n- [hard] REQ-04: The linked dataset under `dev/simulation_results/osd-ebch-128-64/` stays in place and its consuming test passes.\n- [hard] REQ-05: A rerun of the container archival reports no change.\n- [hard] REQ-06: In-file citations to moved paths are repointed, and a link scan of the touched files reports no unresolved local link.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f902240f-evidence.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f902240f-evidence.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f902240f-exec.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ad9dac8881487b435abe445569224e025dedc3f399a47b6c1e0ff9f8e5c5c4f2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "f902240f-evidence.py",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f902240f-evidence.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b5a0dc2f15aea2a754074d46ae9897407edf0881993123652259e110f71b5362",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "f902240f-evidence.txt",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f902240f-evidence.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f122882b8c6e91dbd6fc3692c80180d65d6e5224573ef98c663ab32872206c61",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "f902240f-exec.json",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/f902240f-exec.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/f902240f-osd-archive.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Archive rerun results",
+      "path": "dev/active/fa787f85-documentation-overhaul/archive-rerun-results.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T19:25:41.074669876Z",
   "gates_required": [
     "cargo-ci",
@@ -17,10 +76,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:28:15.331895975Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:48:59.066333938Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:52:22.663489445Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:33.164663831Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T20:47:52.313805944Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
@@ -33,5 +107,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Bring the hand-archived OSD epic under container archival",
-  "updated_at": "2026-10-04T19:29:41.023627032Z"
+  "updated_at": "2026-10-04T20:52:22.663489445Z"
 }

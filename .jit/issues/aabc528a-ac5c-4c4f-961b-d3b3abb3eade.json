@@ -15,7 +15,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Doc-Completeness Breakdown Manifest",
-      "path": "dev/active/aabc528a/aabc528a-doc-completeness-breakdown.json"
+      "path": "dev/active/b4b4b9ee-tech-debt-2026-06-30/aabc528a/aabc528a-doc-completeness-breakdown.json"
     }
   ],
   "gates_required": [
@@ -45,5 +45,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Fill public-API doc-completeness gaps",
-  "updated_at": "2026-10-02T11:28:22.399289334Z"
+  "updated_at": "2026-10-04T20:00:42.793689633Z"
 }
