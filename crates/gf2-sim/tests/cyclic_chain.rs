@@ -1,7 +1,4 @@
-//! Cycle detection in the graph builder (`c09d3e95`).
-//!
-//! Builds a cyclic chain and asserts `Chain::build` returns
-//! [`BuildError::Cyclic`].
+//! `Chain::build` rejects a cyclic chain with [`BuildError::Cyclic`].
 
 use std::sync::Arc;
 
@@ -19,9 +16,8 @@ use gf2_sim::stages::{BitInterleave, DvbT2Encode};
 
 #[test]
 fn test_cyclic_chain_is_rejected() {
-    // Two BitPackedBatch → BitPackedBatch stages: their output and input types
-    // match, so `connect` accepts an edge in either direction. Connecting them
-    // both ways forms a 2-cycle that `build` must reject.
+    // Both stages map BitPackedBatch → BitPackedBatch, so `connect` accepts an
+    // edge in either direction.
     let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
     let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
     let interleaver = Arc::new(DvbT2BitInterleaver::new(modcod));

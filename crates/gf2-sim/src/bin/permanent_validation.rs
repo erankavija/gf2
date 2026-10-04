@@ -1,53 +1,18 @@
 //! Execute the frozen pre-draw validation phase of a permanent-zero-fraction
-//! campaign.
-//!
-//! This CLI is a thin consumer. It supplies only this repository's frozen
-//! constants — the committed preregistration path, the durable journal
-//! directory, the receipt destination, and the worker count — and delegates
-//! every exhaustive comparison, regeneration cross-check, exact decision, and
-//! provenance observation to `gf2_sim::permanent_campaign::validation`. It
-//! proposes no anchor, decides no verdict, and authors no provenance.
-//!
-//! ```console
-//! $ permanent_validation \
-//!     --preregistration BUNDLE/pre-draw-validation-v1-preregistration.json \
-//!     --state-dir BUNDLE/validation-journal \
-//!     --receipt BUNDLE/pre-draw-validation-v2-receipt.json \
-//!     --workers 32
-//! ```
+//! campaign through `gf2_sim::permanent_campaign::validation`.
 //!
 //! Paths are interpreted relative to the repository root, which is resolved
-//! from the working directory. `BUNDLE` is the committed evidence directory;
-//! the receipt is written beside the journal, and each frozen input is
-//! identified by its digest. The preregistration must be committed before the
-//! first validation draw: the run binds its content identity into the receipt
-//! and refuses a plan whose recorded authority digests disagree with the
-//! committed protocol, manifest, and mechanical evidence.
-//!
-//! The journal makes the run resumable and enforces the protocol's no-redraw
-//! rule. An anchor whose durable start marker exists without a terminal record
-//! is preserved as an interruption failure; its address is never reopened. A
-//! resumed run repeats the identical command from the identical source closure:
-//! the journal binds itself to the producer identity it observed, argument
-//! tokens included, and refuses a journal recorded under a different one.
+//! from the working directory. A resumed run repeats the identical command from
+//! the identical source closure: the journal binds itself to the producer
+//! identity it observed, argument tokens included, and refuses a journal
+//! recorded under a different one.
 //! The sole exception is explicit `--continue-producer-segment PATH`: `PATH`
 //! must be the committed schema-v2 owner authorization for one immutable
-//! ordered boundary. The library rehashes the complete authorized prefix and
-//! durably publishes the observed second-producer state before opening the
-//! next address. No third producer is admitted.
-//!
-//! The frozen plan pins its producing toolchain and requires every backend the
-//! frozen manifest selects. The runner refuses a build from another compiler,
-//! and a build or host on which a required backend cannot execute, before it
-//! opens the first address.
-//!
-//! ```console
-//! $ permanent_validation --verify-receipt BUNDLE/pre-draw-validation-v2-receipt.json
-//! ```
+//! ordered boundary.
 //!
 //! `--verify-receipt` re-reads a committed receipt, revalidates it against the
 //! committed frozen preregistration, and reports its verdict without opening a
-//! sampler. This is the launch check consumed before campaign arms unblock.
+//! sampler.
 //!
 //! Exit status is `0` when validation passes, `2` when the preserved evidence
 //! records a failed anchor or a changed frozen artifact, and `1` for a usage or

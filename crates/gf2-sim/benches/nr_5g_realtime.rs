@@ -1,53 +1,11 @@
-//! 5G NR LDPC GPU real-time decode-rate tuning sweep (issue `23d3525f`).
-//!
-//! A custom-main benchmark (`harness = false`: Criterion's per-iteration timing
-//! model does not fit a BLER + decoded-throughput cell sweep). It tunes the
-//! **flat GPU LDPC BP kernel** (reused unchanged from Phase B `a930be7f`,
-//! parameterised for 5G NR by the host-side
-//! [`GpuNr5gDecoder`](gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder)) for the
-//! headline configuration and reports the highest-throughput cell meeting the
-//! BLER target.
-//!
-//! # Headline configuration
-//!
-//! BG1, `i_LS` = 1 (Z = 384), rate 1/2, QPSK (`n` = 16896, `k` = 8448),
-//! NormalizedMinSum(0.75) with syndrome early termination, AWGN. The sweep is
-//! `batch_size ∈ {64, 128, 256, 512, 1024}` × `max_iters ∈ {10, 15, 20, 25}`;
-//! each cell reports decoded transport-block throughput (Mbps) and BLER. The
-//! selected cell is the highest-throughput cell with BLER ≤ 1e-2.
-//!
-//! Decoded TB throughput = (decoded transport blocks × `k` bits) / wall
-//! seconds, where one transport block is the `k` = 8448-bit message. Only the
-//! LDPC **decode** is timed (the task's scope is decoder throughput; non-goals
-//! exclude the RF front-end). BLER is the block (frame) error rate: the
-//! fraction of frames whose recovered `k`-bit message != the transmitted
-//! message.
-//!
-//! # Channel model
-//!
-//! A deterministic per-bit BPSK-AWGN channel over the transmitted codeword
-//! (SplitMix64 → Box-Muller, identical to the byte-identity test's source). For
-//! BPSK the per-bit `E_s/N_0 = 1 / (2 sigma^2)`, so `sigma = 1 / sqrt(2 *
-//! 10^(EsN0_dB/10))`. The operating-point Es/N0 is chosen so the canonical cell
-//! lands at BLER ≈ 1e-2 (recorded in the receipt). RF impairments are out of
-//! scope (decoder throughput only).
-//!
-//! # Running
-//!
-//! ```text
-//! cargo bench -p gf2-sim --features hip --bench nr_5g_realtime
-//! ```
-//!
-//! Optional environment overrides (all default to the headline sweep):
-//! * `NR5G_ESN0_DB` — operating-point per-bit Es/N0 in dB (default `-1.4`, the
-//!   calibrated BLER ≈ 1e-2 waterfall point for this configuration).
-//! * `NR5G_BLER_BLOCKS` — blocks per cell for the BLER estimate (default
-//!   `3000`).
-//! * `NR5G_THRPUT_REPS` — throughput repetitions for the selected cell's
-//!   mean ± σ (default `5`).
-//!
-//! Without the `hip` feature, or with no usable GPU, the bench prints a skip
-//! line and exits 0 (so it builds and runs cleanly on non-ROCm hosts).
+//! 5G NR LDPC GPU decode-rate sweep with a custom main (`harness = false`). For
+//! BG1, Z = 384, rate 1/2 (`n` = 16896, `k` = 8448) over a per-bit BPSK-AWGN
+//! channel, each `batch_size` × `max_iters` cell reports BLER and decoded
+//! transport-block throughput, `(blocks × k) / wall seconds` with only the LDPC
+//! decode timed, and the highest-throughput cell with BLER ≤ 1e-2 is selected.
+//! The `NR5G_*` environment variables read in `run` override the operating
+//! point, sample sizes and decoder settings. Without the `hip` feature or a
+//! usable GPU the bench prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -73,21 +31,17 @@ mod hip_bench {
     use gf2_core::BitVec;
     use gf2_kernels_hip::host::device_mem_info;
     use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
-    // The deterministic SplitMix64 + Box-Muller AWGN LLR source is the shared
-    // `testutil::AwgnLlrSource` (SSOT; review F3, jit:23d3525f) — the same
-    // generator the byte-identity tests draw from.
     use gf2_sim::testutil::AwgnLlrSource;
     use gf2_sim::LlrBatch;
 
-    /// The headline message length `k = 22 * 384` (BG1, Z = 384).
+    /// BG1 message length at Z = 384.
     const TARGET_K: usize = 22 * 384;
-    /// The headline codeword length `n = 2k` (rate 1/2).
+    /// Rate 1/2.
     const TARGET_N: usize = 2 * TARGET_K;
 
     const BATCH_SIZES: [usize; 5] = [64, 128, 256, 512, 1024];
     const MAX_ITERS: [usize; 4] = [10, 15, 20, 25];
 
-    /// Per-bit BPSK Es/N0 (dB) → noise std sigma: `sigma = 1/sqrt(2*10^(dB/10))`.
     fn sigma_for_es_n0_db(es_n0_db: f64) -> f64 {
         let lin = 10f64.powf(es_n0_db / 10.0);
         (1.0 / (2.0 * lin)).sqrt()
@@ -107,7 +61,6 @@ mod hip_bench {
             .unwrap_or(default)
     }
 
-    /// A measured sweep cell.
     struct Cell {
         batch: usize,
         max_iters: usize,
@@ -121,9 +74,6 @@ mod hip_bench {
             return;
         }
 
-        // Default per-bit Es/N0 = -1.4 dB: the empirically-calibrated waterfall
-        // operating point where the BG1 Z=384 r1/2 NMS decoder reaches BLER <=
-        // 1e-2 at max_iters = 20 (see the receipt's Es/N0 calibration sweep).
         let es_n0_db = env_f64("NR5G_ESN0_DB", -1.4);
         let bler_blocks = env_usize("NR5G_BLER_BLOCKS", 3000);
         let thrput_reps = env_usize("NR5G_THRPUT_REPS", 5);
@@ -140,7 +90,6 @@ mod hip_bench {
         );
         println!();
 
-        // Build the rate-matched code once and encode a fixed transmitted block.
         let build_start = Instant::now();
         let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, TARGET_N, TARGET_K));
         assert_eq!(code.params().lifting_factor, 384, "realised Z must be 384");
@@ -154,10 +103,6 @@ mod hip_bench {
             build_start.elapsed().as_secs_f64()
         );
 
-        // Tuning knobs (algorithm + early termination) explored during the
-        // tuning sweep; the headline receipt records the chosen values. The
-        // byte-identity test pins NormalizedMinSum(0.75) + early termination on
-        // both arms (that contract is independent of the throughput knobs).
         let algo = match std::env::var("NR5G_ALGO").ok().as_deref() {
             Some("minsum") => DecoderAlgorithm::MinSum,
             Some("nms") | None => DecoderAlgorithm::NormalizedMinSum(0.75),
@@ -191,7 +136,6 @@ mod hip_bench {
             }
         }
 
-        // Select the highest-throughput cell meeting BLER <= 1e-2.
         let selected = cells
             .iter()
             .filter(|c| c.bler <= 1e-2)
@@ -204,7 +148,6 @@ mod hip_bench {
                     "# SELECTED: batch={} max_iters={} BLER={:.5} throughput={:.2} Mbps",
                     c.batch, c.max_iters, c.bler, c.mbps
                 );
-                // 5-rep mean ± σ for the selected cell.
                 let dec = GpuNr5gDecoder::new(code.clone(), config, c.max_iters);
                 let decoder = dec
                     .build_decoder(max_batch)
@@ -221,13 +164,6 @@ mod hip_bench {
                 }
                 println!();
                 println!("# selected-cell throughput mean ± σ = {mean:.2} ± {sd:.2} Mbps");
-                // AMENDED 2026-06-12b (user option B, study 43fb19e2): the
-                // criterion is the ATTESTED flat-kernel measurement (17.45
-                // ± 0.03 Mbps receipt), not the original >= 200 Mbps bar
-                // (unreachable on gfx1030 — bandwidth-bound). The verdict
-                // regression-guards the attested band: a future run far below
-                // it signals a real regression, far above signals the receipt
-                // is stale (e.g. after kernel work in a future epic).
                 const ATTESTED_MBPS: f64 = 17.45;
                 if mean >= ATTESTED_MBPS * 0.9 {
                     println!(
@@ -251,8 +187,6 @@ mod hip_bench {
         }
     }
 
-    /// BLER over `blocks` frames at the given batch size: fraction of frames
-    /// whose GPU-recovered message != the transmitted message.
     fn measure_bler(
         dec: &GpuNr5gDecoder,
         decoder: &gf2_kernels_hip::GpuLdpcBp,
@@ -283,19 +217,9 @@ mod hip_bench {
         errors as f64 / seen as f64
     }
 
-    /// Decoded TB throughput (Mbps) at the given batch size.
-    ///
-    /// The decoded-TB rate is about the **device decode**: the rate-matching LLR
-    /// mapping ([`prepare_llrs`]) is host pre-processing that in a production
-    /// pipeline overlaps the previous batch's decode, so it is hoisted OUT of
-    /// the timed region (every full-`full_n` LLR batch is pre-prepared). The
-    /// timed region is the inner mother-code GPU decode
-    /// ([`GpuLdpcBp::decode_batch`]) over `blocks` frames; throughput is
-    /// `(blocks * k) / wall_seconds / 1e6`, where one transport block is the
-    /// `k`-bit message.
-    ///
-    /// [`prepare_llrs`]: GpuNr5gDecoder::prepare_llrs
-    /// [`GpuLdpcBp::decode_batch`]: gf2_sim::gpu::ldpc_bp::GpuLdpcBp::decode_batch
+    /// Decoded transport-block throughput in Mbps. The rate-matching LLR
+    /// mapping (`prepare_llrs`) is host pre-processing and stays outside the
+    /// timed region, which covers the mother-code GPU decode only.
     fn measure_throughput(
         dec: &GpuNr5gDecoder,
         decoder: &gf2_kernels_hip::GpuLdpcBp,
@@ -305,9 +229,6 @@ mod hip_bench {
         blocks: usize,
     ) -> f64 {
         let mut src = AwgnLlrSource::new(0x23D3_525F_7373_0000 ^ (batch as u64));
-        // Pre-generate AND rate-match-map every batch to the full mother-code
-        // LLR length, OUTSIDE the timed region: the device decode is what the
-        // decode-rate target measures.
         let mut prepared: Vec<LlrBatch> = Vec::new();
         let mut seen = 0usize;
         while seen < blocks {
@@ -325,7 +246,6 @@ mod hip_bench {
         let start = Instant::now();
         let mut decoded = 0usize;
         for full in &prepared {
-            // Inner mother-code device decode over the pre-prepared full_n LLRs.
             let out = dec
                 .gpu()
                 .decode_batch(full, decoder)

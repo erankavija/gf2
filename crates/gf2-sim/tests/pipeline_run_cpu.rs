@@ -1,13 +1,6 @@
-//! CPU-path `Pipeline::run` integration tests (Phase C `75c22fa8`).
-//!
-//! These exercise the runnable [`Pipeline::run`] surface on the CPU-only path
-//! (no `hip` feature needed) and pin it to the `3fcb7025` SSOT
-//! [`run_snr_point`] dispatch: the scheduler's CPU path is a thin wrapper over
-//! [`run_snr_point`], so a `Pipeline::run` over the preset MUST produce the same
-//! `fer` / `frames` / `errors` / `mean_iters` as a direct
-//! [`run_snr_point`] over the same [`DvbT2BicmFrameSim`] kernel. This guards the
-//! "scheduler's CPU path preserves global-frame-indexed seeking" requirement
-//! without breaking the existing byte-identity contract.
+//! CPU-path [`Pipeline::run`] over the DVB-T2 preset produces the same
+//! `fer` / `frames` / `errors` / `mean_iters` as a direct [`run_snr_point`]
+//! over the same [`DvbT2BicmFrameSim`] kernel.
 
 use std::num::NonZeroUsize;
 
@@ -46,7 +39,6 @@ fn build(workers: usize, frames: u64) -> Pipeline {
 
 #[test]
 fn pipeline_run_cpu_single_frame_decodes() {
-    // One frame above threshold: frames == 1, no error. Fast tier (< 5 s).
     let p = build(1, 1);
     let r = p.run().expect("cpu run");
     assert_eq!(r.per_point.len(), 1);
@@ -59,9 +51,6 @@ fn pipeline_run_cpu_single_frame_decodes() {
 
 #[test]
 fn pipeline_run_cpu_matches_run_snr_point_ssot() {
-    // The CPU `Pipeline::run` must produce the SAME aggregate as a direct
-    // `run_snr_point` over the same frame kernel (the 3fcb7025 SSOT). 4 frames
-    // keeps the fast tier under 5 s (4 × ~0.6 s decode at high SNR, 4 workers).
     let frames = 4u64;
     let p = build(4, frames);
     let via_pipeline = p.run().expect("cpu run").per_point[0];
@@ -82,8 +71,6 @@ fn pipeline_run_cpu_matches_run_snr_point_ssot() {
         |g, ctx, sim| sim.simulate_frame(g, ctx),
     );
 
-    // All four contractual columns must match the run_snr_point SSOT
-    // bit-for-bit, via the shared SSOT comparator over the adapted point.
     assert_four_columns_byte_identical(
         &snr_point_to_counters(&via_pipeline),
         &direct,

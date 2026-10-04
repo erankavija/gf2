@@ -1,22 +1,12 @@
-//! Build-time graph errors at `Pipeline::build()` (issue `de160fc5`,
-//! criterion 2; design doc §9).
-//!
-//! A cyclic graph yields [`BuildError::Cyclic`] and a disconnected graph
-//! yields [`BuildError::Disconnected`] — both at
-//! [`Chain::build`](gf2_sim::graph::Chain::build), the **only** public
-//! constructor of a runnable [`Pipeline`](gf2_sim::Pipeline), so neither shape
-//! can ever reach execution (amendment 2026-06-10a). This file adds the
-//! integration-tier coverage for `Disconnected` (previously unit-tested only
-//! in `graph/mod.rs`) and re-exercises `Cyclic` as the named criterion
-//! surface; the original `Cyclic` guard in `tests/cyclic_chain.rs` (issue
-//! `c09d3e95`) remains in place.
+//! [`Chain::build`](gf2_sim::graph::Chain::build) rejects a cyclic graph with
+//! [`BuildError::Cyclic`] and a disconnected graph with
+//! [`BuildError::Disconnected`].
 
 use gf2_sim::error::BuildError;
 use gf2_sim::graph::Chain;
 use gf2_sim::stage::{erase, BatchSize, ExecutionClass, Stage};
 use gf2_sim::StageError;
 
-/// A tiny one-frame batch newtype so the graph has something typed to carry.
 #[derive(Clone)]
 struct Frames(Vec<u8>);
 impl BatchSize for Frames {
@@ -25,8 +15,8 @@ impl BatchSize for Frames {
     }
 }
 
-/// CPU identity over [`Frames`]; its matching input/output types let edges be
-/// recorded in either direction (which is exactly what a cycle needs).
+/// CPU identity over [`Frames`]; matching input and output types let edges
+/// run in either direction.
 struct Id;
 impl Stage<Frames, Frames> for Id {
     type Scratch = ();
@@ -41,8 +31,6 @@ impl Stage<Frames, Frames> for Id {
 
 #[test]
 fn test_cyclic_graph_yields_build_error_cyclic() {
-    // a → b → c → a: a 3-cycle. Every connect() type-checks (same batch type
-    // throughout), so the cycle is only detectable at build().
     let mut chain = Chain::new();
     let a = chain.add(erase(Id));
     let b = chain.add(erase(Id));
@@ -66,8 +54,6 @@ fn test_cyclic_graph_yields_build_error_cyclic() {
 
 #[test]
 fn test_partial_cycle_yields_build_error_cyclic_with_only_cycle_members() {
-    // d → a → b → a: stage d is acyclic, the {a, b} pair cycles. Only the
-    // cycle members are reported.
     let mut chain = Chain::new();
     let d = chain.add(erase(Id));
     let a = chain.add(erase(Id));
@@ -87,8 +73,6 @@ fn test_partial_cycle_yields_build_error_cyclic_with_only_cycle_members() {
 
 #[test]
 fn test_disconnected_graph_yields_build_error_disconnected() {
-    // Two disjoint components: {a → b} and {c → d}. build() must reject with
-    // the stages outside the lowest-id component listed.
     let mut chain = Chain::new();
     let a = chain.add(erase(Id));
     let b = chain.add(erase(Id));
@@ -112,8 +96,6 @@ fn test_disconnected_graph_yields_build_error_disconnected() {
 
 #[test]
 fn test_isolated_stage_yields_build_error_disconnected() {
-    // A connected pair plus one isolated stage (no edges at all): still a
-    // disconnected graph.
     let mut chain = Chain::new();
     let a = chain.add(erase(Id));
     let b = chain.add(erase(Id));

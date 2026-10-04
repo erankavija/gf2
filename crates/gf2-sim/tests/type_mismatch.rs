@@ -1,8 +1,5 @@
-//! Connector type-mismatch detection in the graph builder (`c09d3e95`).
-//!
-//! Connects a stage producing `SymbolBatch` into a stage consuming
-//! `BitPackedBatch` and asserts `Chain::connect` returns
-//! [`BuildError::TypeMismatch`].
+//! `Chain::connect` rejects a `SymbolBatch` producer wired into a
+//! `BitPackedBatch` consumer with [`BuildError::TypeMismatch`].
 
 use std::sync::Arc;
 
@@ -19,9 +16,7 @@ use gf2_sim::stages::{DvbT2Encode, GrayQamMap};
 #[test]
 fn test_incompatible_connect_is_type_mismatch() {
     // GrayQamMap: BitPackedBatch → SymbolBatch.
-    // DvbT2Encode: BitPackedBatch → BitPackedBatch (consumes BitPackedBatch).
-    // Connecting map → encode wires a SymbolBatch producer into a
-    // BitPackedBatch consumer, which `connect` must reject as a TypeMismatch.
+    // DvbT2Encode: BitPackedBatch → BitPackedBatch.
     let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
 
     let mut chain = Chain::new();

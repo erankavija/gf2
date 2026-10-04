@@ -1,35 +1,7 @@
-//! GPU AWGN noise-generation throughput benchmark (issue `f6004add`,
-//! parallelism-pays receipt).
-//!
-//! Measures **AWGN-step** frames/second for the DVB-T2 r1/2 16-QAM canonical
-//! config (n_ldpc = 64800, 16-QAM = 4 bits/symbol → 16200 symbols/frame, 32400
-//! noise samples/frame) at Es/N0 = 6.5 dB, comparing:
-//!
-//! * the GPU `GpuAwgn` (`gf2_sim::gpu::awgn`, `feature = "hip"`) noise step (one device
-//!   launch + read-back per frame, per-worker-owned generator), against
-//! * a single CPU thread doing the **same** AWGN noise step via
-//!   [`channels::Awgn`](gf2_sim::channels::Awgn).
-//!
-//! This is an apples-to-apples *AWGN-only* comparison: both paths add complex
-//! Gaussian noise to the same per-frame symbol count, so the ratio isolates the
-//! noise-sampling speedup the GPU kernel delivers. (The full-frame
-//! encode+channel+decode baseline of 1.6216 fps in `baseline-single-thread.md`
-//! is dominated by LDPC BP decode, which this kernel does not touch; reporting
-//! the AWGN-only ratio here keeps the receipt honest about what `f6004add`
-//! actually accelerates.)
-//!
-//! This is a manually-invoked benchmark, not a nextest test (it can exceed the
-//! 5 s fast-tier limit at large frame counts).
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features hip --bin gpu_awgn_throughput -- \
-//!     --frames 2000 --repeats 5 --es-n0 6.5
-//! ```
-//!
-//! Defaults: `--frames 2000 --repeats 5 --es-n0 6.5`. Without `--features hip`
-//! the binary prints a notice and exits 0.
+//! Measures AWGN-step frames per second for one DVB-T2 rate-1/2 16-QAM frame of
+//! symbols: the GPU `GpuAwgn` step (`gf2_sim::gpu::awgn`) against one CPU thread
+//! running [`channels::Awgn`](gf2_sim::channels::Awgn). Without
+//! `--features hip` the binary prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -89,12 +61,10 @@ mod imp {
         println!("# config: r1/2 16-QAM Normal, {SYMBOLS_PER_FRAME} symbols/frame, Es/N0 = {es_n0_db} dB");
         println!("# frames={frames} repeats={repeats} seed={SEED:#x}");
 
-        // A flat input symbol batch (one frame at a time, reused). The exact
-        // symbol values are irrelevant to the noise-generation cost.
+        // Symbol values do not affect the noise-generation cost.
         let template_i: Vec<f32> = vec![1.0; SYMBOLS_PER_FRAME];
         let template_q: Vec<f32> = vec![0.0; SYMBOLS_PER_FRAME];
 
-        // ---- CPU single-thread AWGN-step throughput ----------------------
         let cpu = Awgn::new(es_n0_db, 4);
         let mut cpu_fps = Vec::new();
         for _ in 0..repeats {
@@ -113,7 +83,6 @@ mod imp {
         }
         let (cpu_mean, cpu_sigma) = mean_sigma(&cpu_fps);
 
-        // ---- GPU AWGN-step throughput ------------------------------------
         let gpu = GpuAwgn::new(es_n0_db, 4).with_seek(SEED, 0, 0);
         let generator = gpu
             .build_generator(SYMBOLS_PER_FRAME)
