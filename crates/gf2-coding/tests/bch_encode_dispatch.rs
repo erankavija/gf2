@@ -1,7 +1,6 @@
 //! Differential evidence for the batch-encoding family dispatch seam.
-//! The rows are the predeclared corpus of the workload-selection contract
-//! (`dev/active/4e732b56/workload-selection.md` § 2), and the batch ladder is
-//! its § 3. Every registered family is checked bit-identical against
+//! The rows and the batch ladder are those of the workload-selection
+//! contract. Every registered family is checked bit-identical against
 //! [`EncodeFamily::REFERENCE`] on each row, at every declared layout, and
 //! across worker counts.
 

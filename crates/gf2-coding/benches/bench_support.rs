@@ -5,6 +5,7 @@
 
 use gf2_coding::modem::test_oracle::{bit_stream, Lcg};
 
+/// Bits of `modem::test_oracle::bit_stream` at a fixed seed.
 pub fn deterministic_bits(n_bits: usize) -> Vec<bool> {
     bit_stream(0x9E37_79B9_7F4A_7C15, n_bits)
 }

@@ -47,6 +47,7 @@ impl TestVectorSet {
         })
     }
 
+    /// One test point of `reference`; an absent or unparsable file is a [`LoadError`].
     #[allow(dead_code)]
     pub fn load_test_point(
         base_path: &Path,
