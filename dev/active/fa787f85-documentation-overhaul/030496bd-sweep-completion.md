@@ -41,17 +41,17 @@ The block prints nothing: both outputs regenerate byte for byte, the cross-check
 
 ```text
 baseline: e3bfdfae782161c1f5031daac98f77ef48db2281
-after:    70bdb151b3fd885e72a5755547a8b4e906553af7
+after:    fa29c6a3976e162d8994dfc19ea85c90df848f7c
                                    comment         non-blank             share           pattern
 crate                       before   after    before   after    before   after    before   after
-crates/gf2-algebra            7788    1997     22990   17187    33.88%  11.62%         9       0
-crates/gf2-coding            26946   10638     94570   78272    28.49%  13.59%        74       0
-crates/gf2-core              37360   12529    135122  110268    27.65%  11.36%       279       0
-crates/gf2-kernels-hip        4799    2056     10239    7496    46.87%  27.43%        33       0
-crates/gf2-kernels-simd       7984    3974     23772   19762    33.59%  20.11%        48       0
-crates/gf2-sim               18038    7647     70819   60419    25.47%  12.66%       197       5
-crates/gf2-stats               623     541      3410    3328    18.27%  16.26%         0       0
-total                       103538   39382    360922  296732    28.69%  13.27%       640       5
+crates/gf2-algebra            7788    1971     22990   17161    33.88%  11.49%         9       0
+crates/gf2-coding            26946   10603     94570   78237    28.49%  13.55%        74       0
+crates/gf2-core              37360   12465    135122  110204    27.65%  11.31%       279       0
+crates/gf2-kernels-hip        4799    2046     10239    7486    46.87%  27.33%        33       0
+crates/gf2-kernels-simd       7984    3955     23772   19743    33.59%  20.03%        48       0
+crates/gf2-sim               18038    7622     70819   60394    25.47%  12.62%       197       5
+crates/gf2-stats               623     530      3410    3317    18.27%  15.98%         0       0
+total                       103538   39192    360922  296542    28.69%  13.22%       640       5
 ```
 
 The block equals the committed output and the output regenerates from the two census files; both commands print nothing:
