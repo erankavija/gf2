@@ -49,7 +49,6 @@ Method: scan of `.jit/issues/*.json` `documents[].path`, owners resolved to top 
   - `dev/simulation_results/osd-ebch-128-64/` (8 files, simulation cef1ae5f). Permanent path, so copy-only; consumed by `crates/gf2-sim/tests/osd_campaign_protocol.rs:807`.
 - **97bf0879 / 026fc832 (`archived`), copied not moved by `195f8254f`:** `dev/plans/{flint_promotion_evidence,ntl_promotion_evidence,small_prime_kernel_strategy,sota_target_matrix}.md`, `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`.
 - **Archived epics, code and tooling links (stay in place):** `benchmarks/{Containerfile,README.md,image.lock,run.sh,reference/*}`, `crates/gf2-algebra/{README.md,examples/permanent_demo.rs,tests/data/cas_permanent_f5_f7.csv}`, `crates/gf2-coding/examples/bench_sparse_csv_emitter.rs`, `crates/gf2-core/{examples/m4rm_multiply_perfstat.rs,src/sparse.asm.txt,tests/gf2pow32_constant_drift.rs}`, `proofs/Gf2Algebra/Proofs/RyserBounded.lean`, `scripts/{generate-cas-permanent-vectors.sage,plot_permanent_benchmarks.py}`.
-- **Unlinked terminal-owned files still in dev/active:** `e095a100-gfpm-arithmetic/e095a100-presentation/themes/gruvbox.css`, `37e0b235/gpu-batch-ldpc-bp-plan.md` (rejected task under 806eb14e).
 - **Unlinked terminal-owned files in dev/presentations:** `babcf05e-*/themes/gruvbox.css`, `f9717e7e-gf2-sim/themes/gruvbox.css`.
 
 ### 1.2 `jit archive candidates`
@@ -107,7 +106,7 @@ Stale config entries: `managed_paths` lists absent `dev/design`, `dev/experiment
 | `dev/archive/d4851c3d-modem-framework/docs/presentations/d4851c3d-modem-framework/` | d4851c3d (archived) | `base.css`, `themes/{rust,gruvbox}.css`, `../figures/{ber_curves,llr_histograms_16qam,per_bit_mi_16qam}.svg` | own-epic archive documents (`talk.html:353,469`) | — |
 | `dev/archive/{6efb756b-grand,d4851c3d-modem-framework}/docs/presentations/figures/` | fig4-6 and `generate_grand_comparison_plots.py` under 6efb756b; the modem SVGs under d4851c3d | — | `generate_grand_comparison_plots.py:36-37` reads `dev/simulation_results` and `dev/reference_data` | **Writer:** `crates/gf2-coding/examples/gen_presentation_figures.rs` writes the modem SVGs into its `--output-dir` (default `presentation_figures` in the Cargo target directory); README lists this example (`README.md:171`) |
 
-A stray deck asset also sits at `dev/active/e095a100-gfpm-arithmetic/e095a100-presentation/themes/gruvbox.css` (no deck). Relative links climbing `../../../dev/` break when decks move depth; JIT blocks `repository-escape` links but rewrites nothing.
+Relative links climbing `../../../dev/` break when decks move depth; JIT blocks `repository-escape` links but rewrites nothing.
 
 ### 3.5 Crate-local guides
 

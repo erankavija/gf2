@@ -512,7 +512,7 @@ The direct documentation/code-reference consumers include
 `docs/lean4-verification-pipeline.md:24`, `crates/gf2-core/README.md:15`,
 `crates/gf2-algebra/README.md:5`, `dev/archive/legacy/crates/gf2-core/docs/GF2M.md:16`,
 `dev/plans/field_poly_module_overview.md:19`,
-`dev/plans/bdf95060_breakdown.md:8`, `dev/plans/small_prime_kernel_strategy.md:310`,
+`dev/archive/e095a100-gfpm-arithmetic/plans/bdf95060_breakdown.md:8`, `dev/plans/small_prime_kernel_strategy.md:310`,
 and the historical field/packed/Lean documents listed in the prior-art sweep.
 These are prose or proof inputs, not additional Cargo consumers. The audit also
 found the following additional non-`.jit` textual references; entries already
@@ -527,10 +527,10 @@ listed in the Rust/proof lists above are not repeated:
   `dev/active/b8206228-permanent-statistics/investigation.md:228`,
   `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv:17`,
   and `dev/active/charon-patch-backup-2026-05-15/hrtb-associated-types.rs:4`.
-- Research and plans: `dev/research/rns_representation.md:235`,
+- Research and plans: `dev/archive/e095a100-gfpm-arithmetic/research/rns_representation.md:235`,
   `dev/plans/16283d6f-fieldmatrix-gpu/gpu_fieldmatrix_sketch.md:37`,
-  `dev/plans/6fb4abad_breakdown.md:10`, `dev/plans/70972f06_audit.md:74`,
-  `dev/plans/bdf95060_breakdown.md:8`, and
+  `dev/archive/e095a100-gfpm-arithmetic/plans/6fb4abad_breakdown.md:10`, `dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md:74`,
+  `dev/archive/e095a100-gfpm-arithmetic/plans/bdf95060_breakdown.md:8`, and
   `dev/plans/field_poly_module_overview.md:19`.
 - Historical field-linear-algebra references:
   `dev/archive/bb85c68a-field-linear-algebra/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md:4`,
