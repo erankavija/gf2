@@ -1,6 +1,7 @@
-//! 5G NR LDPC code construction from `@/citation/ThreeGpp2017` Section 5.3.2:
-//! base graphs BG1 and BG2 expanded by a lifting size Z from Table 5.3.2-1
-//! ([`QuasiCyclicLdpc::nr_5g`]), and rate matching ([`Nr5gRateMatchedCode`]).
+//! 5G NR LDPC code construction from `@/citation/ThreeGpp2017` Section 5.3.2.
+//!
+//! [`QuasiCyclicLdpc::nr_5g`] expands base graph BG1 or BG2 by a lifting size Z
+//! from Table 5.3.2-1, and [`Nr5gRateMatchedCode`] adds rate matching.
 
 pub(crate) mod bg1;
 pub(crate) mod bg2;

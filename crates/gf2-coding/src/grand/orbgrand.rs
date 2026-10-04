@@ -1,6 +1,7 @@
-//! Ordered Reliability Bits GRAND (ORBGRAND, `@/citation/Duffy2022`): a
-//! soft-input list decoder for any linear block code that tests noise patterns
-//! in ascending combined weight `IC·w + lw`.
+//! Ordered Reliability Bits GRAND (ORBGRAND, `@/citation/Duffy2022`).
+//!
+//! A soft-input list decoder for any linear block code that tests noise
+//! patterns in ascending combined weight `IC·w + lw`.
 
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, SoftDecoder};

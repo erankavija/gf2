@@ -1,7 +1,9 @@
-//! Ordered-statistics decoding: [`MostReliableBasis`] and [`reprocess`] turn a
+//! Ordered-statistics decoding building blocks.
+//!
+//! [`MostReliableBasis`] and [`reprocess`] are the shared engine: they turn a
 //! canonical reliability order plus an ordered GF(2) elimination into a
-//! bounded, soft-ranked search over Hamming-weight patterns, and an
-//! [`OsdSemantics`] adapter defines what a candidate means.
+//! bounded, soft-ranked search over Hamming-weight patterns.  What a candidate
+//! means stays with an [`OsdSemantics`] adapter.
 
 mod bp_osd;
 mod engine;
