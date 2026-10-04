@@ -33,7 +33,6 @@ fn codewords(code: &DvbT2BchCode, count: usize) -> Vec<BitVec> {
         .collect()
 }
 
-/// Decodes every codeword into `bbframe` on one workspace.
 fn decode_all(
     decoder: &OuterDecoder<'_>,
     codewords: &[BitVec],

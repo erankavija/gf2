@@ -23,7 +23,6 @@ use gf2_coding::test_support::{parse_tp_blocks, tp_path_for};
 const NO_VECTORS: &str = "DVB-T2 ETSI test vectors absent; \
     set DVB_TEST_VECTORS_PATH to the stream tree to run this";
 
-/// Count data lines (lines that are neither comments nor blank) in a CSP file.
 fn count_data_lines(path: &std::path::Path) -> std::io::Result<usize> {
     use std::io::{BufRead, BufReader};
     let file = std::fs::File::open(path)?;
@@ -39,7 +38,6 @@ fn count_data_lines(path: &std::path::Path) -> std::io::Result<usize> {
     Ok(count)
 }
 
-/// Count bits in the first block of a CSP bit-data file.
 fn first_block_bits(path: &std::path::Path) -> Option<usize> {
     let text = std::fs::read_to_string(path).ok()?;
     let mut in_block = false;
@@ -67,7 +65,6 @@ fn first_block_bits(path: &std::path::Path) -> Option<usize> {
     }
 }
 
-/// Count total blocks in a CSP bit-data file (lines beginning with `#`).
 fn count_blocks_in_file(path: &std::path::Path) -> Option<usize> {
     let text = std::fs::read_to_string(path).ok()?;
     let count = text

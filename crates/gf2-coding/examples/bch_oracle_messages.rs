@@ -37,7 +37,6 @@ struct CorpusWriter {
 }
 
 impl CorpusWriter {
-    /// Returns the complete, newline-terminated corpus document.
     fn finish(&self) -> String {
         format!(
             "{{\n  \"seed\": \"0x{BCH_CORPUS_SEED:08X}\",\n  \"rows\": [\n{}\n  ]\n}}\n",
@@ -137,7 +136,6 @@ impl BchCorpusVisitor for CorpusWriter {
     }
 }
 
-/// Appends one comma-terminated JSON member.
 fn field(out: &mut String, name: &str, value: &str) {
     writeln!(out, "      \"{name}\": {value},").expect("String write");
 }
@@ -149,7 +147,6 @@ fn digits_to_index(digits: &[u64], characteristic: u64) -> u128 {
     })
 }
 
-/// Renders integers as a flat JSON array.
 fn numbers<T: std::fmt::Display>(values: &[T]) -> String {
     let mut out = String::from("[");
     for (index, value) in values.iter().enumerate() {
