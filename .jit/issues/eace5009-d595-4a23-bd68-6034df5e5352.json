@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T19:29:41.284798398Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -30,7 +31,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Regroup the remaining flat dev/active entries under epic dirs",
-  "updated_at": "2026-10-04T19:25:40.984051554Z"
+  "updated_at": "2026-10-04T19:29:41.284798398Z"
 }
