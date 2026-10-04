@@ -8,8 +8,8 @@
 # (`gf2m::byte_table`). The environment selects the lane and the element
 # representation, so a pair differs in nothing else.
 #
-# The lane contract, the byte-region operand conversions and the untimed smoke
-# driver are the shared survey crates', not this crate's.
+# The lane contract and the byte-region operand conversions are the shared
+# survey crates', not this crate's.
 
 [workspace]
 
@@ -27,10 +27,12 @@ gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-
 # The lane switch, the element representation and the shipped lane witness, as
 # the vector confirmation established them.
 gf256-axpy-arm = { path = "../../../ad2a6a58/survey/axpy-arm" }
-serde_json = "1.0"
-# The runner's plan and addendum types, its case encoder and its result parser:
-# the smoke drives an arm over the runner's own wire.
+# The runner's protocol types; the request-mirror test also takes its addendum
+# decoder and case encoder.
 tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+
+[dev-dependencies]
+serde_json = "1.0"
 
 [lib]
 path = "src/lib.rs"
@@ -42,10 +44,6 @@ path = "src/bin/gf256-gemm-arm.rs"
 [[bin]]
 name = "gf256-gemm-verify"
 path = "src/bin/gf256-gemm-verify.rs"
-
-[[bin]]
-name = "gf256-gemm-smoke"
-path = "src/bin/gf256-gemm-smoke.rs"
 
 # The workspace release profile verbatim, so the measured executable is the
 # build a production receipt would measure.

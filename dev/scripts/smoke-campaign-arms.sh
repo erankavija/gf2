@@ -2,11 +2,11 @@
 # Shared non-timed harness smoke of every arm and cell of a frozen family.
 #
 # Usage (from the worker worktree root), with every flag required except the
-# bracketed ones:
+# bracketed one:
 #   smoke-campaign-arms.sh --issue ID --addendum JSON
 #       --arm-manifest Cargo.toml --arm-bin NAME --plan-tool PY
 #       --producing JSON --record PATH --campaign-id ID --seed N
-#       --max-cells N [--pilot-pairs N] [--smoke-bin NAME]
+#       --max-cells N [--pilot-pairs N]
 #
 # A campaign that reaches the benchmark window and dies on its first arm spends
 # the window and measures nothing, and reading the runner and the arm side by
@@ -17,9 +17,7 @@
 # and validation the runner applies before its first measurement;
 # `benchmark-ab-runner smoke`, whose contract `tuning_campaign_support::arm::smoke`
 # states, drives every arm of every declared cell once in the `validation`
-# position and writes the record. `--smoke-bin` names a binary of the arm
-# workspace that takes the plan and writes the record on stdout in the runner's
-# place.
+# position and writes the record.
 #
 # The projected plan carries the label of the stage the addendum freezes:
 # `confirmation` when a cell is confirmatory, `pilot` when every cell is
@@ -37,14 +35,12 @@ REPO=$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)
 }
 
 PILOT_PAIRS=
-SMOKE_BIN_NAME=
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --issue) ISSUE=$2 ;;
         --addendum) ADDENDUM=$2 ;;
         --arm-manifest) MANIFEST=$2 ;;
         --arm-bin) ARM_BIN=$2 ;;
-        --smoke-bin) SMOKE_BIN_NAME=$2 ;;
         --plan-tool) PLAN_TOOL=$2 ;;
         --producing) PRODUCING=$2 ;;
         --record) RECORD=$2 ;;
@@ -111,10 +107,5 @@ python3 -B "${PLAN_TOOL}" \
     --output "${SCRATCH}/plan.json"
 "${RUNNER}" check "${SCRATCH}/plan.json"
 
-if [[ -n "${SMOKE_BIN_NAME}" ]]; then
-    "${ARM_TARGET}/release/${SMOKE_BIN_NAME}" "${SCRATCH}/plan.json" >"${RECORD}"
-    cat "${RECORD}"
-else
-    "${RUNNER}" smoke "${SCRATCH}/plan.json" --record "${RECORD}"
-fi
+"${RUNNER}" smoke "${SCRATCH}/plan.json" --record "${RECORD}"
 echo "smoke record: ${RECORD}" >&2

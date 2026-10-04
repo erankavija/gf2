@@ -1,0 +1,27 @@
+# command: dev/bench_results/4c1e441f/run-dense-product-confirmation.sh window confirmation
+# invocation: new
+# started_utc: 2026-10-04T23:08:41Z
+# gf2 revision (informational): 897ca69ab52bbbfdfd11e01e324d1ca08a2ce505
+# addendum: dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json sha256=05a6341637595d52b5e8aea3ce3414e3fa96736842e0c7e851a55171413667c6
+# producing manifest: dev/active/4c1e441f/survey/producing-inputs.json sha256=8c8cfc9fc059d82d5f6d6ad5dea06492baef003b5e40f9a00b89ad894ea603e0
+# plan: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-campaigns/4c1e441f-r1-dense-product-confirmation.plan.json sha256=e75534e5ac24b2e6f7db6ddcb9557a33b132be8a333ea6ec51af6b67c0137ae6
+# ledger: dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl sha256=859c4520a130d1a12db77ba21c3fd38da1fa7f70b9ff80edd39a2d44ebaaa407
+# arm: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-arm/release/gf256-gemm-arm sha256=baa15fa519ade386344d1cadd10168e84a0a3f8e7ecf353d52970e6d6e41e6a7
+# runner: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/release/benchmark-ab-runner sha256=f349e85297a681a462773bd8ec4bb6bd29a91aea501d56c7dca307702d2e37cf
+# acceptance: /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/release/benchmark-acceptance sha256=e05f21a7687d5d4d515313eb052fad4c16f9bb4a23aeac22dc15b9cf685c5913
+# toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+# load_avg_start: 1.20 3.51 2.44
+# session 1 started_utc: 2026-10-04T23:08:41Z
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-campaigns/4c1e441f-r1-dense-product-confirmation/execution.log
+# session 1 exit: 3
+# session 2 started_utc: 2026-10-04T23:11:16Z
+nice: cannot set niceness: Permission denied
+GF2_CAMPAIGN_EXECUTION_LOG=/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c04dd4ac/target/4c1e441f-campaigns/4c1e441f-r1-dense-product-confirmation/execution.log
+# session 2 exit: 0
+GF2_BENCHMARK_RECEIPT=dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json
+GF2_BENCHMARK_ACCEPTANCE=Accepted qualifies=true findings=0
+# acceptance exit: 0
+# sessions this invocation: 2
+# load_avg_end: 1.04 2.10 2.10
+# finished_utc: 2026-10-04T23:12:54Z

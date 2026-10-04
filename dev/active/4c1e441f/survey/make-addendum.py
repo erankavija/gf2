@@ -2,7 +2,7 @@
 """Write the frozen pilot addendum of the GF(2^8) dense-product family (jit:4c1e441f).
 
 Usage: make-addendum.py [output]
-       (default dev/active/4c1e441f/addendum-v4-dense-product-pilot.json)
+       (default addendum-v4-dense-product-pilot.json in the family directory)
 
 Every cell of this family measures the same operation through the same entry
 point and differs only in the element representation, the square dimension and
@@ -14,8 +14,9 @@ committed pilot receipt with the repository's canonical freezer.
 
 import json
 import os
-import subprocess
 import sys
+
+import locate
 
 FROZEN_UTC = "2026-09-18T12:58:14Z"
 
@@ -78,7 +79,7 @@ FAMILY_DESCRIPTION = (
     "consumer shape shows. The rule reads the acceptance summary's recorded outcomes and nothing "
     "else. Direction agreement is stated against the accepted matrix-family confirmation receipt "
     "of issue 19513245, pinned by path and SHA-256 in "
-    "dev/active/4c1e441f/pinned-matrix-confirmation.json; that receipt measured a prototype that "
+    f"{locate.ISSUE}/pinned-matrix-confirmation.json; that receipt measured a prototype that "
     "rebuilt its table per product, converted its operands and did not write results in place, so "
     "it is cited for the direction and not inherited as evidence."
 )
@@ -149,11 +150,8 @@ def cell(shape, dimension, metric_kind, seed, representation):
 
 
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-    ).stdout.strip()
     output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-        root, "dev/active/4c1e441f/addendum-v4-dense-product-pilot.json")
+        locate.ROOT, locate.ISSUE, "addendum-v4-dense-product-pilot.json")
     addendum = {
         "schema": "zen3-benchmark-addendum-v4",
         "protocol": {"id": "zen3-benchmark-protocol", "version": 4},
@@ -183,7 +181,7 @@ def main():
             "alpha": 0.05,
             "prior_confirmatory_trials": 0,
             "prior_trials": [],
-            "ledger_path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl",
+            "ledger_path": f"{locate.RESULTS}/dense-product-family-ledger.jsonl",
         },
         "search_budget": {
             "max_pilot_trials_per_cell": 2,
