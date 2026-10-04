@@ -1,0 +1,44 @@
+# Module docs longer than twelve lines (JIT 545b113f)
+
+Each tracked Rust file under `crates/` and `dev/tools/` whose leading `//!`
+block exceeds 12 lines, with the contract each retained section states.
+`545b113f-module-docs.py` beside this record prints it; the contract column is
+`545b113f-module-doc-contracts.tsv`.
+
+| Lines | File | Retained section and its contract |
+|---:|---|---|
+| 53 | `crates/gf2-coding/src/bch/mod.rs` | `# Coordinate conventions`: the coordinates `BinaryBchDecoder` reads under each `SystematicLayout`, spanning decoder, layout and matrix items. `# Examples`: the construct, encode, decode and message-recovery workflow across `spec`, `encode` and the decoder. |
+| 53 | `crates/gf2-core/src/gfpn/quotient.rs` | `# Equivalence of the two forms`: `QuotientField` and `ConstQuotient` of one base and modulus are one field in identity, coordinates and observable results; the example pins that across both forms. |
+| 53 | `crates/gf2-kernels-simd/src/bch_encode.rs` | Orientation with the bit-sliced recurrence the scalar and AVX2 reductions implement. `# Required processor features`: the features each kernel bundle requires. `# Examples`: the batch workflow across the dispatch bundle. |
+| 49 | `crates/gf2-coding/src/bch/encode.rs` | `# Coordinate convention`: the systematic codeword in internal coordinates, shared by `SystematicLayout`, `EncodeFamily` and `SystematicKernel`. `# Examples`: the parallel batch workflow over `encode_workspaces` and `encode_batch_parallel_into`. |
+| 47 | `crates/gf2-coding/examples/sparse_smoke_emit_expected.rs` | `# File format (little-endian)`: the binary file the C++ reference harness compares, with per-operation cell layouts and the value encoding per field. |
+| 41 | `crates/gf2-sim/src/lib.rs` | Example: the build, configure and run workflow of a pipeline. `# Determinism`: equality across worker counts, resume and CPU/GPU paths. |
+| 34 | `crates/gf2-core/src/io/field_matrix.rs` | `# Format specification`: the `FieldMatrix` container format shared by the read, write, save and load items. |
+| 34 | `crates/gf2-core/src/io/mod.rs` | `# GF2DATA layout`: the binary file format shared by the `BitVec`, `BitMatrix`, `SpBitMatrix` and `SpBitMatrixDual` readers and writers. |
+| 29 | `crates/gf2-core/src/tuning/mod.rs` | Unheaded example: the install-before-first-access ordering across `PreparedEnvelope`, `install` and `active`. |
+| 29 | `crates/gf2-sim/src/osd_campaign.rs` | `# Interval coverage`: the coverage statement of the stopping rule that `ber_interval` cites. |
+| 28 | `crates/gf2-core/src/field/extension.rs` | `# Canonical prime coordinates`: the coordinate order and canonical index shared by `FieldIdentity`, `FieldId`, `ModulusId` and the serialization formats. |
+| 28 | `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` | `# Output layout`: the output files, CSV columns and tracing events of the binary. |
+| 27 | `crates/gf2-kernels-simd/src/shift_funnel.rs` | `# The funnel contract`: argument ranges, write order, the words left to the caller and the panic condition, shared by both funnel kernels. |
+| 24 | `crates/gf2-sim/src/presets/nr_5g.rs` | `# Code dimensions`: the `k`, `E` and realized-rate convention that `build` cites. |
+| 22 | `crates/gf2-coding/src/bch/matrix.rs` | `# Layout`: the coordinate layout of `G` and `H` for `BchCode` and the permutation for `LayoutView`, shared by the matrix trait impls and `MatrixFill`. |
+| 21 | `crates/gf2-sim/src/bin/permanent_dataset.rs` | Unheaded: subcommand usage and exit statuses. |
+| 20 | `crates/gf2-kernels-simd/src/modem.rs` | `# Kernel contract`: the argument and output contract shared by the scalar and AVX2 Gray-PAM distance kernels. |
+| 20 | `crates/gf2-sim/src/bin/export_alist.rs` | `# AList format`: the output file format. |
+| 19 | `crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs` | `# File format (little-endian)`: the binary file the NTL reference harness loads. |
+| 19 | `crates/gf2-sim/src/bin/permanent_validation.rs` | Unheaded: the resume and identity rule, `--verify-receipt` and exit statuses. |
+| 18 | `crates/gf2-algebra/src/packed/bipedal3.rs` | `# Encoding`: the `(mag, sgn)` bit encoding of an F_3 lane, shared by every `Bipedal3` operation. |
+| 17 | `crates/gf2-sim/src/executor/scheduler.rs` | `# Determinism`: frame-keyed randomness and ordered reduction across workers. |
+| 17 | `crates/gf2-sim/src/gpu/awgn.rs` | Unheaded: the noise offset and order contract shared by the GPU AWGN items. |
+| 16 | `crates/gf2-core/src/field/modulus_select.rs` | `# Candidate order`: the fallback search order shared by the modulus selectors and `SelectExtension`. |
+| 15 | `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs` | Unheaded: the semantics of `--max-samples`, `--target-block-errors` and `--workers`. |
+| 15 | `crates/gf2-sim/src/gpu/demap.rs` | Unheaded: the LLR layout and sign shared by the GPU and CPU demappers. |
+| 14 | `crates/gf2-algebra/src/permanent/rank.rs` | Unheaded definition: permanental rank deficiency as the conjunction over row subsets that the module's items evaluate. |
+| 14 | `crates/gf2-coding/src/info_theory.rs` | `# SNR convention`: `Es/N0` in dB as the argument unit, the `Es = m·R·Eb` relation and the result units, shared by every function of the module. |
+| 14 | `crates/gf2-kernels-hip/src/host/mod.rs` | One orientation paragraph; the other lines are intra-doc link definitions. The paragraph states the module-wide safe-wrapper contract for FFI calls. |
+| 14 | `crates/gf2-kernels-simd/src/transpose.rs` | `# The block contract`: the 64×64 block transpose contract every lane answers. |
+| 14 | `crates/gf2-sim/src/executor/drain.rs` | `# Cross-path resume`: `gpu_enabled` in the configuration hash and the alignment check, shared by the drain paths. |
+| 14 | `crates/gf2-sim/src/gpu/ldpc_bp.rs` | Unheaded: the edge layout shared with the CPU decoder and the exclusion of iteration counts from byte identity. |
+| 13 | `crates/gf2-coding/src/bch/spec.rs` | `# Coordinate convention`: internal coordinate `i` is the coefficient of `x^i`; the other BCH modules cite it. |
+| 13 | `crates/gf2-coding/tests/bch_oracle_agreement.rs` | `# Coordinates`: the fixture encoding (ascending degree, canonical symbol index) shared by every test of the suite. |
+| 13 | `crates/gf2-kernels-simd/src/lib.rs` | Two paragraphs: the crate's purpose, then the crate-wide dispatch contract (safe detection, `None` without the features, implemented targets). |
