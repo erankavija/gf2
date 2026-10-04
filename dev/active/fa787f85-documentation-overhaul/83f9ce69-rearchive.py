@@ -19,12 +19,14 @@ Sections:
   root resolves; each `dev/archive/...` path token in the repointed files
   resolves.
   URL targets, anchors and fenced Markdown code are skipped.
+- manifest: no migration manifest row of epic 97bf0879 has status `pending`.
 """
 import hashlib
 import json
 import re
 import subprocess
 import sys
+import tomllib
 import urllib.parse
 from pathlib import Path
 
@@ -136,6 +138,14 @@ for name in REPOINTED:
         if not (root / token).exists():
             fail(f"{name}:{number}: unresolved: {token}")
     print(f"  {name}: {len(tokens)} dev/archive path tokens")
+
+print("manifest")
+rows = [r for r in tomllib.loads(Path(__file__).with_name("migration").joinpath("manifest.toml").read_text())["artifacts"]
+        if r["epic"] == plan["target"][:8]]
+open_rows = [r["path"] for r in rows if r["status"] != "complete"]
+for path in open_rows:
+    fail(f"{path}: row is not complete")
+print(f"  rows of epic {plan['target'][:8]} with status complete: {len(rows) - len(open_rows)} of {len(rows)}")
 
 print(f"result: {'FAIL' if failures else 'PASS'} ({failures} failed checks)")
 sys.exit(1 if failures else 0)
