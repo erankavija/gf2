@@ -1,16 +1,10 @@
-//! Backend trait and selection logic for kernel operations.
-//!
-//! This module defines the core abstraction for different execution backends
-//! (scalar, SIMD, GPU, FPGA) and provides smart dispatch logic.
+//! The [`Backend`] trait for word kernels and the length-based backend
+//! selection.
 
-/// Backend trait for kernel operations.
-///
-/// Implementations provide optimized routines for bulk operations on bit vectors
-/// and single-word bit manipulation primitives.
-///
-/// All backends must have identical semantics - only performance characteristics differ.
+/// Bulk operations on `u64` slices and single-word bit primitives. Every
+/// implementation returns the same results.
 pub trait Backend: Send + Sync {
-    /// Returns a human-readable name for this backend.
+    /// Human-readable backend name.
     fn name(&self) -> &'static str;
 
     /// Performs bitwise AND: dst\[i\] &= src\[i\] for all i.
@@ -38,8 +32,6 @@ pub trait Backend: Send + Sync {
     fn popcount(&self, buf: &[u64]) -> u64;
 
     /// Computes XOR parity of a single word (true if odd number of 1s).
-    ///
-    /// This is a fundamental GF(2) operation.
     fn parity(&self, word: u64) -> bool {
         crate::kernels::scalar::primitives::parity(word)
     }
@@ -63,7 +55,7 @@ pub trait Backend: Send + Sync {
 pub enum SelectedBackend {
     /// Pure Rust scalar implementation.
     Scalar,
-    /// SIMD-accelerated implementation (AVX2, AVX-512, NEON).
+    /// SIMD implementation from `gf2-kernels-simd`.
     #[cfg(feature = "simd")]
     Simd,
 }
@@ -88,33 +80,19 @@ const SIMD_MIN_WORDS: usize = crate::tuning::baked::SIMD_MIN_WORDS;
 #[cfg(all(any(test, feature = "simd"), not(gf2_tuning_baked)))]
 const SIMD_MIN_WORDS: usize = SIMD_MIN_WORDS_DEFAULT;
 
-/// Selects the best backend for operations on buffers of the given size.
+/// Selects the backend for a buffer of `size` words: SIMD when the `simd`
+/// feature is enabled and `size` reaches the compile-time threshold, scalar
+/// otherwise.
 ///
-/// Uses a compile-time threshold to determine whether SIMD acceleration is
-/// beneficial. The default build uses the conservative table's eight-word
-/// (64-byte) value. Building with `RUSTFLAGS="--cfg gf2_tuning_baked"`
-/// selects the value measured by
-/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
-/// in the format-2 core owner at
-/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`,
-/// which retains the eight-word value.
-/// The flag is a declared cfg, not a Cargo feature, so `--all-features` builds
-/// keep the conservative threshold. Runtime profile installation does not
-/// govern this boundary; see `dev/active/220cab0b/design.md` (DEC-G).
-///
-/// # Arguments
-///
-/// * `size` - Number of u64 words in the buffer
-///
-/// # Heuristics
-///
-/// - Size below the compile-time threshold: Always use scalar
-/// - Size at or above the compile-time threshold: Use SIMD if available
+/// The threshold is the conservative table's `bit_backend.simd_min_words`
+/// value, or the baked profile's value in a build with
+/// `RUSTFLAGS="--cfg gf2_tuning_baked"`. The flag is a declared cfg, not a
+/// Cargo feature, so `--all-features` builds keep the conservative threshold.
+/// An installed runtime profile does not change it.
 #[inline]
 pub fn select_backend_for_size(_size: usize) -> SelectedBackend {
     #[cfg(feature = "simd")]
     if _size >= SIMD_MIN_WORDS {
-        // SIMD backend will be initialized on first use
         return SelectedBackend::Simd;
     }
 
@@ -125,7 +103,6 @@ pub fn select_backend_for_size(_size: usize) -> SelectedBackend {
 mod tests {
     use super::*;
 
-    // Mock backend for testing trait implementation
     struct MockBackend;
 
     impl Backend for MockBackend {
@@ -244,7 +221,6 @@ mod tests {
 
     #[test]
     fn test_select_backend_at_threshold() {
-        // At exactly the compile-time threshold, should use SIMD if available.
         let backend = select_backend_for_size(SIMD_MIN_WORDS);
         #[cfg(feature = "simd")]
         assert_eq!(backend.name(), "simd");
@@ -269,7 +245,6 @@ mod tests {
 
     #[test]
     fn test_select_backend_empty() {
-        // Empty buffer should use scalar (no overhead)
         let backend = select_backend_for_size(0);
         assert_eq!(backend.name(), "scalar");
     }

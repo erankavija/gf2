@@ -1,92 +1,46 @@
-//! Compile-time values for baked core selectors.
-//!
-//! Each constant here is the compile-time counterpart of one core selector
-//! that `dev/active/7d824b2f/design.md` §3 admits under the bake mechanism
-//! of §2.2: a value that appears as a compile-time constant in generated
-//! code, or whose gated operation is too cheap to absorb a runtime profile
-//! read. Building with `RUSTFLAGS="--cfg gf2_tuning_baked"` selects a
-//! constant here at its defining module's selection site; the default build
-//! keeps that module's conservative constant. Selection sites own their
-//! compile-time wiring; this module owns the values.
+//! Compile-time values of the core selectors that are constants in generated
+//! code or gate an operation too cheap for a runtime profile read. A build with
+//! `RUSTFLAGS="--cfg gf2_tuning_baked"` selects them at their defining
+//! modules' selection sites; the default build keeps each module's
+//! conservative constant.
 
-/// Calibrated bit-backend threshold (`simd_min_words`) recorded in
-/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`.
-/// Its non-monotone crossover curve retains the conservative eight-word value.
-/// The exact measured format-2 core owner is
+/// `bit_backend.simd_min_words`, from the calibration receipt
+/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
+/// and the measured core owner
 /// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
 /// with SHA-256 `8904f7d0c9ef0577790b2af6c42b9da632306842e7928a54ea7251a51c3c4ffa`.
 pub(crate) const SIMD_MIN_WORDS: usize = 8;
 
-/// Baked value for `bit_matrix.matvec_simd_min_words`, mirroring
-/// `crate::matrix::MATVEC_SIMD_MIN_WORDS`.
-///
-/// Both of `BitMatrix::matvec`'s arms are private, so no runtime steering
-/// reaches this field and it is non-sweepable
-/// (`dev/active/7d824b2f/design.md` §5.2). Its value is the core section's
-/// conservative declaration rather than a measured figure.
+/// `bit_matrix.matvec_simd_min_words`, mirroring
+/// `crate::matrix::MATVEC_SIMD_MIN_WORDS`: the core section's conservative
+/// value.
 pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 
-/// Baked value for `gemm.row_tile`, mirroring
-/// `crate::field::matrix::GEMM_ROW_TILE`.
-///
-/// The extent calibration recorded in
-/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
-/// selects the row and column tiles jointly over the full pair grid
-/// (`dev/active/a83583e0/premeasurement-protocol.md` §5). Its non-monotone
-/// pair curve retains the conservative pair, which the measured core owner
-/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
-/// states under that campaign's provenance. The unconditional conservative
-/// declaration is `crate::field::matrix::GEMM_ROW_TILE_DEFAULT`.
+/// `gemm.row_tile`, mirroring `crate::field::matrix::GEMM_ROW_TILE` and
+/// selected jointly with [`GEMM_COL_TILE`] by the receipt cited at
+/// [`SIMD_MIN_WORDS`].
 pub(crate) const GEMM_ROW_TILE: usize = 32;
 
-/// Baked value for `gemm.col_tile`, mirroring
-/// `crate::field::matrix::GEMM_COL_TILE`.
-///
-/// Selected jointly with [`GEMM_ROW_TILE`], whose documentation cites the
-/// receipt and measured owner. The unconditional conservative declaration is
-/// `crate::field::matrix::GEMM_COL_TILE_DEFAULT`.
+/// `gemm.col_tile`, mirroring `crate::field::matrix::GEMM_COL_TILE`; see
+/// [`GEMM_ROW_TILE`].
 pub(crate) const GEMM_COL_TILE: usize = 64;
 
-/// Baked value for `field_vec.dot_chunk_len`, mirroring
-/// `crate::field::vec::DOT_CHUNK_LEN`.
-///
-/// The field sizes `try_simd_dot_product`'s stack scratch buffers, so only
-/// the bake mechanism can carry it (`dev/active/7d824b2f/design.md` §3.8).
-/// The extent calibration recorded in
-/// `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
-/// finds no resolved unique minimum over the declared chunk grid and retains
-/// the conservative chunk, which the measured core owner
-/// `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
-/// states under that campaign's provenance.
+/// `field_vec.dot_chunk_len`, mirroring `crate::field::vec::DOT_CHUNK_LEN`,
+/// from the receipt cited at [`SIMD_MIN_WORDS`].
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
 
-/// Baked value for `prime_route.f32_min_prime`, mirroring
-/// `crate::gfp::simd_ops::N_THRESH_PRIME`.
-///
-/// Declared as `u64` rather than the schema field's `usize`: the read site
-/// compares it against a const-generic prime `P: u64`
-/// (`dev/active/7d824b2f/design.md` §3.11), and only the bake mechanism
-/// reaches a `const fn` predicate over that parameter. Its grid is a set of
-/// primes selected by a type parameter rather than a size grid, so the field
-/// is non-sweepable (§5.2); its value is the core section's conservative
-/// declaration.
+/// `prime_route.f32_min_prime`, mirroring
+/// `crate::gfp::simd_ops::N_THRESH_PRIME`: the core section's conservative
+/// value, a `u64` because its read site compares it with a const-generic
+/// prime `P: u64`.
 pub(crate) const N_THRESH_PRIME: u64 = 251;
 
-/// Baked value for `prime_route.f32_min_cols`, mirroring
-/// `crate::gfp::simd_ops::F32_MIN_COLS`.
-///
-/// The public route-A toggle forces the route on but cannot force it off at
-/// `n >= 512`, so no grid point offers both arms across the default and the
-/// field is non-sweepable (`dev/active/7d824b2f/design.md` §5.2). Its value is
-/// the core section's conservative declaration.
+/// `prime_route.f32_min_cols`, mirroring `crate::gfp::simd_ops::F32_MIN_COLS`:
+/// the core section's conservative value.
 pub(crate) const F32_MIN_COLS: usize = 512;
 
-/// Baked value for `prime_route.f64_min_cols`, mirroring
-/// `crate::gfp::simd_ops::F64_MIN_COLS`.
-///
-/// No public toggle offers both arms of this boundary, so the field is
-/// non-sweepable (`dev/active/7d824b2f/design.md` §5.2); its value is the core
-/// section's conservative declaration.
+/// `prime_route.f64_min_cols`, mirroring `crate::gfp::simd_ops::F64_MIN_COLS`:
+/// the core section's conservative value.
 pub(crate) const F64_MIN_COLS: usize = 512;
 
 #[cfg(test)]

@@ -1,15 +1,9 @@
-//! Kernel operations for matrix algorithms.
-//!
-//! This module provides low-level primitives for matrix operations over GF(2).
-//! Smart backend dispatch automatically selects scalar or SIMD implementations
-//! based on buffer size and CPU capabilities.
+//! Word-slice operations that dispatch between the scalar and SIMD backends
+//! through [`select_backend_for_size`](crate::kernels::select_backend_for_size)
+//! and runtime CPU detection.
 
-/// Resolved in-place XOR operation for fixed-width hot loops.
-///
-/// Call [`resolve_xor_inplace`] once before entering a loop that repeatedly
-/// XORs rows with the same word width, then invoke the returned function
-/// pointer inside the loop. This hoists backend selection and SIMD runtime
-/// probing out of the hot path while preserving [`xor_inplace`] semantics.
+/// In-place XOR resolved by [`resolve_xor_inplace`] for one word width, so a
+/// loop over rows of that width selects the backend once.
 pub type XorInplaceFn = fn(&mut [u64], &[u64]);
 
 #[inline]
@@ -23,34 +17,9 @@ fn scalar_xor_inplace(dst: &mut [u64], src: &[u64]) {
     crate::kernels::Backend::xor(&crate::kernels::scalar::SCALAR_BACKEND, dst, src);
 }
 
-/// Resolves the best in-place XOR implementation for `word_len` words.
-///
-/// The returned function pointer is either the scalar backend XOR or, when
-/// the `simd` feature is enabled and the runtime backend is available, the
-/// detected SIMD `LogicalFns::xor_fn`. Resolving once is preferable in
-/// repeated row-XOR loops because it avoids a per-call backend-size branch and
-/// SIMD detection probe.
-///
-/// # Arguments
-///
-/// * `word_len` - The fixed number of `u64` words that each later XOR call
-///   will process.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::kernels::ops::resolve_xor_inplace;
-///
-/// let xor = resolve_xor_inplace(2);
-/// let mut dst = vec![0xFF, 0x00];
-/// let src = vec![0x0F, 0xF0];
-/// xor(&mut dst, &src);
-/// assert_eq!(dst, vec![0xF0, 0xF0]);
-/// ```
-///
-/// # Complexity
-///
-/// O(1) to resolve; the returned function runs in O(`word_len`).
+/// Returns the XOR that [`xor_inplace`] applies to `word_len` words: the
+/// detected SIMD `LogicalFns::xor_fn` when the backend selection is SIMD and
+/// the kernel bundle is available, otherwise the scalar backend's.
 #[inline]
 pub fn resolve_xor_inplace(word_len: usize) -> XorInplaceFn {
     use crate::kernels::backend::select_backend_for_size;
@@ -64,16 +33,7 @@ pub fn resolve_xor_inplace(word_len: usize) -> XorInplaceFn {
     }
 }
 
-/// XORs source slice into destination slice in-place.
-///
-/// This operation is used heavily in matrix algorithms (M4RM multiplication,
-/// Gauss-Jordan elimination) and benefits significantly from SIMD acceleration
-/// on large buffers.
-///
-/// # Arguments
-///
-/// * `dst` - Destination slice to be modified
-/// * `src` - Source slice to XOR with destination
+/// Performs bitwise XOR: dst\[i\] ^= src\[i\] for all i.
 ///
 /// # Panics
 ///
@@ -91,13 +51,6 @@ pub fn xor_inplace(dst: &mut [u64], src: &[u64]) {
 }
 
 /// Performs bitwise AND: dst\[i\] &= src\[i\] for all i.
-///
-/// Automatically selects the best backend based on buffer size.
-///
-/// # Arguments
-///
-/// * `dst` - Destination slice to be modified
-/// * `src` - Source slice to AND with destination
 ///
 /// # Panics
 ///
@@ -129,13 +82,6 @@ pub fn and_inplace(dst: &mut [u64], src: &[u64]) {
 
 /// Performs bitwise OR: dst\[i\] |= src\[i\] for all i.
 ///
-/// Automatically selects the best backend based on buffer size.
-///
-/// # Arguments
-///
-/// * `dst` - Destination slice to be modified
-/// * `src` - Source slice to OR with destination
-///
 /// # Panics
 ///
 /// Panics in debug mode if slices have different lengths.
@@ -165,8 +111,6 @@ pub fn or_inplace(dst: &mut [u64], src: &[u64]) {
 }
 
 /// Performs bitwise NOT: buf\[i\] = !buf\[i\] for all i.
-///
-/// Automatically selects the best backend based on buffer size.
 #[inline]
 pub fn not_inplace(buf: &mut [u64]) {
     use crate::kernels::{backend::select_backend_for_size, Backend};
@@ -186,12 +130,8 @@ pub fn not_inplace(buf: &mut [u64]) {
     }
 }
 
-/// Route [`resolve_popcount`] and [`resolve_and_popcount`] take for a width.
-///
-/// Reported by [`popcount_route`] and [`and_popcount_route`] so a caller, a
-/// test or a benchmark arm can observe the SIMD boundary at run time instead
-/// of inferring it from build configuration, as `matrix::matvec_route` does
-/// for the matrix-vector product.
+/// Route [`resolve_popcount`] and [`resolve_and_popcount`] take for a width,
+/// reported by [`popcount_route`] and [`and_popcount_route`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PopcountRoute {
     /// The scalar backend's portable count, which every width below the
@@ -213,14 +153,9 @@ impl PopcountRoute {
     }
 }
 
-/// Reports the route [`resolve_popcount`] takes for `word_len` words.
-///
-/// The boundary is the compile-time counterpart of
-/// `bit_backend.simd_min_words`. Every width below it reports
-/// [`PopcountRoute::Scalar`], and so does every width on a host without the
-/// kernel bundle. The carry-save candidate is not selected because its
-/// confirmation receipt does not qualify under the shared measurement
-/// contract.
+/// Reports the route [`resolve_popcount`] takes for `word_len` words:
+/// [`PopcountRoute::Scalar`] below the compile-time SIMD threshold and on a
+/// host without the kernel bundle.
 #[must_use]
 pub fn popcount_route(word_len: usize) -> PopcountRoute {
     use crate::kernels::backend::select_backend_for_size;
@@ -238,27 +173,18 @@ pub fn popcount_route(word_len: usize) -> PopcountRoute {
     }
 }
 
-/// Reports the route [`resolve_and_popcount`] takes for `word_len` words.
-///
-/// The two resolvers share the SIMD boundary, so this reports what
-/// [`popcount_route`] reports: scalar below the threshold or when the SIMD
-/// bundle is unavailable, and the established fused nibble-lookup route at and
-/// above the threshold when that bundle is available. The carry-save candidate
-/// remains available in the kernel bundle for conformance and research but is
-/// not selected automatically.
+/// Reports the route [`resolve_and_popcount`] takes for `word_len` words,
+/// which is the route [`popcount_route`] reports.
 #[must_use]
 pub fn and_popcount_route(word_len: usize) -> PopcountRoute {
     popcount_route(word_len)
 }
 
-/// Resolved population-count operation for fixed-width hot loops.
-///
-/// Call [`resolve_popcount`] once before entering a loop that repeatedly
-/// counts buffers of the same word width, then invoke the returned function
-/// pointer inside the loop, as [`XorInplaceFn`] does for in-place XOR.
+/// Population count resolved by [`resolve_popcount`] for one word width.
 pub type PopcountFn = fn(&[u64]) -> u64;
 
-/// Resolved fused AND-population-count operation for fixed-width hot loops.
+/// Fused AND-population-count resolved by [`resolve_and_popcount`] for one
+/// word width.
 pub type AndPopcountFn = fn(&[u64], &[u64]) -> u64;
 
 #[inline]
@@ -274,30 +200,9 @@ fn scalar_and_popcount(lhs: &[u64], rhs: &[u64]) -> u64 {
         .sum()
 }
 
-/// Resolves the established population-count implementation for `word_len`
-/// words.
-///
-/// At and above the bit-backend SIMD threshold, `LogicalFns::popcnt_fn`
-/// counts every vector through a `VPSHUFB` nibble lookup. The surveyed scalar
-/// POPCNT and Harley-Seal candidates remain available in the detected bundle,
-/// but neither confirmation receipt qualifies for production selection under
-/// the shared measurement contract.
-///
-/// Every width below the SIMD threshold keeps the scalar backend's portable
-/// count. The bundle's `LogicalFns::popcnt_scalar_fn`, which counts one word at
-/// a time with the host's `POPCNT` instruction, loses to that count through a
-/// resolved call on the measured host, so this region retains its established
-/// implementation: cell `popcount-w4-dispatch` of the confirmation receipt
-/// under `dev/bench_results/5cbb6545/` records the regression that decides it.
-///
-/// Without the feature or the backend every width takes the scalar fallback.
-/// The SIMD boundary is a compile-time constant, per DEC-G in
-/// `dev/active/220cab0b/design.md`, and its profile field carries it for
-/// calibration.
-///
-/// # Complexity
-///
-/// O(1) to resolve; the returned function runs in O(`word_len`).
+/// Returns the population count for `word_len` words: `LogicalFns::popcnt_fn`,
+/// a per-vector `VPSHUFB` nibble lookup, at and above the SIMD threshold when
+/// the kernel bundle is available, otherwise the scalar backend's count.
 #[inline]
 pub fn resolve_popcount(word_len: usize) -> PopcountFn {
     use crate::kernels::backend::select_backend_for_size;
@@ -311,22 +216,10 @@ pub fn resolve_popcount(word_len: usize) -> PopcountFn {
     }
 }
 
-/// Resolves the established fused AND-population-count implementation for
-/// `word_len` words.
-///
-/// The fused kernels count `lhs & rhs` without materializing the AND, so a
-/// consumer that only needs the weight of an intersection avoids a temporary
-/// buffer and a second pass. Automatic dispatch uses the scalar fused fallback
-/// below the bit-backend SIMD threshold or when the SIMD bundle is unavailable.
-/// At and above the threshold with that bundle available, it retains the
-/// per-vector nibble lookup because the carry-save family's confirmation
-/// receipt does not qualify for production selection.
-///
-/// The count covers the shorter of the two slices.
-///
-/// # Complexity
-///
-/// O(1) to resolve; the returned function runs in O(`word_len`).
+/// Returns the count of `lhs & rhs` for `word_len` words, computed without
+/// materializing the AND: `LogicalFns::and_popcnt_fn` at and above the SIMD
+/// threshold when the kernel bundle is available, otherwise a scalar fused
+/// count. The count covers the shorter of the two slices.
 #[inline]
 pub fn resolve_and_popcount(word_len: usize) -> AndPopcountFn {
     use crate::kernels::backend::select_backend_for_size;
@@ -341,10 +234,6 @@ pub fn resolve_and_popcount(word_len: usize) -> AndPopcountFn {
 }
 
 /// Counts the number of set bits across all words.
-///
-/// Automatically selects the established backend based on buffer size. The
-/// carry-save comparator is not selected because its confirmation receipt does
-/// not qualify under the shared measurement contract.
 #[inline]
 pub fn popcount(buf: &[u64]) -> u64 {
     use crate::kernels::{backend::select_backend_for_size, Backend};
@@ -364,10 +253,7 @@ pub fn popcount(buf: &[u64]) -> u64 {
     }
 }
 
-/// Counts the set bits of the intersection of two bit buffers.
-///
-/// Resolves the route for this width through [`resolve_and_popcount`] and
-/// calls it once. The count covers the shorter slice.
+/// Counts the set bits of `lhs & rhs` over the shorter slice.
 #[inline]
 pub fn and_popcount(lhs: &[u64], rhs: &[u64]) -> u64 {
     resolve_and_popcount(lhs.len().min(rhs.len()))(lhs, rhs)
@@ -411,7 +297,7 @@ mod tests {
 
     #[test]
     fn test_xor_inplace_small_buffer() {
-        // 7 words - should use scalar backend
+        // One word below the conservative SIMD boundary.
         let mut dst = vec![0xFFFFFFFFFFFFFFFFu64; 7];
         let src = vec![0x0F0F0F0F0F0F0F0Fu64; 7];
         xor_inplace(&mut dst, &src);
@@ -420,8 +306,7 @@ mod tests {
 
     #[test]
     fn test_xor_inplace_at_threshold() {
-        // Exactly 8 words - the conservative default boundary; a profile may
-        // move the SIMD route.
+        // The conservative SIMD boundary.
         let mut dst = vec![0xFFFFFFFFFFFFFFFFu64; 8];
         let src = vec![0x0F0F0F0F0F0F0F0Fu64; 8];
         xor_inplace(&mut dst, &src);
@@ -430,7 +315,6 @@ mod tests {
 
     #[test]
     fn test_xor_inplace_large_buffer() {
-        // Large buffer - should use SIMD if available
         let mut dst = vec![0xAAAAAAAAAAAAAAAAu64; 256];
         let src = vec![0x5555555555555555u64; 256];
         xor_inplace(&mut dst, &src);
@@ -446,7 +330,6 @@ mod tests {
         xor_inplace(&mut dst, &src);
     }
 
-    // AND operation tests
     #[test]
     fn test_and_inplace_basic() {
         let mut dst = vec![0xFF, 0xFF];
@@ -463,7 +346,6 @@ mod tests {
         assert_eq!(dst, vec![0x5555555555555555u64; 256]);
     }
 
-    // OR operation tests
     #[test]
     fn test_or_inplace_basic() {
         let mut dst = vec![0xF0, 0x0F];
@@ -480,7 +362,6 @@ mod tests {
         assert_eq!(dst, vec![0xFFFFFFFFFFFFFFFFu64; 256]);
     }
 
-    // NOT operation tests
     #[test]
     fn test_not_inplace_basic() {
         let mut buf = vec![0xFFFFFFFFFFFFFFFFu64, 0x0000000000000000u64];
@@ -502,7 +383,6 @@ mod tests {
         assert_eq!(buf.len(), 0);
     }
 
-    // Popcount operation tests
     #[test]
     fn test_popcount_basic() {
         let buf = vec![0xFFu64, 0xF0F0F0F0F0F0F0F0u64];
@@ -536,10 +416,6 @@ mod tests {
 mod kani_proofs {
     use super::*;
 
-    /// Verify that xor_inplace matches naive word-by-word XOR.
-    ///
-    /// For symbolic data of length 1-2, the dispatch function must produce
-    /// the same result as simple `dst[i] ^= src[i]`.
     #[kani::proof]
     #[kani::unwind(3)]
     fn xor_equivalence() {
@@ -556,7 +432,6 @@ mod kani_proofs {
             src[i] = kani::any();
         }
 
-        // Naive reference
         for i in 0..len {
             expected[i] ^= src[i];
         }
@@ -568,7 +443,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that and_inplace matches naive word-by-word AND.
     #[kani::proof]
     #[kani::unwind(3)]
     fn and_equivalence() {
@@ -596,7 +470,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that or_inplace matches naive word-by-word OR.
     #[kani::proof]
     #[kani::unwind(3)]
     fn or_equivalence() {
@@ -624,7 +497,6 @@ mod kani_proofs {
         }
     }
 
-    /// Verify that not_inplace matches naive word-by-word NOT.
     #[kani::proof]
     #[kani::unwind(3)]
     fn not_equivalence() {

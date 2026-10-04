@@ -1,15 +1,5 @@
-//! Scalar baseline backend implementation.
-//!
-//! This module provides a portable, pure Rust implementation of all kernel
-//! operations. It serves as the baseline for correctness testing and the
-//! fallback when specialized backends (SIMD, GPU, FPGA) are unavailable.
-//!
-//! # Design
-//!
-//! - **Safety**: No unsafe code
-//! - **Portability**: Works on all platforms
-//! - **Performance**: Hand-unrolled loops for bulk operations
-//! - **Correctness**: Reference implementation for testing
+//! Portable [`Backend`] implementation: the reference for the other backends
+//! and the fallback when none is available.
 
 use crate::kernels::Backend;
 
