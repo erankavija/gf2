@@ -271,7 +271,7 @@ Documentation, campaign, data, presentation, and development references:
 `extract.py`, and `yue2022_fig1_receipt.json` in that directory,
 `dev/simulation_results/fig7_comparison_report.txt`,
 `dev/simulation_results/phase1_comparison_report.md`,
-`dev/simulation_results/phase4_comparison_report.md`, every file under
+`dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md`, every file under
 `dev/simulation_results/osd-ebch-128-64/`,
 `dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md`,
 `dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand/talk.html`,
