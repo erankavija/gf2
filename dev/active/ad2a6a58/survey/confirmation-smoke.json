@@ -1,0 +1,167 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "ad2a6a58-axpy-confirmation-arms-smoke",
+  "issue": "ad2a6a58",
+  "family": "gf256-shipped-axpy-lane",
+  "plan_sha256": "0cc1a21526ccfeab7e0936f6e5f60d19f7c9414f267d626e0d4019db4fcdaa36",
+  "addendum": "dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json",
+  "addendum_sha256": "2a22a6ecefc65fe20d13467b3f23a2a2d05ad0c18647ea019e0435c5c9da31e8",
+  "cells": [
+    {
+      "cell_id": "axpy-4k-element",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "axpy-128k-element",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "axpy-2m-stream-element",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "scalar-element",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0",
+          "windows": 0
+        },
+        {
+          "arm": "table-element",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "axpy-4k-wide",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "axpy-128k-wide",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "axpy-2m-stream-wide",
+      "cache_state": "streaming",
+      "arms": [
+        {
+          "arm": "scalar-wide",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0",
+          "windows": 0
+        },
+        {
+          "arm": "table-wide",
+          "role": "validation",
+          "executable": "target/ad2a6a58-arm/release/gf256-axpy-arm",
+          "executable_sha256": "964da57c6a901770a84cb48546aed50b73ee9d062d64a327295b20ef37be8478",
+          "cache_state_declared": "streaming",
+          "cache_state_applied": "streaming",
+          "selected_path": "gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}
