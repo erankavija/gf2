@@ -3,6 +3,8 @@
 //! target and an order-1 control on the seven `@/citation/Fossorier1994`
 //! abscissas.
 //!
+//! # Options
+//!
 //! `--max-samples` is an additional per-invocation sample bound. Reaching it
 //! records an interrupted cell so a later invocation can continue from the
 //! durable counters. `--target-block-errors` is the cumulative independent

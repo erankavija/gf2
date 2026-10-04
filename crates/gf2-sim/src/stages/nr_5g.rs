@@ -1,10 +1,8 @@
-//! 5G NR LDPC BICM-chain [`Stage`] wrappers (`@/citation/ThreeGpp2017`).
-//!
-//! The stages wrap the `gf2-coding` 5G NR types ([`Nr5gRateMatchedCode`]
-//! encode, [`Nr5gRateMatchedDecoder`] decode, and the
-//! `@/citation/ThreeGpp2020` clause 5.4.2.2
-//! [`interleaver`](gf2_coding::ldpc::nr_5g::interleaver)). Every stage is
-//! `ExecutionClass::CpuOnly` with `CpuFallback = Self` and `Scratch = ()`,
+//! 5G NR LDPC BICM-chain [`Stage`] wrappers (`@/citation/ThreeGpp2017`) over
+//! the `gf2-coding` 5G NR types ([`Nr5gRateMatchedCode`] encode,
+//! [`Nr5gRateMatchedDecoder`] decode, and the `@/citation/ThreeGpp2020` clause
+//! 5.4.2.2 [`interleaver`](gf2_coding::ldpc::nr_5g::interleaver)). Every stage
+//! is `ExecutionClass::CpuOnly` with `CpuFallback = Self` and `Scratch = ()`,
 //! except [`Nr5gDecode`], whose [`Nr5gDecodeScratch`] exposes the per-frame BP
 //! iteration counts.
 

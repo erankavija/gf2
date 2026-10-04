@@ -1,9 +1,8 @@
 //! Runs the DVB-T2 BICM pipeline CPU-only (`with_gpu(false)`) and on the hybrid
 //! CPU+GPU path (`with_gpu(true)`) at one waterfall SNR point and asserts that
 //! `fer` / `frames` / `errors` are byte-identical; `mean_iters` is logged only.
-//! Exits 0 with a notice when no usable GPU is present.
-//!
-//! Run with: `cargo run -p gf2-sim --example gpu_hybrid --features hip --release`
+//! Exits 0 with a notice when no usable GPU is present. Run with
+//! `cargo run -p gf2-sim --example gpu_hybrid --features hip --release`.
 
 #[cfg(not(feature = "hip"))]
 fn main() {

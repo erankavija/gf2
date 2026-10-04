@@ -1,12 +1,10 @@
-//! DVB-T2 codec and modem [`Stage`] wrappers.
-//!
-//! The stages wrap the `gf2-coding` types [`DvbT2Concat`], [`GrayQamMapper`],
-//! [`FastGrayQamDemapper`] and [`DvbT2BitInterleaver`];
-//! [`dvb_t2_bicm_stages`] wires them in BICM order: encode → bit-interleave →
-//! QAM-map → (channel) → QAM-demap → bit-deinterleave → decode. Every stage is
-//! `ExecutionClass::CpuOnly` with `CpuFallback = Self` and `Scratch = ()`,
-//! except [`DvbT2Decode`], whose [`DecodeScratch`] exposes the per-frame LDPC
-//! BP iteration counts.
+//! DVB-T2 codec and modem [`Stage`] wrappers over the `gf2-coding` types
+//! [`DvbT2Concat`], [`GrayQamMapper`], [`FastGrayQamDemapper`] and
+//! [`DvbT2BitInterleaver`]; [`dvb_t2_bicm_stages`] wires them in BICM order:
+//! encode → bit-interleave → QAM-map → (channel) → QAM-demap → bit-deinterleave
+//! → decode. Every stage is `ExecutionClass::CpuOnly` with `CpuFallback = Self`
+//! and `Scratch = ()`, except [`DvbT2Decode`], whose [`DecodeScratch`] exposes
+//! the per-frame LDPC BP iteration counts.
 
 pub mod nr_5g;
 

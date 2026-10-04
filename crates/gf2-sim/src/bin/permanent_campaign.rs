@@ -1,5 +1,7 @@
 //! Execute one exact cell of a permanent-zero-fraction campaign.
 //!
+//! # Usage
+//!
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
 //! `--dry-run-schedule` resolves the same selector and validates the

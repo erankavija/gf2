@@ -1,12 +1,13 @@
-//! `gf2-sim`: CPU and GPU FEC simulation pipeline.
+//! `gf2-sim`: CPU and GPU FEC simulation pipeline. [`Pipeline`], [`Stage`] and
+//! [`Connector`] compose the codes, modems and channels of `gf2-coding` into a
+//! parallel, seeded simulation. The typestate [`presets`]
+//! ([`Pipeline::dvb_t2`], [`Pipeline::nr_5g`]) build the standard chains with
+//! the builder order checked at compile time; [`graph::Chain`] wires an
+//! arbitrary DAG of [`Stage`]s. [`Pipeline::run`] drives a DVB-T2 BICM SNR
+//! sweep and [`TopologyExecutor::run`] drives one batch through any built
+//! pipeline.
 //!
-//! [`Pipeline`], [`Stage`] and [`Connector`] compose the codes, modems and
-//! channels of `gf2-coding` into a parallel, seeded simulation. The typestate
-//! [`presets`] ([`Pipeline::dvb_t2`], [`Pipeline::nr_5g`]) build the standard
-//! chains with the builder order checked at compile time; [`graph::Chain`]
-//! wires an arbitrary DAG of [`Stage`]s. [`Pipeline::run`] drives a DVB-T2
-//! BICM SNR sweep and [`TopologyExecutor::run`] drives one batch through any
-//! built pipeline.
+//! # Examples
 //!
 //! ```no_run
 //! use std::num::NonZeroUsize;

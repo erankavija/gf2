@@ -1,11 +1,9 @@
-//! Graph-based chain construction API.
-//!
-//! A caller [`Chain::add`]s type-erased stages, [`Chain::connect`]s producers
-//! to consumers with a runtime type check, optionally registers GPU→CPU
-//! fallbacks ([`Chain::register_fallback`]), and [`Chain::build`]s a
-//! [`Pipeline`] whose stage list is a topological order of the DAG. A stage
-//! may have several outgoing and several incoming edges. [`Chain::build`]
-//! lists the conditions it checks under its `# Errors`.
+//! Graph-based chain construction API: a caller [`Chain::add`]s type-erased
+//! stages, [`Chain::connect`]s producers to consumers with a runtime type
+//! check, optionally registers GPU→CPU fallbacks
+//! ([`Chain::register_fallback`]), and [`Chain::build`]s a [`Pipeline`] whose
+//! stage list is a topological order of the DAG. A stage may have several
+//! outgoing and several incoming edges.
 
 use std::collections::{HashMap, HashSet, VecDeque};
 

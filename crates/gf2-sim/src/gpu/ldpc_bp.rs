@@ -1,8 +1,9 @@
-//! GPU LDPC belief-propagation decode stage (`feature = "hip"`).
+//! GPU LDPC belief-propagation decode stage (`feature = "hip"`): `GpuLdpcBp`
+//! runs the flooding belief-propagation schedule of the CPU
+//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder) on the `gf2-kernels-hip` LDPC
+//! BP kernel and emits the `n`-bit hard-decision codeword per frame.
 //!
-//! `GpuLdpcBp` runs the flooding belief-propagation schedule of the CPU
-//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder) on the `gf2-kernels-hip`
-//! LDPC BP kernel and emits the `n`-bit hard-decision codeword per frame.
+//! # Edge layout
 //!
 //! The device layout is the canonical
 //! [`EdgeLayout`](gf2_coding::ldpc::EdgeLayout) of an expanded

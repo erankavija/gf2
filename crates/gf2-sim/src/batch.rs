@@ -1,6 +1,5 @@
-//! Batch types exchanged between the DVB-T2 BICM [`stages`](crate::stages).
-//!
-//! A batch holds independent FEC frames, one per outer-`Vec` element;
+//! Batch types exchanged between the DVB-T2 BICM [`stages`](crate::stages). A
+//! batch holds independent FEC frames, one per outer-`Vec` element;
 //! [`BatchSize::batch_size`] returns the frame count.
 
 use gf2_coding::Llr;

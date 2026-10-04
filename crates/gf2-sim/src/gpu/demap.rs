@@ -1,10 +1,8 @@
-//! GPU Gray-QAM soft-demap stage (`feature = "hip"`).
+//! GPU Gray-QAM soft-demap stage (`feature = "hip"`): `GpuGrayQamDemapper`
+//! wraps the `gf2-kernels-hip` max-log demap kernel as a
+//! [`Stage<SymbolBatch, LlrBatch>`](crate::Stage).
 //!
-//! `GpuGrayQamDemapper` wraps the `gf2-kernels-hip` max-log demap kernel as a
-//! [`Stage<SymbolBatch, LlrBatch>`](crate::Stage). A stage built for
-//! `ExactLogMap` reports
-//! [`ExecutionClass::CpuOnly`](crate::stage::ExecutionClass) and runs on its CPU
-//! fallback, `CpuGrayQamDemapper`.
+//! # LLR layout
 //!
 //! The GPU kernel and the CPU
 //! [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper) emit LLRs in
