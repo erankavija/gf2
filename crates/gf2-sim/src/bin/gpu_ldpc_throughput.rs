@@ -1,35 +1,9 @@
-//! GPU LDPC belief-propagation decode-stage throughput benchmark (issue
-//! `a930be7f`, parallelism-pays receipt).
-//!
-//! Measures **decode-stage** frames/second for the DVB-T2 r1/2 (n = 64800)
-//! LDPC code at a waterfall operating point (sigma = 0.80, mean BP ~25.7
-//! iterations — matching the `3fcb7025` full-chain mean_iters ~25.24),
-//! decode-vs-decode (the user-approved 2026-06-09 apples-to-apples
-//! amendment): the GPU
-//! [`GpuLdpcBp`](gf2_sim::gpu::ldpc_bp::GpuLdpcBp) decode kernel (H2D + BP
-//! iterations + D2H, per-worker-owned device decoder) against the CPU
-//! [`LdpcDecoder::decode_to_codeword`](gf2_coding::ldpc::LdpcDecoder) decode
-//! stage measured in isolation, at 1 thread and 24 threads. SumProduct,
-//! early-termination on — matching the gate config.
-//!
-//! Full-frame baselines (`c0b1702d` 1.6216 fps single-thread / `3fcb7025`
-//! 21.44 fps 24-thread) are printed for CONTEXT only; the gate is decode-vs-decode.
-//!
-//! Manually invoked (not a nextest test). Without `--features hip` it prints a
-//! notice and exits 0. The target carries `required-features = ["test-support"]`
-//! (Cargo.toml) because the deterministic AWGN LLR population comes from the
-//! shared `gf2_sim::testutil::AwgnLlrSource` (SSOT; review F3, jit:23d3525f) —
-//! bit-identical draw sequence to the generator this bin originally inlined,
-//! so the per-seed frame population (and the attested receipt numbers) are
-//! unchanged.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features hip,test-support \
-//!     --bin gpu_ldpc_throughput -- \
-//!     --frames 200 --repeats 3 --max-iters 50
-//! ```
+//! Measures LDPC decode-stage frames per second for the DVB-T2 rate-1/2
+//! (n = 64800) code at a waterfall operating point: the GPU
+//! [`GpuLdpcBp`](gf2_sim::gpu::ldpc_bp::GpuLdpcBp) batch decode against the CPU
+//! [`LdpcDecoder::decode_to_codeword`](gf2_coding::ldpc::LdpcDecoder) at one
+//! thread and at the rayon pool size, SumProduct with early termination.
+//! Without `--features hip` the binary prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -84,11 +58,7 @@ mod imp {
             i += 1;
         }
 
-        // Waterfall operating point for DVB-T2 r1/2 (all-zero-codeword BPSK):
-        // sigma = 0.80 yields mean BP depth ~25.7 iterations with successful
-        // decode, matching the `3fcb7025` full-chain mean_iters ~25.24 so the
-        // decode-vs-decode comparison exercises a realistic iteration count
-        // (not the trivial 1-iteration clean-channel case).
+        // Waterfall operating point for DVB-T2 r1/2 (all-zero codeword, BPSK).
         let sigma = 0.80f64;
         let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
         let n = code.n();
@@ -98,14 +68,9 @@ mod imp {
         println!("# config: DVB-T2 r1/2 n={n}, SumProduct, early-term on, waterfall sigma={sigma:.4} (mean BP ~25.7 iters)");
         println!("# frames={frames} repeats={repeats} max_iters={max_iters} seed={SEED:#x}");
 
-        // Pre-generate the frame population once (shared by all paths) from the
-        // shared deterministic AWGN LLR source (testutil SSOT, review F3) —
-        // bit-identical draw sequence to the original in-file generator, so the
-        // per-seed frame population (and the receipt numbers) are unchanged.
         let mut src = AwgnLlrSource::new(SEED);
         let llr_frames: Vec<Vec<Llr>> = (0..frames).map(|_| src.frame_all_zero(n, sigma)).collect();
 
-        // ---- GPU decode-stage throughput (batch all frames per launch) ----
         let stage = GpuLdpcBp::new(code.clone(), config, max_iters);
         let decoder = stage.build_decoder(frames).expect("build GPU LDPC decoder");
         let batch = LlrBatch::new(llr_frames.clone());
@@ -119,7 +84,6 @@ mod imp {
         }
         let (gpu_mean, gpu_sigma) = mean_sigma(&gpu_fps);
 
-        // ---- CPU single-thread decode-stage throughput ----
         let mut cpu1_fps = Vec::new();
         for _ in 0..repeats {
             let mut dec = LdpcDecoder::with_config(code.clone(), config);
@@ -135,14 +99,7 @@ mod imp {
         }
         let (cpu1_mean, cpu1_sigma) = mean_sigma(&cpu1_fps);
 
-        // ---- CPU 24-thread decode-stage throughput (rayon batch) ----
-        //
-        // Mirrors `LdpcDecoder::decode_batch_with_config`'s `parallel`-feature
-        // body (a `par_iter` of per-frame `with_config` decoders) but drives the
-        // rayon pool from `gf2-sim` (which depends on `rayon`) directly, so the
-        // 24-thread number is genuine even though `gf2-sim` does not enable
-        // `gf2-coding/parallel`. The thread count is the rayon global pool size
-        // (24 on this 12C/24T host), reported below.
+        // Drives rayon directly: `gf2-sim` does not enable `gf2-coding/parallel`.
         use rayon::prelude::*;
         let threads = rayon::current_num_threads();
         let mut cpu24_fps = Vec::new();

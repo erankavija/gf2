@@ -1,36 +1,11 @@
-//! Production runner for the independent importance-sampling cross-check.
-//!
-//! The binary takes exactly one argument: the repository-relative path of the
-//! frozen configuration. It decodes that configuration, delegates the whole run
-//! to [`gf2_sim::permanent_rare_event::runner`], and maps the returned status
-//! onto an exit code. Proposal, weighting, interval, effective-sample-size, and
-//! artifact-lifecycle logic all live in the library.
-//!
-//! # Where a frozen configuration comes from
-//!
-//! A frozen configuration is authored to the schema the preregistered design
-//! `dev/active/3f664839/design.md` fixes, and reaches this binary only through
-//! [`decode_configuration`], which refuses a non-canonical encoding, an unknown
-//! schema, or any field outside that closed grammar. The issue that executes a
-//! campaign commits its frozen configuration before its first draw, so every
-//! artifact the run publishes cites immutable preregistered bytes by path and
-//! digest.
-//!
-//! This issue builds and exercises the estimator and its runner rather than
-//! executing a campaign, so it deliberately commits no frozen configuration of
-//! its own. The example below therefore carries a placeholder rather than a
-//! configuration path: no committed file answers to it. The design path cited
-//! above is committed and resolves.
+//! Runner for the independent importance-sampling cross-check. Its one argument
+//! is the repository-relative path of a frozen configuration in the schema of
+//! the preregistered design `dev/active/3f664839/design.md`; the run is
+//! [`gf2_sim::permanent_rare_event::runner`].
 //!
 //! `RAYON_NUM_THREADS` declares the worker count. `GF2_RARE_EVENT_BLOCK_BUDGET`
-//! optionally bounds one invocation to that many checkpoint blocks; the run is
-//! resumable, so the next invocation continues from the published prefix.
-//!
-//! ```text
-//! RAYON_NUM_THREADS=8 GF2_RARE_EVENT_BLOCK_BUDGET=64 \
-//!     cargo run -p gf2-sim --release --bin permanent_rare_event -- \
-//!     <repository-relative path of the frozen configuration>
-//! ```
+//! optionally bounds one invocation to that many checkpoint blocks; the next
+//! invocation continues from the published prefix.
 //!
 //! Exit codes: `0` the dataset is complete, `10` durable progress was published
 //! and blocks remain, `2` the argument vector is not one configuration path,
@@ -41,11 +16,8 @@ use std::process::ExitCode;
 use gf2_sim::permanent_rare_event::artifact::decode_configuration;
 use gf2_sim::permanent_rare_event::runner::{execute_frozen_run, RunError, RunStatus};
 
-/// Exit code reporting that blocks remain for a following bounded run.
 const EXIT_INCOMPLETE: u8 = 10;
-/// Exit code reporting a refusal.
 const EXIT_REFUSED: u8 = 1;
-/// Exit code reporting an argument vector that is not one configuration path.
 const EXIT_USAGE: u8 = 2;
 
 fn main() -> ExitCode {
@@ -64,7 +36,6 @@ fn main() -> ExitCode {
     }
 }
 
-/// Decodes the frozen configuration and delegates the run to the library.
 fn run(configuration_path: &str) -> Result<RunStatus, RunError> {
     let bytes = std::fs::read(configuration_path)?;
     let configuration = decode_configuration(&bytes)?;

@@ -1,29 +1,7 @@
-//! Hybrid CPU+GPU pipeline throughput benchmark (issue `75c22fa8`,
-//! parallelism-pays receipt).
-//!
-//! Measures end-to-end **full-frame** frames/second for the calibration chain
-//! (DVB-T2 r1/2 16-QAM, FrameSize::Normal n=64800) at a deep-waterfall Es/N0,
-//! three ways:
-//!
-//! * **CPU 1-thread** — the CPU-only pipeline path (`with_gpu(false)`,
-//!   parallelism = 1): the single-thread full-frame baseline (context).
-//! * **CPU 24-thread** — the CPU-only pipeline path at the host thread count:
-//!   the gate's divisor (the `3fcb7025` 21.44 fps baseline lives here).
-//! * **CPU+GPU hybrid** — the hybrid scheduler (`with_gpu(true)`): each worker
-//!   prepares the next batch on the CPU while the GPU LDPC-decodes the current
-//!   batch, with the heavy decode off the CPU critical path.
-//!
-//! The gate (criterion 2): combined CPU+GPU ≥ 1.5× the CPU-24-thread baseline.
-//!
-//! Manually invoked (not a nextest test). Without `--features hip` it prints a
-//! notice and exits 0.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features hip --bin hybrid_throughput -- \
-//!     --frames 240 --repeats 3 --es-n0 6.0
-//! ```
+//! Measures full-frame frames per second of the DVB-T2 rate-1/2 16-QAM Normal
+//! chain three ways: the CPU-only pipeline at one worker, the CPU-only pipeline
+//! at the rayon pool size, and the hybrid CPU+GPU scheduler (`with_gpu(true)`).
+//! Without `--features hip` the binary prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -52,8 +30,6 @@ mod imp {
     use gf2_sim::Pipeline;
 
     const SEED: u64 = 0x75C2_2FA8_C0DE;
-    // The `3fcb7025` canonical CPU baselines (printed for context / the gate
-    // divisor): single-thread headline 1.6216 fps, 24-thread 21.44 fps.
     const CPU_1T_HEADLINE_FPS: f64 = 1.6216;
     const CPU_24T_BASELINE_FPS: f64 = 21.44;
 
@@ -130,23 +106,18 @@ mod imp {
         );
         println!("# frames={frames} repeats={repeats} seed={SEED:#x} host_threads={threads}");
 
-        // Host quietness diagnostic (a loaded host UNDERSTATES throughput and
-        // invalidates the receipt).
         if let Ok(la) = std::fs::read_to_string("/proc/loadavg") {
             println!("# /proc/loadavg: {}", la.trim());
         }
 
-        // ---- CPU 1-thread (context baseline) ----
         let cpu1 = build(1, false, es_n0, frames);
         let (cpu1_fps, cpu1_fer) = time_run(&cpu1, frames, repeats);
         let (cpu1_mean, cpu1_sigma) = mean_sigma(&cpu1_fps);
 
-        // ---- CPU 24-thread (gate divisor) ----
         let cpu24 = build(threads, false, es_n0, frames);
         let (cpu24_fps, cpu24_fer) = time_run(&cpu24, frames, repeats);
         let (cpu24_mean, cpu24_sigma) = mean_sigma(&cpu24_fps);
 
-        // ---- CPU+GPU hybrid ----
         let hybrid = build(threads, true, es_n0, frames);
         let (hyb_fps, hyb_fer) = time_run(&hybrid, frames, repeats);
         let (hyb_mean, hyb_sigma) = mean_sigma(&hyb_fps);

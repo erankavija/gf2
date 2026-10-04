@@ -1,26 +1,9 @@
 //! Inspect, checksum, conform, and verify a published permanent-zero-fraction dataset.
 //!
-//! This is the reader- and finalization-side tool for the dataset described in
-//! `dev/simulation_results/permanent-zero-fraction/README.md`. It exists so the
-//! source-identity guard and the integrity layer are runnable by hand, and so
-//! runtime-observed provenance is carried by a real executable rather than
-//! only by the library that any executable links.
-//!
-//! The `gf2-sim` library owns reusable campaign scheduling, admission,
-//! sampling orchestration, and receipt persistence. `permanent_campaign` is a
-//! thin compiled CLI adapter that invokes one exact-cell transaction. This
-//! reader binary has no sampler, backend selection, or accumulator, and it
-//! never creates or mutates a dataset file: `checksums`
-//! prints to standard output rather than writing `checksums.sha256`, so the
-//! executable has no write path into a dataset at all.
-//!
-//! ```console
-//! $ permanent_dataset revision
-//! $ permanent_dataset emission-check <campaign-directory> [emitter-path]
-//! $ permanent_dataset checksums <campaign-directory> > <campaign-directory>/checksums.sha256
-//! $ permanent_dataset conform <campaign-directory>
-//! $ permanent_dataset verify <campaign-directory>
-//! ```
+//! The dataset is described in
+//! `dev/simulation_results/permanent-zero-fraction/README.md`. This binary
+//! never creates or mutates a dataset file: `checksums` prints to standard
+//! output.
 //!
 //! `revision` prints the repository-wide revision observed at command start as
 //! provenance context.
