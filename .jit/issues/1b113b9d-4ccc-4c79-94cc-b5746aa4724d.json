@@ -11,33 +11,25 @@
       "doc_type": null,
       "format": "markdown",
       "label": "Investigation: wave-parallel GPU kernels (0de41c82)",
-      "path": "dev/active/0de41c82/investigation.md"
+      "path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
     },
     {
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "926051cdd017ca00d2fc05a79be9f6fcb3416326d38f566e3e5412d55b411ff8",
+          "content_hash": "a24f9c0fe3fdb09edffbbce786f938969a0bdc4f45281fbd5e56c9b46e696c5c",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "investigation.md",
-          "resolved_path": "dev/active/0de41c82/investigation.md"
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "c0dd046901b2ad942af4c6d4c65ae572fbe84728917e3f01f58b2b21cb2d2190",
+          "content_hash": "2f552ccae367a32062da4b74bed88d0e2d4f5ff186984df04987ef2fc1d19df5",
           "is_shared": false,
           "mime_type": null,
           "original_path": "breakdown.json",
-          "resolved_path": "dev/active/0de41c82/breakdown.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "05f4a9190ff76ca63033466b86a7a696754e2dbfbdd958df66720e53bb5dd59b",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../studies/b488f02c/feasibility-study.md",
-          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/breakdown.json"
         },
         {
           "asset_type": "local",
@@ -45,21 +37,29 @@
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "bipedal-f5-f7-representation-study.md",
-          "resolved_path": "dev/active/0de41c82/bipedal-f5-f7-representation-study.md"
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a92109f9f7f11c8409e8f784a2274828c8c6f14cf005b7d1dafa811848e8b241",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../../studies/b488f02c/feasibility-study.md",
+          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
         }
       ],
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Plan: wave-parallel GPU kernels (0de41c82)",
-      "path": "dev/active/0de41c82/plan.md"
+      "path": "dev/active/b8206228-permanent-statistics/0de41c82/plan.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Breakdown manifest: wave-parallel GPU kernels (0de41c82)",
-      "path": "dev/active/0de41c82/breakdown.json"
+      "path": "dev/active/b8206228-permanent-statistics/0de41c82/breakdown.json"
     }
   ],
   "done_at": "2026-08-09T11:01:29.235506363Z",
@@ -85,5 +85,5 @@
   "priority": "high",
   "state": "done",
   "title": "Plan the wave-parallel GPU kernel evaluation breakdown",
-  "updated_at": "2026-10-01T22:41:16.557172857Z"
+  "updated_at": "2026-10-04T20:00:42.228735496Z"
 }

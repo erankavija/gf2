@@ -14,7 +14,7 @@
       "doc_type": null,
       "format": "markdown",
       "label": "Red-first behavioral evidence",
-      "path": "dev/active/41c3d91d/tdd-red-evidence.md"
+      "path": "dev/active/b8206228-permanent-statistics/41c3d91d/tdd-red-evidence.md"
     }
   ],
   "done_at": "2026-08-16T00:12:51.969502576Z",
@@ -51,5 +51,5 @@
   "priority": "high",
   "state": "done",
   "title": "Campaign driver scheduling and shard emission",
-  "updated_at": "2026-10-01T22:41:25.607980581Z"
+  "updated_at": "2026-10-04T20:00:42.344115533Z"
 }

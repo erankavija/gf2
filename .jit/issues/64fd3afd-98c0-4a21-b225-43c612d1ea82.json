@@ -12,26 +12,26 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
+          "content_hash": "e8cfea52e20fc1d562ea22ea3936b5a1ebd709b51b446b03184e749ef36b8e1a",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/extension-design.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
+          "original_path": "../plan.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "eb0391b0d4692911de0b3d41facb2ea08756010132904e22802ff53d3a5a89d5",
+          "content_hash": "aef9f6ce1c2e57de466fc2736ac006263afb08611c83a767b197e7b7bed15560",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../ae03bcd0-general-bch/plan.md",
-          "resolved_path": "dev/active/ae03bcd0-general-bch/plan.md"
+          "original_path": "../extension-design.md",
+          "resolved_path": "dev/active/ae03bcd0-general-bch/extension-design.md"
         }
       ],
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Formal-proof sketch: algebraic foundations",
-      "path": "dev/active/64fd3afd/proof-sketch.md"
+      "path": "dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md"
     }
   ],
   "done_at": "2026-09-01T16:12:47.805870501Z",
@@ -62,5 +62,5 @@
   "priority": "high",
   "state": "done",
   "title": "Author the formal-proof sketch for the algebraic foundations",
-  "updated_at": "2026-10-01T22:41:33.666759992Z"
+  "updated_at": "2026-10-04T20:00:42.909999695Z"
 }

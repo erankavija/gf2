@@ -13,83 +13,11 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "838d60a8bd793b455a273aea2619f7ebbf7e7ed4314d722f01869103153524d7",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../6c7fcb38/receipts.md",
-          "resolved_path": "dev/studies/6c7fcb38/receipts.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "4171c01aa577acdcb99e88102a2e02ca67147e24bb1bf0e03ab29329e1650955",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../a9284086/receipt.md",
-          "resolved_path": "dev/studies/a9284086/receipt.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9f92c2c9d087d2d335d3c882e0c65dbd4f89ae3e1e8eb9f368f73a384b617dc3",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../active/0de41c82/bipedal-f5-f7-representation-study.md",
-          "resolved_path": "dev/active/0de41c82/bipedal-f5-f7-representation-study.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "36ec09025cea4e0adc9a59fc3a10e53ecadd4c637d864a2b3f1c1b2db6c7674f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md",
-          "resolved_path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "c4cf1286042a594b62fc4c4f5b96cf29fc30250e72c560bae63e208caec806a1",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../research/permanent_wave_gpu/hip/wave_ryser_mapping.h",
-          "resolved_path": "dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "941e0ed6fe06907e20f60a9d7697f0a9519853d36f558b191a0aea7062038b3c",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../91605d4d/receipts.md",
-          "resolved_path": "dev/studies/91605d4d/receipts.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "19aa47b2953f5f1fe575a21d82d131bb2cba65cde45e2019fa6524d6c7f883d0",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../simulation_results/permanent-zero-fraction/protocol.md",
-          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9b650e0dc744126c508a6c5c540b851dce88d55ee66a8c70f6877fde8f5fe893",
+          "content_hash": "db3e64563356696d8664229080842bb97d9aa4ad03b0f4d551f62f0910409caa",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../../../crates/gf2-kernels-hip/src/host/mod.rs",
           "resolved_path": "crates/gf2-kernels-hip/src/host/mod.rs"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "32c971e8d062e96b21a204dea507c9d0603e9476ceafcf124c67a01a5e74727c",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "req08-amendment-draft.md",
-          "resolved_path": "dev/studies/0dffa759/req08-amendment-draft.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "88f0519cb7a2464ca4b01833c537b534222fcfbbb0127626ad165f3407ee72a1",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../active/0de41c82/plan.md",
-          "resolved_path": "dev/active/0de41c82/plan.md"
         },
         {
           "asset_type": "local",
@@ -101,11 +29,43 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../simulation_results/permanent-zero-fraction/protocol.md",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "941e0ed6fe06907e20f60a9d7697f0a9519853d36f558b191a0aea7062038b3c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../91605d4d/receipts.md",
+          "resolved_path": "dev/studies/91605d4d/receipts.md"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://arxiv.org/abs/2407.20205",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
           "content_hash": "708bd7cf18b372ed2c56dfb41cf93c33bbdc3c0e9476c56f626adcee7826c882",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../research/permanent_wave_gpu/README.md",
           "resolved_path": "dev/research/permanent_wave_gpu/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5f1b35e6297d49d93129059c774fa112b3626ff25004dadbc71081d00af23841",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "req08-amendment-draft.md",
+          "resolved_path": "dev/studies/0dffa759/req08-amendment-draft.md"
         },
         {
           "asset_type": "local",
@@ -117,11 +77,67 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "926051cdd017ca00d2fc05a79be9f6fcb3416326d38f566e3e5412d55b411ff8",
+          "content_hash": "9f92c2c9d087d2d335d3c882e0c65dbd4f89ae3e1e8eb9f368f73a384b617dc3",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../active/0de41c82/investigation.md",
-          "resolved_path": "dev/active/0de41c82/investigation.md"
+          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c4cf1286042a594b62fc4c4f5b96cf29fc30250e72c560bae63e208caec806a1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../research/permanent_wave_gpu/hip/wave_ryser_mapping.h",
+          "resolved_path": "dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "48af4cc98a6a470f34f0405812f7a6787805a92b9799852c7c9fba73b4ae2ef6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "rng-provenance-addendum.md",
+          "resolved_path": "dev/studies/0dffa759/rng-provenance-addendum.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4171c01aa577acdcb99e88102a2e02ca67147e24bb1bf0e03ab29329e1650955",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../a9284086/receipt.md",
+          "resolved_path": "dev/studies/a9284086/receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6789e9f9ee4974d626b995972f63f2254be181cfa52141568d645f659524d222",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md",
+          "resolved_path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "09981b3a8e9101dbbd55671dc00422f31699063786a4928a444e093dabe51b0e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/plan.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a24f9c0fe3fdb09edffbbce786f938969a0bdc4f45281fbd5e56c9b46e696c5c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/investigation.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9a659727a7493f6d7e2f3726d16bfb6801c3fe11a18b1b24e26fb789f0d5d76f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6c7fcb38/receipts.md",
+          "resolved_path": "dev/studies/6c7fcb38/receipts.md"
         }
       ],
       "commit": null,
@@ -134,7 +150,7 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "fe51d81eb0262ea5dc5101da254eae783d45d12d761d73d890d71e0aed116027",
+          "content_hash": "6552f01b4f6f1fb7c3051a897166274fe6ba6c113468763282d18ca625f74231",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "findings.md",
@@ -142,11 +158,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "88f0519cb7a2464ca4b01833c537b534222fcfbbb0127626ad165f3407ee72a1",
+          "content_hash": "09981b3a8e9101dbbd55671dc00422f31699063786a4928a444e093dabe51b0e",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../active/0de41c82/plan.md",
-          "resolved_path": "dev/active/0de41c82/plan.md"
+          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/plan.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/plan.md"
         }
       ],
       "commit": null,
@@ -231,5 +247,5 @@
   "priority": "high",
   "state": "done",
   "title": "Field-by-field go/no-go synthesis with production design",
-  "updated_at": "2026-10-01T22:41:12.760674375Z"
+  "updated_at": "2026-10-04T20:00:43.252214984Z"
 }

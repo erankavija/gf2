@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Migration Plan",
-      "path": "dev/active/150d7d79/150d7d79-toolchain-upgrade.md"
+      "path": "dev/active/86b9c719-quality-documentation-tech-debt/150d7d79/150d7d79-toolchain-upgrade.md"
     }
   ],
   "done_at": "2026-05-31T12:23:37.934440221Z",
@@ -58,5 +58,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Upgrade Charon/Aeneas/Lean verification toolchain to latest compatible upstream",
-  "updated_at": "2026-08-07T21:14:30.395883802Z"
+  "updated_at": "2026-10-04T20:00:42.456855655Z"
 }
