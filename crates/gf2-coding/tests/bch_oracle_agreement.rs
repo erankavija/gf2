@@ -659,7 +659,6 @@ fn both_oracle_fixtures_cover_every_corpus_row() {
     }
 }
 
-/// Asserts that `key` holds a non-empty string.
 fn recorded<'a>(record: &'a Value, key: &str) -> &'a str {
     let value = record[key]
         .as_str()

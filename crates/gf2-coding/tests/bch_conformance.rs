@@ -327,8 +327,6 @@ fn shared_coordinate_set<C: BlockCode>(code: &C) -> Vec<usize> {
     coordinates
 }
 
-/// Returns the message basis of a code, which is the fixture a derived code
-/// carries when its dimension is not the mother's.
 fn basis_messages<C: BlockCode>(code: &C) -> Vec<C::Symbols> {
     let zero = code.symbol_zero();
     let one = zero.one_like();

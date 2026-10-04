@@ -32,7 +32,6 @@ pub struct BinaryRow {
     pub degree: usize,
     /// Primitive polynomial, matching the contract's `prim` column.
     pub modulus: u64,
-    /// Designed distance $\delta$ of the contract row.
     pub designed_distance: u64,
     /// Whether a cell on this row costs enough per iteration to run at ten
     /// flat samples rather than Criterion's default hundred.
@@ -88,7 +87,6 @@ pub const BINARY_ROWS: &[BinaryRow] = &[
     },
 ];
 
-/// True when `GF2_BENCH` is set to anything but `0`.
 pub fn bench_mode() -> bool {
     matches!(std::env::var("GF2_BENCH"), Ok(ref value) if value != "0")
 }
@@ -109,13 +107,10 @@ pub fn build(row: &BinaryRow) -> BinaryBchCode {
     .expect("a narrow-sense construction over the contract's mother field")
 }
 
-/// Seed of binary message `index`: the evidence protocol's seed offset by
-/// the message index, through [`BitVec::random_seeded`].
 pub fn binary_message_seed(index: usize) -> u64 {
     gf2_coding::test_support::BCH_CORPUS_SEED.wrapping_add(index as u64)
 }
 
-/// Message `i` is drawn from [`binary_message_seed`]`(i)`, whatever `count` is.
 pub fn binary_messages(k: usize, count: usize) -> Vec<BitVec> {
     (0..count)
         .map(|index| BitVec::random_seeded(k, binary_message_seed(index)))
@@ -133,7 +128,6 @@ fn fnv1a(values: impl IntoIterator<Item = u64>) -> u64 {
     hash
 }
 
-/// A digest of a cell's output, identical for identical outputs.
 pub trait OutputDigest {
     /// Digests `items` in order, each with its length.
     fn digest(items: &[Self]) -> u64
@@ -158,7 +152,6 @@ impl<F: FiniteField + FieldIdentity> OutputDigest for FieldVec<F> {
     }
 }
 
-/// A digest of a materialized matrix, identical for identical matrices.
 pub trait MatrixDigest {
     /// Digests the shape and every entry in row-major order.
     fn matrix_digest(&self) -> u64;

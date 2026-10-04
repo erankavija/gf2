@@ -37,7 +37,6 @@ const DVB_T2_DESIGNED_DISTANCE: u64 = 25;
 /// mother dimension 65343 less the table's $K_{bch} = 32208$.
 const DVB_T2_SHORTENING: usize = 33135;
 
-/// Packed word boundaries every bit-packed length assertion covers.
 const PACKED_WORD_BOUNDARIES: [usize; 5] = [0, 1, 63, 64, 65];
 
 fn dvb_t2_normal_mother() -> BinaryBchCode {
