@@ -1,7 +1,7 @@
 {
  "epic_id": "fa787f85-f4ed-4f43-be78-cb9ebe5a0f88",
  "epic_short_id": "fa787f85",
- "current_wave": 9,
+ "current_wave": 10,
  "waves": [
   {
    "wave_number": 1,
@@ -702,7 +702,7 @@
      "short_id": "030496bd",
      "title": "Close the sweep with the after census and justification list",
      "classification": "implementation",
-     "status": "in_progress"
+     "status": "done"
     },
     {
      "id": "37099e5b-66ef-44ef-a6ef-a58dafd93c9e",
@@ -730,6 +730,13 @@
   {
    "wave_number": 10,
    "issues": [
+    {
+     "id": "545b113f-1ce5-439b-b91e-4a8fefbc4d79",
+     "short_id": "545b113f",
+     "title": "Reduce multi-section module docs to the comment contract",
+     "classification": "documentation",
+     "status": "pending"
+    },
     {
      "id": "ffc35b8c-5f2a-4a37-8eef-905b362b615d",
      "short_id": "ffc35b8c",
@@ -1387,6 +1394,16 @@
    "id": "3783c4c8",
    "epic": "fa787f85",
    "reason": "dvb_t2_matrices.rs module doc outside story REQ-21 (surfaced pitfall of ee2b0c0c)"
+  },
+  {
+   "id": "545b113f",
+   "epic": "fa787f85",
+   "reason": "module docs beyond one orientation paragraph plus contracts (story REQ-21), found by the lead's pre-gate scan"
+  },
+  {
+   "id": "10a729d3",
+   "epic": "b4b4b9ee",
+   "reason": "planned work removed by 66858db0"
   }
  ],
  "escalations": [
@@ -1576,6 +1593,17 @@
    ],
    "recommendation": "first option: one owner for the renderer while its issue is open",
    "resolution": null
+  },
+  {
+   "issue": "bfb37a21",
+   "question": "OPEN: how is the library-first-generality exception of bch/dvb_t2/mod.rs recorded, now that its @/issue/1a8f6acd citation is gone from Rustdoc?",
+   "options": [
+    "record the exception on issue 1a8f6acd",
+    "restore a citation in source by an owner DEC",
+    "accept that it is recorded nowhere"
+   ],
+   "recommendation": "first option",
+   "resolution": null
   }
  ],
  "rework_counts": {
@@ -1726,6 +1754,11 @@
    "issue": "9f47bb94",
    "finding": "scripts/asm-artefact-present.sh fails for comment-only edits to x86 sources (no asm.txt change); it is a separate gate, not part of cargo-ci or the sweep units.",
    "disposition": "informational"
+  },
+  {
+   "issue": "ffc35b8c",
+   "finding": "42 module docs under crates/ exceed twelve lines; bch/encode.rs (189 lines, eight sections), gfpn/quotient.rs, bch/spec.rs, kernels-simd bch_encode.rs, bch/mod.rs and io/field_matrix.rs hold walk-throughs and surveys. Story REQ-21 names module docs.",
+   "disposition": "filed 545b113f under ffc35b8c; must close before the story gate"
   }
  ],
  "notes": [
@@ -1759,7 +1792,8 @@
   "Session 5 ended by owner request (2026-10-04) with handoff-4.md. Wave D is merged; cargo-ci last recorded as failed at caa4b7929 (clippy collapsible_if); the fix 445b6169c is on main and workspace clippy and fmt pass there; cargo-ci has not been re-run. The wave D review batch was stopped: all six doc-reviews failed on the cargo-ci evidence, with content findings on 13dfe1a5 (tests/nr5g_regression.rs:96), c6aa0e84 (bench_seed.rs:53 panic contracts, :167 density threshold statement) and f2064e90 (field/matrix.rs:19 tautological Rustdoc); code-reviews did not complete. Wave E branches worktree-agent-eba21481 (c48da77e6) and worktree-agent-50201002 (6769bb2d0) are complete, clippy-clean and unmerged. SageMath2025 (10.8), Hinnant2021 and Lentmaier2010a are registered.",
   "Session 6 (2026-10-04): wave E merged (70fea53e9, 4e6327377). Fix lane 5 (39a68b205) and fix lane 6 (merge 'second wave 8 review fix lane') reworked the wave D and E review findings; cargo-ci passed on each merged tree and was reused with evaluate-many. Done with all gates passed: 8f451167, c6aa0e84, f2064e90, aa0558c1, 72768e37, eba21481, 50201002, 554c2935. 13dfe1a5 is the only open sweep unit: doc-review passes, code-review fails on four pub-helper docs after rework 2 of 2 (open escalation). 030496bd, ffc35b8c and every later wave wait on it. The binding rule pair that passed five units: a doc on a private item that echoes its name is deleted; a pub item keeps one line that states something the name and signature do not. Each unit's planned-work audit (every deleted comment line of every tagged commit, matched to tracker ids named in a commit body) is in the fix-lane commit bodies 2d0ef6c17, 3925d9b08, eab90716f, 2b1d4dc55, 0f5e71c7f, 612d4e93e. 554c2935: record rewritten to the current state (2223efcc3); the generator gained section 5 (key to citing files for address-only works); three gf2-core bench headers lost a SageMath2026 key that did not match the script's recorded version (lead commit tagged jit:eba21481); scripts/sage_benchmarks.py:298 hard-codes sage_version 10.7 in its output. Lead commit a747d0fdc removed the scipy routine name from tests/channel_capacity.rs. For the 030496bd record: sweep-pattern comment hits in crates/ are five lines of gf2-sim/src/executor/topology.rs where 'wave' is scheduler vocabulary; narration in string literals is tracked by de0528d2. Worker-reported, unfiled: pub items that never had Rustdoc (BaselineCellResult fields, six pub fn run() in gf2-sim binaries, 15 items in gf2-coding tests); gfp/mod.rs:63 calls the const-assertion failure of Fp<P> a construction panic. Any later edit to Rust comments shifts the line numbers in 554c2935-citation-map.txt: rerun the record's command and commit the output before the ffc35b8c story gate.",
   "Session 7 (2026-10-04): owner interviewed on the open points; rulings are in escalations. Wave 8 gains 157c305c (pulled in) and 4b8cebcf (new); they and rework 3 of 13dfe1a5 run before the 030496bd census. Owner instruction for this session: subagent model by task difficulty, no fable; watch net-negative line change; review the documentation invariants rigorously.",
-  "Session 7: wave 8 closed (13dfe1a5 rework 3, 157c305c, 4b8cebcf, 3783c4c8; merges 05c8002f0, e6f9381e9, 05fb3c877 and the 4b8cebcf merge; cargo-ci forced once at 9c1a6662d). Owner instruction 2026-10-04 (standing): never stop to ask; an issue needing owner input is blocked and its question recorded in escalations; write the handoff after waves 8 and 9 finish or when only owner-blocked work remains; check workers every 30 min. 157c305c finding: the earlier doc reason (atanh divergence) was false, Llr::boxplus_n clamps the tanh product; a probe found identical decoding with an infinite filler prior, so whether FILLER_LLR must be finite is unsettled (variable_node_update at ldpc/core.rs:746 could give NaN on a min-sum check with all other inputs infinite; unproven). Out-of-scope narration in string literals at examples/dvb_t2_ldpc_basic.rs:23-36 belongs to de0528d2."
+  "Session 7: wave 8 closed (13dfe1a5 rework 3, 157c305c, 4b8cebcf, 3783c4c8; merges 05c8002f0, e6f9381e9, 05fb3c877 and the 4b8cebcf merge; cargo-ci forced once at 9c1a6662d). Owner instruction 2026-10-04 (standing): never stop to ask; an issue needing owner input is blocked and its question recorded in escalations; write the handoff after waves 8 and 9 finish or when only owner-blocked work remains; check workers every 30 min. 157c305c finding: the earlier doc reason (atanh divergence) was false, Llr::boxplus_n clamps the tanh product; a probe found identical decoding with an infinite filler prior, so whether FILLER_LLR must be finite is unsettled (variable_node_update at ldpc/core.rs:746 could give NaN on a min-sum check with all other inputs infinite; unproven). Out-of-scope narration in string literals at examples/dvb_t2_ldpc_basic.rs:23-36 belongs to de0528d2.",
+  "Session 7 end: wave 9 closed (030496bd, all gates passed first run; merge of worktree-agent-030496bd without rebase because the record's measured commit 1078dc1a5 is on that branch). Wave 10 is 545b113f, then the ffc35b8c story gate. 545b113f REQ-05 regenerates the 030496bd outputs. Scan command for long module docs is in handoff-6.md."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
