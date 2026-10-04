@@ -50,10 +50,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:27:06.842443091Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:44:49.036834918Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:47:48.470172524Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:21.488286175Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T20:40:36.584237934Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "3759f995-edc4-4061-8b45-0ec30078a691",
@@ -67,5 +82,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
-  "updated_at": "2026-10-04T20:23:35.803004851Z"
+  "updated_at": "2026-10-04T20:47:48.470172524Z"
 }

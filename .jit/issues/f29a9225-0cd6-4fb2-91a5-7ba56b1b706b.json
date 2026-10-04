@@ -68,10 +68,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:25:58.046557848Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:36:43.872027696Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:40:32.846096235Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:32.519656613Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T20:33:00.913654978Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b",
@@ -85,5 +100,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-archive epic 026fc832 to collect its terminal stories",
-  "updated_at": "2026-10-04T20:23:35.598614424Z"
+  "updated_at": "2026-10-04T20:40:32.846096235Z"
 }

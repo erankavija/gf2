@@ -76,10 +76,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:28:15.331895975Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:48:59.066333938Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:52:22.663489445Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:33.164663831Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T20:47:52.313805944Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
@@ -92,5 +107,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Bring the hand-archived OSD epic under container archival",
-  "updated_at": "2026-10-04T20:23:35.982551200Z"
+  "updated_at": "2026-10-04T20:52:22.663489445Z"
 }
