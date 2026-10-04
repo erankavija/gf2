@@ -1,0 +1,25 @@
+{
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T11:00:19.254544857Z",
+  "context": {},
+  "created_at": "2026-10-04T10:59:32.072358479Z",
+  "dependencies": [],
+  "description": "The DVB-T2 LDPC table interpretation note states that the sub-diagonal of the parity part wraps, while the parity-check builder adds no wrap entry. A superseding record corrects the statement and the note keeps its bytes.\n\n## Background\n\n`crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md` says under \"Dual-Diagonal Parity Structure\" that parity bit $p$ connects to check $(p-1) \\bmod m$ and that parity bit 0 connects to check $m-1$; its diagram shows that entry. `crates/gf2-coding/src/ldpc/dvb_t2/builder.rs` adds the sub-diagonal edge only for $p > 0$, so row 0 has no sub-diagonal entry. The note is a digest-pinned input of committed benchmark surveys (the `producing-inputs*.json` lists under `dev/active/`), so a byte change invalidates their evidence. The owner ruled on 2026-10-04 that a separate record supersedes the false statement, as the P-02 amendment record does for the Zen 3 protocol.\n\n## Success Criteria\n\n- [hard] REQ-01: A record beside the note states the parity structure the builder implements, names the superseded statements of the note, and cites the builder item and a test that asserts the structure.\n- [hard] REQ-02: `table_interpretation.md` is byte-identical to its state before the change.\n- [hard] REQ-03: Every place in the repository that directs a reader to the note for the parity structure also leads to the record.\n- [hard] REQ-04: The record cites the standard through its registry key and states only what the code at HEAD does.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T10:59:32.072358479Z",
+  "gates_required": [
+    "doc-review",
+    "docs-mechanical"
+  ],
+  "gates_status": {},
+  "id": "4b8cebcf-924d-495b-b912-dd79f0d4e341",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:docs",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "in_progress",
+  "title": "Supersede the sub-diagonal wrap statement of the DVB-T2 table note",
+  "updated_at": "2026-10-04T11:00:19.254544857Z"
+}

@@ -5,7 +5,9 @@
   "created_at": "2026-07-14T20:40:18.243554691Z",
   "dependencies": [
     "112f23c6-77f3-4e2c-9f40-fd3b31aaa776",
+    "157c305c-925a-4f5d-89e5-299c05c5a0f5",
     "41e1d47d-046e-4808-a424-83898cf9b1ee",
+    "4b8cebcf-924d-495b-b912-dd79f0d4e341",
     "4bdcd65a-e338-488b-b42e-19bee4a875a9",
     "60652fe4-d6dd-49e9-97f1-db99b4c73111",
     "629e0ff0-29ce-4450-83a0-f56bb1fda15b",
@@ -175,5 +177,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Overhaul documentation for research adoption",
-  "updated_at": "2026-10-04T09:10:10.066715005Z"
+  "updated_at": "2026-10-04T10:59:38.192984451Z"
 }

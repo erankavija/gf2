@@ -17779,3 +17779,12 @@
 {"id":"61c524f8-48b7-4927-afdd-6c83db623820","issue_id":"554c2935-f2ba-4b37-8c7d-d9288cb9a351","timestamp":"2026-10-04T09:09:16.369010787Z","type":"issue_completed"}
 {"fields":["documents"],"id":"711ed2c0-661d-45e4-aaf4-78533b36b977","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-04T09:10:10.033210614Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"7c7acbc7-1023-4ce0-b5b5-28af395d0bcd","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-04T09:10:10.066715005Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["description"],"id":"b7039942-c63f-424a-ace0-465cde7f6af6","issue_id":"13dfe1a5-a770-4910-b6b3-36e4b2a91cca","timestamp":"2026-10-04T10:59:31.881558526Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["dependencies"],"id":"b259b7a6-48f5-4813-9a17-14f845d88888","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-04T10:59:31.978687837Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"docs-mechanical","id":"e3ffcbbc-285f-4f9d-952c-3fb2722bd01a","issue_id":"157c305c-925a-4f5d-89e5-299c05c5a0f5","timestamp":"2026-10-04T10:59:32.012429685Z","type":"gate_added"}
+{"id":"2c833a1a-173b-4f41-a92f-c8c542aa20f7","issue_id":"4b8cebcf-924d-495b-b912-dd79f0d4e341","priority":"normal","timestamp":"2026-10-04T10:59:32.072358479Z","title":"Supersede the sub-diagonal wrap statement of the DVB-T2 table note","type":"issue_created"}
+{"fields":["dependencies"],"id":"2c9eb67a-326a-4ccc-9e26-3c75248ffed1","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-10-04T10:59:38.192984451Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"86957a47-2464-4f56-ac9a-a755900b2956","issue_id":"157c305c-925a-4f5d-89e5-299c05c5a0f5","timestamp":"2026-10-04T11:00:19.123096774Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"0dde8e74-28f2-4e88-90e1-a40764bbd72b","issue_id":"157c305c-925a-4f5d-89e5-299c05c5a0f5","timestamp":"2026-10-04T11:00:19.123096774Z","type":"issue_claimed"}
+{"from":"ready","id":"f7090608-60ca-4992-afa0-ea8da8024263","issue_id":"4b8cebcf-924d-495b-b912-dd79f0d4e341","timestamp":"2026-10-04T11:00:19.254544857Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"1b0bf165-5cc9-4cdc-825a-e373f5ea514a","issue_id":"4b8cebcf-924d-495b-b912-dd79f0d4e341","timestamp":"2026-10-04T11:00:19.254544857Z","type":"issue_claimed"}

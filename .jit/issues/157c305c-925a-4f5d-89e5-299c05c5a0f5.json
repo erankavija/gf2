@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T11:00:19.123096774Z",
   "context": {},
   "created_at": "2026-09-10T16:35:04.688466291Z",
   "dependencies": [
@@ -11,9 +12,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "docs-mechanical": {
+      "status": "pending",
+      "updated_at": "2026-10-04T10:59:32.012429685Z",
+      "updated_by": null
+    }
+  },
   "id": "157c305c-925a-4f5d-89e5-299c05c5a0f5",
   "labels": [
     "component:gf2-coding",
@@ -21,7 +29,7 @@
     "epic:documentation-overhaul"
   ],
   "priority": "low",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Document the finite NR filler LLR that de-rate-matching writes",
-  "updated_at": "2026-10-02T11:28:22.846079420Z"
+  "updated_at": "2026-10-04T11:00:19.123096774Z"
 }
