@@ -29,9 +29,6 @@ P_{i,j} =
 \qquad 0 \le i, j < m .
 $$
 
-Check 0 involves parity bit 0 alone, every later check $i$ involves parity
-bits $i - 1$ and $i$, and $P_{0,m-1} = 0$.
-
 ## Enforcement
 
 - `build_dvb_edges` in [builder.rs](builder.rs) adds edge $(p, k + p)$ for
