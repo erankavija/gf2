@@ -21,7 +21,7 @@ pub fn keep_scratch() -> bool {
 pub struct Scratch(TempDir);
 
 impl Scratch {
-    /// Returns the directory this handle owns.
+    /// The same path the handle dereferences to.
     pub fn path(&self) -> &Path {
         self.0.path()
     }
@@ -116,7 +116,7 @@ impl ScratchPath {
         }
     }
 
-    /// Returns the path this handle owns.
+    /// The named path; after [`Self::reserved`] nothing exists at it yet.
     pub fn path(&self) -> &Path {
         &self.path
     }
