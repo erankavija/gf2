@@ -403,10 +403,10 @@ Tests performed:
    - ✅ 8-word SIMD threshold confirmed appropriate
 
    The committed host-calibration receipt at
-   [`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
+   [`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`](../../../../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md)
    records a different selected value of **4** for
    `bit_backend.simd_min_words`. The receipt's
-   [**SIMD pilot scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md#simd-pilot-scope)
+   [**SIMD pilot scope**](../../../../../../dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md#simd-pilot-scope)
    defines the evidence boundary for that value and the Criterion result
    summarized here.
    - ⏸️ Full benchmark baseline (deferred - optional)

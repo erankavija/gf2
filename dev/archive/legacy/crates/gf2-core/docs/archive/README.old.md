@@ -39,8 +39,8 @@
 Operations automatically use the fastest backend available. Small operations (<512 bytes) use scalar code to avoid dispatch overhead. Large operations leverage SIMD when available (3.4-3.6x speedup validated).
 
 **Documentation:**
-- [`docs/KERNEL_OPTIMIZATION.md`](docs/KERNEL_OPTIMIZATION.md) - Complete kernel architecture guide
-- [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) - Performance analysis including SIMD validation
+- [`docs/KERNEL_OPTIMIZATION.md`](../KERNEL_OPTIMIZATION.md) - Complete kernel architecture guide
+- [`docs/BENCHMARKS.md`](../BENCHMARKS.md) - Performance analysis including SIMD validation
 
 ## Performance
 
@@ -51,7 +51,7 @@ Benchmarked against SageMath and specialized C/C++ libraries (NTL, M4RI, FLINT).
 - **RREF**: Within 8-10× of M4RI for large matrices (150-170× faster than naive)
 - **SIMD operations**: 3.4-3.6× speedup for large buffers (AVX2)
 
-See **[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)** for comprehensive performance analysis, comparisons, and optimization details.
+See **[`docs/BENCHMARKS.md`](../BENCHMARKS.md)** for comprehensive performance analysis, comparisons, and optimization details.
 
 ## Usage
 
@@ -206,8 +206,8 @@ cd benchmarks-cpp/build && cmake .. && make
 ./bench_flint_poly
 ```
 
-See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) for detailed performance analysis.
+See [`docs/BENCHMARKS.md`](../BENCHMARKS.md) for detailed performance analysis.
 
 ---
 
-For more details, see the workspace-level [README](../../README.md) and the inlined Rustdocs.
+For more details, see the workspace-level [README](../../../../../../../crates/gf2-core/README.md) and the inlined Rustdocs.
