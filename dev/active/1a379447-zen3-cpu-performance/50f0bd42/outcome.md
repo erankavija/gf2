@@ -1,12 +1,12 @@
-# M4RI comparison and dense-parity outcome: pilot stage (jit:50f0bd42)
+# M4RI comparison and dense-parity outcome (jit:50f0bd42)
 
 > **Diátaxis Type:** Research
 
-This record covers the exploratory pilot and the frozen confirmation of the
-M4RI [AlbrechtBard2026] comparator family, and the standing of the fusion
-portfolio. It states no confirmatory verdict: the confirmation is a
-[queue line](../bench-window/queue.tsv) for the
-benchmark window.
+**Decision: no adoption.** The established fused AND-popcount route remains
+the production route. This is the single dense-parity decision record. It
+rests on the confirmation of the M4RI [AlbrechtBard2026] comparator family and
+on the empty fusion portfolio; the exploratory pilot sizes the resolution and
+decides nothing.
 
 ## Pilot evidence
 
@@ -56,7 +56,7 @@ no timing window, and records the route and loaded object each arm reports.
 
 ## Pilot observations
 
-Every measured cell carries the exploratory role, decision `regressed`, and
+Every measured pilot cell carries the exploratory role, decision `regressed`, and
 outcome `pilot` in the acceptance summary. The compared arm is M4RI, so the
 gf2 arm leads in each cell; the tables give each interval at its pair count.
 The two operation boundaries stay separate:
@@ -74,7 +74,7 @@ records each predeclared unqualified anchor shape as `unavailable` with zero
 samples and zero comparisons. These shapes have no runner cell and no
 measurement.
 
-## Resolution rule and frozen confirmation
+## Resolution rule and frozen confirmation addendum
 
 The generated [resolution record](../../../bench_results/2037941f/m4ri-gap-resolution.md)
 applies the frozen rule: the largest relative half-width over the family's
@@ -94,10 +94,64 @@ frozen margins, and gives the two fresh mid-range cells the confirmatory role.
 the family ceiling. The other qualified shapes and both retained-state cells
 remain exploratory pilot evidence.
 
-The confirmation runs fresh pairs under its own campaign identity on the
-family's append-only [ledger](../../../bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl),
-with the arm executables whose digests the pilot receipt and the smoke record
-share. This record claims no confirmation receipt, table, or verdict.
+## Confirmation evidence
+
+The [confirmation receipt](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/receipt.json)
+holds fresh pairs under its own campaign identity, with the arm executables
+whose digests the pilot receipt and the smoke record share. Its reservation is
+the family's one confirmatory line in the append-only
+[ledger](../../../bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl).
+The [execution log](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/execution.log)
+passes the shared log verifier against the receipt and its
+[plan](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/plan.json):
+each confirmatory cell starts, checkpoints and completes once with status
+`measured` at the protocol's confirmatory pair count, in one session closed by
+`complete`. The canonical evaluator reproduces the
+[acceptance summary](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/acceptance-summary.md)
+byte for byte from a copy of the receipt directory. The summary is accepted,
+does not qualify for production selection, and carries no P-20 note on either
+cell. The receipt's
+[resolution-evidence snapshot](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/resolution-evidence/receipt.json)
+is the pinned pilot, and its
+[unavailable-row companion](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv)
+repeats the predeclared unqualified shapes at zero samples and zero
+comparisons. The confirmation section of the generated
+[tables](../../../bench_results/2037941f/m4ri-gap-tables.md)
+carries each cell's interval, pair count, selected paths, and setup costs.
+
+## Decision
+
+The decision uses the confirmation receipt only. The
+[frozen addendum](../../2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md#estimator-confidence-and-multiple-comparisons)
+fixes the rule: each cell's interval is taken at the corrected alpha the
+ledger's attempt and the family's reserved comparisons give, and is compared
+with the family's equivalence margin and material-gap threshold. The summary's
+family line states that alpha and confidence.
+
+| Confirmatory cell | Recorded decision | Recorded outcome | Reading under the frozen rule |
+|---|---|---|---|
+| `m4ri-gap-65x512-warm` | `regressed` | `fail` | The interval's upper bound lies below the reciprocal equivalence margin: the M4RI whole consumer is slower than gf2 beyond equivalence, and no material external gap exists. |
+| `m4ri-gap-65x4096-warm` | `regressed` | `fail` | The same reading. |
+
+Both comparisons fail the comparator-gap objective in gf2's favour. The
+wider cell's confirmation half-width in the tables exceeds the pilot-derived
+resolution; it stays below the family ceiling, the evaluator's endpoint check
+passes, and the interval lies far from both margins, so the reading does not
+depend on it. The comparison holds for the fresh whole-consumer boundary,
+where bit-wise packing and unpacking are charged to the M4RI arm. It makes no
+claim about isolated `mzd_mul` throughput.
+
+1. **Eligible candidates.** None. The fusion portfolio is empty, and the
+   comparator family has no adoption objective.
+2. **Production change.** None selected. A comparator outcome authorizes no
+   production change in either direction, and the complexity budget of the
+   comparator family admits no production line.
+3. **Preserved evidence.** Both failing confirmatory rows, every exploratory
+   pilot row, and the unavailable companions of both receipts stay committed.
+4. **Prior evidence.** The fused AND-popcount route is the retained baseline,
+   and the generic carry-save comparator stays the preserved
+   [non-qualifying result](../../5cbb6545/findings.md). Neither is presented
+   as new optimization work.
 
 ## Fusion portfolio
 
@@ -105,17 +159,15 @@ The fusion portfolio has no candidate. The
 [baseline and portfolio outcome](../c73ffa25/outcome.md) selects no distinct
 in-bound fusion, so REQ-04 to REQ-07 have no eligible identity: there is no
 candidate implementation, candidate receipt, annotated candidate assembly, or
-new unsafe boundary. The fused AND-popcount route is the baseline, and the
-generic carry-save comparator stays the preserved
-[non-qualifying result](../../5cbb6545/findings.md). Neither is presented as new
-optimization work.
+new unsafe boundary.
 
-## Decision status
+## Criterion disposition
 
-A comparator gap authorizes no production change. The frozen addendum makes
-the M4RI family an attribution question with a zero-line complexity budget,
-and no M4RI outcome can select a production route. With no fusion candidate
-and no adoption objective in the comparator family, the established fused
-AND-popcount route remains selected and every losing and unavailable row stays
-in its receipt directory. The decision record that REQ-08 to REQ-10 require
-rests on confirmatory evidence only; this pilot-stage record supplies none.
+- **REQ-01:** Both receipts hold raw samples, commands, pinned inputs, runtime
+  paths, and the cost boundaries described under *Pilot evidence*.
+- **REQ-02:** *Semantic equivalence* covers the frozen dimensions and boundary
+  shapes; fresh whole-consumer and retained-state boundaries stay separate.
+- **REQ-03:** Losing and unavailable rows are committed and adopt nothing.
+- **REQ-04 to REQ-07:** No eligible identity; see *Fusion portfolio*.
+- **REQ-08 to REQ-10:** *Decision* applies the frozen rules to confirmatory
+  evidence and selects no adoption.
