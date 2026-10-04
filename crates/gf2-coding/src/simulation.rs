@@ -1,52 +1,7 @@
-//! Monte Carlo simulation framework for BER/FER performance analysis.
-//!
-//! This module provides reusable utilities for running communication system
-//! simulations over configurable channel models, supporting both bit error rate
-//! (BER) and frame/block error rate (BLER) measurements.
-//!
-//! # Overview
-//!
-//! The simulation framework supports three main workflows:
-//!
-//! - **Uncoded BER**: Raw bit-error-rate measurement without coding
-//!   ([`SimulationRunner::run_uncoded_ber`]). The legacy entry point is
-//!   hard-coded to BPSK; the modem-backed counterpart
-//!   [`SimulationRunner::run_uncoded_ber_with_channel`] takes any
-//!   [`ChannelModel`] (e.g., the
-//!   [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) built on the
-//!   shared modem framework) and performs hard decisions directly on the
-//!   LLRs it returns.
-//! - **Coded (immutable decoder)**: For [`SoftDecoder`] implementations that
-//!   take `&self` ([`run_coded`](SimulationRunner::run_coded)).
-//! - **Coded iterative (mutable decoder)**: For [`IterativeSoftDecoder`]
-//!   implementations that take `&mut self`
-//!   ([`run_coded_iterative`](SimulationRunner::run_coded_iterative)).
-//! - **Coded iterative parallel**: Parallel SNR sweeps (with the `parallel`
-//!   feature) using a decoder factory closure
-//!   ([`run_coded_iterative_parallel`](SimulationRunner::run_coded_iterative_parallel)).
-//!   Falls back to sequential execution without the feature.
-//!
-//! # Channel Abstraction
-//!
-//! The [`ChannelModel`] trait abstracts the modulation and channel, with a
-//! default BPSK/AWGN implementation provided by [`BpskAwgnChannel`]. The
-//! modem-framework adapter
-//! [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter) also implements
-//! [`ChannelModel`], so any validated
-//! [`ModemSpec`] (BPSK, QPSK, 16-/64-/256-QAM, ...)
-//! can be plugged into every `*_with_channel` runner entry point as well as
-//! into [`run_coded`](SimulationRunner::run_coded),
-//! [`run_coded_iterative`](SimulationRunner::run_coded_iterative), and
-//! [`run_coded_iterative_parallel`](SimulationRunner::run_coded_iterative_parallel),
-//! which already accept any
-//! `C: ChannelModel`.
-//!
-//! # Output
-//!
-//! Results can be exported to CSV or JSON via [`SimulationResults`]. When
-//! [`SimulationConfig::output_path`] is set, results are automatically written
-//! to disk in the format determined by the file extension (`.json` for JSON,
-//! anything else for CSV).
+//! Monte Carlo BER/BLER simulation over a [`ChannelModel`]: uncoded sweeps and
+//! coded sweeps for [`SoftDecoder`], [`IterativeSoftDecoder`] and closure
+//! decoders, run through [`SimulationRunner`], with CSV/JSON export through
+//! [`SimulationResults`].
 
 use crate::channel::AwgnChannel;
 use crate::llr::Llr;
@@ -69,31 +24,17 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(feature = "sim-observability")]
 use rand_chacha::ChaCha20Rng;
 
-/// Global lock for serializing all JSONL file appends (progress + point_complete).
-///
-/// Used by both `SnrAccumulator::write_progress_entry` and
-/// `append_point_complete_jsonl` to prevent interleaved writes from
-/// concurrent parallel simulation workers.
+/// Serializes every JSONL append (progress and `point_complete`) across
+/// parallel simulation workers.
 static JSONL_WRITE_LOCK: Mutex<()> = Mutex::new(());
 use std::time::{Duration, Instant};
 
-// ---------------------------------------------------------------------------
-// sim-observability: checkpointing, tracing, and signal handling
-// ---------------------------------------------------------------------------
-
-/// Process-wide interrupt flag. Set to `true` by the `ctrlc` handler
-/// (SIGINT / SIGTERM) when `sim-observability` is active.
-///
-/// The inner simulation loops poll this flag between frames; on trip they
-/// flush the current SNR checkpoint and exit.
+/// Set by the `ctrlc` handler on SIGINT or SIGTERM; the simulation loops poll
+/// it and exit after flushing a checkpoint.
 #[cfg(feature = "sim-observability")]
 static INTERRUPTED: OnceLock<Arc<AtomicBool>> = OnceLock::new();
 
-/// Returns a reference to the process-wide interrupt flag, initialising the
-/// `ctrlc` handler on first call.
-///
-/// Thread-safe: `OnceLock` guarantees the handler is registered exactly once
-/// even under concurrent access.
+/// The process-wide interrupt flag; the first call registers the `ctrlc` handler.
 #[cfg(feature = "sim-observability")]
 fn interrupted_flag() -> &'static Arc<AtomicBool> {
     INTERRUPTED.get_or_init(|| {
@@ -108,25 +49,18 @@ fn interrupted_flag() -> &'static Arc<AtomicBool> {
     })
 }
 
-/// Clears the interrupt flag. Called at the start of each campaign so that
-/// a previous SIGINT during a test does not bleed into the next run.
+/// Called at the start of each campaign so an earlier interrupt does not end it.
 #[cfg(feature = "sim-observability")]
 fn clear_interrupt() {
     interrupted_flag().store(false, Ordering::SeqCst);
 }
 
-/// Returns `true` if SIGINT or SIGTERM was received since the last
-/// [`clear_interrupt`] call.
 #[cfg(feature = "sim-observability")]
 fn is_interrupted() -> bool {
     interrupted_flag().load(Ordering::SeqCst)
 }
 
-/// Per-SNR-point checkpoint written to `<checkpoint_dir>/snr_<index>.json`.
-///
-/// All numeric fields are plain JSON values; the `config_hash` field holds
-/// the `"blake3:<hex>"` string so a corrupted or mismatched checkpoint is
-/// detected early.
+/// Per-SNR-point checkpoint stored at `<checkpoint_dir>/snr_<index>.json`.
 #[cfg(feature = "sim-observability")]
 #[derive(Debug)]
 struct SnrCheckpoint {
@@ -138,9 +72,8 @@ struct SnrCheckpoint {
     total_queries: usize,
     total_bits: usize,
     total_bit_errors: usize,
-    /// ChaCha20 word position at the time of this checkpoint snapshot.
-    /// Stored as a decimal string because `u128` exceeds JSON's safe integer
-    /// range (2^53); the reader parses it back with `str::parse::<u128>`.
+    /// ChaCha20 word position; serialized as a decimal string because `u128`
+    /// exceeds JSON's safe integer range (2^53).
     rng_word_pos: u128,
     frames_target: usize,
     errors_target: usize,
@@ -153,7 +86,6 @@ struct SnrCheckpoint {
 
 #[cfg(feature = "sim-observability")]
 impl SnrCheckpoint {
-    /// Serialises to a JSON string (no external serde dep required).
     fn to_json(&self) -> String {
         format!(
             concat!(
@@ -189,9 +121,7 @@ impl SnrCheckpoint {
         )
     }
 
-    /// Parses a checkpoint from its JSON string representation.
-    ///
-    /// Returns `None` if any required field is missing or cannot be parsed.
+    /// Returns `None` if a field is missing or fails to parse.
     fn from_json(s: &str) -> Option<Self> {
         fn extract<'a>(s: &'a str, key: &str) -> Option<&'a str> {
             let needle = format!("\"{key}\":");
@@ -226,22 +156,13 @@ impl SnrCheckpoint {
     }
 }
 
-/// Computes the BLAKE3 config hash for a `SimulationConfig`.
-///
-/// The canonical encoding includes all fields that affect simulation results:
-/// SNR range, stopping criteria, RNG seed, and decoder parameters.  The
-/// optional observability fields (`checkpoint_dir`, `tracing_log_path`,
-/// `heartbeat_every_frames`, `output_path`) are excluded — they control
-/// output paths, not the simulation itself, so changing them should not
-/// invalidate an existing checkpoint directory.
-///
-/// # Returns
-///
-/// A string `"blake3:<64 lowercase hex chars>"`.
+/// BLAKE3 hash, as `"blake3:<64 lowercase hex chars>"`, over the fields that
+/// determine simulation results: SNR range, stopping criteria, decoder
+/// iteration limit and RNG seed. Output and observability paths are excluded,
+/// so changing them keeps a checkpoint directory valid.
 #[cfg(feature = "sim-observability")]
 fn compute_config_hash(config: &SimulationConfig) -> String {
     let mut hasher = blake3::Hasher::new();
-    // SNR range — encoded as little-endian f64 bytes.
     hasher.update(&(config.eb_n0_range_db.len() as u64).to_le_bytes());
     for &v in &config.eb_n0_range_db {
         hasher.update(&v.to_le_bytes());
@@ -249,7 +170,7 @@ fn compute_config_hash(config: &SimulationConfig) -> String {
     hasher.update(&(config.min_errors as u64).to_le_bytes());
     hasher.update(&(config.max_frames as u64).to_le_bytes());
     hasher.update(&(config.max_decoder_iterations as u64).to_le_bytes());
-    // Seed: 0 for None (same as Some(0), but None is distinct).
+    // The tag byte distinguishes `None` from `Some(0)`.
     let seed_tag: u8 = if config.rng_seed.is_some() { 1 } else { 0 };
     hasher.update(&[seed_tag]);
     hasher.update(&config.rng_seed.unwrap_or(0).to_le_bytes());
@@ -257,20 +178,17 @@ fn compute_config_hash(config: &SimulationConfig) -> String {
     format!("blake3:{}", hash.to_hex())
 }
 
-/// Checkpoint file name for SNR point `index`.
 #[cfg(feature = "sim-observability")]
 fn checkpoint_path(dir: &Path, index: usize) -> PathBuf {
     dir.join(format!("snr_{:04}.json", index))
 }
 
-/// Path of the config-hash sentinel file inside a checkpoint directory.
 #[cfg(feature = "sim-observability")]
 fn config_hash_path(dir: &Path) -> PathBuf {
     dir.join("config_hash.txt")
 }
 
-/// Atomically writes a checkpoint by writing to a `.tmp` file first then
-/// renaming, avoiding torn writes under SIGINT.
+/// Writes to a `.tmp` file then renames, so an interrupt leaves no torn checkpoint.
 #[cfg(feature = "sim-observability")]
 fn write_checkpoint_atomic(path: &Path, ckpt: &SnrCheckpoint) -> std::io::Result<()> {
     let tmp = path.with_extension("tmp");
@@ -278,19 +196,13 @@ fn write_checkpoint_atomic(path: &Path, ckpt: &SnrCheckpoint) -> std::io::Result
     std::fs::rename(&tmp, path)
 }
 
-/// Loads and validates an existing checkpoint from disk.
-///
 /// Returns `None` if the file does not exist or cannot be parsed.
 ///
 /// # Panics
 ///
-/// Panics if the file exists and parses successfully but the stored
-/// `config_hash` does not match `expected_hash`. This is a deliberate
-/// abort: a per-file hash mismatch means the checkpoint directory contains
-/// stale data from a different campaign config, and silently skipping it
-/// would cause the runner to overwrite valid results.  The user must either
-/// delete the stale checkpoint or point `checkpoint_dir` at a fresh
-/// directory.
+/// Panics if the stored `config_hash` differs from `expected_hash`: the
+/// directory holds checkpoints of a different configuration, and skipping
+/// them would overwrite valid results.
 #[cfg(feature = "sim-observability")]
 fn load_checkpoint(path: &Path, expected_hash: &str) -> Option<SnrCheckpoint> {
     let s = std::fs::read_to_string(path).ok()?;
@@ -310,14 +222,8 @@ fn load_checkpoint(path: &Path, expected_hash: &str) -> Option<SnrCheckpoint> {
     Some(ckpt)
 }
 
-/// Validates the checkpoint directory on startup.
-///
-/// Reads `config_hash.txt` if present and compares against `current_hash`.
-/// Returns an error string if a mismatch is found; returns `Ok(())` if the
-/// directory is absent, empty, or hashes match.
-///
-/// On first run (no `config_hash.txt`), creates the directory and writes the
-/// hash file.
+/// Compares `config_hash.txt` in `dir` against `current_hash`, creating the
+/// directory and the file when absent. Returns an error message on mismatch.
 #[cfg(feature = "sim-observability")]
 fn validate_checkpoint_dir(dir: &Path, current_hash: &str) -> Result<(), String> {
     if !dir.exists() {
@@ -329,7 +235,6 @@ fn validate_checkpoint_dir(dir: &Path, current_hash: &str) -> Result<(), String>
     }
     let hash_file = config_hash_path(dir);
     if !hash_file.exists() {
-        // Directory exists but no hash file — write it (first use of an empty dir).
         std::fs::write(&hash_file, current_hash)
             .map_err(|e| format!("Cannot write config_hash.txt: {e}"))?;
         return Ok(());
@@ -346,30 +251,13 @@ fn validate_checkpoint_dir(dir: &Path, current_hash: &str) -> Result<(), String>
     Ok(())
 }
 
-/// Installs a JSON-lines tracing subscriber for the current thread and returns
-/// a guard that uninstalls it on drop.
+/// Installs a JSON-lines tracing subscriber appending to
+/// `config.tracing_log_path` as the thread-local default and returns the guard
+/// that restores the previous subscriber. Returns `None` when no path is set
+/// or the file cannot be opened.
 ///
-/// When `config.tracing_log_path` is `Some(path)`, opens the file in append
-/// mode, builds a `tracing_subscriber::fmt` JSON layer that writes to it, and
-/// calls `SubscriberInitExt::set_default` to install it as the thread-local
-/// default.  The returned `DefaultGuard` restores the previous subscriber
-/// (which may be `NoSubscriber`) when it is dropped at end of scope.
-///
-/// When `tracing_log_path` is `None`, returns `None` and installs nothing.
-/// The caller's existing subscriber (if any) remains active.
-///
-/// # Thread safety
-///
-/// The installed subscriber is thread-local (`set_default`), not global.  For
-/// rayon-parallel paths the caller must propagate the current `Dispatch` into
-/// each worker thread:
-///
-/// ```text
-/// let dispatch = tracing::dispatcher::get_default(|d| d.clone());
-/// rayon_worker_closure = move || {
-///     tracing::dispatcher::with_default(&dispatch, || { ... })
-/// };
-/// ```
+/// The subscriber is thread-local: rayon workers re-enter it through a cloned
+/// `Dispatch`.
 #[cfg(feature = "sim-observability")]
 fn setup_tracing_guard(config: &SimulationConfig) -> Option<tracing::subscriber::DefaultGuard> {
     use tracing_subscriber::{fmt, prelude::*, registry};
@@ -377,24 +265,12 @@ fn setup_tracing_guard(config: &SimulationConfig) -> Option<tracing::subscriber:
     let path = config.tracing_log_path.as_ref()?;
 
     // Keep one extra dispatcher registered for the lifetime of the process.
-    //
-    // tracing-core (0.1.36) optimises the case of at most ONE registered
-    // dispatcher (`Rebuilder::JustOne`): the *first-ever* hit of an event
-    // callsite then computes that callsite's cached `Interest` from the
-    // HITTING thread's current dispatch instead of the registered-dispatcher
-    // list. Under multi-threaded `cargo test`, a concurrent test WITHOUT a
-    // subscriber can therefore be the first to execute a shared
-    // `tracing::info!` line and permanently cache `Interest::never` for it —
-    // silently swallowing that event for every other thread (including one
-    // with a live thread-local JSON subscriber) until the next subscriber
-    // registration rebuilds the cache. Observed as intermittently lost
-    // `snr_completed` events in this module's observability tests; nextest's
-    // process-per-test isolation masks the race, the bare-`cargo test` tier
-    // exposed it.
-    //
-    // Registering a second (no-op) dispatcher forces interest computation to
-    // always fold over the registered list — `never.and(always) ==
-    // sometimes` — so a foreign first hit can no longer poison a callsite.
+    // With at most one registered dispatcher, tracing-core (0.1.36) computes a
+    // callsite's cached `Interest` on its first hit from the hitting thread's
+    // current dispatch, so a thread without a subscriber can cache
+    // `Interest::never` for a shared callsite and drop that event for every
+    // other thread. A second, no-op dispatcher makes interest computation fold
+    // over the registered list (`never.and(always) == sometimes`).
     static ANTI_JUSTONE_DISPATCH: std::sync::OnceLock<tracing::Dispatch> =
         std::sync::OnceLock::new();
     ANTI_JUSTONE_DISPATCH
@@ -423,36 +299,9 @@ fn setup_tracing_guard(config: &SimulationConfig) -> Option<tracing::subscriber:
     Some(subscriber.set_default())
 }
 
-/// Constructs a per-SNR-point `ChaCha20Rng` with deterministic seeding.
-///
-/// The seed for point `snr_index` is derived as:
-///
-/// ```text
-/// seed = base_seed ^ (snr_index as u64).rotate_left(13)
-/// ```
-///
-/// This ensures each SNR point gets an independent RNG stream from a single
-/// base seed while keeping the derivation trivially reversible for auditing.
-/// `set_word_pos(word_pos)` then seeks into the stream at the position
-/// recorded by the last heartbeat checkpoint (0 for a fresh point).
-///
-/// # Resume determinism
-///
-/// The design doc specifies `seed = config.seed ^ snr_index ^ frames_completed_at_checkpoint`
-/// with `(or equivalent)`. This implementation omits the
-/// `frames_completed_at_checkpoint` term from the seed: instead the checkpoint
-/// frame count is consumed by `ChaCha20Rng::set_word_pos(rng_word_pos)`, where
-/// `rng_word_pos` is the exact stream position captured at the heartbeat
-/// checkpoint. This is strictly equivalent for byte-identical resume because
-/// `ChaCha20Rng::set_word_pos` provides a bit-exact stream seek that reaches
-/// the same generator state the uninterrupted run would have been at —
-/// documented as reproducible across `rand_chacha` versions.
-///
-/// # Arguments
-///
-/// * `base_seed` — From `SimulationConfig::rng_seed`.
-/// * `snr_index` — Zero-based index into `eb_n0_range_db`.
-/// * `word_pos` — ChaCha20 word position to seek to; 0 for a fresh start.
+/// Per-SNR-point `ChaCha20Rng`: seeded with
+/// `base_seed ^ (snr_index as u64).rotate_left(13)` and positioned at
+/// `word_pos`, the stream position a checkpoint recorded (0 for a fresh point).
 #[cfg(feature = "sim-observability")]
 fn make_chacha_rng(base_seed: u64, snr_index: usize, word_pos: u128) -> ChaCha20Rng {
     use rand::SeedableRng as _;
@@ -462,41 +311,14 @@ fn make_chacha_rng(base_seed: u64, snr_index: usize, word_pos: u128) -> ChaCha20
     rng
 }
 
-/// CSV header row used for simulation result output files.
 const CSV_HEADER: &str =
     "eb_n0_db,ber,bler,num_bits,num_bit_errors,num_frames,num_frame_errors,avg_iterations,avg_queries_per_bit";
 
-/// Abstracts the modulation scheme and channel model.
-///
-/// Implementors combine modulation (e.g., BPSK), channel noise (e.g., AWGN),
-/// and demodulation into a single `transmit_and_demodulate` call that maps
-/// transmitted bits to received LLRs.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::{ChannelModel, BpskAwgnChannel};
-/// use gf2_core::BitVec;
-///
-/// let channel = BpskAwgnChannel;
-/// let bits = BitVec::from_bytes_le(&[0b10110001]);
-/// let mut rng = rand::thread_rng();
-/// let llrs = channel.transmit_and_demodulate(&bits, 3.0, 0.5, &mut rng);
-/// assert_eq!(llrs.len(), bits.len());
-/// ```
+/// Modulation, channel noise and demodulation combined: maps transmitted bits
+/// to received LLRs.
 pub trait ChannelModel {
-    /// Modulates, transmits through a noisy channel, and demodulates to LLRs.
-    ///
-    /// # Arguments
-    ///
-    /// * `bits` - The codeword bits to transmit
-    /// * `eb_n0_db` - Energy per bit to noise ratio in dB
-    /// * `rate` - Code rate (k/n)
-    /// * `rng` - Random number generator for noise samples
-    ///
-    /// # Returns
-    ///
-    /// A vector of log-likelihood ratios, one per transmitted bit.
+    /// Returns one LLR per bit of `bits` after modulation, the channel at
+    /// `eb_n0_db` for code rate `rate` (k/n), and demodulation.
     fn transmit_and_demodulate<R: Rng>(
         &self,
         bits: &BitVec,
@@ -505,89 +327,42 @@ pub trait ChannelModel {
         rng: &mut R,
     ) -> Vec<Llr>;
 
-    /// Minimum required alignment for `bits.len()` calls into
-    /// [`ChannelModel::transmit_and_demodulate`].
-    ///
-    /// Returns `1` for channels that accept any length (the BPSK legacy
-    /// path). Modem-backed channels that internally require
-    /// `bits.len() % bits_per_symbol == 0` return their `bits_per_symbol`
-    /// here so callers like
-    /// [`SimulationRunner::run_uncoded_ber_with_channel`] can round their
-    /// batch lengths down to a multiple rather than panicking on a
-    /// ragged tail.
-    ///
-    /// Default is `1`.
+    /// Required divisor of `bits.len()` in
+    /// [`ChannelModel::transmit_and_demodulate`]; the uncoded runners round
+    /// each batch down to a multiple of it. Defaults to `1`.
     fn batch_alignment(&self) -> usize {
         1
     }
 
-    /// The [`crate::modem::DemapMethod`] whose LLRs this channel
-    /// produces. Consumed by
-    /// [`SimulationRunner::run_uncoded_ber_with_analysis`] to tag the
-    /// captured statistics with the method that generated them —
-    /// heterogeneous batches silently merged into one `PerBitLlrStats`
-    /// would produce un-interpretable MI / GMI estimates, so the
-    /// runner asserts that the capture's
-    /// [`crate::modem::AnalysisCapture::demap_method`] matches this
-    /// value before the first batch.
-    ///
-    /// Default is [`crate::modem::DemapMethod::MaxLog`], which matches
-    /// the LLR convention of the legacy BPSK/AWGN paths and the
-    /// [`BpskAwgnChannel`] compatibility surface. Modem-backed
-    /// channels that use exact log-MAP (or expose a user-selected
-    /// method like [`crate::modem::ModemChannelAdapter`]) should
-    /// override this.
+    /// The [`crate::modem::DemapMethod`] whose LLRs this channel produces.
+    /// [`SimulationRunner::run_uncoded_ber_with_analysis`] requires it to
+    /// equal [`crate::modem::AnalysisCapture::demap_method`]. Defaults to
+    /// [`crate::modem::DemapMethod::MaxLog`].
     fn demap_method(&self) -> crate::modem::DemapMethod {
         crate::modem::DemapMethod::MaxLog
     }
 }
 
-/// Default BPSK modulation over an AWGN channel.
+/// BPSK over AWGN: maps bits to +/-1, adds Gaussian noise of the variance set
+/// by Eb/N0 and code rate, and returns the LLRs `2r / sigma^2`.
 ///
-/// Maps bits to +/-1 BPSK symbols, adds Gaussian noise with variance
-/// determined by Eb/N0 and code rate, then converts received symbols
-/// to LLRs via `2r / sigma^2`.
+/// Noise is drawn once per symbol on the I axis only;
+/// [`crate::modem::ModemChannelAdapter`] is the 2-D pipeline for arbitrary
+/// constellations.
 ///
-/// # Framework-backed implementation
+/// # Panics
 ///
-/// All bit-to-symbol mapping and LLR conversion route through the shared
-/// modem framework ([`crate::modem::ReferenceMapper`] and
-/// [`crate::modem::ReferenceSoftDemapper`] over
-/// [`crate::modem::ModemSpec::bpsk_with_scalar`]). The only call that is
-/// intrinsically AWGN-shaped (and therefore not modem business) is the
-/// noise application via [`AwgnChannel::transmit_symbols`].
-///
-/// Noise is drawn once per BPSK symbol on the I axis (no Q-axis draw),
-/// matching the 1-D noise convention used by BPSK reference simulations.
-/// Callers that want the generic 2-D modem pipeline (with Q-axis noise
-/// and arbitrary constellation order) should use
-/// [`crate::modem::ModemChannelAdapter`] instead.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::{ChannelModel, BpskAwgnChannel};
-/// use gf2_core::BitVec;
-///
-/// let channel = BpskAwgnChannel;
-/// let bits = BitVec::from_bytes_le(&[0b1010]);
-/// let mut rng = rand::thread_rng();
-/// let llrs = channel.transmit_and_demodulate(&bits, 5.0, 0.5, &mut rng);
-/// assert_eq!(llrs.len(), bits.len());
-/// ```
+/// [`ChannelModel::transmit_and_demodulate`] panics if `rate` is not in `(0, 1]`.
 pub struct BpskAwgnChannel;
 
-/// Lazily-initialised, process-wide BPSK reference mapper over `f64`,
-/// used by [`BpskAwgnChannel::transmit_and_demodulate`] so every frame
-/// shares the same constant preset without reallocating.
+/// Process-wide BPSK reference mapper shared by every frame.
 fn bpsk_mapper_f64() -> &'static ReferenceMapper<f64> {
     static MAPPER: OnceLock<ReferenceMapper<f64>> = OnceLock::new();
     MAPPER.get_or_init(|| ReferenceMapper::new(ModemSpec::<f64>::bpsk_with_scalar()))
 }
 
-/// Lazily-initialised, process-wide BPSK reference soft demapper over
-/// `f64`. Matches the convention `noise_var = 2 * sigma^2` for the BPSK
-/// closed form `LLR = 2 y / sigma^2`.
+/// Process-wide BPSK reference soft demapper; with `noise_var = 2 * sigma^2`
+/// its closed form is `LLR = 2 y / sigma^2`.
 fn bpsk_demapper_f64() -> &'static ReferenceSoftDemapper<f64> {
     static DEMAP: OnceLock<ReferenceSoftDemapper<f64>> = OnceLock::new();
     DEMAP.get_or_init(|| ReferenceSoftDemapper::new(ModemSpec::<f64>::bpsk_with_scalar()))
@@ -601,15 +376,7 @@ impl ChannelModel for BpskAwgnChannel {
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
-        // All modem-side math runs through the shared framework:
-        //   bits -> ReferenceMapper<f64> (BPSK preset) -> I-axis symbols
-        //   -> AwgnChannel::transmit_symbols (1-D noise) -> received I
-        //   -> ReferenceSoftDemapper<f64> with noise_var = 2 * sigma^2
-        //      (the framework's BPSK closed form recovers LLR = 2 y/sigma^2)
-        //
-        // The I-only (1-D) noise application is deliberate: legacy
-        // `BpskAwgnChannel` never drew Q-axis noise, and downstream tests
-        // rely on that RNG-stream shape.
+        // Noise is I-axis only (1-D); tests rely on that RNG-stream shape.
         let n = bits.len();
         let channel = AwgnChannel::from_eb_n0_db(eb_n0_db, rate);
         let bits_vec: Vec<bool> = (0..n).map(|i| bits.get(i)).collect();
@@ -634,31 +401,13 @@ impl ChannelModel for BpskAwgnChannel {
         llrs
     }
 
-    /// `BpskAwgnChannel` drives the shared `ReferenceSoftDemapper`
-    /// with [`DemapMethod::ExactLogMap`] (BPSK exact log-MAP collapses
-    /// to the closed-form `2r / sigma^2` under the consistent-Gaussian
-    /// LLR convention, so this is the numerically correct choice).
+    /// BPSK exact log-MAP equals the closed form `2r / sigma^2`.
     fn demap_method(&self) -> DemapMethod {
         DemapMethod::ExactLogMap
     }
 }
 
-/// Configuration for Monte Carlo simulations.
-///
-/// Controls SNR sweep range, stopping criteria, decoder iteration limits,
-/// RNG seeding, optional output file path, and (with the `sim-observability`
-/// feature) crash-safe checkpointing, structured JSON-lines tracing, and
-/// within-SNR heartbeat events.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::SimulationConfig;
-///
-/// let config = SimulationConfig::quick_test();
-/// assert_eq!(config.min_errors, 100);
-/// assert_eq!(config.max_frames, 100_000);
-/// ```
+/// Configuration of a Monte Carlo sweep.
 #[derive(Debug, Clone)]
 pub struct SimulationConfig {
     /// Range of Eb/N0 values to simulate (in dB).
@@ -673,67 +422,49 @@ pub struct SimulationConfig {
     /// Maximum decoder iterations for iterative decoders.
     pub max_decoder_iterations: usize,
 
-    /// Optional RNG seed for reproducible simulations.
-    ///
-    /// When `Some(seed)`, the simulation uses `StdRng::seed_from_u64(seed)`.
-    /// When `None`, the simulation uses `rand::thread_rng()`.
+    /// RNG seed of the coded runners; the uncoded runners draw from the
+    /// caller's RNG. When `None`, the sequential runners seed from
+    /// `rand::thread_rng()` and the parallel runner uses a fixed default.
     pub rng_seed: Option<u64>,
 
-    /// Optional path for automatic result output.
-    ///
-    /// When set, results are written to this path after the simulation
-    /// completes. Files ending in `.json` are written as JSON; all
-    /// other extensions produce CSV.
+    /// Result file of the coded runners. A `.json` path is written once at
+    /// the end of the sweep; any other path is CSV, appended per completed SNR
+    /// point, and its completed rows are reused on a later run.
     pub output_path: Option<PathBuf>,
 
-    /// Optional directory for per-SNR checkpoint files (requires `sim-observability` feature).
+    /// Directory for per-SNR checkpoint files (`sim-observability` feature).
     ///
-    /// When `Some(dir)`, the runner writes one JSON file per SNR point under
-    /// `<dir>/snr_<index>.json` after each point completes, and resumes from
-    /// any existing checkpoints on startup.  A `config_hash.txt` file in the
-    /// same directory records the BLAKE3 hash of this configuration; if a
-    /// resume attempt finds a hash mismatch the runner aborts with a clear
-    /// error rather than silently using incompatible state.
+    /// When set, the runner writes `<dir>/snr_<index>.json` after each SNR
+    /// point and skips completed points on startup. `config_hash.txt` in the
+    /// directory records the BLAKE3 hash of this configuration; the runner
+    /// panics when the directory cannot be created or a stored hash differs.
     ///
-    /// `None` (the default) disables all checkpoint behaviour.
-    ///
-    /// Requires [`rng_seed`](Self::rng_seed) to be `Some` for byte-identical
-    /// resume: without a fixed seed the per-SNR-point RNG sequence is not
-    /// reproducible.
+    /// The sequential coded runners write checkpoints only when
+    /// [`rng_seed`](Self::rng_seed) is `Some`.
     pub checkpoint_dir: Option<PathBuf>,
 
-    /// Optional path for JSON-lines tracing output (requires `sim-observability` feature).
+    /// Path for JSON-lines tracing output (`sim-observability` feature),
+    /// opened in append mode.
     ///
-    /// When `Some(path)`, each campaign produces one JSON object per line:
-    /// a `campaign_start` record on startup, `snr_completed` records after
-    /// each SNR point, and `heartbeat` records at the cadence set by
+    /// Each campaign writes a `campaign_start` record, an `snr_completed`
+    /// record per SNR point, and `heartbeat` records at the cadence of
     /// [`heartbeat_every_frames`](Self::heartbeat_every_frames).
-    ///
-    /// The file is opened in append mode so concurrent or sequential runs to
-    /// the same path interleave without truncation.
-    ///
-    /// `None` (the default) disables tracing output.
     pub tracing_log_path: Option<PathBuf>,
 
-    /// Optional within-SNR heartbeat cadence in frames (requires `sim-observability` feature).
+    /// Within-SNR heartbeat cadence in frames (`sim-observability` feature).
     ///
-    /// When `Some(n)`, the runner emits a `heartbeat` tracing event and — if
-    /// [`checkpoint_dir`](Self::checkpoint_dir) is set — writes an
-    /// intermediate (incomplete) checkpoint every `n` simulated frames.
-    /// The intermediate checkpoint records the current RNG word position so
-    /// a crash mid-SNR-point can be recovered by restarting with the same
-    /// config.
-    ///
-    /// `None` (the default) disables within-SNR heartbeats and intermediate
-    /// checkpoints; only finished SNR points are checkpointed.
+    /// When `Some(n)`, the sequential coded runners with a set
+    /// [`rng_seed`](Self::rng_seed) and a set
+    /// [`tracing_log_path`](Self::tracing_log_path) or
+    /// [`checkpoint_dir`](Self::checkpoint_dir) emit a `heartbeat` tracing
+    /// event every `n` frames and, with `checkpoint_dir`, write an intermediate
+    /// checkpoint holding the RNG word position, from which an interrupted SNR
+    /// point resumes. The uncoded and parallel runners ignore it.
     pub heartbeat_every_frames: Option<usize>,
 }
 
 impl SimulationConfig {
-    /// Creates a default configuration for quick testing.
-    ///
-    /// Uses three SNR points (0, 3, 6 dB), 100 minimum errors, 100k max
-    /// frames, 50 max decoder iterations, and no fixed seed.
+    /// A small sweep for quick tests.
     pub fn quick_test() -> Self {
         SimulationConfig {
             eb_n0_range_db: vec![0.0, 3.0, 6.0],
@@ -748,10 +479,7 @@ impl SimulationConfig {
         }
     }
 
-    /// Creates a configuration for high-precision BER curves.
-    ///
-    /// Uses 11 SNR points (0..10 dB), 1000 minimum errors, 10M max
-    /// frames, 100 max decoder iterations, and no fixed seed.
+    /// A dense sweep with tight stopping criteria for BER curves.
     pub fn high_precision() -> Self {
         SimulationConfig {
             eb_n0_range_db: (0..=10).map(|i| i as f64).collect(),
@@ -766,11 +494,7 @@ impl SimulationConfig {
         }
     }
 
-    /// Returns a seeded RNG for this configuration.
-    ///
-    /// If `rng_seed` is set, uses it directly. Otherwise generates a seed
-    /// from `thread_rng()` so that the simulation still uses a `StdRng`
-    /// internally (consistent type, no dynamic dispatch).
+    /// Seeds from `rng_seed`, or from `thread_rng()` when it is `None`.
     fn make_rng(&self) -> StdRng {
         match self.rng_seed {
             Some(seed) => StdRng::seed_from_u64(seed),
@@ -779,29 +503,7 @@ impl SimulationConfig {
     }
 }
 
-/// Results from a single SNR point simulation.
-///
-/// Contains BER, BLER, iteration statistics, and raw counts for a single
-/// Eb/N0 operating point.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::SimulationResult;
-///
-/// let result = SimulationResult {
-///     eb_n0_db: 3.0,
-///     ber: 0.01,
-///     bler: 0.05,
-///     avg_iterations: Some(12.5),
-///     avg_queries_per_bit: None,
-///     num_bits: 10000,
-///     num_bit_errors: 100,
-///     num_frames: 200,
-///     num_frame_errors: 10,
-/// };
-/// assert!(result.is_complete(5));
-/// ```
+/// Results at one Eb/N0 point.
 #[derive(Debug, Clone)]
 pub struct SimulationResult {
     /// Eb/N0 in dB for this operating point.
@@ -820,8 +522,6 @@ pub struct SimulationResult {
     ///
     /// Computed from `DecoderResult.queries` when available, falling back
     /// to `DecoderResult.iterations` when `queries` is `None`.
-    /// This provides a finer-grained measure of decoder complexity than
-    /// `avg_iterations` alone.
     pub avg_queries_per_bit: Option<f64>,
 
     /// Total number of decoded message bits.
@@ -839,10 +539,6 @@ pub struct SimulationResult {
 
 impl SimulationResult {
     /// Returns `true` if this result has collected at least `min_errors` frame errors.
-    ///
-    /// # Arguments
-    ///
-    /// * `min_errors` - Minimum frame error count threshold
     pub fn is_complete(&self, min_errors: usize) -> bool {
         self.num_frame_errors >= min_errors
     }
@@ -850,21 +546,6 @@ impl SimulationResult {
     /// Exports result as a CSV row.
     ///
     /// Format: `eb_n0_db,ber,bler,num_bits,num_bit_errors,num_frames,num_frame_errors,avg_iterations,avg_queries_per_bit`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::SimulationResult;
-    ///
-    /// let result = SimulationResult {
-    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
-    ///     avg_iterations: Some(12.5), avg_queries_per_bit: None,
-    ///     num_bits: 10000, num_bit_errors: 100,
-    ///     num_frames: 200, num_frame_errors: 10,
-    /// };
-    /// let row = result.to_csv_row();
-    /// assert!(row.starts_with("3,0.01,0.05,"));
-    /// ```
     pub fn to_csv_row(&self) -> String {
         let avg_iter = self
             .avg_iterations
@@ -886,31 +567,9 @@ impl SimulationResult {
         )
     }
 
-    /// Parses a CSV row (produced by [`to_csv_row`](Self::to_csv_row)) back into
-    /// a `SimulationResult`.
-    ///
-    /// Returns `None` if the row cannot be parsed.
-    ///
-    /// # Arguments
-    ///
-    /// * `row` - A comma-separated string with 9 fields matching the CSV header.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::SimulationResult;
-    ///
-    /// let result = SimulationResult {
-    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
-    ///     avg_iterations: Some(12.5), avg_queries_per_bit: None,
-    ///     num_bits: 10000, num_bit_errors: 100,
-    ///     num_frames: 200, num_frame_errors: 10,
-    /// };
-    /// let row = result.to_csv_row();
-    /// let parsed = SimulationResult::from_csv_row(&row).unwrap();
-    /// assert!((parsed.eb_n0_db - 3.0).abs() < 1e-10);
-    /// assert_eq!(parsed.num_frame_errors, 10);
-    /// ```
+    /// Parses a row produced by [`to_csv_row`](Self::to_csv_row); the two
+    /// trailing optional columns may be absent. Returns `None` if the row
+    /// cannot be parsed.
     pub fn from_csv_row(row: &str) -> Option<Self> {
         let fields: Vec<&str> = row.split(',').collect();
         if fields.len() < 7 {
@@ -938,37 +597,12 @@ impl SimulationResult {
         })
     }
 
-    /// Appends this result as a single CSV row to the given file.
-    ///
-    /// Writes the CSV header if the file does not exist or is empty.
-    /// Uses append mode so concurrent runs do not overwrite each other.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Destination CSV file path.
+    /// Appends this result as one CSV row to `path`, writing the header first
+    /// when the file is missing or empty.
     ///
     /// # Panics
     ///
     /// Panics if the file cannot be opened or written.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::simulation::SimulationResult;
-    /// use std::path::Path;
-    ///
-    /// let result = SimulationResult {
-    ///     eb_n0_db: 3.0, ber: 0.001, bler: 0.01,
-    ///     avg_iterations: Some(5.0), avg_queries_per_bit: None,
-    ///     num_bits: 12100, num_bit_errors: 12,
-    ///     num_frames: 100, num_frame_errors: 1,
-    /// };
-    /// result.append_csv_row_to(Path::new("/tmp/test_results.csv"));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(1) per call (single file open + write).
     pub fn append_csv_row_to(&self, path: &Path) {
         use std::io::Write;
         let needs_header = !path.exists() || std::fs::metadata(path).map_or(true, |m| m.len() == 0);
@@ -984,22 +618,6 @@ impl SimulationResult {
     }
 
     /// Serializes this result as a JSON object string.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::SimulationResult;
-    ///
-    /// let result = SimulationResult {
-    ///     eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
-    ///     avg_iterations: None, avg_queries_per_bit: None,
-    ///     num_bits: 10000, num_bit_errors: 100,
-    ///     num_frames: 200, num_frame_errors: 10,
-    /// };
-    /// let json = result.to_json();
-    /// assert!(json.contains("\"eb_n0_db\":3"));
-    /// assert!(json.contains("\"ber\":0.01"));
-    /// ```
     pub fn to_json(&self) -> String {
         let avg_iter = self
             .avg_iterations
@@ -1034,48 +652,15 @@ impl SimulationResult {
     }
 }
 
-/// Aggregated simulation results across all SNR points.
-///
-/// Contains per-SNR-point results and provides CSV/JSON export.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::{SimulationResult, SimulationResults};
-///
-/// let results = SimulationResults { points: vec![] };
-/// assert!(results.points.is_empty());
-/// ```
+/// Per-SNR-point results of a sweep, with CSV and JSON export.
 #[derive(Debug, Clone)]
 pub struct SimulationResults {
-    /// Per-SNR-point simulation results, ordered by increasing Eb/N0.
+    /// One result per SNR point, in the order of [`SimulationConfig::eb_n0_range_db`].
     pub points: Vec<SimulationResult>,
 }
 
 impl SimulationResults {
-    /// Exports all results to CSV format.
-    ///
-    /// # Arguments
-    ///
-    /// * `include_header` - Whether to prepend a CSV header row
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationResult, SimulationResults};
-    ///
-    /// let results = SimulationResults {
-    ///     points: vec![SimulationResult {
-    ///         eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
-    ///         avg_iterations: None, avg_queries_per_bit: None,
-    ///         num_bits: 10000, num_bit_errors: 100,
-    ///         num_frames: 200, num_frame_errors: 10,
-    ///     }],
-    /// };
-    /// let csv = results.to_csv(true);
-    /// assert!(csv.contains("eb_n0_db"));
-    /// assert!(csv.contains("0.01"));
-    /// ```
+    /// CSV with one row per point; `include_header` prepends the header row.
     pub fn to_csv(&self, include_header: bool) -> String {
         let mut csv = String::new();
         if include_header {
@@ -1089,54 +674,17 @@ impl SimulationResults {
         csv
     }
 
-    /// Exports all results to JSON format.
-    ///
-    /// Returns a JSON array containing one object per SNR point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationResult, SimulationResults};
-    ///
-    /// let results = SimulationResults {
-    ///     points: vec![SimulationResult {
-    ///         eb_n0_db: 3.0, ber: 0.01, bler: 0.05,
-    ///         avg_iterations: None, avg_queries_per_bit: None,
-    ///         num_bits: 10000, num_bit_errors: 100,
-    ///         num_frames: 200, num_frame_errors: 10,
-    ///     }],
-    /// };
-    /// let json = results.to_json();
-    /// assert!(json.starts_with('['));
-    /// assert!(json.ends_with(']'));
-    /// ```
+    /// JSON array with one object per SNR point.
     pub fn to_json(&self) -> String {
         let entries: Vec<String> = self.points.iter().map(|p| p.to_json()).collect();
         format!("[{}]", entries.join(","))
     }
 
-    /// Writes results to the given path.
-    ///
-    /// Files ending in `.json` are written as JSON; all other extensions
-    /// produce CSV with a header.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Destination file path
+    /// Writes JSON when `path` ends in `.json`, otherwise CSV with a header.
     ///
     /// # Panics
     ///
     /// Panics if the file cannot be created or written.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::simulation::{SimulationResults};
-    /// use std::path::Path;
-    ///
-    /// let results = SimulationResults { points: vec![] };
-    /// results.write_to(Path::as_ref(std::path::Path::new("/tmp/out.csv")));
-    /// ```
     pub fn write_to(&self, path: &std::path::Path) {
         let content = if path.extension().and_then(|e| e.to_str()) == Some("json") {
             self.to_json()
@@ -1152,22 +700,9 @@ impl SimulationResults {
     }
 }
 
-/// Shared body of the uncoded-BER Monte Carlo loop, parameterized by
-/// an optional [`AnalysisCapture`]. Both
-/// [`SimulationRunner::run_uncoded_ber_with_channel`] (always `None`)
-/// and [`SimulationRunner::run_uncoded_ber_with_analysis`] (caller's
-/// choice) delegate here so there is exactly one implementation of the
-/// `bits -> channel -> hard-decision` logic.
-///
-/// # Zero-overhead contract
-///
-/// The function is `#[inline]` and the only branch on `capture` is a
-/// single `if let Some(_) = capture` guard around the
-/// [`AnalysisCapture::accumulate_slice`] call. When the caller passes
-/// `None`, the guard's body is dead code after monomorphization and
-/// constant propagation: the compiler emits exactly the same loop
-/// that the analysis-free runner emitted before this refactor. The
-/// `simulation_no_analysis_overhead` bench guards that equivalence.
+/// The uncoded-BER Monte Carlo loop behind
+/// [`SimulationRunner::run_uncoded_ber_with_channel`] and
+/// [`SimulationRunner::run_uncoded_ber_with_analysis`].
 #[inline]
 fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
     channel: &C,
@@ -1175,11 +710,9 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
     mut capture: Option<&mut AnalysisCapture<'_>>,
     rng: &mut R,
 ) -> Vec<SimulationResult> {
-    // sim-observability: install JSON-lines tracing subscriber for this run.
     #[cfg(feature = "sim-observability")]
     let _tracing_guard = setup_tracing_guard(config);
 
-    // sim-observability: open campaign span and emit campaign_start event.
     #[cfg(feature = "sim-observability")]
     let _campaign_guard = {
         use std::time::SystemTime;
@@ -1209,11 +742,7 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         guard
     };
 
-    // sim-observability: validate checkpoint directory and compute config hash.
-    // Per-SNR-boundary checkpointing only; within-SNR heartbeat resume is not
-    // implemented for this path (uncoded simulations are typically fast enough
-    // that per-SNR granularity is sufficient, and StdRng does not support
-    // ChaCha20-style seek).
+    // Checkpoints are written at SNR-point boundaries only.
     #[cfg(feature = "sim-observability")]
     let config_hash = compute_config_hash(config);
     #[cfg(feature = "sim-observability")]
@@ -1223,24 +752,18 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         }
     }
 
-    // sim-observability: clear any stale interrupt flag from a previous run.
     #[cfg(feature = "sim-observability")]
     clear_interrupt();
 
-    /// Nominal batch length. See
-    /// [`SimulationRunner::run_uncoded_ber_with_channel`] for the
-    /// rationale behind the value and the alignment rounding.
+    /// A multiple of every common `bits_per_symbol` (1, 2, 3, 4, 5, 6, 8, 10,
+    /// 12, 15, 16).
     const UNCODED_MODEM_BATCH_BITS: usize = 960;
 
     let alignment = channel.batch_alignment().max(1);
 
-    // Contract: if the caller opted into analysis capture, its
-    // accumulator's `bits_per_symbol` must match the channel's
-    // `batch_alignment`. `PerBitLlrStats::accumulate` only enforces
-    // length invariants; a silent mismatch would accumulate nonsensical
-    // per-position statistics without tripping any downstream check.
-    // Reject up front with a descriptive panic so the misuse is caught
-    // at the first batch rather than being silently averaged away.
+    // `PerBitLlrStats::accumulate` checks lengths only, so a capture whose
+    // `bits_per_symbol` differs from the channel alignment would accumulate
+    // meaningless per-position statistics unnoticed.
     if let Some(cap) = capture.as_deref() {
         assert_eq!(
             cap.bits_per_symbol() as usize,
@@ -1250,13 +773,9 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             cap.bits_per_symbol(),
             alignment,
         );
-        // Second provenance check: the capture is tagged with the
-        // demap method its MI/GMI numbers will describe. The channel
-        // advertises its own method through `ChannelModel::demap_method`.
-        // Per-bit MI / GMI semantics differ between exact log-MAP and
-        // max-log (see the `analysis` module docs), so heterogeneous
-        // batches silently merged into one accumulator would produce
-        // un-interpretable statistics.
+        // Per-bit MI / GMI semantics differ between exact log-MAP and max-log
+        // (see `crate::modem::analysis::gmi_bits`), so one accumulator must not
+        // mix methods.
         let channel_method = channel.demap_method();
         assert_eq!(
             cap.demap_method(),
@@ -1269,9 +788,7 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         );
     }
 
-    // Scratch buffer reused across batches when analysis is enabled.
-    // Allocated exactly once per SNR-point sweep and only on the
-    // analysis-enabled path. Stays `None` when `capture.is_none()`.
+    // Allocated only on the analysis-enabled path and reused across batches.
     let mut truth_scratch: Option<Vec<bool>> = if capture.is_some() {
         Some(Vec::with_capacity(UNCODED_MODEM_BATCH_BITS))
     } else {
@@ -1280,9 +797,6 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
 
     let mut results = Vec::with_capacity(config.eb_n0_range_db.len());
     for (snr_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
-        // sim-observability: check for an existing completed checkpoint.
-        // Per-SNR-boundary granularity only; within-SNR heartbeat resume is
-        // not implemented for the uncoded path (see function-level rustdoc).
         #[cfg(feature = "sim-observability")]
         let ckpt_resume: Option<SnrCheckpoint> = config
             .checkpoint_dir
@@ -1317,7 +831,6 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             }
         }
 
-        // sim-observability: per-SNR span.
         #[cfg(feature = "sim-observability")]
         let _snr_guard = tracing::info_span!(
             "snr_point",
@@ -1328,7 +841,6 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         )
         .entered();
 
-        // Suppress unused-variable warning when feature is disabled.
         #[cfg(not(feature = "sim-observability"))]
         let _ = snr_idx;
 
@@ -1340,22 +852,15 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         while total_errors < config.min_errors && total_bits < config.max_frames {
             let remaining = config.max_frames - total_bits;
             let mut batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
-            // Round down to the channel's required alignment so
-            // modem-backed channels with bits_per_symbol > 1 do
-            // not panic on a ragged tail.
             batch_size -= batch_size % alignment;
             if batch_size == 0 {
                 break;
             }
             let bits = BitVec::random(batch_size, rng);
-            // Uncoded => rate = 1.0. The channel owns modulation,
-            // noise, and demapping end-to-end; we only consume LLRs.
+            // Uncoded => rate = 1.0.
             let llrs = channel.transmit_and_demodulate(&bits, eb_n0_db, 1.0, rng);
             debug_assert_eq!(llrs.len(), batch_size);
 
-            // Opt-in per-bit analysis. The `None` branch has no
-            // extra work; the inline wrapper lets the optimizer
-            // collapse the match when the caller passed `None`.
             if let (Some(cap), Some(scratch)) = (capture.as_deref_mut(), truth_scratch.as_mut()) {
                 scratch.clear();
                 scratch.reserve(batch_size);
@@ -1385,7 +890,6 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             0.0
         };
 
-        // sim-observability: snr_completed event.
         #[cfg(feature = "sim-observability")]
         tracing::info!(
             name: "snr_completed",
@@ -1398,12 +902,6 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             elapsed_seconds = point_start.elapsed().as_secs_f64(),
         );
 
-        // sim-observability: write a completed checkpoint after each SNR point.
-        // Per-SNR-boundary granularity only; within-SNR heartbeat is not
-        // implemented for the uncoded path (uncoded simulations are fast enough
-        // that per-SNR granularity is sufficient; StdRng also lacks ChaCha20's
-        // `set_word_pos` seek, so byte-identical within-SNR resume is not
-        // available here).
         #[cfg(feature = "sim-observability")]
         if let Some(ref ckpt_dir) = config.checkpoint_dir {
             let ckpt = SnrCheckpoint {
@@ -1426,9 +924,7 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             }
         }
 
-        // sim-observability: check for SIGINT / SIGTERM after each SNR
-        // boundary checkpoint is safely on disk.  Per the path-scoping note:
-        // the uncoded path exits on the next-SNR boundary when interrupted.
+        // Checked after the SNR-boundary checkpoint is on disk.
         #[cfg(feature = "sim-observability")]
         if is_interrupted() {
             tracing::info!(
@@ -1460,142 +956,42 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
     results
 }
 
-/// Monte Carlo simulation runner for communication systems.
-///
-/// Provides static methods for both uncoded and coded simulations:
-///
-/// - [`SimulationRunner::run_uncoded_ber`] — uncoded BPSK over AWGN
-/// - [`SimulationRunner::run_uncoded_ber_with_channel`] — uncoded over any
-///   [`ChannelModel`] (modem-framework backed, e.g.
-///   [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter))
-/// - [`SimulationRunner::run_uncoded_ber_with_analysis`] — same, with
-///   opt-in per-bit LLR analysis capture
-/// - [`SimulationRunner::run_coded`] — coded with immutable [`SoftDecoder`]
-/// - [`SimulationRunner::run_coded_iterative`] — coded with [`IterativeSoftDecoder`]
-/// - [`SimulationRunner::run_coded_iterative_parallel`] — parallel iterative with decoder factory
+/// Entry points for uncoded and coded Monte Carlo sweeps.
 pub struct SimulationRunner;
 
 impl SimulationRunner {
-    /// Simulates uncoded BPSK transmission over AWGN and computes BER.
+    /// Simulates uncoded BPSK over AWGN; equals
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] with [`BpskAwgnChannel`].
     ///
-    /// Thin wrapper that delegates to
-    /// [`SimulationRunner::run_uncoded_ber_with_channel`] with
-    /// [`BpskAwgnChannel`] as the channel, so the BPSK/AWGN Monte Carlo
-    /// loop has a single source of truth.
+    /// # Panics
     ///
-    /// # Arguments
-    ///
-    /// * `config` - Simulation configuration (uses `eb_n0_range_db`, `min_errors`, `max_frames`)
-    /// * `rng` - Random number generator
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
-    ///
-    /// let config = SimulationConfig::quick_test();
-    /// let mut rng = rand::thread_rng();
-    /// let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
-    ///
-    /// assert_eq!(results.len(), config.eb_n0_range_db.len());
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// O(SNR_points * max_frames) in transmitted bits. Internal batching
-    /// is governed by `run_uncoded_ber_with_channel` (currently 960 bits
-    /// per inner call, rounded down to `BpskAwgnChannel::batch_alignment()`
-    /// which is `1`).
+    /// As [`SimulationRunner::run_uncoded_ber_with_channel`].
     pub fn run_uncoded_ber<R: Rng>(
         config: &SimulationConfig,
         rng: &mut R,
     ) -> Vec<SimulationResult> {
-        // Delegate to the shared modem-backed runner so the legacy BPSK
-        // entry point no longer reimplements the modulate/transmit/
-        // demodulate Monte Carlo loop. `BpskAwgnChannel` is the canonical
-        // `ChannelModel` for the legacy path; running through it keeps
-        // the noise-variance, RNG consumption, and hard-decision
-        // convention identical to the previous implementation while
-        // eliminating duplication with `run_uncoded_ber_with_channel`.
         Self::run_uncoded_ber_with_channel(&BpskAwgnChannel, config, rng)
     }
 
-    /// Modem-backed counterpart to [`SimulationRunner::run_uncoded_ber`].
+    /// Uncoded BER sweep through any [`ChannelModel`].
     ///
-    /// Routes the uncoded sweep through the supplied [`ChannelModel`]
-    /// and applies a hard decision to the returned LLRs (convention:
-    /// positive LLR => bit 0, negative LLR => bit 1; this matches the
-    /// modem framework's
-    /// [`BatchSoftDemapper`] output
-    /// sign). All modulation, noise generation, and demapping live
-    /// inside [`ChannelModel::transmit_and_demodulate`] — this method
-    /// never reimplements a BPSK LLR formula or a noise draw itself.
+    /// Hard decision on the returned LLRs: positive LLR => bit 0, negative =>
+    /// bit 1, a tie => bit 0. The channel is called with `rate = 1.0`, and
+    /// `rng` feeds both bit generation and channel noise.
     ///
-    /// Passing [`crate::simulation::BpskAwgnChannel`] gives the BPSK/AWGN
-    /// reference path (at equal `StdRng` seeds it converges to the same
-    /// BER as the legacy uncoded runner). Passing
-    /// [`crate::modem::ModemChannelAdapter`] runs any validated
-    /// [`ModemSpec`] (BPSK, QPSK, 16-/64-/256-QAM)
-    /// over AWGN with the shared [`BatchMapper`]
-    /// and [`BatchSoftDemapper`] surfaces.
+    /// Each SNR point stops at `config.min_errors` bit errors or
+    /// `config.max_frames` transmitted bits; `max_decoder_iterations` and
+    /// `heartbeat_every_frames` are unused. With `sim-observability`, a
+    /// checkpoint is written per completed SNR point, completed points are
+    /// skipped on resume, and SIGINT or SIGTERM exits the process at the next
+    /// SNR boundary.
     ///
-    /// # Arguments
+    /// Returns one [`SimulationResult`] per entry of `config.eb_n0_range_db`
+    /// with `num_bits` and `num_bit_errors` populated; the frame counts stay 0.
     ///
-    /// * `channel` - Any [`ChannelModel`] implementation. `rate = 1.0` is
-    ///   passed for every call because this is an uncoded sweep.
-    /// * `config` - Simulation configuration. `eb_n0_range_db`, `min_errors`,
-    ///   and `max_frames` are consumed. `decoder_iterations` is ignored (this
-    ///   is an uncoded runner).
+    /// # Panics
     ///
-    ///   With the `sim-observability` feature (default on):
-    ///   - `checkpoint_dir` IS honored: per-SNR-boundary checkpoints are
-    ///     written after each SNR point completes; completed points are
-    ///     skipped on resume.
-    ///   - `tracing_log_path` IS honored: campaign and per-SNR spans plus
-    ///     completion events are emitted as JSON lines.
-    ///   - `heartbeat_every_frames` is NOT honored for this path (per the
-    ///     path-scoping note in [`SimulationRunner`]): the uncoded path
-    ///     batches bits rather than framing them, so within-SNR resume
-    ///     granularity is unavailable. A SIGINT or SIGTERM while an SNR
-    ///     point is in flight will flush the completed checkpoint only on the
-    ///     next SNR boundary; the in-flight SNR point is re-run on resume.
-    /// * `rng` - Random source used for both bit generation and channel
-    ///   noise. A single RNG feeds both so deterministic seeding is
-    ///   honoured end-to-end.
-    ///
-    /// # Batch sizing
-    ///
-    /// Bits are generated in batches of `UNCODED_MODEM_BATCH_BITS` so that
-    /// the batch size is a multiple of every common `bits_per_symbol`
-    /// (1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 16), satisfying the
-    /// [`ModemChannelAdapter`](crate::modem::ModemChannelAdapter)
-    /// precondition `bits.len() % bits_per_symbol == 0` for all standard
-    /// modulations.
-    ///
-    /// # Returns
-    ///
-    /// One [`SimulationResult`] per SNR point in `config.eb_n0_range_db`.
-    /// `num_bits` / `num_bit_errors` are populated; `num_frames` stays 0
-    /// because uncoded streaming has no natural frame boundary.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{
-    ///     BpskAwgnChannel, SimulationConfig, SimulationRunner,
-    /// };
-    ///
-    /// let mut config = SimulationConfig::quick_test();
-    /// config.eb_n0_range_db = vec![6.0];
-    /// config.min_errors = 1;
-    /// config.max_frames = 10_000;
-    /// let channel = BpskAwgnChannel;
-    /// let mut rng = rand::thread_rng();
-    /// let results = SimulationRunner::run_uncoded_ber_with_channel(
-    ///     &channel, &config, &mut rng,
-    /// );
-    /// assert_eq!(results.len(), 1);
-    /// ```
+    /// Panics under the conditions stated at [`SimulationConfig::checkpoint_dir`].
     ///
     /// # Complexity
     ///
@@ -1605,73 +1001,23 @@ impl SimulationRunner {
         config: &SimulationConfig,
         rng: &mut R,
     ) -> Vec<SimulationResult> {
-        // Delegate to the analysis-aware core with no capture. The
-        // `None` branch is a single `match` arm behind an `#[inline]`
-        // wrapper, so after optimization this path performs no
-        // analysis-specific work whatsoever — no LLR copy, no truth
-        // materialization, no extra allocation. The
-        // `simulation_no_analysis_overhead` bench locks this
-        // equivalence in place.
         run_uncoded_ber_with_channel_impl::<C, R>(channel, config, None, rng)
     }
 
-    /// Uncoded BER sweep with opt-in per-bit LLR analysis capture.
+    /// [`SimulationRunner::run_uncoded_ber_with_channel`] with per-bit LLR
+    /// analysis capture: when `capture` is `Some`, each post-demap
+    /// `(llrs, truth_bits)` batch is forwarded to it before errors are counted.
     ///
-    /// Behaves exactly like
-    /// [`SimulationRunner::run_uncoded_ber_with_channel`] — same
-    /// `ChannelModel` contract, same batch-size alignment, same
-    /// hard-decision convention, same result vector layout — with one
-    /// addition: when `capture` is `Some(&mut AnalysisCapture)`, each
-    /// post-demap `(llrs, truth_bits)` batch is forwarded to the
-    /// accumulator before the error count is tallied. When `capture` is
-    /// `None`, the hot loop is bit-identical to the unaugmented runner
-    /// (the extra branch collapses under `#[inline]`).
-    ///
-    /// # Zero-overhead contract
-    ///
-    /// The no-capture path is benchmarked against
-    /// [`SimulationRunner::run_uncoded_ber_with_channel`] in
-    /// `simulation_no_analysis_overhead`; both paths share the same
-    /// `#[inline]` implementation, so the disabled path matches the
-    /// original to within measurement noise.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel` - Any [`ChannelModel`] implementation (same as
-    ///   `run_uncoded_ber_with_channel`).
-    /// * `config` - Simulation configuration.
-    /// * `capture` - Optional [`AnalysisCapture`] handle. When `Some`,
-    ///   the accumulator backing the capture must have
-    ///   `bits_per_symbol()` equal to the number of bits per modem
-    ///   symbol advertised by `channel` (for a modem-backed channel
-    ///   that is `channel.batch_alignment()`; for `BpskAwgnChannel`
-    ///   it is `1`). See the `# Panics` section for enforcement
-    ///   details.
-    /// * `rng` - Random source.
+    /// One capture accumulates over every entry of `config.eb_n0_range_db`;
+    /// for per-SNR statistics run one SNR point per call with a fresh
+    /// [`crate::modem::analysis::PerBitLlrStats`].
     ///
     /// # Panics
     ///
-    /// Panics with a descriptive message if `capture` is `Some(_)` and
-    /// `capture.bits_per_symbol() != channel.batch_alignment()`. The
-    /// check runs up front, before the first batch — a misconfigured
-    /// capture is caught immediately rather than silently accumulating
-    /// nonsensical per-position statistics over an entire sweep. The
-    /// runner does not try to translate between capture shapes.
-    ///
-    /// # Multi-SNR sweeps
-    ///
-    /// The same `AnalysisCapture` accumulator is reused across every
-    /// entry in `config.eb_n0_range_db`. For most link-level workflows
-    /// that is intentional — the report reflects the *aggregate*
-    /// per-bit LLR distribution over the whole sweep. If you need
-    /// per-SNR decompositions, drive the runner once per SNR point
-    /// with a fresh `AnalysisCapture` (construct a new
-    /// [`crate::modem::analysis::PerBitLlrStats`] between calls).
-    ///
-    /// # Returns
-    ///
-    /// Same as [`SimulationRunner::run_uncoded_ber_with_channel`]: one
-    /// [`SimulationResult`] per SNR point.
+    /// Panics before the first batch if `capture` is `Some` and its
+    /// `bits_per_symbol()` differs from `channel.batch_alignment()` or its
+    /// `demap_method()` differs from `channel.demap_method()`, and under the
+    /// conditions of [`SimulationRunner::run_uncoded_ber_with_channel`].
     ///
     /// # Examples
     ///
@@ -1708,8 +1054,8 @@ impl SimulationRunner {
     ///
     /// # Complexity
     ///
-    /// Same as [`SimulationRunner::run_uncoded_ber_with_channel`], plus
-    /// O(bits) accumulator work on the enabled path.
+    /// That of [`SimulationRunner::run_uncoded_ber_with_channel`] plus O(bits)
+    /// accumulator work when capturing.
     pub fn run_uncoded_ber_with_analysis<C: ChannelModel, R: Rng>(
         channel: &C,
         config: &SimulationConfig,
@@ -1719,25 +1065,7 @@ impl SimulationRunner {
         run_uncoded_ber_with_channel_impl::<C, R>(channel, config, capture, rng)
     }
 
-    /// Exports simulation results to CSV format.
-    ///
-    /// # Arguments
-    ///
-    /// * `results` - Slice of per-SNR simulation results
-    /// * `include_header` - Whether to prepend a CSV header row
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, SimulationConfig};
-    ///
-    /// let config = SimulationConfig::quick_test();
-    /// let mut rng = rand::thread_rng();
-    /// let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
-    /// let csv = SimulationRunner::results_to_csv(&results, true);
-    ///
-    /// assert!(csv.contains("eb_n0_db"));
-    /// ```
+    /// CSV for a slice of results; `include_header` prepends the header row.
     pub fn results_to_csv(results: &[SimulationResult], include_header: bool) -> String {
         let wrapper = SimulationResults {
             points: results.to_vec(),
@@ -1746,12 +1074,10 @@ impl SimulationRunner {
     }
 }
 
-/// Progress reporting interval: print status every this many frames.
+/// Frames between stderr progress reports.
 const PROGRESS_INTERVAL: usize = 1000;
 
-/// Derives the `.progress.jsonl` path from a CSV output path.
-///
-/// Replaces the extension of `csv_path` with `.progress.jsonl`.
+/// Replaces the extension of `csv_path` with `progress.jsonl`.
 fn progress_path_for(csv_path: &Path) -> PathBuf {
     csv_path.with_extension("progress.jsonl")
 }
@@ -1773,13 +1099,8 @@ fn format_duration(d: std::time::Duration) -> String {
     }
 }
 
-/// Reports simulation progress to stderr, including wall-clock elapsed time
-/// and estimated remaining time for the current SNR point.
-///
-/// Uses a tiered approach based on error count:
-/// - 0 errors: show frame progress as percentage of max_frames, no ETA guess
-/// - 1-5 errors: show cautious ETA flagged as "rough"
-/// - >5 errors: confident ETA from current BLER and frame rate
+/// Reports progress to stderr with elapsed time and an ETA for the current
+/// SNR point: none at 0 errors, flagged "rough" at 1-5 errors.
 fn report_progress(
     eb_n0_db: f64,
     frames: usize,
@@ -1794,7 +1115,6 @@ fn report_progress(
         if frames == 0 || el.as_secs_f64() == 0.0 {
             String::new()
         } else if frame_errors == 0 {
-            // No errors yet: show progress toward max_frames, no ETA guess.
             let pct = 100.0 * frames as f64 / max_frames as f64;
             format!(", {frames}/{max_frames} ({pct:.1}%), no errors yet")
         } else if frame_errors < min_errors {
@@ -1807,7 +1127,6 @@ fn report_progress(
                 let eta_secs = remaining_frames as f64 / frame_rate;
                 let eta_dur = std::time::Duration::from_secs_f64(eta_secs);
                 if frame_errors <= 5 {
-                    // Few errors: ETA is unreliable, flag it.
                     format!(
                         ", ETA ~{} (rough, {} errors)",
                         format_duration(eta_dur),
@@ -1849,15 +1168,10 @@ struct CompletedPointInfo {
     bler: f64,
 }
 
-/// Estimates the remaining sweep time using log-linear BLER extrapolation.
-///
-/// For each remaining SNR point, estimates the BLER from the log-linear trend
-/// of completed points that had errors, then estimates frames needed as
-/// `min_errors / estimated_bler` (capped at `max_frames`), and estimates
-/// duration from the frame rate of the nearest completed point.
-///
-/// Returns `None` if insufficient data (fewer than 2 completed points with
-/// errors) to extrapolate.
+/// Estimates the remaining sweep time: BLER at each remaining point from a
+/// log-linear fit over completed points with errors, frames as
+/// `min_errors / bler` capped at `max_frames`, duration from the frame rate of
+/// the nearest completed point. Returns `None` with fewer than 2 such points.
 fn estimate_sweep_eta(
     completed: &[CompletedPointInfo],
     remaining_snr_points: &[f64],
@@ -1868,7 +1182,6 @@ fn estimate_sweep_eta(
         return None;
     }
 
-    // Collect points with measurable BLER for log-linear fit.
     let data_points: Vec<(f64, f64)> = completed
         .iter()
         .filter(|p| p.bler > 0.0 && p.num_frames > 0)
@@ -1894,21 +1207,17 @@ fn estimate_sweep_eta(
     let slope = (n * sum_xy - sum_x * sum_y) / denom;
     let intercept = (sum_y - slope * sum_x) / n;
 
-    // Estimate frame rate from the nearest completed point to each remaining point.
     let mut total_eta_secs = 0.0f64;
     for &snr in remaining_snr_points {
-        // Extrapolate BLER.
         let ln_bler_est = slope * snr + intercept;
         let bler_est = ln_bler_est.exp().clamp(1e-12, 1.0);
 
-        // Estimate frames needed.
         let frames_needed = if min_errors > 0 {
             ((min_errors as f64 / bler_est).ceil() as usize).min(max_frames)
         } else {
             max_frames
         };
 
-        // Find nearest completed point by SNR for frame rate estimation.
         let nearest = completed
             .iter()
             .filter(|p| p.num_frames > 0 && p.duration.as_secs_f64() > 0.0)
@@ -1933,21 +1242,7 @@ fn estimate_sweep_eta(
     }
 }
 
-/// Reports per-point completion with elapsed time and optional ETA.
-///
-/// Uses log-linear BLER extrapolation for sweep ETA when sufficient data
-/// (2+ completed points with errors) is available. Falls back to "unknown"
-/// otherwise.
-///
-/// # Arguments
-///
-/// * `eb_n0_db` - The completed SNR point.
-/// * `result` - The completed simulation result.
-/// * `point_elapsed` - Wall-clock time for this point.
-/// * `remaining_snr_points` - SNR values still to simulate.
-/// * `completed_points` - Info about previously completed points for ETA estimation.
-/// * `min_errors` - Minimum errors per point (for frame count estimation).
-/// * `max_frames` - Maximum frames per point (cap for estimation).
+/// Reports a completed point to stderr with elapsed time and the sweep ETA.
 fn report_point_complete(
     eb_n0_db: f64,
     result: &SimulationResult,
@@ -1973,7 +1268,6 @@ fn report_point_complete(
                     remaining,
                     if remaining == 1 { "" } else { "s" }
                 );
-                // Show per-point breakdown for the next few points
                 if let Some(breakdown) = estimate_per_point_eta(
                     completed_points,
                     remaining_snr_points,
@@ -2030,7 +1324,7 @@ fn estimate_per_point_eta(
 
     let parts: Vec<String> = remaining_snr_points
         .iter()
-        .take(4) // show at most 4 points
+        .take(4)
         .map(|&snr| {
             let bler_est = (slope * snr + intercept).exp().clamp(1e-12, 1.0);
             let frames_needed = if min_errors > 0 {
@@ -2076,37 +1370,9 @@ fn estimate_per_point_eta(
     }
 }
 
-/// Loads existing simulation results from a CSV file for resuming.
-///
-/// Parses each data row and returns a map keyed by the SNR value
-/// formatted to 6 decimal places. Only results meeting the `min_errors`
-/// threshold are included.
-///
-/// Returns an empty map if the file does not exist or cannot be parsed.
-///
-/// # Panics
-///
-/// Does not panic. I/O and parse errors are handled gracefully by
-/// returning an empty map.
-///
-/// # Arguments
-///
-/// * `path` - Path to the CSV file to load.
-/// * `min_errors` - Minimum frame error count for a result to be considered complete.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_coding::simulation::try_load_existing_results;
-/// use std::path::Path;
-///
-/// let results = try_load_existing_results(Path::new("/nonexistent.csv"), 100);
-/// assert!(results.is_empty());
-/// ```
-///
-/// # Complexity
-///
-/// O(n) where n is the number of rows in the CSV file.
+/// Loads completed results from a CSV file for resuming, keyed by Eb/N0
+/// formatted to 6 decimal places. Rows with fewer than `min_errors` frame
+/// errors are dropped; an unreadable file gives an empty map.
 pub fn try_load_existing_results(
     path: &Path,
     min_errors: usize,
@@ -2117,7 +1383,6 @@ pub fn try_load_existing_results(
     };
     let mut map = HashMap::new();
     for line in content.lines().skip(1) {
-        // Skip header
         let trimmed = line.trim();
         if trimmed.is_empty() {
             continue;
@@ -2203,12 +1468,8 @@ impl SnrAccumulator {
         elapsed >= threshold
     }
 
-    /// Appends a JSONL progress entry to the given file path.
-    ///
-    /// Thread-safe: uses [`JSONL_WRITE_LOCK`] to serialize concurrent writes
-    /// from parallel simulation workers.
-    ///
-    /// Warns on stderr on the first failure (best-effort, does not panic).
+    /// Appends a JSONL progress entry under [`JSONL_WRITE_LOCK`]; a write
+    /// failure warns on stderr once.
     fn write_progress_entry(&mut self, path: &Path) {
         use std::io::Write;
 
@@ -2255,7 +1516,6 @@ impl SnrAccumulator {
         self.progress_count += 1;
     }
 
-    /// Appends a `"type":"point_complete"` JSONL entry with full result fields.
     fn write_point_complete_entry(&mut self, path: &Path, result: &SimulationResult) {
         if let Err(e) = append_point_complete_jsonl(path, result, self.start_time.elapsed()) {
             if !self.progress_write_warned {
@@ -2268,15 +1528,10 @@ impl SnrAccumulator {
         }
     }
 
-    /// Returns the elapsed wall-clock time since this accumulator was created.
     fn elapsed(&self) -> std::time::Duration {
         self.start_time.elapsed()
     }
 
-    /// Returns whether the frame-count trigger for a heartbeat has fired.
-    ///
-    /// Returns `true` if `total_frames > 0` and `total_frames` is a multiple
-    /// of `every_frames`.
     #[cfg(feature = "sim-observability")]
     fn should_heartbeat(&self, every_frames: usize) -> bool {
         every_frames > 0 && self.total_frames > 0 && self.total_frames.is_multiple_of(every_frames)
@@ -2318,17 +1573,13 @@ impl SnrAccumulator {
     }
 }
 
-/// Formats and appends a `"type":"point_complete"` JSONL entry.
-///
-/// Shared implementation used by both `SnrAccumulator` (sequential) and
-/// `ParallelResultCollector` (parallel) to avoid duplicating the schema.
+/// The one `point_complete` JSONL schema, shared by the sequential and parallel paths.
 fn append_point_complete_jsonl(
     path: &Path,
     result: &SimulationResult,
     elapsed: Duration,
 ) -> std::io::Result<()> {
     use std::io::Write;
-    // Use the module-level JSONL_WRITE_LOCK to serialize all JSONL appends.
     let _guard = JSONL_WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let elapsed_s = elapsed.as_secs_f64();
     let avg_iter = result
@@ -2406,18 +1657,14 @@ fn chrono_like_timestamp() -> String {
     }
 }
 
-/// Counts bit errors between a decoded message and the original.
-///
-/// Uses word-level XOR and popcount for O(n/64) performance on aligned
-/// vectors. Length mismatches count as additional errors.
+/// Counts differing bits over the common prefix plus the length difference of
+/// the two vectors.
 pub fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
     if original.len() == decoded.len() {
-        // Fast path: XOR and popcount
         let mut diff = original.clone();
         diff.bit_xor_into(decoded);
         diff.count_ones()
     } else {
-        // Mismatched lengths: compare common prefix, count remainder as errors
         let len = original.len().min(decoded.len());
         let mut errors = 0;
         for i in 0..len {
@@ -2429,10 +1676,7 @@ pub fn count_bit_errors(original: &BitVec, decoded: &BitVec) -> usize {
     }
 }
 
-/// Shared context for running a single SNR point within the simulation sweep.
-///
-/// Groups the parameters that are common across all simulation entry-points
-/// so the inner function does not exceed clippy's argument limit.
+/// Parameters of one SNR point shared by the simulation entry points.
 struct SnrPointContext<'a> {
     eb_n0_db: f64,
     rate: f64,
@@ -2442,19 +1686,14 @@ struct SnrPointContext<'a> {
     progress_path: Option<&'a Path>,
     remaining_snr_points: &'a [f64],
     completed_points: &'a [CompletedPointInfo],
-    /// When `true`, `simulate_single_point` suppresses per-point completion
-    /// reporting and CSV/JSONL writes because the caller (e.g., the parallel
-    /// runner's `ParallelResultCollector`) handles them instead.
+    /// Suppresses completion reporting and CSV/JSONL writes; the parallel
+    /// runner's `ParallelResultCollector` performs them.
     suppress_completion_side_effects: bool,
 }
 
-/// Simulates a single SNR point, handling progress reporting, JSONL logging,
-/// incremental CSV append, and point-completion reporting.
-///
-/// The caller supplies a `decode_frame` closure that receives the channel LLRs
-/// for one frame and returns a [`DecoderResult`]. Everything else — the frame
-/// loop, early-termination, resume check, CSV/JSONL I/O — lives here so it
-/// is shared across all simulation entry-points.
+/// Simulates one SNR point: the frame loop, stopping rule, CSV-resume check,
+/// progress reporting and CSV/JSONL output. `decode_frame` maps one frame's
+/// channel LLRs to a [`DecoderResult`].
 fn simulate_single_point<E, C, R, F>(
     encoder: &E,
     channel: &C,
@@ -2473,7 +1712,6 @@ where
     let config = ctx.config;
     let k = encoder.k();
 
-    // Check resume cache.
     let snr_key = format!("{:.6}", eb_n0_db);
     if let Some(cached) = ctx.existing.get(&snr_key) {
         eprintln!(
@@ -2516,7 +1754,6 @@ where
     let sim_result = acc.into_result();
 
     if !ctx.suppress_completion_side_effects {
-        // Write point_complete JSONL entry.
         if let Some(pp) = ctx.progress_path {
             let mut acc_for_jsonl = SnrAccumulator::new(eb_n0_db, k);
             // Reuse the start time from the original accumulator via elapsed.
@@ -2524,7 +1761,7 @@ where
             acc_for_jsonl.write_point_complete_entry(pp, &sim_result);
         }
 
-        // Incremental CSV append (only for CSV outputs; JSON is written at the end).
+        // JSON output is written once at the end of the sweep.
         if let Some(path) = ctx.output_path {
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
                 sim_result.append_csv_row_to(path);
@@ -2545,43 +1782,26 @@ where
     sim_result
 }
 
-/// Collects results from parallel SNR-point workers with synchronized I/O.
-///
-/// Each parallel worker calls [`record_completed_point`] when it finishes an SNR
-/// point. The collector holds the `Mutex` only briefly to:
-/// 1. Store the result at the correct index (preserving config ordering).
-/// 2. Append a CSV row (if CSV output is configured).
-/// 3. Write a `point_complete` JSONL entry (if output_path is set).
-/// 4. Print per-point completion with ETA to stderr.
-///
-/// Intra-point JSONL progress entries are written directly by parallel workers
-/// via append-mode file I/O (each `writeln!` is atomic for short lines on POSIX).
-/// Entries include `eb_n0_db` so readers can demultiplex interleaved progress
-/// from concurrent SNR points.
+/// Collects results of parallel SNR-point workers; its `Mutex` serializes
+/// result storage, CSV append, the `point_complete` JSONL entry and the stderr
+/// completion report.
 #[derive(Debug)]
 struct ParallelResultCollector {
     /// Results indexed by SNR point index; `None` until completed.
     results: Vec<Option<SimulationResult>>,
     /// Path for CSV output (if configured and not JSON).
     output_path: Option<PathBuf>,
-    /// Path for JSONL progress output (derived from output_path).
     progress_path: Option<PathBuf>,
-    /// Number of completed SNR points so far.
     completed_count: usize,
-    /// Info about completed points for ETA estimation.
     completed_points: Vec<CompletedPointInfo>,
-    /// All SNR points in the sweep (for computing remaining points).
     all_snr_points: Vec<f64>,
-    /// Minimum errors per point (for ETA estimation).
     min_errors: usize,
-    /// Maximum frames per point (for ETA estimation).
     max_frames: usize,
     /// Set to `true` after the first JSONL write failure so we only warn once.
     progress_write_warned: bool,
 }
 
 impl ParallelResultCollector {
-    /// Creates a new collector for the given number of SNR points.
     fn new(
         total_points: usize,
         output_path: Option<PathBuf>,
@@ -2603,10 +1823,7 @@ impl ParallelResultCollector {
         }
     }
 
-    /// Records a completed SNR point, writing CSV/JSONL and printing progress.
-    ///
-    /// Called by each parallel worker after `simulate_single_point` returns.
-    /// The Mutex is held only for this brief I/O + bookkeeping window.
+    /// Stores the result and performs the completion I/O; called under the collector's `Mutex`.
     fn record_completed_point(
         &mut self,
         index: usize,
@@ -2622,7 +1839,6 @@ impl ParallelResultCollector {
             bler: result.bler,
         });
 
-        // Compute remaining SNR points (those not yet completed).
         let completed_snrs: Vec<f64> = self.completed_points.iter().map(|p| p.eb_n0_db).collect();
         let remaining_snr: Vec<f64> = self
             .all_snr_points
@@ -2631,19 +1847,16 @@ impl ParallelResultCollector {
             .copied()
             .collect();
 
-        // Append CSV row immediately (if CSV output).
         if let Some(ref path) = self.output_path {
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
                 result.append_csv_row_to(path);
             }
         }
 
-        // Write point_complete JSONL entry.
         if let Some(pp) = self.progress_path.clone() {
             self.write_point_complete_entry(&pp, &result, point_elapsed);
         }
 
-        // Print per-point completion with ETA.
         report_point_complete(
             result.eb_n0_db,
             &result,
@@ -2655,7 +1868,6 @@ impl ParallelResultCollector {
         );
     }
 
-    /// Appends a `"type":"point_complete"` JSONL entry with full result fields.
     fn write_point_complete_entry(
         &mut self,
         path: &Path,
@@ -2683,27 +1895,13 @@ impl ParallelResultCollector {
     }
 }
 
-/// Runs the sequential SNR sweep shared by `run_coded_iterative` and
-/// `run_with_decoder`.
+/// Sequential SNR sweep behind `run_coded`, `run_coded_iterative` and
+/// `run_with_decoder`: CSV resume, progress, incremental CSV, JSONL logging
+/// and the final file write around a per-frame `decode_frame` closure.
 ///
-/// Handles resume, progress, incremental CSV, JSONL logging, and final file
-/// write. The caller provides a per-frame `decode_frame` closure.
-///
-/// With the `sim-observability` feature enabled and
-/// [`SimulationConfig::checkpoint_dir`] set, the sweep additionally:
-/// - validates the checkpoint directory config hash on startup (aborting on
-///   mismatch),
-/// - skips SNR points with a completed checkpoint,
-/// - resumes mid-point from the last heartbeat checkpoint using
-///   `ChaCha20Rng::set_word_pos`,
-/// - writes heartbeat checkpoints every
-///   [`SimulationConfig::heartbeat_every_frames`] frames,
-/// - writes a `campaign_start` tracing event to
-///   [`SimulationConfig::tracing_log_path`],
-/// - writes `snr_completed` and `heartbeat` tracing events,
-/// - polls the process-wide interrupt flag between frames and flushes the
-///   current checkpoint before exiting with a non-zero status on SIGINT /
-///   SIGTERM.
+/// With `sim-observability`, a set [`SimulationConfig::rng_seed`] and a set
+/// `checkpoint_dir` or `tracing_log_path`, each point runs through
+/// `simulate_single_point_observable`.
 fn run_sequential_sweep<E, C, F>(
     encoder: &E,
     channel: &C,
@@ -2715,9 +1913,6 @@ where
     C: ChannelModel,
     F: FnMut(&[crate::llr::Llr]) -> DecoderResult,
 {
-    // sim-observability: install a JSON-lines tracing subscriber for this run.
-    // `_tracing_guard` is held for the entire function duration; dropping it
-    // at end of scope restores the previous subscriber.
     #[cfg(feature = "sim-observability")]
     let _tracing_guard = setup_tracing_guard(config);
 
@@ -2735,7 +1930,6 @@ where
         });
     let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
 
-    // sim-observability: validate checkpoint directory and compute config hash.
     #[cfg(feature = "sim-observability")]
     let config_hash = compute_config_hash(config);
     #[cfg(feature = "sim-observability")]
@@ -2745,12 +1939,9 @@ where
         }
     }
 
-    // sim-observability: clear any stale interrupt flag from a previous run.
     #[cfg(feature = "sim-observability")]
     clear_interrupt();
 
-    // sim-observability: open campaign span (owned via `entered()`) and emit
-    // campaign_start event.  `EnteredSpan` keeps the span alive and entered.
     #[cfg(feature = "sim-observability")]
     let _campaign_guard = {
         use std::time::SystemTime;
@@ -2787,8 +1978,7 @@ where
         let remaining_snr: Vec<f64> = config.eb_n0_range_db[point_idx + 1..].to_vec();
         let point_start = Instant::now();
 
-        // sim-observability: check for existing checkpoint before the legacy
-        // CSV-based resume.
+        // A completed checkpoint takes precedence over CSV-based resume.
         #[cfg(feature = "sim-observability")]
         let ckpt_resume: Option<SnrCheckpoint> = config
             .checkpoint_dir
@@ -2798,7 +1988,6 @@ where
         #[cfg(feature = "sim-observability")]
         if let Some(ref ckpt) = ckpt_resume {
             if ckpt.completed {
-                // Skip this point entirely — reconstruct result from checkpoint.
                 eprintln!(
                     "[{:.1} dB] CHECKPOINT RESUMED: skipping completed point \
                      ({} errors / {} frames)",
@@ -2847,8 +2036,7 @@ where
             }
         }
 
-        // sim-observability: open a per-SNR span (owned via `entered()`) so
-        // that heartbeat and snr_completed events carry the SNR fields.
+        // The per-SNR span gives heartbeat and snr_completed events their SNR fields.
         #[cfg(feature = "sim-observability")]
         let _snr_span_guard = {
             let es_n0_db = crate::info_theory::ebn0_to_esn0(eb_n0_db, 1, k as f64 / n as f64);
@@ -2862,12 +2050,10 @@ where
             .entered()
         };
 
-        // sim-observability: if we have a seed and checkpoint support, use
-        // a per-SNR ChaCha20Rng with deterministic seek.
+        // Checkpoint and heartbeat resume need a seeded, seekable per-SNR ChaCha20Rng.
         #[cfg(feature = "sim-observability")]
         let sim_result = if config.checkpoint_dir.is_some() || config.tracing_log_path.is_some() {
             if let Some(base_seed) = config.rng_seed {
-                // Determine resume word position from a partial checkpoint.
                 let resume_word_pos: u128 = {
                     #[allow(clippy::option_if_let_else)]
                     if let Some(ref ckpt) = ckpt_resume {
@@ -2907,7 +2093,7 @@ where
                     &mut decode_frame,
                 )
             } else {
-                // No seed — fall back to standard sequential path (no resume).
+                // No seed: the plain path, without checkpoints or heartbeats.
                 let ctx = SnrPointContext {
                     eb_n0_db,
                     rate,
@@ -2963,22 +2149,18 @@ where
     }
 
     let results = SimulationResults { points };
-    // Final overwrite with clean, complete file.
     if let Some(ref path) = config.output_path {
         results.write_to(path);
     }
     results
 }
 
-/// Observable variant of `simulate_single_point` used when
-/// `sim-observability` is active and a `checkpoint_dir` or
-/// `tracing_log_path` is set.
+/// `simulate_single_point` with checkpoints, heartbeats, tracing events and
+/// interrupt handling.
 ///
-/// Accepts a `ChaCha20Rng` so its word position can be captured at each
-/// heartbeat and stored in the checkpoint, enabling byte-identical resume.
-///
-/// The `resume_*` parameters carry state accumulated in a prior run's partial
-/// checkpoint so the totals are correct on resume.
+/// Takes a `ChaCha20Rng` so each checkpoint stores its word position, from
+/// which a resumed run continues the same stream. The `resume_*` parameters
+/// carry the totals of a partial checkpoint.
 #[cfg(feature = "sim-observability")]
 #[allow(clippy::too_many_arguments)]
 fn simulate_single_point_observable<E, C, F>(
@@ -3010,7 +2192,7 @@ where
 {
     let k = encoder.k();
 
-    // Legacy CSV-based resume (still honoured alongside checkpoint-based resume).
+    // CSV-based resume applies only when no partial checkpoint exists.
     let snr_key = format!("{:.6}", eb_n0_db);
     if let Some(cached) = existing.get(&snr_key) {
         if resume_frames == 0 {
@@ -3030,7 +2212,6 @@ where
     }
 
     let mut acc = SnrAccumulator::new(eb_n0_db, k);
-    // Inject resumed totals.
     acc.total_frames = resume_frames;
     acc.total_frame_errors = resume_errors;
     acc.total_iterations = resume_iters;
@@ -3039,9 +2220,7 @@ where
     acc.total_bit_errors = resume_bit_errors;
 
     while !acc.should_stop(config.min_errors, config.max_frames) {
-        // Check for SIGINT / SIGTERM before each frame.
         if is_interrupted() {
-            // Flush partial checkpoint and exit.
             if let Some(ref ckpt_dir) = config.checkpoint_dir {
                 let word_pos = rng.get_word_pos();
                 let ckpt = SnrCheckpoint {
@@ -3093,21 +2272,17 @@ where
             );
         }
 
-        // Legacy progress JSONL.
         if let Some(pp) = progress_path {
             if acc.should_write_progress() {
                 acc.write_progress_entry(pp);
             }
         }
 
-        // Heartbeat: tracing event + intermediate checkpoint.
         if let Some(every) = config.heartbeat_every_frames {
             if acc.should_heartbeat(every) {
                 let word_pos = rng.get_word_pos();
                 let elapsed_s = acc.elapsed().as_secs_f64();
 
-                // Tracing event via `tracing::info!` — picked up by the
-                // JSON subscriber installed by `setup_tracing_guard`.
                 tracing::info!(
                     name: "heartbeat",
                     event_type = "heartbeat",
@@ -3118,7 +2293,6 @@ where
                     elapsed_seconds = elapsed_s,
                 );
 
-                // Intermediate checkpoint.
                 if let Some(ref ckpt_dir) = config.checkpoint_dir {
                     let ckpt = SnrCheckpoint {
                         snr_index,
@@ -3148,7 +2322,6 @@ where
     let point_elapsed = acc.elapsed();
     let sim_result = acc.into_result();
 
-    // Write completed checkpoint.
     if let Some(ref ckpt_dir) = config.checkpoint_dir {
         let word_pos = rng.get_word_pos();
         let ckpt = SnrCheckpoint {
@@ -3175,7 +2348,6 @@ where
         }
     }
 
-    // Tracing: snr_completed event via `tracing::info!`.
     tracing::info!(
         name: "snr_completed",
         event_type = "snr_completed",
@@ -3187,14 +2359,12 @@ where
         elapsed_seconds = point_elapsed.as_secs_f64(),
     );
 
-    // Legacy progress JSONL: point_complete entry.
     if let Some(pp) = progress_path {
         if let Err(e) = append_point_complete_jsonl(pp, &sim_result, point_elapsed) {
             eprintln!("Warning: failed to write JSONL progress: {e}");
         }
     }
 
-    // Incremental CSV append.
     if let Some(path) = output_path {
         if path.extension().and_then(|e| e.to_str()) != Some("json") {
             sim_result.append_csv_row_to(path);
@@ -3215,25 +2385,14 @@ where
 }
 
 impl SimulationRunner {
-    /// Runs a coded simulation using an immutable [`SoftDecoder`].
-    ///
-    /// Executes the encode-modulate-channel-demodulate-decode loop for each
-    /// SNR point, collecting BER, BLER, and iteration statistics.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder producing codewords from messages
-    /// * `decoder` - Soft-decision decoder (immutable `&self`)
-    /// * `channel` - Channel model for modulation, noise, and demodulation
-    /// * `config` - Simulation configuration controlling sweep parameters
-    ///
-    /// # Returns
-    ///
-    /// Aggregated [`SimulationResults`] with one entry per SNR point.
+    /// Coded sweep with an immutable [`SoftDecoder`]: per SNR point, frames
+    /// are encoded, sent through `channel` and decoded until
+    /// `config.min_errors` frame errors or `config.max_frames` frames.
     ///
     /// # Panics
     ///
-    /// Panics if `output_path` is set and the file cannot be written.
+    /// Panics if `output_path` is set and the file cannot be written, and under
+    /// the conditions stated at [`SimulationConfig::checkpoint_dir`].
     ///
     /// # Examples
     ///
@@ -3273,45 +2432,13 @@ impl SimulationRunner {
         })
     }
 
-    /// Runs a coded simulation using a mutable [`IterativeSoftDecoder`].
-    ///
-    /// Similar to [`run_coded`](Self::run_coded) but accepts a decoder
-    /// requiring `&mut self`,
-    /// as is typical for iterative belief-propagation decoders that maintain
-    /// internal message state.
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder producing codewords from messages
-    /// * `decoder` - Iterative soft-decision decoder (mutable `&mut self`)
-    /// * `channel` - Channel model for modulation, noise, and demodulation
-    /// * `config` - Simulation configuration controlling sweep parameters
-    ///
-    /// # Returns
-    ///
-    /// Aggregated [`SimulationResults`] with one entry per SNR point.
+    /// [`run_coded`](Self::run_coded) for an [`IterativeSoftDecoder`], which
+    /// is reset before each frame and run for at most
+    /// `config.max_decoder_iterations` iterations.
     ///
     /// # Panics
     ///
-    /// Panics if `output_path` is set and the file cannot be written.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::simulation::{SimulationRunner, BpskAwgnChannel, SimulationConfig};
-    /// use gf2_coding::{LdpcCode, LdpcDecoder, CodeRate};
-    /// use gf2_coding::ldpc::LdpcEncoder;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// let encoder = LdpcEncoder::new(code.clone());
-    /// let mut decoder = LdpcDecoder::new(code);
-    /// let channel = BpskAwgnChannel;
-    /// let mut config = SimulationConfig::quick_test();
-    /// config.eb_n0_range_db = vec![4.0];
-    /// config.max_frames = 10;
-    /// let results = SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
-    /// assert_eq!(results.points.len(), 1);
-    /// ```
+    /// As [`run_coded`](Self::run_coded).
     ///
     /// # Complexity
     ///
@@ -3334,78 +2461,28 @@ impl SimulationRunner {
         })
     }
 
-    /// Runs a coded iterative simulation with per-SNR-point parallelism.
+    /// Coded iterative sweep with one worker per SNR point: rayon threads with
+    /// the `parallel` feature, sequential otherwise. `make_decoder` is called
+    /// once per SNR point.
     ///
-    /// Each SNR point gets its own decoder instance created by `make_decoder`,
-    /// enabling safe parallel execution. With the `parallel` feature enabled,
-    /// SNR points are dispatched to rayon threads. Without it, execution is
-    /// sequential but each point still gets a fresh decoder.
+    /// With `sim-observability`, a checkpoint is written per completed SNR
+    /// point and completed points are skipped on resume;
+    /// `heartbeat_every_frames` is unused, since the per-worker
+    /// [`rand::rngs::StdRng`] has no stream seek
+    /// ([`SimulationRunner::run_coded_iterative`] resumes within a point). On
+    /// SIGINT or SIGTERM, workers that have not started skip their point and
+    /// the process exits non-zero once the running ones finish.
     ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder producing codewords from messages. Must be
-    ///   `Send + Sync` for parallel access.
-    /// * `make_decoder` - Factory closure that creates a fresh
-    ///   [`IterativeSoftDecoder`] instance for each SNR point. Called once per
-    ///   SNR point, so each thread gets its own decoder with independent state.
-    /// * `channel` - Channel model for modulation, noise, and demodulation.
-    ///   Must be `Send + Sync` for parallel access.
-    /// * `config` - Simulation configuration controlling sweep parameters.
-    ///
-    ///   With the `sim-observability` feature (default on):
-    ///   - `checkpoint_dir` IS honored: per-SNR-boundary checkpoints are written
-    ///     after each worker finishes its SNR point; completed points are skipped
-    ///     in subsequent runs.
-    ///   - `tracing_log_path` IS honored: campaign and per-SNR spans plus
-    ///     completion events are emitted as JSON lines (worker threads inherit the
-    ///     main-thread subscriber via `tracing::dispatcher::set_default`).
-    ///   - `heartbeat_every_frames` is NOT honored for this path (per the
-    ///     path-scoping note in [`SimulationRunner`]): rayon workers use per-worker
-    ///     [`rand::rngs::StdRng`] which has no `set_word_pos` seek, so
-    ///     within-SNR resume is architecturally unavailable. Users needing mid-SNR
-    ///     recovery should use [`SimulationRunner::run_coded_iterative`] instead.
-    ///   - A SIGINT or SIGTERM is handled at the per-SNR boundary: any worker
-    ///     that has not yet started its SNR point skips it; after the rayon
-    ///     `for_each` completes the runner checks the interrupt flag and exits
-    ///     non-zero if it was set.
-    ///
-    /// # Returns
-    ///
-    /// Aggregated [`SimulationResults`] with one entry per SNR point, ordered
-    /// by increasing Eb/N0.
+    /// Results are in the order of `config.eb_n0_range_db`.
     ///
     /// # Panics
     ///
-    /// Panics if `output_path` is set and the file cannot be written.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use gf2_coding::simulation::{SimulationRunner, BpskAwgnChannel, SimulationConfig};
-    /// use gf2_coding::{LdpcCode, LdpcDecoder, CodeRate};
-    /// use gf2_coding::ldpc::LdpcEncoder;
-    ///
-    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    /// let encoder = LdpcEncoder::new(code);
-    /// let channel = BpskAwgnChannel;
-    /// let mut config = SimulationConfig::quick_test();
-    /// config.eb_n0_range_db = vec![4.0];
-    /// config.max_frames = 10;
-    ///
-    /// let results = SimulationRunner::run_coded_iterative_parallel(
-    ///     &encoder,
-    ///     || LdpcDecoder::new(LdpcCode::dvb_t2_short(CodeRate::Rate1_2)),
-    ///     &channel,
-    ///     &config,
-    /// );
-    /// assert_eq!(results.points.len(), 1);
-    /// ```
+    /// As [`run_coded`](Self::run_coded).
     ///
     /// # Complexity
     ///
     /// O(SNR_points * max_frames * (encode_time + channel_time + decode_time))
-    /// wall-clock time, divided by available parallelism for independent SNR
-    /// points.
+    /// work.
     pub fn run_coded_iterative_parallel<E, D, F, C>(
         encoder: &E,
         make_decoder: F,
@@ -3422,15 +2499,11 @@ impl SimulationRunner {
         let k = encoder.k();
         let rate = k as f64 / n as f64;
 
-        // sim-observability: install JSON-lines tracing subscriber for this run.
         #[cfg(feature = "sim-observability")]
         let _tracing_guard = setup_tracing_guard(config);
 
-        // sim-observability: compute config hash and validate checkpoint directory.
-        // Per-SNR-boundary checkpointing only; within-SNR heartbeat resume is
-        // architecturally unavailable with rayon-parallel SNR-point dispatch
-        // (workers run concurrently and checkpoints are only written after each
-        // worker returns its completed result to the main thread).
+        // Checkpoints are written at SNR-point boundaries only, after a worker
+        // completes its point.
         #[cfg(feature = "sim-observability")]
         let config_hash = compute_config_hash(config);
         #[cfg(feature = "sim-observability")]
@@ -3440,13 +2513,9 @@ impl SimulationRunner {
             }
         }
 
-        // sim-observability: clear any stale interrupt flag.
         #[cfg(feature = "sim-observability")]
         clear_interrupt();
 
-        // sim-observability: open campaign span and emit campaign_start event.
-        // The Dispatch is cloned so each rayon worker can re-enter it on their
-        // own thread via `tracing::dispatcher::with_default`.
         #[cfg(feature = "sim-observability")]
         let _campaign_guard = {
             use std::time::SystemTime;
@@ -3475,8 +2544,7 @@ impl SimulationRunner {
             guard
         };
 
-        // sim-observability: capture the current thread-local Dispatch so
-        // rayon worker threads can re-activate it.
+        // Rayon workers re-enter the current thread-local Dispatch.
         #[cfg(feature = "sim-observability")]
         let worker_dispatch = tracing::dispatcher::get_default(|d| d.clone());
 
@@ -3492,7 +2560,6 @@ impl SimulationRunner {
         let max_iter = config.max_decoder_iterations;
         let total_points = config.eb_n0_range_db.len();
 
-        // Derive CSV-only output path (None for JSON outputs).
         let csv_output = config.output_path.as_ref().and_then(|p| {
             if p.extension().and_then(|e| e.to_str()) == Some("json") {
                 None
@@ -3503,9 +2570,6 @@ impl SimulationRunner {
         let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
         let worker_progress_path = progress_path.clone();
 
-        // sim-observability: pre-load any completed checkpoint results and build
-        // a filtered list of SNR indices still needing computation.
-        // `checkpoint_results` maps snr_idx -> SimulationResult for already-done points.
         #[cfg(feature = "sim-observability")]
         let checkpoint_results: Vec<Option<SimulationResult>> = {
             (0..total_points)
@@ -3557,8 +2621,6 @@ impl SimulationRunner {
                 .collect()
         };
 
-        // Build the list of (original_idx, eb_n0_db) pairs that still need work.
-        // When sim-observability is disabled, all points need work.
         let pending_points: Vec<(usize, f64)> = {
             #[cfg(feature = "sim-observability")]
             {
@@ -3590,8 +2652,7 @@ impl SimulationRunner {
             config.max_frames,
         )));
 
-        // sim-observability: pre-populate the collector with checkpoint results
-        // so the final aggregation includes all SNR points.
+        // Checkpointed points enter the collector so the results cover every SNR point.
         #[cfg(feature = "sim-observability")]
         {
             let mut coll = collector
@@ -3604,30 +2665,19 @@ impl SimulationRunner {
             }
         }
 
-        // Worker closure: simulates one SNR point, then locks the collector
-        // briefly to record the result with immediate CSV/JSONL writes.
         let simulate_and_record = |(idx, eb_n0_db): (usize, f64)| {
-            // sim-observability: check for SIGINT / SIGTERM at the SNR boundary
-            // before starting work.  The parallel path exits on the next-SNR
-            // boundary per the path-scoping note: within-SNR interrupts are only
-            // fully handled by the sequential coded path.  Workers that have not
-            // yet started simply skip their point; the outer loop checks the flag
-            // again after all workers return and exits non-zero if it was set.
+            // Workers that have not started skip their point; the flag is
+            // checked again after all workers return.
             #[cfg(feature = "sim-observability")]
             if is_interrupted() {
                 return;
             }
 
-            // sim-observability: install the campaign subscriber on this rayon
-            // worker thread for the duration of the closure.  `set_default`
-            // is thread-local; the guard restores the previous dispatch on
-            // drop. Skipped when no JSON subscriber is configured —
-            // installing a `Dispatch::none()` would be a behavioural no-op.
+            // `set_default` is thread-local; skipped without a JSON subscriber.
             #[cfg(feature = "sim-observability")]
             let _dispatch_guard = (!worker_dispatch.is::<tracing::subscriber::NoSubscriber>())
                 .then(|| tracing::dispatcher::set_default(&worker_dispatch));
 
-            // sim-observability: open a per-SNR span on this worker thread.
             #[cfg(feature = "sim-observability")]
             let _snr_guard = tracing::info_span!(
                 "snr_point",
@@ -3653,15 +2703,11 @@ impl SimulationRunner {
                 existing: &existing,
                 // CSV writes handled by ParallelResultCollector under Mutex.
                 output_path: None,
-                // JSONL progress: enabled for parallel workers. All JSONL
-                // writes are serialized via the module-level JSONL_WRITE_LOCK
-                // mutex. Entries include eb_n0_db so readers can demultiplex
-                // interleaved progress from concurrent SNR points.
+                // Entries carry eb_n0_db so readers can demultiplex concurrent
+                // SNR points.
                 progress_path: worker_progress_path.as_deref(),
                 remaining_snr_points: &[],
                 completed_points: &[],
-                // The ParallelResultCollector handles CSV append and
-                // per-point completion reporting with proper ETA tracking.
                 suppress_completion_side_effects: true,
             };
 
@@ -3672,7 +2718,6 @@ impl SimulationRunner {
             });
             let point_elapsed = point_start.elapsed();
 
-            // sim-observability: emit snr_completed event on this worker thread.
             #[cfg(feature = "sim-observability")]
             tracing::info!(
                 name: "snr_completed",
@@ -3685,10 +2730,6 @@ impl SimulationRunner {
                 elapsed_seconds = point_elapsed.as_secs_f64(),
             );
 
-            // sim-observability: write a completed checkpoint after this SNR point.
-            // Within-SNR heartbeat is not implemented for the parallel path —
-            // workers run concurrently and can only checkpoint at completion
-            // boundaries (see function-level rustdoc).
             #[cfg(feature = "sim-observability")]
             if let Some(ref ckpt_dir) = config.checkpoint_dir {
                 let ckpt = SnrCheckpoint {
@@ -3717,7 +2758,6 @@ impl SimulationRunner {
                 }
             }
 
-            // Lock the collector only for the brief I/O + bookkeeping window.
             let mut coll = collector
                 .lock()
                 .expect("ParallelResultCollector lock poisoned");
@@ -3734,10 +2774,6 @@ impl SimulationRunner {
             pending_points.into_iter().for_each(simulate_and_record);
         }
 
-        // sim-observability: after all workers return, check whether the
-        // interrupt flag was set.  Any completed SNR points have already
-        // been checkpointed by their workers; the outer-loop check here is
-        // the per-SNR-boundary exit point for the parallel path.
         #[cfg(feature = "sim-observability")]
         if is_interrupted() {
             eprintln!(
@@ -3754,69 +2790,20 @@ impl SimulationRunner {
             .into_results();
 
         let results = SimulationResults { points };
-        // Final overwrite with clean, complete file (CSV gets a sorted, header-
-        // included version; JSON is written here since incremental JSON is not
-        // supported).
+        // Final overwrite with a complete file; JSON has no incremental form.
         if let Some(ref path) = config.output_path {
             results.write_to(path);
         }
         results
     }
 
-    /// Runs a coded simulation using a decode closure instead of a trait object.
-    ///
-    /// This is useful for decoders that do not implement [`IterativeSoftDecoder`]
-    /// (e.g., [`TurboDecoder`](crate::product::TurboDecoder)) but can be wrapped
-    /// in a closure that returns [`DecoderResult`].
-    ///
-    /// Supports incremental CSV output, JSONL progress logging, and resume from
-    /// existing results, identical to [`run_coded_iterative`](Self::run_coded_iterative).
-    ///
-    /// # Arguments
-    ///
-    /// * `encoder` - Block encoder producing codewords from messages.
-    /// * `decode_fn` - Closure that takes a slice of LLRs and returns a
-    ///   [`DecoderResult`].
-    /// * `channel` - Channel model for modulation, noise, and demodulation.
-    /// * `config` - Simulation configuration controlling sweep parameters.
-    ///
-    /// # Returns
-    ///
-    /// Aggregated [`SimulationResults`] with one entry per SNR point.
+    /// [`run_coded`](Self::run_coded) with a decode closure, for decoders
+    /// outside the decoder traits (e.g.
+    /// [`TurboDecoder`](crate::product::TurboDecoder)).
     ///
     /// # Panics
     ///
-    /// Panics if `output_path` is set and the file cannot be written.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_coding::simulation::{SimulationRunner, BpskAwgnChannel, SimulationConfig};
-    /// use gf2_coding::traits::{DecoderResult, BlockEncoder};
-    /// use gf2_core::BitVec;
-    ///
-    /// // Simple hard-decision closure decoder
-    /// let encoder = gf2_coding::linear::LinearBlockCode::hamming(3);
-    /// let channel = BpskAwgnChannel;
-    /// let mut config = SimulationConfig::quick_test();
-    /// config.eb_n0_range_db = vec![10.0];
-    /// config.min_errors = 5;
-    /// config.max_frames = 500;
-    ///
-    /// let results = SimulationRunner::run_with_decoder(
-    ///     &encoder,
-    ///     |llrs| {
-    ///         let mut bits = BitVec::with_capacity(encoder.k());
-    ///         for &llr in llrs.iter().take(encoder.k()) {
-    ///             bits.push_bit(llr.value() < 0.0);
-    ///         }
-    ///         DecoderResult::success(bits)
-    ///     },
-    ///     &channel,
-    ///     &config,
-    /// );
-    /// assert_eq!(results.points.len(), 1);
-    /// ```
+    /// As [`run_coded`](Self::run_coded).
     ///
     /// # Complexity
     ///
@@ -3834,7 +2821,7 @@ impl SimulationRunner {
     {
         run_sequential_sweep(encoder, channel, config, |llrs| decode_fn(llrs))
     }
-} // impl SimulationRunner (coded methods)
+}
 
 #[cfg(test)]
 mod tests {
@@ -3931,7 +2918,6 @@ mod tests {
         };
 
         let json = result.to_json();
-        // Verify field:value pairs directly
         assert!(
             json.contains("\"eb_n0_db\":3"),
             "JSON must contain eb_n0_db:3, got: {json}"
@@ -4112,10 +3098,7 @@ mod tests {
         );
     }
 
-    // --- Mock encoder/decoder for coded simulation tests ---
-
-    /// A trivial (n=4, k=2) repetition-like encoder for testing.
-    /// Encodes 2 message bits by repeating each bit once: [m0, m1] -> [m0, m0, m1, m1].
+    /// Encodes [m0, m1] -> [m0, m0, m1, m1].
     struct MockEncoder;
 
     impl BlockEncoder for MockEncoder {
@@ -4137,7 +3120,7 @@ mod tests {
         }
     }
 
-    /// A mock soft decoder that does majority-vote on repeated pairs.
+    /// Decides each message bit from the LLR sum of its repeated pair.
     struct MockSoftDecoder;
 
     impl SoftDecoder for MockSoftDecoder {
@@ -4150,7 +3133,6 @@ mod tests {
         fn decode_soft(&self, llrs: &[Llr]) -> BitVec {
             assert_eq!(llrs.len(), 4);
             let mut result = BitVec::with_capacity(2);
-            // Pair 0: llrs[0] + llrs[1], pair 1: llrs[2] + llrs[3]
             for pair in 0..2 {
                 let combined = llrs[2 * pair].value() + llrs[2 * pair + 1].value();
                 result.push_bit(combined < 0.0);
@@ -4159,7 +3141,6 @@ mod tests {
         }
     }
 
-    /// A mock iterative soft decoder wrapping MockSoftDecoder.
     struct MockIterativeDecoder {
         last_iterations: usize,
     }
@@ -4325,12 +3306,8 @@ mod tests {
         assert!(path.exists(), "Output file must be created");
     }
 
-    /// A deterministic "channel" that always returns fixed LLRs.
-    /// Bit 0 gets LLR +10 (correct), bit 1 gets LLR -10 (correct),
-    /// except when `flip_positions` indicates an error.
+    /// Returns LLR +10 for bit 0 and -10 for bit 1, sign-flipped at `flip_positions`.
     struct DeterministicChannel {
-        /// Bit positions in the codeword where the channel introduces errors
-        /// (LLR sign is flipped).
         flip_positions: Vec<usize>,
     }
 
@@ -4344,15 +3321,11 @@ mod tests {
         ) -> Vec<Llr> {
             (0..bits.len())
                 .map(|i| {
-                    let correct_llr = if bits.get(i) {
-                        -10.0 // bit=1 -> negative LLR
-                    } else {
-                        10.0 // bit=0 -> positive LLR
-                    };
+                    let correct_llr = if bits.get(i) { -10.0 } else { 10.0 };
                     if self.flip_positions.contains(&i) {
-                        Llr::new(-correct_llr) // flip: wrong decision
+                        Llr::new(-correct_llr)
                     } else {
-                        Llr::new(correct_llr) // correct
+                        Llr::new(correct_llr)
                     }
                 })
                 .collect()
@@ -4361,15 +3334,8 @@ mod tests {
 
     #[test]
     fn test_hand_calculated_deterministic_ber() {
-        // Setup: MockEncoder maps [m0, m1] -> [m0, m0, m1, m1]
-        // DeterministicChannel flips position 0 and 1 (both copies of m0).
-        // MockSoftDecoder does majority vote on pairs:
-        //   pair 0: both flipped -> wrong decision on m0
-        //   pair 1: both correct -> correct on m1
-        //
-        // So every frame has exactly 1 bit error out of k=2 message bits.
-        // With seeded RNG and 10 frames: 10 bit errors, 10 frame errors.
-
+        // Flipping positions 0 and 1 (both copies of m0) makes every frame
+        // decode m0 wrong and m1 right: 1 bit error per k=2 message bits.
         let encoder = MockEncoder;
         let decoder = MockSoftDecoder;
         let channel = DeterministicChannel {
@@ -4396,14 +3362,14 @@ mod tests {
         );
         assert_eq!(point.num_bits, 20, "10 frames * k=2 bits per frame");
 
-        let expected_ber = 10.0 / 20.0; // 0.5
+        let expected_ber = 10.0 / 20.0;
         assert!(
             (point.ber - expected_ber).abs() < 1e-10,
             "BER must be exactly 0.5, got {}",
             point.ber
         );
 
-        let expected_bler = 10.0 / 10.0; // 1.0
+        let expected_bler = 10.0 / 10.0;
         assert!(
             (point.bler - expected_bler).abs() < 1e-10,
             "BLER must be exactly 1.0, got {}",
@@ -4413,7 +3379,6 @@ mod tests {
 
     #[test]
     fn test_deterministic_no_errors() {
-        // No flipped positions -> zero errors
         let encoder = MockEncoder;
         let decoder = MockSoftDecoder;
         let channel = DeterministicChannel {
@@ -4440,7 +3405,6 @@ mod tests {
 
     #[test]
     fn test_early_termination_at_min_errors() {
-        // Channel always causes errors -> should stop at min_errors, not max_frames.
         let encoder = MockEncoder;
         let decoder = MockSoftDecoder;
         let channel = DeterministicChannel {
@@ -4491,7 +3455,6 @@ mod tests {
 
     #[test]
     fn test_queries_tracking() {
-        /// A decoder that reports queries in its result.
         struct QueryTrackingDecoder;
 
         impl SoftDecoder for QueryTrackingDecoder {
@@ -4570,10 +3533,6 @@ mod tests {
         assert_eq!(acc.total_queries, 108);
     }
 
-    // -------------------------------------------------------------------
-    // count_bit_errors boundary tests (0/1/63/64/65 bits)
-    // -------------------------------------------------------------------
-
     #[test]
     fn test_count_bit_errors_empty() {
         let a = BitVec::zeros(0);
@@ -4615,10 +3574,6 @@ mod tests {
         assert_eq!(count_bit_errors(&a, &b), 1);
     }
 
-    // -------------------------------------------------------------------
-    // Incremental CSV, resume, and run_with_decoder tests
-    // -------------------------------------------------------------------
-
     #[test]
     fn test_incremental_csv_append() {
         let tmpdir = tempfile::tempdir().unwrap();
@@ -4638,11 +3593,9 @@ mod tests {
         let results =
             SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
 
-        // Verify final CSV exists and contains all points.
         let content = std::fs::read_to_string(&path).unwrap();
         let lines: Vec<&str> = content.lines().collect();
         assert!(lines[0].contains("eb_n0_db"), "Header must be present");
-        // 1 header + 2 data rows
         assert_eq!(lines.len(), 3, "CSV must have header + 2 data rows");
         assert_eq!(results.points.len(), 2);
     }
@@ -4653,7 +3606,6 @@ mod tests {
         let dir = tmpdir.path();
         let path = dir.join("resume.csv");
 
-        // Write a partial CSV with one completed point.
         let pre_result = SimulationResult {
             eb_n0_db: 8.0,
             ber: 0.01,
@@ -4665,7 +3617,6 @@ mod tests {
             num_frames: 1000,
             num_frame_errors: 50,
         };
-        // Write header + row
         let header = "eb_n0_db,ber,bler,num_bits,num_bit_errors,num_frames,num_frame_errors,avg_iterations,avg_queries_per_bit";
         std::fs::write(&path, format!("{}\n{}\n", header, pre_result.to_csv_row())).unwrap();
 
@@ -4683,17 +3634,14 @@ mod tests {
             SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
 
         assert_eq!(results.points.len(), 2);
-        // The 8.0 dB point should be the cached one (50 frame errors).
         assert_eq!(results.points[0].num_frame_errors, 50);
         assert!((results.points[0].eb_n0_db - 8.0).abs() < 1e-10);
-        // The 10.0 dB point should be freshly simulated.
         assert!(results.points[1].num_frames > 0);
         assert!((results.points[1].eb_n0_db - 10.0).abs() < 1e-10);
     }
 
     #[test]
     fn test_run_with_decoder_produces_same_results() {
-        // Compare closure-based vs trait-based with the same config and seed.
         let encoder = MockEncoder;
         let channel = BpskAwgnChannel;
         let mut config = SimulationConfig::quick_test();
@@ -4702,12 +3650,10 @@ mod tests {
         config.max_frames = 500;
         config.rng_seed = Some(42);
 
-        // Trait-based run.
         let mut decoder = MockIterativeDecoder { last_iterations: 0 };
         let results_trait =
             SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);
 
-        // Closure-based run (mimicking MockIterativeDecoder behavior).
         let results_closure = SimulationRunner::run_with_decoder(
             &encoder,
             |llrs| {
@@ -4833,9 +3779,6 @@ mod tests {
         let csv_path = dir.join("results.csv");
         let jsonl_path = dir.join("results.progress.jsonl");
 
-        // Force JSONL progress by using a deterministic channel with errors
-        // so we hit enough frames, and set a 0s threshold override by writing
-        // directly through the accumulator API.
         let encoder = MockEncoder;
         let channel = DeterministicChannel {
             flip_positions: vec![0, 1],
@@ -4847,8 +3790,8 @@ mod tests {
         config.rng_seed = Some(42);
         config.output_path = Some(csv_path.clone());
 
-        // Manually simulate to force JSONL writes (the wall-clock threshold in
-        // should_write_progress means normal short tests won't trigger it).
+        // The wall-clock threshold in should_write_progress keeps short runs
+        // from writing entries, so they are written through the accumulator.
         let k = encoder.k();
         let n = encoder.n();
         let rate = k as f64 / n as f64;
@@ -4871,14 +3814,11 @@ mod tests {
             acc.record_frame(bit_errors, 1, None);
         }
 
-        // Force a progress entry write.
         acc.write_progress_entry(&jsonl_path);
-        // Force a point_complete entry write.
         let sim_result = acc.into_result();
         let mut acc2 = SnrAccumulator::new(5.0, k);
         acc2.write_point_complete_entry(&jsonl_path, &sim_result);
 
-        // Verify the JSONL file exists and has valid entries.
         assert!(jsonl_path.exists(), "JSONL progress file must exist");
         let content = std::fs::read_to_string(&jsonl_path).unwrap();
         let lines: Vec<&str> = content.lines().collect();
@@ -4888,7 +3828,6 @@ mod tests {
             lines.len()
         );
 
-        // Validate the first progress line has expected fields.
         let first_line = lines[0];
         assert!(
             first_line.contains("\"type\":\"progress\""),
@@ -4915,7 +3854,6 @@ mod tests {
             "Must contain timestamp field"
         );
 
-        // Validate the point_complete line.
         let last_line = lines[lines.len() - 1];
         assert!(
             last_line.contains("\"type\":\"point_complete\""),
@@ -4934,8 +3872,6 @@ mod tests {
             "point_complete must contain num_frames"
         );
 
-        // Verify timestamps are ISO 8601 format (YYYY-MM-DDTHH:MM:SS).
-        // Extract timestamp from first line.
         if let Some(ts_start) = first_line.find("\"timestamp\":\"") {
             let after = &first_line[ts_start + 13..];
             if let Some(ts_end) = after.find('"') {
@@ -4977,7 +3913,6 @@ mod tests {
         assert_eq!(&ts[10..11], "T", "Position 10 must be 'T' in: {ts}");
         assert_eq!(&ts[13..14], ":", "Position 13 must be ':' in: {ts}");
         assert_eq!(&ts[16..17], ":", "Position 16 must be ':' in: {ts}");
-        // Year should be reasonable (2020-2099).
         let year: u32 = ts[..4].parse().expect("Year must be numeric");
         assert!(
             (2020..2100).contains(&year),
@@ -4995,7 +3930,6 @@ mod tests {
         let encoder = MockEncoder;
         let channel = BpskAwgnChannel;
         let mut config = SimulationConfig::quick_test();
-        // Use 3 SNR points to test parallel incremental writes.
         config.eb_n0_range_db = vec![6.0, 8.0, 10.0];
         config.min_errors = 5;
         config.max_frames = 1000;
@@ -5011,7 +3945,6 @@ mod tests {
 
         assert_eq!(results.points.len(), 3, "Must have 3 result points");
 
-        // Verify final CSV has header + 3 data rows.
         let content = std::fs::read_to_string(&csv_path).unwrap();
         let lines: Vec<&str> = content.lines().filter(|l| !l.is_empty()).collect();
         assert!(
@@ -5026,7 +3959,6 @@ mod tests {
             lines.len()
         );
 
-        // Verify JSONL has point_complete entries for each SNR point.
         assert!(
             jsonl_path.exists(),
             "JSONL progress file must exist at {}",
@@ -5044,7 +3976,6 @@ mod tests {
             jsonl_lines.len()
         );
 
-        // Verify all 3 SNR values appear in point_complete entries.
         for &snr in &[6.0_f64, 8.0, 10.0] {
             let snr_str = format!("\"eb_n0_db\":{}", snr);
             assert!(
@@ -5053,7 +3984,6 @@ mod tests {
             );
         }
 
-        // Verify result ordering matches config order.
         assert!(
             (results.points[0].eb_n0_db - 6.0).abs() < 1e-10,
             "First point must be 6.0 dB"
@@ -5068,19 +3998,6 @@ mod tests {
         );
     }
 
-    // -------------------------------------------------------------------
-    // Modem-backed uncoded runner (run_uncoded_ber_with_channel) tests
-    // -------------------------------------------------------------------
-
-    /// SC3(a): at matched Eb/N0 and the same `StdRng` seed, the modem-backed
-    /// path through [`BpskAwgnChannel`] converges to the same BER as the
-    /// legacy hard-coded BPSK path, within a small Monte Carlo tolerance.
-    ///
-    /// The two paths differ slightly in interleaving order (legacy draws all
-    /// payload bits then all noise samples in one contiguous block; the
-    /// generic runner uses 960-bit batches) so we do not require bit-exact
-    /// match — we require BER closeness at a moderately-high Eb/N0 where
-    /// both paths have settled.
     #[test]
     fn test_run_uncoded_ber_with_channel_matches_legacy_bpsk() {
         let mut config = SimulationConfig::quick_test();
@@ -5089,11 +4006,9 @@ mod tests {
         config.max_frames = 200_000;
         config.rng_seed = Some(0xC0FFEE_u64);
 
-        // Legacy BPSK path.
         let mut rng_legacy = StdRng::seed_from_u64(config.rng_seed.unwrap());
         let legacy = SimulationRunner::run_uncoded_ber(&config, &mut rng_legacy);
 
-        // Modem-backed path through the same BpskAwgnChannel contract.
         let mut rng_modem = StdRng::seed_from_u64(config.rng_seed.unwrap());
         let channel = BpskAwgnChannel;
         let modem_path =
@@ -5113,10 +4028,6 @@ mod tests {
             ber_legacy > 0.0 && ber_modem > 0.0,
             "at 5 dB both paths should observe some errors: legacy={ber_legacy}, modem={ber_modem}",
         );
-        // Tolerance: relative error below 40% covers Monte Carlo variance
-        // at min_errors=200 between two independently interleaved paths
-        // without hiding a systematic noise-convention drift (which would
-        // produce >2x or >0.5x relative deviations).
         let ratio = ber_modem / ber_legacy;
         assert!(
             ratio > 0.6 && ratio < 1.4,
@@ -5124,15 +4035,6 @@ mod tests {
         );
     }
 
-    /// SC3(b): [`ModemChannelAdapter`] built on BPSK (the smallest modem
-    /// spec) plugs into [`SimulationRunner::run_uncoded_ber_with_channel`]
-    /// and returns a sane result (non-zero frame count, finite BER).
-    ///
-    /// Covers the reusability requirement that the new runner accepts any
-    /// `ChannelModel` — BPSK here, but the type is
-    /// `ModemChannelAdapter<GrayQamMapper<f32>, ReferenceSoftDemapper<f32>>`,
-    /// the exact surface coded runners (`run_coded`, `run_coded_iterative`)
-    /// already accept.
     #[test]
     fn test_run_uncoded_ber_with_channel_supports_modem_adapter() {
         use crate::modem::{
@@ -5166,16 +4068,8 @@ mod tests {
         );
     }
 
-    /// Regression locking in that the uncoded runner honours the
-    /// `batch_alignment()` contract for the existing QPSK Rician fading
-    /// path as well as for modem-framework channels.
-    ///
-    /// `QpskRicianChannelModel::transmit_and_demodulate` asserts an
-    /// even codeword length. Before the batch-alignment fix the runner
-    /// could feed it an odd tail and panic; with
-    /// `QpskRicianChannelModel::batch_alignment() -> 2` the runner must
-    /// round each batch down and never panic. `max_frames = 963` is
-    /// intentionally not divisible by 2.
+    /// `QpskRicianChannelModel::transmit_and_demodulate` asserts an even
+    /// codeword length.
     #[test]
     fn test_run_uncoded_ber_with_channel_handles_ragged_tail_for_qpsk_rician() {
         use crate::fading::{QpskRicianChannelModel, RicianConfig};
@@ -5194,7 +4088,6 @@ mod tests {
         config.rng_seed = Some(0xFADE_CAFE_u64);
 
         let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
-        // Must not panic even though max_frames is odd.
         let results = SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng);
         assert_eq!(results.len(), 1);
         let r = &results[0];
@@ -5205,17 +4098,8 @@ mod tests {
         );
     }
 
-    /// Regression for ragged-tail safety on modem-backed channels with
-    /// `bits_per_symbol > 1`.
-    ///
-    /// Earlier code computed `batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining)`
-    /// without respecting the channel's required alignment, which would
-    /// panic inside `ModemChannelAdapter::transmit_and_demodulate` on
-    /// the final batch when `max_frames` was not a multiple of
-    /// `bits_per_symbol`. The runner now honours
-    /// `ChannelModel::batch_alignment()` and rounds every batch down,
-    /// exercised here with a QPSK adapter and `max_frames = 963` (not
-    /// divisible by 2).
+    /// `ModemChannelAdapter::transmit_and_demodulate` requires
+    /// `bits.len() % bits_per_symbol == 0`.
     #[test]
     fn test_run_uncoded_ber_with_channel_handles_ragged_tail_for_qpsk() {
         use crate::modem::{
@@ -5238,7 +4122,6 @@ mod tests {
         config.rng_seed = Some(0xCAFE_F00D_u64);
 
         let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
-        // Must not panic: each inner batch must be pre-aligned to 2.
         let results = SimulationRunner::run_uncoded_ber_with_channel(&adapter, &config, &mut rng);
         assert_eq!(results.len(), 1);
         let r = &results[0];
@@ -5248,10 +4131,6 @@ mod tests {
             "transmitted bits must stay aligned"
         );
     }
-
-    // -------------------------------------------------------------------
-    // Property-based tests for simulation statistics
-    // -------------------------------------------------------------------
 
     mod prop_tests {
         use super::*;
@@ -5302,34 +4181,17 @@ mod tests {
         }
     }
 
-    // -------------------------------------------------------------------
-    // sim-observability integration tests (gated on the feature)
-    // -------------------------------------------------------------------
-
     #[cfg(feature = "sim-observability")]
     mod observability_tests {
         use super::*;
 
-        /// Serializes the four subscriber-creating tests in this module
-        /// (`test_heartbeat_cadence`, `test_tracing_log_valid_jsonl`,
-        /// `test_uncoded_tracing_events`, `test_parallel_tracing_events`).
-        ///
-        /// Defense-in-depth for the process-global tracing state shared by
-        /// every test in this binary under multi-threaded bare `cargo test`:
-        /// each of these tests registers (and on completion drops) a real
-        /// JSON subscriber, and every registration rebuilds tracing-core's
-        /// global callsite-interest cache and max-level hint. The PRIMARY
-        /// fix for the cross-test event-loss race lives in
-        /// `setup_tracing_guard` (the persistent `ANTI_JUSTONE_DISPATCH`
-        /// registration — see the comment there); this guard additionally
-        /// keeps those rebuild windows from interleaving with another
-        /// subscriber-bearing test's emit window.
-        ///
-        /// Lock poisoning is tolerated: a panicking test must not cascade.
+        /// Serializes the tests in this module that install a JSON subscriber:
+        /// each registration rebuilds tracing-core's global callsite-interest
+        /// cache, and this keeps those rebuilds out of another such test's
+        /// emit window. Poisoning is tolerated so a panicking test does not
+        /// cascade.
         static TRACING_SUBSCRIBER_GUARD: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-        /// SC-INT-1: Multi-point AWGN campaign completes, then re-run with same
-        /// config skips all checkpointed points near-instantly.
         #[test]
         fn test_checkpoint_skip_completed_points() {
             let tmpdir = tempfile::tempdir().unwrap();
@@ -5349,12 +4211,10 @@ mod tests {
             config.checkpoint_dir = Some(ckpt_dir.clone());
             config.heartbeat_every_frames = None;
 
-            // First run: completes all 3 SNR points and writes checkpoints.
             let decoder = MockSoftDecoder;
             let results1 = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
             assert_eq!(results1.points.len(), 3);
 
-            // Checkpoint files must exist.
             for i in 0..3 {
                 let ckpt_file = ckpt_dir.join(format!("snr_{:04}.json", i));
                 assert!(
@@ -5368,13 +4228,10 @@ mod tests {
                 );
             }
 
-            // Second run: all checkpoints are complete -> results must match
-            // and the run must complete without recomputing frames.
             let decoder2 = MockSoftDecoder;
             let results2 = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
             assert_eq!(results2.points.len(), 3);
 
-            // Results must be identical (same checkpoint values).
             for i in 0..3 {
                 assert_eq!(
                     results1.points[i].num_frames, results2.points[i].num_frames,
@@ -5387,7 +4244,6 @@ mod tests {
             }
         }
 
-        /// SC-INT-2: Config hash mismatch aborts with a clear panic message.
         #[test]
         #[should_panic(expected = "config hash mismatch")]
         fn test_config_mismatch_aborts() {
@@ -5405,26 +4261,17 @@ mod tests {
             config.rng_seed = Some(42);
             config.checkpoint_dir = Some(ckpt_dir.clone());
 
-            // First run: creates config_hash.txt.
             let decoder = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
 
-            // Mutate a field that affects the hash.
+            // `min_errors` is part of the config hash.
             let mut config2 = config.clone();
             config2.min_errors = 99;
 
-            // Second run with different config: must panic with mismatch message.
             let decoder2 = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config2);
         }
 
-        /// SC-INT-2b: Per-file checkpoint config-hash mismatch aborts with a
-        /// clear panic message rather than silently re-running the point.
-        ///
-        /// Writes a checkpoint with the correct config hash, then overwrites
-        /// its `config_hash` field with a stale value and re-runs.  The runner
-        /// must panic naming the tampered file rather than treating the
-        /// checkpoint as absent and overwriting it.
         #[test]
         #[should_panic(expected = "Per-checkpoint config hash mismatch")]
         fn test_per_file_hash_mismatch_aborts() {
@@ -5442,40 +4289,27 @@ mod tests {
             config.rng_seed = Some(42);
             config.checkpoint_dir = Some(ckpt_dir.clone());
 
-            // First run: writes snr_0000.json with the correct config hash.
             let decoder = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
 
-            // Verify the checkpoint was written.
             let ckpt_file = ckpt_dir.join("snr_0000.json");
             assert!(
                 ckpt_file.exists(),
                 "checkpoint must be written after first run"
             );
 
-            // Tamper the per-file config_hash field so it no longer matches.
             let content = std::fs::read_to_string(&ckpt_file).unwrap();
             let tampered = content.replace("blake3:", "blake3:aaaa_tampered_");
-            // Ensure the replacement actually changed something.
             assert_ne!(content, tampered, "tampering must change the file content");
             std::fs::write(&ckpt_file, tampered).unwrap();
 
-            // Second run with the same config: must panic on per-file hash mismatch.
             let decoder2 = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
         }
 
-        /// SC-INT-3: Heartbeat events are emitted at the configured cadence.
-        ///
-        /// `DeterministicChannel` produces one frame error per frame.  With
-        /// `min_errors = 5` the loop runs exactly 5 frames.  With
-        /// `heartbeat_every_frames = 2` heartbeats fire after frames 2 and 4
-        /// (frame 5 stops the loop before the cadence-6 heartbeat can fire),
-        /// so the log must contain **exactly 2** heartbeat events.
-        ///
-        /// Each heartbeat line is parsed as JSON via `serde_json` and all
-        /// required fields (`frames_completed`, `errors_so_far`,
-        /// `elapsed_seconds`, `snr_index`, `eb_n0_db`) are asserted present.
+        /// `DeterministicChannel` gives one frame error per frame, so
+        /// `min_errors = 5` runs exactly 5 frames and cadence 2 fires after
+        /// frames 2 and 4.
         #[test]
         fn test_heartbeat_cadence() {
             let _serial = TRACING_SUBSCRIBER_GUARD
@@ -5501,7 +4335,6 @@ mod tests {
             let decoder = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
 
-            // Parse every non-empty line as JSON and collect heartbeat objects.
             let content = std::fs::read_to_string(&tlog).unwrap();
             let heartbeats: Vec<serde_json::Value> = content
                 .lines()
@@ -5514,7 +4347,6 @@ mod tests {
                 .filter(|obj| obj["fields"]["event_type"] == "heartbeat")
                 .collect();
 
-            // With cadence=2 and 5 frames: heartbeats at frames 2, 4 → exactly 2.
             assert_eq!(
                 heartbeats.len(),
                 2,
@@ -5548,20 +4380,6 @@ mod tests {
             }
         }
 
-        /// SC-INT-4: Every line in the tracing log parses as a JSON object and
-        /// carries the required fields for its event type.
-        ///
-        /// Each line is parsed with `serde_json::from_str`.  For the event
-        /// types the runner emits the following fields are asserted under the
-        /// `"fields"` key produced by `tracing-subscriber`'s JSON formatter:
-        ///
-        /// - `campaign_start`: `config_hash`, `run_uuid`, `seed`
-        /// - `snr_completed`: `eb_n0_db`, `fer`, `ber`, `mean_iters`
-        /// - `heartbeat`: `frames_completed`, `errors_so_far`,
-        ///   `elapsed_seconds`, `snr_index`, `eb_n0_db`
-        ///
-        /// The event name is carried in the top-level `"name"` key that
-        /// `tracing-subscriber` emits for each record.
         #[test]
         fn test_tracing_log_valid_jsonl() {
             let _serial = TRACING_SUBSCRIBER_GUARD
@@ -5587,7 +4405,6 @@ mod tests {
 
             let content = std::fs::read_to_string(&tlog).unwrap();
 
-            // Parse every non-empty line with serde_json; assert it's an object.
             let objects: Vec<serde_json::Value> = content
                 .lines()
                 .filter(|l| !l.trim().is_empty())
@@ -5604,9 +4421,8 @@ mod tests {
                 })
                 .collect();
 
-            // Partition by event_type field (explicit field in "fields" object,
-            // since tracing-subscriber JSON formatter does not include the
-            // callsite name in its output).
+            // The tracing-subscriber JSON formatter omits the callsite name;
+            // the explicit `event_type` field tells events apart.
             let campaign_starts: Vec<&serde_json::Value> = objects
                 .iter()
                 .filter(|o| o["fields"]["event_type"] == "campaign_start")
@@ -5627,7 +4443,6 @@ mod tests {
                 "must have exactly 2 snr_completed events (one per SNR point)"
             );
 
-            // campaign_start: required fields under "fields".
             let cs = campaign_starts[0]["fields"]
                 .as_object()
                 .unwrap_or_else(|| panic!("campaign_start event has no 'fields' object"));
@@ -5644,7 +4459,6 @@ mod tests {
                 "campaign_start missing fields.seed"
             );
 
-            // snr_completed: required fields under "fields".
             for (i, sc) in snr_completeds.iter().enumerate() {
                 let f = sc["fields"]
                     .as_object()
@@ -5658,31 +4472,13 @@ mod tests {
             }
         }
 
-        /// SC-INT-5: Resume after real SIGINT — subprocess-based test.
-        ///
-        /// # Protocol
-        ///
-        /// 1. Produce a **reference CSV** by running `sim_checkpoint_helper`
-        ///    to normal completion in a clean directory.
-        /// 2. In a second directory run the helper, wait until at least one
-        ///    heartbeat checkpoint file appears (the helper writes one every 5
-        ///    frames), then deliver SIGINT with `kill -INT <pid>`.  The helper
-        ///    exits with code 1 and has flushed a partial checkpoint.
-        /// 3. Re-run the helper with the same checkpoint directory.  It resumes
-        ///    from the partial checkpoint and runs to completion (exit code 0).
-        /// 4. Assert the resumed `results.csv` is byte-identical to the
-        ///    reference CSV.
-        ///
-        /// The test is marked `#[ignore = "slow: ..."]` because the subprocess
-        /// spin-up and SIGINT timing can exceed 5 s on slow CI hosts.
         #[test]
         #[ignore = "slow: subprocess SIGINT timing may exceed 5 s on slow hosts"]
         fn test_resume_after_interrupt() {
             use std::process::Command;
             use std::time::{Duration, Instant};
 
-            // Locate the helper binary next to the current test executable.
-            // cargo places it in .../target/<profile>/ (one level above deps/).
+            // cargo places the helper in target/<profile>/, one level above deps/.
             let helper_bin = {
                 let mut exe = std::env::current_exe().expect("cannot locate test executable");
                 exe.pop(); // strip filename
@@ -5705,7 +4501,6 @@ mod tests {
             std::fs::create_dir_all(&ref_dir).unwrap();
             std::fs::create_dir_all(&resume_dir).unwrap();
 
-            // ── Step 1: reference run to completion ──────────────────────────
             let ref_status = Command::new(&helper_bin)
                 .arg(&ref_dir)
                 .status()
@@ -5717,7 +4512,6 @@ mod tests {
             let ref_csv = std::fs::read(ref_dir.join("results.csv"))
                 .expect("reference results.csv must exist after successful run");
 
-            // ── Step 2: interrupted run ──────────────────────────────────────
             let mut child = Command::new(&helper_bin)
                 .arg(&resume_dir)
                 .spawn()
@@ -5725,7 +4519,6 @@ mod tests {
 
             let pid = child.id();
 
-            // Wait until at least one heartbeat checkpoint exists (cadence=5).
             // The helper writes snr_0000.json after every 5 frames.
             let ckpt_file = resume_dir.join("snr_0000.json");
             let deadline = Instant::now() + Duration::from_secs(30);
@@ -5743,7 +4536,6 @@ mod tests {
                 std::thread::sleep(Duration::from_millis(50));
             }
 
-            // Deliver SIGINT.
             let kill_status = Command::new("kill")
                 .args(["-INT", &pid.to_string()])
                 .status()
@@ -5753,7 +4545,6 @@ mod tests {
                 "kill -INT returned non-zero: {kill_status}"
             );
 
-            // Wait for the helper to flush and exit (exit code 1 = interrupted).
             let interrupted_status = child.wait().expect("failed to wait for interrupted helper");
             assert_eq!(
                 interrupted_status.code(),
@@ -5761,13 +4552,11 @@ mod tests {
                 "interrupted helper must exit with code 1, got: {interrupted_status}"
             );
 
-            // Partial checkpoint must exist on disk.
             assert!(
                 ckpt_file.exists(),
                 "partial checkpoint must persist after SIGINT"
             );
 
-            // ── Step 3: resume run ───────────────────────────────────────────
             let resume_status = Command::new(&helper_bin)
                 .arg(&resume_dir)
                 .status()
@@ -5777,7 +4566,6 @@ mod tests {
                 "resumed run must exit with code 0, got: {resume_status}"
             );
 
-            // ── Step 4: byte-identical CSV ───────────────────────────────────
             let resume_csv = std::fs::read(resume_dir.join("results.csv"))
                 .expect("resume results.csv must exist after resumed run");
             assert_eq!(
@@ -5786,10 +4574,6 @@ mod tests {
             );
         }
 
-        /// SC-INT-6: Checkpoint serialisation round-trip.
-        ///
-        /// Verifies that `SnrCheckpoint::to_json` → `SnrCheckpoint::from_json`
-        /// is lossless for all relevant fields including the `u128` word_pos.
         #[test]
         fn test_checkpoint_roundtrip() {
             let ckpt = SnrCheckpoint {
@@ -5824,8 +4608,6 @@ mod tests {
             assert_eq!(parsed.config_hash, ckpt.config_hash);
         }
 
-        /// SC-INT-7: Config hash stability — same config produces same hash,
-        /// different config produces different hash.
         #[test]
         fn test_config_hash_stability() {
             let mut config = SimulationConfig::quick_test();
@@ -5842,8 +4624,6 @@ mod tests {
             assert_ne!(h1, h3, "Different config must produce different hash");
         }
 
-        /// SC-INT-8: ChaCha20 RNG derivation is deterministic and the word_pos
-        /// round-trip restores the exact stream position.
         #[test]
         fn test_chacha_rng_deterministic_seek() {
             use rand::RngCore;
@@ -5851,15 +4631,12 @@ mod tests {
             let seed = 0xDEAD_BEEF_u64;
             let mut rng1 = make_chacha_rng(seed, 3, 0);
 
-            // Advance 100 words.
             let mut buf = [0u8; 400];
             rng1.fill_bytes(&mut buf);
             let pos = rng1.get_word_pos();
 
-            // Build a second RNG seeked to the same position.
             let mut rng2 = make_chacha_rng(seed, 3, pos);
 
-            // Next 4 bytes must be identical.
             let mut out1 = [0u8; 4];
             let mut out2 = [0u8; 4];
             rng1.fill_bytes(&mut out1);
@@ -5870,15 +4647,6 @@ mod tests {
             );
         }
 
-        /// SC-INT-9: `run_uncoded_ber_with_channel` emits tracing events in the
-        /// expected shape.
-        ///
-        /// Configures a short 2-SNR campaign with a `tracing_log_path`, runs the
-        /// uncoded path, and asserts:
-        /// - Every non-empty line parses as a JSON object.
-        /// - Exactly one `campaign_start` event with `config_hash`, `run_uuid`, `seed`.
-        /// - Exactly two `snr_completed` events (one per SNR point) each carrying
-        ///   `eb_n0_db`, `ber`, `fer`, and `elapsed_seconds`.
         #[test]
         fn test_uncoded_tracing_events() {
             let _serial = TRACING_SUBSCRIBER_GUARD
@@ -5931,7 +4699,6 @@ mod tests {
                 "uncoded path must emit exactly 2 snr_completed events"
             );
 
-            // campaign_start: required fields.
             let cs = campaign_starts[0]["fields"].as_object().unwrap();
             assert!(
                 cs.contains_key("config_hash"),
@@ -5943,7 +4710,6 @@ mod tests {
             );
             assert!(cs.contains_key("seed"), "campaign_start missing seed");
 
-            // snr_completed: required fields.
             for (i, sc) in snr_completeds.iter().enumerate() {
                 let f = sc["fields"]
                     .as_object()
@@ -5957,13 +4723,6 @@ mod tests {
             }
         }
 
-        /// SC-INT-10: `run_uncoded_ber_with_channel` checkpoint skip — second run
-        /// loads from checkpoint and skips recomputation.
-        ///
-        /// Runs the uncoded path twice with the same config and checkpoint dir.
-        /// After the first run, asserts checkpoint files exist and are marked
-        /// `completed: true`.  The second run must produce results with the same
-        /// values (loaded from checkpoint, not recomputed).
         #[test]
         fn test_uncoded_checkpoint_skip() {
             let tmpdir = tempfile::tempdir().unwrap();
@@ -5977,13 +4736,11 @@ mod tests {
             config.rng_seed = Some(88);
             config.checkpoint_dir = Some(ckpt_dir.clone());
 
-            // First run: computes and writes checkpoints.
             let mut rng1 = rand::rngs::StdRng::seed_from_u64(88);
             let results1 =
                 SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng1);
             assert_eq!(results1.len(), 2);
 
-            // Checkpoint files must exist.
             for i in 0..2_usize {
                 let ckpt_file = ckpt_dir.join(format!("snr_{:04}.json", i));
                 assert!(ckpt_file.exists(), "Uncoded checkpoint {i} must exist");
@@ -5994,7 +4751,6 @@ mod tests {
                 );
             }
 
-            // Second run: loads from checkpoints; results must match.
             let mut rng2 = rand::rngs::StdRng::seed_from_u64(99); // different seed irrelevant
             let results2 =
                 SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng2);
@@ -6012,15 +4768,6 @@ mod tests {
             }
         }
 
-        /// SC-INT-11: `run_coded_iterative_parallel` emits tracing events in the
-        /// expected shape.
-        ///
-        /// Configures a short 2-SNR parallel campaign with `tracing_log_path`,
-        /// runs it, and asserts:
-        /// - Every non-empty line parses as a JSON object.
-        /// - Exactly one `campaign_start` event with `config_hash`, `run_uuid`, `seed`.
-        /// - Exactly two `snr_completed` events (one per SNR) with `eb_n0_db`,
-        ///   `fer`, `ber`, and `elapsed_seconds`.
         #[test]
         fn test_parallel_tracing_events() {
             let _serial = TRACING_SUBSCRIBER_GUARD
@@ -6080,7 +4827,6 @@ mod tests {
                 "parallel path must emit exactly 2 snr_completed events"
             );
 
-            // campaign_start: required fields.
             let cs = campaign_starts[0]["fields"].as_object().unwrap();
             assert!(
                 cs.contains_key("config_hash"),
@@ -6092,7 +4838,6 @@ mod tests {
             );
             assert!(cs.contains_key("seed"), "campaign_start missing seed");
 
-            // snr_completed: required fields.
             for (i, sc) in snr_completeds.iter().enumerate() {
                 let f = sc["fields"]
                     .as_object()
@@ -6106,13 +4851,6 @@ mod tests {
             }
         }
 
-        /// SC-INT-12: `run_coded_iterative_parallel` checkpoint skip — second run
-        /// loads from checkpoint and skips recomputation.
-        ///
-        /// Runs the parallel path twice with the same config and checkpoint dir.
-        /// After the first run, asserts checkpoint files exist and are marked
-        /// `completed: true`.  The second run must produce results with the same
-        /// frame counts and error counts (loaded from checkpoint).
         #[test]
         fn test_parallel_checkpoint_skip() {
             let tmpdir = tempfile::tempdir().unwrap();
@@ -6129,7 +4867,6 @@ mod tests {
             config.rng_seed = Some(42);
             config.checkpoint_dir = Some(ckpt_dir.clone());
 
-            // First run: computes and writes checkpoints.
             let results1 = SimulationRunner::run_coded_iterative_parallel(
                 &encoder,
                 || MockIterativeDecoder { last_iterations: 0 },
@@ -6138,7 +4875,6 @@ mod tests {
             );
             assert_eq!(results1.points.len(), 2);
 
-            // Checkpoint files must exist.
             for i in 0..2_usize {
                 let ckpt_file = ckpt_dir.join(format!("snr_{:04}.json", i));
                 assert!(ckpt_file.exists(), "Parallel checkpoint {i} must exist");
@@ -6149,7 +4885,6 @@ mod tests {
                 );
             }
 
-            // Second run: loads from checkpoints; results must match.
             let results2 = SimulationRunner::run_coded_iterative_parallel(
                 &encoder,
                 || MockIterativeDecoder { last_iterations: 0 },
@@ -6169,5 +4904,5 @@ mod tests {
                 );
             }
         }
-    } // mod observability_tests
+    }
 }
