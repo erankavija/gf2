@@ -12,20 +12,14 @@
 //! into a seven-stage [`Chain`]. The built pipeline carries no run plan; drive
 //! it with [`TopologyExecutor::run`](crate::TopologyExecutor::run).
 //!
-//! # Supported parameters (`@/citation/ThreeGpp2017`)
-//!
-//! * **Base graph**: BG1 (46x68, K_b = 22) or BG2 (42x52, K_b = 10).
-//! * **Lifting size** `Z`: any value of Table 5.3.2-1; the optional
-//!   [`lifting_set`](Builder::lifting_set) index is cross-checked against `Z`
-//!   at build time.
-//! * **Rate**: BG1 x {1/3, 1/2, 2/3, 5/6}; BG2 x {1/3, 1/2, 2/3}.
-//! * **Modulation**: QPSK / 16-QAM / 64-QAM / 256-QAM (`Q_m` ∈ {2, 4, 6, 8}).
+//! # Code dimensions
 //!
 //! The message length is the largest payload realising exactly the requested
 //! `Z` ([`max_payload_for_lifting`]). The codeword length is
 //! `E = ⌊k·den/(num·Q_m)⌋·Q_m` for rate `num/den`, the floor form of the
-//! clause 5.4.2.1 bit-selection formula, so `E` is a multiple of `Q_m` as the
-//! `@/citation/ThreeGpp2020` clause 5.4.2.2 interleaver requires. When
+//! `@/citation/ThreeGpp2017` clause 5.4.2.1 bit-selection formula, so `E` is
+//! a multiple of `Q_m` as the `@/citation/ThreeGpp2020` clause 5.4.2.2
+//! interleaver requires. When
 //! `k·den/num` is not a `Q_m`-multiple integer the realized rate `k/E` exceeds
 //! the requested one.
 
