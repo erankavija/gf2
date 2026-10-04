@@ -1,63 +1,10 @@
-//! Hand-rolled timing harness that emits a T1-compatible CSV row for
-//! every (operation, field, size, regime) cell of issue `6ed7f050`.
-//!
-//! ## Why a separate binary
-//!
-//! Criterion's default output is HTML/JSON, not CSV. The reference
-//! container harness (`benchmarks/reference/fflas_bench.cpp`) writes
-//! its rows directly via `clock_gettime(CLOCK_MONOTONIC)`, so for the
-//! gf2 side to produce a CSV in the *same* schema we either need to
-//! parse criterion's JSON output post hoc or run a parallel harness.
-//! This binary takes the latter route — `std::time::Instant`,
-//! warmup + iters, and one `println!` per row.
-//!
-//! The criterion benches in `benches/fieldmatrix_*.rs` cover the same
-//! cells with criterion's statistical machinery (mean ± stdev,
-//! outlier detection); this binary is the "give me the CSV in the
-//! schema fflas_bench wrote" path.
-//!
-//! ## CSV output
-//!
-//! Writes to `bench_results/gf2-<timestamp>.csv` (relative to the
-//! current working directory) by default. The directory is created if
-//! it doesn't exist. The header row matches `benchmarks/README.md`
-//! exactly:
-//!
-//! ```text
-//! lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
-//! ```
-//!
-//! ## Determinism
-//!
-//! Every matrix is drawn from the master seed in
-//! `benchmarks/seeds/seed.txt` via the SplitMix64 derivation in
-//! `benches/common/seed.rs`. Re-running with the same seed produces
-//! byte-identical input matrices.
-//!
-//! ## Usage
-//!
-//! ```bash
-//! # Default: master seed = 0x6F73AC91D31E4A7C, warmup=2, iters=3.
-//! cargo run -p gf2-core --release --example bench_csv_emitter --features rand
-//!
-//! # Override:
-//! cargo run -p gf2-core --release --example bench_csv_emitter --features rand -- \
-//!     --seed 0xCAFEBABEDEADBEEF --warmup 1 --iters 2 --output bench_results/myrun.csv
-//!
-//! # Filter cells (substring match against `<operation>/<field>/<n>/<regime>`):
-//! cargo run -p gf2-core --release --example bench_csv_emitter --features rand -- \
-//!     --filter fgemm/Fp_M31
-//! ```
-//!
-//! ## Per-cell budget
-//!
-//! Cells respect the same 30 s `kCellBudgetNs` cap as the reference
-//! harness; if the warmup phase alone exceeds it, the cell exits early
-//! and emits a row tagged with `early_exit=true` on stderr (the CSV
-//! row carries the partial measurement).
-//!
-//! **Do not run this binary from an automated agent loop.** A full
-//! sweep at default settings can take many minutes per field.
+//! Times every (operation, field, size, regime) cell with `std::time::Instant`
+//! and writes one row per cell under `CSV_HEADER`, by default to
+//! `bench_results/gf2-<timestamp>.csv`. Inputs derive from the master seed
+//! through `benches/common/seed.rs`. A cell stops iterating once its measured
+//! time reaches `CELL_BUDGET_NS` and reports `early_exit` on stderr. Flags:
+//! `--seed`, `--warmup`, `--iters`, `--output` and `--filter` (a substring of
+//! `<operation>/<field>/<n>/<regime>`).
 
 #[path = "../benches/common/seed.rs"]
 mod seed;
@@ -99,11 +46,8 @@ impl Gf2mWideConfig<1> for EmitterGf2m16Cfg {
     const NAME: &'static str = "Gf2m16";
 }
 
-/// GF(2^32) using the Conway polynomial x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1
-/// (0x1_0000_8299). The MODULUS holds the lower 32 bits (0x0000_8299) per the
-/// Gf2mWideConfig contract; the leading x^32 term is implicit. Source:
-/// Frank Lubeck's Conway-polynomial database, f_{2,32}. Also the SSOT
-/// in `crates/gf2-core/src/primitive_polys.rs::standard(32)`.
+/// GF(2^32) with the Conway polynomial `f_{2,32}` of `@/citation/Lubeck2024`,
+/// `x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`; the leading term is implicit.
 struct EmitterGf2m32Cfg;
 impl Gf2mWideConfig<1> for EmitterGf2m32Cfg {
     const M: usize = 32;
@@ -264,22 +208,12 @@ impl CsvSink {
     }
 }
 
-// ─── Per-operation runners ─────────────────────────────────────────────────
-
 const SQUARE_SIZES: &[usize] = &[64, 256, 1024, 4096];
-/// Rectangular fgemm shapes — must match
-/// `crates/gf2-core/benches/fieldmatrix_gemm.rs::RECT_SHAPES` so the
-/// CSV emitter and the criterion bench cover the same `(m, k, n)`
-/// cells. The `size_idx` for these shapes is
-/// `SQUARE_SIZES.len() + rsi` (matching the bench's derivation).
+/// Equals `RECT_SHAPES` in `benches/fieldmatrix_gemm.rs`; shape `rsi` has
+/// `size_idx = SQUARE_SIZES.len() + rsi`.
 const RECT_SHAPES: &[(usize, usize, usize)] = &[(1024, 1024, 32), (1024, 1024, 8)];
 const CHARPOLY_SIZES: &[usize] = &[32, 128, 512];
-/// `minpoly` sizes: subset of `CHARPOLY_SIZES`. The `n=512` cell is
-/// deferred to a bench-day re-run with a relaxed per-cell budget — at
-/// `n=512` `find_max_minpoly_generator`'s LCM-merge sweep iterates
-/// every canonical basis vector and the per-cell wall is a few minutes
-/// even on Fp(7); the published amendment to issue `a9ab0a4f` records
-/// the deferral alongside the `n=4096` charpoly cells.
+/// Subset of `CHARPOLY_SIZES` without `n = 512`.
 const MINPOLY_SIZES: &[usize] = &[32, 128];
 const SPMV_SIZES: &[usize] = &[256, 1024, 4096];
 const SPMV_DENSITIES: &[(f64, &str)] = &[(0.01, "0.01"), (0.05, "0.05")];
@@ -290,7 +224,6 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
     let master = args.master_seed;
     let filter = &args.filter;
 
-    // ── fgemm (uniform only) ──────────────────────────────────────────────
     for (si, &n) in SQUARE_SIZES.iter().enumerate() {
         let key = cell_key("fgemm", field_label, n, "uniform");
         if !cell_passes(filter, &key) {
@@ -324,7 +257,6 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
         )?;
     }
 
-    // ── fgemm rectangular (uniform only; same shape set as bench_rect) ───
     for (rsi, &(m, k, n)) in RECT_SHAPES.iter().enumerate() {
         let key = cell_key("fgemm", field_label, n, "uniform_rect");
         if !cell_passes(filter, &key) {
@@ -359,13 +291,11 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
         )?;
     }
 
-    // ── factorisation ops with both regimes ──────────────────────────────
     for (op_idx, op) in [("pluq", 1u64), ("echelon", 2), ("invert", 3), ("solve", 4)] {
         let _ = op_idx;
         run_fp_factorisation::<P>(args, sink, field_label, op_idx, op)?;
     }
 
-    // ── charpoly (uniform only) ──────────────────────────────────────────
     for (si, &n) in CHARPOLY_SIZES.iter().enumerate() {
         let key = cell_key("charpoly", field_label, n, "uniform");
         if !cell_passes(filter, &key) {
@@ -397,7 +327,6 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
         )?;
     }
 
-    // ── minpoly (uniform only; n=32, 128 — n=512 deferred, see MINPOLY_SIZES) ─
     for (si, &n) in MINPOLY_SIZES.iter().enumerate() {
         let key = cell_key("minpoly", field_label, n, "uniform");
         if !cell_passes(filter, &key) {
@@ -429,7 +358,6 @@ fn run_fp<const P: u64>(args: &Args, sink: &mut CsvSink, field_label: &str) -> s
         )?;
     }
 
-    // ── SpMV (every density × size, uniform only) ────────────────────────
     for (di, &(density, density_label)) in SPMV_DENSITIES.iter().enumerate() {
         for (si, &n) in SPMV_SIZES.iter().enumerate() {
             let regime = format!("density_{density_label}");
@@ -551,7 +479,6 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
     sink: &mut CsvSink,
     field_label: &str,
 ) -> std::io::Result<()> {
-    // ── fgemm (uniform only) ──────────────────────────────────────────────
     for (si, &n) in SQUARE_SIZES.iter().enumerate() {
         let key = cell_key("fgemm", field_label, n, "uniform");
         if !cell_passes(&args.filter, &key) {
@@ -585,7 +512,6 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
         )?;
     }
 
-    // ── fgemm rectangular (uniform only; same shape set as bench_rect) ───
     for (rsi, &(m, k, n)) in RECT_SHAPES.iter().enumerate() {
         let key = cell_key("fgemm", field_label, n, "uniform_rect");
         if !cell_passes(&args.filter, &key) {
@@ -620,13 +546,11 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
         )?;
     }
 
-    // ── factorisation ops with both regimes ──────────────────────────────
     for (op_idx, op) in [("pluq", 1u64), ("echelon", 2), ("invert", 3), ("solve", 4)] {
         let _ = op_idx;
         run_gf2m_factorisation::<C>(args, sink, field_label, op_idx, op)?;
     }
 
-    // ── charpoly (uniform only) ──────────────────────────────────────────
     for (si, &n) in CHARPOLY_SIZES.iter().enumerate() {
         let key = cell_key("charpoly", field_label, n, "uniform");
         if !cell_passes(&args.filter, &key) {
@@ -658,7 +582,6 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
         )?;
     }
 
-    // ── minpoly (uniform only; n=32, 128 — n=512 deferred, see MINPOLY_SIZES) ─
     for (si, &n) in MINPOLY_SIZES.iter().enumerate() {
         let key = cell_key("minpoly", field_label, n, "uniform");
         if !cell_passes(&args.filter, &key) {
@@ -690,7 +613,6 @@ fn run_gf2m<C: Gf2mWideConfig<1>>(
         )?;
     }
 
-    // ── SpMV ─────────────────────────────────────────────────────────────
     for (di, &(density, density_label)) in SPMV_DENSITIES.iter().enumerate() {
         for (si, &n) in SPMV_SIZES.iter().enumerate() {
             let regime = format!("density_{density_label}");
@@ -806,15 +728,8 @@ fn run_gf2m_factorisation<C: Gf2mWideConfig<1>>(
     Ok(())
 }
 
-/// Benchmark the GF(2) `BitMatrix` family. Sizes mirror
-/// `benchmarks/reference/m4ri_bench.c` so cells line up byte-for-byte
-/// with the M4RI reference: matmul on `[64, 256, 1024, 4096]`,
-/// echelon on `[64, 256, 1024]`, both with `uniform` and `deficient`
-/// (rank `n/2`) regimes. `invert` (no M4RI counterpart in the current
-/// harness) covers the same `[64, 256, 1024]` uniform sweep so the
-/// gf2 absolute throughput is captured. SpMV uses the same
-/// `(size, density)` matrix as the `FieldMatrix` runners so a future
-/// LinBox sparse harness lines up cell-for-cell.
+/// GF(2) `BitMatrix` cells. Matmul and echelon sizes follow
+/// `benchmarks/reference/m4ri_bench.c` (`@/citation/AlbrechtBard2026`).
 fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     let warmup = args.warmup;
     let iters = args.iters;
@@ -822,7 +737,6 @@ fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     let filter = &args.filter;
     let field_label = "GF(2)";
 
-    // ── matmul (`BitMatrix * BitMatrix` via M4RM in `gf2_core::alg::m4rm`) ─
     const MATMUL_SIZES: &[usize] = &[64, 256, 1024, 4096];
     for (si, &n) in MATMUL_SIZES.iter().enumerate() {
         for (ri, &(regime, deficient)) in
@@ -865,7 +779,6 @@ fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         }
     }
 
-    // ── echelon (RREF via `gf2_core::alg::rref`) ───────────────────────────
     const ECHELON_SIZES: &[usize] = &[64, 256, 1024];
     for (si, &n) in ECHELON_SIZES.iter().enumerate() {
         for (ri, &(regime, deficient)) in
@@ -910,9 +823,7 @@ fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         }
     }
 
-    // ── invert (Gauss–Jordan via `gf2_core::alg::gauss::invert`) ───────────
-    // Uniform only (the deficient regime is by construction non-invertible
-    // for the size set we benchmark, so the operation is N/A there).
+    // Uniform only: the deficient regime is non-invertible by construction.
     const INVERT_SIZES: &[usize] = &[64, 256, 1024];
     for (si, &n) in INVERT_SIZES.iter().enumerate() {
         let key = cell_key("invert", field_label, n, "uniform");
@@ -947,7 +858,6 @@ fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
         )?;
     }
 
-    // ── SpMV (CSR `SpBitMatrix` × dense `BitVec`) ──────────────────────────
     for (di, &(density, density_label)) in SPMV_DENSITIES.iter().enumerate() {
         for (si, &n) in SPMV_SIZES.iter().enumerate() {
             let regime = format!("density_{density_label}");
@@ -989,20 +899,12 @@ fn run_bitmatrix(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Emit GF(2^32) matmul (square, `n ∈ {64, 256, 1024}`, uniform only) using the
-/// `"matmul"` operation tag. Seed derivation mirrors the NTL bench in
-/// `benchmarks/reference/ntl_bench.cpp` exactly: the NTL bench XORs the master
-/// seed with `0x77` before deriving per-cell seeds so the GF(2^32) stream is
-/// disjoint from all GF(p) streams. At `si=0` (n=64) with the project master
-/// seed `0x6F73AC91D31E4A7C` this produces seed `17158103737143628803`, which
-/// is the NTL canonical row seed from `benchmarks/results/20260505T091600Z.csv`.
-/// The B-matrix seed uses the `^0x1111...` convention shared by the reference
-/// harness (see `ntl_bench.cpp` `fill_uniform` B call).
+/// GF(2^32) square matmul cells. The master seed is XORed with `0x77` before
+/// per-cell derivation, as in `benchmarks/reference/ntl_bench.cpp`
+/// (`@/citation/Shoup2025`).
 fn run_gf2m32_matmul(args: &Args, sink: &mut CsvSink) -> std::io::Result<()> {
     const GF2M32_SIZES: &[usize] = &[64, 256, 1024];
     let field_label = "GF(2^32)";
-    // Mirror the NTL bench's `master_seed ^ 0x77ULL` salt (ntl_bench.cpp
-    // `run_gf2pow32` call site) so seeds align byte-for-byte with the NTL rows.
     let salted_master = args.master_seed ^ 0x77u64;
     for (si, &n) in GF2M32_SIZES.iter().enumerate() {
         let key = cell_key("matmul", field_label, n, "uniform");
@@ -1067,25 +969,15 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-// ─── Determinism doctest ────────────────────────────────────────────────────
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /// First-row hash sanity check at master_seed = 0. Computed once
-    /// from the Rust SplitMix64 implementation and pinned. Any change
-    /// to the seed-derivation logic that breaks bit-identicality with
-    /// the reference harness will trip this check.
-    ///
-    /// A separate cross-language test (in `tests/seed_compat.rs`)
-    /// bridges this hash to the C reference's
-    /// `seed_helpers.h` via independently-computable hardcoded values.
+    /// Pins the seed derivation at master seed 0. `tests/bench_seed_compat.rs`
+    /// checks the same derivation against a port of the C reference.
     #[test]
     fn first_row_hash_pinned_at_seed_0() {
-        // Master seed = 0, tag="fgemm", op_idx=0, size_idx=0, regime_idx=0.
         let row_seed = derive_seed(0, "fgemm", 0, 0, 0);
-        // First 4 SplitMix64 outputs from `row_seed`.
         let mut st = row_seed;
         let outs: [u64; 4] = [
             splitmix64(&mut st),
@@ -1093,10 +985,6 @@ mod tests {
             splitmix64(&mut st),
             splitmix64(&mut st),
         ];
-        // Pinned values (computed from this Rust implementation; updates
-        // require a corresponding C-reference cross-check). If you see
-        // this fail, rerun the cross-language test in
-        // `tests/seed_compat.rs` before changing the constants.
         assert_eq!(row_seed, 0xa1f5_dbf0_5125_7436);
         assert_eq!(outs[0], 0xc17b_957b_cba3_b185);
         assert_eq!(outs[1], 0x09c2_e9a9_f50d_f92d);

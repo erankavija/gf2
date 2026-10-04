@@ -1,22 +1,11 @@
-//! BitVec Basics - Essential operations tutorial
-//!
-//! This example demonstrates the fundamental BitVec operations:
-//! - Construction and initialization
-//! - Element access (get, set, push, pop)
-//! - Bitwise operations (AND, OR, XOR, NOT)
-//! - Searching and counting
-//! - Shifts and rotations
-//!
-//! Run with: `cargo run --example bitvec_basics`
+//! Tour of `BitVec`: construction, element access, bitwise operations,
+//! counting, searching, shifts and conversion.
 
 use gf2_core::BitVec;
 
 fn main() {
     println!("=== BitVec Basics Tutorial ===\n");
 
-    // ========================================
-    // 1. Construction
-    // ========================================
     println!("1. Construction");
     println!("   ----------------");
 
@@ -35,16 +24,13 @@ fn main() {
         from_bytes.to_bytes_le()[0]
     );
 
-    // ========================================
-    // 2. Element Access
-    // ========================================
     println!("2. Element Access");
     println!("   ----------------");
 
     let mut bv = BitVec::zeros(8);
-    bv.set(0, true); // Set bit 0
-    bv.set(3, true); // Set bit 3
-    bv.set(7, true); // Set bit 7
+    bv.set(0, true);
+    bv.set(3, true);
+    bv.set(7, true);
 
     println!("   After setting bits 0, 3, 7:");
     print!("   ");
@@ -53,7 +39,6 @@ fn main() {
     }
     println!(" = {:08b}", bv.to_bytes_le()[0]);
 
-    // Push and pop
     bv.push_bit(true);
     bv.push_bit(false);
     println!("   After push(true), push(false): {} bits", bv.len());
@@ -61,9 +46,6 @@ fn main() {
     let popped = bv.pop_bit();
     println!("   Popped: {:?}, now {} bits\n", popped, bv.len());
 
-    // ========================================
-    // 3. Bitwise Operations
-    // ========================================
     println!("3. Bitwise Operations");
     println!("   ----------------");
 
@@ -88,9 +70,6 @@ fn main() {
     a.not_into();
     println!("   NOT a   = {:08b}\n", a.to_bytes_le()[0]);
 
-    // ========================================
-    // 4. Counting and Parity
-    // ========================================
     println!("4. Counting and Parity");
     println!("   ----------------");
 
@@ -102,9 +81,6 @@ fn main() {
         if bv.parity() { 1 } else { 0 }
     );
 
-    // ========================================
-    // 5. Searching
-    // ========================================
     println!("5. Searching");
     println!("   ----------------");
 
@@ -118,9 +94,6 @@ fn main() {
     println!("   find_first_zero() = {:?}", bv.find_first_zero());
     println!("   find_last_set() = {:?}\n", bv.find_last_set());
 
-    // ========================================
-    // 6. Shifts
-    // ========================================
     println!("6. Shifts");
     println!("   ----------------");
 
@@ -133,9 +106,6 @@ fn main() {
     bv.shift_right(1);
     println!("   shift_right(1): {:08b}\n", bv.to_bytes_le()[0]);
 
-    // ========================================
-    // 7. Conversion
-    // ========================================
     println!("7. Conversion");
     println!("   ----------------");
 
@@ -148,9 +118,6 @@ fn main() {
     let back = bv.to_bytes_le();
     println!("   Back to bytes: {:?}\n", back);
 
-    // ========================================
-    // 8. Practical Example: Parity Check
-    // ========================================
     println!("8. Practical Example: Even Parity Check");
     println!("   ----------------");
 
@@ -161,7 +128,6 @@ fn main() {
         if message.parity() { 1 } else { 0 }
     );
 
-    // Add parity bit
     let mut with_parity = message.clone();
     with_parity.push_bit(message.parity());
     println!(

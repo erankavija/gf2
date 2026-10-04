@@ -1,12 +1,5 @@
-//! Minimal PLE timing harness for the 40195c09 PLE Schur-update non-regression.
-//!
-//! Measures `FieldMatrix::ple` at n=256 for Fp<7>, Fp<251>, Fp<65521> using
-//! a simple wall-clock loop (warmup=2, iters=20), then prints the median.
-//!
-//! Usage:
-//! ```bash
-//! cargo run -p gf2-core --example ple_timing --features rand --release
-//! ```
+//! Times `FieldMatrix::ple` at n = 256 over `Fp<7>`, `Fp<251>` and `Fp<65521>`
+//! with a wall-clock loop and prints the median.
 
 use std::time::Instant;
 
@@ -18,12 +11,10 @@ fn measure_ple<const P: u64>(n: usize, label: &str) {
     let seed = 0xDEAD_BEEF_0000_0001u64 ^ (P * 1000 + n as u64);
     let mat: FieldMatrix<Fp<P>> = fp_matrix_from_seed::<P>(n, n, seed);
 
-    // warmup
     for _ in 0..2 {
         let _ = mat.ple();
     }
 
-    // measure
     const ITERS: usize = 20;
     let mut timings_ns: Vec<u64> = Vec::with_capacity(ITERS);
     for _ in 0..ITERS {
