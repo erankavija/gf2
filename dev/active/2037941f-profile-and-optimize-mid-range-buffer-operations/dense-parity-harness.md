@@ -97,6 +97,11 @@ objectives, metric kinds, and core arms are transcribed from the frozen
 addendum's tables. `dense-campaign verify` re-derives the transcription and
 compares it byte for byte with a candidate campaign JSON, so a campaign JSON
 that changes a cell, margin, limit, or rule fails closed.
+`dense-campaign verify-confirmation` holds a freezer-derived confirmation to
+the same transcription: the family's confirmatory cells with the confirmatory
+role, a restated description and freeze time, and a pinned resolution at or
+below the family's frozen ceiling. Any other difference, or a resolution above
+the ceiling, refuses the run.
 
 ## Family ledgers
 
@@ -343,15 +348,23 @@ $STORY/survey/run-dense-harness.sh cells --family <family-id> --issue <8-hex> \
     --frozen-utc <YYYY-MM-DDTHH:MM:SSZ> --output <path>
 $STORY/survey/run-dense-harness.sh smoke [--m4ri]
 $STORY/survey/run-dense-harness.sh window --family <family-id> \
-    --addendum <committed campaign JSON> --run-id <id> [--m4ri]
+    --addendum <committed campaign JSON> --run-id <id> [--m4ri] \
+    [--confirmation] [--smoke <record>]
 ```
+
+`window --confirmation` takes a freezer-derived confirmation addendum, labels
+the plan `confirmation`, stages it under its own campaign identity, and writes
+the receipt to `<run-id>-confirmation`. `window --smoke <record>` projects the
+same plan and drives it through `benchmark-ab-runner smoke` with no timing
+window, lock, ledger reservation, or receipt.
 
 The launcher drives one Rust tool, `dense-campaign`, which a leaf may also call
 directly: `pins` prints the frozen addendum's path, pinned digest, identity,
 freeze time, the three family ledgers and the declared unavailable rows, and
 fails when the document's bytes differ from the pin; `list` prints one family's
-cells with their ordinals, arms and seeds; `cells`, `verify` and `plan` are the
-transcription, the comparison and the plan projection; `inputs` is the
+cells with their ordinals, arms and seeds; `cells`, `verify`,
+`verify-confirmation` and `plan` are the transcription, the two comparisons and
+the plan projection; `inputs` is the
 producing-input closure guard. The untimed smoke and the timed run are
 `benchmark-ab-runner` subcommands over a projected plan.
 

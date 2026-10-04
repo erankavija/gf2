@@ -16,7 +16,9 @@
 #      wrote for a v1 summary;
 #   2. a v2 pilot summary derived from the same pilot data labels the frozen
 #      total, the attempt allocation and the corrected level distinctly, and
-#      never calls the attempt allocation "family-wise alpha".
+#      never calls the attempt allocation "family-wise alpha";
+#   3. `--resolution-decimals 3` rounds the same pilot's widest half-width up
+#      to the next 0.001 in the addendum and in the record.
 #
 # Usage (from the repository root): freeze-confirmation.test.sh
 set -euo pipefail
@@ -79,5 +81,21 @@ if grep -q 'family-wise alpha 0.025' "$fixture/current-record.txt"; then
   echo "case v2 pilot: attempt allocation mislabelled as family-wise alpha" >&2; exit 1
 fi
 echo "case v2 pilot: labels family-wise, attempt, and corrected alpha distinctly"
+
+# Case 3: a family whose frozen rule rounds to three decimals.
+(cd "$fixture" && python3 "$FREEZER" \
+  --pilot-addendum "$PILOT_ADDENDUM" --pilot "$PILOT" --frozen-utc "$FROZEN" \
+  --output fine-confirmation.json --record fine-record.txt --resolution-decimals 3 >/dev/null)
+python3 - "$fixture/fine-confirmation.json" "$fixture/fine-record.txt" <<'PY'
+import json, math, re, sys
+frozen = json.load(open(sys.argv[1]))["effect"]["measurement_resolution"]
+record = open(sys.argv[2]).read()
+widest = float(re.search(r"^widest relative half-width\s+(\S+)$", record, re.M).group(1))
+if frozen != math.ceil(widest * 1000) / 1000:
+    raise SystemExit(f"case three decimals: froze {frozen} from widest {widest}")
+if f"frozen measurement resolution {frozen:.3f}\n" not in record:
+    raise SystemExit("case three decimals: the record does not state the frozen value")
+PY
+echo "case three decimals: rounds the widest half-width up to the next 0.001"
 
 echo 'freeze-confirmation.test.sh: every case passed'

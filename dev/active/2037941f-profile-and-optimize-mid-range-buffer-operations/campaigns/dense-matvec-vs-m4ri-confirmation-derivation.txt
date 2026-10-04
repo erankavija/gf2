@@ -1,0 +1,57 @@
+pilot receipt  dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json
+receipt sha256 714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab
+campaign       v4-r1-2037941f-dense-matvec-vs-m4ri
+verdict        accepted (label pilot)
+family         2037941f-dense-matvec-vs-m4ri: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+m4ri-gap-65x512-warm                    24   0.0028261   0.0028228   0.0028313    0.0018
+m4ri-gap-65x4096-warm                   24   0.0009235  0.00092217  0.00093209    0.0093
+m4ri-gap-1x1-warm                       24     0.12527     0.12384     0.12644    0.0114
+m4ri-gap-63x63-warm                     24    0.030425    0.030365    0.030483    0.0020
+m4ri-gap-64x64-warm                     24    0.030576    0.030526    0.030634    0.0019
+m4ri-gap-65x65-warm                     24    0.032755    0.032695    0.032806    0.0018
+m4ri-gap-65x512-retained-warm           24    0.090038    0.089911    0.090274    0.0026
+m4ri-gap-65x4096-retained-warm          24      0.1976      0.1974     0.19802    0.0021
+
+widest relative half-width   0.011428
+pilot-alpha floor            0.012
+supplied resolution          0.012
+derivation                   dev/bench_results/2037941f/m4ri-gap-resolution.md
+
+# M4RI comparator pilot resolution
+
+> **Diátaxis Type:** Reference
+
+Source: `dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json` (SHA-256 `714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab`); frozen rule: `dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/dense-parity-addendum.md`.
+
+The canonical `survey-analysis resolution` command recomputes whole-pair bootstrap intervals at the first confirmation's corrected alpha.
+
+Command: `survey-analysis resolution dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot 0.0125`
+
+Ledger `dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl` through the pilot: 1 reservation(s), 0 reserved comparison(s), so the confirmation is attempt $t=1$ with $\alpha_t=0.025$ (`dev/tools/tuning-campaign-support/src/trial_ledger.rs`). P-20 requires 20 expected bootstrap draws per tail (`dev/tools/tuning-campaign-support/src/receipt.rs`), which admits 6 further comparison(s) at 10000 resamples. The family's $m=2$ confirmatory cells give $\alpha_c=0.0125$ and 62.5 expected draws per tail.
+
+| Confirmatory cell | Pilot pairs | Relative half-width |
+|---|---:|---:|
+| `m4ri-gap-65x512-warm` | 24 | 0.002158 |
+| `m4ri-gap-65x4096-warm` | 24 | 0.011641 |
+
+Largest confirmatory width: 0.011641; frozen upward rounding to 0.001: $r=0.012$. Family ceiling: 0.040.
+
+**Outcome: `eligible`.** The pilot resolves the family within its frozen ceiling. The canonical freezer pins this resolution in the confirmation addendum.
+
+frozen measurement resolution 0.012
+restated the family description for the confirmatory stage
+
+selection      2 of 8 pilot cells become confirmatory
+rationale      The frozen addendum (M4RI comparator) names exactly these confirmatory cells: the qualified fresh whole-consumer shapes in the story's mid-range band. The remaining qualified shapes and the retained-state cells stay exploratory pilot evidence, and a retained-state cell never replaces a fresh whole-consumer cell. The resolution derivation in this record recomputes P-20's tail support for the retained comparisons from receipt.rs and trial_ledger.rs.
+retained       m4ri-gap-65x512-warm
+retained       m4ri-gap-65x4096-warm
+dropped        m4ri-gap-1x1-warm
+dropped        m4ri-gap-63x63-warm
+dropped        m4ri-gap-64x64-warm
+dropped        m4ri-gap-65x65-warm
+dropped        m4ri-gap-65x512-retained-warm
+dropped        m4ri-gap-65x4096-retained-warm
+margins: equivalence 1.05, material gap 1.1
+confirmation addendum dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri-confirmation.json

@@ -8,7 +8,11 @@
 #   smoke [--m4ri]                     untimed release smoke; the arm contract is
 #                                      tuning_campaign_support::arm::smoke
 #   window --family <id> --addendum <path> --run-id <id> [--m4ri]
-#                                      timed campaign, benchmark window only
+#          [--confirmation] [--smoke <record>]
+#                                      timed campaign, benchmark window only;
+#                                      --confirmation runs a freezer-derived
+#                                      confirmation addendum, and --smoke drives
+#                                      the projected plan untimed instead
 #
 # Every numeric setting comes from the frozen addendum or the protocol's shared
 # settings; this launcher adds none. `~/.cargo/bin` is exported here because the
@@ -252,13 +256,15 @@ cmd_smoke() {
 }
 
 cmd_window() {
-    local family='' addendum='' run_id='' with_m4ri=0
+    local family='' addendum='' run_id='' with_m4ri=0 phase=pilot smoke_record=''
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --family) family="$2"; shift 2 ;;
             --addendum) addendum="$2"; shift 2 ;;
             --run-id) run_id="$2"; shift 2 ;;
             --m4ri) with_m4ri=1; shift ;;
+            --confirmation) phase=confirmation; shift ;;
+            --smoke) smoke_record="$2"; shift 2 ;;
             *) echo "unknown window argument $1" >&2; exit 2 ;;
         esac
     done
@@ -266,7 +272,7 @@ cmd_window() {
         echo 'window needs --family, --addendum and --run-id' >&2
         exit 2
     }
-    [[ "${GF2_BENCH_WINDOW:-0}" == 1 ]] || {
+    [[ -n "${smoke_record}" || "${GF2_BENCH_WINDOW:-0}" == 1 ]] || {
         echo 'timed dense-parity measurement runs only in the scheduled benchmark window' >&2
         exit 2
     }
@@ -276,9 +282,12 @@ cmd_window() {
     [[ -n "${ledger}" ]] || { echo "${family} is not a frozen family" >&2; exit 2; }
 
     # Refuse unfrozen inputs: the prose addendum matches the harness pin and
-    # the campaign JSON is the harness transcription of it.
+    # the campaign JSON is the harness transcription of it, or the confirmation
+    # the canonical freezer derives from that transcription.
+    local verify=verify
+    [[ "${phase}" == confirmation ]] && verify=verify-confirmation
     "${CAMPAIGN_TOOL}" pins
-    "${CAMPAIGN_TOOL}" verify --family "${family}" --addendum "${addendum}"
+    "${CAMPAIGN_TOOL}" "${verify}" --family "${family}" --addendum "${addendum}"
 
     # Every executable this run launches is rebuilt from the current tree
     # before the closure is checked, so no build can follow the check and no
@@ -311,16 +320,17 @@ cmd_window() {
     runner="$(realpath target/release/benchmark-ab-runner)"
     acceptance="$(realpath target/release/benchmark-acceptance)"
     campaign="${run_id}-${family}"
+    [[ "${phase}" == confirmation ]] && campaign="${run_id}-confirmation-${family}"
     stage="${REPO}/target/e1f9a78f-campaigns/${campaign}"
     plan="${stage}.plan.json"
-    out="${REPO}/dev/bench_results/2037941f/${family}/${run_id}-pilot"
+    out="${REPO}/dev/bench_results/2037941f/${family}/${run_id}-${phase}"
     lock="${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}"
     mkdir -p "$(dirname "${stage}")" "$(dirname "${out}")"
     touch "${lock}"
     lock="$(realpath "${lock}")"
 
     "${CAMPAIGN_TOOL}" plan --family "${family}" --addendum "${addendum}" \
-        --campaign-id "${campaign}" --campaign-seed 20260917 --label pilot \
+        --campaign-id "${campaign}" --campaign-seed 20260917 --label "${phase}" \
         --lock "${lock}" --gf2-executable "${GF2_ARM}" \
         --scalar-executable "${SCALAR_ARM}" "${external[@]}" \
         --producing-manifest "${PRODUCING}" --max-cells-per-session 2 \
@@ -333,6 +343,13 @@ cmd_window() {
         rm "${plan}.projected"
     else
         mv "${plan}.projected" "${plan}"
+    fi
+
+    # The smoke takes no lock, opens no ledger and writes no receipt; its
+    # record pins the plan the timed run resumes under.
+    if [[ -n "${smoke_record}" ]]; then
+        "${runner}" smoke "${plan}" --record "${smoke_record}"
+        return
     fi
 
     launch="${stage}.launcher.log"
@@ -388,7 +405,7 @@ PY
     local verdict=${PIPESTATUS[0]}
     set -e
     echo "# acceptance exit: ${verdict}" >>"${out}/launcher.log"
-    echo "exploratory receipt: ${out}" >&2
+    echo "${phase} receipt: ${out}" >&2
     exit "${verdict}"
 }
 

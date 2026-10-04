@@ -7,6 +7,7 @@ Usage:
                          --output <addendum> --record <derivation.txt>
                          [--cell <cell-id> ...] [--selection-rationale <text>]
                          [--resolution <float> --resolution-derivation <file>]
+                         [--resolution-decimals <n>]
                          [--holdout-cells <declaration.json>] [--purpose <purpose>]
 
 The pilot's acceptance summary holds every cell's percentile interval at the
@@ -14,7 +15,8 @@ pilot's ledger-derived corrected alpha, the value protocol P-03 recomputes
 from the raw pairs. The widest relative half-width,
 max(|s - l|, |u - s|) / s over the pilot's cells, rounded up to two decimals,
 becomes the frozen measurement resolution; the pilot receipt is pinned by path
-and SHA-256 as its evidence. Every retained cell keeps its pilot declaration
+and SHA-256 as its evidence. `--resolution-decimals` selects another rounding
+step for a family whose frozen rule states one. Every retained cell keeps its pilot declaration
 with the confirmatory role. A margin the pilot's resolution invalidates may be
 replaced, with its new rationale, through the margin options, and a family whose
 pilot declares no worthwhile speedup fixes one the same way, and a margin the
@@ -80,6 +82,7 @@ def main():
     parser.add_argument("--family-description")
     parser.add_argument("--resolution", type=float)
     parser.add_argument("--resolution-derivation")
+    parser.add_argument("--resolution-decimals", type=int, default=2)
     parser.add_argument("--holdout-cells")
     parser.add_argument("--purpose")
     args = parser.parse_args()
@@ -155,7 +158,9 @@ def main():
         widest = max(widest, half)
         lines.append(f"{cell['cell_id']:<36}{cell['pairs']:>6}{estimate:>12.5g}{interval['lower']:>12.5g}"
                      f"{interval['upper']:>12.5g}{half:>10.4f}")
-    resolution = math.ceil(widest * 100.0) / 100.0
+    decimals = args.resolution_decimals
+    step = 10 ** decimals
+    resolution = math.ceil(widest * step) / step
     lines += ["", f"widest relative half-width   {widest:.6f}"]
     if args.resolution is not None:
         if args.resolution < resolution:
@@ -163,11 +168,11 @@ def main():
                 f"supplied resolution {args.resolution} is below the pilot-alpha floor {resolution}")
         with open(args.resolution_derivation) as handle:
             derivation = handle.read().rstrip("\n")
-        lines += [f"pilot-alpha floor            {resolution:.2f}",
-                  f"supplied resolution          {args.resolution:.2f}",
+        lines += [f"pilot-alpha floor            {resolution:.{decimals}f}",
+                  f"supplied resolution          {args.resolution:.{decimals}f}",
                   f"derivation                   {args.resolution_derivation}", "", derivation, ""]
         resolution = args.resolution
-    lines.append(f"frozen measurement resolution {resolution:.2f}")
+    lines.append(f"frozen measurement resolution {resolution:.{decimals}f}")
 
     frozen = copy.deepcopy(addendum)
     effect = frozen["effect"]
