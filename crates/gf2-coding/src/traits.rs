@@ -74,8 +74,10 @@ pub mod block {
         /// Creates a zero-filled sequence of `len` symbols.
         fn zeroed(len: usize, zero: &F) -> Self;
 
+        /// Number of symbols; tail padding of a packed sequence is not counted.
         fn len(&self) -> usize;
 
+        /// Agrees with `len() == 0` in every implementation.
         fn is_empty(&self) -> bool {
             self.len() == 0
         }
@@ -106,8 +108,10 @@ pub mod block {
         /// Creates a zero-filled matrix with the requested shape.
         fn zeroed(rows: usize, cols: usize, zero: &F) -> Self;
 
+        /// Row count; [`get`](Self::get) accepts rows `0..rows()`.
         fn rows(&self) -> usize;
 
+        /// Column count; [`get`](Self::get) accepts columns `0..cols()`.
         fn cols(&self) -> usize;
 
         /// Returns a copy of a cell, or `None` when its coordinates are out of range.

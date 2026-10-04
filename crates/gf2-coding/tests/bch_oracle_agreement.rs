@@ -1,10 +1,8 @@
 //! Agreement of the predeclared BCH corpus with two external oracles,
 //! `codes.BCHCode` of `@/citation/SageMath2026` and `BCHCode` of
 //! `@/citation/Joyner2026`, each run on gf2's primitive $n$-th root of unity
-//! $\alpha$. The evidence protocol is
-//! `dev/active/ae03bcd0-general-bch/plan.md`; the fixtures under
-//! `tests/data/bch_oracle/` carry what each oracle derived, with provenance in
-//! `dev/active/ae03bcd0-general-bch/oracle-provenance.md`.
+//! $\alpha$. The evidence protocol predeclares the corpus; the fixtures under
+//! `tests/data/bch_oracle/` carry what each oracle derived.
 //!
 //! # Coordinates
 //!

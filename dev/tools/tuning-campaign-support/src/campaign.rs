@@ -447,7 +447,7 @@ pub struct LaunchUnit {
     pub expected_progress: u64,
 }
 impl LaunchUnit {
-    /// Constructs an internally consistent launch unit.
+    /// Derives `key` and `expected_progress` from `identity`.
     pub fn new(
         ordinal: u64,
         identity: UnitIdentity,
@@ -975,7 +975,7 @@ pub struct ProgressRecord {
     pub progress: ProgressKind,
 }
 impl ProgressRecord {
-    /// Builds a validated event for a timed case.
+    /// Stamps `PROGRESS_SCHEMA` and fails unless [`Self::validate`] accepts the record.
     pub fn new(
         identity: UnitIdentity,
         case_sha256: Sha256Digest,

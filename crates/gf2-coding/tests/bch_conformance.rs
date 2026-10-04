@@ -1,8 +1,7 @@
 //! One shared behavioral suite for the canonical block-code interfaces, run
 //! over every implementation of them and over every base-field class the
-//! library supports. The rows are the predeclared conformance corpus of the
-//! `evidence-protocol` section of `dev/active/ae03bcd0-general-bch/plan.md`,
-//! constructed by [`visit_bch_corpus`]; every binary row runs both as the
+//! library supports. The rows are the conformance corpus that
+//! [`visit_bch_corpus`] constructs; every binary row runs both as the
 //! packed [`BinaryBchCode`] and as its field-generic
 //! [`bch_corpus_dense_twin`]. The DVB-T2 mother row's matrix work and the
 //! production DVB-T2 matrix cases run in the slow tier.
@@ -56,7 +55,6 @@ const FAST_TIER_MATRIX_CELLS: usize = 1 << 20;
 
 const WORD_BOUNDARY_LENGTHS: [usize; 5] = [0, 1, 63, 64, 65];
 
-/// Generator rows the deferred row checks against their basis encodings.
 const SAMPLED_GENERATOR_ROWS: usize = 16;
 
 fn field_order<F: FieldIdentity>(zero: &F) -> u128 {

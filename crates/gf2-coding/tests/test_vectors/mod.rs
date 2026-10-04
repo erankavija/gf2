@@ -8,10 +8,12 @@ pub use parser::ParseError;
 
 use std::path::PathBuf;
 
+/// The tree root that [`gf2_coding::test_support::dvb_vectors_path`] resolves.
 pub fn test_vectors_path() -> PathBuf {
     gf2_coding::test_support::dvb_vectors_path()
 }
 
+/// True when the tree holds the `VV001-CR35_CSP` stream directory.
 pub fn test_vectors_available() -> bool {
     test_vectors_path().join("VV001-CR35_CSP").exists()
 }

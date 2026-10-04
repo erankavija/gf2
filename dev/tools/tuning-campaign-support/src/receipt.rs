@@ -153,7 +153,7 @@ pub struct WindowRecord {
 }
 
 impl WindowRecord {
-    /// Nanoseconds per logical call.
+    /// Mean nanoseconds of one call over the window; not finite when `calls` is zero.
     pub fn ns_per_call(self) -> f64 {
         self.elapsed_ns as f64 / self.calls as f64
     }
