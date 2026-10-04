@@ -1,0 +1,141 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "v4-r1-2037941f-dense-matvec-vs-m4ri",
+  "issue": "e1f9a78f",
+  "label": "pilot",
+  "campaign_seed": 20260917,
+  "addendum": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns/dense-matvec-vs-m4ri.json",
+  "producing_manifest": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/dense-producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "m4ri-mzd-mul": {
+      "build": "external",
+      "description": "External M4RI mzd_init for A, x and y, bit-wise packing through mzd_write_bit, mzd_mul(y, A, x, 0), mzd_read_bit unpacking into a gf2 BitVec, and disposal of every owned mzd_t",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-m4ri-arm/release/dense-m4ri-arm",
+      "arguments": [],
+      "environment": {},
+      "rustflags": "C -O3 -march=native -fPIC library build; Rust glue without a target-cpu override",
+      "tuning_profile": null
+    },
+    "m4ri-peer-gf2": {
+      "build": "conservative-portable",
+      "description": "One public BitMatrix::matvec on a fresh gf2 matrix and vector, with the returned BitVec allocated and released inside the measured call",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-50f0bd42/target/e1f9a78f-arms/release/dense-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_DENSE_ROUTE": "m4ri-peer-gf2"
+      },
+      "rustflags": "",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "m4ri-gap-65x512-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 512,
+        "question": "matvec-vs-m4ri",
+        "retained": false,
+        "rows": 65,
+        "seed": 7672081787005044783
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 4096,
+        "question": "matvec-vs-m4ri",
+        "retained": false,
+        "rows": 65,
+        "seed": 13335509090648851657
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-1x1-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 1,
+        "question": "matvec-vs-m4ri",
+        "retained": false,
+        "rows": 1,
+        "seed": 10284644971133057240
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-63x63-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 63,
+        "question": "matvec-vs-m4ri",
+        "retained": false,
+        "rows": 63,
+        "seed": 3310169354135099474
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-64x64-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 64,
+        "question": "matvec-vs-m4ri",
+        "retained": false,
+        "rows": 64,
+        "seed": 6547711948922860820
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-65x65-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 65,
+        "question": "matvec-vs-m4ri",
+        "retained": false,
+        "rows": 65,
+        "seed": 12159084965721420153
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-65x512-retained-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 512,
+        "question": "matvec-vs-m4ri",
+        "retained": true,
+        "rows": 65,
+        "seed": 13625264189506356630
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-retained-warm",
+      "baseline_arm": "m4ri-peer-gf2",
+      "candidate_arm": "m4ri-mzd-mul",
+      "case": {
+        "cols": 4096,
+        "question": "matvec-vs-m4ri",
+        "retained": true,
+        "rows": 65,
+        "seed": 6734222009069916026
+      },
+      "pilot_pairs": 24
+    }
+  ],
+  "max_cells_per_session": 2
+}
