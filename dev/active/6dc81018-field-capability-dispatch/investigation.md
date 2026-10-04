@@ -521,8 +521,8 @@ listed in the Rust/proof lists above are not repeated:
 - Cargo/docs and bench registration: `crates/gf2-algebra/Cargo.toml:13`,
   `crates/gf2-core/Cargo.toml:174`, `crates/gf2-core/ROADMAP.md:198`, and
   `dev/archive/legacy/crates/gf2-core/benches/strassen_threshold_results.md:4`.
-- Current active artifacts: `dev/active/0de41c82/bipedal-f5-f7-representation-study.md:256`,
-  `dev/active/0de41c82/investigation.md:223`,
+- Current active artifacts: `dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md:256`,
+  `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:223`,
   `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:150`,
   `dev/active/b8206228-permanent-statistics/investigation.md:228`,
   `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv:17`,
