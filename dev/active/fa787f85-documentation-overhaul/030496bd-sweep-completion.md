@@ -41,7 +41,7 @@ The block prints nothing: both outputs regenerate byte for byte, the cross-check
 
 ```text
 baseline: e3bfdfae782161c1f5031daac98f77ef48db2281
-after:    24bdf9068e09144c82b82009cc4bd1c80f0c1e4d
+after:    1078dc1a5a4bfa2ad8181b03cab82bf70707faae
                                    comment         non-blank             share           pattern
 crate                       before   after    before   after    before   after    before   after
 crates/gf2-algebra            7788    2015     22990   17205    33.88%  11.71%         9       0
@@ -90,6 +90,7 @@ diff <(grep -o '^| `crates/[^`]*`' "$D/030496bd-sweep-completion.md" | tr -d '|`
 02ed3c51 | f46046f0
 0d9cb8e3 | 72768e37
 0ecf6fcd | 93aed46a
+10a729d3 | 66858db0
 194b902a | c6aa0e84
 1e272575 | 13dfe1a5
 23d3525f | 72768e37
@@ -167,17 +168,11 @@ ids | while read -r i; do jit issue show "$i" > /dev/null 2>&1 || echo "$i"; don
 jq -r '.created_during_execution[] | select(.reason | startswith("planned work removed by")) | .id' "$D/progress.json" | sort | comm -23 - <(ids)
 ```
 
-Section 2 of the output lists the `planned work:` entries that name no issue. Four of them record a removed statement without a match:
+Section 2 of the output lists the `planned work:` entries that name no issue. Four of them record a removed statement without a match; the first command prints them. Each of their units names the issue in another commit, so the second command prints a non-zero count of section 1 rows for each:
 
 ```sh
 awk '/^# 2/{f=1;next} /^# 3/{f=0} f' "$D/030496bd-planned-work.txt" | grep -E 'unmatched|none matched'
-```
-
-Units 57436474, 8f451167 and 9dda3958 (each `jit issue show <id>`) name the issue in another commit (rows of section 1). Unit 66858db0 (`jit issue show 66858db0`) has no row in section 1: its commit `0376b472a` records "none matched in the tracker" and its commit `5ab246d0d` records "none". The unit's commit `52b4a73d4` removes the sentence "Divide-and-conquer batch GCD is a future algorithmic upgrade." from the Rustdoc of `FieldPoly::batch_gcd` in `crates/gf2-core/src/field/poly.rs`; the list above holds no issue for it.
-
-```sh
-for u in 57436474 8f451167 9dda3958 66858db0; do echo "$u $(sed '/^# 2/,$d' "$D/030496bd-planned-work.txt" | grep -c "^$u ")"; done
-git log --format='%h %s' -S'Divide-and-conquer batch GCD is a future' "$M" -- crates/gf2-core/src/field/poly.rs
+for u in 57436474 66858db0 8f451167 9dda3958; do echo "$u $(sed '/^# 2/,$d' "$D/030496bd-planned-work.txt" | grep -c "^$u ")"; done
 ```
 
 ## Non-comment hunks of the sweep

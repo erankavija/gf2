@@ -39,4 +39,4 @@ eba21481 | 938ff374c | crates/gf2-core/tests/sparse_dual.rs
 9f47bb94 | 42dc2f197 | crates/gf2-kernels-simd/src/x86/asm/_lto_opacity_callsites.asm.txt | not Rust source
 9f47bb94 | 42dc2f197 | crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt | not Rust source
 9f47bb94 | 42dc2f197 | crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt | not Rust source
-compared: 135 commits, 952 Rust file versions
+compared: 136 commits, 952 Rust file versions

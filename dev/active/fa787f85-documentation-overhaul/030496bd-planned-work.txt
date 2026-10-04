@@ -24,6 +24,7 @@
 57436474 | 3c0bbcef1 | parallel permanents for F_5 and F_7 | 2c109c8d
 57436474 | 958b6325f | parallel permanents for F_5 and F_7 | 2c109c8d
 57436474 | c2a66fb9b | parallel permanents for F_5 and F_7 | 2c109c8d
+66858db0 | 1078dc1a5 | divide-and-conquer batch GCD (crates/gf2-core/src/field/poly.rs) | 10a729d3
 67b5d1d8 | 3821ed316 | Barrett m = 64..=127 extension | 6fb4abad
 67b5d1d8 | e0d635033 | extend Barrett to m = 64..=127 | 6fb4abad
 72768e37 | eab90716f | 400,000-draw evidence run of the ten-anchor plan (tests/permanent_validation.rs) | 02b8137c
@@ -135,6 +136,7 @@ f2064e90 | fc4e232c3 | none
 02ed3c51 | f46046f0
 0d9cb8e3 | 72768e37
 0ecf6fcd | 93aed46a
+10a729d3 | 66858db0
 194b902a | c6aa0e84
 1e272575 | 13dfe1a5
 23d3525f | 72768e37
