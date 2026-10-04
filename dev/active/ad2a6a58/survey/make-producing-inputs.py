@@ -2,32 +2,73 @@
 """Write the producing-input manifest of this family's campaigns (jit:ad2a6a58).
 
 Usage: make-producing-inputs.py [output]
-       (default dev/active/ad2a6a58/survey/producing-inputs.json)
+       (default producing-inputs.json beside this file)
 
-The manifest is written by `dev/scripts/campaign_inputs.py`; this file declares
+The manifest is written by the shared `campaign_inputs.py`; this file declares
 which files are this family's closure: the gf2 production crates the arm
 compiles, the harness crates (this family's arm and the two byte-field survey
 crates it reuses), the shared campaign generators, the launcher, the shared lock
 wrapper and the shared campaign tooling.
+
+Every location is resolved under the repository root git reports: this family's
+own files from this file's directory, shared scripts and the launcher by file
+name, harness and tool crates by package name.
 """
 
 import os
 import subprocess
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(subprocess.run(
-    ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-).stdout.strip(), "dev/scripts"))
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = subprocess.run(
+    ["git", "-C", HERE, "rev-parse", "--show-toplevel"], check=True, capture_output=True,
+    text=True,
+).stdout.strip()
+
+
+def shared_scripts():
+    """Root-relative directory of the shared campaign scripts.
+
+    Receipt input snapshots hold byte copies of it under an `inputs` directory;
+    the live one is the path outside them.
+    """
+    listing = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "--", ":(glob)**/campaign_inputs.py"], check=True,
+        capture_output=True, text=True,
+    ).stdout.split()
+    live = [path for path in listing if "inputs" not in path.split("/")[:-1]]
+    if len(live) != 1:
+        raise SystemExit(f"{len(live)} live campaign_inputs.py files; exactly one must exist")
+    return os.path.dirname(live[0])
+
+
+SHARED = shared_scripts()
+sys.path.insert(0, os.path.join(ROOT, SHARED))
 import campaign_inputs  # noqa: E402
+import repository_files  # noqa: E402
 
-ISSUE = "dev/active/ad2a6a58"
-SURVEY = f"{ISSUE}/survey"
-ARM = f"{SURVEY}/axpy-arm"
-REUSED = "dev/active/6c6b09b1/survey"
-TOOL = "dev/tools/tuning-campaign-support"
-SHARED = "dev/scripts"
+
+def package(name):
+    return repository_files.package_directory(Path(ROOT), name)
+
+
+def live_file(name):
+    """Root-relative path of the one live file called `name`."""
+    found = repository_files.tracked_files(Path(ROOT), name)
+    if len(found) != 1:
+        raise SystemExit(f"{len(found)} live files are called {name}; exactly one must be")
+    return found[0]
+
+
+SURVEY = os.path.relpath(HERE, ROOT)
+ISSUE = os.path.dirname(SURVEY)
+ARM = package("gf256-axpy-arm")
+ARM_COMMON = package("byte-field-arm-common")
+GF2_SIDE = package("byte-field-gf2-side")
+TOOL = package("tuning-campaign-support")
 LOCK_WRAPPER = f"{SHARED}/ccx1-bench-flock.sh"
-LAUNCHER = "dev/bench_results/ad2a6a58/run-axpy-confirmation.sh"
+LAUNCHER = live_file("run-axpy-confirmation.sh")
 EVIDENCE = f"{ISSUE}/conformance"
 
 LIFECYCLE = [
@@ -74,9 +115,9 @@ BUILD_EXTRA = [
     f"{SURVEY}/pilot-smoke.json",
     f"{SURVEY}/confirmation-smoke.json",
     f"{SURVEY}/smoke-arms.sh",
-    f"{REUSED}/arm-common/Cargo.toml",
-    f"{REUSED}/gf2-side/Cargo.lock",
-    f"{REUSED}/gf2-side/Cargo.toml",
+    f"{ARM_COMMON}/Cargo.toml",
+    f"{GF2_SIDE}/Cargo.lock",
+    f"{GF2_SIDE}/Cargo.toml",
     f"{EVIDENCE}/lane-equivalence.txt",
     f"{EVIDENCE}/shipped-conformance.txt",
 ]
@@ -85,19 +126,15 @@ SOURCE_DIRS = [
     "crates/gf2-core/src",
     "crates/gf2-kernels-simd/src",
     f"{ARM}/src",
-    f"{REUSED}/arm-common/src",
-    f"{REUSED}/gf2-side/src",
+    f"{ARM_COMMON}/src",
+    f"{GF2_SIDE}/src",
     f"{TOOL}/src",
 ]
 
 
 def main():
-    root = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True,
-    ).stdout.strip()
-    output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-        root, SURVEY, "producing-inputs.json")
-    campaign_inputs.write_manifest(root, output, SOURCE_DIRS, BEHAVIOR_EXTRA, LIFECYCLE,
+    output = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "producing-inputs.json")
+    campaign_inputs.write_manifest(ROOT, output, SOURCE_DIRS, BEHAVIOR_EXTRA, LIFECYCLE,
                                    BUILD_EXTRA)
 
 
