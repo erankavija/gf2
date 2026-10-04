@@ -1,7 +1,5 @@
-//! Equivalence coverage for the hoisted XOR dispatch helper.
-//!
-//! `resolve_xor_inplace` is the callable that M4RM hot loops bind once and
-//! reuse. These tests exercise that resolved path against a scalar reference.
+//! Equivalence coverage for `resolve_xor_inplace`, the XOR callable that M4RM
+//! hot loops bind once and reuse, against a scalar reference.
 
 mod simd_equiv;
 

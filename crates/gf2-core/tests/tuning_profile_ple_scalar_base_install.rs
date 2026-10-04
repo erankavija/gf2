@@ -1,6 +1,5 @@
 //! PLE scalar-base route observation under an installed tuning profile that
 //! widens `ple.scalar_base_max_cols` past the conservative single-column leaf.
-//!
 //! `tuning::install` resolves once per process, so this binary installs the one
 //! profile it observes.
 
@@ -37,7 +36,6 @@ support::fresh_tuning_test!(installed_ple_profile_widens_the_scalar_base_window,
         CoreTuning::CONSERVATIVE.ple().panel_base_max_cols()
     );
 
-    // ── Base-case boundary ──────────────────────────────────────────────────
     let scalar_base_max_cols = ple.scalar_base_max_cols();
     assert_eq!(
         ple_base_route(scalar_base_max_cols),
@@ -58,8 +56,6 @@ support::fresh_tuning_test!(installed_ple_profile_widens_the_scalar_base_window,
          now takes the scalar base"
     );
 
-    // ── The widened value reaches the dispatcher ────────────────────────────
-    //
     // Mersenne-31 registers no panel kernel on any host, so every window of
     // eight columns or fewer is eliminated directly by the scalar base.
     // Route reporting alone publishes no executed observation.

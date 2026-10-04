@@ -1,42 +1,7 @@
-//! Shared conformance suite for the wide carry-less product.
-//!
-//! Every path that can compute an unreduced `2N`-word carry-less product of
-//! two `N`-word GF(2) polynomials runs the same cases here: the public
-//! [`clmul_wide`] and [`clmul_wide_slice`] long-product API, the capability
-//! dispatch that `Gf2mWide` multiplication and the wide Barrett reducer share,
-//! and the portable scalar fallback that hosts outside `clmul_wide_dispatch`'s
-//! dispatch predicate take. The
-//! suite is the behavioural contract those paths hold in common, so a new
-//! kernel, a new width or a new caller joins it rather than growing a private
-//! test of its own.
-//!
-//! # Oracle
-//!
-//! The reference is [`bitwise_product`], a shift-and-XOR polynomial multiply
-//! over the canonical little-endian bit numbering. It shares no code with the
-//! production schoolbook, its `clmul` primitive or the dispatched kernels, so
-//! it is an independent oracle for the portable fallback as much as for the
-//! accelerated lanes. Comparisons are over the complete double-width output,
-//! never a prefix.
-//!
-//! # Operands
-//!
-//! [`adversarial_pairs`] covers the cases that break lane-tail and
-//! carry-propagation handling: zero, one, all-ones, alternating masks, single
-//! bits at the 0/1/63/64/65 word boundaries and at the top of the operand,
-//! and the maximal-degree square. [`random_pairs`] adds seeded uniform
-//! operands drawn from SplitMix64 as published in Steele, Lea and Flood,
-//! "Fast splittable pseudorandom number generators" (OOPSLA 2014), the same
-//! generator the benchmark harness uses; the seed is fixed per width so a
-//! failure reproduces exactly.
-//!
-//! # Widths
-//!
-//! Dispatched widths are 4 (GF(2^256)) and 9 (GF(2^571)); every other width
-//! runs the portable schoolbook on every host. The suite covers both classes,
-//! and [`public_product_reaches_capability_dispatch`] witnesses which lane a
-//! public call actually took through
-//! [`gf2_core::gf2m::wide::last_clmul_wide_lane`].
+//! Shared conformance suite for the wide carry-less product: the public
+//! [`clmul_wide`] and [`clmul_wide_slice`] API, the capability dispatch and the
+//! forced portable fallback are compared, over the complete double-width
+//! output, against the independent shift-and-XOR oracle [`bitwise_product`].
 
 #![cfg(feature = "test-support")]
 
@@ -46,31 +11,16 @@ use gf2_core::gf2m::wide::{
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 use std::sync::Mutex;
 
-/// Serialises `force_scalar_clmul_wide` toggle-and-observe critical sections
-/// across this binary's concurrently-scheduled test threads.
-///
-/// The override is a single process-wide `AtomicBool`
-/// (`FORCE_SCALAR_CLMUL_WIDE`): every wide carry-less product on every thread
-/// computes the same words regardless of which lane it takes, so the override
-/// never corrupts a result, but a test that asserts *which* lane
-/// [`last_clmul_wide_lane`] reports can observe another thread's toggle
-/// mid-section under the default multi-threaded `cargo test` harness (nextest
-/// isolates each test into its own process and does not exercise this path).
-/// Every function here that forces the fallback or asserts an un-forced lane
-/// holds this lock for its whole toggle-execute-observe-restore section, the
-/// same convention `prime_route_dispatch.rs`'s `OBSERVATION_MUTEX` and
-/// `phase2_prime_sweep_proptests.rs`'s `DISPATCH_MUTEX` use for the same
-/// process-wide-toggle hazard.
+/// Serialises `force_scalar_clmul_wide` toggle-and-observe sections: the
+/// override is process-wide, so a test asserting which lane
+/// [`last_clmul_wide_lane`] reports could otherwise observe another thread's
+/// toggle.
 static DISPATCH_LANE_MUTEX: Mutex<()> = Mutex::new(());
 
-/// Random operand pairs drawn per width.
 const RANDOM_PAIRS: usize = 48;
 
-/// SplitMix64, the seeded generator the operand fixtures draw from.
-///
-/// Steele, Lea and Flood, OOPSLA 2014, with the constants of the reference
-/// implementation. Kept here so the suite depends on no generator whose
-/// version could drift underneath a recorded seed.
+/// SplitMix64 (`@/citation/Steele2014`), the seeded generator the operand
+/// fixtures draw from.
 struct SplitMix64(u64);
 
 impl SplitMix64 {
@@ -83,12 +33,9 @@ impl SplitMix64 {
     }
 }
 
-/// Independent oracle: the carry-less product of `a` and `b` as `2 * N` words.
-///
-/// Walks the set bits of `b` and XORs `a` shifted by that bit position into
-/// the accumulator, which is the definition of multiplication in
-/// `GF(2)[x]` under the canonical little-endian bit numbering (bit `i` lives
-/// at `words[i >> 6] >> (i & 63) & 1`).
+/// Independent oracle: the carry-less product of `a` and `b` as `2 * N` words,
+/// by shift-and-XOR over the set bits of `b` (bit `i` lives at
+/// `words[i >> 6] >> (i & 63) & 1`).
 fn bitwise_product<const N: usize>(a: &[u64; N], b: &[u64; N]) -> Vec<u64> {
     let mut out = vec![0u64; 2 * N];
     for bit in 0..(64 * N) {
@@ -119,8 +66,7 @@ fn adversarial_pairs<const N: usize>() -> Vec<([u64; N], [u64; N])> {
     let alternating = [0x5555_5555_5555_5555u64; N];
     let inverted = [0xAAAA_AAAA_AAAA_AAAAu64; N];
     let low_bits = {
-        // Bits 0, 1, 63, 64 and 65: the word-boundary cases the engineering
-        // contract requires of every bit-packed path.
+        // The word-boundary bits 0, 1, 63, 64 and 65.
         let mut words = [0u64; N];
         words[0] = 0b11 | (1 << 63);
         if N > 1 {
@@ -157,7 +103,6 @@ fn adversarial_pairs<const N: usize>() -> Vec<([u64; N], [u64; N])> {
     ]
 }
 
-/// Seeded uniform operand pairs for one width.
 fn random_pairs<const N: usize>(seed: u64) -> Vec<([u64; N], [u64; N])> {
     let mut mixer = SplitMix64(seed);
     (0..RANDOM_PAIRS)
@@ -172,7 +117,6 @@ fn random_pairs<const N: usize>(seed: u64) -> Vec<([u64; N], [u64; N])> {
         .collect()
 }
 
-/// Every operand pair one width is checked with.
 fn pairs<const N: usize>(seed: u64) -> Vec<([u64; N], [u64; N])> {
     let mut all = adversarial_pairs::<N>();
     all.extend(random_pairs::<N>(seed));
@@ -244,11 +188,6 @@ fn expected_lane<const N: usize>() -> &'static str {
 /// Asserts that both public entry points run on the dispatched lane of width
 /// `N`, and that forcing the portable fallback moves them onto it without
 /// changing a single output word.
-///
-/// Prints a `dispatch-lane-witness` line so a captured run (nextest
-/// `--success-output=final`) records which lane this build and host actually
-/// reached, independent of the assertion outcome; `run-validation.sh` parses
-/// it into the committed validation record.
 fn check_public_dispatch<const N: usize, const M: usize>(seed: u64) {
     let _guard = DISPATCH_LANE_MUTEX
         .lock()
@@ -326,7 +265,7 @@ fn check_portable_fallback<const N: usize, const M: usize>(seed: u64) {
     force_scalar_clmul_wide(restore);
 }
 
-/// GF(2^256) with the Seroussi HPL-98-135 Table 1 pentanomial for m = 256.
+/// GF(2^256) with the `@/citation/Seroussi1998` Table 1 pentanomial for m = 256.
 struct Gf2m256Config;
 
 impl Gf2mWideConfig<4> for Gf2m256Config {

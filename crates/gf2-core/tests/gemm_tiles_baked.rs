@@ -1,11 +1,6 @@
-//! Production-site witnesses for the baked GEMM row and column tiles.
-//!
-//! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
-//! cites `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
-//! and states the jointly selected `gemm.row_tile` and `gemm.col_tile` pair.
-//! Every ordinary blocked loop observes that pair, whether or not it equals the
-//! conservative pair.
+//! Production-site witnesses for the baked `gemm.row_tile` and `gemm.col_tile`
+//! pair of the measured format-2 core owner: every ordinary blocked loop
+//! observes that pair.
 #![cfg(gf2_tuning_baked)]
 
 #[path = "support/measured_format2.rs"]
@@ -32,7 +27,6 @@ support::fresh_tuning_test!(baked_tiles_reach_all_seven_blocked_loops, {
 
     reset_gemm_tile_observations();
 
-    // The ordinary GEMM loop.
     let a = FieldMatrix::<Fp<65537>>::identity(2);
     let b = FieldMatrix::<Fp<65537>>::identity(2);
     assert_eq!(gemm(&a, &b), a);

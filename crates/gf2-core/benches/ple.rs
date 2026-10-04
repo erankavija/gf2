@@ -1,24 +1,6 @@
-//! PLE decomposition + derived operations — Criterion benches.
-//!
-//! Issue `c3f8c1cb`. Measures the public PLE entry points at
-//! `n ∈ {64, 256, 1024}` for `Fp<MERSENNE_31>` and a small
-//! `Gf2mWide<8>` configuration. Each operation lives in its own
-//! Criterion group so individual cases can be filtered:
-//!
-//! ```text
-//! ple/ple/Fp_M31/64
-//! ple/row_echelon/Fp_M31/256
-//! ple/rref/Gf2m8/1024
-//! ple/lu/Fp_M31/1024
-//! ```
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench ple --features rand
-//! cargo bench -p gf2-core --bench ple --features rand -- --test
-//! cargo bench -p gf2-core --bench ple --features rand -- ple/ple/Fp_M31/256
-//! ```
+//! Benchmarks the PLE decomposition and the row-echelon, RREF and LU
+//! operations derived from it over `Fp<MERSENNE_31>` and a GF(2^8)
+//! `Gf2mWide<1>` configuration.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
@@ -27,7 +9,7 @@ use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
 const MERSENNE_31: u64 = 2_147_483_647;
 
-/// GF(2^8) AES irreducible.
+/// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
 struct PleBenchGf2m8Cfg;
 impl Gf2mWideConfig<1> for PleBenchGf2m8Cfg {
     const M: usize = 8;
@@ -38,16 +20,9 @@ type Gf2m8 = Gf2mWide<1, PleBenchGf2m8Cfg>;
 
 const SIZES: &[usize] = &[64, 256, 1024];
 
-// ─── Random matrix builders ──────────────────────────────────────────────────
-//
-// Thin local alias that monomorphises the shared generic helpers in
-// `gf2_core::field::test_random_matrix` to this bench's `Gf2m8` config.
-
 fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
     random_gf2m_wide_1::<PleBenchGf2m8Cfg>(rows, cols, seed)
 }
-
-// ─── Benches ────────────────────────────────────────────────────────────────
 
 fn bench_ple(c: &mut Criterion) {
     let mut group = c.benchmark_group("ple/ple");

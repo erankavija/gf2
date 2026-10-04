@@ -1,8 +1,5 @@
-//! Benchmarks for [`gf2_core::field::batch_ops::batch_inverse`].
-//!
-//! Compares Montgomery's batch-inversion trick against the baseline of
-//! inverting each element individually with `Fp<65537>::inv`. The target
-//! set by the issue spec is a ≥5× speed-up at `N = 100`.
+//! Benchmarks [`gf2_core::field::batch_ops::batch_inverse`] against
+//! per-element `Fp<65537>::inv`.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::batch_ops::batch_inverse;
@@ -12,9 +9,7 @@ use gf2_core::gfp::Fp;
 type F = Fp<65537>;
 
 fn make_inputs(n: usize) -> Vec<F> {
-    // Fill deterministically with non-zero residues of a linear sequence. The
-    // pattern itself doesn't matter — all we need is coverage over the field
-    // that stays non-zero so the batch path runs end to end.
+    // Non-zero residues: `batch_inverse` returns `None` on a zero input.
     let modulus: u64 = 65537;
     (0..n)
         .map(|i| {

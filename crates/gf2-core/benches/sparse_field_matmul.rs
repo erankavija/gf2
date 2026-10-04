@@ -1,28 +1,5 @@
-//! Criterion micro-benchmarks for [`SparseFieldMatrix::matmul`] over the
-//! four canonical field types called out in issue `eb57f944`:
-//!
-//! * `Fp<7>`     — small prime field; tests the prime-field code path
-//!   without dominating multiply latency.
-//! * `Fp<65521>` — 16-bit prime field; the canonical "moderate prime" used
-//!   throughout the dense and sparse benchmarks in this crate.
-//! * `Gf2mWide<u8>`  surrogate: `Gf2mWide<1, GF(2^8)>` (AES irreducible).
-//! * `Gf2mWide<u32>` surrogate: `Gf2mWide<1, GF(2^32)>` (Conway polynomial,
-//!   single-word storage; the issue's `<W>` storage-width hint maps to
-//!   "32-bit-ish" here since `Gf2mWide` is generic over `(N, Cfg)` and
-//!   `W` is approximated by the bit-width of the field).
-//!
-//! ## Coverage
-//!
-//! `(n, density) ∈ {(1024, 1/n), (4096, log2(n)/n)}` per the issue
-//! criterion. The shapes are square (`n × n`) and both factors are
-//! generated from the same density.
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench sparse_field_matmul
-//! cargo bench -p gf2-core --bench sparse_field_matmul -- --test
-//! ```
+//! Benchmarks [`SparseFieldMatrix::matmul`] on square operands over `Fp<7>`,
+//! `Fp<65521>`, GF(2^8) and GF(2^32).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
@@ -33,7 +10,7 @@ use gf2_core::gfp::Fp;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-/// GF(2^8) AES irreducible.
+/// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
 struct MmGf2m8Cfg;
 impl Gf2mWideConfig<1> for MmGf2m8Cfg {
     const M: usize = 8;
@@ -42,19 +19,17 @@ impl Gf2mWideConfig<1> for MmGf2m8Cfg {
 }
 type Gf2m8 = Gf2mWide<1, MmGf2m8Cfg>;
 
-/// GF(2^32) Conway polynomial; surrogate for the issue's `Gf2mWide<u32>`
-/// (single u64 storage word, 32 used bits).
+/// GF(2^32) in one storage word.
 struct MmGf2m32Cfg;
 impl Gf2mWideConfig<1> for MmGf2m32Cfg {
     const M: usize = 32;
-    // Irreducible for GF(2^32): x^32 + x^22 + x^2 + x + 1, encoded with
-    // implicit leading bit (low 32 bits hold x^22 + x^2 + x + 1).
+    // x^32 + x^22 + x^2 + x + 1; the leading bit is implicit.
     const MODULUS: [u64; 1] = [(1u64 << 22) | 0b111];
     const NAME: &'static str = "MmGf2m32Cfg";
 }
 type Gf2m32 = Gf2mWide<1, MmGf2m32Cfg>;
 
-/// `(n, density)` pairs called out by issue `eb57f944` §4.
+/// `(n, density, label)` cells.
 fn cells() -> Vec<(usize, f64, &'static str)> {
     let n1 = 1024usize;
     let n2 = 4096usize;

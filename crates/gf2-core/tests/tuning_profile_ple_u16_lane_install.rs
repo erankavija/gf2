@@ -1,6 +1,5 @@
 //! u16-lane PLE panel-width route observation under an installed tuning
 //! profile that narrows `ple.panel_u16_lane_max_cols`.
-//!
 //! The two lane widths are independent fields, so this binary installs the u16
 //! lane's and observes that the byte lane keeps its conservative width. The
 //! byte-lane half lives in `tuning_profile_ple_byte_lane_install.rs`, because
@@ -38,8 +37,6 @@ support::fresh_tuning_test!(installed_u16_lane_width_bounds_the_u16_lane_panel_w
         CoreTuning::CONSERVATIVE.ple().panel_base_max_cols()
     );
 
-    // ── u16-lane width boundary ─────────────────────────────────────────────
-    //
     // The installed width sits below the panel base width, so the lane's own
     // ceiling is the arm that binds at the boundary.
     let u16_width = ple.panel_u16_lane_max_cols();
@@ -61,7 +58,6 @@ support::fresh_tuning_test!(installed_u16_lane_width_bounds_the_u16_lane_panel_w
         "the panel base width still opens the sub-panel walk above it"
     );
 
-    // ── The byte lane keeps its own width ───────────────────────────────────
     let byte = ple.panel_byte_lane_max_cols();
     assert!(byte > u16_width);
     assert_eq!(
@@ -77,8 +73,6 @@ support::fresh_tuning_test!(installed_u16_lane_width_bounds_the_u16_lane_panel_w
         PlePanelRoute::RecursiveSplit
     );
 
-    // ── The installed width reaches the dispatcher ──────────────────────────
-    //
     // `Fp<65521>` registers the u16 lane on a host with the `simd` feature and
     // AVX2, and no lane otherwise; the expectation follows that gate.
     let lane = <Fp<65521> as FiniteField>::simd_ple_panel_lane();

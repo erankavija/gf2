@@ -9,7 +9,6 @@ mod seed;
 
 use seed::{bitmatrix_from_seed, bitmatrix_rank_deficient_from_seed, derive_seed};
 
-/// Generate a random matrix for RREF benchmarking
 fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     let mut rng = StdRng::seed_from_u64(seed);
     let mut m = BitMatrix::zeros(rows, cols);
@@ -28,7 +27,6 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
 fn bench_rref_standard_sizes(c: &mut Criterion) {
     let mut group = c.benchmark_group("rref_standard");
 
-    // Standard square matrix sizes
     for size in [256, 512, 1024, 2048].iter() {
         let m = random_matrix(*size, *size, 42 + *size as u64);
 
@@ -90,7 +88,6 @@ fn bench_gf2_echelon_target_rows(c: &mut Criterion) {
 fn bench_rref_rectangular(c: &mut Criterion) {
     let mut group = c.benchmark_group("rref_rectangular");
 
-    // Rectangular matrices (common in coding theory)
     let test_cases = vec![
         (100, 200, "100x200"),
         (500, 1000, "500x1000"),
@@ -117,13 +114,9 @@ fn bench_rref_rectangular(c: &mut Criterion) {
 fn bench_rref_dvb_t2(c: &mut Criterion) {
     let mut group = c.benchmark_group("rref_dvb_t2");
 
-    // DVB-T2 LDPC matrix sizes
-    // Note: These are large and slow - sample size will be reduced
-    group.sample_size(10); // Reduce from default 100
+    group.sample_size(10);
 
-    // DVB-T2 Short Rate 3/5: 6,480 × 16,200
-    // M4RI baseline: 142.29 ms
-    // Target: <1 second (7x slower than M4RI is acceptable)
+    // DVB-T2 short frame, rate 3/5 (`@/citation/Etsi2015`): 6,480 × 16,200
     let m_short_35 = random_matrix(6480, 16200, 42);
     group.bench_function("dvb_t2_short_rate_3_5", |bench| {
         bench.iter(|| {
@@ -131,18 +124,13 @@ fn bench_rref_dvb_t2(c: &mut Criterion) {
         });
     });
 
-    // DVB-T2 Short Rate 1/2: 9,000 × 16,200
-    // M4RI baseline: 241.18 ms
-    // Target: <1 second (4x slower than M4RI is acceptable)
+    // DVB-T2 short frame, rate 1/2 (`@/citation/Etsi2015`): 9,000 × 16,200
     let m_short_12 = random_matrix(9000, 16200, 43);
     group.bench_function("dvb_t2_short_rate_1_2", |bench| {
         bench.iter(|| {
             let _result = rref(black_box(&m_short_12), true);
         });
     });
-
-    // DVB-T2 Normal is too large for regular benchmarking
-    // Will be tested separately in integration tests
 
     group.finish();
 }

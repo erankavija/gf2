@@ -1,6 +1,4 @@
-// Simple profiling harness for RREF
-// Run with: cargo bench --bench rref_profile
-// Or with flamegraph: cargo flamegraph --bench rref_profile
+// Profiling harness for RREF.
 
 use gf2_core::alg::rref::rref;
 use gf2_core::matrix::BitMatrix;
@@ -24,7 +22,6 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
 }
 
 fn main() {
-    // Profile medium-sized matrix
     let m = random_matrix(1024, 1024, 42);
 
     println!("Profiling RREF on 1024×1024 matrix...");

@@ -1,9 +1,6 @@
-//! Benchmarks for sparse matrix operations over GF(2).
-//!
-//! # Sage Comparison
-//!
-//! Benchmarks marked with `[SAGE_CMP]` have equivalent implementations in
-//! `scripts/sage_benchmarks.py` for comparison with SageMath sparse matrices.
+//! Benchmarks sparse matrix operations over GF(2). Benchmarks marked
+//! `[SAGE_CMP]` have counterparts in `scripts/sage_benchmarks.py`
+//! (`@/citation/SageMath2026`).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::matrix::BitMatrix;
@@ -14,9 +11,7 @@ use gf2_core::sparse::{
 use gf2_core::BitVec;
 use rand::SeedableRng;
 
-/// [SAGE_CMP] Benchmark sparse matrix-vector multiplication
-///
-/// Compare with Sage: `sparse_matrix * vector` over GF(2)
+/// [SAGE_CMP] `sparse_matrix * vector` over GF(2).
 fn bench_sparse_matvec(c: &mut Criterion) {
     let mut group = c.benchmark_group("sparse_matvec");
 
@@ -49,7 +44,6 @@ fn bench_dense_vs_sparse(c: &mut Criterion) {
 
     group.bench_function("sparse_matvec", |b| b.iter(|| black_box(s.matvec(&x))));
 
-    // Compare to dense matrix-vector via manual iteration
     group.bench_function("dense_manual_matvec", |b| {
         b.iter(|| {
             let mut y = BitVec::with_capacity(size);
@@ -69,9 +63,7 @@ fn bench_dense_vs_sparse(c: &mut Criterion) {
     group.finish();
 }
 
-/// [SAGE_CMP] Benchmark sparse matrix transpose
-///
-/// Compare with Sage: `matrix.transpose()` for sparse GF(2) matrices
+/// [SAGE_CMP] `matrix.transpose()` for sparse GF(2) matrices.
 fn bench_sparse_transpose(c: &mut Criterion) {
     let mut group = c.benchmark_group("sparse_transpose");
 
@@ -102,7 +94,6 @@ fn bench_dual_col_iter_vs_transpose(c: &mut Criterion) {
     let single = SpBitMatrix::from_dense(&m);
     let dual = SpBitMatrixDual::from_dense(&m);
 
-    // Single CSR: transpose on every column access
     group.bench_function("single_csr_transpose_per_col", |b| {
         b.iter(|| {
             let mut sum = 0;
@@ -115,7 +106,6 @@ fn bench_dual_col_iter_vs_transpose(c: &mut Criterion) {
         })
     });
 
-    // Dual: direct column access via CSC
     group.bench_function("dual_direct_col_access", |b| {
         b.iter(|| {
             let mut sum = 0;
@@ -144,13 +134,11 @@ fn bench_bidirectional_sweep(c: &mut Criterion) {
     group.bench_function("alternating_row_col_sweeps", |b| {
         b.iter(|| {
             let mut sum = 0;
-            // Row sweep
             for r in 0..dual.rows() {
                 for _c in dual.row_iter(r) {
                     sum += 1;
                 }
             }
-            // Column sweep
             for c in 0..dual.cols() {
                 for _r in dual.col_iter(c) {
                     sum += 1;
@@ -183,14 +171,8 @@ fn bench_dual_matvec_transpose(c: &mut Criterion) {
     group.finish();
 }
 
-/// LDPC-sized opt-in block-CSR matvec benchmark.
-///
-/// Compare:
-/// - `csr`: existing caller-visible scalar CSR path, unchanged.
-/// - `block_csr_prefetch`: transformed block-CSR layout with predecoded bit
-///   gathers and software prefetch.
-/// - `block_csr_no_prefetch`: same layout with the prefetch distance set to 0,
-///   used to isolate the prefetch hint from the cache-layout transform.
+/// `block_csr_no_prefetch` sets the prefetch distance to 0, isolating the
+/// prefetch hint from the block-CSR layout.
 fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
     let mut group = c.benchmark_group("sparse_matvec_ldpc_block_csr");
     group.sample_size(10);
@@ -226,18 +208,8 @@ fn bench_ldpc_block_csr_matvec(c: &mut Criterion) {
     group.finish();
 }
 
-/// LDPC-sized amortized Reverse Cuthill-McKee preprocessing benchmark.
-///
-/// Compares the unchanged CSR path with the opt-in RCM row/column layout over
-/// 128 repeated matvecs. The one-shot `reorder_rcm` transformation and input
-/// vector column permutation are performed outside the timed loop to model
-/// dispatch paths that keep vectors and syndromes in reordered coordinates.
-///
-/// The `rcm_reordered_output` leaf measures the amortized hot path in that
-/// reordered layout. The separate `rcm_original_output` leaf includes result
-/// unpermutation for callers that require original row order after every call.
-/// Correctness tests in `sparse.rs` check that `unapply_rows` recovers the exact
-/// original CSR matvec output.
+/// `reorder_rcm` and the input-vector column permutation run outside the timed
+/// loop. `rcm_original_output` includes the result unpermutation.
 fn bench_ldpc_rcm_amortized_matvec(c: &mut Criterion) {
     const CALLS: usize = 128;
 

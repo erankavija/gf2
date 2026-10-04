@@ -77,7 +77,6 @@ fn bench_wide_logical(c: &mut Criterion) {
     }
     group.finish();
 
-    // Count ones benchmark (unary throughput)
     let mut group = c.benchmark_group("count_ones");
     for &sz_bytes in &sizes {
         let len_bits = sz_bytes * 8;

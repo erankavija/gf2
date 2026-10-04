@@ -1,28 +1,5 @@
-//! Criterion micro-benchmarks for [`SparseFieldMatrix`] SpMV.
-//!
-//! Matches the §4 success criterion of issue `8a90882e` (epic `bb85c68a`):
-//! measure `SparseFieldMatrix::matvec` at densities 1% and 5% across
-//! `n ∈ {256, 1024, 4096}` on a 32-bit Mersenne prime (`Fp<2^31-1>`) and a
-//! binary field (`Gf2mWide<1, AES-GF(2^8)>`).
-//!
-//! ## Allocation contract
-//!
-//! `SparseFieldMatrix::matvec` inlines the delayed-reduction dot product
-//! directly over its CSR slices, so the SpMV hot path is **allocation-free**
-//! per row — the only heap allocation is the output [`FieldVec`]. The numbers
-//! these benches produce therefore reflect field-arithmetic cost, not
-//! per-row `Vec<F>` gather overhead (the pre-rework implementation allocated
-//! a scratch `Vec<F>` per non-empty row, which dominated Mersenne-31 at the
-//! 4096×5% size).
-//!
-//! ## Usage
-//!
-//! ```bash
-//! # Full run.
-//! cargo bench -p gf2-core --bench field_sparse_matrix
-//! # Smoke-only (verifies the bench harness compiles and executes).
-//! cargo bench -p gf2-core --bench field_sparse_matrix -- --test
-//! ```
+//! Benchmarks [`SparseFieldMatrix`] `matvec` at densities 1% and 5% for
+//! `n ∈ {256, 1024, 4096}` over `Fp<2^31-1>` and GF(2^8).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
@@ -33,11 +10,10 @@ use gf2_core::gfp::Fp;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-// Mersenne-31 prime.
 const MERSENNE_31: u64 = 2_147_483_647;
 
-/// GF(2^8) with AES irreducible `x^8 + x^4 + x^3 + x + 1`. Implicit leading
-/// bit convention per `Gf2mWideConfig` ⇒ low byte is `0x1B`.
+/// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1`
+/// (`@/citation/Nist2001`); the leading bit is implicit, so `MODULUS` is `0x1B`.
 struct Gf2m8AesCfg;
 impl Gf2mWideConfig<1> for Gf2m8AesCfg {
     const M: usize = 8;

@@ -1,21 +1,16 @@
-//! The matrix-level transpose contract, run over every lane of the family.
-//!
-//! `gf2_kernels_simd::transpose::contract` holds the block-level cases and
-//! this file holds the ones only a whole matrix has: a zero-sized matrix, a
-//! non-square matrix, a matrix whose rows are not a whole number of words,
-//! and the partial boundary tiles at 63, 64 and 65 rows and columns. Each
-//! case runs through [`BitMatrix::transpose_with_block_kernel`], so every
-//! lane drives the production tiling, output allocation, zero padding and
-//! tail mask rather than a second copy of them.
-//!
-//! Lanes whose processor feature this host lacks are skipped by
-//! `gf2_kernels_simd::transpose::lane` returning `None`; the scalar lane is
-//! always present, so the list is never empty.
+//! The matrix-level transpose contract, run over every lane of the family:
+//! a zero-sized matrix, a non-square matrix, rows that are not a whole
+//! number of words, and the partial boundary tiles at 63, 64 and 65 rows and
+//! columns. Each case runs through [`BitMatrix::transpose_with_block_kernel`],
+//! so every lane drives the production tiling, output allocation, zero
+//! padding and tail mask. Lanes whose processor feature the host lacks are
+//! skipped; the scalar lane is always present.
 
 use gf2_core::matrix::BitMatrix;
 use gf2_kernels_simd::transpose::{lane, Transpose64x64Fn, TransposeLane};
 
-/// SplitMix64 [Steele2014], so a failing case is reproducible from its seed.
+/// SplitMix64 (`@/citation/Steele2014`), so a failing case is reproducible
+/// from its seed.
 fn splitmix64(state: &mut u64) -> u64 {
     *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
     let mut z = *state;

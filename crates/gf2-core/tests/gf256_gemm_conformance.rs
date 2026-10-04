@@ -1,26 +1,8 @@
-//! Shared conformance suite for the GF(2^8) cached-product-table dense
-//! product.
-//!
-//! Every path the dense `FieldMatrix` product can take over GF(2^8) runs the
-//! same cases here: the cached-table lane that
-//! `gf2_core::gf2m::byte_table::gf256_table_dispatch` selects for the
-//! runtime-context `Gf2mElement` and for the single-word `Gf2mWide<1, Cfg>`,
-//! and the route each representation takes when that dispatch declines. The
-//! suite is the behavioural contract those routes hold in common, so a new
-//! representation or a new caller joins it rather than growing a private test.
-//!
-//! # Oracles
-//!
-//! Two. The route without the table, reached through the process-global force
-//! switch [`force_scalar_gf256_table`], is offered identical operands and must
-//! produce identical matrices. Independently, a schoolbook product written
-//! without the table and without gf2-core arithmetic fixes the mathematics.
-//!
-//! # Coverage
-//!
-//! Both the 0x11B and the 0x11D reduction polynomial, over every shape with
-//! `m`, `k` and `n` drawn from 0 through 3, and over shapes at and above the
-//! product traversal's 32-row by 64-column tiling boundary.
+//! Shared conformance suite for the GF(2^8) cached-product-table dense product:
+//! the cached-table lane for `Gf2mElement` and single-word `Gf2mWide<1, Cfg>`
+//! must agree with the route taken when [`force_scalar_gf256_table`] declines
+//! the dispatch, and with a schoolbook product that names no gf2-core
+//! arithmetic, under the 0x11B and 0x11D reduction polynomials.
 
 #![cfg(feature = "test-support")]
 
@@ -39,16 +21,10 @@ use gf2_core::gf2m::{
     Gf2mField_, Gf2mWide, Gf2mWideConfig, GF256_SCALAR_LANE, GF256_TABLE_LANE,
 };
 
-/// Serialises `force_scalar_gf256_table` toggle-and-observe critical sections
-/// across this binary's concurrently-scheduled test threads.
-///
-/// The override is a single process-wide `AtomicBool`: every route computes
-/// the same bytes, so the override never corrupts a result, but a test that
-/// asserts *which* lane [`last_gf256_table_lane`] reports can observe another
-/// thread's toggle mid-section. Every function here that forces the declining
-/// answer or asserts an un-forced lane holds this lock for its whole
-/// toggle-execute-observe-restore section, the convention
-/// `prime_route_dispatch.rs` uses for the same process-wide-toggle hazard.
+/// Serialises `force_scalar_gf256_table` toggle-and-observe sections: the
+/// override is process-wide, so a test asserting which lane
+/// [`last_gf256_table_lane`] reports could otherwise observe another thread's
+/// toggle.
 static DISPATCH_LANE_MUTEX: Mutex<()> = Mutex::new(());
 
 /// The reduction polynomial `x^8 + x^4 + x^3 + x + 1`, low eight bits.
@@ -57,7 +33,6 @@ const POLY_11B: u8 = 0x1b;
 /// The reduction polynomial `x^8 + x^4 + x^3 + x^2 + 1`, low eight bits.
 const POLY_11D: u8 = 0x1d;
 
-/// The two polynomials every shape sweep runs over.
 const SWEEP_POLYNOMIALS: [u8; 2] = [POLY_11B, POLY_11D];
 
 /// GF(2^8) under `x^8 + x^4 + x^3 + x + 1` (0x11B).
@@ -90,8 +65,6 @@ impl Gf2mWideConfig<4> for Gf2m256Cfg {
 
 /// Independent schoolbook oracle: the carry-less product of two bytes, reduced
 /// by the degree-8 modulus bit by bit.
-///
-/// Names no arithmetic from gf2-core.
 fn schoolbook_product(c: u8, v: u8, reduction_low: u8) -> u8 {
     let mut product: u16 = 0;
     for bit in 0..8 {
@@ -108,8 +81,6 @@ fn schoolbook_product(c: u8, v: u8, reduction_low: u8) -> u8 {
     product as u8
 }
 
-/// The `m × n` product of an `m × k` and a `k × n` byte matrix under the
-/// schoolbook oracle.
 fn schoolbook_gemm(a: &[u8], b: &[u8], shape: (usize, usize, usize), reduction_low: u8) -> Vec<u8> {
     let (m, k, n) = shape;
     let mut out = vec![0u8; m * n];
@@ -125,7 +96,6 @@ fn schoolbook_gemm(a: &[u8], b: &[u8], shape: (usize, usize, usize), reduction_l
     out
 }
 
-/// SplitMix64, the seeded generator the operand fixtures draw from.
 fn splitmix64(state: &mut u64) -> u64 {
     *state = state.wrapping_add(0x9e37_79b9_7f4a_7c15);
     let mut z = *state;
@@ -134,7 +104,6 @@ fn splitmix64(state: &mut u64) -> u64 {
     z ^ (z >> 31)
 }
 
-/// `count` seeded bytes.
 fn seeded_bytes(seed: u64, count: usize) -> Vec<u8> {
     let mut state = seed;
     (0..count).map(|_| splitmix64(&mut state) as u8).collect()
@@ -161,7 +130,6 @@ fn conformance_shapes() -> Vec<(usize, usize, usize)> {
     shapes
 }
 
-/// Builds the runtime-context field for a reduction polynomial's low bits.
 fn element_field(reduction_low: u8) -> Gf2mField {
     Gf2mField::new(8, 0x100 | u64::from(reduction_low))
 }
@@ -182,7 +150,6 @@ fn element_matrix(
     matrix
 }
 
-/// The row-major bytes of a runtime-context matrix.
 fn element_bytes(matrix: &FieldMatrix<Gf2mElement>) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(matrix.rows() * matrix.cols());
     for i in 0..matrix.rows() {
@@ -212,7 +179,6 @@ fn wide_matrix<Cfg: Gf2mWideConfig<1>>(
     matrix
 }
 
-/// The row-major bytes of a single-word wide matrix.
 fn wide_bytes<Cfg: Gf2mWideConfig<1>>(matrix: &FieldMatrix<Gf2mWide<1, Cfg>>) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(matrix.rows() * matrix.cols());
     for i in 0..matrix.rows() {
@@ -223,8 +189,6 @@ fn wide_bytes<Cfg: Gf2mWideConfig<1>>(matrix: &FieldMatrix<Gf2mWide<1, Cfg>>) ->
     bytes
 }
 
-/// The runtime-context product for one shape, as bytes.
-///
 /// `gemm` cannot name the zero of a runtime-context field when both factors
 /// carry no storage, so the caller skips `k == 0` with `m > 0` and `n > 0`.
 fn element_gemm(
@@ -239,7 +203,6 @@ fn element_gemm(
     element_bytes(&gemm(&a, &b))
 }
 
-/// The single-word wide product for one shape, as bytes.
 fn wide_gemm<Cfg: Gf2mWideConfig<1>>(
     shape: (usize, usize, usize),
     left: &[u8],
@@ -257,14 +220,9 @@ fn reaches_the_hook(shape: (usize, usize, usize)) -> bool {
     shape.0 > 0 && shape.1 > 0 && shape.2 > 0
 }
 
-/// Whether a runtime-context product of this shape is well defined.
 fn element_shape_is_defined(shape: (usize, usize, usize)) -> bool {
     shape.1 > 0 || shape.0 == 0 || shape.2 == 0
 }
-
-// ---------------------------------------------------------------------------
-// REQ-02 — the accepted path and the path without it agree
-// ---------------------------------------------------------------------------
 
 #[test]
 fn the_element_product_agrees_with_the_path_without_the_table() {
@@ -360,10 +318,6 @@ fn the_two_representations_agree_with_each_other_over_both_polynomials() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// REQ-03 — zero, identity and single-column operands
-// ---------------------------------------------------------------------------
-
 #[test]
 fn a_zero_operand_gives_the_zero_matrix() {
     let shape = (9usize, 7usize, 5usize);
@@ -446,10 +400,6 @@ fn a_single_column_operand_gives_the_schoolbook_dot_products() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// REQ-01 and REQ-06 — what the lane accepts, what it declines, and the witness
-// ---------------------------------------------------------------------------
-
 #[test]
 fn the_table_lane_accepts_both_single_word_gf256_representations() {
     let shape = (9usize, 7usize, 5usize);
@@ -512,8 +462,6 @@ fn every_shape_that_reaches_the_hook_takes_the_table_lane() {
     drop(guard);
 }
 
-/// The product of two `FiniteField` matrices, cell by cell through the field's
-/// own multiply and add.
 fn naive_gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> Vec<F> {
     let mut out = Vec::with_capacity(a.rows() * b.cols());
     for i in 0..a.rows() {
@@ -622,10 +570,6 @@ fn a_single_word_configuration_of_another_degree_declines_and_keeps_its_result()
     assert_eq!(product, naive);
 }
 
-// ---------------------------------------------------------------------------
-// REQ-04 — the output matrix keeps its element type, layout and signature
-// ---------------------------------------------------------------------------
-
 #[test]
 fn the_output_keeps_its_shape_layout_and_field_handles() {
     let shape = (9usize, 7usize, 5usize);
@@ -651,10 +595,6 @@ fn the_output_keeps_its_shape_layout_and_field_handles() {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// REQ-05 — the availability probe keeps its declining answer
-// ---------------------------------------------------------------------------
 
 #[test]
 fn the_availability_probe_declines_for_both_representations() {

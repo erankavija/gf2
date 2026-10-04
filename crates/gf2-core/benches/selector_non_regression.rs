@@ -1,27 +1,8 @@
-//! Receipt-producing benchmark for the pinned selector non-regression set.
-//!
-//! Criterion is deliberately not used: this harness emits raw, pooled CSV
-//! windows with explicit execution and fixture coordinates so a baseline and a
-//! candidate can be compared cell by cell. It pins the operations selected by
-//! the bit-backend and polynomial pilot families around every conservative
-//! default in the tuning-profile selector cutover (epic `6dc81018`, design
-//! `dev/active/220cab0b/design.md` §6 step 3). The cells use only public
-//! `gf2-core` APIs and install no tuning profile, so the same receipt protocol
-//! applies on either side of the cutover.
-//!
-//! The bit family measures the five entry points that read
-//! `select_backend_for_size`: `xor_inplace`, `and_inplace`, `or_inplace`,
-//! `not_inplace`, and `popcount`. The polynomial family measures multiplication,
-//! fast multiplication, division/remainder, and both batch-evaluation entry
-//! points at sizes that straddle their public thresholds. The mutating bit
-//! logical kernels use branch-free per-word loops (with fixed unrolling in the
-//! scalar implementation), so repeated in-place application changes operands
-//! without changing the amount of work in a cell and does not bias its timing.
-//!
-//! Every fixture seed starts with `SEED_ROOT`, folds in the cell dimensions and
-//! a role tag, then applies a SplitMix-style xor/shift/multiply finalizer. The
-//! resulting seed is passed to `gf2_core::rng::Lcg`; this makes each cell and
-//! fixture bank deterministic while keeping roles distinct.
+//! Receipt-producing benchmark for the pinned selector non-regression set. It emits
+//! raw, pooled CSV windows with explicit execution and fixture coordinates, so a
+//! baseline and a candidate compare cell by cell. The cells call the bit-backend and
+//! polynomial entry points at sizes around each selector default, use only public
+//! `gf2-core` APIs and install no tuning profile.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
@@ -147,12 +128,8 @@ enum Fixture {
 /// `BIT_FIXTURES` buffers of `len` words, laid out contiguously with every
 /// buffer starting on a 64-byte boundary.
 ///
-/// The alignment is controlled rather than left to the allocator. A 64-byte
-/// cache line holds eight `u64`, an AVX2 load that straddles two lines costs
-/// materially more than one that does not, and the allocator's address phase
-/// differs between processes. An uncontrolled bank therefore makes a whole
-/// execution measure a different memory layout, which is a property of the heap
-/// rather than of the selection boundary this set exists to gate.
+/// The alignment is fixed because the allocator's address phase differs between
+/// processes, which would make each execution measure a different memory layout.
 struct BitBank {
     storage: Vec<u64>,
     offset: usize,
@@ -185,7 +162,6 @@ impl BitBank {
         bank
     }
 
-    /// Whether every buffer starts on a 64-byte boundary.
     fn is_line_aligned(&self) -> bool {
         let base = self.storage.as_ptr() as usize + self.offset * 8;
         base.is_multiple_of(WORDS_PER_LINE * 8) && self.stride.is_multiple_of(WORDS_PER_LINE)
@@ -330,12 +306,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("parse_args validates --layout-audit/--layout-candidate pairing");
         let reference = load_ensemble(reference_path)?;
         let candidate = load_ensemble(candidate_path)?;
-        // Under `--layout-audit` the receipt pair names the two committed
-        // receipts whose ratios record what one natural rebuild moves, which is
-        // the floor the ensemble's own dispersion is held against. The audit
-        // requires it: without the pair the coverage precondition has nothing
-        // to hold the ensemble against, and it refuses rather than reporting a
-        // verdict that skipped one of its own preconditions.
+        // `--compare`/`--against` name the receipts recording what one natural rebuild
+        // moves; `audit_layout` refuses without them.
         let natural = match (args.compare.as_deref(), args.against.as_deref()) {
             (Some(baseline), Some(rebuild)) => {
                 Some((load_receipt(baseline)?, load_receipt(rebuild)?))
@@ -546,12 +518,8 @@ fn open_output(path: &Path, append: bool) -> io::Result<File> {
 
 /// Resolves a path the caller gave on the command line.
 ///
-/// An absolute path is used as given. A relative path is taken as
-/// repository-relative, because `cargo bench` runs this binary with its working
-/// directory at the package root while the committed receipts and the procedure
-/// that names them are written relative to the repository root. Every path
-/// argument resolves this way, inputs and output alike, so one command works
-/// from where the procedure says to run it.
+/// A relative path is repository-relative: `cargo bench` runs this binary from the
+/// package root, while committed receipts are named from the repository root.
 fn resolve_repository_path(path: &Path) -> PathBuf {
     if path.is_absolute() {
         path.to_owned()
@@ -868,12 +836,8 @@ fn bank_indices(index: usize) -> (usize, usize) {
 /// timed windows, returning the calibrated call count and each window's
 /// `(fixture_start, elapsed)`.
 ///
-/// The dispatch on the cell shape happens once, here, so every timed loop is a
-/// monomorphic sequence of calls into exactly one library entry point. Keeping
-/// the harness's own `match` outside the window is load-bearing for the
-/// small-buffer bit-logical cells: their per-call cost is a few nanoseconds, and
-/// harness dispatch inside the window would dilute the very selection overhead
-/// this set exists to bound.
+/// The dispatch on the cell shape happens once, here, so every timed loop calls
+/// exactly one library entry point and no harness `match` runs inside a window.
 fn sweep_cell(
     cell: Cell,
     fixture: &mut Fixture,
@@ -1217,12 +1181,10 @@ fn compare(baseline: &Receipt, candidate: &Receipt) -> Result<Comparison, Incomp
     if !baseline.stats.keys().eq(pinned_cell_ids().iter()) {
         return Err(Incomparable::NotPinnedSet);
     }
-    // Default behaviour identical by construction is the cutover's whole
-    // contract, and both receipts are taken with no profile installed, so every
-    // cell resolves to the same arm on both sides. A cell whose recorded arm,
-    // family, or operand sizes moved is two different code paths, and a ratio
-    // between them measures no regression at all. It fails here as its own
-    // class rather than passing on a tolerance.
+    // Both receipts are taken with no profile installed, so every cell resolves to
+    // the same arm on both sides. A cell whose recorded arm, family, or operand sizes
+    // differ is two code paths; it fails here as its own class rather than on a
+    // tolerance.
     let mut identity = Vec::new();
     for (cell, baseline_stat) in &baseline.stats {
         let candidate_stat = &candidate.stats[cell];
@@ -1319,9 +1281,8 @@ fn print_comparison(baseline: &Path, candidate: &Path, comparison: &Comparison) 
 /// One arm of a layout ensemble: one revision measured from several builds,
 /// keyed by the execution index each build records.
 ///
-/// The recording path is unchanged and the row schema is unchanged: a build
-/// occupies one execution index, so the `execution` column that separates
-/// processes in a single-build receipt separates builds here as well.
+/// A build occupies one execution index, so the `execution` column separates builds
+/// here as it separates processes in a single-build receipt.
 #[derive(Debug)]
 struct EnsembleArm {
     schema_version: String,
@@ -1805,8 +1766,6 @@ fn audit_layout(
         } else {
             f64::INFINITY
         };
-        // Member j records execution j+1, so the halves the enumeration
-        // balances are the parities of j rather than of the execution index.
         let null_ratio = reference.pooled(cell, even_member)
             / reference.pooled(cell, |execution| !even_member(execution));
         let sigma = natural_sigma[position];
@@ -2101,7 +2060,6 @@ mod tests {
         assert_eq!(ids.len(), count);
     }
 
-    /// Arms present among the pinned cells that `keep` selects.
     /// One row per pinned cell, as a receipt this harness could have written.
     /// `arm_override` replaces the recorded arm of the named cell.
     #[allow(dead_code)]
@@ -2170,8 +2128,8 @@ mod tests {
     }
 
     /// The pinned sizes bracket each default as tightly as the guard allows, so
-    /// moving a default leaves the set no longer straddling it and this test
-    /// reports that the set needs re-pinning.
+    /// a moved default falls outside its bracket and this test reports that the
+    /// set needs re-pinning.
     #[test]
     fn pinned_sizes_bracket_each_default_at_adjacent_guard_values() {
         let mul_degrees: Vec<usize> = pinned_cells()
@@ -2333,8 +2291,6 @@ mod tests {
         );
     }
 
-    /// The bit-backend arm recorded in a receipt is the one the library itself
-    /// selects, not a prediction the harness computes from a size literal.
     #[test]
     fn bit_arm_is_read_from_the_library_selector() {
         for cell in pinned_cells() {
@@ -2350,8 +2306,6 @@ mod tests {
         }
     }
 
-    /// Each polynomial arm follows its own public threshold, in the direction
-    /// the guard in `poly.rs` uses.
     #[test]
     fn polynomial_arms_follow_their_public_thresholds() {
         for cell in pinned_cells() {
@@ -2544,8 +2498,6 @@ mod tests {
         ));
     }
 
-    /// `load_receipt` pools every recorded window of a cell by summing totals,
-    /// which is what makes a five-execution receipt one number per cell.
     #[test]
     fn load_receipt_pools_every_window_of_a_cell() {
         let cell = "bit_backend/xor_inplace/words=1";
@@ -2578,10 +2530,6 @@ mod tests {
         assert_eq!(resolve_repository_path(absolute), absolute);
     }
 
-    /// A receipt named relative to the repository root loads, which is the form
-    /// the committed procedure uses. `cargo bench` runs this binary with its
-    /// working directory at the package root, so the path resolves only because
-    /// `load_receipt` goes through the resolver.
     #[test]
     fn load_receipt_accepts_a_repository_relative_path() {
         let relative = PathBuf::from(format!(
@@ -2606,9 +2554,6 @@ mod tests {
         assert_eq!(receipt.stats.len(), pinned_cells().len());
     }
 
-    /// Two receipts that agree on every timing still fail when a cell resolves
-    /// to a different arm, because the ratio would then compare two different
-    /// code paths rather than measure a regression.
     #[test]
     fn comparison_rejects_a_cell_whose_selector_arm_changed() {
         let baseline = receipt_with_ratio(1.0);
@@ -2634,8 +2579,6 @@ mod tests {
         assert_eq!(cells[0].candidate, "scalar");
     }
 
-    /// The same rejection reached through the CSV, proving the receipt's `arm`
-    /// column is what the identity precondition reads.
     #[test]
     fn arm_column_of_a_receipt_reaches_the_identity_check() {
         let directory = scratch(&format!("gf2-{SCHEMA_VERSION}-arm"));
@@ -2696,8 +2639,6 @@ mod tests {
         assert!(!source_dirty_from_porcelain(""));
     }
 
-    /// Every bit-logical fixture buffer starts on a cache-line boundary, so a
-    /// receipt does not sample the allocator's per-process address phase.
     #[test]
     fn bit_fixture_banks_are_cache_line_aligned() {
         for cell in pinned_cells() {
@@ -2861,8 +2802,6 @@ mod tests {
         assert!((sample_sd(&[1.0, 3.0]) - f64::sqrt(2.0)).abs() < 1e-12);
     }
 
-    /// Member `j` records execution `j+1`, so every member statement of the
-    /// procedure reads one below the recorded index.
     #[test]
     fn member_index_is_one_below_the_execution_index() {
         assert_eq!(member_index(1), 0);
@@ -2911,8 +2850,6 @@ mod tests {
         }
     }
 
-    /// A member occupies one execution index, so an arm's rows separate into
-    /// one pooled statistic per member rather than one per arm.
     #[test]
     fn load_ensemble_pools_each_member_separately() {
         let arm = reference_arm(0.01);
@@ -2923,15 +2860,12 @@ mod tests {
         });
         assert!((arm.pooled(&cell, |execution| execution == 1) - 1_010.0).abs() < 1e-6);
         assert!((arm.pooled(&cell, |execution| execution == 3) - 990.0).abs() < 1e-6);
-        // Pooling two members sums totals rather than averaging their rates.
         assert!(
             (arm.pooled(&cell, |execution| execution == 1 || execution == 3) - 1_000.0).abs()
                 < 1e-6
         );
     }
 
-    /// The half-split runs on member-index parity, so the ratio it reports puts
-    /// the even members over the odd ones.
     #[test]
     fn layout_audit_splits_the_reference_arm_on_member_index_parity() {
         // Even members are slow, odd members fast, so a split on member parity
@@ -2977,8 +2911,6 @@ mod tests {
         }
     }
 
-    /// A displacement balanced across member parity leaves the halves agreeing
-    /// while the members themselves scatter.
     #[test]
     fn a_balanced_ensemble_leaves_its_halves_agreeing() {
         let (baseline, rebuild) = natural_pair(1.0);
@@ -3092,8 +3024,6 @@ mod tests {
         assert!(audit.passed);
     }
 
-    /// Coverage is a precondition of the verdict, so the audit refuses to run
-    /// without the receipts that measure what one natural rebuild moves.
     #[test]
     fn layout_audit_requires_the_natural_pair() {
         assert_eq!(
@@ -3104,8 +3034,6 @@ mod tests {
         );
     }
 
-    /// The ensemble's size sets the layout standard error the margin is
-    /// measured against, so an arm of some other size is a different ensemble.
     #[test]
     fn layout_audit_rejects_an_ensemble_that_is_not_a_predeclared_size() {
         for size in [4_u32, 64, 127] {
@@ -3122,8 +3050,6 @@ mod tests {
         }
     }
 
-    /// The ladder's second rung is a predeclared size and is audited like the
-    /// first.
     #[test]
     fn layout_audit_accepts_the_ladder_rung() {
         let members: Vec<u32> = (0..ENSEMBLE_SIZES[1] as u32).collect();

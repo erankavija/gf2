@@ -38,7 +38,6 @@ support::fresh_tuning_test!(installed_interpolate_profile_moves_both_entry_point
     let below = points(threshold - 1);
     let at = points(threshold);
 
-    // `interpolate_auto` follows the moved boundary.
     assert_eq!(
         interpolate_auto(&below).unwrap(),
         interpolate(&below).unwrap()
@@ -48,7 +47,6 @@ support::fresh_tuning_test!(installed_interpolate_profile_moves_both_entry_point
         interpolate_fast(&at).unwrap()
     );
 
-    // `interpolate_auto_two_adic` follows the same moved boundary.
     assert_eq!(
         interpolate_auto_two_adic(&below).unwrap(),
         interpolate(&below).unwrap()

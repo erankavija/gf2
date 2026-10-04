@@ -1,22 +1,11 @@
-//! BitMatrix Basics - Essential operations tutorial
-//!
-//! This example demonstrates fundamental BitMatrix operations:
-//! - Construction (zeros, identity, ones)
-//! - Element access (get, set)
-//! - Row operations (swap, XOR)
-//! - Matrix operations (transpose, multiply)
-//! - Row/column extraction
-//!
-//! Run with: `cargo run --example matrix_basics`
+//! Tour of `BitMatrix`: construction, element access, row operations,
+//! transpose, multiplication, row and column extraction, and a syndrome check.
 
 use gf2_core::{BitMatrix, BitVec};
 
 fn main() {
     println!("=== BitMatrix Basics Tutorial ===\n");
 
-    // ========================================
-    // 1. Construction
-    // ========================================
     println!("1. Construction");
     println!("   ----------------");
 
@@ -29,17 +18,14 @@ fn main() {
     let ones = BitMatrix::ones(2, 4);
     println!("   2×4 ones:\n{}\n", ones);
 
-    // ========================================
-    // 2. Element Access
-    // ========================================
     println!("2. Element Access");
     println!("   ----------------");
 
     let mut m = BitMatrix::zeros(3, 3);
-    m.set(0, 0, true); // Top-left
-    m.set(1, 1, true); // Center
-    m.set(2, 2, true); // Bottom-right
-    m.set(0, 2, true); // Top-right
+    m.set(0, 0, true);
+    m.set(1, 1, true);
+    m.set(2, 2, true);
+    m.set(0, 2, true);
 
     println!("   Matrix after setting elements:");
     println!("{}", m);
@@ -48,9 +34,6 @@ fn main() {
     println!("   m.get(0, 1) = {}", m.get(0, 1));
     println!("   m.get(0, 2) = {}\n", m.get(0, 2));
 
-    // ========================================
-    // 3. Dimensions
-    // ========================================
     println!("3. Dimensions");
     println!("   ----------------");
 
@@ -61,9 +44,6 @@ fn main() {
         m.cols()
     );
 
-    // ========================================
-    // 4. Row Operations (GF(2) algebra)
-    // ========================================
     println!("4. Row Operations");
     println!("   ----------------");
 
@@ -71,19 +51,14 @@ fn main() {
     println!("   Starting with identity:");
     println!("{}", m);
 
-    // XOR row 1 into row 0 (Gaussian elimination step)
     m.row_xor(0, 1);
     println!("   After row[0] ^= row[1]:");
     println!("{}", m);
 
-    // Swap rows 1 and 2
     m.swap_rows(1, 2);
     println!("   After swap_rows(1, 2):");
     println!("{}\n", m);
 
-    // ========================================
-    // 5. Transpose
-    // ========================================
     println!("5. Transpose");
     println!("   ----------------");
 
@@ -99,9 +74,6 @@ fn main() {
     println!("   Transposed (3×2):");
     println!("{}\n", t);
 
-    // ========================================
-    // 6. Matrix Multiplication
-    // ========================================
     println!("6. Matrix Multiplication (M4RM algorithm)");
     println!("   ----------------");
 
@@ -121,14 +93,10 @@ fn main() {
     println!("   A × B = B (identity property):");
     println!("{}\n", c);
 
-    // Non-trivial multiplication
     let d = &b * &b;
     println!("   B × B:");
     println!("{}\n", d);
 
-    // ========================================
-    // 7. Row and Column Extraction
-    // ========================================
     println!("7. Row and Column Extraction");
     println!("   ----------------");
 
@@ -156,25 +124,18 @@ fn main() {
         col0.to_bytes_le()[0] & 0x7
     );
 
-    // ========================================
-    // 8. Practical Example: Solving Ax = b
-    // ========================================
     println!("8. Practical Example: Matrix-Vector Multiply");
     println!("   ----------------");
 
-    // Create a simple parity check matrix H
     let mut h = BitMatrix::zeros(3, 7);
-    // Row 0: positions 0, 1, 3, 4
     h.set(0, 0, true);
     h.set(0, 1, true);
     h.set(0, 3, true);
     h.set(0, 4, true);
-    // Row 1: positions 0, 2, 3, 5
     h.set(1, 0, true);
     h.set(1, 2, true);
     h.set(1, 3, true);
     h.set(1, 5, true);
-    // Row 2: positions 1, 2, 3, 6
     h.set(2, 1, true);
     h.set(2, 2, true);
     h.set(2, 3, true);

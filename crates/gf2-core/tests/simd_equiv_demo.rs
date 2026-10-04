@@ -1,19 +1,6 @@
-//! Demo + mutation-test driver for the `simd_equiv` helper module.
-//!
-//! The helper itself lives in `tests/simd_equiv/mod.rs` and is loaded
-//! here via the standard `mod simd_equiv;` integration-test
-//! convention. This file contains:
-//!
-//! 1. A working demo — `LogicalFns::xor_fn` (AVX2) versus a scalar
-//!    in-place XOR — that exercises the helper's full API surface
-//!    (`assert_simd_matches_scalar`, `WORD_BOUNDARY_LENGTHS`,
-//!    `unaligned_slice`).
-//! 2. A mutation test that wires a deliberately-broken scalar XOR
-//!    into the helper and asserts the helper PANICS, proving the
-//!    helper actually compares output rather than silently passing.
-//!
-//! Tier A–D kernels under the PPC-spiral epic should follow the same
-//! shape.
+//! Driver for the `simd_equiv` helper module: an XOR equivalence demo over
+//! its whole API, and a mutation test showing that the helper rejects a
+//! deliberately broken scalar reference.
 
 mod simd_equiv;
 
@@ -22,9 +9,6 @@ use proptest::strategy::Strategy;
 
 use simd_equiv::{assert_simd_matches_scalar, unaligned_slice, WORD_BOUNDARY_LENGTHS};
 
-/// Reference scalar XOR — the canonical baseline used everywhere a
-/// kernel claims SIMD-equivalent behaviour. Mirrors the in-place
-/// signature of `LogicalFns::xor_fn`.
 fn scalar_xor_inplace(dst: &mut [u64], src: &[u64]) {
     let n = dst.len().min(src.len());
     for i in 0..n {
@@ -32,8 +16,6 @@ fn scalar_xor_inplace(dst: &mut [u64], src: &[u64]) {
     }
 }
 
-/// Build a proptest strategy that yields `(dst, src)` pairs of
-/// `len` words each, drawn from `any::<u64>()`.
 fn xor_pair_strategy(len: usize) -> impl Strategy<Value = (Vec<u64>, Vec<u64>)> {
     (
         proptest::collection::vec(any::<u64>(), len..=len),
@@ -41,9 +23,8 @@ fn xor_pair_strategy(len: usize) -> impl Strategy<Value = (Vec<u64>, Vec<u64>)> 
     )
 }
 
-/// AVX2-backed XOR via the safe-wrapper API in
-/// `gf2_core::kernels::simd::maybe_simd()`. Returns `None` if the
-/// host has no SIMD backend; tests skip in that case.
+/// XORs through the detected SIMD backend; returns `false` when the host
+/// has none.
 fn simd_xor_inplace(dst: &mut [u64], src: &[u64]) -> bool {
     use gf2_core::kernels::simd::maybe_simd;
     use gf2_core::kernels::Backend;
@@ -62,8 +43,6 @@ fn demo_xor_avx2_matches_scalar_proptest() {
         return;
     }
 
-    // Run the helper at a representative length (256 bits == 4 words);
-    // the boundary-list test below covers the rest.
     assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>), (), _, _, _>(
         |pair| {
             let (dst, src) = pair;
@@ -71,9 +50,7 @@ fn demo_xor_avx2_matches_scalar_proptest() {
         },
         |pair| {
             let (dst, src) = pair;
-            // safe-wrapper around AVX2 xor_fn; the boolean is dropped
-            // because both branches behave identically when the
-            // backend is present (we early-returned above).
+            // The backend is present: the caller returned early otherwise.
             let _ = simd_xor_inplace(dst, src);
         },
         xor_pair_strategy(4),
@@ -87,9 +64,7 @@ fn demo_xor_word_boundary_lengths() {
         return;
     }
 
-    // Exercise every canonical boundary length end-to-end. We use a
-    // deterministic fill rather than proptest here to keep the test
-    // fast and to make any failure trivially reproducible.
+    // Deterministic fill, so a failure is reproducible.
     for &bits in WORD_BOUNDARY_LENGTHS {
         let words = bits.div_ceil(64);
         let mut a_dst: Vec<u64> = (0..words as u64)
@@ -118,9 +93,8 @@ fn demo_xor_unaligned_slice_offsets() {
         return;
     }
 
-    // Over-allocate, then slice the same `len` window at offsets 0..7
-    // to exercise every alignment class within an AVX-512 cache line.
-    const LEN: usize = 16; // 128 bytes — covers AVX2 and exceeds AVX-512 alignment classes
+    // Offsets 0..8 place the window at every word alignment of a 64-byte line.
+    const LEN: usize = 16;
     let mut scalar_back = vec![0u64; 8 + LEN];
     let mut simd_back = vec![0u64; 8 + LEN];
     let src_back: Vec<u64> = (0..(8 + LEN) as u64)
@@ -128,7 +102,6 @@ fn demo_xor_unaligned_slice_offsets() {
         .collect();
 
     for offset in 0..8 {
-        // Reset windows for this iteration.
         for w in scalar_back.iter_mut() {
             *w = 0xdead_beef_cafe_babe;
         }
@@ -151,9 +124,6 @@ fn demo_xor_unaligned_slice_offsets() {
     }
 }
 
-/// Mutation test — the whole point of the helper is to *catch* a
-/// broken scalar reference. Wire in a one-bit-flipped variant and
-/// confirm `assert_simd_matches_scalar` panics.
 #[test]
 fn helper_rejects_mutated_scalar() {
     if gf2_core::kernels::simd::maybe_simd().is_none() {
@@ -163,11 +133,7 @@ fn helper_rejects_mutated_scalar() {
 
     let result = std::panic::catch_unwind(|| {
         assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>), (), _, _, _>(
-            // Mutated scalar — flips bit 0 of every word, so it
-            // disagrees with any honest XOR for the overwhelming
-            // majority of inputs. (The two would only coincide when
-            // every src word had bit 0 already set in dst, which a
-            // 64-case proptest run will dismiss in case 1.)
+            // Flips bit 0 of every word.
             |pair| {
                 let (dst, src) = pair;
                 let n = dst.len().min(src.len());
@@ -176,7 +142,6 @@ fn helper_rejects_mutated_scalar() {
                     dst[i] ^= 1;
                 }
             },
-            // Honest SIMD reference.
             |pair| {
                 let (dst, src) = pair;
                 let _ = simd_xor_inplace(dst, src);
@@ -192,9 +157,7 @@ fn helper_rejects_mutated_scalar() {
     );
 }
 
-/// Sanity test — passing the *same* function as both scalar and SIMD
-/// must succeed. Without this, the mutation test could be a false
-/// positive (helper always panics).
+/// Guards the mutation test against a helper that always panics.
 #[test]
 fn helper_accepts_matching_implementations() {
     assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>), (), _, _, _>(

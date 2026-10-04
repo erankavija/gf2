@@ -1,6 +1,5 @@
 //! PLE route observation under an installed tuning profile that pushes both
 //! selector values to `usize::MAX`.
-//!
 //! Neither field reserves a sentinel: `usize::MAX` is an ordinary admissible
 //! value that disables the sub-panel recursion and the blocked
 //! back-substitution for every finite operand. The below-default half of both
@@ -32,7 +31,6 @@ support::fresh_tuning_test!(
         assert_eq!(ple.panel_base_max_cols(), usize::MAX);
         assert_eq!(ple.blocked_back_sub_min_dim(), usize::MAX);
 
-        // ── Panel-width boundary ────────────────────────────────────────────────
         let conservative_panel = CoreTuning::CONSERVATIVE.ple().panel_base_max_cols();
         assert_eq!(
             ple_panel_route(Some(PlePanelLane::Byte), conservative_panel + 1),
@@ -47,7 +45,6 @@ support::fresh_tuning_test!(
             PlePanelRoute::RecursiveSplit
         );
 
-        // ── Back-substitution boundary ──────────────────────────────────────────
         let conservative_dim = CoreTuning::CONSERVATIVE.ple().blocked_back_sub_min_dim();
         assert_eq!(
             back_sub_route(conservative_dim, conservative_dim),
@@ -61,8 +58,6 @@ support::fresh_tuning_test!(
             "the ceiling is an admissible value, not a reserved sentinel"
         );
 
-        // ── The raised values reach the dispatchers ─────────────────────────────
-        //
         // A window wider than the conservative panel width takes the panel-base
         // and recursive-split arms instead of the sub-panel recursion.
         let a = random_fp::<251>(300, 300, 0x9F01);

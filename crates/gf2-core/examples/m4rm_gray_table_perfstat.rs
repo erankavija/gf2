@@ -1,7 +1,5 @@
-//! Perf-stat harness for the M4RM Gray-code table build (kernel B2).
-//!
-//! Run with `perf stat -r 10` to capture cycles, IPC, L1d misses, and
-//! branch misses for the production table builder at the B2 design point.
+//! Perf-stat harness for the M4RM Gray-code table build: `B2_PERFSTAT_ITERS`
+//! builds of the `k = 8` table over a 1024×1024 matrix.
 
 use gf2_core::alg::m4rm::build_gray_table_flat;
 use gf2_core::kernels::ops::resolve_xor_inplace;

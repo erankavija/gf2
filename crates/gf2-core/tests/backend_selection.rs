@@ -1,13 +1,9 @@
-//! Integration tests for backend selection.
-//!
-//! Verifies that the backend selection logic works correctly with and without
-//! the SIMD feature enabled.
+//! Backend selection with and without the `simd` feature.
 
 use gf2_core::kernels::backend::select_backend_for_size;
 
 #[test]
 fn test_backend_selection_small_buffers() {
-    // Small buffers should always use scalar backend
     assert_eq!(select_backend_for_size(0).name(), "scalar");
     assert_eq!(select_backend_for_size(1).name(), "scalar");
     #[cfg(not(gf2_tuning_baked))]
@@ -18,8 +14,8 @@ fn test_backend_selection_small_buffers() {
 
 #[test]
 fn test_backend_selection_threshold() {
-    // At the conservative threshold (8 words = 64 bytes), should use SIMD if
-    // available; the baked threshold does not exceed it.
+    // 8 words is the conservative threshold; the baked threshold does not
+    // exceed it.
     let backend = select_backend_for_size(8);
 
     #[cfg(feature = "simd")]
@@ -35,7 +31,6 @@ fn test_backend_selection_threshold() {
 
 #[test]
 fn test_backend_selection_large_buffers() {
-    // Large buffers should use SIMD if available
     let backend16 = select_backend_for_size(16);
     let backend256 = select_backend_for_size(256);
     let backend1024 = select_backend_for_size(1024);
@@ -61,8 +56,6 @@ fn test_simd_backend_availability() {
     use gf2_core::kernels::simd::maybe_simd;
     use gf2_core::kernels::Backend;
 
-    // Test that we can query SIMD availability
-    // This may be None on CPUs without AVX2/NEON
     let simd = maybe_simd();
 
     if let Some(backend) = simd {
@@ -77,13 +70,11 @@ fn test_simd_backend_availability() {
 fn test_operations_work_with_selected_backend() {
     use gf2_core::kernels::ops::{and_inplace, not_inplace, or_inplace, popcount, xor_inplace};
 
-    // Test with small buffer (scalar)
     let mut dst = vec![0xFFFFFFFFFFFFFFFFu64; 4];
     let src = vec![0x0F0F0F0F0F0F0F0Fu64; 4];
     xor_inplace(&mut dst, &src);
     assert_eq!(dst, vec![0xF0F0F0F0F0F0F0F0u64; 4]);
 
-    // Test with large buffer (SIMD if available)
     let mut dst = vec![0xFFFFFFFFFFFFFFFFu64; 64];
     let src = vec![0x5555555555555555u64; 64];
 

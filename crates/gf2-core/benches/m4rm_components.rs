@@ -17,7 +17,6 @@ fn random_matrix(rows: usize, cols: usize, seed: u64) -> BitMatrix {
     m
 }
 
-// Benchmark table generation against the production Gray-code table builder.
 fn bench_table_generation(c: &mut Criterion) {
     let b = random_matrix(1024, 1024, 42);
     let k_block = 8;
@@ -41,7 +40,6 @@ fn bench_table_generation(c: &mut Criterion) {
     });
 }
 
-// Benchmark bit extraction pattern
 fn bench_bit_extraction(c: &mut Criterion) {
     let a = random_matrix(1024, 1024, 42);
 
@@ -49,7 +47,6 @@ fn bench_bit_extraction(c: &mut Criterion) {
         bench.iter(|| {
             let mut sum = 0usize;
             for row in 0..1024 {
-                // Extract 8 bits
                 let mut result = 0usize;
                 for bit_idx in 0..8 {
                     let col = bit_idx;
@@ -64,7 +61,6 @@ fn bench_bit_extraction(c: &mut Criterion) {
     });
 }
 
-// Benchmark overall M4RM multiplication for different sizes
 fn bench_m4rm_sizes(c: &mut Criterion) {
     let mut group = c.benchmark_group("m4rm_multiply");
 
@@ -82,12 +78,10 @@ fn bench_m4rm_sizes(c: &mut Criterion) {
     group.finish();
 }
 
-// Benchmark just the table lookup + XOR accumulation pattern
 fn bench_table_lookup(c: &mut Criterion) {
     let stride_words = 1024_usize.div_ceil(64);
     let table_size = 256; // k_block = 8
 
-    // Create a dummy table
     let table: Vec<Vec<u64>> = (0..table_size)
         .map(|_| (0..stride_words).map(|_| rand::random()).collect())
         .collect();

@@ -1,14 +1,8 @@
-//! Production-dispatch witness: the executed arm is the reported route.
-//!
-//! `prime_gemm_route` and both dispatchers resolve the same
-//! `prime_gemm_select` call, so a report and an execution cannot disagree by
-//! construction. This binary checks that construction end to end: it runs the
-//! public `gemm` entry point, reads back the arm the dispatcher recorded at
-//! its kernel-invocation site, and compares it against the reported route for
-//! the same cell.
-//!
-//! The recorded arm is process-wide, so each test resets it immediately before
-//! the GEMM it observes.
+//! Production-dispatch witness: runs the public `gemm` entry point, reads
+//! back the arm the dispatcher recorded at its kernel-invocation site, and
+//! compares it with the route `prime_gemm_route` reports for the same cell.
+//! The recorded arm is process-wide, so each test resets it immediately
+//! before the GEMM it observes.
 #![cfg(all(feature = "simd", not(gf2_tuning_baked)))]
 
 use gf2_core::bench_seed::fp_matrix_from_seed;
@@ -25,8 +19,6 @@ use std::sync::Mutex;
 /// reset and read.
 static OBSERVATION_MUTEX: Mutex<()> = Mutex::new(());
 
-/// Runs the public GEMM entry point for `Fp<Q>` at `m × k` times `k × n` and
-/// returns the arm the dispatcher recorded while running it.
 fn executed_route<const Q: u64>(m: usize, k: usize, n: usize) -> PrimeGemmRoute {
     let a = fp_matrix_from_seed::<Q>(m, k, 0x5eed_0001);
     let b = fp_matrix_from_seed::<Q>(k, n, 0x5eed_0002);

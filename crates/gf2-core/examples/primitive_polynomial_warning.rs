@@ -1,4 +1,5 @@
-//! Demonstrates compile-time warnings for non-standard primitive polynomials.
+//! Constructs fields through `Gf2mField::new` with a standard, a non-standard
+//! and an unlisted primitive polynomial.
 
 use gf2_core::gf2m::Gf2mField;
 
