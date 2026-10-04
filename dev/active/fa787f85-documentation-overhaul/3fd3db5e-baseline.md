@@ -25,21 +25,19 @@ T=$(git ls-files ':(glob)**/fd9d5416/tests/test_render_receipt.py')
 [3fd3db5e-synthetic-receipt.py](3fd3db5e-synthetic-receipt.py) states how it
 renders the synthetic run and the one value it replaces.
 
-## Raw outputs
+## Output
 
 | State | Capture | SHA-256 |
 | --- | --- | --- |
 | Baseline | [3fd3db5e-before.txt](3fd3db5e-before.txt) | `7ccd473fb633fffac8a5975dadd620e652f5e842361dfef7649cdfc0d105e53d` |
-| After | [3fd3db5e-after.txt](3fd3db5e-after.txt) | `7ccd473fb633fffac8a5975dadd620e652f5e842361dfef7649cdfc0d105e53d` |
+| After | the same bytes | `7ccd473fb633fffac8a5975dadd620e652f5e842361dfef7649cdfc0d105e53d` |
 
-Two runs of the command at the baseline source produce the same bytes.
-
-## Equality
-
-The captures are identical; this command prints nothing:
+Two runs of the command at the baseline source produce the same bytes. At the
+after source the command reproduces the committed capture; this prints nothing:
 
 ```
-diff "$R/3fd3db5e-before.txt" "$R/3fd3db5e-after.txt"
+{ python3 -B "$T" -v RenderReceiptTest 2>&1 | sed -E 's/ in [0-9.]+s$/ in <t>s/'
+  python3 -B "$R/3fd3db5e-synthetic-receipt.py" "$T"; } | diff - "$R/3fd3db5e-before.txt"
 ```
 
 ## Committed receipt
