@@ -58,7 +58,6 @@ fn bench_ldpc_batch_backend(c: &mut Criterion) {
     group.finish();
 }
 
-/// Builds the primitive narrow-sense binary BCH code over `GF(2^degree)`.
 fn primitive_code(degree: usize, modulus: u64, designed_distance: u64) -> BinaryBchCode {
     let field = Gf2mField::new(degree, modulus).with_tables();
     let extension = BinaryPrimeExt::new(field).unwrap();

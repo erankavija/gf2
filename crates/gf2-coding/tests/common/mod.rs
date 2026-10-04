@@ -11,7 +11,6 @@ use std::path::PathBuf;
 /// assertions, RREF preprocessing). Set to any value except `0`.
 pub const GF2_BENCH_ENV: &str = "GF2_BENCH";
 
-/// Gate of `skip_unless_bench!`; reads [`GF2_BENCH_ENV`] on every call.
 pub fn bench_enabled() -> bool {
     matches!(std::env::var(GF2_BENCH_ENV), Ok(v) if v != "0")
 }
@@ -39,7 +38,6 @@ macro_rules! skip_unless_bench {
     };
 }
 
-/// The DVB-T2 reference-stream tree, or `None` when it is not a directory.
 pub fn dvb_vectors_dir() -> Option<PathBuf> {
     let path = gf2_coding::test_support::dvb_vectors_path();
     path.is_dir().then_some(path)

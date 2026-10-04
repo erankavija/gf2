@@ -19,7 +19,6 @@ const ALL_RATES: [CodeRate; 6] = [
     CodeRate::Rate5_6,
 ];
 
-/// Deterministic pseudo-random message seeded by `(seed, length)`.
 fn make_message(seed: u8, length: usize) -> BitVec {
     let mut bv = BitVec::with_capacity(length);
     let mut state = seed as u32;

@@ -18,8 +18,6 @@ use gf2_core::gfp::Fp;
 use gf2_core::gfpn::QuotientField;
 use gf2_core::BitMatrix;
 
-/// Forwards to the system allocator and counts every allocating call made
-/// while [`ARMED`] is set.
 struct CountingAllocator;
 
 static ARMED: AtomicBool = AtomicBool::new(false);
