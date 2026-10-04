@@ -81,7 +81,7 @@ The worker count is invocation-local: it is excluded from the campaign
 configuration identity and reaches the receipt only through the recorded
 argument vector. That invariance is witnessed end to end on this evaluator by
 the committed benchmark receipt
-[`2026-08-27-258be082-osd-campaign-worker-scaling.md`](../../bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md),
+[`2026-08-27-258be082-osd-campaign-worker-scaling.md`](../../archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md),
 where all twelve trials at 1, 2, 8, and 24 workers reduce to the single cell
 evidence hash `8c95f21e…` and 24 workers run $12.40\times$ faster than one
 (`@/inv/benchmark-backed-performance`).
