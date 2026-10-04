@@ -258,6 +258,36 @@ def main():
             f"{len(outcomes)} | {tally} | {sum(1 for o in outcomes if o in ending)} | "
             f"`{str(summary['qualifies']).lower()}` |"
         )
+    memory = results / "memory" / "peak-rss.json"
+    lines += ["", "## Peak memory of the canonical and QC arms (untimed)", ""]
+    if memory.is_file():
+        record = read_json(memory)
+        sources.append(memory)
+        floor = record["floor"]
+        lines += [
+            f"Source: `{memory.name}`, written by `record-memory.py`. Method, as the record "
+            f"states it: {record['method']}",
+            "",
+            "| Cell | Arm | Workers | Frames per worker call | Samples | Peak RSS KiB min | "
+            "median | max | Executable sha256 |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---|",
+        ]
+        for row in record["observations"]:
+            lines.append(
+                f"| `{row['cell_id']}` | `{row['arm']}` | {row['workers']} | "
+                f"{row['frames_per_worker_call']} | {row['count']} | {row['min_kib']} | "
+                f"{row['median_kib']} | {row['max_kib']} | "
+                f"`{record['arms'][row['arm']]['sha256']}` |"
+            )
+        lines += [
+            "",
+            f"Floor (`{record['commands']['floor']}`): {floor['count']} samples, min "
+            f"{floor['min_kib']}, median {floor['median_kib']}, max {floor['max_kib']} KiB. The "
+            "rows are descriptive order statistics of repeated launches on one host and carry "
+            "no interval.",
+        ]
+    else:
+        lines.append("No committed peak-memory record.")
     lines += ["", "## Source digests", "", "| Path | sha256 |", "|---|---|"]
     lines += [f"| `{path}` | `{digest(path)}` |" for path in sources]
     sys.stdout.write("\n".join(lines) + "\n")

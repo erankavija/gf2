@@ -231,6 +231,25 @@ The decision record's rule S4 names the cell outcomes that end a family: `fail`,
 | `v4-qc-intra-frame-multicore-family-ledger.jsonl` | 1 | 3 | 3 `pass` | 0 | `true` |
 | `v4-qc-comparator-single-worker-family-ledger.jsonl` | 1 | 2 | 2 `fail` | 2 | `false` |
 
+## Peak memory of the canonical and QC arms (untimed)
+
+Source: `peak-rss.json`, written by `record-memory.py`. Method, as the record states it: ru_maxrss reported by wait4 for one `benchmark-ab-runner smoke` process over a plan whose single cell names one arm in both positions: the largest resident set among the runner and the arm children it reaps, each arm child performing one untimed dispatch of the cell's declared workload. Linux reports the value in KiB. The floor is the same observation of `benchmark-ab-runner check`, which launches no arm; a spawned process starts from its launcher's resident set, so the floor bounds what the launcher and the runner contribute and an observation above it is an arm's.
+
+| Cell | Arm | Workers | Frames per worker call | Samples | Peak RSS KiB min | median | max | Executable sha256 |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| `nr-bg1-z384-qc-w1` | `gf2-nms-f32-nr-bg1-z384` | 1 | 8 | 5 | 36332 | 36572 | 36716 | `3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447` |
+| `nr-bg1-z384-qc-w1` | `qc-intra-frame-nms-f32-nr-bg1-z384` | 1 | 8 | 5 | 33592 | 33924 | 34084 | `6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236` |
+| `nr-bg1-z384-qc-latency` | `gf2-nms-f32-nr-bg1-z384` | 1 | 1 | 5 | 36540 | 36592 | 36720 | `3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447` |
+| `nr-bg1-z384-qc-latency` | `qc-intra-frame-nms-f32-nr-bg1-z384` | 1 | 1 | 5 | 33672 | 33904 | 34176 | `6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236` |
+| `nr-bg1-z384-qc-w6` | `gf2-nms-f32-nr-bg1-z384` | 6 | 8 | 5 | 61396 | 61476 | 61684 | `3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447` |
+| `nr-bg1-z384-qc-w6` | `qc-intra-frame-nms-f32-nr-bg1-z384` | 6 | 8 | 5 | 40592 | 40704 | 40908 | `6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236` |
+| `nr-bg1-z384-qc-w12` | `gf2-nms-f32-nr-bg1-z384` | 12 | 8 | 5 | 91584 | 91612 | 91648 | `3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447` |
+| `nr-bg1-z384-qc-w12` | `qc-intra-frame-nms-f32-nr-bg1-z384` | 12 | 8 | 5 | 48508 | 48764 | 48928 | `6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236` |
+| `nr-bg1-z384-qc-w24` | `gf2-nms-f32-nr-bg1-z384` | 24 | 8 | 5 | 146380 | 146556 | 146652 | `3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447` |
+| `nr-bg1-z384-qc-w24` | `qc-intra-frame-nms-f32-nr-bg1-z384` | 24 | 8 | 5 | 63420 | 63580 | 63752 | `6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236` |
+
+Floor (`target/release/benchmark-ab-runner check <family plan>`): 10 samples, min 24644, median 27170.0, max 29260 KiB. The rows are descriptive order statistics of repeated launches on one host and carry no interval.
+
 ## Source digests
 
 | Path | sha256 |
@@ -262,3 +281,4 @@ The decision record's rule S4 names the cell outcomes that end a family: `fail`,
 | `dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-confirmation/plan.json` | `5b1f76ef3caf3b515c49d9848debca8476844fbb441bf7a26de98d9db6363715` |
 | `dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-confirmation/execution.log` | `2f82cd84675f9e8d6369ea61236933cff268b1fdaa936ac544abf4ab45914335` |
 | `dev/bench_results/f63a2464/v4-r1-f63a2464-ldpc-qc-comparator-single-worker-confirmation/acceptance-summary.json` | `13d4b58682bdbfa56d6d07d252c8f56ed05de3e21f37830000f14304c7d8a4c2` |
+| `dev/bench_results/f63a2464/memory/peak-rss.json` | `9bd1ec587ab02575c97a467af17043470b04cf79147957350bfdb64a603dacf9` |
