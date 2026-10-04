@@ -37,22 +37,23 @@ execution is distinguishable from one that found the table cached.
 | Stage | Artifact | State |
 |---|---|---|
 | Frozen pilot family | [`addendum-v4-axpy-pilot.json`](addendum-v4-axpy-pilot.json) | committed before launch |
-| Genesis ledger | [`axpy-family-ledger.jsonl`](../../bench_results/ad2a6a58/axpy-family-ledger.jsonl) | open and empty |
-| Arm smoke | [`survey/runner-smoke.txt`](survey/runner-smoke.txt) | every arm, cell, operation and cache state, untimed |
-| Pilot campaign | `dev/bench_results/ad2a6a58/r1-axpy-pilot` | queued for the benchmark window |
-| Confirmation addendum | `addendum-v4-axpy-confirmation.json` | frozen from the committed pilot receipt |
-| Confirmation campaign | `dev/bench_results/ad2a6a58/r1-axpy-confirmation` | queued after the freeze |
-| Published outcome | [`tables.md`](../../bench_results/ad2a6a58/tables.md) | generated from committed receipts |
+| Family ledger | [`axpy-family-ledger.jsonl`](../../bench_results/ad2a6a58/axpy-family-ledger.jsonl) | one reservation per campaign |
+| Arm smoke | [`survey/pilot-smoke.json`](survey/pilot-smoke.json), [`survey/confirmation-smoke.json`](survey/confirmation-smoke.json) | every arm and cell of each stage, untimed |
+| Pilot campaign | [`r1-axpy-pilot`](../../bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.md) | committed receipt |
+| Confirmation addendum | [`addendum-v4-axpy-confirmation.json`](addendum-v4-axpy-confirmation.json) | frozen from the committed pilot receipt, with its [derivation record](confirmation-derivation-axpy.txt) |
+| Confirmation campaign | [`r1-axpy-confirmation`](../../bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.md) | committed receipt |
+| Published outcome | [`outcome.md`](outcome.md) over [`tables.md`](../../bench_results/ad2a6a58/tables.md) | generated from committed receipts |
 
 Every stage that measures is preceded by an untimed one.
-`survey/smoke-arms.sh` projects a throwaway plan from the frozen addendum,
-validates it with the runner's own `check`, and drives every arm of every
-declared cell through `gf256-axpy-smoke`, which speaks the runner's wire — its
-case encoder, fresh-child sentinel, child environment and result parser — in
-the `validation` position. Each arm performs one untimed dispatch and reports
-no timing window; the smoke refuses one that does, and the record is a build
-input of both campaigns, so a timed run refuses to launch until the smoke is
-committed. Timing belongs to the queued window alone.
+`survey/smoke-arms.sh` hands each stage's frozen addendum to the shared
+`dev/scripts/smoke-campaign-arms.sh`, which projects a throwaway plan carrying
+that stage's label, validates it with the runner's own `check`, and drives
+every arm of every declared cell through `benchmark-ab-runner smoke`, whose
+contract `tuning_campaign_support::arm::smoke` states. Each arm performs one
+untimed dispatch in the `validation` position and reports no timing window;
+the smoke refuses one that does. Each receipt's producing-input snapshot holds
+the smoke record its campaign pins as a build input. Timing belongs to the
+benchmark window alone.
 
 The freezer derives the measurement resolution from the whole pilot, dropped
 cells included, so a cold cell's width sizes the confirmation's margins even
@@ -68,7 +69,7 @@ confirmation retains, why each dropped cell is dropped, and the rule that
 decides retention or removal of the shipped lane; the freezer's derivation
 record repeats the selection beside the confirmation addendum.
 
-## After the window
+## Receipts and publication
 
 A receipt directory carries the producing-input snapshot, whose nested
 `Cargo.lock` files `.gitignore` excludes: committing a receipt means
@@ -76,12 +77,11 @@ A receipt directory carries the producing-input snapshot, whose nested
 `python3 dev/scripts/check-receipt-input-snapshots.py`, which reads the index
 rather than the working tree and fails CI on an omission.
 
-The post-window session commits the pilot receipt, runs
-`dev/bench_results/ad2a6a58/run-axpy-confirmation.sh freeze`, commits the
-confirmation addendum and its derivation record, queues the confirmation line,
-and then publishes: `run-axpy-confirmation.sh tables` regenerates the result
-tables from the committed receipts, the family ledger and the pinned
-vector-family confirmation, and the findings state each cell's recorded
-verdict, the retention decision the frozen rule yields and whether the
-direction agrees with that pinned receipt. Every quantitative statement points
-at a generated table row rather than repeating it.
+`run-axpy-confirmation.sh freeze` derives the confirmation addendum and its
+derivation record from the committed pilot receipt, and
+`run-axpy-confirmation.sh tables` regenerates the result tables from the
+committed receipts, the family ledger and the pinned vector-family
+confirmation. The [outcome](outcome.md) states each cell's recorded verdict,
+the retention decision the frozen rule yields and whether the direction agrees
+with that pinned receipt; every quantitative statement there points at a
+generated table row rather than repeating it.
