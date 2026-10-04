@@ -13,14 +13,6 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "a4eb8a61fea7c14c8e8c829b8b90591e586a3bf6d940b0251dbaa6bedb9e0c4f",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "conformance/lane-equivalence.txt",
-          "resolved_path": "dev/active/4c1e441f/conformance/lane-equivalence.txt"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "05a6341637595d52b5e8aea3ce3414e3fa96736842e0c7e851a55171413667c6",
           "is_shared": false,
           "mime_type": null,
@@ -37,35 +29,67 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "90cb64e75d4de3f71d1d3b01da610a049ef16bb54508028b2b2fb4d52efe87c4",
+          "content_hash": "c13f27eaf1899ffc9cb50f66208d838b64f7d8fc50ba2d148075c94a98a25e44",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../bench_results/4c1e441f/tables.md",
-          "resolved_path": "dev/bench_results/4c1e441f/tables.md"
+          "original_path": "../1a379447-zen3-cpu-performance/613574db/design.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/613574db/design.md"
         },
         {
-          "asset_type": "local",
-          "content_hash": "301b1666527bf536f09b1cc89dee23dc3da9927ae33fe67d7f383bb85fa99895",
+          "asset_type": "directory",
+          "content_hash": null,
           "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/runner-smoke.txt",
-          "resolved_path": "dev/active/4c1e441f/survey/runner-smoke.txt"
+          "mime_type": null,
+          "original_path": "../../bench_results/4c1e441f/r1-dense-product-pilot",
+          "resolved_path": "dev/bench_results/4c1e441f/r1-dense-product-pilot"
         },
         {
           "asset_type": "local",
-          "content_hash": "8dd24624ac1f2583ccfcb570ef7989e946555bf558ff13ef226c8b13a91d1ff4",
+          "content_hash": "8c849f1251d62cdaf6ec7fe6c5ff4337371dc918122710a8e9db19c78661535a",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../613574db/design.md",
-          "resolved_path": "dev/active/613574db/design.md"
+          "original_path": "outcome.md",
+          "resolved_path": "dev/active/4c1e441f/outcome.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "859c4520a130d1a12db77ba21c3fd38da1fa7f70b9ff80edd39a2d44ebaaa407",
+          "content_hash": "71aae1fa7cbc35aa240aac73e09116e73edbac0db6244f81f6c82bd37be68d65",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../../bench_results/4c1e441f/dense-product-family-ledger.jsonl",
           "resolved_path": "dev/bench_results/4c1e441f/dense-product-family-ledger.jsonl"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a4eb8a61fea7c14c8e8c829b8b90591e586a3bf6d940b0251dbaa6bedb9e0c4f",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "conformance/lane-equivalence.txt",
+          "resolved_path": "dev/active/4c1e441f/conformance/lane-equivalence.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5bcecd4c02cc7c599838ad32a0b94816c7301d11faf6e1330017fb26306615f0",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/pilot-smoke.json",
+          "resolved_path": "dev/active/4c1e441f/survey/pilot-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "539b798a534dcd2c713903f3bef9842b3a3cd13365a47f70fdc06ec81dd76e4e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/confirmation-smoke.json",
+          "resolved_path": "dev/active/4c1e441f/survey/confirmation-smoke.json"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/4c1e441f/r1-dense-product-confirmation",
+          "resolved_path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation"
         },
         {
           "asset_type": "local",
@@ -76,12 +100,12 @@
           "resolved_path": "dev/active/4c1e441f/confirmation-derivation-dense-product.txt"
         },
         {
-          "asset_type": "directory",
-          "content_hash": null,
+          "asset_type": "local",
+          "content_hash": "119793173ba44cad4bdb92b5cf21cbe405e1338fd4a658f2bae9464120f54e2c",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../bench_results/4c1e441f/r1-dense-product-pilot",
-          "resolved_path": "dev/bench_results/4c1e441f/r1-dense-product-pilot"
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/4c1e441f/tables.md",
+          "resolved_path": "dev/bench_results/4c1e441f/tables.md"
         }
       ],
       "commit": null,
@@ -115,13 +139,6 @@
       "format": "markdown",
       "label": "Shipped GF(2^8) table and dense-product suites of the measured tree",
       "path": "dev/active/4c1e441f/conformance/shipped-conformance.txt"
-    },
-    {
-      "commit": null,
-      "doc_type": "smoke",
-      "format": "markdown",
-      "label": "Untimed arm smoke of the confirmation plan",
-      "path": "dev/active/4c1e441f/survey/runner-smoke.txt"
     },
     {
       "commit": null,
@@ -319,13 +336,6 @@
       "commit": null,
       "doc_type": "tool",
       "format": "markdown",
-      "label": "gf256-gemm-smoke.rs",
-      "path": "dev/active/4c1e441f/survey/gemm-arm/src/bin/gf256-gemm-smoke.rs"
-    },
-    {
-      "commit": null,
-      "doc_type": "tool",
-      "format": "markdown",
       "label": "gf256-gemm-verify.rs",
       "path": "dev/active/4c1e441f/survey/gemm-arm/src/bin/gf256-gemm-verify.rs"
     },
@@ -335,6 +345,127 @@
       "format": "markdown",
       "label": "lib.rs",
       "path": "dev/active/4c1e441f/survey/gemm-arm/src/lib.rs"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "05a6341637595d52b5e8aea3ce3414e3fa96736842e0c7e851a55171413667c6",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-dense-product-confirmation.json",
+          "resolved_path": "dev/active/4c1e441f/addendum-v4-dense-product-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "792735abf3b36d7be210f5224378fa70fa266abbfb729706ab19096177f08d1f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "plan.md",
+          "resolved_path": "dev/active/4c1e441f/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "97a985f791aff368069cef3a965458941a2dce8f5edb10fb42b6b90ab162d3d5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "pinned-matrix-confirmation.json",
+          "resolved_path": "dev/active/4c1e441f/pinned-matrix-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "119793173ba44cad4bdb92b5cf21cbe405e1338fd4a658f2bae9464120f54e2c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/4c1e441f/tables.md",
+          "resolved_path": "dev/bench_results/4c1e441f/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "65cbdae038f6a2e593656eabeafa43030ada1999413c62f305320c5e7d4bbb32",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation-dense-product.txt",
+          "resolved_path": "dev/active/4c1e441f/confirmation-derivation-dense-product.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f59b846650c8c128a9786d0f9c6b251cf0d01bde874e1afe30d86b8cbe9c0278",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.json",
+          "resolved_path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Dense-product outcome, per-cell verdict and retention decision",
+      "path": "dev/active/4c1e441f/outcome.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Accepted dense-product confirmation, receipt",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Accepted dense-product confirmation, acceptance summary",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Accepted dense-product confirmation, acceptance summary (rendered)",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/acceptance-summary.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Dense-product confirmation, execution log",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/execution.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense-product confirmation, launcher log",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/launcher.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Dense-product confirmation, runner plan",
+      "path": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/plan.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "smoke",
+      "label": "Untimed runner smoke of the pilot plan",
+      "path": "dev/active/4c1e441f/survey/pilot-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "smoke",
+      "label": "Untimed runner smoke of the confirmation plan",
+      "path": "dev/active/4c1e441f/survey/confirmation-smoke.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Runtime path resolution for the family generators",
+      "path": "dev/active/4c1e441f/survey/locate.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "Request-mirror test against the runner request declaration",
+      "path": "dev/active/4c1e441f/survey/gemm-arm/tests/request_mirror.rs"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:34.507392176Z",
@@ -357,5 +488,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) dense product against the current matrix route",
-  "updated_at": "2026-10-03T16:30:10.151484326Z"
+  "updated_at": "2026-10-04T23:55:55.743208546Z"
 }
