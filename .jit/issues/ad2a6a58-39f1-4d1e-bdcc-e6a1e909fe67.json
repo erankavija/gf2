@@ -531,15 +531,49 @@
       "format": "markdown",
       "label": "Runtime repository lookups for the axpy tooling",
       "path": "dev/active/ad2a6a58/survey/locate.py"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "68407322325eb6042068c80f421090a819e4739bee924d5f4c4969be0135c504",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../ad2a6a58/outcome.md",
+          "resolved_path": "dev/active/ad2a6a58/outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/ad2a6a58-r1.md"
     }
   ],
+  "done_at": "2026-10-04T23:55:31.540487156Z",
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T23:39:28.763325066Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T23:47:33.943495293Z",
+      "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T23:54:59.482280544Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ad2a6a58-39f1-4d1e-bdcc-e6a1e909fe67",
   "labels": [
     "type:task",
@@ -551,7 +585,7 @@
     "satisfies:1a379447/REQ-04"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-10-04T23:35:23.556953522Z"
+  "updated_at": "2026-10-04T23:55:40.411001703Z"
 }

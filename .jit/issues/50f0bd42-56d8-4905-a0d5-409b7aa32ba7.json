@@ -1038,8 +1038,34 @@
       "format": "markdown",
       "label": "M4RI confirmation unavailable rows",
       "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "13dca64fe3b1cdec02be932eea05b48867acc7226d8f03ce90ade1a5ee423a91",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../50f0bd42/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/50f0bd42/outcome.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7bb612d45531e30d685081bd201df4e56179d9f3b3a0017b2a3848972d333c60",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../c73ffa25/outcome.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/c73ffa25/outcome.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "Lead review round 2",
+      "path": "dev/active/1a379447-zen3-cpu-performance/reviews/50f0bd42-r2.md"
     }
   ],
+  "done_at": "2026-10-04T23:55:31.382588514Z",
   "first_ready_at": "2026-09-16T22:37:53.286171086Z",
   "gates_required": [
     "cargo-ci",
@@ -1050,22 +1076,22 @@
   "gates_status": {
     "asm-artefact-present": {
       "status": "passed",
-      "updated_at": "2026-10-04T23:22:04.813947194Z",
+      "updated_at": "2026-10-04T23:37:08.184857685Z",
       "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T23:23:18.375464300Z",
+      "updated_at": "2026-10-04T23:38:18.671687351Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T23:25:24.668901734Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T23:43:19.253101916Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T23:27:31.429855617Z",
+      "updated_at": "2026-10-04T23:52:40.579630425Z",
       "updated_by": "auto:executor"
     }
   },
@@ -1085,7 +1111,7 @@
     "cites:@/citation/AlbrechtBard2026"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-10-04T23:35:50.261281550Z"
+  "updated_at": "2026-10-04T23:55:40.370012387Z"
 }

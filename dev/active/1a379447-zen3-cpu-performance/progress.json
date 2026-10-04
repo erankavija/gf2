@@ -2053,7 +2053,8 @@
     "Session 27: invoker lifted the wave-3 hold on the five out-of-wave confirmation rows; queue.tsv rows uncommented with their original keys; pinned trees verified clean at 706450eed, a00540a8f, 897ca69ab.",
     "Session 27: replay merged at 626be8850, merged-tree cargo-ci passed, 15 artifacts linked to 50f0bd42 at 39fbccb0e, window gf2-bench-window-20261005 armed for 02:00 Europe/Helsinki.",
     "Session 27: post-window final rounds dispatched for 4c1e441f, ad2a6a58, f63a2464 and 50f0bd42 at 2026-10-05 02:20 EEST. Merge order: ad2a6a58 first (shared smoke-script fix), then the others one at a time with schema-index regeneration and merged-tree cargo-ci after each.",
-    "Session 27: 50f0bd42 merged at 3bd366414 with confirmation and no-adoption decision; gates at e60732bef: asm-artefact-present PASS, cargo-ci PASS, research-review PASS (0 findings), code-review FAIL F1 (new M4RI render/freeze tools hard-code dev/ paths and a depth-dependent root traversal; @/invariant/no-dev-path-coupling). Rework 2 of 2 dispatched to the same worker."
+    "Session 27: 50f0bd42 merged at 3bd366414 with confirmation and no-adoption decision; gates at e60732bef: asm-artefact-present PASS, cargo-ci PASS, research-review PASS (0 findings), code-review FAIL F1 (new M4RI render/freeze tools hard-code dev/ paths and a depth-dependent root traversal; @/invariant/no-dev-path-coupling). Rework 2 of 2 dispatched to the same worker.",
+    "Session 27: 50f0bd42 DONE (no adoption; gates pass at 5ebb75b6e after rework 2; review reviews/50f0bd42-r2.md). ad2a6a58 DONE (lane retained; gates pass first round; review reviews/ad2a6a58-r1.md). Notify the fa787f85 lead or the repository owner that ad2a6a58 is done (198aafa3 REQ-01)."
   ],
   "started_at": "2026-09-06T20:22:15+00:00",
   "handoffs": [
@@ -2115,15 +2116,12 @@
       "2037941f"
     ],
     "remaining_descendants": [
-      "50f0bd42",
       "6e87c436",
       "2ad3a3e0"
     ],
     "active_workers": {
-      "w-4c1e441f-final": "agent-c04dd4ac, rebase --onto main 897ca69ab after evidence commit",
-      "w-ad2a6a58-final": "agent-0a357f94, rebase --onto main a00540a8f; owns the dev/scripts/smoke-campaign-arms.sh --label fix",
-      "w-f63a2464-final": "agent-9fb40c83, rebase --onto main 706450eed",
-      "w-50f0bd42-postpilot": "agent-50f0bd42, final round, rebase --onto main e6e32756f"
+      "w-4c1e441f-final": "branch ready at 213995c03, awaiting merge and gates",
+      "w-f63a2464-final": "branch ready at 6ae489733, awaiting merge and gates; two invoker rulings open"
     },
     "m4ri_pilot": "v4-r1-pilot ran 2026-09-28T23:00Z, key 53a5bb9b75c30e58; verified from its execution log; resolution record dev/bench_results/2037941f/m4ri-gap-resolution.md records eligible",
     "m4ri_confirmation": {
