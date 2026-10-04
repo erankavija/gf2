@@ -9,6 +9,7 @@
   ],
   "description": "Flat zen3 `dev/active/` entries `4c1e441f`, `53c5a8c0`, `6c6b09b1`, `6fb89a3c`, `ad2a6a58`, `c077a88b`, `c7113c5a`, `f63a2464` contain survey harness crates whose Cargo path dependency on `dev/tools/tuning-campaign-support` is relative to the crate's depth, so moving an entry one level deeper breaks its build. They move under the Zen 3 CPU performance epic's directory, and the move rewrites those paths.\n\n## Background\n\nThe code-consumer scan (`dev/active/fa787f85-documentation-overhaul/dev-path-code-consumers.md`, CC-§1) found harness crates with five-level relative paths, and a repository search finds four-level variants in further entries; these entries hold 9 such crates.\n\n## Success Criteria\n\n- [hard] REQ-01: No file moves until each owning issue (4c1e441f, 53c5a8c0, 6c6b09b1, 6fb89a3c, ad2a6a58, c077a88b, c7113c5a, f63a2464) is done or rejected; the worker checks this against the tracker when the move starts and records it in the commit message.\n- [hard] REQ-02: The listed entries live under the canonical directory of epic 1a379447.\n- [hard] REQ-03: Each survey harness crate in a moved entry builds after the move; the move rewrites its relative Cargo path dependencies to the new depth (path text only) under the named exception `harness-path-dependencies`, and the commit message records each edit. The benchmark-acceptance run recorded in the receipt verdict baseline, repeated after the move, yields identical verdicts and findings.\n- [hard] REQ-04: Scripts in each moved entry that name the entry's own directory by path literal are updated to the new path (path text only), and each such edit is recorded per entry in the commit message.\n- [hard] REQ-05: Digest-pinned inputs (declarations, producing manifests, addenda, receipts, preregistrations and snapshot copies) keep their bytes; human-facing citations are repointed, and a link scan of the touched files reports no unresolved local link.\n- [hard] REQ-06: Each tracker document reference names the new path, the manifest records each moved row as complete, and the Rust CI gate passes.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T20:20:34.731195637Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -30,7 +31,7 @@
     "satisfies:fa787f85/REQ-11"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Move zen3 survey-harness entries 4c1e441f to f63a2464 under the epic dir",
-  "updated_at": "2026-10-03T13:27:27.824805391Z"
+  "updated_at": "2026-10-04T20:20:34.731195637Z"
 }

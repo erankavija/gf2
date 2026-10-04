@@ -25,10 +25,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T20:03:34.147938592Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:15:54.543073575Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T20:19:53.838018918Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:31.241458266Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T20:11:08.475793959Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "eace5009-d595-4a23-bd68-6034df5e5352",
@@ -41,5 +56,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Regroup the remaining flat dev/active entries under epic dirs",
-  "updated_at": "2026-10-04T20:01:04.187366641Z"
+  "updated_at": "2026-10-04T20:19:53.838018918Z"
 }
