@@ -4,8 +4,8 @@
 Each claim names the project, the file, a fragment the line must contain and
 why the line matters for the candidate decision. The script locates the line by
 its fragment in the working tree, refuses a claim whose fragment matches other
-than exactly one line, and records the verbatim text with the revision the tree
-is at, so every mechanism this issue's reports cite can be checked at its
+than exactly one line, and records the verbatim text with the commit that last
+changed the cited file, so every mechanism this issue's reports cite can be checked at its
 location instead of through a line number in prose.
 
 Usage: make-source-evidence.py > survey/source-evidence.json
@@ -90,19 +90,21 @@ def locate(text, path, fragment):
 
 
 def main():
-    head = subprocess.run(
-        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
-    ).stdout.strip()
-
-    cache = {}
+    cache, revisions = {}, {}
     claims = []
     for path, fragment, topic, why in CLAIMS:
         if path not in cache:
             cache[path] = open(path, encoding="utf-8").read()
+            # The commit that last changed the cited file, so the record is
+            # stable until that file changes.
+            revisions[path] = subprocess.run(
+                ["git", "log", "-1", "--format=%H", "--", path],
+                capture_output=True, text=True, check=True,
+            ).stdout.strip()
         line, text = locate(cache[path], path, fragment)
         claims.append({
             "project": "gf2",
-            "commit": head,
+            "commit": revisions[path],
             "path": path,
             "line": line,
             "text": text,
