@@ -128,7 +128,7 @@ None.
 ## Reference artefacts
 
 - Epic: `jit issue show 1a379447`
-- Design docs: `dev/active/613574db/design.md` (aligned with the L1 code this
+- Design docs: `dev/active/1a379447-zen3-cpu-performance/613574db/design.md` (aligned with the L1 code this
   session), `dev/active/2037941f-.../dense-parity-addendum.md`,
   `.../logical-harness.md`
 - Planning docs: `progress.json`, `handoff-14.md`
