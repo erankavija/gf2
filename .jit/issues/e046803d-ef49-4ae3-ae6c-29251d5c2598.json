@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-04T07:13:05.394065004Z",
+  "dependencies": [],
+  "description": "Three gf2-core benchmark harnesses leave cells unmeasured: the $n = 512$ minimal-polynomial cell of `examples/bench_csv_emitter.rs`, the $\\mathrm{GF}(2^{32})$ field of `benches/fieldmatrix_gemm.rs`, and the $n = 4096$ reference cell of `benches/fieldmatrix_ple.rs` for the operations outside the fast product.\n\n## Background\n\nThe harness headers marked these cells as deferred; the source-comment sweep removed the statements, and this issue tracks them.\n\n## Success Criteria\n\n- [hard] REQ-01: Each cell is measured in the overnight benchmark window with a committed receipt, per `@/inv/benchmark-backed-performance`, or is removed from the harness's declared cell set with the reason recorded where the set is defined.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-04T07:13:05.394065004Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "e046803d-ef49-4ae3-ae6c-29251d5c2598",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Measure or retire the deferred gf2-core benchmark cells",
+  "updated_at": "2026-10-04T07:13:05.394065004Z"
+}

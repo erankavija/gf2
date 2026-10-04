@@ -16,10 +16,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:10:16.677184210Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:14:13.425734046Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:28.690338189Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T07:10:21.002142452Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "aa0558c1-8143-44b9-a2ca-27282d1cf015",
@@ -37,5 +47,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the remaining gf2-coding source files",
-  "updated_at": "2026-10-04T06:22:29.837004430Z"
+  "updated_at": "2026-10-04T07:14:13.425734046Z"
 }

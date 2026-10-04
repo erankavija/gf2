@@ -16,10 +16,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:06:41.561423018Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:13:29.898616556Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:19.717630220Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T07:10:22.001368680Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "13dfe1a5-a770-4910-b6b3-36e4b2a91cca",
@@ -37,5 +47,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-coding tests, benches and examples",
-  "updated_at": "2026-10-04T06:22:30.209652622Z"
+  "updated_at": "2026-10-04T07:13:29.898616556Z"
 }

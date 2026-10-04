@@ -16,10 +16,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:04:15.262026692Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:13:45.982050256Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:27.303689500Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T07:10:20.632089977Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8f451167-c774-42d0-b8e6-346a6df8ee7a",
@@ -37,5 +47,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-core field trait and vector modules",
-  "updated_at": "2026-10-04T06:22:29.586830139Z"
+  "updated_at": "2026-10-04T07:13:45.982050256Z"
 }

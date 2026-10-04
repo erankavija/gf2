@@ -16,10 +16,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:07:54.395175934Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:14:10.888180719Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:32.269482243Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T07:10:21.448567277Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f2064e90-ad75-4253-8402-41d63d38af41",
@@ -37,5 +47,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-core dense field matrix modules",
-  "updated_at": "2026-10-04T06:22:29.709282730Z"
+  "updated_at": "2026-10-04T07:14:10.888180719Z"
 }

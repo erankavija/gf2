@@ -16,10 +16,20 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:05:31.330147977Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T07:13:42.920098246Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:29.595409523Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T07:10:21.643830146Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "c6aa0e84-072e-4671-9c50-0c8e9d0d4f66",
@@ -37,5 +47,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-core runtime support modules",
-  "updated_at": "2026-10-04T06:22:30.087139220Z"
+  "updated_at": "2026-10-04T07:13:42.920098246Z"
 }
