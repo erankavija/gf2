@@ -49,7 +49,7 @@ Method: scan of `.jit/issues/*.json` `documents[].path`, owners resolved to top 
   - `dev/simulation_results/osd-ebch-128-64/` (8 files, simulation cef1ae5f). Permanent path, so copy-only; consumed by `crates/gf2-sim/tests/osd_campaign_protocol.rs:807`.
 - **97bf0879 / 026fc832 (`archived`), copied not moved by `195f8254f`:** `dev/plans/{flint_promotion_evidence,ntl_promotion_evidence,small_prime_kernel_strategy,sota_target_matrix}.md`, `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`.
 - **Archived epics, code and tooling links (stay in place):** `benchmarks/{Containerfile,README.md,image.lock,run.sh,reference/*}`, `crates/gf2-algebra/{README.md,examples/permanent_demo.rs,tests/data/cas_permanent_f5_f7.csv}`, `crates/gf2-coding/examples/bench_sparse_csv_emitter.rs`, `crates/gf2-core/{examples/m4rm_multiply_perfstat.rs,src/sparse.asm.txt,tests/gf2pow32_constant_drift.rs}`, `proofs/Gf2Algebra/Proofs/RyserBounded.lean`, `scripts/{generate-cas-permanent-vectors.sage,plot_permanent_benchmarks.py}`.
-- **Unlinked terminal-owned files still in dev/active:** `babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md`, `e095a100-gfpm-arithmetic/e095a100-presentation/themes/gruvbox.css`, `37e0b235/gpu-batch-ldpc-bp-plan.md` (rejected task under 806eb14e).
+- **Unlinked terminal-owned files still in dev/active:** `dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-5.md`, `e095a100-gfpm-arithmetic/e095a100-presentation/themes/gruvbox.css`, `37e0b235/gpu-batch-ldpc-bp-plan.md` (rejected task under 806eb14e).
 - **Unlinked terminal-owned files in dev/presentations:** `babcf05e-*/themes/gruvbox.css`, `f9717e7e-gf2-sim/themes/gruvbox.css`.
 
 ### 1.2 `jit archive candidates`
@@ -232,7 +232,7 @@ Conclusions for the plan:
 - Container archival is the right mover for `dev/` managed sources and is idempotent. Every execution needs a paired manual commit that repoints in-file citations (README, AGENTS.md, rustdoc, dev/active docs).
 - Deck relocation (REQ-09) and crate-doc legacy moves (owner decision) need `git mv` plus reference edits, or a temporary policy widening that must be verified first.
 - The legacy mirror (D-25) needs `git mv`, or a temporary `archive_root = "dev/archive/legacy"` pass verified on one file. `dev/archive` is a permanent path, which interacts with that pass.
-- Shared-owner files are copied, not moved (`195f8254f` duplicated `babcf05e-handoff-5.md` and bench reports into 026fc832 and 97bf0879). D-24 ownership resolution must happen before execution.
+- Shared-owner files are copied, not moved (`195f8254f` duplicated `dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-5.md` and bench reports into 026fc832 and 97bf0879). D-24 ownership resolution must happen before execution.
 - `jit doc check-links` is a candidate reuse point for docs-mechanical (coverage not tested).
 - The CLAUDE.md symlink (56378e82) becomes a `symlink-artifact` blocker for any archived document that links `CLAUDE.md`.
 
