@@ -1,9 +1,7 @@
-//! Tracing setup for campaign runs.
-//!
-//! [`install_campaign_subscriber`] installs a JSON-lines subscriber as the
-//! process-global default: the sweep emits events from rayon workers and
-//! helper threads, which a thread-local default does not cover. The global
-//! default is set once per process and never uninstalled.
+//! Tracing setup for campaign runs. [`install_campaign_subscriber`] installs a
+//! JSON-lines subscriber as the process-global default: the sweep emits events
+//! from rayon workers and helper threads, which a thread-local default does not
+//! cover. The global default is set once per process and never uninstalled.
 
 use std::sync::Mutex;
 

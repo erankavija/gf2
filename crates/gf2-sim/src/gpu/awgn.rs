@@ -1,8 +1,10 @@
-//! GPU AWGN channel stage (`feature = "hip"`).
+//! GPU AWGN channel stage (`feature = "hip"`): `GpuAwgn` is the device
+//! counterpart of the CPU [`channels::Awgn`](crate::channels::Awgn) stage.
 //!
-//! `GpuAwgn` is the device counterpart of the CPU
-//! [`channels::Awgn`](crate::channels::Awgn) stage. Frame `f` draws its noise
-//! from the device ChaCha20 + Box-Muller kernel (`GpuChaChaAwgn`) at word offset
+//! # Determinism
+//!
+//! Frame `f` draws its noise from the device ChaCha20 + Box-Muller kernel
+//! (`GpuChaChaAwgn`) at word offset
 //! [`worker_offset(seed, snr_idx, worker_idx, f)`](crate::parallel::worker_offset),
 //! as the CPU path does. This module's tests, skipped without a usable GPU,
 //! check at worker 0 that the raw ChaCha words equal the CPU words
@@ -10,6 +12,8 @@
 //! samples and the corrupted symbols are within 1 ulp `f32` of the CPU path
 //! (`test_gpu_box_muller_within_1_ulp_over_1024_frames`,
 //! `test_gpu_awgn_matches_cpu_within_1_ulp`).
+//!
+//! # Sample layout
 //!
 //! The kernel emits `2 * num_symbols` standard-normal samples per frame in the
 //! CPU `draw_standard_normal` word order (4 words per sample); the host assigns

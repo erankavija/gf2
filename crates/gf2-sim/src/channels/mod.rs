@@ -1,6 +1,5 @@
-//! CPU channel stages: AWGN, Rayleigh flat-fading, Rician flat-fading.
-//!
-//! Each stage maps a [`SymbolBatch`](crate::SymbolBatch) to a
+//! CPU channel stages: AWGN, Rayleigh flat-fading, Rician flat-fading. Each
+//! stage maps a [`SymbolBatch`](crate::SymbolBatch) to a
 //! [`SymbolBatch`](crate::SymbolBatch), drawing from the RNG of its
 //! [`ChannelScratch`](awgn::ChannelScratch).
 

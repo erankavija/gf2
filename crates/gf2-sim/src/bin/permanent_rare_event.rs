@@ -3,13 +3,17 @@
 //! the preregistered design; the run is
 //! [`gf2_sim::permanent_rare_event::runner`].
 //!
+//! # Environment
+//!
 //! `RAYON_NUM_THREADS` declares the worker count. `GF2_RARE_EVENT_BLOCK_BUDGET`
 //! optionally bounds one invocation to that many checkpoint blocks; the next
 //! invocation continues from the published prefix.
 //!
-//! Exit codes: `0` the dataset is complete, `10` durable progress was published
-//! and blocks remain, `2` the argument vector is not one configuration path,
-//! and `1` any refusal.
+//! # Exit status
+//!
+//! `0` the dataset is complete, `10` durable progress was published and blocks
+//! remain, `2` the argument vector is not one configuration path, and `1` any
+//! refusal.
 
 use std::process::ExitCode;
 

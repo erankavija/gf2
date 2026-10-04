@@ -1,8 +1,7 @@
 //! DVB-T2 quickstart: builds the DVB-T2 BICM pipeline through the typestate
 //! preset ([`Pipeline::dvb_t2`]), runs one waterfall SNR point with a small
 //! frame budget through [`Pipeline::run`], and prints the per-point columns.
-//!
-//! Run with: `cargo run -p gf2-sim --example dvb_t2_quickstart --release`
+//! Run with `cargo run -p gf2-sim --example dvb_t2_quickstart --release`.
 
 use std::num::NonZeroUsize;
 

@@ -1,11 +1,10 @@
-//! Deterministic exact-cell scheduling primitives for permanent campaigns.
-//!
-//! Work is ordered by `(q, n, shard_id)` and each shard opens the stream
-//! address recorded by its manifest. A `BatchParallel` cell draws each shard's
-//! matrices serially in bounded chunks and evaluates them on a locally
-//! configured Rayon pool; observer and histogram updates retain input order on
-//! the caller thread. Campaign-purpose evaluation and raw emission are
-//! crate-private and entered only by the coordinator.
+//! Deterministic exact-cell scheduling primitives for permanent campaigns. Work
+//! is ordered by `(q, n, shard_id)` and each shard opens the stream address
+//! recorded by its manifest. A `BatchParallel` cell draws each shard's matrices
+//! serially in bounded chunks and evaluates them on a locally configured Rayon
+//! pool; observer and histogram updates retain input order on the caller
+//! thread. Campaign-purpose evaluation and raw emission are crate-private and
+//! entered only by the coordinator.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;

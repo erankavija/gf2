@@ -1,6 +1,8 @@
 //! Execute the frozen pre-draw validation phase of a permanent-zero-fraction
 //! campaign through `gf2_sim::permanent_campaign::validation`.
 //!
+//! # Usage
+//!
 //! Paths are interpreted relative to the repository root, which is resolved
 //! from the working directory. A resumed run repeats the identical command from
 //! the identical source closure: the journal binds itself to the producer
@@ -14,9 +16,11 @@
 //! committed frozen preregistration, and reports its verdict without opening a
 //! sampler.
 //!
-//! Exit status is `0` when validation passes, `2` when the preserved evidence
-//! records a failed anchor or a changed frozen artifact, and `1` for a usage or
-//! runtime error that produced no verdict.
+//! # Exit status
+//!
+//! `0` when validation passes, `2` when the preserved evidence records a failed
+//! anchor or a changed frozen artifact, and `1` for a usage or runtime error
+//! that produced no verdict.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;

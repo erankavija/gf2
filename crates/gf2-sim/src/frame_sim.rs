@@ -1,5 +1,4 @@
 //! Deterministic single-frame DVB-T2 BICM-AWGN simulation kernel.
-//!
 //! [`DvbT2BicmFrameSim::simulate_frame`] draws the transmitted BBFRAME and the
 //! AWGN noise from the supplied [`WorkerCtx`]'s RNG, which the dispatcher
 //! ([`run_snr_point`](crate::parallel::run_snr_point)) has reseeked to the

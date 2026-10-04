@@ -2,9 +2,8 @@
 //! through the typestate preset ([`Pipeline::nr_5g`]) and drives one frame
 //! through [`TopologyExecutor::run`], asserting a clean round-trip at 6 dB
 //! QPSK. Z = 384 belongs to lifting set `i_LS = 1` (`@/citation/ThreeGpp2017`
-//! Table 5.3.2-1: 384 = 3 * 2^7).
-//!
-//! Run with: `cargo run -p gf2-sim --example nr_5g_quickstart --release`
+//! Table 5.3.2-1: 384 = 3 * 2^7). Run with
+//! `cargo run -p gf2-sim --example nr_5g_quickstart --release`.
 
 use std::num::NonZeroUsize;
 

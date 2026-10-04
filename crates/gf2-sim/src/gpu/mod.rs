@@ -1,11 +1,8 @@
-//! HIP/ROCm host-side GPU dispatch (`feature = "hip"`).
-//!
-//! The `unsafe` HIP FFI lives in the `gf2-kernels-hip` kernel crate. This
-//! module owns a `HipDispatcher` (a stream pool plus per-stage scratch) and
-//! translates the kernel crate's `HipError` into the pipeline's
-//! [`StageError`] hierarchy.
-//!
-//! [`StageError`]: crate::error::StageError
+//! HIP/ROCm host-side GPU dispatch (`feature = "hip"`). The `unsafe` HIP FFI
+//! lives in the `gf2-kernels-hip` kernel crate. This module owns a
+//! `HipDispatcher` (a stream pool plus per-stage scratch) and translates the
+//! kernel crate's `HipError` into the pipeline's
+//! [`StageError`](crate::error::StageError) hierarchy.
 
 pub mod awgn;
 pub mod demap;

@@ -1,8 +1,7 @@
-//! Shared campaign-dataset fixtures for this module's test suites.
-//!
-//! One conforming dataset builder serves both the schema conformance suite and
-//! the provenance and integrity suite, so the published shape is described in
-//! one place. The generated [`INTEGRITY_FILE`] covers the dataset exactly as
+//! Shared campaign-dataset fixtures for this module's test suites. One
+//! conforming dataset builder serves both the schema conformance suite and the
+//! provenance and integrity suite, so the published shape is described in one
+//! place. The generated [`INTEGRITY_FILE`] covers the dataset exactly as
 //! written here; a test that mutates a raw file afterwards is exercising
 //! [`conform_dataset`](super::schema::conform_dataset), which checks document
 //! shape and cross-document counts and never consults the integrity file.

@@ -1,6 +1,5 @@
-//! Persisted outside-coordinator state for the frozen permanent campaign.
-//!
-//! The coordinator owns schedule admission, manifest-derived attempt history,
+//! Persisted outside-coordinator state for the frozen permanent campaign. The
+//! coordinator owns schedule admission, manifest-derived attempt history,
 //! terminal cell state, campaign halts, and field interpretation sidecars. The
 //! exact-cell emitter remains a subordinate arm and cannot finalize a field.
 

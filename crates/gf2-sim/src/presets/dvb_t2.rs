@@ -1,13 +1,10 @@
 //! DVB-T2 BICM preset: a typestate fluent builder over the graph API.
-//!
 //! [`Pipeline::dvb_t2`](crate::Pipeline::dvb_t2) returns a
 //! `Builder<NeedsModcod>`. The required setters are called in order,
 //! [`modcod`](Builder::modcod) → [`decoder`](Builder::decoder) →
 //! [`demap`](Builder::demap) → [`channel`](Builder::channel); each exists only
 //! on its predecessor state. A [`Builder<Ready>`] exposes the optional setters
-//! and [`build`](Builder::build), which takes the stage order from
-//! [`dvb_t2_bicm_stages`], inserts the [`Awgn`] channel between the forward and
-//! inverse halves, and calls [`Chain::build`].
+//! and [`build`](Builder::build).
 
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;

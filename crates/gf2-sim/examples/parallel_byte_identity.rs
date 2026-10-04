@@ -1,9 +1,8 @@
 //! Runs one DVB-T2 SNR point on 1 and on 24 workers at a fixed seed and asserts
 //! that `fer` / `frames` / `errors` / `mean_iters` match bit-for-bit. Each
 //! frame's RNG is keyed on the global frame index, so the per-frame outcome
-//! does not depend on which worker ran it.
-//!
-//! Run with: `cargo run -p gf2-sim --example parallel_byte_identity --release`
+//! does not depend on which worker ran it. Run with
+//! `cargo run -p gf2-sim --example parallel_byte_identity --release`.
 
 use std::num::NonZeroUsize;
 
