@@ -524,6 +524,13 @@
       "format": "markdown",
       "label": "Shared result-table generator; Source rows carry acceptance finding counts",
       "path": "dev/scripts/campaign_tables.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "tool",
+      "format": "markdown",
+      "label": "Runtime repository lookups for the axpy tooling",
+      "path": "dev/active/ad2a6a58/survey/locate.py"
     }
   ],
   "first_ready_at": "2026-09-16T12:11:10.819218802Z",
@@ -546,5 +553,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-10-04T23:30:37.928207496Z"
+  "updated_at": "2026-10-04T23:33:53.902035506Z"
 }
