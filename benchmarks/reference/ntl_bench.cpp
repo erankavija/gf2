@@ -34,7 +34,7 @@
 // both libraries store an extension element as a polynomial of degree
 // < 32 with coefficient `c_i` at bit `i`, **no basis-change matrix is
 // required** — gf2-core element bytes load directly into NTL via
-// `GF2XFromBytes`. See `dev/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md`
+// `GF2XFromBytes`. See `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md`
 // for the criterion #3 evidence.
 //
 // Determinism: NTL `zz_p` arithmetic is deterministic; the only
@@ -62,7 +62,7 @@
 //         `crates/gf2-core/tests/gf2pow32_matmul.rs` is retained as a
 //         separate Rust-internal gf2-core ↔ scalar witness, but is no
 //         longer load-bearing for the cross-language smoke contract.
-//         See dev/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md
+//         See dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md
 //         § "Smoke transcript" and § "Implementation note: smoke
 //         architecture (R2 rewrite)" for the rationale.
 // --large enables n=256, 1024 cells. Off by default because at n=1024
@@ -408,7 +408,7 @@ static void bench_mul_gf2pow32(long n, uint64_t seed,
 
 // Driver for the GF(2^32) lane: emits one `matmul,GF(2^32)` row per
 // size in `dense_sizes`. The lane covers matmul only — see
-// `dev/plans/gf2m_reference_lane_selection.md` for the Wave-3 scope
+// `dev/archive/97bf0879-gf2-core-sota-performance/plans/gf2m_reference_lane_selection.md` for the Wave-3 scope
 // decision (b13799ac promotes matmul; non-matmul GF(2^m) cells were
 // excluded under `no-independent-oracle`).
 static void run_gf2pow32(uint64_t master_seed,

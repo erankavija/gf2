@@ -1,7 +1,7 @@
 // benchmarks/reference/sparse_smoke.cpp
 //
 // Cross-equality oracle for the sparse cells promoted by
-// `dev/plans/sparse_benchmark_corpus.md` § 4. Implements protocol § 6
+// `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md` § 4. Implements protocol § 6
 // *Comparable semantics* at `n = 16` for every claimed cross-library
 // or internal-consistency cell. Coverage matrix (post jit:96fde7c7
 // R1 expansion):
@@ -657,7 +657,7 @@ static int oracle_spmv(const Field& F, const char* field_label, uint64_t seed,
 //
 // Together with `oracle_spmv` this gives the smoke chain two independent
 // library-side witnesses (fflas + LinBox) for every GF(*) `spmv` cell —
-// closing the gap recorded in `dev/plans/sparse_benchmark_corpus.md:162`
+// closing the gap recorded in `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:162`
 // for GF(2) and providing redundant coverage for the GF(p) cells.
 template <typename Field>
 static int linbox_oracle_spmv(const Field& F,
@@ -825,7 +825,7 @@ static int oracle_sparse_dense(const Field& F, const char* field_label, uint64_t
 // `linbox_oracle_spmv` but for the `sparse_dense` cell: builds a
 // `LinBox::SparseMatrix<Field, SparseMatrixFormat::TPL>` from the same
 // triples the fflas oracle uses, calls `applyLeft(C, B)` (the canonical
-// sparse×dense kernel per `dev/plans/sparse_benchmark_corpus.md:168-169`
+// sparse×dense kernel per `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:168-169`
 // — `applyLeft × Modular<int8_t>` for GF(2), `applyLeft × Modular<int64_t>`
 // for GF(p), both routing through the same TPL saxpyin engine), and
 // asserts byte-equality between the LinBox output and the gf2-core
@@ -1461,7 +1461,7 @@ int main(int argc, char** argv) {
 
     // LinBox-side spmv oracle (jit:0f708b36). Independent witness alongside
     // the fflas oracles above. GF(2) is the explicit gap-closing target
-    // from `dev/plans/sparse_benchmark_corpus.md:162`; the GF(p) cells get
+    // from `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:162`; the GF(p) cells get
     // redundant coverage for free since LinBox's `SparseMatrix::apply` is
     // a separate code path from fflas-ffpack's `fspmv`. Seeds match the
     // fflas oracle calls so both witnesses see the same triples + RHS.
