@@ -261,7 +261,8 @@ url = "https://gap-packages.github.io/guava/"
 
 [[references]]
 key = "DvbVerification2010"
-citation = "DVB-T2 Verification and Validation Group — DVB-T2 modulator reference streams, configuration VV001-CR35, generated on the Common Simulation Platform (2010); distributed as DVB-T2 conformance material, copyright Digital Video Broadcasting Project. Test points TP04 (BCH input) and TP05 (BCH output) are the standards vectors the BCH conformance evidence consumes."
+citation = "DVB-T2 Verification and Validation Group — DVB-T2 reference streams: the modulator test-point streams of the V&V test cases, among them VV001-CR35, VV009-4KFFT, VV014-64QAM34, VV020-FEF and VV037-DTG167, generated on the Common Simulation Platform and described in The DVB-T2 Reference Streams, TM-T2_0587 (version 1.0, 23 September 2010; version 1.2, 21 January 2021); distributed by the DVB Project. Test points TP04 (BCH input) and TP05 (BCH output) of VV001-CR35 are the standards vectors the BCH conformance evidence consumes."
+url = "https://dvb.org/specifications/verification-validation/dvb-t2-reference-streams/"
 
 [[references]]
 key = "IsaL2026"
@@ -686,3 +687,8 @@ url = "https://json-schema.org/draft/2020-12/json-schema-core"
 key = "MacKay2006"
 citation = "MacKay — alist format. Web page giving the alist file layout for sparse parity-check matrices through the `write_alist` routine and an example; HTTP Last-Modified 2006-03-29."
 url = "https://www.inference.org.uk/mackay/codes/alist.html"
+
+[[references]]
+key = "Coreutils2026"
+citation = "Free Software Foundation — GNU Coreutils manual, for version 9.12, released 2026-09-14. Section \"cksum output modes\" gives the untagged line of the checksum utilities: the checksum, a space, a flag for binary (`*`) or text (space) input mode, and the file name."
+url = "https://www.gnu.org/software/coreutils/manual/html_node/cksum-output-modes.html"
