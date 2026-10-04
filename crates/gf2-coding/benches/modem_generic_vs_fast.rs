@@ -1,57 +1,6 @@
-//! Focused generic-vs-fast comparison benchmarks for the modem
-//! mapper and soft demapper hot paths (JIT issue `1663515c`).
-//!
-//! # Purpose
-//!
-//! This bench exists to make the **reference / Gray-QAM fast-path
-//! ratio** the headline result. The broader throughput matrix lives in
-//! `modem_cpu.rs`; the scalar-vs-AVX2 dispatch crossover lives in
-//! `cpu_dispatch_probe.rs`. This file registers matched pairs of
-//! `reference/...` and `fast/...` bench items at identical input sizes
-//! so downstream consumers (criterion HTML, release notes, tuning
-//! sessions) can read off the multiplicative speed-up of the fast path
-//! with a single glance.
-//!
-//! # How to read the output
-//!
-//! Each criterion group contains, for every `(order, batch)` pair, two
-//! sibling bench items with a `reference` prefix and a `fast` prefix:
-//!
-//! ```text
-//! modem/mapper_generic_vs_fast/reference/order16/batch1024
-//! modem/mapper_generic_vs_fast/fast/order16/batch1024
-//! ```
-//!
-//! Both items report throughput as `Throughput::Elements(batch * m)`
-//! (one "element" = one coded bit), matching the convention in
-//! `modem_cpu.rs`. Divide the reference timing by the fast timing to
-//! obtain the per-configuration speed-up factor; this is the
-//! performance baseline future SIMD and accelerator tuning work is
-//! measured against.
-//!
-//! # Sweep
-//!
-//! Orders `{4, 16, 64, 256}` cover QPSK, 16-QAM, 64-QAM, and 256-QAM —
-//! the full family of Gray-square QAM constellations the fast path
-//! supports. Batch sizes `{1024, 16384}` are chosen as:
-//!
-//! * `1024` — large enough to amortize per-call setup so the inner
-//!   loop dominates, still small enough to stress cache behaviour
-//!   rather than main-memory bandwidth.
-//! * `16384` — large enough that SIMD lanes and loop-unrolled inner
-//!   kernels reach steady-state throughput, exposing the asymptotic
-//!   speed-up a vectorized backend can deliver.
-//!
-//! Two batch sizes per order (rather than the three in `modem_cpu.rs`)
-//! keeps the paired comparison legible and the full bench wall-clock
-//! well inside the project's 60 s test-suite budget.
-//!
-//! # Complements
-//!
-//! * `modem_cpu.rs` — broader `(order, batch)` throughput matrix,
-//!   including the shared-API factory paths.
-//! * `cpu_dispatch_probe.rs` — scalar-vs-AVX2 crossover probe for the
-//!   CPU dispatch layer.
+//! Matched `reference/...` and `fast/...` benchmark pairs for the modem mapper
+//! and soft demapper at identical `(order, batch)` inputs. One throughput
+//! element is one coded bit.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_coding::llr::Llr;
