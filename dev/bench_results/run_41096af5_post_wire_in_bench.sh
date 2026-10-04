@@ -184,7 +184,7 @@ with open(agg_csv, "w", newline="") as fh:
 print(f"WROTE {agg_csv}")
 
 # Console summary with fflas reference numbers for non-regression check.
-# fflas reference (from dev/bench_results/2026-04-26-reference.csv):
+# fflas reference (from dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-reference.csv):
 #   GF(251): 128.48 Gop/s at n=256; 138.32 at n=1024
 # GF(7)/GF(31)/GF(127) baseline (from a70b1c70 session, same-session defaults):
 #   GF(7):   n=256 ~44.65, n=1024 ~75.42

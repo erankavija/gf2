@@ -2,7 +2,7 @@
 //
 // Sparse `spmv` and `sparse×dense` reference harness for fflas-ffpack 2.5.0
 // over GF(p), companion to the dense `fflas_bench.cpp`. Targets the cells
-// promoted in `dev/plans/sparse_benchmark_corpus.md` § 4 — the canonical
+// promoted in `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md` § 4 — the canonical
 // sparse-matrix-vector and sparse-matrix-block-vector products under
 // `Givaro::Modular<int64_t>` / `Modular<float>`.
 //
