@@ -52,7 +52,28 @@
     "doc-review",
     "docs-mechanical"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T12:37:25.676603405Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-04T12:40:56.979118855Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T12:42:44.772986644Z",
+      "updated_by": "auto:executor"
+    },
+    "docs-mechanical": {
+      "status": "passed",
+      "updated_at": "2026-10-04T12:38:37.721927876Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "545b113f-1ce5-439b-b91e-4a8fefbc4d79",
   "labels": [
     "epic:documentation-overhaul",
@@ -63,5 +84,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reduce multi-section module docs to the comment contract",
-  "updated_at": "2026-10-04T12:27:23.724512981Z"
+  "updated_at": "2026-10-04T12:42:44.772986644Z"
 }

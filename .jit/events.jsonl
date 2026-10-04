@@ -17861,3 +17861,11 @@
 {"fields":["documents"],"id":"2ec687e5-27cc-457f-827b-1a9dc3a65999","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:27:23.756750512Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"b45661f0-7916-4885-aa2a-1bce8ad2ae0a","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:27:23.788901792Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a6021653-b577-4d8f-9017-d977cf03fd25","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:27:23.822464271Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"cargo-ci","id":"bdbcd19b-da1d-457a-a4cf-806ab8a4b510","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","timestamp":"2026-10-04T12:37:25.676603405Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"9c3643c6-b422-476a-925d-92a63d01986b","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:38:33.998291256Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"a6207c14-faa4-4b6c-bad4-bce80a9039ba","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","timestamp":"2026-10-04T12:38:37.721927876Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"docs-mechanical","id":"27e10a6e-d7df-4595-b81c-04509162fe05","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:38:41.426531349Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"d05ce095-2922-4ed2-b598-bac68ee5dedd","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","timestamp":"2026-10-04T12:40:56.979118855Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"65707afa-3d6e-4010-965e-a7ea15df1d29","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:41:31.709782670Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"62bbe082-cd46-4ba2-bc80-249a1a1b51f1","issue_id":"3fd3db5e-60ea-41c1-b95a-144d9ae02e4a","timestamp":"2026-10-04T12:42:35.623718364Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"09ebae0d-2c97-45d8-8cea-122a93769e41","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","timestamp":"2026-10-04T12:42:44.772986644Z","type":"gate_passed","updated_by":"auto:executor"}
