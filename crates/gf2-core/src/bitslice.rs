@@ -9,20 +9,23 @@ pub struct BitSlice<'a> {
 }
 
 impl<'a> BitSlice<'a> {
-    /// Returns the number of bits in this slice.
+    /// Length in bits.
     #[inline]
     pub fn len(&self) -> usize {
         self.len_bits
     }
 
-    /// Returns true if the slice is empty.
+    /// Whether the length is zero.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len_bits == 0
     }
 
-    /// Returns the bit at relative index `i` within the slice.
-    /// Panics if out of bounds.
+    /// Bit at index `i` relative to the slice start.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.len()`.
     pub fn get(&self, i: usize) -> bool {
         assert!(i < self.len_bits, "BitSlice index out of bounds");
         let abs = self.offset + i;
@@ -40,19 +43,23 @@ pub struct BitSliceMut<'a> {
 }
 
 impl<'a> BitSliceMut<'a> {
-    /// Returns the number of bits in this slice.
+    /// Length in bits.
     #[inline]
     pub fn len(&self) -> usize {
         self.len_bits
     }
 
-    /// Returns true if the slice is empty.
+    /// Whether the length is zero.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len_bits == 0
     }
 
-    /// Reads the bit at relative index `i` within the slice.
+    /// Bit at index `i` relative to the slice start.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.len()`.
     pub fn get(&self, i: usize) -> bool {
         assert!(i < self.len_bits, "BitSlice index out of bounds");
         let abs = self.offset + i;
@@ -61,7 +68,11 @@ impl<'a> BitSliceMut<'a> {
         ((self.words[w] >> b) & 1) != 0
     }
 
-    /// Sets the bit at relative index `i`.
+    /// Writes `bit` at index `i` relative to the slice start.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.len()`.
     pub fn set(&mut self, i: usize, bit: bool) {
         assert!(i < self.len_bits, "BitSlice index out of bounds");
         let abs = self.offset + i;

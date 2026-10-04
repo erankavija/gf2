@@ -171,8 +171,7 @@ fn ensure_probe_source(target_dir: &Path, mandatory: bool) {
     // An empty HIP device kernel compiles to a valid `.co` on every gfx target
     // without host-side dependencies.
     let body = "// Auto-generated build probe for gf2-kernels-hip multi-arch dispatch.\n\
-                // Real kernels (f6004add / a930be7f / d3f1616a) land their *.cpp here\n\
-                // next wave; this no-op keeps the per-arch .co compile path green.\n\
+                // No-op device kernel that gives an arch directory without *.cpp one .co blob.\n\
                 #include <hip/hip_runtime.h>\n\
                 __global__ void gf2_hip_probe(int* out) { if (out) *out = 0; }\n";
     if let Err(e) = fs::write(&probe, body) {

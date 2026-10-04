@@ -343,12 +343,7 @@ mod tests {
 
     #[test]
     fn test_add_truth_table() {
-        let expected: [[u64; 3]; 3] = [
-            // Row a, column b: a + b.
-            [0, 1, 2],
-            [1, 2, 0],
-            [2, 0, 1],
-        ];
+        let expected: [[u64; 3]; 3] = [[0, 1, 2], [1, 2, 0], [2, 0, 1]];
         for a_v in 0u64..3 {
             for b_v in 0u64..3 {
                 let a = Bipedal3::splat(Fp::<3>::new(a_v));
@@ -366,12 +361,7 @@ mod tests {
 
     #[test]
     fn test_sub_truth_table() {
-        let expected: [[u64; 3]; 3] = [
-            // Row a, column b: a - b.
-            [0, 2, 1],
-            [1, 0, 2],
-            [2, 1, 0],
-        ];
+        let expected: [[u64; 3]; 3] = [[0, 2, 1], [1, 0, 2], [2, 1, 0]];
         for a_v in 0u64..3 {
             for b_v in 0u64..3 {
                 let a = Bipedal3::splat(Fp::<3>::new(a_v));
@@ -389,12 +379,7 @@ mod tests {
 
     #[test]
     fn test_mul_truth_table() {
-        let expected: [[u64; 3]; 3] = [
-            // Row a, column b: a * b.
-            [0, 0, 0],
-            [0, 1, 2],
-            [0, 2, 1],
-        ];
+        let expected: [[u64; 3]; 3] = [[0, 0, 0], [0, 1, 2], [0, 2, 1]];
         for a_v in 0u64..3 {
             for b_v in 0u64..3 {
                 let a = Bipedal3::splat(Fp::<3>::new(a_v));

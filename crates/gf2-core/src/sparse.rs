@@ -380,6 +380,10 @@ pub fn block_csr_from_csr(csr: &SpBitMatrix, block_rows: usize) -> SpBitMatrixBl
 }
 
 /// Deterministic LDPC-like sparse fixture shared by sparse benches and examples.
+///
+/// # Panics
+///
+/// Panics if `cols == 0` while `rows` and `row_weight` are nonzero.
 #[doc(hidden)]
 pub fn deterministic_ldpc_like_fixture(rows: usize, cols: usize, row_weight: usize) -> SpBitMatrix {
     let mut entries = Vec::with_capacity(rows * row_weight);
@@ -408,25 +412,25 @@ pub fn deterministic_sparse_bitvec_fixture(len: usize) -> BitVec {
 }
 
 impl SpBitMatrixBlockCsr {
-    /// Returns number of rows.
+    /// Number of rows.
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
-    /// Returns number of cols.
+    /// Number of columns.
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
-    /// Returns number of nonzeros.
+    /// Number of nonzeros.
     #[inline]
     pub fn nnz(&self) -> usize {
         self.indices.len()
     }
 
-    /// Returns the row-block height used by this layout.
+    /// Row-block height of this layout.
     #[inline]
     pub fn block_rows(&self) -> usize {
         self.block_rows
@@ -874,6 +878,10 @@ impl SpBitMatrix {
 
     /// Returns an iterator over row indices that have a 1 in the given column.
     /// Builds a transient transpose: O(nnz + rows + cols) per call.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `col >= self.cols()`.
     pub fn col_iter(&self, col: usize) -> impl IntoIterator<Item = usize> {
         assert!(
             col < self.cols,
@@ -886,19 +894,19 @@ impl SpBitMatrix {
         v
     }
 
-    /// Returns number of rows.
+    /// Number of rows.
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
-    /// Returns number of cols.
+    /// Number of columns.
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
-    /// Returns number of nonzeros (after XOR-dedup).
+    /// Number of nonzeros.
     #[inline]
     pub fn nnz(&self) -> usize {
         self.indices.len()
@@ -1142,6 +1150,10 @@ impl SpBitMatrixDual {
     ///
     /// Duplicates cancel (even count → 0, odd count → 1).
     /// For deduplication semantics, use [`from_coo_deduplicated`](Self::from_coo_deduplicated).
+    ///
+    /// # Panics
+    ///
+    /// Panics if an entry lies outside `rows × cols`.
     pub fn from_coo(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
         let csr = SpBitMatrix::from_coo(rows, cols, entries);
         let csc = csr.transpose();
@@ -1151,6 +1163,10 @@ impl SpBitMatrixDual {
     /// Creates a dual representation from COO coordinates with deduplication.
     ///
     /// Duplicate entries are ignored.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an entry lies outside `rows × cols`.
     pub fn from_coo_deduplicated(rows: usize, cols: usize, entries: &[(usize, usize)]) -> Self {
         let csr = SpBitMatrix::from_coo_deduplicated(rows, cols, entries);
         let csc = csr.transpose();
@@ -1182,25 +1198,29 @@ impl SpBitMatrixDual {
         self.csr.to_dense()
     }
 
-    /// Returns number of rows.
+    /// Number of rows.
     #[inline]
     pub fn rows(&self) -> usize {
         self.csr.rows()
     }
 
-    /// Returns number of columns.
+    /// Number of columns.
     #[inline]
     pub fn cols(&self) -> usize {
         self.csr.cols()
     }
 
-    /// Returns number of nonzeros.
+    /// Number of nonzeros.
     #[inline]
     pub fn nnz(&self) -> usize {
         self.csr.nnz()
     }
 
     /// Matrix-vector product y = A · x over GF(2).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x.len() != self.cols()`.
     #[inline]
     pub fn matvec(&self, x: &BitVec) -> BitVec {
         self.csr.matvec(x)
@@ -1373,8 +1393,8 @@ impl SpBitMatrix {
     ) -> Result<(), Box<dyn std::error::Error>> {
         use image::{ImageBuffer, Rgb};
 
-        const ZERO_COLOR: [u8; 3] = [0, 0, 0]; // black
-        const ONE_COLOR: [u8; 3] = [255, 255, 255]; // white
+        const ZERO_COLOR: [u8; 3] = [0, 0, 0];
+        const ONE_COLOR: [u8; 3] = [255, 255, 255];
 
         let mut img = ImageBuffer::new(self.cols as u32, self.rows as u32);
 
@@ -1544,16 +1564,11 @@ mod tests {
         }
     }
 
-    /// Reference: dense product on `BitMatrix`, converted back to CSR.
     fn dense_matmul_reference(a: &SpBitMatrix, b: &SpBitMatrix) -> SpBitMatrix {
         let prod = a.to_dense() * b.to_dense();
         SpBitMatrix::from_dense(&prod)
     }
 
-    /// Verifies that the canonical CSR invariants hold on a freshly multiplied
-    /// matrix: indptr is monotone, indices within each row are strictly
-    /// ascending, every column index lies in range, and length agrees with
-    /// the final indptr value.
     fn assert_csr_canonical(c: &SpBitMatrix) {
         assert_eq!(c.indptr.len(), c.rows + 1, "indptr length must be rows + 1");
         assert_eq!(*c.indptr.first().unwrap(), 0, "first indptr must be 0");
@@ -1636,7 +1651,6 @@ mod tests {
 
     #[test]
     fn matmul_xor_cancellation_at_output() {
-        // A = [[1,1,0]] (1×3), so (A · A^T)[0,0] = 1·1 + 1·1 + 0·0 = 0.
         let a = SpBitMatrix::from_coo(1, 3, &[(0, 0), (0, 1)]);
         let at = a.transpose();
         let c = a.matmul(&at);
@@ -1762,15 +1776,11 @@ mod tests {
         }
     }
 
-    /// Reference oracle: `a.matmat(b)` must equal `a.to_dense() * b`
-    /// (dense×dense over GF(2)) bitwise.
     fn matmat_dense_reference(a: &SpBitMatrix, b: &BitMatrix) -> BitMatrix {
         a.to_dense() * b.clone()
     }
 
-    /// Build a deterministic sparse `m × n` matrix at approximate density
-    /// `density` from an LCG stream with the multiplier of
-    /// `@/citation/Knuth1997`.
+    /// LCG with the multiplier of `@/citation/Knuth1997`.
     fn matmat_sparse_from_seed(m: usize, n: usize, density: f64, seed: u64) -> SpBitMatrix {
         let mut entries: Vec<(usize, usize)> = Vec::new();
         let mut st = seed;
@@ -1793,8 +1803,6 @@ mod tests {
         SpBitMatrix::from_coo(m, n, &entries)
     }
 
-    /// Build a deterministic dense `BitMatrix` of shape `m × n` from the same
-    /// LCG stream as [`matmat_sparse_from_seed`].
     fn matmat_dense_from_seed(m: usize, n: usize, seed: u64) -> BitMatrix {
         let mut out = BitMatrix::zeros(m, n);
         let mut st = seed;
@@ -1896,8 +1904,6 @@ mod tests {
 
     #[test]
     fn test_matmat_xor_cancellation() {
-        // A = [[1, 1, 0]]; B = [[1, 0], [1, 0], [0, 1]].
-        // A·B = [[1+1, 0+0]] = [[0, 0]] (XOR).
         let a = SpBitMatrix::from_coo(1, 3, &[(0, 0), (0, 1)]);
         let mut b = BitMatrix::zeros(3, 2);
         b.set(0, 0, true);
@@ -1921,8 +1927,6 @@ mod tests {
         }
     }
 
-    /// Reference: dense GF(2) RREF via `crate::alg::rref::rref`, rebuilt as
-    /// CSR.
     fn dense_rref_reference(m: &SpBitMatrix) -> SpBitMatrix {
         let r = crate::alg::rref::rref(&m.to_dense(), false);
         SpBitMatrix::from_dense(&r.reduced)
@@ -1978,8 +1982,6 @@ mod tests {
 
     #[test]
     fn test_rref_singular_matrix_drops_dependent_row() {
-        // [[1,0,1],[0,1,1],[1,1,0]] — third row equals row1+row2 in GF(2),
-        // so RREF should have rank 2 with last row zero.
         let entries = [(0, 0), (0, 2), (1, 1), (1, 2), (2, 0), (2, 1)];
         let m = SpBitMatrix::from_coo(3, 3, &entries);
         let out = m.rref();
