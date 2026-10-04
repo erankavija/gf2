@@ -54,6 +54,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/fa4939c3-comment-read.md"
     }
   ],
+  "done_at": "2026-10-04T19:25:40.503793098Z",
   "first_ready_at": "2026-10-04T13:13:56.676264757Z",
   "gates_required": [
     "cargo-ci",
@@ -66,7 +67,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T14:11:38.137733418Z",
+      "updated_at": "2026-10-04T19:21:56.498496600Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -81,17 +82,17 @@
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T19:20:34.002398252Z",
+      "updated_at": "2026-10-04T19:22:15.379951726Z",
       "updated_by": "auto:executor"
     },
     "holistic-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T19:18:38.392438035Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T19:25:32.567548093Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
       "status": "passed",
-      "updated_at": "2026-10-04T19:20:30.048862045Z",
+      "updated_at": "2026-10-04T19:22:11.324442663Z",
       "updated_by": "auto:executor"
     }
   },
@@ -104,7 +105,7 @@
     "satisfies:fa787f85/REQ-17"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Workspace source-comment tersification sweep",
-  "updated_at": "2026-10-04T19:20:34.002398252Z"
+  "updated_at": "2026-10-04T19:25:40.503793098Z"
 }
