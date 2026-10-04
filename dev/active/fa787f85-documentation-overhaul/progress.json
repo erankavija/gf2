@@ -1592,7 +1592,7 @@
     "keep both as they are and wait"
    ],
    "recommendation": "first option: one owner for the renderer while its issue is open",
-   "resolution": null
+   "resolution": "Owner: the overhaul fixes the paths and performs the move while fd9d5416 is open; REQ-01 of 3fd3db5e and 7dbcde0c amended, DEC-01 on each (2026-10-04)."
   },
   {
    "issue": "bfb37a21",
@@ -1603,7 +1603,12 @@
     "accept that it is recorded nowhere"
    ],
    "recommendation": "first option",
-   "resolution": null
+   "resolution": "Owner: on issue 1a8f6acd; Tracked exceptions section appended (2026-10-04)."
+  },
+  {
+   "issue": "545b113f",
+   "question": "Dispatch shape for the module-doc unit.",
+   "resolution": "Owner: split by crate in parallel worktrees, reviewed as one net-negative diff (2026-10-04)."
   }
  ],
  "rework_counts": {
@@ -1743,7 +1748,7 @@
   {
    "issue": "bfb37a21",
    "finding": "bch/dvb_t2/mod.rs lost its library-first-generality tracked-exception citation (@/issue/1a8f6acd) because reviewers class an issue reference in Rustdoc as planned work.",
-   "disposition": "open: owner did not authorize recording the exception on 1a8f6acd (2026-10-04); check at the ffc35b8c story gate"
+   "disposition": "resolved: owner ruled 2026-10-04 to record the exception on 1a8f6acd (Tracked exceptions section)"
   },
   {
    "issue": "ee2b0c0c",
