@@ -21,7 +21,11 @@ import subprocess
 import sys
 
 TOOLCHAIN = "1.95"
-PROBE = pathlib.Path("dev/active/f63a2464/survey/intrinsics-probe")
+ROOT = pathlib.Path(subprocess.run(
+    ["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"],
+    check=True, capture_output=True, text=True,
+).stdout.strip())
+PROBE = pathlib.Path(__file__).resolve().parent.relative_to(ROOT) / "intrinsics-probe"
 TARGET = pathlib.Path("target/ldpc-intrinsics-probe")
 
 # Instructions that carry no candidate-specific meaning; the record keeps the

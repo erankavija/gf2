@@ -13,16 +13,23 @@ frozen text.
 
 Usage (from the worktree root):
   make-addenda.py --frozen-utc YYYY-MM-DDTHH:MM:SSZ --bundles-dir DIR
+      --results-dir DIR
+
+The results directory is the root-relative directory of the family ledgers.
 """
 
 import argparse
 import json
 import pathlib
+import subprocess
 import sys
 
-SURVEY = pathlib.Path("dev/active/f63a2464/survey")
+SURVEY = pathlib.Path(__file__).resolve().parent
 CATALOGUE = json.loads((SURVEY / "arms.json").read_text(encoding="utf-8"))
-RESULTS = pathlib.Path("dev/bench_results/f63a2464")
+ROOT = pathlib.Path(subprocess.run(
+    ["git", "-C", str(SURVEY), "rev-parse", "--show-toplevel"],
+    check=True, capture_output=True, text=True,
+).stdout.strip())
 
 ISSUE = "f63a2464"
 ITERATION_CAP = 50
@@ -166,6 +173,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--frozen-utc", required=True)
     parser.add_argument("--bundles-dir", default="target/ldpc-inputs")
+    parser.add_argument("--results-dir", required=True, type=pathlib.Path)
     args = parser.parse_args()
 
     bundle = pathlib.Path(args.bundles_dir) / CATALOGUE["codes"]["nr-bg1-z384"]["bundle"]
@@ -215,7 +223,7 @@ def main():
                 "alpha": 0.05,
                 "prior_confirmatory_trials": 0,
                 "prior_trials": [],
-                "ledger_path": str(RESULTS / declared["ledger"]),
+                "ledger_path": str(args.results_dir / declared["ledger"]),
             },
             "search_budget": {
                 "max_pilot_trials_per_cell": 2,
@@ -227,7 +235,7 @@ def main():
                 for spec in declared["cells"]
             ],
         }
-        out = pathlib.Path(f"dev/active/f63a2464/addendum-{family[:-3]}-pilot.json")
+        out = SURVEY.parent.relative_to(ROOT) / f"addendum-{family[:-3]}-pilot.json"
         out.write_text(json.dumps(addendum, indent=2) + "\n", encoding="utf-8")
         print(out.as_posix())
 

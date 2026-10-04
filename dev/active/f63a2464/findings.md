@@ -448,7 +448,8 @@ outside the mutex:
 [record-intrinsic-feasibility.py](survey/record-intrinsic-feasibility.py) for the
 MSRV feasibility record and its assembly,
 [run-quality.py](survey/run-quality.py) for the quality campaign and
-[summarize-quality.py](survey/summarize-quality.py) for its tables, which
+[summarize-quality.py](survey/summarize-quality.py), given the quality
+directory and the frozen `c077a88b` quality directory, for its tables, which
 reproduce byte for byte on a re-run. Then
 [run-smoke.sh](../../bench_results/f63a2464/run-smoke.sh), given the prepared
 quality directory, proves the wire contract of every arm of both stages through
