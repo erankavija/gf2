@@ -1,6 +1,5 @@
-//! `permanent_bipedal7` — Gray-code Ryser permanent over `F_7`.
-//!
-//! Compiled only when the `f7` Cargo feature is enabled.
+//! `permanent_bipedal7` — Gray-code Ryser permanent over `F_7`, compiled only
+//! when the `f7` Cargo feature is enabled.
 
 use gf2_core::gfp::Fp;
 

@@ -2,6 +2,8 @@
 //! canonical quiet-host lock, with the shared append-only execution log and
 //! checkpoint/resume primitives.
 //!
+//! # Usage
+//!
 //! `run <stage> <plan.json>` executes unfinished cells inside the lock wrapper
 //! and pauses or completes; `finalize <stage> <out-dir>` assembles the receipt
 //! directory from the stage after the wrapper returns. Every arm is a fresh

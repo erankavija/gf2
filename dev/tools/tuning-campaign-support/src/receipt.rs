@@ -1,11 +1,10 @@
-//! Benchmark receipt schema and the independent acceptance evaluation.
-//!
-//! A receipt is the durable evidence of one bounded campaign: pinned
-//! protocol, contract and addendum identities, source and build identities,
-//! runtime host observation, lock evidence, the append-only execution log,
-//! checkpoints, every arm's raw timing windows, and the runner's own claims.
-//! [`evaluate`] recomputes every digest, statistic and decision from those raw
-//! parts and never trusts a claim; its summary is the acceptance record.
+//! Benchmark receipt schema and the independent acceptance evaluation. A
+//! receipt is the durable evidence of one bounded campaign: pinned protocol,
+//! contract and addendum identities, source and build identities, runtime host
+//! observation, lock evidence, the append-only execution log, checkpoints,
+//! every arm's raw timing windows, and the runner's own claims. [`evaluate`]
+//! recomputes every digest, statistic and decision from those raw parts and
+//! never trusts a claim; its summary is the acceptance record.
 
 use crate::abtest::{
     bonferroni_confidence, bootstrap_seed, decide, flagged_windows, median, pair_orders,

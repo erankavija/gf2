@@ -1,8 +1,7 @@
-//! Synthetic arm for protocol smoke runs: XOR-folds a seeded buffer.
-//!
-//! It exists to prove the receipt pipeline end to end and measures nothing
-//! that is claimed as a performance result. It reads the canonical child-v2
-//! request on stdin and writes exactly one result line.
+//! Synthetic arm for protocol smoke runs: XOR-folds a seeded buffer. It exists
+//! to prove the receipt pipeline end to end and measures nothing that is
+//! claimed as a performance result. It reads the canonical child-v2 request on
+//! stdin and writes exactly one result line.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

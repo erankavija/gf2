@@ -1,6 +1,5 @@
 //! The arm-request contract the benchmark runner speaks, the child dispatch it
 //! speaks it over, and the non-timed smoke that drives a saved plan through it.
-//!
 //! One request type serves both positions of a timed pair and the non-timed
 //! validation position, so a harness that smokes its arms and the campaign that
 //! measures them cannot drift apart on the wire.

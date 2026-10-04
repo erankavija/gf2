@@ -1,5 +1,4 @@
 //! Exact probabilities and exhaustive anchors for permanent-zero events.
-//!
 //! [`ExactProbability`] is the permanent module's single arbitrary-precision
 //! count-over-total representation. The exhaustive enumerator supports only
 //! the small campaign-anchor domain; compressed propagation returns the same

@@ -1,8 +1,7 @@
-//! Fixed-width packed `F_3` element encoding ("bipedal3").
-//!
-//! [`Bipedal3`] packs 64 independent `F_3` lanes into two `u64` words
-//! (`mag` and `sgn`). Arithmetic follows the bitwise formulas of
-//! `@/citation/Scheinerman2024` (Theorem 2.1).
+//! Fixed-width packed `F_3` element encoding ("bipedal3"): [`Bipedal3`] packs
+//! 64 independent `F_3` lanes into two `u64` words (`mag` and `sgn`).
+//! Arithmetic follows the bitwise formulas of `@/citation/Scheinerman2024`
+//! (Theorem 2.1).
 //!
 //! # Encoding
 //!
