@@ -1,102 +1,168 @@
 # 1. key | regex | files:lines
-AlbrechtBard2026 | \bM4RI\b | crates/gf2-core/benches/rref.rs:125,126,135,136 crates/gf2-core/benches/sparse_spmv.rs:27 crates/gf2-core/examples/bench_csv_emitter.rs:811,813 crates/gf2-core/examples/m4rm_multiply_perfstat.rs:16 crates/gf2-core/src/alg/gauss.rs:229 crates/gf2-core/src/alg/m4rm.rs:102,551,555,1095 crates/gf2-core/src/alg/rref.rs:55,88,103,106 crates/gf2-core/src/matrix.rs:958 crates/gf2-core/src/tuning/mod.rs:311,888
-Cassagne2019 | \b(?:aff3ct|AFF3CT)\b | crates/gf2-sim/src/bin/export_alist.rs:4,7,19,38 crates/gf2-sim/src/bin/ldpc_bler_sweep.rs:5,7,14,19,27,37,49,56,57,358 crates/gf2-sim/src/testutil.rs:9,44
-Ccsds2020 | \[Ccsds2020\] | crates/gf2-coding/tests/channel_capacity.rs:28
-DvbVerification2010 | VV001|ETSI (?:CSP|verification|vector|DVB-T2 (?:verified|test-vector))|real ETSI | crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:536 crates/gf2-coding/src/test_support.rs:9,10,238,283,284 crates/gf2-coding/tests/bch_oracle_agreement.rs:30,1010,1014,1017 crates/gf2-coding/tests/common/mod.rs:6 crates/gf2-coding/tests/dvb_t2_bch_verification.rs:4 crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:1,4,101,103,110 crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:28,385 crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs:1 crates/gf2-coding/tests/test_vectors/config.rs:43 crates/gf2-coding/tests/test_vectors/parser.rs:48,173
-Etsi2015 | EN 302 755|ETSI(?: |-)(?:parameter|pinned|generator)|ETSI EN\b | crates/gf2-coding/examples/dvb_t2_bch_demo.rs:3 crates/gf2-coding/examples/modem_gray_qam_preset.rs:42 crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs:1,4,27 crates/gf2-coding/src/modem/gray_qam_mapper.rs:10 crates/gf2-coding/src/modem/presets.rs:507 crates/gf2-coding/src/test_support.rs:392,429 crates/gf2-coding/tests/bch_oracle_agreement.rs:906,928 crates/gf2-coding/tests/bch_primitive_verification.rs:5 crates/gf2-coding/tests/bch_tests.rs:825,861 crates/gf2-coding/tests/ldpc_validation.rs:212,259 crates/gf2-coding/tests/shortened_fast_path.rs:43 crates/gf2-core/src/primitive_polys.rs:7 crates/gf2-sim/src/bin/export_alist.rs:13 crates/gf2-sim/src/testutil.rs:64
-Fossorier1994 | Fossorier(?: 1994|'s) | crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs:21,24
-Lentmaier2010 | Lentmaier \(2010\)|\[Lentmaier2010\] | crates/gf2-coding/src/gldpc/mod.rs:5,325,385,406 crates/gf2-coding/tests/channel_capacity.rs:26
-MaurerPontil2009 | Maurer[- ](?:and )?Pontil | crates/gf2-stats/src/intervals.rs:200,208
+AlbrechtBard2026 | \bM4RI\b | crates/gf2-core/src/alg/rref.rs:40 crates/gf2-core/src/tuning/mod.rs:311,887
+Cassagne2019 | \b(?:aff3ct|AFF3CT)\b | crates/gf2-sim/src/bin/export_alist.rs:2 crates/gf2-sim/src/bin/ldpc_bler_sweep.rs:1 crates/gf2-sim/src/testutil.rs:8
+Ccsds2020 | \[Ccsds2020\] | -
+DvbVerification2010 | VV001|ETSI (?:CSP|verification|vector|DVB-T2 (?:verified|test-vector))|real ETSI | crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:536 crates/gf2-coding/src/test_support.rs:261,262 crates/gf2-coding/tests/dvb_t2_bch_verification.rs:1 crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:1,3 crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs:1 crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs:1 crates/gf2-coding/tests/test_vectors/config.rs:43 crates/gf2-coding/tests/test_vectors/mod.rs:16 crates/gf2-coding/tests/test_vectors/parser.rs:164
+Etsi2015 | EN 302 755|ETSI(?: |-)(?:parameter|pinned|generator)|ETSI EN\b | crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs:1,4,27
+Fossorier1994 | Fossorier(?: 1994|'s) | -
+Lentmaier2010 | Lentmaier \(2010\)|\[Lentmaier2010\] | -
+MaurerPontil2009 | Maurer[- ](?:and )?Pontil | crates/gf2-stats/src/intervals.rs:163,171
 Mula2018 | \\?\[Mula2018\\?\] | -
-SageMath2026 | \bSageMath\b | crates/gf2-coding/tests/bch_oracle_agreement.rs:4 crates/gf2-core/benches/polynomial.rs:9 crates/gf2-core/benches/sparse.rs:6 crates/gf2-core/src/field/traits.rs:1087,1093 crates/gf2-core/src/primitive_polys.rs:161 crates/gf2-core/tests/common/mod.rs:83,94 crates/gf2-core/tests/gfpn_nested_towers.rs:17,31,253
-Scheinerman2024 | Scheinerman | crates/gf2-algebra/examples/paper_repro_slope.rs:1 crates/gf2-algebra/src/packed/bipedal3.rs:5,108,195,210,234,412,425,933,1107,1131,1155 crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:6 crates/gf2-algebra/src/permanent/reference.rs:1 crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:4,27 crates/gf2-kernels-simd/src/bipedal/framework.rs:41,69
-Scheinerman2024 | \bpaper(?:'s)?\b|Theorem 2\.1|Table 2, Appendix B [path gf2-algebra/|bipedal] [unless Scheinerman] | crates/gf2-algebra/tests/permanent_vectors.rs:135,137,214
-Sionna2026 | \bSionna\b | crates/gf2-coding/tests/nr5g_external_vectors.rs:41
-Steele2014 | \[Steele2014\]|Steele, Lea and Flood | crates/gf2-core/tests/clmul_wide_conformance.rs:28,71 crates/gf2-core/tests/residual_shift_routes.rs:59 crates/gf2-core/tests/transpose_lane_contract.rs:18
-ThreeGpp2020 | 5\.4\.2\.2 | crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:2,10,61,79 crates/gf2-sim/src/error.rs:230 crates/gf2-sim/src/presets/nr_5g.rs:28 crates/gf2-sim/src/stages/nr_5g.rs:5
-ThreeGpp2017 | TS 38\.212|\b3GPP\b|Table 5\.3\.2-[123] [unless 5\.4\.2\.2|TS 38\.214] | crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:1,17,32,42 crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:1,17,32,42 crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:1,5 crates/gf2-coding/src/ldpc/nr_5g/mod.rs:4,19,20,180 crates/gf2-coding/tests/data/nr5g_regression_vectors.rs:2 crates/gf2-coding/tests/nr5g_external_vectors.rs:3,4,29 crates/gf2-coding/tests/nr5g_regression.rs:4 crates/gf2-core/src/primitive_polys.rs:9 crates/gf2-sim/examples/nr_5g_quickstart.rs:11,12 crates/gf2-sim/src/error.rs:221,226,227,229 crates/gf2-sim/src/presets/nr_5g.rs:18,351,364,445,649,650
+SageMath2026 | \bSageMath\b | -
+Scheinerman2024 | Scheinerman | crates/gf2-algebra/examples/paper_repro_slope.rs:1 crates/gf2-algebra/src/packed/bipedal3.rs:5,108,195,210,234,902,1076,1100,1124 crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:6 crates/gf2-algebra/src/permanent/reference.rs:1 crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:4,27 crates/gf2-kernels-simd/src/bipedal/framework.rs:41,69
+Scheinerman2024 | \bpaper(?:'s)?\b|Theorem 2\.1|Table 2, Appendix B [path gf2-algebra/|bipedal] [unless Scheinerman|[Pp]en-and-paper|paper case] | -
+Sionna2026 | \bSionna\b | crates/gf2-coding/tests/nr5g_external_vectors.rs:16
+Steele2014 | \[Steele2014\]|Steele, Lea and Flood | -
+ThreeGpp2020 | 5\.4\.2\.2 | crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:2,10,61,79 crates/gf2-sim/src/error.rs:192 crates/gf2-sim/src/presets/nr_5g.rs:28 crates/gf2-sim/src/stages/nr_5g.rs:5
+ThreeGpp2017 | TS 38\.212|\b3GPP\b|Table 5\.3\.2-[123] [unless 5\.4\.2\.2|TS 38\.214] | crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:1,17,32,42 crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:1,17,32,42 crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:1,5 crates/gf2-coding/src/ldpc/nr_5g/mod.rs:4,19,20,180 crates/gf2-coding/tests/data/nr5g_regression_vectors.rs:2 crates/gf2-sim/examples/nr_5g_quickstart.rs:5 crates/gf2-sim/src/error.rs:190 crates/gf2-sim/src/presets/nr_5g.rs:18,351,364,445,649,650
 ThreeGpp2017 | §5\.4\.2\.1 [path presets/nr_5g\.rs] | -
-Ccsds2017 | NASA/CCSDS K=7 standard | crates/gf2-coding/examples/nasa_rate_half_k3.rs:7
-Nist2001 | \bAES\b [unless IEEE AES standard|AES/crypto] | crates/gf2-core/benches/charpoly.rs:44 crates/gf2-core/benches/field_matrix_gemm.rs:5,32 crates/gf2-core/benches/field_sparse_matrix.rs:6,39 crates/gf2-core/benches/fieldmatrix_charpoly.rs:19,44 crates/gf2-core/benches/fieldmatrix_gemm.rs:17,98 crates/gf2-core/benches/fieldmatrix_ple.rs:23,54 crates/gf2-core/benches/fieldmatrix_solve.rs:19,50 crates/gf2-core/benches/inverse.rs:33 crates/gf2-core/benches/ple.rs:30 crates/gf2-core/benches/sparse_field_matmul.rs:8,36 crates/gf2-core/benches/sparse_rref.rs:4,31 crates/gf2-core/benches/sparse_rref_scorecard.rs:23 crates/gf2-core/benches/sparse_spmv.rs:17,58 crates/gf2-core/benches/strassen_threshold.rs:6,45 crates/gf2-core/benches/triangular.rs:7,43 crates/gf2-core/src/field/charpoly.rs:2755 crates/gf2-core/src/field/expr.rs:2467 crates/gf2-core/src/field/inverse.rs:766 crates/gf2-core/src/field/matrix.rs:4381 crates/gf2-core/src/field/ple.rs:2260 crates/gf2-core/src/field/sparse_matrix.rs:1765 crates/gf2-core/src/field/triangular.rs:1880 crates/gf2-core/src/field/winograd.rs:734 crates/gf2-core/src/gf2m/field.rs:600
+Ccsds2017 | NASA/CCSDS K=7 standard | -
+Nist2001 | \bAES\b [unless IEEE AES standard|AES/crypto|AES extension] | crates/gf2-core/benches/charpoly.rs:16 crates/gf2-core/benches/field_matrix_gemm.rs:13 crates/gf2-core/benches/field_sparse_matrix.rs:15 crates/gf2-core/benches/fieldmatrix_charpoly.rs:20 crates/gf2-core/benches/fieldmatrix_gemm.rs:42 crates/gf2-core/benches/fieldmatrix_ple.rs:26 crates/gf2-core/benches/fieldmatrix_solve.rs:25 crates/gf2-core/benches/inverse.rs:16 crates/gf2-core/benches/ple.rs:12 crates/gf2-core/benches/sparse_field_matmul.rs:13 crates/gf2-core/benches/sparse_rref.rs:13 crates/gf2-core/benches/sparse_rref_scorecard.rs:12 crates/gf2-core/benches/sparse_spmv.rs:25 crates/gf2-core/benches/strassen_threshold.rs:15 crates/gf2-core/benches/triangular.rs:14 crates/gf2-core/src/field/charpoly.rs:1707 crates/gf2-core/src/field/expr.rs:1961 crates/gf2-core/src/field/inverse.rs:417 crates/gf2-core/src/field/matrix.rs:3307 crates/gf2-core/src/field/ple.rs:1399 crates/gf2-core/src/field/sparse_matrix.rs:1163 crates/gf2-core/src/field/triangular.rs:1155 crates/gf2-core/src/field/winograd.rs:449 crates/gf2-core/src/gf2m/field.rs:600
 ThreeGpp2017a | TS 38\.214 | -
 Amd2020 | AMD Zen 3 Software Optimization Guide|Software Optimization Guide | -
-Bahl1974 | Bahl, Cocke, Jelinek, Raviv|Minimizing Symbol Error Rate | crates/gf2-coding/src/bcjr/mod.rs:51,52
+Bahl1974 | Bahl, Cocke, Jelinek, Raviv|Minimizing Symbol Error Rate | -
 Beuchat2010 | Beuchat et al\.|ePrint 2010/354 | -
-Chase1972 | Chase, D\. \(1972\)|measurement information\.\" | crates/gf2-coding/src/product/chase_pyndiah.rs:6,7 crates/gf2-coding/src/product/mod.rs:55,56
-CoskunPfister2022 | Coskun & Pfister|arxiv:2103\.16680 | crates/gf2-coding/src/drm.rs:21,22
+Chase1972 | Chase, D\. \(1972\)|measurement information\.\" | -
+CoskunPfister2022 | Coskun & Pfister|arxiv:2103\.16680 | -
 CrandallPomerance2005 | Crandall & Pomerance|Numbers: A Computational Perspective | -
 Devegili2006 | Devegili|ePrint 2006/471 | crates/gf2-core/src/gfpn/cubic.rs:6 crates/gf2-core/src/gfpn/quadratic.rs:6
-Duffy2019 | Duffy, K\.R\., Li, J\.|Additive Noise Decoding\.\" | crates/gf2-coding/src/grand/mod.rs:18,19
-Duffy2022 | Duffy–An–Médard(?: 2022)? | crates/gf2-coding/src/grand/orbgrand.rs:131,179,477,768,837
-Duffy2022 | slope heuristic from the paper|`IC` in the paper|paper default [path grand/orbgrand\.rs] | crates/gf2-coding/src/grand/orbgrand.rs:145,156,861
-DumasGiorgiPernet2008 | Dumas, Giorgi, Pernet|the FFLAS and FFPACK Packages | crates/gf2-core/benches/fieldvec_dot_product.rs:36,37
-DumasPernet2012 | Dumas[–-]Pernet(?![–-]Sultan) | crates/gf2-core/src/field/charpoly.rs:9,13,127,2130,2133,2189,2288 crates/gf2-core/src/field/inverse.rs:4,132,289,377,522,1299,1301,1897 crates/gf2-core/src/field/matrix.rs:2371,2511,4364 crates/gf2-core/src/field/ple.rs:4,57,129,1416,1508,1618 crates/gf2-core/src/field/sparse_matrix.rs:87,99,737 crates/gf2-core/src/field/triangular.rs:3,111,418,498,743,808,869,1004,1683 crates/gf2-core/src/field/vec.rs:372,439 crates/gf2-core/src/field/winograd.rs:5,26,365,451,667
-DumasPernet2012 | cited paper|^\W*2010, alg\. 2\.5 [path field/ple\.rs] | crates/gf2-core/src/field/ple.rs:15,130
-DumasPernetSultan2017 | Dumas-Pernet-Sultan|arXiv:1703\.02438 | crates/gf2-core/src/field/ple.rs:1010,1011
-Etsi2012 | T[RS] 102 831 | crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:165,561,569,572 crates/gf2-sim/tests/determinism.rs:149,153 crates/gf2-sim/tests/gpu_byte_identity.rs:35,165
-FflasFfpack2021 | \b(?:fflas|FFLAS)(?:-ffpack|-FFPACK)?\b [unless Dumas, Giorgi, Pernet|the FFLAS and FFPACK Packages|fflas_\w+\.(?:cpp|sh)] | crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:22,248,823 crates/gf2-coding/examples/sparse_smoke_emit_expected.rs:771,826,828,964,1011 crates/gf2-core/benches/charpoly.rs:125 crates/gf2-core/benches/field_matrix_gemm.rs:19 crates/gf2-core/benches/fieldvec_dot_product.rs:6,8,13,19,28,31,38,50,53 crates/gf2-core/benches/mersenne_gemm_regression.rs:10 crates/gf2-core/benches/sparse_spmv.rs:7,8,26 crates/gf2-core/src/bench_seed.rs:231 crates/gf2-core/src/field/inverse.rs:153,2309 crates/gf2-core/src/field/matrix.rs:2990 crates/gf2-core/src/field/ple.rs:885 crates/gf2-core/src/sparse.rs:1475 crates/gf2-core/tests/route_a_gf251_production_dispatch_proptests.rs:22,158
-Flint2026 | \bFLINT\b | crates/gf2-core/src/primitive_polys.rs:162,165
+Duffy2019 | Duffy, K\.R\., Li, J\.|Additive Noise Decoding\.\" | -
+Duffy2022 | Duffy–An–Médard(?: 2022)? | -
+Duffy2022 | slope heuristic from the paper|`IC` in the paper|paper default [path grand/orbgrand\.rs] | -
+DumasGiorgiPernet2008 | Dumas, Giorgi, Pernet|the FFLAS and FFPACK Packages | -
+DumasPernet2012 | Dumas[–-]Pernet(?![–-]Sultan) | -
+DumasPernet2012 | cited paper|^\W*2010, alg\. 2\.5 [path field/ple\.rs] | -
+DumasPernetSultan2017 | Dumas-Pernet-Sultan|arXiv:1703\.02438 | -
+Etsi2012 | T[RS] 102 831 | -
+FflasFfpack2021 | \b(?:fflas|FFLAS)(?:-ffpack|-FFPACK)?\b [unless Dumas, Giorgi, Pernet|the FFLAS and FFPACK Packages|fflas_\w+\.(?:cpp|sh)] | crates/gf2-coding/examples/sparse_smoke_emit_expected.rs:661
+Flint2026 | \bFLINT\b | -
 GentlemanSande1966 | Gentleman & Sande|^\W*\(1966\) [path field/ntt\.rs] | -
-GotoGeijn2008 | Goto-vandeGeijn 2008|\bGoto/BLIS\b | crates/gf2-core/benches/fieldmatrix_gemm.rs:325 crates/gf2-core/src/lib.rs:312 crates/gf2-core/tests/route_c_gf251_parity.rs:4
+GotoGeijn2008 | Goto-vandeGeijn 2008|\bGoto/BLIS\b | -
 HardyWright2008 | Hardy & Wright | -
-Knuth1997 | \bKnuth\b|\bMMIX\b | crates/gf2-coding/src/gldpc/mod.rs:1824 crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:393 crates/gf2-coding/tests/dvb_t2_bicm_chain.rs:71 crates/gf2-core/src/rng.rs:5
-Higham2002 | Higham ?§ ?14\.1 | crates/gf2-core/src/field/inverse.rs:209,654 crates/gf2-core/src/field/triangular.rs:202,215,569,661,1227,1295
-LidlNiederreiter1996 | Lidl & Niederreiter | crates/gf2-core/src/primitive_polys.rs:5
-LinBox2025 | \bLinBox\b | crates/gf2-coding/examples/bench_sparse_csv_emitter.rs:13,22,313,573,823 crates/gf2-coding/examples/sparse_smoke_emit_expected.rs:771,964,1040 crates/gf2-core/benches/sparse_spmv.rs:8,10,28 crates/gf2-core/examples/bench_csv_emitter.rs:817 crates/gf2-core/src/field/sparse_matrix.rs:1242 crates/gf2-core/src/sparse.rs:916,1475
-Lubeck2024 | L[uü]beck|Luebeck | crates/gf2-core/examples/bench_csv_emitter.rs:105 crates/gf2-core/src/primitive_polys.rs:150,151,158,624
-Machler2012 | Machler \(?2012\)? | crates/gf2-coding/src/grand/sogrand.rs:415,489
-Massey1969 | Massey \(1969\) | crates/gf2-core/src/field/charpoly.rs:1435
-McEliece1996 | McEliece \(1996\)|^\W*Inform\. Theory\.\*$ [path bcjr/mod\.rs] | crates/gf2-coding/src/bcjr/mod.rs:55,56
-Menezes1997 | Menezes et al\. | crates/gf2-core/src/primitive_polys.rs:6
+Joyner2026 | \bGUAVA\b | crates/gf2-coding/tests/bch_oracle_agreement.rs:459,460,462,466,542,681,749,753,781
+Knuth1997 | \bKnuth\b|\bMMIX\b | crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:393 crates/gf2-coding/tests/dvb_t2_bicm_chain.rs:22 crates/gf2-core/src/rng.rs:1
+Higham2002 | Higham ?§ ?14\.1 | -
+LidlNiederreiter1996 | Lidl & Niederreiter | -
+LinBox2025 | \bLinBox\b | -
+Lubeck2024 | L[uü]beck|Luebeck | crates/gf2-core/benches/fieldmatrix_charpoly.rs:29 crates/gf2-core/benches/fieldmatrix_gemm.rs:51 crates/gf2-core/benches/fieldmatrix_ple.rs:35 crates/gf2-core/benches/fieldmatrix_solve.rs:34 crates/gf2-core/examples/bench_csv_emitter.rs:49 crates/gf2-core/src/primitive_polys.rs:5,90 crates/gf2-core/tests/gf2pow32_constant_drift.rs:1 crates/gf2-core/tests/gf2pow32_matmul.rs:10
+Machler2012 | Machler \(?2012\)? | -
+Massey1969 | Massey \(1969\) | -
+McEliece1996 | McEliece \(1996\)|^\W*Inform\. Theory\.\*$ [path bcjr/mod\.rs] | -
+Menezes1997 | Menezes et al\. | -
 MollerGranlund2011 | Granlund-Möller | -
-Montgomery1987 | Montgomery 1987 | crates/gf2-core/src/field/batch_ops.rs:31
-Nist2013 | FIPS(?: PUB)? 186-4|NIST B-571 | crates/gf2-core/benches/gf2m_wide_mul.rs:44 crates/gf2-core/src/primitive_polys.rs:12,256,309
-Nist2013 | and from FIPS$ [path primitive_polys\.rs] | crates/gf2-core/src/primitive_polys.rs:35
+Montgomery1987 | Montgomery 1987 | -
+Nist2013 | FIPS(?: PUB)? 186-4|NIST B-571 | -
+Nist2013 | and from FIPS$ [path primitive_polys\.rs] | -
 Oeis2026 | OEIS A011260 | -
-OpenBlas2022 | \bOpenBLAS\b | crates/gf2-core/benches/fieldvec_dot_product.rs:8
+OpenBlas2022 | \bOpenBLAS\b | -
 Plonky2026 | \bPlonky3\b | -
 Proth1878 | François Proth \(1878\) | -
-Pyndiah1998 | Pyndiah, R\.M\. \(1998\)|Pyndiah \(1998\)|^\W*codes\.\" \*IEEE Trans\. Commun\.\* [path product/] | crates/gf2-coding/src/product/chase_pyndiah.rs:8,9,58,90 crates/gf2-coding/src/product/mod.rs:53,54
-Rabin1980 | Rabin, M\. O\. \(1980\)|SIAM Journal on Computing|Rabin's | crates/gf2-core/benches/primitive_poly.rs:9 crates/gf2-core/src/field/irreducibility.rs:3,75,85,113
-RandCore2025 | rand_core(?:-0\.9\.3| 0\.9|'s) | crates/gf2-kernels-hip/src/ffi.rs:101 crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:6,45,46,80
-RichardsonUrbanke2001 | Richardson[-–]Urbanke | crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs:56 crates/gf2-coding/tests/ldpc_encoding_tests.rs:1,43
-Seroussi1998 | Seroussi|HPL-98-135 | crates/gf2-core/benches/gf2m_wide_mul.rs:33 crates/gf2-core/src/field/axiom_tests.rs:1022,1028,1029 crates/gf2-core/src/field/extension.rs:2756 crates/gf2-core/src/gf2m/barrett.rs:1057 crates/gf2-core/src/gf2m/field.rs:1853 crates/gf2-core/src/gf2m/wide.rs:1421 crates/gf2-core/src/primitive_polys.rs:10,34,255,309,314 crates/gf2-core/tests/clmul_wide_conformance.rs:329
-Shoup2025 | \bNTL\b | crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs:13,18,36 crates/gf2-core/examples/bench_csv_emitter.rs:993,994,998,1004,1005 crates/gf2-core/src/primitive_polys.rs:164 crates/gf2-core/tests/gf2pow32_constant_drift.rs:13 crates/gf2-core/tests/gf2pow32_matmul.rs:9,129
-Solomon2020 | Solomon, A\., Duffy|using GRAND\.\" \*IEEE ISIT\* | crates/gf2-coding/src/grand/mod.rs:20,21
+Pyndiah1998 | Pyndiah, R\.M\. \(1998\)|Pyndiah \(1998\)|^\W*codes\.\" \*IEEE Trans\. Commun\.\* [path product/] | -
+Rabin1980 | Rabin, M\. O\. \(1980\)|SIAM Journal on Computing|Rabin's | crates/gf2-core/src/field/irreducibility.rs:3,75,85,113 crates/gf2-core/src/primitive_polys.rs:285
+RandCore2025 | rand_core(?:-0\.9\.3| 0\.9|'s) | -
+RichardsonUrbanke2001 | Richardson[-–]Urbanke | -
+Seroussi1998 | Seroussi|HPL-98-135 | crates/gf2-core/benches/gf2m_wide_mul.rs:10 crates/gf2-core/src/field/axiom_tests.rs:732 crates/gf2-core/src/field/extension.rs:2756 crates/gf2-core/src/gf2m/barrett.rs:1039 crates/gf2-core/src/gf2m/field.rs:1845 crates/gf2-core/src/gf2m/wide.rs:1417 crates/gf2-core/src/primitive_polys.rs:4,131 crates/gf2-core/tests/clmul_wide_conformance.rs:268
+Shoup2025 | \bNTL\b | -
+Solomon2020 | Solomon, A\., Duffy|using GRAND\.\" \*IEEE ISIT\* | -
 Swan1962 | Swan's theorem | -
-TenBrink2001 | ten Brink|parallel concatenated codes\"|IEEE Trans\. Commun\. 2001 [path modem/analysis\.rs] | crates/gf2-coding/src/modem/analysis.rs:625,626,627,635
-VanZee2015 | BLIS 2015|\bGoto/BLIS\b|\bBLIS\b | crates/gf2-core/benches/fieldmatrix_gemm.rs:325 crates/gf2-core/src/lib.rs:312 crates/gf2-core/tests/route_c_gf251_parity.rs:4
-Vigna2015 | Vigna's (?:splitmix64\.c|xoroshiro reference) | crates/gf2-core/src/bench_seed.rs:21 crates/gf2-sim/src/testutil.rs:294
-Warren2012 | Hacker's Delight | crates/gf2-core/benches/matrix_transpose.rs:5
-Warren2012 | scalar Hacker's$ [path gf2-core/src/matrix\.rs] | crates/gf2-core/src/matrix.rs:1045
-Wolf1978 | Wolf \(1978\)|Using a Trellis\.\" | crates/gf2-coding/src/bcjr/mod.rs:53,54
-Yuan2025 | Yuan[–, ]+Médard|SO-GRAND(?: paper| §V| \(§ V\))|Iterative Decoding to Outperform LDPCs | crates/gf2-coding/src/bin/sim_runner.rs:252 crates/gf2-coding/src/crc.rs:28,29 crates/gf2-coding/src/gldpc/mod.rs:407 crates/gf2-coding/src/grand/orbgrand.rs:122,478,854 crates/gf2-coding/src/grand/sogrand.rs:13,328 crates/gf2-coding/src/product/mod.rs:719
-Yuan2025 | \(the paper uses [path src/crc\.rs] | crates/gf2-coding/src/crc.rs:29
-Yuan2025 | \bpaper(?:'s)?\b|SO-GRAND (?:eq\.|§) [path grand/(?:sogrand|orbgrand)\.rs|product/mod\.rs|bin/sim_runner\.rs|sogrand_crc_probe\.rs] [unless slope heuristic from the paper|`IC` in the paper|paper default] | crates/gf2-coding/examples/sogrand_crc_probe.rs:3 crates/gf2-coding/src/bin/sim_runner.rs:250,252 crates/gf2-coding/src/grand/orbgrand.rs:478,515,528,570 crates/gf2-coding/src/grand/sogrand.rs:13,236,295,305,328,374,380,388,455 crates/gf2-coding/src/product/mod.rs:20,232,719,724,857,1112
-Zivkovic1994 | Živković | crates/gf2-core/src/primitive_polys.rs:11
+TenBrink2001 | ten Brink|parallel concatenated codes\"|IEEE Trans\. Commun\. 2001 [path modem/analysis\.rs] | -
+VanZee2015 | BLIS 2015|\bGoto/BLIS\b|\bBLIS\b | -
+Vigna2015 | Vigna's (?:splitmix64\.c|xoroshiro reference) | -
+Warren2012 | Hacker's Delight | -
+Warren2012 | scalar Hacker's$ [path gf2-core/src/matrix\.rs] | -
+Wolf1978 | Wolf \(1978\)|Using a Trellis\.\" | -
+Yuan2025 | Yuan[–, ]+Médard|SO-GRAND(?: paper| §V| \(§ V\))|Iterative Decoding to Outperform LDPCs | -
+Yuan2025 | \(the paper uses [path src/crc\.rs] | -
+Yuan2025 | \bpaper(?:'s)?\b|SO-GRAND (?:eq\.|§) [path grand/(?:sogrand|orbgrand)\.rs|product/mod\.rs|bin/sim_runner\.rs|sogrand_crc_probe\.rs] [unless slope heuristic from the paper|`IC` in the paper|paper default] | -
+Zivkovic1994 | Živković | -
 
 # 2. citations without a registry entry: reason | regex | files:lines
-no work with this title and venue exists | Condo, C\.|^\W*(?:\*IEEE Trans\. )?Commun\.\*$ [path grand/(?:mod|sogrand)\.rs] | crates/gf2-coding/src/grand/mod.rs:22,23 crates/gf2-coding/src/grand/sogrand.rs:60,61
-no edition of the book has this section | Shoup §12\.4 | crates/gf2-core/src/field/charpoly.rs:1435
-no such standard, and the file holds no AES polynomial | IEEE AES standard | crates/gf2-core/src/primitive_polys.rs:8
-paper not named | \bpaper\b [path gf2-coding/src/fading\.rs|ldpc_bler_check\.rs] | crates/gf2-coding/examples/ldpc_bler_check.rs:1 crates/gf2-coding/src/fading.rs:25,108,120,131,142,844
+no work with this title and venue exists | Condo, C\.|^\W*(?:\*IEEE Trans\. )?Commun\.\*$ [path grand/(?:mod|sogrand)\.rs] | -
+no edition of the book has this section | Shoup §12\.4 | -
+no such standard, and the file holds no AES polynomial | IEEE AES standard | -
+paper not named | \bpaper\b [path gf2-coding/src/fading\.rs|ldpc_bler_check\.rs] | -
 
 # 3. heuristic matches outside both tables: label | file:line | comment
-CPU feature name | crates/gf2-core/src/kernels/aarch64.rs:13 | /// Checks if AES/crypto extensions are available.
-date or measurement stamp, not a publication year | crates/gf2-coding/tests/modem_regression.rs:364 | // BPSK uncoded BER at 3 dB Eb/N0 is ~0.023. With 2048 bits and the
-section of an internal design or protocol document | crates/gf2-core/benches/tuning_calibration.rs:5379 | /// outside the sweep, whatever the schema has grown since. Design §5 condition
-section of an internal design or protocol document | crates/gf2-core/src/field/expr.rs:255 | /// `out`'s previous contents surviving the call. See §6.3.
-section of an internal design or protocol document | crates/gf2-core/src/field/expr.rs:1920 | /// `C = A*B + C` assignment form. See §9.2 item 5 and §12 item B of
-section of an internal design or protocol document | crates/gf2-sim/examples/gpu_hybrid.rs:105 | // The §11 CPU-vs-GPU three-column contract.
-section of an internal design or protocol document | crates/gf2-sim/examples/parallel_byte_identity.rs:70 | // The §11 four-column byte-identity contract.
-section of an internal design or protocol document | crates/gf2-sim/tests/dvb_t2_regression.rs:85 | /// Parallelism for Mode B (CPU-parallel). The §11 CPU-parallel contract holds
-section of an internal design or protocol document | crates/gf2-sim/tests/gpu_byte_identity.rs:528 | // The §11 contract is on the FRAME verdict. A per-frame verdict mismatch
+CPU feature name | crates/gf2-core/src/kernels/aarch64.rs:9 | /// Whether the AES extension is enabled at compile time.
+pen-and-paper computation | crates/gf2-algebra/tests/permanent_vectors.rs:135 | /// Case 10: n=3, paper case [[1,2,0],[2,1,2],[0,2,1]]. permanent = 0 (mod 3).
+pen-and-paper computation | crates/gf2-algebra/tests/permanent_vectors.rs:137 | /// Pen-and-paper enumeration of all 6 permutations:
+pen-and-paper computation | crates/gf2-algebra/tests/permanent_vectors.rs:214 | /// Pen-and-paper: M[0,j] nonzero iff j∈{0,1}; M[1,j] iff j∈{1,2};
 section of an internal design or protocol document | dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:148 | /// Protocol §7 host admission. Driver and validator both require this exact
 section of an internal design or protocol document | dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:2799 | /// Protocol §9 repository destinations, all derived from the run ID.
-the verb 'paper over' | crates/gf2-core/src/gfp/specialized.rs:953 | // gfp::montgomery module, so a bug in that module cannot paper over a
+the verb 'paper over' | crates/gf2-core/src/gfp/specialized.rs:948 | // gfp::montgomery module, so a bug in that module cannot paper over a
 
 # 4. residual counts by label
     1  CPU feature name
-    1  date or measurement stamp, not a publication year
-    9  section of an internal design or protocol document
+    3  pen-and-paper computation
+    2  section of an internal design or protocol document
     1  the verb 'paper over'
+
+# 5. citation addresses: key | files:lines
+AeneasVerif2026 | crates/gf2-core/src/gf2m/mod.rs:11 crates/gf2-core/src/gf2m/mul_raw.rs:4
+AlbrechtBard2026 | crates/gf2-core/examples/bench_csv_emitter.rs:732 crates/gf2-core/src/alg/rref.rs:40
+Amd2020 | crates/gf2-kernels-simd/src/fp_small_panel.rs:3
+Bahl1974 | crates/gf2-coding/src/bcjr/mod.rs:2
+Beuchat2010 | crates/gf2-core/src/gfpn/cubic.rs:8
+BlackmanVigna2021 | dev/tools/tuning-campaign-support/src/abtest.rs:47
+Cassagne2019 | crates/gf2-sim/src/bin/export_alist.rs:2 crates/gf2-sim/src/bin/ldpc_bler_sweep.rs:2 crates/gf2-sim/src/testutil.rs:9
+Ccsds2017 | crates/gf2-coding/examples/nasa_rate_half_k3.rs:3
+Ccsds2020 | crates/gf2-coding/tests/channel_capacity.rs:28
+Chase1972 | crates/gf2-coding/src/product/chase_pyndiah.rs:2
+CoskunPfister2022 | crates/gf2-coding/src/drm.rs:2
+Devegili2006 | crates/gf2-core/src/gfpn/cubic.rs:6 crates/gf2-core/src/gfpn/quadratic.rs:6
+Duffy2019 | crates/gf2-coding/src/grand/mod.rs:1
+Duffy2022 | crates/gf2-coding/src/grand/orbgrand.rs:1,53,100,314,549,610
+DumasPernet2012 | crates/gf2-core/src/field/charpoly.rs:6,1410,1464 crates/gf2-core/src/field/inverse.rs:7,63,163,268,904 crates/gf2-core/src/field/matrix.rs:1717 crates/gf2-core/src/field/ple.rs:2,826,876,938 crates/gf2-core/src/field/triangular.rs:2,160,204,343,378,413,439,465 crates/gf2-core/src/field/vec.rs:254,298 crates/gf2-core/src/field/winograd.rs:2,170,234,411 crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs:7 crates/gf2-kernels-simd/src/x86/fp_small_ple.rs:6
+DumasPernetSultan2017 | crates/gf2-core/src/field/ple.rs:563
+DvbVerification2010 | crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:533 crates/gf2-coding/src/test_support.rs:6,203,215 crates/gf2-coding/tests/bch_oracle_agreement.rs:934 crates/gf2-coding/tests/dvb_t2_bch_verification.rs:2 crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs:2 crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:2 crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs:2 crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs:2
+Etsi2012 | crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:407 crates/gf2-sim/tests/determinism.rs:64
+Etsi2015 | crates/gf2-coding/examples/dvb_t2_bch_demo.rs:1 crates/gf2-coding/src/bch/dvb_t2/generators.rs:2 crates/gf2-coding/src/bch/dvb_t2/mod.rs:3,59,342 crates/gf2-coding/src/bch/dvb_t2/params.rs:1,40,50 crates/gf2-coding/src/ldpc/core.rs:90,109 crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:2,63,586,614,690,725 crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:1,63,361,371,381 crates/gf2-coding/src/ldpc/dvb_t2/mod.rs:1 crates/gf2-coding/src/ldpc/dvb_t2/params.rs:1 crates/gf2-coding/src/modem/presets.rs:387 crates/gf2-coding/tests/bch_oracle_agreement.rs:833,852 crates/gf2-coding/tests/bch_primitive_verification.rs:2 crates/gf2-coding/tests/bch_tests.rs:777,812 crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs:3 crates/gf2-coding/tests/ldpc_validation.rs:181,226 crates/gf2-coding/tests/shortened_fast_path.rs:28 crates/gf2-core/benches/rref.rs:119,127 crates/gf2-core/src/gf2m/field.rs:1600,1607,1614,2485,3054,3061,3210,3393,3456 crates/gf2-core/src/gf2m/poly_helpers.rs:59 crates/gf2-core/src/primitive_polys.rs:3 crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs:75 crates/gf2-sim/src/presets/mod.rs:10 crates/gf2-sim/src/testutil.rs:16
+Fossorier1994 | crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs:3,6
+GGK2025 | crates/gf2-algebra/src/permanent/rank.rs:13
+GentlemanSande1966 | crates/gf2-core/src/field/ntt.rs:67
+GotoGeijn2008 | crates/gf2-core/src/gfp/simd_ops.rs:453,461 crates/gf2-core/src/lib.rs:233 crates/gf2-kernels-simd/src/fp_small_panel.rs:2 crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:2
+HardyWright2008 | crates/gf2-core/src/field/two_adic.rs:76,261
+Higham2002 | crates/gf2-core/src/field/inverse.rs:346 crates/gf2-core/src/field/triangular.rs:7,247,297
+Hinnant2021 | crates/gf2-coding/src/simulation.rs:1638 dev/tools/tuning-campaign-support/src/journal.rs:2305
+Joyner2026 | crates/gf2-coding/tests/bch_oracle_agreement.rs:3
+Knuth1997 | crates/gf2-coding/tests/dvb_t2_bicm_chain.rs:22 crates/gf2-core/src/rng.rs:2 crates/gf2-core/src/sparse.rs:1783
+Lentmaier2010 | crates/gf2-coding/tests/channel_capacity.rs:26
+Lentmaier2010a | crates/gf2-coding/src/gldpc/mod.rs:5,232,272,287
+LidlNiederreiter1996 | crates/gf2-core/src/primitive_polys.rs:2
+LinBox2025 | crates/gf2-core/src/field/sparse_matrix.rs:742
+Lubeck2024 | crates/gf2-core/benches/fieldmatrix_charpoly.rs:29 crates/gf2-core/benches/fieldmatrix_gemm.rs:51 crates/gf2-core/benches/fieldmatrix_ple.rs:35 crates/gf2-core/benches/fieldmatrix_solve.rs:34 crates/gf2-core/examples/bench_csv_emitter.rs:49 crates/gf2-core/src/primitive_polys.rs:5,90 crates/gf2-core/tests/gf2pow32_constant_drift.rs:1 crates/gf2-core/tests/gf2pow32_matmul.rs:10
+Machler2012 | crates/gf2-coding/src/grand/sogrand.rs:224,295
+Massey1969 | crates/gf2-core/src/field/charpoly.rs:903
+MaurerPontil2009 | crates/gf2-sim/src/osd_campaign.rs:18 crates/gf2-stats/src/intervals.rs:171
+McEliece1996 | crates/gf2-coding/src/bcjr/mod.rs:3
+Menezes1997 | crates/gf2-core/src/primitive_polys.rs:2
+MollerGranlund2011 | crates/gf2-kernels-simd/src/x86/fp_small.rs:649
+Montgomery1987 | crates/gf2-core/src/field/batch_ops.rs:1
+Mula2018 | crates/gf2-kernels-simd/src/lib.rs:120 crates/gf2-kernels-simd/src/x86/popcount.rs:6,18,68
+Nist2001 | crates/gf2-core/benches/charpoly.rs:16 crates/gf2-core/benches/field_matrix_gemm.rs:14 crates/gf2-core/benches/field_sparse_matrix.rs:16 crates/gf2-core/benches/fieldmatrix_charpoly.rs:20 crates/gf2-core/benches/fieldmatrix_gemm.rs:42 crates/gf2-core/benches/fieldmatrix_ple.rs:26 crates/gf2-core/benches/fieldmatrix_solve.rs:25 crates/gf2-core/benches/inverse.rs:16 crates/gf2-core/benches/ple.rs:12 crates/gf2-core/benches/sparse_field_matmul.rs:13 crates/gf2-core/benches/sparse_rref.rs:13 crates/gf2-core/benches/sparse_rref_scorecard.rs:12 crates/gf2-core/benches/sparse_spmv.rs:25 crates/gf2-core/benches/strassen_threshold.rs:15 crates/gf2-core/benches/triangular.rs:14 crates/gf2-core/src/field/charpoly.rs:1707 crates/gf2-core/src/field/expr.rs:1961 crates/gf2-core/src/field/inverse.rs:417 crates/gf2-core/src/field/matrix.rs:3308 crates/gf2-core/src/field/ple.rs:1399 crates/gf2-core/src/field/sparse_matrix.rs:1163 crates/gf2-core/src/field/triangular.rs:1155 crates/gf2-core/src/field/winograd.rs:449 crates/gf2-core/src/gf2m/field.rs:600
+Nist2013 | crates/gf2-core/benches/gf2m_wide_mul.rs:19 crates/gf2-core/src/gf2m/wide.rs:1427 crates/gf2-core/src/primitive_polys.rs:5,131
+Oeis2026 | crates/gf2-core/src/gf2m/generation.rs:226
+PPV2010 | crates/gf2-coding/src/info_theory.rs:71,86
+Plonky2026 | crates/gf2-core/src/field/two_adic.rs:70,88,101,114,120,274,287
+Pyndiah1998 | crates/gf2-coding/src/product/chase_pyndiah.rs:2 crates/gf2-coding/src/product/mod.rs:2,522
+Rabin1980 | crates/gf2-core/benches/primitive_poly.rs:2 crates/gf2-core/src/field/irreducibility.rs:3,75 crates/gf2-core/src/gf2m/field.rs:459,494
+RandCore2025 | crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:19,26
+SageMath2025 | crates/gf2-core/tests/gfpn_nested_towers.rs:4,188
+SageMath2026 | crates/gf2-algebra/src/permanent/bipedal3.rs:675 crates/gf2-algebra/tests/cas_cross_validation.rs:4,59,85 crates/gf2-coding/tests/bch_oracle_agreement.rs:2 crates/gf2-core/benches/polynomial.rs:3 crates/gf2-core/benches/primitive_poly.rs:4 crates/gf2-core/benches/sparse.rs:3 crates/gf2-core/src/field/traits.rs:526 crates/gf2-core/tests/common/mod.rs:43,54
+Scheinerman2024 | crates/gf2-algebra/examples/paper_repro_slope.rs:1 crates/gf2-algebra/src/packed/bipedal3.rs:5,108,195,210,234,902,1076,1100,1124 crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:6 crates/gf2-algebra/src/permanent/reference.rs:1 crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:4,27 crates/gf2-kernels-simd/src/bipedal/framework.rs:41,69
+Seroussi1998 | crates/gf2-core/benches/gf2m_wide_mul.rs:10 crates/gf2-core/src/field/axiom_tests.rs:732 crates/gf2-core/src/field/extension.rs:2756 crates/gf2-core/src/gf2m/barrett.rs:1039 crates/gf2-core/src/gf2m/field.rs:1845 crates/gf2-core/src/gf2m/wide.rs:1417 crates/gf2-core/src/primitive_polys.rs:4,131 crates/gf2-core/tests/clmul_wide_conformance.rs:268
+Shoup2025 | crates/gf2-core/examples/bench_csv_emitter.rs:904
+Sionna2026 | crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:18,101 crates/gf2-coding/src/ldpc/nr_5g/mod.rs:25 crates/gf2-coding/tests/nr5g_external_vectors.rs:3
+Solomon2020 | crates/gf2-coding/src/grand/mod.rs:2
+Steele2014 | crates/gf2-core/tests/clmul_wide_conformance.rs:22 crates/gf2-core/tests/residual_shift_routes.rs:49 crates/gf2-core/tests/transpose_lane_contract.rs:12 crates/gf2-kernels-simd/src/bch_encode.rs:618 crates/gf2-kernels-simd/src/transpose.rs:261 crates/gf2-kernels-simd/src/x86/clmul.rs:328
+Swan1962 | crates/gf2-core/src/gf2m/generation.rs:137
+TenBrink2001 | crates/gf2-coding/src/modem/analysis.rs:310
+ThreeGpp2017 | crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:1,16,32 crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:1,17,32 crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:1,5 crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1,19,76,113,270,356,375,629 crates/gf2-coding/tests/nr5g_external_vectors.rs:2 crates/gf2-core/src/primitive_polys.rs:3 crates/gf2-sim/examples/nr_5g_quickstart.rs:4 crates/gf2-sim/src/error.rs:186 crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:7,169 crates/gf2-sim/src/presets/mod.rs:11 crates/gf2-sim/src/presets/nr_5g.rs:15,51,351,363,445 crates/gf2-sim/src/stages/nr_5g.rs:1
+ThreeGpp2017a | crates/gf2-sim/src/presets/nr_5g.rs:108
+ThreeGpp2020 | crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:1,10,61,79 crates/gf2-sim/src/error.rs:192 crates/gf2-sim/src/presets/nr_5g.rs:28 crates/gf2-sim/src/stages/nr_5g.rs:5
+VanZee2015 | crates/gf2-core/src/lib.rs:233 crates/gf2-kernels-simd/src/fp_small_panel.rs:2 crates/gf2-kernels-simd/src/x86/fp_medium.rs:496 crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:3
+Vigna2015 | crates/gf2-core/src/bench_seed.rs:24 crates/gf2-sim/src/testutil.rs:142 dev/tools/tuning-campaign-support/src/abtest.rs:29
+Warren2012 | crates/gf2-core/benches/matrix_transpose.rs:3 crates/gf2-kernels-simd/src/transpose.rs:190 crates/gf2-kernels-simd/src/x86/transpose.rs:12
+Wolf1978 | crates/gf2-coding/src/bcjr/mod.rs:2
+Yuan2025 | crates/gf2-coding/src/bin/sim_runner.rs:201 crates/gf2-coding/src/crc.rs:5,103 crates/gf2-coding/src/gldpc/mod.rs:288 crates/gf2-coding/src/grand/mod.rs:5 crates/gf2-coding/src/grand/orbgrand.rs:41,315,343,348,627 crates/gf2-coding/src/grand/sogrand.rs:1,113,138,147,165,203,254,289 crates/gf2-coding/src/product/mod.rs:489,494
+Zivkovic1994 | crates/gf2-core/src/primitive_polys.rs:4
