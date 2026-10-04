@@ -53,5 +53,5 @@ None.
 - Epic: `jit issue show ae03bcd0`; progress.json, plan.md, breakdown.json, investigation.md, bch-api-design.md, extension-design.md (this directory).
 - Rework/dispatch prompt files (session scratchpad, may not survive): `rework-bd0edfa2-444c06bc-r1.md`, `rework-2b6968d3-r1.md`, `dispatch-d7749931.md`, `rework-3f7edef1-r1.md`, `rework-3f7edef1-r1-research.md`, `dispatch-203ee826.md`, `dispatch-e1e0e7ff.md`, `dispatch-5ee83cd3.md`.
 - Survey contract and findings: dev/active/4e732b56/{workload-selection.md,findings.md}; baselines in KEPT worktree agent-4e732b56.
-- Proof sketch: dev/active/64fd3afd/proof-sketch.md (O-3 for d7749931).
+- Proof sketch: dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md (O-3 for d7749931).
 - ETSI DVB-T2 streams: ~/dvb_test_vectors/VV001-CR35_CSP (host-only, not committed).

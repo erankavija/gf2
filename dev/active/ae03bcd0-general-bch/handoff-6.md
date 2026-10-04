@@ -62,5 +62,5 @@
 - Epic: `jit issue show ae03bcd0`; progress.json, plan.md (Amendments 1–2), bch-api-design.md (MatrixFill contract), extension-design.md, oracle-provenance.md, oracle-receipt.md (this directory).
 - Session-9 prompts (committed): `session-9-prompts/` in this directory — rework and dispatch briefs, including the three wave-11 dispatch prompts.
 - Session-9 scratchpad (may not survive): `/tmp/claude-1000/-home-vkaskivuo-Projects-gf2/b6ff6d78-3691-40ce-9546-069e618e637c/scratchpad/` — gate logs (`gates-wave10-{a,b,c,d}.log`, `gates-3f7edef1-r2.log`), `b4-attempt-50g/`, `88ca7d2f-run1/` (the discarded contended measurement).
-- Proof sketch: dev/active/64fd3afd/proof-sketch.md (O-5 for 94597a51 is the remaining obligation).
+- Proof sketch: dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md (O-5 for 94597a51 is the remaining obligation).
 - ETSI DVB-T2 streams: ~/dvb_test_vectors → ~/Projects/dvb_test_vectors/VV001-CR35_CSP (host symlink).

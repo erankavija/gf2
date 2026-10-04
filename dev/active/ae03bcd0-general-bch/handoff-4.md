@@ -49,7 +49,7 @@ None. Wave 10 dispatch is fully specified above.
 ## Reference artefacts
 
 - Epic: `jit issue show ae03bcd0`; progress.json, plan.md, breakdown.json, investigation.md, bch-api-design.md, extension-design.md (this directory).
-- Proof sketch (spec for remaining lean waves): dev/active/64fd3afd/proof-sketch.md; R-27 rulings in progress.json lead_decisions.
+- Proof sketch (spec for remaining lean waves): dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md; R-27 rulings in progress.json lead_decisions.
 - Survey contract (amended §9): dev/active/4e732b56/workload-selection.md; findings.md; baselines in KEPT worktree agent-4e732b56; receipts dev/bench_results/4e732b56/.
 - HIP receipt: dev/bench_results/c3cc5226/hip-outcome-identity-receipt.md (pinned 489e85ef, doc-linked).
 - New shared surfaces wave-10 workers consume: EncodeFamily seam + CodingTuning (crates/gf2-coding/src/bch/encode.rs, tuning.rs), NonPrimitiveConsecutive (bch/spec.rs), ParityCheckMatrixAccess for Extended (transform/mod.rs), RelativeExtension.lean (proofs/Gf2Core/Proofs/).
