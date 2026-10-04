@@ -1,11 +1,11 @@
-commit: 70bdb151b3fd885e72a5755547a8b4e906553af7
+commit: fa29c6a3976e162d8994dfc19ea85c90df848f7c
 files: 706
 crate                       comment  non-blank   share  pattern
-crates/gf2-algebra             1997      17187  11.62%        0
-crates/gf2-coding             10638      78272  13.59%        0
-crates/gf2-core               12529     110268  11.36%        0
-crates/gf2-kernels-hip         2056       7496  27.43%        0
-crates/gf2-kernels-simd        3974      19762  20.11%        0
-crates/gf2-sim                 7647      60419  12.66%        5
-crates/gf2-stats                541       3328  16.26%        0
-total                         39382     296732  13.27%        5
+crates/gf2-algebra             1971      17161  11.49%        0
+crates/gf2-coding             10603      78237  13.55%        0
+crates/gf2-core               12465     110204  11.31%        0
+crates/gf2-kernels-hip         2046       7486  27.33%        0
+crates/gf2-kernels-simd        3955      19743  20.03%        0
+crates/gf2-sim                 7622      60394  12.62%        5
+crates/gf2-stats                530       3317  15.98%        0
+total                         39192     296542  13.22%        5
