@@ -1,12 +1,7 @@
 //! Cross-checks that every protocol version's own committed schema file
-//! validates a real frozen family addendum that names that version.
-//!
-//! Each protocol version keeps its own committed schema file. Version 1 has
-//! two, since a wording-only edit to the `frozen.description` annotation split
-//! the very first pilot and confirmation receipts from every later version-1
-//! receipt (`amendment-v2.md`); both are exercised below. Schemas and fixtures
-//! are frozen, so the test locates each by its SHA-256 among the addendum
-//! files git lists in the checkout.
+//! validates a real frozen family addendum that names that version. Version 1
+//! has two schema files. Schemas and fixtures are frozen, so the test locates
+//! each by its SHA-256 among the addendum files git lists in the checkout.
 
 use serde_json::Value;
 use std::collections::BTreeMap;

@@ -4334,8 +4334,6 @@ mod tests {
         };
         let imported = fixture.declaration.imported("algebra").unwrap().clone();
 
-        // A checkout whose committed import differs fails the strict reopen
-        // before the checksum manifest marks the publication complete.
         let drifted = fixture.repository("drifted");
         fs::write(drifted.join(&imported.envelope.path), b"{}").unwrap();
         let refused = fixture.publish(&drifted).unwrap_err().to_string();
@@ -4472,8 +4470,7 @@ mod tests {
     /// Worst-case full-scale receipt: 4,536 accepted units and owner decisions
     /// carrying every one of the 9,000 retained-threshold timing windows at
     /// the widest values the protocol admits (2^32 calls, the 120 s child
-    /// limit), plus the one-factor, GEMM and joint decisions at twice the
-    /// 30,947 bytes measured on the 2026-09-28 stage.
+    /// limit), plus the one-factor, GEMM and joint decisions at twice 30,947 bytes.
     #[test]
     fn full_scale_receipt_stays_within_a_quarter_of_the_committed_limit() {
         let campaign = Token::new("gf2-dbd8787d-19700101t000000z-1").unwrap();
@@ -4575,8 +4572,6 @@ mod tests {
         );
     }
 
-    /// Renders the receipt documents with the driver and checks them with the
-    /// validator's real receipt checks; either side drifting fails.
     #[test]
     fn rendered_receipt_documents_pass_the_validator_receipt_checks() {
         let scratch_root = scratch("gf2-driver-receipt-check");
@@ -4708,8 +4703,6 @@ mod tests {
         publish_receipt_documents(&stage, &facts, units.iter(), &responses).unwrap();
         let receipt = stage.join("receipt.md");
         let text = fs::read_to_string(&receipt).unwrap();
-        // Every cited file is named by its archived or committed repository
-        // path, never by an absolute or stage-relative one.
         assert!(!text.contains(stage.to_str().unwrap()) && !text.contains("/repository/"));
         assert!(text.contains(".agents/campaign-evidence/gf2-dbd8787d-19700101t000000z-1/candidates/core-producer-s-9/output.json"));
         assert!(text.contains("`dev/benchmarks/tuning_profiles/gf2-dbd8787d-19700101t000000z-1-session/composition.json`"));
@@ -4751,9 +4744,6 @@ mod tests {
         );
     }
 
-    /// Imports the declared algebra owner with a stand-in composer that
-    /// accepts only the staged committed bytes, then has the validator check
-    /// the staged copy, reopen record and journaled composer runs.
     #[test]
     fn imported_owner_is_staged_reopened_journaled_and_independently_validated() {
         use std::os::unix::fs::PermissionsExt;
@@ -4871,10 +4861,6 @@ mod tests {
         );
     }
 
-    /// The validator reconstructs the typed encodings the driver and children
-    /// hash from the sorted-key values checkpoints and journals store, and
-    /// encodes floats and decision reasons as serde does. A campaign stage's
-    /// validation depends on each of these agreeing byte for byte.
     #[test]
     fn validator_reproduces_the_rust_encodings_it_binds() {
         use tuning_campaign_support::statistics::DecisionReason;

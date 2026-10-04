@@ -49,9 +49,7 @@ fn invalid(message: impl ToString) -> io::Error {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum PairPosition {
-    /// The pair's baseline arm.
     Baseline,
-    /// The pair's candidate arm.
     Candidate,
     /// The non-timed position: the arm performs one untimed dispatch and
     /// reports no timing window. Only [`smoke`] builds a request in it; a
@@ -538,11 +536,7 @@ pub fn validate_cell(
 ///
 /// It is non-timed by construction: the request carries no timing window, the
 /// smoke takes no host lock, opens no family ledger, writes no receipt, and
-/// emits no timing sample. It fails, naming the cell and the arm, when an arm
-/// reports a timing window, exits other than cleanly, writes something other
-/// than one canonical result line, applies another cache state or reports no
-/// route provenance; a plan cell the addendum does not declare fails before any
-/// arm runs.
+/// emits no timing sample. It fails on every defect [`validate_cell`] names.
 ///
 /// This entry point writes nothing.
 /// `benchmark-ab-runner smoke <plan> --stage <dir>` drives the same validation

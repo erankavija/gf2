@@ -179,7 +179,6 @@ fn read_cpu_list(path: &Path) -> io::Result<Vec<u32>> {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LogicalCpu {
-    /// The logical CPU identifier.
     pub cpu: u32,
     /// The physical core identifier within the package.
     pub core_id: u32,
@@ -424,7 +423,6 @@ fn sorted(mut cpus: Vec<u32>) -> Result<Vec<u32>, String> {
 pub struct HostObservation {
     /// UTC timestamp at which this observation was collected.
     pub observed_utc: String,
-    /// Runtime hostname.
     pub hostname: String,
     /// CPU model string from `/proc/cpuinfo`.
     pub cpu_model: String,
@@ -438,7 +436,6 @@ pub struct HostObservation {
     pub smt_active: Option<bool>,
     /// Current process affinity.
     pub affinity: CpuAffinity,
-    /// Runtime CPU topology.
     pub topology: CpuTopology,
     /// The first three fields of `/proc/loadavg`.
     pub load_average: [f64; 3],

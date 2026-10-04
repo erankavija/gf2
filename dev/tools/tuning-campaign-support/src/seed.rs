@@ -1,8 +1,8 @@
 //! Deterministic fixture seed derivation.
 
-/// Root for the a835 extent fixture streams.
+/// Root for the extent fixture streams.
 pub const EXTENT_SEED_ROOT: u64 = 0x5ecc_9bf8_0000_0000;
-/// Stable name of the retained mixer.
+/// Stable name of the [`fixture_seed`] mixer.
 pub const SEED_DERIVATION: &str = "gf2-calibration-seed-v1";
 
 /// Adds a fixture bank to a role in the protocol's reserved high bits.

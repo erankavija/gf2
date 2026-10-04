@@ -1,12 +1,6 @@
 //! Crate-neutral mechanics shared by tuning campaign producers and by the
-//! Zen 3 benchmark protocol tooling.
-//!
-//! This development-only crate deliberately knows nothing about gf2 selector
-//! types or installation. Owner crates retain all tuning policy and semantic
-//! validation; this crate supplies the byte framing, the arm wire and its
-//! non-timed smoke, timing, deterministic seed, empirical selection, journal,
-//! checkpoint, host-observation, process and paired A/B statistics primitives
-//! around it.
+//! Zen 3 benchmark protocol tooling. Owner crates hold all tuning policy and
+//! semantic validation; this crate depends on no gf2 selector type.
 
 #![forbid(unsafe_code)]
 
@@ -29,5 +23,4 @@ pub mod transport;
 #[cfg(feature = "test-support")]
 pub mod scratch;
 
-/// Versioned-protocol append-only family attempt ledger.
 pub mod trial_ledger;
