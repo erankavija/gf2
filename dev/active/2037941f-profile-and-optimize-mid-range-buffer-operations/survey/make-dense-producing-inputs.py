@@ -8,8 +8,14 @@ that no longer enumerates its own tree.
 import argparse
 import json
 import pathlib
+import subprocess
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+ROOT = pathlib.Path(
+    subprocess.run(
+        ["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "--show-toplevel"],
+        capture_output=True, check=True, text=True,
+    ).stdout.strip()
+)
 STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
 SURVEY = STORY / "survey"
 HARNESS = SURVEY / "dense-harness"
@@ -36,7 +42,11 @@ def closure():
     # crates' sources plus the harness that calls them, the C shim that reaches
     # the external comparator's public coordinates, and the shared campaign
     # support that times them.
-    lifecycle = [str(SURVEY / "run-dense-harness.sh"), "dev/scripts/ccx1-bench-flock.sh"]
+    lifecycle = [
+        str(SURVEY / "run-dense-harness.sh"),
+        str(SURVEY / "repo_artifacts.py"),
+        "dev/scripts/ccx1-bench-flock.sh",
+    ]
     lifecycle += files_under(SUPPORT)
     behavior = sorted(
         set(

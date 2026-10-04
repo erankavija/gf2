@@ -9,7 +9,13 @@ import unittest
 
 
 SOURCE = Path(os.environ.get("DENSE_LAUNCHER_SOURCE", Path(__file__).with_name("run-dense-harness.sh")))
-SURVEY = Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey")
+# The launcher's directory relative to its checkout, which the fixture mirrors.
+SURVEY = SOURCE.resolve().parent.relative_to(
+    subprocess.run(
+        ["git", "-C", str(SOURCE.resolve().parent), "rev-parse", "--show-toplevel"],
+        capture_output=True, check=True, text=True,
+    ).stdout.strip()
+)
 
 
 def fixture_launcher(root):
@@ -25,6 +31,8 @@ def fixture_launcher(root):
     assert script.count(stop) == 1
     script = script.replace(stop, '    } >>"${launch}"\n    exit 0', 1)
 
+    # The launcher resolves its root through git, so the fixture is a checkout.
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
     launcher = root / SURVEY / "run-dense-harness.sh"
     launcher.parent.mkdir(parents=True)
     launcher.write_text(script)

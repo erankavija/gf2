@@ -3,15 +3,15 @@
 
 import hashlib
 import json
-import pathlib
 import sys
 
-from resolution_rule import ROOT, accepted_pilot, ceiling as family_ceiling, half_widths, rounded
+from repo_artifacts import ROOT, addendum as campaign_addendum, receipt, tracked
+from resolution_rule import accepted_pilot, ceiling as family_ceiling, half_widths, rounded
 
-STORY = pathlib.Path("dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations")
-PILOT = pathlib.Path("dev/bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot")
-ADDENDUM = STORY / "campaigns/logical-isal-base-gap.json"
-RULES = STORY / "logical-buffer-addendum.md"
+CAMPAIGN = "v4-r1-2037941f-logical-isal-base-gap"
+PILOT = receipt(CAMPAIGN)
+ADDENDUM = campaign_addendum(CAMPAIGN)
+RULES = tracked("logical-buffer-addendum.md")
 
 
 def main() -> None:
