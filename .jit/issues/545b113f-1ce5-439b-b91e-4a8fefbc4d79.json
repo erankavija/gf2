@@ -45,6 +45,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/030496bd-sweep-completion.md"
     }
   ],
+  "done_at": "2026-10-04T13:13:56.598118329Z",
   "first_ready_at": "2026-10-04T11:44:36.284012118Z",
   "gates_required": [
     "cargo-ci",
@@ -55,22 +56,22 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-10-04T12:37:25.676603405Z",
+      "updated_at": "2026-10-04T13:08:05.759743719Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T12:40:56.979118855Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T13:13:36.861992935Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T12:42:44.772986644Z",
+      "updated_at": "2026-10-04T13:12:52.499925196Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
       "status": "passed",
-      "updated_at": "2026-10-04T12:38:37.721927876Z",
+      "updated_at": "2026-10-04T13:09:18.197048011Z",
       "updated_by": "auto:executor"
     }
   },
@@ -82,7 +83,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Reduce multi-section module docs to the comment contract",
-  "updated_at": "2026-10-04T12:42:44.772986644Z"
+  "updated_at": "2026-10-04T13:13:56.598118329Z"
 }

@@ -405,7 +405,7 @@
      "short_id": "3fd3db5e",
      "title": "Locate BCH receipt-renderer inputs through the configured repository root",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "01c20b61-4dce-4437-baab-9c9d03d1d2c1",
@@ -735,7 +735,7 @@
      "short_id": "545b113f",
      "title": "Reduce multi-section module docs to the comment contract",
      "classification": "documentation",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "ffc35b8c-5f2a-4a37-8eef-905b362b615d",
@@ -1675,7 +1675,7 @@
   {
    "issue": "56378e82",
    "finding": "~40 source comments and crate docs cite 'CLAUDE.md §<section>' sections that AGENTS.md does not contain (one tracked in 12907582-drift-preaudit.md:77).",
-   "disposition": "subject of REQ-17/12907582 and the tersification sweep; verify closed before story/epic gates"
+   "disposition": "resolved: no CLAUDE.md or AGENTS.md section citation remains in Rust sources (scan 2026-10-04)"
   },
   {
    "issue": "2ff9953a",
@@ -1685,12 +1685,12 @@
   {
    "issue": "12907582",
    "finding": "Uncited feasibility/timing text not added by 12907582 remains in gf2-algebra: '~600 years'/'infeasible' (bipedal3_multiword.rs, bipedal5.rs:450, reference.rs:28), permanent_demo.rs:5 'headline speedup numbers' + dev/ CSV path, #[ignore ... (≈ 5 s)] in bipedal3.rs, narrowing narration bipedal3.rs:21,118.",
-   "disposition": "sweep units 3aef9e33/57436474 (REQ-17)"
+   "disposition": "resolved: the feasibility and timing text is absent from Rust comments (scan 2026-10-04)"
   },
   {
    "issue": "8b42d23b",
    "finding": "gf2-core lib.rs:1 'High-Performance' title and lib.rs:23 accessor-only crate example (doc-review advisory).",
-   "disposition": "audit fca578b1 / sweep (REQ-07, REQ-17)"
+   "disposition": "resolved: gf2-core lib.rs title and example changed by the sweep"
   },
   {
    "issue": "deda0962",
@@ -1765,7 +1765,7 @@
   {
    "issue": "ffc35b8c",
    "finding": "42 module docs under crates/ exceed twelve lines; bch/encode.rs (189 lines, eight sections), gfpn/quotient.rs, bch/spec.rs, kernels-simd bch_encode.rs, bch/mod.rs and io/field_matrix.rs hold walk-throughs and surveys. Story REQ-21 names module docs.",
-   "disposition": "filed 545b113f under ffc35b8c; must close before the story gate"
+   "disposition": "resolved: 545b113f done; every module doc is one orientation paragraph plus headed sections"
   }
  ],
  "notes": [
@@ -1800,7 +1800,8 @@
   "Session 6 (2026-10-04): wave E merged (70fea53e9, 4e6327377). Fix lane 5 (39a68b205) and fix lane 6 (merge 'second wave 8 review fix lane') reworked the wave D and E review findings; cargo-ci passed on each merged tree and was reused with evaluate-many. Done with all gates passed: 8f451167, c6aa0e84, f2064e90, aa0558c1, 72768e37, eba21481, 50201002, 554c2935. 13dfe1a5 is the only open sweep unit: doc-review passes, code-review fails on four pub-helper docs after rework 2 of 2 (open escalation). 030496bd, ffc35b8c and every later wave wait on it. The binding rule pair that passed five units: a doc on a private item that echoes its name is deleted; a pub item keeps one line that states something the name and signature do not. Each unit's planned-work audit (every deleted comment line of every tagged commit, matched to tracker ids named in a commit body) is in the fix-lane commit bodies 2d0ef6c17, 3925d9b08, eab90716f, 2b1d4dc55, 0f5e71c7f, 612d4e93e. 554c2935: record rewritten to the current state (2223efcc3); the generator gained section 5 (key to citing files for address-only works); three gf2-core bench headers lost a SageMath2026 key that did not match the script's recorded version (lead commit tagged jit:eba21481); scripts/sage_benchmarks.py:298 hard-codes sage_version 10.7 in its output. Lead commit a747d0fdc removed the scipy routine name from tests/channel_capacity.rs. For the 030496bd record: sweep-pattern comment hits in crates/ are five lines of gf2-sim/src/executor/topology.rs where 'wave' is scheduler vocabulary; narration in string literals is tracked by de0528d2. Worker-reported, unfiled: pub items that never had Rustdoc (BaselineCellResult fields, six pub fn run() in gf2-sim binaries, 15 items in gf2-coding tests); gfp/mod.rs:63 calls the const-assertion failure of Fp<P> a construction panic. Any later edit to Rust comments shifts the line numbers in 554c2935-citation-map.txt: rerun the record's command and commit the output before the ffc35b8c story gate.",
   "Session 7 (2026-10-04): owner interviewed on the open points; rulings are in escalations. Wave 8 gains 157c305c (pulled in) and 4b8cebcf (new); they and rework 3 of 13dfe1a5 run before the 030496bd census. Owner instruction for this session: subagent model by task difficulty, no fable; watch net-negative line change; review the documentation invariants rigorously.",
   "Session 7: wave 8 closed (13dfe1a5 rework 3, 157c305c, 4b8cebcf, 3783c4c8; merges 05c8002f0, e6f9381e9, 05fb3c877 and the 4b8cebcf merge; cargo-ci forced once at 9c1a6662d). Owner instruction 2026-10-04 (standing): never stop to ask; an issue needing owner input is blocked and its question recorded in escalations; write the handoff after waves 8 and 9 finish or when only owner-blocked work remains; check workers every 30 min. 157c305c finding: the earlier doc reason (atanh divergence) was false, Llr::boxplus_n clamps the tanh product; a probe found identical decoding with an infinite filler prior, so whether FILLER_LLR must be finite is unsettled (variable_node_update at ldpc/core.rs:746 could give NaN on a min-sum check with all other inputs infinite; unproven). Out-of-scope narration in string literals at examples/dvb_t2_ldpc_basic.rs:23-36 belongs to de0528d2.",
-  "Session 7 end: wave 9 closed (030496bd, all gates passed first run; merge of worktree-agent-030496bd without rebase because the record's measured commit 1078dc1a5 is on that branch). Wave 10 is 545b113f, then the ffc35b8c story gate. 545b113f REQ-05 regenerates the 030496bd outputs. Scan command for long module docs is in handoff-6.md."
+  "Session 7 end: wave 9 closed (030496bd, all gates passed first run; merge of worktree-agent-030496bd without rebase because the record's measured commit 1078dc1a5 is on that branch). Wave 10 is 545b113f, then the ffc35b8c story gate. 545b113f REQ-05 regenerates the 030496bd outputs. Scan command for long module docs is in handoff-6.md.",
+  "Session 8 (2026-10-04): owner rulings applied (3fd3db5e and 7dbcde0c REQ-01 amended, DEC-01 each; exception recorded on 1a8f6acd). Wave 10: 545b113f split by crate; code-review round 1 failed because the lead had workers restore title lines; the reviewer reads title line + overview paragraph as two paragraphs. Round 2 merged titles into one orientation paragraph across all crates and dev/tools (211 files, 859 insertions, 1659 deletions against 808f03aeb) and passed. 3fd3db5e done after one fix of the baseline record's source commit."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
