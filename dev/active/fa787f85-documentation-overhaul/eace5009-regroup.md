@@ -20,7 +20,7 @@ the owners' single applicable `epic:` label.
 | 8b3fe657 | 8b3fe657 | 86b9c719 (1), b4b4b9ee (1) | L: `epic:tech-debt-2026-06-30` | `b4b4b9ee-tech-debt-2026-06-30/8b3fe657/` | moved |
 | aabc528a | aabc528a | 86b9c719 (1), b4b4b9ee (1) | L: `epic:tech-debt-2026-06-30` | `b4b4b9ee-tech-debt-2026-06-30/aabc528a/` | moved |
 | 64fd3afd | 64fd3afd, 94597a51, b1bd75ca | 86b9c719 (3), ae03bcd0 (3) | L: `epic:general-bch` | `ae03bcd0-general-bch/64fd3afd/` | moved |
-| 4e732b56 | 4e732b56 | 86b9c719 (18), ae03bcd0 (18) | L: `epic:general-bch` | `ae03bcd0-general-bch/4e732b56/` | left: six manifest `consumers` rows, each a directory-depth path to the repository root or to `crates/` (`Makefile:10`, `fetch-build.sh:20`, `run-survey.sh:25`, `gf2-side/Cargo.toml:16-17`, `verify-generator-matrices.py:29`, `verify-generators.py:27`) |
+| 4e732b56 | 4e732b56 | 86b9c719 (18), ae03bcd0 (18) | L: `epic:general-bch` | `ae03bcd0-general-bch/4e732b56/` | left: six manifest `consumers` rows (table below) |
 | 02b8137c, 3f664839, d1b4f85e, 591a1c5e, fd9d5416 | — | — | — | — | left: excluded by the issue description |
 | 220cab0b, 389aa4de, 3fa7c9d0 | — | 6dc81018, 86b9c719 | — | manifest epic 6dc81018 | left: scope of 616e1d7c |
 | 3be770d5, c077a88b, f547c394 | — | 1a379447, d77176e5 | — | manifest epic 1a379447 | left: scope of 4f161183 and its exclusions |
@@ -41,12 +41,73 @@ script, so REQ-06 has no edit.
 | Mechanical check | `python3 contrib/gates/docs-mechanical.py` | PASS, 0 findings | links and anchors of `dev/active/**/*.md` |
 | Manifest | `python3 dev/active/fa787f85-documentation-overhaul/migration/check.py` | exit 0; ten rows complete | source absent and destination present for each moved row |
 
+## Left in place, reported for decoupling
+
+Paths are relative to `dev/active/4e732b56/baseline-survey/`. Each consumer is a
+depth-dependent path under `no-dev-path-coupling`: it holds at the entry's
+current depth and at no other.
+
+| Entry | Consumer | Construct | Decoupling under `no-dev-path-coupling` |
+|---|---|---|---|
+| 4e732b56 | `Makefile:10` | `$(CURDIR)/../../../../.agents/ext` | `EXT` derives from one runtime-resolved repository root |
+| 4e732b56 | `fetch-build.sh:20` | `${HERE}/../../../..` | `REPO` is the runtime-resolved repository root |
+| 4e732b56 | `run-survey.sh:25` | `${HERE}/../../../..` | `REPO` is the runtime-resolved repository root |
+| 4e732b56 | `gf2-side/Cargo.toml:16-17` | `path = "../../../../../crates/gf2-coding"`, `.../gf2-core` | the two path dependencies resolve independently of the directory depth |
+| 4e732b56 | `verify-generator-matrices.py:29` | `pathlib.Path(__file__).resolve().parents[4]` | `REPO` is the runtime-resolved repository root |
+| 4e732b56 | `verify-generators.py:27` | `pathlib.Path(__file__).resolve().parents[4]` | `REPO` is the runtime-resolved repository root |
+
+`make-receipt.py:264-266` prints three literals of the entry's own directory;
+they are REQ-06 edits of the move.
+
+## Byte-stable receipts with unresolved links
+
+These three receipts are byte-stable under REQ-03, and their seven inline links
+to the flat 0de41c82 paths do not resolve.
+`dev/active/b8206228-permanent-statistics/receipt-inventory.md` cites the
+SHA-256 digests of `dev/studies/6c7fcb38/receipts.md` and
+`dev/studies/91605d4d/receipts.md`.
+
+| Location | Link target |
+|---|---|
+| `dev/studies/6c7fcb38/receipts.md:970` | `../../active/0de41c82/plan.md` |
+| `dev/studies/6c7fcb38/receipts.md:1036` | `../../active/0de41c82/investigation.md` |
+| `dev/studies/6c7fcb38/receipts.md:2094` | `../../active/0de41c82/plan.md` |
+| `dev/studies/91605d4d/receipts.md:908` | `../../active/0de41c82/plan.md` |
+| `dev/studies/91605d4d/receipts.md:1449` | `../../active/0de41c82/plan.md` |
+| `dev/studies/a9284086/receipt.md:714` | `../../active/0de41c82/plan.md` |
+| `dev/studies/a9284086/receipt.md:717` | `../../active/0de41c82/investigation.md` |
+
+Tracker link check, measured with `jit doc check-links --scope <scope>`:
+
+| Checkout | Scope | Result |
+|---|---|---|
+| main at `a1f2e4f45` | `all` | summary 42 error(s); 103 error lines: 58 `broken_link`, 26 `missing_asset`, 19 `unreachable_url`; no line names the three receipts |
+| branch at `ec71b73d8` | `all` | six `missing_asset` lines name the three receipts, two each |
+| branch | `issue:6c7fcb38` | 3 `broken_link` |
+| branch | `issue:91605d4d` | 2 `broken_link` |
+| branch | `issue:a9284086` | 2 `broken_link` |
+
+The branch `all` run also reports the tracker references that
+`eace5009-relink.sh` repoints and `target/doc` links absent from the worktree,
+so its summary count is not a measure of the receipts.
+
+## Repointed study documents
+
+`dev/studies/0dffa759/findings.md` and
+`dev/studies/0dffa759/req08-amendment-draft.md` are in scope because each links
+a moved 0de41c82 file and no digest pins either.
+
+| Evidence | Command | Result |
+|---|---|---|
+| Manifest | `digest_pinned` of both rows | `false` |
+| Digest citation | `git grep -l <sha256 of the file at 98e238917> 98e238917 -- .` with `b751a65181c19a7d12cb6411504395793df77f53e16283b1cdb515b807e5483b` (findings) and `8cd7cf0e149230d029f596921490e9e4a31189f9e3c4a660a7ec0a3900bd285f` (draft) | no file |
+
 ## Citations that keep the source path
 
 | File | Citations | Reason |
 |---|---|---|
-| `dev/studies/6c7fcb38/receipts.md`, `dev/studies/91605d4d/receipts.md`, `dev/studies/a9284086/receipt.md` | 7 inline links into 0de41c82 | receipts keep their bytes; the links are unresolved, and `jit doc check-links` reports them as `broken_link` for 6c7fcb38, 91605d4d and a9284086 |
-| `dev/active/6dc81018-field-capability-dispatch/investigation.md:524-525` | 2 code spans of 0de41c82 | branch `worktree-agent-103a792a` carries an unmerged commit on the file |
+| the three receipts above | 7 inline links into 0de41c82 | byte-stable under REQ-03 |
+| `dev/active/6dc81018-field-capability-dispatch/investigation.md:524-525` | 2 code spans of 0de41c82 | main changed the adjoining line 523 after `98e238917`; the repoint on this branch conflicts in the merge (`git merge-tree --write-tree main <commit>` exits 1), and `target/eace5009-post-merge.sh` applies it on main |
 | `dev/active/ae03bcd0-general-bch/progress.json` | 2 strings of 64fd3afd | JSON state of the session working on ae03bcd0 |
 | `dev/active/f547c394/research-r3-sweeps.json`, `research-r3-sweep-resolutions.md` | citations of 64fd3afd | sweep output of an excluded code-pinned entry |
 | `dev/active/b8206228-permanent-statistics/0de41c82/breakdown.json` | 24 strings | breakdown manifest; each names a planned output that does not exist |
