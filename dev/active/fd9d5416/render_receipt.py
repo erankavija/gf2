@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Render the jit:fd9d5416 BCH performance receipt from one window run.
 
-Reads the run directory `dev/active/d1b4f85e/run.sh` writes (`host.txt`,
-`logs/<bench>-criterion.txt`, `dispatch.jsonl`, and the Criterion
+Reads the run directory the BCH workload window script `run.sh` writes
+(`host.txt`, `logs/<bench>-criterion.txt`, `dispatch.jsonl`, and the Criterion
 `benchmark.json`/`estimates.json`/`sample.json` triples under `samples/`),
-the pinned pre-cutover baseline run (`dev/bench_results/88ca7d2f/`), and the
-committed external-baseline survey CSVs (`dev/bench_results/4e732b56/`), and
-prints the receipt markdown to stdout. Every figure is computed from those
-files at render time; the protocol it applies is
-`dev/active/fd9d5416/receipt-protocol.md`.
+the pinned pre-cutover baseline run, and the committed external-baseline
+survey CSVs, and prints the receipt markdown to stdout. Every figure is
+computed from those files at render time; the protocol it applies is
+`receipt-protocol.md` beside this file.
+
+The baseline and survey directories default to the directories of their
+receipts, which the repository-file helper finds by file name and opening line
+under the git work tree holding this file.
 
 Usage:
   render_receipt.py <run-dir> [--baseline-dir DIR] [--survey-dir DIR]
@@ -30,8 +33,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
 ISSUE = "fd9d5416"
+
+# Committed inputs, each identified by file-name glob and opening line.
+BASELINE_RECEIPT = ("*-precutover-bch-baseline.md", "# Receipt: pre-cutover BCH throughput baseline (jit:88ca7d2f)\n")
+SURVEY_RECEIPT = ("*-survey-receipt.md", "# Receipt: external-baseline survey for BCH encoding and generator-matrix materialization\n")
+TIER_A_MAPPING = ("smoke-run.md", "# BCH bench smoke run (591a1c5e)\n")
 
 # Protocol constants: plan.md `evidence-protocol` (resamples, confidence,
 # threshold) and receipt-protocol.md (statistic, seed).
@@ -42,7 +49,7 @@ BOOTSTRAP_SEED = 0xAE03BCD0
 
 BENCH_LABELS = ("batch_operations", "bch_parallel", "bch_encode_w1", "bch_genmatrix")
 
-# Tier A: the pinned pre-cutover receipt, mapped by dev/active/591a1c5e/smoke-run.md.
+# Tier A: the pinned pre-cutover receipt, mapped by the `TIER_A_MAPPING` document.
 TIER_A_KEPT = (
     "bch_batch_decode/1",
     "bch_batch_decode/10",
@@ -81,6 +88,36 @@ W2_EXTERNAL = (("m4ri", "genmatrix-rref"), ("aff3ct", "basis-encode-pack"))
 
 class InputError(Exception):
     pass
+
+
+# ---------------------------------------------------------------- locating
+
+
+def git_output(*args: str) -> str:
+    return subprocess.run(["git", *args], stdout=subprocess.PIPE, check=True, text=True).stdout.strip()
+
+
+SELF = Path(__file__).resolve()
+REPO_ROOT = Path(git_output("-C", str(SELF.parent), "rev-parse", "--show-toplevel"))
+
+
+def located(name: str, opening: str) -> Path:
+    """Root-relative path the repository-file helper prints for the document."""
+    helper = git_output("-C", str(REPO_ROOT), "ls-files", "--cached", "--others", "--exclude-standard",
+                        "--", ":(glob)**/repository_files.py")
+    printed = subprocess.run([sys.executable, "-B", str(REPO_ROOT / helper), "document", name, opening],
+                             stdout=subprocess.PIPE, text=True)
+    if printed.returncode != 0:
+        raise InputError(f"no unique {name} opening with {opening!r}")
+    return Path(printed.stdout.strip())
+
+
+def default_baseline_dir() -> Path:
+    return (REPO_ROOT / located(*BASELINE_RECEIPT)).parent
+
+
+def default_survey_dir() -> Path:
+    return (REPO_ROOT / located(*SURVEY_RECEIPT)).parent
 
 
 # ----------------------------------------------------------------- reading
@@ -265,8 +302,9 @@ def render(run_dir: Path, baseline_dir: Path, survey_dir: Path) -> tuple[list[st
 
     w(f"# Receipt: BCH performance after the cutover (jit:{ISSUE})")
     w("")
-    w("Rendered by `dev/active/fd9d5416/render_receipt.py` under "
-      "`dev/active/fd9d5416/receipt-protocol.md`; every figure is computed at "
+    renderer = SELF.relative_to(REPO_ROOT)
+    w(f"Rendered by `{renderer}` under "
+      f"`{renderer.with_name('receipt-protocol.md')}`; every figure is computed at "
       "render time from the files listed under *Pinned inputs*.")
     w("")
     out += table(["Field", "Value"], [
@@ -299,7 +337,7 @@ def render(run_dir: Path, baseline_dir: Path, survey_dir: Path) -> tuple[list[st
     # ------------------------------------------------ non-regression, tier A
     w("## REQ-01 non-regression against the pinned pre-cutover receipt (`88ca7d2f`)")
     w("")
-    w("Cell mapping: `dev/active/591a1c5e/smoke-run.md`. Ratio is throughput "
+    w(f"Cell mapping: `{located(*TIER_A_MAPPING)}`. Ratio is throughput "
       "new/baseline = median(baseline)/median(new) over per-iteration times; "
       "*Lower bound* is the one-sided lower 95% bootstrap bound.")
     w("")
@@ -547,11 +585,12 @@ def external_row(label, cands, new, ext, row, batch):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("run_dir", type=Path)
-    ap.add_argument("--baseline-dir", type=Path, default=REPO_ROOT / "dev/bench_results/88ca7d2f")
-    ap.add_argument("--survey-dir", type=Path, default=REPO_ROOT / "dev/bench_results/4e732b56")
+    ap.add_argument("--baseline-dir", type=Path)
+    ap.add_argument("--survey-dir", type=Path)
     args = ap.parse_args()
     try:
-        lines, ok = render(args.run_dir, args.baseline_dir, args.survey_dir)
+        lines, ok = render(args.run_dir, args.baseline_dir or default_baseline_dir(),
+                           args.survey_dir or default_survey_dir())
     except (InputError, OSError, KeyError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
