@@ -197,9 +197,6 @@ fn launcher_discovers_complete_publisher_temporary_before_selecting_identity_or_
     launcher_replays_preparation(true);
 }
 
-/// A new campaign names its issue; the launcher refuses an issue without
-/// exactly one declaration content before it creates a stage or builds
-/// anything.
 #[test]
 fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
     let root = scratch("gf2-launcher-declaration");

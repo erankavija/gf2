@@ -93,7 +93,7 @@ pub fn execution_window_start(execution: u64, repetition: u64) -> usize {
     ((execution * WINDOWS + repetition) as usize) & (FIXTURE_BANKS - 1)
 }
 
-/// Calibrates the exact call count with the reviewed doubling protocol.
+/// Doubles a probe until it lasts `min(target, 20 ms)`, then scales its call count to `target`.
 pub fn calibrated_calls(target: Duration, body: &mut impl FnMut(usize)) -> u64 {
     calibrated_calls_with(target, body, |calls, body| time_calls(calls, 0, body))
 }
@@ -150,9 +150,9 @@ pub fn execution_windows_with_progress(
 
 /// Shared mechanics for an explicitly declared/test timing protocol.
 ///
-/// `repetitions` must be in 1..=WINDOWS and `target` must be positive. This
-/// helper satisfies a835 only with exactly WINDOWS repetitions and TARGET;
-/// authoritative campaign callers use `execution_windows_with_progress`.
+/// `repetitions` must be in 1..=WINDOWS and `target` must be positive. Only
+/// WINDOWS repetitions and TARGET form the extent protocol, which
+/// [`execution_windows_with_progress`] runs.
 /// Callbacks execute strictly after their interval and errors stop sampling.
 pub fn execution_windows_configured(
     execution: u64,

@@ -33,16 +33,15 @@ pub const PROGRESS_SCHEMA: &str = "tuning-campaign-progress-v1";
 pub const PROGRESS_PREFIX: &str = "GF2_TUNING_PROGRESS=";
 /// Canonical session descriptor and lifecycle schema.
 pub const LIFECYCLE_SCHEMA: &str = "tuning-campaign-session-v1";
-/// Exact feature set of the a835 measurement build.
+/// Exact feature set of the measurement build.
 pub const FEATURE_CONTRACT: &str = "parallel,simd,tuning-profile,test-support";
 /// Exact inherited Rayon and dedicated-pool measurement contract.
 pub const THREAD_CONTRACT: &str = "RAYON_NUM_THREADS=4;dedicated_pool_width=4";
-/// Exact direct-binary toolchain environment required by a835.
+/// Exact direct-binary toolchain environment.
 pub const TOOLCHAIN_CONTRACT: &str = "1.95.0";
 
 /// The complete declared child environment. Runners use `env_clear()` then
 /// install this map, so inherited agent/tool settings cannot alter a campaign.
-/// An additional variable requires a reviewed protocol/behavior declaration.
 pub fn measurement_environment() -> BTreeMap<String, String> {
     BTreeMap::from([
         (FRESH_CASE_VAR.into(), FRESH_CASE_VALUE.into()),
@@ -1254,7 +1253,7 @@ impl ProcessIdentity {
         Ok(())
     }
 }
-/// Driver-observed death of one previously persisted writer identity. A missing
+/// Driver-observed death of one persisted writer identity. A missing
 /// process, reused PID, or different boot may establish death; uncertainty may not.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -2968,7 +2967,7 @@ pub struct JournalPrefix {
     pub record_count: u64,
 }
 impl JournalPrefix {
-    /// Validates and syncs all currently appended bytes before producing a pin.
+    /// Validates and syncs all appended bytes before producing a pin.
     pub fn sync(log: &mut ExecutionLog, campaign_id: &Token) -> io::Result<Self> {
         let data = log.validated_synced_prefix()?;
         let records = ExecutionLog::validate_prefix(&data, campaign_id.as_str())?;

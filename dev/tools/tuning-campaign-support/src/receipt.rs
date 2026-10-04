@@ -91,7 +91,7 @@ pub struct LockRecord {
     pub lock_path: String,
     pub holder_pid: u32,
     pub observation: String,
-    /// V1/v2 launcher label retained only for historical receipt decoding.
+    /// Launcher label; protocol versions 1 and 2 require it.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub wrapper: String,
 }
@@ -314,7 +314,7 @@ pub struct CellRecord {
     pub checkpoint_sha256: Option<String>,
 }
 
-/// The receipt.
+/// The [`RECEIPT_FILE`] document of one campaign, whose claims [`evaluate`] recomputes.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BenchmarkReceipt {
@@ -848,7 +848,7 @@ fn attempt_violations(attempts: &[CellAttempt]) -> Vec<String> {
     violations
 }
 
-/// Severity of a finding.
+/// Whether a finding rejects the receipt.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Severity {
@@ -858,7 +858,7 @@ pub enum Severity {
     Note,
 }
 
-/// One acceptance finding.
+/// One protocol-rule violation or note the evaluation reports, optionally for one cell.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Finding {
@@ -927,12 +927,7 @@ pub struct CellVerdict {
 /// from the family ledger (e.g. `0.025` on a first attempt,
 /// [`crate::trial_ledger::attempt_alpha`]); `corrected_alpha` is
 /// `attempt_alpha / comparisons`, the Bonferroni-corrected per-comparison
-/// level the bootstrap interval actually uses. A summary produced before
-/// these fields separated reported the attempt allocation under the name
-/// `family_alpha`; `@/issue/c5e01de3` records that the legacy field carried
-/// the attempt budget, not the frozen total, under that name, and that
-/// committed receipts predating this type keep their legacy value and
-/// meaning unchanged.
+/// level the bootstrap interval actually uses.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct FamilySummary {
@@ -1206,7 +1201,6 @@ pub fn evaluate_version(
         }
     }
 
-    // Execution log and sessions.
     let mut announced_before_first_cell = false;
     let mut sessions = 0u32;
     let mut terminal = None;
@@ -1408,7 +1402,6 @@ pub fn evaluate_version(
         }
     }
 
-    // Checkpoints.
     let manifest_path = receipt_dir.join(&receipt.checkpoints.manifest_path);
     let checkpoint_store = (|| -> io::Result<CheckpointStore> {
         if manifest_path.file_name().and_then(|name| name.to_str()) != Some("manifest.json") {
@@ -1457,7 +1450,6 @@ pub fn evaluate_version(
             "saved plan, addendum or checkpoint facts are unavailable",
         ),
     }
-    // Cells.
     let family = addendum.as_ref().map(|addendum| {
         let comparisons = if version >= 2 {
             match receipt
@@ -1722,7 +1714,6 @@ pub fn evaluate_version(
             );
             invalid = true;
         }
-        // Sample budget and structure.
         let settings = &receipt.settings;
         let required_pairs = match cell.role {
             CellRole::Confirmatory | CellRole::Holdout => {
@@ -1925,7 +1916,6 @@ pub fn evaluate_version(
             verdict.flagged_windows =
                 flagged_windows_legacy(&all_windows, settings.flagged_window_factor).unwrap_or(0);
         }
-        // Decoder quality.
         let mut quality_incompatible = false;
         if let Some(declared) = declaration {
             if let Some(decoder) = &declared.decoder {
@@ -2067,7 +2057,6 @@ pub fn evaluate_version(
             verdicts.push(verdict);
             continue;
         }
-        // Statistics.
         let confidence = family
             .as_ref()
             .map(|family| family.per_comparison_confidence)
@@ -2471,8 +2460,8 @@ fn close(left: f64, right: f64) -> bool {
     (left - right).abs() <= 1e-9 * left.abs().max(right.abs()).max(1.0)
 }
 
-/// Preserves the strict v1/v2 boundary while their frozen receipts remain
-/// reproducibly evaluable. Version 3 and later use `abtest::flagged_windows`.
+/// Strict (`>`) flagged-window count of protocol versions 1 and 2; version 3
+/// and later use `abtest::flagged_windows`.
 fn flagged_windows_legacy(
     ns_per_call: &[f64],
     factor: f64,

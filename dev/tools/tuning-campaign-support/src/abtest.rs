@@ -26,17 +26,15 @@ impl fmt::Display for AbError {
 
 impl std::error::Error for AbError {}
 
-/// SplitMix64 stream used to expand one seed into generator state.
+/// SplitMix64 stream (`@/citation/Vigna2015`) used to expand one seed into generator state.
 #[derive(Clone, Debug)]
 pub struct SplitMix64(u64);
 
 impl SplitMix64 {
-    /// Starts the stream at `seed`.
     pub fn new(seed: u64) -> Self {
         Self(seed)
     }
 
-    /// Returns the next 64-bit output.
     pub fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9e37_79b9_7f4a_7c15);
         let mut z = self.0;
@@ -46,7 +44,7 @@ impl SplitMix64 {
     }
 }
 
-/// xoshiro256** generator seeded through SplitMix64.
+/// xoshiro256** generator (`@/citation/BlackmanVigna2021`) seeded through SplitMix64.
 #[derive(Clone, Debug)]
 pub struct Xoshiro256StarStar {
     state: [u64; 4],
@@ -66,7 +64,6 @@ impl Xoshiro256StarStar {
         }
     }
 
-    /// Returns the next 64-bit output.
     pub fn next_u64(&mut self) -> u64 {
         let result = self.state[1].wrapping_mul(5).rotate_left(7).wrapping_mul(9);
         let t = self.state[1] << 17;
@@ -79,7 +76,11 @@ impl Xoshiro256StarStar {
         result
     }
 
-    /// Returns an index in `0..n` from the top 53 bits; `n` must be positive.
+    /// Returns an index in `0..n` from the top 53 bits.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is zero.
     pub fn below(&mut self, n: usize) -> usize {
         assert!(n > 0, "cannot draw below zero");
         let unit = (self.next_u64() >> 11) as f64 / (1u64 << 53) as f64;
@@ -228,11 +229,8 @@ pub fn paired_bootstrap_speedup(
     })
 }
 
-/// Preserves the v1/v2 evaluator's confidence-parameterized interval.
-///
-/// Version 3 callers pass their declared corrected alpha to
-/// [`paired_bootstrap_speedup`]. This compatibility boundary remains only while
-/// committed v1/v2 receipts need reproducible evaluation.
+/// Confidence-parameterized interval of protocol versions 1 and 2; version 3
+/// and later pass their corrected alpha to [`paired_bootstrap_speedup`].
 pub fn paired_bootstrap_speedup_legacy(
     pairs: &[PairedObservation],
     resamples: u32,
@@ -320,7 +318,7 @@ pub fn bonferroni_confidence(family_alpha: f64, comparisons: u32) -> Result<f64,
     Ok(1.0 - family_alpha / f64::from(comparisons))
 }
 
-/// Counts windows slower than `factor` times the execution median. Flagged
+/// Counts windows at least `factor` times the execution median. Flagged
 /// windows are retained; the count is evidence about stability, never a
 /// filter.
 pub fn flagged_windows(ns_per_call: &[f64], factor: f64) -> Result<usize, AbError> {
@@ -416,7 +414,6 @@ mod tests {
 
     #[test]
     fn xoshiro_matches_the_reference_first_output() {
-        // Reference: xoshiro256** seeded with SplitMix64(0) yields these words.
         let mut generator = Xoshiro256StarStar::seed_from_u64(0);
         let first = generator.next_u64();
         let mut again = Xoshiro256StarStar::seed_from_u64(0);
