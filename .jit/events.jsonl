@@ -17825,3 +17825,6 @@
 {"id":"cf05268c-8063-499b-b8c8-b1acb1972d9f","issue_id":"4b8cebcf-924d-495b-b912-dd79f0d4e341","timestamp":"2026-10-04T11:28:56.624652120Z","type":"issue_completed"}
 {"from":"ready","id":"0c98f397-f560-400b-892d-4ca2b089332b","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:30:22.433099431Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"b8ed0fc4-9c9d-418b-8159-daed5e955f38","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:30:22.433099431Z","type":"issue_claimed"}
+{"id":"0ed86144-b960-454f-81e5-3513328f2f86","issue_id":"10a729d3-4d97-4bea-8227-e6a2be852023","priority":"normal","timestamp":"2026-10-04T11:41:20.401498303Z","title":"Divide-and-conquer batch GCD for FieldPoly","type":"issue_created"}
+{"fields":["dependencies"],"id":"6e78870a-aa49-43a2-b283-6c4cdd812836","issue_id":"b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e","timestamp":"2026-10-04T11:41:20.595953338Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["description"],"id":"7327aafe-b701-46a3-998f-13c61fdf712d","issue_id":"10a729d3-4d97-4bea-8227-e6a2be852023","timestamp":"2026-10-04T11:41:38.563782259Z","type":"issue_updated","updated_by":"issue-update"}
