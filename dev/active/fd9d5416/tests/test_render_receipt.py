@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Tests for `dev/active/fd9d5416/render_receipt.py` on a synthetic run.
+"""Tests for `render_receipt.py` on a synthetic run.
 
 The run directory is built in a temporary directory at test time and holds
-test data only: the Criterion IDs come from the committed smoke-run ID lists
-(`dev/active/d1b4f85e/smoke-run.md`, `dev/active/591a1c5e/smoke-run.md`), and
-the sample times are synthetic multiples of the committed baseline and survey
-medians, chosen to drive each verdict. Nothing generated here is committed.
-The baseline and survey inputs are the committed ones.
+test data only: the Criterion IDs come from the two committed smoke-run ID
+lists, and the sample times are synthetic multiples of the committed baseline
+and survey medians, chosen to drive each verdict. Nothing generated here is
+committed. The baseline and survey inputs are the committed ones.
 
-Usage: python3 dev/active/fd9d5416/tests/test_render_receipt.py
+Usage: python3 test_render_receipt.py, from any directory
 """
 from __future__ import annotations
 
@@ -17,16 +16,24 @@ import importlib.util
 import json
 import random
 import re
+import shutil
 import statistics
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[3]
 spec = importlib.util.spec_from_file_location("render_receipt", HERE.parent / "render_receipt.py")
 rr = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rr)
+
+REPO = rr.REPO_ROOT
+BASELINE_DIR, SURVEY_DIR = rr.default_baseline_dir(), rr.default_survey_dir()
+# The smoke run whose ID list covers the W1 and W2 bench targets.
+WORKLOAD_SMOKE_RUN = REPO / rr.located("smoke-run.md", "# BCH workload bench smoke run (d1b4f85e)\n")
+MIGRATED_SMOKE_RUN = REPO / rr.located(*rr.TIER_A_MAPPING)
 
 # `GF2_BENCH=1` cells the d1b4f85e smoke run names in its Outcome section but
 # leaves out of its timing table.
@@ -60,8 +67,8 @@ def smoke_ids(path: Path) -> list[str]:
 
 
 def all_ids() -> list[str]:
-    return (smoke_ids(REPO / "dev/active/d1b4f85e/smoke-run.md") + BENCH_MODE_IDS
-            + [i for i in smoke_ids(REPO / "dev/active/591a1c5e/smoke-run.md") if i.startswith(("bch_batch_decode", "bch_single_vs_batch"))])
+    return (smoke_ids(WORKLOAD_SMOKE_RUN) + BENCH_MODE_IDS
+            + [i for i in smoke_ids(MIGRATED_SMOKE_RUN) if i.startswith(("bch_batch_decode", "bch_single_vs_batch"))])
 
 
 def record_for(cid: str) -> dict | None:
@@ -112,8 +119,8 @@ class Fixture:
         self.dir = root / "run"
         samples = self.dir / "samples"
         (self.dir / "logs").mkdir(parents=True)
-        base = rr.load_criterion(REPO / "dev/bench_results/88ca7d2f/samples")
-        survey, _ = rr.load_survey(REPO / "dev/bench_results/4e732b56")
+        base = rr.load_criterion(BASELINE_DIR / "samples")
+        survey, _ = rr.load_survey(SURVEY_DIR)
         records = []
         for cid in all_ids():
             rec = record_for(cid)
@@ -147,7 +154,7 @@ class Fixture:
         (self.dir / "dispatch.jsonl").write_text("".join(json.dumps(r) + "\n" for r in self.records))
 
     def render(self) -> tuple[str, bool]:
-        lines, ok = rr.render(self.dir, REPO / "dev/bench_results/88ca7d2f", REPO / "dev/bench_results/4e732b56")
+        lines, ok = rr.render(self.dir, BASELINE_DIR, SURVEY_DIR)
         return "\n".join(lines), ok
 
 
@@ -230,6 +237,41 @@ class RenderReceiptTest(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("**GAP**", text)
         self.assertIn(f"Dispatch-record IDs without Criterion output: `{cid}`", text)
+
+
+class InputLocationTest(unittest.TestCase):
+    def test_a_rearranged_repository_renders_from_its_own_inputs(self):
+        """The renderer, the lookup helper, and every committed input sit elsewhere."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        repo = Path(tmp.name) / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+        helper = subprocess.run(
+            ["git", "-C", str(REPO), "ls-files", "--", ":(glob)**/repository_files.py"],
+            capture_output=True, check=True, text=True).stdout.strip()
+        placed = {
+            HERE.parent / "render_receipt.py": "tools/renderer/render_receipt.py",
+            REPO / helper: "lib/repository_files.py",
+            WORKLOAD_SMOKE_RUN: "notes/workloads/smoke-run.md",
+            MIGRATED_SMOKE_RUN: "notes/migrated/smoke-run.md",
+        }
+        for source, target in placed.items():
+            (repo / target).parent.mkdir(parents=True)
+            shutil.copy(source, repo / target)
+        shutil.copytree(BASELINE_DIR, repo / "evidence/baseline")
+        shutil.copytree(SURVEY_DIR, repo / "evidence/nested/survey")
+        fx = Fixture(Path(tmp.name))
+        run = subprocess.run(
+            [sys.executable, "-B", str(repo / "tools/renderer/render_receipt.py"), str(fx.dir)],
+            capture_output=True, text=True, cwd="/")
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn("Rendered by `tools/renderer/render_receipt.py` under "
+                      "`tools/renderer/receipt-protocol.md`", run.stdout)
+        self.assertIn("Cell mapping: `notes/migrated/smoke-run.md`", run.stdout)
+        pinned = run.stdout.split("## Pinned inputs")[1]
+        self.assertIn("| `evidence/baseline/samples/", pinned)
+        self.assertIn("| `evidence/nested/survey/", pinned)
 
 
 if __name__ == "__main__":
