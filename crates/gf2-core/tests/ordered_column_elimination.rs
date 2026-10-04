@@ -1,12 +1,9 @@
-//! Conformance tests for ordered-column elimination over GF(2).
-//!
-//! The suite pins the four observable contracts of
-//! [`gf2_core::alg::rref::ordered_column_elimination`]: preference-ordered basis
-//! selection with a reusable row transform, right-hand-side equivalence under
-//! that transform, deterministic behaviour on rank-deficient, empty, and
-//! rectangular inputs, and rejection of malformed preferences and dimensions.
-//! It also ties the primitive back to the existing RREF semantics under the
-//! natural and reversed column orders.
+//! Conformance tests for [`gf2_core::alg::rref::ordered_column_elimination`]:
+//! preference-ordered basis selection with a reusable row transform,
+//! right-hand-side equivalence under that transform, deterministic behaviour on
+//! rank-deficient, empty and rectangular inputs, rejection of malformed
+//! preferences and dimensions, and agreement with RREF under the natural and
+//! reversed column orders.
 
 use gf2_core::alg::rref::{ordered_column_elimination, rref, OrderedEliminationError};
 use gf2_core::matrix::BitMatrix;
@@ -74,10 +71,6 @@ fn row_space(m: &BitMatrix) -> BitMatrix {
     rref(m, false).reduced
 }
 
-// ---------------------------------------------------------------------------
-// REQ-01: ordered basis selection and applied row transform
-// ---------------------------------------------------------------------------
-
 #[test]
 fn selects_greedy_independent_columns_in_preference_order() {
     // Columns 0 and 2 are equal, column 3 is the sum of columns 0 and 1.
@@ -107,7 +100,6 @@ fn selects_greedy_independent_columns_in_preference_order() {
         "preference order decides which independent columns enter the basis"
     );
 
-    // The selected columns carry the identity of the reduced matrix.
     for (row, &col) in result.selected_cols.iter().enumerate() {
         for other in 0..result.reduced.rows() {
             assert_eq!(
@@ -174,10 +166,6 @@ fn selected_columns_match_the_rank_and_are_preference_ordered() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// REQ-02: right-hand-side transform equivalence
-// ---------------------------------------------------------------------------
-
 #[test]
 fn transformed_system_has_the_same_solutions() {
     for cols in [1usize, 7, 63, 64, 65] {
@@ -218,10 +206,6 @@ fn apply_transform_agrees_with_the_returned_matrix() {
         result.transform.matvec(&b)
     );
 }
-
-// ---------------------------------------------------------------------------
-// REQ-03: rank-deficient, empty, rectangular, and inconsistent inputs
-// ---------------------------------------------------------------------------
 
 #[test]
 fn rank_deficient_input_leaves_zero_rows_below_the_rank() {
@@ -341,10 +325,6 @@ fn every_zero_row_pairs_with_a_consistency_condition() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// REQ-04: malformed preferences and right-hand-side dimensions
-// ---------------------------------------------------------------------------
-
 #[test]
 fn preference_length_mismatch_is_rejected() {
     let a = BitMatrix::identity(3);
@@ -424,10 +404,6 @@ fn errors_describe_themselves() {
     };
     assert!(!error.to_string().is_empty());
 }
-
-// ---------------------------------------------------------------------------
-// REQ-05: agreement with the existing RREF semantics
-// ---------------------------------------------------------------------------
 
 #[test]
 fn natural_order_matches_left_to_right_rref() {

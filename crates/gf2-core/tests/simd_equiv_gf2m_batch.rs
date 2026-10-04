@@ -1,21 +1,7 @@
-//! SIMD-vs-scalar equivalence proptests for the GF(2^m) batch element-wise
-//! multiply/square kernel (jit:ec286cee, kernel C1).
-//!
-//! Compares the AVX2 + VPCLMULQDQ-on-YMM batch path against three scalar
-//! reference strategies:
-//!
-//! 1. **Bit-by-bit shift-and-add** — independent bit-by-bit GF(2^m) reducer
-//!    that the SIMD kernel cannot accidentally agree with.
-//! 2. **`Gf2mField::Mul` per-element** — exercises the existing single-shot
-//!    PCLMULQDQ + Barrett dispatch path; ensures the new batch kernel
-//!    matches the production single-element path that callers already trust.
-//! 3. **Log/exp tables** — a third independent oracle for `m ∈ {8, 16}`
-//!    (table sizes for `m = 32` would exceed reasonable test memory).
-//!
-//! Covers `m ∈ {8, 16, 32}` and a sweep of word-boundary batch lengths
-//! (0, 1, 3, 4, 5, 7, 8, 9, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128,
-//! 129, 255, 256, 257) so the 4-way unroll's tail handler is exercised at
-//! every alignment relative to the YMM-pair lane structure.
+//! SIMD-vs-scalar equivalence for the GF(2^m) batch element-wise multiply
+//! kernel, `m ∈ {8, 16, 32}`, against three independent references:
+//! bit-by-bit shift-and-add, per-element `Gf2mField` multiplication, and
+//! log/exp tables for `m ∈ {8, 16}`; the batch square is checked against it.
 
 #![cfg(feature = "simd")]
 
@@ -30,10 +16,6 @@ use simd_equiv::{assert_simd_matches_scalar, WORD_BOUNDARY_LENGTHS};
 fn gf2m_batch_simd_available() -> bool {
     gf2_core::kernels::simd::maybe_gf2m_batch().is_some()
 }
-
-// ---------------------------------------------------------------------------
-// Reference strategies
-// ---------------------------------------------------------------------------
 
 /// Bit-by-bit GF(2^m) multiplication, independent of every PCLMULQDQ path.
 fn scalar_bitwise_mul(a: u64, b: u64, m: u32, poly: u64) -> u64 {
@@ -93,10 +75,6 @@ impl LogExpOracle {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Boundary tests — explicit lengths from `WORD_BOUNDARY_LENGTHS`.
-// ---------------------------------------------------------------------------
-
 fn run_boundary_test(m: u32, poly: u64) {
     if !gf2m_batch_simd_available() {
         eprintln!("GF(2^m) batch SIMD backend unavailable — skipping batch-mul boundary test");
@@ -124,13 +102,11 @@ fn run_boundary_test(m: u32, poly: u64) {
         batch_mul(&field, &a, &b, &mut got);
 
         for i in 0..len {
-            // Strategy 1: bit-by-bit
             let bitwise = scalar_bitwise_mul(a[i], b[i], m, poly);
             assert_eq!(
                 got[i], bitwise,
                 "bitwise oracle disagrees at m={m}, len={len}, i={i}"
             );
-            // Strategy 2: Gf2mField single-shot
             if a[i] != 0 && b[i] != 0 {
                 let ea = field.element(a[i]);
                 let eb = field.element(b[i]);
@@ -140,7 +116,6 @@ fn run_boundary_test(m: u32, poly: u64) {
                     "Gf2mField single-shot disagrees at m={m}, len={len}, i={i}"
                 );
             }
-            // Strategy 3: log/exp (m ≤ 16)
             if let Some(oracle) = oracle.as_ref() {
                 let log_exp = oracle.mul(a[i], b[i]);
                 assert_eq!(
@@ -167,10 +142,6 @@ fn boundary_lengths_gf2_32() {
     run_boundary_test(32, 0b1_0000_0000_0100_0000_0000_0000_0000_0111);
 }
 
-// ---------------------------------------------------------------------------
-// Proptest equivalence — random batches up to 256 elements, `m ∈ {8, 16, 32}`.
-// ---------------------------------------------------------------------------
-
 /// Build a `(Vec<u64>, Vec<u64>)` strategy for batches up to length `max_len`,
 /// each element pre-masked to `m` bits.
 fn batch_pair_strategy(
@@ -189,7 +160,6 @@ fn batch_pair_strategy(
         proptest::collection::vec(any::<u64>().prop_map(move |v| v & mask), 0..=max_len),
     )
         .prop_map(move |(mut a, mut b)| {
-            // Equalise lengths.
             let n = a.len().min(b.len());
             a.truncate(n);
             b.truncate(n);
@@ -204,7 +174,6 @@ fn proptest_gf2_8_batch_mul_matches_field_single_shot() {
     }
     let field = Gf2mField::new(8, 0b100011101);
     assert_simd_matches_scalar::<(Vec<u64>, Vec<u64>, u32, u64), (), _, _, _>(
-        // Scalar reference: per-element bit-by-bit multiply.
         |input| {
             let (a, b, m, poly) = input;
             let mut out = vec![0u64; a.len()];
@@ -213,7 +182,6 @@ fn proptest_gf2_8_batch_mul_matches_field_single_shot() {
             }
             *a = out;
         },
-        // Candidate: SIMD batch path.
         |input| {
             let (a, b, _m, _poly) = input;
             let mut out = vec![0u64; a.len()];
@@ -273,10 +241,6 @@ fn proptest_gf2_32_batch_mul_matches_field_single_shot() {
         batch_pair_strategy(32, 257),
     );
 }
-
-// ---------------------------------------------------------------------------
-// Square kernel parity — square(a) == mul(a, a) for every supported m.
-// ---------------------------------------------------------------------------
 
 #[test]
 fn square_matches_mul_self_gf2_8() {

@@ -30,12 +30,10 @@ fn test_transpose_roundtrip_dense() {
 
 #[test]
 fn test_column_access_via_transpose() {
-    // Column 3 has (rows 0,2) set.
     let mut m = BitMatrix::zeros(3, 6);
     m.set(0, 3, true);
     m.set(2, 3, true);
     let s = SpBitMatrix::from_dense(&m);
-    // Column 3 via col_iter
     let col3_rows: Vec<_> = s.col_iter(3).into_iter().collect();
     assert_eq!(col3_rows, vec![0, 2]);
 }

@@ -1,23 +1,10 @@
 //! Installed-profile witness for `soa_batch.parallel_min_len` and
-//! `soa_batch.parallel_chunk_len` (jit:fa92608b, rework round 2).
-//!
-//! `tuning::install` resolves the process-wide profile once, so this binary
-//! installs exactly one profile, per `dev/active/7d824b2f/design.md` §4's
-//! "one installed profile per test binary" rule. Both fields are set in the
-//! same installed profile so one process can assert the
-//! `soa_parallel_route` boundary and the chunk-length determinism witness
-//! together, through the public [`BatchExtField`] dispatch entry points.
-//!
-//! The parallel and scalar arms are bit-exact for every valid chunk length
-//! (`crates/gf2-core/src/compute/field.rs` module docs, "V10 execution
-//! policy"), so an output-equality comparison alone is not evidence that the
-//! resolved `parallel_chunk_len` reached the parallel arm — every valid
-//! chunk length produces the same output, and a build that silently took the
-//! scalar arm (e.g. a single-threaded rayon pool) would pass an
-//! equality-only check too. This binary instead reads
-//! [`last_effective_soa_chunk`], a `test-support` hook the parallel arm of
-//! each entry point records itself, directly off production code, and also
-//! confirms a scalar-arm call (below `parallel_min_len`) records nothing.
+//! `soa_batch.parallel_chunk_len` through the public [`BatchExtField`]
+//! dispatch entry points. `tuning::install` resolves once per process, so
+//! this binary installs one profile carrying both fields. The parallel and
+//! scalar arms return equal output for every valid chunk length, so the
+//! binary reads [`last_effective_soa_chunk`], which the parallel arm of each
+//! entry point records, and confirms that a scalar-arm call records nothing.
 
 #[path = "support/core_tuning.rs"]
 mod support;
@@ -117,20 +104,13 @@ support::fresh_tuning_test!(
         "a scalar-arm call (len {scalar_len} < parallel_min_len {INSTALLED_MIN_LEN}) must not record a chunk"
     );
 
-        // Chunk-length determinism witness: lengths at/above the installed
-        // parallel_min_len (so the public dispatcher's route is Parallel),
-        // including lengths that do not evenly divide the installed
-        // parallel_chunk_len = 7, still match direct scalar arithmetic. The
-        // chunk length only repartitions the rayon work; it carries no
-        // correctness meaning, per `@/inv/deterministic-seeded-execution`. Each
-        // call is bracketed by a reset and a `last_effective_soa_chunk` check
-        // proving that call's own parallel arm actually consumed the installed
-        // chunk length, not just that its output happens to be correct.
-        // The dispatcher's thread gate (`rayon::current_num_threads() > 1`) is
-        // GUARANTEED here rather than tolerated: the whole witness loop runs
-        // inside a dedicated two-thread pool, so the parallel arm must execute
-        // and the chunk observations below are unconditional on every supported
-        // configuration.
+        // Lengths at or above the installed `parallel_min_len`, including
+        // ones the installed chunk length does not divide, match direct
+        // scalar arithmetic. Each call is bracketed by a reset and a
+        // `last_effective_soa_chunk` check, so the observation is that
+        // call's own. The loop runs inside a dedicated two-thread pool, which
+        // satisfies the dispatcher's thread gate
+        // (`rayon::current_num_threads() > 1`).
         run_in_dedicated_parallel_pool(2, || {
             for &len in &[
                 INSTALLED_MIN_LEN,

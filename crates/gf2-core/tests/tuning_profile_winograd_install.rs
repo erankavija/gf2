@@ -1,6 +1,5 @@
 //! Winograd route observation under an installed profile below the
 //! conservative `gemm.winograd_min_dim` value.
-//!
 //! The above-default boundary lives in
 //! `tuning_profile_winograd_install_above`, because `tuning::install` is
 //! one-shot per process.

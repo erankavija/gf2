@@ -1,4 +1,4 @@
-//! Tests for BitMatrix matrix-vector multiplication operations.
+//! `BitMatrix` matrix-vector products.
 
 use gf2_core::{BitMatrix, BitVec};
 
@@ -56,7 +56,6 @@ mod matvec_tests {
         m.set(1, 1, true);
         m.set(1, 2, true);
 
-        // x = [1, 1, 0]
         let mut x = BitVec::new();
         x.push_bit(true);
         x.push_bit(true);
@@ -64,9 +63,7 @@ mod matvec_tests {
 
         let y = m.matvec(&x);
         assert_eq!(y.len(), 2);
-        // Row 0: 1*1 ^ 0*1 ^ 1*0 = 1
         assert!(y.get(0));
-        // Row 1: 0*1 ^ 1*1 ^ 1*0 = 1
         assert!(y.get(1));
     }
 
@@ -78,30 +75,25 @@ mod matvec_tests {
         m.set(0, 1, true);
         m.set(0, 2, true);
 
-        // x = [1, 1, 0]
         let mut x = BitVec::new();
         x.push_bit(true);
         x.push_bit(true);
         x.push_bit(false);
 
         let y = m.matvec(&x);
-        // 1 ^ 1 ^ 0 = 0 (XOR cancellation in GF(2))
         assert!(!y.get(0));
 
-        // x = [1, 1, 1]
         let mut x2 = BitVec::new();
         x2.push_bit(true);
         x2.push_bit(true);
         x2.push_bit(true);
 
         let y2 = m.matvec(&x2);
-        // 1 ^ 1 ^ 1 = 1
         assert!(y2.get(0));
     }
 
     #[test]
     fn test_matvec_word_boundary_64() {
-        // Test at 64-bit word boundary
         let m = BitMatrix::identity(64);
         let mut x = BitVec::with_capacity(64);
         for i in 0..64 {
@@ -117,7 +109,6 @@ mod matvec_tests {
 
     #[test]
     fn test_matvec_word_boundary_65() {
-        // Test just over 64-bit word boundary
         let m = BitMatrix::identity(65);
         let mut x = BitVec::with_capacity(65);
         for i in 0..65 {
@@ -141,7 +132,6 @@ mod matvec_tests {
 
     #[test]
     fn test_matvec_matches_sparse() {
-        // Verify dense matvec matches sparse matvec for the same matrix
         use gf2_core::sparse::SpBitMatrix;
 
         let mut m = BitMatrix::zeros(5, 7);
@@ -219,28 +209,20 @@ mod matvec_transpose_tests {
         // Matrix A:
         // [1 0 1]
         // [0 1 1]
-        // A^T:
-        // [1 0]
-        // [0 1]
-        // [1 1]
         let mut m = BitMatrix::zeros(2, 3);
         m.set(0, 0, true);
         m.set(0, 2, true);
         m.set(1, 1, true);
         m.set(1, 2, true);
 
-        // x = [1, 0]
         let mut x = BitVec::new();
         x.push_bit(true);
         x.push_bit(false);
 
         let y = m.matvec_transpose(&x);
         assert_eq!(y.len(), 3);
-        // Col 0 of A (row 0 of A^T): [1, 0] · [1, 0] = 1
         assert!(y.get(0));
-        // Col 1 of A (row 1 of A^T): [0, 1] · [1, 0] = 0
         assert!(!y.get(1));
-        // Col 2 of A (row 2 of A^T): [1, 1] · [1, 0] = 1
         assert!(y.get(2));
     }
 
@@ -250,13 +232,11 @@ mod matvec_transpose_tests {
         // [1]
         // [1]
         // [1]
-        // A^T = [1 1 1]
         let mut m = BitMatrix::zeros(3, 1);
         m.set(0, 0, true);
         m.set(1, 0, true);
         m.set(2, 0, true);
 
-        // x = [1, 1, 0]
         let mut x = BitVec::new();
         x.push_bit(true);
         x.push_bit(true);
@@ -264,7 +244,6 @@ mod matvec_transpose_tests {
 
         let y = m.matvec_transpose(&x);
         assert_eq!(y.len(), 1);
-        // 1 ^ 1 ^ 0 = 0
         assert!(!y.get(0));
     }
 
@@ -338,7 +317,6 @@ mod matvec_transpose_tests {
 
     #[test]
     fn test_matvec_transpose_relationship() {
-        // Verify that A^T × x is transpose of A × x when x is a row pattern
         let mut m = BitMatrix::zeros(3, 5);
         m.set(0, 1, true);
         m.set(0, 4, true);
@@ -358,7 +336,6 @@ mod matvec_transpose_tests {
         }
         let y2 = m.matvec_transpose(&x2);
 
-        // This tests the relationship holds for specific vector patterns
         assert_eq!(y1.len(), 3);
         assert_eq!(y2.len(), 5);
     }

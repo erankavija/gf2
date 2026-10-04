@@ -1,34 +1,7 @@
-//! Shared conformance suite for the GF(2^8) cached-product-table axpy lane.
-//!
-//! Every path a GF(2^8) fused multiply-add can take runs the same cases here:
-//! the cached-table lane that
-//! `gf2_core::gf2m::byte_table::gf256_table_dispatch` selects for the
-//! runtime-context `Gf2mElement` and for the single-word `Gf2mWide<1, Cfg>`,
-//! and the scalar element loop `FieldVec::axpy` runs when that dispatch
-//! declines. The suite is the behavioural contract the two lanes hold in
-//! common, so a new representation or a new caller joins it rather than
-//! growing a private test.
-//!
-//! # Oracle
-//!
-//! The reference is the scalar lane itself, reached through the process-global
-//! force switch [`force_scalar_gf256_table`]: both lanes are offered identical
-//! operands through the public [`FieldVec::axpy`] entry point and must produce
-//! identical vectors. The table's own entries are checked against an
-//! independent schoolbook oracle in the `gf2m::byte_table` unit tests; this
-//! suite checks the consumer.
-//!
-//! # Coverage
-//!
-//! Coefficients 0 through 255 over both the 0x11B and the 0x11D reduction
-//! polynomial, and every irreducible degree-8 modulus the crate's own Rabin
-//! test admits. Lengths are 0, 1, 63, 64, 65 and 137 — an odd length above the
-//! kernel's eight-element unrolling — each shifted by every offset 0 through
-//! 7, so every residue of the unrolling is covered. Byte offsets *within* a
-//! buffer are a property of the region kernel, which a `FieldVec` cannot
-//! express because it always owns its whole buffer; the `gf2m::byte_table`
-//! unit tests drive the kernel at every source and destination byte offset 0
-//! through 7 directly.
+//! Shared conformance suite for the GF(2^8) cached-product-table axpy lane:
+//! through the public [`FieldVec::axpy`], the cached-table lane for
+//! `Gf2mElement` and single-word `Gf2mWide<1, Cfg>` must agree with the scalar
+//! element loop reached through [`force_scalar_gf256_table`].
 
 #![cfg(feature = "test-support")]
 
@@ -41,18 +14,10 @@ use gf2_core::gf2m::{
     Gf2mWide, Gf2mWideConfig, GF256_SCALAR_LANE, GF256_TABLE_LANE,
 };
 
-/// Serialises `force_scalar_gf256_table` toggle-and-observe critical sections
-/// across this binary's concurrently-scheduled test threads.
-///
-/// The override is a single process-wide `AtomicBool`: every lane computes the
-/// same bytes, so the override never corrupts a result, but a test that
-/// asserts *which* lane [`last_gf256_table_lane`] reports can observe another
-/// thread's toggle mid-section under the default multi-threaded `cargo test`
-/// harness. Every function here that forces the scalar lane or asserts an
-/// un-forced lane holds this lock for its whole
-/// toggle-execute-observe-restore section, the convention
-/// `prime_route_dispatch.rs` and `clmul_wide_conformance.rs` use for the same
-/// process-wide-toggle hazard.
+/// Serialises `force_scalar_gf256_table` toggle-and-observe sections: the
+/// override is process-wide, so a test asserting which lane
+/// [`last_gf256_table_lane`] reports could otherwise observe another thread's
+/// toggle.
 static DISPATCH_LANE_MUTEX: Mutex<()> = Mutex::new(());
 
 /// The reduction polynomial `x^8 + x^4 + x^3 + x + 1`, low eight bits.
@@ -61,7 +26,6 @@ const POLY_11B: u8 = 0x1b;
 /// The reduction polynomial `x^8 + x^4 + x^3 + x^2 + 1`, low eight bits.
 const POLY_11D: u8 = 0x1d;
 
-/// The two polynomials every coefficient sweep runs over.
 const SWEEP_POLYNOMIALS: [u8; 2] = [POLY_11B, POLY_11D];
 
 /// GF(2^8) under `x^8 + x^4 + x^3 + x + 1` (0x11B).
@@ -93,12 +57,10 @@ impl Gf2mWideConfig<4> for Gf2m256Cfg {
     const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
 }
 
-/// Builds the runtime-context field for a reduction polynomial's low bits.
 fn element_field(reduction_low: u8) -> Gf2mField {
     Gf2mField::new(8, 0x100 | u64::from(reduction_low))
 }
 
-/// SplitMix64, the seeded generator the operand fixtures draw from.
 fn splitmix64(state: &mut u64) -> u64 {
     *state = state.wrapping_add(0x9e37_79b9_7f4a_7c15);
     let mut z = *state;
@@ -107,7 +69,6 @@ fn splitmix64(state: &mut u64) -> u64 {
     z ^ (z >> 31)
 }
 
-/// `count` seeded bytes.
 fn seeded_bytes(seed: u64, count: usize) -> Vec<u8> {
     let mut state = seed;
     (0..count).map(|_| splitmix64(&mut state) as u8).collect()
@@ -175,10 +136,6 @@ fn wide_axpy<Cfg: Gf2mWideConfig<1>>(
     let lane = last_gf256_table_lane();
     ((0..y.len()).map(|i| y[i].words()[0] as u8).collect(), lane)
 }
-
-// ---------------------------------------------------------------------------
-// REQ-04 — the accepted lane and the scalar lane agree
-// ---------------------------------------------------------------------------
 
 #[test]
 fn element_axpy_agrees_with_the_scalar_lane_for_every_coefficient() {
@@ -351,10 +308,6 @@ fn every_irreducible_degree_8_modulus_agrees_across_lanes() {
     assert_eq!(irreducible, (256 - 16) / 8);
 }
 
-// ---------------------------------------------------------------------------
-// REQ-03 — what the lane accepts and what it declines
-// ---------------------------------------------------------------------------
-
 #[test]
 fn the_table_lane_accepts_both_single_word_gf256_representations() {
     let destination = seeded_bytes(0x5eed_000d, 65);
@@ -489,10 +442,6 @@ fn a_single_word_configuration_of_another_degree_declines_and_keeps_its_result()
     }
 }
 
-// ---------------------------------------------------------------------------
-// REQ-05 — a mixed field context behaves as it does without the lane
-// ---------------------------------------------------------------------------
-
 #[test]
 fn a_mixed_field_context_declines_and_panics_exactly_as_the_scalar_path_does() {
     /// Runs an axpy whose source elements come from a second field handle and
@@ -539,10 +488,6 @@ fn a_mixed_field_context_declines_and_panics_exactly_as_the_scalar_path_does() {
     assert_eq!(without_lane_witness, GF256_SCALAR_LANE);
 }
 
-// ---------------------------------------------------------------------------
-// REQ-06 — one selection point, a lane witness and a test-only force switch
-// ---------------------------------------------------------------------------
-
 #[test]
 fn the_force_switch_holds_every_caller_on_the_scalar_lane() {
     let destination = seeded_bytes(0x5eed_000f, 137);
@@ -579,10 +524,6 @@ fn the_force_switch_holds_every_caller_on_the_scalar_lane() {
     assert_eq!(released_element, table_element);
 }
 
-// ---------------------------------------------------------------------------
-// REQ-02 — one table per polynomial, shared by reference
-// ---------------------------------------------------------------------------
-
 #[test]
 fn repeated_calls_on_one_polynomial_build_one_table() {
     let destination = seeded_bytes(0x5eed_0011, 64);
@@ -598,10 +539,6 @@ fn repeated_calls_on_one_polynomial_build_one_table() {
     }
     assert_eq!(gf256_table_builds(), builds);
 }
-
-// ---------------------------------------------------------------------------
-// REQ-07 — the call reads a source distinct from its destination
-// ---------------------------------------------------------------------------
 
 #[test]
 fn the_call_leaves_its_source_unchanged() {

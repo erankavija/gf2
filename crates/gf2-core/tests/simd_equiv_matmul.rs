@@ -112,10 +112,6 @@ fn matmul_word_boundary_lengths_match_scalar_reference() {
     }
 }
 
-/// jit:bdf60780 — the production M4RM dispatch (`&a * &b`) must stay bit-exact
-/// against a naive GF(2) reference at the small-n boundary lengths and at the
-/// two parity targets (n=64, n=256), which exercise the lowered register-tiled
-/// gate (stride 4) and the new SIMD Gray-table builders (stride 4 / stride 8).
 #[test]
 fn production_m4rm_matches_scalar_reference_at_smalln_boundaries_and_targets() {
     for &n in &[0usize, 1, 15, 16, 17, 63, 64, 65, 256] {
@@ -129,10 +125,6 @@ fn production_m4rm_matches_scalar_reference_at_smalln_boundaries_and_targets() {
     }
 }
 
-/// Property-based bit-exactness for the production M4RM path across the small-n
-/// boundary lengths {0,1,15,16,17,63,64,65} and the n=64,256 parity targets.
-/// Random fill exercises the SIMD Gray-table build (stride 4: n in {193..=256};
-/// stride 8: n in {449..=512}) plus the register-tiled C-update.
 #[test]
 fn production_m4rm_proptest_smalln_boundary_lengths_match_scalar() {
     use proptest::prelude::ProptestConfig;
@@ -144,7 +136,6 @@ fn production_m4rm_proptest_smalln_boundary_lengths_match_scalar() {
         .run(
             &(proptest::sample::select(boundary_ns.to_vec()), any::<u64>()),
             |(n, seed)| {
-                // Deterministic pseudo-random fill from the seed.
                 let mut state = seed | 1;
                 let mut next_bit = || {
                     state ^= state << 13;

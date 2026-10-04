@@ -1,15 +1,8 @@
-//! Allocation witness for the GF(2^8) cached-product-table dense product.
-//!
-//! The accepted path's scratch is three byte buffers: the packed left operand,
-//! the restored right operand and the byte accumulator. This binary pins both
-//! the count and the total bytes at one named shape for both single-word
-//! representations, so a fourth buffer or a per-call table build fails here.
-//! Witnessing allocation from outside the crate takes a counting global
-//! allocator, a global allocator is a process-wide choice, and the counters
-//! are process-wide too, so this witness owns its own test binary.
-//!
-//! `unsafe` appears here for the [`GlobalAlloc`] implementation alone. This is
-//! a test binary; `gf2-core` keeps `#![deny(unsafe_code)]`.
+//! Allocation witness for the GF(2^8) cached-product-table dense product: pins
+//! the allocation count and total bytes at one shape for both single-word
+//! representations. The counting global allocator and its counters are
+//! process-wide, so this witness owns its test binary; `unsafe` appears only in
+//! the [`GlobalAlloc`] implementation.
 
 #![cfg(feature = "test-support")]
 
@@ -25,13 +18,10 @@ use gf2_core::gf2m::{
 /// bytes it requests, while [`ARMED`] is set.
 struct CountingAllocator;
 
-/// Whether allocations are currently being counted.
 static ARMED: AtomicBool = AtomicBool::new(false);
 
-/// Allocating calls observed since the counters were last reset.
 static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
 
-/// Bytes requested by those calls.
 static ALLOCATED_BYTES: AtomicUsize = AtomicUsize::new(0);
 
 fn record(bytes: usize) {
@@ -68,8 +58,6 @@ unsafe impl GlobalAlloc for CountingAllocator {
 #[global_allocator]
 static ALLOCATOR: CountingAllocator = CountingAllocator;
 
-/// Runs `body` with the counters armed and returns the allocating calls it
-/// made and the bytes they requested.
 fn allocations_during(body: impl FnOnce()) -> (usize, usize) {
     ALLOCATIONS.store(0, Ordering::Relaxed);
     ALLOCATED_BYTES.store(0, Ordering::Relaxed);

@@ -153,7 +153,6 @@ proptest! {
         bytes1 in prop::collection::vec(any::<u8>(), 1..50),
         bytes2 in prop::collection::vec(any::<u8>(), 1..50)
     ) {
-        // Make sure lengths match
         let len = bytes1.len().min(bytes2.len());
         let b1 = &bytes1[..len];
         let b2 = &bytes2[..len];
