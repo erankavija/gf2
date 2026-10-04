@@ -5,7 +5,46 @@
   "created_at": "2026-10-04T11:44:36.284012118Z",
   "dependencies": [],
   "description": "Several module-level docs under `crates/` span multiple sections and paragraphs after the source-comment sweep. They are reduced to one short orientation paragraph plus the contract statements no single item owns, so the workspace comment rule holds for every file.\n\n## Background\n\nThe root `AGENTS.md` limits a module-level orientation to one short paragraph. A scan of the leading `//!` block of every Rust file under `crates/` and `dev/tools/` finds module docs of more than twelve lines; the longest are `crates/gf2-coding/src/bch/encode.rs`, `crates/gf2-core/src/gfpn/quotient.rs`, `crates/gf2-coding/src/bch/spec.rs`, `crates/gf2-kernels-simd/src/bch_encode.rs`, `crates/gf2-coding/src/bch/mod.rs` and `crates/gf2-core/src/io/field_matrix.rs`. They hold algorithm walk-throughs, selection narratives, complexity surveys that item docs own, and examples. A section stays where it states a contract that no single item of the module owns, such as a coordinate convention, a file format or a module-wide safety contract; a Rustdoc example stays where it teaches a workflow under `teaching-rustdoc-examples`.\n\n## Success Criteria\n\n- [hard] REQ-01: Each module-level doc under `crates/` and `dev/tools/` is one short orientation paragraph plus sections that each state a contract no single item of the module owns; every other section is deleted, or its content sits once on the item that owns it.\n- [hard] REQ-02: Every retained or moved statement is true of the code, and public items keep purpose, panics, safety conditions and non-obvious complexity.\n- [hard] REQ-03: The diff contains only comment, Rustdoc and whitespace edits and deletes more lines than it adds; Rustdoc builds without new warnings, doc tests pass and the Rust CI gate passes.\n- [hard] REQ-04: A linked record lists each module doc longer than twelve lines that remains, with the contract each retained section states, produced by a committed command.\n- [hard] REQ-05: The sweep completion record and its outputs are regenerated at the final commit of this change.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Module docs longer than twelve lines",
+      "path": "dev/active/fa787f85-documentation-overhaul/545b113f-module-docs.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Module doc scan",
+      "path": "dev/active/fa787f85-documentation-overhaul/545b113f-module-docs.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Module doc contracts",
+      "path": "dev/active/fa787f85-documentation-overhaul/545b113f-module-doc-contracts.tsv"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "23a6a5d70add18844021413445e77fc95e04fc5f4147105ab2030654d1285395",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "62f0d0e6-comment-census.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/62f0d0e6-comment-census.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Sweep completion record",
+      "path": "dev/active/fa787f85-documentation-overhaul/030496bd-sweep-completion.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T11:44:36.284012118Z",
   "gates_required": [
     "cargo-ci",
@@ -24,5 +63,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Reduce multi-section module docs to the comment contract",
-  "updated_at": "2026-10-04T12:06:42.765911244Z"
+  "updated_at": "2026-10-04T12:27:23.724512981Z"
 }
