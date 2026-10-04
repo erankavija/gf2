@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:56:43.420646720Z",
+  "dependencies": [],
+  "description": "The J-function approximation in `crates/gf2-coding/src/modem/analysis.rs:310-318` cites `@/citation/TenBrink2001`; its constants and functional form may belong to a different published fit.\n\n## Background\n\nReported by the modem comment sweep from memory, without a check of either paper. `@/inv/external-claims-cited` applies.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: The constants and functional form are compared with the cited work, and the citation key names the work they come from.\n- [hard] REQ-03: A test pins the approximation against tabulated values of that work.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:56:43.420646720Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "7a5ee7c7-27ff-40dd-854f-82fe70145899",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Verify the J-function fit in modem analysis against its cited source",
+  "updated_at": "2026-10-03T22:56:43.420646720Z"
+}

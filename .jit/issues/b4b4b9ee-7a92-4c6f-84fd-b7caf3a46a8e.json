@@ -3,6 +3,7 @@
   "context": {},
   "created_at": "2026-06-30T20:00:46.349908352Z",
   "dependencies": [
+    "01877f76-f4a1-4ce5-9e7a-c473b0ba6544",
     "02ed3c51-204e-4adf-af3c-1a6dcd36267c",
     "0657c9fa-0f07-4175-addf-9baf7aefdfa9",
     "07a1813a-bcfc-4fd0-9611-6d3c6928776e",
@@ -26,13 +27,22 @@
     "45a962da-b51a-4bf5-b147-9c5ffec18634",
     "54a483a3-220e-42e7-b2af-440eaed04a8a",
     "58a4bb51-72ee-4cdb-92dc-a5303726b0a7",
+    "5a3abee1-eafb-48f3-b245-ac8671f2e254",
+    "5c62bb1c-684b-4d6e-b128-c5f44735dd2d",
     "63cc5518-ecc6-40ef-b0c8-a4b6688bab37",
+    "6705a134-d327-4026-b6af-39252d35e59a",
+    "697b9178-6b19-4946-9001-f2475df71321",
     "6b5f4f3c-6d75-4efa-a987-80eec7de3843",
+    "6bb13c31-2d0c-4091-aed5-439e681abb22",
     "79873126-1d34-4dd9-ba67-e3f691242ed9",
+    "79a62102-0a4a-4f8c-a261-dc474d09593e",
+    "7a5ee7c7-27ff-40dd-854f-82fe70145899",
     "7c8ab1e2-7da6-48dd-bebb-5bb73922bd01",
     "8342487d-9899-42c7-a30c-f5618bb0ee74",
+    "879b52bd-c41d-4489-9518-6b3fc1eef632",
     "8b3fe657-586c-4191-813e-6ab7799a28ab",
     "8d5b7ad7-fbbb-4f41-8e85-ac9cfe55aa8c",
+    "9600eb56-53ce-448c-bcc5-44d85f7aa06c",
     "9ff05f12-7e08-4a8c-b298-3de575f51a9d",
     "a1e02780-1f25-49f7-9e59-7dbaa70db3b6",
     "a44566c0-ddb2-4c18-91f6-6697e41d056f",
@@ -50,6 +60,7 @@
     "d436dd5f-f0f7-4243-9727-d00a1830f61b",
     "d5afe5aa-9261-432f-81bb-2f33bd90e786",
     "de0528d2-2ac1-412d-89ce-6a328d795256",
+    "df144ecf-bc47-4581-961c-c0f317952c7b",
     "dfb8820b-93a9-40f0-bf90-1d29ea22d48e",
     "e1ff915f-c119-45a1-a177-a80bc3782869",
     "e250b5bb-c5b7-4e9a-937d-6ffb519f1f6f",
@@ -57,7 +68,8 @@
     "f258468e-a973-4b07-a663-99b18e1e8713",
     "f556d663-e4cf-4da7-b36e-8d726286a848",
     "f6603b37-0835-4735-97ca-2df5dcd6522b",
-    "f6ee400a-666d-4ef5-a6c7-5ce434366f4d"
+    "f6ee400a-666d-4ef5-a6c7-5ce434366f4d",
+    "fbcadf17-4017-4f62-b45a-2e4f9de8c44d"
   ],
   "description": "Remediation of technical debt surfaced by the 2026-06-30 workflow-driven assessment of the gf2 workspace. The assessment audited all six crates against the project coding ideals (AGENTS.md + @/gate/code-review) and for documentation drift, producing 71 verified findings (1 critical, 6 high, 44 medium, 20 low) across 9 dimensions: tail-masking, unsafe-isolation, bitwise-arithmetic, functional-api, doc-completeness, test-conventions, msrv, ssot-duplication, separation-of-concerns, doc-drift.\n\nThe full report is attached to this epic via `jit doc list`.\n\n## Scope\n\nThis epic covers the code-debt half of the assessment. Documentation-drift findings transferred to the documentation-overhaul epic on 2026-08-07 so that code remediation is not gated on the documentation contract; the transfer is itemised under \"Transferred scope\" below.\n\n- **Critical/high (5 code findings retained):** one task each, covering the single correctness hole (`BitVec::from_words` tail masking), the unsafe-doc isolation gap, the `polar_transform` performance regression, the CI-budget-breaking `SimulationRunner` tests, and the F_3 permanent bound stated in the gf2-kernels-hip FFI docs.\n- **Medium/low (64 findings):** filed as dimension-scoped bundles after scoping with the user; granularity and inclusion decided per dimension.\n\n## Transferred scope\n\nTracked under epic `fa787f85` (Overhaul documentation for research adoption), reconciled through its REQ-18:\n\n- `44c98235` — Rewrite README for research adoption (high, doc-drift).\n- `84db2984` — Fix `SparseFieldMatrix::from_entries` reference in FieldMatrix deck (high, doc-drift; rejected as obsolete).\n- `12907582` — Correct surviving source-level documentation drift (medium/low doc-drift bundle).\n- Rustdoc `# Examples` additions for accessor-shaped public API, split out of `aabc528a` because they are governed by the non-trivial-example policy that `3f29e945` establishes.\n\n## Success Criteria\n\n- [hard] REQ-01: All five retained critical/high code findings have dedicated task issues wired under this epic; the transferred documentation findings are tracked under `fa787f85` and itemised in \"Transferred scope\" above.\n- [hard] REQ-02: The assessment report is linked to this epic via `jit doc add`.\n- [hard] REQ-03: Every child task carries explicit, verifiable success criteria traceable to a report finding.\n- [hard] REQ-04: The epic is `done` only when all child tasks are `done` or explicitly rejected with justification.\n",
   "documents": [
@@ -83,5 +95,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Technical debt assessment remediation (2026-06-30)",
-  "updated_at": "2026-10-03T22:54:50.795195348Z"
+  "updated_at": "2026-10-03T22:58:19.423998634Z"
 }

@@ -16,19 +16,24 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T23:15:47.334639319Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_at": "2026-10-03T22:18:39.934833261Z",
+      "updated_at": "2026-10-03T23:21:55.205553635Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-10-03T22:15:26.385086609Z",
+      "status": "passed",
+      "updated_at": "2026-10-03T23:18:43.317646482Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
-      "status": "passed",
-      "updated_at": "2026-10-03T22:12:41.814424171Z",
+      "status": "failed",
+      "updated_at": "2026-10-03T23:15:51.671150688Z",
       "updated_by": "auto:executor"
     }
   },
@@ -42,5 +47,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Empty dev/presentations of leftover theme files",
-  "updated_at": "2026-10-03T22:18:39.934833261Z"
+  "updated_at": "2026-10-03T23:21:55.205553635Z"
 }

@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:57:48.438684282Z",
+  "dependencies": [],
+  "description": "`find_block_pivot_invert` and `eliminate_block_full` in `crates/gf2-core/src/alg/gauss.rs` duplicate helpers of `alg/rref.rs`.\n\n## Background\n\nThe comment that justified the duplicate stated that `rref::eliminate_block` clears only rows below the pivot stripe; it clears all rows, and the sweep removed the comment. `@/inv/convention-convergence` applies.\n\n## Success Criteria\n\n- [hard] REQ-01: The inversion path uses the shared rref helpers, or a cited, tracked exception records why it cannot.\n- [hard] REQ-02: Inversion results are unchanged on the existing suite.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:57:48.438684282Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "6705a134-d327-4026-b6af-39252d35e59a",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "alg/gauss.rs duplicates the rref block-pivot and elimination helpers",
+  "updated_at": "2026-10-03T22:57:48.438684282Z"
+}

@@ -16,10 +16,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T23:05:19.673531133Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T23:28:48.710418730Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T23:22:18.337108244Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:22.625638849Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-10-03T23:15:51.356868400Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "4997a3ed-0791-41b2-b19c-5f5ff8ed943f",
@@ -37,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in gf2-core bit-level structures",
-  "updated_at": "2026-10-03T21:51:07.659912393Z"
+  "updated_at": "2026-10-03T23:28:48.710418730Z"
 }

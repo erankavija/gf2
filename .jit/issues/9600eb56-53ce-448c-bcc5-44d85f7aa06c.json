@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:56:56.344075217Z",
+  "dependencies": [],
+  "description": "`GldpcDecoder::decode_soft` in `crates/gf2-coding/src/gldpc/mod.rs:791` is reported to return hard decisions of its input without running the decoder.\n\n## Background\n\nReported by the comment sweep of the GLDPC module.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: `decode_soft` decodes, or the method is removed from the public surface; the shared decoder conformance suite covers it.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:56:56.344075217Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "9600eb56-53ce-448c-bcc5-44d85f7aa06c",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "GldpcDecoder::decode_soft returns hard decisions without decoding",
+  "updated_at": "2026-10-03T22:56:56.344075217Z"
+}

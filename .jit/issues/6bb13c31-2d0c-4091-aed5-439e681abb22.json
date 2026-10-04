@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:57:40.856932352Z",
+  "dependencies": [],
+  "description": "No `BitVec` mutator (`set`, `push_bit`, `bit_xor_into`, `resize`, `clear`, the shifts) is reported to reset `rank_select_index`, so `rank` and `select` read a stale index after a mutation that follows a first query.\n\n## Background\n\nReported by the gf2-core bit-level comment sweep at `crates/gf2-core/src/bitvec.rs`.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: Every mutator invalidates or updates the index; a property test interleaves mutations with `rank`/`select` queries and compares with a scalar reference, including lengths 0, 1, 63, 64 and 65.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:57:40.856932352Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "6bb13c31-2d0c-4091-aed5-439e681abb22",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "BitVec mutators leave the rank/select index stale",
+  "updated_at": "2026-10-03T22:57:40.856932352Z"
+}

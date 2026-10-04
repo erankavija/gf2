@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:58:04.397922884Z",
+  "dependencies": [],
+  "description": "In `crates/gf2-core/src/field/expr.rs`, `gemm_matrixlike`, `gemm_trans_a_concrete_tiled` and the generic transposed-product arms are reported to return without writing `out` when the inner dimension is 0, although their contract says the output is overwritten; `Sum::evaluate_into` skips the `out` shape assertion on empty operands.\n\n## Background\n\nReported by the field-matrix comment sweep.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: A product with inner dimension 0 writes the zero matrix to `out`; `evaluate_into` checks the output shape for every operand shape; tests cover dimensions 0 and 1.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:58:04.397922884Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "01877f76-f4a1-4ce5-9e7a-c473b0ba6544",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Lazy field expressions skip writes and shape checks on empty operands",
+  "updated_at": "2026-10-03T22:58:04.397922884Z"
+}

@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:57:33.259522264Z",
+  "dependencies": [],
+  "description": "`crates/gf2-sim/src/frame_sim.rs:249` is reported to substitute an empty `BitVec` when the hard decoder fails, before `count_bit_errors` runs.\n\n## Background\n\nReported by the gf2-sim comment sweep. The effect on counted bit errors for failed frames is unverified.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: A failed frame contributes a defined, documented bit-error count, covered by a test.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:57:33.259522264Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "fbcadf17-4017-4f62-b45a-2e4f9de8c44d",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "frame_sim substitutes an empty BitVec on hard decode failure",
+  "updated_at": "2026-10-03T22:57:33.259522264Z"
+}

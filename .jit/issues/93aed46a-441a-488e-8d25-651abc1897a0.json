@@ -6,7 +6,7 @@
   "dependencies": [
     "62f0d0e6-0d54-44a6-a5d7-31b09c33976d"
   ],
-  "description": "Bring the comments and Rustdoc in the gf2-kernels-hip and gf2-stats crates to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: Rust files under `crates/gf2-kernels-hip/` (including `build.rs`) and `crates/gf2-stats/`, about 5,700 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form. The HIP crate sits outside the default Cargo workspace; its Rustdoc is built through its own crate check.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n",
+  "description": "Bring the comments and Rustdoc in the gf2-kernels-hip and gf2-stats crates to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: Rust files under `crates/gf2-kernels-hip/` (including `build.rs`) and `crates/gf2-stats/`, about 5,700 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form. The HIP crate sits outside the default Cargo workspace; its Rustdoc is built through its own crate check.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n\n\n\n## Decisions\n\n- DEC-01: The owner approved on 2026-10-04 one string-literal edit in `crates/gf2-kernels-hip/build.rs`: the comment text that the build script emits into the generated probe source states what the probe is in present tense. It is the one non-comment hunk outside REQ-05.",
   "documents": [],
   "first_ready_at": "2026-10-03T16:21:57.914082519Z",
   "gates_required": [
@@ -16,10 +16,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T23:12:47.934254422Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-10-03T23:23:10.051873634Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-03T23:19:30.425055909Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:27.530935871Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-10-03T23:15:52.048378837Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "93aed46a-441a-488e-8d25-651abc1897a0",
@@ -37,5 +52,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Tersify comments in the gf2-kernels-hip and gf2-stats crates",
-  "updated_at": "2026-10-03T21:51:08.271303492Z"
+  "updated_at": "2026-10-04T06:17:46.778810245Z"
 }

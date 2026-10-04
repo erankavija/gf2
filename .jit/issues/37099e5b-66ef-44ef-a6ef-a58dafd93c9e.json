@@ -16,6 +16,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/37099e5b-doc-relink.sh"
     }
   ],
+  "done_at": "2026-10-04T06:17:46.927455662Z",
   "first_ready_at": "2026-10-03T18:24:39.327626755Z",
   "gates_required": [
     "cargo-ci",
@@ -24,6 +25,11 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-03T23:14:17.795101010Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
       "updated_at": "2026-10-03T22:18:43.161900045Z",
@@ -48,7 +54,7 @@
     "satisfies:fa787f85/REQ-14"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Empty dev/sessions into owner dirs or the legacy mirror",
-  "updated_at": "2026-10-03T22:53:19.125508467Z"
+  "updated_at": "2026-10-04T06:17:46.927455662Z"
 }

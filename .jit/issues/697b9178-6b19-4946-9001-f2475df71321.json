@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:57:07.838430543Z",
+  "dependencies": [],
+  "description": "Several tests assert less than their names state, or exercise a local re-implementation instead of production code.\n\n## Background\n\nReported locations: `crates/gf2-coding/src/modem/awgn_link.rs:575` (asserts a locally recomputed formula); `crates/gf2-coding/src/gldpc/mod.rs:1511` (asserts only dimensions); `crates/gf2-coding/src/grand/sogrand.rs:1135` (early return skips the ratio assertion); `crates/gf2-core/src/bitvec.rs` kani proofs `mask_tail_zeros_padding`, `mask_tail_preserves_valid_bits`, `ones_constructor_tail_clean` (re-implement the mask) and `test_parity_xor_property`; `crates/gf2-core/src/alg/rref.rs` `test_rref_pivot_from_right`; `crates/gf2-core/src/field/charpoly.rs:2423` `test_kg_singular_matrix` (vacuous branch); `crates/gf2-kernels-hip` `launch_chacha20_awgn.rs` `test_host_rng_reproducible_at_seed` (compares an RNG with itself, while `Cargo.toml` states a `rand_chacha` comparison). `@/inv/semantic-test-assertions` applies.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed test asserts the property its name states against production code, or is removed.\n- [hard] REQ-02: The `gf2-kernels-hip` `Cargo.toml` comment matches the tests that exist.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:57:07.838430543Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "697b9178-6b19-4946-9001-f2475df71321",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Strengthen vacuous and weak tests reported by the comment sweep",
+  "updated_at": "2026-10-03T22:57:07.838430543Z"
+}

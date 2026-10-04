@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:56:28.447789722Z",
+  "dependencies": [],
+  "description": "The Gray square-QAM preset takes the I-axis label from the first $m/2$ label bits. `@/citation/Etsi2015` Table 14 takes I from the even-indexed and Q from the odd-indexed cell-word bits, so preset labels agree with the standard for orders 2 and 4 only.\n\n## Background\n\n`crates/gf2-coding/src/modem/presets.rs` (the `gray_qam` preset Rustdoc states the difference); `crates/gf2-coding/examples/modem_gray_qam_preset.rs:42` claims conformance without the qualification. `@/inv/standards-vector-conformance` applies.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: The DVB-T2 constellation presets map cell words as Table 14 specifies for every supported order, checked against an external vector source, or the generic preset carries no standards-conformance claim in Rustdoc and examples.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:56:28.447789722Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "df144ecf-bc47-4581-961c-c0f317952c7b",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:bug"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Gray-QAM preset labels differ from EN 302 755 Table 14 above order 4",
+  "updated_at": "2026-10-03T22:56:28.447789722Z"
+}

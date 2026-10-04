@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:57:25.689302679Z",
+  "dependencies": [],
+  "description": "`apply` in `crates/gf2-sim/src/channels/{awgn,rayleigh,rician}.rs` asserts against `FRAME_STRIDE - 256`, while `parallel::DEBUG_ASSERT_WORD_MARGIN` is 1024; it also budgets a multi-frame batch against one frame's stride.\n\n## Background\n\nReported by the gf2-sim comment sweep. `@/inv/deterministic-seeded-execution` depends on per-frame stream budgets holding.\n\n## Success Criteria\n\n- [hard] REQ-01: A test reproduces the reported behavior at the cited location, or a record shows the report does not hold and the issue is rejected with that evidence.\n- [hard] REQ-02: The channels use the shared margin constant and budget per frame, with a test at the boundary.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:57:25.689302679Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "5c62bb1c-684b-4d6e-b128-c5f44735dd2d",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Channel apply stride-margin assertion disagrees with the shared word margin",
+  "updated_at": "2026-10-03T22:57:25.689302679Z"
+}

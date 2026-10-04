@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-10-03T22:57:18.152426111Z",
+  "dependencies": [],
+  "description": "Unused or redundant items remain in `gf2-coding` and `gf2-sim`.\n\n## Background\n\nReported locations: `crates/gf2-coding/src/modem/spec.rs` `DefaultSpec` under `#[allow(dead_code)]`; `crates/gf2-coding/src/product/mod.rs:179` `has_list_bler_prediction`; `crates/gf2-coding/src/product/chase_pyndiah.rs:311` unreachable empty-list branch; `crates/gf2-coding/src/simulation.rs:1257` points at module docs that hold no such content; `crates/gf2-sim` `Pipeline::run_with_decoder` and `Pipeline::run_parallel` are bare aliases of `run`. `@/inv/canonical-cutover` applies.\n\n## Success Criteria\n\n- [hard] REQ-01: Each listed item has a caller or distinct behavior, or is removed.\n- [hard] REQ-02: The Rust CI gate passes.\n",
+  "documents": [],
+  "first_ready_at": "2026-10-03T22:57:18.152426111Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "879b52bd-c41d-4489-9518-6b3fc1eef632",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Remove dead code and bare aliases reported by the comment sweep",
+  "updated_at": "2026-10-03T22:57:18.152426111Z"
+}
