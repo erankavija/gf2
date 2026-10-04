@@ -1,26 +1,9 @@
-//! CPU-vs-GPU byte-identity of the BCH syndrome evaluator and outcome
-//! identity of GPU-assisted decoding (issue `9012f8a0`, correctness ladder
-//! rungs 4-5; design doc §10).
-//!
-//! Rung 4 — DVB-T2 Short (GF(2^14)) and Normal (GF(2^16)) syndrome
-//!   byte-identity: 200 shortened frames per config at a fixed seed, MIXED
-//!   valid codewords (all-zero syndromes), `<= t` correctable errors, and
-//!   `> t` uncorrectable errors, each written into its mother code's
-//!   coordinates. All `2t` u16 syndromes of
-//!   `BinaryBchDecoder::compute_syndromes_batch_gpu` equal the CPU sums
-//!   `S_j = sum_i r_i beta^{ij}`, `j = 1..=2t`, with ZERO tolerance (exact
-//!   integer GF arithmetic — no ULP drift, unlike LDPC).
-//! Rung 5 — outcome identity: over the canonical construction model,
-//!   `BinaryBchDecoder::correct_batch_gpu` reports the same
-//!   `BchDecodeOutcome` and leaves the same corrected word as the per-word CPU
-//!   `BinaryBchDecoder::correct_in_place`, frame for frame. Its two codes are
-//!   the primitive narrow-sense mother codes of the two DVB-T2 configurations
-//!   of rung 4: the same field presentation and the same radius 12, so the
-//!   same 168- and 192-bit parity structure, over the full primitive length.
-//!
-//! Gated on GPU presence — skips cleanly when `device_mem_info().is_err()`,
-//! like the other `gf2-sim` GPU tests. Carries `#[ignore]` per
-//! `@/inv/test-tier-budgets`; run command in the receipt.
+//! CPU-vs-GPU identity of the BCH syndrome evaluator and of GPU-assisted
+//! decoding. `BinaryBchDecoder::compute_syndromes_batch_gpu` returns exactly the
+//! `2t` CPU syndromes `S_j = sum_i r_i beta^{ij}` on DVB-T2 Short and Normal
+//! frames lifted into mother-code coordinates; `correct_batch_gpu` matches
+//! `correct_in_place` in outcome and corrected word on the primitive
+//! narrow-sense mother codes. Skips when no GPU is usable.
 
 #![cfg(feature = "hip")]
 
@@ -35,8 +18,6 @@ use gf2_core::gf2m::{Gf2mElement, Gf2mField};
 use gf2_core::BitVec;
 use gf2_kernels_hip::host::device_mem_info;
 
-/// Deterministic SplitMix64 — a self-contained PRNG so the fixture frames (and
-/// thus the byte-identity outcomes) are reproducible without an external dep.
 struct SplitMix64(u64);
 
 impl SplitMix64 {
@@ -50,13 +31,11 @@ impl SplitMix64 {
         z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
         z ^ (z >> 31)
     }
-    /// A uniform `usize` in `0..bound`.
     fn below(&mut self, bound: usize) -> usize {
         (self.next_u64() % bound as u64) as usize
     }
 }
 
-/// Injects `errors` flips at distinct random coordinates of `word`.
 fn inject(word: &mut BitVec, errors: usize, rng: &mut SplitMix64) {
     let mut flipped = std::collections::HashSet::new();
     while flipped.len() < errors {
@@ -77,14 +56,7 @@ fn mixed_error_count(f: usize, t: usize, rng: &mut SplitMix64) -> usize {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Rung 4 — the device syndrome evaluator, on the DVB-T2 configurations
-// ---------------------------------------------------------------------------
-
-/// One fixture frame: a valid shortened codeword with a chosen number of bit
-/// errors injected at distinct random positions.
 fn build_frame(code: &DvbT2BchCode, errors: usize, rng: &mut SplitMix64) -> BitVec {
-    // Random message, systematic encode -> valid codeword.
     let mut msg = BitVec::zeros(code.k());
     for i in 0..code.k() {
         if rng.next_u64() & 1 == 1 {
@@ -131,8 +103,6 @@ fn cpu_syndromes(word: &BitVec, root: &Gf2mElement, count: usize) -> Vec<Gf2mEle
     syndromes
 }
 
-/// Builds the 200-frame mixed population for one config: ~1/3 valid, ~1/3
-/// `<= t` errors, ~1/3 `> t` errors (deterministic per seed).
 fn mixed_population(code: &DvbT2BchCode, t: usize, frames: usize, seed: u64) -> Vec<BitVec> {
     let mut rng = SplitMix64::new(seed);
     let mut out = Vec::with_capacity(frames);
@@ -157,7 +127,6 @@ fn run_syndrome_identity(frame_size: FrameSize, label: &str) {
         .map(|word| lift(&code, word))
         .collect();
 
-    // GPU syndromes == CPU syndromes, every frame, zero tolerance.
     let gpu_syndromes = decoder
         .compute_syndromes_batch_gpu(&population)
         .expect("GPU syndrome batch");
@@ -181,13 +150,7 @@ fn run_syndrome_identity(frame_size: FrameSize, label: &str) {
     eprintln!("{label}: {frames} frames, {two_t} syndromes/frame, byte-identical (CPU==GPU)");
 }
 
-// ---------------------------------------------------------------------------
-// Rung 5 — outcome identity of GPU-assisted decoding, canonical model
-// ---------------------------------------------------------------------------
-
-/// The primitive narrow-sense mother code of one DVB-T2 configuration: the
-/// same splitting-field presentation and the same radius, so the same parity
-/// structure, over the full primitive block length the model constructs.
+/// The primitive narrow-sense mother code of one DVB-T2 configuration.
 fn mother_code(params: &DvbBchParams) -> BinaryBchCode {
     let field = Gf2mField::new(params.field_m, params.primitive_poly).with_tables();
     let code = BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
@@ -248,7 +211,6 @@ fn run_outcome_identity(frame_size: FrameSize, label: &str) {
         })
         .collect();
 
-    // The per-word CPU fast path is the oracle.
     let mut workspace = decoder.workspace();
     let mut expected_words = population.clone();
     let expected: Vec<BchDecodeOutcome> = expected_words
@@ -260,7 +222,6 @@ fn run_outcome_identity(frame_size: FrameSize, label: &str) {
         })
         .collect();
 
-    // GPU-assisted: device syndromes, CPU locator search, device verification.
     let mut words = population.clone();
     let outcomes = decoder
         .correct_batch_gpu(&mut words)
@@ -299,10 +260,6 @@ fn run_outcome_identity(frame_size: FrameSize, label: &str) {
         code.k()
     );
 }
-
-// ---------------------------------------------------------------------------
-// Suite
-// ---------------------------------------------------------------------------
 
 #[test]
 #[ignore = "sim: 200-frame DVB-T2 Short BCH GF(2^14) CPU-vs-GPU syndrome byte-identity (gfx1030-gated)"]

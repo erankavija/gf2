@@ -104,8 +104,6 @@ fn work(eliminations: u64, patterns: u64, candidates: u64) -> OsdWorkCounters {
     }
 }
 
-/// The single-worker dispatch the worker-count invariance contract is stated
-/// against.
 fn serial() -> NonZeroUsize {
     NonZeroUsize::new(1).expect("one worker")
 }
@@ -114,7 +112,6 @@ fn workers(count: usize) -> NonZeroUsize {
     NonZeroUsize::new(count).expect("positive worker count")
 }
 
-/// Scripted per-block error counts with two failing blocks, at indices 2 and 6.
 fn scripted_errors(block_index: u64) -> u64 {
     match block_index {
         2 => 3,
@@ -123,12 +120,8 @@ fn scripted_errors(block_index: u64) -> u64 {
     }
 }
 
-/// A block-index-pure pseudo-random process: about one block in sixteen fails,
-/// carrying between 1 and 24 of its 64 information bits in error.
-///
-/// The mixing is SplitMix64 over the global block index alone, so a block's
-/// outcome does not depend on which worker evaluates it — the property the
-/// protocol's evaluator contract demands.
+/// SplitMix64 over the global block index alone, so a block's outcome does not
+/// depend on which worker evaluates it.
 fn mixed_block_errors(block_index: u64) -> u64 {
     let mut z = block_index.wrapping_add(0x9E37_79B9_7F4A_7C15);
     z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -141,8 +134,7 @@ fn mixed_block_errors(block_index: u64) -> u64 {
     }
 }
 
-/// The block index carrying the `target`-th error of [`mixed_block_errors`],
-/// derived independently of the protocol.
+/// The block index carrying the `target`-th error of [`mixed_block_errors`].
 fn mixed_stopping_index(target: u64) -> u64 {
     let mut failures = 0;
     for block_index in 0.. {
@@ -156,7 +148,6 @@ fn mixed_stopping_index(target: u64) -> u64 {
     unreachable!("the scripted process fails infinitely often")
 }
 
-/// Runs the [`mixed_block_errors`] process to completion at `workers`.
 fn mixed_run(label: &str, campaign: &OsdCampaign, workers: NonZeroUsize) -> OsdCampaignReceipt {
     let dir = temp_dir(label);
     run_osd_campaign(
@@ -290,9 +281,6 @@ fn protocol_stops_on_the_block_carrying_the_exact_target_error() {
     ));
 }
 
-/// REQ-01: for a fixed campaign and seed the counters, the stopping index, and
-/// the whole receipt payload are byte-identical across worker counts, with the
-/// single-worker run as the reference.
 #[test]
 fn multi_worker_runs_reproduce_the_single_worker_reference() {
     let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
@@ -313,8 +301,6 @@ fn multi_worker_runs_reproduce_the_single_worker_reference() {
     assert!(reference.cell_results[0].samples > 24 * 16);
 }
 
-/// REQ-02: completion falls exactly on the block carrying the `K`-th block
-/// error, and the blocks workers evaluate past it contribute to no counter.
 #[test]
 fn speculative_blocks_past_the_kth_error_contribute_to_no_counter() {
     let dir = temp_dir("speculative-truncation");
@@ -361,8 +347,6 @@ fn speculative_blocks_past_the_kth_error_contribute_to_no_counter() {
     assert!((0..7).all(|index| evaluated.contains(&index)));
 }
 
-/// REQ-02 at scale: the protocol's stopping index equals the independently
-/// derived index of the target's `K`-th error.
 #[test]
 fn the_stopping_index_is_the_block_carrying_the_kth_error() {
     let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
@@ -375,9 +359,6 @@ fn the_stopping_index_is_the_block_carrying_the_kth_error() {
     assert_eq!(receipt.cell_results[0].block_errors, 25);
 }
 
-/// REQ-03: an interrupted multi-worker cell that resumes across several
-/// bounded invocations, at differing worker counts, reaches the uninterrupted
-/// cumulative evidence.
 #[test]
 fn interrupted_multi_worker_cell_resumes_to_the_uninterrupted_result() {
     let campaign = campaign_with_target(vec![cell("invariance", 2.0, 2)], 25);
@@ -419,7 +400,6 @@ fn interrupted_multi_worker_cell_resumes_to_the_uninterrupted_result() {
     );
 }
 
-/// Resumes the [`mixed_block_errors`] process on an existing checkpoint.
 fn mixed_resume(
     checkpoint_path: &Path,
     campaign: &OsdCampaign,
@@ -435,9 +415,6 @@ fn mixed_resume(
     .expect("resume reaches the block-error target")
 }
 
-/// The per-block stream is positioned by the shared
-/// [`gf2_sim::parallel::worker_offset`] seek, so a block's random draw depends
-/// on its global index alone.
 #[test]
 fn block_streams_seek_to_the_shared_worker_offset() {
     let mut stream = OsdBlockStream::new(0x5eed_cafe);
@@ -1187,8 +1164,7 @@ const OPERATING_POINTS: [(&str, u64, u64, u64); 4] = [
 
 /// A scale-oblivious estimator produces endpoints orders of magnitude away from
 /// the point estimate at these operating points, which makes any downstream
-/// acceptance rule accept every published value. This is the regression guard
-/// against that: the interval must exclude zero and span at most one decade.
+/// acceptance rule accept every published value.
 #[test]
 fn ber_interval_stays_informative_at_the_pinned_grid_operating_points() {
     let spec = interval_spec();
@@ -1219,10 +1195,6 @@ fn ber_interval_stays_informative_at_the_pinned_grid_operating_points() {
     }
 }
 
-/// A seeded bursty process with a known BER: a block fails with probability
-/// `1 / 4`, and a failing block carries a uniform 8 to 15 of its 64
-/// information bits in error. Sampling stops at 100 block errors, matching the
-/// design the interval claims coverage for.
 fn bursty_stopped_sample(rng: &mut ChaCha20Rng, block_errors: u64) -> BlockSampleCounts {
     let mut counts = BlockSampleCounts {
         samples: 0,
@@ -1244,11 +1216,9 @@ fn bursty_stopped_sample(rng: &mut ChaCha20Rng, block_errors: u64) -> BlockSampl
     counts
 }
 
-/// Empirical coverage over independent replications of that process must reach
-/// the nominal level. The tolerance is 0.05 below nominal: at 200 replications
-/// the Monte Carlo standard error of a coverage estimate near 0.95 is about
-/// 0.015, so the tolerance is roughly three standard errors and the seeded
-/// draw makes the outcome deterministic.
+/// At 200 replications the Monte Carlo standard error of a coverage estimate
+/// near 0.95 is about 0.015, so the 0.05 tolerance is roughly three standard
+/// errors.
 #[test]
 fn ber_interval_covers_a_seeded_bursty_process_at_its_nominal_level() {
     const REPLICATIONS: u32 = 200;
@@ -1273,9 +1243,8 @@ fn ber_interval_covers_a_seeded_bursty_process_at_its_nominal_level() {
     );
 }
 
-/// The stopping design fixes which exact inversion is valid, so the campaign
-/// refuses the fixed-trial method. The method vocabulary still dispatches what
-/// it names, which is what keeps a schema 1 receipt's estimator meaningful.
+/// The method vocabulary still dispatches what it names, which keeps a
+/// schema 1 receipt's estimator meaningful.
 #[test]
 fn a_block_error_stopping_campaign_refuses_the_fixed_trial_interval_method() {
     let spec = BinomialIntervalSpec::new(BinomialIntervalMethod::ClopperPearson, 0.95)
@@ -1297,8 +1266,6 @@ fn a_block_error_stopping_campaign_refuses_the_fixed_trial_interval_method() {
     );
 }
 
-/// A digitization precision large enough to overflow its decade scale must
-/// still produce a decision rather than an indeterminate comparison.
 #[test]
 fn a_precision_beyond_the_decade_range_keeps_the_predicate_total() {
     let zero_width = BinomialConfidenceInterval {

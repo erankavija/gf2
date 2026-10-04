@@ -1,175 +1,37 @@
-//! DVB-T2 BICM AWGN campaign runner — `gf2-sim` pipeline edition.
-//!
-//! Runs the full DVB-T2 BICM AWGN simulation for one `(rate, modulation)`
-//! configuration, producing a CSV curve, a README, and per-SNR checkpoint
-//! files.
-//!
-//! Six invocations (3 rates × 2 modulations) reproduce every curve required
-//! by epic 2928ccce.
-//!
-//! # Migration (jit:bbf6b6ee, wave D.2 of epic gf2-sim `f9717e7e`)
-//!
-//! This is the **migrated** campaign binary. It drives the simulation through
-//! the [`gf2_sim`] hybrid pipeline ([`Pipeline::dvb_t2`] typestate preset +
-//! `Scheduler::run_sweep_checkpointed` for production sweeps — called directly
-//! rather than through the `Pipeline::run_checkpointed` thin wrapper so the
-//! per-frame `frame_observer` can emit live `campaign_heartbeat` tracing
-//! events — and `Pipeline::run_with_decoder` for calibration), replacing the
-//! legacy
-//! `gf2_coding::simulation::SimulationRunner::run_with_decoder` call site of
-//! the original binary, which lived at
-//! `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs` until the
-//! user-approved bbf6b6ee amendment DELETED that binary file (this one is THE
-//! campaign binary; `cargo run --release --bin dvb_t2_awgn_campaign` resolves
-//! unambiguously from the workspace root). The legacy
-//! `gf2_coding::simulation::SimulationRunner` LIBRARY path is retained — only
-//! the binary moved; a binary inside `gf2-coding` cannot call `gf2-sim`
-//! (dependency cycle: `gf2-sim` depends on `gf2-coding`).
-//!
-//! The new pipeline parallelises every SNR point across rayon workers (and,
-//! with `--gpu` on a `--features hip` build, offloads the heavy LDPC BP +
-//! demap stages to the HIP device), so it is materially faster than the legacy
-//! single-thread path (see `dev/benchmarks/gf2-sim/parallelism-receipts.md`).
-//!
-//! # BICM chain (per frame)
-//!
-//! ```text
-//! BBFRAME → BCH+LDPC encode → bit interleave → QAM map → AWGN
-//!                                                            ↓
-//! BBFRAME ← BCH+LDPC decode ← bit deinterleave ← QAM demap
-//! ```
-//!
-//! The pipeline owns this chain: the [`Pipeline::dvb_t2`] preset wires the
-//! seven (CPU) or eight (GPU) stages, the AWGN channel injects noise from the
-//! per-worker ChaCha20 stream, and the within-SNR frame-parallel executor
-//! (or the hybrid CPU+GPU scheduler under `--gpu`) drives the frames. The
-//! binary itself is a thin CLI front-end: parse args → build the pipeline via
-//! the typestate preset → set the sweep on its
-//! [`PipelineConfig`](gf2_sim::PipelineConfig) → run →
-//! post-process the [`SimulationResults`] into the campaign CSV.
-//!
-//! # Es/N0 vs Eb/N0
-//!
-//! Unlike the legacy binary (which converted Es/N0 → Eb/N0 for the legacy
-//! `SimulationConfig`), the `gf2-sim` pipeline's `esn0_db_points` *are* Es/N0
-//! in dB directly: the frame kernel
-//! [`DvbT2BicmFrameSim`](gf2_sim::frame_sim::DvbT2BicmFrameSim) takes Es/N0 and
-//! derives sigma from it. The CLI `--esn0-range` values are therefore fed to
-//! the config verbatim — no unit conversion happens in this binary.
-//!
-//! # Usage
-//!
-//! ## Smoke run (3 SNR points, small frame budget)
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
-//!     --rate 1/2 --modulation 16qam \
-//!     --esn0-range 4.0:5.0:0.5 \
-//!     --max-frames 100 --target-errors 5 \
-//!     --output-dir /tmp/dvb_smoke --seed 42
-//! ```
-//!
-//! ## Production run
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
-//!     --rate 1/2 --modulation 16qam \
-//!     --esn0-range 4.0:7.0:0.5 \
-//!     --target-errors 100 --max-frames 10000000 \
-//!     --output-dir /tmp/dvb_r12_16qam --seed 42
-//! ```
-//!
-//! ## Resuming after interruption
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
-//!     --rate 1/2 --modulation 16qam \
-//!     --esn0-range 4.0:7.0:0.5 \
-//!     --target-errors 100 --max-frames 10000000 \
-//!     --output-dir /tmp/dvb_r12_16qam --seed 42 --resume
-//! ```
-//!
-//! ## GPU offload (requires `--features hip`)
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features hip --bin dvb_t2_awgn_campaign -- \
-//!     --rate 1/2 --modulation 16qam \
-//!     --esn0-range 4.0:7.0:0.5 --target-errors 100 \
-//!     --output-dir /tmp/dvb_r12_16qam --seed 42 --gpu
-//! ```
-//!
-//! On a build **without** `--features hip`, passing `--gpu` returns a clear
-//! error before any work runs.
-//!
-//! ## Calibration sweep
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
-//!     --calibrate --rate 1/2 --modulation 16qam \
-//!     --output-dir /tmp/dvb_calib --seed 42 --calibrate-frames 1000
-//! ```
+//! DVB-T2 BICM AWGN campaign runner: simulates one `(rate, modulation)`
+//! configuration through the [`Pipeline::dvb_t2`] preset and writes a CSV
+//! curve, a README, per-SNR checkpoints and a tracing log. `--esn0-range`
+//! values are Es/N0 in dB and reach
+//! [`PipelineConfig`](gf2_sim::PipelineConfig) unconverted.
 //!
 //! # Output layout
 //!
 //! Under `<output-dir>/`:
 //! - `curve_<rate>_<mod>.csv` — per-SNR results (columns: `es_n0_db, fer, ber,
-//!   frames, errors, mean_iters, wall_seconds`). Two columns are inherently
-//!   non-deterministic across separate process invocations and are excluded
-//!   from any byte-identity assertion: `wall_seconds` (average wall-clock time
-//!   per SNR point for this invocation) and `ber` (a non-associative f32
-//!   horizontal reduction over LDPC belief-propagation output; design doc §11
-//!   always-excluded). The discrete columns `es_n0_db`, `fer`, `frames`,
-//!   `errors`, and `mean_iters` are deterministic and asserted byte-identical
-//!   across two runs at the same seed by the within-pipeline byte-identity
-//!   integration test (`tests/campaign_byte_identity.rs`).
-//!
-//!   **`mean_iters` legacy-compatibility note**: the legacy binary recorded
-//!   `iterations: 1` for converged frames (a quirk of its `DecoderResult`
-//!   sentinel). This pipeline records the real BP iteration depth. Old-vs-new
-//!   `mean_iters` curves are therefore **not comparable**; use only
-//!   `fer`/`ber`/`frames`/`errors` for cross-binary comparison.
-//! - `tracing.jsonl` — structured JSON-lines tracing log (one JSON object per
-//!   line). Written unconditionally (both production and calibration runs) by
-//!   the [`gf2_sim::observability::install_campaign_subscriber`] machinery
-//!   (a **process-global** subscriber, so events from the executor's rayon /
-//!   helper threads land too). The cross-epic e4849f07 multi-day sweep monitor
-//!   watches this file. Events (each carries a matching `event_type` field):
+//!   frames, errors, mean_iters, wall_seconds`). `wall_seconds` is the sweep
+//!   wall-clock time averaged over the SNR points.
+//!   `tests/campaign_byte_identity.rs` compares `fer`, `frames`, `errors`, and
+//!   `mean_iters` across two runs at the same seed and excludes `ber` and
+//!   `wall_seconds`.
+//! - `tracing.jsonl` — structured JSON-lines tracing log, written through
+//!   [`gf2_sim::observability::install_campaign_subscriber`]. Events (each
+//!   carries a matching `event_type` field):
 //!   - `campaign_start` — once, at sweep start.
-//!   - `campaign_heartbeat` — **live**, from the executor's per-frame
-//!     `frame_observer`, every `--heartbeat-frames` observed frames per SNR
-//!     point (production runs only; calibration has no checkpointed path).
-//!     Approximate progress, not exact accounting: on the hybrid GPU path,
-//!     frames in a batch discarded at an interrupt are observed-but-unrecorded
-//!     and re-observed on resume, and the counter restarts each invocation.
-//!   - `snr_point_completed` — one per point with the full CSV field schema
-//!     `es_n0_db`/`fer`/`ber`/`frames`/`errors`/`mean_iters`/`wall_seconds`.
-//!     On the production (checkpointed) path it is emitted **live** at each
-//!     SNR-point boundary from inside
-//!     [`gf2_sim::Scheduler::run_sweep_checkpointed`], so a monitor tailing
-//!     this file sees each point complete as the sweep advances (there
-//!     `wall_seconds` is the measured per-point wall; the CSV column reports
-//!     the sweep-averaged `wall_per_point`). On the calibration
-//!     (non-checkpointed) path it is emitted post-run (that path has no
-//!     per-point boundary hook).
-//! - `README.md` — invocation, seed, host info, total wall-clock.
-//! - `checkpoints/` — per-SNR JSON files (v2 schema with BLAKE3-verified
-//!   config hash), written by the pipeline's checkpoint subsystem.
+//!   - `campaign_heartbeat` — every `--heartbeat-frames` observed frames per
+//!     SNR point (production runs only). Approximate progress, not exact
+//!     accounting: on the hybrid GPU path, frames in a batch discarded at an
+//!     interrupt are observed-but-unrecorded and re-observed on resume, and
+//!     the counter restarts each invocation.
+//!   - `snr_point_completed` — one per point with the CSV fields. The
+//!     production (checkpointed) path emits it at each SNR-point boundary
+//!     from inside [`gf2_sim::Scheduler::run_sweep_checkpointed`], with the
+//!     measured per-point `wall_seconds`; the calibration path emits it after
+//!     the run.
+//! - `README.md` — invocation, seed, host info, total wall-clock (production
+//!   runs only).
+//! - `checkpoints/` — per-SNR JSON files, written by the pipeline's
+//!   checkpoint subsystem (production runs only).
 //! - `calibration/calibration_<rate>_<mod>.csv` (only when `--calibrate`).
-//!
-//! The CSV schema is **identical** to the legacy binary's, so
-//! `dev/benchmarks/dvb_t2_awgn/plot.py` keeps working unchanged.
-//!
-//! # Plotting
-//!
-//! After running the campaign, produce a PNG overlay with simulated FER and
-//! ETSI TR 102 831 reference points using:
-//!
-//! ```bash
-//! python3 dev/benchmarks/dvb_t2_awgn/plot.py \
-//!     --curve-csv <output-dir>/curve_<rate>_<mod>.csv \
-//!     --reference-toml crates/gf2-coding/data/dvb_t2_tr102831_reference.toml \
-//!     --output <output-dir>/curve_<rate>_<mod>.png
-//! ```
 
 #![deny(unsafe_code)]
 
@@ -190,11 +52,6 @@ use gf2_sim::observability::install_campaign_subscriber;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::Pipeline;
 
-// ---------------------------------------------------------------------------
-// CLI argument definitions (parsed manually, no clap dependency needed).
-// ---------------------------------------------------------------------------
-
-/// Parsed CLI arguments.
 struct Args {
     rate: CodeRate,
     modulation: DvbT2Modulation,
@@ -209,15 +66,12 @@ struct Args {
     strict_gpu: bool,
     calibrate: bool,
     calibrate_frames: usize,
-    /// Optional explicit 3-point bracket [low, center, high] for calibration.
+    /// Calibration bracket `[low, center, high]`.
     calibrate_bracket: Option<[f64; 3]>,
-    /// LDPC belief-propagation decoder configuration.
     decoder: DecoderConfig,
-    /// QAM soft-demapping method.
     demap: DemapMethod,
-    /// Within-SNR heartbeat cadence in frames: drives both the heartbeat
-    /// checkpoint flush AND the `campaign_heartbeat` tracing event. Ignored
-    /// (forced to 0) for calibration runs.
+    /// Within-SNR heartbeat cadence in frames, for both the checkpoint flush
+    /// and the `campaign_heartbeat` tracing event. Calibration runs use 0.
     heartbeat_frames: u64,
 }
 
@@ -318,8 +172,7 @@ fn parse_decoder(s: &str) -> Result<DecoderConfig, String> {
             let a: f32 = alpha
                 .parse()
                 .map_err(|_| format!("Cannot parse nms alpha '{}' as f32", alpha))?;
-            // DecoderConfig::new panics on out-of-range alpha; validate here
-            // so the CLI returns a clean error instead.
+            // `DecoderConfig::new` panics on an out-of-range alpha.
             if !a.is_finite() || a <= 0.0 || a > 1.0 {
                 return Err(format!(
                     "nms alpha must be finite and in (0.0, 1.0]; got {}",
@@ -332,8 +185,7 @@ fn parse_decoder(s: &str) -> Result<DecoderConfig, String> {
             let b: f32 = beta
                 .parse()
                 .map_err(|_| format!("Cannot parse oms beta '{}' as f32", beta))?;
-            // DecoderConfig::new panics on negative or non-finite beta;
-            // validate here so the CLI returns a clean error instead.
+            // `DecoderConfig::new` panics on a negative or non-finite beta.
             if !b.is_finite() || b < 0.0 {
                 return Err(format!("oms beta must be finite and >= 0.0; got {}", b));
             }
@@ -426,7 +278,6 @@ fn parse_args() -> Result<Args, String> {
                 let s = argv
                     .get(i)
                     .ok_or_else(|| "--seed requires a value".to_string())?;
-                // Accept hex (0x...) or decimal.
                 if s.starts_with("0x") || s.starts_with("0X") {
                     seed = u64::from_str_radix(&s[2..], 16)
                         .map_err(|_| format!("Cannot parse '--seed {}' as hex u64", s))?;
@@ -539,10 +390,6 @@ fn parse_args() -> Result<Args, String> {
     })
 }
 
-// ---------------------------------------------------------------------------
-// Naming helpers (campaign-local aliases that forward to the shared harness).
-// ---------------------------------------------------------------------------
-
 fn rate_str(r: CodeRate) -> &'static str {
     rate_underscore(r)
 }
@@ -555,28 +402,16 @@ fn calib_csv_name(rate: CodeRate, modulation: DvbT2Modulation) -> String {
     format!("calibration_{}_{}.csv", rate_str(rate), mod_str(modulation))
 }
 
-// ---------------------------------------------------------------------------
-// Reference TOML: load default calibration bracket for a MODCOD.
-//
-// Centers derived from ETSI TR 102 831 Table 44 (AWGN C/N at BER=1e-7 after
-// LDPC, Normal 64800-bit blocks) minus ~1.5 dB to estimate the Es/N0 at
-// FER=1e-4 waterfall (the QEF threshold is at BER=1e-7 ≈ FER=1e-11 after BCH;
-// waterfall is ~1-2 dB below the table C/N).
-// ---------------------------------------------------------------------------
-
 /// Returns `[low, center, high]` Es/N0 values for the calibration bracket.
-///
-/// The center value is derived from ETSI TR 102 831 Table 44 AWGN C/N at
-/// BER = 1e-7 after LDPC (Normal frame, 64800 bits).
 fn default_calibration_bracket(rate: CodeRate, modulation: DvbT2Modulation) -> [f64; 3] {
-    // ETSI TR 102 831 Table 44 AWGN C/N at BER=1e-7 after LDPC (Normal frames):
+    // `@/citation/Etsi2012` Table 44 AWGN C/N at BER=1e-7 after LDPC (Normal frames):
     //   16-QAM 1/2: 6.0 dB
     //   16-QAM 2/3: 8.9 dB
     //   16-QAM 3/4: 10.0 dB
     //   64-QAM 1/2: 9.9 dB
     //   64-QAM 2/3: 13.5 dB
     //   64-QAM 3/4: 15.1 dB
-    // The waterfall knee (FER~1e-2..1e-4) sits ~1.5 dB below the QEF C/N.
+    // Each center sits 0.5 to 1.1 dB below its table value.
     let center = match (rate, modulation) {
         (CodeRate::Rate1_2, DvbT2Modulation::Qam16) => 5.5,
         (CodeRate::Rate2_3, DvbT2Modulation::Qam16) => 8.0,
@@ -589,10 +424,6 @@ fn default_calibration_bracket(rate: CodeRate, modulation: DvbT2Modulation) -> [
     [center - 1.0, center, center + 1.0]
 }
 
-// ---------------------------------------------------------------------------
-// SNR range builder.
-// ---------------------------------------------------------------------------
-
 fn build_snr_range(start: f64, stop: f64, step: f64) -> Vec<f64> {
     let n = ((stop - start) / step).round() as usize + 1;
     (0..n)
@@ -604,10 +435,6 @@ fn build_snr_range(start: f64, stop: f64, step: f64) -> Vec<f64> {
         .filter(|&v| v <= stop + step * 0.001)
         .collect()
 }
-
-// ---------------------------------------------------------------------------
-// Campaign CSV writer.
-// ---------------------------------------------------------------------------
 
 const CAMPAIGN_CSV_HEADER: &str = "es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds";
 
@@ -627,12 +454,6 @@ fn write_campaign_csv(
     Ok(())
 }
 
-/// Projects one [`SnrPointResult`] into a campaign CSV row.
-///
-/// `ber` is the bit error rate `total_bit_errors / total_bits`; `wall_seconds`
-/// is the per-point average passed in (the executor does not expose per-point
-/// timing). `es_n0_db` comes from the requested sweep point (it equals the
-/// result's `es_n0_db`, which the pipeline carries through verbatim).
 fn point_to_csv_row(
     es_n0_db: f64,
     p: &SnrPointResult,
@@ -654,10 +475,6 @@ fn point_to_csv_row(
     )
 }
 
-// ---------------------------------------------------------------------------
-// Host info helper.
-// ---------------------------------------------------------------------------
-
 fn host_info() -> (String, String) {
     let whoami = std::process::Command::new("whoami")
         .output()
@@ -672,10 +489,6 @@ fn host_info() -> (String, String) {
         .unwrap_or_else(|| "unknown".to_string());
     (whoami, uname)
 }
-
-// ---------------------------------------------------------------------------
-// README writer.
-// ---------------------------------------------------------------------------
 
 fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds: f64) {
     let invocation: Vec<String> = std::env::args().collect();
@@ -738,37 +551,8 @@ fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds
     }
 }
 
-// ---------------------------------------------------------------------------
-// Pipeline construction.
-// ---------------------------------------------------------------------------
-
-/// Builds the DVB-T2 BICM pipeline for the campaign's MODCOD/decoder/demap.
-///
-/// Uses the lowest Es/N0 sweep point as the *channel* Es/N0 the preset builds
-/// the AWGN stage and demapper noise variance from; the per-point Es/N0 sweep
-/// is then applied through `config.esn0_db_points` and the executor rebuilds
-/// the frame kernel per point from the [`RunPlan`](gf2_sim::executor::RunPlan)
-/// (so the channel value the preset captures here does not pin the sweep —
-/// only the `(rate, modulation, decoder, demap)` plan does).
-///
-/// All CLI run-control knobs are wired onto the built pipeline's
-/// [`PipelineConfig`](gf2_sim::PipelineConfig) here: `esn0_db_points`,
-/// `target_errors`, `max_frames`, `seed`, **`strict_gpu`** (from
-/// `args.strict_gpu`), **`gpu_enabled`** (from `args.gpu`),
-/// `tracing_log_path`, `checkpoint_dir`, and the heartbeat cadence. This is
-/// the single CLI→config wiring point, exercised directly by the
-/// `strict_gpu_flag_wires_to_config` and `gpu_enabled_flag_wires_to_config`
-/// unit tests.
-///
-/// # Arguments
-///
-/// * `args` — the parsed CLI arguments.
-/// * `esn0_points` — the resolved Es/N0 sweep points (dB).
-/// * `target_errors` — the per-SNR frame-error early-exit budget (`0` disables).
-/// * `max_frames` — the per-SNR maximum frame budget.
-/// * `checkpoint_dir` — the per-SNR checkpoint directory, or `None`.
-/// * `heartbeat_every_frames` — the within-SNR checkpoint cadence (`0` off).
-/// * `tracing_log_path` — JSON-lines sink for tracing events, or `None`.
+/// The preset's channel takes the first sweep point; the sweep itself is
+/// `config.esn0_db_points`.
 fn build_configured_pipeline(
     args: &Args,
     esn0_points: &[f64],
@@ -811,15 +595,7 @@ fn build_configured_pipeline(
     Ok(pipeline)
 }
 
-// ---------------------------------------------------------------------------
-// Full campaign (production or calibration).
-// ---------------------------------------------------------------------------
-
 fn run_campaign(args: &Args) -> Result<(), String> {
-    // GPU gating: `--gpu` only does anything on a `--features hip` build. On a
-    // default build, fail fast with a clear error (deliverable / criterion:
-    // "emits a clear error on default builds") rather than silently running on
-    // the CPU and mislabelling the run.
     if args.gpu && !cfg!(feature = "hip") {
         return Err(
             "--gpu requires a build with --features hip (the HIP/ROCm GPU backend). \
@@ -844,7 +620,6 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     let is_calib = args.calibrate;
 
-    // Determine the Es/N0 sweep.
     let esn0_points: Vec<f64> = if is_calib {
         let bracket = args
             .calibrate_bracket
@@ -856,9 +631,7 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     };
 
     let target_errors = if is_calib {
-        // Calibration: stop only at max_frames; 0 disables the error-count
-        // early exit in the checkpointed executor (and calibration uses the
-        // plain run path anyway, which has no early exit).
+        // 0 disables the error-count early exit.
         0
     } else {
         args.target_errors
@@ -869,7 +642,6 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         args.max_frames
     };
 
-    // Output paths.
     let csv_path = if is_calib {
         let calib_dir = args.output_dir.join("calibration");
         std::fs::create_dir_all(&calib_dir)
@@ -880,18 +652,12 @@ fn run_campaign(args: &Args) -> Result<(), String> {
             .join(curve_csv_name(args.rate, args.modulation))
     };
 
-    // Calibration writes no checkpoints (short, fixed-frame sweeps); production
-    // runs checkpoint per-SNR + heartbeat under <output-dir>/checkpoints.
     let checkpoint_dir = if is_calib {
         None
     } else {
         Some(args.output_dir.join("checkpoints"))
     };
 
-    // If --resume is NOT set but a checkpoint dir exists from a prior run, clear
-    // it so the run starts fresh (the checkpointed sweep would otherwise honour
-    // stale checkpoints only with --resume, but a config-hash mismatch would
-    // surface as a load error; clearing keeps the non-resume semantics clean).
     if !args.resume && !is_calib {
         if let Some(ref ckpt_dir) = checkpoint_dir {
             if ckpt_dir.exists() {
@@ -901,9 +667,6 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         }
     }
 
-    // JSON-lines tracing log: unconditional (matches legacy binary parity),
-    // written by install_campaign_subscriber below.  Both production and
-    // calibration runs produce the file; the cross-epic monitor watches it.
     let tracing_path = args.output_dir.join("tracing.jsonl");
 
     eprintln!(
@@ -923,7 +686,6 @@ fn run_campaign(args: &Args) -> Result<(), String> {
             .collect::<Vec<_>>()
     );
 
-    // Build the pipeline via the typestate preset and configure the sweep.
     let pipeline = build_configured_pipeline(
         args,
         &esn0_points,
@@ -934,18 +696,11 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         Some(tracing_path.clone()),
     )?;
 
-    // Install the JSON-lines tracing subscriber as the PROCESS-GLOBAL default.
-    // Must be called AFTER the pipeline is built (so `tracing_log_path` is set
-    // on the config) and BEFORE the run starts. Global (not thread-local)
-    // because the sweep's frame loops run on rayon-pool workers and helper
-    // threads — a thread-local default would silently drop every event they
-    // emit (the campaign_heartbeat events below).
+    // Process-global, because the frame loops run on rayon workers and helper
+    // threads, where a thread-local default would drop their events.
     install_campaign_subscriber(pipeline.config())
         .map_err(|e| format!("Cannot install tracing subscriber: {e}"))?;
 
-    // Emit a campaign_start event so tracing.jsonl has at least one record.
-    // This matches the legacy binary's event name/shape used by external monitors
-    // (cross-epic e4849f07).
     tracing::info!(
         name: "campaign_start",
         event_type = "campaign_start",
@@ -971,31 +726,12 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     let campaign_start = Instant::now();
 
-    // Route: a checkpointed sweep when a checkpoint dir is configured (the
-    // production path — honours `target_errors` early-exit, heartbeat +
-    // SNR-boundary + SIGINT checkpointing, and `--resume`); the plain run
-    // otherwise (calibration — fixed frame budget, no checkpoints). The plain
-    // `Pipeline::run` path has no `target_errors` early-exit, which matches
-    // calibration's "run exactly N frames" semantics.
-    //
-    // The production arm calls `Scheduler::run_sweep_checkpointed` directly
-    // (rather than the `Pipeline::run_checkpointed` thin wrapper, which passes
-    // a no-op observer) so the per-frame `frame_observer` can emit live
-    // `campaign_heartbeat` tracing events — the monitoring channel the
-    // cross-epic e4849f07 multi-day sweep watches.
+    // The checkpointed arm calls `Scheduler::run_sweep_checkpointed` directly
+    // so that its frame observer emits `campaign_heartbeat` events.
     let results: SimulationResults = if checkpoint_dir.is_some() {
         let scheduler = Scheduler::from_pipeline(&pipeline);
         let heartbeat_every = pipeline.config().heartbeat_every_frames;
 
-        // Per-SNR-point counters of frames observed by this invocation.
-        // `campaign_heartbeat` is emitted every `heartbeat_every` observed
-        // frames. NOTE (frame_observer caveat, executor/drain.rs): on the
-        // hybrid path, frames prepped into a batch that is discarded at an
-        // interrupt are observed-but-unrecorded and re-observed on resume, and
-        // after a resume the count restarts at 0 (it counts THIS invocation's
-        // observations, not global progress) — heartbeat events are
-        // approximate liveness/progress, not exact frame accounting. The
-        // exact deterministic record is the checkpoint files + final CSV.
         let frames_seen: Vec<AtomicU64> = esn0_points.iter().map(|_| AtomicU64::new(0)).collect();
         let esn0_for_observer = esn0_points.clone();
         let observer = move |snr_idx: usize, _global_frame: usize| {
@@ -1035,24 +771,14 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         0.0
     };
 
-    // Post-process SimulationResults into the campaign CSV format. The pipeline
-    // already works in Es/N0, so per-point `es_n0_db` is the sweep value.
     let csv_rows: Vec<(f64, f64, f64, u64, u64, f64, f64)> = esn0_points
         .iter()
         .zip(results.per_point.iter())
         .map(|(&es_n0_db, p)| point_to_csv_row(es_n0_db, p, wall_per_point))
         .collect();
 
-    // Emit `snr_point_completed` events for the NON-checkpointed (calibration)
-    // path only. The checkpointed production sweep emits one such event LIVE at
-    // each SNR-point boundary from inside `Scheduler::run_sweep_checkpointed`
-    // (so monitors tailing `tracing.jsonl` see each point as the sweep
-    // advances); re-emitting here would double-log it. The calibration path
-    // runs the plain `Pipeline::run_with_decoder` (no per-point boundary hook),
-    // so it has no live emission — emit the records post-run here. Both paths
-    // carry the same field schema (`es_n0_db`, `fer`, `ber`, `frames`,
-    // `errors`, `mean_iters`, `wall_seconds`) so existing `jq`/parsers work
-    // regardless of path.
+    // The checkpointed sweep emits this event itself at each SNR-point
+    // boundary; emitting it here too would log it twice.
     if checkpoint_dir.is_none() {
         for &(es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds) in &csv_rows {
             tracing::info!(
@@ -1072,7 +798,6 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     write_campaign_csv(&csv_path, &csv_rows)
         .map_err(|e| format!("Cannot write campaign CSV: {e}"))?;
 
-    // Write README (production runs only).
     if !is_calib {
         let readme_path = args.output_dir.join("README.md");
         write_readme(&readme_path, args, &esn0_points, total_wall);
@@ -1087,10 +812,6 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     Ok(())
 }
-
-// ---------------------------------------------------------------------------
-// Entry point.
-// ---------------------------------------------------------------------------
 
 fn main() {
     let args = match parse_args() {
@@ -1156,32 +877,28 @@ mod tests {
 
     #[test]
     fn parse_decoder_rejects_invalid_nms_alpha_range() {
-        // DecoderConfig::new would panic on these; the parser must reject them.
         assert!(parse_decoder("nms:0.0").is_err()); // alpha = 0 is the boundary excluded by (0, 1]
-        assert!(parse_decoder("nms:1.5").is_err()); // alpha > 1
-        assert!(parse_decoder("nms:-0.25").is_err()); // negative
-        assert!(parse_decoder("nms:NaN").is_err()); // non-finite
-        assert!(parse_decoder("nms:inf").is_err()); // non-finite
+        assert!(parse_decoder("nms:1.5").is_err());
+        assert!(parse_decoder("nms:-0.25").is_err());
+        assert!(parse_decoder("nms:NaN").is_err());
+        assert!(parse_decoder("nms:inf").is_err());
     }
 
     #[test]
     fn parse_decoder_rejects_invalid_oms_beta_range() {
-        // DecoderConfig::new would panic on these; the parser must reject them.
-        assert!(parse_decoder("oms:-0.1").is_err()); // negative
-        assert!(parse_decoder("oms:NaN").is_err()); // non-finite
-        assert!(parse_decoder("oms:inf").is_err()); // non-finite
+        assert!(parse_decoder("oms:-0.1").is_err());
+        assert!(parse_decoder("oms:NaN").is_err());
+        assert!(parse_decoder("oms:inf").is_err());
     }
 
     #[test]
     fn parse_decoder_accepts_nms_boundary_one() {
-        // alpha = 1.0 is the inclusive upper bound — must be accepted.
         let cfg = parse_decoder("nms:1.0").expect("nms:1.0 parse");
         assert_eq!(cfg.algorithm(), DecoderAlgorithm::NormalizedMinSum(1.0));
     }
 
     #[test]
     fn parse_decoder_accepts_oms_zero_beta() {
-        // beta = 0.0 is the inclusive lower bound — must be accepted.
         let cfg = parse_decoder("oms:0.0").expect("oms:0.0 parse");
         assert_eq!(cfg.algorithm(), DecoderAlgorithm::OffsetMinSum(0.0));
     }
@@ -1208,8 +925,6 @@ mod tests {
         assert_eq!(r, vec![4.0, 4.5, 5.0]);
     }
 
-    /// `point_to_csv_row` derives `ber = total_bit_errors / total_bits` and
-    /// forwards the four deterministic columns verbatim.
     #[test]
     fn point_to_csv_row_projects_columns() {
         use gf2_sim::parallel::WorkerCounters;
@@ -1227,8 +942,6 @@ mod tests {
         assert_eq!(wall, 1.5);
     }
 
-    /// A minimal valid `Args` (rate 1/2, 16-QAM, one Es/N0 point) the config
-    /// tests vary one field of at a time.
     fn base_args() -> Args {
         Args {
             rate: CodeRate::Rate1_2,
@@ -1250,14 +963,10 @@ mod tests {
         }
     }
 
-    /// CLI→config: the `--strict-gpu` flag (here `args.strict_gpu`) wires through
-    /// `build_configured_pipeline` onto `PipelineConfig::strict_gpu`. This is the
-    /// "verified by a CLI→config parse test" success criterion.
     #[test]
     fn strict_gpu_flag_wires_to_config() {
         let mut args = base_args();
 
-        // Default (flag absent): strict_gpu false on the config.
         let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
             .expect("pipeline builds");
         assert!(
@@ -1265,7 +974,6 @@ mod tests {
             "strict_gpu must default to false when --strict-gpu is absent"
         );
 
-        // Flag present: strict_gpu true on the config.
         args.strict_gpu = true;
         let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
             .expect("pipeline builds");
@@ -1275,14 +983,10 @@ mod tests {
         );
     }
 
-    /// CLI→config: the `--gpu` flag (here `args.gpu`) wires through
-    /// `build_configured_pipeline` onto `PipelineConfig::gpu_enabled`.
-    /// This is the hard-criterion wire verified by a CLI→config parse test.
     #[test]
     fn gpu_enabled_flag_wires_to_config() {
         let mut args = base_args();
 
-        // Default (--gpu absent): gpu_enabled false on the config.
         let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
             .expect("pipeline builds without gpu");
         assert!(
@@ -1290,9 +994,7 @@ mod tests {
             "gpu_enabled must default to false when --gpu is absent"
         );
 
-        // --gpu present: gpu_enabled true on the config.  Note: `with_gpu(true)`
-        // on a non-hip build degrades gracefully at build() time (no error) and
-        // only errors at run time when the GPU executor is actually invoked.
+        // `with_gpu(true)` builds without error on a non-hip build.
         args.gpu = true;
         let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
             .expect("pipeline builds with gpu flag");
@@ -1302,10 +1004,6 @@ mod tests {
         );
     }
 
-    /// CLI→config: the remaining run-control knobs (`seed`, `target_errors`,
-    /// `max_frames`, `esn0_db_points`, `checkpoint_dir`, `heartbeat`,
-    /// `tracing_log_path`) also wire through the single
-    /// `build_configured_pipeline` site.
     #[test]
     fn run_control_knobs_wire_to_config() {
         let args = base_args();

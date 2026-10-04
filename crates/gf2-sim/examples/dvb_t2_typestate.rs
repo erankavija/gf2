@@ -1,9 +1,8 @@
 //! DVB-T2 BICM chain via the typestate fluent builder (`Pipeline::dvb_t2`):
-//! Normal r1/2 16-QAM at the waterfall Es/N0 (6.0 dB), so the summary shows
-//! a mixed verdict (3/8 errored frames at this seed) rather than the
-//! informationless all-zeros of an above-threshold point. The builder
-//! enforces the call order at compile time (`.decoder()` before `.modcod()`
-//! does not compile). Graph-API version: `examples/dvb_t2_graph_api.rs`.
+//! Normal r1/2 16-QAM at the waterfall Es/N0 (6.0 dB), where the summary shows
+//! a mixed verdict. The builder enforces the call order at compile time
+//! (`.decoder()` before `.modcod()` does not compile). Graph-API version:
+//! `examples/dvb_t2_graph_api.rs`.
 //!
 //! Run with: `cargo run -p gf2-sim --example dvb_t2_typestate --release`
 
@@ -18,8 +17,6 @@ use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::{Pipeline, Scheduler, TopologyExecutor};
 
 fn main() {
-    // 8 frames keep the heavy n = 64800 waterfall decodes to a few seconds;
-    // this pinned seed yields the mixed 3/8-errored verdict at 6.0 dB.
     const FRAMES: usize = 8;
     const SEED: u64 = 0xDE16_0FC5;
     const ES_N0_DB: f32 = 6.0;

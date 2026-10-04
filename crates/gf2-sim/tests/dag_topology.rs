@@ -1,30 +1,7 @@
-//! DAG topology executor semantics (issue `de160fc5`, criteria 1, 3, 4).
-//!
-//! Exercises [`TopologyExecutor`] over:
-//!
-//! * the **linear DVB-T2 BICM chain** — a graph-API build with scrambled
-//!   insertion order topo-sorts to the same stage order as the typestate
-//!   preset, and the executor's driven output is byte-identical to a
-//!   sequential fold over the preset's stages;
-//! * **fan-out** — one channel feeding two parallel demappers ("double
-//!   demap" diversity): both branches execute, each with its own config;
-//! * **fan-in** — two demapper branches feeding a single decoder: the decoder
-//!   waits on both producers and receives their outputs concatenated in
-//!   in-edge order;
-//! * the **diamond ordering contract** — producers always run before
-//!   consumers, fan-in waits on ALL producers;
-//! * the **`Hybrid` routing arm** — a synthetic `ExecutionClass::Hybrid`
-//!   stage is split per-batch (first `ceil(n/2)` frames, then the rest) and
-//!   its outputs re-concatenated in order (no production Hybrid stage
-//!   exists; the synthetic stage lives here);
-//! * **intermediate-buffer reference counting** — a producer's output is
-//!   dropped as soon as its last consumer has run;
-//! * the **six-field per-stage tracing spans**
-//!   `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)`.
-//!
-//! Cyclic / disconnected construction is rejected at `Pipeline::build()` and
-//! is covered by `tests/build_errors.rs` (+ the pre-existing
-//! `tests/cyclic_chain.rs`); those shapes cannot reach this executor.
+//! `TopologyExecutor` semantics over linear, fan-out, fan-in and diamond
+//! graphs: topological execution order, in-edge-ordered fan-in merging,
+//! per-batch `Hybrid` splitting, intermediate-buffer reference counting, and
+//! per-stage tracing spans.
 
 use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -45,8 +22,8 @@ use gf2_sim::stage::{erase, AnyScratch, BatchSize, ExecutionClass, Stage, TypedB
 use gf2_sim::stages::{dvb_t2_bicm_stages, GrayQamDemap};
 use gf2_sim::{Pipeline, Scheduler, StageError, TopologyExecutor};
 
-/// The high-SNR operating point: the BP decoder early-terminates, keeping each
-/// chain run fast-tier, while the channel still injects real noise.
+/// High enough that the BP decoder terminates early; the channel still adds
+/// noise.
 const ES_N0_DB: f32 = 20.0;
 const SEED: u64 = 0xDE16_0FC5;
 
@@ -89,14 +66,8 @@ fn build_preset() -> Pipeline {
         .expect("in-scope MODCOD builds")
 }
 
-// ---------------------------------------------------------------------------
-// Linear chain: topo order matches the preset; executor matches a fold
-// ---------------------------------------------------------------------------
-
-/// Builds the 7-stage DVB-T2 BICM chain through the graph API with a
-/// **scrambled insertion order** (inverse half added before the forward half),
-/// so the recorded `StageId`s are NOT already topologically sorted and
-/// `build()` must genuinely reorder.
+/// Inserts the inverse half before the forward half, so the recorded
+/// `StageId`s are out of topological order and `build()` has to sort them.
 fn build_graph_scrambled() -> Pipeline {
     let factory = dvb_t2_bicm_stages(
         CodeRate::Rate1_2,
@@ -107,12 +78,10 @@ fn build_graph_scrambled() -> Pipeline {
     );
 
     let mut chain = Chain::new();
-    // Insert in scrambled order: inverse (demap, deinterleave, decode) first…
     let mut inv_ids = Vec::new();
     for stage in factory.inverse {
         inv_ids.push(chain.add(stage));
     }
-    // …then the channel, then the forward half (encode, interleave, map).
     let ch = chain.add(gf2_sim::stage::erase(gf2_sim::channels::Awgn::new(
         ES_N0_DB, 4,
     )));
@@ -121,8 +90,7 @@ fn build_graph_scrambled() -> Pipeline {
         fwd_ids.push(chain.add(stage));
     }
 
-    // Wire the canonical BICM order: encode → interleave → map → channel →
-    // demap → deinterleave → decode.
+    // encode → interleave → map → channel → demap → deinterleave → decode
     let order = [
         fwd_ids[0], fwd_ids[1], fwd_ids[2], ch, inv_ids[0], inv_ids[1], inv_ids[2],
     ];
@@ -136,8 +104,6 @@ fn build_graph_scrambled() -> Pipeline {
 
 #[test]
 fn test_linear_chain_topo_order_matches_preset() {
-    // Criterion 1 + deliverable 3 bullet 1: build() must topo-sort the
-    // scrambled insertion into the SAME stage order the preset produces.
     let preset = build_preset();
     let graph = build_graph_scrambled();
 
@@ -173,18 +139,12 @@ fn test_linear_chain_topo_order_matches_preset() {
 
 #[test]
 fn test_linear_chain_executor_output_matches_sequential_fold() {
-    // The executor's driven output over the preset chain must be
-    // byte-identical to a sequential fold over the same stages with the same
-    // (default) scratches — proving correct topological per-stage execution.
     let pipeline = build_preset();
     let sched = scheduler(2);
 
     let k = 32208; // k_bch for Normal r1/2
     let bbframe = random_bbframe(k, SEED);
 
-    // Sequential fold (the precedent machinery from preset_vs_graph.rs),
-    // using each stage's own default scratch — identical to what the
-    // executor allocates (ChannelScratch::default() for the AWGN stage).
     let fold_out = pipeline.stages().iter().fold(
         Box::new(BitPackedBatch::new(vec![bbframe.clone()])) as Box<dyn TypedBatch>,
         |batch, stage| {
@@ -199,7 +159,6 @@ fn test_linear_chain_executor_output_matches_sequential_fold() {
         .downcast_ref::<HardDecisionBatch>()
         .expect("chain ends in HardDecisionBatch");
 
-    // Executor drive.
     let exec_out = TopologyExecutor::run(
         &pipeline,
         &sched,
@@ -223,13 +182,6 @@ fn test_linear_chain_executor_output_matches_sequential_fold() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Diamond ordering contract (synthetic counting stages)
-// ---------------------------------------------------------------------------
-
-/// A synthetic CPU stage over `BitPackedBatch` that records (a) the global
-/// tick at which it ran, (b) the input batch size it saw, and (c) a clone of
-/// its input — then emits `frames_out`.
 struct Probe {
     clock: Arc<AtomicU64>,
     tick: Arc<AtomicU64>,
@@ -238,8 +190,7 @@ struct Probe {
     frames_out: Vec<BitVec>,
 }
 
-/// The observer handles `Probe::new` returns alongside the stage: its run
-/// tick, the input batch size it saw, and a clone of its input.
+/// `(run tick, input batch size, input clone)`.
 type ProbeHandles = (
     Arc<AtomicU64>,
     Arc<AtomicUsize>,
@@ -283,8 +234,6 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Probe {
 
 #[test]
 fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
-    // a → {b, c} → d. The fan-in consumer d must wait on BOTH producers and
-    // receive their outputs concatenated in in-edge order.
     let clock = Arc::new(AtomicU64::new(0));
     let (a, (a_tick, _, _)) = Probe::new(&clock, vec![BitVec::zeros(4)]);
     let (b, (b_tick, b_size, _)) = Probe::new(&clock, vec![BitVec::ones(8)]);
@@ -298,8 +247,8 @@ fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
     let id = chain.add(erase(d));
     chain.connect(ia, ib).unwrap();
     chain.connect(ia, ic).unwrap();
-    chain.connect(ib, id).unwrap(); // in-edge order at d: b first…
-    chain.connect(ic, id).unwrap(); // …then c.
+    chain.connect(ib, id).unwrap();
+    chain.connect(ic, id).unwrap();
     let pipeline = chain.build().expect("a diamond is a valid DAG");
 
     let sched = scheduler(4);
@@ -310,11 +259,9 @@ fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
     )
     .expect("diamond runs");
 
-    // Single sink: d.
     let out = outputs.into_single().expect("d is the only sink");
     assert_eq!(out.batch_size(), 1, "d's own output");
 
-    // Topological order: a before both branches; d strictly after both.
     let (ta, tb, tc, td) = (
         a_tick.load(Ordering::SeqCst),
         b_tick.load(Ordering::SeqCst),
@@ -328,11 +275,9 @@ fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
         "the fan-in consumer waits on ALL producers (d after b AND c)"
     );
 
-    // Both branches saw the shared (fan-out) producer output of 1 frame.
     assert_eq!(b_size.load(Ordering::SeqCst), 1);
     assert_eq!(c_size.load(Ordering::SeqCst), 1);
 
-    // The fan-in merge: d saw 2 frames, b's output first (in-edge order).
     assert_eq!(d_size.load(Ordering::SeqCst), 2, "fan-in concatenates");
     let seen = d_input
         .lock()
@@ -347,14 +292,8 @@ fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
     assert_eq!(seen.frames[1], BitVec::zeros(8), "c's frame second");
 }
 
-// ---------------------------------------------------------------------------
-// Fan-out: double demap (diversity)
-// ---------------------------------------------------------------------------
-
 #[test]
 fn test_fan_out_double_demap_both_branches_execute() {
-    // encode → interleave → map → channel → {demap_true_n0, demap_default_n0}.
-    // Both demappers are sinks; both must execute, each with its own config.
     let factory = dvb_t2_bicm_stages(
         CodeRate::Rate1_2,
         DvbT2Modulation::Qam16,
@@ -372,8 +311,6 @@ fn test_fan_out_double_demap_both_branches_execute() {
     }
     let ch = chain.add(erase(gf2_sim::channels::Awgn::new(ES_N0_DB, 4)));
     ids.push(ch);
-    // Two demappers with DIFFERENT assumed N0, so their LLRs observably
-    // differ — proving each branch ran its own stage, not a shared one.
     let demap_true = chain.add(erase(GrayQamDemap::with_noise_var(
         DvbT2Modulation::Qam16,
         DemapMethod::ExactLogMap,
@@ -413,7 +350,6 @@ fn test_fan_out_double_demap_both_branches_execute() {
         assert_eq!(l.frames.len(), 1);
         assert_eq!(l.frames[0].len(), n, "full FECFRAME of LLRs per branch");
     }
-    // The two branches used their own N0: the LLR scalings differ.
     let differs = llrs[0].frames[0]
         .iter()
         .zip(llrs[1].frames[0].iter())
@@ -425,15 +361,8 @@ fn test_fan_out_double_demap_both_branches_execute() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Fan-in: two demap branches feeding one decoder
-// ---------------------------------------------------------------------------
-
 #[test]
 fn test_fan_in_two_demap_branches_feed_one_decoder() {
-    // encode → interleave → map → channel → {(demapA → deintA),
-    // (demapB → deintB)} → decode. The decoder waits on both branches and
-    // decodes the 2-frame merged batch; at high SNR both recover the BBFRAME.
     let factory = dvb_t2_bicm_stages(
         CodeRate::Rate1_2,
         DvbT2Modulation::Qam16,
@@ -507,13 +436,8 @@ fn test_fan_in_two_demap_branches_feed_one_decoder() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Hybrid routing arm (synthetic stage; split per-batch)
-// ---------------------------------------------------------------------------
-
-/// A synthetic `ExecutionClass::Hybrid` identity stage recording the batch
-/// size of every `process` invocation. No production Hybrid stage exists;
-/// this test-only stage exercises the executor's split-per-batch arm.
+/// An `ExecutionClass::Hybrid` identity stage recording the batch size of
+/// each `process` call; no production stage reports `Hybrid`.
 struct HybridProbe {
     calls: Arc<Mutex<Vec<usize>>>,
 }
@@ -540,8 +464,6 @@ fn test_hybrid_stage_split_per_batch() {
     let pipeline = chain.build().expect("single Hybrid stage builds");
     let sched = scheduler(2);
 
-    // 5 distinguishable frames → split into ceil(5/2)=3 then 2, processed as
-    // two sub-batches and re-concatenated in order.
     let frames: Vec<BitVec> = (1..=5).map(BitVec::ones).collect();
     let out = TopologyExecutor::run(
         &pipeline,
@@ -594,12 +516,7 @@ fn test_hybrid_stage_single_frame_processes_whole() {
     assert_eq!(out.batch_size(), 1);
 }
 
-// ---------------------------------------------------------------------------
-// Intermediate-buffer reference counting
-// ---------------------------------------------------------------------------
-
-/// A batch carrying a drop-observable marker (held, never read: its Arc
-/// strong count IS the observable).
+/// The marker's `Arc` strong count is the observable; the field is never read.
 struct TrackedBatch {
     #[allow(dead_code)]
     marker: Arc<()>,
@@ -618,8 +535,6 @@ impl BatchSize for PlainBatch {
     }
 }
 
-/// Source: `PlainBatch → TrackedBatch` (clones the stage's marker into the
-/// output, so the output's liveness is observable via the Arc strong count).
 struct MakeTracked {
     marker: Arc<()>,
 }
@@ -636,7 +551,6 @@ impl Stage<PlainBatch, TrackedBatch> for MakeTracked {
     }
 }
 
-/// Middle: consumes the tracked batch, emits a plain one.
 struct ConsumeTracked;
 impl Stage<TrackedBatch, PlainBatch> for ConsumeTracked {
     type Scratch = ();
@@ -649,7 +563,6 @@ impl Stage<TrackedBatch, PlainBatch> for ConsumeTracked {
     }
 }
 
-/// Tail: records the marker's strong count at the moment it runs.
 struct CountObserver {
     marker: Arc<()>,
     observed: Arc<AtomicUsize>,
@@ -667,9 +580,6 @@ impl Stage<PlainBatch, PlainBatch> for CountObserver {
     }
 }
 
-/// Fan-out consumer: records the marker's strong count *while consuming* the
-/// tracked batch (the shared buffer is alive during its own run), then emits a
-/// plain batch.
 struct ObserveTracked {
     marker: Arc<()>,
     observed: Arc<AtomicUsize>,
@@ -689,9 +599,6 @@ impl Stage<TrackedBatch, PlainBatch> for ObserveTracked {
 
 #[test]
 fn test_intermediate_buffer_dropped_after_last_consumer() {
-    // A → B → C, where A's output carries a marker. The executor's refcount
-    // must drop A's output buffer once B (its only consumer) has run, BEFORE
-    // C executes — observed by C reading the marker's strong count.
     let marker = Arc::new(());
     let observed = Arc::new(AtomicUsize::new(0));
 
@@ -723,10 +630,6 @@ fn test_intermediate_buffer_dropped_after_last_consumer() {
 
 #[test]
 fn test_fan_out_buffer_alive_for_all_consumers_then_dropped() {
-    // A → {B, C} (fan-out: refcount 2 on A's output); B → D. The shared
-    // intermediate buffer must stay alive while EACH consumer runs — B and C
-    // both observe it — and be dropped once its LAST consumer has run: D,
-    // executing in the wave after {B, C}, observes the count without it.
     let marker = Arc::new(());
     let observed_b = Arc::new(AtomicUsize::new(0));
     let observed_c = Arc::new(AtomicUsize::new(0));
@@ -775,35 +678,19 @@ fn test_fan_out_buffer_alive_for_all_consumers_then_dropped() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Per-stage tracing spans (six fields)
-// ---------------------------------------------------------------------------
-
 mod span_capture {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
-    /// One captured span: its metadata name and recorded fields (rendered via
-    /// `Debug`).
     #[derive(Clone)]
     pub struct CapturedSpan {
         pub name: &'static str,
         pub fields: HashMap<String, String>,
     }
 
-    /// A minimal capturing `tracing::Subscriber` (no `tracing-subscriber`
-    /// dependency): records every span's name and fields, including fields
-    /// recorded after creation (`wall_us`).
-    ///
-    /// Installed as the GLOBAL subscriber (the executor's spans are emitted
-    /// on scheduler threads, which a thread-local subscriber would miss), so
-    /// under bare `cargo test` (one process, tests on concurrent threads) it
-    /// captures spans from EVERY test in this binary that runs after
-    /// installation — not just the installing test. Consumers must therefore
-    /// filter captured spans by a field unique to their own run (e.g. a
-    /// distinctive `batch_id`), and the lock sites below are poison-tolerant
-    /// so an asserting test can never cascade panics into the scheduler
-    /// threads of concurrently-running tests.
+    /// Installed as the global subscriber, so under one-process `cargo test`
+    /// it captures spans from every test in this binary; consumers filter by
+    /// a field unique to their run, and the lock sites tolerate poisoning.
     pub struct Capture {
         pub spans: Arc<Mutex<Vec<CapturedSpan>>>,
     }
@@ -823,8 +710,6 @@ mod span_capture {
         fn new_span(&self, attrs: &tracing::span::Attributes<'_>) -> tracing::span::Id {
             let mut fields = HashMap::new();
             attrs.record(&mut Visitor(&mut fields));
-            // Poison-tolerant: a panicking test elsewhere in this process must
-            // not cascade into scheduler threads emitting spans here.
             let mut spans = self
                 .spans
                 .lock()
@@ -856,21 +741,15 @@ mod span_capture {
 fn test_per_stage_spans_carry_six_fields() {
     use gf2_sim::BatchHandle;
 
-    // Global subscriber: the executor's spans are emitted on the scheduler's
-    // rayon pool threads, which a thread-local subscriber would miss. Under
-    // nextest each test runs in its own process; under bare `cargo test`
-    // (one process, concurrent test threads) the global subscriber also
-    // receives spans from every OTHER test running after installation, so
-    // the assertions below filter on this test's unique `batch_id` (7 — all
-    // other tests in this binary use the default handle, batch_id 0).
+    // The executor emits spans on scheduler threads, which a thread-local
+    // subscriber misses. `batch_id` 7 is unique to this test; the other tests
+    // in this binary use the default handle (0).
     let spans = Arc::new(Mutex::new(Vec::new()));
     tracing::subscriber::set_global_default(span_capture::Capture {
         spans: spans.clone(),
     })
     .expect("first and only global subscriber in this process");
 
-    // A 3-stage chain covering the CpuOnly and Hybrid routing arms (the
-    // GpuOnly arm needs a device; its span shape shares this code path).
     let calls = Arc::new(Mutex::new(Vec::new()));
     let clock = Arc::new(AtomicU64::new(0));
     let (p1, ..) = Probe::new(&clock, vec![BitVec::ones(2), BitVec::zeros(2)]);
@@ -894,17 +773,12 @@ fn test_per_stage_spans_carry_six_fields() {
     )
     .expect("runs");
 
-    // Snapshot-then-assert: clone the captured spans out and DROP the lock
-    // guard before any assertion. Panicking while holding the guard would
-    // poison the mutex for concurrently-running tests' scheduler threads
-    // (which still emit through the leaked global subscriber under bare
-    // `cargo test`).
+    // Drop the lock guard before asserting: a panic while holding it poisons
+    // the mutex for other tests' scheduler threads.
     let spans_snapshot = spans
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .clone();
-    // Filter on this test's unique batch_id (7): foreign tests' spans use
-    // the default handle (batch_id 0) and must not pollute the count.
     let stage_spans: Vec<_> = spans_snapshot
         .iter()
         .filter(|s| {
@@ -942,14 +816,12 @@ fn test_per_stage_spans_carry_six_fields() {
             "no GPU pool: stream_id records the NO_STREAM sentinel"
         );
     }
-    // The Hybrid stage's span names the synthetic stage type.
     assert!(
         stage_spans
             .iter()
             .any(|s| s.fields["stage_name"].contains("HybridProbe")),
         "stage_name carries the concrete stage type name"
     );
-    // The split still happened inside the span-wrapped Hybrid execution.
     assert_eq!(
         *calls.lock().unwrap(),
         vec![1, 1],
@@ -957,15 +829,6 @@ fn test_per_stage_spans_carry_six_fields() {
     );
 }
 
-// ---------------------------------------------------------------------------
-// GpuOnly routing (hip): known stages → the worker's owned stream; unknown
-// GpuOnly stages → a typed error (never a silent default-stream process_any)
-// ---------------------------------------------------------------------------
-
-/// GPU-gated routing tests for the `GpuOnly` arm (round-1 finding 1): every
-/// known GpuOnly stage type routes onto `scheduler.worker_stream(worker_idx)`
-/// via its stream-aware entry point, and an unknown GpuOnly stage with an
-/// active stream pool is a typed [`gf2_sim::BuildError::ExecutionValidation`].
 #[cfg(feature = "hip")]
 mod gpu {
     use super::*;
@@ -978,14 +841,11 @@ mod gpu {
         gf2_kernels_hip::host::device_mem_info().is_ok()
     }
 
-    /// A scheduler with `gpu_enabled = true`: on the gfx1030 host this builds
-    /// an active HIP stream pool, so `worker_stream` hands out owned streams.
     fn gpu_scheduler(workers: usize) -> Scheduler {
         Scheduler::new(NonZeroUsize::new(workers).unwrap(), true, SEED)
     }
 
-    /// A synthetic GpuOnly identity stage the executor has NO stream-aware
-    /// dispatch for (it is none of GpuLdpcBp / GpuAwgn / GpuGrayQamDemapper).
+    /// A GpuOnly stage type the executor has no stream-aware dispatch for.
     struct UnknownGpuProbe;
     impl Stage<SymbolBatch, SymbolBatch> for UnknownGpuProbe {
         type Scratch = ();
@@ -998,9 +858,7 @@ mod gpu {
         }
     }
 
-    /// The CPU identity twin `Chain::build` requires as the registered §8
-    /// fallback target for a GpuOnly stage (a substitution target only — not a
-    /// DAG node, and not part of what these tests exercise).
+    /// The CPU fallback target `Chain::build` requires for a GpuOnly stage.
     struct CpuIdentityProbe;
     impl Stage<SymbolBatch, SymbolBatch> for CpuIdentityProbe {
         type Scratch = ();
@@ -1013,9 +871,6 @@ mod gpu {
         }
     }
 
-    /// An unknown GpuOnly stage type while the worker owns a stream must be a
-    /// typed `ExecutionValidation` error naming the stage — never a silent
-    /// fall-through to a default-stream `process_any` (the contract-rot guard).
     #[test]
     fn test_unknown_gpu_only_stage_with_active_pool_is_typed_error() {
         if !gpu_present() {
@@ -1048,9 +903,6 @@ mod gpu {
         }
     }
 
-    /// The `GpuAwgn` stage routed through the topology executor (worker-owned
-    /// stream, `apply_on_stream`) must corrupt the batch **byte-identically**
-    /// to the stage's own default-stream `process` path.
     #[test]
     fn test_gpu_awgn_routes_on_worker_stream_byte_identical() {
         if !gpu_present() {
@@ -1065,12 +917,9 @@ mod gpu {
             vec![vec![1.0_f32; 64], vec![0.5_f32; 64]],
         );
 
-        // Reference: the stage's own (default-stream) erased process path.
         let mut scratch = GpuAwgnScratch::default();
         let reference = stage.process(&input, &mut scratch).expect("process");
 
-        // Executor: single-stage chain on a gpu-enabled scheduler (the §8
-        // fallback registration is a build() requirement for GpuOnly stages).
         let mut chain = Chain::new();
         let gpu = chain.add(erase(stage));
         let cpu = chain.add(erase(gf2_sim::channels::Awgn::new(6.0, 4)));
@@ -1103,9 +952,6 @@ mod gpu {
         }
     }
 
-    /// The GPU max-log demap stage routed through the topology executor
-    /// (worker-owned stream, `demap_batch_on_stream`) must emit LLRs
-    /// **byte-identical** to the stage's own default-stream `process` path.
     #[test]
     fn test_gpu_demap_routes_on_worker_stream_byte_identical() {
         if !gpu_present() {
@@ -1119,7 +965,6 @@ mod gpu {
         let q: Vec<f32> = (0..40).map(|k| 1.6 - 0.08 * k as f32).collect();
         let input = SymbolBatch::new(vec![i.clone(), i], vec![q.clone(), q]);
 
-        // Reference: the stage's own (default-stream) erased process path.
         let reference = stage.process(&input, &mut ()).expect("process");
 
         let mut chain = Chain::new();

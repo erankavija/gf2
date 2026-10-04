@@ -1,40 +1,10 @@
-//! GPU BCH syndrome-evaluation throughput benchmark (issue `9012f8a0`,
-//! design doc §11).
-//!
-//! Measures **syndrome-evaluation** frames/second for the canonical DVB-T2
-//! Normal Rate 1/2 BCH mother code (n = 65535, GF(2^16), t = 12, 2t = 24 — the
-//! design workload's field and radius), decode sub-step vs decode sub-step: the
-//! GPU
-//! `compute_syndromes_batch_gpu`
-//! path (H2D of packed coeff streams + Horner kernel + D2H of syndromes) against
-//! the CPU syndrome evaluation measured **in isolation** (NO Berlekamp-Massey /
-//! Chien), at 1 thread and at the full rayon pool. The canonical decoder
-//! exposes CPU syndrome evaluation as the first step of
+//! Measures BCH syndrome-evaluation frames per second for the DVB-T2 Normal
+//! rate-1/2 mother code: the GPU `compute_syndromes_batch_gpu` path against the
+//! CPU syndrome evaluation, timed through
 //! [`correct_in_place`](gf2_coding::bch::BinaryBchDecoder::correct_in_place),
-//! which returns right after it on a codeword, so the CPU arms time
-//! `correct_in_place` over error-free codewords. The shortened DVB-T2 frame
-//! (n = 32400) decodes through this mother, so the mother's length is the
-//! length a device syndrome evaluation covers.
-//!
-//! The `[hard]` gate is GPU syndrome throughput >= 5x the best existing CPU
-//! path (single-thread); both 1T and the full pool are reported. This follows the
-//! `a930be7f` decode-vs-decode precedent (avoid GPU-vs-serial category
-//! confusion).
-//!
-//! Also reports a batch-size sweep (64 / 256 / 1024 / 4096 by default) and a
-//! coarse host-side phase split (coefficient staging vs device transfer and kernel), plus the
-//! hardware / ROCm metadata recorded in the receipt.
-//!
-//! Manually invoked (not a nextest test). Without `--features hip` it prints a
-//! notice and exits 0.
-//!
-//! # Usage
-//!
-//! ```bash
-//! cargo run -p gf2-sim --release --features hip \
-//!     --bin gpu_bch_syndrome_throughput -- \
-//!     --frames 1024 --repeats 5 --sweep 64,256,1024,4096
-//! ```
+//! at one thread and at the rayon pool size, plus a batch-size sweep and the
+//! host-staging share of the GPU call. Without `--features hip` the binary
+//! prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -64,7 +34,6 @@ mod imp {
 
     const SEED: u64 = 0x9012_F8A0_C0DE_0001;
 
-    /// Deterministic SplitMix64 for reproducible frame population.
     struct SplitMix64(u64);
     impl SplitMix64 {
         fn new(seed: u64) -> Self {
@@ -82,7 +51,6 @@ mod imp {
         }
     }
 
-    /// A mixed frame population (valid + correctable + uncorrectable errors).
     fn population(
         code: &BinaryBchCode,
         k: usize,
@@ -148,7 +116,6 @@ mod imp {
             std::process::exit(1);
         }
 
-        // Design workload: DVB-T2 Normal Rate 1/2 BCH.
         // The DVB-T2 outer code decodes through its mother code, which is the
         // code the device syndrome evaluation covers.
         let dvb_t2 = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2)
@@ -167,13 +134,11 @@ mod imp {
         println!("# frames={frames} repeats={repeats} sweep={sweep:?}");
         println!();
 
-        // Build the largest population once; sub-slice for the sweep.
         let max_frames = *sweep.iter().max().unwrap().max(&frames);
         let frames_all = population(code, k, n, t, max_frames);
         // The CPU arms time `correct_in_place` over error-free codewords (every
-        // third population frame), which returns right after the syndrome
-        // evaluation. Syndrome cost is independent of the error pattern, so the
-        // clean pool is cycled to the population size.
+        // third population frame), where it returns right after the syndrome
+        // evaluation.
         let mut clean_all: Vec<BitVec> = frames_all
             .iter()
             .step_by(3)
@@ -193,12 +158,9 @@ mod imp {
             );
         }
 
-        // --- Main operating point (the gate) -------------------------------
         let pop = &frames_all[..frames];
 
-        // GPU: median fps over `repeats` of the full compute_syndromes_batch_gpu.
         let gpu_fps = {
-            // Warm up (allocates device buffers, JITs).
             let _ = decoder
                 .compute_syndromes_batch_gpu(pop)
                 .expect("gpu warmup");
@@ -213,11 +175,6 @@ mod imp {
             frames as f64 / best
         };
 
-        // CPU 1-thread: syndrome evaluation in isolation. fps is a rate, so
-        // this is measured on a smaller subset (a single-thread syndrome
-        // evaluation is ~ms/frame; the full batch would take minutes) and
-        // reported as fps. This IS the gate divisor: 1T is the reference
-        // production CPU path.
         let cpu1_count = frames.min(64);
         let cpu1_fps = {
             let sub = &mut clean_all[..cpu1_count];
@@ -239,8 +196,6 @@ mod imp {
             cpu1_count as f64 / best
         };
 
-        // CPU rayon pool: the same isolated syndrome evaluation, one workspace
-        // per worker (context only).
         let cpu24_fps = {
             let run_pool = |words: &mut [BitVec]| {
                 words
@@ -282,7 +237,6 @@ mod imp {
         );
         println!();
 
-        // --- Batch-size sweep ----------------------------------------------
         println!("## Batch-size sweep (GPU vs CPU{threads}T)");
         println!(
             "{:>8}  {:>14}  {:>14}  {:>12}",
@@ -326,11 +280,8 @@ mod imp {
         }
         println!();
 
-        // --- Coarse phase split --------------------------------------------
-        // Host-side staging cost (build the packed coeff streams) measured in
-        // isolation, vs the full GPU call; the remainder is H2D + kernel + D2H +
-        // rehydrate. A finer H2D/kernel/D2H split would need wrapper-level
-        // instrumentation; this coarse split is the "where practical" §11 ask.
+        // Host-side staging is timed in isolation; the remainder of the full GPU
+        // call is H2D, kernel, D2H and rehydration.
         {
             let pop = &frames_all[..frames];
             let mut stage_best = f64::INFINITY;

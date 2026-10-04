@@ -1,45 +1,25 @@
-//! Run the pinned eBCH OSD reference campaign through `gf2-sim`'s reusable
-//! checkpointed protocol.
+//! Runs the pinned eBCH(128,64,22) OSD reference campaign (BI-AWGN, BPSK, rate
+//! 1/2, BER versus Eb/N0 in dB) through [`gf2_sim::osd_campaign`]: an order-2
+//! target and an order-1 control on the seven `@/citation/Fossorier1994`
+//! abscissas.
 //!
-//! The executable owns only the domain binding: the named
-//! [`ebch_128_64`] construction, the BI-AWGN/BPSK channel, the
-//! order-2 target and order-1 control cells, and each sampled block's outcome.
-//! Cell identity, deterministic seed derivation, bounded stopping, checkpoint
-//! validation, BER/BLER intervals, receipt schema, and resume history remain in
-//! [`gf2_sim::osd_campaign`].
-//!
-//! # Usage
-//!
-//! ```text
-//! ebch_osd_awgn_campaign --checkpoint PATH --receipt PATH [OPTIONS]
-//! ```
-//!
-//! The campaign is the eBCH(128,64,22) code over BI-AWGN with BPSK at rate
-//! 1/2.  Its reported comparison metric is BER versus Eb/N0 in dB; BLER is
-//! recorded as a companion quantity.  `--checkpoint` names the protocol's
-//! resumable progress file and `--receipt` names the versioned JSON receipt.
-//! The pinned grid is the seven Fossorier 1994 abscissas shared by the order-2
-//! target and the order-1 internal control.
-//!
-//! Fossorier's reprocessing list is mapped to increasing Hamming weight over
-//! the 64 MRI positions, with lexicographic ascending zero-based indices
-//! within each weight.  The source leaves reliability ties and equal-distance
-//! ties undefined: the shared decoder uses ascending original coordinate
-//! index for equal reliability magnitudes and retains the first generated
-//! candidate for an equal metric.  Those are implementation decisions, not
-//! source claims.
+//! The reprocessing list of `@/citation/Fossorier1994` is mapped to increasing
+//! Hamming weight over the 64 MRI positions, with lexicographic ascending
+//! zero-based indices within each weight.  The source leaves reliability ties
+//! and equal-distance ties undefined: the shared decoder uses ascending
+//! original coordinate index for equal reliability magnitudes and retains the
+//! first generated candidate for an equal metric.
 //!
 //! `--max-samples` is an additional per-invocation sample bound. Reaching it
 //! records an interrupted cell so a later invocation can continue from the
 //! durable counters. `--target-block-errors` is the cumulative independent
 //! block-error target for a cell; reaching it records a completed cell.
 //!
-//! `--workers` sets how many blocks are decoded concurrently and defaults to
-//! the host's available parallelism. It changes throughput only: every block
+//! `--workers` sets how many blocks are decoded concurrently. Every block
 //! draws from its own reserved region of the cell's ChaCha20 stream, keyed on
-//! the block index alone, so the sampled sequence and every recorded counter
-//! are the same at any worker count. The resolved value is always part of the
-//! recorded invocation argument vector, which therefore reproduces the run.
+//! the block index alone; `tests/ebch_osd_campaign_cli.rs`
+//! (`worker_count_is_recorded_provenance_and_leaves_cell_evidence_unchanged`)
+//! compares the cell evidence across worker counts.
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
@@ -139,7 +119,6 @@ fn main() -> ExitCode {
 /// `crates/gf2-coding/tests/data/ebch_128_64_reference.json`.
 type Ebch128 = Extended<LayoutView<BinaryPrimeExt, BitVec, BitMatrix>>;
 
-/// Builds the pinned code on the canonical construction model.
 fn ebch_128_64() -> Ebch128 {
     let extension = BinaryPrimeExt::new(Gf2mField::new(7, 0b10000011).with_tables())
         .expect("x^7 + x + 1 presents GF(2^7)");
@@ -186,8 +165,6 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
-/// Parses the small domain-specific command line without introducing a CLI
-/// dependency into the simulation crate.
 fn parse_args() -> Result<Option<Args>, String> {
     let mut checkpoint = None;
     let mut receipt = None;
@@ -272,8 +249,6 @@ fn parse_args() -> Result<Option<Args>, String> {
     }))
 }
 
-/// The host's available parallelism, falling back to one worker where the
-/// platform does not report it.
 fn available_parallelism() -> NonZeroUsize {
     std::thread::available_parallelism().unwrap_or(NonZeroUsize::MIN)
 }
@@ -333,20 +308,14 @@ fn pinned_campaign(
     OsdCampaign::new(seed, cells, interval, target_block_errors, provenance)
 }
 
-/// One worker's block evaluator: the code, the channel, and whichever cell
-/// binding the worker last saw.
-///
-/// The protocol builds one of these per worker and hands it blocks of a single
-/// cell at a time, in no particular order. Every block seeks the cell's stream
-/// to its own reserved region, so an evaluator carries no state from one block
-/// to the next and two evaluators agree on any block they both see.
+/// One worker's block evaluator. Every block seeks the cell's stream to its own
+/// reserved region, so an evaluator carries no state from one block to the next.
 struct CellEvaluator<'a> {
     code: &'a Ebch128,
     channel: BpskAwgnChannel,
     binding: Option<CellBinding>,
 }
 
-/// The decoder and random stream bound to the cell a worker is sampling.
 struct CellBinding {
     cell_id: OsdCellId,
     decoder: GeneratorMatrixOsdDecoder<Ebch128>,

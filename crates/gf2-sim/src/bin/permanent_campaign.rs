@@ -1,25 +1,8 @@
 //! Execute one exact cell of a permanent-zero-fraction campaign.
 //!
-//! The manifest is read from `--manifest`; `--output` names the campaign
-//! directory, `--q FIELD --n ORDER` selects exactly one manifest cell, and
-//! `--workers N` selects the configured worker count (default: 1 when omitted).
-//! This thin CLI passes the parsed exact scope to the reusable `gf2-sim`
-//! campaign transaction. The library obtains live-executable and
-//! committed-manifest approval and reads the initial manifest before acquiring
-//! the execution lock. The held lock covers receipt and interpretation-source
-//! revalidation, arm and attempt admission, sampling, raw emission,
-//! terminalization, and projection.
-//!
-//! ```console
-//! $ permanent_campaign --print-provenance --manifest <campaign-directory>
-//! ```
-//!
 //! `--print-provenance` observes and prints the provenance for this emitting
 //! executable without running a campaign or writing a dataset file.
-//!
-//! Exact execution publishes the field summary and typed interpretation
-//! sidecar when every cell in the field is terminal. `--dry-run-schedule`
-//! resolves the same selector and validates the
+//! `--dry-run-schedule` resolves the same selector and validates the
 //! complete manifest accelerator-cost input without opening the output
 //! directory, coordinator receipt, execution lock, or sampler.
 
