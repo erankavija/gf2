@@ -1,105 +1,109 @@
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-completion-report.md	605e9f2963217ba7b2a0d5028d378ca2f36120b4e1175d59ae5311286428cff2	6718	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:1
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-10.md	439678d5dbb6145288edc307be35373d6ddb1e9358cf4ce65e3be209f80966bb	13378	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:2
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-11.md	f4be2d0b8b1e6a52bdc626f2ba3a7200d2bc18b343beafe9ca462f2b5016badd	13902	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:3
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-12.md	7d93e65696f2bbf0309d081e296654a3ed542d13ba8ab88e568271739cbb7938	12749	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:4
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-13.md	223f43c1726d2c7a3cf7a341ee376926be4e1ab7194c79c2874b1c62648178d4	15466	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:5
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-14.md	8d62a1b634df368b9965fba05184ec7a0c3d25ec755020efac38125d88f939fa	11842	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:6
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-15.md	a0dea26570bbf09b3d7c66048b560c44dc2ec9507ab43336e3cea7988becee47	8499	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:7
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-16.md	0c5e22f6ff4256c0ff7e27dd7421307e4115e1fb7177343de8a0f7e40827d501	7519	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:8
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-2.md	f0a8eae6a6f518d35f657722a9d86b860557693f1c999deb8ddd5462d5f09bb3	12985	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:9
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-3.md	d03cf11a46f2ceb26373b8fd6197508637eafc847d5945004ed3e9aecdfba9d9	15497	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:10
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-4.md	12183d4873037378fc6c8ba586d5a85cc61d5235152f561a33b8e5222c930ed3	6660	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:11
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-5.md	ee34f383528ad12860dbc5b33b2bf081552f5750027181556df44fbe0a779ead	11970	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:12
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-6.md	d4c682a19c39ded3142b7c4f56fb84b6709ed24b42a688037b24dffafe632eab	12219	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:13
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-7.md	3c88c9cd8600e87016020fb9c1e9fed4dfc2a70c0d3bcd491ad8712633ee8f49	12294	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:14
-dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff.md	208206eac454446be6f7ecf9784c0f8a31a24afa4fe4f17722b431949617f62d	9315	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:15
-dev/archive/026fc832-gf2-core-sota-stretch/active/24a93e4e/24a93e4e-blocked-echelon-design.md	ee550847cb355ef049a61b72e73f44d2538d3d4cf3ace369da8d4255d53917a7	28252	1	24a93e4e-ca18-4a21-9e1b-98fad3633f7f:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/2e8c5a29/2e8c5a29-panelized-ple-design.md	693aa5aac0c05146d286f06a838ef75fd56c5e3290e5df48538b42556f06d949	22697	1	2e8c5a29-818b-4d6b-8e96-1e53037f4c9f:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/52cce970/52cce970-bespoke-avx2-design.md	2cdf7369d3c8a9384927a8e453e3975c010d83129823be83ce40186127b2367e	11828	1	52cce970-8142-4ff9-ac19-95ed994fee38:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md	30f5e9ee7eeb219532f585a04aff49563000a144cf31e43f93a9690038d54c95	10127	1	5ce13bae-61db-4df2-85b1-87447f643cd8:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md	e308ebbc8d0da7f1b1472b9cb4aa33849bd137f38e3ebf30a50ce351abfd90de	31935	1	615db3b9-9dbf-44b6-a9e4-7f60d6009a09:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/68cdf4c8/68cdf4c8-route-a-design.md	1dab904bea0f381327cabceb1e2b90306c9964b64e9d7853823e50724d9ca89d	14447	1	68cdf4c8-562b-43a7-8532-fb979d6fd4c3:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/873cbec1/873cbec1-extension-field-matrix-gemm-design.md	aa0889bb4a34747bff4fbd9add1cd359e60f8292a2629e313caf2023388bc903	29456	1	873cbec1-6c55-44db-9685-f6c8a2614eb6:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-2.md	35a8f42e7c105c6f021172c788a5bf82aeed5492611d57adb755632c5dcad423	8704	1	
-dev/archive/026fc832-gf2-core-sota-stretch/active/aaa847cf/aaa847cf-m4rm-invert-design.md	4469be65dc19d1d8ffa34ab7126a57675c4c0865a21422dd5e33d10f2781c7b5	6478	1	aaa847cf-1f94-42a4-9ddc-513a04c92b5a:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md	036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6	4013	1	
-dev/archive/026fc832-gf2-core-sota-stretch/active/bd9c6e13/bd9c6e13-canonical-rref-fix.md	af4c249e049ad4078f9d8c8e9a2bc13b1ed3435d4b513cc8315530ec90555797	6853	1	bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/e8a0c47a/e8a0c47a-vector-modular-reduction-design.md	cd4d39940335570abb6bbe73e2b37796e10b78658a523faa65528d703d8c9e5c	13046	1	e8a0c47a-2ad1-4c31-bb30-531256fce432:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md	0ca78cbf8c64374a0b9c121c414d00452243b81df3a171ac6c4e3f5dadb6f8be	23364	1	fc182ed5-bc03-4385-b6c2-22d785b4904f:0
-dev/archive/026fc832-gf2-core-sota-stretch/active/feb15da9/feb15da9-blocked-invert-design.md	794e49e5598304bfc4d00507c71da7d5a240d0fd3419067307ef95238f0b4086	27760	1	feb15da9-4645-440c-ae9c-f40bfcff654e:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0749dbad/2026-05-27-0749dbad-fp-medium-f64-cascade.md	20356e198ef3d30c4f2c3cb121f29e21fd7bf11d07bb94d5c437517b3904a38f	21260	1	0749dbad-4c15-4f63-9e15-7a4c7121ad1c:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-host.txt	35b331d8b77fe514a30e836ef3a142c2e5345383ddaf540b0129afd1b9de3ec1	6327	1	0fd48627-ae6a-43af-89c2-49e49d17de46:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt	0a17b6eee99267fab6c3aa30386015ef86af1ed947d205e581bdd78fac27a63e	13354	1	0fd48627-ae6a-43af-89c2-49e49d17de46:3
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26-gf2.csv	59e860e297705230a28c8baf6ab8d4c8abc68e28d5ce2d9d7871feb73f0a0254	16847	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26-reference.csv	ef6488dc80414b41246a4cad24216ac48a6f1e68effd95dc7eef43a2788904a5	12060	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26-uncompetitiveness-profile.md	227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169	7461	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26.md	f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9	69909	1	02ace293-bb0b-4357-9958-08f28dfd80e0:0,b0434149-9385-4149-8fec-dc2b4663333f:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-27-asm-audit.md	f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e	18722	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md	c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242	7570	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md	6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295	2886	1	b0434149-9385-4149-8fec-dc2b4663333f:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-7c954fb5-criterion.txt	79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38	997	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md	c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97	4868	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-strassen-matmul-crossover.md	f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804	5011	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-30-post-ppc-delta-appendix.md	4206dc4ed755433923f087223479cbace8713201b398f51789ed03570e5c128b	18246	1	b0434149-9385-4149-8fec-dc2b4663333f:2,b8189dbf-10c4-4e35-88fa-2e8828f41715:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md	364306caaf615da8920f30eac6601715fd9dc2bcddf796915be6c7520adbc9b1	18545	1	0fd48627-ae6a-43af-89c2-49e49d17de46:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md	77d6d4e5d89109cd93b91e1882545f0815a095e0cd405d9e780cb340193643f1	36877	1	3b762764-aa71-49c1-a32c-01c52d9ba746:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-609855d9-gfp-by-family.md	f3250b84530f3dfd3bc16f534a477e46b12bc40f6bb5577b4b1ba7d11f6fc6a7	24703	1	609855d9-24d7-4f72-969d-2e41d5ea1b7c:0,cc5de315-109f-4178-999c-a47460a571c2:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md	76f2b0bc034ed20edbdf05cfa965a9ea38464898321c460392b138bccb2a4c0f	27832	1	c3e79272-13f1-47e1-9492-65947116a08a:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-charpoly-reference.csv	2973c26ba73583f161da8372397a0b031e076055cdb41942ee11ea529b2c3955	2829	1	c3e79272-13f1-47e1-9492-65947116a08a:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-minpoly-reference.csv	1b4b05da3143c731f47a1d6bd1860545934ebd21ee41821087736d8d04bb9c3d	2157	1	c3e79272-13f1-47e1-9492-65947116a08a:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md	51ce9c50553d19a0064ed55b2a4fc0c8ca836bf0e33fca3fe0795df038009a20	2524	0	662f7a15-2a49-4055-aeb0-3be1e613d05d:3
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-08-2cfc4372-sota-scorecard.md	81bd151c9ab4d4df37ef8a6c754bbf6d55db55cb90ea7f630def73ae7bed4112	81907	1	026fc832-a480-4d07-8d25-47b8bfcb69a3:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-26-6613abf4-blocked-solve.md	a80fe7f7f2900fa187394565410f58be12cdf807e3b1c427477ba3280cfe5fd3	14473	0	6613abf4-0fde-45ec-8280-82da7506b916:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-26-869ce43b-blocked-echelon.md	1beaf626e0f0b48d618c2b63070d8a0081d8bcfcd0835de55bd584b3ec2811c6	14433	0	869ce43b-4278-4bf4-815a-3d41eeb52fbe:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-68db401b-fp-medium-ple.md	5e6995ab5952a2f2aea8da49e4f2b75190e15e6651c33bda7893f8466889de2a	13275	0	68db401b-7118-4cd6-be40-c3c5002abde4:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-6a7d4c8e-m31-echelon-dispatch.md	78b78282b3e15c98f49d085ae9b74b8d0d90e6c54a4ee25603b463786561e0a1	5710	0	6a7d4c8e-6b06-4987-bb2a-88143b102ed4:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-8df0c501-blocked-invert.md	fe9881a6f3edfabc4819792b4451022c5858b0de73df8505e9fe1a5b627100ac	10379	0	8df0c501-9fc0-484f-9600-46d735b10bab:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-9138d86c-fp65521-n64-solve.md	3182341c3d4c21b8876bfc7b346128059eb6d89397a2ae6d5fa5d8300d8da256	9661	0	9138d86c-eccf-4756-91f5-0bb4b1080e4b:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-d36cc414-gf251-n64-borderline.md	0d794df66b67df0eb4d59a6a8f1bdb61421ce06ccb9ca0626c8741ad3f16dc78	19605	0	d36cc414-7bb9-4937-969a-9ab581681a8b:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md	49f83de5d67798a2f2972705520689dd625462bd2516f50e85ea398a3986c142	46719	1	b0fa00af-795c-49de-b27a-870d5e239cc1:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.csv	37491ab14d10264516b5de5effc2582e1df325e50e993552e4bbdd0c2db56d01	4747	1	27bb2f75-7305-4ae2-8cfe-512696bf4fcc:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.md	2e6a446852f59cf7d30cbd218f91480b60a94505b74cc5b83cc26d7086a53fbb	16426	1	27bb2f75-7305-4ae2-8cfe-512696bf4fcc:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-fresh.csv	9ced7f9ae698000226b94631b640d582d128f712023845477ecb0123c2741496	12702	1	3b762764-aa71-49c1-a32c-01c52d9ba746:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-host.txt	23fce8bed964b7e935ea10c14504a2dd02d1b97aea7dd7afc450386f1737b288	3235	1	3b762764-aa71-49c1-a32c-01c52d9ba746:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-reference.csv	5a6f23ad1978bc7e6017bf6276301b2649c15133946a76406560249086699323	21053	1	3b762764-aa71-49c1-a32c-01c52d9ba746:3
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/40195c09/2026-05-26-40195c09-gemm-axpy-lift.md	2a652b366711a299503a2f0102d28bef573cbfa09e6bdd6a660f7d8e2b5636c0	11771	1	40195c09-b334-4141-a0d0-dba393f351c7:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md	5b9ee41000e18a4745c7f89dcab523264421460320949c447db3f8527b169e23	14728	1	41096af5-f777-4ad7-86fd-335431f1ab40:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/52cce970/2026-05-24-52cce970-charpoly-minpoly-closure.md	cfb8373bcc5e082c4a3e624ccf9f96941eb8602601e85875d608bbff1d88f301	43402	1	52cce970-8142-4ff9-ac19-95ed994fee38:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/5ce13bae/2026-05-24-5ce13bae-markowitz-sparse-rref.md	e153c4d2c8011e5c9413ef961e1e114b1d61f702b0a955fb3710b5903dde039c	17757	1	5ce13bae-61db-4df2-85b1-87447f643cd8:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/5dea7457/2026-05-04-5dea7457-reference-extension.csv	f66de2a6729aaaf49f5348dd190b1c0755efcf3f3ffd7270bb8538ca09e8a637	14582	1	5dea7457-2843-478a-895f-b7295ce612e0:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gf31-supplement.csv	21947d5f72757b7226c88c3219acbcad6decfba99af02fc1fcc26479ddacd864	3001	1	609855d9-24d7-4f72-969d-2e41d5ea1b7c:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gfp-host.txt	a10512d01b6c4230ad76a90fec8c919a1b5a4bb95e7cecae72db13e572407675	7076	1	609855d9-24d7-4f72-969d-2e41d5ea1b7c:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gfp-reference.csv	551c419f7a6694a8aa807d4aadd403aa50918dee08e8d24013b49c7183f3c6dc	795	1	609855d9-24d7-4f72-969d-2e41d5ea1b7c:3
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-non-regression-fp65537-mersenne.md	c6debcd2595b82cd95f42f1674d2d9752cc25b92a723ba78f434a9cffd93361a	7438	1	662f7a15-2a49-4055-aeb0-3be1e613d05d:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv	fce822b4ac769704aa4a32453a60921a5dbcec29555b89d06f9d5470b9354f2b	2326	1	662f7a15-2a49-4055-aeb0-3be1e613d05d:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-panelized-ple.md	a4a74f55d2f44ebf113e31313579950b3c29a275b4a2ee888701d9f22885963a	11203	1	6823c8a0-ac0b-4b4d-9250-d59272e2f1b9:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md	3c76b580cb50d635924562ba1cd8b1a0b0a135772c2539f78c40b6bf20cc6a5b	15148	1	6823c8a0-ac0b-4b4d-9250-d59272e2f1b9:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/68cdf4c8/2026-05-24-68cdf4c8-route-a-f32-cascade.md	135ca79d700e8ec8cffb27aeba63b84fc917a35bfee4a6e2f2e53a12c01c5395	18686	1	68cdf4c8-562b-43a7-8532-fb979d6fd4c3:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md	fe63d2b057ea72b4786cfe2358a3fc2851911c441302eb61d5cc389d262b697c	34940	1	695350fd-a59f-46b2-b528-2bbb0d0ecc6f:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/74ba1cdc/2026-05-25-74ba1cdc-fgemm-engineering.md	f47ac1c6dc3af2765094570e1b3fb5910e843d5df2a3864a511850093a3b0046	15211	1	74ba1cdc-20dc-43bd-a890-7ef2be4ef345:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/74ba1cdc/2026-05-26-74ba1cdc-fgemm-engineering.md	d13a23d263b16c1b69bb62ab4461124b3b27757b02e98e0ae5d8ce570be59216	14382	1	74ba1cdc-20dc-43bd-a890-7ef2be4ef345:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas-aggregate.csv	87cfac18a1a56d4de25bbc7f55729fd134eb10895f8e5cabb3445f047c674bea	427	1	91429c1c-2955-4ce9-979d-11eb753c8946:3
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.csv	e1e30bdc7ecb3b778e3862badc5e1c25d7b22ec7ee30ed0e8c8333dd3cb4d1bc	1232	1	91429c1c-2955-4ce9-979d-11eb753c8946:4
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.md	890a7abfcc27f2a063bac14b1ce016fe621edd7ca7844b1148ca632e03dcdd2c	24924	1	91429c1c-2955-4ce9-979d-11eb753c8946:5
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/run_91429c1c_route_b_bench.sh	70b1b256faed6d0eb856f8a5b390a88cc492bdb0024d12abc151586f4d651fe2	6224	1	91429c1c-2955-4ce9-979d-11eb753c8946:6
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/98336ab4/2026-05-28-98336ab4-fgemm-n4096.md	2861f1e6c01c4471a8ca47f44135ed2fbfc514beb77a0dbcb083e489c8107493	14883	1	98336ab4-21c3-49b4-97c7-466263574c7f:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/9e12659b/2026-05-05-9e12659b-medium-prime-gemm.md	57b802983afc9258c41d28a414def7ff7a7c218b73f784ac149a3d82a2542b37	24443	1	9e12659b-5e26-4ce4-9461-853c25b51ba6:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/a70b1c70/2026-05-24-a70b1c70-phase0-controls.md	3e3d692d984613943c2f0c53e0c3ab0e261e073c0903b305e6a29e885cd30f5a	10001	1	a70b1c70-357a-4378-9ed5-3afa7715d86d:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.csv	34778cb16ffb48c9d9f542668a640c4f9c121bd2a6ee0f967fcb67e21d3c662e	811	1	aaa847cf-1f94-42a4-9ddc-513a04c92b5a:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.md	44aac394a6c51bba4ea4f379a076fff452e44811f71740c380b6761804d59861	9161	1	aaa847cf-1f94-42a4-9ddc-513a04c92b5a:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b0fa00af/2026-05-25-b0fa00af-sota-scorecard-final.md	bbeb358fbedc2f931d6fd561d0b3381e0225b29b327612459a94ad2807279c52	41422	1	b0fa00af-795c-49de-b27a-870d5e239cc1:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md	4cce9fc8a786a5a2ed24d5de921df5a0924f8ea6b2e3ce0abdd4de812c26ecff	20625	1	b13799ac-c493-4554-9da3-78142769b7c5:2
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/bd9c6e13/2026-05-24-bd9c6e13-canonical-rref-fix.md	a6587e76dfe69c88ce4ddd9b791334d775c2f2b3eb10329c761a6c16002091ea	13020	1	bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/bdf60780/2026-05-28-bdf60780-matmul-gf2-smalln.md	52ae8bfccfacf159a35a5d62969104fd9bd6fb192c43dc9fb2d74a62dcad6333	8756	1	bdf60780-1130-40f4-a474-d0f17657bf15:0
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/c7791a20/2026-04-26-profile-release-delta.md	f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372	6589	1	
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/e8a0c47a/2026-05-25-e8a0c47a-phase2-generalization.md	85ba644502e797795acc2b9d0edea1be64b48c970370471d75d27c588e8fa0d4	12507	1	e8a0c47a-2ad1-4c31-bb30-531256fce432:1
-dev/archive/026fc832-gf2-core-sota-stretch/bench_results/fc182ed5/2026-05-24-fc182ed5-route-c-integer-panel.md	7248f92d696d3bfc04d8f7b9eda3bdcd9a05584432005b3ba092f0edfec5df29	26332	1	fc182ed5-bc03-4385-b6c2-22d785b4904f:1
-dev/archive/026fc832-gf2-core-sota-stretch/plans/5dea7457/5dea7457_lane_hardening_evidence.md	ab0932ec1c708d7c2e48e0a262f1762ea2a1957060a2f0360e8daf12b8ef7319	14699	1	5dea7457-2843-478a-895f-b7295ce612e0:0
-dev/archive/026fc832-gf2-core-sota-stretch/plans/gf2m_reference_lane_selection.md	5ae54dcb7b8609838c2324f83fb11b0d53debbd71f22c2f5e872ec9806b94ad0	26783	1	9a715d75-eb45-4f37-a031-5c83bfae8556:0
-dev/archive/026fc832-gf2-core-sota-stretch/plans/linbox_promotion_evidence.md	5c2f26111c74a7a226477371cf19d08ed69923d5e545da83356e672886e261b5	21510	1	79388011-0d65-4ae3-8a7f-8dc961157429:0,cbecfced-d91e-404f-a1f9-b2e960f5b55f:1
-dev/archive/026fc832-gf2-core-sota-stretch/plans/m4rie_promotion_evidence.md	832d07be28780160dd0bfce6d6d60ad8460129164539efb1130efe4bb27492fa	21529	1	507b0036-62a5-4110-9660-7f26e51d428d:0,cbecfced-d91e-404f-a1f9-b2e960f5b55f:2
-dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md	dba4d021bf5243cc12d8cb58142a765aa3ba9115cce56234687234340221d195	40164	1	1d6043e8-49da-4ec4-adac-5be67bb8b443:0,cbecfced-d91e-404f-a1f9-b2e960f5b55f:0
-dev/archive/026fc832-gf2-core-sota-stretch/plans/sparse_benchmark_corpus.md	8b1f94dd9718b9cbc18619558365286a32debf71431c66a512d8be72e77074dd	37204	1	a3412e15-e73d-4556-a2aa-e4296677cfa5:0
-dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/blas_ffi.rs	cf65f4a707a4a0b8642576523fcfbaf440068398e2364690d1902e0c3854b758	2840	1	91429c1c-2955-4ce9-979d-11eb753c8946:1
-dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/lib.rs	7420b638041aaf58ac9a2d442375ee617b1908c81e375093e4d3ae5784fe3370	23430	1	91429c1c-2955-4ce9-979d-11eb753c8946:0
-dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/tests/bit_exact.rs	d2e285094b9f3aab13fadc6afa6644f4cee0f4a6a802d84ef81e9009a02093ec	1372	1	91429c1c-2955-4ce9-979d-11eb753c8946:2
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-completion-report.md	605e9f2963217ba7b2a0d5028d378ca2f36120b4e1175d59ae5311286428cff2	6718
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-10.md	439678d5dbb6145288edc307be35373d6ddb1e9358cf4ce65e3be209f80966bb	13378
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-11.md	f4be2d0b8b1e6a52bdc626f2ba3a7200d2bc18b343beafe9ca462f2b5016badd	13902
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-12.md	7d93e65696f2bbf0309d081e296654a3ed542d13ba8ab88e568271739cbb7938	12749
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-13.md	223f43c1726d2c7a3cf7a341ee376926be4e1ab7194c79c2874b1c62648178d4	15466
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-14.md	8d62a1b634df368b9965fba05184ec7a0c3d25ec755020efac38125d88f939fa	11842
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-15.md	a0dea26570bbf09b3d7c66048b560c44dc2ec9507ab43336e3cea7988becee47	8499
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-16.md	0c5e22f6ff4256c0ff7e27dd7421307e4115e1fb7177343de8a0f7e40827d501	7519
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-2.md	f0a8eae6a6f518d35f657722a9d86b860557693f1c999deb8ddd5462d5f09bb3	12985
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-3.md	d03cf11a46f2ceb26373b8fd6197508637eafc847d5945004ed3e9aecdfba9d9	15497
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-4.md	12183d4873037378fc6c8ba586d5a85cc61d5235152f561a33b8e5222c930ed3	6660
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-5.md	ee34f383528ad12860dbc5b33b2bf081552f5750027181556df44fbe0a779ead	11970
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-6.md	d4c682a19c39ded3142b7c4f56fb84b6709ed24b42a688037b24dffafe632eab	12219
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff-7.md	3c88c9cd8600e87016020fb9c1e9fed4dfc2a70c0d3bcd491ad8712633ee8f49	12294
+dev/archive/026fc832-gf2-core-sota-stretch/active/026fc832-handoff.md	208206eac454446be6f7ecf9784c0f8a31a24afa4fe4f17722b431949617f62d	9315
+dev/archive/026fc832-gf2-core-sota-stretch/active/24a93e4e/24a93e4e-blocked-echelon-design.md	ee550847cb355ef049a61b72e73f44d2538d3d4cf3ace369da8d4255d53917a7	28252
+dev/archive/026fc832-gf2-core-sota-stretch/active/2e8c5a29/2e8c5a29-panelized-ple-design.md	693aa5aac0c05146d286f06a838ef75fd56c5e3290e5df48538b42556f06d949	22697
+dev/archive/026fc832-gf2-core-sota-stretch/active/52cce970/52cce970-bespoke-avx2-design.md	2cdf7369d3c8a9384927a8e453e3975c010d83129823be83ce40186127b2367e	11828
+dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md	30f5e9ee7eeb219532f585a04aff49563000a144cf31e43f93a9690038d54c95	10127
+dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md	e308ebbc8d0da7f1b1472b9cb4aa33849bd137f38e3ebf30a50ce351abfd90de	31935
+dev/archive/026fc832-gf2-core-sota-stretch/active/68cdf4c8/68cdf4c8-route-a-design.md	1dab904bea0f381327cabceb1e2b90306c9964b64e9d7853823e50724d9ca89d	14447
+dev/archive/026fc832-gf2-core-sota-stretch/active/873cbec1/873cbec1-extension-field-matrix-gemm-design.md	aa0889bb4a34747bff4fbd9add1cd359e60f8292a2629e313caf2023388bc903	29456
+dev/archive/026fc832-gf2-core-sota-stretch/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-2.md	35a8f42e7c105c6f021172c788a5bf82aeed5492611d57adb755632c5dcad423	8704
+dev/archive/026fc832-gf2-core-sota-stretch/active/aaa847cf/aaa847cf-m4rm-invert-design.md	4469be65dc19d1d8ffa34ab7126a57675c4c0865a21422dd5e33d10f2781c7b5	6478
+dev/archive/026fc832-gf2-core-sota-stretch/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md	036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6	4013
+dev/archive/026fc832-gf2-core-sota-stretch/active/bd9c6e13/bd9c6e13-canonical-rref-fix.md	af4c249e049ad4078f9d8c8e9a2bc13b1ed3435d4b513cc8315530ec90555797	6853
+dev/archive/026fc832-gf2-core-sota-stretch/active/e8a0c47a/e8a0c47a-vector-modular-reduction-design.md	cd4d39940335570abb6bbe73e2b37796e10b78658a523faa65528d703d8c9e5c	13046
+dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md	0ca78cbf8c64374a0b9c121c414d00452243b81df3a171ac6c4e3f5dadb6f8be	23364
+dev/archive/026fc832-gf2-core-sota-stretch/active/feb15da9/feb15da9-blocked-invert-design.md	794e49e5598304bfc4d00507c71da7d5a240d0fd3419067307ef95238f0b4086	27760
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0749dbad/2026-05-27-0749dbad-fp-medium-f64-cascade.md	20356e198ef3d30c4f2c3cb121f29e21fd7bf11d07bb94d5c437517b3904a38f	21260
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-host.txt	35b331d8b77fe514a30e836ef3a142c2e5345383ddaf540b0129afd1b9de3ec1	6327
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt	0a17b6eee99267fab6c3aa30386015ef86af1ed947d205e581bdd78fac27a63e	13354
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26-gf2.csv	59e860e297705230a28c8baf6ab8d4c8abc68e28d5ce2d9d7871feb73f0a0254	16847
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26-reference.csv	ef6488dc80414b41246a4cad24216ac48a6f1e68effd95dc7eef43a2788904a5	12060
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26-uncompetitiveness-profile.md	227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169	7461
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-26.md	f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9	69909
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-27-asm-audit.md	f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e	18722
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md	c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242	7570
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md	6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295	2886
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-7c954fb5-criterion.txt	79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38	997
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md	c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97	4868
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-29-strassen-matmul-crossover.md	f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804	5011
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-30-post-ppc-delta-appendix.md	4206dc4ed755433923f087223479cbace8713201b398f51789ed03570e5c128b	18246
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md	364306caaf615da8920f30eac6601715fd9dc2bcddf796915be6c7520adbc9b1	18545
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md	77d6d4e5d89109cd93b91e1882545f0815a095e0cd405d9e780cb340193643f1	36877
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-609855d9-gfp-by-family.md	f3250b84530f3dfd3bc16f534a477e46b12bc40f6bb5577b4b1ba7d11f6fc6a7	24703
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md	76f2b0bc034ed20edbdf05cfa965a9ea38464898321c460392b138bccb2a4c0f	27832
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-charpoly-reference.csv	2973c26ba73583f161da8372397a0b031e076055cdb41942ee11ea529b2c3955	2829
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-minpoly-reference.csv	1b4b05da3143c731f47a1d6bd1860545934ebd21ee41821087736d8d04bb9c3d	2157
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md	51ce9c50553d19a0064ed55b2a4fc0c8ca836bf0e33fca3fe0795df038009a20	2524
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-08-2cfc4372-sota-scorecard.md	81bd151c9ab4d4df37ef8a6c754bbf6d55db55cb90ea7f630def73ae7bed4112	81907
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-26-6613abf4-blocked-solve.md	a80fe7f7f2900fa187394565410f58be12cdf807e3b1c427477ba3280cfe5fd3	14473
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-26-869ce43b-blocked-echelon.md	1beaf626e0f0b48d618c2b63070d8a0081d8bcfcd0835de55bd584b3ec2811c6	14433
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-68db401b-fp-medium-ple.md	5e6995ab5952a2f2aea8da49e4f2b75190e15e6651c33bda7893f8466889de2a	13275
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-6a7d4c8e-m31-echelon-dispatch.md	78b78282b3e15c98f49d085ae9b74b8d0d90e6c54a4ee25603b463786561e0a1	5710
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-8df0c501-blocked-invert.md	fe9881a6f3edfabc4819792b4451022c5858b0de73df8505e9fe1a5b627100ac	10379
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-9138d86c-fp65521-n64-solve.md	3182341c3d4c21b8876bfc7b346128059eb6d89397a2ae6d5fa5d8300d8da256	9661
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-d36cc414-gf251-n64-borderline.md	0d794df66b67df0eb4d59a6a8f1bdb61421ce06ccb9ca0626c8741ad3f16dc78	19605
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md	49f83de5d67798a2f2972705520689dd625462bd2516f50e85ea398a3986c142	46719
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.csv	37491ab14d10264516b5de5effc2582e1df325e50e993552e4bbdd0c2db56d01	4747
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.md	2e6a446852f59cf7d30cbd218f91480b60a94505b74cc5b83cc26d7086a53fbb	16426
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-fresh.csv	9ced7f9ae698000226b94631b640d582d128f712023845477ecb0123c2741496	12702
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-host.txt	23fce8bed964b7e935ea10c14504a2dd02d1b97aea7dd7afc450386f1737b288	3235
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-reference.csv	5a6f23ad1978bc7e6017bf6276301b2649c15133946a76406560249086699323	21053
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/40195c09/2026-05-26-40195c09-gemm-axpy-lift.md	2a652b366711a299503a2f0102d28bef573cbfa09e6bdd6a660f7d8e2b5636c0	11771
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md	5b9ee41000e18a4745c7f89dcab523264421460320949c447db3f8527b169e23	14728
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/52cce970/2026-05-24-52cce970-charpoly-minpoly-closure.md	cfb8373bcc5e082c4a3e624ccf9f96941eb8602601e85875d608bbff1d88f301	43402
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/5ce13bae/2026-05-24-5ce13bae-markowitz-sparse-rref.md	e153c4d2c8011e5c9413ef961e1e114b1d61f702b0a955fb3710b5903dde039c	17757
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/5dea7457/2026-05-04-5dea7457-reference-extension.csv	f66de2a6729aaaf49f5348dd190b1c0755efcf3f3ffd7270bb8538ca09e8a637	14582
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gf31-supplement.csv	21947d5f72757b7226c88c3219acbcad6decfba99af02fc1fcc26479ddacd864	3001
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gfp-host.txt	a10512d01b6c4230ad76a90fec8c919a1b5a4bb95e7cecae72db13e572407675	7076
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gfp-reference.csv	551c419f7a6694a8aa807d4aadd403aa50918dee08e8d24013b49c7183f3c6dc	795
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-non-regression-fp65537-mersenne.md	c6debcd2595b82cd95f42f1674d2d9752cc25b92a723ba78f434a9cffd93361a	7438
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv	fce822b4ac769704aa4a32453a60921a5dbcec29555b89d06f9d5470b9354f2b	2326
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-panelized-ple.md	a4a74f55d2f44ebf113e31313579950b3c29a275b4a2ee888701d9f22885963a	11203
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md	3c76b580cb50d635924562ba1cd8b1a0b0a135772c2539f78c40b6bf20cc6a5b	15148
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/68cdf4c8/2026-05-24-68cdf4c8-route-a-f32-cascade.md	135ca79d700e8ec8cffb27aeba63b84fc917a35bfee4a6e2f2e53a12c01c5395	18686
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md	fe63d2b057ea72b4786cfe2358a3fc2851911c441302eb61d5cc389d262b697c	34940
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/74ba1cdc/2026-05-25-74ba1cdc-fgemm-engineering.md	f47ac1c6dc3af2765094570e1b3fb5910e843d5df2a3864a511850093a3b0046	15211
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/74ba1cdc/2026-05-26-74ba1cdc-fgemm-engineering.md	d13a23d263b16c1b69bb62ab4461124b3b27757b02e98e0ae5d8ce570be59216	14382
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas-aggregate.csv	87cfac18a1a56d4de25bbc7f55729fd134eb10895f8e5cabb3445f047c674bea	427
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.csv	e1e30bdc7ecb3b778e3862badc5e1c25d7b22ec7ee30ed0e8c8333dd3cb4d1bc	1232
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.md	890a7abfcc27f2a063bac14b1ce016fe621edd7ca7844b1148ca632e03dcdd2c	24924
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/run_91429c1c_route_b_bench.sh	70b1b256faed6d0eb856f8a5b390a88cc492bdb0024d12abc151586f4d651fe2	6224
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/98336ab4/2026-05-28-98336ab4-fgemm-n4096.md	2861f1e6c01c4471a8ca47f44135ed2fbfc514beb77a0dbcb083e489c8107493	14883
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/9e12659b/2026-05-05-9e12659b-medium-prime-gemm.md	57b802983afc9258c41d28a414def7ff7a7c218b73f784ac149a3d82a2542b37	24443
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/a70b1c70/2026-05-24-a70b1c70-phase0-controls.md	3e3d692d984613943c2f0c53e0c3ab0e261e073c0903b305e6a29e885cd30f5a	10001
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.csv	34778cb16ffb48c9d9f542668a640c4f9c121bd2a6ee0f967fcb67e21d3c662e	811
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.md	44aac394a6c51bba4ea4f379a076fff452e44811f71740c380b6761804d59861	9161
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b0fa00af/2026-05-25-b0fa00af-sota-scorecard-final.md	bbeb358fbedc2f931d6fd561d0b3381e0225b29b327612459a94ad2807279c52	41422
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md	4cce9fc8a786a5a2ed24d5de921df5a0924f8ea6b2e3ce0abdd4de812c26ecff	20625
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/bd9c6e13/2026-05-24-bd9c6e13-canonical-rref-fix.md	a6587e76dfe69c88ce4ddd9b791334d775c2f2b3eb10329c761a6c16002091ea	13020
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/bdf60780/2026-05-28-bdf60780-matmul-gf2-smalln.md	52ae8bfccfacf159a35a5d62969104fd9bd6fb192c43dc9fb2d74a62dcad6333	8756
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/c7791a20/2026-04-26-profile-release-delta.md	f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372	6589
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/e8a0c47a/2026-05-25-e8a0c47a-phase2-generalization.md	85ba644502e797795acc2b9d0edea1be64b48c970370471d75d27c588e8fa0d4	12507
+dev/archive/026fc832-gf2-core-sota-stretch/bench_results/fc182ed5/2026-05-24-fc182ed5-route-c-integer-panel.md	7248f92d696d3bfc04d8f7b9eda3bdcd9a05584432005b3ba092f0edfec5df29	26332
+dev/archive/026fc832-gf2-core-sota-stretch/plans/5dea7457/5dea7457_lane_hardening_evidence.md	ab0932ec1c708d7c2e48e0a262f1762ea2a1957060a2f0360e8daf12b8ef7319	14699
+dev/archive/026fc832-gf2-core-sota-stretch/plans/gf2m_reference_lane_selection.md	5ae54dcb7b8609838c2324f83fb11b0d53debbd71f22c2f5e872ec9806b94ad0	26783
+dev/archive/026fc832-gf2-core-sota-stretch/plans/linbox_promotion_evidence.md	5c2f26111c74a7a226477371cf19d08ed69923d5e545da83356e672886e261b5	21510
+dev/archive/026fc832-gf2-core-sota-stretch/plans/m4rie_promotion_evidence.md	832d07be28780160dd0bfce6d6d60ad8460129164539efb1130efe4bb27492fa	21529
+dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md	dba4d021bf5243cc12d8cb58142a765aa3ba9115cce56234687234340221d195	40164
+dev/archive/026fc832-gf2-core-sota-stretch/plans/sparse_benchmark_corpus.md	8b1f94dd9718b9cbc18619558365286a32debf71431c66a512d8be72e77074dd	37204
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/.gitignore	12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069	19
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/Cargo.toml	09b0cc1fae9c51e1f2d629f56ecb1be69c9032d75efe7a1699782402b4bc258f	971
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/build.rs	24e6a88b94156de6035d14cf44bcab763ad92456b62d331485a36063b8fafb5c	894
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/bin/bench_blas_gf251.rs	12c7a073c483db3fe6f63ca3fda38ff6cbb8289b31ce35d6a105d9e3cfa84083	5226
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/blas_ffi.rs	cf65f4a707a4a0b8642576523fcfbaf440068398e2364690d1902e0c3854b758	2840
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/lib.rs	d025117b811851a61fd23367275f174243b7b2cbac5a9046a92cb70bf57f3cb8	23374
+dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/tests/bit_exact.rs	d2e285094b9f3aab13fadc6afa6644f4cee0f4a6a802d84ef81e9009a02093ec	1372
