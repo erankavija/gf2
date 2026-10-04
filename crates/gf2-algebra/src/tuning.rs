@@ -1,8 +1,7 @@
-//! Algebra-owned permanent selectors and process-wide typed access.
-//!
-//! The generic process authority lives in [`gf2_core::tuning`]. This module
-//! owns only the permanent algorithm's selector vocabulary, conservative
-//! value, optional format-2 codec, and typed accessor.
+//! Algebra-owned permanent selectors and process-wide typed access. The generic
+//! process authority lives in [`gf2_core::tuning`]; this module owns only the
+//! permanent algorithm's selector vocabulary, conservative value, optional
+//! format-2 codec, and typed accessor.
 
 use std::fmt;
 

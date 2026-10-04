@@ -1,5 +1,4 @@
-//! Rayon-parallel `permanent_bipedal3` over fixed Gray-code chunks.
-//!
+//! Rayon-parallel `permanent_bipedal3` over fixed Gray-code chunks:
 //! [`permanent_bipedal3_parallel`] reads its chunk length from
 //! [`permanent_chunk_len`].
 

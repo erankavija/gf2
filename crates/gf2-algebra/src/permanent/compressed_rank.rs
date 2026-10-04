@@ -1,5 +1,7 @@
 //! Exact compressed-state propagation for three-column permanental rank.
 //!
+//! # Compressed state
+//!
 //! With the symmetric bilinear contraction
 //! `phi(u, v) = (u2*v3 + u3*v2, u1*v3 + u3*v1, u1*v2 + u2*v1)`, the identity
 //! `per(u, v, x) = phi(u, v) dot x` holds. A valid row prefix is summarised by

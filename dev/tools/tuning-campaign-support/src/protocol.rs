@@ -1,11 +1,9 @@
 //! Zen 3 benchmark protocol identity, frozen shared settings, and the
-//! family/cell addendum contract.
-//!
-//! The protocol document, the addendum schema and this module describe one
-//! versioned contract. Receipts pin the document and schema by receipt-local
-//! snapshot and content digest, with the source path as provenance; the
-//! acceptance tool recomputes every digest and every statistic instead of
-//! trusting a receipt's own claims.
+//! family/cell addendum contract. The protocol document, the addendum schema
+//! and this module describe one versioned contract. Receipts pin the document
+//! and schema by receipt-local snapshot and content digest, with the source
+//! path as provenance; the acceptance tool recomputes every digest and every
+//! statistic instead of trusting a receipt's own claims.
 
 use crate::abtest::Margins;
 use crate::host::CoreArm;

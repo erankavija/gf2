@@ -1,9 +1,8 @@
-//! Algebra-owned producer for the permanent extent campaign.
-//!
-//! The neutral driver consumes this executable's sealed owner manifest and
-//! treats its cases and evidence as opaque bytes. Only a guarded fresh child
-//! installs tuning. Reporting, validation, analysis, and owner emission never
-//! resolve process-global tuning.
+//! Algebra-owned producer for the permanent extent campaign. The neutral driver
+//! consumes this executable's sealed owner manifest and treats its cases and
+//! evidence as opaque bytes. Only a guarded fresh child installs tuning.
+//! Reporting, validation, analysis, and owner emission never resolve
+//! process-global tuning.
 //! Protocol: `dev/active/a83583e0/premeasurement-protocol.md` §3, 6, 8, 8.1, 10.
 
 use std::collections::BTreeSet;

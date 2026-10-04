@@ -1,8 +1,7 @@
-//! Exact campaign anchors for permanent-zero fractions and determinant singularity.
-//!
-//! The enumeration side retains integer counts.  Floating point is used only
-//! when the production Clopper-Pearson interval API receives the already exact
-//! probability at its comparison boundary.
+//! Exact campaign anchors for permanent-zero fractions and determinant
+//! singularity. The enumeration side retains integer counts. Floating point is
+//! used only when the production Clopper-Pearson interval API receives the
+//! already exact probability at its comparison boundary.
 
 use gf2_algebra::permanent::{
     determinant_singular_probability, enumerate_permanent_zero_probability, permanent_ryser,

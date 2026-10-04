@@ -1,10 +1,11 @@
 //! Reproduces the Table 2 scaling slope of `@/citation/Scheinerman2024` with
-//! [`permanent_mod3_reference`].
-//!
-//! Times the function over `n ∈ {8, 10, …, 24}` (the cited table covers
-//! `n ∈ {24, 26, …, 36}`), fits `ln(mean_us) = a + b*n` by ordinary least
-//! squares, and exits nonzero unless `b` lies within ±10% of
+//! [`permanent_mod3_reference`]: times the function over `n ∈ {8, 10, …, 24}`
+//! (the cited table covers `n ∈ {24, 26, …, 36}`), fits `ln(mean_us) = a + b*n`
+//! by ordinary least squares, and exits nonzero unless `b` lies within ±10% of
 //! `ln 2 + mean(1/n)`, the slope of an `O(n·2^n)` cost over the sweep.
+//!
+//! # Output
+//!
 //! Writes `dev/benchmarks/gf2_algebra_permanent/paper_repro_slope-<DATE>.csv`
 //! (date overridable via `SA_DATE`) with columns `n`, `mean_us`, `std_us`,
 //! `samples` and `input_hash`: the SHA-256 over `n` and each sample's seed,

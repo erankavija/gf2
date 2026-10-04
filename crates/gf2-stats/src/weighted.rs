@@ -1,10 +1,9 @@
-//! Exact statistics for weights represented as powers of an integer base.
-//!
-//! This module deliberately contains no scientific-event semantics. A caller
+//! Exact statistics for weights represented as powers of an integer base. This
+//! module deliberately contains no scientific-event semantics. A caller
 //! supplies exponent histograms for weights `base^-exponent`; reduction keeps
-//! sums, run-mean variance, ESS, and interval containment exact. Rendering
-//! uses an arbitrary-precision symbolic scale, so tiny absolute weights never
-//! pass through binary floating point.
+//! sums, run-mean variance, ESS, and interval containment exact. Rendering uses
+//! an arbitrary-precision symbolic scale, so tiny absolute weights never pass
+//! through binary floating point.
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;

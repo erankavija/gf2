@@ -1,8 +1,7 @@
-//! Exact binomial hypothesis tests for count data.
-//!
-//! These tests evaluate binomial tails rather than normal approximations.
-//! Results retain the natural logarithm of the p-value, so a decision remains
-//! available when the p-value itself underflows `f64`.
+//! Exact binomial hypothesis tests for count data. These tests evaluate
+//! binomial tails rather than normal approximations. Results retain the natural
+//! logarithm of the p-value, so a decision remains available when the p-value
+//! itself underflows `f64`.
 
 use crate::numerics::log_gamma;
 

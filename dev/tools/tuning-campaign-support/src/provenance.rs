@@ -1,6 +1,5 @@
-//! Content identities for measurement-producing source and build inputs.
-//!
-//! A producing-input manifest selects the files whose bytes can affect a
+//! Content identities for measurement-producing source and build inputs. A
+//! producing-input manifest selects the files whose bytes can affect a
 //! campaign. Capturing it hashes the manifest itself and every selected file;
 //! repository metadata and files outside the manifest do not enter the
 //! identity.
