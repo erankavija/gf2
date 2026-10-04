@@ -2,7 +2,9 @@
 //! [`Pipeline::run`](crate::Pipeline::run). Each rayon worker owns a strided
 //! partition of the SNR point's global frames (worker `w` of `W` takes
 //! `w, w+W, w+2W, …`) and one HIP stream: it enqueues the GPU LDPC decode of
-//! batch `N` on that stream and prepares batch `N+1` on the CPU meanwhile.
+//! batch `N` on that stream, prepares batch `N+1` on the CPU meanwhile, awaits
+//! completion per-stream (never via device-wide sync), then runs the BCH
+//! decode-tail and information-bit error count on the CPU.
 //!
 //! # Determinism
 //!
