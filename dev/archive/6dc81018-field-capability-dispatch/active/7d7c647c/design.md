@@ -70,10 +70,10 @@ Two Charon invocations reach these constants, and both are probed.
 | Invocation | Roots | Trait module | Probe |
 |---|---|---|---|
 | The committed pipeline (`scripts/verify-lean.sh:103-131`), which produces `proofs/Gf2Core/` | `gf2_core::gfp`, `gf2_core::gfpn`, `gf2_core::gf2m::mul_raw` | `--opaque 'gf2_core::field'` | S1 / AS1 |
-| The extraction chain of record, X3/AX3 of `dev/active/e6ea0dde/record.md:101-138` | `FiniteFieldExt::square`, `FiniteFieldExt::frobenius` | `--opaque 'gf2_core::field'` plus `--include` on `FiniteFieldExt` | X1 / AX1 |
+| The extraction chain of record, X3/AX3 of `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:101-138` | `FiniteFieldExt::square`, `FiniteFieldExt::frobenius` | `--opaque 'gf2_core::field'` plus `--include` on `FiniteFieldExt` | X1 / AX1 |
 
 `AX1_lean/Types.lean` is byte-identical to the record's committed
-`dev/active/e6ea0dde/extraction/AX3_lean/Types.lean` after normalising the
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/Types.lean` after normalising the
 generated module prefix, so the control confirms this worktree reproduces the
 record's toolchain behaviour exactly.
 
@@ -224,7 +224,7 @@ the hook this design adds.
 
 ### 3.4 Why the extraction chain of record is unaffected
 
-The chain of record is X3/AX3 of `dev/active/e6ea0dde/record.md`, whose subject
+The chain of record is X3/AX3 of `dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md`, whose subject
 is `FiniteFieldExt::square` and `frobenius`. Three facts make the seam inert
 for it.
 
@@ -232,16 +232,16 @@ Its REQ-01 result stands: X2 and AX2 both exit 0 with the constants gone, as
 X3 and AX3 do with them present. Its REQ-02 finding stands unchanged: the
 blocker is six repeated field names arising from bounds on `Self`,
 `Self::Characteristic` and `Self::Wide`
-(`dev/active/e6ea0dde/record.md:206-219`), and probe AX2 emits the same six.
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:206-219`), and probe AX2 emits the same six.
 Its REQ-03 result stands: the sketch's lemma statements project
 `corecloneCloneInst`, `coreopsarithMulInst`, `characteristic` and `pow`
-(`dev/active/e6ea0dde/record.md:347`), none of which the seam touches.
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:347`), none of which the seam touches.
 
 The seam improves the record's position in one respect it is worth naming.
 `AX2_lean` carries no `FunsExternal_Template.lean`, because the four constants
 were that file's entire content. The rename step the record's elaboration
 harness performs between Aeneas and Lean
-(`dev/active/e6ea0dde/record.md:186-189`) has nothing left to rename, and the
+(`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md:186-189`) has nothing left to rename, and the
 generated tree stops being `noncomputable`.
 
 ---
@@ -644,7 +644,7 @@ field that holds the live value.
 ## 9. Probe index
 
 All commands are committed as `.cmd` files under
-`dev/active/7d7c647c/probes/` and executed through `probes/run.sh`, which
+`dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/` and executed through `probes/run.sh`, which
 prints the command file into the log before running it, so the text quoted here
 is byte-identical to what ran. Toolchain identities captured at run time are in
 `probes/excerpts/toolchain-versions.txt`: `charon 0.1.217` on
@@ -711,7 +711,7 @@ the pinned pipeline generates
 `packed.packed5.Packed5.to_raw_planes` in
 `proofs/Gf2Algebra/Funs.lean` from the Rust method introduced by commit
 `9b78666c`, while the committed algebra tree predates that method.
-`dev/active/34d85cb9/findings.md` records this as the pipeline's sole
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/findings.md` records this as the pipeline's sole
 non-comment Gf2Algebra drift.
 
 This exception permits exactly that generated definition, requires the

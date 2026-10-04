@@ -348,7 +348,7 @@ The only exact production `.gf2` round trip is the LDPC encoding cache;
 `BitMatrix`’s own tests live in `crates/gf2-core/src/io/matrix.rs`.
 
 The remaining exact matches are proof/generated or documentation references:
-`dev/active/7d7c647c/probes/AS1_lean/Funs.lean` and
+`dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/AS1_lean/Funs.lean` and
 `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv`.
 No HIP/SIMD crate, BCH matrix path, or simulation checkpoint uses the `.gf2`
 BitMatrix format.

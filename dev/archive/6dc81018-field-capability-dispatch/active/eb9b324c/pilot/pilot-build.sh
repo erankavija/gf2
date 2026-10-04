@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pilot translation ensemble of the FIXED candidate for issue eb9b324c.
 # 16 members, E = 0..15, 32-byte build-id translation steps, RUSTFLAGS
-# construction copied from dev/active/50b47eae/s5-session/build-arm.sh.
+# construction copied from dev/archive/6dc81018-field-capability-dispatch/active/50b47eae/s5-session/build-arm.sh.
 # Build phase only: no lock is held and no timed work runs here.
 set -uo pipefail
 
