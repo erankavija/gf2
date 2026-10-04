@@ -1,5 +1,7 @@
-//! HIP/ROCm GPU kernels for the gf2 workspace. BCH syndrome evaluation and
-//! F_3/F_5/F_7 permanents are compiled under the `hip` feature.
+//! HIP/ROCm GPU kernels for the gf2 workspace: batch kernels for BCJR
+//! decoding, Gray-QAM soft demapping, LDPC belief propagation, ChaCha20 AWGN
+//! generation, and, under the `hip` feature, BCH syndrome evaluation and
+//! F_3/F_5/F_7 permanents.
 //!
 //! # Requirements
 //!
