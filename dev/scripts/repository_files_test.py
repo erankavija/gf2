@@ -18,6 +18,7 @@ from repository_files import (  # noqa: E402
     PROTOCOL_OPENING,
     SHARED_PRODUCING_MANIFEST,
     SNAPSHOT_DIRECTORY,
+    document,
     package_directory,
     shared_producing_manifest,
 )
@@ -76,6 +77,32 @@ class SharedProducingManifest(Fixture):
         self.entry("a", None)
         with self.assertRaisesRegex(LookupError, "^0 distinct"):
             shared_producing_manifest(self.root)
+
+
+class Document(Fixture):
+    def test_document_is_located_by_name_and_opening(self):
+        self.write("x/2026-01-01-record.md", b"# Wanted\n\nBody.\n")
+        self.write("y/2026-01-02-record.md", b"# Other\n")
+        self.write("z/notes.md", b"# Wanted\n")
+        self.assertEqual(document(self.root, "*-record.md", b"# Wanted\n"), "x/2026-01-01-record.md")
+
+    def test_byte_identical_copies_are_one_named_by_the_first_path(self):
+        self.write("b/record.md", b"# Wanted\n")
+        self.write("a/record.md", b"# Wanted\n")
+        self.assertEqual(document(self.root, "record.md", b"# Wanted\n"), "a/record.md")
+
+    def test_snapshot_copy_is_not_live(self):
+        self.write("entry/record.md", b"# Wanted\n")
+        self.write(f"receipt/{SNAPSHOT_DIRECTORY}/record.md", b"# Wanted\n\nSnapshot.\n")
+        self.assertEqual(document(self.root, "record.md", b"# Wanted\n"), "entry/record.md")
+
+    def test_absent_and_differing_documents_are_rejected(self):
+        self.write("a/record.md", b"# Twice\n\nFirst.\n")
+        self.write("b/record.md", b"# Twice\n\nSecond.\n")
+        with self.assertRaisesRegex(LookupError, "^2 distinct"):
+            document(self.root, "record.md", b"# Twice\n")
+        with self.assertRaisesRegex(LookupError, "^0 distinct"):
+            document(self.root, "record.md", b"# Absent\n")
 
 
 class PackageDirectory(Fixture):
