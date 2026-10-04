@@ -1,21 +1,6 @@
-//! Focused `FieldMatrix::gemm` baseline comparison for issue `e7ab802d`.
-//!
-//! This bench keeps the full `64c88ae4` sweep (`fieldmatrix_gemm`) untouched
-//! and adds fast development cells that compare:
-//!
-//! - `eager_scalar`: classical triple loop, reducing after every field MAC.
-//! - `delayed_blocked`: production `gemm`, cache-blocked over output tiles and
-//!   using `dot_product_slices` delayed product-sum reduction.
-//!
-//! The 64×64 cells are intended for quick pre/post checks. Larger 64c88ae4
-//! cells, especially 1024/4096 and rectangular sweeps, are deferred to the
-//! existing full harness/nightly runs.
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench fieldmatrix_gemm_delayed --features rand
-//! cargo bench -p gf2-core --bench fieldmatrix_gemm_delayed --features rand -- --test
-//! cargo bench -p gf2-core --bench fieldmatrix_gemm_delayed --features rand -- Fp_7/64
-//! ```
+//! Benchmarks production `gemm` (`delayed_blocked`) against a triple loop that
+//! reduces after every field multiply-add (`eager_scalar`) over small prime
+//! fields.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::matrix::{gemm, FieldMatrix};

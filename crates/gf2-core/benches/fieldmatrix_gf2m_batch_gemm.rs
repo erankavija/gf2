@@ -1,14 +1,5 @@
-//! GF(2^m) `FieldMatrix::gemm` benchmark for `jit:577b9e7f`.
-//!
-//! Compares the production matrix path, which routes supported single-word
-//! GF(2^m) dot products through the batched carry-less-multiply hook, against
-//! an eager scalar reference that multiplies one field element at a time inside
-//! the innermost loop. Run with:
-//!
-//! ```bash
-//! RUSTFLAGS="-C target-cpu=native" cargo bench -p gf2-core \
-//!     --bench fieldmatrix_gf2m_batch_gemm --features rand,simd
-//! ```
+//! Benchmarks `gemm` over single-word GF(2^m) (`batch_gemm`) against a triple
+//! loop that multiplies one field element at a time (`scalar_eager`).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::matrix::{gemm, FieldMatrix};

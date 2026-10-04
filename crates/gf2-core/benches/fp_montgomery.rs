@@ -1,4 +1,4 @@
-//! Benchmarks for Montgomery-form Fp<P> arithmetic.
+//! Benchmarks `Fp<P>` arithmetic against naive `%` baselines.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use gf2_core::field::{ConstField, FiniteField};
@@ -110,17 +110,11 @@ fn bench_mul_chain_mersenne61(c: &mut Criterion) {
     });
 }
 
-// ---------------------------------------------------------------------------
-// Naive baseline benchmarks for comparison
-// ---------------------------------------------------------------------------
-
-/// Naive modular multiplication using `%` — the baseline Montgomery replaces.
 #[inline]
 fn naive_mul(a: u64, b: u64, p: u64) -> u64 {
     ((a as u128 * b as u128) % p as u128) as u64
 }
 
-/// Naive modular exponentiation using `%`.
 fn naive_mod_pow(mut base: u64, mut exp: u64, modulus: u64) -> u64 {
     let mut result = 1u64;
     base %= modulus;
@@ -136,13 +130,11 @@ fn naive_mod_pow(mut base: u64, mut exp: u64, modulus: u64) -> u64 {
     result
 }
 
-/// Naive modular addition using `%`.
 #[inline]
 fn naive_add(a: u64, b: u64, p: u64) -> u64 {
     ((a as u128 + b as u128) % p as u128) as u64
 }
 
-/// Naive modular subtraction using `%`.
 #[inline]
 fn naive_sub(a: u64, b: u64, p: u64) -> u64 {
     ((a as u128 + p as u128 - b as u128) % p as u128) as u64
@@ -151,8 +143,7 @@ fn naive_sub(a: u64, b: u64, p: u64) -> u64 {
 fn bench_naive_add_mersenne61(c: &mut Criterion) {
     let a = 123_456_789u64;
     let b = 987_654_321u64;
-    // black_box(p) prevents the compiler from replacing `% p` with multiply-high+shift,
-    // ensuring the benchmark measures actual division (what Montgomery eliminates).
+    // `black_box(p)` keeps `% p` a runtime division.
     let p = MERSENNE_61;
     c.bench_function("naive_mersenne61_add", |bench| {
         bench.iter(|| naive_add(black_box(a), black_box(b), black_box(p)))

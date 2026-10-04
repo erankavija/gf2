@@ -1,35 +1,6 @@
-//! Strassen–Winograd threshold sweep and classical-vs-Winograd comparison.
-//!
-//! Issue `ad597ede`, story `d48a3cfd/T3`. Measures:
-//!
-//! 1. Classical `gemm` vs `gemm_winograd` at `n ∈ {256, 512, 1024, 2048,
-//!    4096}` for both `Fp<2^31 - 1>` (Mersenne-31) and `Gf2mWide<1, AES>`
-//!    GF(2^8).
-//! 2. Threshold sweep at `n = 2048` over Mersenne-31: records the Winograd
-//!    runtime for per-recursion thresholds `∈ {32, 64, 128, 256, 512, 1024}`
-//!    — the winning value is recorded in
-//!    `benches/strassen_threshold_results.md` and fed back to
-//!    `WINOGRAD_MIN_DIM_DEFAULT`, the conservative default of the
-//!    `gemm.winograd_min_dim` profile field that live dispatch reads
-//!    (see `crates/gf2-core/src/field/winograd.rs`).
-//!
-//! The recorded results live in `benches/strassen_threshold_results.md`.
-//!
-//! No recursion or helper logic is duplicated here; the sweep invokes
-//! [`gemm_winograd_with_threshold`] which is the same recursion used by
-//! production.
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench strassen_threshold --features rand
-//! # Smoke run:
-//! cargo bench -p gf2-core --bench strassen_threshold --features rand -- --test
-//! ```
-//!
-//! The `n = 4096` case is expensive (≈ minutes per sample on a
-//! commodity core); the `threshold_sweep` group is the most useful
-//! artefact for retuning the crossover.
+//! Benchmarks classical `gemm` against `gemm_winograd` over `Fp<MERSENNE_31>`
+//! and GF(2^8), and sweeps the Winograd recursion threshold at `n = 2048`
+//! through [`gemm_winograd_with_threshold`].
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::field::matrix::{gemm, FieldMatrix};
@@ -39,11 +10,9 @@ use gf2_core::gfp::Fp;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-// Mersenne-31 prime.
 const MERSENNE_31: u64 = 2_147_483_647;
 
-/// GF(2^8) with AES irreducible `x^8 + x^4 + x^3 + x + 1`. Implicit leading
-/// bit convention per `Gf2mWideConfig` ⇒ low byte is `0x1B`.
+/// GF(2^8) with the AES polynomial `x^8 + x^4 + x^3 + x + 1` (`@/citation/Nist2001`).
 struct StrassenGf2m8Cfg;
 impl Gf2mWideConfig<1> for StrassenGf2m8Cfg {
     const M: usize = 8;
@@ -52,10 +21,8 @@ impl Gf2mWideConfig<1> for StrassenGf2m8Cfg {
 }
 type Gf2m8 = Gf2mWide<1, StrassenGf2m8Cfg>;
 
-// Compare at `n ≥ 256` so the Winograd peel actually fires (default
-// threshold = 128). n = 4096 takes minutes per sample on a scalar path;
-// Criterion owners may filter it with a bench name filter for faster
-// iteration.
+// Every size exceeds the conservative `gemm.winograd_min_dim` of 128, so the
+// Winograd recursion runs.
 const COMPARE_SIZES: &[usize] = &[256, 512, 1024, 2048, 4096];
 
 fn random_fp_matrix<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
@@ -124,12 +91,6 @@ fn bench_gemm_vs_winograd_gf2m8(c: &mut Criterion) {
     group.finish();
 }
 
-/// Threshold sweep at `n = 2048` over Mersenne-31. The winning threshold
-/// is recorded in `benches/strassen_threshold_results.md` and fed back
-/// to `WINOGRAD_MIN_DIM_DEFAULT`, the conservative default of the
-/// `gemm.winograd_min_dim` profile field. The sweep routes
-/// through the production recursion via
-/// [`gemm_winograd_with_threshold`], so no helper duplication.
 fn bench_threshold_sweep(c: &mut Criterion) {
     let mut group = c.benchmark_group("strassen_threshold/sweep_fp_mersenne31_n2048");
     let n = 2048;

@@ -1,6 +1,4 @@
-//! Benchmark Arc vs Rc clone overhead for GF(2^m) fields.
-//!
-//! Phase 15: Validates that Arc has negligible overhead compared to Rc.
+//! Benchmarks `Gf2mField` clone, element creation and multiplication in GF(2^8).
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use gf2_core::gf2m::Gf2mField;

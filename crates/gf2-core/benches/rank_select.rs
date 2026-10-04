@@ -11,7 +11,6 @@ fn bench_rank(c: &mut Criterion) {
 
         group.throughput(Throughput::Bytes((bits / 8) as u64));
 
-        // Benchmark rank at various positions
         group.bench_with_input(BenchmarkId::new("rank_middle", size_kb), &bv, |b, bv| {
             let pos = bits / 2;
             b.iter(|| black_box(bv.rank(black_box(pos))));
@@ -36,7 +35,6 @@ fn bench_rank_naive(c: &mut Criterion) {
 
         group.throughput(Throughput::Bytes((bits / 8) as u64));
 
-        // Naive rank implementation for comparison
         let rank_naive =
             |bv: &BitVec, idx: usize| -> usize { (0..=idx).filter(|&i| bv.get(i)).count() };
 
@@ -65,7 +63,6 @@ fn bench_select(c: &mut Criterion) {
 
         group.throughput(Throughput::Bytes((bits / 8) as u64));
 
-        // Benchmark select at various ranks
         group.bench_with_input(BenchmarkId::new("select_middle", size_kb), &bv, |b, bv| {
             let k = total_ones / 2;
             b.iter(|| black_box(bv.select(black_box(k))));
@@ -91,7 +88,6 @@ fn bench_select_naive(c: &mut Criterion) {
 
         group.throughput(Throughput::Bytes((bits / 8) as u64));
 
-        // Naive select implementation for comparison
         let select_naive = |bv: &BitVec, k: usize| -> Option<usize> {
             let mut count = 0;
             for i in 0..bv.len() {

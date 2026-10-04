@@ -1,9 +1,6 @@
-//! Benchmark and protocol-v4 survey harness for `BitVec` shifts.
-//!
-//! Ordinary Criterion invocation retains the historical shift suites. Setting
-//! `GF2_SHIFT_ARM` makes the executable a canonical A/B-runner child for the
-//! residual-shift workload profile, while `--verify` checks both production
-//! paths against an independent zero-fill oracle without running a timer.
+//! Benchmarks `BitVec` shifts. Setting `GF2_SHIFT_ARM` makes the executable an
+//! A/B-runner child for the residual-shift workload profile, and `--verify`
+//! checks both production paths against a zero-fill oracle without timing.
 
 use criterion::{black_box, criterion_group, BenchmarkId, Criterion, Throughput};
 use gf2_core::residual_shift::{
@@ -500,13 +497,11 @@ fn arm_main(mode: ArmMode) -> Result<(), String> {
     transport::write_result_line(io::stdout().lock(), &output).map_err(|error| error.to_string())
 }
 
-/// Helper to create a BitVec with random-ish data
 fn create_bitvec(num_bytes: usize) -> BitVec {
     let data: Vec<u8> = (0..num_bytes).map(|i| i as u8).collect();
     BitVec::from_bytes_le(&data)
 }
 
-/// Benchmark shift_left with word-aligned shift amount (k % 64 == 0)
 fn bench_shift_left_word_aligned(c: &mut Criterion) {
     let mut group = c.benchmark_group("shift_left_word_aligned");
 
@@ -514,7 +509,6 @@ fn bench_shift_left_word_aligned(c: &mut Criterion) {
         let num_bytes = size_kb * 1024;
         group.throughput(Throughput::Bytes(num_bytes as u64));
 
-        // Shift by 128 bits (2 words) - word-aligned
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{}KB_shift128", size_kb)),
             &num_bytes,
@@ -531,7 +525,6 @@ fn bench_shift_left_word_aligned(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark shift_left with bit-level shift amount (k % 64 != 0)
 fn bench_shift_left_bit_level(c: &mut Criterion) {
     let mut group = c.benchmark_group("shift_left_bit_level");
 
@@ -539,7 +532,6 @@ fn bench_shift_left_bit_level(c: &mut Criterion) {
         let num_bytes = size_kb * 1024;
         group.throughput(Throughput::Bytes(num_bytes as u64));
 
-        // Shift by 137 bits (2 words + 9 bits) - requires bit combining
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{}KB_shift137", size_kb)),
             &num_bytes,
@@ -556,7 +548,6 @@ fn bench_shift_left_bit_level(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark shift_right with word-aligned shift amount
 fn bench_shift_right_word_aligned(c: &mut Criterion) {
     let mut group = c.benchmark_group("shift_right_word_aligned");
 
@@ -580,7 +571,6 @@ fn bench_shift_right_word_aligned(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark shift_right with bit-level shift amount
 fn bench_shift_right_bit_level(c: &mut Criterion) {
     let mut group = c.benchmark_group("shift_right_bit_level");
 
@@ -604,7 +594,6 @@ fn bench_shift_right_bit_level(c: &mut Criterion) {
     group.finish();
 }
 
-/// Comprehensive comparison: word-aligned vs bit-level shifts
 fn bench_shift_comparison(c: &mut Criterion) {
     let mut group = c.benchmark_group("shift_comparison");
 
@@ -643,11 +632,9 @@ fn bench_shift_comparison(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark across multiple buffer sizes to find SIMD crossover point
 fn bench_shift_sizes(c: &mut Criterion) {
     let mut group = c.benchmark_group("shift_sizes");
 
-    // Test small to large buffers
     let sizes = [
         ("64B", 64),
         ("256B", 256),
@@ -662,7 +649,6 @@ fn bench_shift_sizes(c: &mut Criterion) {
     for (name, num_bytes) in sizes.iter() {
         group.throughput(Throughput::Bytes(*num_bytes as u64));
 
-        // Word-aligned shift
         group.bench_with_input(
             BenchmarkId::new("word_aligned", name),
             num_bytes,
@@ -675,7 +661,6 @@ fn bench_shift_sizes(c: &mut Criterion) {
             },
         );
 
-        // Bit-level shift
         group.bench_with_input(BenchmarkId::new("bit_level", name), num_bytes, |b, &n| {
             let mut bv = create_bitvec(n);
             b.iter(|| {

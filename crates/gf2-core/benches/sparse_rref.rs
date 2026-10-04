@@ -1,23 +1,5 @@
-//! Criterion micro-benchmarks for [`SparseFieldMatrix::rref`] over the
-//! field types called out in issue `eb57f944` §4. RREF is generic over
-//! `F: FiniteField`, so the suite covers `Fp<7>`, `Fp<65521>`, plus the
-//! two GF(2^m) surrogates for `Gf2mWide<u8>` (GF(2^8) AES) and
-//! `Gf2mWide<u32>` (GF(2^32) single-word Conway).
-//!
-//! ## Coverage
-//!
-//! `(n, density) ∈ {(1024, 1/n), (4096, log2(n)/n)}` per the issue
-//! criterion. Inputs are square `n × n` random matrices with the listed
-//! density. Runs at the very low densities chosen above, RREF on a
-//! random sparse matrix is dominated by fill-in growth — that is the
-//! intended measurement, not a worst case.
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench sparse_rref
-//! cargo bench -p gf2-core --bench sparse_rref -- --test
-//! ```
+//! Benchmarks [`SparseFieldMatrix::rref`] on square random operands over
+//! `Fp<7>`, `Fp<65521>`, GF(2^8) and GF(2^32).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
@@ -28,7 +10,7 @@ use gf2_core::gfp::Fp;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-/// GF(2^8) AES irreducible.
+/// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
 struct RrefGf2m8Cfg;
 impl Gf2mWideConfig<1> for RrefGf2m8Cfg {
     const M: usize = 8;
@@ -37,17 +19,17 @@ impl Gf2mWideConfig<1> for RrefGf2m8Cfg {
 }
 type Gf2m8 = Gf2mWide<1, RrefGf2m8Cfg>;
 
-/// GF(2^32) — surrogate for the issue's `Gf2mWide<u32>`.
+/// GF(2^32) in one storage word.
 struct RrefGf2m32Cfg;
 impl Gf2mWideConfig<1> for RrefGf2m32Cfg {
     const M: usize = 32;
-    // Irreducible: x^32 + x^22 + x^2 + x + 1.
+    // x^32 + x^22 + x^2 + x + 1; the leading bit is implicit.
     const MODULUS: [u64; 1] = [(1u64 << 22) | 0b111];
     const NAME: &'static str = "RrefGf2m32Cfg";
 }
 type Gf2m32 = Gf2mWide<1, RrefGf2m32Cfg>;
 
-/// `(n, density)` pairs called out by issue `eb57f944` §4.
+/// `(n, density, label)` cells.
 fn cells() -> Vec<(usize, f64, &'static str)> {
     let n1 = 1024usize;
     let n2 = 4096usize;
