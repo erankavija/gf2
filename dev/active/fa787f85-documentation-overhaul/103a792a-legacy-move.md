@@ -44,13 +44,17 @@ over the tracked tree finds no occurrence, and no script or tool reads them.
 
 Rust sources, crate READMEs and `docs/` hold no citation of a moved path.
 
-Remaining hits of a moved path, outside the mirror and receipt `inputs/`
-trees:
+Sentences containing a repointed path are true at the committed state: 41
+lines in 17 documents are read, and two sentences are restated as current
+facts (`fa787f85-planning-brief.md:83`, `investigation.md:138`).
 
-| File:line | Reason |
+Remaining hits of a moved path, outside the mirror and receipt `inputs/`
+trees, with the ground for keeping each:
+
+| File:line | Ground |
 | --- | --- |
-| `dev/active/a83583e0/premeasurement-protocol.md:1031` | the campaign driver hashes the file (`dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:84-89`) and rejects a changed digest (`:682-684`); `dev/active/a83583e0/campaign-declaration.json:4` names the file |
-| `dev/active/fa787f85-documentation-overhaul/breakdown.json:4396,4484,5089,5133` | lines 4396, 4484 and 5089 copy the descriptions of tracker issues, and 5133 is the footprint of issue 103a792a, whose contract names the pre-move location |
+| `dev/active/a83583e0/premeasurement-protocol.md:1031` | digest-pinned machine input (REQ-02): the campaign driver hashes the file (`dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs:84-89`) and rejects a changed digest (`:682-684`); `dev/active/a83583e0/campaign-declaration.json:4` names the file |
+| `dev/active/fa787f85-documentation-overhaul/breakdown.json:4396,4484,5089,5133` | lines 4396, 4484 and 5089 copy descriptions of terminal tracker issues, which keep their text (DEC-01); line 5133 is the footprint of issue 103a792a, whose contract names the pre-move location |
 | `dev/active/fa787f85-documentation-overhaul/migration/manifest.toml` (rows 23-51 and `inbound` fields) | rows key on the `crates/gf2-core/` paths |
 | `dev/active/fa787f85-documentation-overhaul/103a792a-legacy-move.md` | this record names the moved paths |
 
