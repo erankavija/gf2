@@ -1,0 +1,48 @@
+# Lane-selecting GF(2^8) axpy arm (jit:ad2a6a58).
+#
+# A standalone workspace so the confirmation adds no target, feature or
+# dependency to the production workspace. Both arms of every pair are this one
+# executable: it consumes the shipped `gf2-core` by path with `simd`, which
+# gates runtime kernel dispatch, and with `test-support`, which is where the
+# shipped crate compiles the lane switch and the lane witness
+# (`gf2m::byte_table`). The environment selects the lane and the element
+# representation, so a pair differs in nothing else.
+
+[workspace]
+
+[package]
+name = "gf256-axpy-arm"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+byte-field-arm-common = { path = "../../../6c6b09b1/survey/arm-common" }
+byte-field-gf2-side = { path = "../../../6c6b09b1/survey/gf2-side" }
+gf2-core = { path = "../../../../../crates/gf2-core", features = ["simd", "test-support"] }
+serde_json = "1.0"
+# The runner's plan and addendum types, its case encoder and its result parser:
+# the smoke drives an arm over the runner's own wire.
+tuning-campaign-support = { path = "../../../../tools/tuning-campaign-support" }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "gf256-axpy-arm"
+path = "src/bin/gf256-axpy-arm.rs"
+
+[[bin]]
+name = "gf256-axpy-verify"
+path = "src/bin/gf256-axpy-verify.rs"
+
+[[bin]]
+name = "gf256-axpy-smoke"
+path = "src/bin/gf256-axpy-smoke.rs"
+
+# The workspace release profile verbatim, so the measured executable is the
+# build a production receipt would measure.
+[profile.release]
+lto = "thin"
+codegen-units = 1

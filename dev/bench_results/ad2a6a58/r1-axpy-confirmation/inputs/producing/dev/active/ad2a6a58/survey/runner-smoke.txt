@@ -3,7 +3,9 @@
 # every line below is observed at run time from the plan this smoke drove and the result
 # lines the arms wrote; none carries a clock reading or a timing window, so a rerun on the
 # same executables reproduces this record byte for byte
-# plan: campaign ad2a6a58-axpy-arms-smoke over dev/active/ad2a6a58/addendum-v4-axpy-pilot.json (10 cells, 4 arms)
+# plan: campaign ad2a6a58-axpy-arms-smoke-pilot over dev/active/ad2a6a58/addendum-v4-axpy-pilot.json (10 cells, 4 arms)
+# arm executable gf256-axpy-arm sha256: 9f8b8f70bcf18a95356edaf2ac50a669e3f5cce237dcf64f25602a6df31d8d38
+# plan: campaign ad2a6a58-axpy-arms-smoke-confirmation over dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json (6 cells, 4 arms)
 # arm executable gf256-axpy-arm sha256: 9f8b8f70bcf18a95356edaf2ac50a669e3f5cce237dcf64f25602a6df31d8d38
 PASS axpy-1k-cold-element/scalar-element: cache-state=cold operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
 PASS axpy-1k-cold-element/table-element: cache-state=cold operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
@@ -25,7 +27,19 @@ PASS axpy-8m-wide/scalar-wide: cache-state=warm operation=axpy workers=1 windows
 PASS axpy-8m-wide/table-wide: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
 PASS axpy-2m-stream-wide/scalar-wide: cache-state=streaming operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
 PASS axpy-2m-stream-wide/table-wide: cache-state=streaming operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS axpy-4k-element/scalar-element: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS axpy-4k-element/table-element: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS axpy-128k-element/scalar-element: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS axpy-128k-element/table-element: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS axpy-2m-stream-element/scalar-element: cache-state=streaming operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS axpy-2m-stream-element/table-element: cache-state=streaming operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mElement>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS axpy-4k-wide/scalar-wide: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS axpy-4k-wide/table-wide: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS axpy-128k-wide/scalar-wide: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS axpy-128k-wide/table-wide: cache-state=warm operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
+PASS axpy-2m-stream-wide/scalar-wide: cache-state=streaming operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-table-declined/table-builds=0
+PASS axpy-2m-stream-wide/table-wide: cache-state=streaming operation=axpy workers=1 windows=0 gf2-core/FieldVec<Gf2mWide<1,Gf256x11d>>::axpy/poly=0x11D/lane=gf256-product-table/table-builds=1
 PASS coverage: arms scalar-element,scalar-wide,table-element,table-wide
 PASS coverage: operations axpy
 PASS coverage: cache states cold,streaming,warm
-PASS coverage: 20 untimed dispatches, 0 timing windows
+PASS coverage: 32 untimed dispatches, 0 timing windows
