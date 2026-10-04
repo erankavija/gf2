@@ -761,7 +761,7 @@
      "short_id": "103a792a",
      "title": "Move gf2-core crate guides into the legacy mirror",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "1adfe2e9-2e12-4851-a341-69c36d50d63f",
@@ -775,7 +775,7 @@
      "short_id": "1ca94ec2",
      "title": "Re-archive epics e095a100, 806eb14e, 2928ccce, d4851c3d to collect their terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "2596b143-9284-450b-bf60-8e6510c7032b",
@@ -789,56 +789,56 @@
      "short_id": "3759f995",
      "title": "Re-archive epics babcf05e, f9717e7e to collect their terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "42037c91-71ad-431b-b27a-e9826e5354a9",
      "short_id": "42037c91",
      "title": "Re-archive epics bb85c68a, 6efb756b to collect their terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "blocked"
     },
     {
      "id": "4f161183-869b-4369-83e9-46dc023720d5",
      "short_id": "4f161183",
      "title": "Regroup flat zen3 dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "616e1d7c-1e65-45f0-91d4-2eb194746882",
      "short_id": "616e1d7c",
      "title": "Regroup flat field-dispatch dev/active entries under their epic dir",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "83f9ce69-6d18-4767-ac9c-6b2f00485581",
      "short_id": "83f9ce69",
      "title": "Re-archive epic 97bf0879 to collect its terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "eace5009-d595-4a23-bd68-6034df5e5352",
      "short_id": "eace5009",
      "title": "Regroup the remaining flat dev/active entries under epic dirs",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "f29a9225-0cd6-4fb2-91a5-7ba56b1b706b",
      "short_id": "f29a9225",
      "title": "Re-archive epic 026fc832 to collect its terminal stories",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     },
     {
      "id": "f902240f-f550-47ea-84fa-326f3d3f96a1",
      "short_id": "f902240f",
      "title": "Bring the hand-archived OSD epic under container archival",
      "classification": "implementation",
-     "status": "pending"
+     "status": "in_progress"
     }
    ]
   },
@@ -1853,7 +1853,8 @@
   "Session 8 (2026-10-04): owner rulings applied (3fd3db5e and 7dbcde0c REQ-01 amended, DEC-01 each; exception recorded on 1a8f6acd). Wave 10: 545b113f split by crate; code-review round 1 failed because the lead had workers restore title lines; the reviewer reads title line + overview paragraph as two paragraphs. Round 2 merged titles into one orientation paragraph across all crates and dev/tools (211 files, 859 insertions, 1659 deletions against 808f03aeb) and passed. 3fd3db5e done after one fix of the baseline record's source commit.",
   "Session 8 end: wave 10 tasks done (545b113f, 3fd3db5e, fa4939c3). ffc35b8c story gates: all pass except holistic-review, which fails twice on one finding (DEC-nn decision identifiers do not match the configured D-[0-9]+ pattern); open escalation, owner input needed. Wave 11 waits on the story. Six re-archive previews report blockers from tracker references to absent paths (see handoff-7.md).",
   "Session 9 (2026-10-04): owner instruction for this session: never stop to ask; an issue needing owner input is blocked and its question recorded in escalations for the next session. Write the handoff when waves 11 and 12 finish, or when only owner-blocked work remains. Check workers every 30 min. Subagent model follows task difficulty; Fable is excluded. Reviews weigh net-negative line change and the documentation invariants.",
-  "Session 9: six stale worktrees of other epics removed with owner approval (agent-8bd873f7, agent-c73ffa25, agent-dbd8787d-publish, agent-dbd8787d-run, two under .claude/worktrees); the unmerged branches worktree-agent-aa4df2631e461c6ae and worktree-agent-ab61dd5f4d07bfb81 remain."
+  "Session 9: six stale worktrees of other epics removed with owner approval (agent-8bd873f7, agent-c73ffa25, agent-dbd8787d-publish, agent-dbd8787d-run, two under .claude/worktrees); the unmerged branches worktree-agent-aa4df2631e461c6ae and worktree-agent-ab61dd5f4d07bfb81 remain.",
+  "Session 9 wave 11 dispatch (base 98e238917): 83f9ce69, f29a9225, 3759f995, f902240f run in two phases (worker pre-flight, lead executes the archive on main in the order 97bf0879, 026fc832, babcf05e, f9717e7e, b7157be6, worker repoints after a SendMessage naming the commit); 4f161183, eace5009, 616e1d7c, 103a792a are single-phase worktree workers. 2596b143 runs after they merge. 1ca94ec2 and 42037c91 wait on the dev/docs policy question. Worktrees were created without cache seeding (LEAD_CACHE_POOL unset to a missing path); the workers build nothing."
  ],
  "started_at": "2026-10-01T19:40:00Z",
  "traps": [
