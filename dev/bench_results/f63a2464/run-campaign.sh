@@ -18,7 +18,7 @@
 # `prepare` refuses an existing plan and checks that every arm executable is the
 # one the preparation build identity records. `run` prints the authoritative
 # execution log before the first session, then invokes the shared runner inside
-# one `dev/scripts/ccx1-bench-flock.sh --full-host` acquisition per bounded
+# one `ccx1-bench-flock.sh --full-host` acquisition per bounded
 # session. Exit 3 means the session checkpointed its cells and paused; the next
 # session resumes under the same identity without repeating a completed cell.
 # Any other nonzero exit stops the launcher with that code; the failed attempt
@@ -45,17 +45,21 @@ case "$FAMILY" in
 esac
 case "$MODE" in pilot|confirmation) ;; *) echo "unknown mode $MODE" >&2; exit 2 ;; esac
 export PATH="$HOME/.cargo/bin:$PATH" RAYON_NUM_THREADS=1 RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
-SURVEY=dev/active/f63a2464/survey
-RESULTS=dev/bench_results/f63a2464
-ADDENDUM=dev/active/f63a2464/addendum-${FAMILY_ID%-v1}
+files=$(git ls-files --cached --others --exclude-standard -- ':(glob)**/repository_files.py')
+# The survey directory holds the arms workspace; the addenda lie beside it.
+SURVEY=$(dirname "$(python3 -B "$files" package-directory ldpc-qc-arms)")
+RESULTS=$(realpath --relative-to="$repo" "$(dirname "${BASH_SOURCE[0]}")")
+WRAPPER=$(python3 -B "$files" document ccx1-bench-flock.sh '#!')
+ADDENDUM=$(dirname "$SURVEY")/addendum-${FAMILY_ID%-v1}
 [[ "$MODE" != pilot ]] || ADDENDUM=$ADDENDUM-pilot
 ADDENDUM=$ADDENDUM.json
 BASELINE=$repo/target/ldpc-qc-baseline/release
 CANDIDATE=$repo/target/ldpc-qc-arms/release
 BUNDLES=$repo/target/ldpc-inputs
-QUALITY=$repo/dev/bench_results/c077a88b/v3-preparation/quality
 IDENTITY=$RESULTS/preparation/build-identity.json
-PRODUCING=dev/active/f63a2464/survey/producing-inputs.json
+# The prepared quality directory the build identity records.
+QUALITY=$repo/$(python3 -c 'import json,os,sys; print(os.path.dirname(next(iter(json.load(open(sys.argv[1]))["prepared_quality"]))))' "$IDENTITY")
+PRODUCING=$SURVEY/producing-inputs.json
 STAGE=$repo/target/ldpc-qc-campaigns/$RUN_ID-$FAMILY-$MODE
 PLAN=$STAGE.plan.json
 OUT=$RESULTS/$RUN_ID-f63a2464-ldpc-qc-$FAMILY-$MODE
@@ -89,9 +93,9 @@ run_sessions() {
   echo "GF2_CAMPAIGN_EXECUTION_LOG=$STAGE/execution.log"
   while true; do
     printf 'start=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$LAUNCH_LOG"
-    printf 'command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 dev/scripts/ccx1-bench-flock.sh --full-host %q run %q %q\n' "$RUNNER" "$STAGE" "$PLAN" >> "$LAUNCH_LOG"
+    printf 'command=GF2_BENCH=1 CARGO_CI_NO_LOCK=1 %s --full-host %q run %q %q\n' "$WRAPPER" "$RUNNER" "$STAGE" "$PLAN" >> "$LAUNCH_LOG"
     set +e
-    CARGO_CI_NO_LOCK=1 GF2_BENCH=1 dev/scripts/ccx1-bench-flock.sh --full-host \
+    CARGO_CI_NO_LOCK=1 GF2_BENCH=1 "$WRAPPER" --full-host \
       "$RUNNER" run "$STAGE" "$PLAN" 2>&1 | tee -a "$LAUNCH_LOG"
     code=${PIPESTATUS[0]}
     set -e

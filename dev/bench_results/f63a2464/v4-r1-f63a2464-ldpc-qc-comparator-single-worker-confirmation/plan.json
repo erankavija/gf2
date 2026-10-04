@@ -1,0 +1,74 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "f63a2464-v4-r1-qc-comparator-single-worker-confirmation",
+  "issue": "f63a2464",
+  "label": "confirmation",
+  "campaign_seed": 762304518899223043,
+  "addendum": "dev/active/f63a2464/addendum-ldpc-qc-comparator-single-worker.json",
+  "producing_manifest": "dev/active/f63a2464/survey/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "qc-intra-frame-nms-f32-nr-bg1-z384": {
+      "build": "native",
+      "description": "QC-aware intra-frame prototype: the same f32 flooding normalized min-sum contract vectorized across the lifted positions of one frame's circulant blocks, syndrome stopping, one reused decoder per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-arms/release/qc-decoder-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-flooding-nms-f32-nr-bg1-z384": {
+      "build": "external",
+      "description": "AFF3CT v4.7.0 Decoder_LDPC_BP_flooding<NMS>, f32, scalar, one clone per pinned worker",
+      "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-qc-baseline/release/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg1-z384-qc-comparator-w1",
+      "baseline_arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-qc-comparator-latency",
+      "baseline_arm": "qc-intra-frame-nms-f32-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-9fb40c83/target/ldpc-inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 1
+}

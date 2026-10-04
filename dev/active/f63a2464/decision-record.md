@@ -194,3 +194,83 @@ through this issue's prototypes.
 
 Inter-frame batching itself, which is `ed3d490e`'s subject. Family QC is measured
 as the intra-frame alternative to it, and neither is forced to win here.
+
+## Decisions after the confirmations
+
+The sections above are the frozen instrument and are applied here as written.
+Every figure behind a decision is in the
+[quality tables](../../bench_results/f63a2464/quality/tables.md) or the
+[timing tables](../../bench_results/f63a2464/timing-tables.md);
+[findings.md](findings.md) carries the evidence walk and the limits.
+
+**Reading of the confirmatory cap.** The cap of one confirmatory campaign
+applies per ledger (repository owner's ruling, 2026-10-05). Family QC asks three
+canonical questions on three ledgers, so each ledger carries one pilot
+reservation and one confirmatory reservation, and rule S4 is applied to each
+ledger's confirmation separately (timing tables, "Stop rule S4 per ledger").
+
+| Family | Rule that closes it | Decision | Evidence |
+|---|---|---|---|
+| Q, quantized min-sum | S2 | No proceed | quality tables, "The exploratory screen" |
+| L, layered min-sum | S2 | No proceed | quality tables, "The exploratory screen" |
+| QC, single-worker ledger | S4, no ending outcome | Qualifies | timing tables, the single-worker confirmation |
+| QC, multicore ledger | S4, no ending outcome | Qualifies | timing tables, the multicore confirmation |
+| QC, comparator ledger | S4, every cell `fail` | Ended; no further attempt, no margin revised | timing tables, the comparator confirmation |
+| QC, candidate family | — | Proceed to the production design proposed below | the three rows above |
+
+The comparator ledger's `fail` is recorded as the evaluator records it. Its
+direction follows from the plan's arm positions, which the timing tables print
+beside each cell: the QC prototype holds the baseline position and AFF3CT's
+scalar f32 flooding normalized-min-sum decoder [Cassagne2019] the candidate
+position, so a speedup below the reciprocal of the equivalence margin states
+that the external arm is the slower one. The confirmation therefore establishes
+no material gap in the external arm's favour, which is the question that family
+asks, and its acceptance summary reports that the receipt does not qualify.
+
+The proceed decision for family QC rests on the two ledgers that compare the
+prototype with the canonical decoder under an unchanged numerical contract. It
+selects a design direction, and the canonical `LdpcDecoder` stays the production
+decoder until the scope below delivers its own evidence.
+
+### Proposed production design for family QC
+
+A proposal for review; no issue exists for it and no production code changes
+under `f63a2464`.
+
+- **Ownership.** `gf2-coding` owns the circulant-block layout derived from
+  `QuasiCyclicLdpc` and a QC-aware flooding update behind the existing
+  `LdpcDecoder` interface, selected by the code's structure. `gf2-kernels-simd`
+  owns the one AVX2 check-block kernel with its safety contract; the scalar
+  reference stays in `gf2-coding` and is the fallback where the capability is
+  absent.
+- **Contract.** The canonical float contract, unchanged: the posterior of every
+  codeword position carries the canonical decoder's `f32` bit pattern after the
+  same iteration count, under every min-sum rule and under early termination.
+  The shared behavioural suite asserts it for the scalar path and the kernel
+  separately, including signed zeros, NaN encodings and infinities.
+- **Dispatch domain.** Codes that expose an equal-degree circulant block
+  partition. DVB-T2 keeps the canonical path, for the structural reason the
+  [numerical-contract review](numerical-contract-review.md) records.
+- **Budget.** The complexity budget the confirmation addenda freeze: one new
+  unsafe kernel and their declared source-line ceiling.
+
+### Proposed worker-sized scope
+
+1. **Layout and scalar path.** The block layout and the scalar QC-aware flooding
+   update in `gf2-coding`, with the posterior-level equivalence suite over
+   several lifting sizes, the min-sum rules, punctured and filler inputs and
+   early termination. No `unsafe`.
+2. **Kernel and dispatch.** The AVX2 check-block kernel in `gf2-kernels-simd`
+   with its safety contract, byte-identity tests against the scalar reference,
+   Rust 1.95 verification, runtime dispatch and the tested fallback.
+3. **Before/after evidence and selection rule.** A fresh pilot and confirmation
+   of the production path against a pinned pre-change baseline under the
+   measurement contract, covering what this checkpoint leaves unmeasured:
+   lifting sizes below and at the vector width with their dispatch overhead, a
+   rate-matched NR operating point, and the production path's memory by the
+   method of this checkpoint's peak-memory record.
+   The selection rule for the dispatch domain is frozen from that evidence.
+
+Inter-frame batching (`ed3d490e`) remains a separate candidate; neither
+excludes the other, and a comparison of the two on sustained throughput belongs
+to the third item's addendum.
