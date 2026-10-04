@@ -1,8 +1,7 @@
-//! Generic AVX2 batch kernels for Montgomery-stored `Fp<P>` values.
-//!
-//! A safe function-pointer bundle for Montgomery-form primes with
-//! `P <= 2^63`: add/sub are lane-wise modular corrections, and mul is a 4-lane
-//! AVX2 Montgomery REDC.
+//! Generic AVX2 batch kernels for Montgomery-stored `Fp<P>` values: a safe
+//! function-pointer bundle for Montgomery-form primes with `P <= 2^63`, where
+//! add/sub are lane-wise modular corrections and mul is a 4-lane AVX2
+//! Montgomery REDC.
 
 /// Lane-wise batch multiply for Montgomery-form `Fp<P>` storage words.
 ///

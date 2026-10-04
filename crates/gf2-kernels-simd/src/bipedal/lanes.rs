@@ -1,9 +1,7 @@
 //! Lane-width logical primitives used by the generic bipedal-like SIMD
-//! framework ([`crate::bipedal::framework`]).
-//!
-//! Every method impl must be `#[inline(always)]`: rustc otherwise cannot
-//! inline an AVX2-emitting trait method into the
-//! `#[target_feature(enable = "avx2")]` kernel entry points.
+//! framework ([`crate::bipedal::framework`]). Every method impl must be
+//! `#[inline(always)]`: rustc otherwise cannot inline an AVX2-emitting trait
+//! method into the `#[target_feature(enable = "avx2")]` kernel entry points.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;

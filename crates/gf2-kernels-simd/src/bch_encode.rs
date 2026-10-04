@@ -1,15 +1,17 @@
-//! Batch-encoding kernels for binary BCH codes.
+//! Batch-encoding kernels for binary BCH codes: one dispatch bundle carries two
+//! independent reductions of $x^r m(x)$ modulo the generator $g$. The
+//! carry-less-multiply fold reduces one frame 64 message coefficients at a time
+//! ([`BchFoldBlockFn`]), and the bit-sliced reduction advances
+//! [`BITSLICE_LANES`] frames per step.
 //!
-//! One dispatch bundle carries two independent reductions of $x^r m(x)$
-//! modulo the generator $g$. The carry-less-multiply fold reduces one frame 64
-//! message coefficients at a time ([`BchFoldBlockFn`]). The bit-sliced
-//! reduction holds the shift register of $r$ binary coefficients one word per
-//! coefficient, bit $l$ carrying lane $l$'s value, and advances
-//! [`BITSLICE_LANES`] frames per step: with $s_j$ the slice of register
-//! coefficient $j$, $\mu_j$ the all-ones-or-zero broadcast of the generator's
-//! coefficient of $x^j$, $m$ the slice of the entering message coefficient
-//! and $s_{-1}$ read as zero, $f = s_{r-1} \oplus m$ and
-//! $s'_j = s_{j-1} \oplus (\mu_j \wedge f)$.
+//! # Bit-sliced register
+//!
+//! The bit-sliced reduction holds the shift register of $r$ binary coefficients
+//! one word per coefficient, bit $l$ carrying lane $l$'s value. With $s_j$ the
+//! slice of register coefficient $j$, $\mu_j$ the all-ones-or-zero broadcast of
+//! the generator's coefficient of $x^j$, $m$ the slice of the entering message
+//! coefficient and $s_{-1}$ read as zero, a step computes
+//! $f = s_{r-1} \oplus m$ and $s'_j = s_{j-1} \oplus (\mu_j \wedge f)$.
 //!
 //! # Required processor features
 //!

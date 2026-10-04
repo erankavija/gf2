@@ -1,12 +1,14 @@
 //! AVX2 panelized PLE base-case kernel for medium `Fp<P>` with
-//! `P ∈ (251, 65536)`.
+//! `P ∈ (251, 65536)`: an in-place rank-revealing PLE decomposition of a
+//! column-window panel of canonical u16 storage, with a row-major Schur update
+//! that performs the same writes as the column-major base case of
+//! `@/citation/DumasPernet2012` §2.2 Alg. 2.5.
 //!
-//! An in-place rank-revealing PLE decomposition of a column-window panel of
-//! canonical u16 storage, with a row-major Schur update that performs the
-//! same writes as the column-major base case of
-//! `@/citation/DumasPernet2012` §2.2 Alg. 2.5. All public functions are
-//! `unsafe`: callers must ensure AVX2 is available at runtime, `p` is an odd
-//! prime in `(251, 65536)`, and all input u16 lanes are canonical (`< p`).
+//! # Safety
+//!
+//! All public functions are `unsafe`: callers must ensure AVX2 is available at
+//! runtime, `p` is an odd prime in `(251, 65536)`, and all input u16 lanes are
+//! canonical (`< p`).
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]

@@ -1,9 +1,7 @@
 //! GPU bit-identity tests for the F_7 HIP permanent kernel against the CPU
-//! reference `permanent_bipedal7_singleword`, and a checksum test of the
-//! device `d_MUL_LUT` against the host `MUL_LUT`.
-//!
-//! The CPU reference panics for n > 16 (`Packed7::LANES`), so the
-//! bit-identity tests use n ∈ {8, 12}.
+//! reference `permanent_bipedal7_singleword`, and a checksum test of the device
+//! `d_MUL_LUT` against the host `MUL_LUT`. The CPU reference panics for n > 16
+//! (`Packed7::LANES`), so the bit-identity tests use n ∈ {8, 12}.
 
 #![cfg(feature = "hip")]
 

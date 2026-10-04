@@ -1,12 +1,13 @@
-//! AVX2 pure-integer panelized GEMM kernel for small `Fp<P>` with
-//! `P <= 251`, in the style of `@/citation/GotoGeijn2008` and
-//! `@/citation/VanZee2015`.
+//! AVX2 pure-integer panelized GEMM kernel for small `Fp<P>` with `P <= 251`,
+//! in the style of `@/citation/GotoGeijn2008` and `@/citation/VanZee2015`. B is
+//! packed into `NR`-wide panels and each `MR`-row block of A into
+//! pair-broadcast words for a `_mm256_madd_epi16` micro-kernel.
 //!
-//! B is packed into `NR`-wide panels and each `MR`-row block of A into
-//! pair-broadcast words for a `_mm256_madd_epi16` micro-kernel. All public
-//! functions are `unsafe`: callers must ensure AVX2 is available at runtime,
-//! `p` is an odd prime in `[3, 251]`, and all input bytes are canonical
-//! (`< p`).
+//! # Safety
+//!
+//! All public functions are `unsafe`: callers must ensure AVX2 is available at
+//! runtime, `p` is an odd prime in `[3, 251]`, and all input bytes are
+//! canonical (`< p`).
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]

@@ -1,7 +1,6 @@
-//! Horizontal min-sum and max-abs operations over LLR slices for
-//! soft-decision decoding.
-//!
-//! An LLR is `log(P(bit=0) / P(bit=1))`: positive means bit 0 is more likely.
+//! Horizontal min-sum and max-abs operations over LLR slices for soft-decision
+//! decoding. An LLR is `log(P(bit=0) / P(bit=1))`: positive means bit 0 is more
+//! likely.
 
 /// LLR operation function bundle for f32.
 pub struct LlrFnsF32 {

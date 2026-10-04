@@ -1,9 +1,8 @@
-//! AVX2 64×64 bit-block transpose lanes.
-//!
-//! Every kernel here answers the block contract [`crate::transpose`] states
-//! and is reached only through [`crate::transpose::lane`], which publishes a
-//! safe pointer to it once `is_x86_feature_detected!("avx2")` holds.
-//! `src/x86/asm/transpose.asm.txt` is the release disassembly of all four.
+//! AVX2 64×64 bit-block transpose lanes. Every kernel here answers the block
+//! contract [`crate::transpose`] states and is reached only through
+//! [`crate::transpose::lane`], which publishes a safe pointer to it once
+//! `is_x86_feature_detected!("avx2")` holds. `src/x86/asm/transpose.asm.txt` is
+//! the release disassembly of all four.
 
 use core::arch::x86_64::*;
 

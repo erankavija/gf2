@@ -1,11 +1,9 @@
-//! F_5 SIMD batch kernels (3-plane bit-sliced encoding).
-//!
-//! Each F_5 element `x = b0 + 2*b1 + 4*b2` is stored across three parallel
-//! bit-planes `(b0, b1, b2)`; one `u64` per plane holds 64 lanes. Three planes
-//! do not fit the 2-stream shape of [`super::framework::BipedalLikeConfig`],
-//! so F_5 uses the AVX2 entry points in `crate::x86::bipedal_avx2_packed5`
-//! (256 lanes per register), the [`F5AvxFns`] bundle and the scalar fallbacks
-//! in this module.
+//! F_5 SIMD batch kernels (3-plane bit-sliced encoding). Each F_5 element
+//! `x = b0 + 2*b1 + 4*b2` is stored across three parallel bit-planes
+//! `(b0, b1, b2)`; one `u64` per plane holds 64 lanes. Three planes do not fit
+//! the 2-stream shape of [`super::framework::BipedalLikeConfig`], so F_5 uses
+//! the AVX2 entry points in `crate::x86::bipedal_avx2_packed5` (256 lanes per
+//! register), the [`F5AvxFns`] bundle and the scalar fallbacks in this module.
 
 /// Decode a single `(b0, b1, b2)` operand word-triple into five mutually-
 /// exclusive one-hot selectors `[e0, e1, e2, e3, e4]`.
