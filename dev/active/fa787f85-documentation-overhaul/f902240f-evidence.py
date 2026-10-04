@@ -16,6 +16,7 @@ import urllib.parse
 from pathlib import Path
 
 EXEC = "7335791e4dbb83e123d2e3c794e92b0b6344fe9e"
+PIN = "744aa9b037c8c5c0c61e75dffab0f2e891ba926a"
 EPIC = "b7157be6-16d8-4050-834c-e996d4fa27c3"
 ARCHIVE = "dev/archive/b7157be6-osd"
 REVIEW = "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
@@ -79,6 +80,15 @@ todo = [a["source"] for a in plan["artifacts"] if a["action"] in ("move", "copy"
 dels = [d["source"] for a in plan["artifacts"] for d in a["pending_deletions"]]
 figure("REQ-05 preview", plan["eligible"] and not plan["blockers"] and not todo and not dels,
        f"eligible {plan['eligible']}, blockers {len(plan['blockers'])}, unarchived move/copy/block {len(todo)}, pending deletions {len(dels)}")
+
+pins = {doc["path"]: doc["commit"] for issue in ("cef1ae5f", "a82f2dd9")
+        for doc in json.loads(next(Path(".jit/issues").glob(issue + "-*.json")).read_text())["documents"]}
+differ = sorted(p for p, c in pins.items() if sha(git("show", f"{c}:{p}", text=False)) != now(p))
+retained = [a["source"] for a in plan["artifacts"] if a["source"] in pins and a["action"] == "retain" and "pinned-historical" in a["evidence"]]
+figure("pinned references", len(retained) == len(pins) and set(pins.values()) == {PIN},
+       f"{len(pins)} pinned to {PIN[:9]}, {len(retained)} retained by the preview, {len(pins) - len(differ)} with the pinned blob in the working tree, differing: {differ}")
+for path in differ:
+    print(git("diff", "--stat", PIN, "--", path).strip().splitlines()[-1].strip())
 
 touched = git("log", "--format=", "--name-only", "--grep", "jit:f902240f").split()
 files = sorted({f for f in [*touched, RECORD, *listed("HEAD", ARCHIVE)] if f.endswith(".md") and Path(f).is_file()})

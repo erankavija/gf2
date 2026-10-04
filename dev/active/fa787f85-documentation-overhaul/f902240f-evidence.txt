@@ -6,8 +6,10 @@ ok   REQ-03 review live == archive copy: 5e40581dd6a4150f6b178a7383f8848cb21c553
 ok   receipt moved: 18ae1a66b56d39845e54e1c4b1ef16aaaa0081927af38c75503f32c91b8f7f1b
 ok   REQ-04 dataset: 14 files present, changed since: ['dev/simulation_results/osd-ebch-128-64/README.md']
 ok   REQ-05 preview: eligible True, blockers 0, unarchived move/copy/block 0, pending deletions 0
+ok   pinned references: 11 pinned to 744aa9b03, 11 retained by the preview, 10 with the pinned blob in the working tree, differing: ['dev/simulation_results/osd-ebch-128-64/README.md']
+1 file changed, 1 insertion(+), 1 deletion(-)
 scanned dev/active/ae03bcd0-general-bch/investigation.md: 0 local links
-scanned dev/active/fa787f85-documentation-overhaul/f902240f-osd-archive.md: 3 local links
+scanned dev/active/fa787f85-documentation-overhaul/f902240f-osd-archive.md: 4 local links
 scanned dev/active/fa787f85-documentation-overhaul/investigation.md: 0 local links
 scanned dev/active/fa787f85-documentation-overhaul/perf-evidence-catalog.md: 0 local links
 scanned dev/archive/b7157be6-osd/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md: 0 local links
