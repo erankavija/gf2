@@ -682,6 +682,7 @@ mod span_capture {
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
+    /// A span's metadata name and its recorded fields, each in `Debug` rendering.
     #[derive(Clone)]
     pub struct CapturedSpan {
         pub name: &'static str,

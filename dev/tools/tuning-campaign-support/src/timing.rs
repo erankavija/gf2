@@ -27,7 +27,7 @@ pub struct TimingSample {
 }
 
 impl TimingSample {
-    /// Constructs a valid positive timing sample.
+    /// Fails unless [`Self::validate`] accepts the sample.
     pub fn new(
         execution: u64,
         repetition: u64,
@@ -70,7 +70,7 @@ impl TimingSample {
         Ok(())
     }
 
-    /// Returns the observed nanoseconds per logical call.
+    /// Mean nanoseconds of one call over the window; not finite when `calls` is zero.
     pub fn ns_per_call(self) -> f64 {
         self.elapsed_ns as f64 / self.calls as f64
     }

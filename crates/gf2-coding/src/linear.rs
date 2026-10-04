@@ -392,6 +392,7 @@ impl SyndromeTableDecoder {
         }
     }
 
+    /// The code whose zero and single-error syndromes fill the table.
     pub fn code(&self) -> &LinearBlockCode {
         &self.code
     }

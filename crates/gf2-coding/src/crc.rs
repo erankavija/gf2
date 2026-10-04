@@ -133,6 +133,7 @@ impl CrcCode {
         true
     }
 
+    /// The systematic code built from the generator polynomial; it holds G and H.
     pub fn inner(&self) -> &LinearBlockCode {
         &self.inner
     }

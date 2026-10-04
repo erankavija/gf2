@@ -109,7 +109,6 @@ impl Permutation {
     }
 }
 
-/// Builds an `r × c` zero matrix sourcing the field's zero from `template`.
 fn zero_matrix_like<F: FiniteField>(
     r: usize,
     c: usize,
@@ -275,7 +274,6 @@ struct PleWidths {
 }
 
 impl PleWidths {
-    /// Resolves the three widths for carrier `F` from the active profile.
     fn resolve<F: FiniteField>() -> Self {
         let tuning = tuning::active();
         let ple = tuning.ple();
@@ -362,8 +360,6 @@ pub fn ple_base_route(win: usize) -> PleBaseRoute {
     ple_base_route_resolved(tuning::active().ple().scalar_base_max_cols(), win)
 }
 
-/// Reports the base-case arm for a column-window width against an
-/// already-resolved `scalar_base_max_cols`.
 fn ple_base_route_resolved(scalar_base_max_cols: usize, win: usize) -> PleBaseRoute {
     if win <= scalar_base_max_cols {
         PleBaseRoute::ScalarBase
@@ -458,8 +454,6 @@ pub fn ple_panel_route(lane: Option<PlePanelLane>, win: usize) -> PlePanelRoute 
     ple_panel_route_resolved(ple.panel_base_max_cols(), ple_lane_max_cols(ple, lane), win)
 }
 
-/// Reports the panel arm for a column-window width against already-resolved
-/// widths.
 fn ple_panel_route_resolved(
     panel_base_max_cols: usize,
     panel_lane_max_cols: Option<usize>,
@@ -1190,8 +1184,6 @@ pub fn back_sub_route(m: usize, n: usize) -> BackSubRoute {
     back_sub_route_resolved(tuning::active().ple().blocked_back_sub_min_dim(), m, n)
 }
 
-/// Reports the back-substitution arm for a matrix shape against an
-/// already-resolved `blocked_back_sub_min_dim`.
 fn back_sub_route_resolved(blocked_back_sub_min_dim: usize, m: usize, n: usize) -> BackSubRoute {
     if m.max(n) < blocked_back_sub_min_dim {
         BackSubRoute::Scalar
