@@ -11,7 +11,7 @@ decision be amended at its source with the permanent-workload evidence and the
 changed verdict. [`findings.md`](findings.md) §8 determines that the receipts do
 support it. `dev/archive/` is permanent repository content and amending it is a
 deliberate act that needs the owner's approval
-([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):174). The
+([`../../active/b8206228-permanent-statistics/0de41c82/plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md):174). The
 owner gave that approval on 2026-08-17 and this document records the approved
 text and its insertion points.
 

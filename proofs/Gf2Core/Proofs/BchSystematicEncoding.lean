@@ -3,7 +3,7 @@
   encoding, field-generic and packed binary, writes under every declared layout a codeword
   that is a multiple of the generator and carries the message in its first `k` coordinates.
   Production path, refinement anchors, assumptions (A-11, A-12, A-13) and proof-route notes:
-  `dev/active/64fd3afd/proof-sketch.md`, section O-5.
+  `dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md`, section O-5.
 -/
 import Mathlib.Algebra.Polynomial.Div
 import Gf2Core.Proofs.BchGenerator
