@@ -383,6 +383,7 @@ pub enum FamilyPurpose {
     FinalIntegration,
 }
 
+/// Family an addendum names; `id` keys the trial ledger and `issue` must equal the plan's.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct FamilyIdentity {
@@ -545,6 +546,7 @@ pub struct WorkerDeclaration {
     pub nested_pools_allowed: bool,
 }
 
+/// Build each side of a cell's pair must have; a plan's arms are checked against it.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArmBuilds {
@@ -561,6 +563,7 @@ pub struct Workload {
     pub seed: u64,
 }
 
+/// Whether both arms must report the declared decoder settings or the candidate must only meet the quality tolerance.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DecoderArmKind {
@@ -605,6 +608,7 @@ pub enum NormalizationKind {
     SumProduct,
 }
 
+/// Declared stopping rule; `crc` is present exactly when `kind` is [`StoppingKind::Crc`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Stopping {
@@ -612,6 +616,7 @@ pub struct Stopping {
     pub crc: Option<String>,
 }
 
+/// Stopping criterion of a decoder cell; only `Crc` carries a polynomial.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum StoppingKind {
@@ -630,6 +635,7 @@ pub enum CodewordSource {
     Both,
 }
 
+/// LLR input both arms decode: source, seed, SNR and a positive frame count.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct DecoderInput {
@@ -641,6 +647,7 @@ pub struct DecoderInput {
     pub snr_db: f64,
 }
 
+/// Code a decoder cell measures: `0 < k <= n`, and `h_sha256` is the 64-hex-digit parity-check digest.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CodeIdentity {
@@ -650,6 +657,7 @@ pub struct CodeIdentity {
     pub h_sha256: String,
 }
 
+/// Declared decoder batch size, which is positive and which matched-algorithm arms must report.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Batching {
