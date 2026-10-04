@@ -1038,13 +1038,6 @@
       "format": "markdown",
       "label": "M4RI confirmation unavailable rows",
       "path": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv"
-    },
-    {
-      "commit": null,
-      "doc_type": "tool",
-      "format": "markdown",
-      "label": "Runtime repository lookups for the dense-parity tooling",
-      "path": "dev/active/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/repo_artifacts.py"
     }
   ],
   "first_ready_at": "2026-09-16T22:37:53.286171086Z",
@@ -1094,5 +1087,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
-  "updated_at": "2026-10-04T23:35:41.160494838Z"
+  "updated_at": "2026-10-04T23:35:50.261281550Z"
 }
