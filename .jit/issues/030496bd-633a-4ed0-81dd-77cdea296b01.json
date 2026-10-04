@@ -108,6 +108,7 @@
       "path": "dev/active/fa787f85-documentation-overhaul/030496bd-token-diff.txt"
     }
   ],
+  "done_at": "2026-10-04T11:49:42.932919131Z",
   "first_ready_at": "2026-10-04T11:28:56.531774684Z",
   "gates_required": [
     "cargo-ci",
@@ -116,10 +117,25 @@
     "docs-mechanical"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:44:53.490949096Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:48:00.852681882Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:49:32.285655468Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
-      "status": "pending",
-      "updated_at": "2026-10-02T09:38:18.521080202Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-10-04T11:43:41.589024488Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "030496bd-633a-4ed0-81dd-77cdea296b01",
@@ -132,7 +148,7 @@
     "satisfies:ffc35b8c/REQ-27"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Close the sweep with the after census and justification list",
-  "updated_at": "2026-10-04T11:43:26.426835598Z"
+  "updated_at": "2026-10-04T11:49:42.932919131Z"
 }

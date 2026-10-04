@@ -17839,3 +17839,11 @@
 {"fields":["documents"],"id":"89a5aa11-76a9-4651-94d5-fe8a516f7239","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:43:26.398019897Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"b8740f71-f1b3-4fa5-a27c-17dd111e84e9","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:43:26.426835598Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a7022548-38d9-4e61-bc02-389981c63f49","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T11:43:26.457508420Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"docs-mechanical","id":"90766a13-95b2-495c-addb-47cf9ad1f5b9","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:43:41.589024488Z","type":"gate_passed","updated_by":"auto:executor"}
+{"id":"52645730-b8aa-4eb4-b148-c16598bd510e","issue_id":"545b113f-1ce5-439b-b91e-4a8fefbc4d79","priority":"normal","timestamp":"2026-10-04T11:44:36.284012118Z","title":"Reduce multi-section module docs to the comment contract","type":"issue_created"}
+{"fields":["dependencies"],"id":"7db1b51b-8f1a-4121-be48-09d9ed7079c4","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T11:44:36.729721690Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"c3468af1-3cec-4f16-95a8-f0ec632ef78a","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:44:53.490949096Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"c9d8b24c-c0ca-4637-a10f-fa4fced5bea0","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:48:00.852681882Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"doc-review","id":"5720a2dc-e9ff-4208-b3c3-43ffa4f8d3ce","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:49:32.285655468Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"ed581017-b3d3-4b49-bec3-2cb9585b383f","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:49:42.932919131Z","to":"done","type":"issue_state_changed"}
+{"id":"ac9dd106-bdac-42f7-a10a-ac99f15884b2","issue_id":"030496bd-633a-4ed0-81dd-77cdea296b01","timestamp":"2026-10-04T11:49:42.932919131Z","type":"issue_completed"}
