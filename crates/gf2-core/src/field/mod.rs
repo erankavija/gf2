@@ -1,7 +1,4 @@
 //! Generic finite field trait hierarchy.
-//!
-//! This module provides abstract traits for finite field arithmetic, enabling
-//! generic algorithms over any field type (binary extensions, prime fields, tower extensions).
 
 pub mod batch_ops;
 pub mod charpoly;

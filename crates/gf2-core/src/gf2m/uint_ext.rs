@@ -1,7 +1,5 @@
-//! Sealed trait for integer types used as GF(2^m) element representations.
-//!
-//! [`UintExt`] abstracts over the unsigned integer types `u8`, `u16`, `u32`,
-//! `u64` and `u128`, so GF(2^m) arithmetic is generic over the element width.
+//! [`UintExt`]: the sealed trait over `u8`, `u16`, `u32`, `u64` and `u128`
+//! that makes GF(2^m) arithmetic generic over the element width.
 
 use std::fmt::{Binary, Debug, Display};
 use std::hash::Hash;

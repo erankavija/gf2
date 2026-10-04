@@ -1,12 +1,9 @@
-//! Configuration trait for multi-word GF(2^m) extensions.
-//!
-//! [`Gf2mWideConfig`] is the multi-word analogue of
-//! [`crate::gfpn::ExtConfig`]: a zero-sized marker type parameterises
-//! [`crate::gf2m::Gf2mWide`] with the extension degree and the irreducible
-//! polynomial. `MODULUS` leaves the leading coefficient at bit `M` implicit,
-//! whereas [`crate::gf2m::Gf2mField_::new`] takes it explicit at bit `m`; the
-//! field identity of a `Gf2mWide` appends it, so both carriers name the same
-//! monic modulus.
+//! Configuration trait for multi-word GF(2^m) extensions: a zero-sized
+//! [`Gf2mWideConfig`] marker gives [`crate::gf2m::Gf2mWide`] its extension
+//! degree and irreducible polynomial. `MODULUS` leaves the leading
+//! coefficient at bit `M` implicit, whereas [`crate::gf2m::Gf2mField_::new`]
+//! takes it explicit at bit `m`; the field identity of a `Gf2mWide` appends
+//! it, so both carriers name the same monic modulus.
 
 /// Zero-sized configuration specifying an irreducible polynomial for
 /// GF(2^M), packed into `N` little-endian `u64` words.

@@ -1,13 +1,6 @@
-//! Lagrange polynomial interpolation over any [`FiniteField`].
-//!
-//! Each entry point returns the unique polynomial of degree at most `n − 1`
-//! through `n` points with distinct `x_i`, or
-//! [`InterpolationError::DuplicatePoint`]. [`interpolate`] is the `O(n²)`
-//! barycentric form and [`interpolate_fast`] the subproduct-tree form;
-//! [`interpolate_auto`] selects between them at the active
-//! `polynomial.interpolate_fast_min_points()` value. [`interpolate_fast_auto`]
-//! and [`interpolate_auto_two_adic`] are the [`TwoAdicField`] forms, whose
-//! `M'(x_i)` evaluation uses [`FieldPoly::batch_evaluate_auto`].
+//! Lagrange polynomial interpolation over any [`FiniteField`]: each entry
+//! point returns the unique polynomial of degree at most `n − 1` through `n`
+//! points with distinct `x_i`, or [`InterpolationError::DuplicatePoint`].
 
 use crate::field::batch_ops::batch_inverse;
 use crate::field::poly::build_subproduct_tree;

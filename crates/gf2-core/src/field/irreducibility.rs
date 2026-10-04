@@ -1,9 +1,6 @@
-//! Complete irreducibility validation for finite-field polynomials.
-//!
-//! The implementation uses Rabin's criterion (`@/citation/Rabin1980`) over the
-//! field named by the coefficient witness.  Its certificate records the
-//! canonical base-field identity and modulus, so a quotient-field constructor
-//! can reuse the validation without running the decision procedure again.
+//! Complete irreducibility validation for finite-field polynomials by Rabin's
+//! criterion (`@/citation/Rabin1980`), with a certificate that lets a
+//! quotient-field constructor reuse the validation.
 
 use std::sync::Arc;
 

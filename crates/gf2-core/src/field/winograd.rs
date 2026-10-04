@@ -1,12 +1,6 @@
 //! Strassen–Winograd recursive matrix multiplication over a
 //! [`FiniteField`] (`@/citation/DumasPernet2012` §1.4, algorithm 1.6):
 //! 7 recursive half-size multiplies and 15 block additions per level.
-//!
-//! [`gemm_winograd`] peels a level while every dimension is at least the
-//! active `gemm.winograd_min_dim` profile value and the theorem-4 bound of
-//! that section fits the field's delayed-reduction headroom; otherwise it
-//! calls the classical [`crate::field::matrix::gemm`]. Odd dimensions are
-//! zero-padded to the next even value and the result is sliced back.
 
 use crate::field::matrix::{gemm, FieldMatrix};
 use crate::field::{FieldVec, FiniteField};

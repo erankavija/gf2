@@ -36,9 +36,6 @@ pub mod tuning;
 
 pub mod rng;
 
-/// Deterministic SplitMix64-based seed and matrix-fill helpers shared by the
-/// benchmark suite and the example CSV emitter; the C counterpart is
-/// `benchmarks/reference/seed_helpers.h`.
 #[cfg(any(test, feature = "test-support"))]
 pub mod bench_seed;
 

@@ -1,20 +1,7 @@
-//! Expression-template proxy algebra over [`FieldMatrix<F>`].
-//!
-//! Operators on matrix references build lazy proxies ([`Product`], [`Sum`],
-//! [`Scale`], [`NegProxy`], [`TransposedProduct`],
-//! [`ScaledTransposedProduct`], [`FusedProductPlus`],
-//! [`FusedProductPlusScaled`], [`FusedLinear`]) that [`Evaluate`] writes
-//! with one kernel call per fused pattern, as in
-//! `(&a * &b + &c).into()`. Converting a subexpression to a
-//! [`FieldMatrix<F>`] evaluates it and ends the fusion. [`kernel_counts`]
-//! reports the kernel calls of the current thread.
-//!
-//! # `FieldMatrix<F>` does not implement `Evaluate<F>`
-//!
-//! Such an impl would make the `From<E: Evaluate<F>> for FieldMatrix<F>`
-//! bridge overlap the reflexive `impl<T> From<T> for T` (E0119). Proxies
-//! over `&FieldMatrix<F>` call the kernels directly, and `a.clone()` gives
-//! an owned copy of a bare matrix.
+//! Expression-template proxy algebra over [`FieldMatrix<F>`]: operators on
+//! matrix references build lazy proxies that [`Evaluate`] writes with one
+//! kernel call per fused pattern, as in `(&a * &b + &c).into()`. Converting
+//! a subexpression to a [`FieldMatrix<F>`] evaluates it and ends the fusion.
 
 use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};
@@ -123,7 +110,9 @@ pub fn reset_kernel_counts() {
 /// Consumer side of the expression-template algebra, implemented by every
 /// lazy proxy in this module and by
 /// [`Transposed<&FieldMatrix<F>>`](crate::field::matrix::Transposed), but
-/// not by `FieldMatrix<F>` or `&FieldMatrix<F>` (see the module docs).
+/// not by `&FieldMatrix<F>` or by `FieldMatrix<F>`, whose impl would make the
+/// `From<E: Evaluate<F>> for FieldMatrix<F>` bridge overlap the reflexive
+/// `impl<T> From<T> for T`.
 ///
 /// `evaluate_into` overwrites `out`. Implementors must assert
 /// `out.shape() == self.shape()`.
