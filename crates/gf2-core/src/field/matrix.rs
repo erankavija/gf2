@@ -1,32 +1,6 @@
-//! Dense row-major matrix over an arbitrary [`FiniteField`].
-//!
-//! [`FieldMatrix<F>`] is the finite-field companion of
-//! [`BitMatrix`](crate::matrix::BitMatrix). The public surface mirrors
-//! `BitMatrix` method-for-method and, where the underlying operation makes
-//! sense over a general field, carries the same name. Armadillo-style
-//! convenience constructors (`zeros`, `ones`, `identity`, `random`) are
-//! provided for [`ConstField`] instantiations.
-//!
-//! # Storage
-//!
-//! Elements are held in a [`FieldVec<F>`] laid out row-major with stride
-//! `cols`; element `(r, c)` lives at linear index `r * cols + c`.
-//!
-//! # Views
-//!
-//! [`MatView`], [`MatViewMut`], and [`ColView`] are zero-copy borrow-only
-//! windows into a parent matrix. Views may span disjoint column blocks and
-//! are thus described by `(row_offset, col_offset, rows, cols, stride)`.
-//! They implement [`MatrixLike<F>`] so generic algorithms recurse into
-//! submatrices without allocating.
-//!
-//! # Operator layer
-//!
-//! All four owned/ref combinations are provided for `Add`, `Sub`, and `Mul`,
-//! plus `Neg`, scalar `F * &M` / `&M * F`, and `Index<(usize, usize)>`.
-//! The `Mul` body is a classical O(n³) cache-blocked `gemm` backed by
-//! delayed-reduction dot-product kernels; Strassen-Winograd is layered above
-//! this base case in the field algorithms.
+//! Dense row-major matrix [`FieldMatrix<F>`] over an arbitrary
+//! [`FiniteField`], its zero-copy views [`MatView`], [`MatViewMut`] and
+//! [`ColView`], and the classical `gemm` kernels.
 
 use std::fmt;
 use std::ops::{Bound, Index, RangeBounds};
@@ -36,42 +10,18 @@ use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use crate::field::{ConstField, FieldVec, FiniteField};
 use crate::matrix_like::{MatrixLike, MatrixLikeMut};
 
-// Re-export the PLE-decomposition permutation type so callers of
-// `field::matrix` (the natural module surface for matrix algorithms)
-// can refer to it without crossing module boundaries. The canonical
-// home is [`crate::field::ple::Permutation`]; PLE-derived methods on
-// [`FieldMatrix`] are implemented in that module.
 pub use crate::field::ple::Permutation;
 
-/// Crate-internal trait for cyclic-decomposition basis reducers
-/// (issue `d1dd266c`).
-///
-/// `cyclic_decomposition`'s reduce loop sweeps every basis column
-/// for every chain step. Storing each basis column once in a packed
-/// canonical-byte / canonical-u16 representation lets the inner
-/// `axpy` chain run on canonical lanes via the AVX2 `batch_mul +
-/// batch_sub` kernels, eliminating the per-element Montgomery REDC
-/// overhead of the scalar
-/// [`crate::field::vec::FieldVec::axpy`] path.
-///
-/// Implementations live alongside the field-specific SIMD layer
-/// (`crate::gfp::simd_ops::PackedFpBasis`); other fields return
-/// `None` from `try_make_basis_reducer` and the iterative driver
-/// falls back to the scalar `reduce` chain.
+/// Basis of column vectors for the `cyclic_decomposition` reduce loop, held
+/// in a field-specific packed form. A field without one returns `None` from
+/// `try_make_basis_reducer`.
 pub trait BasisReducer<F: FiniteField>: Send {
-    /// Appends a column to the basis. The column is packed once at
-    /// append time; subsequent `reduce` calls reuse the packed form.
+    /// Appends a column to the basis.
     fn push_col(&mut self, col: &[F]);
 
-    /// Optimised variant for callers that already know which row holds
-    /// this column's pivot. Implementations may pre-compute and cache
-    /// `col[pivot_row]^{-1}`, hoisting the (Fermat-style) inverse out
-    /// of the per-reduce inner loop. The caller guarantees
-    /// `col[pivot_row]` is non-zero (the basis invariant).
-    ///
-    /// The default implementation ignores `pivot_row` and delegates to
-    /// [`push_col`](Self::push_col). Optimised impls (e.g.
-    /// `PackedFpBasis`) override this to skip the per-element REDC.
+    /// [`push_col`](Self::push_col) for a column whose pivot row is known.
+    /// The caller guarantees `col[pivot_row]` is non-zero; an implementation
+    /// may cache its inverse.
     fn push_col_with_pivot_row(&mut self, col: &[F], pivot_row: usize) {
         let _ = pivot_row;
         self.push_col(col);
@@ -84,9 +34,7 @@ pub trait BasisReducer<F: FiniteField>: Send {
     /// column, in append order).
     fn reduce(&self, v: &[F], pivot_row_of_col: &[usize]) -> (Vec<F>, Vec<F>);
 
-    /// Number of columns currently stored. Useful for invariants
-    /// shared with the parallel [`FieldVec`] basis kept by
-    /// `cyclic_decomposition`.
+    /// Number of columns stored.
     fn len(&self) -> usize;
 
     /// Returns `true` when no columns have been appended yet.
@@ -95,18 +43,9 @@ pub trait BasisReducer<F: FiniteField>: Send {
     }
 }
 
-/// Crate-internal trait for pre-packed matvec caches (issue `d1dd266c`).
-///
-/// `cyclic_decomposition` and `wiedemann_minpoly_attempt` perform
-/// `O(n)` matvec operations on the same matrix. Repacking the matrix
-/// per call would add an `O(n^3)` overhead to every minpoly /
-/// charpoly call. This trait gives them an opaque handle they can
-/// build once and reuse for every matvec.
-///
-/// Implementations live in the `Fp<P>` SIMD layer
-/// (`crate::gfp::simd_ops::PackedFpMatrix`); other fields return
-/// `None` from `try_prepack_matvec` and the iterative drivers fall
-/// back to the per-row scalar matvec chain.
+/// A matrix packed once for the repeated matvec products of
+/// `cyclic_decomposition` and `wiedemann_minpoly_attempt`. A field without
+/// one returns `None` from `try_prepack_matvec`.
 pub trait PackedMatvec<F: FiniteField>: Send {
     /// Computes `out = A · x` using the pre-packed matrix. The caller
     /// guarantees `x.len() == k` and `out.len() == m` where `m, k` were
@@ -114,30 +53,18 @@ pub trait PackedMatvec<F: FiniteField>: Send {
     fn matvec(&self, x: &[F], out: &mut [F]);
 }
 
-/// Crate-internal trait for packed chain-polynomial arithmetic (issue
-/// `5a3dbd5b`).
-///
-/// `cyclic_decomposition` maintains a `chain_polys: Vec<FieldPoly<F>>`
-/// that grows degree-by-degree. At each Krylov step `d` the update is:
+/// Packed arithmetic for the chain polynomials of `cyclic_decomposition`,
+/// whose Krylov step `d` computes
 ///
 /// ```text
 /// next_poly = x · chain_polys[d-1]
 ///           − Σ_{j=0}^{d-1} α_j · chain_polys[j]
 /// ```
 ///
-/// For `Fp<P>` with `P ≤ 251` these are `O(d)` scalar multiplies and
-/// subtracts — all in `[0, P)` canonical-byte form — which can be
-/// vectorised via the AVX2 `batch_mul` + `batch_sub` kernels,
-/// eliminating the per-element Montgomery REDC overhead of the scalar
-/// `FieldPoly::mul_scalar` / `Sub` path.
-///
-/// Implementations live alongside the field-specific SIMD layer
-/// (`crate::gfp::simd_ops::PackedFpChainPolys`); other fields return
-/// `None` from `try_make_chain_poly_arith` and `cyclic_decomposition`
-/// falls back to the scalar `FieldPoly` path.
+/// A field without an implementation returns `None` from
+/// `try_make_chain_poly_arith`.
 pub trait ChainPolyArith<F: FiniteField>: Send {
-    /// Appends the constant polynomial `1` as the first chain entry
-    /// (called once before the Krylov loop starts).
+    /// Appends the constant polynomial `1` as the first chain entry.
     fn push_one(&mut self);
 
     /// Computes `x · chain_polys[last]` and stores the result into `buf`.
@@ -146,31 +73,17 @@ pub trait ChainPolyArith<F: FiniteField>: Send {
     /// [`push_buf`](Self::push_buf) or [`finish_buf`](Self::finish_buf).
     fn shift_x_last_into(&self, buf: &mut Vec<u8>);
 
-    /// Subtracts `alpha · chain_polys[j]` from `buf` in-place.
-    ///
-    /// * `buf` — the running accumulator started by `shift_x_last_into`.
-    /// * `alpha` — the scalar multiplier. Implementations must convert
-    ///   from any internal representation (e.g. Montgomery form) to the
-    ///   form expected by the byte-lane kernels via a precomputed
-    ///   table — the contract forbids a per-call REDC on the hot path.
-    /// * `j` — index into the chain (0-based).
-    ///
-    /// Takes `&mut self` to allow implementations to reuse pre-allocated
-    /// scratch buffers without per-call allocation.
+    /// Subtracts `alpha · chain_polys[j]` from `buf`, the accumulator started
+    /// by [`shift_x_last_into`](Self::shift_x_last_into).
     fn sub_scaled_into(&mut self, buf: &mut Vec<u8>, alpha: &F, j: usize);
 
-    /// Appends the polynomial stored in `buf` as the next chain entry
-    /// (called when the Krylov step yields an independent vector).
+    /// Appends the polynomial stored in `buf` as the next chain entry.
     fn push_buf(&mut self, buf: &[u8]);
 
-    /// Converts `buf` to a monic `FieldPoly<F>` and returns it (called
-    /// when the Krylov step yields a dependent vector — the terminator
-    /// polynomial of the block). The caller is responsible for making
-    /// the result monic if needed (i.e. calling `monic()` on it).
+    /// Converts `buf` to a `FieldPoly<F>`.
     fn finish_buf(&self, buf: &[u8], zero: &F) -> crate::field::poly::FieldPoly<F>;
 
-    /// Allocates a fresh scratch buffer sized for polynomials of degree
-    /// up to `max_deg` (grows automatically if needed).
+    /// Allocates a scratch buffer for polynomials of degree up to `max_deg`.
     fn alloc_buf(&self, max_deg: usize) -> Vec<u8>;
 
     /// Returns the number of chain polynomials stored so far.
@@ -182,65 +95,27 @@ pub trait ChainPolyArith<F: FiniteField>: Send {
     }
 }
 
-// ─── Test-only allocation counter ─────────────────────────────────────────────
-//
-// Exposed only under `#[cfg(test)]`; the production path is a single
-// thread-local increment that LLVM can elide when the counter is dead.
-// The counter is bumped exactly once per `FieldMatrix::new` invocation
-// — the canonical "fresh allocation" entry point for trsm/trmm/trtri/
-// trtrm scratches and for test fixtures. The triangular-allocation
-// regression tests use this counter to certify the per-recursion-
-// level allocation budget.
-//
-// **Thread-local on purpose.** Earlier the counter was a process-wide
-// `AtomicU64`; that races against any other test running in the same
-// `cargo test` worker pool because the JIT regression tests reset and
-// read the counter from the same thread that runs the
-// trsm/trmm/trtri/trtrm call. Making the counter `thread_local!`
-// scopes the count to the test's own thread, which matches the
-// recursive single-threaded execution model of the triangular
-// primitives and gives deterministic numbers under both `cargo
-// nextest` (process-per-test) and `cargo test --release` (thread pool).
 #[cfg(test)]
 thread_local! {
     static FIELDMATRIX_NEW_COUNT: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
 }
 
-/// Test-only: returns the cumulative count of [`FieldMatrix::new`]
-/// allocations on **this thread** since the last
-/// [`reset_fieldmatrix_new_count`]. Thread-local so concurrent tests
-/// in `cargo test --release` do not contaminate each other's counts.
+/// Test-only: count of owned [`FieldMatrix`] constructions (`new`,
+/// `transpose`, view `to_owned`) on this thread since the last
+/// [`reset_fieldmatrix_new_count`].
 #[cfg(test)]
 pub(crate) fn fieldmatrix_new_count() -> u64 {
     FIELDMATRIX_NEW_COUNT.with(|c| c.get())
 }
 
-/// Test-only: zeroes the per-thread [`FieldMatrix::new`] counter.
+/// Test-only: resets [`fieldmatrix_new_count`].
 #[cfg(test)]
 pub(crate) fn reset_fieldmatrix_new_count() {
     FIELDMATRIX_NEW_COUNT.with(|c| c.set(0));
 }
 
-// ─── Transposed proxy ─────────────────────────────────────────────────────────
-
-/// Minimal lazy-transpose proxy.
-///
-/// This type is a *placeholder* for the expression-template layer designed
-/// in issue `cdcebf6a` and implemented in `d48a3cfd`. For now it simply
-/// wraps a reference and exposes `rows`/`cols` swapped; a future
-/// `Evaluate<F>` impl will plug into fused `A·B + C` fgemm calls.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let a = FieldMatrix::<Fp<7>>::identity(3);
-/// let t = a.t();
-/// assert_eq!(t.rows(), 3);
-/// assert_eq!(t.cols(), 3);
-/// ```
+/// Lazy-transpose proxy: wraps a matrix reference and reports `rows` and
+/// `cols` swapped.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Transposed<M>(pub M);
 
@@ -258,26 +133,12 @@ impl<F: FiniteField> Transposed<&FieldMatrix<F>> {
     }
 }
 
-// ─── FieldMatrix ──────────────────────────────────────────────────────────────
-
 /// Row-major dense matrix over a [`FiniteField`].
 ///
 /// # Storage
 ///
 /// Entries are stored row-major in a single [`FieldVec<F>`] of length
 /// `rows * cols`. Element `(r, c)` lives at linear index `r * cols + c`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 3);
-/// m.set(0, 1, Fp::<7>::new(4));
-/// assert_eq!(m.get(0, 1), Fp::<7>::new(4));
-/// assert_eq!(m.shape(), (2, 3));
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FieldMatrix<F: FiniteField> {
     rows: usize,
@@ -285,20 +146,8 @@ pub struct FieldMatrix<F: FiniteField> {
     data: FieldVec<F>,
 }
 
-// ─── Constructors ─────────────────────────────────────────────────────────────
-
 impl<F: FiniteField> FieldMatrix<F> {
     /// Creates an `rows × cols` matrix with every entry equal to `fill`.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Row count.
-    /// * `cols` - Column count.
-    /// * `fill` - Value used for every cell (cloned `rows * cols` times).
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) clones and one allocation.
     pub fn new(rows: usize, cols: usize, fill: F) -> Self {
         #[cfg(test)]
         FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
@@ -306,13 +155,9 @@ impl<F: FiniteField> FieldMatrix<F> {
         Self { rows, cols, data }
     }
 
-    /// Crate-private: build a [`FieldMatrix`] directly from a pre-sized
-    /// [`FieldVec`] payload.
-    ///
-    /// Used by the sparse module (story `8a90882e`) to hand back a dense
-    /// matrix whose backing storage was allocated in one shot. The caller
-    /// must guarantee `data.len() == rows * cols` (or `data.len() == 0`
-    /// when either dimension is zero); this invariant is debug-asserted.
+    /// Builds a matrix from a pre-sized payload. The caller guarantees
+    /// `data.len() == rows * cols`, or an empty `data` when either dimension
+    /// is zero; debug builds assert it.
     #[doc(hidden)]
     pub(crate) fn from_raw_parts(rows: usize, cols: usize, data: FieldVec<F>) -> Self {
         debug_assert!(
@@ -325,24 +170,13 @@ impl<F: FiniteField> FieldMatrix<F> {
         Self { rows, cols, data }
     }
 
-    /// Crate-private accessor for the raw backing slice.
-    ///
-    /// Used by the expression-template kernels in
-    /// [`crate::field::expr`] so they can feed the
-    /// existing `dot_product_slices` helper without reaching through the
-    /// `MatrixLike::get` interface element-by-element. This is strictly
-    /// row-major over `rows * cols` cells.
+    /// The backing storage, row-major over `rows * cols` cells.
     #[doc(hidden)]
     pub(crate) fn as_data_slice(&self) -> &[F] {
         self.data.as_slice()
     }
 
-    /// Crate-private mutable counterpart to [`Self::as_data_slice`].
-    ///
-    /// Used by the blocked fused-gemm kernels in
-    /// [`crate::field::expr`] to write into the
-    /// output matrix row-block directly, matching the `gemm` inner loop shape
-    /// while folding `β·C` into the same store.
+    /// Mutable counterpart of [`Self::as_data_slice`].
     #[doc(hidden)]
     pub(crate) fn as_data_mut_slice(&mut self) -> &mut [F] {
         self.data.as_mut_slice()
@@ -350,17 +184,9 @@ impl<F: FiniteField> FieldMatrix<F> {
 
     /// Constructs a matrix from a `Vec` of row vectors, one [`FieldVec<F>`] per row.
     ///
-    /// # Arguments
-    ///
-    /// * `rows` - Non-empty list of equal-length row vectors.
-    ///
     /// # Panics
     ///
     /// Panics if `rows` is empty or if the rows have unequal lengths.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows × cols).
     pub fn from_rows(rows: Vec<FieldVec<F>>) -> Self {
         assert!(
             !rows.is_empty(),
@@ -393,39 +219,12 @@ impl<F: FiniteField> FieldMatrix<F> {
 }
 
 impl<F: ConstField> FieldMatrix<F> {
-    /// Creates a `rows × cols` matrix initialised to zero.
-    ///
-    /// Named `with_capacity` for Armadillo parity (it mirrors
-    /// `arma::mat(rows, cols, fill::none)`); in safe Rust this is equivalent
-    /// to [`FieldMatrix::zeros`] because the `fill::none` no-init optimisation
-    /// cannot be expressed without `unsafe`, which `gf2-core` denies. Use
-    /// this when the caller will overwrite every element and the zero-fill
-    /// cost is acceptable.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::with_capacity(4, 4);
-    /// assert_eq!(m.rows(), 4);
-    /// assert_eq!(m.cols(), 4);
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
-    /// ```
+    /// Equivalent to [`FieldMatrix::zeros`]; named for Armadillo parity.
     pub fn with_capacity(rows: usize, cols: usize) -> Self {
         Self::zeros(rows, cols)
     }
 
     /// Returns a `rows × cols` zero matrix.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols).
     pub fn zeros(rows: usize, cols: usize) -> Self {
         Self {
             rows,
@@ -435,19 +234,11 @@ impl<F: ConstField> FieldMatrix<F> {
     }
 
     /// Returns a `rows × cols` matrix filled with the multiplicative identity.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols).
     pub fn ones(rows: usize, cols: usize) -> Self {
         Self::new(rows, cols, F::one())
     }
 
     /// Returns the `n × n` identity matrix.
-    ///
-    /// # Complexity
-    ///
-    /// O(n²) to zero-fill plus O(n) to place the diagonal.
     pub fn identity(n: usize) -> Self {
         let mut m = Self::zeros(n, n);
         for i in 0..n {
@@ -457,10 +248,8 @@ impl<F: ConstField> FieldMatrix<F> {
     }
 }
 
-/// Enables `Fp<P>` to participate in generic random generation via
-/// `rng.gen::<Fp<P>>()`. This local impl is narrow in scope (it lives next to
-/// the matrix type that needs it) and avoids having to touch the `gfp`
-/// module. `BitMatrix::random` uses a different, word-fill strategy.
+/// Lets `rng.gen::<Fp<P>>()` draw field elements, which
+/// [`FieldMatrix::random`] requires.
 #[cfg(feature = "rand")]
 impl<const P: u64> rand::distributions::Distribution<crate::gfp::Fp<P>>
     for rand::distributions::Standard
@@ -477,39 +266,19 @@ where
 {
     /// Returns a `rows × cols` matrix populated from `rng` via
     /// [`rand::distributions::Standard`] (uniform over the storage type).
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols).
     pub fn random<R: rand::Rng + ?Sized>(rows: usize, cols: usize, rng: &mut R) -> Self {
         let data: FieldVec<F> = (0..rows * cols).map(|_| rng.gen::<F>()).collect();
         Self { rows, cols, data }
     }
 
-    /// Returns a `rows × cols` matrix from a seeded `StdRng`.
-    ///
-    /// Useful for reproducible tests and benchmarks.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # #[cfg(feature = "rand")] {
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = FieldMatrix::<Fp<7>>::random_seeded(4, 4, 42);
-    /// let b = FieldMatrix::<Fp<7>>::random_seeded(4, 4, 42);
-    /// assert_eq!(a, b);
-    /// # }
-    /// ```
+    /// Returns a `rows × cols` matrix drawn from a `StdRng` seeded with
+    /// `seed`.
     pub fn random_seeded(rows: usize, cols: usize, seed: u64) -> Self {
         use rand::SeedableRng;
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         Self::random(rows, cols, &mut rng)
     }
 }
-
-// ─── Shape / element access ───────────────────────────────────────────────────
 
 impl<F: FiniteField> FieldMatrix<F> {
     /// Returns the number of rows.
@@ -691,18 +460,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if the range exceeds the parent dimensions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let v = m.submat(1..3, 1..3);
-    /// assert_eq!(v.rows(), 2);
-    /// assert_eq!(v.cols(), 2);
-    /// ```
     pub fn submat(
         &self,
         rows: impl RangeBounds<usize>,
@@ -727,18 +484,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if the range exceeds the parent dimensions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// m.submat_mut(0..2, 0..2).fill(Fp::<7>::new(2));
-    /// assert_eq!(m.get(1, 1), Fp::<7>::new(2));
-    /// assert_eq!(m.get(2, 2), Fp::<7>::new(0));
-    /// ```
     pub fn submat_mut(
         &mut self,
         rows: impl RangeBounds<usize>,
@@ -758,17 +503,23 @@ impl<F: FiniteField> FieldMatrix<F> {
     }
 
     /// Convenience: submatrix selecting a contiguous row range, all columns.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the range exceeds the row count.
     pub fn row_range(&self, rows: impl RangeBounds<usize>) -> MatView<'_, F> {
         self.submat(rows, ..)
     }
 
     /// Convenience: submatrix selecting all rows and a contiguous column range.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the range exceeds the column count.
     pub fn col_range(&self, cols: impl RangeBounds<usize>) -> MatView<'_, F> {
         self.submat(.., cols)
     }
 }
-
-// ─── Row ops (needed by Gauss-Jordan / PLE) ───────────────────────────────────
 
 impl<F: FiniteField> FieldMatrix<F> {
     /// Swaps rows `r1` and `r2`. A no-op when `r1 == r2`.
@@ -776,10 +527,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if either index is out of bounds.
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) element swaps; no allocation.
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         assert!(
             r1 < self.rows,
@@ -810,10 +557,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if `row >= self.rows()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) multiplications.
     pub fn scale_row(&mut self, row: usize, factor: F) {
         assert!(
             row < self.rows,
@@ -828,32 +571,9 @@ impl<F: FiniteField> FieldMatrix<F> {
 
     /// Fused multiply-add on rows: `row[dst] += factor * row[src]`.
     ///
-    /// This is the finite-field counterpart of
-    /// [`BitMatrix::row_xor`](crate::matrix::BitMatrix::row_xor). When
-    /// `factor == F::one()` it behaves exactly like `row_xor` over GF(2)
-    /// since `a + 1·b == a XOR b` in `GF(2)`.
-    ///
     /// # Panics
     ///
     /// Panics if either row index is out of bounds.
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) multiply-adds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// m.set(0, 0, Fp::<7>::new(2));
-    /// m.set(1, 0, Fp::<7>::new(3));
-    /// m.axpy_row(1, 0, Fp::<7>::new(4)); // row1 += 4·row0
-    /// // row1[0] = 3 + 4·2 = 11 ≡ 4 (mod 7)
-    /// assert_eq!(m.get(1, 0), Fp::<7>::new(4));
-    /// ```
     pub fn axpy_row(&mut self, dst: usize, src: usize, factor: F) {
         assert!(
             dst < self.rows,
@@ -894,26 +614,8 @@ impl<F: FiniteField> FieldMatrix<F> {
         }
     }
 
-    /// Returns the first row `>= start_row` with a non-zero entry in `col`.
-    ///
-    /// Mirrors [`BitMatrix::find_pivot_row`](crate::matrix::BitMatrix::find_pivot_row).
-    ///
-    /// # Complexity
-    ///
-    /// O(rows − start_row) comparisons in the worst case; returns early on the
-    /// first non-zero entry found.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-    /// m.set(2, 1, Fp::<7>::new(4));
-    /// assert_eq!(m.find_pivot_row(1, 0), Some(2));
-    /// assert_eq!(m.find_pivot_row(0, 0), None);
-    /// ```
+    /// Returns the first row `>= start_row` with a non-zero entry in `col`,
+    /// or `None`, also when `col` or `start_row` is out of range.
     pub fn find_pivot_row(&self, col: usize, start_row: usize) -> Option<usize> {
         if col >= self.cols || start_row >= self.rows {
             return None;
@@ -923,27 +625,8 @@ impl<F: FiniteField> FieldMatrix<F> {
     }
 }
 
-// ─── Derived operations ───────────────────────────────────────────────────────
-
 impl<F: FiniteField> FieldMatrix<F> {
     /// Returns an owned transpose.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) copies.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// m.set(0, 2, Fp::<7>::new(3));
-    /// let t = m.transpose();
-    /// assert_eq!(t.shape(), (3, 2));
-    /// assert_eq!(t.get(2, 0), Fp::<7>::new(3));
-    /// ```
     pub fn transpose(&self) -> Self {
         #[cfg(test)]
         FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
@@ -970,44 +653,16 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// Converts this dense matrix into a [`SparseFieldMatrix<F>`](crate::field::sparse_matrix::SparseFieldMatrix),
     /// keeping only the non-zero entries. The returned matrix is in CSR
     /// layout with column indices sorted ascending within each row.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) scalar comparisons; the output allocates `nnz`
-    /// `(col_idx, value)` pairs plus a `(rows + 1)` row-pointer array.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// m.set(0, 1, Fp::<7>::new(2));
-    /// m.set(1, 2, Fp::<7>::new(5));
-    /// let s = m.to_sparse();
-    /// assert_eq!(s.shape(), (2, 3));
-    /// assert_eq!(s.nnz(), 2);
-    /// ```
     pub fn to_sparse(&self) -> crate::field::sparse_matrix::SparseFieldMatrix<F> {
         crate::field::sparse_matrix::SparseFieldMatrix::from_dense(self)
     }
 
     /// Returns a lazy transpose proxy borrowing `self`.
-    ///
-    /// The proxy is a stub in this story; fused-expression semantics land in
-    /// issue `d48a3cfd`.
     pub fn t(&self) -> Transposed<&Self> {
         Transposed(self)
     }
 
-    /// Returns the diagonal as a [`FieldVec`].
-    ///
-    /// Length equals `min(rows, cols)`.
-    ///
-    /// # Complexity
-    ///
-    /// O(min(rows, cols)) element clones.
+    /// Returns the diagonal, of length `min(rows, cols)`.
     pub fn diag(&self) -> FieldVec<F> {
         let n = self.rows.min(self.cols);
         (0..n)
@@ -1020,10 +675,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// # Panics
     ///
     /// Panics if the matrix is empty.
-    ///
-    /// # Complexity
-    ///
-    /// O(min(rows, cols)) field additions.
     pub fn trace(&self) -> F {
         assert!(!self.is_empty(), "FieldMatrix::trace: matrix is empty");
         let n = self.rows.min(self.cols);
@@ -1035,10 +686,6 @@ impl<F: FiniteField> FieldMatrix<F> {
     }
 
     /// Returns `true` if `self == self.transpose()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(n²) in the worst case; returns `false` early on the first mismatch.
     pub fn is_symmetric(&self) -> bool {
         if self.rows != self.cols {
             return false;
@@ -1057,32 +704,8 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Panics if `x.len() != self.cols()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) multiply-adds.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `x.len() != self.cols()`. Also panics if
-    /// `self.rows > 0 && self.cols == 0` because the output is a length-
-    /// `self.rows` zero vector but neither `x` (empty) nor `self.data`
-    /// (empty) supplies an `F` instance to seed the zero vector under the
-    /// `F: FiniteField` bound; use `F: ConstField` or ensure the matrix has
-    /// at least one column.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, matrix::FieldMatrix};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let id = FieldMatrix::<Fp<7>>::identity(3);
-    /// let x = FieldVec::from(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-    /// let y = id.matvec(&x);
-    /// assert_eq!(y[1], Fp::<7>::new(2));
-    /// ```
+    /// Panics if `x.len() != self.cols()`, or if `self.rows() > 0`,
+    /// `self.cols() == 0` and `F::zero_hint()` is `None`.
     pub fn matvec(&self, x: &FieldVec<F>) -> FieldVec<F> {
         assert_eq!(
             x.len(),
@@ -1094,18 +717,13 @@ impl<F: FiniteField> FieldMatrix<F> {
         if self.rows == 0 {
             return FieldVec::new();
         }
-        // Obtain a zero element without requiring `F: ConstField`. When
-        // `cols > 0`, `x[0]` is available; otherwise the only candidate is
-        // a matrix entry, which requires `rows > 0 && cols > 0`. For the
-        // pathological shape `(rows > 0, cols == 0)` we fall back to the
-        // static escape hatch `F::zero_hint()` (returns `Some` for all
-        // `ConstField` impls), and only panic if that also returns `None`.
+        // A zero without `F: ConstField`: from `x[0]` when `cols > 0`, else
+        // from `F::zero_hint()`.
         let zero: F = if self.cols > 0 {
             x.as_slice()[0].zero_like()
         } else if let Some(z) = F::zero_hint() {
             z
         } else {
-            // `self.rows > 0 && self.cols == 0` on a runtime-context field.
             panic!(
                 "FieldMatrix::matvec: producing length-{} zero vector from \
                  ({}×0) matrix requires a zero witness; use F: ConstField \
@@ -1114,10 +732,6 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.rows, &zero);
-        // SIMD whole-matvec fast path for `Fp<P>` with `P ≤ 65521`
-        // (issue `d1dd266c`). Falls through to the per-row scalar
-        // chain when the field is out of range, the `simd` feature is
-        // disabled, or AVX2 is unavailable at runtime.
         if self.cols > 0
             && F::try_simd_matvec(
                 self.data.as_slice(),
@@ -1129,10 +743,8 @@ impl<F: FiniteField> FieldMatrix<F> {
         {
             return y;
         }
-        // Delegate each row to the delayed-reduction dot-product kernel so
-        // large-prime fields (where a naive running accumulator would have
-        // to reduce on every multiply) and GF(2^m) (where Wide = Self so a
-        // single XOR chain is possible) share the same code path.
+        // The delayed-reduction dot-product kernel serves large-prime fields
+        // and GF(2^m) through one code path.
         for r in 0..self.rows {
             let row = &self.data.as_slice()[r * self.cols..(r + 1) * self.cols];
             y.set(
@@ -1147,28 +759,12 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Panics if `x.len() != self.rows()`. Also panics if
-    /// `self.rows == 0 && self.cols > 0` because the output is a length-
-    /// `self.cols` zero vector but neither `x` (empty) nor `self.data`
-    /// (empty) supplies an `F` instance to seed the zero vector under the
-    /// `F: FiniteField` bound; use `F: ConstField` or ensure the matrix has
-    /// at least one row.
+    /// Panics if `x.len() != self.rows()`, or if `self.rows() == 0`,
+    /// `self.cols() > 0` and `F::zero_hint()` is `None`.
     ///
     /// # Complexity
     ///
-    /// O(rows · cols) multiply-adds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FieldVec, matrix::FieldMatrix};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let id = FieldMatrix::<Fp<7>>::identity(3);
-    /// let x = FieldVec::from(vec![Fp::<7>::new(1), Fp::<7>::new(2), Fp::<7>::new(3)]);
-    /// let y = id.matvec_transpose(&x);
-    /// assert_eq!(y[2], Fp::<7>::new(3));
-    /// ```
+    /// O(rows · cols) multiply-adds, plus one transposed copy of `self`.
     pub fn matvec_transpose(&self, x: &FieldVec<F>) -> FieldVec<F> {
         assert_eq!(
             x.len(),
@@ -1180,10 +776,7 @@ impl<F: FiniteField> FieldMatrix<F> {
         if self.cols == 0 {
             return FieldVec::new();
         }
-        // Same `zero_like` pattern as `matvec`: prefer `x[0]` when the input
-        // vector is non-empty, else fall back to `F::zero_hint()` (which
-        // returns `Some` for `ConstField` impls), and only panic when that
-        // also fails.
+        // The zero witness follows the rule of `matvec`.
         let zero: F = if self.rows > 0 {
             x.as_slice()[0].zero_like()
         } else if let Some(z) = F::zero_hint() {
@@ -1197,13 +790,8 @@ impl<F: FiniteField> FieldMatrix<F> {
             );
         };
         let mut y: FieldVec<F> = FieldVec::zeros_from(self.cols, &zero);
-        // Rank-1 update reformulated as per-output-cell dot products over the
-        // transposed matrix, so we reuse the delayed-reduction kernel. The
-        // one-shot transpose is O(rows · cols) and keeps the inner loop
-        // strictly contiguous on both operands. Identical algebraic result to
-        // the previous column-walk; faster for large-prime fields because it
-        // defers reductions by the same §1.2 kmax scheduling the classical
-        // gemm path uses.
+        // Dot products over the transposed copy keep both operands contiguous
+        // for the delayed-reduction kernel.
         let self_t = self.transpose();
         for j in 0..self.cols {
             let row = &self_t.data.as_slice()[j * self_t.cols..(j + 1) * self_t.cols];
@@ -1215,8 +803,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         y
     }
 }
-
-// ─── MatrixLike impl ──────────────────────────────────────────────────────────
 
 impl<F: FiniteField> MatrixLike<F> for FieldMatrix<F> {
     type Owned = FieldMatrix<F>;
@@ -1254,28 +840,12 @@ impl<F: FiniteField> MatrixLikeMut<F> for FieldMatrix<F> {
     }
 }
 
-// ─── MatView / MatViewMut / ColView ──────────────────────────────────────────
-
 /// Zero-copy immutable submatrix view.
 ///
 /// A `MatView` borrows a rectangular window of a parent [`FieldMatrix`].
 /// Rows are contiguous in memory; stepping between rows uses the parent's
 /// full row stride (`parent_cols`) so views over column ranges remain
 /// aligned to the parent's row-major layout.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let m = FieldMatrix::<Fp<7>>::identity(4);
-/// let v = m.submat(1..3, 1..3);
-/// assert_eq!(v.rows(), 2);
-/// assert_eq!(v.cols(), 2);
-/// // Element (0, 0) of the view is m[(1, 1)] of the parent.
-/// assert_eq!(v.get(0, 0), Fp::<7>::new(1));
-/// ```
 #[derive(Debug)]
 pub struct MatView<'a, F> {
     data: &'a [F],
@@ -1309,14 +879,7 @@ impl<'a, F: FiniteField> MatView<'a, F> {
         self.data[(self.row_offset + r) * self.parent_cols + self.col_offset + c].clone()
     }
 
-    /// Crate-internal: returns the contiguous slice backing logical row
-    /// `r` of this view. Rows of a row-major view are contiguous in the
-    /// parent buffer at offset
-    /// `(row_offset + r) * parent_cols + col_offset`, length `cols`, so
-    /// no allocation is needed. Used by the in-place gemm kernels in
-    /// [`crate::field::matrix::gemm_axpy_into_view`] to feed
-    /// [`crate::field::vec::dot_product_slices`] without materialising a
-    /// per-row scratch buffer.
+    /// The contiguous slice backing row `r` of the view.
     ///
     /// # Panics
     ///
@@ -1334,26 +897,6 @@ impl<'a, F: FiniteField> MatView<'a, F> {
     }
 
     /// Materialises this view into a freshly allocated [`FieldMatrix<F>`].
-    ///
-    /// The returned matrix owns its storage, so it can outlive the parent
-    /// buffer the view borrowed from.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) element clones plus one allocation of that size.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let v = m.submat(1..3, 1..3);
-    /// let owned = v.to_owned();
-    /// assert_eq!(owned.shape(), (2, 2));
-    /// assert_eq!(owned.get(0, 0), Fp::<7>::new(1));
-    /// ```
     pub fn to_owned(&self) -> FieldMatrix<F> {
         #[cfg(test)]
         FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
@@ -1379,23 +922,10 @@ impl<'a, F: FiniteField> MatView<'a, F> {
     }
 
     /// Returns a sub-view restricted to the rectangle `(rows, cols)`.
-    /// Mirrors [`FieldMatrix::submat`] but operates on an existing view.
     ///
     /// # Panics
     ///
     /// Panics if either range exceeds the view's dimensions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let outer = m.submat(0..4, 0..4);
-    /// let inner = outer.submat(1..3, 1..3);
-    /// assert_eq!(inner.get(0, 0), Fp::<7>::new(1));
-    /// ```
     pub fn submat(
         &self,
         rows: impl RangeBounds<usize>,
@@ -1445,20 +975,6 @@ impl<F: FiniteField> MatrixLike<F> for MatView<'_, F> {
 /// A `MatViewMut` borrows a rectangular window of a parent [`FieldMatrix`]
 /// with exclusive write access. Like [`MatView`], rows are contiguous in
 /// memory and stepping between rows uses the parent's row stride.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 3);
-/// m.submat_mut(0..2, 0..2).fill(Fp::<7>::new(2));
-/// assert_eq!(m.get(0, 0), Fp::<7>::new(2));
-/// assert_eq!(m.get(1, 1), Fp::<7>::new(2));
-/// // Cells outside the view are untouched.
-/// assert_eq!(m.get(2, 2), Fp::<7>::new(0));
-/// ```
 #[derive(Debug)]
 pub struct MatViewMut<'a, F> {
     data: &'a mut [F],
@@ -1510,10 +1026,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     }
 
     /// Fills every cell of the view with `value`.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) element clones.
     pub fn fill(&mut self, value: F) {
         for r in 0..self.rows {
             for c in 0..self.cols {
@@ -1528,10 +1040,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Panics
     ///
     /// Panics if `src.shape() != self.shape()`.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) element clones; no allocation.
     pub fn assign(&mut self, src: &FieldMatrix<F>) {
         assert_eq!(src.rows(), self.rows, "assign: row count mismatch");
         assert_eq!(src.cols(), self.cols, "assign: col count mismatch");
@@ -1548,10 +1056,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     /// # Panics
     ///
     /// Panics if either index is out of range for the view.
-    ///
-    /// # Complexity
-    ///
-    /// O(cols) element swaps; no allocation.
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         assert!(r1 < self.rows && r2 < self.rows, "swap_rows out of bounds");
         if r1 == r2 {
@@ -1566,25 +1070,6 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
 
     /// Materialises this mutable view into a freshly allocated
     /// [`FieldMatrix<F>`].
-    ///
-    /// The returned matrix owns its storage, so it can outlive the borrow.
-    ///
-    /// # Complexity
-    ///
-    /// O(rows · cols) element clones plus one allocation of that size.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::identity(3);
-    /// let v = m.submat_mut(0..2, 0..2);
-    /// let owned = v.to_owned();
-    /// assert_eq!(owned.shape(), (2, 2));
-    /// assert_eq!(owned.get(0, 0), Fp::<7>::new(1));
-    /// ```
     pub fn to_owned(&self) -> FieldMatrix<F> {
         #[cfg(test)]
         FIELDMATRIX_NEW_COUNT.with(|c| c.set(c.get() + 1));
@@ -1609,27 +1094,11 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
         }
     }
 
-    /// Returns a sub-view restricted to the rectangle `(rows, cols)`,
-    /// borrowing the same backing storage. The borrow chain is
-    /// `MatViewMut → MatViewMut`, so the returned sub-view inherits the
-    /// parent's lifetime and write access.
+    /// Returns a mutable sub-view restricted to the rectangle `(rows, cols)`.
     ///
     /// # Panics
     ///
     /// Panics if either range exceeds the view's dimensions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(4, 4);
-    /// let mut v = m.submat_mut(0..4, 0..4);
-    /// v.submat_mut(1..3, 1..3).fill(Fp::<7>::new(5));
-    /// assert_eq!(m.get(2, 2), Fp::<7>::new(5));
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(0));
-    /// ```
     pub fn submat_mut(
         &mut self,
         rows: impl RangeBounds<usize>,
@@ -1647,25 +1116,11 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
         }
     }
 
-    /// Returns an immutable sub-view restricted to `(rows, cols)`. Useful
-    /// for passing the view as a read-only argument while retaining the
-    /// outer mutable borrow.
+    /// Returns an immutable sub-view restricted to `(rows, cols)`.
     ///
     /// # Panics
     ///
     /// Panics if either range exceeds the view's dimensions.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::identity(4);
-    /// let v = m.submat_mut(0..4, 0..4);
-    /// let inner = v.submat(1..3, 1..3);
-    /// assert_eq!(inner.get(0, 0), Fp::<7>::new(1));
-    /// ```
     pub fn submat(
         &self,
         rows: impl RangeBounds<usize>,
@@ -1684,8 +1139,7 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
     }
 
     /// Reborrows this mutable view as an immutable view over the same
-    /// rectangle. Equivalent to `self.submat(.., ..)` but more concise at
-    /// call sites that need to hand the view as a read-only argument.
+    /// rectangle.
     pub fn as_view(&self) -> MatView<'_, F> {
         MatView {
             data: self.data,
@@ -1697,38 +1151,12 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
         }
     }
 
-    /// Splits the view into two disjoint mutable views at row `mid`,
-    /// consuming `self`. Returns `(top, bot)` where `top` holds rows
-    /// `0..mid` and `bot` holds rows `mid..rows`. Because rows of a
-    /// row-major view are contiguous chunks of `parent_cols` cells, the
-    /// split is implemented as a `slice::split_at_mut` at the row
-    /// boundary, so the two halves borrow disjoint regions of the
-    /// backing store and can be passed to separate routines (or to one
-    /// routine as `&dst` + `&src`) without aliasing the same `FieldVec`.
-    ///
-    /// This is the zero-allocation primitive that the `triangular`
-    /// module's recursive primitives use to avoid `to_owned()`
-    /// snapshots when the recursion needs to read one half of `B` while
-    /// writing the other half.
+    /// Splits the view at row `mid`, consuming `self`, into disjoint mutable
+    /// views `(top, bot)` over rows `0..mid` and `mid..rows`.
     ///
     /// # Panics
     ///
     /// Panics if `mid > self.rows()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(4, 2);
-    /// let v = m.submat_mut(.., ..);
-    /// let (mut top, mut bot) = v.split_rows_mut(2);
-    /// top.set(0, 0, Fp::<7>::new(3));
-    /// bot.set(0, 0, Fp::<7>::new(5));
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
-    /// assert_eq!(m.get(2, 0), Fp::<7>::new(5));
-    /// ```
     pub fn split_rows_mut(self, mid: usize) -> (MatViewMut<'a, F>, MatViewMut<'a, F>) {
         assert!(
             mid <= self.rows,
@@ -1757,26 +1185,8 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
         (top, bot)
     }
 
-    /// Reborrows this mutable view as a fresh `MatViewMut<'_, F>` with
-    /// a shorter lifetime. Equivalent to `self.submat_mut(.., ..)`.
-    ///
-    /// Useful when a routine needs to pass a `MatViewMut` to a callee
-    /// without consuming the outer borrow.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// let mut v = m.submat_mut(.., ..);
-    /// {
-    ///     let mut r = v.reborrow();
-    ///     r.set(0, 0, Fp::<7>::new(3));
-    /// }
-    /// assert_eq!(m.get(0, 0), Fp::<7>::new(3));
-    /// ```
+    /// Reborrows this mutable view with a shorter lifetime, so a callee can
+    /// take a `MatViewMut` without consuming the outer borrow.
     pub fn reborrow(&mut self) -> MatViewMut<'_, F> {
         MatViewMut {
             data: self.data,
@@ -1788,18 +1198,8 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
         }
     }
 
-    /// Crate-internal raw accessors used by the panelized PLE
-    /// dispatcher (`crate::field::ple`, issue `6823c8a0`). Returns the
-    /// underlying contiguous parent-data slice together with the
-    /// view's parent stride, row offset, and column offset. The view
-    /// itself spans `self.rows × self.cols` starting at
-    /// `(row_offset, col_offset)` within a row-major buffer of length
-    /// `parent_rows * parent_cols`.
-    ///
-    /// Intended for kernels that need direct access to a rectangular
-    /// sub-block of the parent storage; safe Rust at the call site
-    /// must still uphold the borrowing rules around the returned
-    /// mutable slice.
+    /// The parent backing slice with this view's
+    /// `(parent_cols, row_offset, col_offset, rows, cols)`.
     #[doc(hidden)]
     #[inline]
     pub(crate) fn raw_parts_mut(&mut self) -> (&mut [F], usize, usize, usize, usize, usize) {
@@ -1856,21 +1256,6 @@ impl<F: FiniteField> MatrixLikeMut<F> for MatViewMut<'_, F> {
 ///
 /// `ColView` is returned by [`FieldMatrix::col`] and borrows the parent's
 /// backing slice with a stride of `parent.cols()`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let m = FieldMatrix::<Fp<7>>::identity(3);
-/// let c = m.col(1);
-/// assert_eq!(c.len(), 3);
-/// // Column 1 of the 3×3 identity is (0, 1, 0).
-/// assert_eq!(c.get(0), Fp::<7>::new(0));
-/// assert_eq!(c.get(1), Fp::<7>::new(1));
-/// assert_eq!(c.get(2), Fp::<7>::new(0));
-/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct ColView<'a, F> {
     data: &'a [F],
@@ -1911,8 +1296,6 @@ impl<'a, F: FiniteField> ColView<'a, F> {
     }
 }
 
-// ─── Index / Display / arithmetic operators ───────────────────────────────────
-
 impl<F: FiniteField> Index<(usize, usize)> for FieldMatrix<F> {
     type Output = F;
 
@@ -1932,18 +1315,6 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
     ///
     /// Each column is right-padded to the width of the widest element in
     /// that column so that entries line up vertically.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let m = FieldMatrix::<Fp<7>>::identity(2);
-    /// let rendered = format!("{}", m);
-    /// assert!(rendered.contains('┌'));
-    /// assert!(rendered.contains('└'));
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
             return write!(f, "[ ]");
@@ -1975,14 +1346,9 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
     }
 }
 
-// NOTE: The `Add`/`Sub`/`Neg` operator overloads live in the expression-template
-// layer `crate::field::expr`; `@/issue/cdcebf6a` §4.5 gives the rationale.
-//
-// They return proxy types (`Sum`, `NegProxy`, `FusedProductPlus`,
-// …) instead of `FieldMatrix<F>`, so `&a * &b + &c` fuses to a single
-// kernel call on the evaluation boundary. Call sites that need the
-// materialised matrix write `(&a + &b).into()` (or rely on type inference
-// at the binding site).
+// The `Add`, `Sub`, `Neg` and `Mul` operator overloads live in
+// `crate::field::expr` and return proxy types, so `&a * &b + &c` fuses into
+// one kernel call at evaluation.
 
 /// Row-tile height for the blocked classical GEMM loops.
 ///
@@ -2023,19 +1389,9 @@ pub const fn selected_gemm_tiles() -> (usize, usize) {
     (GEMM_ROW_TILE, GEMM_COL_TILE)
 }
 
-/// Smallest work volume `m · k · n` at which [`gemm_axpy_into_view`] takes the
-/// whole-GEMM fast path.
-///
-/// Below this volume the per-cell SIMD dot path is competitive (the
-/// small-prime `fp_small_try_dot_vec` already packs and runs an AVX2 batch dot
-/// per cell), and the contiguous-A + scratch-output allocations dominate the
-/// inner work. Tuned empirically against the trsm recursion shape (which
-/// decomposes an n×n trsm into many tiny `gemm_axpy_into_view` calls down to
-/// the triangular base case — live bound `triangular.base_case_max_dim`,
-/// conservative default `8`): at `m, k, n ≤ 32` the per-cell SIMD dot wins; at
-/// `m · k · n ≥ 4096` (≈ a 16³ cube) the whole-GEMM kernel wins on every cell
-/// measured in `2026-05-26-40195c09-gemm-axpy-lift`. This is the conservative
-/// default for the tuning-profile field `gemm.axpy_fast_path_min_volume`.
+/// Conservative default for the tuning-profile field
+/// `gemm.axpy_fast_path_min_volume`: the smallest work volume `m · k · n` at
+/// which [`gemm_axpy_into_view`] takes the whole-GEMM fast path.
 pub(crate) const GEMM_AXPY_FAST_PATH_THRESHOLD: usize = 16 * 16 * 16;
 
 /// The selected volume arm of the crate-private `gemm_axpy_into_view`
@@ -2081,7 +1437,7 @@ fn gemm_axpy_route_resolved(
     }
 }
 
-/// One of the seven production blocked loops that consume the GEMM tiles.
+/// A production blocked loop that consumes the GEMM tiles.
 #[cfg(any(test, feature = "test-support"))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(usize)]
@@ -2218,7 +1574,6 @@ impl ObservationPolicy for QuietObservations {}
 
 /// One admissible compile-time GEMM tile pair for calibration.
 ///
-/// This closed vocabulary is available only to tests and development tools.
 /// Each value resolves to a monomorphized production body; installing a
 /// runtime tuning profile does not select one of these baked extents.
 /// Resolver methods are constant-time and do not panic. Returned functions
@@ -2366,83 +1721,24 @@ pub fn last_gemm_axpy_dispatch_route() -> Option<GemmAxpyRoute> {
     }
 }
 
-/// Classical blocked gemm over `F: FiniteField` with delayed reduction.
+/// Classical blocked product `A · B` with delayed reduction
+/// (`@/citation/DumasPernet2012` §1.2): `B` is transposed once and each
+/// output cell is a row·row dot product whose accumulation is chunked by
+/// [`FiniteField::max_unreduced_additions`].
 ///
-/// Implements the §1.2 Dumas–Pernet pattern: transpose `B` once so the inner
-/// kernel is a cache-friendly row·row dot product, then for each `(i, j)`
-/// cell compute `∑_k a[i,k] · b[k,j]` via a slice-level delayed-reduction
-/// dot product. That kernel chunks its accumulation by
-/// [`FiniteField::max_unreduced_additions`] so the `Wide` accumulator never
-/// overflows; this function asserts (in debug builds) that the inner
-/// dimension either fits under kmax or is correctly chunked downstream.
-///
-/// SIMD — where available — is inherited from the slice product-sum kernels.
-/// Single-word GF(2^m) fields with `m ∈ {8, 16, 32}` additionally use a
-/// matrix-level batch hook that exports each row/column dot product to `u64`
-/// lanes and calls the VPCLMULQDQ-aware batch multiply kernel once per output
-/// cell, reusing scratch buffers across the blocked traversal. Other fields,
-/// unsupported GF(2^m) degrees, and builds without a detected SIMD kernel keep
-/// the scalar/delayed-reduction fallback. Strassen–Winograd recursion is
-/// explicitly out of scope (that is issue `ad597ede`).
-///
-/// # Arguments
-///
-/// * `a` - Left operand of shape `m × k`. Its column count must equal
-///   `b.rows`.
-/// * `b` - Right operand of shape `k × n`. Its row count must equal
-///   `a.cols`.
-///
-/// The result has shape `m × n` with entry `(i, j) = ∑_{t=0}^{k-1}
-/// a[i, t] · b[t, j]`.
+/// Field hooks may replace the whole product or the per-cell dot product;
+/// the fallback is `dot_product_slices`.
 ///
 /// # Panics
 ///
-/// Panics if `a.cols != b.rows`. Also panics if `a.rows > 0 && b.cols > 0 &&
-/// a.cols == 0` (equivalently `b.rows == 0`) **and** both inputs carry no
-/// elements; in that degenerate configuration no `F` instance is available
-/// from either factor so the output's zero matrix cannot be materialised for
-/// a runtime-context field. Use `F: ConstField` or ensure at least one
-/// factor is non-empty to avoid this panic — this matches the contract
-/// locked by `ab791e27`.
+/// Panics if `a.cols() != b.rows()`. Also panics when the output is
+/// non-empty, both factors are storage-empty (inner dimension 0) and
+/// `F::zero_hint()` is `None`.
 ///
 /// # Complexity
 ///
-/// The classical triple-loop cost is `O(m · k · n)` field multiplications
-/// plus the same count of field additions, amortised against a single
-/// transpose of `B` costing `O(k · n)` clones for cache locality. The
-/// slice-level dot-product kernel accumulates in the field's `Wide` type
-/// and folds back to canonical form at most once per `kmax` additions,
-/// where `kmax = F::max_unreduced_additions()`. The per-MAC reduction
-/// count is therefore reduced by a factor of `kmax` relative to an
-/// eager-reduction inner loop — for Mersenne-31 that is a ~2³¹ headroom,
-/// and for the small `Gf2m` fields it coincides with unbounded
-/// accumulation (`kmax == usize::MAX`).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::{gemm, FieldMatrix};
-/// use gf2_core::gfp::Fp;
-///
-/// // A = [[1, 2], [3, 4]] over GF(7)
-/// let a = FieldMatrix::<Fp<7>>::from_rows(vec![
-///     vec![Fp::<7>::new(1), Fp::<7>::new(2)].into_iter().collect(),
-///     vec![Fp::<7>::new(3), Fp::<7>::new(4)].into_iter().collect(),
-/// ]);
-/// // B = [[5, 6], [7, 8]] over GF(7)
-/// let b = FieldMatrix::<Fp<7>>::from_rows(vec![
-///     vec![Fp::<7>::new(5), Fp::<7>::new(6)].into_iter().collect(),
-///     vec![Fp::<7>::new(7), Fp::<7>::new(8)].into_iter().collect(),
-/// ]);
-///
-/// // A·B = [[19, 22], [43, 50]]  →  mod 7  →  [[5, 1], [1, 1]]
-/// let c = gemm(&a, &b);
-/// assert_eq!(c.shape(), (2, 2));
-/// assert_eq!(c.get(0, 0), Fp::<7>::new(5));
-/// assert_eq!(c.get(0, 1), Fp::<7>::new(1));
-/// assert_eq!(c.get(1, 0), Fp::<7>::new(1));
-/// assert_eq!(c.get(1, 1), Fp::<7>::new(1));
-/// ```
+/// `O(m · k · n)` field multiplications and additions, plus one transposed
+/// copy of `B`.
 pub fn gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
     gemm_tiled::<F, GEMM_ROW_TILE, GEMM_COL_TILE, RecordObservations>(a, b)
 }
@@ -2473,12 +1769,8 @@ fn gemm_tiled<
         };
     }
 
-    // From here: a.rows > 0 && b.cols > 0, so the output has `a.rows * b.cols
-    // > 0` cells and its backing storage MUST be the same length. We need a
-    // zero element to materialise those cells. Source one from whichever
-    // factor is non-empty, or — if both are empty — use `F::zero_hint()`
-    // which returns `Some(F::zero())` on `ConstField` implementations and
-    // `None` on runtime-context fields like `Gf2mElement`.
+    // The non-empty output needs a zero element: from whichever factor is
+    // non-empty, else from `F::zero_hint()`.
     let zero: F = if !a.data.as_slice().is_empty() {
         a.data.as_slice()[0].zero_like()
     } else if !b.data.as_slice().is_empty() {
@@ -2486,11 +1778,6 @@ fn gemm_tiled<
     } else if let Some(z) = F::zero_hint() {
         z
     } else {
-        // a.cols == 0 (equivalently b.rows == 0) and both factors carry no
-        // storage. The output's semantic value is the m×n zero matrix, but
-        // we have no `F` instance to clone for runtime-context fields. The
-        // type-only escape hatch `F::zero_hint()` also returned `None`, so
-        // there is no way to fabricate a zero here.
         panic!(
             "gemm: producing an m×n zero matrix from (m×0) * (0×n) is \
              ambiguous for runtime-context fields; use F: ConstField or \
@@ -2508,13 +1795,8 @@ fn gemm_tiled<
         return out;
     }
 
-    // Dumas–Pernet §1.2 classical-bound sanity check. The slice-level dot
-    // product chunks by `kmax` so the Wide accumulator never overflows even
-    // for huge inner dims, but we document the invariant here so future
-    // readers see the theorem-4 / §1.2 contract at the call site. In debug
-    // builds we also assert that every whole-row reduction respects the
-    // bound — this is a tautology against the chunked kernel but serves as
-    // an anchored regression gate if anyone later inlines the reduction.
+    // `dot_product_slices` chunks by `kmax`, so the `Wide` accumulator does
+    // not overflow for any inner dimension.
     let kmax = F::max_unreduced_additions();
     debug_assert!(
         kmax == usize::MAX || a.cols <= kmax || kmax > 0,
@@ -2547,23 +1829,15 @@ fn gemm_tiled<
     let mut scratch_b = Vec::<u64>::new();
     let mut scratch_products = Vec::<u64>::new();
 
-    // Medium-prime fast path (`Fp<P>` with `P ∈ (251, 65536)`): pre-pack
-    // both operands into u16 raw-storage buffers once per gemm call, then
-    // run the AVX2 16-lane SIMD dot kernel per output cell. This amortises
-    // the `u64 → u16` truncation across all `m·n` output cells (`O(mk +
-    // kn)` packing vs `O(mn(k+k))` if we re-packed per cell).
-    //
-    // `try_pack_fp_medium_u16` returns `None` for every other field, so we
-    // never allocate the packed buffers unless we know the kernel will
-    // consume them.
+    // Both operands are packed to `u16` once per call.
+    // `try_pack_fp_medium_u16` returns `None` for every field without the
+    // packed kernel, which leaves the buffers unallocated.
     let inner = a.cols;
     let mut a_pack_buf: Vec<u16> = Vec::new();
     let mut b_pack_buf: Vec<u16> = Vec::new();
     let medium_pack_ok = F::try_pack_fp_medium_u16(a.data.as_slice(), &mut a_pack_buf).is_some()
         && F::try_pack_fp_medium_u16(b_t.data.as_slice(), &mut b_pack_buf).is_some();
 
-    // Blocked traversal over output tiles. The inner kernel is a single
-    // `dot_product_slices` call per output cell.
     for i_blk in (0..a.rows).step_by(ROW_TILE) {
         let i_end = (i_blk + ROW_TILE).min(a.rows);
         for j_blk in (0..b.cols).step_by(COL_TILE) {
@@ -2584,8 +1858,6 @@ fn gemm_tiled<
                     ) {
                         *out_cell = value;
                     } else if medium_pack_ok {
-                        // Slice into the pre-packed buffers using the same
-                        // row/col indexing as the unpacked operands.
                         let a_packed = &a_pack_buf[i * inner..(i + 1) * inner];
                         let b_packed = &b_pack_buf[j * inner..(j + 1) * inner];
                         if let Some(value) = F::try_fp_simd_dot_packed_u16(a_packed, b_packed) {
@@ -2629,35 +1901,13 @@ impl GemmTilePair {
     }
 }
 
-// ─── View-based gemm kernels (zero scratch beyond gemm's B-transpose) ─────────
-
-/// In-place gemm kernel `out ← A · B` writing into a [`MatViewMut`].
-///
-/// Mirrors [`gemm`]'s blocked traversal but lets the caller own `out`
-/// (so the routine itself returns nothing and allocates no
-/// `FieldMatrix` on top of `gemm`'s standard B-transpose scratch).
-///
-/// The single allocation this routine performs is the `B`-transpose
-/// scratch via `MatrixLike::transpose`, which mirrors the historical
-/// behaviour of [`gemm`]. No additional `FieldMatrix<F>` is
-/// materialised — `out` is overwritten cell by cell via the same
-/// `dot_product_slices` primitive [`gemm`] uses.
-///
-/// # Arguments
-///
-/// * `a` — left operand, shape `m × k`. Any [`MatrixLike<F>`].
-/// * `b` — right operand, shape `k × n`. Any [`MatrixLike<F>`].
-/// * `out` — destination view, shape `m × n`.
+/// Writes `A · B` into `out` by the blocked traversal of [`gemm`]. Its one
+/// allocation is the transposed copy of `B`.
 ///
 /// # Panics
 ///
 /// Panics if `a.cols() != b.rows()`, `out.rows() != a.rows()`, or
 /// `out.cols() != b.cols()`.
-///
-/// # Complexity
-///
-/// `O(m · k · n)` field multiplications, plus the one-shot transpose of
-/// `B` for cache locality (`O(k · n)` clones).
 pub(crate) fn gemm_into_view<F, A, B>(a: &A, b: &B, out: MatViewMut<'_, F>)
 where
     F: FiniteField,
@@ -2714,9 +1964,6 @@ pub(crate) fn gemm_into_view_tiled<
         return;
     }
     let zero: F = a.get(0, 0).zero_like();
-    // Transpose `B` into an owned `B::Owned` so the inner dot product
-    // walks contiguous memory. This is the only allocation this kernel
-    // performs.
     let b_t = b.transpose();
     for i_blk in (0..m).step_by(ROW_TILE) {
         let i_end = (i_blk + ROW_TILE).min(m);
@@ -2773,84 +2020,23 @@ impl GemmTilePair {
 
 /// Fused kernel `out ← α · A · B + β · out`.
 ///
-/// In-place axpy form of [`gemm_into_view`] where the destination view
-/// doubles as the `C` operand of the classical `α · A · B + β · C`
-/// shape. Each cell is computed as
+/// Each cell reads `out[i, j]` before writing it, so `out` serves as its own
+/// `C` operand: `α = −1, β = 1` is the `trsm` update and `α = 1, β = 1` the
+/// `trmm` update.
 ///
-/// ```text
-///     out[i, j] := α · (A · B)[i, j] + β · out[i, j]
-/// ```
+/// A field with `has_simd_gemm_classical()` takes its whole-GEMM kernel when
+/// [`gemm_axpy_route`] reports [`GemmAxpyRoute::WholeGemm`]; a field whose
+/// `try_pack_fp_medium_u16` accepts the operands takes packed per-cell dot
+/// products at every volume; every other case uses `dot_product_slices`.
 ///
-/// reading `out[i, j]` BEFORE writing the new value, so the kernel is
-/// safe even though `out` aliases its own `C` operand. This is the
-/// idiom the [`crate::field::triangular`] `trsm` and `trmm` routines
-/// need: `submul` is `α = −1, β = 1`, `addmul` is `α = 1, β = 1`. The
-/// caller-supplied [`MatViewMut`] lets the kernel write into a
-/// rectangular sub-window of a parent buffer without paying any
-/// `to_owned()` snapshot cost.
+/// # Panics
 ///
-/// # Shape contract
-///
-/// * `a.cols() == b.rows()`
-/// * `out.shape() == (a.rows(), b.cols())`
-///
-/// Both are asserted with clear panic messages.
-///
-/// # Aliasing
-///
-/// The kernel is correct under the trsm/trmm idiom where `out`
-/// **doubles as `C`** (the kernel reads `out.get(i, j)` once before
-/// writing `out.set(i, j, …)` for the same cell). Aliasing `out`'s
-/// underlying buffer with the operand views `a` or `b` is **undefined**
-/// — the borrow checker will normally enforce this for `MatView` /
-/// `MatViewMut` callers because `MatView` borrows the parent buffer
-/// immutably while `MatViewMut` borrows it mutably; obtaining both for
-/// the same parent slice is impossible without going through
-/// [`MatViewMut::split_rows_mut`] (which returns disjoint windows).
-///
-/// # Delayed reduction
-///
-/// The inner accumulation is delegated to
-/// [`crate::field::vec::dot_product_slices`] — the same delayed-
-/// reduction primitive [`gemm`] uses — so the `Wide` accumulator
-/// chunks every `F::max_unreduced_additions()` MACs. The single
-/// allocation this kernel performs is the standard `B`-transpose
-/// scratch (the same one [`gemm`] and [`gemm_into_view`] pay), giving
-/// the inner kernel cache-friendly contiguous row·row dot products.
-///
-/// # Small-prime / medium-prime fast paths (issue `40195c09`)
-///
-/// When `F` is `Fp<P>` with `P ≤ 251` and the `simd` feature is
-/// enabled, the kernel pre-packs `A` into a contiguous `m × k`
-/// scratch buffer, calls [`FiniteField::try_simd_gemm_classical`] to
-/// run the whole-GEMM byte-lane AVX2 kernel into a fresh `m × n`
-/// scratch, then folds `α · scratch[i, j] + β · out[i, j]` into the
-/// caller-supplied `out` view. This bypasses the per-cell
-/// `dot_product_slices` loop and inherits the full whole-GEMM win
-/// (~6–10× over the per-cell scalar fallback at `n = 256` per the
-/// `41096af5` post-wire-in measurements). The fold pass reads
-/// `out[i, j]` BEFORE writing the new value, preserving the trsm/trmm
-/// aliasing rule.
-///
-/// When `F` is `Fp<P>` with `P ∈ (251, 65536)`, the kernel pre-packs
-/// both `A` and `B^T` into u16 canonical-storage buffers (matching
-/// the [`gemm`] medium-prime path) and dispatches per-cell through
-/// [`FiniteField::try_fp_simd_dot_packed_u16`], amortising the
-/// `u64 → u16` truncation across all `m · n` output cells. Unlike
-/// the small-prime whole-GEMM path this pre-pack path has no minimum
-/// size threshold: the fallback `dot_product_slices` allocates fresh
-/// `Vec<u16>` scratch per call, so pre-packing once always wins even
-/// for the small shapes generated by the TRSM recursion. For every
-/// other field the kernel falls back to the per-cell
-/// `dot_product_slices` loop as before.
+/// Panics if `a.cols() != b.rows()` or
+/// `out.shape() != (a.rows(), b.cols())`.
 ///
 /// # Complexity
 ///
-/// `O(m · k · n)` field multiplies plus the one-time `O(k · n)`
-/// transpose of `B` for cache locality. The β·out fold adds one
-/// extra mul + one extra read + one extra add per output cell,
-/// dominated by the inner dot product for any non-degenerate inner
-/// dim.
+/// `O(m · k · n)` field multiplications, plus one transposed copy of `B`.
 pub(crate) fn gemm_axpy_into_view<F>(
     alpha: F,
     a: &MatView<'_, F>,
@@ -2902,7 +2088,6 @@ pub(crate) fn gemm_axpy_into_view_tiled<
     }
     if k == 0 {
         // Empty inner dim: A·B is the zero matrix, so out ← β · out.
-        // Read each cell, scale by β, write back.
         for i in 0..m {
             for j in 0..n {
                 let v = beta.clone() * out.get(i, j);
@@ -2913,45 +2098,19 @@ pub(crate) fn gemm_axpy_into_view_tiled<
         return;
     }
     let zero: F = a.get(0, 0).zero_like();
-    // Transpose `B` once so the inner kernel walks contiguous memory in
-    // both operands. Mirrors `gemm` / `gemm_into_view`. The transpose
-    // materialises an owned `FieldMatrix<F>`, so its backing slice is
-    // contiguous and usable by the whole-GEMM SIMD kernels below.
+    // The owned transpose gives every kernel below a contiguous `B^T`.
     let b_t = b.transpose();
 
-    // Whole-GEMM small-prime fast path (issue `40195c09`): when the
-    // field exposes the packed AVX2 byte-lane kernel (the `Fp<P>`
-    // `P ≤ 251` implementation), pre-pack `A` into a contiguous
-    // `m × k` buffer, allocate a fresh `m × n` scratch for the kernel
-    // output, run the kernel once, then fold
-    // `out[i, j] ← α · scratch[i, j] + β · out[i, j]` cell by cell.
-    // The fold reads `out` BEFORE writing, preserving the trsm/trmm
-    // aliasing contract documented above.
-    //
-    // The probe `has_simd_gemm_classical` is non-allocating, so the
-    // `a_flat` / `scratch` buffers below are paid only when the
-    // kernel will actually execute. The default trait impl returns
-    // `false`, so non-`Fp<P>` fields (Mersenne31, GF(2^m), etc.) skip
-    // this block entirely. The volume gate is the active
-    // `gemm.axpy_fast_path_min_volume` profile field reported by
-    // `gemm_axpy_route` above.
+    // `has_simd_gemm_classical` is a non-allocating probe, so `a_flat` and
+    // `scratch` are allocated only when the kernel can run.
     if F::has_simd_gemm_classical() && route == GemmAxpyRoute::WholeGemm {
-        // Pack `A` (which may be a strided sub-view of a parent
-        // buffer) into a contiguous row-major `m × k` slice. Walks
-        // `a.row_slice(i)` to avoid the per-cell `get` indexing.
+        // `A` may be a strided sub-view; the kernel takes it contiguous.
         let mut a_flat: Vec<F> = Vec::with_capacity(m * k);
         for i in 0..m {
             a_flat.extend_from_slice(a.row_slice(i));
         }
-        // Fresh `m × n` scratch — initialised to zero so the kernel
-        // sees a clean buffer (the underlying kernel writes every
-        // cell, but we use `zero` for defensive determinism on the
-        // fallback `false`-return path).
         let mut scratch: Vec<F> = vec![zero.clone(); m * n];
         if F::try_simd_gemm_classical(&a_flat, b_t.data.as_slice(), m, k, n, &mut scratch) {
-            // Fold `α · scratch[i, j] + β · out[i, j]` into `out`.
-            // The read of `out.get(i, j)` happens before the write,
-            // matching the trsm/trmm aliasing rule.
             for i in 0..m {
                 let row_start = i * n;
                 for j in 0..n {
@@ -2963,48 +2122,18 @@ pub(crate) fn gemm_axpy_into_view_tiled<
             O::gemm_axpy_route(GemmAxpyRoute::WholeGemm);
             return;
         }
-        // The kernel declined (e.g. shape early-out, AVX2 not
-        // available at runtime even though the probe said yes for the
-        // prime range). Fall through to the per-cell loop below; the
-        // `a_flat` / `scratch` allocations are dropped.
+        // The kernel declined; the per-cell loop below takes over.
     }
 
-    // Medium-prime fast path (`Fp<P>` with `P ∈ (251, 65536)`):
-    // pre-pack both operands into u16 raw-storage buffers once per
-    // call, then run the AVX2 16-lane SIMD dot kernel per output cell.
-    // This amortises the `u64 → u16` truncation across all `m · n`
-    // output cells (`O(mk + kn)` packing vs `O(mn · (2 Vec allocs + k
-    // pushes))` if we relied on per-cell `dot_product_slices`).
-    //
-    // NOTE: unlike the small-prime whole-GEMM path above, the medium-
-    // prime per-cell packed-dot path does NOT gate on the active
-    // `gemm.axpy_fast_path_min_volume` profile value (whose conservative
-    // default is `GEMM_AXPY_FAST_PATH_THRESHOLD`). The reason:
-    // `dot_product_slices`
-    // calls `try_fp_simd_dot_product`, which allocates two fresh
-    // `Vec<u16>` scratch buffers on every single call. Even for tiny
-    // shapes (e.g. the 32×32×1 update GEMMs generated by the TRSM
-    // recursion at n=64), the pack-once / dot-many-cells pattern saves
-    // O(m·n) Vec allocations compared to the per-cell scratch path.
-    // Empirical evidence: GF(65521)/n=64 solve dropped from ~2.1× to
-    // ≤ 1.5× vs fflas after removing the threshold guard (jit:9138d86c).
-    //
-    // `A` may be a strided sub-view, so we first materialise it into
-    // a contiguous `m × k` `Vec<F>` (`a_contig`) and then hand the
-    // slice to `try_pack_fp_medium_u16`, which `clear()`s its output
-    // buffer and fills it in one pass.
+    // The packed per-cell path has no volume gate: `dot_product_slices`
+    // fills fresh `u16` scratch vectors on every call, which packing once
+    // per call avoids at any size.
     let mut a_contig_for_medium: Vec<F> = Vec::new();
     let mut a_pack_buf: Vec<u16> = Vec::new();
     let mut b_pack_buf: Vec<u16> = Vec::new();
     let medium_pack_ok = {
-        // Cheap probe via the `B^T` pack: this slice is already
-        // contiguous (it's an owned `FieldMatrix::data`). If the
-        // hook returns `Some(())`, the field is eligible and we pay
-        // the `A` contiguity copy + the second pack call. Otherwise
-        // (every non-medium `Fp<P>` field, plus the medium-prime
-        // case with the `simd` feature disabled or AVX2 unavailable),
-        // the probe declines, leaving `a_pack_buf` empty and
-        // `medium_pack_ok = false`.
+        // `B^T` is already contiguous, so packing it doubles as the
+        // eligibility probe; `A` is copied and packed only when it accepts.
         if F::try_pack_fp_medium_u16(b_t.data.as_slice(), &mut b_pack_buf).is_some() {
             a_contig_for_medium.reserve(m * k);
             for i in 0..m {
@@ -3016,11 +2145,6 @@ pub(crate) fn gemm_axpy_into_view_tiled<
         }
     };
 
-    // Blocked traversal over output tiles. The inner kernel is one
-    // `dot_product_slices` per cell — the same delayed-reduction
-    // primitive `gemm` uses. The `β · out[i, j]` fold reads the cell
-    // BEFORE writing the new value at (i, j), so the routine is safe
-    // even when `out` aliases its own `C` operand.
     for i_blk in (0..m).step_by(ROW_TILE) {
         let i_end = (i_blk + ROW_TILE).min(m);
         for j_blk in (0..n).step_by(COL_TILE) {
@@ -3032,15 +2156,6 @@ pub(crate) fn gemm_axpy_into_view_tiled<
                     let b_col = b_t.row(j);
                     debug_assert_eq!(b_col.len(), k);
                     let prod = if medium_pack_ok {
-                        // Slice the pre-packed `A` and `B^T` u16
-                        // buffers using the same row/col indexing as
-                        // the unpacked operands. The `Fp<P>` medium
-                        // hook returns the canonical reduced dot
-                        // product as `Self`; fall back to
-                        // `dot_product_slices` only if the hook
-                        // declines (which should not happen here
-                        // because `medium_pack_ok` already gated the
-                        // dispatch).
                         let a_packed = &a_pack_buf[i * k..(i + 1) * k];
                         let b_packed = &b_pack_buf[j * k..(j + 1) * k];
                         match F::try_fp_simd_dot_packed_u16(a_packed, b_packed) {
@@ -3062,9 +2177,6 @@ pub(crate) fn gemm_axpy_into_view_tiled<
 
 /// Runs the production GEMM AXPY dispatcher as `out ← a · b` for
 /// test-support route observation.
-///
-/// This thin test-support entry exists so integration tests can observe the
-/// route consumed inside the crate-private `gemm_axpy_into_view` dispatcher.
 ///
 /// # Panics
 ///
@@ -3124,40 +2236,18 @@ impl GemmTilePair {
     }
 }
 
-// ─── gemm_axpy_into_view_diag — implicit unit-diagonal variant ────────────────
-
 /// Diagonal-handling flag for [`gemm_axpy_into_view_diag`].
-///
-/// Distinguishes operands whose diagonal cells are physically present in
-/// storage from operands whose diagonal is logically all-ones (the
-/// storage cell may carry garbage and must NOT be read on the diagonal).
-/// This is the convention `trtrm` uses for the unit-lower-triangular
-/// `L` operand: the diagonal cells of `L` are reused for `L21` /
-/// product-output entries during the in-place compression, so the
-/// storage's `[i, i]` cell does not hold `1` and reading it would yield
-/// the wrong value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum UnitDiag {
     /// Operand storage holds the actual diagonal values.
     Stored,
-    /// Operand storage's diagonal is logically all-ones (read as
-    /// `F::one()` synthesised from `zero_like().one_like()`),
-    /// regardless of what the underlying buffer holds. The kernel
-    /// **never** reads the `[i, i]` storage cell on a unit-diagonal
-    /// operand.
+    /// The diagonal is logically all-ones; the kernel never reads the
+    /// `[i, i]` storage cell.
     Implicit,
 }
 
-/// Read-time wrapper that synthesises `F::one()` on the diagonal of any
-/// [`MatrixLike`] operand. Used internally by
-/// [`gemm_axpy_into_view_diag`] so the existing per-cell `gemm` kernel
-/// can be reused without a special-case loop.
-///
-/// The wrapper does NOT mutate the underlying matrix; it just
-/// substitutes `F::one()` for `get(i, i)` reads. Strict-upper or
-/// strict-lower regions are forwarded verbatim — callers that need a
-/// triangular operand must arrange for those regions to be zero in the
-/// underlying storage.
+/// Read-time wrapper that returns `F::one()` for `get(i, i)` on any
+/// [`MatrixLike`] operand and forwards every other read.
 pub(crate) struct UnitDiagView<'a, F, M: ?Sized> {
     inner: &'a M,
     one: F,
@@ -3192,69 +2282,20 @@ impl<F: FiniteField, M: MatrixLike<F> + ?Sized> MatrixLike<F> for UnitDiagView<'
     }
 
     fn transpose(&self) -> Self::Owned {
-        // Materialise an owned transpose. We synthesise the unit
-        // diagonal at clone time so the resulting buffer carries
-        // the logical 1 on the diagonal cells. Callers (this module's
-        // `gemm_axpy_into_view_diag`) only ever call `transpose()` on
-        // the right-hand operand, so the materialised owned matrix
-        // sits in the same role the existing kernel uses for `b_t`.
-        //
-        // Implementation: clone the underlying transpose, then
-        // overwrite the diagonal of the owned buffer with `self.one`.
-        // We can't do that in general (the `Owned` trait surface is
-        // read-only), so instead we route through an explicit
-        // materialise-via-`get` path. The only caller is
-        // `gemm_axpy_into_view_diag` below, which does NOT use the
-        // wrapper's `transpose()` — it constructs its own per-cell
-        // accumulator. We still implement the method so the trait is
-        // satisfied; an unused-method audit is fine to leave it as a
-        // delegating default.
+        // The transpose of the underlying storage: the implicit diagonal is
+        // not synthesised here.
         self.inner.transpose()
     }
 }
 
-/// Generic axpy-form gemm that accepts **operands with implicit unit
-/// diagonals**.
-///
-/// Same contract as [`gemm_axpy_into_view`] (`out ← α · a · b + β · out`
-/// per cell, reading `out[i, j]` BEFORE writing to handle the trsm/trmm
-/// `C ≡ out` aliasing) but with explicit per-operand diagonal flags.
-/// When `diag_a == UnitDiag::Implicit`, every read of the form
-/// `a.get(i, i)` is replaced with `F::one()` (synthesised once via
-/// `b.get(0, 0).zero_like().one_like()`); same for `diag_b`. Reads off
-/// the diagonal pass through unchanged.
-///
-/// # Aliasing
-///
-/// Same per-cell read-then-write rule as [`gemm_axpy_into_view`]: `out`
-/// may alias its own `C` operand, but operand views `a` / `b` must not
-/// alias `out`'s underlying buffer. The borrow checker enforces this for
-/// `MatView` / `MatViewMut` callers.
-///
-/// # Generic operands
-///
-/// Unlike [`gemm_axpy_into_view`] (which is hard-bound to `MatView<F>`
-/// because it uses the `row_slice` fast path and the
-/// `dot_product_slices` delayed-reduction primitive), this kernel takes
-/// any [`MatrixLike<F>`] for `a` and `b`. It computes the inner dot
-/// product **eagerly per cell** because a unit-diagonal operand has no
-/// contiguous slice you can hand to `dot_product_slices` without first
-/// materialising the implicit `1`s — and materialising would defeat the
-/// point. For the `trtrm` use case the kernel is invoked exactly once
-/// per recursion level (not in the inner O(n³) hot path of `trsm` /
-/// `trmm`), so the eager-multiply cost is amortised.
+/// [`gemm_axpy_into_view`] for operands with implicit unit diagonals: under
+/// `UnitDiag::Implicit` a diagonal read of that operand yields `F::one()`
+/// and its storage cell is not read.
 ///
 /// # Complexity
 ///
-/// `O(m · k · n)` field operations. No `B`-transpose scratch is paid
-/// because the kernel walks `b` cell-wise via `MatrixLike::get`; the
-/// per-cell `get` cost is the same as the existing
-/// [`gemm_into_view`] generic path.
-///
-/// # Used by
-///
-/// [`crate::field::triangular::trtrm`] for the `A12 = U12 · L22` step
-/// where `L22` is unit-lower-triangular with implicit diagonal.
+/// `O(m · k · n)` field operations, evaluated cell-wise through
+/// `MatrixLike::get` with no transposed copy of `b`.
 pub(crate) fn gemm_axpy_into_view_diag<F, A, B>(
     diag_a: UnitDiag,
     alpha: F,
@@ -3324,10 +2365,8 @@ pub(crate) fn gemm_axpy_into_view_diag_tiled<
     }
     let zero: F = out.get(0, 0).zero_like();
     let one: F = zero.one_like();
-    // Blocked traversal over output tiles, matching `gemm_axpy_into_view`.
-    // Inside each tile we compute the inner dot product eagerly, since a
-    // unit-diagonal operand cannot expose a contiguous slice for
-    // `dot_product_slices`.
+    // A unit-diagonal operand has no contiguous slice for
+    // `dot_product_slices`, so the dot product is evaluated eagerly.
     for i_blk in (0..m).step_by(ROW_TILE) {
         let i_end = (i_blk + ROW_TILE).min(m);
         for j_blk in (0..n).step_by(COL_TILE) {
@@ -3398,10 +2437,7 @@ impl GemmTilePair {
     }
 }
 
-/// Convenience constructor for [`UnitDiagView`]. `pub(crate)` so the
-/// triangular module can wrap a `MatrixLike` operand and pass it
-/// through to other generic kernels (e.g. `gemm_into_view`) when
-/// useful. Currently used only inside this crate.
+/// Constructor for [`UnitDiagView`].
 #[allow(dead_code)]
 pub(crate) fn unit_diag_view<F: FiniteField, M: MatrixLike<F> + ?Sized>(
     inner: &M,
@@ -3409,16 +2445,6 @@ pub(crate) fn unit_diag_view<F: FiniteField, M: MatrixLike<F> + ?Sized>(
 ) -> UnitDiagView<'_, F, M> {
     UnitDiagView::new(inner, one)
 }
-
-// NOTE: The `Mul` operator overloads live in the expression-template layer
-// `crate::field::expr` (`@/issue/cdcebf6a` §4.5).
-//
-// `&a * &b` returns `Product<&M, &M>`, a lazy proxy; pipe it through
-// `.into()` to materialise, or compose it with `+` to reach a canonical
-// fusion such as `FusedProductPlus<Product<_, _>, &M>` that dispatches one
-// `gemm_with_beta` kernel call.
-
-// ─── Range resolution ─────────────────────────────────────────────────────────
 
 fn resolve_range(bounds: impl RangeBounds<usize>, upper: usize) -> (usize, usize) {
     let start = match bounds.start_bound() {
@@ -3446,8 +2472,6 @@ fn resolve_range(bounds: impl RangeBounds<usize>, upper: usize) -> (usize, usize
     (start, end)
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3460,8 +2484,7 @@ mod tests {
         Fp::<7>::new(v)
     }
 
-    // GF(2^4) with primitive polynomial x^4 + x + 1 = 0b10011; shared by the
-    // Gf2mElement-based tests that exercise the `FiniteField`-only paths.
+    // GF(2^4) with primitive polynomial x^4 + x + 1 = 0b10011.
     fn gf16() -> Gf2mField {
         Gf2mField::new(4, 0b10011)
     }
@@ -3486,9 +2509,6 @@ mod tests {
 
     #[test]
     fn test_with_capacity_honours_requested_shape() {
-        // Round-7 regression: `with_capacity(rows, cols)` must return a
-        // `rows × cols` matrix (zero-initialised in safe Rust), not a
-        // permanent `0 × 0` matrix with only reserved backing storage.
         let m = FieldMatrix::<F>::with_capacity(4, 5);
         assert_eq!(m.shape(), (4, 5));
         assert_eq!(m.rows(), 4);
@@ -3498,8 +2518,6 @@ mod tests {
                 assert_eq!(m.get(r, c), f(0));
             }
         }
-        // Writes through the normal `set()` path must succeed for every
-        // advertised cell (the earlier bug caused `set(3, 4, ..)` to panic).
         let mut m = FieldMatrix::<F>::with_capacity(4, 5);
         m.set(3, 4, f(2));
         assert_eq!(m.get(3, 4), f(2));
@@ -3701,13 +2719,6 @@ mod tests {
         assert_eq!(r1.get(0, 1), f(6));
     }
 
-    // ─── Left-scalar multiplication parity across every `ConstField` ─────
-    //
-    // The issue's API surface comment promises `F * M` and `M * F` for
-    // every `ConstField`, not only `Fp<P>`. These regression tests lock
-    // commutativity (`F * &M == &M * F`) and the owned/ref combos for
-    // each concrete `ConstField` in the crate.
-
     #[test]
     fn test_left_scalar_mul_fp_matches_right() {
         let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
@@ -3741,8 +2752,7 @@ mod tests {
         assert_eq!(right_owned, right_ref);
     }
 
-    // Ext-field test configs reused from the pattern established in
-    // `gfpn::ext_config` tests: GF(7²) and GF(7³) with simple non-residues.
+    // GF(7²) and GF(7³) with simple non-residues.
     struct MatScalarQ7Cfg;
     impl crate::gfpn::ExtConfig for MatScalarQ7Cfg {
         type BaseField = Fp<7>;
@@ -3793,11 +2803,8 @@ mod tests {
         assert_eq!(right_owned, right_ref);
     }
 
-    // Test config for `Gf2mWide`: GF(2^4) with irreducible x^4 + x + 1.
-    // Uses a single-word layout (N = 1). `MODULUS` stores only the low m
-    // bits (implicit-leading-one convention documented on
-    // `Gf2mWideConfig`), so `x^4 + x + 1` becomes `0b0011` = 3, with the
-    // leading `x^4` term implicit at position M = 4.
+    // GF(2^4) with irreducible x^4 + x + 1: `MODULUS` stores the low m bits,
+    // the leading term being implicit, hence `0b0011`.
     struct MatScalarGf2m4Cfg;
     impl crate::gf2m::Gf2mWideConfig<1> for MatScalarGf2m4Cfg {
         const M: usize = 4;
@@ -3824,31 +2831,17 @@ mod tests {
         assert_eq!(right_owned, right_ref);
     }
 
-    // Right-scalar multiplication must stay generic for runtime-context fields
-    // that are deliberately **not** `ConstField`, such as `Gf2mElement`. The
-    // design note (§8 of `@/issue/ab791e27`) promises both `&M * F` and `M * F`
-    // for any `FiniteField`; left-scalar `F * M` is not required here because
-    // `Gf2mElement` is not a `ConstField` and the orphan rule blocks a single
-    // generic impl.
     #[test]
     fn test_right_scalar_mul_gf2m_element_generic() {
         use crate::matrix_like::MatrixLike;
         let field = gf16();
-        // 3×3 non-trivial matrix over GF(2^4) so the element-wise check
-        // exercises every row/column at least once.
         let values: &[&[u64]] = &[&[1, 2, 3], &[4, 5, 6], &[7, 8, 9]];
         let m = gf16_mat(&field, values);
         let k = field.element(11); // arbitrary non-zero scalar
 
-        // `&M * F` (ref form) and `M * F` (owned form) must agree — no
-        // separate arithmetic path. These return `Scale` proxies whose
-        // `MatrixLike::get` implements the multiplication lazily.
         let right_ref = &m * k.clone();
         let right_owned = m.clone() * k.clone();
 
-        // Element-wise cross-check: each entry equals `k * m[r][c]`.
-        // `Gf2mElement` multiplication is commutative (GF(2^m) is a
-        // commutative field), so `k * m[r][c] == m[r][c] * k`.
         for (r, row) in values.iter().enumerate() {
             for (c, v) in row.iter().enumerate() {
                 let expected = field.element(*v) * k.clone();
@@ -3863,7 +2856,6 @@ mod tests {
             }
         }
 
-        // Shape is preserved.
         assert_eq!(<_ as MatrixLike<Gf2mElement>>::shape(&right_ref), (3, 3));
         assert_eq!(<_ as MatrixLike<Gf2mElement>>::shape(&right_owned), (3, 3));
     }
@@ -3900,11 +2892,8 @@ mod tests {
         m.set(1, 2, f(5));
         let v = m.submat(0..2, 0..3);
         let t: FieldMatrix<F> = <MatView<F> as MatrixLike<F>>::transpose(&v);
-        // A 2x3 view transposes to 3x2.
         assert_eq!(t.shape(), (3, 2));
-        // Element (0,1)=2 in the view maps to (1,0)=2 in the transpose.
         assert_eq!(t.get(1, 0), f(2));
-        // (1,2)=5 maps to (2,1)=5.
         assert_eq!(t.get(2, 1), f(5));
     }
 
@@ -3951,17 +2940,8 @@ mod tests {
         assert_eq!(s.nnz(), 0);
     }
 
-    // ── Property-based invariants ───────────────────────────────────────────
-    //
-    // Arithmetic invariants hold for every finite field; we spot-check with
-    // two concrete ones:
-    //   * `Fp<7>` — the workhorse prime-field testbed.
-    //   * `Gf2mElement` in GF(2^4) — exercises the runtime-context path and
-    //     ensures the `F: FiniteField` generalisation is not silently prime-
-    //     specific.
-    //
-    // Dimensions are kept ≤ 6 so each proptest case remains well under the
-    // 5s per-test nextest budget even for the `n³` `Mul` paths.
+    // Dimensions stay ≤ 6 to keep the `n³` proptest cases inside the
+    // fast-tier budget.
 
     fn random_fp7_matrix(rows: usize, cols: usize, seed: u64) -> FieldMatrix<F> {
         use rand::{Rng, SeedableRng};
@@ -4011,12 +2991,8 @@ mod tests {
         random_gf2m_matrix_with_mask(field, rows, cols, seed, 0xF)
     }
 
-    // ─── Degenerate-dimension correctness tests ───────────────────────────
-
     #[test]
     fn test_gemm_m_times_zero_times_zero_times_n_returns_zero_matrix() {
-        // (m=3, k=0) * (k=0, n=2) on a ConstField. Expected: 3×2 zero matrix
-        // with backing storage of length 6, not an inconsistent empty buffer.
         let a = FieldMatrix::<F>::zeros(3, 0);
         let b = FieldMatrix::<F>::zeros(0, 2);
         let out: FieldMatrix<F> = (&a * &b).into();
@@ -4027,17 +3003,10 @@ mod tests {
                 assert_eq!(out.get(r, c), f(0), "({}, {}) not zero", r, c);
             }
         }
-        // Storage invariant: data.len() == rows * cols. Accessing every
-        // (r, c) above already exercises this through `FieldMatrix::get`,
-        // which indexes `data[r * cols + c]`.
     }
 
     #[test]
     fn test_gemm_empty_outer_dim_returns_empty_storage() {
-        // (0, k) * (k, n) and (m, k) * (k, 0) on the non-ConstField path.
-        // The zero-outer-dim short circuit in `gemm` must NOT panic for
-        // Gf2mElement even though we cannot synthesise a standalone zero;
-        // the output carries an empty `FieldVec` because `rows * cols == 0`.
         let field = gf16();
         let a_empty_rows = FieldMatrix::<Gf2mElement>::new(0, 3, field.element(0));
         let b = gf16_mat(&field, &[&[1, 2], &[3, 4], &[5, 6]]);
@@ -4054,11 +3023,6 @@ mod tests {
 
     #[test]
     fn test_gemm_panics_for_zero_inner_without_const_zero() {
-        // (3, 0) * (0, 2) on Gf2mElement. Both factors are empty, so gemm
-        // has no `F` witness to materialise the 3×2 zero output and must
-        // panic with the documented message. With the expression-template
-        // layer the panic fires at evaluation time (on `gemm(&a, &b)`), not
-        // at proxy construction.
         let field = gf16();
         let a = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
         let b = FieldMatrix::<Gf2mElement>::new(0, 2, field.element(0));
@@ -4083,7 +3047,6 @@ mod tests {
 
     #[test]
     fn test_matvec_zero_cols_returns_zero_vector() {
-        // (3, 0) * length-0 vec on Fp<7> returns length-3 zero vector.
         let a = FieldMatrix::<F>::zeros(3, 0);
         let x = FieldVec::<F>::new();
         let y = a.matvec(&x);
@@ -4095,7 +3058,6 @@ mod tests {
 
     #[test]
     fn test_matvec_transpose_zero_rows_returns_zero_vector() {
-        // (0, 3)ᵀ * length-0 vec on Fp<7> returns length-3 zero vector.
         let a = FieldMatrix::<F>::zeros(0, 3);
         let x = FieldVec::<F>::new();
         let y = a.matvec_transpose(&x);
@@ -4107,7 +3069,6 @@ mod tests {
 
     #[test]
     fn test_matvec_panics_for_non_const_zero_cols() {
-        // (3, 0) on Gf2mElement. matvec has no zero witness and must panic.
         let field = gf16();
         let a = FieldMatrix::<Gf2mElement>::new(3, 0, field.element(0));
         let x = FieldVec::<Gf2mElement>::new();
@@ -4132,9 +3093,6 @@ mod tests {
 
     #[test]
     fn test_matvec_transpose_panics_for_non_const_zero_rows() {
-        // (0, 3) on Gf2mElement. matvec_transpose has no zero witness and must
-        // panic because it cannot seed the length-3 output without a row to
-        // borrow an element from, and Gf2mElement is not ConstField.
         let field = gf16();
         let a = FieldMatrix::<Gf2mElement>::new(0, 3, field.element(0));
         let x = FieldVec::<Gf2mElement>::new(); // length 0 == self.rows
@@ -4261,7 +3219,6 @@ mod tests {
             let field = gf16();
             let a = random_gf16_matrix(&field, rows, cols, seed_a);
             let b = random_gf16_matrix(&field, rows, cols, seed_b);
-            // Runtime-context field: compare element-wise via MatrixLike.
             let ab = &a + &b;
             let ba = &b + &a;
             for r in 0..rows {
@@ -4286,7 +3243,6 @@ mod tests {
             let a = random_gf16_matrix(&field, rows, cols, seed_a);
             let b = random_gf16_matrix(&field, rows, cols, seed_b);
             let c = random_gf16_matrix(&field, rows, cols, seed_c);
-            // (A+B)+C and A+(B+C) — element-wise, no ConstField available.
             let ab = &a + &b;
             let bc = &b + &c;
             for r in 0..rows {
@@ -4311,10 +3267,7 @@ mod tests {
             let a = random_gf16_matrix(&field, n, n, seed_a);
             let b = random_gf16_matrix(&field, n, n, seed_b);
             let c = random_gf16_matrix(&field, n, n, seed_c);
-            // Distributivity over a runtime-context field: use `gemm`
-            // directly (no `.into()` bridge for non-ConstField).
             let bc_proxy = &b + &c;
-            // Materialise `b+c` via a helper.
             let bc = gf16_mat_from_proxy(n, n, &bc_proxy);
             let a_bc = crate::field::matrix::gemm(&a, &bc);
             let ab = crate::field::matrix::gemm(&a, &b);
@@ -4342,9 +3295,8 @@ mod tests {
         }
     }
 
-    // Helper: materialise a `MatrixLike` proxy over runtime-context
-    // `Gf2mElement` into an owned `FieldMatrix`. The public `From<Expr>`
-    // bridge is `ConstField`-only; this helper fills the runtime-context gap.
+    // The `From<Expr>` bridge is `ConstField`-only; this materialises a
+    // proxy over `Gf2mElement`.
     fn gf16_mat_from_proxy<M: MatrixLike<Gf2mElement>>(
         rows: usize,
         cols: usize,
@@ -4359,28 +3311,10 @@ mod tests {
         FieldMatrix::from_raw_parts(rows, cols, data)
     }
 
-    // ─── 91c06222: blocked gemm regression suite ──────────────────────────
-    //
-    // These tests lock the Dumas–Pernet §1.2 contract:
-    //   1. `gemm` agrees with the naive triple loop on every field this
-    //      crate models. (`Fp<7>`, `Fp<65521>`, Mersenne-31 `Fp<2^31-1>`,
-    //      Gf2mElement GF(2^8), Gf2mWide<1, _> GF(2^8) via a config.)
-    //   2. Operators eagerly allocate their result in all four
-    //      owned/ref combinations.
-    //   3. Block-boundary arithmetic is correct when dims straddle
-    //      `GEMM_ROW_TILE` / `GEMM_COL_TILE`.
-    //   4. Delayed-reduction chunking is correct when the inner dimension
-    //      exceeds `F::max_unreduced_additions()` (forces at least one
-    //      mid-dot-product reduce).
-    //
-    // Everything stays inside the 5-second nextest budget.
-
     use crate::field::FiniteField;
 
-    // Test config for an 8-bit binary field via `Gf2mWide`. GF(2^8) with the
-    // AES irreducible `x^8 + x^4 + x^3 + x + 1` (implicit leading bit ⇒ low
-    // byte stores `0x1B`). Declared outside the macro'd ConstField family
-    // so we can exercise the ConstField path for matrix mul.
+    // GF(2^8) with the AES reduction polynomial x^8 + x^4 + x^3 + x + 1
+    // (`@/citation/Nist2001`); `MODULUS` stores the low byte `0x1B`.
     struct MatGf2m8AesCfg;
     impl crate::gf2m::Gf2mWideConfig<1> for MatGf2m8AesCfg {
         const M: usize = 8;
@@ -4389,10 +3323,8 @@ mod tests {
     }
     type Gf2m8 = crate::gf2m::Gf2mWide<1, MatGf2m8AesCfg>;
 
-    /// Naive triple-loop gemm used as a reference for cross-checks. Every
-    /// multiply is reduced immediately so this path deliberately avoids the
-    /// `Wide` accumulator — it is the baseline the delayed-reduction path
-    /// must match.
+    /// Naive triple-loop gemm reference: every multiply is reduced
+    /// immediately, bypassing the `Wide` accumulator.
     fn naive_gemm<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>) -> FieldMatrix<F> {
         assert_eq!(a.cols, b.rows);
         let m = a.rows;
@@ -4495,7 +3427,6 @@ mod tests {
 
     #[test]
     fn test_gemm_matches_naive_fp65521() {
-        // 16-bit prime. Exercises u128 wide accumulator with room to spare.
         for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
             let a = random_fp_matrix::<65521>(m, k, 0xCAFEu64 ^ (m * k) as u64);
             let b = random_fp_matrix::<65521>(k, n, 0xBEEFu64 ^ (k * n) as u64);
@@ -4506,8 +3437,6 @@ mod tests {
 
     #[test]
     fn test_gemm_matches_naive_fp_mersenne31() {
-        // 2^31 - 1. Close to the upper edge of u32 where kmax is a few
-        // million, so inner dims stay well inside one chunk.
         const M31: u64 = 2_147_483_647;
         for (m, k, n) in [(1, 1, 1), (4, 6, 3), (5, 17, 5)] {
             let a = random_fp_matrix::<M31>(m, k, 0xD00Du64 ^ (m * k) as u64);
@@ -4519,7 +3448,6 @@ mod tests {
 
     #[test]
     fn test_gemm_matches_naive_gf2_8_const() {
-        // GF(2^8) via `Gf2mWide`. XOR accumulator, kmax = usize::MAX.
         for (m, k, n) in [(1, 1, 1), (3, 5, 2), (7, 11, 5)] {
             let a = random_gf2m8_matrix(m, k, 0xF00Du64 ^ (m * k) as u64);
             let b = random_gf2m8_matrix(k, n, 0x1234u64 ^ (k * n) as u64);
@@ -4530,8 +3458,6 @@ mod tests {
 
     #[test]
     fn test_gemm_matches_naive_gf2_16_const() {
-        // GF(2^16) via a dedicated Gf2mWide config. Exercises wider storage
-        // but the same XOR-only delayed-reduction branch.
         struct MatGf2m16Cfg;
         impl crate::gf2m::Gf2mWideConfig<1> for MatGf2m16Cfg {
             const M: usize = 16;
@@ -4592,10 +3518,6 @@ mod tests {
         where
             F: crate::field::ConstField + FromGf2mU64,
         {
-            // Covers skinny-inner development cells plus output tile
-            // boundaries around 32 rows / 64 columns. The exact
-            // 64c88ae4 skinny-output shapes are covered separately below
-            // with a structured diagonal-left reference.
             for (m, k, n) in [
                 (GEMM_ROW_TILE - 1, 8, GEMM_COL_TILE - 1),
                 (GEMM_ROW_TILE, 8, GEMM_COL_TILE),
@@ -4680,9 +3602,6 @@ mod tests {
 
     #[test]
     fn test_gemm_matches_naive_gf2m_element_runtime() {
-        // Gf2mElement is the runtime-context field. Cross-check over
-        // GF(2^4) with polynomial x^4 + x + 1. Runtime-context fields have
-        // no `ConstField` bridge, so call `gemm` directly.
         let field = gf16();
         for (m, k, n) in [(1, 1, 1), (2, 3, 4), (5, 5, 5)] {
             let a = random_gf16_matrix(&field, m, k, 0x42u64 ^ (m * k) as u64);
@@ -4694,9 +3613,7 @@ mod tests {
 
     #[test]
     fn test_gemm_block_boundary_crossing_fp7() {
-        // Dims straddle the GEMM_ROW_TILE (32) and GEMM_COL_TILE (64)
-        // boundaries. A correctness bug in the tile-clamping (`i_end` /
-        // `j_end`) would surface here.
+        // Dims straddle the `GEMM_ROW_TILE` and `GEMM_COL_TILE` boundaries.
         let cases = [
             (GEMM_ROW_TILE - 1, 8, GEMM_COL_TILE - 1),
             (GEMM_ROW_TILE, 8, GEMM_COL_TILE),
@@ -4714,10 +3631,6 @@ mod tests {
 
     #[test]
     fn test_gemm_rectangular_extremes_fp7() {
-        // (2 × 1001) * (1001 × 2) stresses the inner dot-product path with
-        // a very deep k, exercising the multi-chunk reduction branch for
-        // small primes (kmax is effectively unbounded here but the branch
-        // still produces the right answer for long runs).
         let m = 2;
         let k = 1001;
         let n = 2;
@@ -4729,14 +3642,9 @@ mod tests {
 
     #[test]
     fn test_gemm_kmax_boundary_reduction_chunking() {
-        // Build a matrix whose inner dim crosses kmax for a prime where
-        // kmax is small enough to actually hit the multi-chunk code path.
-        // For `Fp<9_223_372_036_854_775_783>` (near 2^63), kmax is a small
-        // handful; the dot-product kernel *must* reduce at the boundary.
-        //
-        // We construct inputs `a[0,k] = 1`, `b[k,0] = 1` for all k, and
-        // require `out[0,0] == k`. This is the cleanest numerical witness
-        // that bounded accumulation didn't drop any terms.
+        // For this prime near 2^63, `kmax` is small enough for the inner
+        // dimension to cross it. With all-ones operands, `out[0,0]` equals
+        // the inner dimension only if no term is dropped.
         const P: u64 = 9_223_372_036_854_775_783;
         type Fpx = Fp<P>;
         let kmax = <Fpx as FiniteField>::max_unreduced_additions();
@@ -4745,9 +3653,8 @@ mod tests {
             kmax < 100,
             "sanity: this field should have a small kmax for the chunking path"
         );
-        // Choose inner dim just above 2*kmax so we hit at least three
-        // chunks; the last chunk is deliberately short (size 1) to cover
-        // the `remaining.min(kmax)` clamp.
+        // Just above 2·kmax: three chunks, the last of size 1, covering the
+        // `remaining.min(kmax)` clamp.
         let k_inner = 2 * kmax + 1;
         let mut a = FieldMatrix::<Fpx>::zeros(1, k_inner);
         let mut b = FieldMatrix::<Fpx>::zeros(k_inner, 1);
@@ -4759,8 +3666,7 @@ mod tests {
         let expected = Fpx::new(k_inner as u64 % P);
         assert_eq!(out.get(0, 0), expected);
 
-        // Same invariant at *exactly* kmax products — exercises the single-
-        // chunk path where `remaining == kmax` on the first iteration.
+        // Exactly kmax products: the single-chunk path.
         let k_inner = kmax;
         let mut a = FieldMatrix::<Fpx>::zeros(1, k_inner);
         let mut b = FieldMatrix::<Fpx>::zeros(k_inner, 1);
@@ -4774,8 +3680,6 @@ mod tests {
 
     #[test]
     fn test_gemm_all_four_owned_ref_combos_agree() {
-        // Fp<7>, 3x3 square. The four combinations must yield the same
-        // matrix; this catches any accidental divergence in the Mul impls.
         let a = random_fp_matrix::<7>(3, 3, 0xABCD);
         let b = random_fp_matrix::<7>(3, 3, 0xDCBA);
         let r1: FieldMatrix<Fp<7>> = (&a * &b).into();
@@ -4819,7 +3723,6 @@ mod tests {
         let r_owned: FieldMatrix<Fp<7>> = (-a.clone()).into();
         let r_ref: FieldMatrix<Fp<7>> = (-&a).into();
         assert_eq!(r_owned, r_ref);
-        // And it is self-inverse: -(-a) == a.
         let twice_neg: FieldMatrix<Fp<7>> = {
             let n1: FieldMatrix<Fp<7>> = (-&a).into();
             (-&n1).into()
@@ -4840,7 +3743,6 @@ mod tests {
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(16))]
 
-        /// Blocked gemm must equal naive gemm over Fp<65521>.
         #[test]
         fn prop_gemm_matches_naive_fp65521(
             m in 1usize..=6,
@@ -4855,7 +3757,6 @@ mod tests {
             prop_assert_eq!(got, naive_gemm(&a, &b));
         }
 
-        /// Mul is associative over Fp<7>: (A*B)*C == A*(B*C).
         #[test]
         fn prop_mul_is_associative_fp7(
             m in 1usize..=4,
@@ -4876,7 +3777,6 @@ mod tests {
             prop_assert_eq!(lhs, rhs);
         }
 
-        /// Right distributivity over Fp<7>: (A + B) * C == A*C + B*C.
         #[test]
         fn prop_mul_right_distributes_fp7(
             m in 1usize..=4,
@@ -4897,7 +3797,6 @@ mod tests {
             prop_assert_eq!(lhs, rhs);
         }
 
-        /// Mul matches naive over GF(2^8) via Gf2mWide.
         #[test]
         fn prop_gemm_matches_naive_gf2_8(
             m in 1usize..=5,
@@ -4913,13 +3812,9 @@ mod tests {
         }
     }
 
-    // ─── gemm_axpy_into_view_diag (R4) — implicit-unit-diagonal kernel ────
-
     const MERSENNE_31: u64 = 2_147_483_647;
 
-    /// Materialise `a` with an explicit unit diagonal (overwrites the
-    /// `[i, i]` cell with `F::one()`) so the result can be fed to a
-    /// stock gemm reference that has no implicit-diag concept.
+    /// `a` with its `[i, i]` cells overwritten by `F::one()`.
     fn materialise_unit_diag<F: FiniteField>(a: &FieldMatrix<F>) -> FieldMatrix<F> {
         let mut out = a.clone();
         let one = a.get(0, 0).one_like();
@@ -4963,10 +3858,8 @@ mod tests {
     }
 
     fn check_axpy_diag_fp<const P: u64>(case: AxpyDiagCase<Fp<P>>) {
-        // Build a/b with explicit unit-diag cells so the stored cells
-        // happen to coincide with `F::one()` only when stored ≡ implicit.
-        // For the implicit case we *deliberately* poison the diagonal
-        // with garbage to certify the kernel does not read those cells.
+        // Under `UnitDiag::Implicit` the diagonal is poisoned, to certify
+        // that the kernel does not read those cells.
         let AxpyDiagCase {
             m,
             k,
@@ -4981,7 +3874,6 @@ mod tests {
         let mut b = random_fp_matrix::<P>(k, n, seed.wrapping_add(11));
         let out0 = random_fp_matrix::<P>(m, n, seed.wrapping_add(23));
         if diag_a == UnitDiag::Implicit {
-            // Poison: stuff random non-1 values into the diagonal of a.
             for d in 0..m.min(k) {
                 a.set(
                     d,
@@ -4999,11 +3891,8 @@ mod tests {
                 );
             }
         }
-        // Compute the kernel result.
         let mut got = out0.clone();
         gemm_axpy_into_view_diag(diag_a, alpha, &a, diag_b, &b, beta, got.submat_mut(.., ..));
-        // Reference: materialise the unit-diag operands explicitly,
-        // then run the naive axpy.
         let a_ref = if diag_a == UnitDiag::Implicit {
             materialise_unit_diag(&a)
         } else {
@@ -5024,9 +3913,6 @@ mod tests {
 
     #[test]
     fn test_gemm_axpy_into_view_diag_stored_matches_axpy_fp7() {
-        // Sanity: with both diagonals stored, results must match the
-        // existing axpy-into-view exactly (cross-check the new kernel
-        // against the older one for the all-Stored case).
         for &(m, k, n) in &[(2usize, 2, 2), (3, 4, 5), (5, 5, 5), (7, 3, 11)] {
             check_axpy_diag_fp::<7>(AxpyDiagCase {
                 m,
@@ -5043,8 +3929,6 @@ mod tests {
 
     #[test]
     fn test_gemm_axpy_into_view_diag_implicit_b_fp7() {
-        // The trtrm A12 = U12 · L22 use case: b carries a logical unit
-        // diagonal but the storage is poisoned.
         for &(m, k, n) in &[(2usize, 2, 2), (3, 5, 4), (4, 7, 7), (1, 5, 5)] {
             check_axpy_diag_fp::<7>(AxpyDiagCase {
                 m,
@@ -5109,8 +3993,6 @@ mod tests {
 
     #[test]
     fn test_gemm_axpy_into_view_diag_implicit_b_gf2m8() {
-        // Run the kernel over GF(2^8) via Gf2mWide so the SIMD-ish path is
-        // exercised end-to-end with a unit-diag operand.
         let cases: &[(usize, usize, usize)] =
             &[(2, 2, 2), (3, 5, 4), (4, 7, 7), (5, 5, 5), (8, 8, 3)];
         for &(m, k, n) in cases {
@@ -5120,7 +4002,6 @@ mod tests {
             };
             let a = random_gf2m8_matrix(m, k, 0xF0 + (m * k * n) as u64);
             let mut b = random_gf2m8_matrix(k, n, 0xF1 + (m * k * n) as u64);
-            // Poison b's diagonal so we know the kernel ignores it.
             for d in 0..k.min(n) {
                 use rand::Rng;
                 b.set(d, d, Gf2m8::new([(rng.gen::<u64>() & 0xFF).max(2)]));
@@ -5151,8 +4032,6 @@ mod tests {
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(32))]
 
-        /// Property: with both diagonals stored, the new kernel agrees
-        /// with the naive axpy reference.
         #[test]
         fn prop_gemm_axpy_into_view_diag_stored_fp7(
             m in 1usize..=5,
@@ -5168,7 +4047,6 @@ mod tests {
             });
         }
 
-        /// Property: implicit-diag b agrees with materialised reference.
         #[test]
         fn prop_gemm_axpy_into_view_diag_implicit_b_fp7(
             m in 1usize..=5,
@@ -5186,7 +4064,6 @@ mod tests {
             });
         }
 
-        /// Property: implicit-diag a agrees with materialised reference.
         #[test]
         fn prop_gemm_axpy_into_view_diag_implicit_a_mersenne31(
             m in 1usize..=5,
@@ -5206,7 +4083,6 @@ mod tests {
 
     #[test]
     fn test_gemm_axpy_into_view_diag_zero_inner_dim_only_betas_out() {
-        // k = 0: A·B = 0 ⇒ out ← β · out only, regardless of diag flags.
         let m = 3;
         let n = 4;
         let a = random_fp_matrix::<7>(m, 0, 1);
@@ -5234,7 +4110,6 @@ mod tests {
 
     #[test]
     fn test_gemm_axpy_into_view_diag_empty_outer_dim() {
-        // m = 0 or n = 0: no work, no panic.
         let a = random_fp_matrix::<7>(0, 3, 1);
         let b = random_fp_matrix::<7>(3, 4, 2);
         let mut out = random_fp_matrix::<7>(0, 4, 3);
@@ -5247,15 +4122,11 @@ mod tests {
             f(1),
             out.submat_mut(.., ..),
         );
-        // Just verify it didn't panic and produced an empty result.
         assert_eq!(out.shape(), (0, 4));
     }
 
-    // ─── Candidate F (AVX2+FMA f32-cascade) GEMM correctness tests ────────
-
-    /// Computes `a · b` element-by-element through the scalar `Fp<P>`
-    /// arithmetic operators, bypassing every SIMD path. Used by the
-    /// F-path bit-exactness tests as the trusted reference.
+    /// `a · b` through the scalar `Fp<P>` operators, bypassing every SIMD
+    /// path.
     fn scalar_gemm_reference<const P: u64>(
         a: &FieldMatrix<Fp<P>>,
         b: &FieldMatrix<Fp<P>>,
@@ -5274,33 +4145,10 @@ mod tests {
         out
     }
 
-    /// Verifies that for every `n` in the F-path coverage set, the
-    /// production `gemm(a, b)` (which dispatches through
-    /// `try_simd_gemm_classical`, routing GF(251)/n>=512 to route A
-    /// and all other `P ≤ 251` cells to Candidate C per
-    /// `N_THRESH_PRIME = 251` — see 41096af5) matches the scalar
-    /// reference bit-exactly. The F-path itself is exercised directly
-    /// via the kernel-crate tests in
-    /// `gf2-kernels-simd/src/x86/fp_small_f32.rs::tests`.
-    ///
-    /// The set covers:
-    /// - `WORD_BOUNDARY_LENS` (0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257)
-    ///   — re-uses Candidate C's existing word-boundary coverage so
-    ///   the F-path doesn't regress at the exact-vector edges.
-    /// - `n ∈ {32, 134, 268, 512, 1024}` — pack-amortisation knee
-    ///   (32 per § 6.1) and `k_max` chunk boundaries (134 = GF(251)
-    ///   `k_max`; 268 = first multiple, exercises mid-panel
-    ///   reduction; 512, 1024 = larger panels per § 7.4 step 1).
     fn check_small_prime_f32<const P: u64>() {
-        // Re-use Candidate C's WORD_BOUNDARY_LENS plus the F-path
-        // boundary additions named in dispatch instructions.
         const WORD_BOUNDARY_LENS: &[usize] = &[0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257];
         const F_PATH_EXTRA_LENS: &[usize] = &[32, 134, 268, 512, 1024];
 
-        // Exercise both square-ish and rectangular panels so the
-        // (m, k, n) selector is hit at every shape the production
-        // gemm sees in practice. Square `n × n × n` is the most
-        // expensive shape per § 7.4 step 6 acceptance bands.
         let lens: Vec<usize> = WORD_BOUNDARY_LENS
             .iter()
             .chain(F_PATH_EXTRA_LENS.iter())
@@ -5308,12 +4156,8 @@ mod tests {
             .collect();
 
         for &n in &lens {
-            // Trim the largest (n, k, n) cases under release-mode nextest's
-            // per-test budget (`@/inv/test-tier-budgets`). 1024³ multiplies are
-            // within budget for the f32-FMA kernel but the scalar reference is
-            // the bound; skip the scalar reference at n > 257 and only test the
-            // SIMD path's self-consistency against itself in the larger cases
-            // via a smaller k-cross-check.
+            // Above n = 257, m and k shrink to n / 4 so the scalar reference
+            // stays inside the per-test budget.
             let k = if n > 257 { n / 4 } else { n };
             let m = if n > 257 { n / 4 } else { n };
 
@@ -5358,23 +4202,9 @@ mod tests {
         check_small_prime_f32::<251>();
     }
 
-    // ─── gemm_axpy_into_view small-prime / medium-prime fast-path tests ─────
-    //
-    // Issue `40195c09`: bit-exact equality between the lifted
-    // `gemm_axpy_into_view` (which now dispatches through
-    // `try_simd_gemm_classical` for `P ≤ 251` and through the
-    // pre-packed `try_fp_simd_dot_packed_u16` for `251 < P < 65536`)
-    // and an independent scalar oracle that walks the kernel's
-    // mathematical definition cell by cell. Boundary lengths
-    // `{0, 1, 15, 16, 17, 63, 64, 65}` cover the SIMD lane boundaries
-    // (16 lanes for u16 medium, 32 lanes for u8 small) and the
-    // `n = 0` / `k = 0` shape early-outs.
-
-    /// Naive scalar oracle for `gemm_axpy_into_view`: walks the cell
-    /// definition `out[i, j] := α · Σ a[i, t] · b[t, j] + β · out[i, j]`
-    /// using `FiniteField` operators only, so it never visits any
-    /// SIMD code path. Used as the bit-exact reference for the
-    /// lifted-kernel tests below.
+    /// Scalar oracle for `gemm_axpy_into_view`:
+    /// `out[i, j] := α · Σ a[i, t] · b[t, j] + β · out[i, j]` through
+    /// `FiniteField` operators only.
     fn scalar_axpy_reference<const P: u64>(
         alpha: Fp<P>,
         a: &FieldMatrix<Fp<P>>,
@@ -5400,12 +4230,6 @@ mod tests {
         }
     }
 
-    /// Explicit small-prime path coverage at `Fp<251>` for the three
-    /// `n ∈ {16, 64, 256}` cells mandated by issue `40195c09`. Builds
-    /// random `m × k` and `k × n` operands plus an `m × n` `C` buffer
-    /// (square `n × n × n` shape because trsm Schur-update tiles are
-    /// square-ish), runs the lifted `gemm_axpy_into_view`, and asserts
-    /// every cell matches the scalar oracle bit-exactly.
     #[test]
     fn test_gemm_axpy_into_view_fp251_small_prime_path() {
         const P: u64 = 251;
@@ -5444,19 +4268,12 @@ mod tests {
         }
     }
 
-    /// Boundary-length sweep for the small-prime path at every prime
-    /// in `{7, 31, 127, 241, 251}`. Lengths cover SIMD lane boundaries
-    /// (`{0, 1, 15, 16, 17, 63, 64, 65}`). Includes `α = 0`, `α = 1`,
-    /// `α = −1` (the `submul` case used by trsm), `β = 0`, `β = 1`
-    /// shape mixes so the read-then-write aliasing path is exercised.
     #[test]
     fn test_gemm_axpy_into_view_small_prime_boundary_lengths() {
         fn check<const P: u64>() {
             const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             for &n in LENS {
                 if n == 0 {
-                    // n = 0 ⇒ empty output, kernel returns early. Verify
-                    // shapes and that no panic occurs.
                     let a = random_fp_matrix::<P>(2, 3, 0xA000 ^ n as u64);
                     let b = random_fp_matrix::<P>(3, 0, 0xB000 ^ n as u64);
                     let mut got = FieldMatrix::<Fp<P>>::zeros(2, 0);
@@ -5511,13 +4328,6 @@ mod tests {
         check::<251>();
     }
 
-    /// Boundary-length sweep for the medium-prime path at `Fp<65521>`
-    /// (the largest prime that fits in the u16 raw-storage lane). Same
-    /// `(α, β)` mix as the small-prime sweep above. The lifted
-    /// `gemm_axpy_into_view` pre-packs both operands into u16 buffers
-    /// once and dispatches per cell through `try_fp_simd_dot_packed_u16`,
-    /// matching the `gemm` medium-prime path; this test guards
-    /// bit-exact equality against the scalar oracle.
     #[test]
     fn test_gemm_axpy_into_view_fp65521_medium_prime_boundary_lengths() {
         const P: u64 = 65521;
@@ -5570,21 +4380,11 @@ mod tests {
         }
     }
 
-    /// Verifies the lifted `gemm_axpy_into_view` is correct when `A`
-    /// is a STRIDED sub-view (the common trsm Schur-update shape:
-    /// `a21 = a.submat(h..m, 0..h)` is row-strided because
-    /// `parent_cols = m > h = cols`). The packing path materialises
-    /// `A` into a contiguous buffer before the kernel call; this test
-    /// guards that materialisation against a parent matrix whose
-    /// non-A columns hold non-zero values that must NOT leak into
-    /// the kernel.
+    /// `A` is a strided sub-view whose parent holds non-zero values outside
+    /// it; those must stay out of the product.
     #[test]
     fn test_gemm_axpy_into_view_fp251_strided_a() {
         const P: u64 = 251;
-        // Build a 128 × 128 parent and pull out a 64 × 32 strided
-        // sub-view from rows 32..96, cols 16..48. The strict-strided
-        // shape (col_offset > 0, cols < parent_cols) exercises both
-        // the row-offset and col-offset fast-path arithmetic.
         let parent_a = random_fp_matrix::<P>(128, 128, 0xAB12_CD34);
         let a_view = parent_a.submat(32..96, 16..48);
         let m = a_view.rows();
@@ -5602,7 +4402,6 @@ mod tests {
             beta,
             got.submat_mut(.., ..),
         );
-        // Build the contiguous A oracle by manual copy.
         let mut a_contig = FieldMatrix::<Fp<P>>::zeros(m, k);
         for i in 0..m {
             for j in 0..k {
@@ -5623,10 +4422,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<251>`
-        /// matrices with random `(α, β)` matches the scalar oracle
-        /// bit-exactly. 16 cases × randomised shapes covering the
-        /// boundary-length grid.
         #[test]
         fn prop_gemm_axpy_into_view_fp251_matches_oracle(
             seed in 0u64..256,
@@ -5663,9 +4458,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<7>`
-        /// matrices with random `(α, β)` matches the scalar oracle
-        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
         #[test]
         fn prop_gemm_axpy_into_view_fp7_matches_oracle(
             seed in 0u64..256,
@@ -5702,9 +4494,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<31>`
-        /// matrices with random `(α, β)` matches the scalar oracle
-        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
         #[test]
         fn prop_gemm_axpy_into_view_fp31_matches_oracle(
             seed in 0u64..256,
@@ -5741,9 +4530,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<127>`
-        /// matrices with random `(α, β)` matches the scalar oracle
-        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
         #[test]
         fn prop_gemm_axpy_into_view_fp127_matches_oracle(
             seed in 0u64..256,
@@ -5780,9 +4566,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<241>`
-        /// matrices with random `(α, β)` matches the scalar oracle
-        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
         #[test]
         fn prop_gemm_axpy_into_view_fp241_matches_oracle(
             seed in 0u64..256,
@@ -5819,9 +4602,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<65521>` matrices with
-        /// random `(α, β)` matches the scalar oracle bit-exactly. Covers
-        /// boundary-length grid {1, 15, 16, 17, 63, 64, 65}. Medium-prime path.
         #[test]
         fn prop_gemm_axpy_into_view_fp65521_matches_oracle(
             seed in 0u64..256,
@@ -5857,26 +4637,12 @@ mod tests {
         }
     }
 
-    // ─── gemm_axpy_into_view Mersenne31 SIMD dispatch tests (issue 6a7d4c8e) ──
-
-    /// Deterministic correctness test for the Mersenne31 whole-GEMM
-    /// fast path in `gemm_axpy_into_view`. Verifies bit-exact equality
-    /// against the scalar oracle at `n ∈ {16, 64, 256}` — sizes whose
-    /// volume clears the active `gemm.axpy_fast_path_min_volume` bound
-    /// (no profile installed here, so its conservative default
-    /// `GEMM_AXPY_FAST_PATH_THRESHOLD = 4096` applies; n³ ≥ 4096)
-    /// trigger the `fp_m31_try_gemm_classical` dispatch.
-    ///
-    /// Issue: `6a7d4c8e` (wire `m31_batch_dot_fn` into `gemm_axpy_into_view`).
     #[test]
     fn test_gemm_axpy_into_view_mersenne31_simd_path() {
-        // M31 = 2^31 - 1
         const P: u64 = (1u64 << 31) - 1;
-        // n=16 (16³ = 4096) sits exactly at the conservative default of
-        // gemm.axpy_fast_path_min_volume, which the inclusive `>=`
-        // dispatch admits; n=64 and n=256 are well above it. All three
-        // hit the whole-GEMM fast path when AVX2 is available (no
-        // profile installed in this binary).
+        // 16³ equals the conservative default of
+        // `gemm.axpy_fast_path_min_volume`, which the inclusive dispatch
+        // admits; no profile is installed in this binary.
         for &n in &[16usize, 64, 256] {
             let m = n;
             let k = n;
@@ -5912,13 +4678,6 @@ mod tests {
         }
     }
 
-    /// Boundary-length sweep for the Mersenne31 SIMD path. Covers the
-    /// SIMD lane boundaries `{0, 1, 7, 8, 9, 63, 64, 65}` for M31
-    /// (AVX2 M31 kernel processes 8 u32 lanes per iteration).
-    /// Includes `(α, β)` mixes: submul `(M31-1, 1)`, addmul `(1, 1)`,
-    /// copy-overwrite `(1, 0)`, scale `(3, 5)`.
-    ///
-    /// Issue: `6a7d4c8e`.
     #[test]
     fn test_gemm_axpy_into_view_mersenne31_boundary_lengths() {
         const P: u64 = (1u64 << 31) - 1;
@@ -5972,11 +4731,6 @@ mod tests {
     }
 
     proptest! {
-        /// Property: `gemm_axpy_into_view` at random `Fp<M31>` matrices
-        /// with random `(α, β)` matches the scalar oracle bit-exactly.
-        /// Covers boundary-length grid `{0, 1, 7, 8, 9, 63, 64, 65}`.
-        ///
-        /// Issue: `6a7d4c8e`.
         #[test]
         fn prop_gemm_axpy_into_view_mersenne31_matches_oracle(
             seed in 0u64..256,
@@ -6015,11 +4769,8 @@ mod tests {
         }
     }
 
-    // ─── Coverage: Transposed, row_range/col_range, axpy_row variants, etc. ──
-
     #[test]
     fn test_transposed_rows_and_cols_methods() {
-        // Covers `Transposed<&FM>::rows()` (line ~259) and `cols()` (line ~276).
         let m = FieldMatrix::<F>::zeros(3, 7);
         let t = m.t();
         assert_eq!(t.rows(), 7);
@@ -6028,7 +4779,6 @@ mod tests {
 
     #[test]
     fn test_row_range_and_col_range() {
-        // Covers `FieldMatrix::row_range` and `col_range`.
         let m = FieldMatrix::<F>::identity(5);
         let rv = m.row_range(1..3);
         assert_eq!(rv.rows(), 2);
@@ -6040,7 +4790,6 @@ mod tests {
 
     #[test]
     fn test_swap_rows_same_row_is_noop() {
-        // Covers the `if r1 == r2 { return; }` early-return in `swap_rows`.
         let mut m = FieldMatrix::<F>::identity(3);
         m.swap_rows(1, 1);
         assert_eq!(m.get(1, 1), f(1));
@@ -6048,15 +4797,13 @@ mod tests {
 
     #[test]
     fn test_axpy_row_zero_cols_is_noop() {
-        // Covers the `if self.cols == 0 { return; }` early-return in `axpy_row`.
         let mut m = FieldMatrix::<F>::zeros(3, 0);
-        m.axpy_row(0, 1, f(5)); // no-op — zero columns
+        m.axpy_row(0, 1, f(5));
         assert_eq!(m.shape(), (3, 0));
     }
 
     #[test]
     fn test_axpy_row_dst_eq_src_scales_in_place() {
-        // Covers the `if dst == src { ... return; }` path in `axpy_row`.
         // row[dst] += factor * row[dst]  ⇔  row[dst] = (1 + factor) * row[dst].
         let mut m = FieldMatrix::<F>::zeros(2, 3);
         m.set(1, 0, f(2));
@@ -6071,7 +4818,6 @@ mod tests {
 
     #[test]
     fn test_axpy_row_dst_less_than_src_path() {
-        // When dst < src, `axpy_row` takes the `(lo_slice, &*hi_slice)` branch.
         let mut m = FieldMatrix::<F>::zeros(3, 2);
         m.set(0, 0, f(1));
         m.set(0, 1, f(2));
@@ -6085,7 +4831,6 @@ mod tests {
 
     #[test]
     fn test_find_pivot_row_out_of_bounds_returns_none() {
-        // Covers the `if col >= self.cols || start_row >= self.rows { return None; }` path.
         let m = FieldMatrix::<F>::identity(3);
         assert_eq!(m.find_pivot_row(5, 0), None); // col OOB
         assert_eq!(m.find_pivot_row(0, 5), None); // start_row OOB
@@ -6093,7 +4838,6 @@ mod tests {
 
     #[test]
     fn test_is_square_non_square_returns_false() {
-        // Covers the `#[inline] pub fn is_square`.
         let rect = FieldMatrix::<F>::zeros(2, 3);
         assert!(!rect.is_square());
         let sq = FieldMatrix::<F>::zeros(3, 3);
@@ -6102,14 +4846,12 @@ mod tests {
 
     #[test]
     fn test_is_symmetric_non_square_returns_false() {
-        // Covers the `if self.rows != self.cols { return false; }` path.
         let m = FieldMatrix::<F>::zeros(2, 3);
         assert!(!m.is_symmetric());
     }
 
     #[test]
     fn test_is_symmetric_asymmetric_matrix_returns_false() {
-        // Covers the `return false` path inside the element-mismatch loop.
         let mut m = FieldMatrix::<F>::zeros(3, 3);
         m.set(0, 1, f(1)); // m[0,1] = 1 but m[1,0] = 0 → asymmetric
         assert!(!m.is_symmetric());
@@ -6118,7 +4860,6 @@ mod tests {
     #[cfg(feature = "rand")]
     #[test]
     fn test_random_seeded_is_deterministic() {
-        // Covers `FieldMatrix::random_seeded` and `FieldMatrix::random`.
         let a = FieldMatrix::<F>::random_seeded(4, 5, 0xC0FFEE);
         let b = FieldMatrix::<F>::random_seeded(4, 5, 0xC0FFEE);
         assert_eq!(a, b);

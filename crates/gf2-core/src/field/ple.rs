@@ -1,148 +1,6 @@
-//! PLE decomposition and derived row-echelon / RREF / nullspace / LU
-//! operations over an arbitrary [`FiniteField`].
-//!
-//! Issue `c3f8c1cb` (R2 rework). Implements Dumas–Pernet §2.2 algorithm
-//! 2.5: given an `m × n` matrix `A`, compute a permutation `P`, a unit
-//! lower-trapezoidal `L` (`m × r`) and a row-echelon matrix `E` (`r × n`)
-//! such that
-//!
-//! ```text
-//!     P · L · E = A
-//! ```
-//!
-//! where `r = rank(A)`. The decomposition is unique once a pivot rule is
-//! fixed (this implementation uses the first non-zero entry from the top,
-//! standard in the cited paper).
-//!
-//! # Allocation budget
-//!
-//! The PLE recursion runs in place on a single working clone of the input
-//! matrix; sub-blocks are passed as [`MatView`] / [`MatViewMut`]. Each
-//! recursive level pays for two intrinsic gemm-kernel B-transposes (one
-//! from [`trsm_lower`] on the rank-deficient branch, one from
-//! `gemm_axpy_into_view` for the Schur complement update). To bridge
-//! the row-major layout's lack of a safe `split_cols_mut`, the read-side
-//! operands `L1` (the unit-lower-triangular leading block) and `L1_bot`
-//! (its strict-lower extension) are materialised into owned buffers per
-//! level.
-//!
-//! Total `FieldMatrix<F>` allocations pinned in
-//! `tests::test_*_allocation_budget_*`:
-//!
-//! - [`ple`](FieldMatrix::ple)`(m × n)`: input clone + final L + final E
-//!   + per-level (L1 owned, L1_bot owned, gemm B-transpose, trsm
-//!     B-transpose).
-//! - [`row_echelon`](FieldMatrix::row_echelon)`(m × n)`: PLE + the inverted
-//!   `L_full` block + `Pᵀ` + the assembled `E_full`.
-//! - [`rref`](FieldMatrix::rref)`(m × n)`: row_echelon + panelized
-//!   back-substitution (Stage 3a/3b) when `max(m, n)` reaches the active
-//!   profile's `ple.blocked_back_sub_min_dim()` (conservative default
-//!   `BLOCKED_BACK_SUB_MIN_DIM` = 128), allocating 8 scratch `FieldMatrix`
-//!   instances (`e_piv_piv`, `e_piv_free`, `x_piv`, `e_nonpiv_piv`,
-//!   `e_piv_free_post`, `e_nonpiv_free`, `x_piv_post`, `x_nonpiv`); falls
-//!   through to the scalar loop below the threshold. Under the conservative
-//!   default at n=64 the scalar loop runs: total count = `EXPECTED_RREF_N64`
-//!   = 280. At n >= 128 the blocked path adds 8 scratch matrices + trsm
-//!   B-transposes.
-//! - [`lu`](FieldMatrix::lu)`(m × n)`: PLE + 0 (just repackages PLE's
-//!   outputs).
-//! - [`nullspace`](FieldMatrix::nullspace)`(m × n)`: rref + `(n − rank)`
-//!   [`FieldVec`] allocations (no extra `FieldMatrix::new`).
-//!
-//! Exact counts are pinned in `tests::test_ple_allocation_budget_*` with
-//! strict integer asserts.
-//!
-//! # Algorithm
-//!
-//! Block-recursive (Dumas–Pernet §2.2 alg. 2.5), splitting on columns, with
-//! a direct-elimination base case selected by the active profile's
-//! `ple.scalar_base_max_cols()`, whose conservative default
-//! `PLE_SCALAR_BASE_MAX_COLS_DEFAULT` is the single-column leaf, and
-//! reported by [`ple_base_route`]:
-//!
-//! ```text
-//! ple(A):  // A is m × n
-//!     if ple_base_route(n) == ScalarBase:
-//!         direct column-by-column Gaussian elimination (ple_base_direct)
-//!     else:
-//!         h = n / 2
-//!         (r1, pc_left) = ple(A[:, 0..h])         (recurse on the left;
-//!                                                   pc_left is the set of
-//!                                                   r1 absolute pivot
-//!                                                   columns found in
-//!                                                   [0..h))
-//!         L1     = unit-lower-triangular shaped from A[0..r1, pc_left]
-//!         L1_bot = A[r1..m, pc_left]
-//!         A[0..r1, h..n]   ← trsm_lower(L1, A[0..r1, h..n])             (A3)
-//!         A[r1..m, h..n]   ← A[r1..m, h..n] − L1_bot · A[0..r1, h..n]   (A4)
-//!         r2 = ple(A[r1..m, h..n])
-//!         return r1 + r2
-//! ```
-//!
-//! Note: `L1` and `L1_bot` source their cells from the actual pivot
-//! columns `pc_left` rather than the contiguous prefix `[0..r1)`. The
-//! compact-storage convention places L's multipliers under their pivot
-//! columns (see below), and those columns are non-contiguous when the
-//! left half is rank-deficient (one or more columns in `[0..h)` had
-//! no pivot). Sourcing from the contiguous prefix in that case reads
-//! pre-Schur-eliminated zeros (or earlier pivots' multipliers) and
-//! silently corrupts the trsm + gemm update — see jit:bd9c6e13 for the
-//! discovery case (15x17 GF(7), seed=1, density=0.05).
-//!
-//! At the conservative width, the block-recursive trsm+gemm path drives every
-//! window wider than one column. This suits large-prime fields (e.g.
-//! Mersenne-31) whose blocked GEMM with delayed `u128` reduction outperforms a
-//! scalar schoolbook loop. A host whose fields have cheap per-element
-//! arithmetic (GF(2^m)) or a SIMD panel kernel (p ≤ 251 with AVX2) can install
-//! a profile that widens the window and moves those windows to the schoolbook
-//! base case.
-//!
-//! A carrier that registers a SIMD panel kernel —
-//! [`FiniteField::simd_ple_panel_lane`] returns `Some` — takes one of two
-//! further arms in place of the halving split, reported by
-//! [`ple_panel_route`]: a window wider than the profile's
-//! `ple.panel_base_max_cols()` is walked in narrow sub-panels
-//! ([`PlePanelRoute::SubPanelRecursion`]), and a window that also fits the
-//! lane's own width — `ple.panel_byte_lane_max_cols()` for
-//! [`PlePanelLane::Byte`], `ple.panel_u16_lane_max_cols()` for
-//! [`PlePanelLane::U16`] — goes to the kernel in one shot
-//! ([`PlePanelRoute::PanelBase`]).
-//!
-//! Compact storage: after the recursion, the working buffer interleaves
-//! `E`'s entries and `L`'s multipliers within a single dense `m × n`
-//! grid. Specifically, for each pivot index `k = 0..r` with absolute
-//! pivot column `pc[k]`:
-//!
-//! - `working[k, pc[k]..n]` holds row `k` of `E` (above the diagonal of
-//!   the leading pivot block); cells `working[k, j]` for `j < pc[k]`
-//!   may hold L-multipliers of earlier rows but are projected to zero
-//!   when E is extracted.
-//! - `working[i, pc[k]]` for `i > k` holds `L`'s `k`-th column
-//!   multiplier (not the value at column `k` of `working`, since
-//!   `pc[k]` may exceed `k`).
-//!
-//! The base case writes `working[k, col] = working[k, col] / pivot` for
-//! `k > 0`, leaving the pivot value at the pivot row (so the diagonal
-//! cell `working[k, pc[k]]` carries E's pivot value, NOT `1`; the L
-//! factor's unit diagonal is synthesised when extracting `L`).
-//!
-//! See Dumas–Pernet, "Polynomial-time matrix algorithms over finite fields,"
-//! 2010, alg. 2.5 (PLE), 2.6 (row echelon), 2.7 (RREF).
-//!
-//! # Relationship to derived ops
-//!
-//! - [`row_echelon`](FieldMatrix::row_echelon): from `(P, L, E, r)`,
-//!   `X = L_full⁻¹ · Pᵀ` (with `L` extended to `m × m` by appending an
-//!   identity block) is solved via [`trsm_lower`] then composed with
-//!   `Pᵀ`.
-//! - [`rref`](FieldMatrix::rref): start from echelon `(X₀, E)`, scale
-//!   each pivot row to make leading entries `1`, then peel each pivot
-//!   column (zero entries above and below).
-//! - [`rank`](FieldMatrix::rank): the fourth return of `ple`.
-//! - [`nullspace`](FieldMatrix::nullspace): from RREF, free columns
-//!   produce basis vectors.
-//! - [`lu`](FieldMatrix::lu): exists only when `rank == min(m, n)`;
-//!   returns `(P, L, U)` where `U = E`.
+//! PLE decomposition `P · L · E = A` over an arbitrary [`FiniteField`]
+//! (`@/citation/DumasPernet2012` §2.2, alg. 2.5) and the row-echelon, RREF,
+//! rank, nullspace and LU operations derived from it.
 
 use crate::field::matrix::{
     gemm_axpy_into_view, gemm_axpy_into_view_tiled, FieldMatrix, MatView, MatViewMut,
@@ -153,94 +11,33 @@ use crate::field::vec::FieldVec;
 use crate::field::{FiniteField, PlePanelLane};
 use crate::tuning;
 
-/// Conservative default for `ple.scalar_base_max_cols()` in the active
-/// [`crate::tuning::CoreTuning`]: the widest column window
-/// [`FieldMatrix::ple`]'s block-recursive driver hands to the direct
+/// Conservative default for `ple.scalar_base_max_cols()`: the widest column
+/// window [`FieldMatrix::ple`]'s block-recursive driver hands to the direct
 /// column-by-column base case.
-///
-/// Selected by the same Criterion session as
-/// `triangular::TRI_BASE_MAX_DIM_DEFAULT`: values 1, 4, 8 and 16 were
-/// evaluated, and 8 produced a ≈ 80% regression on `pluq/Fp_M31/uniform/256`
-/// because the Mersenne-31 blocked GEMM amortises its delayed `u128`
-/// reduction and the schoolbook leaf does not —
-/// `dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md:146`.
-/// The seam calibration `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
-/// measures a `FieldMatrix::ple` crossover at 32 and states 24 in its
-/// measured core owner; that value applies only through an installed profile.
-/// This constant remains the compiled-in conservative default consumed by
-/// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
-/// the active profile and is reported by [`ple_base_route`].
 pub(crate) const PLE_SCALAR_BASE_MAX_COLS_DEFAULT: usize = 1;
 
-// ─── Permutation ─────────────────────────────────────────────────────────────
-
-/// A row permutation produced by [`FieldMatrix::ple`].
-///
-/// Stored compactly as a `Vec<usize>` of length `m` where `perm[i]` is
-/// the row of the original matrix that has been moved to row `i`. This is
-/// the **destination → source** convention: applying the permutation to a
-/// matrix `A` row-wise yields a matrix `B` with `B[i, *] = A[perm[i], *]`.
-///
-/// Equivalently, the permutation matrix `P` defined by `P[i, perm[i]] = 1`
-/// (and zero elsewhere) satisfies `B = P · A`.
-///
-/// `Permutation` does NOT materialise an `m × m` field-matrix; it stores
-/// just the index vector.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::matrix::FieldMatrix;
-/// use gf2_core::gfp::Fp;
-///
-/// let mut a = FieldMatrix::<Fp<7>>::zeros(3, 1);
-/// a.set(1, 0, Fp::<7>::new(2));
-/// a.set(2, 0, Fp::<7>::new(3));
-/// let (p, _l, _e, _r) = a.ple();
-/// // First non-zero is at row 1, so P swaps row 0 with row 1.
-/// assert_eq!(p.indices(), &[1, 0, 2]);
-/// ```
+/// A row permutation produced by [`FieldMatrix::ple`], stored as a
+/// destination → source index vector: applying it to `A` yields `B` with
+/// `B[i, *] = A[perm[i], *]`, that is `B = P · A` for `P[i, perm[i]] = 1`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Permutation {
-    /// `perm[i]` is the row of the input that ended up at row `i` of
-    /// `P · A`. Always a valid permutation of `0..len()`.
     perm: Vec<usize>,
 }
 
 impl Permutation {
-    /// Builds the identity permutation on `n` rows.
-    ///
-    /// # Arguments
-    ///
-    /// * `n` — Number of rows.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` writes plus one allocation.
+    /// The identity permutation on `n` rows.
     pub fn identity(n: usize) -> Self {
         Self {
             perm: (0..n).collect(),
         }
     }
 
-    /// Builds a permutation directly from an index vector.
-    ///
-    /// The caller must ensure `perm` is a valid permutation of
-    /// `0..perm.len()`. Debug builds verify this; release builds trust
-    /// the caller.
-    ///
-    /// # Arguments
-    ///
-    /// * `perm` — Destination → source vector. `perm[i] = j` means row
-    ///   `j` of the input lands at row `i` of `P · A`.
+    /// Builds a permutation from a destination → source index vector.
     ///
     /// # Panics
     ///
-    /// In debug builds, panics if `perm` is not a valid permutation.
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` for the debug-mode validation, `O(1)` in release.
+    /// In debug builds, panics if `perm` is not a permutation of
+    /// `0..perm.len()`; release builds trust the caller.
     pub fn from_indices(perm: Vec<usize>) -> Self {
         if cfg!(debug_assertions) {
             let n = perm.len();
@@ -259,54 +56,22 @@ impl Permutation {
         Self { perm }
     }
 
-    /// Returns the destination → source index vector.
-    ///
-    /// `indices()[i]` is the original row that ended up at row `i` after
-    /// applying the permutation.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// The destination → source index vector.
     pub fn indices(&self) -> &[usize] {
         &self.perm
     }
 
-    /// Length of the permutation (number of rows it permutes).
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
+    /// Number of rows the permutation acts on.
     pub fn len(&self) -> usize {
         self.perm.len()
     }
 
     /// Returns `true` if this permutation has length zero.
-    ///
-    /// # Complexity
-    ///
-    /// `O(1)`.
     pub fn is_empty(&self) -> bool {
         self.perm.is_empty()
     }
 
     /// Returns the inverse permutation `P⁻¹`.
-    ///
-    /// If `self.indices()[i] = j`, then `inverse().indices()[j] = i`.
-    /// `P⁻¹ · (P · A) = A` for any matrix `A`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::Permutation;
-    ///
-    /// let p = Permutation::from_indices(vec![2, 0, 1]);
-    /// let inv = p.inverse();
-    /// assert_eq!(inv.indices(), &[1, 2, 0]);
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(n)` writes plus one allocation of size `n`.
     pub fn inverse(&self) -> Permutation {
         let n = self.perm.len();
         let mut inv = vec![0usize; n];
@@ -316,38 +81,11 @@ impl Permutation {
         Permutation { perm: inv }
     }
 
-    /// Applies this permutation to the rows of `m`, returning `P · m`.
-    ///
-    /// The output's row `i` is row `self.indices()[i]` of `m`.
-    ///
-    /// # Arguments
-    ///
-    /// * `m` — Input matrix; must satisfy `m.rows() == self.len()`.
+    /// Returns `P · m`: output row `i` is row `self.indices()[i]` of `m`.
     ///
     /// # Panics
     ///
     /// Panics if `m.rows() != self.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::{FieldMatrix, Permutation};
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut m = FieldMatrix::<Fp<7>>::zeros(3, 1);
-    /// m.set(0, 0, Fp::<7>::new(1));
-    /// m.set(1, 0, Fp::<7>::new(2));
-    /// m.set(2, 0, Fp::<7>::new(3));
-    /// let p = Permutation::from_indices(vec![2, 0, 1]);
-    /// let pm = p.apply(&m);
-    /// assert_eq!(pm.get(0, 0), Fp::<7>::new(3));
-    /// assert_eq!(pm.get(1, 0), Fp::<7>::new(1));
-    /// assert_eq!(pm.get(2, 0), Fp::<7>::new(2));
-    /// ```
-    ///
-    /// # Complexity
-    ///
-    /// `O(rows · cols)` clones plus one `rows × cols` allocation.
     pub fn apply<F: FiniteField>(&self, m: &FieldMatrix<F>) -> FieldMatrix<F> {
         assert_eq!(
             m.rows(),
@@ -370,8 +108,6 @@ impl Permutation {
         out
     }
 }
-
-// ─── Internal helpers ────────────────────────────────────────────────────────
 
 /// Builds an `r × c` zero matrix sourcing the field's zero from `template`.
 fn zero_matrix_like<F: FiniteField>(
@@ -396,20 +132,9 @@ fn zero_matrix_like<F: FiniteField>(
     FieldMatrix::new(r, c, zero)
 }
 
-// ─── PLE in-place driver ─────────────────────────────────────────────────────
-
-/// Direct column-by-column Gaussian elimination base case for small windows.
-///
-/// Called by [`ple_in_place_window`] when [`ple_base_route`] reports
-/// [`PleBaseRoute::ScalarBase`] for the column window. Processes
-/// the column window `[col_lo, col_hi)` of the full matrix view `a` using a
-/// simple left-to-right partial-pivoting elimination. Maintains compact storage
-/// convention: pivot values stay in row `rank`'s diagonal entry; the entries
-/// below each pivot column are scaled to L's multipliers.
-///
-/// # Returns
-///
-/// Number of pivots found (rank contribution from this window).
+/// Direct column-by-column elimination of the column window
+/// `[col_lo, col_hi)`, the [`PleBaseRoute::ScalarBase`] arm, in the compact
+/// storage of [`split_compact`]. Returns the number of pivots found.
 fn ple_base_direct<F: FiniteField>(
     a: &mut MatViewMut<'_, F>,
     col_lo: usize,
@@ -425,7 +150,6 @@ fn ple_base_direct<F: FiniteField>(
         if rank >= m {
             break;
         }
-        // Step 1: find pivot in rows [rank..m] of column `col`.
         let mut pivot_row: Option<usize> = None;
         for i in rank..m {
             if a.get(i, col) != zero {
@@ -434,19 +158,18 @@ fn ple_base_direct<F: FiniteField>(
             }
         }
         let Some(p) = pivot_row else {
-            // No pivot in this column — zero column, skip.
             continue;
         };
 
-        // Step 2: swap row `p` into row `rank` (full-row swap for permutation
-        // consistency across all already-processed columns).
+        // A full-row swap keeps the already-processed columns consistent
+        // with `perm`.
         if p != rank {
             a.swap_rows(rank, p);
             perm.swap(rank, p);
         }
 
-        // Step 3: scale. Compact storage keeps a[rank, col] = pivot value
-        // (the E entry); all a[k, col] for k > rank become L's multipliers.
+        // `a[rank, col]` keeps the pivot (E's entry); the rows below become
+        // L's multipliers.
         let pivot = a.get(rank, col);
         let inv = pivot.inv().unwrap_or_else(|| {
             panic!("ple_base_direct: pivot a[{rank}, {col}] failed to invert (zero pivot)")
@@ -456,25 +179,19 @@ fn ple_base_direct<F: FiniteField>(
             a.set(k, col, v);
         }
 
-        // Step 4: eliminate — for every column `c` strictly right of `col`
-        // in the window, subtract multiplier[k] * a[rank, c] from a[k, c].
-        // This performs the Schur-complement update within the window,
-        // keeping the remaining columns in reduced form.
         for c in (col + 1)..col_hi {
             let pivot_c = a.get(rank, c);
             if pivot_c == zero {
                 continue;
             }
             for k in (rank + 1)..m {
-                let mult = a.get(k, col); // L's multiplier at (k, col)
+                let mult = a.get(k, col);
                 let v = a.get(k, c) - mult.clone() * pivot_c.clone();
                 a.set(k, c, v);
             }
         }
 
-        // Record this pivot's absolute column index. `pivot_cols` is
-        // consumed by `split_compact` to skip the post-factorisation
-        // O(rank * n) pivot-rediscovery scan.
+        // `split_compact` reads `pivot_cols` instead of rescanning for pivots.
         pivot_cols.push(col);
         rank += 1;
     }
@@ -482,21 +199,6 @@ fn ple_base_direct<F: FiniteField>(
     rank
 }
 
-/// Panelized SIMD base-case dispatch helper (issue `6823c8a0`,
-/// design `2e8c5a29`).
-///
-/// Called by [`ple_in_place_window`] when [`ple_panel_route`] reports
-/// [`PlePanelRoute::PanelBase`] for the column window. Extracts the parent
-/// matrix's raw storage from the `MatViewMut`, invokes the field's
-/// `try_simd_ple_panel_base` hook, and returns `Some(rank)` on
-/// success or `None` if the kernel declined (caller then falls back
-/// to the recursive trsm + gemm split or scalar `ple_base_direct`).
-///
-/// The kernel operates on the column window `[col_lo, col_hi)` of
-/// the row range `[row_offset, row_offset + rows)`. It handles the
-/// pivot search, swap, scale, and Schur update; the caller's
-/// permutation tracker `perm` (length = view rows) and absolute
-/// pivot column indices are updated in place.
 /// Widest column window handed to the panel kernel since the last
 /// [`reset_max_effective_panel_dispatch_cols`] call. Zero means "none".
 /// Route-observation tests read this to prove the installed per-lane
@@ -507,8 +209,6 @@ static MAX_EFFECTIVE_PANEL_DISPATCH_COLS: std::sync::atomic::AtomicUsize =
     std::sync::atomic::AtomicUsize::new(0);
 
 /// Reads the widest panel-kernel dispatch window since the last reset.
-///
-/// Exists only under `cfg(test)` or the `test-support` feature.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn max_effective_panel_dispatch_cols() -> Option<usize> {
@@ -519,8 +219,6 @@ pub fn max_effective_panel_dispatch_cols() -> Option<usize> {
 }
 
 /// Clears [`max_effective_panel_dispatch_cols`].
-///
-/// Exists only under `cfg(test)` or the `test-support` feature.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_max_effective_panel_dispatch_cols() {
     MAX_EFFECTIVE_PANEL_DISPATCH_COLS.store(0, std::sync::atomic::Ordering::SeqCst);
@@ -531,6 +229,8 @@ pub(crate) fn record_ple_panel_cols(cols: usize) {
     MAX_EFFECTIVE_PANEL_DISPATCH_COLS.fetch_max(cols, std::sync::atomic::Ordering::SeqCst);
 }
 
+/// Runs the field's `try_simd_ple_panel_base` hook on the column window
+/// `[col_lo, col_hi)` of the view's rows; `None` when the kernel declines.
 fn try_panel_base_dispatch<F: FiniteField, O: ObservationPolicy>(
     a: &mut MatViewMut<'_, F>,
     col_lo: usize,
@@ -544,7 +244,6 @@ fn try_panel_base_dispatch<F: FiniteField, O: ObservationPolicy>(
         col_lo <= col_hi && col_hi <= cols,
         "ple panel dispatch: col window out of bounds"
     );
-    // Build the sub-slice spanning the view's rows.
     let row_start = row_offset * parent_cols;
     let row_end = row_start + rows * parent_cols;
     let sub = &mut data[row_start..row_end];
@@ -585,9 +284,9 @@ impl PleWidths {
             panel_base_max_cols: ple.panel_base_max_cols(),
             panel_lane_max_cols: ple_lane_max_cols(ple, F::simd_ple_panel_lane()),
         };
-        // R4 of design `2e8c5a29`: a lane width below the scalar base leaves the
-        // panel branch dead rather than wrong, because the scalar base case has
-        // already returned for every window that narrow.
+        // A lane width below the scalar base leaves the panel branch dead
+        // rather than wrong: the scalar base case has already returned for
+        // every window that narrow.
         debug_assert!(
             widths
                 .panel_lane_max_cols
@@ -614,25 +313,12 @@ fn ple_lane_max_cols(
     })
 }
 
-/// In-place PLE on the supplied [`MatViewMut`]. Records destination →
-/// source row swaps in `perm` (caller-managed). Writes the L-factor's
-/// strict-lower entries directly into `a`'s storage; the leading pivot
-/// values stay on `a`'s diagonal (the L-factor's unit diagonal is
-/// synthesised at extraction time).
+/// In-place PLE of `a` in the compact storage of [`split_compact`]. Records
+/// destination → source row swaps in `perm`, appends the pivot columns to
+/// `pivot_cols` and returns the rank.
 ///
-/// The caller passes a row-restricted view spanning the FULL column range
-/// of the working matrix (so that `swap_rows` swaps whole rows for
-/// permutation consistency across already-processed columns). The
-/// algorithm operates on the column window `[col_lo, col_hi)`.
-///
-/// Returns the rank of the column window (i.e., the number of pivots
-/// found in those columns).
-///
-/// This is the panel entry: it resolves all three PLE column widths —
-/// `ple.scalar_base_max_cols()`, `ple.panel_base_max_cols()` and the carrier
-/// lane's own width — exactly once and threads them by parameter through
-/// [`ple_in_place_window`]'s recursion, so no recursion node reads the
-/// profile.
+/// `a` spans the full column range of the working matrix, so `swap_rows`
+/// moves whole rows.
 fn ple_in_place<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     perm: &mut [usize],
@@ -648,20 +334,9 @@ fn ple_in_place<F: FiniteField, O: ObservationPolicy>(
     rank
 }
 
-/// Conservative default for `ple.panel_base_max_cols()` in the active
-/// [`crate::tuning::CoreTuning`]: the widest column window the panel base
-/// handles directly before [`ple_in_place_window`] splits it into recursive
-/// sub-panels.
-///
-/// Chosen so the panel kernel still amortises its packing overhead
-/// (canonical-byte scratch pack + outside-window row permutation) over a
-/// useful number of pivots, while each panel handles few enough columns that
-/// the wide GEMM dominates the work between panels. 128 was empirically
-/// selected from a tuning sweep over {32, 48, 64, 96, 128} — see
-/// `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
-/// This constant remains the compiled-in conservative default consumed by
-/// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
-/// the active profile and is reported by [`ple_panel_route`].
+/// Conservative default for `ple.panel_base_max_cols()`: the widest column
+/// window the panel base handles directly before [`ple_in_place_window`]
+/// splits it into sub-panels.
 pub(crate) const PLE_PANEL_RECURSIVE_BASE: usize = 128;
 
 /// The selected arm of the [`FieldMatrix::ple`] base-case dispatcher for one
@@ -721,8 +396,6 @@ pub(crate) fn record_ple_base_route(scalar_base_max_cols: usize, route: usize) {
 }
 
 /// Clears [`last_effective_ple_base_route`].
-///
-/// Exists only under `cfg(test)` or the `test-support` feature.
 #[cfg(any(test, feature = "test-support"))]
 pub fn reset_last_effective_ple_base_route() {
     LAST_EFFECTIVE_PLE_BASE_ROUTE.store(0, std::sync::atomic::Ordering::SeqCst);
@@ -733,10 +406,8 @@ pub fn reset_last_effective_ple_base_route() {
 /// [`PleBaseRoute`] of the most recent [`FieldMatrix::ple`] decomposition
 /// since the last reset.
 ///
-/// The decomposition publishes once at its resolve point, after the whole
-/// column window completes, so recursive windows add no
-/// candidate-dependent writes. [`ple_base_route`] alone publishes nothing.
-/// Exists only under `cfg(test)` or the `test-support` feature.
+/// The decomposition publishes once, after the whole column window
+/// completes. [`ple_base_route`] alone publishes nothing.
 #[cfg(any(test, feature = "test-support"))]
 #[must_use]
 pub fn last_effective_ple_base_route() -> Option<(usize, PleBaseRoute)> {
@@ -777,18 +448,9 @@ pub enum PlePanelRoute {
     RecursiveSplit,
 }
 
-/// Reports the [`FieldMatrix::ple`] panel arm for a carrier's lane class and
-/// a column-window width.
-///
-/// `lane` is the carrier's own [`FiniteField::simd_ple_panel_lane`]; the
-/// dispatcher passes `F::simd_ple_panel_lane()`. Two active profile values carry
-/// the comparison: `ple.panel_base_max_cols()`, above which a window takes the
-/// sub-panel walk (each sub-panel capped at the lane's own width), and the
-/// lane's own width — `ple.panel_byte_lane_max_cols()` for
-/// [`crate::field::PlePanelLane::Byte`] and `ple.panel_u16_lane_max_cols()`
-/// for [`crate::field::PlePanelLane::U16`] — above which a window that does
-/// not exceed the panel base width takes the recursive split instead of the
-/// kernel.
+/// Reports the [`FieldMatrix::ple`] panel arm for a carrier's lane class
+/// ([`FiniteField::simd_ple_panel_lane`]) and a column-window width, against
+/// the active profile's `ple.panel_base_max_cols()` and the lane's own width.
 #[must_use]
 pub fn ple_panel_route(lane: Option<PlePanelLane>, win: usize) -> PlePanelRoute {
     let tuning = tuning::active();
@@ -815,36 +477,14 @@ fn ple_panel_route_resolved(
     }
 }
 
-/// Inner driver — see [`ple_in_place`]. The window `[col_lo, col_hi)`
-/// is the column range to process; cells outside this window are not
-/// modified by the elimination but DO get permuted by `swap_rows`.
+/// Recursive driver of [`ple_in_place`] over the column window
+/// `[col_lo, col_hi)`; `swap_rows` also permutes the cells outside it.
+/// Appends the window's pivot columns (absolute indices) to `pivot_cols` in
+/// discovery order and returns their count.
 ///
-/// Appends discovered pivot columns (absolute column indices into the
-/// full working matrix) to `pivot_cols` in the order they are found.
-/// On return `pivot_cols.len()` increases by the rank of this window.
-///
-/// # Compact storage and pivot-column scatter (jit:bd9c6e13)
-///
-/// Pivots are found left-to-right by column scan; the storage convention
-/// places L's multipliers in the **pivot columns themselves**, not in
-/// the leftmost `r1` columns of the window. When the left-half recursion
-/// finds `r1` pivots at columns `pivot_cols[L..L+r1]`, the L multipliers
-/// live at `a[i, pivot_cols[L+k]]` (not at `a[i, col_lo + k]`).
-///
-/// For the inter-block trsm + gemm step to be correct on rank-deficient
-/// inputs where the left half has gaps (i.e., one or more columns in
-/// `[col_lo, mid)` had no pivot), we must read L1 and L1_bot from the
-/// actual pivot columns rather than the contiguous prefix. The earlier
-/// implementation read the contiguous prefix `[col_lo, col_lo + r1)`,
-/// which silently used wrong multipliers when pivots were non-contiguous
-/// — corrupting the Schur complement update and dropping otherwise-
-/// valid pivots in the right-half recursion.
-///
-/// # Panel widths
-///
-/// `widths` contains the active profile's three PLE column widths, resolved
-/// once by [`ple_in_place`] and forwarded unchanged to every recursive call and
-/// to [`ple_panel_recursive_window`].
+/// L's multipliers live in the pivot columns themselves, which are
+/// non-contiguous when the left half is rank-deficient, so `L1` and `L1_bot`
+/// are read from `pivot_cols`, never from the prefix `[col_lo, col_lo + r1)`.
 fn ple_in_place_window<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
@@ -860,44 +500,10 @@ fn ple_in_place_window<F: FiniteField, O: ObservationPolicy>(
         return 0;
     }
 
-    // Base case: column window at or below the active scalar-base width.
-    //
-    // On `PleBaseRoute::ScalarBase`, use `ple_base_direct` — a direct
-    // column-by-column Gaussian elimination that avoids the per-level
-    // materialise_l1_unit / materialise_block / trsm dispatch overhead.
-    // The conservative width restricts this to the single-column leaf,
-    // where the recursive path would recurse into an empty right half. A
-    // host whose fields have cheap per-element arithmetic can install a
-    // wider one.
-    //
-    // Complexity: O(m · win²) element operations per call.
     if ple_base_route_resolved(widths.scalar_base_max_cols, win) == PleBaseRoute::ScalarBase {
         return ple_base_direct(&mut a, col_lo, col_hi, perm, pivot_cols);
     }
 
-    // Panelized SIMD dispatch (issue 6823c8a0, design 2e8c5a29), in the
-    // recursive-PLUQ left-looking shape the design's R1 amendment fixes.
-    //
-    // A carrier that exposes the AVX2 panel base kernel does not run that
-    // kernel over a full lane-width window in one shot. The kernel's inner
-    // Schur update is row-major axpy (one pivot at a time over a shrinking
-    // tail); even with AVX2 byte lanes its throughput at large win is
-    // roughly 8 Gop/s — far below fflas-ffpack's ~30 Gop/s sgemm-cascade
-    // PLUQ. To close the gap the driver dispatches the kernel on a narrow
-    // leftmost sub-panel (`widths.panel_base_max_cols` columns wide, capped
-    // at the resolved per-lane ceiling when an installed profile sets it
-    // lower), then
-    // updates the wide right tail via the existing `trsm_lower` +
-    // `gemm_axpy_into_view` path. The wide gemm inherits the small-prime
-    // whole-GEMM fast path from issue 40195c09 (lift), which hits the
-    // kernel's u8 byte-lane throughput on the bulk of the operations.
-    //
-    // A window that fits both that width and the carrier lane's own width
-    // goes to the kernel directly. A window above the panel base width
-    // takes the sub-panel walk (lane-capped). A carrier with no lane, or
-    // a window between the lane's width and the panel base width, falls
-    // through to the halving split below; so does a kernel that declines
-    // at run time.
     match ple_panel_route_resolved(widths.panel_base_max_cols, widths.panel_lane_max_cols, win) {
         PlePanelRoute::SubPanelRecursion => {
             return ple_panel_recursive_window::<F, O>(a, col_lo, col_hi, perm, pivot_cols, widths);
@@ -915,49 +521,24 @@ fn ple_in_place_window<F: FiniteField, O: ObservationPolicy>(
     let h = win / 2;
     let mid = col_lo + h;
 
-    // Step 1 — recurse on the left half. `a` continues to span the
-    // full parent column range; we restrict only via the col window.
-    //
-    // Snapshot the pivot-cols length so we can locate this level's own
-    // left-half pivots after the recursion returns (they sit at
-    // `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`).
     let pivot_cols_start = pivot_cols.len();
     let r1 = ple_in_place_window::<F, O>(a.reborrow(), col_lo, mid, perm, pivot_cols, widths);
 
-    // Steps 2 & 3 — trsm and gemm on the right half.
-    //
-    // We need to read `L1` and `L1_bot` from `a`'s left half while
-    // writing to `a`'s right half. Row-major storage forbids holding
-    // simultaneous mutable views over disjoint column ranges in safe
-    // Rust, so we materialise the read-side operands into owned
-    // buffers. The materialised L1 carries an explicit unit diagonal
-    // so it can feed `trsm_lower` (which reads diagonal cells).
+    // Row-major storage admits no simultaneous mutable views over disjoint
+    // column ranges, so the read-side operands `L1` and `L1_bot` are
+    // materialised into owned buffers. `L1` carries an explicit unit
+    // diagonal, which `trsm_lower` reads.
     if r1 > 0 && mid < col_hi {
-        // The left-half recursion places its r1 pivots at the absolute
-        // column indices `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`.
-        // L1 and L1_bot must be sourced from THOSE columns (not from
-        // the contiguous prefix `[col_lo, col_lo + r1)`); otherwise on
-        // rank-deficient inputs where pivots are non-contiguous within
-        // `[col_lo, mid)` the multipliers are scattered across gap
-        // columns and the contiguous read returns either non-pivot
-        // residue (almost always zero — pre-Schur-eliminated) or the
-        // wrong pivot's multipliers. See jit:bd9c6e13 for the discovery
-        // case (15x17 GF(7), seed=1, density=0.05).
         let left_pivots: &[usize] = &pivot_cols[pivot_cols_start..pivot_cols_start + r1];
-        // Materialise L1 (r1 × r1, unit lower-triangular). Source
-        // strict-lower cells from `a[0..r1, left_pivots[j]]` for j<i.
         let l1 = materialise_l1_unit_at_cols(&a.as_view(), 0, left_pivots);
-        // trsm_lower: solve L1 · X = a[0..r1, mid..col_hi] in place.
         trsm_lower_with_policy::<F, O>(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
 
-        // Step 3 — Schur complement: a[r1..m, mid..col_hi] -=
-        //   L1_bot · a[0..r1, mid..col_hi].
+        // a[r1..m, mid..col_hi] -= L1_bot · a[0..r1, mid..col_hi].
         if r1 < m {
             let l1_bot = materialise_block_at_cols(&a.as_view(), r1, left_pivots, m - r1);
             let zero = a.get(0, col_lo).zero_like();
             let one = zero.one_like();
             let neg_one = zero - one.clone();
-            // Disjoint borrow: split rows of the right-half view.
             let right = a.submat_mut(.., mid..col_hi);
             let (a3_mut, a4_mut) = right.split_rows_mut(r1);
             let a3_view = a3_mut.as_view();
@@ -971,15 +552,8 @@ fn ple_in_place_window<F: FiniteField, O: ObservationPolicy>(
         }
     }
 
-    // Step 4 — recurse on the bottom-right block a[r1..m, mid..col_hi].
-    // Use split_rows_mut so the recursive view spans the full parent
-    // column range (preserving full-row swap semantics) but only rows
-    // r1..m. The recursion processes the column window [mid, col_hi).
-    //
-    // Rank-deficient early exit: when r1 == m all rows have been assigned
-    // pivots in the left half, so the bottom-right block is empty. Skip
-    // the recursion entirely (avoids the function-call overhead on
-    // inputs that exhibit early-termination rank-deficiency).
+    // The recursive view keeps the full parent column range, so its row
+    // swaps stay full-row.
     let r2 = if r1 < m && mid < col_hi {
         let (_top, a4) = a.split_rows_mut(r1);
         ple_in_place_window::<F, O>(a4, mid, col_hi, &mut perm[r1..], pivot_cols, widths)
@@ -990,63 +564,14 @@ fn ple_in_place_window<F: FiniteField, O: ObservationPolicy>(
     r1 + r2
 }
 
-/// Recursive PLUQ left-looking blocking for small-prime fields (issue
-/// 6823c8a0 R1, design 2e8c5a29 R1 amendment).
+/// Left-looking sub-panel walk of the column window `[col_lo, col_hi)`, the
+/// [`PlePanelRoute::SubPanelRecursion`] arm: a column-axis-only form of the
+/// recursive PLUQ of `@/citation/DumasPernetSultan2017`.
 ///
-/// Iterates over the column window `[col_lo, col_hi)` in narrow
-/// sub-panels of width `widths.panel_base_max_cols` each. For every sub-panel:
-///
-/// 1. Dispatch the field's AVX2 panel-base kernel on the sub-panel
-///    covering rows below the running rank cursor. Returns `r_i` new
-///    pivots and appends them to `pivot_cols`.
-/// 2. If the sub-panel produced any pivots AND there are columns
-///    remaining to the right: solve `L11 · X = right_top` (trsm) and
-///    perform the Schur-complement update `right_bot -= L_bot · X`
-///    (gemm). The wide gemm hits the small-prime whole-GEMM fast path
-///    (`gemm_axpy_into_view` → `40195c09` lift) and the medium-prime
-///    panel u16 path for primes outside the byte-lane range.
-/// 3. Advance the rank cursor and the column cursor.
-///
-/// This mirrors the recursive PLUQ shape of Dumas-Pernet-Sultan 2017
-/// (arXiv:1703.02438) — left-looking column-axis split rather than
-/// 2D recursion. The 2D split is structurally equivalent at the cost
-/// of more recursion bookkeeping; the 1D column-axis form has been
-/// sufficient to close the GF(251) ratio gap empirically (see
-/// `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md`).
-///
-/// # Correctness invariants preserved
-///
-/// - The kernel's `pivot_cols` reads from `pivot_cols[start..start+r_i]`
-///   carry **absolute** column indices in the parent matrix (the panel
-///   wrapper offsets the panel-local indices by `col_lo`). This means
-///   `materialise_l1_unit_at_cols` and `materialise_block_at_cols`
-///   continue to see the correct scattered-pivot pattern even when the
-///   left sub-panel is rank-deficient (bd9c6e13 fix preserved).
-/// - The kernel's row swaps are propagated to cells **outside** the
-///   sub-panel via the `try_simd_ple_panel_base` hook. Crucially, those
-///   "outside" cells include both the columns to the left of the
-///   sub-panel (where L's multipliers from earlier sub-panels live)
-///   AND the columns to the right (the not-yet-processed right tail).
-///   The row order remains consistent across the whole matrix at every
-///   step.
-///
-/// # Parameters
-///
-/// * `a` — full-width row-restricted view; only the column window
-///   `[col_lo, col_hi)` is mutated by the elimination, but full-row
-///   swaps propagate across the entire parent column range.
-/// * `col_lo`, `col_hi` — absolute column window in the parent matrix.
-/// * `perm` — row permutation tracker, length = `a.rows()`. Mutated
-///   in place for every row swap performed by the kernel.
-/// * `pivot_cols` — absolute pivot-column accumulator. New pivots are
-///   appended in left-to-right order.
-/// * `widths` — the resolved PLE column widths. Each sub-panel is
-///   at most `widths.panel_base_max_cols` columns wide — capped at the
-///   resolved per-lane ceiling when an installed profile sets it lower —
-///   and the scalar base width rides
-///   along for the fallback driver. The values are resolved by [`ple_in_place`]
-///   and forwarded through [`ple_in_place_window`], with conservative defaults
-///   [`PLE_PANEL_RECURSIVE_BASE`] and [`PLE_SCALAR_BASE_MAX_COLS_DEFAULT`].
+/// Each sub-panel goes to the panel kernel on the rows below the running
+/// rank; a trsm and a Schur-complement gemm then update the right tail. The
+/// kernel reports absolute pivot columns and propagates its row swaps across
+/// the full parent column range, left and right of the sub-panel.
 fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
@@ -1060,11 +585,8 @@ fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
     let mut rank_total = 0usize;
 
     while col_cur < col_hi && rank_total < m {
-        // Each sub-panel respects BOTH bounds: the sub-panel split width
-        // and the resolved per-lane ceiling the panel kernel accepts (an
-        // installed profile may set the lane ceiling below the split
-        // width; the direct arm enforces it via the route, so the
-        // splitter must too).
+        // An installed profile may set the lane ceiling below the split
+        // width; a sub-panel honours both.
         let sub_panel_cols = widths
             .panel_lane_max_cols
             .map_or(widths.panel_base_max_cols, |lane_max_cols| {
@@ -1072,28 +594,13 @@ fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
             });
         let sub_hi = (col_cur + sub_panel_cols).min(col_hi);
 
-        // Snapshot pivot-cols length so we can slice this sub-panel's
-        // own pivots after the dispatch returns. The dispatch pushes
-        // ABSOLUTE column indices (offset by col_lo of the panel call,
-        // which is `col_cur` here).
         let pivot_cols_start = pivot_cols.len();
 
-        // Run the panel kernel on rows [rank_total..m] × cols [col_cur, sub_hi).
-        // The panel wrapper requires a view rooted at row 0 of the
-        // working clone (so its kernel-local row_perm indexes from 0).
-        // We split off the top `rank_total` rows and pass the bottom
-        // slice; the kernel handles in-window swaps + outside-window
-        // propagation across the parent's full column range.
+        // The kernel's row permutation indexes from row 0 of the view it is
+        // given, so it receives the rows below `rank_total`.
         let r_i_opt = if rank_total == 0 {
-            // Fast path: no top rows to skip. Reborrow `a` for this iteration.
             try_panel_base_dispatch::<F, O>(&mut a.reborrow(), col_cur, sub_hi, perm, pivot_cols)
         } else {
-            // Split off the top `rank_total` rows of a freshly reborrowed
-            // view. The bottom slice sees rows [rank_total..m] of the
-            // parent across the full column range.
-            // `try_panel_base_dispatch` extracts the raw parent slice via
-            // `raw_parts_mut`, so the bottom view's `row_offset =
-            // rank_total` is reflected in the slice the kernel sees.
             let (_top, mut bot) = a.reborrow().split_rows_mut(rank_total);
             try_panel_base_dispatch::<F, O>(
                 &mut bot,
@@ -1104,10 +611,6 @@ fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
             )
         };
 
-        // If the panel declined, fall back to the binary-halving recursive
-        // path on this sub-panel. This branch should only trigger when AVX2
-        // is unavailable at runtime mid-execution, which doesn't happen on
-        // a fixed host; included for defensive correctness.
         let r_i = match r_i_opt {
             Some(r) => r,
             None => {
@@ -1134,21 +637,11 @@ fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
             }
         };
 
-        // Inter-block trsm + gemm update on the right tail (if any).
-        //
-        // The new pivots sit at `pivot_cols[pivot_cols_start..pivot_cols_start + r_i]`
-        // and reference ABSOLUTE column indices in the parent matrix
-        // (they live within `[col_cur, sub_hi)`). The L-multipliers
-        // beneath the new pivots live at those same columns in rows
-        // `[rank_total + r_i .. m]`.
         if r_i > 0 && sub_hi < col_hi {
             let new_pivots: Vec<usize> =
                 pivot_cols[pivot_cols_start..pivot_cols_start + r_i].to_vec();
 
-            // L1 (r_i × r_i, unit lower-triangular) sourced from rows
-            // [rank_total .. rank_total + r_i] at the new pivot columns.
             let l1 = materialise_l1_unit_at_cols(&a.as_view(), rank_total, &new_pivots);
-            // trsm_lower solves L1 · X = a[rank_total..rank_total+r_i, sub_hi..col_hi].
             trsm_lower_with_policy::<F, O>(
                 l1.submat(.., ..),
                 a.submat_mut(rank_total..rank_total + r_i, sub_hi..col_hi),
@@ -1185,13 +678,9 @@ fn ple_panel_recursive_window<F: FiniteField, O: ObservationPolicy>(
     rank_total
 }
 
-/// Fallback variant of [`ple_in_place_window`] that does NOT take the
-/// SIMD panel-base path even when available. Used by
-/// [`ple_panel_recursive_window`] when the panel dispatch declines mid-
-/// execution (e.g. AVX2 unavailable at runtime). Mirrors the structure
-/// of `ple_in_place_window` minus the panel-base dispatch arm, so of
-/// `widths` it reads only `scalar_base_max_cols`; the rest rides along to
-/// keep one resolved value per call reaching every driver.
+/// [`ple_in_place_window`] without the panel arms, for a sub-panel whose
+/// kernel dispatch declined; of `widths` it reads only
+/// `scalar_base_max_cols`.
 fn ple_in_place_window_no_panel<F: FiniteField, O: ObservationPolicy>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
@@ -1246,21 +735,8 @@ fn ple_in_place_window_no_panel<F: FiniteField, O: ObservationPolicy>(
     r1 + r2
 }
 
-/// Materialises an `r1 × r1` unit-lower-triangular L1 factor by sourcing
-/// strict-lower entries from the **pivot columns** of `a`.
-///
-/// `pivot_cols[k]` is the absolute column index in `a` holding L's
-/// `k`-th column multipliers. Reads `a.get(row_off + i, pivot_cols[j])`
-/// for `j < i` (the strict-lower part); fills diagonal with `1` and
-/// strict-upper with `0`.
-///
-/// This replaces the earlier `materialise_l1_unit(a, row_off, col_off, r1)`
-/// which read a contiguous `[col_off, col_off + r1)` range. The contiguous
-/// read was correct only when the left-half pivots happened to be at
-/// columns `col_off, col_off + 1, …, col_off + r1 - 1`; on rank-deficient
-/// inputs whose left half had gaps, the contiguous read returned wrong
-/// values, corrupting the inter-block trsm + Schur update. See
-/// jit:bd9c6e13.
+/// Materialises the `r1 × r1` unit-lower-triangular `L1`: entry `(i, j)` for
+/// `j < i` is `a[row_off + i, pivot_cols[j]]` and the diagonal is `1`.
 fn materialise_l1_unit_at_cols<F: FiniteField>(
     a: &MatView<'_, F>,
     row_off: usize,
@@ -1276,17 +752,12 @@ fn materialise_l1_unit_at_cols<F: FiniteField>(
         for (j, &pcj) in pivot_cols.iter().enumerate().take(i) {
             l1.set(i, j, a.get(row_off + i, pcj));
         }
-        // Strict-upper stays zero.
     }
     l1
 }
 
-/// Materialises a `rows × r1` block sourcing column `j` from
-/// `a.get(row_off + i, pivot_cols[j])` for each row `i`.
-///
-/// Used to build L1_bot (the strict-lower-trapezoidal L factor below
-/// the pivot rows) for the Schur-complement update. Mirrors
-/// `materialise_l1_unit_at_cols` but covers a rectangular block.
+/// Materialises the `rows × r1` block `L1_bot`: entry `(i, j)` is
+/// `a[row_off + i, pivot_cols[j]]`.
 fn materialise_block_at_cols<F: FiniteField>(
     a: &MatView<'_, F>,
     row_off: usize,
@@ -1308,27 +779,14 @@ fn materialise_block_at_cols<F: FiniteField>(
     out
 }
 
-/// Splits the working buffer's compact storage into the L (`m × rank`)
-/// and E (`rank × n`) factors.
+/// Splits the compact storage of `working` into `L` (`m × rank`) and `E`
+/// (`rank × n`).
 ///
-/// `working[i, pivot_cols[i]..n]` for `i < rank` holds E's entries (the
-/// part of row `i` from its pivot column rightward); cells to the left
-/// of `pivot_cols[i]` either hold earlier pivots' L-multipliers (when
-/// `j ∈ pivot_cols` with index `< i`) or are zero. `working[i, pivot_cols[k]]`
-/// for `i > k` holds L's `k`-th-column strict-lower entry (L's unit
-/// diagonal is synthesised at extraction).
-///
-/// **Rank-deficient optimisation.** `pivot_cols` is pre-filled by
-/// `ple_in_place` during the factorisation — one entry per pivot, in
-/// left-to-right order. Providing them here eliminates the O(rank * n)
-/// row-scan that the naive approach would use to rediscover them from
-/// the compact storage.
-///
-/// For an `n x n` rank-`r` matrix the saving is `O(r * (n - c_last))`
-/// comparisons where `c_last` is the rightmost pivot column. In the
-/// rank-deficient regime (`r = n/2`, all pivots in the left half,
-/// `c_last ~= n/2`) this removes approximately `n/2 * n/2 = n^2/4`
-/// comparisons from the post-factorisation extraction path.
+/// Compact storage: for pivot index `k` with pivot column `pivot_cols[k]`,
+/// `working[k, pivot_cols[k]..n]` is row `k` of `E` and
+/// `working[i, pivot_cols[k]]` for `i > k` is `L[i, k]`. `L`'s unit diagonal
+/// is synthesised here; the cells of row `k` left of its pivot column hold
+/// earlier multipliers or zero and are excluded from `E`.
 fn split_compact<F: FiniteField>(
     working: &FieldMatrix<F>,
     rank: usize,
@@ -1351,45 +809,16 @@ fn split_compact<F: FiniteField>(
     let zero = working.get(0, 0).zero_like();
     let one = zero.one_like();
 
-    // E: rank × n, in row-echelon form.
-    //
-    // Compact storage of `working` interleaves L's multipliers and E's
-    // entries within the top `rank` rows: `working[i, j]` holds
-    //   - E[i, j]              if j ∈ pivot_cols and j is row i's pivot or
-    //                          to its right (j ≥ pivot_cols[i])
-    //   - L's multiplier L[i, k]   if j == pivot_cols[k] for some k < i
-    //                          (i.e., j is strictly to the LEFT of row
-    //                           i's pivot but happens to be a pivot
-    //                           column of an earlier row)
-    //   - 0                    otherwise (zeroed by Schur updates)
-    //
-    // So when extracting E, we must zero out the multiplier cells. The
-    // simplest correct rule: E[i, j] = working[i, j] if j ≥
-    // pivot_cols[i], else 0. This satisfies the row-echelon property
-    // (each row has its leading non-zero at pivot_cols[i], strictly to
-    // the right of the previous row's pivot).
     let mut e = FieldMatrix::new(rank, n, zero.clone());
     for (i, &pci) in pivot_cols.iter().enumerate().take(rank) {
         for j in pci..n {
             e.set(i, j, working.get(i, j));
         }
-        // Cells j < pci stay zero (from FieldMatrix::new).
     }
-
-    // L: m × rank, unit lower-trapezoidal. L[k, k] = 1 for k < rank.
-    // For i > k, L[i, k] is the multiplier that lived in working at
-    // column `pivot_cols[k]` of row i — i.e., L[i, k] =
-    // working[i, pivot_cols[k]] (after the recursion the column of
-    // pivot_cols[k] in rows > k holds L's multipliers; the recursion
-    // does NOT zero these out in-place).
     let mut l = FieldMatrix::new(m, rank, zero);
     for k in 0..rank {
         l.set(k, k, one.clone());
     }
-    // Above the diagonal: L[i, j] = 0 for i < j. (Already zero from
-    // FieldMatrix::new.)
-    // Below and on the diagonal: L[i, j] for i > j (within the rank-`r`
-    // range of i). These come from working[i, pivot_cols[j]].
     for (j, &pcj) in pivot_cols.iter().enumerate().take(rank) {
         for i in (j + 1)..m {
             l.set(i, j, working.get(i, pcj));
@@ -1398,10 +827,9 @@ fn split_compact<F: FiniteField>(
     (l, e)
 }
 
-// ─── Public entry points on FieldMatrix ──────────────────────────────────────
-
 impl<F: FiniteField> FieldMatrix<F> {
-    /// Computes the PLE decomposition `P · L · E = self`.
+    /// Computes the PLE decomposition `P · L · E = self`
+    /// (`@/citation/DumasPernet2012` §2.2, alg. 2.5).
     ///
     /// Returns `(P, L, E, r)` where:
     ///
@@ -1413,57 +841,15 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///   entry strictly to the right of the previous row's leading.
     /// - `r` is the rank of `self`.
     ///
-    /// Implements Dumas–Pernet §2.2 algorithm 2.5 via a horizontal
-    /// block-recursive split, dispatching to
-    /// [`crate::field::triangular::trsm_lower`] for the off-diagonal
-    /// solves and to
-    /// `gemm_axpy_into_view`
-    /// for the rank-update.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — `m × n` input. The matrix is not modified.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic on rank-deficient or singular inputs.
-    ///
     /// # Complexity
     ///
-    /// `O(m · n · min(m, n))` field operations. The recursion is
-    /// `O(log min(m, n))` deep and reduces a `min(m, n)`-rank
-    /// elimination to balanced sub-problems.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // A = [[2, 4], [1, 3]] over GF(7).
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 1, Fp::<7>::new(4));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(3));
-    /// let (_p, _l, _e, r) = a.ple();
-    /// assert_eq!(r, 2);
-    /// ```
+    /// `O(m · n · min(m, n))` field operations.
     pub fn ple(&self) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
         self.ple_with_policy::<RecordObservations>()
     }
 
-    /// Runs the complete [`ple`](Self::ple) body without test-support
-    /// observation writes.
-    ///
-    /// Development calibration resolves this function before timing. It
-    /// shares every profile read, recursion, TRSM, GEMM and panel dispatch
-    /// with [`ple`](Self::ple); its zero-sized compile-time policy emits no
-    /// route, panel or GEMM observations.
-    ///
-    /// # Complexity
-    ///
-    /// Identical to [`ple`](Self::ple).
+    /// [`ple`](Self::ple) without the test-support route, panel and GEMM
+    /// observation writes; the computation is identical.
     #[cfg(any(test, feature = "test-support"))]
     pub fn ple_quiet_for_test(&self) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
         self.ple_with_policy::<crate::field::matrix::QuietObservations>()
@@ -1474,26 +860,15 @@ impl<F: FiniteField> FieldMatrix<F> {
     ) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
         let (m, n) = self.shape();
         if m == 0 || n == 0 {
-            // Empty input: identity permutation, empty L, empty E.
             let l = zero_matrix_like(m, 0, self);
             let e = zero_matrix_like(0, n, self);
             return (Permutation::identity(m), l, e, 0);
         }
-        // 1 alloc: working clone (we cannot destroy &self).
         let mut working = self.clone();
-        // 0 matrix allocs: identity permutation in a Vec<usize>.
         let mut perm: Vec<usize> = (0..m).collect();
-        // Pivot-column accumulator filled by ple_in_place; reused by
-        // split_compact to skip the O(rank * n) post-factorisation scan.
         let max_rank = m.min(n);
         let mut pivot_cols: Vec<usize> = Vec::with_capacity(max_rank);
-        // Run the in-place driver. Per-level allocations come from
-        // materialised L1/L1_bot operands and the gemm/trsm B-transpose
-        // scratches. See module rustdoc for the budget.
         let rank = ple_in_place::<F, O>(working.submat_mut(.., ..), &mut perm, &mut pivot_cols);
-        // 2 allocs: split working's compact storage into owned L and E.
-        // pivot_cols is already populated by ple_in_place, so split_compact
-        // does no rediscovery scan.
         let (l, e) = split_compact(&working, rank, &pivot_cols);
         // The recursion's `perm` is the destination → source map: applying
         // it to `self` row-wise gives the matrix that decomposes as L · E.
@@ -1502,72 +877,32 @@ impl<F: FiniteField> FieldMatrix<F> {
         (Permutation::from_indices(inverse_perm), l, e, rank)
     }
 
-    /// Returns the row-echelon form of `self` with the transform.
+    /// Row-echelon form with its transform: returns `(X, E)` with
+    /// `X · self = E` and `E` an `m × n` row-echelon matrix
+    /// (`@/citation/DumasPernet2012` §2.2, alg. 2.6).
     ///
-    /// Computes `(X, E)` where `X · self = E` and `E` is in row-echelon
-    /// form. Implements Dumas–Pernet §2.2 algorithm 2.6 by composing
-    /// PLE with one [`trsm_lower`]
-    /// solve to invert `L`'s effect.
-    ///
-    /// `X` is an `m × m` matrix equal to `L_full⁻¹ · Pᵀ`, where `L_full`
-    /// is the full `m × m` unit lower-triangular matrix obtained by
-    /// appending an `(m − r) × (m − r)` identity block to the right of
-    /// `L`. By construction `X` is non-singular.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — `m × n` input.
-    ///
-    /// # Returns
-    ///
-    /// `(X, E)` such that `X · self == E` (verified by tests) and `E`
-    /// is row-echelon.
+    /// `X = L_full⁻¹ · Pᵀ` is `m × m` and non-singular, where `L_full` is the
+    /// PLE factor `L` padded to `m × m` unit lower-triangular.
     ///
     /// # Panics
     ///
-    /// Does not panic on rank-deficient inputs over `ConstField`. For
-    /// `m × 0` (zero-width) inputs over runtime-context fields without
-    /// a `zero_hint`, panics with a clear message — there is no `F`
-    /// witness to seed the identity `X`. Use `F: ConstField` or a
-    /// non-empty input.
+    /// Panics on an `m × 0` input with `m > 0` over a field whose
+    /// `zero_hint` is `None`.
     ///
     /// # Complexity
     ///
     /// `O(m · n · min(m, n) + m³)` field operations.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // A = [[0, 2], [1, 3]] over GF(7).
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 1, Fp::<7>::new(2));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(3));
-    /// let (_x, e) = a.row_echelon();
-    /// // E[0, 0] != 0 (leading entry of first row).
-    /// assert_ne!(e.get(0, 0), Fp::<7>::new(0));
-    /// ```
     pub fn row_echelon(&self) -> (FieldMatrix<F>, FieldMatrix<F>) {
         let (m, n) = self.shape();
         if m == 0 {
-            // X is 0×0, E is 0×n.
             let x = zero_matrix_like(0, 0, self);
             let e = zero_matrix_like(0, n, self);
             return (x, e);
         }
         if n == 0 {
-            // X is identity m×m, E is m×0. With cols == 0 we cannot read
-            // a witness from `self`'s storage (it has no cells); fall
-            // back to F::zero_hint(), which is `Some(F::zero())` for
-            // every ConstField in the project. Runtime-context fields
-            // (`Gf2mElement`) return `None` from zero_hint and would need
-            // a witness from a non-empty `self`; with `cols == 0` and
-            // any rows, no witness exists, so the only sound result is
-            // to panic with a clear message — matching the locked
-            // `gemm`/`matvec` zero-inner-dim contract from `ab791e27`.
+            // An `m × 0` matrix has no cell to take a zero from, so the
+            // identity `X` needs `F::zero_hint()`, which is `None` for
+            // runtime-context fields.
             let zero = F::zero_hint().expect(
                 "row_echelon: cannot construct identity X for an m×0 input \
                  over a runtime-context field (no F witness available); \
@@ -1583,12 +918,9 @@ impl<F: FiniteField> FieldMatrix<F> {
         }
 
         let (p, l, e, _r) = self.ple();
-        // Build L_full (m × m unit lower-triangular) by padding L's
-        // (m × r) trapezoidal shape with an identity block.
         let l_full = pad_l_to_full(&l, m, self);
 
-        // Pᵀ has 1 at (perm[i], i) — equivalently, a column-permutation
-        // of the m × m identity. Build it explicitly.
+        // Pᵀ has 1 at (perm[i], i).
         let zero = self.get(0, 0).zero_like();
         let one = zero.one_like();
         let mut p_t = FieldMatrix::new(m, m, zero.clone());
@@ -1598,7 +930,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         // Solve L_full · X = Pᵀ in place; result lands in p_t.
         trsm_lower(l_full.submat(.., ..), p_t.submat_mut(.., ..));
 
-        // E_full: m × n with E (r × n) at the top, zeros below.
         let r = e.rows();
         let mut e_full = FieldMatrix::new(m, n, zero);
         for i in 0..r {
@@ -1609,52 +940,17 @@ impl<F: FiniteField> FieldMatrix<F> {
         (p_t, e_full)
     }
 
-    /// Returns the reduced row-echelon form of `self` with the transform.
-    ///
-    /// Computes `(X, R)` where `X · self = R` and `R` is in RREF
-    /// (leading entries are 1, all other entries in pivot columns are
-    /// zero, leading 1s strictly to the right of the previous row's).
-    ///
-    /// Implements Dumas–Pernet §2.2 algorithm 2.7: starts from the
-    /// echelon `(X₀, E)` returned by [`row_echelon`](Self::row_echelon)
-    /// and peels each pivot column.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — `m × n` input.
-    ///
-    /// # Returns
-    ///
-    /// `(X, R)` such that `X · self == R` and `R` is in RREF.
+    /// Reduced row-echelon form with its transform: returns `(X, R)` with
+    /// `X · self = R` and `R` in RREF (`@/citation/DumasPernet2012` §2.2,
+    /// alg. 2.7).
     ///
     /// # Panics
     ///
-    /// Does not panic on `ConstField` inputs of any shape, rank, or
-    /// pivot pattern. For `m × 0` (zero-width) inputs over
-    /// runtime-context fields without a `zero_hint` (e.g.
-    /// `Gf2mElement`), the inner [`row_echelon`](Self::row_echelon)
-    /// call panics with a clear message — there is no `F` witness
-    /// available to seed the identity `X`.
+    /// Panics where [`row_echelon`](Self::row_echelon) does.
     ///
     /// # Complexity
     ///
-    /// `O(m · n · min(m, n) + m · (m + n) · r)` where `r = rank(self)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 3);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 2, Fp::<7>::new(1));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(3));
-    /// let (_x, r) = a.rref();
-    /// // R[0, 0] is the leading 1 of row 0.
-    /// assert_eq!(r.get(0, 0), Fp::<7>::new(1));
-    /// ```
+    /// `O(m · n · min(m, n) + m³)` field operations.
     pub fn rref(&self) -> (FieldMatrix<F>, FieldMatrix<F>) {
         let (m, n) = self.shape();
         if m == 0 || n == 0 {
@@ -1664,7 +960,6 @@ impl<F: FiniteField> FieldMatrix<F> {
         let zero = self.get(0, 0).zero_like();
         let one = zero.one_like();
 
-        // Identify pivots in the echelon form.
         let mut pivots: Vec<(usize, usize)> = Vec::new();
         let mut last: isize = -1;
         for i in 0..m {
@@ -1684,16 +979,11 @@ impl<F: FiniteField> FieldMatrix<F> {
             }
         }
 
-        // Fast path: blocked back-substitution via gemm_axpy_into_view (Stage 3a)
-        // and trsm_upper (Stage 3b). Falls back to the scalar loop below the
-        // shape reported by `back_sub_route`.
         if try_blocked_back_sub(&mut x, &mut e, &pivots, m, n) {
             return (x, e);
         }
 
-        // Scalar fallback (unchanged from original implementation).
         for &(pi, pc) in &pivots {
-            // Scale row `pi` so the pivot is 1.
             let pivot_val = e.get(pi, pc);
             if pivot_val != one {
                 let inv = pivot_val
@@ -1708,8 +998,8 @@ impl<F: FiniteField> FieldMatrix<F> {
                     x.set(pi, j, v);
                 }
             }
-            // Eliminate above (and below — already-zero by row-echelon
-            // form, but the loop is symmetric and cheap).
+            // Rows below `pi` are already zero in column `pc` by the echelon
+            // form; the zero-factor test skips them.
             for k in 0..m {
                 if k == pi {
                     continue;
@@ -1731,82 +1021,27 @@ impl<F: FiniteField> FieldMatrix<F> {
         (x, e)
     }
 
-    /// Returns the rank of `self`.
-    ///
-    /// Convenience wrapper for the fourth return of [`ple`](Self::ple).
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — `m × n` input.
+    /// Rank of `self`, computed by [`ple`](Self::ple).
     ///
     /// # Complexity
     ///
     /// `O(m · n · min(m, n))` field operations.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(1));
-    /// a.set(0, 1, Fp::<7>::new(2));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(2));
-    /// assert_eq!(a.rank(), 1);
-    /// ```
     pub fn rank(&self) -> usize {
         self.ple().3
     }
 
-    /// Returns a basis for the right null-space of `self`.
-    ///
-    /// The null-space `ker(self) = { v ∈ Fⁿ : self · v = 0 }` has
-    /// dimension `n − rank(self)`. This routine returns a basis of size
-    /// exactly that dimension, with each basis vector verified to lie
-    /// in the kernel by construction.
-    ///
-    /// Implementation: compute `(_, R) = self.rref()`, identify pivot
-    /// and free columns. For each free column `f`, build vector `v`
-    /// with `v[f] = 1` and `v[pivot_cols[k]] = -R[k, f]` for each
-    /// pivot row `k`.
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — `m × n` input.
-    ///
-    /// # Returns
-    ///
-    /// `Vec<FieldVec<F>>` of length `n − rank(self)`. Each entry is a
-    /// length-`n` vector in `ker(self)`.
-    ///
-    /// # Complexity
-    ///
-    /// Dominated by [`rref`](Self::rref).
+    /// Returns a basis of the right null-space `{ v ∈ Fⁿ : self · v = 0 }`:
+    /// `n − rank(self)` vectors of length `n`, one per free column `f` of the
+    /// RREF `R`, with `v[f] = 1` and `v[pivot_cols[k]] = −R[k, f]`.
     ///
     /// # Panics
     ///
-    /// Does not panic on `ConstField` inputs of any shape, rank, or
-    /// pivot pattern. For `m = 0` (zero-row) inputs over runtime-context
-    /// fields without a `zero_hint` (e.g. `Gf2mElement`), panics with a
-    /// clear message — there is no `F` witness available to seed the
-    /// canonical basis vectors. Use `F: ConstField`, or pass a non-empty
-    /// input.
+    /// Panics on a `0 × n` input with `n > 0` over a field whose `zero_hint`
+    /// is `None`.
     ///
-    /// # Examples
+    /// # Complexity
     ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(1, 3);
-    /// a.set(0, 0, Fp::<7>::new(1));
-    /// a.set(0, 1, Fp::<7>::new(2));
-    /// a.set(0, 2, Fp::<7>::new(3));
-    /// let basis = a.nullspace();
-    /// assert_eq!(basis.len(), 2);
-    /// ```
+    /// That of [`rref`](Self::rref).
     pub fn nullspace(&self) -> Vec<FieldVec<F>> {
         let (m, n) = self.shape();
         if n == 0 {
@@ -1872,61 +1107,26 @@ impl<F: FiniteField> FieldMatrix<F> {
         basis
     }
 
-    /// Returns the LU decomposition of `self` if it has full rank.
+    /// LU decomposition of a full-rank matrix: `Some((P, L, U))` with
+    /// `P · self = L · U` if and only if `rank(self) == min(m, n)`.
     ///
-    /// Returns `Some((P, L, U))` such that `P · self = L · U`, if and
-    /// only if `rank(self) == min(m, n)`. Otherwise returns `None`.
-    ///
-    /// `L` is the `m × r` factor from PLE (unit lower-trapezoidal) and
-    /// `U = E` is the `r × n` echelon factor (upper-trapezoidal under
-    /// full rank: leading entry of row `k` is at column `k`).
-    ///
-    /// # Arguments
-    ///
-    /// * `self` — `m × n` input.
-    ///
-    /// # Returns
-    ///
-    /// `Some((P, L, U))` if `rank == min(m, n)`, else `None`.
-    ///
-    /// # Panics
-    ///
-    /// Does not panic.
+    /// `L` (`m × r`, unit lower-trapezoidal) and `U = E` (`r × n`) are the
+    /// [`ple`](Self::ple) factors.
     ///
     /// # Complexity
     ///
     /// `O(m · n · min(m, n))` field operations.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::matrix::FieldMatrix;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
-    /// a.set(0, 0, Fp::<7>::new(2));
-    /// a.set(0, 1, Fp::<7>::new(4));
-    /// a.set(1, 0, Fp::<7>::new(1));
-    /// a.set(1, 1, Fp::<7>::new(3));
-    /// assert!(a.lu().is_some());
-    /// ```
     pub fn lu(&self) -> Option<(Permutation, FieldMatrix<F>, FieldMatrix<F>)> {
         let (m, n) = self.shape();
         let (p_ple, l, e, r) = self.ple();
         if r != m.min(n) {
             return None;
         }
-        // Contract orientation. PLE: `A = P_ple · L · E`. LU asks for
-        // `P_lu · A = L · U`, so `P_lu = P_ple^{-1}`. For involutive
-        // permutations these coincide, but for non-involutive `P_ple`
-        // (any non-trivial pivoting beyond a single swap), returning
-        // `p_ple` directly would silently violate the contract — the
-        // R3 reviewer caught this.
+        // PLE gives `A = P_ple · L · E`; LU returns `P_lu · A = L · U`, so
+        // `P_lu = P_ple⁻¹`.
         Some((p_ple.inverse(), l, e))
     }
 }
-
-// ─── Helpers for row_echelon ─────────────────────────────────────────────────
 
 /// Returns the inverse of a destination-source permutation.
 fn invert_perm(perm: &[usize]) -> Vec<usize> {
@@ -1965,21 +1165,9 @@ fn pad_l_to_full<F: FiniteField>(
     full
 }
 
-// ─── Blocked back-substitution (Stage 3a + 3b) ───────────────────────────────
-
-/// Conservative default for `ple.blocked_back_sub_min_dim()` in the active
-/// [`crate::tuning::CoreTuning`]: the minimum matrix dimension
-/// (max(m, n)) below which `try_blocked_back_sub` returns `false` and lets
-/// `rref` fall through to the scalar loop.
-///
-/// Below this threshold the scatter/gather overhead of allocating 8 scratch
-/// `FieldMatrix` instances dominates the back-sub work, regressing `rref`
-/// by up to ~20% vs the scalar loop (observed at GF(M31)/n=64/deficient).
-/// The crossover based on CCX1 measurements (2026-05-27) is between 64 and
-/// 256; a threshold of 128 leaves a ≥5% safety margin in both directions.
-/// This constant remains the compiled-in conservative default consumed by
-/// [`crate::tuning::CoreTuning::CONSERVATIVE`]; the live value comes from
-/// the active profile and is reported by [`back_sub_route`].
+/// Conservative default for `ple.blocked_back_sub_min_dim()`: the `max(m, n)`
+/// below which `try_blocked_back_sub` returns `false` and `rref` runs its
+/// scalar loop.
 pub(crate) const BLOCKED_BACK_SUB_MIN_DIM: usize = 128;
 
 /// The selected arm of [`FieldMatrix::rref`]'s back-substitution.
@@ -2013,31 +1201,16 @@ fn back_sub_route_resolved(blocked_back_sub_min_dim: usize, m: usize, n: usize) 
     }
 }
 
-/// Blocked back-substitution for [`FieldMatrix::rref`] (design `24a93e4e`).
+/// Blocked back-substitution for [`FieldMatrix::rref`] on the echelon pair
+/// `(x, e)` with the `(pivot_row, pivot_col)` list `pivots`.
 ///
-/// Given the echelon form `(x, e)` from [`FieldMatrix::row_echelon`] and the
-/// list of `(pivot_row, pivot_col)` pairs, performs the back-substitution in
-/// three stages:
-///
-/// 1. **Scale** each pivot row so that `e[pi, pc] = 1` (and scale the
-///    corresponding rows of `x`).
-///
-/// 2. **Stage 3b — Pivot rows TRSM.** Extract `E_piv_piv` (the `r×r`
-///    upper unit-triangular pivot-column block) and apply `trsm_upper` to
-///    both `E[pivot rows, free cols]` and `X[pivot rows, *]` to eliminate
-///    the off-diagonal coupling among pivot rows.
-///
-/// 3. **Stage 3a — Non-pivot rows GEMM.** Using the post-3b pivot-row blocks,
-///    eliminate the pivot columns from the non-pivot rows:
-///    - `E[non-pivot rows, free cols] -= E[non-pivot rows, pivot cols] · E[pivot rows, free cols]`
-///    - `X[non-pivot rows, *] -= E[non-pivot rows, pivot cols] · X[pivot rows, *]`
-///
-/// Finally, zero the pivot columns of `e` (set to identity columns).
+/// Scales the pivot rows to unit pivots, applies `trsm_upper` with the
+/// pivot-column block to `E[pivot rows, free cols]` and `X[pivot rows, *]`,
+/// subtracts `E[non-pivot rows, pivot cols]` times those blocks from the
+/// non-pivot rows, and sets the pivot columns of `e` to identity columns.
 ///
 /// Returns `false` without touching `x` or `e` when [`back_sub_route`]
-/// reports [`BackSubRoute::Scalar`] for `(m, n)`, leaving `rref` to run its
-/// scalar loop; otherwise runs the three stages and returns `true`. A
-/// pivot-free input is an immediate no-op returning `true`.
+/// reports [`BackSubRoute::Scalar`] for `(m, n)`; otherwise returns `true`.
 pub(crate) fn try_blocked_back_sub<F: FiniteField>(
     x: &mut FieldMatrix<F>,
     e: &mut FieldMatrix<F>,
@@ -2047,12 +1220,9 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
 ) -> bool {
     let r = pivots.len();
     if r == 0 {
-        // No pivots — e is all-zero, x is already the identity. Done.
         return true;
     }
 
-    // For small matrices the scatter/gather overhead exceeds the scalar loop
-    // cost.  Let the caller fall through to the scalar path.
     if back_sub_route(m, n) == BackSubRoute::Scalar {
         return false;
     }
@@ -2061,11 +1231,9 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
     let one = zero.one_like();
     let neg_one = zero.clone() - one.clone();
 
-    // Collect pivot row / column indices in declaration order.
     let pivot_rows: Vec<usize> = pivots.iter().map(|&(pi, _)| pi).collect();
     let pivot_cols: Vec<usize> = pivots.iter().map(|&(_, pc)| pc).collect();
 
-    // Non-pivot row and free (non-pivot) column index sets.
     let is_pivot_row = {
         let mut v = vec![false; m];
         for &pi in &pivot_rows {
@@ -2085,7 +1253,6 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
     let n_nonpiv = non_pivot_rows.len();
     let n_free = free_cols.len();
 
-    // ── 1. Scale pivot rows so that e[pi, pc] = 1 ────────────────────────────
     for &(pi, pc) in pivots {
         let pivot_val = e.get(pi, pc);
         if pivot_val != one {
@@ -2103,12 +1270,9 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
         }
     }
 
-    // ── 2. Stage 3b — Pivot rows TRSM ────────────────────────────────────────
-    //
-    // After scaling, E_piv_piv (r×r) is upper unit triangular.  We apply
-    // trsm_upper to BOTH the free-col block of e AND to x[pivot rows, *].
-    // Key: E_piv_piv is the `a` arg to trsm_upper (not `b`) so it is NOT
-    // modified by trsm_upper.  We extract it once and reuse for both calls.
+    // After scaling, the pivot-column block is upper unit-triangular.
+    // `trsm_upper` leaves it unmodified, so one extraction serves both
+    // solves.
     let e_piv_piv = {
         let mut m_pp = FieldMatrix::new(r, r, zero.clone());
         for (ki, &pi) in pivot_rows.iter().enumerate() {
@@ -2119,7 +1283,6 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
         m_pp
     };
 
-    // 2a. trsm_upper on E[pivot rows, free cols].
     if n_free > 0 {
         let mut e_piv_free = FieldMatrix::new(r, n_free, zero.clone());
         for (ki, &pi) in pivot_rows.iter().enumerate() {
@@ -2135,8 +1298,7 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
         }
     }
 
-    // 2b. trsm_upper on X[pivot rows, *].
-    // (r == 1 case: unit triangular 1×1 with diagonal 1 — trsm is identity, skip.)
+    // For `r == 1` the 1×1 unit block makes the solve the identity.
     if r > 1 {
         let mut x_piv = FieldMatrix::new(r, m, zero.clone());
         for (ki, &pi) in pivot_rows.iter().enumerate() {
@@ -2152,13 +1314,7 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
         }
     }
 
-    // ── 3. Stage 3a — Non-pivot rows GEMM ────────────────────────────────────
-    //
-    // Uses the post-stage-3b pivot-row values.
-    // E[non-pivot rows, free cols] -= E[non-pivot rows, pivot cols] · E[pivot rows, free cols]
-    // X[non-pivot rows, *]         -= E[non-pivot rows, pivot cols] · X[pivot rows, *]
     if n_nonpiv > 0 {
-        // E_nonpiv_piv ((m-r)×r): pivot-column values for non-pivot rows.
         let e_nonpiv_piv = {
             let mut m_np = FieldMatrix::new(n_nonpiv, r, zero.clone());
             for (ni, &npi) in non_pivot_rows.iter().enumerate() {
@@ -2169,7 +1325,6 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
             m_np
         };
 
-        // 3a-e: update E[non-pivot rows, free cols].
         if n_free > 0 {
             let mut e_piv_free_post = FieldMatrix::new(r, n_free, zero.clone());
             for (ki, &pi) in pivot_rows.iter().enumerate() {
@@ -2197,9 +1352,7 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
             }
         }
 
-        // 3a-x: update X[non-pivot rows, *].
         {
-            // X_piv (r×m) — post stage-3b, already updated in x.
             let mut x_piv_post = FieldMatrix::new(r, m, zero.clone());
             for (ki, &pi) in pivot_rows.iter().enumerate() {
                 for j in 0..m {
@@ -2227,9 +1380,6 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
         }
     }
 
-    // ── 4. Pivot column zeroing ───────────────────────────────────────────────
-    //
-    // Set e[*, pc] to the identity column: e[pi, pc] = 1, 0 elsewhere.
     for &(pi, pc) in pivots {
         for k in 0..m {
             e.set(k, pc, zero.clone());
@@ -2239,8 +1389,6 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
 
     true
 }
-
-// ─── Tests ───────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -2257,7 +1405,7 @@ mod tests {
 
     const MERSENNE_31: u64 = 2_147_483_647;
 
-    /// AES-irreducible Gf2mWide<8>.
+    /// GF(2^8) with the AES reduction polynomial (`@/citation/Nist2001`).
     struct PleGf2m8Cfg;
     impl Gf2mWideConfig<1> for PleGf2m8Cfg {
         const M: usize = 8;
@@ -2276,8 +1424,6 @@ mod tests {
     }
     type Gf2m16 = Gf2mWide<1, PleGf2m16Cfg>;
 
-    // Local convenience aliases that monomorphise the shared generic
-    // helpers in `field::test_random_matrix` to this module's configs.
     fn random_gf2m8(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Gf2m8> {
         random_gf2m_wide_1::<PleGf2m8Cfg>(rows, cols, seed)
     }
@@ -2302,7 +1448,6 @@ mod tests {
         };
         let rebuild = p.apply(&le);
         assert_eq!(rebuild, *a, "P · L · E != A");
-        // Echelon form of E.
         if r > 0 {
             let zero = a.get(0, 0).zero_like();
             let mut last: isize = -1;
@@ -2325,7 +1470,6 @@ mod tests {
                 last = pp as isize;
             }
         }
-        // Unit lower-trapezoidal L.
         if l.rows() > 0 && l.cols() > 0 {
             let zero = a.get(0, 0).zero_like();
             let one = zero.one_like();
@@ -2341,8 +1485,6 @@ mod tests {
         }
         r
     }
-
-    // ── Hard SC#1: P · L · E == A on five fields ─────────────────────────────
 
     #[test]
     fn test_ple_random_fp7() {
@@ -2385,8 +1527,6 @@ mod tests {
             check_ple(&a);
         }
     }
-
-    // ── Hard SC#2: rank-deficient inputs ─────────────────────────────────────
 
     #[test]
     fn test_ple_rank_deficient_duplicated_row() {
@@ -2466,8 +1606,6 @@ mod tests {
             proptest::prop_assert_eq!(rebuild, a);
         }
     }
-
-    // ── Hard SC#3: row_echelon and rref forms ────────────────────────────────
 
     fn check_row_echelon<F: FiniteField>(a: &FieldMatrix<F>) {
         let (x, e) = a.row_echelon();
@@ -2573,37 +1711,6 @@ mod tests {
         check_rref(&a);
     }
 
-    // ── Canonical RREF (jit:bd9c6e13) ────────────────────────────────────────
-    //
-    // `FieldMatrix::rref` is contractually required to produce the
-    // canonical reduced row-echelon form: the unique RREF whose pivot
-    // columns are the leftmost linearly-independent subset of the input's
-    // columns. The check_rref helper above verifies the structural RREF
-    // property (leading-1, zero in pivot columns, increasing pivot order)
-    // but does NOT verify canonical-leftmost pivots — which is a separate
-    // uniqueness contract. The harness below adds:
-    //
-    //   1. `direct_rref_oracle_fp` — shared SSOT in
-    //      `field::test_random_matrix`. Textbook column-by-column
-    //      Gauss-Jordan over GF(p); produces canonical RREF by
-    //      construction (jit:bd9c6e13 SSOT fix).
-    //   2. `dense_random_fp_seeded` — thin alias to the shared
-    //      `dense_random_fp_sparse` SSOT in `field::test_random_matrix`.
-    //      Same seeded sparse-random generator used by Markowitz sweep
-    //      tests in `sparse_matrix.rs`.
-    //   3. `check_canonical_rref_fp` — bit-exact equality between
-    //      `FieldMatrix::rref` and the oracle.
-    //
-    // The actual regression guard is
-    // `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` (5 cells
-    // that diverged pre-fix, with hardcoded expected pivot sets).
-    // `test_rref_canonical_15x17_gf7_seed1_structural_correctness` is
-    // the issue-named structural check (does NOT guard regression; see
-    // evidence doc § 10).
-
-    /// Thin alias: `dense_random_fp_seeded` delegates to the shared
-    /// `dense_random_fp_sparse` SSOT in `field::test_random_matrix`
-    /// (jit:bd9c6e13 SSOT fix). Tests below use this name unchanged.
     fn dense_random_fp_seeded<const P: u64>(
         rows: usize,
         cols: usize,
@@ -2660,21 +1767,10 @@ mod tests {
         );
     }
 
-    /// Issue-named structural-correctness check for jit:bd9c6e13.
-    ///
-    /// Input: 15x17 GF(7) matrix, density=0.05, seed=1 (same seeded
-    /// generator as `crates/gf2-core/src/field/sparse_matrix.rs` tests).
-    ///
-    /// NOTE: this exact cell happens to agree pre-fix and post-fix (the
-    /// pivots on this seed coincide by chance — see evidence doc § 10).
-    /// It is a structural correctness check, NOT a regression guard.
-    /// The actual regression guard is
-    /// `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` below.
     #[test]
     fn test_rref_canonical_15x17_gf7_seed1_structural_correctness() {
         let a = dense_random_fp_seeded::<7>(15, 17, 0.05, 1);
         check_canonical_rref_fp(&a);
-        // Rank reported by ple() must match the canonical pivot count.
         let (_x, got) = a.rref();
         assert_eq!(
             a.rank(),
@@ -2683,21 +1779,6 @@ mod tests {
         );
     }
 
-    /// Regression guard for jit:bd9c6e13 — hardcoded cells that diverged
-    /// pre-fix (from evidence doc § 3 discovery sweep, 47 divergent cells).
-    ///
-    /// Each entry: `(pre-XOR seed, rows, cols, density, expected canonical pivots)`.
-    /// The actual generator key used is `seed ^ 0xF1AB_CAFE` (matching
-    /// `test_rref_canonical_markowitz_grid_sweep_fp7`). Expected pivots
-    /// were captured at post-fix HEAD (commit 95f28a57) against
-    /// `direct_rref_oracle_fp`.
-    ///
-    /// Pre-fix pivot divergences observed:
-    ///   - seed=0x8,  3×5,  0.50: got `[1, 4]`,       expected `[1, 2, 4]`
-    ///   - seed=0x19, 8×8,  0.05: got `[1, 5]`,       expected `[1, 3, 5]`
-    ///   - seed=0x1f, 8×8,  0.05: got `[1, 2, 4]`,    expected `[1, 2, 4, 5]`
-    ///   - seed=0x4,  8×8,  0.25: got 5 pivots,        expected 6 pivots
-    ///   - seed=0xc,  8×8,  0.25: got 5 pivots,        expected 6 pivots
     #[test]
     fn test_rref_canonical_known_buggy_cells_jit_bd9c6e13() {
         // (pre-XOR seed, rows, cols, density, expected canonical pivots)
@@ -2710,10 +1791,7 @@ mod tests {
         ];
         for &(seed, rows, cols, density, expected_pivots) in cells {
             let a = dense_random_fp_seeded::<7>(rows, cols, density, seed ^ 0xF1AB_CAFE);
-            // bit-exact equality with the canonical oracle
             check_canonical_rref_fp(&a);
-            // Also assert the specific expected pivot columns (regression
-            // guard: if the fix regresses, the wrong pivot set is caught here).
             let (_x, got) = a.rref();
             let got_pivots = pivot_cols_of_rref(&got);
             assert_eq!(
@@ -2724,11 +1802,6 @@ mod tests {
         }
     }
 
-    /// Mirrors the seed/shape/density grid that `test_rref_markowitz_sweep_fp7`
-    /// uses in `sparse_matrix.rs` (32 seeds x 6 shapes x 5 densities), and
-    /// asserts byte-equal canonical RREF between the dense PLE-based
-    /// `FieldMatrix::rref` and the textbook oracle. Pre-fix this sweep
-    /// flagged 47 divergent cells (jit:bd9c6e13 evidence doc § "Reproducer").
     #[test]
     fn test_rref_canonical_markowitz_grid_sweep_fp7() {
         const SHAPES: &[(usize, usize)] = &[(1, 1), (3, 5), (5, 3), (8, 8), (15, 17), (24, 24)];
@@ -2759,16 +1832,8 @@ mod tests {
         );
     }
 
-    // Property-based test: bit-exact equality with the textbook canonical
-    // Gauss-Jordan oracle on 128 random inputs over GF(7) and GF(251),
-    // restricted to rank-deficient matrices.
-    //
-    // Per jit:bd9c6e13 SC#2: "property-based proptest covering 100+
-    // random rank-deficient shapes". Configured for 128 cases (> 100).
-    // Rank-deficient matrices are generated by outer-product
-    // construction `A = F * G` where `F` is rows×(rank) and `G` is
-    // (rank)×cols with `rank = min(rows, cols) - 1`, so
-    // `rank(A) <= rank < min(rows, cols)` by construction.
+    // Rank-deficient inputs `A = F · G` with `F` rows×rank, `G` rank×cols and
+    // `rank = min(rows, cols) − 1`.
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(128))]
 
@@ -2778,16 +1843,10 @@ mod tests {
             cols in 4usize..=16,
             seed in proptest::prelude::any::<u64>(),
         ) {
-            // Build a rank-deficient GF(7) matrix by outer-product
-            // construction: A = F * G where F is rows×(rank) and G is
-            // (rank)×cols with rank = min(rows,cols) - 1. This guarantees
-            // rank(A) <= rank < min(rows,cols) by construction.
-            let rank = rows.min(cols) - 1; // guaranteed < min(rows,cols)
+            let rank = rows.min(cols) - 1;
             let f7 = random_fp::<7>(rows, rank, seed);
             let g7 = random_fp::<7>(rank, cols, seed.wrapping_add(1));
             let a7 = gemm(&f7, &g7);
-            // rank(A) <= rank by construction; equality holds with high prob
-            // but we only need rank < min(rows,cols), which always holds.
             proptest::prop_assert!(
                 a7.rank() < rows.min(cols),
                 "product matrix should have rank < min(rows,cols)"
@@ -2799,7 +1858,6 @@ mod tests {
                 "FieldMatrix::rref != canonical oracle on GF(7) rank-deficient input"
             );
 
-            // Same for GF(251).
             let f251 = random_fp::<251>(rows, rank, seed.wrapping_add(2));
             let g251 = random_fp::<251>(rank, cols, seed.wrapping_add(3));
             let a251 = gemm(&f251, &g251);
@@ -2811,8 +1869,6 @@ mod tests {
             );
         }
     }
-
-    // ── Hard SC#4: nullspace ─────────────────────────────────────────────────
 
     fn check_nullspace<F: FiniteField>(a: &FieldMatrix<F>) {
         let basis = a.nullspace();
@@ -2872,8 +1928,6 @@ mod tests {
         assert_eq!(basis.len(), 4);
     }
 
-    // ── Hard SC#5: lu ────────────────────────────────────────────────────────
-
     #[test]
     fn test_lu_full_rank_square() {
         let a = random_fp::<MERSENNE_31>(4, 4, 0x77);
@@ -2897,19 +1951,15 @@ mod tests {
         }
     }
 
-    /// Hand-crafted matrix that forces a NON-INVOLUTIVE permutation in
-    /// the PLE recursion. The 4×4 identity-shifted matrix
+    /// The 4×4 cyclic-shift matrix
     ///
     ///   [ 0 0 0 1 ]
     ///   [ 1 0 0 0 ]
     ///   [ 0 1 0 0 ]
     ///   [ 0 0 1 0 ]
     ///
-    /// has rank 4. PLE's column-by-column pivoting must do a 4-cycle
-    /// (or compose three 2-cycles) on the rows. If `lu()` returns the
-    /// PLE permutation directly (the bug R3 caught), then `P · A` does
-    /// not equal `L · U`. This test fails on the buggy code and passes
-    /// on the orientation-corrected code.
+    /// has rank 4 and forces a non-involutive row permutation, for which
+    /// the PLE permutation and its inverse differ.
     #[test]
     fn test_lu_non_involutive_permutation_fp_m31() {
         type F = Fp<MERSENNE_31>;
@@ -2924,10 +1974,6 @@ mod tests {
         assert_eq!(pa, lu, "lu contract: P · A == L · U for non-involutive P");
     }
 
-    // Proptest covering 50 random 5×5 matrices over Mersenne-31. Any
-    // non-trivial random matrix is expected to be full-rank with
-    // probability (1 − 1/p) · (1 − 1/p²) · … ≈ 1; whenever lu()
-    // returns Some, P · A == L · U must hold.
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(50))]
         #[test]
@@ -2943,12 +1989,6 @@ mod tests {
         }
     }
 
-    /// Independently-computed-rank check (reviewer-asked): build matrices
-    /// with a KNOWN rank by construction using DISTINCT canonical-basis
-    /// vectors (e_i ⊗ e_i pattern), then assert `m.rank() == known_rank`.
-    /// Using basis vectors guarantees the constructed rank equals the
-    /// number of outer products without depending on the field size or
-    /// PRNG quality.
     #[test]
     fn test_rank_matches_independent_construction_fp_m31() {
         type F = Fp<MERSENNE_31>;
@@ -2957,12 +1997,7 @@ mod tests {
         for &target_rank in &[1usize, 2, 3, 4, 5] {
             let mut a = FieldMatrix::<F>::zeros(m, n);
             for i in 0..target_rank {
-                // u_i = e_i (the i-th canonical basis vector in Fp^m),
-                // v_i = e_i (in Fp^n). The sum ∑ u_i ⊗ v_i is a
-                // rank-`target_rank` matrix with 1s on the leading
-                // diagonal and 0s elsewhere — independently rank-`r` by
-                // construction (the diagonal gives an r × r identity
-                // submatrix).
+                // ∑ e_i ⊗ e_i has an r × r identity submatrix, hence rank r.
                 a.set(i, i, F::new(1));
             }
             assert_eq!(
@@ -2975,10 +2010,7 @@ mod tests {
             );
         }
 
-        // Also cross-check on a non-trivial rank-2 matrix built from two
-        // random rank-1 outer products: a = u1 ⊗ v1 + u2 ⊗ v2 with u1
-        // and u2 linearly independent (and same for v1, v2). Use
-        // distinct canonical-basis-shifted vectors.
+        // a = u1 ⊗ v1 + u2 ⊗ v2 with u1, u2 and v1, v2 linearly independent.
         let u1: Vec<F> = (0..m).map(|j| F::new(j as u64 + 1)).collect();
         let u2: Vec<F> = (0..m).map(|j| F::new(((m - j) as u64) * 7 + 13)).collect();
         let v1: Vec<F> = (0..n).map(|j| F::new(j as u64 + 2)).collect();
@@ -2989,9 +2021,6 @@ mod tests {
                 a.set(r, c, u1[r] * v1[c] + u2[r] * v2[c]);
             }
         }
-        // Two independent outer products → rank 2 (with probability ≈ 1
-        // for large fields and these specific seeds; verified at
-        // construction).
         assert_eq!(
             a.rank(),
             2,
@@ -3010,8 +2039,6 @@ mod tests {
             assert_eq!(pa, lu);
         }
     }
-
-    // ── Hard SC#6: edge cases ────────────────────────────────────────────────
 
     #[test]
     fn test_ple_identity() {
@@ -3061,19 +2088,13 @@ mod tests {
         assert_eq!(r, 0);
     }
 
-    /// Zero-width input (`m × 0`) edge case: every public op must not
-    /// panic. `row_echelon` returns `(I_m, 0_m×0)`; `rref` forwards;
-    /// `lu` returns `Some` (rank == 0 == min(m, 0)); `nullspace` is
-    /// empty (n == 0).
     #[test]
     fn test_zero_width_edge_does_not_panic() {
         let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(4, 0);
-        // ple
         let (_p, l, e, r) = a.ple();
         assert_eq!(r, 0);
         assert_eq!(l.shape(), (4, 0));
         assert_eq!(e.shape(), (0, 0));
-        // row_echelon: X = I_4, E = 0_{4×0}
         let (x, e) = a.row_echelon();
         assert_eq!(x.shape(), (4, 4));
         assert_eq!(e.shape(), (4, 0));
@@ -3091,16 +2112,13 @@ mod tests {
                 );
             }
         }
-        // rref forwards to row_echelon for m × 0.
         let (_x2, e2) = a.rref();
         assert_eq!(e2.shape(), (4, 0));
-        // lu: rank == 0 == min(4, 0); Some.
+        // rank == 0 == min(4, 0).
         let lu = a.lu();
         assert!(lu.is_some(), "lu(m × 0) must return Some (rank == min)");
-        // nullspace is empty (n - rank == 0).
         let ns = a.nullspace();
         assert_eq!(ns.len(), 0);
-        // rank
         assert_eq!(a.rank(), 0);
     }
 
@@ -3139,24 +2157,6 @@ mod tests {
         let wide = random_gf2m8(3, 8, 0xA5);
         check_ple(&wide);
     }
-
-    // ── SC#8: allocation budget (strict integer pins per replan §3.4) ────────
-    //
-    // Each test below invokes the corresponding derived op once on a random
-    // input over `Fp<MERSENNE_31>` and asserts the EXACT number of
-    // `FieldMatrix::new` (plus `transpose` / `to_owned`) bumps observed. The
-    // counter increments on every `FieldMatrix::new` (`matrix.rs:194`),
-    // `FieldMatrix::transpose` (`matrix.rs:1102`), `MatView::to_owned`
-    // (`matrix.rs:1574`), and `MatViewMut::to_owned` (`matrix.rs:1890`).
-    //
-    // A change in any of these counts means: either the recursion strategy
-    // changed, the kernels' internal allocation count changed, or both. Any
-    // such change MUST be cross-checked against the doc-contract budget in
-    // the module rustdoc and the matching benchmark numbers in
-    // `benches/ple.rs`.
-
-    /// Per-test serial guard: the counter is thread-local, but `#[serial]`
-    /// keeps the budget reading deterministic across nextest runs.
 
     #[test]
     #[serial]
@@ -3237,69 +2237,28 @@ mod tests {
         );
     }
 
-    // Pinned allocation counts (strict integer asserts per replan §3.4).
-    //
-    // Each count is the exact `FIELDMATRIX_NEW_COUNT` reading observed
-    // for the current view-based driver. Update only when the recursion
-    // strategy or the underlying gemm/trsm kernels change their
-    // allocation footprint. The breakdown matches the budget in the
-    // module rustdoc:
-    //
-    //   ple(m × n) = 1 (working clone)
-    //              + 2 (final L + final E from split_compact)
-    //              + per-level cost (materialised L1, L1_bot, plus the
-    //                gemm and trsm kernels' B-transpose scratches and
-    //                their own internal recursion's gemm calls).
-    //
-    // The counter increments on FieldMatrix::new (via FieldMatrix::clone,
-    // FieldMatrix::zeros, MatView::transpose, MatViewMut::to_owned, etc.).
-    //
-    // The 4736 count at n=1024 is dominated by the trsm_lower's recursive
-    // gemm_axpy_into_view calls (each pays 2 transpose bumps: to_owned +
-    // transpose). PLE has log₂(1024)=10 column-halving levels; trsm at
-    // each level uses the active `triangular.base_case_max_dim = 8` profile
-    // value selected by the jit:73ec5da3 sweep. The resulting recursion
-    // contributes the measured 4736 bumps; every byte of intermediate
-    // storage is documented and accounted for here.
-    //
-    // The 2026-05-07 jit:73ec5da3 evidence records ~13% more allocations
-    // at n=1024 than its threshold-32 comparison (4192 → 4736), together
-    // with 1–7% lower wall time on the target Mersenne-31 cells (see the
-    // sweep table in dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md).
+    // `fieldmatrix_new_count` readings for one call with no tuning profile
+    // installed.
     const EXPECTED_PLE_N4: u64 = 14;
     const EXPECTED_PLE_N64: u64 = 264;
     const EXPECTED_PLE_N1024: u64 = 4736;
     const EXPECTED_ROW_ECHELON_N64: u64 = 280;
-    // This binary installs no tuning profile, so `blocked_back_sub_min_dim`
-    // resolves to its conservative default BLOCKED_BACK_SUB_MIN_DIM = 128. At
-    // n=64 try_blocked_back_sub returns false (n < 128) so rref falls through
-    // to the scalar loop — no extra allocations vs row_echelon. For n >= 128
-    // the blocked path adds 8 scratch matrices + trsm B-transposes; see the
-    // BLOCKED_BACK_SUB_MIN_DIM doc comment.
+    // Below `BLOCKED_BACK_SUB_MIN_DIM`, `rref` runs the scalar loop and
+    // allocates what `row_echelon` does.
     const EXPECTED_RREF_N64: u64 = 280;
     const EXPECTED_LU_N64: u64 = 264;
 
-    // Boundary lengths chosen per the PLE design doc § 6.1 (jit:6823c8a0)
-    // and the gf2-core word-boundary test convention (0, 1, 63, 64, 65)
-    // plus the 16-byte AVX2 boundary (15, 16, 17). Consumed by the
-    // boundary-length proptest sweep below (SC#2): each (m, n) pair is
-    // drawn from this set and the panelized PLE output is asserted
-    // bit-exact against `ple_scalar_oracle`.
+    // Word boundaries (0, 1, 63, 64, 65) and the 16-byte AVX2 boundary
+    // (15, 16, 17).
     const PANEL_BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
 
-    /// Sanity wall-time measurement: runs `FieldMatrix::ple` on a
-    /// `256 × 256` GF(251) matrix five times and prints the median per-call
-    /// duration. Output is informational only; the test always passes
-    /// (the goal is to catch the case where the panelized dispatch is
-    /// either not active or actively making things slower, by giving the
-    /// developer a quick numeric handle). The b0fa00af pre-change
-    /// baseline was ~4.7 ms.
+    /// Prints the median of five `FieldMatrix::ple` timings on a `256 × 256`
+    /// GF(251) matrix; asserts nothing.
     #[test]
     #[ignore = "slow: wall-time probe for panelized PLE; informational only"]
     fn test_ple_panelized_wall_time_probe_gf251_256_uniform() {
         let n = 256;
         let a = random_fp::<251>(n, n, 0xC3FAu64);
-        // Warmup.
         for _ in 0..3 {
             let _ = a.ple();
         }
@@ -3314,21 +2273,6 @@ mod tests {
         eprintln!("pluq GF(251) n=256 uniform median: {median_us} µs (samples {samples:?})");
     }
 
-    /// Full panelized-PLE measurement sweep across the A8-row cells
-    /// (rows 6-17, 71) plus the new R1-amendment cells per the design
-    /// doc § 7. Emits one CSV line per cell to stderr in the format
-    /// `op,field,n,regime,trial,wall_ns,wall_median_ns`. 5 trials per
-    /// cell, with 3 warmup runs first.
-    ///
-    /// To capture the output, run with the CCX1 flock wrapper:
-    /// ```bash
-    /// ./dev/scripts/ccx1-bench-flock.sh \
-    ///   cargo test -p gf2-core --release --all-features --lib -- \
-    ///     --ignored --nocapture --test-threads 1 \
-    ///     'test_ple_panelized_wall_time_full_sweep'
-    /// ```
-    /// (stderr lines bracketed by `--- panelized-ple-sweep BEGIN/END ---`
-    /// markers are the canonical CSV emission.)
     #[test]
     #[ignore = "slow: full panelized PLE wall-time sweep (~30 s)"]
     fn test_ple_panelized_wall_time_full_sweep() {
@@ -3387,10 +2331,8 @@ mod tests {
         eprintln!("--- panelized-ple-sweep END ---");
     }
 
-    /// Helper for `test_ple_panelized_wall_time_full_sweep`: measures
-    /// a single (field, n, regime) cell with 3 warmup runs + 5 trials,
-    /// returns the median wall-time in ns, and emits one CSV row per
-    /// trial to stderr.
+    /// Median wall time in ns of five `ple` calls after three warm-ups; emits
+    /// one CSV row per trial to stderr.
     fn measure_cell<const P: u64>(n: usize, regime: &str, field: &str) -> u128 {
         let seed = P
             .wrapping_mul(0x9E37_79B9)
@@ -3419,8 +2361,8 @@ mod tests {
         samples[samples.len() / 2]
     }
 
-    /// Helper: measures a single (field, n, regime) cell for `row_echelon`
-    /// with 3 warmup runs + 5 trials, returns the median wall-time in ns.
+    /// Median wall time in ns of five `row_echelon` calls after three
+    /// warm-ups; emits one CSV row per trial to stderr.
     fn measure_echelon_cell<const P: u64>(n: usize, regime: &str, field: &str) -> u128 {
         let seed = P
             .wrapping_mul(0x9E37_79B9)
@@ -3449,18 +2391,6 @@ mod tests {
         samples[samples.len() / 2]
     }
 
-    /// Wall-time sweep for the A8 echelon cells (rows 18-33, 72-73).
-    ///
-    /// Run via:
-    /// ```bash
-    /// ./dev/scripts/ccx1-bench-flock.sh \
-    ///   cargo test -p gf2-core --release --all-features --lib \
-    ///   -- --nocapture --ignored field::ple::tests::test_echelon_wall_time_full_sweep \
-    ///   2>&1 | grep -E 'echelon|BEGIN|END'
-    /// ```
-    ///
-    /// Output is CSV emitted to stderr between `--- echelon-sweep BEGIN ---`
-    /// and `--- echelon-sweep END ---`.
     #[test]
     #[ignore = "slow: echelon wall-time sweep for A8 rows 18-33 and 72-73 (~60 s)"]
     fn test_echelon_wall_time_full_sweep() {
@@ -3512,12 +2442,8 @@ mod tests {
         eprintln!("--- echelon-sweep END ---");
     }
 
-    /// Scalar back-substitution verbatim from pre-`869ce43b` commit `38387525`.
-    ///
-    /// Serves as the state-A anchor for SC#5 same-operation non-regression:
-    /// calling this function on a given matrix is equivalent to calling
-    /// `rref()` at commit `38387525`. The blocked path in the production
-    /// `rref()` is the state-B counterpart.
+    /// `rref` with scalar back-substitution only: the reference the blocked
+    /// path is timed against.
     fn rref_scalar_state_a<const P: u64>(
         a: &FieldMatrix<Fp<P>>,
     ) -> (FieldMatrix<Fp<P>>, FieldMatrix<Fp<P>>) {
@@ -3584,13 +2510,9 @@ mod tests {
         (x, e)
     }
 
-    /// Helper: measure both state-A (scalar back-sub) and state-B (blocked
-    /// back-sub) rref on the same matrix, 10 trials each, 3 warm-up calls.
-    ///
-    /// Returns `(median_a_ns, median_b_ns)`. Emits per-trial CSV lines to
-    /// stderr:
-    /// - `rref_A,<field>,<n>,<regime>,<trial>,<wall_ns>,`
-    /// - `rref_B,<field>,<n>,<regime>,<trial>,<wall_ns>,`
+    /// Times scalar (`rref_A`) and blocked (`rref_B`) back-substitution on
+    /// one matrix; returns `(median_a_ns, median_b_ns)` and emits one CSV
+    /// line per trial to stderr.
     fn measure_rref_paired_cell<const P: u64>(n: usize, regime: &str, field: &str) -> (u128, u128) {
         let seed = P
             .wrapping_mul(0x9E37_79B9)
@@ -3604,7 +2526,6 @@ mod tests {
         } else {
             random_fp::<P>(n, n, seed)
         };
-        // Warm up both paths.
         for _ in 0..3 {
             let _ = rref_scalar_state_a::<P>(&a);
             let _ = a.rref();
@@ -3633,30 +2554,8 @@ mod tests {
         )
     }
 
-    /// SC#5 non-regression: paired same-operation `rref` delta
-    /// (state A = scalar back-sub @ `38387525` vs state B = blocked back-sub).
-    ///
-    /// Previously-PASSing cells (ratio ≤ 1.5× before `869ce43b`):
-    /// GF(7)/n={64,256,1024}, GF(31)/n={64,256}, GF(65521)/n={64,256,1024},
-    /// GF(M31)/n={64,256,1024}, all uniform + deficient where applicable.
-    ///
-    /// SC#5 is satisfied when every cell's delta
-    /// `(B_median − A_median) / A_median ≤ 5%`.
-    ///
-    /// Run via (CCX1 flock guard required):
-    /// ```bash
-    /// ./dev/scripts/ccx1-bench-flock.sh \
-    ///   cargo test -p gf2-core --release --all-features --lib \
-    ///   -- --nocapture --ignored field::ple::tests::test_rref_non_regression_wall_time \
-    ///   2>&1 | grep -E 'rref|BEGIN|END'
-    /// ```
-    ///
-    /// Output is CSV emitted to stderr between `--- rref-nonreg BEGIN ---`
-    /// and `--- rref-nonreg END ---`.
-    ///
-    /// It is a wall-clock measurement, so it is additionally gated behind
-    /// `GF2_BENCH=1`: on a shared CI runner the numbers measure the runner, not
-    /// the code, and the sweep exceeds the nightly per-test cap.
+    /// Paired `rref` timing, scalar against blocked back-substitution, as CSV
+    /// on stderr. Runs only under `GF2_BENCH=1`.
     #[test]
     #[ignore = "bench: rref SC#5 non-regression paired 10-trial sweep (~30 s); run on a quiesced host"]
     fn test_rref_non_regression_wall_time() {
@@ -3668,7 +2567,6 @@ mod tests {
             return;
         }
 
-        // Previously-PASSing cells only (echelon ratio ≤ 1.5× at 38387525).
         const CELLS: &[(u64, &str, usize, &str)] = &[
             (7, "GF(7)", 64, "uniform"),
             (7, "GF(7)", 64, "deficient"),
@@ -3740,11 +2638,8 @@ mod tests {
         // binaries `tests/tuning_profile_ple_*_install*.rs`, because the
         // conservative panel base width is narrower than either lane width.
 
-        // `simd_ple_panel_lane()` should report `Byte` for P <= 251 and
-        // `U16` for 252 <= P < 65536 (medium primes, e.g. GF(65521);
-        // issue `68db401b`) on any AVX2 host with the `simd` feature.
-        // Without the simd feature it always returns `None` (the kernel
-        // dispatch is feature-gated). Detect both axes.
+        // On an AVX2 host with the `simd` feature the lane is `Byte` for
+        // P <= 251 and `U16` for 252 <= P < 65536.
         #[cfg(feature = "simd")]
         {
             if std::arch::is_x86_feature_detected!("avx2") {
@@ -3776,22 +2671,17 @@ mod tests {
         }
         #[cfg(not(feature = "simd"))]
         {
-            // Without `simd`, every prime should report `None`.
             assert_eq!(<Fp<7> as FiniteField>::simd_ple_panel_lane(), None);
             assert_eq!(<Fp<251> as FiniteField>::simd_ple_panel_lane(), None);
             assert_eq!(<Fp<65521> as FiniteField>::simd_ple_panel_lane(), None);
         }
-        // P >= 65536 must NEVER advertise a panel lane — both byte-lane
-        // (P <= 251) and u16-lane (252..65536) kernels exclude
-        // it.
         assert_eq!(
             <Fp<MERSENNE_31> as FiniteField>::simd_ple_panel_lane(),
             None
         );
     }
 
-    /// Helper: build a rank-deficient matrix of shape (m, n) over Fp<P>
-    /// with rank exactly `min(m, n) / 2`, via outer-product `F · G`.
+    /// An `m × n` matrix of rank at most `rank`, the product `F · G`.
     fn random_fp_rank_deficient<const P: u64>(
         m: usize,
         n: usize,
@@ -3803,8 +2693,6 @@ mod tests {
         gemm(&f, &g)
     }
 
-    /// Helper: run `check_ple` on a rank-deficient input for every
-    /// (m, n) boundary pair where rank-deficient construction is possible.
     fn rank_deficient_sweep_fp<const P: u64>() {
         for &m in PANEL_BOUNDARY_LENS {
             for &n in PANEL_BOUNDARY_LENS {
@@ -3858,15 +2746,8 @@ mod tests {
         rank_deficient_sweep_fp::<65521>();
     }
 
-    /// Scalar PLE oracle: runs the full PLE factorisation on `a` using
-    /// `ple_in_place_window_no_panel`, which explicitly bypasses the
-    /// SIMD panel-base dispatch path. Used by proptests as the bit-exact
-    /// reference to compare the panelized output against.
-    ///
-    /// The oracle is semantically identical to `FieldMatrix::ple` but
-    /// calls `ple_in_place_window_no_panel` instead of `ple_in_place`
-    /// so the panel-base SIMD kernel is never invoked, giving a pure
-    /// scalar result.
+    /// `FieldMatrix::ple` through `ple_in_place_window_no_panel`, so the SIMD
+    /// panel kernel never runs.
     pub(super) fn ple_scalar_oracle<F: FiniteField>(
         a: &FieldMatrix<F>,
     ) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
@@ -3893,18 +2774,6 @@ mod tests {
         (Permutation::from_indices(inverse_perm), l, e, rank)
     }
 
-    // Proptest: property-based sweep for the panelized PLE path over
-    // all 6 small primes per SC#2. 32 cases per field at m, n in [1, 96].
-    //
-    // Each test:
-    //   1. Generates a random matrix `a`.
-    //   2. Runs the panelized PLE (`a.ple()`) — may invoke the AVX2 panel
-    //      kernel for P ≤ 251.
-    //   3. Runs the scalar oracle (`ple_scalar_oracle(&a)`) — forces the
-    //      `ple_in_place_window_no_panel` path, bypassing all SIMD dispatch.
-    //   4. Asserts bit-exact equality of
-    //      `(P_panel, L_panel, E_panel, r_panel) == (P_scalar, L_scalar, E_scalar, r_scalar)`.
-    //   5. Also verifies the `P · L · E == A` contract as a sanity check.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 32, .. proptest::test_runner::Config::default() })]
 
@@ -3921,7 +2790,6 @@ mod tests {
             proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
             proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
             proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
-            // Sanity: P · L · E == A.
             let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
@@ -4042,10 +2910,6 @@ mod tests {
         }
     }
 
-    // Cross-field rank-deficient proptest: builds rank-deficient matrices
-    // via outer-product construction and verifies panelized PLE output
-    // is bit-exact vs the scalar oracle, reports `rank <= constructed_rank`,
-    // and honours `P · L · E == A`.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 16, .. proptest::test_runner::Config::default() })]
 
@@ -4200,23 +3064,6 @@ mod tests {
         }
     }
 
-    // Boundary-length proptest sweep per SC#2 (jit:6823c8a0): for every
-    // small prime in `{7, 31, 127, 241, 251, 65521}` the inner test body
-    // exhaustively iterates **all** `(m, n)` pairs drawn from
-    // `PANEL_BOUNDARY_LENS = {0, 1, 15, 16, 17, 63, 64, 65}` and asserts
-    // bit-exact equality of `(P, L, E, rank)` between the panelized PLE
-    // and the scalar oracle. The empty `(0, 0)` matrix is excluded
-    // (`a.ple()` returns rank 0 trivially); every other boundary pair —
-    // including degenerate-shape `m=0` or `n=0` rows/columns — is
-    // covered every proptest case.
-    //
-    // The proptest macro drives **seed variance** rather than `(m, n)`
-    // sampling: each of the 8 cases per prime fans out the matrix
-    // generator's seed over `0u64..1_000_000`, so every boundary pair is
-    // tested 8 times against 8 different random matrices in addition to
-    // the standalone single-seed coverage. This gives both deterministic
-    // exhaustive boundary coverage AND randomized matrix variance — both
-    // halves of "proptest sweep at boundary lengths" per the SC.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
 
@@ -4335,29 +3182,8 @@ mod tests {
         }
     }
 
-    // ── RREF blocked back-substitution correctness — proptests ────────────────
-    //
-    // SC#2 (jit:869ce43b): bit-exact correctness of blocked RREF vs the scalar
-    // oracle across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521),
-    // GF(2^31-1) at all boundary (m, n) ∈ PANEL_BOUNDARY_LENS² and for both
-    // uniform and rank-deficient regimes.
-    //
-    // Structure (matches sibling PLE proptests above):
-    // - `proptest!` macro drives seed variance over 0..1_000_000, 8 cases.
-    // - Inner `for m in BOUNDARY_LENS { for n in BOUNDARY_LENS { ... } }` loop
-    //   provides exhaustive boundary-length coverage.
-    // - `rref_scalar_oracle` bypasses any blocked dispatch path, giving the
-    //   bit-exact scalar reference.
-    // - Uniform regime: random matrix of shape (m, n).
-    // - Rank-deficient regime: `m×n` matrix of rank ⌊min(m,n)/2⌋ via outer-product.
-
-    /// Scalar RREF oracle: computes `self.rref()` via the unmodified scalar
-    /// back-substitution loop, bypassing the `try_blocked_back_sub` fast path.
-    /// Used by proptest sweep as the bit-exact reference.
-    ///
-    /// Implementation: calls `row_echelon()` (which already uses the panelized
-    /// PLE), then applies the scalar pivot-column loop verbatim from the original
-    /// `rref()` body (the fallback branch that `try_blocked_back_sub` bypasses).
+    /// `rref` through the scalar back-substitution loop, bypassing
+    /// `try_blocked_back_sub`.
     fn rref_scalar_oracle<F: FiniteField>(a: &FieldMatrix<F>) -> (FieldMatrix<F>, FieldMatrix<F>) {
         let (m, n) = a.shape();
         if m == 0 || n == 0 {
@@ -4366,7 +3192,6 @@ mod tests {
         let (mut x, mut e) = a.row_echelon();
         let zero = a.get(0, 0).zero_like();
         let one = zero.one_like();
-        // Identify pivots.
         let mut pivots: Vec<(usize, usize)> = Vec::new();
         let mut last: isize = -1;
         for i in 0..m {
@@ -4385,7 +3210,6 @@ mod tests {
                 break;
             }
         }
-        // Scalar back-substitution (original rref fallback, verbatim).
         for &(pi, pc) in &pivots {
             let pivot_val = e.get(pi, pc);
             if pivot_val != one {
@@ -4420,13 +3244,9 @@ mod tests {
         (x, e)
     }
 
-    // Boundary-length proptest sweep for blocked RREF across all 7 primes.
-    // Cases: 8 (seed variance); (m, n) exhaustive over PANEL_BOUNDARY_LENS.
-    // Regime: uniform.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
 
-        // § 6.3 §7.1 — GF(7) uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_fp7(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4445,7 +3265,6 @@ mod tests {
             }
         }
 
-        // GF(31) uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_fp31(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4464,7 +3283,6 @@ mod tests {
             }
         }
 
-        // GF(127) uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_fp127(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4483,7 +3301,6 @@ mod tests {
             }
         }
 
-        // GF(241) uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_fp241(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4502,7 +3319,6 @@ mod tests {
             }
         }
 
-        // GF(251) uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_fp251(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4521,7 +3337,6 @@ mod tests {
             }
         }
 
-        // GF(65521) uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_fp65521(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4540,7 +3355,6 @@ mod tests {
             }
         }
 
-        // GF(2^31-1) Mersenne31 uniform boundary sweep
         #[test]
         fn prop_blocked_rref_boundary_sweep_uniform_mersenne31(seed in 0u64..1_000_000) {
             for &m in PANEL_BOUNDARY_LENS {
@@ -4560,10 +3374,6 @@ mod tests {
         }
     }
 
-    // Rank-deficient regime proptest sweep.
-    // For each (m, n) pair where rank-deficient construction is possible
-    // (min(m, n) >= 2), generate a matrix of rank ⌊min(m,n)/2⌋ and assert
-    // bit-exact RREF output.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
 
@@ -4722,14 +3532,6 @@ mod tests {
         }
     }
 
-    // ─── Coverage: try_blocked_back_sub at the conservative default ─────────────
-    //
-    // `try_blocked_back_sub` fires only when max(m, n) reaches
-    // `blocked_back_sub_min_dim`, which resolves to BLOCKED_BACK_SUB_MIN_DIM =
-    // 128 in this binary (no profile is installed). The proptest sweep stays at
-    // PANEL_BOUNDARY_LENS (max = 65) and never reaches the threshold. These
-    // four deterministic tests close the gap.
-
     #[test]
     fn test_rref_128x128_fp7_blocked_back_sub() {
         let a = random_fp::<7>(128, 128, 0xBB01);
@@ -4761,22 +3563,13 @@ mod tests {
 
     #[test]
     fn test_rref_128x128_rank_deficient_fp7_blocked_back_sub() {
-        // Rank-deficient 128×128 matrix: rank 64, so some pivot columns are
-        // absent.  The blocked back-substitution must handle this gracefully.
+        // Rank 64, so some pivot columns are absent.
         let a = random_fp_rank_deficient::<7>(128, 128, 64, 0xBB04);
         let (x_blocked, r_blocked) = a.rref();
         let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
         assert_eq!(r_blocked, r_scalar);
         assert_eq!(x_blocked, x_scalar);
     }
-
-    // ─── Route reporters under the conservative profile ─────────────────────
-    //
-    // No test in this binary installs a tuning profile, so `tuning::active()`
-    // resolves to `CoreTuning::CONSERVATIVE`, whose PLE entries are defined
-    // by naming the two constants below. The installed-profile halves of both
-    // boundaries live in `tests/tuning_profile_ple_install.rs` and
-    // `tests/tuning_profile_ple_install_above.rs`.
 
     #[test]
     fn test_ple_panel_route_boundary_is_the_conservative_panel_width() {
