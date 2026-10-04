@@ -1,9 +1,8 @@
 //! Conformance suite for exact compressed-state permanental-rank propagation.
-//!
-//! The transition oracle below represents a subspace as its complete sorted
-//! set of vectors. It constructs spans by explicit closure and contraction
-//! images by applying the contraction to every element, so it shares neither
-//! RREF normalization nor basis-image code with the production implementation.
+//! The transition oracle below represents a subspace as its complete sorted set
+//! of vectors. It constructs spans by explicit closure and contraction images
+//! by applying the contraction to every element, so it shares neither RREF
+//! normalization nor basis-image code with the production implementation.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::{Hash, Hasher};

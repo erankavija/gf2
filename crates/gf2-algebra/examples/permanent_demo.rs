@@ -1,6 +1,4 @@
-//! Throughput demo: `permanent_bipedal3` vs `permanent_mod3_reference`.
-//!
-//! Times `permanent_bipedal3` at `n = N_BIPEDAL` and
+//! Throughput demo: times `permanent_bipedal3` at `n = N_BIPEDAL` and
 //! `permanent_mod3_reference` at `n = N_REF` over `BATCH` seeded random
 //! matrices each, prints permanents/sec for both, and reports whether the
 //! bipedal3 mean lies within ±5% of `S1_MEAN_US_BIPEDAL3_N24`. The matrix

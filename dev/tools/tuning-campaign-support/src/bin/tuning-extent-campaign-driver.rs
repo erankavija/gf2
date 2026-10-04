@@ -1,11 +1,10 @@
-//! Neutral, resumable owner-campaign process driver.
-//!
-//! The launcher builds and stages every executable before preparation. Each
-//! handoff names one immutable session; only run-session executes measurement
-//! or composition, under the inherited full-host flock. Finalization observes
-//! wrapper return and release before publishing terminal evidence. After a
-//! `complete` terminal, `publish-campaign` copies the validated stage to its
-//! repository destinations.
+//! Neutral, resumable owner-campaign process driver. The launcher builds and
+//! stages every executable before preparation. Each handoff names one immutable
+//! session; only run-session executes measurement or composition, under the
+//! inherited full-host flock. Finalization observes wrapper return and release
+//! before publishing terminal evidence. After a `complete` terminal,
+//! `publish-campaign` copies the validated stage to its repository
+//! destinations.
 #![deny(unsafe_code)]
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};

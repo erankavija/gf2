@@ -1,11 +1,9 @@
-//! Paired, interleaved A/B measurement statistics.
-//!
-//! The Zen 3 benchmark protocol resamples the *paired execution* (one fresh
-//! baseline child and one fresh candidate child, run adjacently in a
-//! seed-determined order) and reports a percentile bootstrap interval for the
-//! ratio of medians. Everything here is deterministic given its seed so an
-//! independent acceptance pass recomputes the same interval from the same raw
-//! samples.
+//! Paired, interleaved A/B measurement statistics. The Zen 3 benchmark protocol
+//! resamples the *paired execution* (one fresh baseline child and one fresh
+//! candidate child, run adjacently in a seed-determined order) and reports a
+//! percentile bootstrap interval for the ratio of medians. Everything here is
+//! deterministic given its seed so an independent acceptance pass recomputes
+//! the same interval from the same raw samples.
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

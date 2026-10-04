@@ -1,8 +1,7 @@
 //! Single-thread speedup benchmark: the public `permanent_bipedal3` entry point
-//! against `permanent_mod3_reference` on identical seeded inputs.
-//!
-//! Criterion cells cover `n ∈ {24, 28}`. With `S1_OFFLINE=1` the binary instead
-//! takes one wall-clock sample per cell at `n ∈ {32, 36}` and appends rows to
+//! against `permanent_mod3_reference` on identical seeded inputs. Criterion
+//! cells cover `n ∈ {24, 28}`. With `S1_OFFLINE=1` the binary instead takes one
+//! wall-clock sample per cell at `n ∈ {32, 36}` and appends rows to
 //! `dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv` (date
 //! overridable via `SA_DATE`) with columns
 //! `n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint`.

@@ -1,9 +1,7 @@
 //! `permanent_mod3_reference` — Rust port of `@/citation/Scheinerman2024`
-//! Algorithm 1 / Listing 1 (Julia naive Ryser).
-//!
-//! [`permanent_mod3_reference`] is a scalar `i32` implementation of Ryser's
-//! formula specialised to `F_3`, with explicit `% 3` reductions and a
-//! self-contained Gray walk.
+//! Algorithm 1 / Listing 1 (Julia naive Ryser): a scalar `i32` implementation
+//! of Ryser's formula specialised to `F_3`, with explicit `% 3` reductions and
+//! a self-contained Gray walk.
 
 use gf2_core::gfp::Fp;
 
