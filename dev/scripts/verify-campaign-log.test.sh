@@ -1,17 +1,33 @@
 #!/usr/bin/env bash
-# Tests dev/scripts/verify-campaign-log.py against committed campaign evidence.
+# Tests verify-campaign-log.py, which lies beside this file, against committed
+# campaign evidence.
 #
-# Usage (from the repository root): dev/scripts/verify-campaign-log.test.sh
+# Usage: verify-campaign-log.test.sh
 #
 # Positive cases are committed campaigns, so the checker sees journals real
 # sessions wrote. Negative cases perturb those journals.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CHECKER="${ROOT}/dev/scripts/verify-campaign-log.py"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT=$(git -C "${HERE}" rev-parse --show-toplevel)
+CHECKER="${HERE}/verify-campaign-log.py"
+
+# The committed receipt directory whose path ends in $1: receipt input snapshots
+# hold byte copies under an `inputs` directory, and the live one lies outside.
+campaign() {
+    local found
+    mapfile -t found < <(git -C "${ROOT}" ls-files -- ":(glob)**/$1/receipt.json" |
+        grep -v '/inputs/')
+    [[ ${#found[@]} -eq 1 ]] || {
+        echo "${#found[@]} committed campaigns end in $1; exactly one must" >&2
+        exit 2
+    }
+    dirname "${ROOT}/${found[0]}"
+}
+
 # A committed accepted campaign that paused at its session cell budget and then
 # completed, so the positive case covers a resumed campaign.
-CAMPAIGN="${ROOT}/dev/bench_results/19513245/r1-matrix-confirmation"
+CAMPAIGN=$(campaign r1-matrix-confirmation)
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK}"' EXIT
 
@@ -90,10 +106,9 @@ run "${CAMPAIGN}/execution.log" | grep -q 'terminal record' || {
 }
 
 # The plans omit pilot_pairs; their frozen addenda declare exploratory cells.
-for pilot in \
-    "${ROOT}/dev/bench_results/2037941f/2037941f-logical-isolated-xor/v4-r1-pilot" \
-    "${ROOT}/dev/bench_results/2037941f/2037941f-logical-nr-construction/v4-r1-pilot" \
-    "${ROOT}/dev/bench_results/2037941f/2037941f-logical-public-row-xor/v4-r1-pilot"; do
+for family in 2037941f-logical-isolated-xor 2037941f-logical-nr-construction \
+    2037941f-logical-public-row-xor; do
+    pilot=$(campaign "${family}/v4-r1-pilot")
     run "${pilot}/execution.log" "${pilot}" | grep -q 'terminal record'
 done
 retell_all_completion_pairs "${pilot}/execution.log" 24 "${WORK}/wrong-pilot-pairs.log"
