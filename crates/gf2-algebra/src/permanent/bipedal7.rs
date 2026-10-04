@@ -1,11 +1,5 @@
 //! `permanent_bipedal7` — Gray-code Ryser permanent over `F_7`.
 //!
-//! The column-sum vector is a single [`Packed7`] word (16 F_7 lanes in one
-//! `u64` at 4-bit-aligned slots), so the matrix must satisfy
-//! `n ≤ Packed7::LANES = 16`. Each Gray-code step updates it with one
-//! [`PackedField::add`] or [`PackedField::sub`] and folds the first `n` lanes
-//! via [`Packed7::fold_mul_first_n`].
-//!
 //! Compiled only when the `f7` Cargo feature is enabled.
 
 use gf2_core::gfp::Fp;

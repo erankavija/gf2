@@ -1,8 +1,5 @@
 //! Panelized GF(2^m) GEMM kernel using AVX2 + VPCLMULQDQ.
 //!
-//! [`gf2m_broadcast_mul_xor`] multiplies a scalar `a_ik` by every element of
-//! a row of `B` and XOR-accumulates into an output row;
-//! [`gf2m_gemm_panelized`] loops it over rows `i` and inner columns `k`.
 //! Output rows are zeroed by the caller.
 //!
 //! All entry points carry `#[target_feature(enable = "avx2", ...)]`; the
