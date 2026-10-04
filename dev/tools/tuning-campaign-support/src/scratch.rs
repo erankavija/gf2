@@ -1,5 +1,4 @@
 //! Scratch directories for this crate's tests and its driver binary.
-//!
 //! `gf2_core::test_scratch` is the workspace form of this module. This crate is
 //! a dev-dependency of `gf2-core`, so depending back on it would close a package
 //! cycle; the two stay in step by convention.

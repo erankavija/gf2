@@ -32,7 +32,7 @@ pub struct CandidateScore<C> {
     pub summary: EmpiricalSummary,
 }
 
-/// Existing threshold sweep statistics over all untrimmed windows.
+/// Threshold sweep statistics over all untrimmed windows.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct WindowStatistics {
     pub median: f64,
@@ -42,7 +42,7 @@ pub struct WindowStatistics {
 }
 
 impl WindowStatistics {
-    /// Reproduces the retained threshold harness's exact summary.
+    /// Median and relative IQR of the validated samples' ns/call.
     pub fn from_samples(samples: Vec<TimingSample>) -> Result<Self, StatisticsError> {
         for sample in &samples {
             sample
@@ -59,7 +59,7 @@ impl WindowStatistics {
     }
 }
 
-/// One point in the retained two-arm threshold grid.
+/// One point in the two-arm threshold grid.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ThresholdPoint {
     pub size: usize,
@@ -91,7 +91,7 @@ pub enum ThresholdDirection {
     UpperBound { floor: usize },
 }
 
-/// Retained threshold fallback reason.
+/// Why [`select_threshold`] kept the default.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "kind")]
 pub enum ThresholdFallback {
@@ -100,7 +100,7 @@ pub enum ThresholdFallback {
     NonMonotone { first_win: usize, later_loss: usize },
 }
 
-/// Retained threshold decision.
+/// Outcome of [`select_threshold`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "kind")]
 pub enum ThresholdSelection {
@@ -294,7 +294,8 @@ pub fn execution_median(samples: &[TimingSample], execution: u64) -> Result<f64,
     Ok(empirical_summary(&values)?.median)
 }
 
-/// Reproduces the retained threshold selection rule without owner policy.
+/// Selects the crossover at the first grid point from which the asymptotic
+/// arm wins every later point; otherwise keeps `default`.
 pub fn select_threshold(
     points: &[ThresholdPoint],
     default: usize,

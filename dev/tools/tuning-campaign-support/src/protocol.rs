@@ -32,11 +32,10 @@ pub const RECEIPT_SCHEMA_ID: &str = "zen3-benchmark-receipt-v1";
 ///
 /// `zen3-benchmark-acceptance-v1` reports the sequential-attempt allocation
 /// under the field name `family_alpha`; `zen3-benchmark-acceptance-v2`
-/// (`@/issue/c5e01de3`) separates that allocation (`attempt_alpha`) from the
+/// separates that allocation (`attempt_alpha`) from the
 /// frozen total (`family_alpha`) and the per-comparison corrected level
-/// (`corrected_alpha`). A committed v1 summary keeps its bytes and its v1
-/// meaning; a reader that still consumes acceptance summaries branches on
-/// this identity rather than on which fields happen to be present.
+/// (`corrected_alpha`). A reader of acceptance summaries branches on this
+/// identity.
 pub const ACCEPTANCE_SCHEMA_ID: &str = "zen3-benchmark-acceptance-v2";
 /// Lifecycle schema recorded in the runner's resume identity.
 pub const RUNNER_LIFECYCLE_SCHEMA: &str = "zen3-benchmark-runner-session-v1";
@@ -384,7 +383,7 @@ pub enum FamilyPurpose {
     FinalIntegration,
 }
 
-/// Family identity.
+/// Family an addendum names; `id` keys the trial ledger and `issue` must equal the plan's.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct FamilyIdentity {
@@ -547,7 +546,7 @@ pub struct WorkerDeclaration {
     pub nested_pools_allowed: bool,
 }
 
-/// Arm builds.
+/// Build each side of a cell's pair must have; a plan's arms are checked against it.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArmBuilds {
@@ -564,7 +563,7 @@ pub struct Workload {
     pub seed: u64,
 }
 
-/// Decoder arm kind.
+/// Whether both arms must report the declared decoder settings or the candidate must only meet the quality tolerance.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DecoderArmKind {
@@ -609,7 +608,7 @@ pub enum NormalizationKind {
     SumProduct,
 }
 
-/// Stopping contract.
+/// Declared stopping rule; `crc` is present exactly when `kind` is [`StoppingKind::Crc`].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Stopping {
@@ -617,7 +616,7 @@ pub struct Stopping {
     pub crc: Option<String>,
 }
 
-/// Stopping rule kind.
+/// Stopping criterion of a decoder cell; only `Crc` carries a polynomial.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum StoppingKind {
@@ -636,7 +635,7 @@ pub enum CodewordSource {
     Both,
 }
 
-/// Decoder input identity.
+/// LLR input both arms decode: source, seed, SNR and a positive frame count.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct DecoderInput {
@@ -648,7 +647,7 @@ pub struct DecoderInput {
     pub snr_db: f64,
 }
 
-/// Code identity.
+/// Code a decoder cell measures: `0 < k <= n`, and `h_sha256` is the 64-hex-digit parity-check digest.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CodeIdentity {
@@ -658,7 +657,7 @@ pub struct CodeIdentity {
     pub h_sha256: String,
 }
 
-/// Batching declaration.
+/// Declared decoder batch size, which is positive and which matched-algorithm arms must report.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Batching {
@@ -1179,8 +1178,7 @@ pub struct RunnerPlan {
     pub campaign_seed: u64,
     /// Repository-relative addendum path.
     pub addendum: String,
-    /// Family producing-input closure. Omission retains the historical shared
-    /// runner manifest for plans published before family selection was supported.
+    /// Family producing-input closure; [`SHARED_PRODUCING_MANIFEST`] when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub producing_manifest: Option<crate::provenance::ProducingManifestPath>,
     /// Absolute canonical lock path the wrapper holds.

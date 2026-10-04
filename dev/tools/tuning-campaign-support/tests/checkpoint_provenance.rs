@@ -152,7 +152,6 @@ fn inspection_validates_without_recovering_or_creating_files() {
     assert_eq!(fs::read(&pending).unwrap(), b"partial evidence");
     assert_eq!(fs::read(&unit.path).unwrap(), before);
     fs::remove_file(pending).unwrap();
-    // A parseable but noncanonical unit fails through the shared validator.
     let mut corrupt = before;
     corrupt.push(b' ');
     fs::write(&unit.path, &corrupt).unwrap();

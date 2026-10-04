@@ -832,7 +832,6 @@ fn transition_projection_recovers_once_after_durable_state_commit() {
     drop(log);
     // Simulate the crash boundary after immutable state commit, before its journal append.
     fs::write(tmp.path().join("execution.log"), &prefix).unwrap();
-    // Journal low-level reopen keeps the same live session for projection recovery.
     let mut log =
         ExecutionLog::reopen_active(tmp.path().join("execution.log"), "campaign", "s1").unwrap();
     let store = SessionStore::reopen(descriptor).unwrap();
