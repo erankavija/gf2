@@ -767,12 +767,12 @@
         "worker_sized_reason": "One scheduled campaign run over a single field on a prepared host, with no instrumentation to design, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/0de41c82/f3-protocol-note.md",
-            "dev/active/0de41c82/f3-throughput.csv",
-            "dev/active/0de41c82/f3-micro-gray-update.csv",
-            "dev/active/0de41c82/f3-micro-horizontal-product.csv",
-            "dev/active/0de41c82/f3-zero-fraction.csv",
-            "dev/active/0de41c82/f3-equivalence.csv"
+            "dev/active/b8206228-permanent-statistics/0de41c82/f3-protocol-note.md",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f3-throughput.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f3-micro-gray-update.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f3-micro-horizontal-product.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f3-zero-fraction.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f3-equivalence.csv"
           ],
           "uncertainty": "Receipt filenames carry the measurement date in the harness's committed convention, so the exact committed names are fixed at measurement time."
         }
@@ -840,12 +840,12 @@
         "worker_sized_reason": "One scheduled campaign run over a single field on a prepared host, with no instrumentation to design, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/0de41c82/f5-protocol-note.md",
-            "dev/active/0de41c82/f5-throughput.csv",
-            "dev/active/0de41c82/f5-micro-gray-update.csv",
-            "dev/active/0de41c82/f5-micro-horizontal-product.csv",
-            "dev/active/0de41c82/f5-zero-fraction.csv",
-            "dev/active/0de41c82/f5-equivalence.csv"
+            "dev/active/b8206228-permanent-statistics/0de41c82/f5-protocol-note.md",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f5-throughput.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f5-micro-gray-update.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f5-micro-horizontal-product.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f5-zero-fraction.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f5-equivalence.csv"
           ],
           "uncertainty": "Receipt filenames carry the measurement date in the harness's committed convention, so the exact committed names are fixed at measurement time."
         }
@@ -915,13 +915,13 @@
         "worker_sized_reason": "One scheduled campaign run over a single field on a prepared host, with no instrumentation to design, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/0de41c82/f7-protocol-note.md",
-            "dev/active/0de41c82/f7-throughput.csv",
-            "dev/active/0de41c82/f7-micro-gray-update.csv",
-            "dev/active/0de41c82/f7-micro-horizontal-product.csv",
-            "dev/active/0de41c82/f7-zero-fraction.csv",
-            "dev/active/0de41c82/f7-equivalence.csv",
-            "dev/active/0de41c82/f7-bitplane-resources.csv"
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-protocol-note.md",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-throughput.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-micro-gray-update.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-micro-horizontal-product.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-zero-fraction.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-equivalence.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/f7-bitplane-resources.csv"
           ],
           "uncertainty": "Receipt filenames carry the measurement date in the harness's committed convention, so the exact committed names are fixed at measurement time."
         }
@@ -977,9 +977,9 @@
         "worker_sized_reason": "One qualification pass over kernels that already run on the host, bounded to resource readouts plus a launch-duration envelope, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/0de41c82/runtime-qualification.md",
-            "dev/active/0de41c82/occupancy-resources.csv",
-            "dev/active/0de41c82/launch-duration-envelope.csv"
+            "dev/active/b8206228-permanent-statistics/0de41c82/runtime-qualification.md",
+            "dev/active/b8206228-permanent-statistics/0de41c82/occupancy-resources.csv",
+            "dev/active/b8206228-permanent-statistics/0de41c82/launch-duration-envelope.csv"
           ],
           "uncertainty": "Whether achieved occupancy can be measured at all depends on profiler availability for the study's HIP toolchain on the target host; where it is unavailable the receipt records it as not measured rather than substituting a computed figure."
         }
@@ -1026,7 +1026,7 @@
         "worker_sized_reason": "One build-script flag surface plus a compile sweep over an already-written kernel set is a small self-contained cycle.",
         "footprint": {
           "creates": [
-            "dev/active/0de41c82/compile-scope-evidence.txt"
+            "dev/active/b8206228-permanent-statistics/0de41c82/compile-scope-evidence.txt"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/build.rs",
@@ -1095,7 +1095,7 @@
         "worker_sized_reason": "One synthesis over evidence that is already committed, with no measurement to run, is a single focused writing cycle.",
         "footprint": {
           "creates": [
-            "dev/active/0de41c82/wave-gpu-findings.md"
+            "dev/active/b8206228-permanent-statistics/0de41c82/wave-gpu-findings.md"
           ],
           "touches": [
             "dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md"

@@ -689,7 +689,7 @@ enforces a 512 MB cap over `dev/`, so `target/` must never be tracked.)
 
 ### Where this issue's receipts belong
 
-`jit doc dir 0de41c82 dev/active` resolves to `dev/active/0de41c82/`, which
+`jit doc dir 0de41c82 dev/active` resolves to `dev/active/b8206228-permanent-statistics/0de41c82/`, which
 already holds the representation study attached as a `design` doc. The issue
 Notes say prototype artifacts and final findings belong in "this issue resolved
 study directory". Two constraints interact:
@@ -703,7 +703,7 @@ study directory". Two constraints interact:
 
 **Recommendation:** findings document and all receipts under the issue's
 resolved doc directory (matching what `jit doc dir` returns at authoring time,
-which is `dev/active/0de41c82/` today), executable prototypes under
+which is `dev/active/b8206228-permanent-statistics/0de41c82/` today), executable prototypes under
 `dev/research/<new-crate>/`, and every doc attached with `jit doc add` rather
 than referenced by an inline `dev/...` path.
 
