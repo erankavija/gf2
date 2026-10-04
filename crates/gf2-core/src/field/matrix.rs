@@ -878,11 +878,6 @@ impl<'a, F: FiniteField> MatView<'a, F> {
         self.data[(self.row_offset + r) * self.parent_cols + self.col_offset + c].clone()
     }
 
-    /// The contiguous slice backing row `r` of the view.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `r >= self.rows()`.
     #[inline]
     pub(crate) fn row_slice(&self, r: usize) -> &[F] {
         assert!(
@@ -1421,8 +1416,6 @@ pub fn gemm_axpy_route(m: usize, k: usize, n: usize) -> GemmAxpyRoute {
     )
 }
 
-/// Reports the GEMM AXPY volume arm against an already-resolved
-/// `axpy_fast_path_min_volume`.
 fn gemm_axpy_route_resolved(
     axpy_fast_path_min_volume: usize,
     m: usize,
