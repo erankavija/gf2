@@ -13,23 +13,7 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "d96762a9121aca3e31366a522138a6c2b05ec58fe3621bf4d9959139b8367930",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../bench_results/ad2a6a58/tables.md",
-          "resolved_path": "dev/bench_results/ad2a6a58/tables.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "3ab42b522841f21b97e5ca45ab4dc2f5b5a8f701bf5b1dd676490c639c3a54b4",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "survey/runner-smoke.txt",
-          "resolved_path": "dev/active/ad2a6a58/survey/runner-smoke.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "content_hash": "77d312c365cb6a71ca370ed6f753172b499b04f953a3a92d1caee628f4792a26",
           "is_shared": false,
           "mime_type": null,
           "original_path": "../../bench_results/ad2a6a58/axpy-family-ledger.jsonl",
@@ -37,11 +21,43 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "da45a53314d79a65ba16eae30aa84b4be1fac9e49800306d0b84417375857cd0",
+          "content_hash": "9f05ea628c34591fe0eefbf49af0a7bfc46d3feb756044869b8a373043806c22",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/confirmation-smoke.json",
+          "resolved_path": "dev/active/ad2a6a58/survey/confirmation-smoke.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6a5925f8fe545073cc87ced7c09f970eb5ce05fc68b2ac703e418a3d9849e7c0",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../613574db/design.md",
-          "resolved_path": "dev/active/613574db/design.md"
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-pilot/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "188d7e10b10bf6233711490d438e48dc7f3ca9cdbb91beb51303f42d4ed7bf87",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "confirmation-derivation-axpy.txt",
+          "resolved_path": "dev/active/ad2a6a58/confirmation-derivation-axpy.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5d89979b0d07db0b6802067902eba1650a1968baa609637c98a372fa1c808f6b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/ad2a6a58/tables.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/tables.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f28aaf4fdee6c54015ec2b1087701212d40f9166dad7969e1e99472de6e04987",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "survey/pilot-smoke.json",
+          "resolved_path": "dev/active/ad2a6a58/survey/pilot-smoke.json"
         },
         {
           "asset_type": "local",
@@ -50,6 +66,38 @@
           "mime_type": null,
           "original_path": "addendum-v4-axpy-pilot.json",
           "resolved_path": "dev/active/ad2a6a58/addendum-v4-axpy-pilot.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2a22a6ecefc65fe20d13467b3f23a2a2d05ad0c18647ea019e0435c5c9da31e8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "addendum-v4-axpy-confirmation.json",
+          "resolved_path": "dev/active/ad2a6a58/addendum-v4-axpy-confirmation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c13f27eaf1899ffc9cb50f66208d838b64f7d8fc50ba2d148075c94a98a25e44",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../1a379447-zen3-cpu-performance/613574db/design.md",
+          "resolved_path": "dev/active/1a379447-zen3-cpu-performance/613574db/design.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "48fb324f36b03344070589c9da155df37625d04f573d1081fe2439035ec0f635",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.md",
+          "resolved_path": "dev/bench_results/ad2a6a58/r1-axpy-confirmation/acceptance-summary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "68407322325eb6042068c80f421090a819e4739bee924d5f4c4969be0135c504",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "outcome.md",
+          "resolved_path": "dev/active/ad2a6a58/outcome.md"
         }
       ],
       "commit": null,
@@ -498,5 +546,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Confirm the GF(2^8) axpy path against the current vector route",
-  "updated_at": "2026-10-04T23:30:29.733916009Z"
+  "updated_at": "2026-10-04T23:30:37.928207496Z"
 }
