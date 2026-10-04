@@ -983,6 +983,9 @@ pub fn multiply_with_table_schedule_for_test(
         crate::tuning::active().m4rm().tiled_min_stride_words(),
     )
 }
+/// # Panics
+///
+/// Panics if `a.cols() != b.rows()`.
 #[doc(hidden)]
 #[cfg(any(test, feature = "test-support"))]
 pub fn multiply_rowwise_for_test(a: &BitMatrix, b: &BitMatrix) -> BitMatrix {
@@ -1058,7 +1061,6 @@ fn multiply_rowwise_panels(
     let table_size = 1usize << k_block;
     let mut c = BitMatrix::zeros(m, n);
 
-    // Pre-allocate flat buffer for Gray code table (reused across all panels).
     let mut table_buffer = vec![0u64; table_size * stride_words];
 
     let mut panel_start = 0;
@@ -1351,9 +1353,7 @@ mod tests {
         assert_eq!(choose_k_block(conservative_m4rm(), 128, 128), 6);
         assert_eq!(choose_k_block(conservative_m4rm(), 256, 256), 6);
         assert_eq!(choose_k_block(conservative_m4rm(), 512, 512), 7);
-        // Lower clamp keeps the panel width at >= 2 (k=1 degenerates to row-XOR).
         assert_eq!(choose_k_block_small_n(small_n_max_k, 3, 256), 2);
-        // k=1 inner dim maps to the row-XOR path (k_block == 1).
         assert_eq!(choose_k_block_small_n(small_n_max_k, 1, 256), 1);
         assert_eq!(choose_k_block_small_n(small_n_max_k, 0, 256), 0);
         assert!(choose_k_block_small_n(small_n_max_k, 100_000, 512) <= M4RM_SMALL_N_MAX_K);
@@ -1370,7 +1370,6 @@ mod tests {
                 "n={n} should use the small-n heuristic"
             );
         }
-        // n=961..1024 round up to 16 words and enter the wide tier.
         assert!(961usize.div_ceil(64) >= M4RM_WIDE_TIER_MIN_STRIDE_WORDS);
         assert_eq!(choose_k_block(m4rm, 4096, 0), 0);
         assert_eq!(choose_k_block(m4rm, 4096, 1024), 9);
@@ -1429,9 +1428,6 @@ mod tests {
         assert!(!m4rm_schedule_route(4096, n_below).tiled_stride_admitted());
         assert!(m4rm_schedule_route(4096, n_at).tiled_stride_admitted());
 
-        // The reported gate is the stride half of the predicate the dispatcher
-        // calls, so it agrees with it at every width once the row count admits
-        // a full tile.
         for n in [n_below, n_at, 4096, 0] {
             let stride_words = row_stride_words(n);
             assert_eq!(
@@ -1678,7 +1674,7 @@ mod tests {
                     let mut expected = false;
                     for k in 0..size {
                         if a.get(i, k) && b.get(k, j) {
-                            expected = !expected; // XOR in GF(2)
+                            expected = !expected;
                         }
                     }
                     assert_eq!(

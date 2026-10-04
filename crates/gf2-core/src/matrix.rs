@@ -240,6 +240,10 @@ impl BitMatrix {
     }
 
     /// Test-support hook for exercising the non-M4RM row-XOR multiplier.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.cols() != rhs.rows()`.
     #[doc(hidden)]
     #[cfg(any(test, feature = "test-support"))]
     pub fn mul_row_xor_for_test(&self, rhs: &BitMatrix) -> BitMatrix {
@@ -247,6 +251,10 @@ impl BitMatrix {
     }
 
     /// Test-support hook for exercising the Strassen-family multiplier.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless `self` and `rhs` are square with the same dimension.
     #[doc(hidden)]
     #[cfg(any(test, feature = "test-support"))]
     pub fn strassen_mul_for_test(
@@ -396,19 +404,19 @@ impl BitMatrix {
         }
     }
 
-    /// Returns the number of rows.
+    /// Number of rows.
     #[inline]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
-    /// Returns the number of columns.
+    /// Number of columns.
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
     }
 
-    /// Returns the number of u64 words per row (stride).
+    /// Number of `u64` words per row.
     #[inline]
     pub fn stride_words(&self) -> usize {
         self.stride_words
@@ -1268,8 +1276,8 @@ impl BitMatrix {
     ) -> Result<(), Box<dyn std::error::Error>> {
         use image::{ImageBuffer, Rgb};
 
-        const ZERO_COLOR: [u8; 3] = [0, 0, 0]; // black
-        const ONE_COLOR: [u8; 3] = [255, 255, 255]; // white
+        const ZERO_COLOR: [u8; 3] = [0, 0, 0];
+        const ONE_COLOR: [u8; 3] = [255, 255, 255];
 
         let mut img = ImageBuffer::new(self.cols as u32, self.rows as u32);
 
