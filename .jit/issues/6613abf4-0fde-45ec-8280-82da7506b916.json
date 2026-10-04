@@ -13,7 +13,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-05-26-6613abf4-blocked-solve.md",
-      "path": "dev/bench_results/2026-05-26-6613abf4-blocked-solve.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-26-6613abf4-blocked-solve.md"
     }
   ],
   "done_at": "2026-05-27T00:17:56.368241653Z",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement blocked GF(p) triangular solve (026fc832 Phase 6)",
-  "updated_at": "2026-10-03T16:30:19.383710749Z"
+  "updated_at": "2026-10-04T19:53:01.754882015Z"
 }

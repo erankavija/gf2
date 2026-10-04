@@ -11,7 +11,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-05-27-6a7d4c8e-m31-echelon-dispatch.md",
-      "path": "dev/bench_results/2026-05-27-6a7d4c8e-m31-echelon-dispatch.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-6a7d4c8e-m31-echelon-dispatch.md"
     }
   ],
   "done_at": "2026-05-27T05:37:29.974333034Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "M31 echelon: wire m31_batch_dot_fn into gemm_axpy_into_view (869ce43b row 33 follow-up)",
-  "updated_at": "2026-10-03T16:30:19.600036691Z"
+  "updated_at": "2026-10-04T19:53:01.754882015Z"
 }

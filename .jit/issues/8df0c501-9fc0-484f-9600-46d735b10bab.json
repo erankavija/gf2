@@ -14,7 +14,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-05-27-8df0c501-blocked-invert.md",
-      "path": "dev/bench_results/2026-05-27-8df0c501-blocked-invert.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-8df0c501-blocked-invert.md"
     }
   ],
   "done_at": "2026-05-27T00:25:55.808745952Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement blocked GF(p) invert via PLE (026fc832 Phase 6)",
-  "updated_at": "2026-10-03T16:30:28.364906083Z"
+  "updated_at": "2026-10-04T19:53:01.754882015Z"
 }

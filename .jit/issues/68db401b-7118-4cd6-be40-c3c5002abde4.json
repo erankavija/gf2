@@ -11,7 +11,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "2026-05-27-68db401b-fp-medium-ple.md",
-      "path": "dev/bench_results/2026-05-27-68db401b-fp-medium-ple.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-68db401b-fp-medium-ple.md"
     }
   ],
   "done_at": "2026-05-27T15:10:38.621225182Z",
@@ -48,5 +48,5 @@
   "priority": "normal",
   "state": "done",
   "title": "u16-lane PLE base-case kernel (6823c8a0 Phase 6d)",
-  "updated_at": "2026-10-03T16:30:19.486205728Z"
+  "updated_at": "2026-10-04T19:53:01.754882015Z"
 }
