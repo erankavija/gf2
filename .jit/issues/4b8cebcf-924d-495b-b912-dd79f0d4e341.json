@@ -48,12 +48,18 @@
       "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation-amendment.md"
     }
   ],
+  "done_at": "2026-10-04T11:28:56.624652120Z",
   "first_ready_at": "2026-10-04T10:59:32.072358479Z",
   "gates_required": [
     "doc-review",
     "docs-mechanical"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:26:20.629048094Z",
+      "updated_by": "auto:executor"
+    },
     "docs-mechanical": {
       "status": "passed",
       "updated_at": "2026-10-04T11:16:05.163355Z",
@@ -67,7 +73,7 @@
     "type:task"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Supersede the sub-diagonal wrap statement of the DVB-T2 table note",
-  "updated_at": "2026-10-04T11:16:05.163355Z"
+  "updated_at": "2026-10-04T11:28:56.624652120Z"
 }

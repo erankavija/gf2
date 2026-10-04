@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-10-04T11:30:22.433099431Z",
   "context": {},
   "created_at": "2026-10-01T14:43:15.466350554Z",
   "dependencies": [
@@ -32,6 +33,7 @@
   ],
   "description": "The source-comment sweep closes with a record comparing each crate's comment share before and after, listing every justified pattern match, and naming the tracked issues that now hold removed planned-work statements.\n\n## Success Criteria\n\n- [hard] REQ-01: The completion record states each crate's comment share after the sweep by the same command as the baseline, beside the baseline figures.\n- [hard] REQ-02: A case-insensitive grep of `crates/` comment lines for the sweep pattern below returns only lines that the record lists, each with a one-line justification.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-03: The record lists every tracked issue created or matched for a removed planned, deferred or out-of-scope statement.\n",
   "documents": [],
+  "first_ready_at": "2026-10-04T11:28:56.531774684Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -55,7 +57,7 @@
     "satisfies:ffc35b8c/REQ-27"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "in_progress",
   "title": "Close the sweep with the after census and justification list",
-  "updated_at": "2026-10-04T11:02:51.528254774Z"
+  "updated_at": "2026-10-04T11:30:22.433099431Z"
 }

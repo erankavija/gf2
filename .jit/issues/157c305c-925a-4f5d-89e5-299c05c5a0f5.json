@@ -8,6 +8,7 @@
   ],
   "description": "The rate-matched 5G NR LDPC code documents filler-position LLR initialization as $+\\infty$, while de-rate-matching writes a finite prior.\n\n## Background\n\nThe rustdoc of the NR rate-matched code constructor in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs` states that punctured positions get LLR 0 and filler positions get LLR $+\\infty$. The de-rate-matching path writes the private constant `FILLER_LLR`, which is 15.0 and is documented at its definition as chosen to avoid `tanh` saturation in f32. A caller comparing gf2 with another implementation's filler convention reads the wrong contract from the public documentation.\n\n## Success Criteria\n\n- [hard] REQ-01: The public documentation of NR rate-matched LLR preparation states the filler-position LLR value that the implementation writes, and the reason it is finite.\n- [hard] REQ-02: The documented filler value and the value de-rate-matching writes derive from one source, so they cannot diverge silently.\n\n## Notes\n\nSurfaced by the protocol-v3 shift and coding-permutation baseline survey while mapping gf2 de-rate-matching onto an external implementation's filler convention.\n",
   "documents": [],
+  "done_at": "2026-10-04T11:28:56.334495527Z",
   "first_ready_at": "2026-09-10T16:35:04.688466291Z",
   "gates_required": [
     "cargo-ci",
@@ -19,6 +20,16 @@
     "cargo-ci": {
       "status": "passed",
       "updated_at": "2026-10-04T11:14:39.265063997Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:21:57.924847135Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-10-04T11:22:38.058002907Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -34,7 +45,7 @@
     "epic:documentation-overhaul"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "Document the finite NR filler LLR that de-rate-matching writes",
-  "updated_at": "2026-10-04T11:15:57.595361163Z"
+  "updated_at": "2026-10-04T11:28:56.334495527Z"
 }

@@ -6,8 +6,9 @@
   "dependencies": [
     "62f0d0e6-0d54-44a6-a5d7-31b09c33976d"
   ],
-  "description": "Bring the comments and Rustdoc in gf2-coding tests, benches and examples to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-coding/tests/`, `crates/gf2-coding/benches/` and `crates/gf2-coding/examples/`, about 4,400 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n\n\n## Decisions\n\n- DEC-01: The owner approved on 2026-10-04 a third rework and ruled for `pub` items in `tests/`, `benches/` and `examples/` of gf2-coding: a Rustdoc line that can only paraphrase the item's body is deleted, and the item then carries no Rustdoc. These targets set no `missing_docs` lint, and their `pub` items are test support, outside the public API that REQ-04 names.",
+  "description": "Bring the comments and Rustdoc in gf2-coding tests, benches and examples to the workspace comment contract: current state only, non-obvious content only, shortest form.\n\n## Background\n\nScope: `crates/gf2-coding/tests/`, `crates/gf2-coding/benches/` and `crates/gf2-coding/examples/`, about 4,400 comment lines on 2026-10-01. Generated data tables keep their provenance headers. Comments citing an external standard, paper or committed receipt are evidence pointers and stay in shortened form.\n\n## Success Criteria\n\n- [hard] REQ-01: Each comment and Rustdoc block in scope meets the root `AGENTS.md` comment rule: nothing restates adjacent code, and each module-level doc is at most one short orientation paragraph plus the contract statements its public API needs.\n- [hard] REQ-02: No comment in scope narrates history or process, or states planned, deferred, excluded or out-of-scope work; a current limitation is restated in present tense, and each removed planned-work statement is matched to or filed as a tracked issue named in the commit message.\n- [hard] REQ-03: Each line in scope matching the sweep pattern below is removed or listed with a one-line justification in the commit message.\n\n  ```text\n  non-goal|out of scope|not in scope|future work|deferred to|follow-on|phase [a-e]\\b|wave [a-z0-9]|(task|issue|story) `?[0-9a-f]{8}|previously|no longer|legacy|migrat\n  ```\n\n- [hard] REQ-04: Public API Rustdoc still states purpose, panics, safety conditions and non-obvious complexity; Rustdoc builds without new warnings and the Rust CI gate passes.\n- [hard] REQ-05: The diff contains only comment, Rustdoc and whitespace edits, verified by an ignore-whitespace review of every hunk.\n\n\n## Decisions\n\n- DEC-01: The owner approved on 2026-10-04 a third rework and ruled for `pub` items in `tests/`, `benches/` and `examples/` of gf2-coding: a Rustdoc line that can only paraphrase the item's body is deleted, and the item then carries no Rustdoc. These targets set no `missing_docs` lint, and their `pub` items are test support, outside the public API that REQ-04 names.\n\n- DEC-02: The owner ruled on 2026-10-04 that the nested `if` in `crates/gf2-coding/tests/ldpc_validation.rs`, which `clippy::collapsible_if` flags once the comment between its two conditions is deleted, is collapsed under this issue. The collapsed condition preserves behavior and is the one code hunk outside REQ-05; decision DEC-01 of story ffc35b8c admits lint-forced hunks of this kind.\n",
   "documents": [],
+  "done_at": "2026-10-04T11:28:56.224835826Z",
   "first_ready_at": "2026-10-03T16:21:56.952115772Z",
   "gates_required": [
     "cargo-ci",
@@ -22,13 +23,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-10-04T08:54:56.560158715Z",
+      "status": "passed",
+      "updated_at": "2026-10-04T11:28:42.258414846Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-10-04T08:49:52.099448319Z",
+      "updated_at": "2026-10-04T11:21:00.278340403Z",
       "updated_by": "auto:executor"
     },
     "docs-mechanical": {
@@ -50,7 +51,7 @@
     "satisfies:ffc35b8c/REQ-26"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Tersify comments in gf2-coding tests, benches and examples",
-  "updated_at": "2026-10-04T11:15:53.862036723Z"
+  "updated_at": "2026-10-04T11:28:56.224835826Z"
 }
