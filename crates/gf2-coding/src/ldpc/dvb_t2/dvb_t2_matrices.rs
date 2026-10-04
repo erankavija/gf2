@@ -1,34 +1,6 @@
-//! DVB-T2 LDPC tables from ETSI EN 302 755.
-//!
-//! This module contains DVB-T2 LDPC parity check matrix tables as defined in
-//! ETSI EN 302 755 V1.4.1 (2015-07).
-//!
-//! # Table Format
-//!
-//! Each table represents base parity indices for information bit blocks:
-//! - Row i contains base parity indices for 360-bit information block i
-//! - For info bit at position (i*360 + j), parity connections at:
-//!   `(base_index + j * q) mod m`
-//! - Variable column weights (rows have varying length)
-//!
-//! # Structure
-//!
-//! DVB-T2 LDPC codes:
-//! - **Short frames**: n=16200, Z=360
-//! - **Normal frames**: n=64800, Z=360
-//!
-//! # Code Rates
-//!
-//! Both frame types support 6 code rates: 1/2, 3/5, 2/3, 3/4, 4/5, 5/6
-//! Note that for short frames, the effective code rates are somewhat different.
-//!
-//! # References
-//!
-//! ETSI EN 302 755 V1.4.1: Digital Video Broadcasting (DVB); Frame structure
-//! channel coding and modulation for a second generation digital terrestrial
-//! television broadcasting system (DVB-T2)
+//! LDPC parity-index tables of `@/citation/Etsi2015`, expanded into
+//! parity-check edges by [`super::builder::build_dvb_edges`].
 
-/// DVB-T2 Short frame Rate 1/2 table (N=16200, K=7200, q=25, Z=360)
 pub const SHORT_RATE_1_2_TABLE: &[&[usize]] = &[
     &[20, 712, 2386, 6354, 4061, 1062, 5045, 5158],
     &[21, 2543, 5748, 4822, 2348, 3089, 6328, 5876],
@@ -52,7 +24,6 @@ pub const SHORT_RATE_1_2_TABLE: &[&[usize]] = &[
     &[14, 7411, 3450],
 ];
 
-/// DVB-T2 Short frame Rate 3/5 table (N=16200, K=9720, q=18, Z=360)
 #[rustfmt::skip]
 pub const SHORT_RATE_3_5_TABLE: &[&[usize]] = &[
     &[71, 1478, 1901, 2240, 2649, 2725, 3592, 3708, 3965, 4080, 5733, 6198],
@@ -84,7 +55,6 @@ pub const SHORT_RATE_3_5_TABLE: &[&[usize]] = &[
     &[1005, 1675, 2062],
 ];
 
-/// DVB-T2 Short frame Rate 2/3 table (N=16200, K=10800, q=15, Z=360)
 #[rustfmt::skip]
 pub const SHORT_RATE_2_3_TABLE: &[&[usize]] = &[
     &[0, 2084, 1613, 1548, 1286, 1460, 3196, 4297, 2481, 3369, 3451, 4620, 2622],
@@ -119,7 +89,6 @@ pub const SHORT_RATE_2_3_TABLE: &[&[usize]] = &[
     &[14, 1129, 3894],
 ];
 
-/// DVB-T2 Short frame Rate 3/4 table (N=16200, K=11880, q=12, Z=360)
 #[rustfmt::skip]
 pub const SHORT_RATE_3_4_TABLE: &[&[usize]] = &[
     &[3, 3198, 478, 4207, 1481, 1009, 2616, 1924, 3437, 554, 683, 1801],
@@ -157,7 +126,6 @@ pub const SHORT_RATE_3_4_TABLE: &[&[usize]] = &[
     &[11, 1415, 2808],
 ];
 
-/// DVB-T2 Short frame Rate 4/5 table (N=16200, K=12600, q=10, Z=360)
 pub const SHORT_RATE_4_5_TABLE: &[&[usize]] = &[
     &[5, 896, 1565],
     &[6, 2493, 184],
@@ -196,7 +164,6 @@ pub const SHORT_RATE_4_5_TABLE: &[&[usize]] = &[
     &[9, 3545, 1168],
 ];
 
-/// DVB-T2 Short frame Rate 5/6 table (N=16200, K=13320, q=8, Z=360)
 #[rustfmt::skip]
 pub const SHORT_RATE_5_6_TABLE: &[&[usize]] = &[
     &[3, 2409, 499, 1481, 908, 559, 716, 1270, 333, 2508, 2264, 1702, 2805],
@@ -238,7 +205,6 @@ pub const SHORT_RATE_5_6_TABLE: &[&[usize]] = &[
     &[7, 2644, 1704],
 ];
 
-/// DVB-T2 Normal frame Rate 1/2 table (N=64800, K=32400, q=90, Z=360)
 pub const NORMAL_RATE_1_2_TABLE: &[&[usize]] = &[
     &[54, 9318, 14392, 27561, 26909, 10219, 2534, 8597],
     &[55, 7263, 4635, 2530, 28130, 3033, 23830, 3651],
@@ -332,7 +298,6 @@ pub const NORMAL_RATE_1_2_TABLE: &[&[usize]] = &[
     &[53, 19267, 20113],
 ];
 
-/// DVB-T2 Normal frame Rate 3/5 table (N=64800, K=38880, q=72, Z=360)
 #[rustfmt::skip]
 pub const NORMAL_RATE_3_5_TABLE: &[&[usize]] = &[
     &[22422, 10282, 11626, 19997, 11161, 2922, 3122, 99, 5625, 17064, 8270, 179],
@@ -445,7 +410,6 @@ pub const NORMAL_RATE_3_5_TABLE: &[&[usize]] = &[
     &[71, 3434, 7769],
 ];
 
-/// DVB-T2 Normal frame Rate 2/3 table (N=64800, K=43200, q=60, Z=360)
 #[rustfmt::skip]
 pub const NORMAL_RATE_2_3_TABLE: &[&[usize]] = &[
     &[317, 2255, 2324, 2723, 3538, 3576, 6194, 6700, 9101, 10057, 12739, 17407, 21039],
@@ -570,7 +534,6 @@ pub const NORMAL_RATE_2_3_TABLE: &[&[usize]] = &[
     &[13115, 17259, 17332],
 ];
 
-/// DVB-T2 Normal frame Rate 3/4 table (N=64800, K=48600, q=45, Z=360)
 #[rustfmt::skip]
 pub const NORMAL_RATE_3_4_TABLE: &[&[usize]] = &[
     &[0, 6385, 7901, 14611, 13389, 11200, 3252, 5243, 2504, 2722, 821, 7374],
@@ -710,7 +673,6 @@ pub const NORMAL_RATE_3_4_TABLE: &[&[usize]] = &[
     &[44, 2883, 14521],
 ];
 
-/// DVB-T2 Normal frame Rate 4/5 table (N=64800, K=51840, q=36, Z=360)
 #[rustfmt::skip]
 pub const NORMAL_RATE_4_5_TABLE: &[&[usize]] = &[
     &[0, 149, 11212, 5575, 6360, 12559, 8108, 8505, 408, 10026, 12828],
@@ -859,7 +821,6 @@ pub const NORMAL_RATE_4_5_TABLE: &[&[usize]] = &[
     &[35, 7108, 5553],
 ];
 
-/// DVB-T2 Normal frame Rate 5/6 table (N=64800, K=54000, q=30, Z=360)
 #[rustfmt::skip]
 pub const NORMAL_RATE_5_6_TABLE: &[&[usize]] = &[
     &[0, 4362, 416, 8909, 4156, 3216, 3112, 2560, 2912, 6405, 8593, 4969, 6723],
@@ -1018,11 +979,6 @@ pub const NORMAL_RATE_5_6_TABLE: &[&[usize]] = &[
 mod tests {
     use super::*;
 
-    /// Parse a DVB-T2 table source file.
-    ///
-    /// Lines starting with `#` are treated as comments and skipped.
-    /// All other non-empty lines must consist of space-separated non-negative
-    /// integers; each such line is one table row.
     fn parse_txt_table(text: &str) -> Vec<Vec<usize>> {
         text.lines()
             .filter(|line| !line.starts_with('#') && !line.trim().is_empty())
