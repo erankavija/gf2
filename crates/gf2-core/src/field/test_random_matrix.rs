@@ -1,35 +1,5 @@
-//! Shared random `FieldMatrix` / `FieldVec` builders for tests and
-//! benches.
-//!
-//! Issue `ae1d1e88` (R1 review). The PLE story (`c3f8c1cb`), triangular
-//! story (`83b1ad8b`), and inverse story (`ae1d1e88`) each grew their
-//! own copy of the same deterministic random builders inside private
-//! `#[cfg(test)] mod tests` blocks (and in their corresponding
-//! `benches/*.rs` files). The reviewer flagged the duplication as an
-//! SSOT violation; per the project's standing rule, SSOT fixes land in
-//! the same task that surfaces them.
-//!
-//! This module is the single source of truth for those builders. It is
-//! gated behind `#[cfg(any(test, feature = "test-support"))]` so it
-//! adds zero compile-time cost to non-test, non-benchmark consumers.
-//! Benches reach it through the `dev-dependency` self-import that
-//! enables `test-support`.
-//!
-//! ## What's exported
-//!
-//! - [`random_fp`] — uniform random `m × n` over `Fp<P>`.
-//! - [`random_fp_invertible`] — random square `Fp<P>` resampled until
-//!   `rank == n`.
-//! - [`random_gf2m_wide_1`] — uniform random `m × n` over `Gf2mWide<1, C>`
-//!   for any `Gf2mWideConfig<1>` (covers `M ∈ {8, 16}` used by tests
-//!   and benches via masking on the low `M` bits).
-//! - [`random_gf2m_wide_1_invertible`] — random square `Gf2mWide<1, C>`
-//!   resampled until full rank.
-//! - [`random_fp_vec`] / [`random_gf2m_wide_1_vec`] — vector counterparts.
-//!
-//! All builders take a deterministic `u64` seed; identical seeds
-//! produce identical matrices on identical platforms (StdRng is
-//! platform-stable for our `cargo test` matrix).
+//! Seeded random `FieldMatrix` / `FieldVec` builders shared by tests and
+//! benches, compiled under `cfg(any(test, feature = "test-support"))`.
 
 use crate::field::matrix::{gemm, FieldMatrix};
 use crate::field::traits::FiniteField;
@@ -39,10 +9,7 @@ use crate::gfp::Fp;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-// ─── Fp builders ─────────────────────────────────────────────────────────────
-
-/// Returns an `m × n` matrix of uniform random elements over `Fp<P>`,
-/// reduced modulo `P`. Deterministic in `seed`.
+/// Returns a seeded random `rows × cols` matrix over `Fp<P>`.
 pub fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
     let mut rng = StdRng::seed_from_u64(seed);
     let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
@@ -54,20 +21,18 @@ pub fn random_fp<const P: u64>(rows: usize, cols: usize, seed: u64) -> FieldMatr
     m
 }
 
-/// Returns a uniform random length-`n` vector over `Fp<P>`.
+/// Returns a seeded random length-`n` vector over `Fp<P>`.
 pub fn random_fp_vec<const P: u64>(n: usize, seed: u64) -> FieldVec<Fp<P>> {
     let mut rng = StdRng::seed_from_u64(seed);
     (0..n).map(|_| Fp::<P>::new(rng.gen::<u64>() % P)).collect()
 }
 
-/// Returns a random `n × n` matrix over `Fp<P>` that is full-rank
-/// (`rank == n`). Resamples up to `attempts` times before panicking;
-/// for any reasonable `P` and `n ≥ 1` the singularity probability is
-/// `~1/P`, so `attempts = 16` is dramatic overkill.
+/// Returns a random full-rank `n × n` matrix over `Fp<P>`, resampling with
+/// seeds `seed`, `seed.wrapping_add(1)`, … up to 16 times.
 ///
-/// The seed schedule starts at `seed`, then `seed.wrapping_add(1)`,
-/// `seed.wrapping_add(2)`, … so callers using disjoint base seeds get
-/// disjoint resample sequences.
+/// # Panics
+///
+/// Panics if all 16 samples are singular.
 pub fn random_fp_invertible<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp<P>> {
     for k in 0..16u64 {
         let m = random_fp::<P>(n, n, seed.wrapping_add(k));
@@ -82,26 +47,9 @@ pub fn random_fp_invertible<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp
     );
 }
 
-/// Returns a rank-deficient `m × n` matrix over `Fp<P>` with rank exactly
-/// `rank` (must satisfy `rank < m.min(n)`). Constructed as an outer product
-/// `F · G` where `F` is `m × rank` and `G` is `rank × n`, both random.
-///
-/// # Arguments
-///
-/// - `m`, `n` — matrix dimensions.
-/// - `rank` — desired rank; must be `< m.min(n)` for the matrix to be
-///   rank-deficient. The caller is responsible for the precondition.
-/// - `seed` — deterministic seed. `F` uses `seed`; `G` uses
-///   `seed.wrapping_add(0x1234_5678)` to keep the two draws independent.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::test_random_matrix::random_fp_rank_deficient;
-/// let a = random_fp_rank_deficient::<7>(8, 8, 4, 42);
-/// assert_eq!(a.rows(), 8);
-/// assert_eq!(a.cols(), 8);
-/// ```
+/// Returns the `m × n` product `F · G` of a random `m × rank` and a random
+/// `rank × n` matrix over `Fp<P>`, of rank at most `rank`. `F` uses `seed`
+/// and `G` uses `seed.wrapping_add(0x1234_5678)`.
 pub fn random_fp_rank_deficient<const P: u64>(
     m: usize,
     n: usize,
@@ -113,16 +61,8 @@ pub fn random_fp_rank_deficient<const P: u64>(
     gemm(&f, &g)
 }
 
-// ─── Gf2mWide<1, C> builders ─────────────────────────────────────────────────
-
-/// Returns an `m × n` matrix of uniform random elements over
-/// `Gf2mWide<1, C>`. The low `C::M` bits are kept; this matches every
-/// in-tree config (`M ∈ {8, 16}`) since the upper bits are always
-/// masked out by `Gf2mWide::new`.
-///
-/// Generic so all per-module configs (PLE/triangular/inverse tests
-/// each define their own marker struct to avoid trait-coherence
-/// conflicts) can share a single builder.
+/// Returns a seeded random `rows × cols` matrix over `Gf2mWide<1, C>`, each
+/// entry drawn from the low `C::M` bits of a `u64`.
 pub fn random_gf2m_wide_1<C: Gf2mWideConfig<1>>(
     rows: usize,
     cols: usize,
@@ -143,7 +83,7 @@ pub fn random_gf2m_wide_1<C: Gf2mWideConfig<1>>(
     m
 }
 
-/// Returns a uniform random length-`n` vector over `Gf2mWide<1, C>`.
+/// Returns a seeded random length-`n` vector over `Gf2mWide<1, C>`.
 pub fn random_gf2m_wide_1_vec<C: Gf2mWideConfig<1>>(
     n: usize,
     seed: u64,
@@ -161,6 +101,10 @@ pub fn random_gf2m_wide_1_vec<C: Gf2mWideConfig<1>>(
 
 /// Returns a random full-rank `n × n` matrix over `Gf2mWide<1, C>`,
 /// resampling up to 16 times.
+///
+/// # Panics
+///
+/// Panics if all 16 samples are singular.
 pub fn random_gf2m_wide_1_invertible<C: Gf2mWideConfig<1>>(
     n: usize,
     seed: u64,
@@ -180,30 +124,9 @@ pub fn random_gf2m_wide_1_invertible<C: Gf2mWideConfig<1>>(
     );
 }
 
-// ─── Sparse (density-threshold) Fp builder ───────────────────────────────────
-
-/// Returns a sparse `m × n` matrix over `Fp<P>` where each entry is
-/// independently non-zero with probability `density`. Non-zero values
-/// are sampled uniformly from `[1, P-1]`. Deterministic in `seed`.
-///
-/// Used by RREF/PLE tests in `ple.rs` and `sparse_matrix.rs`; this is
-/// the single source of truth for the generator (jit:bd9c6e13 SSOT fix).
-///
-/// # Arguments
-///
-/// - `rows`, `cols` — matrix dimensions.
-/// - `density` — Bernoulli probability that each entry is non-zero
-///   (0.0 = all-zero, 1.0 = all non-zero).
-/// - `seed` — deterministic seed for `StdRng`.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::test_random_matrix::dense_random_fp_sparse;
-/// let m = dense_random_fp_sparse::<7>(4, 5, 0.3, 42);
-/// assert_eq!(m.rows(), 4);
-/// assert_eq!(m.cols(), 5);
-/// ```
+/// Returns a seeded `rows × cols` matrix over `Fp<P>` in which each entry is
+/// independently non-zero with probability `density`, with non-zero values
+/// drawn from `[1, P-1]`.
 pub fn dense_random_fp_sparse<const P: u64>(
     rows: usize,
     cols: usize,
@@ -223,31 +146,9 @@ pub fn dense_random_fp_sparse<const P: u64>(
     m
 }
 
-// ─── Canonical RREF oracle ────────────────────────────────────────────────────
-
-/// Textbook column-by-column Gauss-Jordan RREF over `Fp<P>`.
-///
-/// Produces the canonical RREF by construction: pivot columns are the
-/// leftmost linearly-independent subset of the input's columns.
-/// Used as a byte-equality reference for `FieldMatrix::rref` tests in
-/// `ple.rs` and `sparse_matrix.rs`; this is the single source of truth
-/// for the oracle (jit:bd9c6e13 SSOT fix, was duplicated as
-/// `direct_rref_oracle_fp` in `ple.rs` and `direct_rref_reference_fp`
-/// in `sparse_matrix.rs`).
-///
-/// # Arguments
-///
-/// - `a` — input matrix (not mutated).
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::test_random_matrix::{dense_random_fp_sparse, direct_rref_oracle_fp};
-/// let a = dense_random_fp_sparse::<7>(4, 5, 0.4, 1);
-/// let rref = direct_rref_oracle_fp(&a);
-/// assert_eq!(rref.rows(), 4);
-/// assert_eq!(rref.cols(), 5);
-/// ```
+/// Column-by-column Gauss-Jordan RREF over `Fp<P>`, the reference for
+/// `FieldMatrix::rref` tests: pivot columns are the leftmost
+/// linearly-independent subset of the input's columns.
 pub fn direct_rref_oracle_fp<const P: u64>(a: &FieldMatrix<Fp<P>>) -> FieldMatrix<Fp<P>> {
     let (m, n) = a.shape();
     let mut e = a.clone();

@@ -1,28 +1,11 @@
 //! Trait hierarchy for finite field arithmetic.
-//!
-//! This module defines a generic abstraction for finite fields that supports:
-//! - Binary extension fields GF(2^m) via [`Gf2mElement`](crate::gf2m::Gf2mElement)
-//! - Prime fields GF(p) (future)
-//! - Tower extension fields GF(p^n) (future)
-//!
-//! # Trait Overview
-//!
-//! - [`FiniteField`]: Core trait with arithmetic, identity elements, and wide accumulation.
-//! - [`ConstField`]: Extension for fields whose elements are `Copy` and have const-like constructors.
-//! - [`FiniteFieldExt`]: Blanket-implemented convenience methods (`square`, `pow`, `frobenius`).
 
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
-/// SIMD panel-kernel lane class for the panelized PLE base case
-/// (issue `6823c8a0`, design `2e8c5a29`).
-///
-/// Reported by [`FiniteField::simd_ple_panel_lane`]. Identifies which
-/// AVX2 panel kernel a field carrier has registered for
-/// [`FiniteField::try_simd_ple_panel_base`]. It carries no numeric
-/// width — the panel window's tuned size is a host-tuning concern,
-/// not a per-carrier constant.
+/// SIMD panel-kernel lane class of the panelized PLE base case, reported by
+/// [`FiniteField::simd_ple_panel_lane`].
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlePanelLane {
     /// Byte-lane AVX2 panel kernel (`Fp<P>` for `P <= 251`).
@@ -35,28 +18,6 @@ pub enum PlePanelLane {
 ///
 /// Provides arithmetic operations, identity elements, and a wide accumulator type
 /// for delayed-reduction dot products.
-///
-/// # Associated Types
-///
-/// - `Characteristic`: The field characteristic (e.g., `u64` for small primes).
-/// - `Wide`: A wider accumulator type that can hold sums of products before reduction.
-///
-/// # Examples
-///
-/// ```
-/// use gf2_core::field::FiniteField;
-/// use gf2_core::gf2m::Gf2mField;
-///
-/// let field = Gf2mField::new(4, 0b10011);
-/// let a = field.element(5);
-/// let b = field.element(3);
-///
-/// assert!(!a.is_zero());
-/// assert!(field.zero().is_zero());
-///
-/// let inv = a.inv().expect("non-zero element has inverse");
-/// assert!((a * inv).is_one());
-/// ```
 pub trait FiniteField:
     Sized
     + Clone
@@ -90,9 +51,6 @@ pub trait FiniteField:
 
     /// Returns the extension degree [F : F_p].
     ///
-    /// For a prime field GF(p), this returns 1.
-    /// For GF(p^m), this returns m.
-    ///
     /// # Panics
     ///
     /// May panic if the extension degree is not statically known (e.g., runtime-configured fields).
@@ -105,18 +63,6 @@ pub trait FiniteField:
     fn is_one(&self) -> bool;
 
     /// Computes the multiplicative inverse, or `None` if this element is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(7);
-    /// let inv = a.inv().unwrap();
-    /// assert!((a * inv).is_one());
-    /// ```
     fn inv(&self) -> Option<Self>;
 
     /// Returns the additive identity (zero) in the same field as `self`.
@@ -125,97 +71,26 @@ pub trait FiniteField:
     /// Returns the multiplicative identity (one) in the same field as `self`.
     fn one_like(&self) -> Self;
 
-    /// Returns the additive identity when the field's context is known
-    /// purely from the type (no runtime field witness required).
+    /// Returns the additive identity when the type alone determines the field,
+    /// as it does for every [`ConstField`] in this crate, and `None` otherwise.
     ///
-    /// Implementations that satisfy [`ConstField`] return `Some(Self::zero())`;
-    /// every other `FiniteField` returns `None`. This is a *static escape
-    /// hatch* used by constructors that need to fabricate a zero but hold
-    /// neither an existing element nor a field descriptor — the canonical
-    /// example is multiplying an `m×0` matrix by a `0×n` matrix with both
-    /// factors carrying empty storage.
-    ///
-    /// Override this in any [`ConstField`] impl to return `Some(Self::zero())`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// // Compile-time field: zero is always available.
-    /// assert_eq!(<Fp<7> as FiniteField>::zero_hint(), Some(Fp::<7>::new(0)));
-    ///
-    /// // Runtime-context field: no zero without a witness.
-    /// assert!(<Gf2mElement as FiniteField>::zero_hint().is_none());
-    /// ```
+    /// Lets a constructor fabricate a zero while holding neither an element nor
+    /// a field descriptor, as in the product of an `m×0` and a `0×n` matrix.
     fn zero_hint() -> Option<Self> {
         None
     }
 
-    /// Returns `floor(log2(|F|))` when the field's cardinality can be
-    /// determined statically from the type, or `None` for runtime-context
-    /// fields (e.g. [`crate::gf2m::Gf2mElement`]) whose extension degree
-    /// is only known at runtime.
+    /// Returns `floor(log2(|F|))` when the type alone determines the field
+    /// cardinality, and `None` for runtime-context fields such as
+    /// [`crate::gf2m::Gf2mElement`].
     ///
-    /// This is a *static escape hatch* used by algorithms that branch on
-    /// the field cardinality `q` (e.g. the Las-Vegas Keller–Gehrig
-    /// charpoly path in [`crate::field::charpoly`], whose probabilistic
-    /// guarantee `q > 2 n²` is meaningless when `q` is unknown). Callers
-    /// receive `None` for any field that cannot supply a compile-time
-    /// cardinality and must fall back to a deterministic alternative.
-    ///
-    /// Every [`ConstField`] implementation in this crate overrides this
-    /// to return `Some(<Self as ConstField>::order_log2())`. Runtime-
-    /// context `FiniteField` impls keep the default `None`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// // Compile-time field: cardinality known.
-    /// assert_eq!(<Fp<7> as FiniteField>::cardinality_log2_hint(), Some(2));
-    ///
-    /// // Runtime-context field: no static cardinality available.
-    /// assert!(<Gf2mElement as FiniteField>::cardinality_log2_hint().is_none());
-    /// ```
+    /// An algorithm that branches on `|F|` takes a deterministic alternative
+    /// on `None`.
     fn cardinality_log2_hint() -> Option<u32> {
         None
     }
 
     /// Converts this element to the wide accumulator type.
-    ///
-    /// For binary extension fields GF(2^m), `Wide = Self` so this is a clone.
-    /// For prime fields GF(p), this widens to a double-width integer (e.g., `u64` → `u128`)
-    /// to leave headroom for accumulating sums of products without overflow.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// // GF(2^4): Wide = Self, so to_wide is identity
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(7);
-    /// let wide = a.to_wide();
-    /// let back = <gf2_core::gf2m::Gf2mElement as FiniteField>::reduce_wide(&wide);
-    /// assert_eq!(back, a);
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Fp<7>: Wide = u128, so to_wide widens the canonical value
-    /// let a = Fp::<7>::new(5);
-    /// let wide: u128 = a.to_wide();
-    /// assert_eq!(wide, 5u128);
-    /// ```
     fn to_wide(&self) -> Self::Wide;
 
     /// Multiplies two elements and returns the result in the wide type (before reduction).
@@ -224,36 +99,6 @@ pub trait FiniteField:
     /// (up to [`max_unreduced_additions`](Self::max_unreduced_additions) times)
     /// before a single [`reduce_wide`](Self::reduce_wide) call brings the accumulator
     /// back into the field.
-    ///
-    /// # Arguments
-    ///
-    /// * `rhs` — The right-hand multiplicand.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(5);
-    /// let b = field.element(3);
-    /// let wide = a.mul_to_wide(&b);
-    /// let reduced = <gf2_core::gf2m::Gf2mElement as FiniteField>::reduce_wide(&wide);
-    /// assert_eq!(reduced, a * b);
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// let a = Fp::<7>::new(5);
-    /// let b = Fp::<7>::new(4);
-    /// let wide: u128 = a.mul_to_wide(&b);
-    /// // 5 * 4 = 20 stored unreduced in u128
-    /// assert_eq!(wide, 20u128);
-    /// assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(6)); // 20 mod 7 = 6
-    /// ```
     fn mul_to_wide(&self, rhs: &Self) -> Self::Wide;
 
     /// Multiplies two elements in the representation preferred by delayed
@@ -281,37 +126,6 @@ pub trait FiniteField:
     ///
     /// After accumulating up to [`max_unreduced_additions`](Self::max_unreduced_additions)
     /// wide products, call this to obtain the canonical field element.
-    ///
-    /// # Arguments
-    ///
-    /// * `wide` — The accumulated wide value to reduce.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(5);
-    /// let wide = a.to_wide();
-    /// let back = <gf2_core::gf2m::Gf2mElement as FiniteField>::reduce_wide(&wide);
-    /// assert_eq!(back, a);
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Accumulate two products in u128, then reduce once
-    /// let a = Fp::<7>::new(5);
-    /// let b = Fp::<7>::new(4);
-    /// let c = Fp::<7>::new(3);
-    /// let d = Fp::<7>::new(6);
-    /// let wide = a.mul_to_wide(&b) + c.mul_to_wide(&d);
-    /// // 5*4 + 3*6 = 20 + 18 = 38 → 38 mod 7 = 3
-    /// assert_eq!(Fp::<7>::reduce_wide(&wide), Fp::<7>::new(3));
-    /// ```
     fn reduce_wide(wide: &Self::Wide) -> Self;
 
     /// Reduces a delayed product-sum accumulator back to a field element.
@@ -327,19 +141,11 @@ pub trait FiniteField:
         Self::reduce_wide(wide)
     }
 
-    /// Hidden matrix-kernel hook for GF(2^m) batch product sums.
+    /// Hook for a batched dot product of `a` and `b` over single-word GF(2^m).
     ///
-    /// Most fields return `None` and continue through the generic
-    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) delayed-reduction
-    /// path. Single-word GF(2^m) implementations for `m ∈ {8, 16, 32}` may
-    /// override this hook to export operands to canonical `u64` lanes, call the
-    /// batched carry-less multiply kernel once for the whole dot product, and
-    /// XOR-reduce the products back into one field element. The scratch buffers
-    /// are caller-owned so matrix multiplication can reuse allocations across
-    /// output cells.
-    ///
-    /// This is crate-internal API surface for `FieldMatrix` performance work;
-    /// downstream code should use the public matrix/vector APIs instead.
+    /// `None` (the default) sends the caller to the generic
+    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) path. The scratch
+    /// buffers are caller-owned so that they are reused across output cells.
     #[doc(hidden)]
     #[inline]
     fn try_gf2m_u64_batch_dot_product(
@@ -354,25 +160,11 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden matrix-kernel hook for prime-field SIMD batch dot products.
+    /// Hook for a SIMD dot product of `a` and `b` over a prime field.
     ///
-    /// Companion to [`try_gf2m_u64_batch_dot_product`] for `Fp<P>` instead
-    /// of `GF(2^m)`. Most fields (including the GF(2^m) families and
-    /// generic-Montgomery primes) return `None` and the caller falls back
-    /// through the [`mul_product_sum_wide`](Self::mul_product_sum_wide)
-    /// delayed-reduction loop. The medium-prime `Fp<P>` impl
-    /// (`P ∈ (251, 65536)`) overrides this hook to route the dot through
-    /// the AVX2 16-lane u16 Barrett kernel in
-    /// `gf2-kernels-simd::fp_medium`, accumulating in 64-bit lanes and
-    /// reducing once at the very end.
-    ///
-    /// `scratch_a` / `scratch_b` are caller-owned packing buffers reused
-    /// across the surrounding GEMM traversal so the SIMD path pays its
-    /// `u64 → u16` truncation cost only once per matrix cell. The hook
-    /// is responsible for `clear()`-ing each buffer before use.
-    ///
-    /// This is crate-internal API surface for `FieldMatrix` performance
-    /// work; downstream code should use the public matrix/vector APIs.
+    /// `None` (the default) sends the caller to the
+    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) loop. An override
+    /// clears the caller-owned packing buffers before use.
     #[doc(hidden)]
     #[inline]
     fn try_fp_simd_dot_product(
@@ -385,18 +177,10 @@ pub trait FiniteField:
         None
     }
 
-    /// GEMM-internal hook: pack a slice of `Fp<P>` raw storage values
-    /// into `Vec<u16>` once, so the inner dot kernel can read pre-packed
-    /// canonical-storage lanes without re-truncating per cell.
-    ///
-    /// Returns `Some(())` if the field is eligible for the medium-prime
-    /// fast path (`Fp<P>` with `P ∈ (251, 65536)`); returns `None` for
-    /// every other field, signalling that the GEMM caller should not
-    /// attempt the pre-pack-then-SIMD-dot path. Implementations are
-    /// responsible for `clear()`-ing `out` before pushing.
-    ///
-    /// This is crate-internal API surface for `FieldMatrix` performance
-    /// work; downstream code should use the public matrix/vector APIs.
+    /// Hook that packs `xs` into `out` as `u16` lanes for
+    /// [`try_fp_simd_dot_packed_u16`](Self::try_fp_simd_dot_packed_u16),
+    /// clearing `out` first. `None` (the default) means the field has no
+    /// packed dot path.
     #[doc(hidden)]
     #[inline]
     fn try_pack_fp_medium_u16(xs: &[Self], out: &mut Vec<u16>) -> Option<()> {
@@ -404,14 +188,9 @@ pub trait FiniteField:
         None
     }
 
-    /// GEMM-internal hook: SIMD batch dot product using pre-packed u16
-    /// canonical-storage slices.
-    ///
-    /// Companion to [`try_pack_fp_medium_u16`]. Given two `&[u16]` slices
-    /// produced by the pack hook, computes the storage-domain dot
-    /// product, applies one Montgomery REDC, and returns the result as
-    /// a `Self`. Returns `None` for every field that does not implement
-    /// the medium-prime fast path.
+    /// Dot product of two slices packed by
+    /// [`try_pack_fp_medium_u16`](Self::try_pack_fp_medium_u16); `None` (the
+    /// default) means the field has no packed dot path.
     #[doc(hidden)]
     #[inline]
     fn try_fp_simd_dot_packed_u16(a_packed: &[u16], b_packed: &[u16]) -> Option<Self> {
@@ -419,32 +198,10 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden matrix-kernel hook for SIMD-accelerated `Fp<P>` dot products
-    /// over small primes (`P <= 251`).
-    ///
-    /// Most fields return `None` and continue through the generic
-    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) delayed-reduction
-    /// path. The small-prime byte-lane SIMD kernel for `Fp<P>` with
-    /// `P <= 251` overrides this hook to call the AVX2
-    /// `_mm256_madd_epi16`-based dot kernel directly, returning the
-    /// canonical reduced sum as one scalar.
-    ///
-    /// This is crate-internal API surface for `FieldMatrix` performance work
-    /// — it lets the gemm and matvec hot loops dispatch through one virtual
-    /// call without forcing every generic `gemm` caller to add a
-    /// `SimdVecOps` bound. Downstream code should use the public
-    /// matrix/vector APIs instead.
-    ///
-    /// # Arguments
-    ///
-    /// * `a`, `b` — same-length element slices.
-    ///
-    /// # Returns
-    ///
-    /// `Some(scalar)` — the canonical reduced dot product — when a SIMD
-    /// kernel is available; `None` (the default) otherwise, in which case
-    /// the caller falls back to the chunked-`Wide` `dot_product_slices`
-    /// loop.
+    /// Hook for a SIMD dot product of same-length slices, returning the
+    /// reduced sum; `None` (the default) sends the caller to the delayed
+    /// reduction loop. A trait hook, so that generic callers need no
+    /// `SimdVecOps` bound.
     #[doc(hidden)]
     #[inline]
     fn try_simd_dot_product(a: &[Self], b: &[Self]) -> Option<Self> {
@@ -452,30 +209,12 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden whole-gemm hook for a field that computes the whole product
-    /// itself.
+    /// Hook for a field that computes a whole matrix product itself.
     ///
-    /// Lets a field bypass the per-cell `dot_product_slices` loop in
-    /// [`crate::field::matrix::gemm`] and instead pack `A` and `B^T` once,
-    /// run its own inner kernel and unpack the output, paying
-    /// `O(m·k + n·k + m·n)` of packing to amortise a per-element cost
-    /// across the `O(m·k·n)` inner kernel. `Fp<P>` for `P ≤ 251` packs to
-    /// canonical bytes for an AVX2 byte-lane gemm; the single-word GF(2^8)
-    /// representations pack to bytes for the cached product table.
-    ///
-    /// # Arguments
-    ///
-    /// * `a` — `m × k` flattened row-major buffer.
-    /// * `b_t` — `n × k` flattened row-major buffer (already transposed
-    ///   so the inner product walks contiguous memory).
-    /// * `m`, `k`, `n` — matrix shapes; `a.len() == m * k`,
-    ///   `b_t.len() == n * k`.
-    /// * `out` — `m × n` flattened row-major destination.
-    ///
-    /// # Returns
-    ///
-    /// `true` when the kernel populated `out`, `false` (the default)
-    /// when the caller should fall back to the per-cell scalar path.
+    /// `a` is the `m × k` row-major left operand, `b_t` the `n × k` row-major
+    /// transpose of the right operand, and `out` the `m × n` row-major
+    /// destination. Returns `true` when `out` is populated and `false` (the
+    /// default) when the caller should take the per-cell path.
     #[doc(hidden)]
     #[inline]
     fn try_simd_gemm_classical(
@@ -490,68 +229,24 @@ pub trait FiniteField:
         false
     }
 
-    /// Non-allocating availability probe for [`try_simd_gemm_classical`]
-    /// (issue `40195c09`).
+    /// Non-allocating probe: `true` when callers should allocate contiguous
+    /// operand scratch for
+    /// [`try_simd_gemm_classical`](Self::try_simd_gemm_classical) or
+    /// restructure an algorithm around it. Defaults to `false`.
     ///
-    /// Callers that need to decide whether to allocate the contiguous
-    /// `A` and `out` scratch buffers before calling
-    /// [`try_simd_gemm_classical`] use this probe to skip the
-    /// allocation when the kernel will return `false` regardless (no
-    /// `simd` feature, AVX2 unavailable at runtime, or prime out of the
-    /// `P ≤ 251` byte-lane range). The default returns `false`; `Fp<P>`
-    /// for `P ≤ 251` overrides to return `true` when the `simd` feature
-    /// is enabled and AVX2 is detected.
-    ///
-    /// This is the same probe pattern used by
-    /// [`chain_poly_arith_available`](Self::chain_poly_arith_available)
-    /// for the `try_make_chain_poly_arith` hook.
-    ///
-    /// # A field may accept the hook and decline this probe
-    ///
-    /// [`crate::field::matrix::gemm`] calls the hook directly rather than
-    /// through this probe, so a field whose hook populates `out` may still
-    /// answer `false` here. A `false` therefore means only that callers should
-    /// neither pre-allocate operand scratch for the hook nor restructure an
-    /// algorithm around it; it does not mean the dense product declines. The
-    /// single-word GF(2^8) representations are that case: their hook runs the
-    /// cached byte product table while this probe keeps the default, so the
-    /// GEMM-axpy fold, the blocked triangular solve and the blocked inverse
-    /// keep the route they take. The condition that ends it is a benchmark
-    /// receipt covering those three consumers on the table lane; until one
-    /// exists, the probe stays `false` for GF(2^8).
-    ///
-    /// # Returns
-    ///
-    /// `true` when [`try_simd_gemm_classical`] is expected to populate
-    /// `out` for any shape compatible with the kernel; `false` when the
-    /// caller should not bother allocating the contiguous operand
-    /// scratch.
+    /// [`crate::field::matrix::gemm`] calls the hook without consulting this
+    /// probe, so a field whose hook populates `out` may answer `false` here;
+    /// the single-word GF(2^8) representations do.
     #[doc(hidden)]
     #[inline]
     fn has_simd_gemm_classical() -> bool {
         false
     }
 
-    /// Hidden cyclic-decomposition basis reducer hook
-    /// (issue `d1dd266c`).
-    ///
-    /// Returns an opaque handle that owns a packed canonical-form
-    /// copy of the basis columns and runs the
-    /// `(residual, coeffs) = v − Σ coeffs[j] basis[j]` reduce against
-    /// it via SIMD `batch_mul + batch_sub` calls on the canonical
-    /// lanes. The `push_col` method appends a new packed column;
-    /// `reduce` does the per-call reduce sweep against all currently
-    /// stored columns.
-    ///
-    /// The win over the scalar
-    /// [`crate::field::vec::FieldVec::axpy`]-driven reduce loop is
-    /// the elimination of the per-element Montgomery REDC pass: the
-    /// packed representation lets the inner loop run in canonical
-    /// form for every pivot subtraction, paying the `Fp<P>::value()`
-    /// REDC at append time only.
-    ///
-    /// Returns `None` for fields without a SIMD fast path; the
-    /// caller falls back to the scalar `reduce` chain.
+    /// Hook returning a reducer that holds packed basis columns and computes
+    /// `(residual, coeffs)` with `residual = v − Σ coeffs[j]·basis[j]` for
+    /// cyclic decomposition; `None` (the default) sends the caller to the
+    /// scalar reduction.
     #[doc(hidden)]
     #[inline]
     fn try_make_basis_reducer(
@@ -561,17 +256,9 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden chain-polynomial arithmetic hook (issue `5a3dbd5b`).
-    ///
-    /// Returns a boxed [`crate::field::matrix::ChainPolyArith`] handle
-    /// that stores chain polynomial coefficients in canonical-byte form
-    /// and performs the Krylov-step polynomial update (`shift_x`,
-    /// `sub_scaled`) via AVX2 byte-lane kernels, avoiding per-element
-    /// Montgomery REDC overhead.
-    ///
-    /// Returns `None` for fields other than `Fp<P>` with `P ≤ 251`
-    /// (or when AVX2 is unavailable); the caller falls back to the
-    /// scalar `FieldPoly` path.
+    /// Hook returning a [`crate::field::matrix::ChainPolyArith`] handle for
+    /// the chain-polynomial updates of cyclic decomposition; `None` (the
+    /// default) sends the caller to the `FieldPoly` path.
     #[doc(hidden)]
     #[inline]
     fn try_make_chain_poly_arith(
@@ -581,45 +268,18 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden non-allocating availability probe for the chain-poly
-    /// arithmetic hook above (issue `5a3dbd5b` review feedback).
-    ///
-    /// Callers that only need to decide whether to take the packed path
-    /// (without actually constructing the handle) call this instead of
-    /// `try_make_chain_poly_arith(...).is_some()` to avoid the boxed
-    /// allocation/drop on the hot path. Default returns `false`; `Fp<P>`
-    /// overrides for `P ≤ 251` with AVX2 available.
+    /// Non-allocating probe for
+    /// [`try_make_chain_poly_arith`](Self::try_make_chain_poly_arith).
+    /// Defaults to `false`.
     #[doc(hidden)]
     #[inline]
     fn chain_poly_arith_available() -> bool {
         false
     }
 
-    /// Hidden accelerated `axpy` hook (issue `d1dd266c`).
-    ///
-    /// Computes `y[i] += a · x[i]` for all `i` through whatever
-    /// accelerated route the field has. Returns `true` when that route
-    /// ran (and `y` was updated), `false` (the default) when the caller
-    /// should fall back to the scalar
-    /// `for (y_i, x_i) in y.zip(x): y_i += a * x_i` loop.
-    ///
-    /// Two families override it, and neither shares a mechanism with the
-    /// other:
-    ///
-    /// * `Fp<P>` (`P ≤ 65521`) dispatches to the AVX2 byte-lane
-    ///   (`P ≤ 251`) or u16-lane (`252 ≤ P < 65536`) `batch_mul` +
-    ///   `batch_add` kernels with the scalar `a` broadcast across the
-    ///   whole vector, which needs the crate's `simd` feature and an
-    ///   AVX2 host. The pack/unpack overhead is `O(n)` and is amortised
-    ///   against the `O(n)` SIMD inner loop; callers that perform `O(n)`
-    ///   axpys per reduction step (such as `cyclic_decomposition`) thus
-    ///   close the asymptotic gap.
-    /// * Both single-word GF(2^8) representations — `Gf2mElement_<u64>`
-    ///   and `Gf2mWide<1, Cfg>` with `Cfg::M == 8` — read a cached byte
-    ///   product table at one indexed load and one XOR per element
-    ///   (issue `77c21ecd`). That path is safe scalar Rust and needs no
-    ///   cargo feature and no processor capability; its exact predicate
-    ///   is `crate::gf2m::byte_table::gf256_table_dispatch`.
+    /// Hook for an accelerated `y[i] += a · x[i]`. Returns `true` when `y` is
+    /// updated and `false` (the default) when the caller should run the
+    /// scalar loop.
     #[doc(hidden)]
     #[inline]
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
@@ -627,19 +287,9 @@ pub trait FiniteField:
         false
     }
 
-    /// Hidden pre-packed matvec cache hook (issue `d1dd266c`).
-    ///
-    /// Returns an opaque boxed cache that pre-packs the row-major
-    /// `m × k` matrix `a` once and exposes a `matvec(x, out)` method.
-    /// Used by the iterative drivers in
-    /// [`crate::field::charpoly`] (`cyclic_decomposition`,
-    /// `wiedemann_minpoly_attempt`) so the per-call matrix pack cost
-    /// is paid exactly once per minpoly / charpoly call.
-    ///
-    /// Returns `None` when no SIMD fast path is available (the
-    /// caller falls back to the per-call
-    /// [`Self::try_simd_matvec`] hook or to the scalar
-    /// `dot_product_slices` chain).
+    /// Hook that packs the row-major `m × k` matrix `a` once and returns a
+    /// handle for repeated matrix-vector products; `None` (the default)
+    /// means the field has no packed path.
     #[doc(hidden)]
     #[inline]
     fn try_prepack_matvec(
@@ -651,32 +301,10 @@ pub trait FiniteField:
         None
     }
 
-    /// Hidden whole-matvec hook for SIMD-accelerated `Fp<P>` matrix-
-    /// vector product `y = A · x`.
-    ///
-    /// Lets `Fp<P>` (`P ≤ 65521`) bypass the per-row scalar
-    /// [`mul_product_sum_wide`](Self::mul_product_sum_wide) chain and
-    /// instead pre-pack the whole `a` matrix once, run a fully
-    /// vectorised AVX2 byte / 16-bit-lane batch-dot per row, and
-    /// unpack into `out`. The pack/unpack cost is `O(m·k + k + m)`,
-    /// amortising the per-element Montgomery REDC across the
-    /// `O(m·k)` inner kernel work — but the matrix re-pack still runs
-    /// once per call. Iterative drivers (Wiedemann, cyclic
-    /// decomposition) that perform `O(n)` matvecs on the same matrix
-    /// should reach into the pre-packed cache (`PackedFpMatrix` in
-    /// `crate::gfp::simd_ops`) directly to avoid the per-call repack.
-    ///
-    /// # Arguments
-    ///
-    /// * `a` — `m × k` flattened row-major buffer.
-    /// * `x` — length-`k` input vector.
-    /// * `m`, `k` — matrix shape; `a.len() == m * k`, `x.len() == k`.
-    /// * `out` — length-`m` destination.
-    ///
-    /// # Returns
-    ///
-    /// `true` when the kernel populated `out`, `false` (the default)
-    /// when the caller should fall back to the per-row scalar path.
+    /// Hook for a whole matrix-vector product `out = A · x`, with `a` the
+    /// `m × k` row-major matrix, `x` of length `k` and `out` of length `m`.
+    /// Returns `true` when `out` is populated and `false` (the default) when
+    /// the caller should take the per-row path.
     #[doc(hidden)]
     #[inline]
     fn try_simd_matvec(a: &[Self], x: &[Self], m: usize, k: usize, out: &mut [Self]) -> bool {
@@ -684,30 +312,11 @@ pub trait FiniteField:
         false
     }
 
-    /// Hidden sparse-times-dense whole-matmat hook for SIMD-accelerated
-    /// SpMM.
-    ///
-    /// Lets `Fp<P>` (`P ≤ 65521`) bypass the per-row Wide-accumulator
-    /// path in [`crate::field::sparse_matrix::SparseFieldMatrix::matmat`]
-    /// and instead pack the dense `b` once, run an AVX2 byte /
-    /// 16-bit-lane SpMM kernel against each sparse row of `A`, and
-    /// unpack the output. The whole-matmat shape lets the
-    /// implementation amortise the `b` pack across all rows of `A`,
-    /// which is the SpMM throughput win over per-row dispatch.
-    ///
-    /// # Arguments
-    ///
-    /// * `a_row_ptr` — CSR row pointer for `A` (length `m + 1`).
-    /// * `a_col_idx` — CSR column indices for `A` (length `nnz`).
-    /// * `a_values` — CSR values for `A` (length `nnz`).
-    /// * `b` — dense `b_rows × n` row-major matrix of `Self`.
-    /// * `b_rows`, `n` — shape of `b`.
-    /// * `out` — destination dense `m × n` row-major buffer.
-    ///
-    /// # Returns
-    ///
-    /// `true` when the kernel populated `out`, `false` (the default)
-    /// when the caller should fall back to the per-row Wide-accumulator
+    /// Hook for a whole sparse-times-dense product `out = A · B`, with `A` in
+    /// CSR form (`a_row_ptr` of length `m + 1`, `a_col_idx` and `a_values` of
+    /// length `nnz`), `b` a `b_rows × n` row-major matrix and `out` the
+    /// `m × n` row-major destination. Returns `true` when `out` is populated
+    /// and `false` (the default) when the caller should take the per-row
     /// path.
     #[doc(hidden)]
     #[inline]
@@ -724,30 +333,13 @@ pub trait FiniteField:
         false
     }
 
-    /// Hidden hook for the extension-field scalar Wiedemann minimal-
-    /// polynomial path (issue `6c926de0`).
+    /// Hook for the minimal polynomial of the square matrix `a`, computed by
+    /// scalar Wiedemann over an extension field and descended to the base
+    /// field.
     ///
-    /// Lets specific prime-field types (`Fp<P>` with `P ∈ {7, 251}`)
-    /// bypass the base-field multi-seed Wiedemann path of
-    /// [`crate::field::charpoly::minpoly_dispatch`] and instead embed
-    /// the matrix into a small extension `E = Fp<P>[α] / (f)` where
-    /// `|E| > n`, run a single scalar Wiedemann attempt over `E`, and
-    /// descend the result back to the base field.
-    ///
-    /// The default returns `None` so the caller falls back to the base-
-    /// field path. Overrides must verify the descended polynomial
-    /// annihilates `A` over the base field before returning `Some`.
-    ///
-    /// # Arguments
-    ///
-    /// * `a` — square matrix whose minpoly is sought.
-    ///
-    /// # Returns
-    ///
-    /// `Some(p)` when the extension-field path produced a polynomial
-    /// that descends to the base field and annihilates `A`. `None`
-    /// otherwise (no override available, embedding not beneficial,
-    /// extension Wiedemann failed, descent or verification failed).
+    /// An override verifies that the descended polynomial annihilates `a`
+    /// over the base field before returning `Some`. `None` (the default)
+    /// sends the caller to the base-field path.
     #[doc(hidden)]
     #[inline]
     fn try_extension_wiedemann_minpoly(
@@ -760,112 +352,29 @@ pub trait FiniteField:
     /// Maximum number of wide-type additions before reduction is required to avoid overflow.
     ///
     /// Returns `usize::MAX` if overflow is impossible (e.g., binary fields where addition is XOR).
-    /// For prime fields, this is computed as `floor(u128::MAX / (P-1)^2)` — the number of
-    /// unreduced `mul_to_wide` products that can be safely summed in a `u128` accumulator
-    /// without wrapping. Dot-product implementations use this to chunk their work.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// // GF(2^m): XOR never overflows, so no reduction limit
-    /// assert_eq!(<Gf2mElement as FiniteField>::max_unreduced_additions(), usize::MAX);
-    /// ```
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// // Small prime: many products fit in u128
-    /// let k = <Fp<7> as FiniteField>::max_unreduced_additions();
-    /// assert!(k > 1_000_000);
-    ///
-    /// // Large prime near 2^63: only a handful of products fit
-    /// let k2 = <Fp<9_223_372_036_854_775_783> as FiniteField>::max_unreduced_additions();
-    /// assert!(k2 >= 1 && k2 < 100);
-    /// ```
+    /// Dot-product implementations use this to chunk their work.
     fn max_unreduced_additions() -> usize;
 
-    /// Per-cell operand magnitude bound used by the Strassen–Winograd
-    /// theorem-4 recursion gate in [`crate::field::winograd`].
+    /// Per-cell operand magnitude bound for the Strassen–Winograd recursion
+    /// gate in [`crate::field::winograd`]: the largest integer value of a
+    /// canonical element viewed in `Self::Wide`.
     ///
-    /// Returns the maximum absolute integer value a canonical field
-    /// element can take when viewed as an element of `Self::Wide`. For
-    /// prime fields this is `p - 1`; for binary extension fields where
-    /// `Wide = Self` and addition is XOR the theorem is vacuous, and the
-    /// sentinel `u128::MAX` signals to callers that the bound check can
-    /// be skipped entirely (matching the behaviour of
-    /// `max_unreduced_additions() == usize::MAX`).
-    ///
-    /// Used by `gemm_winograd_inner` to decide whether the theorem-4
-    /// cell-magnitude bound at the next recursion depth would exceed the
-    /// field's delayed-reduction headroom:
-    ///
-    /// ```text
-    /// theorem_4_bound(level + 1, k, theorem_4_operand_bound())
-    ///     > max_unreduced_additions() * theorem_4_operand_bound()²
-    /// ```
-    ///
-    /// When true, the recursion falls back to the classical gemm at the
-    /// current level.
-    ///
-    /// # Overrides
-    ///
-    /// **Every prime-field implementation MUST override this** to return
-    /// `(P - 1) as u128` (or the moral equivalent for the specific
-    /// field) — the default value is calibrated for binary fields, where
-    /// the theorem is vacuous, and is too loose for prime fields.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::FiniteField;
-    /// use gf2_core::gfp::Fp;
-    /// use gf2_core::gf2m::Gf2mElement;
-    ///
-    /// assert_eq!(<Fp<7> as FiniteField>::theorem_4_operand_bound(), 6);
-    /// assert_eq!(
-    ///     <Gf2mElement as FiniteField>::theorem_4_operand_bound(),
-    ///     u128::MAX,
-    /// );
-    /// ```
+    /// A prime-field implementation must override this to return `p - 1`.
+    /// The default `u128::MAX` is for binary extension fields, where addition
+    /// is XOR and the gate is skipped.
     fn theorem_4_operand_bound() -> u128 {
         u128::MAX
     }
 
-    /// Optional panelized PLE base-case fast path for small windows
-    /// (issue `6823c8a0`, design `2e8c5a29`).
+    /// Hook for a panelized PLE base case on the column window
+    /// `[col_lo, col_hi)` of the `m`-row, `parent_cols`-column row-major
+    /// `matrix`.
     ///
-    /// When `Some(rank)` is returned, the kernel populated the matrix
-    /// window `[col_lo, col_hi)` of rows `[0, m)` with the in-place PLE
-    /// compact storage (same convention as the scalar
-    /// [`crate::field::ple::ple_base_direct`]), updated `perm` for any
-    /// row swaps, and pushed pivot column indices to `pivot_cols`. When
-    /// `None` is returned, the caller falls back to
-    /// [`crate::field::ple::ple_base_direct`].
-    ///
-    /// The kernel is responsible for applying full-row swaps to cells
-    /// **outside** the `[col_lo, col_hi)` window via direct access to
-    /// the parent storage `matrix` (length `m * parent_cols`).
-    ///
-    /// # Arguments
-    ///
-    /// * `matrix` — full row-major parent storage, length `m * parent_cols`.
-    /// * `parent_cols` — number of columns in the parent matrix.
-    /// * `m` — number of rows.
-    /// * `col_lo`, `col_hi` — column window `[col_lo, col_hi)` (within
-    ///   `0..parent_cols`).
-    /// * `perm` — row permutation tracker, length `m`. Mutated for any
-    ///   row swap performed by the kernel.
-    /// * `pivot_cols` — pivot-column accumulator. Absolute column indices
-    ///   (within the parent matrix) are pushed in left-to-right order.
-    ///
-    /// # Returns
-    ///
-    /// `Some(rank)` on success; `None` when the kernel declined (e.g.
-    /// AVX2 unavailable, prime out of range, or feature disabled).
+    /// On `Some(rank)` the window holds the in-place PLE compact storage in
+    /// the convention of `crate::field::ple::ple_base_direct`, row swaps are
+    /// applied to whole rows of `matrix` and recorded in `perm` (length `m`),
+    /// and absolute pivot column indices are pushed to `pivot_cols` left to
+    /// right. `None` (the default) sends the caller to `ple_base_direct`.
     #[doc(hidden)]
     #[inline]
     fn try_simd_ple_panel_base(
@@ -881,19 +390,10 @@ pub trait FiniteField:
         None
     }
 
-    /// Non-allocating lane-class probe for
-    /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base)
-    /// (issue `6823c8a0`).
-    ///
-    /// Callers (specifically
-    /// [`crate::field::ple::ple_in_place_window`]) use this probe to
-    /// decide whether to take the panel-base dispatch arm and, when
-    /// `Some`, which lane class the registered kernel runs. The default
-    /// returns `None`; `Fp<P>` overrides to return
-    /// `Some(PlePanelLane::Byte)` for `P <= 251` or
-    /// `Some(PlePanelLane::U16)` for `252 <= P < 65536`, when the
-    /// `simd` feature is enabled and AVX2 is detected at runtime, and
-    /// `None` otherwise.
+    /// Non-allocating probe for
+    /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base): the lane
+    /// class of the registered kernel, or `None` (the default) when there is
+    /// none.
     #[doc(hidden)]
     #[inline]
     fn simd_ple_panel_lane() -> Option<PlePanelLane> {
@@ -917,38 +417,20 @@ pub trait ConstField: FiniteField + Copy {
     /// # Panics
     ///
     /// Impls are permitted to panic when the order exceeds `u128::MAX` —
-    /// for example, `Gf2mWide<N, Cfg>` with `Cfg::M >= 128` (GF(2^256)
-    /// and above). Callers that need a non-panicking width probe should
-    /// use [`Self::order_log2`] first.
+    /// for example, `Gf2mWide<N, Cfg>` with `Cfg::M >= 128`. Callers that
+    /// need a non-panicking width probe should use [`Self::order_log2`].
     fn order() -> u128;
 
-    /// Returns `floor(log2(order))`. Always safe to call, even for
-    /// fields whose order exceeds `u128::MAX`.
+    /// Returns `floor(log2(order))`.
     ///
-    /// The default implementation computes `Self::order().ilog2()` and
-    /// therefore panics when `order()` does. Impls whose order is too
-    /// large to fit in a `u128` (e.g. `Gf2mWide<4, _>` for `GF(2^256)`)
-    /// MUST override this method so that callers can still query the
-    /// field's bit-width without triggering the overflow panic on
-    /// `order()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::ConstField;
-    /// use gf2_core::gfp::Fp;
-    ///
-    /// assert_eq!(<Fp<7> as ConstField>::order_log2(), 2); // floor(log2(7))
-    /// assert_eq!(<Fp<17> as ConstField>::order_log2(), 4);
-    /// ```
+    /// The default computes `Self::order().ilog2()` and panics when `order()`
+    /// does; an impl whose order exceeds `u128::MAX` must override it.
     fn order_log2() -> u32 {
         Self::order().ilog2()
     }
 }
 
 /// Blanket-implemented convenience methods for all [`FiniteField`] types.
-///
-/// Provides `square`, `pow`, and `frobenius` built on top of the core trait.
 pub trait FiniteFieldExt: FiniteField {
     /// Computes `self * self`.
     fn square(&self) -> Self {
@@ -960,18 +442,6 @@ pub trait FiniteFieldExt: FiniteField {
     /// # Complexity
     ///
     /// O(log exp) field multiplications.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FiniteField, FiniteFieldExt};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(6);
-    /// // Fermat's little theorem: a^(2^4 - 1) = 1 for non-zero a
-    /// assert!(a.pow(15).is_one());
-    /// ```
     fn pow(&self, exp: u64) -> Self {
         if exp == 0 {
             return self.one_like();
@@ -996,34 +466,14 @@ pub trait FiniteFieldExt: FiniteField {
 
     /// Computes the k-th iterated Frobenius endomorphism: `self^(p^k)`.
     ///
-    /// The Frobenius map φ: x → x^p is a field automorphism of GF(p^m).
-    /// This computes φ^k(x) = x^(p^k).
-    ///
-    /// # Arguments
-    ///
-    /// * `k` - Number of Frobenius iterations.
-    ///
     /// # Panics
     ///
-    /// Panics if the characteristic cannot be converted to `u64`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use gf2_core::field::{FiniteField, FiniteFieldExt};
-    /// use gf2_core::gf2m::Gf2mField;
-    ///
-    /// let field = Gf2mField::new(4, 0b10011);
-    /// let a = field.element(5);
-    /// // In GF(2^4): frobenius(a, 1) = a^2
-    /// assert_eq!(a.frobenius(1), a.square());
-    /// ```
+    /// Panics if `p^k` overflows `u64`.
     fn frobenius(&self, k: usize) -> Self
     where
         Self::Characteristic: Into<u64>,
     {
         let p: u64 = self.characteristic().into();
-        // Compute p^k as exponent
         let mut exp = 1u64;
         for _ in 0..k {
             exp = exp.checked_mul(p).expect("Frobenius exponent overflow");
@@ -1032,7 +482,6 @@ pub trait FiniteFieldExt: FiniteField {
     }
 }
 
-// Blanket implementation: every FiniteField automatically gets FiniteFieldExt
 impl<T: FiniteField> FiniteFieldExt for T {}
 
 #[cfg(test)]
@@ -1040,32 +489,23 @@ mod tests {
     use super::*;
     use crate::gf2m::Gf2mField;
 
-    // --- Generic function test proving trait usability ---
-
     fn generic_field_test<F: FiniteField>(a: F, b: F) {
-        // Commutativity: a + b == b + a
         assert_eq!(a.clone() + b.clone(), b.clone() + a.clone());
-        // Commutativity: a * b == b * a
         assert_eq!(a.clone() * b.clone(), b.clone() * a.clone());
 
-        // Additive identity
         let zero = a.zero_like();
         assert_eq!(a.clone() + zero.clone(), a);
 
-        // Multiplicative identity
         let one = a.one_like();
         assert_eq!(a.clone() * one.clone(), a);
 
-        // Subtraction (additive inverse)
         assert!((a.clone() - a.clone()).is_zero());
 
-        // Multiplicative inverse (if non-zero)
         if !a.is_zero() {
             let inv = a.inv().expect("non-zero element has inverse");
             assert!((a.clone() * inv).is_one());
         }
 
-        // Zero has no inverse
         assert!(zero.inv().is_none());
     }
 
@@ -1083,63 +523,43 @@ mod tests {
         generic_field_test(field.element(0x53), field.element(0xCA));
     }
 
-    // --- FiniteFieldExt: square() ---
-    // SageMath: GF(2^4, 'a', modulus=x^4+x+1)
-
+    // Expected values: `@/citation/SageMath2026`, GF(2^4) with modulus x^4+x+1.
     #[test]
     fn test_square_gf16() {
         let field = Gf2mField::new(4, 0b10011);
 
-        // square(5) = 2: a^2+1 squared = a^2+a+1 ... SageMath says 2
         assert_eq!(field.element(5).square(), field.element(2));
-        // square(10) = 8
         assert_eq!(field.element(10).square(), field.element(8));
     }
-
-    // --- FiniteFieldExt: pow() ---
 
     #[test]
     fn test_pow_gf16() {
         let field = Gf2mField::new(4, 0b10011);
 
-        // pow(3, 5) = 6
         assert_eq!(field.element(3).pow(5), field.element(6));
-        // pow(7, 10) = 7
         assert_eq!(field.element(7).pow(10), field.element(7));
-        // pow(9, 13) = 4
         assert_eq!(field.element(9).pow(13), field.element(4));
-        // pow(13, 4) = 11
         assert_eq!(field.element(13).pow(4), field.element(11));
         // Fermat: pow(6, 15) = 1
         assert_eq!(field.element(6).pow(15), field.element(1));
-        // pow(a, 0) = 1 for any non-zero a
         assert_eq!(field.element(5).pow(0), field.element(1));
         assert_eq!(field.element(1).pow(0), field.element(1));
     }
-
-    // --- FiniteFieldExt: frobenius() ---
 
     #[test]
     fn test_frobenius_gf16() {
         let field = Gf2mField::new(4, 0b10011);
 
-        // frobenius(5, 1) = 5^2 = 2
         assert_eq!(field.element(5).frobenius(1), field.element(2));
-        // frobenius(5, 2) = 5^4 = 4
         assert_eq!(field.element(5).frobenius(2), field.element(4));
-        // frobenius(7, 1) = 7^2 = 6
         assert_eq!(field.element(7).frobenius(1), field.element(6));
-        // frobenius(10, 1) = 10^2 = 8
         assert_eq!(field.element(10).frobenius(1), field.element(8));
     }
-
-    // --- GF(2^8) with polynomial x^8+x^4+x^3+x^2+1 (0b100011101) ---
 
     #[test]
     fn test_gf256_inv() {
         let field = Gf2mField::gf256();
         let a = field.element(0x53);
-        // Verify a * inv(a) = 1
         let inv = a.inv().unwrap();
         assert!((a * inv).is_one());
     }
@@ -1149,7 +569,6 @@ mod tests {
         let field = Gf2mField::gf256();
         // Fermat: a^255 = 1 for any non-zero a
         assert!(field.element(0x53).pow(255).is_one());
-        // pow consistency: a^7 = a * a^2 * a^4
         let a = field.element(0x53);
         let a2 = a.square();
         let a4 = a2.square();
@@ -1160,11 +579,8 @@ mod tests {
     fn test_gf256_square() {
         let field = Gf2mField::gf256();
         let a = field.element(0x53);
-        // square(a) = a * a
         assert_eq!(a.square(), a.clone() * a);
     }
-
-    // --- Trait method consistency ---
 
     #[test]
     fn test_characteristic_and_extension() {
@@ -1199,7 +615,6 @@ mod tests {
         let b = field.element(3);
         a += &b;
         assert_eq!(a, field.element(5 ^ 3));
-        // b is still valid
         assert_eq!(b.value(), 3);
     }
 
@@ -1209,7 +624,6 @@ mod tests {
         let a = field.element(5);
         let b = field.element(3);
 
-        // owned + &ref
         assert_eq!(a.clone() + &b, &a + &b);
         assert_eq!(a.clone() - &b, &a - &b);
         assert_eq!(a.clone() * &b, &a * &b);

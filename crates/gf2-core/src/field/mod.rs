@@ -2,52 +2,6 @@
 //!
 //! This module provides abstract traits for finite field arithmetic, enabling
 //! generic algorithms over any field type (binary extensions, prime fields, tower extensions).
-//!
-//! # Traits
-//!
-//! - [`FiniteField`] — Core trait: arithmetic, identities, wide accumulation.
-//! - [`ConstField`] — Extension for `Copy` fields with zero-cost constructors.
-//! - [`FiniteFieldExt`] — Blanket convenience methods: `square`, `pow`, `frobenius`.
-//! - [`TwoAdicField`] — Fields with a large power-of-two subgroup of `F^*`,
-//!   enabling radix-2 NTT butterflies.
-//! - [`FieldIdentity`] — Carriers that name their algebraic identity
-//!   ([`FieldId`]) and their canonical prime-field coordinates.
-//! - [`FieldExtension`] — The relation "E is an extension of B", witnessed by
-//!   a value: embedding, checked restriction, relative degree, relative
-//!   Frobenius, and the order relationships between the two fields.
-//!
-//! # Extensions and identity
-//!
-//! - [`extension`] — [`FieldId`], [`FieldIdentity`], [`FieldExtension`], the
-//!   validation certificates that make repeated construction cheap, and the
-//!   concrete witnesses [`BinaryPrimeExt`], [`ConstExt`], and [`TrivialExt`]
-//!   covering GF(2) inside a runtime GF(2^m), the compile-time binomial
-//!   towers, and the trivial extension of any carrier.
-//!
-//! # Batch operations
-//!
-//! - [`batch_ops`] — Montgomery's trick for inverting many elements with a
-//!   single field inversion.
-//!
-//! # Fast transforms
-//!
-//! - [`ntt`] — radix-2 Number Theoretic Transform over [`TwoAdicField`].
-//!   Powers the `O(n log n)` fast polynomial multiplication path
-//!   [`FieldPoly::mul_ntt`](poly::FieldPoly::mul_ntt) and the free
-//!   function [`poly::mul_fast`].
-//!
-//! # Polynomials
-//!
-//! - [`poly`] — [`FieldPoly<F>`](poly::FieldPoly), a generic univariate
-//!   polynomial type. It is the single source of truth in `gf2-core`:
-//!   [`Gf2mPoly_<V>`](crate::gf2m::Gf2mPoly_) is a thin `pub type`
-//!   alias for `FieldPoly<Gf2mElement_<V>>`. The module covers the
-//!   full basic algebraic surface — addition, subtraction, negation,
-//!   scalar multiplication, polynomial multiplication (schoolbook +
-//!   Karatsuba dispatch), Euclidean division and GCD, Horner
-//!   evaluation, naive per-point batch evaluation, subproduct-tree
-//!   batch evaluation, construction from roots, and products of
-//!   polynomial slices.
 
 pub mod batch_ops;
 pub mod charpoly;
