@@ -213,7 +213,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
   retaining binary-specific performance paths. The implemented `gfpn` result is
   the narrower quadratic/cubic tower seen in `gfpn/mod.rs`, not arbitrary
   polynomial quotients.
-- `dev/plans/70972f06_audit.md:1-35` records that BCH’s
+- `dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md:1-35` records that BCH’s
   `alpha_power.minimal_polynomial()` call remains a Gf2mElement operation. It
   is useful cutover evidence: moving this operation to a reusable relative-field
   API must preserve the current call’s semantics while removing the BCH-private
@@ -368,7 +368,7 @@ or `.verify_primitive()` are:
 `crates/gf2-core/examples/primitive_polynomial_verification.rs:1-32`,
 `dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md:70-80,270-360`,
 `dev/archive/legacy/crates/gf2-core/docs/archive/GF2M_POLY_UTILITIES_REQUIREMENTS.md:171`,
-`dev/plans/70972f06_audit.md:28-29`, and
+`dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md:28-29`, and
 `dev/archive/806eb14e-hip-gpu-prototype/active/9012f8a0/gpu-batch-bch-syndrome-plan.md:73`.
 The HIP field test additionally consumes `primitive_element` to form evaluation
 points (`crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs:39-48`). No
