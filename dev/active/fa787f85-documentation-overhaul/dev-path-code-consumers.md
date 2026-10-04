@@ -245,7 +245,7 @@ comments in `proofs/`.
 ## crates/*/docs
 
 No non-comment consumer found: no `include_str!`, `#[doc = include_str!]`,
-Cargo `readme`, CI step, or script references `crates/gf2-core/docs` or
+Cargo `readme`, CI step, or script references `dev/archive/legacy/crates/gf2-core/docs` or
 `crates/gf2-coding/docs`.
 
 ## Other config consumers

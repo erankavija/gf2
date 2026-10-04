@@ -24,7 +24,7 @@ Other root sections belong to sibling records.
 | Line | Item | Disposition | Evidence |
 |---|---|---|---|
 | 111 | Compete with Magma/Sage on binary field operations | tracked | `d77176e5` |
-| 112 | Primitive polynomial testing matches or exceeds CAS | delivered | `crates/gf2-core/src/primitive_polys.rs`; comparison in `crates/gf2-core/docs/BENCHMARKS.md` |
+| 112 | Primitive polynomial testing matches or exceeds CAS | delivered | `crates/gf2-core/src/primitive_polys.rs`; comparison in `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md` |
 | 113 | GF(2^m) arithmetic via zero-cost abstractions and SIMD | delivered | `crates/gf2-kernels-simd/src/gf2m.rs`, `crates/gf2-kernels-simd/src/gf2m_gemm.rs` |
 | 114 | Top-tier Polynomial Systems Solving benchmarks | obsolete | Polynomial system solving (Groebner-basis, XL-style) lies outside the Mission scope in `AGENTS.md`: field arithmetic, dense and sparse linear algebra, and coding theory. The competitive program compares exactly those operation families (`d77176e5`, `64c88ae4`), and the SOTA target matrix (`4c0d0202`) assigns each in-scope family a reference owner or an explicit exclusion |
 | 117 | State-of-the-art decoding algorithms (umbrella of lines 118-121) | tracked | `0fc3c9d0`; per-algorithm rows below |

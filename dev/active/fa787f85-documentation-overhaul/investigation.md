@@ -65,7 +65,7 @@ Not obtained. `jit archive candidates` ran for the 30-minute background limit wi
 | `3f29e945` description, DEC-01..DEC-06 | story decisions | DEC-04 keeps the AI-review wrapper; DEC-05 docs-mechanical is stdlib Python under `contrib/gates/`; DEC-06 rustdoc/doctests inside `scripts/cargo-ci.sh`. |
 | `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:138-196` | drift audit | 20 doc-drift findings in CONTRIBUTING, README, decks; the source of 84db2984 and several REQ-18 candidates. |
 | `dev/active/DOCUMENTATION_AUDIT.md` | 2026-02-20 audit (no jit tag, commit 13e82164f) | Class (c) legacy; proposes a CONTRIBUTING template (`:526,619`) that conflicts with D-13. |
-| `crates/gf2-core/docs/archive/DOCUMENTATION_AUDIT_{PLAN,REPORT}.md`, `dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_*` | pre-JIT audits | Legacy; mine only for verified facts. |
+| `dev/archive/legacy/crates/gf2-core/docs/archive/DOCUMENTATION_AUDIT_{PLAN,REPORT}.md`, `dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_*` | pre-JIT audits | Legacy; mine only for verified facts. |
 | `dev/archive/b7157be6-osd/active/b7157be6-completion-report.md` and `e034dfaab` message | manual archive precedent | Records that 58 done-issue descriptions name old `dev/active` paths and were left unchanged. |
 | `195f8254f` | 12-epic archive execution | Shows R097/R099 renames and hand edits to `crates/gf2-algebra/README.md`: the reference repointing was manual. |
 | `.agents/skills/jit-project-lead/scripts/standards-scan.sh:82` | tooling | Defaults permanent paths to `docs/`; a reuse point for the doc footprint. |
@@ -111,7 +111,7 @@ A stray deck asset also sits at `dev/active/e095a100-gfpm-arithmetic/e095a100-pr
 
 ### 3.5 Crate-local guides
 
-`crates/gf2-core/docs`: 25 tracked md (9,544 lines; 13 under `archive/`). `dev/archive/legacy/crates/gf2-coding/docs`: 10 tracked md (3,922 lines; 2 under `archive/`). Line counts: `git ls-files ... | xargs wc -l`.
+`dev/archive/legacy/crates/gf2-core/docs`: 25 tracked md (9,544 lines; 13 under `archive/`). `dev/archive/legacy/crates/gf2-coding/docs`: 10 tracked md (3,922 lines; 2 under `archive/`). Line counts: `git ls-files ... | xargs wc -l`.
 
 Inbound references (outside the dirs, excluding archives):
 - `crates/gf2-core/README.md:125,155-159` (BENCHMARKS, KERNEL_OPTIMIZATION, GF2M, PRIMITIVE_POLYNOMIALS, COMPUTE_BACKEND_DESIGN, RREF_DESIGN_PLAN, SPARSE_DEDUP_DESIGN).
@@ -135,7 +135,7 @@ Topic map (title; perf-number lines by regex):
 | `SIMD_PERFORMANCE_GUIDE.md`, `PARALLELIZATION.md`, `LDPC_PERFORMANCE.md` | acceleration + numbers | `docs/how-to/` acceleration; numbers to evidence page |
 | `SDR_INTEGRATION.md` | SDR integration (GNU Radio epic 21922c59 is backlog) | check against current code; likely future-facing |
 
-Other permanent-adjacent markdown not in the brief's inventory: `crates/gf2-core/benches/{BENCHMARK_RESULTS,field_matrix_fusion_results,strassen_threshold_results}.md` (cited by rustdoc at `crates/gf2-core/src/field/winograd.rs:112,116`, `expr.rs:2916`, and bench headers), `benchmarks/README.md` (281 lines), `crates/gf2-algebra/README.md` (261), `crates/gf2-kernels-simd/README.md` (85), `crates/gf2-stats/README.md` (19), `proofs/README.md`, `proofs/WORKAROUNDS.md`, `docs/lean4-verification-pipeline.md` (429), `crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md`, `crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md`. gf2-sim has no README. gf2-stats is a public crate absent from REQ-04's four entry pages.
+Other permanent-adjacent markdown not in the brief's inventory: `dev/archive/legacy/crates/gf2-core/benches/{BENCHMARK_RESULTS,field_matrix_fusion_results,strassen_threshold_results}.md` (cited by rustdoc at `crates/gf2-core/src/field/winograd.rs:112,116`, `expr.rs:2916`, and bench headers), `benchmarks/README.md` (281 lines), `crates/gf2-algebra/README.md` (261), `crates/gf2-kernels-simd/README.md` (85), `crates/gf2-stats/README.md` (19), `proofs/README.md`, `proofs/WORKAROUNDS.md`, `docs/lean4-verification-pipeline.md` (429), `crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md`, `crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md`. gf2-sim has no README. gf2-stats is a public crate absent from REQ-04's four entry pages.
 
 ### 3.6 CONTRIBUTING.md
 
@@ -163,7 +163,7 @@ Already-tracked overlaps visible in epic titles (not a mapping): GPU production 
 | gf2-sim / DVB-T2 | `dev/benchmarks/gf2-sim/dvb-t2-regression-receipts.md:10-16`, `dev/benchmarks/dvb_t2_awgn/*.csv` | md yes | command only | yes | none | none | none |
 | Datasets | `dev/simulation_results/permanent-zero-fraction-20260829/manifest.json` | yes | — | yes | — | — | `provenance.git_revision` |
 | Raw criterion/perf-stat | `dev/benchmarks/<id>-criterion.txt` | no | no | no | no | no | no |
-| Crate-local tables | `crates/gf2-core/docs/BENCHMARKS.md`, `crates/gf2-core/benches/*_results.md`, `crates/gf2-core/README.md:125` | mixed | mixed | yes | mixed | mixed | none |
+| Crate-local tables | `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md`, `dev/archive/legacy/crates/gf2-core/benches/*_results.md`, `crates/gf2-core/README.md:125` | mixed | mixed | yes | mixed | mixed | none |
 
 No class carries all six REQ-06 fields in-file. The commit field must come from a commit-pinned link (blob URL at a SHA) on the evidence page. Moving a whole receipt dir keeps its verdict (`dev/tools/tuning-campaign-support/src/receipt.rs:1148-1151,2280-2300`); rewriting bytes inside a receipt dir breaks digests.
 
@@ -203,7 +203,7 @@ Bold rows are absent from today's candidate list. 1362381c (backlog) depends on 
 - `5fa988085` (13:14) added an archive-exclusion clause to `contrib/gates/doc-review-prompt.md`; `bb898b0e4` reverted it ("changes only with the invoker's explicit approval"); `a47ac3c71` (13:16) re-applied it. The working tree is now clean (`git status --short` empty), so the uncommitted change in the session snapshot is committed. The clause excludes any path with an `archive` segment, which already covers the planned `dev/archive/legacy/` and `crates/*/docs/archive/`.
 - Effect on plan: dcd38c45 (ground doc-review in invariants) must carry this clause forward; the live prompt now diverges from `packages/sim-research/assets/live/contrib/gates/doc-review-prompt.md` (`diff` shows only these lines), so a profile re-apply would drop it unless the asset changes too.
 - `e8a68dc73` deleted `.github/copilot-instructions.md`; `6fab5d796` removed the Copilot branch trigger. REQ-02 has one fewer pointer file.
-- `61c3f0a6a`, `791beb2b0` deleted roadmaps (also edited `crates/gf2-core/docs/{KERNEL_OPTIMIZATION,PRIMITIVE_POLYNOMIALS,README}.md`, `crates/gf2-coding/docs/{LDPC_VERIFICATION_TESTS,README}.md`, `README.md`).
+- `61c3f0a6a`, `791beb2b0` deleted roadmaps (also edited `dev/archive/legacy/crates/gf2-core/docs/{KERNEL_OPTIMIZATION,PRIMITIVE_POLYNOMIALS,README}.md`, `crates/gf2-coding/docs/{LDPC_VERIFICATION_TESTS,README}.md`, `README.md`).
 - `e1c1135fe` removed a non-goals section from gf2-sim channels rustdoc: sweep-style edits are already landing outside f357b3dc.
 - Active parallel sessions: d1b4f85e (ae03bcd0, `fca6df53d` "module doc rework"), f759d724 BCH prose sweep (closed `7ab443c17`), 4ad869d6 claimed by a worker. gf2-coding `bch/` and `transform/` comments are moving now; sweep tasks touching them should depend on ae03bcd0 work or run after it.
 
@@ -261,7 +261,7 @@ Conclusions for the plan:
 - No FieldMatrix or GF(p^m) example exists. `crates/gf2-core/examples/` has 14 files: BitVec/BitMatrix basics, primitive polynomials, perf-stat and emitter tools.
 - Benches cover the target workload: `crates/gf2-core/benches/{field_matrix,field_matrix_gemm,fieldmatrix_gemm,fieldmatrix_gemm_delayed,fieldmatrix_gf2m_batch_gemm,fieldmatrix_ple,fieldmatrix_solve,fieldmatrix_charpoly,field_sparse_matrix,sparse_field_matmul,fp_montgomery,fp_specialized,strassen_threshold,...}.rs`.
 - Source: `crates/gf2-core/src/field/{matrix,ple,charpoly,inverse,triangular,sparse_matrix,winograd,extension,extension_wiedemann,poly}.rs`; `gfp/`, `gfpn/`, `gf2m/`.
-- Evidence: `crates/gf2-core/benches/{field_matrix_fusion_results,strassen_threshold_results}.md`, tuning receipts under `dev/benchmarks/tuning_profiles/`, campaign receipts in `dev/bench_results/`.
+- Evidence: `dev/archive/legacy/crates/gf2-core/benches/{field_matrix_fusion_results,strassen_threshold_results}.md`, tuning receipts under `dev/benchmarks/tuning_profiles/`, campaign receipts in `dev/bench_results/`.
 - Feasible, but the tutorial needs a new tested example program; it cannot build on an existing one.
 
 ### 5.3 Sweep sizing (Appendix C)
@@ -274,7 +274,7 @@ Total comment lines (`//`, `///`, `//!`): gf2-core 40,784; gf2-coding 29,111; gf
 |---|---|
 | `behavioral-evidence-validity` | Moving a whole receipt dir keeps its verdict; rewriting references inside any receipt dir (`receipt.json`, `acceptance-summary`, `plan.json`, `inputs/producing/`) breaks digests. `check-receipt-input-snapshots.py:136` and `check-addendum-schema-versions.py:181,198` hard-code `dev/bench_results/`; moved receipts drop out of CI silently. `receipt-input-omissions.json` keys by full path. Receipt dirs must be excluded from any bulk rewrite and their checks updated in the same commit as any move. |
 | `single-source-prose` | README's example list (`README.md:162-173`) and feature table (`:108-125`) are hand copies that drift: the gf2-core list names 6 of 14 example files, and the gf2-coding list omits `dvb_t2_bicm_chain` and `bch_oracle_messages`. The evidence page should cite receipts, not copy tables. |
-| `benchmark-backed-performance` | `crates/gf2-core/README.md:125` (3.4-3.6x), `crates/gf2-core/docs/BENCHMARKS.md` (214 perf lines), gf2-coding perf guides carry numbers without commit-pinned receipts. |
+| `benchmark-backed-performance` | `crates/gf2-core/README.md:125` (3.4-3.6x), `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md` (214 perf lines), gf2-coding perf guides carry numbers without commit-pinned receipts. |
 | `present-tense-prose` | `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:9-30` migration narration; crate docs named `*_PLAN.md`; README "not yet published", "Good first areas". |
 | `no-deferred-defects` | 29 dangling `dev/plans/*.md` citations in code/rustdoc. |
 | `runtime-observed-provenance` | Receipts pin `dev/active/00dd43c3/...` paths as provenance strings (`dev/bench_results/00dd43c3/v4-r1-pilot/receipt.json:3100,3444`); regrouping dev/active does not break verification (snapshot copy) but makes the string historical. |
