@@ -5,7 +5,49 @@
   "created_at": "2026-10-04T10:59:32.072358479Z",
   "dependencies": [],
   "description": "The DVB-T2 LDPC table interpretation note states that the sub-diagonal of the parity part wraps, while the parity-check builder adds no wrap entry. A superseding record corrects the statement and the note keeps its bytes.\n\n## Background\n\n`crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md` says under \"Dual-Diagonal Parity Structure\" that parity bit $p$ connects to check $(p-1) \\bmod m$ and that parity bit 0 connects to check $m-1$; its diagram shows that entry. `crates/gf2-coding/src/ldpc/dvb_t2/builder.rs` adds the sub-diagonal edge only for $p > 0$, so row 0 has no sub-diagonal entry. The note is a digest-pinned input of committed benchmark surveys (the `producing-inputs*.json` lists under `dev/active/`), so a byte change invalidates their evidence. The owner ruled on 2026-10-04 that a separate record supersedes the false statement, as the P-02 amendment record does for the Zen 3 protocol.\n\n## Success Criteria\n\n- [hard] REQ-01: A record beside the note states the parity structure the builder implements, names the superseded statements of the note, and cites the builder item and a test that asserts the structure.\n- [hard] REQ-02: `table_interpretation.md` is byte-identical to its state before the change.\n- [hard] REQ-03: Every place in the repository that directs a reader to the note for the parity structure also leads to the record.\n- [hard] REQ-04: The record cites the standard through its registry key and states only what the code at HEAD does.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2a851881f36adc495142fac24faa23c02a858006e63192d69c29bd5a716ac603",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "table_interpretation.md",
+          "resolved_path": "crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4616ccfe69f8ee9a3cf500b3dd99396a12f1b700d1ec7738fadd8e230d52a27d",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../core.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/core.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fa4ddc1370c7c8c3cc43d19a02e7cb358f5ece70f22712ab3ca8956ffb7d058b",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "builder.rs",
+          "resolved_path": "crates/gf2-coding/src/ldpc/dvb_t2/builder.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "27e56a8899623aa1466b74ab968430f3e7e2efb2bf37edeef9f7b1520a9b34a2",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../tests/ira_encoder_correctness.rs",
+          "resolved_path": "crates/gf2-coding/tests/ira_encoder_correctness.rs"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "DVB-T2 parity structure amendment record",
+      "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation-amendment.md"
+    }
+  ],
   "first_ready_at": "2026-10-04T10:59:32.072358479Z",
   "gates_required": [
     "doc-review",
@@ -21,5 +63,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Supersede the sub-diagonal wrap statement of the DVB-T2 table note",
-  "updated_at": "2026-10-04T11:00:19.254544857Z"
+  "updated_at": "2026-10-04T11:05:55.102124263Z"
 }
