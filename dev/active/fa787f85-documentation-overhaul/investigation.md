@@ -135,7 +135,7 @@ Topic map (title; perf-number lines by regex):
 | `SIMD_PERFORMANCE_GUIDE.md`, `PARALLELIZATION.md`, `LDPC_PERFORMANCE.md` | acceleration + numbers | `docs/how-to/` acceleration; numbers to evidence page |
 | `SDR_INTEGRATION.md` | SDR integration (GNU Radio epic 21922c59 is backlog) | check against current code; likely future-facing |
 
-Other permanent-adjacent markdown not in the brief's inventory: `dev/archive/legacy/crates/gf2-core/benches/{BENCHMARK_RESULTS,field_matrix_fusion_results,strassen_threshold_results}.md` (cited by rustdoc at `crates/gf2-core/src/field/winograd.rs:112,116`, `expr.rs:2916`, and bench headers), `benchmarks/README.md` (281 lines), `crates/gf2-algebra/README.md` (261), `crates/gf2-kernels-simd/README.md` (85), `crates/gf2-stats/README.md` (19), `proofs/README.md`, `proofs/WORKAROUNDS.md`, `docs/lean4-verification-pipeline.md` (429), `crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md`, `crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md`. gf2-sim has no README. gf2-stats is a public crate absent from REQ-04's four entry pages.
+Other permanent-adjacent markdown not in the brief's inventory: `dev/archive/legacy/crates/gf2-core/benches/{BENCHMARK_RESULTS,field_matrix_fusion_results,strassen_threshold_results}.md`, `benchmarks/README.md` (281 lines), `crates/gf2-algebra/README.md` (261), `crates/gf2-kernels-simd/README.md` (85), `crates/gf2-stats/README.md` (19), `proofs/README.md`, `proofs/WORKAROUNDS.md`, `docs/lean4-verification-pipeline.md` (429), `crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md`, `crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md`. gf2-sim has no README. gf2-stats is a public crate absent from REQ-04's four entry pages.
 
 ### 3.6 CONTRIBUTING.md
 
