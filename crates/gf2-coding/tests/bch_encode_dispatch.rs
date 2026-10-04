@@ -28,7 +28,6 @@ struct Row {
     /// Primitive polynomial of the mother field, matching the contract's
     /// `prim` column.
     modulus: u64,
-    /// Designed distance $\delta$ of the contract row.
     designed_distance: u64,
     batches: &'static [usize],
 }

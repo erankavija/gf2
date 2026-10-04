@@ -30,8 +30,6 @@ fn bump(counter: &'static std::thread::LocalKey<Cell<u64>>, by: u64) {
     let _ = counter.try_with(|cell| cell.set(cell.get() + by));
 }
 
-/// The system allocator with per-thread request counters that record only while
-/// that thread is inside a counted section.
 struct Counting;
 
 // SAFETY: every method forwards to `System` with the caller's arguments

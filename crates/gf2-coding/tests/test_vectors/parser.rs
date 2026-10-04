@@ -146,7 +146,6 @@ impl TestVectorFile {
         })
     }
 
-    /// Blocks of frame `frame_idx`; empty when the index is out of range.
     pub fn frame(&self, frame_idx: usize) -> &[TestVector] {
         self.frames
             .get(frame_idx)
@@ -154,7 +153,6 @@ impl TestVectorFile {
             .unwrap_or(&[])
     }
 
-    /// Frame count; [`Self::frame`] returns blocks for indices `0..num_frames()`.
     pub fn num_frames(&self) -> usize {
         self.frames.len()
     }
