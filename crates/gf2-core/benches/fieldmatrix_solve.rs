@@ -1,30 +1,5 @@
-//! `FieldMatrix::inv` / `solve` / `det` — Criterion benchmarks at
-//! every (operation, field, size, regime) cell of the `64c88ae4` story
-//! matrix.
-//!
-//! Issue `6ed7f050`. Sibling of the reference container harness's
-//! `bench_invert` and `bench_solve` calls in
-//! `benchmarks/reference/fflas_bench.cpp`.
-//!
-//! ## Coverage
-//!
-//! - **Sizes**: `n ∈ {64, 256, 1024, 4096}`. n=4096 cells use the
-//!   30 s `seed::CELL_BUDGET_NS` cap mirroring the reference harness.
-//! - **Regimes**: `uniform` (full-rank with overwhelming probability) and
-//!   `deficient` (rank exactly `n / 2`, generated as `L · R`). For
-//!   `inv`/`solve`, the deficient regime returns `None` — the timer
-//!   measures the work the LU pass does to detect singularity, which is
-//!   the same path the full-rank computation would take.
-//! - **Fields**: `Fp<7>`, `Fp<251>`, `Fp<65521>`, `Fp<2^31-1>`,
-//!   `Gf2mWide<1, M=8 AES>`, `Gf2mWide<1, M=16 Conway>`.
-//!
-//! ## Usage
-//!
-//! ```bash
-//! cargo bench -p gf2-core --bench fieldmatrix_solve --features rand
-//! cargo bench -p gf2-core --bench fieldmatrix_solve --features rand -- --test
-//! cargo bench -p gf2-core --bench fieldmatrix_solve --features rand -- invert/Fp_M31/uniform/256
-//! ```
+//! Benchmarks `FieldMatrix` `inv`, `solve` and `det` on uniform and
+//! rank-`n / 2` matrices derived from the shared bench seed.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::field::matrix::FieldMatrix;
@@ -47,7 +22,7 @@ const PRIME_251: u64 = 251;
 const PRIME_65521: u64 = 65521;
 const MERSENNE_31: u64 = 2_147_483_647;
 
-/// GF(2^8) AES irreducible.
+/// GF(2^8) with the AES polynomial (`@/citation/Nist2001`).
 struct SolveGf2m8Cfg;
 impl Gf2mWideConfig<1> for SolveGf2m8Cfg {
     const M: usize = 8;
@@ -56,7 +31,7 @@ impl Gf2mWideConfig<1> for SolveGf2m8Cfg {
 }
 type Gf2m8 = Gf2mWide<1, SolveGf2m8Cfg>;
 
-/// GF(2^16) Conway polynomial.
+/// GF(2^16) with the Conway polynomial (`@/citation/Lubeck2024`).
 struct SolveGf2m16Cfg;
 impl Gf2mWideConfig<1> for SolveGf2m16Cfg {
     const M: usize = 16;
@@ -65,11 +40,7 @@ impl Gf2mWideConfig<1> for SolveGf2m16Cfg {
 }
 type Gf2m16 = Gf2mWide<1, SolveGf2m16Cfg>;
 
-/// Returns the size sweep for this bench run.
-///
-/// Set `GF2_BENCH_SKIP_4096=1` to skip the n=4096 cells (and their
-/// expensive rank-deficient matrix precomputation) when running targeted
-/// CCX1-pinned measurement trials that do not require the largest size.
+/// Setting `GF2_BENCH_SKIP_4096` to any value drops the `n = 4096` cells.
 fn bench_sizes() -> &'static [usize] {
     if std::env::var("GF2_BENCH_SKIP_4096").is_ok() {
         &[64, 256, 1024]
@@ -116,7 +87,6 @@ fn run_field<F, FillUniform, FillDeficient, FillVec>(
     FillDeficient: Fn(usize, usize, usize, u64) -> FieldMatrix<F> + Copy,
     FillVec: Fn(usize, u64) -> FieldVec<F> + Copy,
 {
-    // ── inv ───────────────────────────────────────────────────────────────
     for &(regime, regime_idx) in REGIMES {
         let group_name = format!("invert/{field_label}/{regime}");
         let mut group = c.benchmark_group(&group_name);
@@ -142,7 +112,6 @@ fn run_field<F, FillUniform, FillDeficient, FillVec>(
         group.finish();
     }
 
-    // ── solve ─────────────────────────────────────────────────────────────
     for &(regime, regime_idx) in REGIMES {
         let group_name = format!("solve/{field_label}/{regime}");
         let mut group = c.benchmark_group(&group_name);
@@ -158,9 +127,6 @@ fn run_field<F, FillUniform, FillDeficient, FillVec>(
                 fill_uniform,
                 fill_deficient,
             );
-            // RHS vector — same fixed XOR salt as the reference's
-            // `seed ^ 0xDEADBEEFCAFEBABE` so the gf2 cell consumes the
-            // same `b` vector when the regime is uniform.
             let b_seed = derive_seed(MASTER_SEED, "solve_rhs", 4, si as u64, regime_idx);
             let bvec = fill_vec(n, b_seed);
             group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
@@ -173,12 +139,6 @@ fn run_field<F, FillUniform, FillDeficient, FillVec>(
         group.finish();
     }
 
-    // ── det ───────────────────────────────────────────────────────────────
-    //
-    // det() runs uniform-only in the reference harness; we add the
-    // deficient case here too because the project's `FieldMatrix::det`
-    // returns zero on singular inputs and the timer is still meaningful
-    // (it goes through the same LU pass).
     for &(regime, regime_idx) in REGIMES {
         let group_name = format!("det/{field_label}/{regime}");
         let mut group = c.benchmark_group(&group_name);

@@ -1,13 +1,9 @@
 //! Benchmarks for dense BitMatrix matrix-vector multiplication.
-//!
-//! These benchmarks measure the performance of matrix-vector operations
-//! for dense bit-packed matrices over GF(2).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::{BitMatrix, BitVec};
 use rand::SeedableRng;
 
-/// Benchmark dense matrix-vector multiplication: y = A × x
 fn bench_matvec(c: &mut Criterion) {
     let mut group = c.benchmark_group("dense_matvec");
 
@@ -23,7 +19,6 @@ fn bench_matvec(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark dense transpose matrix-vector multiplication: y = A^T × x
 fn bench_matvec_transpose(c: &mut Criterion) {
     let mut group = c.benchmark_group("dense_matvec_transpose");
 
@@ -39,7 +34,6 @@ fn bench_matvec_transpose(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark matvec at different matrix densities
 fn bench_matvec_by_density(c: &mut Criterion) {
     let mut group = c.benchmark_group("matvec_by_density");
 
@@ -58,7 +52,6 @@ fn bench_matvec_by_density(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark rectangular matrix-vector multiplication
 fn bench_matvec_rectangular(c: &mut Criterion) {
     let mut group = c.benchmark_group("matvec_rectangular");
 
@@ -76,7 +69,6 @@ fn bench_matvec_rectangular(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark transpose rectangular matrix-vector multiplication
 fn bench_matvec_transpose_rectangular(c: &mut Criterion) {
     let mut group = c.benchmark_group("matvec_transpose_rectangular");
 
@@ -94,7 +86,6 @@ fn bench_matvec_transpose_rectangular(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark dense vs sparse matvec at various densities
 fn bench_dense_vs_sparse_matvec(c: &mut Criterion) {
     use gf2_core::sparse::SpBitMatrix;
     let mut group = c.benchmark_group("dense_vs_sparse_matvec");
@@ -121,7 +112,6 @@ fn bench_dense_vs_sparse_matvec(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark dense vs sparse transpose matvec at various densities
 fn bench_dense_vs_sparse_transpose(c: &mut Criterion) {
     use gf2_core::sparse::SpBitMatrixDual;
     let mut group = c.benchmark_group("dense_vs_sparse_transpose");
@@ -148,7 +138,6 @@ fn bench_dense_vs_sparse_transpose(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark word boundary cases (63, 64, 65 bits)
 fn bench_matvec_word_boundaries(c: &mut Criterion) {
     let mut group = c.benchmark_group("matvec_word_boundaries");
 

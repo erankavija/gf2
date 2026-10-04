@@ -1,32 +1,18 @@
-//! Benchmarks for primitive polynomial verification and testing.
-//!
-//! This benchmark suite measures the performance of Phase 9 primitivity testing
-//! operations, which are critical for ensuring correctness of GF(2^m) constructions.
-//!
-//! # Benchmark Groups
-//!
-//! 1. **Primitivity Verification**: Full primitive polynomial test (irreducibility + order)
-//! 2. **Irreducibility Testing**: Rabin's irreducibility test only
-//! 3. **Order Computation**: Testing multiplicative order of x
-//!
-//! # Sage Comparison Markers
-//!
-//! Benchmarks marked with `[SAGE_CMP]` have equivalent implementations in
-//! `scripts/sage_benchmarks.py` for direct performance comparison.
+//! Benchmarks primitive-polynomial verification: the full primitivity test and
+//! the irreducibility test of `@/citation/Rabin1980` alone. Benchmarks marked
+//! `[SAGE_CMP]` have counterparts in `scripts/sage_benchmarks.py`
+//! (`@/citation/SageMath2026`).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::gf2m::Gf2mField;
 
-/// Test polynomials for various degrees.
-/// Format: (degree, polynomial_value, is_primitive, description)
+/// (degree, polynomial, is_primitive, description)
 const TEST_POLYNOMIALS: &[(usize, u64, bool, &str)] = &[
-    // Small degrees (m=2..8)
     (2, 0b111, true, "GF(4): x^2 + x + 1"),
     (3, 0b1011, true, "GF(8): x^3 + x + 1"),
     (4, 0b10011, true, "GF(16): x^4 + x + 1"),
     (5, 0b100101, true, "GF(32): x^5 + x^2 + 1"),
     (8, 0b100011101, true, "GF(256): x^8 + x^4 + x^3 + x^2 + 1"),
-    // DVB-T2 standard polynomials (m=10,14,16)
     (10, 0b10000001001, true, "DVB-T2 GF(1024): x^10 + x^3 + 1"),
     (
         14,
@@ -40,7 +26,6 @@ const TEST_POLYNOMIALS: &[(usize, u64, bool, &str)] = &[
         true,
         "DVB-T2 GF(65536): x^16 + x^5 + x^3 + x^2 + 1",
     ),
-    // Non-primitive but irreducible (for negative testing)
     (
         8,
         0b100011011,
@@ -55,15 +40,12 @@ const TEST_POLYNOMIALS: &[(usize, u64, bool, &str)] = &[
     ),
 ];
 
-/// Additional primitive polynomials for extended testing
 const EXTENDED_PRIMITIVES: &[(usize, u64, &str)] = &[
-    // Trinomials (hardware-efficient)
     (9, 0b1000010001, "x^9 + x^4 + 1"),
     (11, 0b100000000101, "x^11 + x^2 + 1"),
     (13, 0b10000000011011, "x^13 + x^4 + x^3 + x + 1"),
     (15, 0b1000000000000011, "x^15 + x + 1"),
     (17, 0b100000000000001001, "x^17 + x^3 + 1"),
-    // Larger degrees for scaling tests
     (20, 0b100000000000000001001, "x^20 + x^3 + 1"),
     (
         24,
@@ -77,16 +59,10 @@ const EXTENDED_PRIMITIVES: &[(usize, u64, &str)] = &[
     ),
 ];
 
-/// [SAGE_CMP] Benchmark full primitivity verification (irreducibility + order test)
-///
-/// This is the complete test: verify_primitive() which checks:
-/// 1. Rabin irreducibility test
-/// 2. Order verification (x has multiplicative order 2^m-1)
-///
-/// Compare with Sage: `GF(2^m, modulus=poly).is_primitive()`
+/// [SAGE_CMP] `GF(2^m, modulus=poly).is_primitive()`.
 fn bench_primitivity_verification(c: &mut Criterion) {
     let mut group = c.benchmark_group("primitivity_verification");
-    group.sample_size(50); // Smaller sample for expensive tests
+    group.sample_size(50);
 
     for &(m, poly, _is_prim, desc) in TEST_POLYNOMIALS {
         let field = Gf2mField::new(m, poly);
@@ -103,12 +79,7 @@ fn bench_primitivity_verification(c: &mut Criterion) {
     group.finish();
 }
 
-/// [SAGE_CMP] Benchmark Rabin irreducibility test only
-///
-/// Tests only irreducibility without order verification.
-/// This is faster and useful for polynomial generation.
-///
-/// Compare with Sage: `poly.is_irreducible()`
+/// [SAGE_CMP] `poly.is_irreducible()`.
 fn bench_irreducibility_only(c: &mut Criterion) {
     let mut group = c.benchmark_group("irreducibility_rabin");
     group.sample_size(100);
@@ -128,14 +99,10 @@ fn bench_irreducibility_only(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark primitivity across a range of degrees
-///
-/// Tests scaling behavior from m=2 to m=32
 fn bench_primitivity_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("primitivity_scaling");
     group.sample_size(30);
 
-    // Combine test sets
     let mut all_tests: Vec<(usize, u64, &str)> = TEST_POLYNOMIALS
         .iter()
         .filter(|(_, _, is_prim, _)| *is_prim)
@@ -162,9 +129,6 @@ fn bench_primitivity_scaling(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark irreducibility for various degrees
-///
-/// Measures Rabin test performance across different polynomial sizes
 fn bench_irreducibility_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("irreducibility_scaling");
     group.sample_size(50);
@@ -191,15 +155,10 @@ fn bench_irreducibility_scaling(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark detection of non-primitive polynomials
-///
-/// Tests performance when verification correctly rejects non-primitive polynomials.
-/// This is important for polynomial generation where we try many candidates.
 fn bench_nonprimitive_detection(c: &mut Criterion) {
     let mut group = c.benchmark_group("nonprimitive_detection");
     group.sample_size(50);
 
-    // Test non-primitive polynomials
     let non_primitives = TEST_POLYNOMIALS
         .iter()
         .filter(|(_, _, is_prim, _)| !*is_prim);
@@ -223,14 +182,10 @@ fn bench_nonprimitive_detection(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark standard field constructors with primitivity check
-///
-/// Measures overhead of verification in factory methods
 fn bench_field_construction_with_verify(c: &mut Criterion) {
     let mut group = c.benchmark_group("field_construction");
     group.sample_size(100);
 
-    // GF(256)
     group.bench_function("GF256_construct_verify", |b| {
         b.iter(|| {
             let field = Gf2mField::gf256();
@@ -238,7 +193,6 @@ fn bench_field_construction_with_verify(c: &mut Criterion) {
         });
     });
 
-    // GF(65536)
     group.bench_function("GF65536_construct_verify", |b| {
         b.iter(|| {
             let field = Gf2mField::gf65536();
@@ -246,7 +200,6 @@ fn bench_field_construction_with_verify(c: &mut Criterion) {
         });
     });
 
-    // Custom field construction
     group.bench_function("Custom_GF16384_construct_verify", |b| {
         b.iter(|| {
             let field = Gf2mField::new(14, 0b100000000101011);

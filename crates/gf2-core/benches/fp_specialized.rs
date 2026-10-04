@@ -1,19 +1,5 @@
-//! Benchmarks comparing specialized prime-field reductions (Mersenne, Proth,
-//! Goldilocks) against the Montgomery baseline.
-//!
-//! Success criteria targeted by this bench (revised 2026-04-18):
-//!
-//! * **AVX2 batch Mersenne31** multiplication (`fp_m31_batch_mul_simd`) ≥ 2×
-//!   faster than scalar Montgomery batch. Measured ~4.0–4.4× at N=1024 on
-//!   Zen 3. Requires the `simd` feature; this bench is feature-gated via
-//!   `required-features = ["simd"]` in Cargo.toml so it cannot silently run
-//!   against the scalar fallback.
-//! * **Goldilocks** multiplication ≥ 1.5× faster than Montgomery. Measured
-//!   ~1.99×.
-//! * **Scalar Mersenne31** is not expected to beat Montgomery; modern x86
-//!   REDC pipelines ~4 multiplies in ~2 ns, matching the specialized path's
-//!   algorithmic floor. The scalar benches here are informational, not
-//!   acceptance gates.
+//! Benchmarks the Mersenne, Proth and Goldilocks prime-field reductions
+//! against Montgomery baselines of matching magnitude.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use gf2_core::field::two_adic::BABYBEAR_P;
@@ -25,17 +11,9 @@ use gf2_core::gfp::specialized::{
 };
 use gf2_core::gfp::Fp;
 
-// ---------------------------------------------------------------------------
-// Mersenne 2^31 - 1
-// ---------------------------------------------------------------------------
-
 const M31: u64 = (1u64 << 31) - 1;
 const M61: u64 = (1u64 << 61) - 1;
-/// BabyBear Proth prime: 15 * 2^27 + 1 = 2_013_265_921.
-///
-/// Rebinds the SSOT constant `BABYBEAR_P` (`crates/gf2-core/src/field/two_adic.rs`)
-/// under the bench-local name `PROTH` to preserve the historical call-site
-/// names throughout this benchmark file without duplicating the literal.
+/// BabyBear Proth prime `15 · 2^27 + 1`.
 const PROTH: u64 = BABYBEAR_P;
 
 fn bench_fp_mersenne31_mul(c: &mut Criterion) {
@@ -67,9 +45,8 @@ fn bench_fp_mersenne31_add(c: &mut Criterion) {
     });
 }
 
-/// Synthetic Montgomery baseline of similar magnitude — uses the nearby
-/// prime `2^31 - 19 = 2147483629` (prime, not Mersenne) so the Montgomery
-/// code path is forced and the workloads are size-matched.
+/// `2^31 - 19`: a non-Mersenne prime of the same magnitude, so `Fp<P>` uses
+/// Montgomery form.
 const M31_LIKE_GENERIC: u64 = 2_147_483_629;
 
 fn bench_fp_montgomery_like_mul(c: &mut Criterion) {
@@ -100,11 +77,6 @@ fn bench_fp_mersenne31_mul_chain(c: &mut Criterion) {
     });
 }
 
-// ---------------------------------------------------------------------------
-// Mersenne 2^61 - 1 — the existing Fp<M61> is already covered by the
-// Montgomery bench; here we measure with the specialized path enabled.
-// ---------------------------------------------------------------------------
-
 fn bench_fp_mersenne61_mul_specialized(c: &mut Criterion) {
     let a = Fp::<M61>::new(123_456_789);
     let b = Fp::<M61>::new(987_654_321);
@@ -113,8 +85,8 @@ fn bench_fp_mersenne61_mul_specialized(c: &mut Criterion) {
     });
 }
 
-/// Montgomery baseline of the same ~61-bit magnitude — the nearby prime
-/// `2^61 - 45 = 2305843009213693907` forces the Montgomery code path.
+/// `2^61 - 45`: a non-Mersenne prime of the same magnitude, so `Fp<P>` uses
+/// Montgomery form.
 const M61_LIKE_GENERIC: u64 = 2_305_843_009_213_693_907;
 
 fn bench_fp_m61_like_mul_montgomery(c: &mut Criterion) {
@@ -125,10 +97,6 @@ fn bench_fp_m61_like_mul_montgomery(c: &mut Criterion) {
     });
 }
 
-// ---------------------------------------------------------------------------
-// Proth 3·2^32 + 1
-// ---------------------------------------------------------------------------
-
 fn bench_fp_proth_mul(c: &mut Criterion) {
     let a = Fp::<PROTH>::new(123_456_789);
     let b = Fp::<PROTH>::new(987_654_321);
@@ -136,10 +104,6 @@ fn bench_fp_proth_mul(c: &mut Criterion) {
         bench.iter(|| black_box(a) * black_box(b))
     });
 }
-
-// ---------------------------------------------------------------------------
-// Goldilocks
-// ---------------------------------------------------------------------------
 
 fn bench_goldilocks_mul(c: &mut Criterion) {
     let a = GoldilocksFp::new(123_456_789_012_345);
@@ -164,7 +128,6 @@ fn bench_goldilocks_inv(c: &mut Criterion) {
     });
 }
 
-/// Naive Goldilocks multiplication baseline using `% p` directly.
 fn bench_goldilocks_naive_mul(c: &mut Criterion) {
     let a: u64 = 123_456_789_012_345;
     let b: u64 = 987_654_321_098_765;
@@ -177,8 +140,6 @@ fn bench_goldilocks_naive_mul(c: &mut Criterion) {
     });
 }
 
-/// Montgomery baseline at an "almost Goldilocks" size — the largest prime
-/// that fits in `Fp<P>`'s `P ≤ 2^63` bound, to anchor the speed-up claim.
 const NEAR_GOLDILOCKS_MONTGOMERY: u64 = 9_223_372_036_854_775_783; // 2^63 - 25 (prime)
 
 fn bench_fp_near_goldilocks_montgomery_mul(c: &mut Criterion) {
@@ -188,10 +149,6 @@ fn bench_fp_near_goldilocks_montgomery_mul(c: &mut Criterion) {
         bench.iter(|| black_box(a) * black_box(b))
     });
 }
-
-// ---------------------------------------------------------------------------
-// Raw reducer benches (isolate the reduction itself, no field wrapping)
-// ---------------------------------------------------------------------------
 
 fn bench_mersenne31_reducer(c: &mut Criterion) {
     let x = 0x1234_5678_9abc_def0u128;
@@ -221,14 +178,6 @@ fn bench_goldilocks_reducer(c: &mut Criterion) {
     });
 }
 
-// ---------------------------------------------------------------------------
-// SIMD batch Mersenne31 — the success-criterion benchmark. The target is
-// ≥ 2× throughput over the scalar Montgomery batch for the same length,
-// and ≥ 2× over the scalar specialized batch.
-// ---------------------------------------------------------------------------
-
-/// Length used for batch benches. Large enough to saturate AVX2 but not so
-/// large that cache misses dominate.
 const BATCH_LEN: usize = 1024;
 
 fn bench_fp_m31_batch_mul_simd(c: &mut Criterion) {
@@ -261,9 +210,6 @@ fn bench_fp_m31_batch_mul_scalar_specialized(c: &mut Criterion) {
 }
 
 fn bench_fp_m31_batch_mul_scalar_montgomery(c: &mut Criterion) {
-    // Use a nearby non-Mersenne prime (2^31 - 19) so Fp<P>'s Montgomery
-    // storage path is forced — this gives an apples-to-apples scalar
-    // Montgomery batch baseline at the same operand magnitude.
     let a: Vec<Fp<M31_LIKE_GENERIC>> = (0..BATCH_LEN as u64)
         .map(|i| Fp::<M31_LIKE_GENERIC>::new(i * 17 + 1))
         .collect();
@@ -347,16 +293,6 @@ fn bench_fp_generic_near_m61_fieldvec_mul_scalar_loop(c: &mut Criterion) {
         })
     });
 }
-
-// ---------------------------------------------------------------------------
-// General 64-bit prime Montgomery batch — the C3 success-criterion leaf.
-//
-// This is the criterion-1.5x gate target for issue 86c09a51. It exercises
-// the production generic-Fp SIMD path from cad241e6 (`fp_generic::detect`)
-// rather than the stale WIP's separate Montgomery dispatch tree. The modulus
-// is a ~61-bit generic prime that does not use the Mersenne/Proth storage
-// specialisations, so operands and outputs are Montgomery-form `u64` words.
-// ---------------------------------------------------------------------------
 
 fn bench_fp_general_64bit_batch_mul_simd(c: &mut Criterion) {
     fn p_inv(p: u64) -> u64 {

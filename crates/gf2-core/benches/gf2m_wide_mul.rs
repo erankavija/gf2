@@ -1,38 +1,13 @@
-//! Benchmarks for fixed-size `Gf2mWide` multiplication (GF(2^256) and GF(2^571)).
-//!
-//! Two groups:
-//!
-//! 1. **scalar-baseline** — the pure-Rust `clmul_wide_slice_portable::<4>` +
-//!    Barrett reduction path. This is what `Gf2mWide::<4, _>::mul` executes
-//!    when the `simd` feature is disabled or PCLMULQDQ is unavailable.
-//!
-//! 2. **simd-kernel** — the dispatched kernel returned by
-//!    `gf2_kernels_simd::gf2m_wide::detect()` (AVX2+VPCLMULQDQ YMM on Zen 3-
-//!    class hosts, PCLMULQDQ scalar-XMM elsewhere). The group name is
-//!    suffixed with the kernel tag from `ClmulWide256Fns::name` so the
-//!    benchmark output identifies which lane ran. Falls back to scalar if
-//!    no PCLMULQDQ is present. An AVX-512VL+VPCLMULQDQ (ZMM) lane is out of
-//!    scope while the test host (Zen 3) is AVX2-only; the `_mm512_*`
-//!    carry-less-multiply intrinsics are stable since Rust 1.89 and
-//!    available under the current MSRV (1.95).
-//!
-//! # Running
-//!
-//! The bench target is feature-gated on `simd` (see
-//! `crates/gf2-core/Cargo.toml`), so the `--features` flag is required:
-//!
-//! ```text
-//! cargo bench -p gf2-core --bench gf2m_wide_mul --features simd -- --quick
-//! ```
+//! Benchmarks `Gf2mWide` multiplication in GF(2^256) and GF(2^571): the
+//! portable carry-less multiply with Barrett reduction, the dispatched `Mul`
+//! impl, and the raw carry-less-multiply kernels.
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use gf2_core::gf2m::barrett::BarrettReducerWide;
 use gf2_core::gf2m::wide::clmul_wide_slice_portable;
 use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
 
-/// GF(2^256), Seroussi HPL-98-135 Table 1 row m = 256: `x^256 + x^10 + x^5 + x^2 + 1`.
-///
-/// Matches the canonical test config used throughout `Gf2mWide<4>` tests.
+/// GF(2^256), `@/citation/Seroussi1998` Table 1 row m = 256: `x^256 + x^10 + x^5 + x^2 + 1`.
 struct Gf2m256Config;
 
 impl Gf2mWideConfig<4> for Gf2m256Config {
@@ -41,7 +16,7 @@ impl Gf2mWideConfig<4> for Gf2m256Config {
     const NAME: &'static str = "Gf2m256Config";
 }
 
-/// GF(2^571), NIST B-571/K-571 polynomial: `x^571 + x^10 + x^5 + x^2 + 1`.
+/// GF(2^571), `@/citation/Nist2013` B-571/K-571 polynomial: `x^571 + x^10 + x^5 + x^2 + 1`.
 struct Gf2m571Config;
 
 impl Gf2mWideConfig<9> for Gf2m571Config {
@@ -51,7 +26,6 @@ impl Gf2mWideConfig<9> for Gf2m571Config {
 }
 
 fn sample_operand<const N: usize>(seed: u64) -> [u64; N] {
-    // Cheap deterministic fill — we just need bit-dense, irregular operands.
     let mut s = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(1);
     let mut out = [0u64; N];
     for slot in &mut out {
@@ -69,8 +43,6 @@ fn sample_operand_m571(seed: u64) -> [u64; 9] {
     out
 }
 
-/// Fresh Barrett reducer for GF(2^256). Allocated once per benchmark group
-/// to avoid measuring cache warmup.
 fn make_reducer() -> BarrettReducerWide<4> {
     BarrettReducerWide::<4>::new(Gf2m256Config::MODULUS, 256)
 }
@@ -78,10 +50,6 @@ fn make_reducer() -> BarrettReducerWide<4> {
 fn make_reducer_m571() -> BarrettReducerWide<9> {
     BarrettReducerWide::<9>::new(Gf2m571Config::MODULUS, 571)
 }
-
-// ---------------------------------------------------------------------------
-// Scalar baseline: clmul_wide_slice_portable + Barrett (the non-SIMD path of Mul)
-// ---------------------------------------------------------------------------
 
 fn bench_scalar_clmul_plus_barrett(c: &mut Criterion) {
     let a = sample_operand::<4>(0x1234);
@@ -91,7 +59,7 @@ fn bench_scalar_clmul_plus_barrett(c: &mut Criterion) {
 
     c.bench_function("gf2m_wide4_scalar_clmul_barrett", |bench| {
         bench.iter(|| {
-            // Zero the buffer — `clmul_wide_slice_portable` XOR-accumulates.
+            // `clmul_wide_slice_portable` XOR-accumulates.
             product.fill(0);
             clmul_wide_slice_portable::<4>(black_box(&a), black_box(&b), &mut product);
             let reduced = reducer.reduce_slice(&product);
@@ -100,17 +68,10 @@ fn bench_scalar_clmul_plus_barrett(c: &mut Criterion) {
     });
 }
 
-// ---------------------------------------------------------------------------
-// End-to-end multiplication via the public `Mul` impl, which internally
-// selects SIMD or scalar depending on the host.
-// ---------------------------------------------------------------------------
-
 fn bench_mul_ref_dispatched(c: &mut Criterion) {
     let a = Gf2mWide::<4, Gf2m256Config>::new(sample_operand::<4>(0x1234));
     let b = Gf2mWide::<4, Gf2m256Config>::new(sample_operand::<4>(0xBEEF));
 
-    // Identify the lane the dispatcher chose. The `Mul` impl reaches into the
-    // same `OnceLock`, so we re-read it here purely for the benchmark label.
     #[cfg(feature = "simd")]
     let lane_name = gf2_kernels_simd::gf2m_wide::detect()
         .map(|f| f.name)
@@ -123,13 +84,6 @@ fn bench_mul_ref_dispatched(c: &mut Criterion) {
         bench.iter(|| black_box(black_box(a) * black_box(b)))
     });
 }
-
-// ---------------------------------------------------------------------------
-// Direct SIMD-kernel benchmark (raw clmul only, no Barrett) — lets us see the
-// pre-reduction SIMD speedup in isolation. The scalar baseline above
-// includes Barrett, so compare against `gf2m_wide4_scalar_clmul_only` for a
-// fair kernel-vs-kernel comparison.
-// ---------------------------------------------------------------------------
 
 fn bench_raw_kernels(c: &mut Criterion) {
     let a = sample_operand::<4>(0x1234);
@@ -158,10 +112,6 @@ fn bench_raw_kernels(c: &mut Criterion) {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// GF(2^571): scalar baseline, dispatched full multiply, and raw clmul kernels
-// ---------------------------------------------------------------------------
 
 fn bench_scalar_clmul_plus_barrett_m571(c: &mut Criterion) {
     let a = sample_operand_m571(0x5710_1234);

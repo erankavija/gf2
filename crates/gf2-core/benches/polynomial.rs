@@ -1,22 +1,14 @@
-//! Benchmarks for GF(2^m) polynomial arithmetic operations.
-//!
-//! These benchmarks measure the performance of polynomial operations over extension fields,
-//! which are critical for BCH codes and other error-correcting codes.
-//!
-//! # Sage Comparison
-//!
-//! Benchmarks marked with `[SAGE_CMP]` have equivalent implementations in
-//! `scripts/sage_benchmarks.py` for direct performance comparison against SageMath.
+//! Benchmarks GF(2^m) polynomial arithmetic. Benchmarks marked `[SAGE_CMP]`
+//! have counterparts in `scripts/sage_benchmarks.py`
+//! (`@/citation/SageMath2026`).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::gf2m::{Gf2mField, Gf2mPoly};
 
-/// Helper to create a polynomial with random-ish coefficients of given degree
 fn random_poly(field: &Gf2mField, degree: usize, seed: u32) -> Gf2mPoly {
     let mut coeffs = Vec::with_capacity(degree + 1);
     let modulus = ((1u64 << field.degree()) - 1) as u32;
     for i in 0..=degree {
-        // Simple deterministic "random" values for reproducibility
         let value = ((seed.wrapping_mul(31).wrapping_add(i as u32)) % modulus) as u64;
         coeffs.push(field.element(if value == 0 { 1 } else { value }));
     }
@@ -51,9 +43,7 @@ fn bench_poly_addition(c: &mut Criterion) {
     group.finish();
 }
 
-/// [SAGE_CMP] Benchmark polynomial multiplication
-///
-/// Compare with Sage: `poly1 * poly2` in polynomial ring over GF(2^m)
+/// [SAGE_CMP] `poly1 * poly2` in the polynomial ring over GF(2^m).
 fn bench_poly_multiplication_schoolbook(c: &mut Criterion) {
     let mut group = c.benchmark_group("polynomial_multiplication_schoolbook");
 
@@ -64,7 +54,6 @@ fn bench_poly_multiplication_schoolbook(c: &mut Criterion) {
             _ => unreachable!(),
         };
 
-        // Test various polynomial degrees
         for &degree in &[5, 10, 20, 50, 100, 200] {
             let p1 = random_poly(&field, degree, 42);
             let p2 = random_poly(&field, degree, 43);
@@ -94,7 +83,6 @@ fn bench_poly_division(c: &mut Criterion) {
             _ => unreachable!(),
         };
 
-        // Divide polynomials of varying degrees
         for &dividend_deg in &[20, 50, 100, 200] {
             for &divisor_deg in &[5, 10, 20] {
                 if divisor_deg >= dividend_deg {
@@ -132,9 +120,7 @@ fn bench_poly_gcd(c: &mut Criterion) {
             _ => unreachable!(),
         };
 
-        // Test GCD on polynomials with known common factors
         for &degree in &[10, 20, 50, 100] {
-            // Create polynomials with a common factor
             let common_factor = random_poly(&field, degree / 4, 40);
             let factor1 = random_poly(&field, degree / 2, 41);
             let factor2 = random_poly(&field, degree / 2, 42);
@@ -194,13 +180,11 @@ fn bench_poly_eval_batch(c: &mut Criterion) {
             _ => unreachable!(),
         };
 
-        // BCH syndrome computation pattern: evaluate at multiple points
         for &poly_degree in &[50, 100, 200] {
             for &num_points in &[4, 8, 16, 32] {
                 let poly = random_poly(&field, poly_degree, 42);
                 let points: Vec<_> = (1..=num_points).map(|i| field.element(i as u64)).collect();
 
-                // Total operations: poly_degree * num_points
                 group.throughput(Throughput::Elements((poly_degree * num_points) as u64));
                 group.bench_with_input(
                     BenchmarkId::new(
@@ -229,8 +213,6 @@ fn bench_minimal_polynomial(c: &mut Criterion) {
             _ => unreachable!(),
         };
 
-        // Test minimal polynomial computation for various elements
-        // Minimal polynomial degree divides m, so worst case is m
         for &elem_value in &[2, 3, 5, 7, 11, 13] {
             if elem_value >= (1 << field.degree()) {
                 continue;
@@ -251,18 +233,14 @@ fn bench_minimal_polynomial(c: &mut Criterion) {
     group.finish();
 }
 
-// Benchmark polynomial operations specifically sized for BCH(255,k) codes
 fn bench_bch_syndrome_pattern(c: &mut Criterion) {
     let mut group = c.benchmark_group("bch_syndrome_simulation");
     group.sample_size(50);
 
     let field = Gf2mField::gf256();
 
-    // BCH(255, k) with t=16 has syndrome polynomial of degree up to 255
-    // and evaluates at 2t consecutive roots
     let message_poly = random_poly(&field, 254, 42); // degree 254 for 255-bit message
 
-    // Typical BCH evaluation points: α, α², α³, ..., α^(2t)
     let t = 16;
     let num_syndromes = 2 * t;
 
@@ -282,15 +260,11 @@ fn bench_bch_syndrome_pattern(c: &mut Criterion) {
     group.finish();
 }
 
-/// [SAGE_CMP] Benchmark field element multiplication
-///
-/// Direct element-to-element multiplication in GF(2^m).
-/// Compare with Sage: `a * b` where a, b ∈ GF(2^m)
+/// [SAGE_CMP] `a * b` for a, b ∈ GF(2^m).
 fn bench_field_element_multiply(c: &mut Criterion) {
     let mut group = c.benchmark_group("field_element_multiply");
     group.sample_size(1000);
 
-    // Test different field sizes
     let test_fields = [(8, "GF(256)"), (16, "GF(65536)")];
 
     for (m, name) in test_fields {
@@ -300,7 +274,6 @@ fn bench_field_element_multiply(c: &mut Criterion) {
             Gf2mField::gf65536()
         };
 
-        // Create test elements
         let a = field.element(42);
         let b = field.element(123);
 
@@ -317,10 +290,7 @@ fn bench_field_element_multiply(c: &mut Criterion) {
     group.finish();
 }
 
-/// [SAGE_CMP] Benchmark batch field element multiplications
-///
-/// Measures throughput of repeated element multiplications.
-/// Compare with Sage batch operations.
+/// [SAGE_CMP]
 fn bench_field_element_multiply_batch(c: &mut Criterion) {
     let mut group = c.benchmark_group("field_element_multiply_batch");
 
@@ -333,7 +303,6 @@ fn bench_field_element_multiply_batch(c: &mut Criterion) {
             Gf2mField::gf65536()
         };
 
-        // Create arrays of elements
         let count = 1000;
         let elements_a: Vec<_> = (0..count).map(|i| field.element(i)).collect();
         let elements_b: Vec<_> = (0..count).map(|i| field.element(i * 3 + 7)).collect();

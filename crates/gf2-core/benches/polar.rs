@@ -71,7 +71,6 @@ fn benchmark_polar_transform(c: &mut Criterion) {
 fn benchmark_polar_transform_vs_naive(c: &mut Criterion) {
     let mut group = c.benchmark_group("polar_vs_naive");
 
-    // Only test smaller sizes for naive matrix multiply
     for n in [64, 256, 1024].iter() {
         group.throughput(Throughput::Elements(*n as u64));
 
@@ -84,9 +83,7 @@ fn benchmark_polar_transform_vs_naive(c: &mut Criterion) {
             b.iter(|| black_box(&bv).polar_transform(black_box(n)))
         });
 
-        // Naive: build full G_N matrix and multiply
         group.bench_with_input(BenchmarkId::new("naive_matrix", n), n, |b, &n| {
-            // Build G_N via Kronecker product
             let mut g = BitMatrix::identity(1);
             let g2 = {
                 let mut m = BitMatrix::zeros(2, 2);

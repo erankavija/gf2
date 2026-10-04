@@ -24,7 +24,6 @@ fn create_dense_bitvec(num_bits: usize, pos: usize) -> BitVec {
 fn bench_find_first_one_sparse(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_one_sparse");
 
-    // Test different positions of the first set bit
     for &(size_kb, bit_pos) in &[
         (1, 0),
         (1, 63),
@@ -50,7 +49,6 @@ fn bench_find_first_one_sparse(c: &mut Criterion) {
 fn bench_find_first_one_dense(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_one_dense");
 
-    // Test with all bits set (worst case - none found)
     for &size_kb in &[1, 64, 256] {
         let size_bits = size_kb * 1024 * 8;
         let bv = create_sparse_bitvec(size_bits, size_bits); // No bit set
@@ -67,7 +65,6 @@ fn bench_find_first_one_dense(c: &mut Criterion) {
 fn bench_find_first_zero_sparse(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_zero_sparse");
 
-    // Test different positions of the first clear bit
     for &(size_kb, bit_pos) in &[
         (1, 0),
         (1, 63),
@@ -93,7 +90,6 @@ fn bench_find_first_zero_sparse(c: &mut Criterion) {
 fn bench_find_first_zero_dense(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_first_zero_dense");
 
-    // Test with all bits clear (worst case - none found)
     for &size_kb in &[1, 64, 256] {
         let size_bits = size_kb * 1024 * 8;
         let bv = create_dense_bitvec(size_bits, size_bits); // No bit clear
