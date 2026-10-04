@@ -55,6 +55,7 @@ pub fn assert_four_columns_byte_identical(
     );
 }
 
+/// The [`WorkerCounters`] columns of `p`, the operand the column assertions take.
 pub fn snr_point_to_counters(p: &SnrPointResult) -> WorkerCounters {
     WorkerCounters {
         frames: p.frames,
@@ -220,6 +221,8 @@ pub struct OomInjector<I, O, S: Stage<I, O>> {
 }
 
 impl<I, O, S: Stage<I, O> + Clone> OomInjector<I, O, S> {
+    /// Wraps `inner`; the injected error reports device 0 and 1 GiB requested.
+    ///
     /// # Panics
     ///
     /// Panics if `trigger_on == 0`.
@@ -235,12 +238,14 @@ impl<I, O, S: Stage<I, O> + Clone> OomInjector<I, O, S> {
         }
     }
 
+    /// Sets the device id and byte count the injected error reports.
     pub fn with_oom_params(mut self, device_id: i32, bytes_requested: usize) -> Self {
         self.device_id = device_id;
         self.bytes_requested = bytes_requested;
         self
     }
 
+    /// `process` calls so far, the injected one included.
     pub fn call_count(&self) -> u64 {
         self.call_count.load(Ordering::SeqCst)
     }
@@ -288,6 +293,8 @@ pub struct KernelErrorInjector<I, O, S: Stage<I, O>> {
 }
 
 impl<I, O, S: Stage<I, O> + Clone> KernelErrorInjector<I, O, S> {
+    /// Wraps `inner`; the injected error reports HIP code 7 (`hipErrorLaunchFailure`).
+    ///
     /// # Panics
     ///
     /// Panics if `trigger_on == 0`.
@@ -307,6 +314,7 @@ impl<I, O, S: Stage<I, O> + Clone> KernelErrorInjector<I, O, S> {
         }
     }
 
+    /// Sets the HIP code, kernel name and argument text the injected error reports.
     pub fn with_launch_params(
         mut self,
         hip_code: i32,
@@ -319,6 +327,7 @@ impl<I, O, S: Stage<I, O> + Clone> KernelErrorInjector<I, O, S> {
         self
     }
 
+    /// `process` calls so far, the failing ones included.
     pub fn call_count(&self) -> u64 {
         self.call_count.load(Ordering::SeqCst)
     }
