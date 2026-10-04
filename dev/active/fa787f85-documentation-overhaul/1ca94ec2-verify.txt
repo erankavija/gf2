@@ -1,0 +1,47 @@
+== 2928ccce
+pre-execution preview: eligible=True destination_root=dev/archive/2928ccce-dvb-t2-awgn-campaign blockers=0 counts={"already_archived": 12, "block": 0, "copy": 0, "move": 12, "pending_deletions": 0, "retain": 1}
+marker: dev/archive/2928ccce-dvb-t2-awgn-campaign/.jit-container names 2928ccce-700a-46ff-88c7-6998915f9fdf
+byte verification: 12/12 destinations carry the pre-execution sha256; 0 carried it before a commit tagged jit:1ca94ec2 changed them; 0/0 deleted sources are absent
+fresh preview: eligible=True blockers=0 counts={"already_archived": 12, "block": 0, "copy": 0, "move": 12, "pending_deletions": 0, "retain": 1} artifacts left to move, copy or delete=0
+tracker references: 13/13 planned references name the archive path
+link scan of dev/archive/2928ccce-dvb-t2-awgn-campaign: 11 Markdown files, 4 local links, 0 unresolved
+== 806eb14e
+pre-execution preview: eligible=True destination_root=dev/archive/806eb14e-hip-gpu-prototype blockers=0 counts={"already_archived": 8, "block": 0, "copy": 0, "move": 8, "pending_deletions": 1, "retain": 0}
+marker: dev/archive/806eb14e-hip-gpu-prototype/.jit-container names 806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923
+byte verification: 8/8 destinations carry the pre-execution sha256; 0 carried it before a commit tagged jit:1ca94ec2 changed them; 1/1 deleted sources are absent
+fresh preview: eligible=True blockers=0 counts={"already_archived": 8, "block": 0, "copy": 0, "move": 8, "pending_deletions": 0, "retain": 0} artifacts left to move, copy or delete=0
+tracker references: 10/10 planned references name the archive path
+link scan of dev/archive/806eb14e-hip-gpu-prototype: 7 Markdown files, 0 local links, 0 unresolved
+== d4851c3d
+pre-execution preview: eligible=True destination_root=dev/archive/d4851c3d-modem-framework blockers=0 counts={"already_archived": 8, "block": 0, "copy": 0, "move": 8, "pending_deletions": 0, "retain": 0}
+marker: dev/archive/d4851c3d-modem-framework/.jit-container names d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe
+byte verification: 8/8 destinations carry the pre-execution sha256; 0 carried it before a commit tagged jit:1ca94ec2 changed them; 0/0 deleted sources are absent
+fresh preview: eligible=True blockers=0 counts={"already_archived": 13, "block": 0, "copy": 0, "move": 13, "pending_deletions": 0, "retain": 0} artifacts left to move, copy or delete=0
+tracker references: 9/9 planned references name the archive path
+link scan of dev/archive/d4851c3d-modem-framework: 5 Markdown files, 0 local links, 0 unresolved
+== e095a100
+pre-execution preview: eligible=True destination_root=dev/archive/e095a100-gfpm-arithmetic blockers=0 counts={"already_archived": 19, "block": 0, "copy": 0, "move": 23, "pending_deletions": 5, "retain": 0}
+marker: dev/archive/e095a100-gfpm-arithmetic/.jit-container names e095a100-d028-4bbb-a175-a6886137df61
+byte verification: 22/23 destinations carry the pre-execution sha256; 1 carried it before a commit tagged jit:1ca94ec2 changed them; 5/5 deleted sources are absent
+  changed after placement: dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md
+fresh preview: eligible=True blockers=0 counts={"already_archived": 23, "block": 0, "copy": 0, "move": 23, "pending_deletions": 0, "retain": 1} artifacts left to move, copy or delete=0
+tracker references: 24/24 planned references name the archive path
+link scan of dev/archive/e095a100-gfpm-arithmetic: 19 Markdown files, 2 local links, 0 unresolved
+== Markdown files touched by the commits tagged jit:1ca94ec2
+link scan: 10 Markdown files, 1 local links, 0 unresolved
+== manifest rows whose destination the pre-execution plans place
+complete dev/active/37e0b235/gpu-batch-ldpc-bp-plan.md -> dev/archive/806eb14e-hip-gpu-prototype/active/37e0b235/gpu-batch-ldpc-bp-plan.md
+complete dev/active/e095a100-gfpm-arithmetic/e095a100-presentation/themes/gruvbox.css -> dev/archive/e095a100-gfpm-arithmetic/active/e095a100-presentation/themes/gruvbox.css
+complete dev/plans/6fb4abad_breakdown.md -> dev/archive/e095a100-gfpm-arithmetic/plans/6fb4abad_breakdown.md
+complete dev/plans/70972f06_audit.md -> dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md
+complete dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md -> dev/archive/806eb14e-hip-gpu-prototype/plans/hip_gpu_prototype_wave.md
+complete dev/plans/bdf95060_breakdown.md -> dev/archive/e095a100-gfpm-arithmetic/plans/bdf95060_breakdown.md
+complete dev/research/rns_representation.md -> dev/archive/e095a100-gfpm-arithmetic/research/rns_representation.md
+complete docs/lean4-verification-pipeline.md -> dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md
+complete docs/presentations/d4851c3d-modem-framework/talk.html -> dev/archive/d4851c3d-modem-framework/docs/presentations/d4851c3d-modem-framework/talk.html
+complete docs/presentations/d4851c3d-modem-framework/themes/gruvbox.css -> dev/archive/d4851c3d-modem-framework/docs/presentations/d4851c3d-modem-framework/themes/gruvbox.css
+== manifest rows by epic
+2928ccce: 4 rows, 0 pending
+806eb14e: 4 rows, 0 pending
+d4851c3d: 10 rows, 0 pending
+e095a100: 7 rows, 0 pending

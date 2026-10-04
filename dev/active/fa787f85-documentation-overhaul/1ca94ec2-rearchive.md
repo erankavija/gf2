@@ -20,7 +20,7 @@ Issue 1ca94ec2. Container archival of the four epics is executed in commit
 |---|---|---|---|
 | REQ-01 | `pre-execution preview` lines: four epics `eligible=True`, `blockers=0`, destination roots `EA`, `HA`, `CA`, `MA` | The preview before each execution is eligible, without plan-level or artifact-level blocker, into the existing directory. | That the reduced file equals the raw preview; the raw JSON is not committed. |
 | REQ-02 | `marker` lines | Each of `EA`, `HA`, `CA`, `MA` holds a `.jit-container` naming the full identifier of its epic. | – |
-| REQ-03 | `byte verification`: 23, 8, 12 and 8 destinations; 5 and 1 deleted sources; `tracker references`: 24/24, 10/10, 13/13, 9/9 | Each destination of the pre-execution plan has the sha256 the plan records, except one file that had it before a commit tagged `jit:1ca94ec2` changed one link target (section "Link target changed after execution"); each source the plan deletes is absent; each document reference the fresh plan lists names its archive path in the live tracker. | Anything about `crates/gf2-sim/src/executor/scheduler.rs`, which the 2928ccce plan retains in place without a destination. |
+| REQ-03 | `byte verification`: 23, 8, 12 and 8 destinations; 5 and 1 deleted sources; `tracker references`: 24/24, 10/10, 13/13, 9/9 | Each destination of the pre-execution plan has the sha256 the plan records, except one file that had it before a commit tagged `jit:1ca94ec2` changed one link target (section "Link target of the adopted Lean guide"); each source the plan deletes is absent; each document reference the fresh plan lists names its archive path in the live tracker. | Anything about `crates/gf2-sim/src/executor/scheduler.rs`, which the 2928ccce plan retains in place without a destination. |
 | REQ-04 | Table "Citations" below | – | – |
 | REQ-05 | `archive-rerun-results.md`, rows of epics e095a100, 806eb14e, 2928ccce and d4851c3d for issue 1ca94ec2; `fresh preview` lines: `eligible=True`, 0 blockers, 0 artifacts left to move, copy or delete; `link scan` lines: 0 unresolved; `manifest rows by epic`: 0 rows with status `pending` | The rerun table holds the result of a further `--execute` of each epic; a preview of each archived epic plans no publication and no deletion; no inline Markdown link with a local target is unresolved in a Markdown file of `EA`, `HA`, `CA` or `MA` or in a Markdown file the commits tagged `jit:1ca94ec2` touch; each manifest row of the four epics is complete. | Reference-style links, HTML links, anchors and links in non-Markdown files. |
 
@@ -51,17 +51,18 @@ of commit `398ca9e0b`.
 
 The four pre-execution plans share no source, so the execution order is free.
 
-## Link target changed after execution
+## Link target of the adopted Lean guide
 
 The execution adopts `EA/docs/lean4-verification-pipeline.md`. The planner
 evaluates an adopted file at its mirrored source path
-`dev/docs/lean4-verification-pipeline.md`, from which the target
-`../../../../proofs/WORKAROUNDS.md` of line 10 leaves the repository: the preview
-after execution reports `repository-escape` for the file and
-`unpreservable-layout` for `EA/plans/9509d8cc-9509d8cc/formal_verification.md`,
-which links it. Line 10 carries the root-relative target `/proofs/WORKAROUNDS.md`,
-which the planner resolves to `proofs/WORKAROUNDS.md`; the link scan of the
-verifier resolves a target starting with `/` from the repository root.
+`dev/docs/lean4-verification-pipeline.md`. From that path the relative target
+`../../../../proofs/WORKAROUNDS.md`, which the file has in commit `398ca9e0b`,
+leaves the repository; the planner reports such a target as `repository-escape`
+and reports `unpreservable-layout` for
+`EA/plans/9509d8cc-9509d8cc/formal_verification.md`, which links the file. Line
+10 carries the root-relative target `/proofs/WORKAROUNDS.md`, which the planner
+resolves to `proofs/WORKAROUNDS.md`; the link scan of the verifier resolves a
+target starting with `/` from the repository root.
 
 ## Citations
 
