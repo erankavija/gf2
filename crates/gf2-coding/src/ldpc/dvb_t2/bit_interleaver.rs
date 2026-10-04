@@ -687,7 +687,7 @@ mod tests {
         il.deinterleave_llrs(&wrong);
     }
 
-    /// `@/citation/Etsi2015` §6.1.3 is titled "Bit Interleaving
+    /// `@/citation/Etsi2015` §6.1.3 is titled "Bit Interleaver
     /// (for 16-QAM, 64-QAM and 256-QAM)", so QPSK passes Λ through unchanged.
     #[test]
     fn test_qpsk_identity() {

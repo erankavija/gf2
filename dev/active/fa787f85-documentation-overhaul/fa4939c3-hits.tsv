@@ -1,0 +1,625 @@
+path	line	disposition	key or reason	found by
+crates/gf2-algebra/benches/tuning_calibration.rs	6	not a citation	section of an internal design or protocol document	read
+crates/gf2-algebra/examples/paper_repro_slope.rs	1	keyed	Scheinerman2024	read
+crates/gf2-algebra/examples/paper_repro_slope.rs	3	keyed	Scheinerman2024	read
+crates/gf2-algebra/examples/paper_repro_slope.rs	40	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	3	keyed	Scheinerman2024	map
+crates/gf2-algebra/src/packed/bipedal3.rs	4	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	107	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	194	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	209	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	233	keyed	Scheinerman2024	map
+crates/gf2-algebra/src/packed/bipedal3.rs	901	keyed	Scheinerman2024	map
+crates/gf2-algebra/src/packed/bipedal3.rs	1075	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	1099	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/packed/bipedal3.rs	1123	keyed	Scheinerman2024	map
+crates/gf2-algebra/src/permanent/bipedal3.rs	675	keyed	SageMath2026	map
+crates/gf2-algebra/src/permanent/bipedal3_multiword.rs	5	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/permanent/rank.rs	14	keyed	GGK2025	read
+crates/gf2-algebra/src/permanent/reference.rs	1	keyed	Scheinerman2024	map
+crates/gf2-algebra/src/permanent/reference.rs	2	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/permanent/reference.rs	57	keyed	Scheinerman2024	read
+crates/gf2-algebra/src/testutil.rs	152	keyed	Hinnant2021	read
+crates/gf2-algebra/tests/cas_cross_validation.rs	4	keyed	SageMath2026	map
+crates/gf2-algebra/tests/cas_cross_validation.rs	59	keyed	SageMath2026	map
+crates/gf2-algebra/tests/cas_cross_validation.rs	85	keyed	SageMath2026	map
+crates/gf2-algebra/tests/permanent_vectors.rs	135	not a citation	pen-and-paper computation	read
+crates/gf2-algebra/tests/tuning_repository_envelopes.rs	188	not a citation	section of an internal design or protocol document	read
+crates/gf2-coding/benches/bch_workloads.rs	2	not a citation	repository document or harness	read
+crates/gf2-coding/benches/bch_workloads.rs	18	not a citation	section of an internal design or protocol document	read
+crates/gf2-coding/benches/bch_workloads.rs	21	not a citation	section of an internal design or protocol document	read
+crates/gf2-coding/benches/bch_workloads.rs	27	not a citation	repository document or harness	read
+crates/gf2-coding/benches/bch_workloads.rs	33	not a citation	repository document or harness	read
+crates/gf2-coding/benches/bch_workloads.rs	45	not a citation	repository document or harness	read
+crates/gf2-coding/benches/bch_workloads.rs	71	not a citation	section of an internal design or protocol document	read
+crates/gf2-coding/examples/bch_oracle_messages.rs	1	not a citation	no external work named	read
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs	184	not a citation	repository document or harness	read
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs	243	not a citation	repository document or harness	read
+crates/gf2-coding/examples/bench_sparse_csv_emitter.rs	721	not a citation	repository document or harness	read
+crates/gf2-coding/examples/dvb_t2_bch_demo.rs	1	keyed	Etsi2015	map
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	1	not a citation	repository document or harness	read
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	12	keyed	Lubeck2024	read
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	19	not a citation	repository document or harness	read
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	112	not a citation	repository document or harness	read
+crates/gf2-coding/examples/ldpc_bler_check.rs	1	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/examples/ldpc_mother_check.rs	1	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/examples/nasa_rate_half_k3.rs	2	keyed	Ccsds2017	read
+crates/gf2-coding/examples/nasa_rate_half_k3.rs	3	keyed	Ccsds2017	map
+crates/gf2-coding/examples/sparse_smoke_emit_expected.rs	661	keyed	FflasFfpack2021	read
+crates/gf2-coding/src/bch/core.rs	11	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/bch/dvb_t2/generators.rs	2	keyed	Etsi2015	map
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	1	keyed	Etsi2015	map
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	3	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	27	keyed	Etsi2015	map
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	29	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	33	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	167	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/mod.rs	310	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/params.rs	1	keyed	Etsi2015	map
+crates/gf2-coding/src/bch/dvb_t2/params.rs	22	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/params.rs	40	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/dvb_t2/params.rs	50	keyed	Etsi2015	read
+crates/gf2-coding/src/bch/encode.rs	2435	not a citation	no external work named	read
+crates/gf2-coding/src/bch/matrix.rs	1536	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/bch/mod.rs	20	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/bcjr/mod.rs	2	keyed	Bahl1974,Wolf1978	map
+crates/gf2-coding/src/bcjr/mod.rs	3	keyed	McEliece1996	map
+crates/gf2-coding/src/bin/generate_ldpc_cache.rs	1	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/bin/sim_runner.rs	28	not a citation	code identifier	read
+crates/gf2-coding/src/bin/sim_runner.rs	33	not a citation	code identifier	read
+crates/gf2-coding/src/bin/sim_runner.rs	128	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/bin/sim_runner.rs	144	not a citation	code identifier	read
+crates/gf2-coding/src/bin/sim_runner.rs	201	keyed	Yuan2025	read
+crates/gf2-coding/src/crc.rs	5	keyed	Yuan2025	map
+crates/gf2-coding/src/crc.rs	103	keyed	Yuan2025	map
+crates/gf2-coding/src/drm.rs	2	keyed	CoskunPfister2022	map
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs	1	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs	29	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/dvb_t2_bicm_harness.rs	102	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/fading.rs	84	keyed	Yuan2025	read
+crates/gf2-coding/src/fading.rs	93	keyed	Yuan2025	read
+crates/gf2-coding/src/fading.rs	102	keyed	Yuan2025	read
+crates/gf2-coding/src/gldpc/mod.rs	2	keyed	Lentmaier2010a	map
+crates/gf2-coding/src/gldpc/mod.rs	55	not a citation	no external work named	read
+crates/gf2-coding/src/gldpc/mod.rs	230	keyed	Lentmaier2010a	map
+crates/gf2-coding/src/gldpc/mod.rs	270	keyed	Lentmaier2010a	map
+crates/gf2-coding/src/gldpc/mod.rs	285	keyed	Lentmaier2010a	map
+crates/gf2-coding/src/gldpc/mod.rs	286	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/mod.rs	1	keyed	Duffy2019	map
+crates/gf2-coding/src/grand/mod.rs	2	keyed	Solomon2020	map
+crates/gf2-coding/src/grand/mod.rs	5	keyed	Yuan2025	map
+crates/gf2-coding/src/grand/orbgrand.rs	1	keyed	Duffy2022	map
+crates/gf2-coding/src/grand/orbgrand.rs	36	keyed	Yuan2025	map
+crates/gf2-coding/src/grand/orbgrand.rs	48	keyed	Duffy2022	map
+crates/gf2-coding/src/grand/orbgrand.rs	62	keyed	Duffy2022	read
+crates/gf2-coding/src/grand/orbgrand.rs	95	keyed	Duffy2022	map
+crates/gf2-coding/src/grand/orbgrand.rs	309	keyed	Duffy2022	map
+crates/gf2-coding/src/grand/orbgrand.rs	310	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/orbgrand.rs	338	keyed	Yuan2025	map
+crates/gf2-coding/src/grand/orbgrand.rs	343	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/orbgrand.rs	544	keyed	Duffy2022	read
+crates/gf2-coding/src/grand/orbgrand.rs	605	keyed	Duffy2022	map
+crates/gf2-coding/src/grand/orbgrand.rs	622	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	1	keyed	Yuan2025	map
+crates/gf2-coding/src/grand/sogrand.rs	111	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	136	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	137	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	145	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	163	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	201	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	222	keyed	Machler2012	map
+crates/gf2-coding/src/grand/sogrand.rs	252	keyed	Yuan2025	map
+crates/gf2-coding/src/grand/sogrand.rs	253	keyed	Yuan2025	read
+crates/gf2-coding/src/grand/sogrand.rs	287	keyed	Yuan2025	map
+crates/gf2-coding/src/grand/sogrand.rs	293	keyed	Machler2012	map
+crates/gf2-coding/src/info_theory.rs	71	keyed	PPV2010	map
+crates/gf2-coding/src/info_theory.rs	86	keyed	PPV2010	map
+crates/gf2-coding/src/ldpc/core.rs	90	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/core.rs	109	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/core.rs	781	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	2	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	13	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	16	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	19	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	24	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	63	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	64	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	67	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	69	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	71	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	107	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	121	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	141	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	194	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	249	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	254	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	259	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	265	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	393	keyed	Knuth1997	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	586	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	614	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	690	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs	725	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/builder.rs	1	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/builder.rs	41	not a citation	standard or code family named as a topic	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	1	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	63	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	73	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	102	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	361	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	371	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	381	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	533	keyed	DvbVerification2010	map
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	536	keyed	DvbVerification2010	read
+crates/gf2-coding/src/ldpc/dvb_t2/concat.rs	537	keyed	DvbVerification2010	map
+crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs	1	keyed	Etsi2015	map
+crates/gf2-coding/src/ldpc/dvb_t2/mod.rs	1	keyed	Etsi2015	map
+crates/gf2-coding/src/ldpc/dvb_t2/mod.rs	2	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/dvb_t2/params.rs	1	keyed	Etsi2015	map
+crates/gf2-coding/src/ldpc/dvb_t2/params.rs	23	keyed	Etsi2015	read
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs	1	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs	16	keyed	ThreeGpp2017	map
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs	17	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs	32	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg1.rs	42	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs	1	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs	17	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs	32	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/bg2.rs	42	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	1	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	2	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	10	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	15	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	18	keyed	Sionna2026	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	22	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	61	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	79	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	99	keyed	ThreeGpp2020	read
+crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs	101	keyed	Sionna2026	read
+crates/gf2-coding/src/ldpc/nr_5g/lifting.rs	1	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/lifting.rs	5	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	1	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	2	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	14	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	15	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	20	keyed	Sionna2026	map
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	71	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	75	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	108	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	157	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	167	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	175	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	265	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	270	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	351	keyed	ThreeGpp2017	map
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	370	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	625	keyed	ThreeGpp2017	map
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	1190	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/ldpc/nr_5g/mod.rs	1272	keyed	ThreeGpp2017	read
+crates/gf2-coding/src/modem/analysis.rs	310	keyed	TenBrink2001	map
+crates/gf2-coding/src/modem/analysis.rs	735	not a citation	method or object name	read
+crates/gf2-coding/src/modem/presets.rs	387	keyed	Etsi2015	read
+crates/gf2-coding/src/modem/presets.rs	388	not a citation	part of a sentence whose citation is listed at an adjacent line	read
+crates/gf2-coding/src/modem/presets.rs	389	not a citation	part of a sentence whose citation is listed at an adjacent line	read
+crates/gf2-coding/src/product/chase_pyndiah.rs	2	keyed	Chase1972,Pyndiah1998	map
+crates/gf2-coding/src/product/mod.rs	2	keyed	Pyndiah1998	map
+crates/gf2-coding/src/product/mod.rs	485	keyed	Yuan2025	map
+crates/gf2-coding/src/product/mod.rs	490	keyed	Yuan2025	read
+crates/gf2-coding/src/product/mod.rs	518	keyed	Pyndiah1998	map
+crates/gf2-coding/src/simulation.rs	1638	keyed	Hinnant2021	map
+crates/gf2-coding/src/test_support.rs	5	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	6	keyed	DvbVerification2010	map
+crates/gf2-coding/src/test_support.rs	202	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	203	keyed	DvbVerification2010	map
+crates/gf2-coding/src/test_support.rs	215	keyed	DvbVerification2010	map
+crates/gf2-coding/src/test_support.rs	261	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	262	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	273	keyed	DvbVerification2010	map
+crates/gf2-coding/src/test_support.rs	274	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	276	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	277	keyed	DvbVerification2010	read
+crates/gf2-coding/src/test_support.rs	297	not a citation	repository document or harness	read
+crates/gf2-coding/src/test_support.rs	313	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_conformance.rs	44	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_encode_dispatch.rs	2	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_encode_dispatch.rs	29	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_encode_dispatch.rs	40	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_encode_dispatch.rs	348	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_encode_dispatch_installed.rs	3	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_matrix_allocation.rs	68	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	1	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	2	keyed	SageMath2026,Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	3	keyed	Joyner2026	map
+crates/gf2-coding/tests/bch_oracle_agreement.rs	4	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	187	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	188	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	384	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	427	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	459	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	460	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	462	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	466	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	539	not a citation	repository document or harness	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	542	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	543	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	670	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	680	keyed	Joyner2026,GapGroup2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	733	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	734	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	748	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	751	not a citation	code identifier	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	752	keyed	Joyner2026	map
+crates/gf2-coding/tests/bch_oracle_agreement.rs	776	not a citation	no external work named	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	780	keyed	Joyner2026	read
+crates/gf2-coding/tests/bch_oracle_agreement.rs	832	keyed	Etsi2015	map
+crates/gf2-coding/tests/bch_oracle_agreement.rs	851	keyed	Etsi2015	map
+crates/gf2-coding/tests/bch_oracle_agreement.rs	933	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/bch_oracle_agreement.rs	1036	keyed	Etsi2015	read
+crates/gf2-coding/tests/bch_primitive_verification.rs	2	keyed	Etsi2015	read
+crates/gf2-coding/tests/bch_tests.rs	777	keyed	Etsi2015	map
+crates/gf2-coding/tests/bch_tests.rs	812	keyed	Etsi2015	map
+crates/gf2-coding/tests/channel_capacity.rs	22	not a citation	no external work named	read
+crates/gf2-coding/tests/channel_capacity.rs	26	keyed	Lentmaier2010	read
+crates/gf2-coding/tests/channel_capacity.rs	27	keyed	Lentmaier2010	read
+crates/gf2-coding/tests/channel_capacity.rs	28	keyed	Ccsds2020	read
+crates/gf2-coding/tests/channel_capacity.rs	29	keyed	Ccsds2020	read
+crates/gf2-coding/tests/data/nr5g_regression_vectors.rs	2	keyed	ThreeGpp2017	read
+crates/gf2-coding/tests/dvb_t2_bch_verification.rs	1	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_bch_verification.rs	2	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_bicm_chain.rs	22	keyed	Knuth1997	read
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs	1	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs	2	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs	3	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs	4	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs	5	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs	6	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	1	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	2	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	3	keyed	Etsi2015,DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	5	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	6	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	7	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	77	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	78	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	80	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	86	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	166	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	167	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs	168	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs	1	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs	2	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs	1	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs	2	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/ebch_128_64_reference.rs	1	not a citation	no external work named	read
+crates/gf2-coding/tests/ldpc_validation.rs	181	keyed	Etsi2015	map
+crates/gf2-coding/tests/ldpc_validation.rs	226	keyed	Etsi2015	map
+crates/gf2-coding/tests/modem_regression.rs	303	not a citation	code identifier	read
+crates/gf2-coding/tests/nr5g_external_vectors.rs	2	keyed	ThreeGpp2017	read
+crates/gf2-coding/tests/nr5g_external_vectors.rs	3	keyed	Sionna2026	map
+crates/gf2-coding/tests/nr5g_external_vectors.rs	5	keyed	ThreeGpp2017	read
+crates/gf2-coding/tests/nr5g_external_vectors.rs	16	keyed	Sionna2026	read
+crates/gf2-coding/tests/osd_reprocessing_engine.rs	431	not a citation	no external work named	read
+crates/gf2-coding/tests/shortened_fast_path.rs	28	keyed	Etsi2015	read
+crates/gf2-coding/tests/shortened_fast_path.rs	32	keyed	Etsi2015	read
+crates/gf2-coding/tests/shortened_fast_path.rs	37	keyed	Etsi2015	read
+crates/gf2-coding/tests/support/fresh_tuning_process.rs	35	not a citation	repository document or harness	read
+crates/gf2-coding/tests/support/fresh_tuning_process.rs	183	not a citation	repository document or harness	read
+crates/gf2-coding/tests/support/fresh_tuning_process.rs	306	not a citation	repository document or harness	read
+crates/gf2-coding/tests/test_vector_parser.rs	1	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/test_vector_parser.rs	2	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/test_vectors/config.rs	43	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/test_vectors/loader.rs	70	keyed	DvbVerification2010	map
+crates/gf2-coding/tests/test_vectors/mod.rs	19	keyed	DvbVerification2010	read
+crates/gf2-coding/tests/test_vectors/parser.rs	162	keyed	DvbVerification2010	read
+crates/gf2-core/benches/charpoly.rs	16	keyed	Nist2001	map
+crates/gf2-core/benches/field_matrix_gemm.rs	13	keyed	Nist2001	map
+crates/gf2-core/benches/field_matrix_gemm.rs	14	keyed	Nist2001	map
+crates/gf2-core/benches/field_sparse_matrix.rs	15	keyed	Nist2001	map
+crates/gf2-core/benches/field_sparse_matrix.rs	16	keyed	Nist2001	map
+crates/gf2-core/benches/fieldmatrix_charpoly.rs	20	keyed	Nist2001	map
+crates/gf2-core/benches/fieldmatrix_charpoly.rs	29	keyed	Lubeck2024	map
+crates/gf2-core/benches/fieldmatrix_gemm.rs	42	keyed	Nist2001	map
+crates/gf2-core/benches/fieldmatrix_gemm.rs	51	keyed	Lubeck2024	map
+crates/gf2-core/benches/fieldmatrix_ple.rs	26	keyed	Nist2001	map
+crates/gf2-core/benches/fieldmatrix_ple.rs	35	keyed	Lubeck2024	map
+crates/gf2-core/benches/fieldmatrix_ple.rs	48	not a citation	repository document or harness	read
+crates/gf2-core/benches/fieldmatrix_ple.rs	49	not a citation	repository document or harness	read
+crates/gf2-core/benches/fieldmatrix_solve.rs	25	keyed	Nist2001	map
+crates/gf2-core/benches/fieldmatrix_solve.rs	34	keyed	Lubeck2024	map
+crates/gf2-core/benches/gf2m_mul_strategies.rs	532	not a citation	repository document or harness	read
+crates/gf2-core/benches/gf2m_wide_mul.rs	10	keyed	Seroussi1998	read
+crates/gf2-core/benches/gf2m_wide_mul.rs	19	keyed	Nist2013	read
+crates/gf2-core/benches/inverse.rs	16	keyed	Nist2001	map
+crates/gf2-core/benches/matrix_transpose.rs	3	keyed	Warren2012	read
+crates/gf2-core/benches/ple.rs	12	keyed	Nist2001	map
+crates/gf2-core/benches/polynomial.rs	1	not a citation	repository document or harness	read
+crates/gf2-core/benches/polynomial.rs	2	not a citation	repository document or harness	read
+crates/gf2-core/benches/polynomial.rs	45	not a citation	repository document or harness	read
+crates/gf2-core/benches/polynomial.rs	262	not a citation	repository document or harness	read
+crates/gf2-core/benches/polynomial.rs	292	not a citation	repository document or harness	read
+crates/gf2-core/benches/primitive_poly.rs	2	keyed	Rabin1980	map
+crates/gf2-core/benches/primitive_poly.rs	3	not a citation	repository document or harness	read
+crates/gf2-core/benches/primitive_poly.rs	61	not a citation	repository document or harness	read
+crates/gf2-core/benches/primitive_poly.rs	81	not a citation	repository document or harness	read
+crates/gf2-core/benches/rref.rs	119	keyed	Etsi2015	map
+crates/gf2-core/benches/rref.rs	127	keyed	Etsi2015	map
+crates/gf2-core/benches/selector_non_regression.rs	1930	not a citation	repository document or harness	read
+crates/gf2-core/benches/selector_non_regression.rs	1931	not a citation	repository document or harness	read
+crates/gf2-core/benches/selector_non_regression.rs	2811	not a citation	section of an internal design or protocol document	read
+crates/gf2-core/benches/selector_non_regression.rs	2812	not a citation	section of an internal design or protocol document	read
+crates/gf2-core/benches/selector_non_regression.rs	2813	not a citation	section of an internal design or protocol document	read
+crates/gf2-core/benches/selector_non_regression.rs	2814	not a citation	section of an internal design or protocol document	read
+crates/gf2-core/benches/sparse.rs	2	not a citation	repository document or harness	read
+crates/gf2-core/benches/sparse.rs	13	not a citation	repository document or harness	read
+crates/gf2-core/benches/sparse.rs	65	not a citation	repository document or harness	read
+crates/gf2-core/benches/sparse_field_matmul.rs	13	keyed	Nist2001	read
+crates/gf2-core/benches/sparse_rref.rs	13	keyed	Nist2001	read
+crates/gf2-core/benches/sparse_rref_scorecard.rs	12	keyed	Nist2001	read
+crates/gf2-core/benches/sparse_spmv.rs	25	keyed	Nist2001	read
+crates/gf2-core/benches/strassen_threshold.rs	15	keyed	Nist2001	read
+crates/gf2-core/benches/triangular.rs	14	keyed	Nist2001	read
+crates/gf2-core/benches/tuning_calibration.rs	607	not a citation	section of an internal design or protocol document	read
+crates/gf2-core/benches/tuning_calibration.rs	619	not a citation	section of an internal design or protocol document	read
+crates/gf2-core/benches/tuning_calibration.rs	1196	new work	KlyneNewman2002	read
+crates/gf2-core/examples/bench_csv_emitter.rs	49	keyed	Lubeck2024	read
+crates/gf2-core/examples/bench_csv_emitter.rs	732	keyed	AlbrechtBard2026	read
+crates/gf2-core/examples/bench_csv_emitter.rs	903	not a citation	repository document or harness	read
+crates/gf2-core/examples/bench_csv_emitter.rs	904	keyed	Shoup2025	map
+crates/gf2-core/examples/bench_csv_emitter.rs	977	not a citation	repository document or harness	read
+crates/gf2-core/src/alg/rref.rs	33	keyed	AlbrechtBard2026	read
+crates/gf2-core/src/bench_seed.rs	24	keyed	Vigna2015	read
+crates/gf2-core/src/bench_seed.rs	36	not a citation	repository document or harness	read
+crates/gf2-core/src/field/axiom_tests.rs	732	keyed	Seroussi1998	map
+crates/gf2-core/src/field/axiom_tests.rs	733	keyed	Seroussi1998	read
+crates/gf2-core/src/field/batch_ops.rs	1	keyed	Montgomery1987	read
+crates/gf2-core/src/field/charpoly.rs	898	keyed	Massey1969	read
+crates/gf2-core/src/field/charpoly.rs	1405	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/charpoly.rs	1459	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/charpoly.rs	1702	keyed	Nist2001	read
+crates/gf2-core/src/field/charpoly.rs	1711	keyed	Lubeck2024	read
+crates/gf2-core/src/field/expr.rs	1950	keyed	Nist2001	read
+crates/gf2-core/src/field/extension.rs	2749	keyed	Seroussi1998	read
+crates/gf2-core/src/field/inverse.rs	3	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/inverse.rs	57	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/inverse.rs	157	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/inverse.rs	262	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/inverse.rs	340	keyed	Higham2002	read
+crates/gf2-core/src/field/inverse.rs	411	keyed	Nist2001	read
+crates/gf2-core/src/field/inverse.rs	420	keyed	Lubeck2024	read
+crates/gf2-core/src/field/inverse.rs	898	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/irreducibility.rs	1	keyed	Rabin1980	read
+crates/gf2-core/src/field/irreducibility.rs	2	keyed	Rabin1980	map
+crates/gf2-core/src/field/irreducibility.rs	72	keyed	Rabin1980	read
+crates/gf2-core/src/field/irreducibility.rs	82	keyed	Rabin1980	map
+crates/gf2-core/src/field/irreducibility.rs	110	keyed	Rabin1980	map
+crates/gf2-core/src/field/matrix.rs	221	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/field/matrix.rs	1717	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/matrix.rs	3307	keyed	Nist2001	read
+crates/gf2-core/src/field/matrix.rs	3308	keyed	Nist2001	map
+crates/gf2-core/src/field/modulus_select.rs	32	not a citation	repository document or harness	read
+crates/gf2-core/src/field/ntt.rs	63	keyed	GentlemanSande1966	map
+crates/gf2-core/src/field/ple.rs	2	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/ple.rs	563	keyed	DumasPernetSultan2017	map
+crates/gf2-core/src/field/ple.rs	826	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/ple.rs	876	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/ple.rs	938	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/ple.rs	939	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/ple.rs	1399	keyed	Nist2001	read
+crates/gf2-core/src/field/ple.rs	1408	keyed	Lubeck2024	read
+crates/gf2-core/src/field/sparse_matrix.rs	741	keyed	LinBox2025	read
+crates/gf2-core/src/field/sparse_matrix.rs	742	keyed	LinBox2025	map
+crates/gf2-core/src/field/sparse_matrix.rs	1163	keyed	Nist2001	read
+crates/gf2-core/src/field/traits.rs	117	not a citation	code identifier	read
+crates/gf2-core/src/field/traits.rs	526	keyed	SageMath2026	map
+crates/gf2-core/src/field/triangular.rs	2	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	7	keyed	Higham2002	read
+crates/gf2-core/src/field/triangular.rs	160	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	204	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	247	keyed	Higham2002	map
+crates/gf2-core/src/field/triangular.rs	248	keyed	Higham2002	read
+crates/gf2-core/src/field/triangular.rs	297	keyed	Higham2002	map
+crates/gf2-core/src/field/triangular.rs	298	keyed	Higham2002	read
+crates/gf2-core/src/field/triangular.rs	343	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	378	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	413	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	439	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	465	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/triangular.rs	1155	keyed	Nist2001	read
+crates/gf2-core/src/field/two_adic.rs	68	keyed	Plonky2026	map
+crates/gf2-core/src/field/two_adic.rs	74	keyed	HardyWright2008	read
+crates/gf2-core/src/field/two_adic.rs	86	keyed	Plonky2026	map
+crates/gf2-core/src/field/two_adic.rs	99	keyed	Plonky2026	map
+crates/gf2-core/src/field/two_adic.rs	112	keyed	Plonky2026	map
+crates/gf2-core/src/field/two_adic.rs	118	keyed	Plonky2026	map
+crates/gf2-core/src/field/two_adic.rs	259	keyed	HardyWright2008	read
+crates/gf2-core/src/field/two_adic.rs	272	keyed	Plonky2026	map
+crates/gf2-core/src/field/two_adic.rs	285	keyed	Plonky2026	map
+crates/gf2-core/src/field/vec.rs	252	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/vec.rs	253	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/vec.rs	296	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	2	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	88	not a citation	code identifier	read
+crates/gf2-core/src/field/winograd.rs	137	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	164	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	165	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	228	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	229	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	260	not a citation	code identifier	read
+crates/gf2-core/src/field/winograd.rs	405	keyed	DumasPernet2012	read
+crates/gf2-core/src/field/winograd.rs	443	keyed	Nist2001	read
+crates/gf2-core/src/field/winograd.rs	651	not a citation	part of a sentence whose citation is listed at an adjacent line	read
+crates/gf2-core/src/field/winograd.rs	652	keyed	DumasPernet2012	map
+crates/gf2-core/src/field/winograd.rs	821	keyed	DumasPernet2012	map
+crates/gf2-core/src/field/winograd.rs	822	not a citation	part of a sentence whose citation is listed at an adjacent line	read
+crates/gf2-core/src/gf2m/barrett.rs	1036	keyed	Seroussi1998	read
+crates/gf2-core/src/gf2m/field.rs	459	keyed	Rabin1980	map
+crates/gf2-core/src/gf2m/field.rs	494	keyed	Rabin1980	map
+crates/gf2-core/src/gf2m/field.rs	567	not a citation	repository document or harness	read
+crates/gf2-core/src/gf2m/field.rs	600	keyed	Nist2001	read
+crates/gf2-core/src/gf2m/field.rs	605	not a citation	no external work named	read
+crates/gf2-core/src/gf2m/field.rs	1600	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	1607	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	1614	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	1845	keyed	Seroussi1998	read
+crates/gf2-core/src/gf2m/field.rs	2485	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	3054	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	3061	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	3210	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	3393	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/field.rs	3456	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/generation.rs	137	keyed	Swan1962	map
+crates/gf2-core/src/gf2m/generation.rs	226	keyed	Oeis2026	read
+crates/gf2-core/src/gf2m/mod.rs	9	keyed	AeneasVerif2026	read
+crates/gf2-core/src/gf2m/mul_raw.rs	3	keyed	AeneasVerif2026	read
+crates/gf2-core/src/gf2m/mul_raw.rs	4	keyed	AeneasVerif2026	map
+crates/gf2-core/src/gf2m/poly_helpers.rs	55	keyed	Etsi2015	read
+crates/gf2-core/src/gf2m/wide.rs	1415	keyed	Seroussi1998	read
+crates/gf2-core/src/gf2m/wide.rs	1425	keyed	Nist2013	read
+crates/gf2-core/src/gf2m/wide.rs	1426	keyed	Nist2013	read
+crates/gf2-core/src/gfp/mod.rs	518	keyed	DumasPernet2012	read
+crates/gf2-core/src/gfp/simd_ops.rs	451	keyed	GotoGeijn2008	map
+crates/gf2-core/src/gfp/simd_ops.rs	459	keyed	GotoGeijn2008	map
+crates/gf2-core/src/gfp/specialized.rs	660	keyed	DumasPernet2012	read
+crates/gf2-core/src/gfpn/cubic.rs	4	keyed	Devegili2006	map
+crates/gf2-core/src/gfpn/cubic.rs	5	keyed	Beuchat2010	map
+crates/gf2-core/src/gfpn/ext_config.rs	40	keyed	AeneasVerif2026	read
+crates/gf2-core/src/gfpn/ext_config.rs	42	keyed	AeneasVerif2026	read
+crates/gf2-core/src/gfpn/quadratic.rs	3	keyed	Devegili2006	map
+crates/gf2-core/src/io/field_matrix.rs	8	not a citation	method or object name	read
+crates/gf2-core/src/lib.rs	230	keyed	GotoGeijn2008,VanZee2015	map
+crates/gf2-core/src/macros.rs	21	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/macros.rs	24	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/matrix.rs	1169	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/primitive_polys.rs	2	keyed	LidlNiederreiter1996,Menezes1997	map
+crates/gf2-core/src/primitive_polys.rs	3	keyed	Etsi2015,ThreeGpp2017	map
+crates/gf2-core/src/primitive_polys.rs	4	keyed	Seroussi1998,Zivkovic1994	map
+crates/gf2-core/src/primitive_polys.rs	5	keyed	Nist2013,Lubeck2024	read
+crates/gf2-core/src/primitive_polys.rs	87	keyed	Etsi2015	read
+crates/gf2-core/src/primitive_polys.rs	89	keyed	Etsi2015	read
+crates/gf2-core/src/primitive_polys.rs	90	keyed	Lubeck2024	read
+crates/gf2-core/src/primitive_polys.rs	131	keyed	Nist2013,Seroussi1998	map
+crates/gf2-core/src/primitive_polys.rs	132	keyed	Nist2013	read
+crates/gf2-core/src/primitive_polys.rs	285	keyed	Rabin1980	map
+crates/gf2-core/src/rng.rs	1	keyed	Knuth1997	read
+crates/gf2-core/src/rng.rs	2	keyed	Knuth1997	map
+crates/gf2-core/src/sparse.rs	1308	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/sparse.rs	1339	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/sparse.rs	1376	not a citation	names software without attributing a method or number	read
+crates/gf2-core/src/sparse.rs	1783	keyed	Knuth1997	map
+crates/gf2-core/src/sparse.rs	2095	not a citation	method or object name	read
+crates/gf2-core/src/tuning/mod.rs	137	new work	KlyneNewman2002	read
+crates/gf2-core/src/tuning/mod.rs	147	new work	KlyneNewman2002	read
+crates/gf2-core/src/tuning/mod.rs	308	keyed	AlbrechtBard2026	read
+crates/gf2-core/src/tuning/mod.rs	884	keyed	AlbrechtBard2026	read
+crates/gf2-core/tests/clmul_wide_conformance.rs	22	keyed	Steele2014	read
+crates/gf2-core/tests/clmul_wide_conformance.rs	268	keyed	Seroussi1998	read
+crates/gf2-core/tests/common/mod.rs	43	keyed	SageMath2026	map
+crates/gf2-core/tests/common/mod.rs	54	keyed	SageMath2026	map
+crates/gf2-core/tests/gf2pow32_constant_drift.rs	1	keyed	Lubeck2024	read
+crates/gf2-core/tests/gf2pow32_matmul.rs	10	keyed	Lubeck2024	read
+crates/gf2-core/tests/gf2pow32_matmul.rs	14	keyed	Lubeck2024	read
+crates/gf2-core/tests/gf2pow32_matmul.rs	42	not a citation	method or object name	read
+crates/gf2-core/tests/gfpn_nested_towers.rs	4	keyed	SageMath2025	map
+crates/gf2-core/tests/gfpn_nested_towers.rs	188	keyed	SageMath2025	read
+crates/gf2-core/tests/residual_shift_routes.rs	49	keyed	Steele2014	read
+crates/gf2-core/tests/transpose_lane_contract.rs	12	keyed	Steele2014	read
+crates/gf2-kernels-hip/src/ffi.rs	95	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	97	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	102	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	103	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	118	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	121	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	125	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/ffi.rs	126	not a citation	method or object name	read
+crates/gf2-kernels-hip/src/host/streams.rs	120	not a citation	names software without attributing a method or number	read
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs	18	keyed	RandCore2025	map
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs	25	keyed	RandCore2025	map
+crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs	113	not a citation	code identifier	read
+crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs	74	keyed	Etsi2015	read
+crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs	75	keyed	Etsi2015	map
+crates/gf2-kernels-simd/src/bch_encode.rs	605	keyed	Steele2014	read
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs	2	keyed	Scheinerman2024	map
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs	3	keyed	Scheinerman2024	read
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs	25	keyed	Scheinerman2024	map
+crates/gf2-kernels-simd/src/bipedal/bipedal3.rs	26	keyed	Scheinerman2024	read
+crates/gf2-kernels-simd/src/bipedal/framework.rs	39	keyed	Scheinerman2024	read
+crates/gf2-kernels-simd/src/bipedal/framework.rs	67	keyed	Scheinerman2024	read
+crates/gf2-kernels-simd/src/fp_small_panel.rs	2	keyed	GotoGeijn2008,VanZee2015	map
+crates/gf2-kernels-simd/src/fp_small_panel.rs	3	keyed	Amd2020	map
+crates/gf2-kernels-simd/src/lib.rs	122	keyed	Mula2018	map
+crates/gf2-kernels-simd/src/transpose.rs	189	keyed	Warren2012	read
+crates/gf2-kernels-simd/src/transpose.rs	260	keyed	Steele2014	read
+crates/gf2-kernels-simd/src/x86/clmul.rs	327	keyed	Steele2014	read
+crates/gf2-kernels-simd/src/x86/fp_medium.rs	497	keyed	VanZee2015	map
+crates/gf2-kernels-simd/src/x86/fp_medium_ple.rs	5	keyed	DumasPernet2012	read
+crates/gf2-kernels-simd/src/x86/fp_small.rs	650	keyed	MollerGranlund2011	map
+crates/gf2-kernels-simd/src/x86/fp_small_panel.rs	2	keyed	GotoGeijn2008,VanZee2015	map
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs	4	keyed	DumasPernet2012	read
+crates/gf2-kernels-simd/src/x86/fp_small_ple.rs	5	keyed	DumasPernet2012	read
+crates/gf2-kernels-simd/src/x86/popcount.rs	5	keyed	Mula2018	map
+crates/gf2-kernels-simd/src/x86/popcount.rs	17	keyed	Mula2018	map
+crates/gf2-kernels-simd/src/x86/popcount.rs	67	keyed	Mula2018	map
+crates/gf2-kernels-simd/src/x86/transpose.rs	11	keyed	Warren2012	read
+crates/gf2-sim/examples/nr_5g_quickstart.rs	4	keyed	ThreeGpp2017	map
+crates/gf2-sim/examples/nr_5g_quickstart.rs	5	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs	401	keyed	Etsi2012	read
+crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs	408	keyed	Etsi2012	read
+crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs	3	keyed	Fossorier1994	map
+crates/gf2-sim/src/bin/export_alist.rs	1	new work	MacKay2006	read
+crates/gf2-sim/src/bin/export_alist.rs	2	keyed	Cassagne2019	read
+crates/gf2-sim/src/bin/export_alist.rs	6	new work	MacKay2006	map
+crates/gf2-sim/src/bin/ldpc_bler_sweep.rs	1	keyed	Cassagne2019	read
+crates/gf2-sim/src/bin/ldpc_bler_sweep.rs	2	keyed	Cassagne2019	map
+crates/gf2-sim/src/error.rs	186	keyed	ThreeGpp2017	map
+crates/gf2-sim/src/error.rs	190	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/error.rs	192	keyed	ThreeGpp2020	read
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs	9	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/gpu/nr_5g_ldpc.rs	171	keyed	ThreeGpp2017	map
+crates/gf2-sim/src/osd_campaign.rs	18	keyed	MaurerPontil2009	map
+crates/gf2-sim/src/permanent_campaign/coordinator.rs	82	not a citation	repository document or harness	read
+crates/gf2-sim/src/permanent_campaign/coordinator.rs	1767	not a citation	repository document or harness	read
+crates/gf2-sim/src/permanent_campaign/coordinator.rs	1772	not a citation	no external work named	read
+crates/gf2-sim/src/permanent_campaign/coordinator.rs	1778	not a citation	no external work named	read
+crates/gf2-sim/src/permanent_campaign/coordinator.rs	1782	not a citation	no external work named	read
+crates/gf2-sim/src/permanent_campaign/provenance.rs	1059	new work	Coreutils2026	read
+crates/gf2-sim/src/permanent_campaign/provenance.rs	1076	new work	Coreutils2026	read
+crates/gf2-sim/src/permanent_campaign/provenance.rs	1078	new work	Coreutils2026	read
+crates/gf2-sim/src/permanent_campaign/schema.rs	39	not a citation	repository document or harness	read
+crates/gf2-sim/src/presets/mod.rs	2	not a citation	no external work named	read
+crates/gf2-sim/src/presets/mod.rs	4	keyed	Etsi2015	map
+crates/gf2-sim/src/presets/mod.rs	5	keyed	ThreeGpp2017	map
+crates/gf2-sim/src/presets/nr_5g.rs	22	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/presets/nr_5g.rs	23	keyed	ThreeGpp2020	read
+crates/gf2-sim/src/presets/nr_5g.rs	47	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/presets/nr_5g.rs	104	keyed	ThreeGpp2017a	map
+crates/gf2-sim/src/presets/nr_5g.rs	347	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/presets/nr_5g.rs	359	keyed	ThreeGpp2017	map
+crates/gf2-sim/src/presets/nr_5g.rs	360	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/presets/nr_5g.rs	441	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/presets/nr_5g.rs	645	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/presets/nr_5g.rs	646	keyed	ThreeGpp2017	read
+crates/gf2-sim/src/stages/nr_5g.rs	1	keyed	ThreeGpp2017	map
+crates/gf2-sim/src/stages/nr_5g.rs	3	keyed	ThreeGpp2020	read
+crates/gf2-sim/src/stages/nr_5g.rs	4	keyed	ThreeGpp2020	read
+crates/gf2-sim/src/testutil.rs	8	keyed	Cassagne2019	read
+crates/gf2-sim/src/testutil.rs	9	keyed	Cassagne2019	map
+crates/gf2-sim/src/testutil.rs	16	keyed	Etsi2015	read
+crates/gf2-sim/src/testutil.rs	60	not a citation	no external work named	read
+crates/gf2-sim/src/testutil.rs	142	keyed	Vigna2015	map
+crates/gf2-sim/tests/determinism.rs	64	keyed	Etsi2012	read
+crates/gf2-stats/src/intervals.rs	163	keyed	MaurerPontil2009	read
+crates/gf2-stats/src/intervals.rs	171	keyed	MaurerPontil2009	read
+dev/tools/tuning-campaign-support/src/abtest.rs	27	keyed	Vigna2015	map
+dev/tools/tuning-campaign-support/src/abtest.rs	45	keyed	BlackmanVigna2021	map
+dev/tools/tuning-campaign-support/src/abtest.rs	345	not a citation	method or object name	read
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs	147	not a citation	section of an internal design or protocol document	read
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs	2798	not a citation	section of an internal design or protocol document	read
+dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs	2833	not a citation	section of an internal design or protocol document	read
+dev/tools/tuning-campaign-support/src/journal.rs	2305	keyed	Hinnant2021	read
+dev/tools/tuning-campaign-support/src/receipt.rs	676	not a citation	section of an internal design or protocol document	read
+dev/tools/tuning-campaign-support/src/receipt.rs	798	not a citation	section of an internal design or protocol document	read
+dev/tools/tuning-campaign-support/src/receipt.rs	921	not a citation	section of an internal design or protocol document	read
+dev/tools/tuning-campaign-support/src/schema.rs	5	new work	Bryan2013	read
+dev/tools/tuning-campaign-support/src/schema.rs	8	new work	Bryan2013	map
+dev/tools/tuning-campaign-support/src/schema.rs	10	new work	Bryan2013	map
+dev/tools/tuning-campaign-support/src/schema.rs	18	new work	Wright2022	read
