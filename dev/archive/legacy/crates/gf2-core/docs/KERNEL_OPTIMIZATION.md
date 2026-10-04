@@ -201,11 +201,11 @@ pub fn next_power_of_2(v: u64) -> u64 {
 - ✅ Benchmark suite: `benches/simd_vs_scalar.rs`
 
 The committed host-calibration receipt at
-[`dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`](../../../dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md)
+[`dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`](../../../../../../dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md)
 records a selected value of **8** for `bit_backend.simd_min_words`: its
 crossover curve is non-monotone (first win at four words, later loss at
 seven), so the conservative default is retained. The
-[**SIMD scope**](../../../dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md#simd-scope)
+[**SIMD scope**](../../../../../../dev/benchmarks/tuning_profiles/2026-09-01-eaae1b56.md#simd-scope)
 of `2026-09-01-eaae1b56.md` defines the evidence boundary for the Phase 4
 Criterion result summarized here.
 

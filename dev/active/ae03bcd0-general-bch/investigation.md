@@ -261,7 +261,7 @@ Documentation, campaign, data, presentation, and development references:
 `crates/gf2-coding/README.md`, `ROADMAP.md`, `dev/archive/legacy/crates/gf2-coding/docs/PARALLELIZATION.md`,
 `dev/archive/legacy/crates/gf2-coding/docs/SYSTEMATIC_ENCODING_CONVENTION.md`,
 `dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md`,
-`crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md`,
+`dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md`,
 `dev/campaigns/cp_ebch_sanity.toml`, `dev/campaigns/ebch32_vs_drm32.toml`,
 `dev/campaigns/ebch_bcjr_compare.toml`, all `dev/campaigns/phase*.toml`,
 `dev/campaigns/test_cp_ebch.toml`, `dev/reference_data/fig_*ebch*.csv`,
@@ -366,8 +366,8 @@ or `.verify_primitive()` are:
 `crates/gf2-core/benches/polynomial.rs:245`,
 `crates/gf2-core/benches/primitive_poly.rs:98-253`,
 `crates/gf2-core/examples/primitive_polynomial_verification.rs:1-32`,
-`crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md:70-80,270-360`,
-`crates/gf2-core/docs/archive/GF2M_POLY_UTILITIES_REQUIREMENTS.md:171`,
+`dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md:70-80,270-360`,
+`dev/archive/legacy/crates/gf2-core/docs/archive/GF2M_POLY_UTILITIES_REQUIREMENTS.md:171`,
 `dev/plans/70972f06_audit.md:28-29`, and
 `dev/archive/806eb14e-hip-gpu-prototype/active/9012f8a0/gpu-batch-bch-syndrome-plan.md:73`.
 The HIP field test additionally consumes `primitive_element` to form evaluation

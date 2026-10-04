@@ -35,7 +35,7 @@ digest instead of SHA), `-` absent.
 | gf2-sim receipts | `dev/benchmarks/gf2-sim/*.md`, `dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/*.md` | + | ~ command | + | + | + | ~ (`9e983ae26e`, `ec30b3e1` in prose; GPU BCH receipt has none) | Sections 3.6, 3.7. |
 | DVB-T2 AWGN campaign | `dev/benchmarks/dvb_t2_awgn/*.csv`, `dev/archive/2928ccce-dvb-t2-awgn-campaign/` | ~ | ~ | + | - | ~ | - | Conformance curves, not throughput. |
 | Raw criterion / perf-stat dumps | `dev/benchmarks/<id>-criterion.txt`, `*-perf-stat.txt` | - | - | ~ | - | - | - | Usable only via the report that cites them. |
-| Crate-local tables | `crates/gf2-core/docs/BENCHMARKS.md`, `crates/gf2-core/benches/*_results.md`, `crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` | ~ | ~ | + | + | - | ~ (`179be78`, `e94eb23` short SHAs in benches md) | Section 4 rates each claim. |
+| Crate-local tables | `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md`, `dev/archive/legacy/crates/gf2-core/benches/*_results.md`, `dev/archive/legacy/crates/gf2-core/docs/KERNEL_OPTIMIZATION.md` | ~ | ~ | + | + | - | ~ (`179be78`, `e94eb23` short SHAs in benches md) | Section 4 rates each claim. |
 
 ## 2. zen3 receipt.json inventory
 
@@ -161,7 +161,7 @@ as projected or target.
 
 | Line | Claim | Status | Evidence |
 |---|---|---|---|
-| 125 | 3.4–3.6× SIMD speedup for bulk logical ops and popcount on operands >512 bytes | partial | `crates/gf2-core/docs/BENCHMARKS.md` Phase 3 table ("x86_64 with AVX2", no date/commit); `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md` (simd_min_words=4, host, commit) remeasures the threshold, not the 3.4–3.6× figure; zen3 popcount receipts `dev/bench_results/5cbb6545/`, `26465e6c/` |
+| 125 | 3.4–3.6× SIMD speedup for bulk logical ops and popcount on operands >512 bytes | partial | `dev/archive/legacy/crates/gf2-core/docs/BENCHMARKS.md` Phase 3 table ("x86_64 with AVX2", no date/commit); `dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md` (simd_min_words=4, host, commit) remeasures the threshold, not the 3.4–3.6× figure; zen3 popcount receipts `dev/bench_results/5cbb6545/`, `26465e6c/` |
 | 155 | BENCHMARKS.md gives performance vs M4RI / NTL / FLINT | partial | see 4.4 |
 
 ### 4.3 `crates/gf2-algebra/README.md`
@@ -174,7 +174,7 @@ as projected or target.
 | 224 | debug 10–100× slower | unbacked (rule of thumb) | none |
 | lib.rs:40 | reference oracle used as the "50× speedup denominator" | partial | same S1 csv |
 
-### 4.4 `crates/gf2-core/docs/`
+### 4.4 `dev/archive/legacy/crates/gf2-core/docs/`
 
 | File:line | Claim | Status | Evidence |
 |---|---|---|---|
@@ -192,9 +192,9 @@ as projected or target.
 | `POLY_UTILITIES_PERFORMANCE.md:9-10,68-70,198-213,241-242` | 13–18× vs NTL; 100–1000× vs SageMath; per-function 50–500× | estimate / unbacked | document is a design plan; figures are targets and "expected", no measurements committed |
 | `POLAR_IMPLEMENTATION_PLAN.md:66,150,199` | FHT 12×/28×/81× vs naive at N=64/256/1024 | unbacked | no committed table or receipt found |
 | `QUALITY_AUDIT_PLAN.md:236,293-296` | SIMD 2.57× avg, 3.4–3.5× peak; BitVec 8–17 GiB/s | partial | audit narrative; no receipt |
-| `benches/BENCHMARK_RESULTS.md` | Montgomery vs naive 1.8×/2.7×/3.0×/2.6× (Mersenne-61) | partial | commit `179be78`; "AMD Ryzen / Intel x86-64" (ambiguous host), no date/flags |
-| `benches/field_matrix_fusion_results.md` | fused vs eager ≈1.00–1.02 | partial | commit `e94eb23`, Mersenne-31, single core; host model absent |
-| `benches/strassen_threshold_results.md` | Winograd ≥1.2× over classical at threshold | partial | see file; also `dev/bench_results/2026-04-29-strassen-matmul-crossover.md` |
+| `dev/archive/legacy/crates/gf2-core/benches/BENCHMARK_RESULTS.md` | Montgomery vs naive 1.8×/2.7×/3.0×/2.6× (Mersenne-61) | partial | commit `179be78`; "AMD Ryzen / Intel x86-64" (ambiguous host), no date/flags |
+| `dev/archive/legacy/crates/gf2-core/benches/field_matrix_fusion_results.md` | fused vs eager ≈1.00–1.02 | partial | commit `e94eb23`, Mersenne-31, single core; host model absent |
+| `dev/archive/legacy/crates/gf2-core/benches/strassen_threshold_results.md` | Winograd ≥1.2× over classical at threshold | partial | see file; also `dev/bench_results/2026-04-29-strassen-matmul-crossover.md` |
 
 ### 4.5 `crates/gf2-coding/README.md` and `dev/archive/legacy/crates/gf2-coding/docs/`
 
@@ -218,7 +218,7 @@ as projected or target.
 | `crates/gf2-sim` (no README; `src/lib.rs`) | none | — |
 | `benchmarks/README.md` | defines `throughput_ops` and the external-library protocol; no figures | — |
 | `docs/lean4-verification-pipeline.md` | none | — |
-| `crates/gf2-core/src/lib.rs:286` | Mersenne backend gives 2× the throughput of generic Montgomery | partial; `benches/BENCHMARK_RESULTS.md` and `dev/bench_results/2026-05-05-3d06224c-mersenne-baseline.csv` |
+| `crates/gf2-core/src/lib.rs:286` | Mersenne backend gives 2× the throughput of generic Montgomery | partial; `dev/archive/legacy/crates/gf2-core/benches/BENCHMARK_RESULTS.md` and `dev/bench_results/2026-05-05-3d06224c-mersenne-baseline.csv` |
 
 ## 5. Gaps across the board
 

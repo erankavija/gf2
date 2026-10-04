@@ -8,7 +8,7 @@ obsolete (reason), newly filed (issue).
 
 | Roadmap item | Citation | Disposition |
 |---|---|---|
-| Phase 14: benchmark polynomial utilities vs SageMath/NTL | R:163 | Delivered: `crates/gf2-core/docs/POLY_UTILITIES_PERFORMANCE.md`, `crates/gf2-core/benches/polynomial.rs`; NTL/FLINT references `73ab8eef`, `53c5a8c0` (done) |
+| Phase 14: benchmark polynomial utilities vs SageMath/NTL | R:163 | Delivered: `dev/archive/legacy/crates/gf2-core/docs/POLY_UTILITIES_PERFORMANCE.md`, `crates/gf2-core/benches/polynomial.rs`; NTL/FLINT references `73ab8eef`, `53c5a8c0` (done) |
 | Phase 14: replace `poly_from_exponents()` in gf2-coding BCH | R:164 | Delivered: `crates/gf2-coding/src/bch/dvb_t2/generators.rs` builds generators from core polynomials; no `poly_from_exponents` remains outside tests |
 | Phase 2: higher unrolling factors 8x/16x | R:206 | Tracked: `2037941f` REQ-02 covers unroll candidates. Factors 2 and 4 are measured with no adoption (`bc091474`, `dev/active/bc091474/pilot-outcome.md`); factors 8 and 16 are outside that portfolio; scalar kernel keeps `UNROLL = 4` (`crates/gf2-core/src/kernels/scalar/logical.rs`) |
 | Phase 2: BitSlice zero-copy operations | R:207 | Tracked: `2037941f` REQ-02 covers zero-copy BitSlice use. `a1ad6d4e` (done) selects no candidate and no adoption: no measured consumer exercises BitSlice copying (`dev/active/a1ad6d4e/outcome.md`) |
