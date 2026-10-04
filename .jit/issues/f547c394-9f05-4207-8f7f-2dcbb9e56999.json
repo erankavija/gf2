@@ -330,11 +330,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "331de6dea8fa621602deb7410f916d245947756c285ad1574834b2cdefabedbb",
+          "content_hash": "b1e0614869eec91eb048c942872b7d75d926a3ac90f7a03e91fe07d609b353d3",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "research-r3-portability.json",
-          "resolved_path": "dev/active/f547c394/research-r3-portability.json"
+          "mime_type": "text/plain",
+          "original_path": "research-r3-prework.txt",
+          "resolved_path": "dev/active/f547c394/research-r3-prework.txt"
         },
         {
           "asset_type": "local",
@@ -346,6 +346,14 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "331de6dea8fa621602deb7410f916d245947756c285ad1574834b2cdefabedbb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "research-r3-portability.json",
+          "resolved_path": "dev/active/f547c394/research-r3-portability.json"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "6bcd6ae2c145a9e36ea76bf5d63ba2782a850c2ea90fdb2302aca8a70d8c31c8",
           "is_shared": false,
           "mime_type": null,
@@ -354,19 +362,35 @@
         },
         {
           "asset_type": "local",
+          "content_hash": "2d0a5c5124220f91e22db708d5ce7f72ac6e8934b99e84f2a8e87c57144800bc",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "research-r4-v1-v2-preservation.json",
+          "resolved_path": "dev/active/f547c394/research-r4-v1-v2-preservation.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "531a306b7a3d43374f98741d11dfcdf4351db67dfa3e97e50aeba173f9c4ff41",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "research-r3-sweep-resolutions.md",
+          "resolved_path": "dev/active/f547c394/research-r3-sweep-resolutions.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "b059220be88a297912c34ead6a2fd322182eebd10b35e0edf062268d3c816123",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "validation-r3/cargo-ci.log",
+          "resolved_path": "dev/active/f547c394/validation-r3/cargo-ci.log"
+        },
+        {
+          "asset_type": "local",
           "content_hash": "41fe2b5dc1f3c28ea2282fc77dea8fa859e72d312f5ee6d3d6fa8cf0183cdf7d",
           "is_shared": false,
           "mime_type": null,
           "original_path": "research-r3-v1-preservation.json",
           "resolved_path": "dev/active/f547c394/research-r3-v1-preservation.json"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "84e1318c6ea5799b22aa708f124ce7cc95476d053c2d0b026aa1c2ee97a0417b",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "research-r3-sweep-resolutions.md",
-          "resolved_path": "dev/active/f547c394/research-r3-sweep-resolutions.md"
         },
         {
           "asset_type": "local",
@@ -386,35 +410,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "b059220be88a297912c34ead6a2fd322182eebd10b35e0edf062268d3c816123",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "validation-r3/cargo-ci.log",
-          "resolved_path": "dev/active/f547c394/validation-r3/cargo-ci.log"
-        },
-        {
-          "asset_type": "local",
           "content_hash": "19d323b5eb921fba400b1ba430843a5e4416f6298002a7fcc0fd50cc0470e414",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "validation-r3/commands.md",
           "resolved_path": "dev/active/f547c394/validation-r3/commands.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "b1e0614869eec91eb048c942872b7d75d926a3ac90f7a03e91fe07d609b353d3",
-          "is_shared": false,
-          "mime_type": "text/plain",
-          "original_path": "research-r3-prework.txt",
-          "resolved_path": "dev/active/f547c394/research-r3-prework.txt"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2d0a5c5124220f91e22db708d5ce7f72ac6e8934b99e84f2a8e87c57144800bc",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "research-r4-v1-v2-preservation.json",
-          "resolved_path": "dev/active/f547c394/research-r4-v1-v2-preservation.json"
         }
       ],
       "commit": null,
@@ -1114,5 +1114,5 @@
   "priority": "high",
   "state": "done",
   "title": "Freeze the shared Zen 3 benchmark protocol and acceptance rules",
-  "updated_at": "2026-10-03T16:31:16.690423411Z"
+  "updated_at": "2026-10-04T20:56:40.464441334Z"
 }

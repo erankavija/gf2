@@ -13,67 +13,19 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "db3e64563356696d8664229080842bb97d9aa4ad03b0f4d551f62f0910409caa",
+          "content_hash": "d406774f8eed75aca7d2750c75ed725c9e7e11c1dcc2afb666fa7026796c4e0b",
           "is_shared": false,
-          "mime_type": null,
-          "original_path": "../../../crates/gf2-kernels-hip/src/host/mod.rs",
-          "resolved_path": "crates/gf2-kernels-hip/src/host/mod.rs"
+          "mime_type": "text/markdown",
+          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/plan.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/plan.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "a92109f9f7f11c8409e8f784a2274828c8c6f14cf005b7d1dafa811848e8b241",
+          "content_hash": "9a659727a7493f6d7e2f3726d16bfb6801c3fe11a18b1b24e26fb789f0d5d76f",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../b488f02c/feasibility-study.md",
-          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../simulation_results/permanent-zero-fraction/protocol.md",
-          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "941e0ed6fe06907e20f60a9d7697f0a9519853d36f558b191a0aea7062038b3c",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../91605d4d/receipts.md",
-          "resolved_path": "dev/studies/91605d4d/receipts.md"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://arxiv.org/abs/2407.20205",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "708bd7cf18b372ed2c56dfb41cf93c33bbdc3c0e9476c56f626adcee7826c882",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../../research/permanent_wave_gpu/README.md",
-          "resolved_path": "dev/research/permanent_wave_gpu/README.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "5f1b35e6297d49d93129059c774fa112b3626ff25004dadbc71081d00af23841",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "req08-amendment-draft.md",
-          "resolved_path": "dev/studies/0dffa759/req08-amendment-draft.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "a0b0b1b345260dfec9545273ce798f4223aee2bbca87ef0d04414fe0d0c88ca2",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../047b62ed/receipts.md",
-          "resolved_path": "dev/studies/047b62ed/receipts.md"
+          "original_path": "../6c7fcb38/receipts.md",
+          "resolved_path": "dev/studies/6c7fcb38/receipts.md"
         },
         {
           "asset_type": "local",
@@ -85,11 +37,67 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "c4cf1286042a594b62fc4c4f5b96cf29fc30250e72c560bae63e208caec806a1",
+          "content_hash": "a92109f9f7f11c8409e8f784a2274828c8c6f14cf005b7d1dafa811848e8b241",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../b488f02c/feasibility-study.md",
+          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "661da374f9253a4f280529179d4c64272a39a071e36f996bcb153964a46dfcfe",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../a9284086/receipt.md",
+          "resolved_path": "dev/studies/a9284086/receipt.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../simulation_results/permanent-zero-fraction/protocol.md",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
           "is_shared": false,
           "mime_type": null,
-          "original_path": "../../research/permanent_wave_gpu/hip/wave_ryser_mapping.h",
-          "resolved_path": "dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h"
+          "original_path": "https://arxiv.org/abs/2407.20205",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c53da367c58481a69cc1b8cfaa1f8a946df0ab0b692362a7467a0fc5630c4ba2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/investigation.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0b0b1b345260dfec9545273ce798f4223aee2bbca87ef0d04414fe0d0c88ca2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../047b62ed/receipts.md",
+          "resolved_path": "dev/studies/047b62ed/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "db3e64563356696d8664229080842bb97d9aa4ad03b0f4d551f62f0910409caa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../../crates/gf2-kernels-hip/src/host/mod.rs",
+          "resolved_path": "crates/gf2-kernels-hip/src/host/mod.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "941e0ed6fe06907e20f60a9d7697f0a9519853d36f558b191a0aea7062038b3c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../91605d4d/receipts.md",
+          "resolved_path": "dev/studies/91605d4d/receipts.md"
         },
         {
           "asset_type": "local",
@@ -101,11 +109,11 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "4171c01aa577acdcb99e88102a2e02ca67147e24bb1bf0e03ab29329e1650955",
+          "content_hash": "c4cf1286042a594b62fc4c4f5b96cf29fc30250e72c560bae63e208caec806a1",
           "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../a9284086/receipt.md",
-          "resolved_path": "dev/studies/a9284086/receipt.md"
+          "mime_type": null,
+          "original_path": "../../research/permanent_wave_gpu/hip/wave_ryser_mapping.h",
+          "resolved_path": "dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h"
         },
         {
           "asset_type": "local",
@@ -117,27 +125,19 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "09981b3a8e9101dbbd55671dc00422f31699063786a4928a444e093dabe51b0e",
+          "content_hash": "5f1b35e6297d49d93129059c774fa112b3626ff25004dadbc71081d00af23841",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/plan.md",
-          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/plan.md"
+          "original_path": "req08-amendment-draft.md",
+          "resolved_path": "dev/studies/0dffa759/req08-amendment-draft.md"
         },
         {
           "asset_type": "local",
-          "content_hash": "a24f9c0fe3fdb09edffbbce786f938969a0bdc4f45281fbd5e56c9b46e696c5c",
+          "content_hash": "708bd7cf18b372ed2c56dfb41cf93c33bbdc3c0e9476c56f626adcee7826c882",
           "is_shared": false,
           "mime_type": "text/markdown",
-          "original_path": "../../active/b8206228-permanent-statistics/0de41c82/investigation.md",
-          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "9a659727a7493f6d7e2f3726d16bfb6801c3fe11a18b1b24e26fb789f0d5d76f",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "../6c7fcb38/receipts.md",
-          "resolved_path": "dev/studies/6c7fcb38/receipts.md"
+          "original_path": "../../research/permanent_wave_gpu/README.md",
+          "resolved_path": "dev/research/permanent_wave_gpu/README.md"
         }
       ],
       "commit": null,
@@ -158,7 +158,7 @@
         },
         {
           "asset_type": "local",
-          "content_hash": "09981b3a8e9101dbbd55671dc00422f31699063786a4928a444e093dabe51b0e",
+          "content_hash": "d406774f8eed75aca7d2750c75ed725c9e7e11c1dcc2afb666fa7026796c4e0b",
           "is_shared": false,
           "mime_type": "text/markdown",
           "original_path": "../../active/b8206228-permanent-statistics/0de41c82/plan.md",
@@ -247,5 +247,5 @@
   "priority": "high",
   "state": "done",
   "title": "Field-by-field go/no-go synthesis with production design",
-  "updated_at": "2026-10-04T20:00:43.252214984Z"
+  "updated_at": "2026-10-04T20:56:40.379638093Z"
 }

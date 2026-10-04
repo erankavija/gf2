@@ -17,15 +17,7 @@
       "assets": [
         {
           "asset_type": "local",
-          "content_hash": "a24f9c0fe3fdb09edffbbce786f938969a0bdc4f45281fbd5e56c9b46e696c5c",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "investigation.md",
-          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "2f552ccae367a32062da4b74bed88d0e2d4f5ff186984df04987ef2fc1d19df5",
+          "content_hash": "1484b1ec383b1703f4d45fe1b56958b972344950a06f5b01c63b54d604787823",
           "is_shared": false,
           "mime_type": null,
           "original_path": "breakdown.json",
@@ -38,6 +30,14 @@
           "mime_type": "text/markdown",
           "original_path": "bipedal-f5-f7-representation-study.md",
           "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c53da367c58481a69cc1b8cfaa1f8a946df0ab0b692362a7467a0fc5630c4ba2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/0de41c82/investigation.md"
         },
         {
           "asset_type": "local",
@@ -85,5 +85,5 @@
   "priority": "high",
   "state": "done",
   "title": "Plan the wave-parallel GPU kernel evaluation breakdown",
-  "updated_at": "2026-10-04T20:00:42.228735496Z"
+  "updated_at": "2026-10-04T20:56:40.293066742Z"
 }
