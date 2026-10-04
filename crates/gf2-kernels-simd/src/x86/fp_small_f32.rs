@@ -1,9 +1,11 @@
 //! AVX2 + FMA3 f32-cascade GEMM micro-kernel for small `Fp<P>` with
 //! `P <= 251`.
 //!
-//! Inputs are canonical residues, one per `f32` lane; outputs are canonical
-//! bytes. All public functions are `unsafe`: callers must ensure AVX2 and FMA3
-//! are available at runtime; `crate::fp_small_f32::detect` returns the safe
+//! Inputs are canonical residues, one per `f32` lane; a `4 × 24`
+//! register-blocked micro-kernel accumulates exact integer sums in chunks
+//! of at most `floor(2^24 / (p-1)²)` k steps and writes canonical bytes. All
+//! public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
+//! available at runtime; `crate::fp_small_f32::detect` returns the safe
 //! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]

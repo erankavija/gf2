@@ -1,8 +1,8 @@
 //! SIMD batch kernels for Mersenne-prime arithmetic.
 //!
-//! Targets the `M31 = 2^31 - 1` prime field with AVX2 kernels over 8 lanes of
-//! packed `u32`. [`detect`] returns safe function-pointer wrappers in
-//! [`MersenneFns`], or `None` without AVX2.
+//! Targets the `M31 = 2^31 - 1` prime field with AVX2 kernels over 8 lanes
+//! of packed `u32`, reducing through `2^31 ≡ 1 (mod M31)`. [`detect`] returns
+//! safe function-pointer wrappers in [`MersenneFns`], or `None` without AVX2.
 
 /// Lane-wise batch multiply for `Fp<2^31 - 1>`.
 ///

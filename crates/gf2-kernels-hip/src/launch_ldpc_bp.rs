@@ -2,7 +2,12 @@
 //! (`hip/ldpc_bp.hip`).
 //!
 //! [`GpuLdpcBp`] runs a flooding BP schedule over a caller-built
-//! [`LdpcGraphLayout`].
+//! [`LdpcGraphLayout`]: init, then alternating check-node and variable-node
+//! updates, with optional per-frame early termination. The default-stream
+//! entry points use synchronous transfers; the `_on_stream` variants order
+//! every launch and transfer on a caller-owned [`HipStream`], staging transfers
+//! through pinned memory because a synchronous `hipMemcpy` executes on the NULL
+//! stream and serializes against every other blocking stream on the device.
 
 use std::ffi::c_void;
 use std::ptr;

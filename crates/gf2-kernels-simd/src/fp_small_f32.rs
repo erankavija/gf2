@@ -1,8 +1,11 @@
 //! AVX2 + FMA3 (`_mm256_fmadd_ps`) f32-cascade GEMM kernel for small
 //! `Fp<P>` with `P <= 251`.
 //!
-//! [`detect`] returns safe function-pointer wrappers in [`SmallPrimeF32Fns`],
-//! or `None` without AVX2 and FMA3.
+//! [`detect`] returns safe function-pointer wrappers in
+//! [`SmallPrimeF32Fns`], or `None` without AVX2 and FMA3. The two kernels
+//! differ only in output reduction: `batch_gemm_fn` reduces each cell with a
+//! scalar `% p`, `batch_gemm_route_a_fn` with a 32-bit-lane AVX2 Barrett
+//! reduction.
 
 #![allow(clippy::missing_safety_doc)]
 

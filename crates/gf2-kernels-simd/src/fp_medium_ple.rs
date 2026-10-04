@@ -2,7 +2,9 @@
 //! `P ∈ (251, 65536)`.
 //!
 //! Safe wrapper layer over `crate::x86::fp_medium_ple`, the u16-lane analogue
-//! of [`crate::fp_small_ple`].
+//! of [`crate::fp_small_ple`]. The kernel decomposes an `m × win` column
+//! window of canonical u16 storage in place; row swaps touch the window only,
+//! and the caller propagates them outside it through `row_perm`.
 
 /// L1d-fit column-window blocking factor for the u16-lane panel-base
 /// kernel: half the byte-lane panel kernel's

@@ -1,9 +1,12 @@
 //! AVX2 + FMA3 (`_mm256_fmadd_pd`) f64-cascade GEMM kernel for medium
 //! `Fp<P>` with `P ∈ (251, 65536)`.
 //!
-//! Inputs are canonical residues, one per `f64` lane. All public functions are
-//! `unsafe`: callers must ensure AVX2 and FMA3 are available at runtime;
-//! `crate::fp_medium_f64::detect` returns the safe dispatched table.
+//! Inputs are canonical residues, one per `f64` lane; a `4 × 12`
+//! register-blocked micro-kernel accumulates exact integer dot products and
+//! a vectorised f64 Barrett reduction writes canonical `u16` cells. All
+//! public functions are `unsafe`: callers must ensure AVX2 and FMA3 are
+//! available at runtime; `crate::fp_medium_f64::detect` returns the safe
+//! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]

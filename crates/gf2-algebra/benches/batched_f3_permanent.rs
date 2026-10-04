@@ -1,8 +1,10 @@
 //! Raw timing harness for the four-matrix F_3 permanent AVX2 receipt.
 //!
-//! Matrix construction is complete before a timed window; each invocation
-//! evaluates the same four deterministic matrices through exactly one of the
-//! three named paths.
+//! Criterion is deliberately not used: the receipt needs retained raw windows,
+//! fresh-process execution identifiers, pooled-total rates, and independent
+//! within- and across-process dispersion calculations. Matrix construction is
+//! complete before a timed window; each invocation evaluates the same four
+//! deterministic matrices through exactly one of the three named paths.
 
 use std::env;
 use std::fs::{self, File, OpenOptions};

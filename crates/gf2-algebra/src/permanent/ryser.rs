@@ -1,10 +1,11 @@
 //! Generic `permanent_ryser<F>` driver — field-generic Ryser-formula permanent.
 //!
 //! Implements Ryser's inclusion-exclusion formula in Gray-code subset order,
-//! giving an `O(n · 2^n)` algorithm that is exact over any `FiniteField`. This
-//! module is the correctness oracle for the bipedal permanents
-//! (`permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`) and uses
-//! no SIMD or rayon.
+//! giving an `O(n · 2^n)` algorithm that is exact over any `FiniteField`. The
+//! Gray-code walk reduces each subset's column-sum update to a single element
+//! add or subtract per row. This module is the correctness oracle for the
+//! bipedal permanents (`permanent_bipedal3`, `permanent_bipedal5`,
+//! `permanent_bipedal7`) and uses no SIMD or rayon.
 
 use gf2_core::field::FiniteField;
 

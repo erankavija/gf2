@@ -1,10 +1,11 @@
 //! AVX2 batch kernels for medium primes `Fp<P>` with `P < 2^16`.
 //!
 //! Residues occupy one 16-bit lane; the kernels accept any odd prime
-//! `P ∈ (251, 65535]`. Each kernel's doc states whether it takes canonical
-//! residues or Montgomery raw storage. All public functions are `unsafe`:
-//! callers must ensure AVX2 is available at runtime;
-//! `crate::fp_medium::detect` returns the safe dispatched table.
+//! `P ∈ (251, 65535]` and reduce by Barrett with `m = floor(2^32 / P)`. Each
+//! kernel's doc states whether it takes canonical residues or Montgomery
+//! raw storage. All public functions are `unsafe`: callers must ensure AVX2
+//! is available at runtime; `crate::fp_medium::detect` returns the safe
+//! dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 

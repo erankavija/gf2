@@ -1,8 +1,9 @@
 //! Generic SIMD framework for bipedal-like `(mag, sgn)` finite-field encodings.
 //!
-//! [`framework::BatchedBipedalLike`] over [`lanes::BipedalLogicalLanes`]
-//! serves F_3 through [`bipedal3::Config3`]. F_5 ([`packed5`]) and F_7
-//! ([`packed7`]) use dedicated AVX2 batch entry points.
+//! [`framework::BatchedBipedalLike`] over [`lanes::BipedalLogicalLanes`] serves
+//! F_3 through [`bipedal3::Config3`]. F_5 ([`packed5`], 3-plane bit-sliced) and
+//! F_7 ([`packed7`], 3-bit digits with a 2^16 LUT) use dedicated AVX2 batch
+//! entry points, because neither encoding fits the 2-stream `(mag, sgn)` shape.
 
 pub mod bipedal3;
 pub mod framework;
