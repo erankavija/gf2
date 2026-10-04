@@ -1,9 +1,9 @@
 //! Serialization format types and detection.
 
-/// Supported serialization formats
+/// Serialization formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SerializationFormat {
-    /// Binary format with header (default, most efficient)
+    /// Binary GF2DATA format.
     #[default]
     Binary,
 
@@ -15,19 +15,21 @@ pub enum SerializationFormat {
 }
 
 impl SerializationFormat {
-    /// Detect format from file header/content
+    /// Guesses the format of `bytes`: binary by its magic; text for an input
+    /// under 8 bytes of digits and blanks; hex when the second line has a hex
+    /// letter or is a multiple of 16 hex digits that are not all `0`/`1`;
+    /// text when the leading bytes are mostly `0`/`1` or the first line is a
+    /// dimension header. `None` when no rule matches.
     pub fn detect(bytes: &[u8]) -> Option<Self> {
         if bytes.is_empty() {
             return None;
         }
 
-        // Check for binary format magic bytes (need at least 8 bytes)
         if bytes.len() >= 8 && &bytes[0..8] == super::MAGIC_BYTES {
             return Some(SerializationFormat::Binary);
         }
 
-        // For short files that are all ASCII text, assume text format
-        // This handles cases like "0 0\n" (empty matrix) or "3\n" (short BitVec)
+        // Short text inputs such as "0 0\n" (empty matrix) or "3\n" (short BitVec).
         if bytes.len() < 8 {
             let all_text = bytes.iter().all(|&b| {
                 b.is_ascii_digit() || b == b'\n' || b == b'\r' || b == b' ' || b == b'\t'
@@ -38,9 +40,7 @@ impl SerializationFormat {
             return None;
         }
 
-        // Check for hex format FIRST (before text format)
-        // Hex format: check if second line has long hex strings (16+ chars)
-        // This distinguishes hex (16 chars per word) from text (1 char per bit)
+        // Hex before text: hex has 16 chars per word, text 1 char per bit.
         if let Some(first_newline) = bytes.iter().position(|&b| b == b'\n') {
             if first_newline + 1 < bytes.len() {
                 let second_line_start = first_newline + 1;
@@ -51,7 +51,6 @@ impl SerializationFormat {
                     .unwrap_or(bytes.len());
                 let second_line = &bytes[second_line_start..second_line_end];
 
-                // If has hex letters A-F, definitely hex format (not text)
                 let has_hex_letter = second_line
                     .iter()
                     .any(|&b| matches!(b, b'A'..=b'F' | b'a'..=b'f'));
@@ -59,8 +58,7 @@ impl SerializationFormat {
                     return Some(SerializationFormat::Hex);
                 }
 
-                // If second line is all hex chars and length is a multiple of 16, it's hex format
-                // BUT: if it's only 0s and 1s, it's text format (ambiguous case)
+                // A line of only 0s and 1s is ambiguous and resolves to text.
                 if second_line.len() >= 16 && second_line.len().is_multiple_of(16) {
                     let all_hex = second_line.iter().all(|&b| b.is_ascii_hexdigit());
                     let only_binary = second_line.iter().all(|&b| b == b'0' || b == b'1');
@@ -71,7 +69,7 @@ impl SerializationFormat {
             }
         }
 
-        // For text format: check if mostly 0/1 chars (at least 70%)
+        // Text: at least 70% of the first 100 bytes are 0/1.
         let text_chars: usize = bytes
             .iter()
             .take(100)
@@ -93,7 +91,7 @@ impl SerializationFormat {
             }
         }
 
-        // Fallback: if starts with digits and newline, likely text format (handles dimension headers)
+        // A first line of digits and blanks is a text dimension header.
         if bytes[0].is_ascii_digit() {
             let first_line_end = bytes
                 .iter()
@@ -111,7 +109,7 @@ impl SerializationFormat {
         None
     }
 
-    /// File extension suggestion for this format
+    /// Suggested file extension.
     pub fn extension(&self) -> &'static str {
         match self {
             SerializationFormat::Binary => "gf2",
@@ -160,7 +158,6 @@ mod tests {
     #[test]
     fn test_detect_short_text() {
         let data = b"01";
-        // Short files with digits are now detected as text format
         assert_eq!(
             SerializationFormat::detect(data),
             Some(SerializationFormat::Text)

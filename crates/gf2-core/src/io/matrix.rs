@@ -1,10 +1,9 @@
-//! BitMatrix serialization and deserialization.
+//! `BitMatrix` serialization.
 
 use super::{error::*, format::*};
 use crate::BitMatrix;
 use std::io::{Read, Write};
 
-/// Metadata for BitMatrix serialization
 #[derive(Debug)]
 #[cfg_attr(feature = "io", derive(serde::Serialize, serde::Deserialize))]
 struct BitMatrixMetadata {
@@ -67,9 +66,7 @@ impl BitMatrix {
         self.write_binary(writer)
     }
 
-    /// Write BitMatrix in binary format
     fn write_binary<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Create metadata
         let metadata = BitMatrixMetadata {
             type_name: "BitMatrix".to_string(),
             rows: self.rows(),
@@ -80,7 +77,6 @@ impl BitMatrix {
         let metadata_json = serde_json::to_vec(&metadata)
             .map_err(|e| IoError::InvalidData(format!("Failed to serialize metadata: {}", e)))?;
 
-        // Calculate data length: rows * stride_words * 8 bytes
         let stride_words = if self.cols() == 0 {
             0
         } else {
@@ -88,7 +84,6 @@ impl BitMatrix {
         };
         let data_len = self.rows() * stride_words * 8;
 
-        // Write header
         let header = Header::new(
             TypeTag::BitMatrix,
             metadata_json.len() as u32,
@@ -96,10 +91,8 @@ impl BitMatrix {
         );
         header.write_to(writer)?;
 
-        // Write metadata
         writer.write_all(&metadata_json)?;
 
-        // Write data (row-major, words in little-endian)
         for row_idx in 0..self.rows() {
             for word_idx in 0..stride_words {
                 let word = self.get_word(row_idx, word_idx);
@@ -110,12 +103,9 @@ impl BitMatrix {
         Ok(())
     }
 
-    /// Write BitMatrix in text format (human-readable)
     fn write_text<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Write dimensions as first line
         writeln!(writer, "{} {}", self.rows(), self.cols())?;
 
-        // Write each row as ASCII '0' and '1'
         for row in 0..self.rows() {
             for col in 0..self.cols() {
                 write!(writer, "{}", if self.get(row, col) { '1' } else { '0' })?;
@@ -126,12 +116,9 @@ impl BitMatrix {
         Ok(())
     }
 
-    /// Write BitMatrix in hex format
     fn write_hex<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Write dimensions as first line
         writeln!(writer, "{} {}", self.rows(), self.cols())?;
 
-        // Write each row's words in hex (16 chars per word)
         let stride_words = if self.cols() == 0 {
             0
         } else {
@@ -165,9 +152,7 @@ impl BitMatrix {
         Self::read_binary(reader)
     }
 
-    /// Read BitMatrix from binary format
     fn read_binary<R: Read>(reader: &mut R) -> Result<Self> {
-        // Read and validate header
         let header = Header::read_from(reader)?;
 
         if header.type_tag != TypeTag::BitMatrix {
@@ -177,14 +162,12 @@ impl BitMatrix {
             )));
         }
 
-        // Read metadata
         let mut metadata_buf = vec![0u8; header.metadata_len as usize];
         reader.read_exact(&mut metadata_buf)?;
 
         let metadata: BitMatrixMetadata = serde_json::from_slice(&metadata_buf)
             .map_err(|e| IoError::InvalidData(format!("Failed to parse metadata: {}", e)))?;
 
-        // Validate metadata
         if metadata.type_name != "BitMatrix" {
             return Err(IoError::InvalidData(format!(
                 "Expected BitMatrix type, got {}",
@@ -192,10 +175,8 @@ impl BitMatrix {
             )));
         }
 
-        // Create matrix
         let mut matrix = BitMatrix::zeros(metadata.rows, metadata.cols);
 
-        // Read data
         let stride_words = if metadata.cols == 0 {
             0
         } else {
@@ -223,12 +204,10 @@ impl BitMatrix {
         Ok(matrix)
     }
 
-    /// Read BitMatrix from text format
     fn read_text<R: Read>(reader: &mut R) -> Result<Self> {
         use std::io::BufRead;
         let mut reader = std::io::BufReader::new(reader);
 
-        // Read dimensions
         let mut dim_line = String::new();
         reader.read_line(&mut dim_line)?;
         let dims: Vec<&str> = dim_line.split_whitespace().collect();
@@ -245,10 +224,8 @@ impl BitMatrix {
             .parse()
             .map_err(|_| IoError::InvalidData("Invalid column count".to_string()))?;
 
-        // Create matrix
         let mut matrix = BitMatrix::zeros(rows, cols);
 
-        // Read each row
         for row in 0..rows {
             let mut line = String::new();
             reader.read_line(&mut line)?;
@@ -280,12 +257,10 @@ impl BitMatrix {
         Ok(matrix)
     }
 
-    /// Read BitMatrix from hex format
     fn read_hex<R: Read>(reader: &mut R) -> Result<Self> {
         use std::io::BufRead;
         let mut reader = std::io::BufReader::new(reader);
 
-        // Read dimensions
         let mut dim_line = String::new();
         reader.read_line(&mut dim_line)?;
         let dims: Vec<&str> = dim_line.split_whitespace().collect();
@@ -302,11 +277,9 @@ impl BitMatrix {
             .parse()
             .map_err(|_| IoError::InvalidData("Invalid column count".to_string()))?;
 
-        // Create matrix
         let mut matrix = BitMatrix::zeros(rows, cols);
         let stride_words = if cols == 0 { 0 } else { cols.div_ceil(64) };
 
-        // Read each row
         for row in 0..rows {
             let mut line = String::new();
             reader.read_line(&mut line)?;
@@ -346,7 +319,6 @@ mod tests {
     use crate::test_scratch::scratch;
     use crate::BitMatrix;
 
-    // Helper to create a simple test matrix
     fn create_test_matrix() -> BitMatrix {
         let mut m = BitMatrix::zeros(3, 5);
         m.set(0, 0, true);
@@ -403,7 +375,6 @@ mod tests {
 
     #[test]
     fn test_binary_roundtrip_word_boundary() {
-        // Test exactly at word boundary (64 columns)
         let mut original = BitMatrix::zeros(3, 64);
         original.set(0, 0, true);
         original.set(0, 63, true);
@@ -418,7 +389,6 @@ mod tests {
 
     #[test]
     fn test_binary_roundtrip_multi_word() {
-        // Test with multiple words per row (65 columns = 2 words)
         let mut original = BitMatrix::zeros(2, 65);
         original.set(0, 0, true);
         original.set(0, 64, true);
@@ -452,13 +422,11 @@ mod tests {
             .unwrap();
         let text = String::from_utf8(buffer.clone()).unwrap();
 
-        // Verify format
         assert!(text.starts_with("3 5\n"));
         assert!(text.contains("10001\n"));
         assert!(text.contains("00100\n"));
         assert!(text.contains("01010\n"));
 
-        // Test roundtrip
         let loaded = BitMatrix::read_from_with_format(
             &mut buffer.as_slice(),
             super::super::SerializationFormat::Text,
@@ -494,12 +462,10 @@ mod tests {
             .unwrap();
         let text = String::from_utf8(buffer.clone()).unwrap();
 
-        // Verify format (each row has 1 word = 16 hex chars)
         assert!(text.starts_with("3 5\n"));
         let lines: Vec<&str> = text.lines().collect();
         assert_eq!(lines.len(), 4); // dimensions + 3 rows
 
-        // Test roundtrip
         let loaded = BitMatrix::read_from_with_format(
             &mut buffer.as_slice(),
             super::super::SerializationFormat::Hex,
@@ -544,7 +510,6 @@ mod tests {
         let mut buffer = Vec::new();
         bv.write_to(&mut buffer).unwrap();
 
-        // Try to load as matrix (should fail)
         let result = BitMatrix::read_from(&mut buffer.as_slice());
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), IoError::InvalidData(_)));
@@ -552,7 +517,6 @@ mod tests {
 
     #[test]
     fn test_metadata_validation() {
-        // Create invalid metadata
         let mut buffer = Vec::new();
 
         let metadata = r#"{"type":"NotAMatrix","rows":10,"cols":20,"version":1}"#;
@@ -566,7 +530,6 @@ mod tests {
         assert!(result.is_err());
     }
 
-    // Property-based tests with proptest
     #[cfg(test)]
     mod proptests {
         use super::*;

@@ -1,10 +1,9 @@
-//! BitVec serialization and deserialization.
+//! `BitVec` serialization.
 
 use super::{error::*, format::*};
 use crate::BitVec;
 use std::io::{Read, Write};
 
-/// Metadata for BitVec serialization
 #[derive(Debug)]
 #[cfg_attr(feature = "io", derive(serde::Serialize, serde::Deserialize))]
 struct BitVecMetadata {
@@ -56,9 +55,7 @@ impl BitVec {
         self.write_binary(writer)
     }
 
-    /// Write BitVec in binary format
     fn write_binary<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Create metadata
         let metadata = BitVecMetadata {
             type_name: "BitVec".to_string(),
             len_bits: self.len(),
@@ -68,17 +65,13 @@ impl BitVec {
         let metadata_json = serde_json::to_vec(&metadata)
             .map_err(|e| IoError::InvalidData(format!("Failed to serialize metadata: {}", e)))?;
 
-        // Calculate data length (words as bytes)
         let data_len = self.words().len() * 8;
 
-        // Write header
         let header = Header::new(TypeTag::BitVec, metadata_json.len() as u32, data_len as u64);
         header.write_to(writer)?;
 
-        // Write metadata
         writer.write_all(&metadata_json)?;
 
-        // Write data (words in little-endian)
         for &word in self.words() {
             writer.write_all(&word.to_le_bytes())?;
         }
@@ -86,12 +79,9 @@ impl BitVec {
         Ok(())
     }
 
-    /// Write BitVec in text format (human-readable)
     fn write_text<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Write length as first line
         writeln!(writer, "{}", self.len())?;
 
-        // Write bits as ASCII '0' and '1'
         const CHARS_PER_LINE: usize = 80;
         for chunk_start in (0..self.len()).step_by(CHARS_PER_LINE) {
             let chunk_end = (chunk_start + CHARS_PER_LINE).min(self.len());
@@ -104,12 +94,9 @@ impl BitVec {
         Ok(())
     }
 
-    /// Write BitVec in hexadecimal format
     fn write_hex<W: Write>(&self, writer: &mut W) -> Result<()> {
-        // Write length as first line
         writeln!(writer, "{}", self.len())?;
 
-        // Write words as hex
         for &word in self.words() {
             writeln!(writer, "{:016X}", word)?;
         }
@@ -117,17 +104,13 @@ impl BitVec {
         Ok(())
     }
 
-    /// Read BitVec from a reader with auto-detection
     fn read_from_with_auto_detect<R: Read>(reader: &mut R) -> Result<Self> {
-        // Read all content into a buffer for format detection
         let mut content = Vec::new();
         reader.read_to_end(&mut content)?;
 
-        // Detect format
         let format = super::SerializationFormat::detect(&content)
             .ok_or_else(|| IoError::InvalidData("Unable to detect file format".to_string()))?;
 
-        // Create cursor from buffer
         let mut cursor = std::io::Cursor::new(content);
 
         match format {
@@ -142,12 +125,9 @@ impl BitVec {
         Self::read_binary(reader)
     }
 
-    /// Read BitVec in binary format
     fn read_binary<R: Read>(reader: &mut R) -> Result<Self> {
-        // Read header
         let header = Header::read_from(reader)?;
 
-        // Validate type
         if header.type_tag != TypeTag::BitVec {
             return Err(IoError::InvalidData(format!(
                 "Expected BitVec type, got {:?}",
@@ -155,14 +135,12 @@ impl BitVec {
             )));
         }
 
-        // Read metadata
         let mut metadata_bytes = vec![0u8; header.metadata_len as usize];
         reader.read_exact(&mut metadata_bytes)?;
 
         let metadata: BitVecMetadata = serde_json::from_slice(&metadata_bytes)
             .map_err(|e| IoError::InvalidData(format!("Failed to parse metadata: {}", e)))?;
 
-        // Validate metadata
         if metadata.type_name != "BitVec" {
             return Err(IoError::InvalidData(format!(
                 "Metadata type mismatch: expected 'BitVec', got '{}'",
@@ -170,7 +148,6 @@ impl BitVec {
             )));
         }
 
-        // Calculate expected word count
         let num_words = metadata.len_bits.div_ceil(64);
         let expected_data_len = num_words * 8;
 
@@ -181,7 +158,6 @@ impl BitVec {
             )));
         }
 
-        // Read words
         let mut words = Vec::with_capacity(num_words);
         for _ in 0..num_words {
             let mut word_bytes = [0u8; 8];
@@ -189,13 +165,11 @@ impl BitVec {
             words.push(u64::from_le_bytes(word_bytes));
         }
 
-        // Construct BitVec directly from words
         let bv = BitVec::from_words(words, metadata.len_bits);
 
         Ok(bv)
     }
 
-    /// Read BitVec in text format
     fn read_text<R: Read>(reader: &mut R) -> Result<Self> {
         use std::io::BufRead;
 
@@ -203,13 +177,11 @@ impl BitVec {
         let mut first_line = String::new();
         buf_reader.read_line(&mut first_line)?;
 
-        // Parse length from first line
         let len_bits = first_line
             .trim()
             .parse::<usize>()
             .map_err(|e| IoError::InvalidData(format!("Invalid length: {}", e)))?;
 
-        // Read bits
         let mut bv = BitVec::new();
         let mut line = String::new();
         while buf_reader.read_line(&mut line)? > 0 {
@@ -234,7 +206,6 @@ impl BitVec {
         Ok(bv)
     }
 
-    /// Read BitVec in hexadecimal format
     fn read_hex<R: Read>(reader: &mut R) -> Result<Self> {
         use std::io::BufRead;
 
@@ -242,13 +213,11 @@ impl BitVec {
         let mut first_line = String::new();
         buf_reader.read_line(&mut first_line)?;
 
-        // Parse length from first line
         let len_bits = first_line
             .trim()
             .parse::<usize>()
             .map_err(|e| IoError::InvalidData(format!("Invalid length: {}", e)))?;
 
-        // Read hex words
         let mut words = Vec::new();
         let mut line = String::new();
         while buf_reader.read_line(&mut line)? > 0 {
@@ -363,20 +332,16 @@ mod tests {
         let mut buffer = Vec::new();
         bv.write_to(&mut buffer).unwrap();
 
-        // Check magic bytes
         assert_eq!(&buffer[0..8], MAGIC_BYTES);
 
-        // Check version
         let version = u16::from_le_bytes([buffer[8], buffer[9]]);
         assert_eq!(version, FORMAT_VERSION);
 
-        // Check type tag
         assert_eq!(buffer[10], TypeTag::BitVec as u8);
     }
 
     #[test]
     fn test_bitvec_read_wrong_type() {
-        // Create a header with wrong type
         let header = Header::new(TypeTag::BitMatrix, 50, 100);
 
         let mut buffer = Vec::new();
@@ -391,7 +356,6 @@ mod tests {
 
     #[test]
     fn test_bitvec_preserves_tail_masking() {
-        // Create BitVec with non-word-aligned length
         let mut original = BitVec::new();
         for i in 0..100 {
             original.push_bit(i < 50);
@@ -403,7 +367,6 @@ mod tests {
         let mut cursor = Cursor::new(buffer);
         let restored = BitVec::read_from(&mut cursor).unwrap();
 
-        // Verify tail masking is preserved
         assert_eq!(original.words(), restored.words());
     }
 
@@ -450,9 +413,8 @@ mod tests {
             .write_to_with_format(&mut buffer, super::super::SerializationFormat::Text)
             .unwrap();
 
-        // Verify text format
         let text = String::from_utf8(buffer.clone()).unwrap();
-        assert!(text.starts_with("100\n")); // Length
+        assert!(text.starts_with("100\n"));
         assert!(text.contains('0'));
         assert!(text.contains('1'));
 
@@ -474,9 +436,8 @@ mod tests {
             .write_to_with_format(&mut buffer, super::super::SerializationFormat::Hex)
             .unwrap();
 
-        // Verify hex format
         let text = String::from_utf8(buffer.clone()).unwrap();
-        assert!(text.starts_with("128\n")); // Length
+        assert!(text.starts_with("128\n"));
         assert!(text.chars().any(|c| c.is_ascii_hexdigit()));
 
         let mut cursor = Cursor::new(buffer);
@@ -489,7 +450,6 @@ mod tests {
     fn test_bitvec_format_auto_detect() {
         let original = BitVec::from_bytes_le(&[0xAA, 0x55]);
 
-        // Test binary format detection
         let mut binary_buf = Vec::new();
         original
             .write_to_with_format(&mut binary_buf, super::super::SerializationFormat::Binary)
@@ -498,7 +458,6 @@ mod tests {
         let restored_binary = BitVec::read_from_with_auto_detect(&mut cursor).unwrap();
         assert_eq!(original, restored_binary);
 
-        // Test text format detection
         let mut text_buf = Vec::new();
         original
             .write_to_with_format(&mut text_buf, super::super::SerializationFormat::Text)
@@ -507,7 +466,6 @@ mod tests {
         let restored_text = BitVec::read_from_with_auto_detect(&mut cursor).unwrap();
         assert_eq!(original, restored_text);
 
-        // Test hex format detection
         let mut hex_buf = Vec::new();
         original
             .write_to_with_format(&mut hex_buf, super::super::SerializationFormat::Hex)
