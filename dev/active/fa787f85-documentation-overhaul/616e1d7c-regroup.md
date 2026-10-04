@@ -1,96 +1,133 @@
-# Field-dispatch entry regroup record
+# Re-archive of epic 6dc81018 (616e1d7c)
 
 Issue 616e1d7c covers the Appendix A rows of [investigation.md](investigation.md)
 whose top epic includes 6dc81018, less the code-pinned entries a83583e0 and
-dbd8787d. Epic 6dc81018 is in tracker state `archived` and its archive root is
-`dev/archive/6dc81018-field-capability-dispatch/`; epic 86b9c719 is in state
-`backlog`. This issue moves no file and changes no manifest row.
+dbd8787d. The epic is archived, so decision DEC-01 of the issue collects its
+entries through container archival. `jit archive container 6dc81018 --execute`
+ran on main in commit `50de04a6b`. `AR` is
+`dev/archive/6dc81018-field-capability-dispatch`.
 
-## Entry state
-
-Source: [616e1d7c-entry-state.txt](616e1d7c-entry-state.txt), printed by
-[616e1d7c-entry-state.py](616e1d7c-entry-state.py). "Copy" counts flat files
-with a byte-identical file at the same relative path under the archive root's
-`active/` tree. Manifest rows are `complete` / `pending`.
-
-| Entry | Owner issues | Flat files | Copy | No copy | Archive files | Rows | Disposition |
-|---|---|---|---|---|---|---|---|
-| 1ac74567 | 1ac74567 | 0 | 0 | 0 | 5 | 5 / 0 | archived |
-| 220cab0b | 220cab0b, 2a85f728, 676f55a2, f35daec0 | 1 | 1 | 0 | 1 | 0 / 1 | left: D |
-| 2a85f728 | 2a85f728 | 0 | 0 | 0 | 1 | 1 / 0 | archived |
-| 34d85cb9 | 34d85cb9 | 180 | 0 | 180 | 1 | 1 / 180 | left: U |
-| 389aa4de | 389aa4de | 1 | 0 | 1 | 0 | 0 / 1 | left: U |
-| 3fa7c9d0 | 3fa7c9d0 | 1 | 1 | 0 | 1 | 0 / 1 | left: D |
-| 50b47eae | 50b47eae | 63 | 0 | 63 | 0 | 0 / 63 | left: U |
-| 6dc81018-field-capability-dispatch | 265997f9, 663965f6, 6dc81018 | 6 | 4 | 2 | 21 | 15 / 6 | in the canonical directory; W |
-| 7d7c647c | 7d7c647c | 88 | 1 | 87 | 1 | 0 / 88 | left: U, W |
-| 7d824b2f | 7d824b2f, a83583e0, eaae1b56 | 1 | 1 | 0 | 1 | 0 / 1 | left: D |
-| 9162956b | 9162956b | 14 | 14 | 0 | 14 | 0 / 14 | left: D |
-| 972e2b88 | 972e2b88 | 1 | 1 | 0 | 1 | 0 / 1 | left: D |
-| e6ea0dde | e6ea0dde | 66 | 0 | 66 | 1 | 1 / 66 | left: U |
-| eaae1b56 | eaae1b56 | 1 | 1 | 0 | 1 | 0 / 1 | left: D |
-| eb9b324c | eb9b324c | 5 | 0 | 5 | 13 | 13 / 5 | left: U |
-| fc976a80 | fc976a80 | 1 | 1 | 0 | 1 | 0 / 1 | left: D |
-
-| Code | Reason |
+| File | Content |
 |---|---|
-| D | The owning epic 6dc81018 is archived. Each flat file duplicates an archived file. |
-| U | The owning epic 6dc81018 is archived. The flat files have no archive copy, and the tracker references of the owner issue name the flat paths. |
-| W | Branch `worktree-agent-103a792a` carries an unmerged commit editing `dev/active/7d7c647c/design.md` and `dev/active/6dc81018-field-capability-dispatch/investigation.md`. |
+| [616e1d7c-preexec.json](616e1d7c-preexec.json) | The `jit archive container 6dc81018 --json` preview taken on main immediately before execution, reduced to target, destination root, eligibility, blockers, action counts and per artifact source, action, destination, sha256, evidence, relinked references and deleted sources |
+| [616e1d7c-verify.py](616e1d7c-verify.py) | Verification script; its docstring states each section |
+| [616e1d7c-verify.txt](616e1d7c-verify.txt) | Its output |
+| [616e1d7c-rows.py](616e1d7c-rows.py) | Manifest row reconciliation; its docstring states the decision rule |
 
-The `pending` rows of every left entry name a destination under
-`dev/active/6dc81018-field-capability-dispatch/<entry>/`, the directory
-`jit doc dir 6dc81018 dev/active` resolves. Contract `active-layout` of
-[plan.md](plan.md) assigns that directory to open-epic material.
+## Entries
 
-## Owning epic
+| Entry | State | Files |
+|---|---|---|
+| 1ac74567, 2a85f728 | archived by the first archive run | 5, 1 under `AR/active/` |
+| 34d85cb9 | archived | 180 moved |
+| e6ea0dde | archived | 66 moved |
+| eb9b324c | archived | 5 moved (`pilot/`) |
+| 7d7c647c | archived; `design.md` stays with an archive copy | 87 moved (`probes/`), 1 kept |
+| 50b47eae | archived; six files stay with an archive copy | 57 moved, 6 copied |
+| 220cab0b, 3fa7c9d0, 7d824b2f, 972e2b88, eaae1b56, fc976a80 | one file each stays with an archive copy | 6 kept |
+| 9162956b | stays with an archive copy | 14 kept |
+| 6dc81018-field-capability-dispatch | 4 files stay with an archive copy; `handoff-12.md` and `handoff-13.md` stay without one | 6 kept |
+| 389aa4de | flat, outside the archive plan | 1 |
 
-Each owner issue of an entry outside the table below carries the single
-membership label `epic:field-capability-dispatch` and lies in the dependency
-closure of exactly one epic, 6dc81018.
+## Criteria
 
-| Entry | Closure of | Deciding step of `active-layout` | Owning epic |
+| Criterion | Evidence in `616e1d7c-verify.txt` | Establishes | Does not establish |
 |---|---|---|---|
-| 220cab0b | 6dc81018, 86b9c719 | single membership label of the entry issue | 6dc81018 |
-| 389aa4de | 6dc81018, 86b9c719 | owner decision, row "Active-layout ties" of [plan.md](plan.md) | 6dc81018 |
-| 3fa7c9d0 | 6dc81018, 86b9c719 | single membership label of the entry issue | 6dc81018 |
-| 6dc81018-field-capability-dispatch | 6dc81018, 86b9c719 | the epic issue ID names the entry | 6dc81018 |
+| REQ-01 | `preview`, `marker`, `bytes`: the plan is eligible without blocker; 401 of 401 published destinations hold the planned sha256 at the execution commit; 395 of 395 move sources are absent; 6 of 6 copy sources hold the planned sha256 | The files the plan moves are under `AR`, byte-identical to their sources at execution | Anything about 389aa4de |
+| REQ-02 | `references`: 522 of 522 relinked tracker documents on 25 issues name their archive path | The tracker of the checkout names the archive path for each reference the plan relinks | References of kept files that an issue outside the container owns |
+| REQ-03 | `links`: 0 unresolved in the 60 Markdown files of `AR` and in the Markdown files of this issue under the active area | Inline links outside fenced code resolve, except three that resolve from the plan source path only | Anchors, code-span paths, links in non-Markdown files |
+| REQ-04 | `excluded`: no path under `dev/active/a83583e0` or `dev/active/dbd8787d` changes, is published or is deleted | The code-pinned entries are in place | The Rust CI verdict; `cargo-ci` runs it |
+| REQ-05 | `manifest`: every row of a plan source is `complete`; `python3 616e1d7c-rows.py --check` exits 0 | 395 rows archived, 33 rows retained in place by this unit | — |
+| REQ-06 | Commit `03272e29d` | Path text only, per entry in the commit message | — |
 
-## Checks
+The three links that resolve from the source path only are relative links
+from `AR` files to files outside the development root
+(`handoff-11.md:140`, `2026-09-01-eaae1b56.md:82,98`). The planner evaluates
+an archived file's links at its source path, so their targets keep their text.
 
-Entry state, from the repository root:
+`rerun`: a fresh preview is eligible, without blocker, and publishes and
+deletes nothing. It does not establish the result of a second `--execute`.
 
-```sh
-G=$(git ls-files ':(glob)**/616e1d7c-entry-state.py')
-python3 "$G" | diff - "${G%.py}.txt"
-```
+## Pins of a83583e0
 
-It establishes file locations, byte identity of copies, tracker references in
-the checkout's `.jit/issues`, and manifest row status. It does not establish
-why the archive run left a source in place.
+Unpinned, documents 5 to 11 of a83583e0 make the planner move seven files of
+`dev/active/a83583e0/`; `campaign-declaration.json` among them is read by path
+by the tuning-extent campaign driver. Each reference carries the commit that
+last changed its file, and the plan retains the seven as `pinned-historical`.
 
-Consumer check, per entry `<e>` of the left set, with one `':!dev/active/<x>'`
-exclusion per left entry `<x>`:
+| Documents | Files | Pin |
+|---|---|---|
+| 5 | `campaign-declaration.json` | `87b5b733c` |
+| 6 to 11 | six files under `failed-attempts/gf2-a83583e0-20260928T130755Z-3719910/` | `eebbc778c` |
 
-```sh
-git grep -nF "dev/active/<e>" -- ':!dev/archive' ':!**/inputs/**' ':!*.md' \
-  ':!.jit' ':!dev/active/fa787f85-documentation-overhaul' ':!dev/active/<x>'...
-```
+## Files that stay
 
-| Match | Kind |
+Each row below is `retained-operational`, empty destination, `complete`.
+
+| Files | What keeps them |
 |---|---|
-| `scripts/cargo-ci.sh:268` (7d824b2f) | shell comment |
-| `crates/gf2-core/benches/tuning_calibration.rs:607` (eaae1b56) | Rustdoc comment |
-| `dev/active/f547c394/research-r3-sweeps.json` (220cab0b, 7d824b2f, 6dc81018-field-capability-dispatch) | provenance strings in a data file |
+| `50b47eae/s{4,5,6}-session/{comparison,layout-audit}.txt` | Root-relative link targets of post-cutover receipts 4, 5 and 6, which keep their bytes |
+| `9162956b/ensemble-axes-pilot-receipt.md`, `972e2b88/ensemble-axis-verification.md`, `fc976a80/findings.md`, `220cab0b/design.md` | Root-relative link targets of the verdicts and the selector plan under `dev/benchmarks/tuning_profiles/` and of the 9162956b pilot receipt |
+| 13 further files of 9162956b | Relative link targets of the 9162956b pilot receipt and protocols |
+| `3fa7c9d0/design.md`, `7d824b2f/design.md`, `eaae1b56/premeasurement-protocol.md`, `7d7c647c/design.md` | Relative link targets of the a83583e0 and dbd8787d protocols, which stay by exclusion; issue 3fa7c9d0 resolves under the open epic 86b9c719 |
+| `classification.md`, `plan.md`, `investigation.md`, `breakdown.json` of the epic directory | Relative link targets of the designs above and of each other |
+| `handoff-12.md`, `handoff-13.md` of the epic directory | References of 6dc81018 pinned to commits `623f5568` and `4c70534c` |
 
-No match is a non-comment code, test, script or config consumer. The check
-excludes references between the listed entries: scripts in eb9b324c read
-50b47eae, and one script each in e6ea0dde and 7d7c647c names 34d85cb9 and
-e6ea0dde. Scripts in 34d85cb9, 50b47eae, 7d7c647c, e6ea0dde and eb9b324c name
-their own directory by path literal.
+Two kept files differ from their archive file by citation repoints of other
+units after the first archive run: `6dc81018-field-capability-dispatch/investigation.md`
+and `eaae1b56/premeasurement-protocol.md`. The plan reports neither as a
+conflict. `AR/active/7d7c647c/design.md` holds the bytes of its source
+(commit `1be94823d`): an archive file that differs both from its source and
+from its recorded publication blocks the plan with `destination-conflict`.
 
-Worker-branch check, per entry and per branch of `git worktree list`:
-`git log --oneline main..<branch> -- dev/active/<e>`. Code W lists every
-non-empty result.
+## 389aa4de
 
-Link scan: `python3 contrib/gates/docs-mechanical.py` passes.
+| File | Tracker parent of issue 389aa4de | Plan row "Active-layout ties" | State |
+|---|---|---|---|
+| `dev/active/389aa4de/receipt-notes.md` | 86b9c719 (`jit graph tree`), state backlog | assigns the entry to 6dc81018 | flat; in no archive plan; manifest row `pending` |
+
+## Citations
+
+Repointed in commit `44c701933`, path text only:
+
+| File | Cites |
+|---|---|
+| `dev/active/7d7c647c/design.md` and `AR/active/7d7c647c/design.md` | e6ea0dde, 34d85cb9, `7d7c647c/probes` |
+| `dev/active/ae03bcd0-general-bch/investigation.md` | `7d7c647c/probes/AS1_lean/Funs.lean` |
+| `AR/active/1ac74567/proof-sketch.md`, `34d85cb9/findings.md`, `e6ea0dde/record.md`, `handoff-2.md` to `handoff-5.md`, `handoff-8.md` | 34d85cb9, e6ea0dde, 50b47eae, eb9b324c, `7d7c647c/probes` |
+| Comments in `AR/active/7d7c647c/probes/trim-logs.sh`, `e6ea0dde/extraction/trim-logs.sh`, `eb9b324c/pilot/pilot-build.sh`, `1ac74567/elaboration/elaborate.sh` | sibling entries |
+| Input paths `LED` in `AR/active/eb9b324c/pilot/pilot-analyse.py` and `SRC` in `AR/active/1ac74567/elaboration/elaborate.sh` | `50b47eae/s5-session`, `34d85cb9/extraction/A8b_lean` |
+
+Two repointed command quotations name generated files that no commit holds
+(`34d85cb9/extraction/R2_gf2_core.llbc`, `e6ea0dde/extraction/X3_gf2_core.llbc`).
+
+Citations that keep their bytes:
+
+| Location | Reason |
+|---|---|
+| `dev/benchmarks/tuning_profiles/2026-08-22-post-cutover-receipt-{4,5}.md` and the three receipts under `AR/benchmarks/tuning_profiles/` | Receipts |
+| 19 scripts under `AR/active/50b47eae/s{4,5,6}-session/`, three of which name their own directory | Manifest `digest_pinned`; the post-cutover receipts record their digests |
+| Logs, excerpts and Lean outputs under `AR/active/`, `progress.json` | Tool outputs and continuation JSON |
+| `67048b47-linked-pairs.txt`, `7bac1303-harness-path-trials.txt`, `96cea1b9-archive-rows.txt` | Committed script outputs |
+| `migration/manifest.toml`, `path` fields | The field names the source by schema |
+
+`git grep -F` for the five moved entry directories finds no citation in a
+README, `AGENTS.md`, `docs/` page or Rust source outside `dev/archive/` and
+receipt `inputs/` trees. `scripts/cargo-ci.sh:268` and
+`crates/gf2-core/benches/tuning_calibration.rs:607` cite
+`7d824b2f/design.md` and `eaae1b56/premeasurement-protocol.md` in comments;
+both files stay.
+
+`96cea1b9-archive-rows.py` requires exactly one archive event for the
+container and exits on the two the event log holds.
+
+## Commands
+
+```sh
+python3 dev/active/fa787f85-documentation-overhaul/616e1d7c-verify.py
+python3 dev/active/fa787f85-documentation-overhaul/616e1d7c-rows.py --check
+python3 dev/active/fa787f85-documentation-overhaul/migration/check.py
+python3 contrib/gates/docs-mechanical.py
+```
+
+`migration/check.py` reports no finding on a row of this unit.
