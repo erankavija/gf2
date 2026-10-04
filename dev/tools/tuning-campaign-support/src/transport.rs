@@ -6,7 +6,7 @@ use std::io::{self, Read, Write};
 
 /// Environment variable guarding entry into a fresh calibration child.
 pub const FRESH_CASE_VAR: &str = "GF2_TUNING_FRESH_CASE";
-/// Reviewed fresh-child sentinel.
+/// Value of [`FRESH_CASE_VAR`] that admits a fresh child.
 pub const FRESH_CASE_VALUE: &str = "child-v2";
 /// Prefix of the one canonical result line emitted by a child.
 pub const FRESH_RESULT_PREFIX: &str = "GF2_TUNING_RESULT=";

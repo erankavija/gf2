@@ -1006,7 +1006,6 @@ fn build_receipt_with_history(
                     }
                 }
             }
-            // Journal every execution in run order, as the runner does.
             for pair in &record.pairs {
                 let run_order = match pair.order {
                     ArmOrder::BaselineFirst => {
@@ -1304,7 +1303,6 @@ fn decisions_follow_confidence_bound_margins_not_significance() {
         decide(&interval(1.2, 1.4), &margins).unwrap(),
         Decision::NotWorse
     );
-    // A "significant" 3% slowdown is still not worse under the equivalence margin.
     assert_eq!(
         decide(&interval(0.95, 0.99), &margins).unwrap(),
         Decision::NotWorse
@@ -1313,7 +1311,6 @@ fn decisions_follow_confidence_bound_margins_not_significance() {
         decide(&interval(0.7, 0.85), &margins).unwrap(),
         Decision::Regressed
     );
-    // A wide interval around 1 that crosses the equivalence floor is inconclusive.
     assert_eq!(
         decide(&interval(0.85, 1.3), &margins).unwrap(),
         Decision::Inconclusive
@@ -1486,7 +1483,6 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         .iter()
         .any(|f| f.rule == "P-03" && f.message.contains("content digest")));
     assert!(!summary.qualifies);
-    // An intact receipt is independently verifiable without a repository.
     let intact = build_receipt("portable", &family, &[spec("a", 2.0)], false, false, |_| {});
     let summary = evaluate(&intact.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
@@ -1990,7 +1986,6 @@ fn acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell() {
     assert!(summary.resumed);
     assert_eq!(outcome(&summary, "a"), CellOutcome::Pass);
     assert_eq!(outcome(&summary, "b"), CellOutcome::Pass);
-    // A session that starts a completed cell again contradicts checkpoint/resume.
     let repeated = build_receipt(
         "repeated",
         &family,
@@ -2050,8 +2045,6 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
     assert_eq!(outcome(&summary, "twelve"), CellOutcome::Unavailable);
     assert_eq!(outcome(&summary, "p"), CellOutcome::Pilot);
     assert!(!summary.qualifies);
-    // An unavailable outcome is still a durable checkpointed result. A valid
-    // alternate reason in the receipt must not replace that frozen result.
     let receipt_path = built.dir.join(RECEIPT_FILE);
     let original_receipt = fs::read(&receipt_path).unwrap();
     let mut receipt = BenchmarkReceipt::decode(&original_receipt).unwrap();
@@ -2085,7 +2078,6 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
         .iter()
         .any(|finding| finding.rule == "P-12" && finding.cell.as_deref() == Some("twelve")));
     fs::write(unavailable_unit, unit_bytes).unwrap();
-    // Dropping a declared cell from the receipt is a rejected incomplete negative result.
     let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
     receipt.cells.retain(|cell| cell.cell_id != "twelve");
     fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
@@ -2239,7 +2231,6 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
         outcome(&summary, "fastest"),
         CellOutcome::QualityIncompatible
     );
-    // Missing quality or diverging matched settings invalidate the cell.
     let mut receipt =
         BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
     receipt.cells[0]
@@ -2622,7 +2613,6 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
             "unrelated JIT metadata",
         ],
     );
-    // Outside the wrapper the runner refuses to measure.
     let unlocked = Command::new(runner)
         .args(["run"])
         .arg(&stage)
@@ -2734,9 +2724,6 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
         .any(|record| record.event == JournalEvent::LockHold));
 }
 
-/// `check` is the untimed half of `run`: it applies the same decode and
-/// validation and then stops, so a working session can refuse a malformed
-/// frozen input without a host lock, a stage directory or a journal.
 #[test]
 fn runner_check_validates_a_plan_and_measures_nothing() {
     let root = scratch("runner-check");
@@ -3248,7 +3235,6 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     assert!(trial_ledger::decode(&removed, &family.family.id).is_err());
     let confidence = bonferroni_confidence(0.05, count).unwrap();
     assert_ne!(confidence, bonferroni_confidence(0.05, count - 1).unwrap());
-    // Full acceptance derives its family size from a chain containing a failed trial.
     let complete = build_receipt_with_history(
         "complete-v2-chain",
         &family,
@@ -3281,7 +3267,6 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     let omitted = evaluate(&complete.dir).unwrap();
     assert_eq!(omitted.verdict, Verdict::Rejected);
     assert!(omitted.findings.iter().any(|f| f.rule == "P-22"));
-    // A self-consistent checkpoint claiming the wrong correction is rejected by P-20.
     let built = build_receipt(
         "wrong-v2-correction",
         &family,
@@ -3298,10 +3283,6 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     assert!(summary.findings.iter().any(|f| f.rule == "P-20"));
 }
 
-/// A first confirmatory attempt (`t=1`) recomputes `attempt_alpha` from the
-/// family ledger as `alpha / (t(t+1))`, distinct from the frozen total
-/// `family_alpha`; the renderer never labels the attempt allocation
-/// "family-wise alpha". Regression coverage for `@/issue/c5e01de3`.
 #[test]
 fn family_summary_names_first_attempt_alpha_distinctly_from_the_family_total() {
     let family = v2_family();
@@ -3327,7 +3308,6 @@ fn family_summary_names_first_attempt_alpha_distinctly_from_the_family_total() {
         fam.attempt_alpha / f64::from(fam.comparisons)
     );
 
-    // Recompute independently from the frozen ledger chain (P-22 path).
     let receipt =
         BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
     let ledger_pin = receipt.trial_ledger.clone().unwrap();
@@ -3342,10 +3322,6 @@ fn family_summary_names_first_attempt_alpha_distinctly_from_the_family_total() {
     assert!(!markdown.contains(&format!("family-wise alpha {}", fam.attempt_alpha)));
 }
 
-/// A later confirmatory attempt (`t=2`, after one prior reservation) spends a
-/// smaller sequential allocation than the first; the frozen total stays fixed
-/// and the renderer still never calls the allocation "family-wise alpha".
-/// Regression coverage for `@/issue/c5e01de3`.
 #[test]
 fn family_summary_names_later_attempt_alpha_distinctly_from_the_family_total() {
     let family = v2_family();
@@ -3828,8 +3804,6 @@ fn runner_restarts_an_interrupted_cell_and_acceptance_accepts_the_receipt() {
     assert_eq!(cell_starts(records, "third").len(), 1);
     let second = cell_starts(records, "second");
     assert_eq!(second.len(), 2, "only the interrupted cell starts again");
-    // The resumed session closes the stopped session, then gives up the
-    // unfinished attempt before it starts the cell again.
     let interrupted = records
         .iter()
         .find(|record| record.event == JournalEvent::Interrupted)
@@ -3843,8 +3817,6 @@ fn runner_restarts_an_interrupted_cell_and_acceptance_accepts_the_receipt() {
     assert_eq!(record_key(abandoned[0]), Some("second"));
     assert_eq!(abandoned[0].details, json!({"attempt_start": second[0]}));
     assert!(interrupted.sequence < abandoned[0].sequence && abandoned[0].sequence < second[1]);
-    // The abandoned attempt journaled samples; the receipt holds only the
-    // executions of the restarted attempt.
     let spawned = |attempt: std::ops::Range<u64>| {
         records
             .iter()
@@ -3999,7 +3971,6 @@ fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_sampl
     });
     assert_rejected_by_p11(&completed_twice, "completed 2 times");
 
-    // Pair 0 of the candidate, as the abandoned attempt journaled it.
     let journaled = |event: JournalEvent| {
         records
             .iter()
@@ -4094,8 +4065,6 @@ fn v3_receipts_keep_rejecting_a_restarted_cell_and_refuse_later_rules() {
     assert!(later.findings.iter().any(|finding| finding.rule == "P-01"));
 }
 
-/// The one arm-request contract, from both ends: the request the runner builds
-/// and the mirrors campaign arms decode it with.
 mod arm_wire {
     use super::{cell, CellObjective, CellRole, CoreArm};
     use serde::{Deserialize, Serialize};
@@ -4105,7 +4074,7 @@ mod arm_wire {
     use tuning_campaign_support::transport;
 
     /// The mirror of an arm that names the position with its own enumeration
-    /// and leaves the decoder opaque, as `6c6b09b1/survey/arm-common` does.
+    /// and leaves the decoder opaque.
     #[derive(Debug, Deserialize, Serialize)]
     #[serde(deny_unknown_fields)]
     struct TypedMirror {
@@ -4127,7 +4096,7 @@ mod arm_wire {
     }
 
     /// The mirror of an arm that keeps the position and the cache state as
-    /// strings, as the shift, interleaver and logical-buffer arms do.
+    /// strings.
     #[derive(Debug, Deserialize, Serialize)]
     #[serde(deny_unknown_fields)]
     struct StringMirror {
@@ -4215,11 +4184,6 @@ mod arm_wire {
         }
     }
 
-    /// Both mirror shapes decode the smoke's request and re-encode the exact
-    /// bytes the runner wrote; a mirror that disagrees in field order, in field
-    /// set or in the omission of an absent optional field fails at the decode,
-    /// because the canonical framing compares its own re-encoding with the
-    /// bytes it read.
     #[test]
     fn arm_mirrors_round_trip_the_runners_validation_request() {
         let declared = cell(
@@ -4254,9 +4218,6 @@ mod arm_wire {
         }
     }
 
-    /// A timed execution takes one side of the pair and carries the settings'
-    /// window budget; the validation position is no campaign execution, so the
-    /// timed request refuses it.
     #[test]
     fn a_timed_request_takes_a_pair_side_and_refuses_the_validation_position() {
         let declared = cell(
@@ -4302,11 +4263,6 @@ mod arm_wire {
     }
 }
 
-/// The staged smoke drives the runner's own session loop: one invocation runs
-/// at most the plan's cells-per-session budget and pauses, the next resumes
-/// from the checkpoints without repeating a completed cell, the stage carries
-/// no timing sample, no lock hold and no ledger reservation, the record lands
-/// only once the session completes, and `finalize` refuses the stage.
 #[test]
 fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     use tuning_campaign_support::arm::{PairPosition, SmokeRecord};
@@ -4402,7 +4358,6 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
             .collect()
     };
 
-    // One invocation spends the plan's cells-per-session budget and pauses.
     let first = smoke();
     assert_eq!(
         first.status.code(),
@@ -4416,7 +4371,6 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     assert_eq!(paused.last().unwrap().event, JournalEvent::Paused);
     assert!(!record.exists(), "a paused staged smoke wrote its record");
 
-    // The next invocation resumes and never repeats the completed cell.
     let second = smoke();
     assert_eq!(
         second.status.code(),
@@ -4438,7 +4392,6 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
         4
     );
 
-    // The stage carries no timing sample, no lock hold and no reservation.
     for entry in &complete {
         assert!(
             !matches!(
@@ -4463,7 +4416,6 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     );
     assert!(!stage.join(RECEIPT_FILE).exists());
 
-    // The record covers the whole plan and reports no window.
     let written: SmokeRecord = serde_json::from_slice(&fs::read(&record).unwrap()).unwrap();
     assert_eq!(
         written
@@ -4479,7 +4431,6 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
         .flat_map(|cell| &cell.arms)
         .all(|arm| arm.windows == 0 && arm.role == PairPosition::Validation));
 
-    // Finalize assembles a timed campaign's receipt and refuses this stage.
     let refused = Command::new(runner)
         .args(["finalize"])
         .arg(&stage)
@@ -4493,7 +4444,6 @@ fn staged_smoke_pauses_resumes_and_finalize_refuses_the_stage() {
     assert!(!root.join("out").exists());
 }
 
-/// The non-timed smoke end to end, through the subcommand a harness invokes.
 mod arm_smoke {
     use super::{
         addendum, cell, git, scratch, write_addendum, CellObjective, CellRole, CoreArm,
@@ -4647,11 +4597,6 @@ mod arm_smoke {
         String::from_utf8_lossy(&output.stderr).into_owned()
     }
 
-    /// The smoke drives every arm of every cell once in the validation
-    /// position, records only what the plan declares and the arms report, and
-    /// writes nothing else: no stage, no checkpoint, no receipt, no ledger
-    /// reservation and no lock. Two runs over one build reproduce the record
-    /// byte for byte.
     #[test]
     fn smoke_drives_every_arm_untimed_and_reproduces_its_record() {
         let fixture = fixture("smoke-conforming", conforming("1"), CELLS);
@@ -4725,8 +4670,6 @@ mod arm_smoke {
         assert_eq!(fs::read(&again).unwrap(), bytes);
     }
 
-    /// The smoke measures nothing, so an arm that reports a timing window is a
-    /// defect the smoke names by cell and arm.
     #[test]
     fn smoke_fails_an_arm_that_reports_a_timing_window() {
         const TIMED: &str = r#"cat >/dev/null
@@ -4742,7 +4685,6 @@ printf 'GF2_TUNING_RESULT={"schema":"zen3-benchmark-arm-result-v1","windows":[{"
         assert!(!fixture.record.exists());
     }
 
-    /// An arm that exits without its one result line fails the smoke.
     #[test]
     fn smoke_fails_an_arm_that_writes_no_result_line() {
         let fixture = fixture(
@@ -4757,7 +4699,6 @@ printf 'GF2_TUNING_RESULT={"schema":"zen3-benchmark-arm-result-v1","windows":[{"
         );
     }
 
-    /// A result line the canonical parser refuses fails the smoke.
     #[test]
     fn smoke_fails_a_malformed_result_line() {
         const MALFORMED: &str = r#"cat >/dev/null
@@ -4774,8 +4715,6 @@ printf 'GF2_TUNING_RESULT={"schema":"zen3-benchmark-arm-result-v1","windows":[]\
         );
     }
 
-    /// A plan cell the frozen addendum does not declare fails before any arm
-    /// runs, exactly as it fails the timed path's validation.
     #[test]
     fn smoke_fails_a_plan_cell_the_addendum_does_not_declare() {
         let fixture = fixture("smoke-undeclared", conforming("1"), ["first", "undeclared"]);

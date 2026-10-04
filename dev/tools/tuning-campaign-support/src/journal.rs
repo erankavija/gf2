@@ -10,9 +10,9 @@ use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-/// Journal schema identity fixed by the a835 protocol.
+/// Journal schema identity.
 pub const JOURNAL_SCHEMA: &str = "tuning-campaign-journal-v1";
-/// Resume-manifest schema identity fixed by the a835 protocol.
+/// Resume-manifest schema identity.
 pub const CHECKPOINT_SCHEMA: &str = "tuning-campaign-checkpoint-v1";
 const RECOVERY_SCHEMA: &str = "tuning-campaign-log-recovery-v1";
 const UNIT_SCHEMA: &str = "tuning-campaign-checkpoint-unit-v1";
@@ -431,7 +431,7 @@ impl ExecutionLog {
         &self.session_id
     }
 
-    /// Exact readily visible log-path line required by the project invariant.
+    /// Log-path line `@/inv/campaign-execution-logging` requires before work starts.
     pub fn announcement(&self) -> String {
         format!("GF2_CAMPAIGN_EXECUTION_LOG={}", self.path.to_string_lossy())
     }
@@ -1338,10 +1338,9 @@ fn validate_recovery_record_details(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ResumeIdentity {
-    /// Digest of the reviewed premeasurement protocol.
+    /// Digest of the premeasurement protocol.
     pub protocol_digest: String,
-    /// Optional source-control locator for display and historical receipts.
-    /// This field is informational and is excluded from resume equivalence.
+    /// Informational source-control locator.
     #[serde(default)]
     pub source_revision: String,
     /// Digest of the complete selected producing-input content snapshot.
@@ -1368,8 +1367,7 @@ pub struct ResumeIdentity {
 
 impl ResumeIdentity {
     /// Whether two identities describe the same measurement behavior and
-    /// inputs. Source-control locators are informational and do not affect
-    /// checkpoint compatibility.
+    /// inputs; `source_revision` is not compared.
     pub fn resume_equivalent(&self, other: &Self) -> bool {
         self.protocol_digest == other.protocol_digest
             && self.source_sha256 == other.source_sha256
@@ -1389,7 +1387,6 @@ impl ResumeIdentity {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct CheckpointManifest {
-    /// Checkpoint manifest schema.
     pub schema: String,
     /// Campaign owning every unit under this manifest.
     pub campaign_id: String,
@@ -1651,7 +1648,7 @@ impl CheckpointStore {
         })
     }
 
-    /// Writes one previously absent, already owner-validated case/result pair.
+    /// Writes one owner-validated case/result pair under a key with no accepted unit.
     ///
     /// The caller must complete semantic and route validation before this call.
     /// This boundary serializes both typed values, records their digests, and
@@ -1800,7 +1797,7 @@ impl CheckpointStore {
     }
 }
 
-/// Atomically publishes bytes to a previously absent path and syncs its parent.
+/// Atomically publishes bytes to an absent path and syncs its parent.
 pub fn atomic_write_new(path: &Path, bytes: &[u8]) -> io::Result<()> {
     atomic_write(path, bytes, false)
 }
@@ -2305,7 +2302,7 @@ pub(crate) fn utc_now() -> io::Result<String> {
     ))
 }
 
-// Howard Hinnant's proleptic-Gregorian civil-date conversion.
+// `civil_from_days` of `@/citation/Hinnant2021`.
 fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     let z = days_since_epoch + 719_468;
     let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
