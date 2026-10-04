@@ -13,7 +13,6 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
 
 thread_local! {
-    /// Whether this thread is inside a counted section.
     static COUNTING: Cell<bool> = const { Cell::new(false) };
     static ALLOCATIONS: Cell<u64> = const { Cell::new(0) };
     static REALLOCATIONS: Cell<u64> = const { Cell::new(0) };

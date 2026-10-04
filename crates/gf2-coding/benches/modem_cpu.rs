@@ -45,7 +45,6 @@ fn bench_gray_qam_mapper(c: &mut Criterion) {
     group.finish();
 }
 
-/// The boxed mapper returned by `ModemSpec::preferred_mapper`.
 fn bench_preferred_mapper(c: &mut Criterion) {
     let mut group = c.benchmark_group("modem/preferred_mapper_map_bits");
     for &order in &[16usize, 64] {
@@ -114,7 +113,6 @@ fn bench_fast_gray_qam_demapper(c: &mut Criterion) {
     }
 }
 
-/// The boxed soft demapper returned by `ModemSpec::preferred_soft_demapper`.
 fn bench_preferred_soft_demapper(c: &mut Criterion) {
     let mut group = c.benchmark_group("modem/preferred_soft_demapper_demap_llrs");
     for &order in &[16usize, 64] {
@@ -147,7 +145,6 @@ fn bench_preferred_soft_demapper(c: &mut Criterion) {
     group.finish();
 }
 
-/// Reference path at orders 4 and 16.
 fn bench_reference_mapper_and_demapper(c: &mut Criterion) {
     let mut group = c.benchmark_group("modem/reference_baseline");
     let batch = 4096usize;

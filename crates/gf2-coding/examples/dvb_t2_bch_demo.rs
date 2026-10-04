@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     demo_configuration(FrameSize::Normal, CodeRate::Rate1_2)?;
     println!();
 
-    // Normal frame, rate 2/3 (uses t=10 instead of t=12)
+    // t = 10; the configurations above have t = 12.
     demo_configuration(FrameSize::Normal, CodeRate::Rate2_3)?;
     println!();
 

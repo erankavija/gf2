@@ -85,7 +85,6 @@ fn bench_simulation_no_analysis_overhead(c: &mut Criterion) {
     group.finish();
 }
 
-/// The same comparison over a 16-QAM `ModemChannelAdapter`.
 fn bench_simulation_no_analysis_overhead_qam16(c: &mut Criterion) {
     let config = bench_config();
     let mut group = c.benchmark_group("simulation_no_analysis_overhead_qam16");

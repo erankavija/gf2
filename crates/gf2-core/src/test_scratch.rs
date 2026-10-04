@@ -15,7 +15,8 @@ pub fn keep_scratch() -> bool {
 }
 
 /// An empty directory removed when the handle drops, including during panic
-/// unwinding. Dereferences to its own path.
+/// unwinding, unless [`KEEP_VAR`] or the `keep` of [`scratch_with`] retains
+/// it. Dereferences to its own path.
 pub struct Scratch(TempDir);
 
 impl Scratch {
