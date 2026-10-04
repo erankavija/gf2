@@ -93,7 +93,6 @@ fn test_ber_far_from_shannon_limit() {
         capacity
     );
 
-    // BER is non-zero: rate 1.0 exceeds the channel capacity
     assert!(
         results[0].ber > 0.001,
         "BER should be significant at 3 dB for rate 1.0"

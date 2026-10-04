@@ -28,7 +28,8 @@ pub fn last_effective_soa_chunk() -> Option<usize> {
 }
 
 /// Runs `f` inside a dedicated rayon pool of `threads` workers, so that
-/// `rayon::current_num_threads` inside `f` reports `threads`.
+/// `rayon::current_num_threads` inside `f` reports `threads`; `threads == 0`
+/// takes rayon's default worker count.
 ///
 /// # Panics
 ///
