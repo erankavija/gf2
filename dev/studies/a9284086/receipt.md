@@ -711,10 +711,10 @@ records "*nothing here attributes the hang to a watchdog timeout: that is one
 hypothesis among others (driver defect, memory pressure, a transient), and no
 diagnostic was captured that would separate them*", and states that the file
 "*supports NO claim in the study*". The campaign plan directs the same reading
-([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):13), and the
+([`../../active/b8206228-permanent-statistics/0de41c82/plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md):13), and the
 study's investigation records the two documents as disagreeing and forbids
 papering over it
-([`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md):352-358).
+([`../../active/b8206228-permanent-statistics/0de41c82/investigation.md`](../../active/b8206228-permanent-statistics/0de41c82/investigation.md):352-358).
 
 The archived document carries a dated supersession note (2026-08-16) above its
 §2.5, and beside each of its two other renderings of the same claim, pointing at

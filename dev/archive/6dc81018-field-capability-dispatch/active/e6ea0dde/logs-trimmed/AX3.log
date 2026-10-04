@@ -1,0 +1,17 @@
+=== AX3 === 2026-08-22T23:24:05+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/e6ea0dde/extraction/AX3_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/e6ea0dde/extraction/X3_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/e6ea0dde/extraction/X3_gf2_core.llbc
+
+[Info ] Creating missing directory: dev/active/e6ea0dde/extraction/AX3_lean
+[Info ] Generated: dev/active/e6ea0dde/extraction/AX3_lean/Types.lean
+[Info ] Generated: dev/active/e6ea0dde/extraction/AX3_lean/FunsExternal_Template.lean
+[Info ] Generated: dev/active/e6ea0dde/extraction/AX3_lean/Funs.lean
+[Info ] Total execution time: 0.312167 seconds
+--- exit=0 elapsed=1s ---

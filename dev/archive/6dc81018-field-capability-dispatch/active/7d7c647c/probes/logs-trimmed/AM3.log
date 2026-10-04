@@ -1,0 +1,16 @@
+=== AM3 === 2026-08-23T00:44:48+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/7d7c647c/probes/AM3_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/7d7c647c/probes/M3_seam_shape.llbc
+--- output ---
+[Info ] Imported: dev/active/7d7c647c/probes/M3_seam_shape.llbc
+
+[Info ] Creating missing directory: dev/active/7d7c647c/probes/AM3_lean
+[Info ] Generated: dev/active/7d7c647c/probes/AM3_lean/Types.lean
+[Info ] Generated: dev/active/7d7c647c/probes/AM3_lean/Funs.lean
+[Info ] Total execution time: 0.175338 seconds
+--- exit=0 elapsed=1s ---

@@ -55,7 +55,7 @@ requires both accepted baseline receipts before profiling.
 
 The completed [profile log](../../bench_results/2037941f/dense-baseline-profile-r2/execution.log)
 and [summary](../../bench_results/2037941f/dense-baseline-profile-r2/profile-summary.md)
-retain the cost attribution. The [portfolio outcome](../c73ffa25/outcome.md)
+retain the cost attribution. The [portfolio outcome](../1a379447-zen3-cpu-performance/c73ffa25/outcome.md)
 records no supported distinct fusion within the frozen budget. The established
 fused route and generic carry-save result remain the prior evidence cited by
 the addendum.

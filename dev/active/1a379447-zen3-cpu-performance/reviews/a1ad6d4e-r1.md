@@ -9,8 +9,8 @@ research review `59a70bea` pass with zero findings.
 
 ## Success criteria
 
-The [outcome](../../a1ad6d4e/outcome.md) and
-[source ledger](../../a1ad6d4e/survey/source-evidence.json) establish the
+The [outcome](../a1ad6d4e/outcome.md) and
+[source ledger](../a1ad6d4e/survey/source-evidence.json) establish the
 explicit missing-consumer-signal branch.
 
 - [x] REQ-01: REQ-02 stops portfolio admission before any candidate measurement;

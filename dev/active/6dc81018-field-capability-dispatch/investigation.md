@@ -510,7 +510,7 @@ generated/handwritten proof files:
 
 The direct documentation/code-reference consumers include
 `docs/lean4-verification-pipeline.md:24`, `crates/gf2-core/README.md:15`,
-`crates/gf2-algebra/README.md:5`, `crates/gf2-core/docs/GF2M.md:16`,
+`crates/gf2-algebra/README.md:5`, `dev/archive/legacy/crates/gf2-core/docs/GF2M.md:16`,
 `dev/plans/field_poly_module_overview.md:19`,
 `dev/plans/bdf95060_breakdown.md:8`, `dev/plans/small_prime_kernel_strategy.md:310`,
 and the historical field/packed/Lean documents listed in the prior-art sweep.
@@ -520,9 +520,9 @@ listed in the Rust/proof lists above are not repeated:
 
 - Cargo/docs and bench registration: `crates/gf2-algebra/Cargo.toml:13`,
   `crates/gf2-core/Cargo.toml:174`, `crates/gf2-core/ROADMAP.md:198`, and
-  `crates/gf2-core/benches/strassen_threshold_results.md:4`.
-- Current active artifacts: `dev/active/0de41c82/bipedal-f5-f7-representation-study.md:256`,
-  `dev/active/0de41c82/investigation.md:223`,
+  `dev/archive/legacy/crates/gf2-core/benches/strassen_threshold_results.md:4`.
+- Current active artifacts: `dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md:256`,
+  `dev/active/b8206228-permanent-statistics/0de41c82/investigation.md:223`,
   `dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md:150`,
   `dev/active/b8206228-permanent-statistics/investigation.md:228`,
   `dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv:17`,

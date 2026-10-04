@@ -1,0 +1,63 @@
+=== AQ4 === 2026-08-22T23:33:03+03:00
+--- command ---
+aeneas \
+  -backend lean \
+  -dest dev/active/e6ea0dde/extraction/AQ4_lean \
+  -split-files \
+  -print-error-emitters \
+  dev/active/e6ea0dde/extraction/Q4_gf2_core.llbc
+--- output ---
+[Info ] Imported: dev/active/e6ea0dde/extraction/Q4_gf2_core.llbc
+
+[Error] Could not lookup trait declaration, probably because of a previous error or an --exclude option
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1124:21-1124:42
+Compiler source: llbc/Contexts.ml, line 227
+[Warn ] Could not translate the body of function 'gf2_core::field::traits::FiniteFieldExt::frobenius because of previous error
+Name pattern: 'gf2_core::field::traits::FiniteFieldExt::frobenius'
+Definition span: 'crates/gf2-core/src/field/traits.rs', lines 1120:4-1131:5
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1124:21-1124:42
+Compiler source: interp/Interp.ml, line 609
+
+[Error] Found type error in the output of charon
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1054:8-1054:35
+Compiler source: llbc/RegionsHierarchy.ml, line 198
+[Warn ] Could not translate the body of function 'gf2_core::field::traits::FiniteFieldExt::square because of previous error
+Name pattern: 'gf2_core::field::traits::FiniteFieldExt::square'
+Definition span: 'crates/gf2-core/src/field/traits.rs', lines 1053:4-1055:5
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1054:8-1054:35
+Compiler source: interp/Interp.ml, line 609
+
+[Info ] Creating missing directory: dev/active/e6ea0dde/extraction/AQ4_lean
+[Error] Could not find: trait_decl_id: 2
+Source: 'crates/gf2-core/src/field/traits.rs', lines 1039:0-1132:1
+Compiler source: extract/ExtractBase.ml, line 484
+Uncaught exception:
+
+  Not_found
+
+Raised at Stdlib__Map.Make.find in file "map.ml", line 141, characters 10-25
+Called from Charon__NameMatcher.trait_ref_item_with_generics_to_pattern in file "charon/charon-ml/src/NameMatcher.ml", lines 1108-1109, characters 6-29
+Called from Charon__NameMatcher.ty_to_pattern_aux in file "charon/charon-ml/src/NameMatcher.ml", lines 1065-1066, characters 8-18
+Called from Stdlib__List.map in file "list.ml", line 88, characters 15-19
+Called from Charon__NameMatcher.generic_args_to_pattern in file "charon/charon-ml/src/NameMatcher.ml", line 1151, characters 14-56
+Called from Charon__NameMatcher.name_with_generics_to_pattern in file "charon/charon-ml/src/NameMatcher.ml", line 1184, characters 15-51
+Called from Aeneas__ExtractName.name_with_generics_to_simple_name in file "extract/ExtractName.ml", line 172, characters 13-57
+Called from Aeneas__ExtractBase.ctx_compute_trait_clause_name in file "extract/ExtractBase.ml", lines 1993-1994, characters 8-52
+Called from Aeneas__ExtractBase.ctx_compute_trait_clause_basename in file "extract/ExtractBase.ml", lines 2183-2184, characters 4-36
+Called from Aeneas__ExtractBase.ctx_add_local_trait_clauses.(fun) in file "extract/ExtractBase.ml", lines 2292-2293, characters 8-21
+Called from Stdlib__List.fold_left_map.aux in file "list.ml", line 324, characters 22-30
+Called from Aeneas__ExtractBase.ctx_add_generic_params in file "extract/ExtractBase.ml", lines 2314-2315, characters 4-23
+Called from Aeneas__Extract.extract_trait_decl_method_items_aux.ty in file "extract/Extract.ml", lines 3051-3052, characters 6-48
+Called from Aeneas__Extract.extract_trait_item in file "extract/Extract.ml", line 2994, characters 2-7
+Called from Aeneas__Extract.extract_trait_decl_method_items in file "extract/Extract.ml", line 3078, characters 6-59
+Called from Stdlib__List.iter in file "list.ml", line 114, characters 12-15
+Called from Aeneas__Extract.extract_trait_decl in file "extract/Extract.ml", lines 3284-3286, characters 4-18
+Called from Aeneas__Translate.export_trait_decl in file "Translate.ml", line 1076, characters 6-51
+Called from Aeneas__Translate.extract_definitions.export_trait_decl_group in file "Translate.ml" (inlined), line 1109, characters 4-50
+Called from Aeneas__Translate.extract_definitions.export_decl_group in file "Translate.ml", line 1196, characters 10-36
+Called from Aeneas__Translate.extract_definitions.(fun) in file "Translate.ml", line 1251, characters 10-29
+Called from Stdlib__List.iter in file "list.ml", line 114, characters 12-15
+Called from Aeneas__Translate.extract_file in file "Translate.ml", line 1404, characters 2-36
+Called from Aeneas__Translate.extract_translated_crate in file "Translate.ml", line 1945, characters 5-44
+Called from Dune__exe__Main in file "Main.ml", lines 743-744, characters 8-37
+--- exit=2 elapsed=1s ---

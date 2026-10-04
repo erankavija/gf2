@@ -1,0 +1,11 @@
+=== M4 === 2026-08-23T00:52:14+03:00
+--- command ---
+RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
+  --preset aeneas \
+  --start-from 'seam_shape::driver::route_hooked' \
+  --dest-file "$PWD"/dev/active/7d7c647c/probes/M4_seam_shape.llbc \
+  -- --manifest-path "$PWD"/dev/active/7d7c647c/probes/seam-shape/Cargo.toml
+--- output ---
+   Compiling seam-shape v0.0.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d7c647c/dev/active/7d7c647c/probes/seam-shape)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+--- exit=0 elapsed=1s ---

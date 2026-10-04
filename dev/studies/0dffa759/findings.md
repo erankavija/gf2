@@ -18,7 +18,7 @@ artifacts disagree, §10 records the disagreement rather than choosing silently.
 | [`../a9284086/receipt.md`](../a9284086/receipt.md) | Device-wide runtime qualification: wave utilization, occupancy, launch-duration envelopes |
 | [`../b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md) | Prior feasibility study and its gap table |
 | [`../../research/permanent_wave_gpu/`](../../research/permanent_wave_gpu/README.md) | The executable prototype: shared mapping header, three per-field equivalence units |
-| [`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md), [`plan.md`](../../active/0de41c82/plan.md) | The study's own survey of this ground |
+| [`../../active/b8206228-permanent-statistics/0de41c82/investigation.md`](../../active/b8206228-permanent-statistics/0de41c82/investigation.md), [`plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md) | The study's own survey of this ground |
 | [`req08-amendment-draft.md`](req08-amendment-draft.md) | Drafted amendment to the archived $\mathbb{F}_7$ encoding decision (§8) |
 | [`rng-provenance-addendum.md`](rng-provenance-addendum.md) | Committed RNG identity for the three campaign manifests, which omit it (§1) |
 
@@ -37,7 +37,7 @@ The study's own rule is committed before the measurements:
 > operator-only win is insufficient. A no-go decision retains the candidate,
 > resource report, and falsifying measurements so the negative result remains
 > reproducible.
-> ([`../../active/0de41c82/bipedal-f5-f7-representation-study.md`](../../active/0de41c82/bipedal-f5-f7-representation-study.md):268-273)
+> ([`../../active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md`](../../active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md):268-273)
 
 Four conditions, and this document takes each literally.
 
@@ -1015,7 +1015,7 @@ them apart:
 public packed $\mathbb{F}_7$ representation and define the three-plane state as
 an internal permanent-kernel representation with explicit scope, shared
 behavioral tests, and a tracked convergence condition
-([`../../active/0de41c82/bipedal-f5-f7-representation-study.md`](../../active/0de41c82/bipedal-f5-f7-representation-study.md):255-260,
+([`../../active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md`](../../active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md):255-260,
 option 2).
 
 **Grounding in the committed evidence.** The other compliant resolution —
@@ -1041,19 +1041,19 @@ decline to order it on would be a change the record does not support.
 forbids a local parallel variant "*unless it is a named, cited exception with a
 tracked convergence condition*", which is why this resolution carries the
 exception below as a deliverable rather than a note
-([`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md):717-737).
+([`../../active/b8206228-permanent-statistics/0de41c82/investigation.md`](../../active/b8206228-permanent-statistics/0de41c82/investigation.md):717-737).
 The proof-obligation asymmetry decides the cost side: a new *public* packed
 representation attracts a proof obligation by convention, and `AGENTS.md`
 requires an approved sketch — lemma statements, strategy, exact production path
 — before proof code; a permanent-internal, non-public kernel state does not
 obviously attract one
-([`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md):291-295).
+([`../../active/b8206228-permanent-statistics/0de41c82/investigation.md`](../../active/b8206228-permanent-statistics/0de41c82/investigation.md):291-295).
 Option 1 also reaches the SIMD mirror
 (`crates/gf2-kernels-simd/src/bipedal/packed7.rs` and
 `x86/bipedal_avx2_packed7.rs`), the HIP LUT upload path, and
 `Packed7Correctness.lean` (`investigation.md`:730-737). The study's own plan
 records the same conclusion in advance and leaves option 1 to a new bracket
-([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):177).
+([`../../active/b8206228-permanent-statistics/0de41c82/plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md):177).
 
 **$\mathbb{F}_5$ needs no exception, and the asymmetry is itself evidence for
 the choice.** `Packed5` is already a three-plane representation —
@@ -1061,7 +1061,7 @@ the choice.** `Packed5` is already a three-plane representation —
 circuit and no lookup table
 (`crates/gf2-algebra/src/packed/packed5.rs:184-187`, `:208-212`) — because the
 archived $\mathbb{F}_5$ decision chose exactly that candidate
-([`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md):369-371).
+([`../../active/b8206228-permanent-statistics/0de41c82/investigation.md`](../../active/b8206228-permanent-statistics/0de41c82/investigation.md):369-371).
 So the $\mathbb{F}_5$ prototype's internal state and the public representation
 agree in shape, and the $\mathbb{F}_5$ production design of §6 introduces no
 second representation at all. The boundary question is $\mathbb{F}_7$-only, and
@@ -1225,7 +1225,7 @@ the public encoding.
 
 **Status: applied with owner approval (2026-08-17).** `dev/archive/` is
 permanent repository content and amending it needs the owner's approval
-([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):174); the
+([`../../active/b8206228-permanent-statistics/0de41c82/plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md):174); the
 owner approved the drafted text verbatim and the note and pointer stubs of
 [`req08-amendment-draft.md`](req08-amendment-draft.md) are inserted in the
 archived file at the draft's stated insertion points. The amendment follows the

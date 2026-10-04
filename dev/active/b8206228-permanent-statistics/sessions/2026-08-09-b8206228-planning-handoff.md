@@ -9,11 +9,11 @@ Both containers carry applied `plan` brackets, claimed by `agent:claude`:
 
 | Container | Planning node P | Breakdown node B | Manifest state |
 |---|---|---|---|
-| `0de41c82` — wave-parallel GPU kernels (story) | `1b113b9d` (in_progress) | `a2b00bd6` | `dev/active/0de41c82/breakdown.json` + `plan.md`, 18 issues / 26 edges at last check |
+| `0de41c82` — wave-parallel GPU kernels (story) | `1b113b9d` (in_progress) | `a2b00bd6` | `dev/active/b8206228-permanent-statistics/0de41c82/breakdown.json` + `plan.md`, 18 issues / 26 edges at last check |
 | `b8206228` — permanent-statistics campaign (epic) | `912f1008` (in_progress) | `f3dc1bb1` | `dev/active/b8206228-permanent-statistics/breakdown.json` + `plan.md`, 34 issues / 48 edges at last check |
 
 Investigations are complete and linked to both P nodes
-(`dev/active/0de41c82/investigation.md`,
+(`dev/active/b8206228-permanent-statistics/0de41c82/investigation.md`,
 `dev/active/b8206228-permanent-statistics/investigation.md`).
 
 ## Gate state (the critical part)

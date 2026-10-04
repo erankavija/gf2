@@ -1,0 +1,1887 @@
+{
+ "action_counts": {
+  "already_archived": 83,
+  "block": 0,
+  "copy": 0,
+  "move": 83,
+  "pending_deletions": 1,
+  "retain": 7
+ },
+ "artifacts": [
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "outside-development-root"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "benchmarks/reference/sparse_smoke.cpp",
+   "version": "working-tree"
+  },
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "outside-development-root"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "crates/gf2-coding/examples/bench_sparse_csv_emitter.rs",
+   "version": "working-tree"
+  },
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "outside-development-root",
+    "outside-owner"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 14244,
+    "sha256": "77857f218b410d962a9efd8f2bf4000e0c13c5e624aca9306ab7a6cab31c7cf4"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-10.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 14,
+     "from_path": "dev/active/97bf0879-handoff-10.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-10.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-10.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 10029,
+    "sha256": "39c95f2da76d9ae071a4df8582d589ecdeb731717ee11c40c705870c8103e001"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-11.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 15,
+     "from_path": "dev/active/97bf0879-handoff-11.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-11.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-11.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 8704,
+    "sha256": "35a8f42e7c105c6f021172c788a5bf82aeed5492611d57adb755632c5dcad423"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-2.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 16,
+     "from_path": "dev/active/97bf0879-handoff-2.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-2.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-2.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 19002,
+    "sha256": "f6f8c201dce3acde010c543886536c88c5abb4857935aab4710762c730e74b2b"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-3.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 17,
+     "from_path": "dev/active/97bf0879-handoff-3.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-3.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-3.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 10943,
+    "sha256": "a9dd7961177137285e817e94479ce0570af617e8c050df63942fec07f87bc933"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-4.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 18,
+     "from_path": "dev/active/97bf0879-handoff-4.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-4.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-4.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12860,
+    "sha256": "87baebb28218d24fb74d82be5971b9038ff48cfd7eac49e684833a7131cfc8dc"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-5.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 19,
+     "from_path": "dev/active/97bf0879-handoff-5.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-5.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-5.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 14242,
+    "sha256": "d93af9916b0c59520a139281470fbc3d42f17fc12f6309ffb8c9aba9feb719dd"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-6.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 20,
+     "from_path": "dev/active/97bf0879-handoff-6.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-6.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-6.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 11525,
+    "sha256": "286cf36ebefe219972d521ace01adcc9dc7cc5cc59033ddb6a73d37b6e698d79"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-7.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 21,
+     "from_path": "dev/active/97bf0879-handoff-7.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-7.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-7.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12978,
+    "sha256": "177bf963d4fb54e2b9411487f639ae062119e7225f42f8d9c09dceea754bf6d3"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-8.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 22,
+     "from_path": "dev/active/97bf0879-handoff-8.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-8.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-8.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 14423,
+    "sha256": "b26f5cc4a28b9d267d9afdd778a2a3896cfb04860348d1a66d21c9d40d9fa9e8"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-9.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 23,
+     "from_path": "dev/active/97bf0879-handoff-9.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-9.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff-9.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 14879,
+    "sha256": "76b66ae53b645db8bc941f299760ef858d46fcc315d9b62aea555bbc208f4a8a"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 24,
+     "from_path": "dev/active/97bf0879-handoff.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff.md"
+    }
+   ],
+   "source": "dev/active/97bf0879-handoff.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 50872,
+    "sha256": "2ad154ea6f21e551d899646f537aaeb35b64f9793bf064f0e5c71b8f78d113e5"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-progress.json",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 25,
+     "from_path": "dev/active/97bf0879-progress.json",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-progress.json"
+    }
+   ],
+   "source": "dev/active/97bf0879-progress.json",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 4013,
+    "sha256": "036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12035,
+    "sha256": "9d6269df0bf2c1cb5d7aefa275ce5913ff412ad03625d9f1cac8f600899555e8"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/active/d1dd266c/d1dd266c-minpoly-sota-plan.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 2,
+     "from_path": "dev/active/d1dd266c/d1dd266c-minpoly-sota-plan.md",
+     "issue": "d1dd266c-ae4a-4d9f-843c-e138618677f3",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/d1dd266c/d1dd266c-minpoly-sota-plan.md"
+    }
+   ],
+   "source": "dev/active/d1dd266c/d1dd266c-minpoly-sota-plan.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 6327,
+    "sha256": "35b331d8b77fe514a30e836ef3a142c2e5345383ddaf540b0129afd1b9de3ec1"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-host.txt",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-host.txt",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 13354,
+    "sha256": "0a17b6eee99267fab6c3aa30386015ef86af1ed947d205e581bdd78fac27a63e"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 13858,
+    "sha256": "dc6716228e7b22f02ad25464d28e0996991e8e86705e1973707c61bfdc7cb80d"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md",
+     "issue": "111a3967-dfa8-4b9a-8b1d-880dfc3c2d48",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md"
+    }
+   ],
+   "source": "dev/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 16847,
+    "sha256": "59e860e297705230a28c8baf6ab8d4c8abc68e28d5ce2d9d7871feb73f0a0254"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-gf2.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-04-26-gf2.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12060,
+    "sha256": "ef6488dc80414b41246a4cad24216ac48a6f1e68effd95dc7eef43a2788904a5"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-reference.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-04-26-reference.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 7461,
+    "sha256": "227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-uncompetitiveness-profile.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 69909,
+    "sha256": "f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 4,
+     "from_path": "dev/bench_results/2026-04-26.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-04-26.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 18722,
+    "sha256": "f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-27-asm-audit.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-04-27-asm-audit.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 7570,
+    "sha256": "c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 2886,
+    "sha256": "6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 997,
+    "sha256": "79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-7c954fb5-criterion.txt",
+   "evidence": [],
+   "pending_deletions": [
+    "dev/bench_results/2026-04-29-7c954fb5-criterion.txt"
+   ],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-04-29-7c954fb5-criterion.txt",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 4868,
+    "sha256": "c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 3,
+     "from_path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 5011,
+    "sha256": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-strassen-matmul-crossover.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-strassen-matmul-crossover.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 18246,
+    "sha256": "4206dc4ed755433923f087223479cbace8713201b398f51789ed03570e5c128b"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 18464,
+    "sha256": "c097e27fdc25c7f755dbdb395ed1650b51215d405826f49ad8c556dfabf5d124"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md",
+     "issue": "974a85bd-cb5d-48d2-94a4-7a15364ea2a0",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 36877,
+    "sha256": "77d6d4e5d89109cd93b91e1882545f0815a095e0cd405d9e780cb340193643f1"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
+     "issue": "72ab6d0e-60ae-4148-8168-bbfd2b238546",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 3627,
+    "sha256": "3e06df7bbad20129fd9db3315d469c538bd760e361b85dcba36c1ee07b91d301"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse-reference.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
+     "issue": "47698404-edd8-4035-a4a1-9820001fc5d7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse-reference.csv"
+    },
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse-reference.csv"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 4241,
+    "sha256": "f15d0466e199e2fca881756498465859fcd8d63c0a0bd048c72773ef01c22844"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-04-47698404-sparse.csv",
+     "issue": "47698404-edd8-4035-a4a1-9820001fc5d7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse.csv"
+    },
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/2026-05-04-47698404-sparse.csv",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse.csv"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-47698404-sparse.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 27832,
+    "sha256": "76f2b0bc034ed20edbdf05cfa965a9ea38464898321c460392b138bccb2a4c0f"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
+     "issue": "66190ccd-60aa-4675-bb59-153f1834b92e",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md"
+    },
+    {
+     "document_index": 4,
+     "from_path": "dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
+     "issue": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 2829,
+    "sha256": "2973c26ba73583f161da8372397a0b031e076055cdb41942ee11ea529b2c3955"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-reference.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv",
+     "issue": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-reference.csv"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 2157,
+    "sha256": "1b4b05da3143c731f47a1d6bd1860545934ebd21ee41821087736d8d04bb9c3d"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-minpoly-reference.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 3,
+     "from_path": "dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv",
+     "issue": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-minpoly-reference.csv"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "pinned-historical"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md",
+   "version": "11be30fe6f32d4260ee8695d37490cc4dd2c0816"
+  },
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "pinned-historical"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md",
+   "version": "4cde8a8f93c96e699b64fb0d170f073749fb4ec3"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 25015,
+    "sha256": "07ab1cbdcb68803b10e65f06eb91428a0007a00e5fc62cf9edddadab0cd733cf"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
+     "issue": "4eb105f7-ea4f-4ec9-8003-df75ef48ce15",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md"
+    },
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
+     "issue": "72ab6d0e-60ae-4148-8168-bbfd2b238546",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 25545,
+    "sha256": "34cf5b8c144298b86122dd082da0abcefe61622a35b277a254a2b3f520b464f8"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "5a3dbd5b-3827-4052-9d50-8033773aa867",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "6c926de0-0e06-4ac5-8e9e-a394f84fc99a",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "70766cb1-2d79-4194-becd-7e17984310d0",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "b87362a3-a021-4508-a544-0228ff5c8665",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "d1dd266c-ae4a-4d9f-843c-e138618677f3",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+     "issue": "d1dd266c-ae4a-4d9f-843c-e138618677f3",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 18710,
+    "sha256": "76b02ad7ac392295307d8dc2fb81060a089e151cd67a284b05f36a069f2dbc96"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md",
+     "issue": "2c7548ae-c35b-4a78-b0dc-8aacfd550e93",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md",
+     "issue": "d82c00a3-9142-494f-900f-35b11fac7230",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-07-d82c00a3-gf2m-parity-evidence.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 81907,
+    "sha256": "81bd151c9ab4d4df37ef8a6c754bbf6d55db55cb90ea7f630def73ae7bed4112"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
+     "issue": "01ae4c20-aae4-4940-9889-ea7070bd4377",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
+     "issue": "2cfc4372-e741-4bec-aea8-b759024f718b",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+    },
+    {
+     "document_index": 8,
+     "from_path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 13198,
+    "sha256": "523968b2194c6cfe0d97edc831309cf590528590eaad72e69706151772fc0633"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md",
+     "issue": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md"
+    },
+    {
+     "document_index": 12,
+     "from_path": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 35702,
+    "sha256": "afdd9456a7fe62ed33eff7a0e530b9743a2d39ee4980f746f931dae04afc0633"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+     "issue": "01ae4c20-aae4-4940-9889-ea7070bd4377",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+    },
+    {
+     "document_index": 9,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+     "issue": "dece4e73-eafb-4519-b68a-e6b3f6580487",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 50211,
+    "sha256": "99d6594a89e40ad1a8c40d0317f1db9a40d608f9f99c8f37daefa3f6babe67e4"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+     "issue": "01ae4c20-aae4-4940-9889-ea7070bd4377",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+    },
+    {
+     "document_index": 10,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+    },
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+     "issue": "dece4e73-eafb-4519-b68a-e6b3f6580487",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 14374,
+    "sha256": "7377f1b033f8b87c85cbe555ccf16de993338eb3a648283cfdeff69115229b21"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 11,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md"
+    },
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
+     "issue": "dece4e73-eafb-4519-b68a-e6b3f6580487",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12499,
+    "sha256": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/base.css",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/base.css",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 48684,
+    "sha256": "3eb8525712f8825b97a80f0d3b4853ec4741cc10b5e9eb0715faf83ef3af9f18"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 3,
+     "from_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
+     "issue": "01ae4c20-aae4-4940-9889-ea7070bd4377",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
+    },
+    {
+     "document_index": 13,
+     "from_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
+    },
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
+     "issue": "f00fd873-bd25-45c6-ac8e-7a0ab2a2fe68",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 1393,
+    "sha256": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/themes/rust.css",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/themes/rust.css",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 13279,
+    "sha256": "65928420ca58988d01c2df4b7cb16d3463978245a80e1b0f691fb32838d156c8"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-pending-cell-measurement.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 28,
+     "from_path": "dev/bench_results/2026-05-08-pending-cell-measurement.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-pending-cell-measurement.md"
+    }
+   ],
+   "source": "dev/bench_results/2026-05-08-pending-cell-measurement.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 7404,
+    "sha256": "f656f95454d54a862ced0f826556822665f85a6223b135382c4bcd6769291b02"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md",
+     "issue": "2c52bcf6-eeff-485d-b4d2-2bcc01078ea3",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md"
+    }
+   ],
+   "source": "dev/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 3817,
+    "sha256": "561b7d50c480b40d4632bda2990ae706bb0006f7f105b222b3d4053e2731323b"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md",
+     "issue": "2cfc4372-e741-4bec-aea8-b759024f718b",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md"
+    }
+   ],
+   "source": "dev/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 4521,
+    "sha256": "2374de307efe139c9a2942e900c703fe9abc7b7fdff7c93fc43350be392d371d"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md",
+     "issue": "366dbbcd-4485-4865-bcc4-42c0838eb822",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md"
+    }
+   ],
+   "source": "dev/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 4792,
+    "sha256": "b44cf80c43e96b50f3799fa37b8366d7058ce6f29baba9db057078e9b2681152"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md",
+     "issue": "380e041a-7931-4bfc-8f95-982f103c51bf",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md"
+    }
+   ],
+   "source": "dev/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 4241,
+    "sha256": "f15d0466e199e2fca881756498465859fcd8d63c0a0bd048c72773ef01c22844"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-extended.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 4,
+     "from_path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-extended.csv",
+     "issue": "47698404-edd8-4035-a4a1-9820001fc5d7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-extended.csv"
+    }
+   ],
+   "source": "dev/bench_results/47698404/2026-05-04-47698404-sparse-extended.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 1927,
+    "sha256": "f1aba8fe7663ff93622199b09f2d6c967fbf91acd3e5f1e8ae54e17e3eaafce9"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-host.txt",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 5,
+     "from_path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-host.txt",
+     "issue": "47698404-edd8-4035-a4a1-9820001fc5d7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-host.txt"
+    }
+   ],
+   "source": "dev/bench_results/47698404/2026-05-04-47698404-sparse-host.txt",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 52555,
+    "sha256": "b24b707724b1acc6c8e7f171a64e8e1234c66a429062f3d4e1964488baec2d2a"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-scorecard.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 6,
+     "from_path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-scorecard.md",
+     "issue": "47698404-edd8-4035-a4a1-9820001fc5d7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-scorecard.md"
+    }
+   ],
+   "source": "dev/bench_results/47698404/2026-05-04-47698404-sparse-scorecard.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 8839,
+    "sha256": "64b9fb74249411252f718c6ac74fdecce1bc7071a9df99358ba38bed0f88c041"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-tables.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 7,
+     "from_path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-tables.md",
+     "issue": "47698404-edd8-4035-a4a1-9820001fc5d7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-tables.md"
+    }
+   ],
+   "source": "dev/bench_results/47698404/2026-05-04-47698404-sparse-tables.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 14145,
+    "sha256": "7f761a32b01b2a7793c311d20566c6e12baa0b4dfc07d5ab04b191f51dd4fd2b"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md",
+     "issue": "4a59d1f9-e85b-4b88-86c6-727419b0a8a7",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md"
+    }
+   ],
+   "source": "dev/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 19723,
+    "sha256": "6a6fdaee9f098f5d6e4f8f3e2a73b022dd073a4b9489334c4801942ba6a7b2c7"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 4,
+     "from_path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md"
+    }
+   ],
+   "source": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 710,
+    "sha256": "c64c4740deae886c53076b2ad6fd817600a1177b09e998c60d60a0cf7fbbcd55"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 5,
+     "from_path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv"
+    }
+   ],
+   "source": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 710,
+    "sha256": "b3977699d9a1bc26e235adfe675e20736f65d2033d8c5613d8ded68450f075c3"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 6,
+     "from_path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv"
+    }
+   ],
+   "source": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 21953,
+    "sha256": "bc5f5a6af1872ac8361f8f0e56723bfc01a5e6e4ead73fb2a94a13f643bf05de"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 7,
+     "from_path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md"
+    }
+   ],
+   "source": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 1098,
+    "sha256": "d16bc732d7583a38d7d5edef71bcd560f4ffcb97e4262bf98e5777674b557b32"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 8,
+     "from_path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv"
+    }
+   ],
+   "source": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12474,
+    "sha256": "ca5699ea6d13d80968a1a8459386431e4c5709eef06b635732ab76df5b4dfe24"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md",
+     "issue": "73ec5da3-96a0-4282-b66f-5fc305f54ec5",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md"
+    }
+   ],
+   "source": "dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 17613,
+    "sha256": "0d9cea333439a7cb31333d094c176dfdb5a4ffa3bdd76a592c7843216fd39a7d"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/7e41400f/2026-05-07-7e41400f-invert-solve-det.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/7e41400f/2026-05-07-7e41400f-invert-solve-det.md",
+     "issue": "7e41400f-187f-4d28-b316-49cbb127189d",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/7e41400f/2026-05-07-7e41400f-invert-solve-det.md"
+    }
+   ],
+   "source": "dev/bench_results/7e41400f/2026-05-07-7e41400f-invert-solve-det.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 5931,
+    "sha256": "71642ce223cd676697c10cdcd70acdb29d70869242dbbf79e053fe18dbd9fbce"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/8e305c21/2026-05-06-8e305c21-production-m4rm.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/8e305c21/2026-05-06-8e305c21-production-m4rm.md",
+     "issue": "8e305c21-1a25-42af-a208-3126d3eb6206",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/8e305c21/2026-05-06-8e305c21-production-m4rm.md"
+    }
+   ],
+   "source": "dev/bench_results/8e305c21/2026-05-06-8e305c21-production-m4rm.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 1029,
+    "sha256": "86eaeabb77356d08579fc766828ccffec5b069d19c38fe8789395a61b21d59a4"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-gf2-rows.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-gf2-rows.csv",
+     "issue": "a1172cea-cf5b-4527-9343-d81872382859",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-gf2-rows.csv"
+    }
+   ],
+   "source": "dev/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-gf2-rows.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 20180,
+    "sha256": "14ccc45585640d500ca841c9b674094fba038799e93d0ae6f6d948132e877ba7"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-scorecard.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-scorecard.md",
+     "issue": "a1172cea-cf5b-4527-9343-d81872382859",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-scorecard.md"
+    }
+   ],
+   "source": "dev/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-scorecard.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 317,
+    "sha256": "d4781447cf5ad8192d57c4633e24b612dab4eb82ec692f9d3a6914fc9e4b432b"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-ntl-gf2pow32-large.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/a1172cea/2026-05-06-a1172cea-ntl-gf2pow32-large.csv",
+     "issue": "a1172cea-cf5b-4527-9343-d81872382859",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-ntl-gf2pow32-large.csv"
+    }
+   ],
+   "source": "dev/bench_results/a1172cea/2026-05-06-a1172cea-ntl-gf2pow32-large.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 6589,
+    "sha256": "f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/c7791a20/2026-04-26-profile-release-delta.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/bench_results/c7791a20/2026-04-26-profile-release-delta.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 13985,
+    "sha256": "ff36df541cdb5a8bd9169067d2cc30153ebb784926c6b2467765e6b246f6d414"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md",
+     "issue": "d1a5fea8-6277-4ce4-b433-3d32d92d509e",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md"
+    }
+   ],
+   "source": "dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 3420,
+    "sha256": "a4d96149a4b3ad3630cd674cd27f97221d487581b351ab4f1e952bbd477de583"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-gf2m-panelized.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/bench_results/e24f7839/2026-05-06-e24f7839-gf2m-panelized.csv",
+     "issue": "e24f7839-5460-4b5c-ac4d-9f656eeefb54",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-gf2m-panelized.csv"
+    }
+   ],
+   "source": "dev/bench_results/e24f7839/2026-05-06-e24f7839-gf2m-panelized.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 935,
+    "sha256": "071faf8b23d2258b60a135a06d2c1b4d1173739ccc3c33fed11bd5942be3fd6f"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-gf2pow32-panelized.csv",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 1,
+     "from_path": "dev/bench_results/e24f7839/2026-05-06-e24f7839-gf2pow32-panelized.csv",
+     "issue": "e24f7839-5460-4b5c-ac4d-9f656eeefb54",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-gf2pow32-panelized.csv"
+    }
+   ],
+   "source": "dev/bench_results/e24f7839/2026-05-06-e24f7839-gf2pow32-panelized.csv",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 8990,
+    "sha256": "fb0de34b8ef7880bfb37b3d12683da53bc9e61e637cd0122fce9c1ff949d41e6"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-panelized-gf2m-gemm.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 2,
+     "from_path": "dev/bench_results/e24f7839/2026-05-06-e24f7839-panelized-gf2m-gemm.md",
+     "issue": "e24f7839-5460-4b5c-ac4d-9f656eeefb54",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-panelized-gf2m-gemm.md"
+    }
+   ],
+   "source": "dev/bench_results/e24f7839/2026-05-06-e24f7839-panelized-gf2m-gemm.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 71159,
+    "sha256": "bc56448c1567b50e8430a73c34a2a7f52b902889c3f5c42126b8182367b2a8b1"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/talk.html",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 27,
+     "from_path": "dev/bench_results/talk.html",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/talk.html"
+    }
+   ],
+   "source": "dev/bench_results/talk.html",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 16543,
+    "sha256": "02d2ba8801e0c4627cc790286eace36c243a7822ffeee591b9e0d9423d55c65e"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md",
+     "issue": "96fde7c7-e05b-4a2a-90a6-99cece36db7c",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md"
+    }
+   ],
+   "source": "dev/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 9601,
+    "sha256": "0f8d87559f377595fb2afd98aeb26156662362afc5a1939936d05dbaa4e7e57e"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/d1dd266c/d1dd266c-minpoly-performance-gaps.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 3,
+     "from_path": "dev/plans/d1dd266c/d1dd266c-minpoly-performance-gaps.md",
+     "issue": "d1dd266c-ae4a-4d9f-843c-e138618677f3",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/d1dd266c/d1dd266c-minpoly-performance-gaps.md"
+    }
+   ],
+   "source": "dev/plans/d1dd266c/d1dd266c-minpoly-performance-gaps.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 13439,
+    "sha256": "69d4c46d638e7fbbf0095811ac220b5959889c3ceb7a6dfcbf4342b1b39eb58f"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/fb271c41/gf2m_avx512_gfni_evaluation.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/plans/fb271c41/gf2m_avx512_gfni_evaluation.md",
+     "issue": "fb271c41-d797-455d-916b-0d698e092d73",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/fb271c41/gf2m_avx512_gfni_evaluation.md"
+    }
+   ],
+   "source": "dev/plans/fb271c41/gf2m_avx512_gfni_evaluation.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 26783,
+    "sha256": "5ae54dcb7b8609838c2324f83fb11b0d53debbd71f22c2f5e872ec9806b94ad0"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/gf2m_reference_lane_selection.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/plans/gf2m_reference_lane_selection.md",
+     "issue": "2c7548ae-c35b-4a78-b0dc-8aacfd550e93",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/gf2m_reference_lane_selection.md"
+    }
+   ],
+   "source": "dev/plans/gf2m_reference_lane_selection.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 7089,
+    "sha256": "d40721fae7e4921592a139a7ca8b725b616f649a15e75c80eee9b663a450f512"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/project_lead_skill_improvements.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 26,
+     "from_path": "dev/plans/project_lead_skill_improvements.md",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/project_lead_skill_improvements.md"
+    }
+   ],
+   "source": "dev/plans/project_lead_skill_improvements.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "pinned-historical"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/plans/small_prime_kernel_strategy.md",
+   "version": "3f62600971b058f4c87aa728d8430986a5bcc75a"
+  },
+  {
+   "action": "retain",
+   "already_archived": false,
+   "content_identity": null,
+   "destination": null,
+   "evidence": [
+    "pinned-historical"
+   ],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/plans/sota_target_matrix.md",
+   "version": "47e452544b040f0d61e800a4ad9f3c94f0e8022f"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 37204,
+    "sha256": "8b1f94dd9718b9cbc18619558365286a32debf71431c66a512d8be72e77074dd"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/plans/sparse_benchmark_corpus.md",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md"
+    }
+   ],
+   "source": "dev/plans/sparse_benchmark_corpus.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 18776,
+    "sha256": "e0088fa16c2aeca4ebd8b07426575953ea05137819b7bd73f3e40ad475506e50"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_cpu_vs_gpu_handoff.md",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 0,
+     "from_path": "dev/plans/sparse_cpu_vs_gpu_handoff.md",
+     "issue": "3643923d-cb72-4cdd-9be2-20a66c0d4c43",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_cpu_vs_gpu_handoff.md"
+    },
+    {
+     "document_index": 3,
+     "from_path": "dev/plans/sparse_cpu_vs_gpu_handoff.md",
+     "issue": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_cpu_vs_gpu_handoff.md"
+    }
+   ],
+   "source": "dev/plans/sparse_cpu_vs_gpu_handoff.md",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 12499,
+    "sha256": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/base.css",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/base.css",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 15398,
+    "sha256": "fdf00c020fba5ea87629b854faed3adc9e9a4e98b151346f4f5989410341e399"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [
+    {
+     "document_index": 29,
+     "from_path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html",
+     "issue": "97bf0879-357e-4151-bdeb-781987cd0902",
+     "to_path": "dev/archive/97bf0879-gf2-core-sota-performance/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html"
+    }
+   ],
+   "source": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html",
+   "version": "working-tree"
+  },
+  {
+   "action": "move",
+   "already_archived": true,
+   "content_identity": {
+    "byte_size": 1393,
+    "sha256": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe"
+   },
+   "destination": "dev/archive/97bf0879-gf2-core-sota-performance/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/themes/rust.css",
+   "evidence": [],
+   "pending_deletions": [],
+   "reference_changes": [],
+   "source": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/themes/rust.css",
+   "version": "working-tree"
+  }
+ ],
+ "blockers": [],
+ "destination_root": "dev/archive/97bf0879-gf2-core-sota-performance",
+ "eligible": true,
+ "target": "97bf0879-357e-4151-bdeb-781987cd0902"
+}
