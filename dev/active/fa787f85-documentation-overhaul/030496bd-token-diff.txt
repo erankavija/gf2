@@ -1,0 +1,42 @@
+13dfe1a5 | 445b6169c | crates/gf2-coding/tests/ldpc_validation.rs
+  @ line 482
+  - { if
+  + & &
+  @ line 484
+  - }
+eba21481 | 938ff374c | crates/gf2-core/tests/sparse.rs
+  @ line 196
+  - ,
+  @ line 214
+  - ,
+eba21481 | 938ff374c | crates/gf2-core/tests/sparse_dual.rs
+  @ line 148
+  - ,
+72768e37 | 105fff2f0 | crates/gf2-sim/tests/campaign_byte_identity.rs
+  @ line 114
+  - ,
+13dfe1a5 | 680938c07 | crates/gf2-coding/examples/llr_operations.rs
+  @ line 95
+  - ,
+3aef9e33 | f525ad59e | crates/gf2-algebra/src/packed/bipedal3.rs
+  @ line 346
+  - ,
+  @ line 364
+  - ,
+  @ line 382
+  - ,
+93aed46a | fe3a4fb88 | crates/gf2-kernels-hip/build.rs
+  @ line 173
+  - "// Auto-generated build probe for gf2-kernels-hip multi-arch dispatch.\n\
+                // Real kernels (f6004add / a930be7f / d3f1616a) land their *.cpp here\n\
+                // next wave; this no-op keeps the per-arch .co compile path green.\n\
+                #include <hip/hip_runtime.h>\n\
+                __global__ void gf2_hip_probe(int* out) { if (out) *out = 0; }\n"
+  + "// Auto-generated build probe for gf2-kernels-hip multi-arch dispatch.\n\
+                // No-op device kernel that gives an arch directory without *.cpp one .co blob.\n\
+                #include <hip/hip_runtime.h>\n\
+                __global__ void gf2_hip_probe(int* out) { if (out) *out = 0; }\n"
+9f47bb94 | 42dc2f197 | crates/gf2-kernels-simd/src/x86/asm/_lto_opacity_callsites.asm.txt | not Rust source
+9f47bb94 | 42dc2f197 | crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt | not Rust source
+9f47bb94 | 42dc2f197 | crates/gf2-kernels-simd/src/x86/asm/transpose.asm.txt | not Rust source
+compared: 135 commits, 952 Rust file versions
