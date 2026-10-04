@@ -515,7 +515,7 @@ impl<const P: u64> FiniteField for Fp<P> {
         }
     }
 
-    /// Theorem-4 per-cell operand bound `P - 1`. See
+    /// Theorem-4 (`@/citation/DumasPernet2012` §1.4) per-cell operand bound `P - 1`. See
     /// [`FiniteField::theorem_4_operand_bound`] for the semantics.
     #[inline]
     fn theorem_4_operand_bound() -> u128 {

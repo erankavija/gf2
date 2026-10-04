@@ -149,7 +149,7 @@ fn permanent_permutation_sum<F: FiniteField>(matrix: &[F], k: usize) -> F {
 }
 
 /// Convert Unix epoch seconds to a `(year, month, day)` UTC tuple via the
-/// Howard Hinnant civil-from-days algorithm; negative `secs` give pre-1970
+/// `civil_from_days` of `@/citation/Hinnant2021`; negative `secs` give pre-1970
 /// dates.
 ///
 /// Inlined to keep `chrono`/`time` out of the crate's dependencies.

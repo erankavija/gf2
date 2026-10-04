@@ -81,7 +81,7 @@ pub struct RicianConfig {
 }
 
 impl RicianConfig {
-    /// Preset K = 5, N_c = 128, t = 4: a 1024-bit frame.
+    /// `@/citation/Yuan2025` channel K = 5, N_c = 128, t = 4: a 1024-bit frame.
     pub fn fig8() -> Self {
         RicianConfig {
             k_factor: 5.0,
@@ -90,7 +90,7 @@ impl RicianConfig {
         }
     }
 
-    /// Preset K = 8, N_c = 256, t = 2: a 1024-bit frame.
+    /// `@/citation/Yuan2025` channel K = 8, N_c = 256, t = 2: a 1024-bit frame.
     pub fn fig9() -> Self {
         RicianConfig {
             k_factor: 8.0,
@@ -99,7 +99,7 @@ impl RicianConfig {
         }
     }
 
-    /// Preset K = 6, N_c = 256, t = 8: a 4096-bit frame.
+    /// `@/citation/Yuan2025` channel K = 6, N_c = 256, t = 8: a 4096-bit frame.
     pub fn fig10() -> Self {
         RicianConfig {
             k_factor: 6.0,

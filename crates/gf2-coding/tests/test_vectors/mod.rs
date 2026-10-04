@@ -16,7 +16,7 @@ pub fn test_vectors_available() -> bool {
     test_vectors_path().join("VV001-CR35_CSP").exists()
 }
 
-/// Returns from the calling test when the DVB test vectors are absent.
+/// Returns from the calling test when the DVB test vectors (`@/citation/DvbVerification2010`) are absent.
 #[macro_export]
 macro_rules! require_test_vectors {
     () => {
