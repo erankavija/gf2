@@ -1,0 +1,394 @@
+{
+ "babcf05e": {
+  "action_counts": {
+   "already_archived": 25,
+   "block": 0,
+   "copy": 0,
+   "move": 26,
+   "pending_deletions": 7,
+   "retain": 1
+  },
+  "artifacts": [
+   {
+    "action": "retain",
+    "already_archived": false,
+    "deletes": [],
+    "destination": null,
+    "sha256": null,
+    "source": "crates/gf2-core/src/sparse.asm.txt"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md",
+    "sha256": "e8b5bd7a807d3e6ffaf6e13d84efddc828905a56b349506c57cff5eb2b649221",
+    "source": "dev/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-2.md",
+    "sha256": "6094638c28d0a68092b527c0220f4b4b163b0b0b09ccd13cbacabb849e446286",
+    "source": "dev/active/babcf05e-handoff-2.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-3.md",
+    "sha256": "7eccca424e6ce8667fc0bb0d68c10935ec5c5627e7e79b78f391695f20b98e07",
+    "source": "dev/active/babcf05e-handoff-3.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-4.md",
+    "sha256": "64469e447d6577e9f63be708178471423e13540ad80ed4a642d8d400d292e46b",
+    "source": "dev/active/babcf05e-handoff-4.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff-5.md",
+    "sha256": "036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6",
+    "source": "dev/active/babcf05e-handoff-5.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-handoff.md",
+    "sha256": "0514710465d845341b95e6cbbdc2d7b911009dec0bc16aacae9880dbaee21635",
+    "source": "dev/active/babcf05e-handoff.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/babcf05e-progress.json",
+    "sha256": "f52ed9f2c07ae9b0e0f3e900d5eed3a373272d25748253c049e7b5c3eecc41c6",
+    "source": "dev/active/babcf05e-progress.json"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-26-uncompetitiveness-profile.md",
+    "sha256": "227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169",
+    "source": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-26.md",
+    "sha256": "f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9",
+    "source": "dev/bench_results/2026-04-26.md"
+   },
+   {
+    "action": "move",
+    "already_archived": false,
+    "deletes": [
+     "dev/bench_results/2026-04-27-asm-audit.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-27-asm-audit.md",
+    "sha256": "f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e",
+    "source": "dev/bench_results/2026-04-27-asm-audit.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+    "sha256": "c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242",
+    "source": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
+    "sha256": "6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295",
+    "source": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+    "sha256": "c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97",
+    "source": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-soa-rayon-scaling.md",
+    "sha256": "33e74d5bbe7f75253d30e9a73252f839b8ea236c23580850d48fdedbf168c29c",
+    "source": "dev/bench_results/2026-04-29-soa-rayon-scaling.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/bench_results/2026-04-29-strassen-matmul-crossover.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-strassen-matmul-crossover.md",
+    "sha256": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
+    "source": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [
+     "dev/bench_results/c7791a20/2026-04-26-profile-release-delta.md"
+    ],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/c7791a20/2026-04-26-profile-release-delta.md",
+    "sha256": "f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372",
+    "source": "dev/bench_results/c7791a20/2026-04-26-profile-release-delta.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/cbf576d1/cbf576d1-rcm-sparse-matvec.md",
+    "sha256": "9b918076164b66bb03cc86b8b8cbd17c04c86d2c75c7ba3ce8de6e2da2c44eaa",
+    "source": "dev/bench_results/cbf576d1/cbf576d1-rcm-sparse-matvec.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/1f899836-preflight-abort.txt",
+    "sha256": "de9f75d484a2799135ade602e0bbd94c933cf680aace98b4bb509d09995cab30",
+    "source": "dev/benchmarks/1f899836-preflight-abort.txt"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/33d3f5b7-criterion.txt",
+    "sha256": "5ced4c6afde940245e55621056084235428e49dd15643b3890c3b16482b2cf32",
+    "source": "dev/benchmarks/33d3f5b7-criterion.txt"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/33d3f5b7-perf-stat.txt",
+    "sha256": "fda6b58296334d49b094320bc67676ca72bb8caba17b80524b6a128dfb959dc4",
+    "source": "dev/benchmarks/33d3f5b7-perf-stat.txt"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md",
+    "sha256": "368303b3cf7b9d479b9b2cc3d2f48515e336688965cf51ba310804d31f1dae3d",
+    "source": "dev/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/f1a896f0-criterion.txt",
+    "sha256": "5b7d7fdcf10bee5c6be9b2034424e3ea6e8c083cc6bb2469e7f84fcb41698723",
+    "source": "dev/benchmarks/f1a896f0-criterion.txt"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/f1a896f0-perf-stat.txt",
+    "sha256": "bbc46992bc97646b029ecc3cb9cce045fc53c3907cc0b03b6bbe4aefcdb9f20f",
+    "source": "dev/benchmarks/f1a896f0-perf-stat.txt"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md",
+    "sha256": "9c57d567df1be391a01872ee45b8d458c919da211af0aa031965781314d82005",
+    "source": "dev/plans/gf2_core_ppc_spiral.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/presentations/babcf05e-ppc-spiral/talk.html",
+    "sha256": "fdf00c020fba5ea87629b854faed3adc9e9a4e98b151346f4f5989410341e399",
+    "source": "dev/presentations/babcf05e-ppc-spiral/talk.html"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/babcf05e-gf2-core-ppc-spiral/presentations/babcf05e-ppc-spiral/themes/gruvbox.css",
+    "sha256": "b835feba6c82b645f3a4eb98bfc49622501b1b8f4b1a0d28bf4241bb5b147401",
+    "source": "dev/presentations/babcf05e-ppc-spiral/themes/gruvbox.css"
+   }
+  ],
+  "blockers": [],
+  "destination_root": "dev/archive/babcf05e-gf2-core-ppc-spiral",
+  "eligible": true,
+  "target": "babcf05e-29e8-4c81-ba77-843ec6409cfa"
+ },
+ "f9717e7e": {
+  "action_counts": {
+   "already_archived": 15,
+   "block": 0,
+   "copy": 1,
+   "move": 15,
+   "pending_deletions": 1,
+   "retain": 0
+  },
+  "artifacts": [
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/active/43fb19e2/43fb19e2-nr-kernel-feasibility.md",
+    "sha256": "e29e4ee1c35384ba77319dce5d1df9f099ffb457f756358f64d97c9b24bb28a6",
+    "source": "dev/active/43fb19e2/43fb19e2-nr-kernel-feasibility.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md",
+    "sha256": "a290d46e8ee3e5c81ae363ebcdffe8b31f62b5cc5eb4e7bacd3290c99d72cf7a",
+    "source": "dev/active/ec530af9/ec530af9-pipeline-design.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/active/f9717e7e-project-plan.md",
+    "sha256": "8217f982de3a501441c320c1ede7b86e8494eca353c8325e14f7ce66962b02de",
+    "source": "dev/active/f9717e7e-project-plan.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/5g-nr-realtime.md",
+    "sha256": "e7f91ba1060e714044696847145c8fcce0ade4f40beb452a78ba7c29b50208ad",
+    "source": "dev/benchmarks/gf2-sim/5g-nr-realtime.md"
+   },
+   {
+    "action": "move",
+    "already_archived": false,
+    "deletes": [
+     "dev/benchmarks/gf2-sim/README.md"
+    ],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/README.md",
+    "sha256": "a47c8fa839d10003942a4f3c76954adb0cba94a477ff1ffd33c847539bf3e9fd",
+    "source": "dev/benchmarks/gf2-sim/README.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/baseline-single-thread.md",
+    "sha256": "7a52ac9a9756cc4e19e4807f8ff9c3201041dba8c3c98c399876bb0d0f4ce1ca",
+    "source": "dev/benchmarks/gf2-sim/baseline-single-thread.md"
+   },
+   {
+    "action": "copy",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/comparison/README.md",
+    "sha256": "212a86b01a9222d9a4c78e63c6ad063fe2d31a209920ac3117f4e8df1f0eebd6",
+    "source": "dev/benchmarks/gf2-sim/comparison/README.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/comparison/dvb-t2-r12-16qam-vs-aff3ct.csv",
+    "sha256": "c15f10f7bed1564dd0de8aa69d6f6b3c5fa754f11b4ff3a210fdff5a76d5ffc4",
+    "source": "dev/benchmarks/gf2-sim/comparison/dvb-t2-r12-16qam-vs-aff3ct.csv"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/comparison/dvb-t2-r12-vs-aff3ct.png",
+    "sha256": "53c0e53fb6e3de9d8428343ff36deb7cc75d8af6ee225e349c5319c1cae7ed90",
+    "source": "dev/benchmarks/gf2-sim/comparison/dvb-t2-r12-vs-aff3ct.png"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/comparison/nr-5g-bg1-r12-vs-aff3ct.csv",
+    "sha256": "4d297ae6d3860812a37df72f027602de01d724d854833af3ee2a370a79ac5d6f",
+    "source": "dev/benchmarks/gf2-sim/comparison/nr-5g-bg1-r12-vs-aff3ct.csv"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/comparison/nr-5g-bg1-r12-vs-aff3ct.png",
+    "sha256": "ecf4ca1e20a00ba4081736f1e9db4a0bb74f496c4d0182a8f022fb5650aeb132",
+    "source": "dev/benchmarks/gf2-sim/comparison/nr-5g-bg1-r12-vs-aff3ct.png"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/cpu-foundation-receipts.md",
+    "sha256": "d7c3f8535047d4cdb93ca3d89e6c6e01ee4a3cd11d3f8b668aea7a5d6855511e",
+    "source": "dev/benchmarks/gf2-sim/cpu-foundation-receipts.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/gpu-stages-receipts.md",
+    "sha256": "d9e802c818cddc1251132eefcc1bbb1992364275d848194de9b52306cd553a0b",
+    "source": "dev/benchmarks/gf2-sim/gpu-stages-receipts.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/parallelism-receipts.md",
+    "sha256": "0df1bac872d991159e54b97271a8168563ea6c311964c7c14a6ebd83645d3c94",
+    "source": "dev/benchmarks/gf2-sim/parallelism-receipts.md"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/presentations/talk.html",
+    "sha256": "52f6855ac110e958770a874ef4b63e0834c70ec70e90870f1421a372b5b7aa02",
+    "source": "dev/presentations/talk.html"
+   },
+   {
+    "action": "move",
+    "already_archived": true,
+    "deletes": [],
+    "destination": "dev/archive/f9717e7e-gf2-sim/presentations/themes/gruvbox.css",
+    "sha256": "b835feba6c82b645f3a4eb98bfc49622501b1b8f4b1a0d28bf4241bb5b147401",
+    "source": "dev/presentations/themes/gruvbox.css"
+   }
+  ],
+  "blockers": [],
+  "destination_root": "dev/archive/f9717e7e-gf2-sim",
+  "eligible": true,
+  "target": "f9717e7e-3950-422c-a545-d940d119a440"
+ }
+}
