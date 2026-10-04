@@ -17897,3 +17897,8 @@
 {"fields":["description"],"id":"9ee2784a-634c-447b-a1b7-b60c8a69979f","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:26:56.022308643Z","type":"issue_updated","updated_by":"issue-update"}
 {"id":"1adaa5bc-a2cd-49ec-86bc-bd9209a4f5d7","issue_id":"9c7e6369-5bef-4453-a6da-d2f7538c61be","priority":"normal","timestamp":"2026-10-04T13:48:57.806178789Z","title":"Ground the HipStream Sync contract in documented HIP behavior","type":"issue_created"}
 {"fields":["dependencies"],"id":"24a47c7a-edae-4a37-83eb-742f0acd59dd","issue_id":"b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e","timestamp":"2026-10-04T13:49:05.017169562Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["documents"],"id":"f049c4fe-4a43-4a5d-ae8a-835a23617b65","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:54:27.827471409Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"bd9f8ea9-ed92-46d7-a87c-09f701940c2a","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:54:27.873960812Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"ff5542de-ff9c-4000-b717-ce4f23c25b10","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:54:27.906253285Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"2210ff77-5a34-4abd-8cd3-974699b2d54b","issue_id":"fa4939c3-2cc8-4ff2-b609-d368d3b25a24","timestamp":"2026-10-04T13:54:27.939407412Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"2c067c50-2f6e-40d2-896d-515f835cc745","issue_id":"ffc35b8c-5f2a-4a37-8eef-905b362b615d","timestamp":"2026-10-04T13:54:27.973984527Z","type":"issue_updated","updated_by":"doc-add"}

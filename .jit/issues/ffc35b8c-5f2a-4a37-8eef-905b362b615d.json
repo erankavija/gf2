@@ -27,6 +27,31 @@
       "format": "markdown",
       "label": "Sweep completion record",
       "path": "dev/active/fa787f85-documentation-overhaul/030496bd-sweep-completion.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://rocm.docs.amd.com/projects/HIP/en/latest/doxygen/html/group___stream.html",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8f2b209443f2df94afad837116946e0035540dcb5e7163136ff1de2aaedf798e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "554c2935-citation-map.md",
+          "resolved_path": "dev/active/fa787f85-documentation-overhaul/554c2935-citation-map.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Comment read for citations",
+      "path": "dev/active/fa787f85-documentation-overhaul/fa4939c3-comment-read.md"
     }
   ],
   "first_ready_at": "2026-10-04T13:13:56.676264757Z",
@@ -81,5 +106,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Workspace source-comment tersification sweep",
-  "updated_at": "2026-10-04T13:25:36.196783661Z"
+  "updated_at": "2026-10-04T13:54:27.973984527Z"
 }
