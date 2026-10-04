@@ -1,20 +1,9 @@
-//! Test helpers shared between crate-internal unit tests, the integration
-//! tests under `tests/`, and the bench targets.
-//!
-//! The helpers are allocation witnesses over the encoding workspaces, the
-//! kernel-selection controls of the kernel-dispatched encode families, the
-//! basis-vector matrix oracles the canonical materialization is measured and
-//! compared against, the predeclared BCH conformance corpus with its seeded
-//! messages, a mother-code wrapper that forces the rank-derived shortening
-//! derivation, and a reader for the ETSI DVB-T2 verified vectors (the
-//! `VV001-CR35_CSP/TestPoint*/...CSP.txt` files).
-//!
-//! Gated behind `cfg(any(test, feature = "test-support"))` so the helpers
-//! are reachable from both unit tests inside the crate and integration
-//! tests under `tests/` (which import them by enabling the
-//! `test-support` feature on the dev-dependency self-reference).
-//!
-//! All helpers here are test-only — production code must not call them.
+//! Test helpers shared by crate unit tests, the integration tests under
+//! `tests/`, and the bench targets: allocation witnesses over the encoding
+//! workspaces, kernel-selection controls, basis-vector matrix oracles, the
+//! predeclared BCH conformance corpus with its seeded messages, the BCH and
+//! derived-code conformance cases, and a reader for the DVB-T2 reference
+//! streams (`@/citation/DvbVerification2010`).
 
 #![cfg(any(test, feature = "test-support"))]
 
@@ -73,10 +62,8 @@ pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> 
 /// Writes `code`'s generator matrix by encoding the $k$ message basis
 /// vectors, one row per encode.
 ///
-/// This is the straightforward reading of the matrix contract. The canonical
-/// materialization derives the same matrix from the generator polynomial's
-/// recurrence instead, and this is the oracle its equality tests and the
-/// `bch_genmatrix` bench measure it against.
+/// The oracle for the canonical materialization, which derives the same
+/// matrix from the generator polynomial's recurrence.
 ///
 /// # Errors
 ///
@@ -85,8 +72,7 @@ pub fn encode_scratch_shape<W: 'static>() -> Option<Vec<(usize, usize, usize)>> 
 ///
 /// # Complexity
 ///
-/// $O(k^2 r)$ base-field operations for $r = n - k$, where the canonical
-/// materialization walks the output once.
+/// $O(k^2 r)$ base-field operations for $r = n - k$.
 pub fn bch_generator_matrix_by_encoding<X, S, M>(
     code: &BchCode<X, S, M>,
     out: &mut M,
@@ -128,12 +114,8 @@ where
 /// previous setting.
 ///
 /// One switch covers the whole bundle, so forcing it exercises the fallback
-/// arm of both [`EncodeFamily::BitsliceInterleaved`][bitslice] and
-/// [`EncodeFamily::ClmulFold`][fold] whatever the host detects. Every arm
-/// computes the same words.
-///
-/// [bitslice]: crate::bch::encode::EncodeFamily::BitsliceInterleaved
-/// [fold]: crate::bch::encode::EncodeFamily::ClmulFold
+/// arm of both [`EncodeFamily::BitsliceInterleaved`] and
+/// [`EncodeFamily::ClmulFold`] whatever the host detects.
 pub fn force_scalar_encode_kernels(forced: bool) -> bool {
     crate::bch::encode::force_scalar_encode_kernels(forced)
 }
@@ -161,11 +143,8 @@ pub fn generic_ebch_16_11() -> Extended<BinaryBchCode> {
 /// [`SystematicRestriction`](crate::transform::ShortenedDerivation::SystematicRestriction),
 /// so wrapping a systematic mother in this forces the same coordinate set
 /// onto [`RankDerived`](crate::transform::ShortenedDerivation::RankDerived).
-/// One fixture then produces both derivations of one code, which is how the
-/// suites compare them.
-///
-/// Every other method delegates, so the two mothers have the same generator,
-/// check matrix, dimensions, and codewords.
+/// The two mothers have the same generator, check matrix, dimensions, and
+/// codewords.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RankDerivedMother<C>(pub C);
 
@@ -203,8 +182,6 @@ impl<C: GeneratorMatrixAccess> GeneratorMatrixAccess for RankDerivedMother<C> {
         self.0.generator_matrix_into(out)
     }
 
-    /// Reports `false` whatever the wrapped code reports, which is what
-    /// forces the rank-derived construction.
     fn is_systematic(&self) -> Result<bool, CodeError> {
         Ok(false)
     }
@@ -235,7 +212,8 @@ pub fn dvb_vectors_path() -> PathBuf {
         })
 }
 
-/// Parses an ETSI CSP test-point file into a sequence of `BitVec` blocks.
+/// Parses a CSP test-point file of `@/citation/DvbVerification2010` into
+/// `BitVec` blocks.
 ///
 /// Each `%`- or `#`-prefixed line begins a new block. Within a block,
 /// `'0'` and `'1'` characters become bits; all other characters are
@@ -292,19 +270,11 @@ pub fn tp_path(config_dir: &Path, tp: &str) -> PathBuf {
         .join(format!("VV001-CR35_TP{}_CSP.txt", tp))
 }
 
-/// Builds the canonical path to a test-point file for an arbitrary
-/// `VV<num>-<name>_CSP` directory.
-///
-/// Infers the file stem from the directory basename by stripping the
-/// trailing `_CSP` suffix (if present), then constructs:
-/// `<config_dir>/TestPoint<NN>/<file-stem>_TP<NN>_CSP.txt`
-///
-/// For example, given `config_dir = ".../VV014-64QAM34_CSP"` and
-/// `tp = "07a"`, the resulting path is:
-/// `.../VV014-64QAM34_CSP/TestPoint07/VV014-64QAM34_TP07a_CSP.txt`
-///
-/// `tp` may include an alphabetic suffix (e.g., `"07a"`); the
-/// `TestPoint<NN>` directory uses only the numeric prefix.
+/// Builds `<config_dir>/TestPoint<NN>/<stem>_TP<tp>_CSP.txt` for a
+/// `VV<num>-<name>_CSP` directory: `<stem>` is the directory basename without
+/// a trailing `_CSP`, and `<NN>` is `tp` without its alphabetic suffix.
+/// `.../VV014-64QAM34_CSP` and `"07a"` give
+/// `.../VV014-64QAM34_CSP/TestPoint07/VV014-64QAM34_TP07a_CSP.txt`.
 ///
 /// # Panics
 ///
@@ -314,8 +284,6 @@ pub fn tp_path_for(config_dir: &Path, tp: &str) -> PathBuf {
         .file_name()
         .expect("config_dir must have a file name")
         .to_string_lossy();
-    // Strip the trailing `_CSP` suffix to get the file stem used inside
-    // the directory (e.g., `VV014-64QAM34_CSP` → `VV014-64QAM34`).
     let file_stem = dir_name
         .strip_suffix("_CSP")
         .unwrap_or(&dir_name)
@@ -326,23 +294,14 @@ pub fn tp_path_for(config_dir: &Path, tp: &str) -> PathBuf {
         .join(format!("{file_stem}_TP{tp}_CSP.txt"))
 }
 
-// ---------------------------------------------------------------------------
-// The predeclared BCH conformance corpus
-// ---------------------------------------------------------------------------
-
 /// The message seed the evidence protocol predeclares for the conformance
 /// corpus.
 pub const BCH_CORPUS_SEED: u64 = 0xAE03_BCD0;
 
 /// Messages a corpus row carries at or below [`BCH_CORPUS_LARGE_LENGTH`].
-///
-/// Amendment 1 of the `evidence-protocol` section of
-/// `dev/active/ae03bcd0-general-bch/plan.md` fixes this count, the one below
-/// it, and the threshold between them.
 pub const BCH_CORPUS_MESSAGES_SMALL: usize = 4;
 
-/// Messages a corpus row carries above [`BCH_CORPUS_LARGE_LENGTH`], which
-/// keeps the committed fixture proportionate to the evidence it carries.
+/// Messages a corpus row carries above [`BCH_CORPUS_LARGE_LENGTH`].
 pub const BCH_CORPUS_MESSAGES_LARGE: usize = 2;
 
 /// Length above which a row carries [`BCH_CORPUS_MESSAGES_LARGE`] messages.
@@ -367,12 +326,9 @@ pub struct BchCorpusRow {
 /// rows cannot share one code type. A visitor keeps the construction in one
 /// place while letting each consumer stay generic over the row's own types.
 ///
-/// The bounds are the strongest the corpus rows satisfy rather than the
-/// weakest a consumer might need: [`MatrixFill`] so a visitor reaches the
-/// generator and parity-check capabilities, and thread-safe `'static` symbols
-/// so it reaches the opt-in matrix cache. Every corpus row is built on a
-/// representation that satisfies them, and an implementation whose own body
-/// needs less may still state the weaker bounds it uses.
+/// The bounds are the strongest the corpus rows satisfy: [`MatrixFill`] so a
+/// visitor reaches the generator and parity-check capabilities, and
+/// thread-safe `'static` symbols so it reaches the opt-in matrix cache.
 pub trait BchCorpusVisitor {
     /// Handles one constructed row.
     fn visit<X, S, M>(&mut self, row: &BchCorpusRow, code: &BchCode<X, S, M>)
@@ -386,18 +342,9 @@ pub trait BchCorpusVisitor {
 /// Constructs every predeclared corpus row and hands it to `visitor` in
 /// corpus order.
 ///
-/// Each row goes through the canonical [`BchCode::construct`] pipeline: the
-/// three binary rows and the two prime-base rows select their splitting field
-/// by the deterministic registry policy, the DVB-T2 mother row takes the field
-/// polynomial and correction radius the in-tree ETSI parameter table pins, the
-/// $\mathrm{GF}(9)$ row uses the tower presentation that policy selects, and
-/// the Reed-Solomon row uses the degree-one extension of the selected
-/// $\mathrm{GF}(2^8)$.
-///
 /// # Panics
 ///
-/// Panics if any row fails to construct, which would mean the predeclared
-/// corpus no longer describes a valid BCH code.
+/// Panics if any row fails to construct.
 ///
 /// # Complexity
 ///
@@ -425,8 +372,6 @@ pub fn visit_bch_corpus<V: BchCorpusVisitor>(visitor: &mut V) {
         );
     }
 
-    // The DVB-T2 normal-frame mother code, on the field polynomial and the
-    // correction radius the in-tree ETSI parameter table pins.
     let dvb = DvbBchParams::for_code(FrameSize::Normal, CodeRate::Rate1_2);
     let etsi = BinaryPrimeExt::<u64>::new(Gf2mField::new(dvb.field_m, dvb.primitive_poly))
         .expect("the ETSI normal-frame polynomial is primitive");
@@ -554,8 +499,7 @@ pub fn bch_corpus_index<F: FieldIdentity>(value: &F) -> u128 {
 ///
 /// # Panics
 ///
-/// Panics if `index` is at or above the field order, which no corpus fixture
-/// coordinate is.
+/// Panics if `index` is at or above the field order.
 pub fn bch_corpus_element<F: FieldIdentity>(witness: &F, index: u128) -> F {
     let characteristic = u128::from(witness.field_id().characteristic());
     let degree = witness.field_id().degree();
@@ -583,9 +527,11 @@ pub fn bch_corpus_message_count(n: usize) -> usize {
 /// Draws one corpus row's seeded messages as canonical base-field indices.
 ///
 /// The row's own stream starts from [`BCH_CORPUS_SEED`], so a row reproduces
-/// independently of the rows before it. Symbols are drawn in order from the
-/// repository's standard seeded test generator, `rand`'s `StdRng` under
-/// `SeedableRng::seed_from_u64`, as `gen_range(0..base_order)`.
+/// independently of the rows before it.
+///
+/// # Panics
+///
+/// Panics if `base_order` is zero and a symbol is drawn.
 pub fn bch_corpus_messages(k: usize, n: usize, base_order: u64) -> Vec<Vec<u64>> {
     let mut rng = StdRng::seed_from_u64(BCH_CORPUS_SEED);
     (0..bch_corpus_message_count(n))
@@ -631,7 +577,7 @@ pub fn bch_corpus_encode_symbols(symbols: &[u64], base_order: u64) -> String {
 ///
 /// # Panics
 ///
-/// Panics if `text` is not lowercase hex or holds fewer than `count` symbols.
+/// Panics if `text` is not hex or holds fewer than `count` symbols.
 pub fn bch_corpus_decode_symbols(text: &str, count: usize, base_order: u64) -> Vec<u64> {
     let bytes: Vec<u8> = text
         .as_bytes()
@@ -650,18 +596,11 @@ pub fn bch_corpus_decode_symbols(text: &str, count: usize, base_order: u64) -> V
     }
 }
 
-// ---------------------------------------------------------------------------
-// Shared conformance cases
-// ---------------------------------------------------------------------------
-//
-// One function per law, applied to every implementation that carries the law.
-// The trait-level cases live beside the traits they check, in
-// `crate::traits::block::conformance`; the cases here are the ones that need
-// BCH construction, the predeclared corpus, or a derived-code transformation.
-// `tests/bch_conformance.rs` is the suite that runs both sets over the whole
-// implementor roster.
-
 /// Returns the order of `code`'s base field.
+///
+/// # Panics
+///
+/// Panics if the order exceeds `u64::MAX`.
 pub fn bch_base_order<X, S, M>(code: &BchCode<X, S, M>) -> u64
 where
     X: FieldExtension,
@@ -708,10 +647,9 @@ where
 /// dense representation, and asserts that every derived quantity agrees with
 /// `code`.
 ///
-/// The corpus builds each row once, in the representation that row is
-/// declared in. This is how the suite reaches the other representation of a
-/// row that admits both, so the packed and dense implementations of the
-/// canonical interfaces run the same cases on the same code.
+/// The corpus builds each row once, in its declared representation; the twin
+/// lets the packed and dense implementations of the canonical interfaces run
+/// the same cases on the same code.
 ///
 /// # Panics
 ///
@@ -785,8 +723,8 @@ where
 ///
 /// # Complexity
 ///
-/// $O(n \log n)$ base-field operations for the cyclic division, plus $O(n)$
-/// for the defining-set closure.
+/// $O(k r)$ base-field operations for the cyclic division, $r = n - k$, plus
+/// $O(r \log r)$ for the defining-set checks.
 pub fn bch_construction_contract<X, S, M>(code: &BchCode<X, S, M>, designed_distance: u64)
 where
     X: FieldExtension,
@@ -1058,22 +996,19 @@ pub fn code_linearity_contract<C>(
 /// parity-check pair: $G = [\,I_k \mid P\,]$ and $H = [\,-P^{\mathsf T} \mid
 /// I_{n-k}\,]$.
 ///
-/// The two shapes together are $G H^{\mathsf T} = 0$ by algebra, so this is the
-/// orthogonality statement in the form whose cost is $O(k(n-k))$ rather than
-/// $O(k(n-k)n)$. Codes small enough for the direct triple loop also run
-/// [`crate::traits::block::conformance::generator_parity_orthogonality`].
+/// The two shapes together are $G H^{\mathsf T} = 0$ by algebra, at
+/// $O(k(n-k))$ symbol comparisons where
+/// [`crate::traits::block::conformance::generator_parity_orthogonality`]
+/// costs $O(k(n-k)n)$ field operations.
 ///
-/// The caller selects this case from the code's own reports:
+/// The case applies to a code that reports
 /// [`GeneratorMatrixAccess::is_systematic`] and
-/// [`GeneratorMatrixAccess::has_canonical_message_order`] together are the
-/// leading identity block. Those two decide the generator's shape alone, so a
-/// code whose parity check is not the canonical dual of its generator — the
-/// one-symbol extension, whose extra check row carries the identity in every
-/// coordinate — runs the direct orthogonality case instead of this one.
+/// [`GeneratorMatrixAccess::has_canonical_message_order`] and whose parity
+/// check is the canonical dual of its generator.
 ///
 /// # Panics
 ///
-/// Panics when either matrix departs from the layout.
+/// Panics when either matrix departs from the layout or does not materialize.
 pub fn systematic_pair_contract<C>(code: &C)
 where
     C: GeneratorMatrixAccess + ParityCheckMatrixAccess,
@@ -1219,10 +1154,6 @@ where
 
 /// Copies `code`'s generator into the field-generic dense representation.
 ///
-/// The rank computations the transformation cases compare against need one
-/// representation, and this is the conversion that reaches it from any
-/// implementor of the canonical matrix capability.
-///
 /// # Panics
 ///
 /// Panics when the generator does not materialize.
@@ -1276,9 +1207,11 @@ pub fn projected_generator<F: FiniteField>(
 /// onto the surviving columns.
 ///
 /// This is the direct reading of shortening: solve the vanishing constraints
-/// over the message space, then read the surviving coordinates. It is the
-/// oracle the transformation cases measure the wrapper's rank-derived
-/// dimension against.
+/// over the message space, then read the surviving coordinates.
+///
+/// # Panics
+///
+/// Panics when a removed column is outside a generator with at least one row.
 pub fn constrained_generator<F: FiniteField>(
     generator: &FieldMatrix<F>,
     removed: &[usize],
@@ -1353,11 +1286,12 @@ pub fn row_space_contains<F: FiniteField>(
 }
 
 /// Asserts that the symbols of `word` at the positions in `positions` are all
-/// zero, and returns nothing.
+/// zero.
 ///
 /// # Panics
 ///
-/// Panics when a listed position carries a nonzero symbol.
+/// Panics when a listed position is outside `word` or carries a nonzero
+/// symbol.
 pub fn assert_zero_at<F, S>(word: &S, positions: &[usize])
 where
     F: FieldIdentity,
@@ -1377,8 +1311,8 @@ where
 ///
 /// # Panics
 ///
-/// Panics when a syndrome coordinate is nonzero or the parity check does not
-/// materialize.
+/// Panics when a syndrome coordinate is nonzero, `word` is shorter than `n`,
+/// or the parity check does not materialize.
 pub fn assert_is_codeword<C>(code: &C, word: &C::Symbols)
 where
     C: ParityCheckMatrixAccess,
@@ -1440,15 +1374,10 @@ where
 
 /// Returns the derivation [`Shortened`] selects for `mother` and `removed`.
 ///
-/// The rule is the one [`ShortenedDerivation`] documents: a mother that
-/// reports both a systematic layout and the canonical message-coordinate
-/// order carries message symbol $s$ at coordinate $s$, so a coordinate set
-/// entirely below $k$ reads as constraints on the message and the derived
-/// code is the mother's restricted to them. Every other mother and every
-/// other coordinate set is rank-derived.
-///
-/// Stating the rule here rather than at each call site is what lets
-/// [`shortening_contract`] assert the reported derivation wherever it runs.
+/// Applies the rule [`ShortenedDerivation`] documents: the systematic
+/// restriction when the mother reports both a systematic layout and the
+/// canonical message-coordinate order and every removed coordinate is below
+/// $k$, the rank derivation otherwise.
 ///
 /// # Panics
 ///
@@ -1478,10 +1407,8 @@ where
 /// coordinates, and every derived codeword lifts to a mother codeword that
 /// vanishes on the removed set.
 ///
-/// The value also reports the derivation
-/// [`expected_shortened_derivation`] names for this mother and coordinate
-/// set. Every statement above is asserted the same way whichever derivation
-/// that is, which is what makes one call site cover both paths.
+/// The reported derivation is the one [`expected_shortened_derivation`]
+/// names.
 ///
 /// # Panics
 ///
@@ -1490,8 +1417,7 @@ where
 /// # Complexity
 ///
 /// Dominated by the mother generator materialization and the two rank
-/// computations over it, which the systematic restriction does not itself
-/// perform.
+/// computations over it.
 pub fn shortening_contract<C>(mother: &C, removed: &[usize])
 where
     C: BlockEncoder + GeneratorMatrixAccess + ParityCheckMatrixAccess + Clone,

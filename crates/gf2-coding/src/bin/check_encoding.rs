@@ -9,11 +9,9 @@ fn main() {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate3_5);
     let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
 
-    // Encode all-zeros message
     let msg = gf2_core::BitVec::zeros(encoder.k());
     let cw = encoder.encode(&msg);
 
-    // Check if it's a valid codeword
     let is_valid = code.is_valid_codeword(&cw);
 
     println!("Message: {} zeros", msg.len());
