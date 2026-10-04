@@ -8,7 +8,7 @@ second leg against newest upstream Charon/Aeneas (see *Upgrade leg* below). No p
 production code and nothing under `proofs/` was modified.
 
 Every command in the matrix below was executed from a committed `.cmd` file via
-`dev/active/34d85cb9/extraction/run.sh`, which prints the command file into the
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/run.sh`, which prints the command file into the
 log before executing it. The command text quoted in this record is therefore
 byte-identical to what ran.
 
@@ -32,8 +32,8 @@ were added once the first outcomes motivated them (§ Methodology, axes D and E)
 This is the **pinned pair** the baseline leg ran on; the newest-upstream pair is
 recorded under *Upgrade leg* below. Two toolchains are in play and the criterion
 turns on the first. All of it is captured at run time in
-`dev/active/34d85cb9/extraction/excerpts/toolchain-versions.txt` (regenerate
-with `dev/active/34d85cb9/extraction/versions.sh`):
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/toolchain-versions.txt` (regenerate
+with `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/versions.sh`):
 
 | Component | Version | Role |
 |---|---|---|
@@ -60,8 +60,8 @@ and it is exactly the arrangement `scripts/verify-lean.sh:8-9` already relies
 on. This host's *default* toolchain is 1.97.0, recorded in the receipt only to
 show what the runs did **not** use.
 
-Host context (`dev/active/34d85cb9/extraction/excerpts/host-context.txt`,
-regenerate with `dev/active/34d85cb9/extraction/host.sh`): AMD Ryzen 9 5900X,
+Host context (`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/host-context.txt`,
+regenerate with `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/host.sh`): AMD Ryzen 9 5900X,
 24 hardware threads, 31 GiB RAM, Linux 7.1.8-arch1-3 x86_64.
 
 **Stopping rule, declared before any run:** the lead's dispatch instructions
@@ -102,13 +102,13 @@ Axes varied:
   (`crates/gf2-core/src/field/poly.rs:1130`), an inherent generic method whose
   loop carries an `F`-typed accumulator, chosen once axis D localised the
   failure to lifted loop functions.
-- **F — standalone probes.** `dev/active/34d85cb9/extraction/probe-P1.rs`
+- **F — standalone probes.** `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/probe-P1.rs`
   through `probe-P4.rs`, extracted with `charon rustc`, replaying the same
   square-and-multiply loop over four trait shapes plus a concrete `u64`
   baseline. The probe grew across runs, so each run has its own committed
   source and `P{N}.cmd` names `probe-P{N}.rs` exactly; every probe result below
   is therefore regenerable from the command that produced it. The probes are
-  scratch files under `dev/active/34d85cb9/`; none is wired into any crate.
+  scratch files under `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/`; none is wired into any crate.
 
 Aeneas was run on every Charon output that produced a `.llbc`, with
 `-backend lean -split-files` as in `scripts/verify-lean.sh:220-224`, plus
@@ -121,10 +121,10 @@ files. Across both legs the 27 `.llbc` files total 51,971,305 bytes
 (49.6 MiB / 52.0 MB), ranging from 31,190 bytes (R5, which emits nothing) to
 14,426,493 bytes; the sized artefacts are the `.llbc` files alone. Their
 **per-file byte sizes and item counts** are committed instead, in
-`dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt` and
-`dev/active/34d85cb9/upgrade/excerpts/llbc-item-counts.txt` (regenerate with
-`dev/active/34d85cb9/extraction/llbc-summary.sh`), and the three load-bearing
-fragments are committed under `dev/active/34d85cb9/extraction/excerpts/`.
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt` and
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/excerpts/llbc-item-counts.txt` (regenerate with
+`dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/llbc-summary.sh`), and the three load-bearing
+fragments are committed under `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/`.
 
 ---
 
@@ -143,12 +143,12 @@ that this is so, rather than an assertion:
 - Every generated `Funs.lean` and `Types.lean` in `extraction/A*_lean/` and
   `upgrade/extraction/A*_lean/` is **byte-identical** to the version produced
   before the pin. This is checkable from git history rather than asserted:
-  `git diff --name-only d29b6c0c..947f0569 -- 'dev/active/34d85cb9/**/*_lean/*.lean'`
+  `git diff --name-only d29b6c0c..947f0569 -- 'dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/**/*_lean/*.lean'`
   lists exactly ten paths, all of them probe trees (`extraction/P{1,2,3,4}_lean`
   and `upgrade/extraction/P1_lean`, `Funs.lean` and `Types.lean` each), and no
   `A*_lean` file at all.
 - Every LLBC **item count** is unchanged, receipted on both sides: the
-  pre-rerun counts are `git show d29b6c0c:dev/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt`,
+  pre-rerun counts are `git show d29b6c0c:dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/llbc-item-counts.txt`,
   the post-rerun counts are the working-tree file at the same path.
 - **The LLBC byte sizes are not part of this comparison.** The pre-rerun
   receipts recorded item counts only — byte sizes were added to
@@ -167,8 +167,8 @@ The only artefact that changed is the probe Lean, and only in its crate name
 (`namespace probe` → `namespace probe_P1`), a mechanical consequence of splitting
 `probe.rs` into one source per run for F4 below.
 
-Trimmed logs for every run are under `dev/active/34d85cb9/logs-trimmed/`
-(produced from the raw logs by `dev/active/34d85cb9/extraction/trim-logs.sh`,
+Trimmed logs for every run are under `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/logs-trimmed/`
+(produced from the raw logs by `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/trim-logs.sh`,
 which strips ANSI escapes, progress-bar redraws and the rustc dead-code warning
 blocks). Each trimmed log opens with the exact command and closes with
 `--- exit=<code> elapsed=<seconds>s ---`.
@@ -215,7 +215,7 @@ RUSTUP_TOOLCHAIN=1.95.0 charon cargo \
   --opaque 'gf2_core::primitive_polys' \
   --opaque 'gf2_core::io' \
   --opaque 'gf2_core::macros' \
-  --dest-file dev/active/34d85cb9/extraction/R2_gf2_core.llbc \
+  --dest-file dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/R2_gf2_core.llbc \
   -- --manifest-path crates/gf2-core/Cargo.toml --no-default-features
 ```
 
@@ -253,7 +253,7 @@ single flag that turns generic `gf2-core` code from opaque into transparent is
 therefore `--include` on the target module.
 
 **Aeneas produces real Lean for the generic entry point.** The preserved
-extraction `dev/active/34d85cb9/extraction/A2_lean/Funs.lean:62-88` carries a
+extraction `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A2_lean/Funs.lean:62-88` carries a
 complete, `sorry`-free `batch_inverse` whose `FiniteField` dictionary is an
 explicit parameter:
 
@@ -835,7 +835,7 @@ If DEC-A is chosen:
 
 Independently of the decision, `scripts/verify-lean.sh` needs no change: nothing
 in this spike touched the existing gfp/gfpn/gf2m extraction, and every
-invocation here wrote to `dev/active/34d85cb9/extraction/` instead of
+invocation here wrote to `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/` instead of
 `target/charon/`.
 
 ---
@@ -846,29 +846,29 @@ All paths relative to the repository root.
 
 | Path | Contents |
 |---|---|
-| `dev/active/34d85cb9/extraction/run.sh` | Runner: executes one `.cmd` file, tees to `logs/<run>.log` |
-| `dev/active/34d85cb9/extraction/*.cmd` | The 29 exact invocations, one per run |
-| `dev/active/34d85cb9/extraction/probe-P{1,2,3,4}.rs` | Standalone probe sources, one per probe run |
-| `dev/active/34d85cb9/extraction/A2_lean/` | **Preserved Lean for the primary generic target** (REQ-02) |
-| `dev/active/34d85cb9/extraction/A8b_lean/` | Lean for `FiniteFieldExt::{square,pow,frobenius}` |
-| `dev/active/34d85cb9/extraction/A11_lean/` | Lean for `gf2_core::field::poly` (F4 at scale) |
-| `dev/active/34d85cb9/extraction/A{2b,3,4}_lean/` | Lean for the remaining Aeneas runs |
-| `dev/active/34d85cb9/extraction/P{1,2,3,4}_lean/` | Lean for the probes |
-| `dev/active/34d85cb9/extraction/excerpts/` | Toolchain versions, host context, LLBC item counts, three LLBC fragments |
-| `dev/active/34d85cb9/logs-trimmed/` | Trimmed log per run, each opening with its command and closing with `exit=`/`elapsed=` |
-| `dev/active/34d85cb9/extraction/{trim-logs,llbc-summary,versions,host}.sh` | Regenerate the derived artifacts above |
-| `dev/active/34d85cb9/upgrade/extraction/` | The upgrade leg's `.cmd` files, runner, and generated Lean |
-| `dev/active/34d85cb9/upgrade/logs-trimmed/` | Trimmed log per upgrade-leg run, including both pipeline legs |
-| `dev/active/34d85cb9/upgrade/excerpts/` | New-pair versions, LLBC counts, F4 signature, pipeline diff and breakage tables |
-| `dev/active/34d85cb9/upgrade/pipeline-regression.sh` | Runs the committed verify-lean.sh extraction stages on either pair and diffs against `proofs/` |
-| `dev/active/34d85cb9/upgrade/charon-local-patch-487f0320.patch` | The project-local Charon patch as found in `/data/aeneas-build/charon` |
-| `dev/active/34d85cb9/upgrade/excerpts/upstream-topology.txt` | Branch/tag topology receipt for the "newest upstream" claim |
-| `dev/active/34d85cb9/upgrade/topology.sh` | Regenerates the topology receipt (read-only network) |
-| `dev/active/34d85cb9/upgrade/versions-new.sh` | Regenerates the new-pair, OCaml and host-install receipts |
-| `dev/active/34d85cb9/upgrade/logs-trimmed/charon-build.log` | Charon release build log; its `Finished` line is the build-duration receipt |
-| `dev/active/34d85cb9/upgrade/excerpts/pipeline-{baseline,new}-summary.txt` | Each pipeline leg's exit code and per-file diff verdict, with the `cargo 1.95.0` banner it ran under |
-| `dev/active/34d85cb9/extraction/excerpts/A11-accounting.txt` | A11 error classes and `sorry` tally, kept separate because they do not map 1:1 |
-| `dev/active/34d85cb9/extraction/a11-accounting.sh` | Regenerates the A11 accounting receipt |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/run.sh` | Runner: executes one `.cmd` file, tees to `logs/<run>.log` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/*.cmd` | The 29 exact invocations, one per run |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/probe-P{1,2,3,4}.rs` | Standalone probe sources, one per probe run |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A2_lean/` | **Preserved Lean for the primary generic target** (REQ-02) |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A8b_lean/` | Lean for `FiniteFieldExt::{square,pow,frobenius}` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A11_lean/` | Lean for `gf2_core::field::poly` (F4 at scale) |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A{2b,3,4}_lean/` | Lean for the remaining Aeneas runs |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/P{1,2,3,4}_lean/` | Lean for the probes |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/` | Toolchain versions, host context, LLBC item counts, three LLBC fragments |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/logs-trimmed/` | Trimmed log per run, each opening with its command and closing with `exit=`/`elapsed=` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/{trim-logs,llbc-summary,versions,host}.sh` | Regenerate the derived artifacts above |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/extraction/` | The upgrade leg's `.cmd` files, runner, and generated Lean |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/logs-trimmed/` | Trimmed log per upgrade-leg run, including both pipeline legs |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/excerpts/` | New-pair versions, LLBC counts, F4 signature, pipeline diff and breakage tables |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/pipeline-regression.sh` | Runs the committed verify-lean.sh extraction stages on either pair and diffs against `proofs/` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/charon-local-patch-487f0320.patch` | The project-local Charon patch as found in `/data/aeneas-build/charon` |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/excerpts/upstream-topology.txt` | Branch/tag topology receipt for the "newest upstream" claim |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/topology.sh` | Regenerates the topology receipt (read-only network) |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/versions-new.sh` | Regenerates the new-pair, OCaml and host-install receipts |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/logs-trimmed/charon-build.log` | Charon release build log; its `Finished` line is the build-duration receipt |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/upgrade/excerpts/pipeline-{baseline,new}-summary.txt` | Each pipeline leg's exit code and per-file diff verdict, with the `cargo 1.95.0` banner it ran under |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/excerpts/A11-accounting.txt` | A11 error classes and `sorry` tally, kept separate because they do not map 1:1 |
+| `dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/a11-accounting.sh` | Regenerates the A11 accounting receipt |
 
 ---
 
@@ -876,7 +876,7 @@ All paths relative to the repository root.
 
 Appended 2026-08-22. Additive: nothing above this heading changes.
 
-`dev/active/e6ea0dde/record.md` records the DEC-A class extracted with both
+`dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/record.md` records the DEC-A class extracted with both
 Charon and Aeneas exiting 0 on this same pinned pair and the same MSRV. It
 reaches that by two changes to R8b: the start roots become
 `FiniteFieldExt::square` and `FiniteFieldExt::frobenius`, and
