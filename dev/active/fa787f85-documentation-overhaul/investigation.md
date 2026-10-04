@@ -158,7 +158,7 @@ Already-tracked overlaps visible in epic titles (not a mapping): GPU production 
 | Class | Location | Hardware | Flags | Workload | Baseline | Date | Commit |
 |---|---|---|---|---|---|---|---|
 | Campaign receipts (145) | `dev/bench_results/<id>/<campaign>/receipt.json` | yes (`00dd43c3/v4-r1-pilot/receipt.json:2293ff`) | yes per arm (`:4278`) | yes (`plan.json`) | control arms | `observed_utc` (`:4`) | none; content digests only |
-| Loose reports (17 md) | `dev/bench_results/*.md` | header (`2026-05-27-8df0c501-blocked-invert.md:4`) | `:6` | yes | `:9` | `:3` | none |
+| Loose reports (17 md) | `dev/bench_results/*.md` | header (`dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-27-8df0c501-blocked-invert.md:4`) | `:6` | yes | `:9` | `:3` | none |
 | Tuning-profile receipts | `dev/benchmarks/tuning_profiles/*.md` + `.sha256` | yes | yes | yes | yes | yes | sometimes (`gf2-a83583e0-...-evidence.md:7`) |
 | gf2-sim / DVB-T2 | `dev/benchmarks/gf2-sim/dvb-t2-regression-receipts.md:10-16`, `dev/benchmarks/dvb_t2_awgn/*.csv` | md yes | command only | yes | none | none | none |
 | Datasets | `dev/simulation_results/permanent-zero-fraction-20260829/manifest.json` | yes | — | yes | — | — | `provenance.git_revision` |
