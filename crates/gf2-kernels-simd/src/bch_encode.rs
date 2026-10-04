@@ -20,21 +20,6 @@
 //! and the fold needs `pclmulqdq` and `sse4.1`. [`scalar`] computes the same
 //! words with no processor feature.
 //!
-//! # Complexity
-//!
-//! One lane group of [`BITSLICE_LANES`] frames costs $r$ word operations per
-//! message degree in [`bitslice_reduce_scalar`] and $\lceil r/4 \rceil$
-//! 256-bit operations in the AVX2 kernel, so $O(k r / 64)$ and
-//! $O(k r / 256)$ word-equivalents per frame respectively, against the
-//! $O(k \lceil r/64 \rceil)$ of a packed per-frame recurrence. A batch below
-//! the lane width pays a whole lane group, which is what makes that
-//! reduction's admission a batch-length question.
-//!
-//! The fold costs $1 + \lceil r/64 \rceil$ carry-less multiplies and
-//! $O(\lceil r/64 \rceil)$ word operations per 64 message coefficients of
-//! one frame, so $O(k (1 + \lceil r/64 \rceil) / 64)$ multiplies per
-//! message, whatever the batch length is.
-//!
 //! # Examples
 //!
 //! Two frames of a one-coefficient and a two-coefficient message under
