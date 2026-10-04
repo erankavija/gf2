@@ -1,0 +1,108 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "2037941f-dense-matvec-vs-m4ri",
+    "issue": "e1f9a78f",
+    "purpose": "consumer-family",
+    "description": "Confirmatory stage of the whole-consumer comparison of public BitMatrix::matvec with the qualified external M4RI mzd_mul. Every cell is a fresh whole-consumer mid-range shape, both arms charging construction, conversion, execution and output, measured on fresh pairs at the resolution the committed pilot fixes. The family's only objective is the comparator gap: an outcome attributes an external difference and selects no production route."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-04T21:05:34Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The comparator family holds no improvement or non-regression cell, so its worthwhile speedup is unresolved by design.",
+    "measurement_resolution": 0.012,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/receipt.json",
+      "sha256": "714223d50a6774a7a793db6848c162e45b29958672fc12d807e94ad7d61ba9ab"
+    },
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "Five percent separates a comparable external arm from a recorded difference at this family's resolution.",
+    "material_gap_threshold": 1.1,
+    "material_gap_rationale": "A ten-percent external gap warrants attribution, not selection; M4RI throughput cannot authorise an incompatible production route."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "Zero production lines and zero unsafe kernels; no production change is selected from an external comparator."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/2037941f/dense-matvec-vs-m4ri-ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 4,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "m4ri-gap-65x512-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x512-warm",
+        "size": {
+          "columns": 512,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 8
+        },
+        "seed": 7672081787005044783
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    },
+    {
+      "cell_id": "m4ri-gap-65x4096-warm",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "matvec-vs-m4ri-m4ri-gap-65x4096-warm",
+        "size": {
+          "columns": 4096,
+          "retained_state": 0,
+          "rows": 65,
+          "words": 64
+        },
+        "seed": 13335509090648851657
+      },
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": null
+    }
+  ]
+}
