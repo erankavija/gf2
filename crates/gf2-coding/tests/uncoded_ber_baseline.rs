@@ -1,7 +1,5 @@
-//! Integration tests for uncoded transmission baseline performance.
-//!
-//! These tests establish reference BER values for uncoded BPSK transmission
-//! over AWGN channels, serving as a baseline for comparing coded systems.
+//! Integration tests for uncoded BPSK transmission over AWGN: BER bounds and
+//! CSV export.
 
 use gf2_coding::info_theory::bi_awgn_capacity;
 use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
@@ -9,7 +7,6 @@ use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 #[test]
 #[ignore = "sim: uncoded BPSK BER baseline, 100 000 frames"]
 fn test_uncoded_ber_at_high_snr() {
-    // At high SNR (10 dB), BER should be very low
     let mut config = SimulationConfig::quick_test();
     config.eb_n0_range_db = vec![10.0];
     config.min_errors = 10;
@@ -29,7 +26,6 @@ fn test_uncoded_ber_at_high_snr() {
 #[test]
 #[ignore = "sim: BER monotonicity, 3 SNR points x 100 000 frames"]
 fn test_uncoded_ber_decreases_monotonically() {
-    // BER should decrease as Eb/N0 increases
     let mut config = SimulationConfig::quick_test();
     config.eb_n0_range_db = vec![0.0, 3.0, 6.0];
     config.min_errors = 100;
@@ -56,8 +52,6 @@ fn test_uncoded_ber_decreases_monotonically() {
 #[test]
 #[ignore = "sim: BER precision, 500 000 frames, 200 min errors"]
 fn test_uncoded_ber_reasonable_values() {
-    // Check that BER values are in expected ranges for uncoded BPSK
-    // These are approximate bounds based on Q-function
     let mut config = SimulationConfig::quick_test();
     config.eb_n0_range_db = vec![3.0, 6.0];
     config.min_errors = 200;
@@ -66,16 +60,12 @@ fn test_uncoded_ber_reasonable_values() {
     let mut rng = rand::thread_rng();
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
-    // At 3 dB: BER ~ 0.004 (Q(sqrt(6)))
-    // Allow wider tolerance due to Monte Carlo variance
     assert!(
         results[0].ber > 0.001 && results[0].ber < 0.03,
         "BER at 3 dB should be around 0.004, got {}",
         results[0].ber
     );
 
-    // At 6 dB: BER ~ 0.000023 (Q(sqrt(12)))
-    // With only 200 errors minimum, variance is high
     assert!(
         results[1].ber < 0.005,
         "BER at 6 dB should be small, got {}",
@@ -86,10 +76,6 @@ fn test_uncoded_ber_reasonable_values() {
 #[test]
 #[ignore = "sim: BER vs Shannon, 100 000 frames"]
 fn test_ber_far_from_shannon_limit() {
-    // Uncoded transmission operates far from Shannon limit
-    // At Shannon limit for rate 1.0, we'd need infinite SNR
-    // At practical SNRs, there's a significant gap
-
     let mut config = SimulationConfig::quick_test();
     config.eb_n0_range_db = vec![3.0];
     config.min_errors = 100;
@@ -125,13 +111,11 @@ fn test_csv_export_format() {
 
     let csv = SimulationRunner::results_to_csv(&results, true);
 
-    // Check CSV has header and data
     assert!(csv.contains("eb_n0_db"));
     assert!(csv.contains("ber"));
     assert!(csv.contains("num_bits"));
     assert!(csv.contains("num_bit_errors"));
 
-    // Check it has the data row
     let lines: Vec<&str> = csv.lines().collect();
     assert_eq!(lines.len(), 2, "Should have header + 1 data row");
 }
@@ -145,7 +129,6 @@ mod property_tests {
         #[test]
         #[ignore = "sim: proptest Monte Carlo, 20+ SNR points x 10 000 frames each"]
         fn ber_bounded_by_half(eb_n0_db in -5.0..20.0) {
-            // BER for BPSK should always be <= 0.5 (worst case is random guessing)
             let mut config = SimulationConfig::quick_test();
             config.eb_n0_range_db = vec![eb_n0_db];
             config.min_errors = 10;

@@ -1,19 +1,6 @@
-//! Integration tests for the reference mapper + soft demapper pair
-//! (JIT issue `0aac93c6`).
-//!
-//! These tests exercise the public modem surface end-to-end and pin
-//! three behaviors:
-//!
-//! 1. **Round-trip** — bits mapped through [`ReferenceMapper`] and pushed
-//!    through [`ReferenceSoftDemapper`] at low noise must recover exactly
-//!    under hard-decision for both preset and custom builder specs.
-//! 2. **Analytic oracle** — the exact log-MAP LLRs emitted by the
-//!    reference demapper must match a brute-force log-MAP oracle computed
-//!    directly from the post-normalization spec points and labels.
-//! 3. **Builder/spec invariants** — each `ModemSpecBuilder::build` /
-//!    `ModemSpec::from_parts_checked` invariant has its own
-//!    `#[should_panic(expected = ...)]` test that exercises the public
-//!    builder entry point.
+//! Integration tests for [`ReferenceMapper`] and [`ReferenceSoftDemapper`]:
+//! low-noise round trip, agreement with a brute-force log-MAP oracle, and the
+//! panics of the public `ModemSpecBuilder` entry point.
 
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::test_oracle::{label_stream, permutation};
@@ -23,16 +10,7 @@ use gf2_coding::modem::{
     Normalization, ReferenceMapper, ReferenceSoftDemapper, SymbolPoint,
 };
 
-/// Brute-force exact log-MAP LLR for a single received sample, bit
-/// position, and noise variance.
-///
-/// Thin wrapper that forwards to the shared
-/// `gf2_coding::modem::test_oracle::brute_force_log_map_llr`, hardcoding
-/// the pure-AWGN complex gain `(h_i, h_q) = (1.0, 0.0)` so integration
-/// test call sites stay compact. Keeping the oracle math itself in
-/// `test_oracle` is the single-source-of-truth guarantee the reviewer
-/// checks: `ref_demapper.rs` unit tests and this file both route through
-/// the same helper.
+/// Brute-force exact log-MAP LLR over pure AWGN: complex gain `(1.0, 0.0)`.
 fn oracle_log_map_llr(
     points: &[(f64, f64)],
     labels: &[u16],
@@ -55,8 +33,6 @@ fn oracle_log_map_llr(
     )
 }
 
-/// Snapshots post-normalization points and labels from a spec into flat
-/// `f64` form suitable for `oracle_log_map_llr`.
 fn snapshot_spec_f64<S: ModemScalar>(spec: &ModemSpec<S>) -> (Vec<(f64, f64)>, Vec<u16>, u8) {
     let view = spec.view();
     let pts: Vec<(f64, f64)> = view
@@ -68,28 +44,22 @@ fn snapshot_spec_f64<S: ModemScalar>(spec: &ModemSpec<S>) -> (Vec<(f64, f64)>, V
     (pts, labs, view.bits_per_symbol())
 }
 
-/// Runs the round-trip test: map a deterministic batch of random labels
-/// through `ReferenceMapper`, pass the clean transmitted samples through
-/// `ReferenceSoftDemapper` at tiny noise, and assert every hard-decision
-/// bit recovers the transmitted bit.
 fn check_round_trip_f64(spec: ModemSpec<f64>, seed: u64, batch: usize) {
     let bps = spec.bits_per_symbol();
     let n = spec.num_symbols();
     let label_stream = label_stream(seed, batch, n);
 
-    // Build the input bit stream in MSB-first symbol-major order.
+    // MSB-first, symbol-major order.
     let mut bits: Vec<bool> = Vec::with_capacity(batch * bps as usize);
     for &v in &label_stream {
         bits.extend(unpack_label_msb_first(v, bps));
     }
 
-    // Map to transmitted samples via the reference mapper.
     let mapper = ReferenceMapper::new(spec.clone());
     let mut tx_i = vec![0.0_f64; batch];
     let mut tx_q = vec![0.0_f64; batch];
     mapper.map_bits(&bits, &mut tx_i, &mut tx_q);
 
-    // Push through the reference soft demapper at very low noise.
     let demapper = ReferenceSoftDemapper::new(spec);
     let nv = vec![1e-4_f64; batch];
     let input = DemapInput::<f64> {
@@ -103,7 +73,6 @@ fn check_round_trip_f64(spec: ModemSpec<f64>, seed: u64, batch: usize) {
     let mut llrs = vec![Llr::new(0.0); batch * bps as usize];
     demapper.demap_llrs(input, &mut llrs);
 
-    // Confirm every hard-decision bit matches the transmitted bit.
     for k in 0..batch {
         let expected = unpack_label_msb_first(label_stream[k], bps);
         for b in 0..bps as usize {
@@ -117,9 +86,6 @@ fn check_round_trip_f64(spec: ModemSpec<f64>, seed: u64, batch: usize) {
     }
 }
 
-/// Runs the oracle cross-check: for each received sample and bit
-/// position, compares the demapper's exact log-MAP LLR against the
-/// brute-force oracle computed from the spec's post-normalization points.
 fn check_oracle_f64(spec: ModemSpec<f64>, rx_i: &[f64], rx_q: &[f64], nv: &[f64], tol: f64) {
     let (pts, labs, bps) = snapshot_spec_f64(&spec);
     let demapper = ReferenceSoftDemapper::new(spec);
@@ -146,13 +112,6 @@ fn check_oracle_f64(spec: ModemSpec<f64>, rx_i: &[f64], rx_q: &[f64], nv: &[f64]
     }
 }
 
-// ---------------------------------------------------------------------
-// Representative spec builders
-// ---------------------------------------------------------------------
-
-/// Non-Gray axis-4 constellation: unit-circle points at 0, pi/2, pi,
-/// 3pi/2 with the label permutation `[0b00, 0b10, 0b11, 0b01]` (so that
-/// adjacent angles differ by more than one bit in some cases).
 fn axis4_non_gray_spec() -> ModemSpec<f64> {
     ModemSpecBuilder::<f64>::new()
         .bits_per_symbol(2)
@@ -172,7 +131,6 @@ fn axis4_non_gray_spec() -> ModemSpec<f64> {
         .build()
 }
 
-/// 8-PSK on the unit circle with an arbitrary bijective label mapping.
 fn psk8_spec() -> ModemSpec<f64> {
     let points: Vec<SymbolPoint<f64>> = (0..8)
         .map(|k| {
@@ -193,10 +151,6 @@ fn psk8_spec() -> ModemSpec<f64> {
         .build()
 }
 
-/// Asymmetric 4-PAM on the I axis only (points `-7, -1, +3, +5` scaled
-/// to unit average energy). Q is zero for every point; this exercises
-/// the reference path's handling of constellations that are not
-/// symmetric in I or around the origin.
 fn pam4_asymmetric_spec() -> ModemSpec<f64> {
     ModemSpecBuilder::<f64>::new()
         .bits_per_symbol(2)
@@ -215,10 +169,6 @@ fn pam4_asymmetric_spec() -> ModemSpec<f64> {
         .normalization(Normalization::UnitAverageSymbolEnergy)
         .build()
 }
-
-// ---------------------------------------------------------------------
-// Round-trip coverage (success criterion 1)
-// ---------------------------------------------------------------------
 
 #[test]
 fn test_round_trip_axis4_non_gray_recovers_bits() {
@@ -252,10 +202,6 @@ fn test_round_trip_preset_qam16_recovers_bits() {
     let spec: ModemSpec<f64> = ModemSpec::<f64>::gray_square_qam_with_scalar(16);
     check_round_trip_f64(spec, 0xFEED, 256);
 }
-
-// ---------------------------------------------------------------------
-// Analytic oracle cross-check (success criterion 2)
-// ---------------------------------------------------------------------
 
 fn oracle_rx_samples() -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     // Mix of points near/far from the origin, both axes, a range of N0.
@@ -306,9 +252,6 @@ fn test_oracle_preset_qam16_matches_brute_force() {
 
 #[test]
 fn test_oracle_random_bijection_matches_brute_force() {
-    // Random 3-bit permutation on the unit circle — exercises the
-    // oracle on a builder-built, non-preset constellation that is not
-    // one of the three named representative specs above.
     let n = 8usize;
     let perm = permutation(0x51EED, n);
     let points: Vec<SymbolPoint<f64>> = (0..n)
@@ -327,14 +270,6 @@ fn test_oracle_random_bijection_matches_brute_force() {
     let (rx_i, rx_q, nv) = oracle_rx_samples();
     check_oracle_f64(spec, &rx_i, &rx_q, &nv, 1e-3);
 }
-
-// ---------------------------------------------------------------------
-// Invalid builder input coverage (success criterion 3)
-//
-// One test per invariant enforced by `ModemSpecBuilder::build` /
-// `ModemSpec::from_parts_checked`. Each test drives the public builder
-// entry point and asserts the expected panic message.
-// ---------------------------------------------------------------------
 
 #[test]
 #[should_panic(expected = "bits_per_symbol not set")]
@@ -396,10 +331,8 @@ fn test_builder_invariant_nonpositive_explicit_es() {
 #[test]
 #[should_panic(expected = "bits_per_symbol must be in [1, 16]")]
 fn test_builder_invariant_bits_per_symbol_out_of_range() {
-    // bits_per_symbol = 0 forces `expected_len = 1` (1 << 0). We still
-    // have to supply a non-empty constellation (to pass the zero-energy
-    // check inside `compute_scale`) and a label; from_parts_checked
-    // rejects the bits_per_symbol value before any other check.
+    // One point and one label pass the zero-energy check in `compute_scale`,
+    // which runs before the range check.
     let _ = ModemSpecBuilder::<f32>::new()
         .bits_per_symbol(0)
         .points(vec![SymbolPoint::new(1.0, 0.0)])
@@ -423,7 +356,6 @@ fn test_builder_invariant_points_labels_length_mismatch() {
 #[test]
 #[should_panic(expected = "bit_channels length")]
 fn test_builder_invariant_bit_channels_length_mismatch() {
-    // 2 bits per symbol, but caller supplies only 1 bit-channel tag.
     let _ = ModemSpecBuilder::<f32>::new()
         .bits_per_symbol(2)
         .points(vec![
@@ -445,7 +377,6 @@ fn test_builder_invariant_bit_channels_length_mismatch() {
 #[test]
 #[should_panic(expected = "expected 2")]
 fn test_builder_invariant_label_width_mismatch() {
-    // Labels declared as width 3 but bits_per_symbol is 2.
     let _ = ModemSpecBuilder::<f32>::new()
         .bits_per_symbol(2)
         .points(vec![
@@ -483,18 +414,9 @@ fn test_builder_invariant_duplicate_label_bits() {
         .build();
 }
 
-// Note on invariants 6 (post-normalization unit energy) and 7
-// (`normalization_scale > 0`): both live inside the sealed
-// `ModemSpec::from_parts_checked` choke point but are not reachable
-// through the public `ModemSpecBuilder` surface. `compute_scale`
-// always derives a strictly-positive, unit-energy-matching scale from
-// the supplied raw points (rejecting zero-energy and non-positive
-// `ExplicitEs` earlier), so no public call path can deliver a bad
-// scale to `from_parts_checked`. Those invariants are covered by the
-// unit tests in `crates/gf2-coding/src/modem/spec.rs`
-// (`test_invariant_nonpositive_scale`,
-// `test_invariant_unit_energy_violated`), which exercise
-// `from_parts_checked` directly.
+// The unit-energy and positive-scale invariants of `from_parts_checked` are
+// unreachable through `ModemSpecBuilder`; the unit tests in
+// `src/modem/spec.rs` exercise them directly.
 
 #[test]
 #[should_panic(expected = "at least one demap method")]
@@ -517,11 +439,8 @@ fn test_builder_invariant_no_demap_method_advertised() {
 #[test]
 #[should_panic(expected = "capabilities.analysis length")]
 fn test_builder_invariant_capabilities_analysis_length_mismatch() {
-    // Supply a non-empty but wrong-length analysis slice (length 1 for
-    // bits_per_symbol = 2). `ModemSpecBuilder::build` only back-fills
-    // the analysis slot when the caller's slice is empty, so a
-    // length-1 slice is forwarded verbatim and rejected by
-    // `from_parts_checked`'s invariant 9.
+    // `build` back-fills the analysis slice only when it is empty, so this
+    // length-1 slice reaches `from_parts_checked`.
     use gf2_coding::modem::BitChannelAnalysis;
     static ANALYSIS_ONE: &[BitChannelAnalysis] = &[BitChannelAnalysis {
         symmetric_llr_distribution: false,

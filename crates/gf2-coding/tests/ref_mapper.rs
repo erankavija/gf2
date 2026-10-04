@@ -1,9 +1,6 @@
 //! Integration test: [`ReferenceMapper`] end-to-end on a custom
 //! constellation built through the public [`ModemSpecBuilder`] entry
 //! point.
-//!
-//! This test imports from the crate root so it exercises the re-export
-//! surface that downstream users will actually consume.
 
 use gf2_coding::modem::{
     unpack_label_msb_first, BatchMapper, LabelWord, ModemSpecBuilder, Normalization,
@@ -12,7 +9,6 @@ use gf2_coding::modem::{
 
 #[test]
 fn test_reference_mapper_end_to_end_custom_constellation() {
-    // 4 custom points with a non-identity label permutation.
     let points = vec![
         SymbolPoint::<f32>::new(1.0, 0.0),
         SymbolPoint::<f32>::new(0.0, 1.0),
@@ -31,7 +27,6 @@ fn test_reference_mapper_end_to_end_custom_constellation() {
         .normalization(Normalization::UnitAverageSymbolEnergy)
         .build();
 
-    // Snapshot expected (i, q) by label.bits.
     let view = spec.view();
     let mut expected: [(f32, f32); 4] = [(0.0, 0.0); 4];
     for k in 0..4 {
@@ -42,7 +37,6 @@ fn test_reference_mapper_end_to_end_custom_constellation() {
 
     let mapper = ReferenceMapper::new(spec);
 
-    // Map every label value once in a single 4-symbol batch.
     // Bits are MSB-first within each symbol.
     let mut bits: Vec<bool> = Vec::with_capacity(8);
     for v in 0u16..4 {

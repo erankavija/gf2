@@ -1,9 +1,6 @@
-//! Integration tests ensuring BCH codes use verified primitive polynomials.
-//!
-//! These tests verify that:
-//! 1. All DVB-T2 BCH configurations use primitive polynomials
-//! 2. The polynomials match the ETSI EN 302 755 standard
-//! 3. The wrong polynomial that caused the bug is detected
+//! The DVB-T2 BCH parameters use the primitive polynomials of
+//! `@/citation/Etsi2015`, and the polynomial database flags another primitive
+//! polynomial of the same degree as a conflict.
 
 use gf2_coding::bch::dvb_t2::{DvbBchParams, FrameSize};
 use gf2_coding::CodeRate;
@@ -41,13 +38,13 @@ fn test_all_dvb_t2_configurations_use_primitive_polynomials() {
 fn test_dvb_t2_short_uses_correct_polynomial() {
     let params = DvbBchParams::for_code(FrameSize::Short, CodeRate::Rate1_2);
 
-    // Must use the correct x^14 + x^5 + x^3 + x + 1
+    // x^14 + x^5 + x^3 + x + 1
     assert_eq!(
         params.primitive_poly, 0b100000000101011,
         "DVB-T2 short frames must use standard GF(2^14) polynomial"
     );
 
-    // Must NOT use the wrong polynomial that caused the bug
+    // x^14 + x^5 + 1
     assert_ne!(
         params.primitive_poly, 0b100000000100001,
         "Must not use alternative primitive polynomial"
@@ -58,7 +55,7 @@ fn test_dvb_t2_short_uses_correct_polynomial() {
 fn test_dvb_t2_normal_uses_correct_polynomial() {
     let params = DvbBchParams::for_code(FrameSize::Normal, CodeRate::Rate1_2);
 
-    // Must use the correct x^16 + x^5 + x^3 + x^2 + 1
+    // x^16 + x^5 + x^3 + x^2 + 1
     assert_eq!(
         params.primitive_poly, 0b10000000000101101,
         "DVB-T2 normal frames must use standard GF(2^16) polynomial"
@@ -100,7 +97,6 @@ fn test_dvb_t2_polynomials_match_database() {
 fn test_wrong_polynomial_is_detected() {
     use gf2_core::primitive_polys::{PrimitivePolynomialDatabase, VerificationResult};
 
-    // The bug case: using wrong (but still primitive) polynomial
     let wrong_poly = 0b100000000100001; // x^14 + x^5 + 1
 
     let result = PrimitivePolynomialDatabase::verify(14, wrong_poly);
@@ -114,7 +110,6 @@ fn test_wrong_polynomial_is_detected() {
 
 #[test]
 fn test_all_dvb_t2_short_frames_use_same_field() {
-    // All short frame codes should use the same field parameters
     let rates = [
         CodeRate::Rate1_2,
         CodeRate::Rate3_5,
@@ -139,7 +134,6 @@ fn test_all_dvb_t2_short_frames_use_same_field() {
 
 #[test]
 fn test_all_dvb_t2_normal_frames_use_same_field() {
-    // All normal frame codes should use the same field parameters
     let rates = [
         CodeRate::Rate1_2,
         CodeRate::Rate3_5,

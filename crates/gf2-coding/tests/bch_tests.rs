@@ -1,15 +1,11 @@
 //! Binary BCH construction, encoding, and decoding laws on the canonical model.
-//!
 //! The codes are primitive narrow-sense constructions over
 //! $\mathrm{GF}(2^4) = \mathrm{GF}(2)\[x\]/(x^4 + x + 1)$ and the production
 //! DVB-T2 outer codes. Laws shared with every base-field class, including the
 //! typed errors of invalid constructions, live in `bch_conformance.rs`.
-//!
-//! [`BinaryBchDecoder`] reads internal coordinates, where coordinate $i$ is the
-//! coefficient of $x^i$, and exposes its syndromes, error locator, and Chien
-//! search only through the outcome, the corrected word, and the corrected
-//! coordinates of its diagnostic report. The syndrome, Berlekamp-Massey, and
-//! Chien-search groups below assert those observables.
+//! [`BinaryBchDecoder`] exposes its syndromes, error locator, and Chien search
+//! only through the outcome, the corrected word, and the corrected coordinates
+//! of its diagnostic report.
 
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder, FrameSize};
 use gf2_coding::bch::error::BchError;
@@ -35,7 +31,6 @@ fn gf16_code(t: u64) -> BinaryBchCode {
         .expect("a primitive narrow-sense code over GF(16)")
 }
 
-/// Encodes `message` in the default systematic layout.
 fn encode(code: &BinaryBchCode, message: &BitVec) -> BitVec {
     code.encode(message).expect("a k-bit message encodes")
 }
@@ -90,8 +85,6 @@ struct LayoutDecode {
     error_positions: Vec<usize>,
 }
 
-/// Decodes a default-layout word with [`BinaryBchDecoder`].
-///
 /// The decoder reads internal coordinates, so the received word crosses the
 /// layout's coordinate map on the way in, and the corrected word and its
 /// corrected coordinates cross it on the way out.
@@ -133,7 +126,6 @@ fn decode(code: &BinaryBchCode, received: &BitVec) -> LayoutDecode {
     }
 }
 
-/// Returns the decoded message, which a correctable word always produces.
 fn decode_message(code: &BinaryBchCode, received: &BitVec) -> BitVec {
     decode(code, received)
         .message
@@ -156,15 +148,13 @@ mod bch_construction_tests {
     fn test_generator_polynomial_degree() {
         let code = gf16_code(1);
 
-        // For t=1, generator has degree at most 2t*m where m is extension degree
-        // In practice, should be around n-k = 4
+        // The generator degree is at most 2tm = 8.
         assert!(code.generator().degree().unwrap() <= 8);
-        assert!(code.generator().degree().unwrap() >= 2); // At least 2 for t=1
+        assert!(code.generator().degree().unwrap() >= 2);
     }
 
     #[test]
     fn test_generator_has_consecutive_roots() {
-        // Generator should have α, α^2, α^3, α^4 as roots (for t=2)
         let code = gf16_code(2);
         assert_generator_vanishes_at_consecutive_powers(&code, code.correction_radius());
     }
@@ -176,7 +166,7 @@ mod bch_construction_tests {
         let code = gf16_code(1);
 
         assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 3); // 2t + 1 = 3
-        assert_eq!(code.n() - code.k(), 4); // Parity bits
+        assert_eq!(code.n() - code.k(), 4);
     }
 }
 
@@ -224,10 +214,10 @@ mod dvb_t2_parameter_tests {
         let rates = vec![
             (CodeRate::Rate1_2, 32208, 12),
             (CodeRate::Rate3_5, 38688, 12),
-            (CodeRate::Rate2_3, 43040, 10), // t=10 for this rate
+            (CodeRate::Rate2_3, 43040, 10),
             (CodeRate::Rate3_4, 48408, 12),
             (CodeRate::Rate4_5, 51648, 12),
-            (CodeRate::Rate5_6, 53840, 10), // t=10 for this rate
+            (CodeRate::Rate5_6, 53840, 10),
         ];
 
         for (rate, expected_k, expected_t) in rates {
@@ -264,7 +254,6 @@ mod encoding_tests {
         }
         let cw = encode(&code, &msg);
 
-        // In systematic form [message | parity], message appears in first k positions
         for i in 0..11 {
             assert_eq!(
                 cw.get(i),
@@ -292,7 +281,7 @@ mod encoding_tests {
     fn test_encoder_rejects_wrong_message_length() {
         let code = gf16_code(1);
 
-        let msg = BitVec::zeros(10); // Wrong length
+        let msg = BitVec::zeros(10);
         assert_eq!(
             code.encode(&msg),
             Err(CodeError::BufferLengthMismatch {
@@ -310,7 +299,6 @@ mod encoding_tests {
         let cw = encode(&code, &msg);
 
         assert_eq!(cw.len(), 15);
-        // Message part should be all ones
         for i in 4..15 {
             assert!(cw.get(i), "Message bit should be 1 at position {}", i);
         }
@@ -321,7 +309,7 @@ mod encoding_tests {
         let code = gf16_code(1);
 
         let mut msg = BitVec::from_bytes_le(&[0b10101010, 0b101]);
-        msg.resize(11, false); // Trim to exactly 11 bits
+        msg.resize(11, false);
         let cw = encode(&code, &msg);
 
         let (_, remainder) = codeword_polynomial(&code, &cw).div_rem(code.generator());
@@ -367,7 +355,6 @@ mod syndrome_tests {
         }
         let mut cw = encode(&code, &msg);
 
-        // Introduce single-bit error
         cw.set(5, !cw.get(5));
 
         assert_ne!(
@@ -396,7 +383,6 @@ mod syndrome_tests {
         let msg = BitVec::zeros(7);
         let mut cw = encode(&code, &msg);
 
-        // Introduce 2 errors
         cw.set(3, !cw.get(3));
         cw.set(10, !cw.get(10));
 
@@ -407,13 +393,12 @@ mod syndrome_tests {
         );
     }
 
-    /// A received word of the wrong length is a typed decode error.
     #[test]
     fn test_syndrome_wrong_length_rejected() {
         let code = gf16_code(1);
         let decoder = BinaryBchDecoder::new(&code);
 
-        let cw = BitVec::zeros(14); // Wrong length
+        let cw = BitVec::zeros(14);
         assert_eq!(
             decoder.decode(&cw),
             Err(BchError::Decode(CodeError::BufferLengthMismatch {
@@ -443,9 +428,8 @@ mod berlekamp_massey_tests {
 
         let msg = BitVec::ones(11);
         let mut cw = encode(&code, &msg);
-        cw.set(5, !cw.get(5)); // Single error at position 5
+        cw.set(5, !cw.get(5));
 
-        // For single error, degree should be 1
         assert_eq!(
             decode(&code, &cw).outcome,
             BchDecodeOutcome::Corrected { count: 1 }
@@ -459,11 +443,9 @@ mod berlekamp_massey_tests {
         let msg = BitVec::zeros(7);
         let mut cw = encode(&code, &msg);
 
-        // Inject 2 errors
         cw.set(3, !cw.get(3));
         cw.set(10, !cw.get(10));
 
-        // For 2 errors, degree should be 2
         assert_eq!(
             decode(&code, &cw).outcome,
             BchDecodeOutcome::Corrected { count: 2 }
@@ -477,11 +459,9 @@ mod berlekamp_massey_tests {
         let msg = BitVec::ones(7);
         let mut cw = encode(&code, &msg);
 
-        // Inject t errors
         cw.set(1, !cw.get(1));
         cw.set(8, !cw.get(8));
 
-        // Degree should be at most t
         let count = decode(&code, &cw)
             .outcome
             .corrected_count()
@@ -510,7 +490,6 @@ mod chien_search_tests {
         let msg = BitVec::ones(11);
         let mut cw = encode(&code, &msg);
 
-        // Inject error at bitvec position 5
         let bitvec_error_pos = 5;
         cw.set(bitvec_error_pos, !cw.get(bitvec_error_pos));
 
@@ -527,7 +506,6 @@ mod chien_search_tests {
         let msg = BitVec::zeros(7);
         let mut cw = encode(&code, &msg);
 
-        // Inject 2 errors at bitvec positions
         let bitvec_errors = vec![3, 10];
         for &pos in &bitvec_errors {
             cw.set(pos, !cw.get(pos));
@@ -546,11 +524,9 @@ mod chien_search_tests {
         let msg = BitVec::ones(7);
         let mut cw = encode(&code, &msg);
 
-        // Inject exactly t errors
         cw.set(0, !cw.get(0));
         cw.set(14, !cw.get(14));
 
-        // Should find exactly t error positions
         let positions = decode(&code, &cw).error_positions;
         assert_eq!(positions.len(), code.correction_radius());
     }
@@ -580,7 +556,6 @@ mod decoder_integration_tests {
         }
         let mut cw = encode(&code, &msg);
 
-        // Inject single error
         cw.set(7, !cw.get(7));
 
         let decoded = decode_message(&code, &cw);
@@ -594,7 +569,6 @@ mod decoder_integration_tests {
         let msg = BitVec::ones(7);
         let mut cw = encode(&code, &msg);
 
-        // Inject 2 errors (within correction capability)
         cw.set(2, !cw.get(2));
         cw.set(12, !cw.get(12));
 
@@ -606,7 +580,6 @@ mod decoder_integration_tests {
     fn test_decode_roundtrip_various_messages() {
         let code = gf16_code(1);
 
-        // Test various message patterns
         let test_messages = vec![BitVec::zeros(11), BitVec::ones(11), {
             let mut msg = BitVec::zeros(11);
             for i in 0..11 {
@@ -629,7 +602,6 @@ mod decoder_integration_tests {
         let msg = BitVec::zeros(7);
         let mut cw = encode(&code, &msg);
 
-        // Inject exactly t errors
         cw.set(1, !cw.get(1));
         cw.set(8, !cw.get(8));
 
@@ -641,27 +613,21 @@ mod decoder_integration_tests {
 mod known_bch_codes {
     use super::*;
 
-    /// Test BCH(15, 7, 2) - well-documented in literature
-    /// Generator polynomial: x^8 + x^7 + x^6 + x^4 + 1 (over GF(2^4))
+    /// The generator polynomial is x^8 + x^7 + x^6 + x^4 + 1.
     #[test]
     fn test_bch_15_7_2_properties() {
-        let code = gf16_code(2); // x^4 + x + 1
+        let code = gf16_code(2);
 
-        // Verify parameters
         assert_eq!(code.n(), 15);
         assert_eq!(code.k(), 7);
         assert_eq!(code.correction_radius(), 2);
         assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 5); // 2t + 1
 
-        // Verify generator polynomial degree
         assert_eq!(code.generator().degree(), Some(8)); // n - k = 15 - 7 = 8
 
-        // Generator should have roots at α, α^2, α^3, α^4
         assert_generator_vanishes_at_consecutive_powers(&code, 2);
     }
 
-    /// Test BCH(15, 11, 1) - single error correcting
-    /// This is equivalent to Hamming(15, 11)
     #[test]
     fn test_bch_15_11_1_hamming_equivalence() {
         let code = gf16_code(1);
@@ -669,18 +635,15 @@ mod known_bch_codes {
         assert_eq!(code.n(), 15);
         assert_eq!(code.k(), 11);
         assert_eq!(code.correction_radius(), 1);
-        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 3); // Hamming distance
+        assert_eq!(code.distance_bound().minimum_distance_lower_bound(), 3);
 
-        // Generator polynomial should have degree n - k = 4
         assert_eq!(code.generator().degree(), Some(4));
     }
 
-    /// Test linearity: c1 + c2 should be a valid codeword if c1, c2 are
     #[test]
     fn test_linearity_property() {
         let code = gf16_code(1);
 
-        // Encode two different messages
         let mut m1 = BitVec::zeros(11);
         for i in 0..11 {
             m1.set(i, i % 2 == 0);
@@ -694,7 +657,6 @@ mod known_bch_codes {
         let c1 = encode(&code, &m1);
         let c2 = encode(&code, &m2);
 
-        // c1 XOR c2 should decode to m1 XOR m2
         let mut c_sum = BitVec::zeros(15);
         for i in 0..15 {
             c_sum.set(i, c1.get(i) ^ c2.get(i));
@@ -715,7 +677,6 @@ mod error_correction_limits {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
-    /// Test that exactly t errors can be corrected
     #[test]
     fn test_corrects_exactly_t_errors() {
         let code = gf16_code(2);
@@ -723,7 +684,6 @@ mod error_correction_limits {
         let msg = BitVec::ones(7);
         let cw = encode(&code, &msg);
 
-        // Test with exactly t = 2 errors at various positions
         let error_patterns = vec![(0, 5), (1, 14), (3, 10), (7, 12)];
 
         for (pos1, pos2) in error_patterns {
@@ -740,19 +700,16 @@ mod error_correction_limits {
         }
     }
 
-    /// Test multiple seeded random error patterns within correction capability
     #[test]
     fn test_random_correctable_errors() {
         let mut rng = StdRng::seed_from_u64(0xAE03_BCD0);
 
         let code = gf16_code(1);
 
-        // Test 20 random single-error patterns
         for _ in 0..20 {
             let msg = BitVec::ones(11);
             let mut cw = encode(&code, &msg);
 
-            // Inject single error at random position
             let error_pos = rng.gen_range(0..15);
             cw.set(error_pos, !cw.get(error_pos));
 
@@ -769,7 +726,6 @@ mod error_correction_limits {
 mod systematic_encoding_validation {
     use super::*;
 
-    /// Verify systematic form: message appears in first k positions
     #[test]
     fn test_systematic_form() {
         let code = gf16_code(1);
@@ -781,7 +737,6 @@ mod systematic_encoding_validation {
 
         let cw = encode(&code, &msg);
 
-        // Message should appear in positions [0, k) - systematic [message | parity] format
         for i in 0..11 {
             assert_eq!(
                 cw.get(i),
@@ -792,12 +747,10 @@ mod systematic_encoding_validation {
         }
     }
 
-    /// Verify codeword is divisible by generator polynomial
     #[test]
     fn test_codeword_divisibility() {
         let code = gf16_code(2);
 
-        // Test multiple messages
         for pattern in [0b0000000, 0b1111111, 0b1010101, 0b0110011] {
             let mut msg = BitVec::zeros(7);
             for i in 0..7 {
@@ -806,7 +759,6 @@ mod systematic_encoding_validation {
 
             let cw = encode(&code, &msg);
 
-            // Should be divisible by generator
             let (_, remainder) = codeword_polynomial(&code, &cw).div_rem(code.generator());
             assert!(
                 remainder.is_zero(),
@@ -822,7 +774,7 @@ mod dvb_t2_validation {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
-    /// Verify DVB-T2 Short frame parameters match ETSI EN 302 755 specification
+    /// Short-frame parameters of `@/citation/Etsi2015`.
     #[test]
     fn test_dvb_t2_short_parameters() {
         let expected = vec![
@@ -845,7 +797,6 @@ mod dvb_t2_validation {
                 rate
             );
 
-            // Verify generator polynomial degree equals BCH parity bits
             let deg = code.mother().code().generator().degree().unwrap();
             assert_eq!(
                 deg,
@@ -858,16 +809,16 @@ mod dvb_t2_validation {
         }
     }
 
-    /// Verify DVB-T2 Normal frame parameters match ETSI EN 302 755 specification
+    /// Normal-frame parameters of `@/citation/Etsi2015`.
     #[test]
     fn test_dvb_t2_normal_parameters() {
         let expected = vec![
             (CodeRate::Rate1_2, 32400, 32208, 12),
             (CodeRate::Rate3_5, 38880, 38688, 12),
-            (CodeRate::Rate2_3, 43200, 43040, 10), // t=10 for rate 2/3
+            (CodeRate::Rate2_3, 43200, 43040, 10),
             (CodeRate::Rate3_4, 48600, 48408, 12),
             (CodeRate::Rate4_5, 51840, 51648, 12),
-            (CodeRate::Rate5_6, 54000, 53840, 10), // t=10 for rate 5/6
+            (CodeRate::Rate5_6, 54000, 53840, 10),
         ];
 
         for (rate, n, k, t) in expected {
@@ -881,7 +832,6 @@ mod dvb_t2_validation {
                 rate
             );
 
-            // Verify generator polynomial degree equals BCH parity bits
             let deg = code.mother().code().generator().degree().unwrap();
             assert_eq!(
                 deg,
@@ -894,39 +844,31 @@ mod dvb_t2_validation {
         }
     }
 
-    /// Test DVB-T2 short frame encode/decode
     #[test]
     fn test_dvb_t2_short_encode_decode() {
         let code = dvb_t2_bch_code(FrameSize::Short, CodeRate::Rate1_2).unwrap();
         let decoder = DvbT2BchDecoder::new(&code);
 
-        // Create test message (all zeros for simplicity)
         let msg = BitVec::zeros(code.k());
 
-        // Encode
         let cw = code.encode(&msg).unwrap();
         assert_eq!(cw.len(), code.n());
 
-        // Decode without errors
         let (outcome, decoded) = decoder.decode(&cw).unwrap();
         assert_eq!(outcome, BchDecodeOutcome::NoErrors);
         assert_eq!(decoded, msg);
     }
 
-    /// Test DVB-T2 normal frame encode/decode
     #[test]
     fn test_dvb_t2_normal_encode_decode() {
         let code = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
         let decoder = DvbT2BchDecoder::new(&code);
 
-        // Create test message (all zeros for simplicity)
         let msg = BitVec::zeros(code.k());
 
-        // Encode
         let cw = code.encode(&msg).unwrap();
         assert_eq!(cw.len(), code.n());
 
-        // Decode without errors
         let (outcome, decoded) = decoder.decode(&cw).unwrap();
         assert_eq!(outcome, BchDecodeOutcome::NoErrors);
         assert_eq!(decoded, msg);
@@ -944,7 +886,6 @@ mod dvb_t2_validation {
         let mut corrupted = codeword.clone();
         let mut positions = Vec::new();
 
-        // Inject errors at random positions
         for _ in 0..num_errors {
             loop {
                 let pos = rng.gen_range(0..code.n());
@@ -967,7 +908,6 @@ mod dvb_t2_validation {
         );
     }
 
-    /// Test DVB-T2 short frame error correction capability
     #[test]
     fn test_dvb_t2_short_error_correction() {
         let code = dvb_t2_bch_code(FrameSize::Short, CodeRate::Rate1_2).unwrap();
@@ -977,13 +917,11 @@ mod dvb_t2_validation {
         let msg = BitVec::random(code.k(), &mut rng);
         let cw = code.encode(&msg).unwrap();
 
-        // Test correction of 1, t/2, and t errors
         for num_errors in [1, t / 2, t] {
             assert_corrects(&code, &msg, &cw, num_errors, &mut rng);
         }
     }
 
-    /// Test DVB-T2 normal frame error correction capability
     #[test]
     fn test_dvb_t2_normal_error_correction() {
         let code = dvb_t2_bch_code(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
@@ -993,13 +931,11 @@ mod dvb_t2_validation {
         let msg = BitVec::random(code.k(), &mut rng);
         let cw = code.encode(&msg).unwrap();
 
-        // Test correction of 1, t/2, and t errors
         for num_errors in [1, t / 2, t] {
             assert_corrects(&code, &msg, &cw, num_errors, &mut rng);
         }
     }
 
-    /// Test DVB-T2 short frame - all code rates with error correction
     #[test]
     fn test_dvb_t2_short_all_rates_error_correction() {
         let rates = [
@@ -1018,12 +954,10 @@ mod dvb_t2_validation {
             let msg = BitVec::random(code.k(), &mut rng);
             let cw = code.encode(&msg).unwrap();
 
-            // Test with single error
             assert_corrects(&code, &msg, &cw, 1, &mut rng);
         }
     }
 
-    /// Test DVB-T2 normal frame - all code rates with error correction
     #[test]
     fn test_dvb_t2_normal_all_rates_error_correction() {
         let rates = [
@@ -1042,7 +976,6 @@ mod dvb_t2_validation {
             let msg = BitVec::random(code.k(), &mut rng);
             let cw = code.encode(&msg).unwrap();
 
-            // Test with single error
             assert_corrects(&code, &msg, &cw, 1, &mut rng);
         }
     }

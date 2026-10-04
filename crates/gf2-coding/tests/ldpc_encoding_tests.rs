@@ -1,16 +1,9 @@
-//! Tests for LDPC systematic encoding using Richardson-Urbanke algorithm.
-//!
-//! Following TDD approach: tests define expected behavior before implementation.
+//! LDPC systematic encoding: codeword validity and systematic form.
 
 use gf2_coding::ldpc::LdpcCode;
 use gf2_core::BitVec;
 
-/// Helper: Create a simple (7,4) Hamming code as LDPC for testing
 fn simple_ldpc_7_4() -> LdpcCode {
-    // Parity-check matrix H for [7,4] Hamming code:
-    // H = [1 0 1 1 1 0 0]
-    //     [0 1 0 1 0 1 0]
-    //     [0 0 1 1 0 0 1]
     let edges = vec![
         (0, 0),
         (0, 2),
@@ -26,7 +19,6 @@ fn simple_ldpc_7_4() -> LdpcCode {
     LdpcCode::from_edges(3, 7, &edges)
 }
 
-/// Helper: Generate all 4-bit messages
 fn all_4_bit_messages() -> Vec<BitVec> {
     (0u8..16)
         .map(|n| {
@@ -39,10 +31,6 @@ fn all_4_bit_messages() -> Vec<BitVec> {
         .collect()
 }
 
-// ============================================================================
-// Phase 1: Core Richardson-Urbanke Algorithm Tests
-// ============================================================================
-
 #[test]
 fn test_ru_preprocess_simple_ldpc() {
     use gf2_coding::ldpc::LdpcEncoder;
@@ -50,10 +38,8 @@ fn test_ru_preprocess_simple_ldpc() {
 
     let code = simple_ldpc_7_4();
 
-    // Creating an encoder preprocesses the matrix
     let encoder = LdpcEncoder::new(code.clone());
 
-    // Verify dimensions through encoder
     assert_eq!(encoder.n(), 7, "n should be 7");
     assert_eq!(encoder.k(), 4, "k should be 4 (7-3)");
 }
@@ -66,7 +52,6 @@ fn test_ru_encoding_produces_valid_codewords() {
     let code = simple_ldpc_7_4();
     let encoder = LdpcEncoder::new(code.clone());
 
-    // Test all 16 possible 4-bit messages
     for message in all_4_bit_messages() {
         let codeword = encoder.encode(&message);
         assert_eq!(codeword.len(), 7, "Codeword should be 7 bits");
@@ -85,7 +70,6 @@ fn test_ru_encoding_is_systematic() {
     let code = simple_ldpc_7_4();
     let encoder = LdpcEncoder::new(code);
 
-    // Create 4-bit message [0,1,0,1]
     let mut message = BitVec::new();
     message.push_bit(false);
     message.push_bit(true);
@@ -94,7 +78,6 @@ fn test_ru_encoding_is_systematic() {
 
     let codeword = encoder.encode(&message);
 
-    // First k bits should equal the message
     for i in 0..4 {
         assert_eq!(
             codeword.get(i),
@@ -105,19 +88,12 @@ fn test_ru_encoding_is_systematic() {
     }
 }
 
-// ============================================================================
-// Phase 2: DVB-T2 Integration Tests
-// ============================================================================
-
 #[test]
 fn test_dvb_t2_preprocessing_all_configs() {
     use gf2_coding::bch::CodeRate;
     use gf2_coding::ldpc::{encoding::EncodingCache, LdpcEncoder};
     use gf2_coding::traits::BlockEncoder;
 
-    // DVB-T2 codes now use the IRA staircase encoder: O(nnz) construction,
-    // no RREF, no cache required. This test verifies all 6 short configs
-    // can be constructed and used instantly.
     let cache = EncodingCache::new();
 
     let rates = [
@@ -130,18 +106,15 @@ fn test_dvb_t2_preprocessing_all_configs() {
     ];
 
     for rate in &rates {
-        // Test short frames: IRA path is selected automatically
         let code_short = LdpcCode::dvb_t2_short(*rate);
         let encoder = LdpcEncoder::with_cache(code_short.clone(), &cache);
         assert!(encoder.is_ira(), "DVB-T2 short should use IRA encoder");
 
-        // Verify a zero message encodes to a valid codeword
         let msg = BitVec::zeros(code_short.k());
         let cw = encoder.encode(&msg);
         assert!(code_short.is_valid_codeword(&cw), "H·c must be zero");
     }
 
-    // IRA path bypasses the RREF cache — no entries expected.
     assert_eq!(
         cache.stats().entries,
         0,
@@ -159,7 +132,6 @@ fn test_ldpc_encoder_creation() {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
 
-    // Generate random message
     let mut message = BitVec::new();
     for _ in 0..code.k() {
         message.push_bit(rand::random());
@@ -169,7 +141,6 @@ fn test_ldpc_encoder_creation() {
 
     assert_eq!(codeword.len(), code.n(), "Codeword length should match n");
 
-    // Check systematic form: first k bits = message
     for i in 0..code.k() {
         assert_eq!(
             codeword.get(i),
@@ -190,7 +161,6 @@ fn test_dvb_t2_encoded_codewords_valid() {
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
 
-    // Test 10 random messages
     for _ in 0..10 {
         let mut message = BitVec::new();
         for _ in 0..code.k() {
@@ -217,34 +187,29 @@ fn test_ldpc_encode_decode_roundtrip_simple() {
     let encoder = LdpcEncoder::new(code.clone());
     let mut decoder = LdpcDecoder::new(code.clone());
 
-    // Random message
     let mut message = BitVec::new();
     for _ in 0..code.k() {
         message.push_bit(rand::random());
     }
 
-    // Encode
     let codeword = encoder.encode(&message);
 
-    // Perfect channel: convert bits to high-confidence LLRs. The convention is
-    // L = log(P(0)/P(1)), so a set bit maps to a NEGATIVE LLR.
+    // L = log(P(0)/P(1)): a set bit maps to a negative LLR.
     let mut llrs = Vec::with_capacity(codeword.len());
     for i in 0..codeword.len() {
         let bit = codeword.get(i);
         llrs.push(if bit {
-            Llr::new(-10.0f32) // Strong belief in '1'
+            Llr::new(-10.0f32)
         } else {
-            Llr::new(10.0f32) // Strong belief in '0'
+            Llr::new(10.0f32)
         });
     }
 
-    // Decode
     let result = decoder.decode_iterative(&llrs, 50);
     assert!(result.converged, "Decoding should converge");
 
     let decoded = result.decoded_bits;
 
-    // Extract message from systematic position
     let mut recovered_message = BitVec::new();
     for i in 0..code.k() {
         recovered_message.push_bit(decoded.get(i));

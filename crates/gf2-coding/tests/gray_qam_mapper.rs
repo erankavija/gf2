@@ -1,8 +1,5 @@
-//! Integration test for the public [`GrayQamMapper`] surface.
-//!
-//! Verifies that the mapper is reachable from the crate root and that its
-//! [`BatchMapper`] methods produce outputs equivalent to the preset
-//! [`ModemSpec::gray_square_qam`] per-label point lookup for 16-QAM.
+//! [`GrayQamMapper`] batch output against the [`ModemSpec::gray_square_qam`]
+//! preset.
 
 use gf2_coding::modem::{
     unpack_label_msb_first as bits_msb_first, BatchMapper, GrayQamMapper, ModemSpec,
@@ -11,7 +8,6 @@ use gf2_coding::modem::{
 #[test]
 fn test_gray_qam_mapper_public_surface_16qam() {
     let mapper = GrayQamMapper::from_preset_order(16);
-    // `spec()` accessor exists and matches the preset.
     let view = mapper.spec();
     assert_eq!(view.num_symbols(), 16);
     assert_eq!(view.bits_per_symbol(), 4);
@@ -19,7 +15,6 @@ fn test_gray_qam_mapper_public_surface_16qam() {
     let preset = ModemSpec::gray_square_qam(16);
     let preset_view = preset.view();
 
-    // All 16 labels, one-symbol batches.
     for label in 0u16..16 {
         let bits = bits_msb_first(label, 4);
         let mut oi = [0.0_f32; 1];
@@ -46,7 +41,6 @@ fn test_gray_qam_mapper_public_surface_16qam() {
         );
     }
 
-    // Multi-symbol batch.
     let mut all_bits = Vec::with_capacity(16 * 4);
     for label in 0u16..16 {
         all_bits.extend(bits_msb_first(label, 4));

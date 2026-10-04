@@ -1,22 +1,5 @@
-//! DVB-T2 LDPC Verification Test Suite
-//!
-//! Comprehensive validation of LDPC encoding and decoding against official DVB-T2
-//! test vectors, following the same approach as BCH verification.
-//!
-//! Test structure:
-//! - TP05 (BCH output) → TP06 (LDPC output) encoding validation
-//! - TP06 → TP05 decoding validation (error-free)
-//! - TP06 + errors → TP05 decoding (error correction)
-//! - Systematic encoding property verification
-//! - Multi-frame consistency checks
-//!
-//! Prerequisites:
-//! - DVB-T2 test vectors at $DVB_TEST_VECTORS_PATH or ~/dvb_test_vectors
-//! - Pre-computed LDPC cache at data/ldpc/dvb_t2/ (optional; the IRA
-//!   staircase encoder used for DVB-T2 needs no preprocessing, so the
-//!   cache is only useful for non-IRA codes that fall back to RREF)
-//!
-//! Run with: cargo test --test dvb_t2_ldpc_verification_suite -- --ignored --nocapture
+//! DVB-T2 LDPC encoding and decoding against the VV001-CR35 TP05 and TP06
+//! streams (`@/citation/DvbVerification2010`) under `$DVB_TEST_VECTORS_PATH`.
 
 mod test_vectors;
 
@@ -29,7 +12,6 @@ use rand::Rng;
 use std::path::PathBuf;
 use test_vectors::{test_vectors_available, test_vectors_path, TestVectorSet};
 
-/// Helper: Load cache from standard location if available
 fn try_load_cache() -> Option<EncodingCache> {
     let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
 
@@ -43,7 +25,6 @@ fn try_load_cache() -> Option<EncodingCache> {
     }
 }
 
-/// Helper: Create encoder with optional cache
 fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder {
     match cache {
         Some(c) => {
@@ -51,18 +32,12 @@ fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder 
             LdpcEncoder::with_cache(code, c)
         }
         None => {
-            // For DVB-T2 codes LdpcEncoder::new returns instantly via the
-            // IRA path; the 2-10 s preprocessing only applies to non-IRA
-            // codes that fall back to Richardson-Urbanke RREF.
+            // DVB-T2 codes take the IRA path, which never consults the cache.
             LdpcEncoder::new(code)
         }
     }
 }
 
-/// Test 1: Verify LDPC encoding TP05 → TP06
-///
-/// Validates that systematic LDPC encoding produces exact match with
-/// reference test vectors.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_encoding_tp05_to_tp06() {
@@ -87,14 +62,11 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     println!("Testing LDPC encoding on Frame 1 (202 blocks)...");
     let start = std::time::Instant::now();
 
-    // Test all blocks in first frame
     for (block_idx, input_block) in tp05.frame(0).iter().enumerate() {
         let expected_output = &tp06.frame(0)[block_idx];
 
-        // Encode
         let encoded = encoder.encode(&input_block.data);
 
-        // Compare
         if encoded == expected_output.data {
             successes += 1;
         } else {
@@ -106,7 +78,6 @@ fn test_ldpc_encoding_tp05_to_tp06() {
                 encoded.len()
             );
 
-            // Show first few bit differences
             let mut diff_count = 0;
             for i in 0..encoded.len().min(expected_output.data.len()) {
                 if encoded.get(i) != expected_output.data.get(i) {
@@ -147,10 +118,6 @@ fn test_ldpc_encoding_tp05_to_tp06() {
     );
 }
 
-/// Test 2: Verify LDPC decoding TP06 → TP05 (error-free)
-///
-/// Validates that hard-decision decoding of valid codewords recovers
-/// the original message bits.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_decoding_tp06_to_tp05_error_free() {
@@ -175,26 +142,22 @@ fn test_ldpc_decoding_tp06_to_tp05_error_free() {
     println!("Testing LDPC decoding on Frame 1 (202 blocks, error-free)...");
     let start = std::time::Instant::now();
 
-    // Test all blocks in first frame
     for (block_idx, codeword) in tp06.frame(0).iter().enumerate() {
         let expected_message = &tp05.frame(0)[block_idx];
 
-        // Convert to soft LLRs (high confidence for error-free)
         let mut llrs = Vec::with_capacity(codeword.data.len());
         for i in 0..codeword.data.len() {
             let bit = codeword.data.get(i);
             llrs.push(if bit {
-                Llr::new(-10.0f32) // Strong belief in bit 1
+                Llr::new(-10.0f32)
             } else {
-                Llr::new(10.0f32) // Strong belief in bit 0
+                Llr::new(10.0f32)
             });
         }
 
-        // Decode
         let result = decoder.decode_iterative(&llrs, 50);
         total_iterations += result.iterations;
 
-        // Compare
         if result.decoded_bits == expected_message.data {
             successes += 1;
         } else {
@@ -231,9 +194,6 @@ fn test_ldpc_decoding_tp06_to_tp05_error_free() {
     );
 }
 
-/// Test 3: Verify LDPC error correction capability with injected errors
-///
-/// Tests the decoder's ability to correct random bit errors in codewords.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_error_correction() {
@@ -259,7 +219,6 @@ fn test_ldpc_error_correction() {
     let num_test_blocks = 10.min(tp06.frame(0).len());
     let trials_per_block = 5;
 
-    // Test different error rates
     let error_rates = vec![0.001, 0.005, 0.01, 0.02]; // Fraction of bits flipped
 
     for error_rate in error_rates {
@@ -272,7 +231,6 @@ fn test_ldpc_error_correction() {
             let expected_message = &tp05.frame(0)[block_idx];
 
             for _trial in 0..trials_per_block {
-                // Inject random errors
                 let mut corrupted = codeword.data.clone();
                 let num_errors = (corrupted.len() as f64 * error_rate).round() as usize;
                 let mut error_positions = Vec::new();
@@ -285,22 +243,19 @@ fn test_ldpc_error_correction() {
                     }
                 }
 
-                // Convert to soft LLRs (moderate confidence)
                 let mut llrs = Vec::with_capacity(corrupted.len());
                 for i in 0..corrupted.len() {
                     let bit = corrupted.get(i);
                     llrs.push(if bit {
-                        Llr::new(-3.0f32) // Moderate belief in bit 1
+                        Llr::new(-3.0f32)
                     } else {
-                        Llr::new(3.0f32) // Moderate belief in bit 0
+                        Llr::new(3.0f32)
                     });
                 }
 
-                // Decode
                 let result = decoder.decode_iterative(&llrs, 50);
                 total_iterations += result.iterations;
 
-                // Check if corrected
                 if result.decoded_bits == expected_message.data {
                     successes += 1;
                 } else {
@@ -325,9 +280,6 @@ fn test_ldpc_error_correction() {
     }
 }
 
-/// Test 4: Verify LDPC systematic encoding property
-///
-/// Checks that the first k bits of each codeword match the message bits.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_systematic_property() {
@@ -353,7 +305,6 @@ fn test_ldpc_systematic_property() {
         k, n, parity_bits
     );
 
-    // Check first few blocks
     for block_idx in 0..5.min(tp05.frame(0).len()) {
         let message = &tp05.frame(0)[block_idx];
         let codeword = &tp06.frame(0)[block_idx];
@@ -361,7 +312,6 @@ fn test_ldpc_systematic_property() {
         assert_eq!(message.data.len(), k, "Message length mismatch");
         assert_eq!(codeword.data.len(), n, "Codeword length mismatch");
 
-        // Systematic property: first k bits of codeword should equal message
         for i in 0..k {
             assert_eq!(
                 codeword.data.get(i),
@@ -376,9 +326,6 @@ fn test_ldpc_systematic_property() {
     println!("✓ Systematic encoding property verified");
 }
 
-/// Test 5: Sample blocks across multiple frames
-///
-/// Spot-checks encoding consistency across all frames.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_encoding_sample() {
@@ -403,7 +350,6 @@ fn test_ldpc_encoding_sample() {
         let frame_tp05 = tp05.frame(frame_idx);
         let frame_tp06 = tp06.frame(frame_idx);
 
-        // Test first, middle, and last block of each frame
         let test_indices = vec![0, frame_tp05.len() / 2, frame_tp05.len() - 1];
 
         for &block_idx in &test_indices {
@@ -430,9 +376,6 @@ fn test_ldpc_encoding_sample() {
     println!("✓ All sample blocks match");
 }
 
-/// Test 6: Validate DVB-T2 LDPC parameters
-///
-/// Ensures that the LDPC code parameters match DVB-T2 specification.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_parameter_validation() {
@@ -448,12 +391,10 @@ fn test_ldpc_parameter_validation() {
 
     println!("Validating DVB-T2 LDPC parameters...");
 
-    // Check dimensions
     assert_eq!(code.n(), 64800, "LDPC codeword length mismatch");
     assert_eq!(code.k(), 38880, "LDPC message length mismatch");
     assert_eq!(code.m(), 64800 - 38880, "LDPC parity check count mismatch");
 
-    // Check rate
     let rate = code.k() as f64 / code.n() as f64;
     let expected_rate = 3.0 / 5.0;
     assert!(
@@ -463,7 +404,6 @@ fn test_ldpc_parameter_validation() {
         rate
     );
 
-    // Check test vector consistency
     let tp05 = vectors.tp05.as_ref().expect("TP05 not found");
     let tp06 = vectors.tp06.as_ref().expect("TP06 not found");
 
@@ -481,9 +421,6 @@ fn test_ldpc_parameter_validation() {
     println!("✓ All parameters validated");
 }
 
-/// Test 7: Parity check validation
-///
-/// Verifies that all codewords in TP06 satisfy H·c = 0.
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_parity_check() {
@@ -526,9 +463,6 @@ fn test_ldpc_parity_check() {
     println!("✓ Parity check validated for {} blocks", num_test_blocks);
 }
 
-/// Test 8: Encode/decode roundtrip
-///
-/// Full roundtrip: message → encode → decode → message
 #[test]
 #[ignore = "slow: reads the VV001-CR35 reference stream from $DVB_TEST_VECTORS_PATH"]
 fn test_ldpc_roundtrip() {
@@ -554,24 +488,20 @@ fn test_ldpc_roundtrip() {
     let mut failures = 0;
 
     for (block_idx, message_block) in tp05.frame(0).iter().take(num_test_blocks).enumerate() {
-        // Encode
         let codeword = encoder.encode(&message_block.data);
 
-        // Convert to soft LLRs
         let mut llrs = Vec::with_capacity(codeword.len());
         for i in 0..codeword.len() {
             let bit = codeword.get(i);
             llrs.push(if bit {
-                Llr::new(-10.0f32) // Strong belief in bit 1
+                Llr::new(-10.0f32)
             } else {
-                Llr::new(10.0f32) // Strong belief in bit 0
+                Llr::new(10.0f32)
             });
         }
 
-        // Decode
         let result = decoder.decode_iterative(&llrs, 50);
 
-        // Check roundtrip
         if result.decoded_bits == message_block.data {
             successes += 1;
         } else {

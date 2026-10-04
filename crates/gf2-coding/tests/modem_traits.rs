@@ -1,10 +1,5 @@
-//! Integration test: ensure the modem batched-trait surface is publicly
-//! reachable from the crate root.
-//!
-//! This intentionally exercises only the public types and trait shapes;
-//! correctness of any specific demapper math lives with the backend
-//! implementations in tasks `51334873` (reference path) and `52112411`
-//! (Gray-QAM fast path).
+//! Integration test: the modem batched-trait surface is reachable from the
+//! crate root.
 
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::{
@@ -70,7 +65,6 @@ fn test_batched_trait_surface_is_public() {
         spec: ModemSpec::gray_square_qam(4),
     };
 
-    // BatchMapper path.
     let bps = BatchMapper::<f32>::spec(&modem).bits_per_symbol() as usize;
     assert_eq!(bps, 2);
     let bits = vec![false; bps * 3];
@@ -80,7 +74,6 @@ fn test_batched_trait_surface_is_public() {
     assert!(out_i.iter().all(|x| *x == 0.0));
     assert!(out_q.iter().all(|x| *x == 0.0));
 
-    // DemapInput construction over the public surface.
     let rx_i = [0.1_f32, -0.2, 0.3];
     let rx_q = [-0.1_f32, 0.2, -0.3];
     let noise_var = [0.05_f32; 3];
@@ -93,12 +86,10 @@ fn test_batched_trait_surface_is_public() {
         method: DemapMethod::MaxLog,
     };
 
-    // Soft demap path.
     let mut out_llrs = vec![Llr::new(1.0); rx_i.len() * bps];
     BatchSoftDemapper::demap_llrs(&modem, input, &mut out_llrs);
     assert!(out_llrs.iter().all(|l| l.value() == 0.0));
 
-    // Hard demap path; reuse the same DemapInput (it's Copy).
     let mut out_bits = vec![true; rx_i.len() * bps];
     BatchHardDemapper::demap_bits(&modem, input, &mut out_bits);
     assert!(out_bits.iter().all(|b| !*b));

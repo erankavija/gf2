@@ -7,7 +7,6 @@ use rand::SeedableRng;
 
 #[test]
 fn diag_bler_simulation_mother_code() {
-    // Reproduce the bug: simulate BLER using LdpcEncoder + LdpcDecoder on mother code
     let qc = QuasiCyclicLdpc::nr_5g(2, 13);
     let code = LdpcCode::from_quasi_cyclic(&qc);
     let encoder = LdpcEncoder::new(code.clone());
