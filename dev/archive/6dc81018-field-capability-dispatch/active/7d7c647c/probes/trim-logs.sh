@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Trim the raw run logs of dev/active/7d7c647c/probes/logs/ into committed evidence.
+# Trim the raw run logs of dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/logs/ into committed evidence.
 #
 # Strips ANSI escapes, terminal progress-bar redraws, and the rustc dead-code
 # warning blocks that dominate every `charon cargo` run, keeping the command

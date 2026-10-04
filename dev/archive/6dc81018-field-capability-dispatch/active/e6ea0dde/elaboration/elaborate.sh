@@ -2,11 +2,11 @@
 # Elaboration harness for JIT issue e6ea0dde.
 #
 # Answers "does the Lean that Aeneas run AX3 generated elaborate, and what does
-# it take to get there?" for dev/active/e6ea0dde/extraction/AX3_lean/.
+# it take to get there?" for dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean/.
 # Regenerate the committed receipt with:
 #
-#   ./dev/active/e6ea0dde/elaboration/elaborate.sh \
-#     > dev/active/e6ea0dde/elaboration/elaborate.log 2>&1
+#   ./dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.sh \
+#     > dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration/elaborate.log 2>&1
 #
 # The generated files are copied into a fresh mktemp tree and elaborated with
 # `lake env`, which reads the committed proofs/ lake project's environment
@@ -33,8 +33,8 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
-SRC="$REPO_ROOT/dev/active/e6ea0dde/extraction/AX3_lean"
-HERE="$REPO_ROOT/dev/active/e6ea0dde/elaboration"
+SRC="$REPO_ROOT/dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/extraction/AX3_lean"
+HERE="$REPO_ROOT/dev/archive/6dc81018-field-capability-dispatch/active/e6ea0dde/elaboration"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 

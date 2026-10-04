@@ -12,9 +12,9 @@ mkdir -p "$HERE/excerpts"
 
 {
   echo "# A11 (pinned leg) error/sorry accounting."
-  echo "# Sources: dev/active/34d85cb9/logs-trimmed/A11.log"
-  echo "#          dev/active/34d85cb9/extraction/A11_lean/Funs.lean"
-  echo "# Reproduce: dev/active/34d85cb9/extraction/a11-accounting.sh"
+  echo "# Sources: dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/logs-trimmed/A11.log"
+  echo "#          dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/A11_lean/Funs.lean"
+  echo "# Reproduce: dev/archive/6dc81018-field-capability-dispatch/active/34d85cb9/extraction/a11-accounting.sh"
   echo
   echo "## [Error] lines in the log, by class"
   grep -oE "\[Error\] .*" "$LOG" | sed 's/[[:space:]]*$//' | sort | uniq -c | sort -rn | sed 's/^/  /'
