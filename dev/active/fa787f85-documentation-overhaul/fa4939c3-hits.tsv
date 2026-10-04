@@ -38,7 +38,7 @@ crates/gf2-coding/examples/bench_sparse_csv_emitter.rs	243	not a citation	reposi
 crates/gf2-coding/examples/bench_sparse_csv_emitter.rs	721	not a citation	repository document or harness	read
 crates/gf2-coding/examples/dvb_t2_bch_demo.rs	1	keyed	Etsi2015	map
 crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	1	not a citation	repository document or harness	read
-crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	12	not a citation	method or object name	read
+crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	12	keyed	Lubeck2024	read
 crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	19	not a citation	repository document or harness	read
 crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs	112	not a citation	repository document or harness	read
 crates/gf2-coding/examples/ldpc_bler_check.rs	1	not a citation	standard or code family named as a topic	read
@@ -376,7 +376,7 @@ crates/gf2-core/src/field/charpoly.rs	898	keyed	Massey1969	read
 crates/gf2-core/src/field/charpoly.rs	1405	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/charpoly.rs	1459	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/charpoly.rs	1702	keyed	Nist2001	read
-crates/gf2-core/src/field/charpoly.rs	1711	not a citation	method or object name	read
+crates/gf2-core/src/field/charpoly.rs	1711	keyed	Lubeck2024	read
 crates/gf2-core/src/field/expr.rs	1950	keyed	Nist2001	read
 crates/gf2-core/src/field/extension.rs	2749	keyed	Seroussi1998	read
 crates/gf2-core/src/field/inverse.rs	3	keyed	DumasPernet2012	read
@@ -385,7 +385,7 @@ crates/gf2-core/src/field/inverse.rs	157	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/inverse.rs	262	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/inverse.rs	340	keyed	Higham2002	read
 crates/gf2-core/src/field/inverse.rs	411	keyed	Nist2001	read
-crates/gf2-core/src/field/inverse.rs	420	not a citation	method or object name	read
+crates/gf2-core/src/field/inverse.rs	420	keyed	Lubeck2024	read
 crates/gf2-core/src/field/inverse.rs	898	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/irreducibility.rs	1	keyed	Rabin1980	read
 crates/gf2-core/src/field/irreducibility.rs	2	keyed	Rabin1980	map
@@ -405,7 +405,7 @@ crates/gf2-core/src/field/ple.rs	876	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/ple.rs	938	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/ple.rs	939	keyed	DumasPernet2012	read
 crates/gf2-core/src/field/ple.rs	1399	keyed	Nist2001	read
-crates/gf2-core/src/field/ple.rs	1408	not a citation	method or object name	read
+crates/gf2-core/src/field/ple.rs	1408	keyed	Lubeck2024	read
 crates/gf2-core/src/field/sparse_matrix.rs	741	keyed	LinBox2025	read
 crates/gf2-core/src/field/sparse_matrix.rs	742	keyed	LinBox2025	map
 crates/gf2-core/src/field/sparse_matrix.rs	1163	keyed	Nist2001	read
@@ -517,7 +517,7 @@ crates/gf2-core/tests/common/mod.rs	43	keyed	SageMath2026	map
 crates/gf2-core/tests/common/mod.rs	54	keyed	SageMath2026	map
 crates/gf2-core/tests/gf2pow32_constant_drift.rs	1	keyed	Lubeck2024	read
 crates/gf2-core/tests/gf2pow32_matmul.rs	10	keyed	Lubeck2024	read
-crates/gf2-core/tests/gf2pow32_matmul.rs	14	not a citation	method or object name	read
+crates/gf2-core/tests/gf2pow32_matmul.rs	14	keyed	Lubeck2024	read
 crates/gf2-core/tests/gf2pow32_matmul.rs	42	not a citation	method or object name	read
 crates/gf2-core/tests/gfpn_nested_towers.rs	4	keyed	SageMath2025	map
 crates/gf2-core/tests/gfpn_nested_towers.rs	188	keyed	SageMath2025	read
@@ -581,9 +581,9 @@ crates/gf2-sim/src/permanent_campaign/coordinator.rs	1767	not a citation	reposit
 crates/gf2-sim/src/permanent_campaign/coordinator.rs	1772	not a citation	no external work named	read
 crates/gf2-sim/src/permanent_campaign/coordinator.rs	1778	not a citation	no external work named	read
 crates/gf2-sim/src/permanent_campaign/coordinator.rs	1782	not a citation	no external work named	read
-crates/gf2-sim/src/permanent_campaign/provenance.rs	1059	not a citation	names software without attributing a method or number	read
-crates/gf2-sim/src/permanent_campaign/provenance.rs	1076	not a citation	names software without attributing a method or number	read
-crates/gf2-sim/src/permanent_campaign/provenance.rs	1078	not a citation	names software without attributing a method or number	read
+crates/gf2-sim/src/permanent_campaign/provenance.rs	1059	new work	Coreutils2026	read
+crates/gf2-sim/src/permanent_campaign/provenance.rs	1076	new work	Coreutils2026	read
+crates/gf2-sim/src/permanent_campaign/provenance.rs	1078	new work	Coreutils2026	read
 crates/gf2-sim/src/permanent_campaign/schema.rs	39	not a citation	repository document or harness	read
 crates/gf2-sim/src/presets/mod.rs	2	not a citation	no external work named	read
 crates/gf2-sim/src/presets/mod.rs	4	keyed	Etsi2015	map
