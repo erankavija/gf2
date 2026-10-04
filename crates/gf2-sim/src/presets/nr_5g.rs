@@ -17,8 +17,9 @@
 //! The message length is the largest payload realising exactly the requested
 //! `Z` ([`max_payload_for_lifting`]). The codeword length is
 //! `E = ⌊k·den/(num·Q_m)⌋·Q_m` for rate `num/den`, the floor form of the
-//! `@/citation/ThreeGpp2017` clause 5.4.2.1 bit-selection formula, so `E` is a multiple of `Q_m` as the
-//! `@/citation/ThreeGpp2020` clause 5.4.2.2 interleaver requires. When
+//! `@/citation/ThreeGpp2017` clause 5.4.2.1 bit-selection formula, so `E` is
+//! a multiple of `Q_m` as the `@/citation/ThreeGpp2020` clause 5.4.2.2
+//! interleaver requires. When
 //! `k·den/num` is not a `Q_m`-multiple integer the realized rate `k/E` exceeds
 //! the requested one.
 

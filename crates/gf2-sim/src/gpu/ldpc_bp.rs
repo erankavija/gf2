@@ -9,8 +9,9 @@
 //! [`LdpcCode`](gf2_coding::ldpc::LdpcCode) parity-check matrix, the edge
 //! indexing the CPU decoder passes messages over, so both sides gather
 //! check-node messages in CSR order and sum variable-node beliefs in CSC
-//! order. Per-frame iteration counts are excluded from the CPU-vs-GPU
-//! byte-identity contract.
+//! order. The kernel decodes any such layout; DVB-T2 and 5G NR codes are
+//! expanded on the host. Per-frame iteration counts are excluded from the
+//! CPU-vs-GPU byte-identity contract.
 
 #[cfg(feature = "hip")]
 mod imp {
