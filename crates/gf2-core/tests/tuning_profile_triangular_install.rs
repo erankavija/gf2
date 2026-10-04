@@ -1,5 +1,4 @@
 //! Triangular-solve route observation under an installed tuning profile.
-//!
 //! This binary installs values below the conservative threshold. The
 //! above-default boundary lives in `tuning_profile_triangular_install_above`.
 

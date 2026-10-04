@@ -1,21 +1,9 @@
-//! Routing witness for the baked `prime_route` selector family.
-//!
-//! These tests assert the committed conservative boundaries, so they are
-//! compiled only under the declared cfg `gf2_tuning_baked`
-//! (`RUSTFLAGS="--cfg gf2_tuning_baked"`); the default build's conservative
-//! boundaries are asserted by `prime_route_reporter.rs`.
-//!
-//! The measured format-2 core owner at
-//! `crates/gf2-core/data/tuning-profiles/gf2-dbd8787d-20261001t230000z-2601601.json`
-//! cites `dev/benchmarks/tuning_profiles/gf2-dbd8787d-20261001t230000z-2601601.md`
-//! and omits `prime_route`. These baked fields therefore retain their
-//! conservative defaults, as `dev/active/3fa7c9d0/design.md` §7.1 requires.
-//!
-//! `prime_gemm_route` reports the dispatchers' whole gate chain, and whether a
-//! cascade kernel is registered is a host property, so each boundary test
-//! reads the arm at a reference cell above the bound and asserts against that
-//! arm. No test here touches the GF(251) debug switches, which stay at their
-//! `false` production default.
+//! Routing witness for the baked `prime_route` selector family: the committed
+//! conservative boundaries, compiled only under `--cfg gf2_tuning_baked`. The
+//! measured format-2 core profile omits `prime_route`, so the baked fields
+//! keep their conservative defaults. Whether a cascade kernel is registered
+//! is a host property, so each boundary test reads the arm at a reference
+//! cell above the bound and asserts against that arm.
 #![cfg(all(gf2_tuning_baked, feature = "simd"))]
 
 use gf2_core::gfp::simd_ops::{prime_gemm_route, PrimeGemmRoute};

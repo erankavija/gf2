@@ -4,7 +4,6 @@ use gf2_core::BitVec;
 use proptest::prelude::*;
 
 proptest! {
-    /// Property: rank(i) counts set bits in [0..=i]
     #[test]
     fn rank_counts_ones(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -15,7 +14,6 @@ proptest! {
         }
     }
 
-    /// Property: rank is monotonically increasing
     #[test]
     fn rank_is_monotonic(bytes in prop::collection::vec(any::<u8>(), 1..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -27,7 +25,6 @@ proptest! {
         }
     }
 
-    /// Property: rank increases by at most 1 between consecutive positions
     #[test]
     fn rank_increments_by_at_most_one(bytes in prop::collection::vec(any::<u8>(), 1..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -40,7 +37,6 @@ proptest! {
         }
     }
 
-    /// Property: rank(len-1) equals count_ones()
     #[test]
     fn rank_last_equals_count_ones(bytes in prop::collection::vec(any::<u8>(), 1..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -50,7 +46,6 @@ proptest! {
         }
     }
 
-    /// Property: select returns positions where bits are set
     #[test]
     fn select_returns_set_bits(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -62,7 +57,6 @@ proptest! {
         }
     }
 
-    /// Property: select(k) is None for k >= count_ones()
     #[test]
     fn select_out_of_range_is_none(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -72,7 +66,6 @@ proptest! {
         prop_assert_eq!(bv.select(total + 1), None);
     }
 
-    /// Property: rank(select(k)) = k + 1 for all valid k
     #[test]
     fn rank_select_invariant(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -84,7 +77,6 @@ proptest! {
         }
     }
 
-    /// Property: select is monotonically increasing
     #[test]
     fn select_is_monotonic(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -96,7 +88,6 @@ proptest! {
         }
     }
 
-    /// Property: select positions cover all set bits
     #[test]
     fn select_covers_all_ones(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -112,7 +103,6 @@ proptest! {
         prop_assert_eq!(selected_positions, expected_positions);
     }
 
-    /// Property: rank of select(k) - 1 positions equals k
     #[test]
     fn rank_before_select(bytes in prop::collection::vec(any::<u8>(), 0..100)) {
         let bv = BitVec::from_bytes_le(&bytes);
@@ -126,7 +116,6 @@ proptest! {
         }
     }
 
-    /// Property: All zeros => rank always 0
     #[test]
     fn rank_all_zeros(len in 0usize..1000) {
         let bv = BitVec::zeros(len);
@@ -136,7 +125,6 @@ proptest! {
         }
     }
 
-    /// Property: All ones => rank(i) = i + 1
     #[test]
     fn rank_all_ones(len in 1usize..1000) {
         let bv = BitVec::ones(len);
@@ -146,7 +134,6 @@ proptest! {
         }
     }
 
-    /// Property: All ones => select(k) = k
     #[test]
     fn select_all_ones(len in 1usize..1000) {
         let bv = BitVec::ones(len);
@@ -156,7 +143,6 @@ proptest! {
         }
     }
 
-    /// Property: rank differences equal bit values
     #[test]
     fn rank_diff_equals_bit(bytes in prop::collection::vec(any::<u8>(), 1..100)) {
         let bv = BitVec::from_bytes_le(&bytes);

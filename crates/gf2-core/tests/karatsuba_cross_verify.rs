@@ -1,39 +1,6 @@
-//! Karatsuba vs naive cross-verification for tower extensions.
-//!
-//! Validates that the optimised Karatsuba multiplication in
-//! [`QuadraticExt`] (3M) and Karatsuba-style multiplication in
-//! [`CubicExt`] (6M) produce identical results to independently-written
-//! schoolbook polynomial multiplication (4M for quadratic, 9M for cubic).
-//!
-//! # Independence
-//!
-//! The naive reference implementations live in [`common::naive_quadratic_mul`]
-//! / [`common::naive_cubic_mul`] (shared with the other tower integration
-//! tests). They use only the public accessors of [`QuadraticExt`] /
-//! [`CubicExt`] and the base field's own `+`/`*` operators. They deliberately
-//! do **not** call the optimised `Mul` impl or any of its helpers, so a bug
-//! in the Karatsuba code path cannot silently hide behind a shared
-//! subroutine.
-//!
-//! # Coverage
-//!
-//! Per the design plan (`@/issue/2ce2a757`):
-//!
-//! | Extension | Base field | β     | Notes                             |
-//! |-----------|-----------|-------|-----------------------------------|
-//! | Quadratic | Fp<7>      | −1    | Overridden `mul_by_non_residue` (negation) |
-//! | Quadratic | Fp<7>      | 3     | Default `mul_by_non_residue`      |
-//! | Quadratic | Fp<101>    | −2    | Larger prime                      |
-//! | Quadratic | Fp<65537>  | 3     | Fermat prime                      |
-//! | Cubic     | Fp<7>      | 3     | Overridden `mul_by_non_residue`   |
-//! | Cubic     | Fp<31>     | 11    | Default `mul_by_non_residue`      |
-//! | Cubic     | Fp<101>    | 2     | Larger prime                      |
-//!
-//! # Case counts
-//!
-//! All tests run 10 000 proptest cases per configuration, as specified
-//! in the issue. The `square` consistency tests (`a.square() == naive_mul(a, a)`)
-//! also run 10 000 cases each.
+//! Cross-verifies Karatsuba multiplication in [`QuadraticExt`] (3M) and
+//! [`CubicExt`] (6M) against the schoolbook references
+//! [`common::naive_quadratic_mul`] (4M) and [`common::naive_cubic_mul`] (9M).
 
 use gf2_core::field::{ConstField, FiniteField, FiniteFieldExt};
 use gf2_core::gfp::Fp;
@@ -44,12 +11,6 @@ use common::{
     naive_cubic_mul, naive_quadratic_mul, Fq2Fp101NegTwo, Fq2Fp7NegOne, Fq2Large, Fq2Small,
     Fq3Fp101Beta2, Fq3Fp31Beta11, Fq3Fp7Beta3,
 };
-
-// ---------------------------------------------------------------------------
-// Unit tests for the naive references — hand-checked against simple examples.
-// These confirm the shared naive implementations in `common` are themselves
-// correct, before we use them as a reference for the Karatsuba cross-check.
-// ---------------------------------------------------------------------------
 
 #[test]
 fn test_naive_quadratic_reference_hand_check_neg_one() {
@@ -75,7 +36,6 @@ fn test_naive_quadratic_reference_hand_check_beta_three() {
 
 #[test]
 fn test_naive_quadratic_reference_hand_check_u_squared_is_beta() {
-    // u² = β for every config.
     let u = Fq2Fp101NegTwo::new(Fp::new(0), Fp::new(1));
     let u_sq = naive_quadratic_mul(u, u);
     assert_eq!(u_sq, Fq2Fp101NegTwo::from_base(Fp::new(99)));
@@ -83,7 +43,7 @@ fn test_naive_quadratic_reference_hand_check_u_squared_is_beta() {
 
 #[test]
 fn test_naive_cubic_reference_hand_check_v_cubed_is_beta() {
-    // v³ = β. Compute v·v → v², then (v²)·v → v³ = β.
+    // v³ = β.
     let v = Fq3Fp7Beta3::new(Fp::new(0), Fp::new(1), Fp::new(0));
     let v_sq = naive_cubic_mul(v, v);
     assert_eq!(v_sq, Fq3Fp7Beta3::new(Fp::new(0), Fp::new(0), Fp::new(1)));
@@ -127,19 +87,11 @@ fn test_naive_cubic_reference_hand_check_general_fp31() {
     assert_eq!(c.c2().value(), 29);
 }
 
-// ---------------------------------------------------------------------------
-// Property-based tests: Karatsuba == naive for 10 000 random pairs per config.
-// ---------------------------------------------------------------------------
-
 proptest! {
     #![proptest_config(ProptestConfig {
         cases: 10_000,
         .. ProptestConfig::default()
     })]
-
-    // -----------------------------------------------------------------------
-    // QuadraticExt cross-verification
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_karatsuba_matches_naive_fp7_neg_one(
@@ -189,10 +141,6 @@ proptest! {
         prop_assert_eq!(a * b, naive_quadratic_mul(a, b));
     }
 
-    // -----------------------------------------------------------------------
-    // CubicExt cross-verification
-    // -----------------------------------------------------------------------
-
     #[test]
     fn test_karatsuba_matches_naive_cubic_fp7_beta_three(
         a0 in 0u64..7,
@@ -234,14 +182,6 @@ proptest! {
         let b = Fq3Fp101Beta2::new(Fp::new(b0), Fp::new(b1), Fp::new(b2));
         prop_assert_eq!(a * b, naive_cubic_mul(a, b));
     }
-
-    // -----------------------------------------------------------------------
-    // Squaring consistency: a.square() == naive_mul(a, a).
-    //
-    // `FiniteFieldExt::square` is a default impl (`self * self`), so this
-    // chains Karatsuba multiplication with the naive reference. It provides
-    // an extra sanity check that the `square` path agrees with schoolbook.
-    // -----------------------------------------------------------------------
 
     #[test]
     fn test_square_matches_naive_quadratic_fp7_neg_one(
@@ -309,10 +249,6 @@ proptest! {
         prop_assert_eq!(a.square(), naive_cubic_mul(a, a));
     }
 }
-
-// ---------------------------------------------------------------------------
-// Sanity: zero and one obey the expected laws under the naive reference.
-// ---------------------------------------------------------------------------
 
 #[test]
 fn test_naive_mul_zero_is_zero_quadratic() {

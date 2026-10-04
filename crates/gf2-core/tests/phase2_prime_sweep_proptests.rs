@@ -1,46 +1,7 @@
-//! Phase 2 (e8a0c47a) multi-prime sweep proptests — SC#3.
-//!
-//! Verifies bit-exact equality between the production `gemm()` path and a
-//! naive scalar oracle across **all 10 primes** named in SC#3:
+//! Compares the production `gemm()` dispatch with a naive scalar oracle over
 //! GF(7), GF(31), GF(127), GF(241), GF(251), GF(257), GF(32749), GF(65521),
-//! Fp<65537>, and Mersenne31 (`Fp<2147483647>`).
-//!
-//! Boundary lengths swept: `{1, 15, 16, 17, 63, 64, 65}` (n=0 is trivially a
-//! no-op and is excluded from the proptest body via a guard — the
-//! `prop_oneof![Just(0), ...]` form is used as required by the 52cce970 R1
-//! trap, but the test body returns early on n=0).
-//!
-//! For small primes (p ≤ 251): the production path routes through
-//! `fp_small_try_gemm_classical` → Candidate C (n < 512) or route A (p=251,
-//! n ≥ 512, gated by `set_route_a_gf251_enabled`). All boundary lengths here
-//! are below 512, so every small-prime cell stays on Candidate C.
-//!
-//! For medium primes (252 ≤ p < 65536): the production path routes through
-//! the medium-prime u16 Barrett dot kernel (`fp_medium_batch_mul16`), which
-//! now calls the shared `barrett_reduce_lane32` SSOT primitive introduced in
-//! Phase 2. This is the call site added by the Phase 2 consolidation.
-//!
-//! For Fp<65537>: routes through the Fermat-prime specialised path.
-//!
-//! For Mersenne31: routes through the M31 specialised path.
-//!
-//! The file is intentionally separate from
-//! `route_a_gf251_production_dispatch_proptests.rs` (which covers the 5
-//! small primes at boundary lengths and route A at n=512/1024). This file
-//! extends coverage to the 5 medium/large primes added by Phase 2, without
-//! disturbing the 41096af5-era test structure.
-//!
-//! # Relationship to SC#2 (dispatch ordering)
-//!
-//! SC#2 (dispatch ordering invariant) is satisfied by the existing test
-//! `gfp::simd_ops::tests::specialized_primes_do_not_use_generic_montgomery_path`
-//! in `crates/gf2-core/src/gfp/simd_ops.rs` (line 2959), which asserts that
-//! Fp<65537>, Mersenne31, Fp<65521>, Fp<257>, and Fp<32749> each route to
-//! their specialised SIMD kernel rather than the generic Montgomery fallback.
-//! The structural source ordering in `simd_ops.rs:190-243` (Fp<65537> first,
-//! then M31, then small-prime family, then medium-prime family, then generic)
-//! is preserved by Phase 2 — which only touches the inner kernel, not the
-//! dispatcher.
+//! `Fp<65537>` and Mersenne31 at the square sizes {0, 1, 15, 16, 17, 63, 64,
+//! 65}, and for the medium primes at rectangular shapes with `n` from 512.
 
 #![cfg(feature = "simd")]
 
@@ -54,13 +15,9 @@ use std::sync::Mutex;
 // Serialise AtomicBool toggle mutations across concurrent test threads.
 static DISPATCH_MUTEX: Mutex<()> = Mutex::new(());
 
-// Mersenne31 prime as a const for use in generic const parameters.
 const M31: u64 = (1u64 << 31) - 1;
 
-// ── Scalar reference ──────────────────────────────────────────────────────────
-
-/// Naive GF(Q) GEMM reference: computes C = A * B using direct field
-/// arithmetic. A is (m x k), B is (k x n). Returns a flat row-major Vec.
+/// Naive `C = A * B` for `A` (m × k) and `B` (k × n), as a flat row-major `Vec`.
 fn naive_gemm_gf<const Q: u64>(
     a: &gf2_core::field::matrix::FieldMatrix<Fp<Q>>,
     b: &gf2_core::field::matrix::FieldMatrix<Fp<Q>>,
@@ -81,14 +38,8 @@ fn naive_gemm_gf<const Q: u64>(
     c
 }
 
-// ── Core comparison helper ────────────────────────────────────────────────────
-
-/// Compare the production `gemm()` output against the scalar naive oracle.
-///
-/// For small primes (Q <= 251): uses the route-A toggle at default (false),
-/// serialised through DISPATCH_MUTEX.
-/// For other primes: no toggle interaction; the mutex is still held to avoid
-/// interfering with any concurrent test that does mutate the toggle.
+/// Compares `gemm()` with the naive oracle at n × n, with route A disabled
+/// under `DISPATCH_MUTEX`.
 fn check_phase2_vs_scalar<const Q: u64>(n: usize, seed_a: u64, seed_b: u64) {
     let a_mat = fp_matrix_from_seed::<Q>(n, n, seed_a);
     let b_mat = fp_matrix_from_seed::<Q>(n, n, seed_b);
@@ -96,12 +47,11 @@ fn check_phase2_vs_scalar<const Q: u64>(n: usize, seed_a: u64, seed_b: u64) {
     let _guard = DISPATCH_MUTEX.lock().unwrap();
     set_route_a_gf251_enabled(false);
     let c_prod = gemm(&a_mat, &b_mat);
-    set_route_a_gf251_enabled(false); // restore
+    set_route_a_gf251_enabled(false);
 
     let c_scalar = naive_gemm_gf::<Q>(&a_mat, &b_mat, n, n, n);
 
-    // SC#3 boundary length n=0: both production and scalar paths emit an
-    // empty (0 x 0) result. Verify the shape agrees rather than skipping.
+    // n = 0: both paths emit an empty result, so the shapes are compared.
     assert_eq!(
         c_prod.rows(),
         n,
@@ -130,19 +80,7 @@ fn check_phase2_vs_scalar<const Q: u64>(n: usize, seed_a: u64, seed_b: u64) {
     }
 }
 
-// ── Proptest: small-prime extension (GF(241) not in 41096af5 sweep actually
-//    is — we repeat GF(7)/31/127/241/251 for completeness) ───────────────────
-
 proptest! {
-    /// Phase 2 SC#3: small-prime sweep (GF(7), GF(31), GF(127), GF(241),
-    /// GF(251)) at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.
-    ///
-    /// These primes are also covered by
-    /// `proptest_production_dispatch_prime_sweep_boundary_n` in
-    /// `route_a_gf251_production_dispatch_proptests.rs`; this block is a
-    /// redundant cross-check that also exercises the Phase 2 refactored
-    /// `barrett_reduce_lane32` call site in `fp_small_panel.rs` and
-    /// `fp_small_f32.rs` (both of which now call the shared SSOT).
     #[test]
     fn proptest_phase2_small_prime_sweep_boundary_n(
         n in prop_oneof![
@@ -160,11 +98,7 @@ proptest! {
     }
 }
 
-/// Compare production `gemm()` output against the scalar naive oracle for a
-/// non-square shape (m × k) · (k × n). This is needed for the issue-0749dbad
-/// f64-cascade boundary sweep below: we want to exercise the f64 path (gated
-/// on `n ≥ 512`) while keeping `m` and `k` small enough that the proptest
-/// budget stays under the 5 s nextest limit.
+/// Rectangular variant of the comparison: (m × k) · (k × n).
 fn check_dispatch_vs_scalar_rect<const Q: u64>(
     m: usize,
     k: usize,
@@ -196,27 +130,9 @@ fn check_dispatch_vs_scalar_rect<const Q: u64>(
 }
 
 proptest! {
-    // Heavy n=512+ kernel calls — keep proptest budget very small so we stay
-    // inside the 5 s nextest limit.
+    // Kernel calls at n ≥ 512 are heavy, so the case count is small.
     #![proptest_config(ProptestConfig::with_cases(2))]
 
-    /// Issue 0749dbad SC#3: medium-prime f64-cascade dispatch at boundary
-    /// lengths within the `n >= 512` f64-cascade window.
-    ///
-    /// The 0749dbad f64 cascade is gated on `n >= 512` (see
-    /// `select_f64_path` in `crates/gf2-core/src/gfp/simd_ops.rs`). The
-    /// existing `proptest_phase2_medium_prime_sweep_boundary_n` block
-    /// (n ∈ {0..65}) exercises the u16 panel kernel only; this block
-    /// covers the f64 dispatch by sweeping `n` at boundary offsets *above
-    /// the f64 threshold*. We keep `m` and `k` boundary-sized (so the
-    /// total work stays bounded) and let `n` slide across the dispatch
-    /// boundary so both paths see the boundary panel arithmetic.
-    ///
-    /// Cell shapes: `m ∈ {1, 4, 17}`, `k ∈ {1, 17, 65}`,
-    /// `n ∈ {512, 513, 527, 1024, 1025}`. The k=1 case sets the inner-
-    /// loop trip count to one (single FMA per cell — the most sensitive
-    /// configuration for the Barrett reduction's quotient-rounding
-    /// correctness).
     #[test]
     fn proptest_0749dbad_medium_f64_cascade_boundary(
         m in prop_oneof![Just(1usize), Just(4), Just(17)],
@@ -234,13 +150,6 @@ proptest! {
 }
 
 proptest! {
-    /// Phase 2 SC#3: medium-prime sweep (GF(257), GF(32749), GF(65521)) at
-    /// boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.
-    ///
-    /// These primes route through `fp_medium_batch_mul16`, which in Phase 2
-    /// now calls the shared `barrett_reduce_lane32` SSOT from `fp_small.rs`
-    /// instead of its old local copy. This block is the bit-exact correctness
-    /// gate for that new call site (SC#1's "at least one other call site").
     #[test]
     fn proptest_phase2_medium_prime_sweep_boundary_n(
         n in prop_oneof![
@@ -257,13 +166,6 @@ proptest! {
 }
 
 proptest! {
-    /// Phase 2 SC#3: Fermat prime Fp<65537> at boundary lengths
-    /// {0, 1, 15, 16, 17, 63, 64, 65}.
-    ///
-    /// Routes through the dedicated `fp65537_try_*_vec` specialised path.
-    /// Confirms Phase 2's dispatch ordering is preserved: Fp<65537> is
-    /// checked first in `simd_ops.rs:193` before any small/medium/generic
-    /// branch.
     #[test]
     fn proptest_phase2_fp65537_boundary_n(
         n in prop_oneof![
@@ -278,13 +180,6 @@ proptest! {
 }
 
 proptest! {
-    /// Phase 2 SC#3: Mersenne31 prime Fp<2147483647> at boundary lengths
-    /// {0, 1, 15, 16, 17, 63, 64, 65}.
-    ///
-    /// Routes through the `fpm31_try_mul_vec` specialised path (for mul_vec
-    /// operations). For GEMM, falls through to the medium-prime u16 path or
-    /// scalar (M31 does not have a dedicated GEMM kernel). Correctness of
-    /// the scalar fallback for Mersenne31 GEMM is confirmed here.
     #[test]
     fn proptest_phase2_mersenne31_boundary_n(
         n in prop_oneof![

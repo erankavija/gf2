@@ -1,16 +1,7 @@
 //! Scratch-length observation for the SIMD dot-product walk in the default
-//! build.
-//!
-//! `field_vec.dot_chunk_len` selects no arm, so the walk carries no route
-//! reporter (`dev/active/7d824b2f/design.md` §4); what the field must satisfy
-//! is that its value reaches the walk as the stack-buffer length and the walk
-//! step. The production walk records the widest chunk it fills, and this test
-//! reads that observation back. `field_vec_baked.rs` witnesses the same
-//! property against the committed conservative value under
-//! `--cfg gf2_tuning_baked`.
-//!
-//! The observation is a process-wide maximum, so exactly one test per binary
-//! resets and reads it.
+//! build: `field_vec.dot_chunk_len` reaches the walk as its step, and the walk
+//! records the widest chunk it fills. The observation is a process-wide
+//! maximum, so exactly one test per binary resets and reads it.
 #![cfg(all(feature = "simd", feature = "test-support", not(gf2_tuning_baked)))]
 
 use gf2_core::field::vec::{

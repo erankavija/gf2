@@ -1,33 +1,11 @@
-//! Cross-validates the gf2-side bench seed scheme against the
-//! reference container harness's `seed_helpers.h`.
-//!
-//! Issue `6ed7f050`. The reference C++ harness in
-//! `benchmarks/reference/fflas_bench.cpp` and the gf2-side bench
-//! generators in `crates/gf2-core/benches/common/seed.rs` and
-//! `crates/gf2-core/examples/bench_csv_emitter.rs` must produce
-//! byte-identical input matrices for the same `(field, op_idx,
-//! size_idx, regime_idx)` cell. To enforce that without running the
-//! container, this test re-implements the C reference's SplitMix64 +
-//! `derive_seed` *exactly* (line-by-line port from
-//! `benchmarks/reference/seed_helpers.h`) and compares against the
-//! Rust implementation used by the bench harness.
-//!
-//! The "C reference" port lives only inside this test; production
-//! benches use the canonical Rust impl. If the two ever diverge, this
-//! test fails fast and points at exactly which step of the chain
-//! drifted.
+//! Cross-validates the Rust bench seed scheme (`benches/common/seed.rs`)
+//! against a line-by-line port of `benchmarks/reference/seed_helpers.h`: both
+//! derive the same seed for the same `(master, tag, op, size, regime)` cell.
 
-// Re-import the production seed helper. Using `#[path]` so we don't
-// have to expose the bench-private module to other consumers.
 #[path = "../benches/common/seed.rs"]
 mod seed;
 
-// ─── Bit-for-bit port of `benchmarks/reference/seed_helpers.h` ─────────────
-//
-// Every line below is mechanically translated from the canonical C
-// header. Constants, shift counts, multiplications, byte-by-byte tag
-// mixing, op/size/regime ordering — all preserved exactly. `wrapping_*`
-// matches C's unsigned-overflow semantics.
+// `wrapping_*` matches C's unsigned-overflow semantics.
 
 #[allow(non_snake_case)]
 fn c_ref_splitmix64(state: &mut u64) -> u64 {
@@ -41,7 +19,6 @@ fn c_ref_splitmix64(state: &mut u64) -> u64 {
 #[allow(non_snake_case)]
 fn c_ref_derive_seed(master: u64, tag: &[u8], op_idx: u64, size_idx: u64, regime_idx: u64) -> u64 {
     let mut s = master;
-    // for (const char* p = tag; *p != '\0'; ++p) { s ^= *p; splitmix64(&s); }
     for b in tag {
         s ^= u64::from(*b);
         let _ = c_ref_splitmix64(&mut s);
@@ -57,7 +34,6 @@ fn c_ref_derive_seed(master: u64, tag: &[u8], op_idx: u64, size_idx: u64, regime
 
 #[test]
 fn rust_splitmix_matches_c_reference() {
-    // A handful of seeds spanning the u64 range.
     for &s0 in &[
         0u64,
         1,
@@ -117,21 +93,18 @@ fn rust_derive_matches_c_reference_across_tags_and_indices() {
     }
 }
 
-/// Pinned constants — derived once from this implementation and locked
-/// in. Future changes to the seed pipeline that break byte-for-byte
-/// reproducibility against the reference harness will trip this test.
+/// Pinned outputs: a seed-pipeline change that breaks reproducibility against
+/// the reference harness fails here.
 #[test]
 fn pinned_seed_values_at_master_0_and_pinned_master() {
-    // master = 0, tag="fgemm", op=0, size=0, regime=0
     let r0 = seed::derive_seed(0, "fgemm", 0, 0, 0);
     assert_eq!(r0, 0xa1f5_dbf0_5125_7436);
 
-    // master = 0x6F73AC91D31E4A7C (the value pinned in seed.txt).
+    // The master seed pinned in `benchmarks/seeds/seed.txt`.
     let pinned_master = 0x6F73_AC91_D31E_4A7C;
     let r1 = seed::derive_seed(pinned_master, "fgemm", 0, 0, 0);
     assert_eq!(r1, 0x47e4_989d_742b_754f);
 
-    // First four SplitMix64 outputs from the master+fgemm row seed.
     let mut st = r1;
     assert_eq!(seed::splitmix64(&mut st), 0x350b_8ce7_e52d_880c);
     assert_eq!(seed::splitmix64(&mut st), 0x00b2_abfd_4b04_5d88);

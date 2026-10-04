@@ -1,7 +1,4 @@
 //! Tests for random BitVec and BitMatrix generation.
-//!
-//! Following TDD principles, these tests define the expected behavior
-//! before implementation.
 
 #![cfg(feature = "rand")]
 
@@ -9,10 +6,6 @@ use gf2_core::{matrix::BitMatrix, BitVec};
 use proptest::prelude::*;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-
-// ============================================================================
-// BitVec Random Generation Tests
-// ============================================================================
 
 #[test]
 fn test_bitvec_random_length() {
@@ -74,15 +67,12 @@ fn test_bitvec_random_word_boundary_65() {
 
 #[test]
 fn test_bitvec_random_tail_masking() {
-    // Verify that padding bits are always zero (tail masking invariant)
     let mut rng = StdRng::seed_from_u64(42);
     for len in [1, 7, 63, 65, 100, 127, 129] {
         let bv = BitVec::random(len, &mut rng);
-        // Create a reference BitVec and verify all bits match
         for i in 0..bv.len() {
-            let _ = bv.get(i); // Should not panic
+            let _ = bv.get(i);
         }
-        // Verify length is exact
         assert_eq!(bv.len(), len);
     }
 }
@@ -92,7 +82,6 @@ fn test_bitvec_fill_random() {
     let mut bv = BitVec::from_bytes_le(&[0xFF, 0xFF]);
     let mut rng = StdRng::seed_from_u64(99);
     bv.fill_random(&mut rng);
-    // Should have changed from all ones
     assert_eq!(bv.len(), 16);
 }
 
@@ -116,7 +105,6 @@ fn test_bitvec_random_with_probability_default() {
     let bv = BitVec::random_with_probability(1000, 0.5, &mut rng);
     assert_eq!(bv.len(), 1000);
 
-    // With p=0.5 and 1000 bits, expect roughly 400-600 ones
     let ones = bv.count_ones();
     assert!(
         (400..=600).contains(&ones),
@@ -144,7 +132,6 @@ fn test_bitvec_random_with_probability_sparse() {
     let mut rng = StdRng::seed_from_u64(42);
     let bv = BitVec::random_with_probability(1000, 0.1, &mut rng);
     let ones = bv.count_ones();
-    // With p=0.1 and 1000 bits, expect roughly 50-150 ones
     assert!(
         (50..=150).contains(&ones),
         "Expected ~100 ones, got {}",
@@ -157,7 +144,6 @@ fn test_bitvec_random_with_probability_dense() {
     let mut rng = StdRng::seed_from_u64(42);
     let bv = BitVec::random_with_probability(1000, 0.9, &mut rng);
     let ones = bv.count_ones();
-    // With p=0.9 and 1000 bits, expect roughly 850-950 ones
     assert!(
         (850..=950).contains(&ones),
         "Expected ~900 ones, got {}",
@@ -178,10 +164,6 @@ fn test_bitvec_random_with_probability_invalid_too_large() {
     let mut rng = StdRng::seed_from_u64(42);
     let _ = BitVec::random_with_probability(100, 1.1, &mut rng);
 }
-
-// ============================================================================
-// BitMatrix Random Generation Tests
-// ============================================================================
 
 #[test]
 fn test_bitmatrix_random_dimensions() {
@@ -275,7 +257,6 @@ fn test_bitmatrix_random_with_probability_default() {
     assert_eq!(m.rows(), 20);
     assert_eq!(m.cols(), 30);
 
-    // Count ones in the matrix
     let mut ones = 0u64;
     for r in 0..m.rows() {
         for c in 0..m.cols() {
@@ -285,7 +266,6 @@ fn test_bitmatrix_random_with_probability_default() {
         }
     }
 
-    // With p=0.5 and 600 bits, expect roughly 240-360 ones
     assert!(
         (240..=360).contains(&ones),
         "Expected ~300 ones, got {}",
@@ -324,10 +304,6 @@ fn test_bitmatrix_random_with_probability_invalid() {
     let _ = BitMatrix::random_with_probability(10, 10, 1.5, &mut rng);
 }
 
-// ============================================================================
-// Property-Based Tests
-// ============================================================================
-
 proptest! {
     #[test]
     fn prop_bitvec_random_has_correct_length(len in 0usize..10000) {
@@ -348,7 +324,6 @@ proptest! {
         let mut rng = StdRng::seed_from_u64(99);
         let bv = BitVec::random(len, &mut rng);
 
-        // Verify we can access all bits
         for i in 0..bv.len() {
             let _ = bv.get(i);
         }

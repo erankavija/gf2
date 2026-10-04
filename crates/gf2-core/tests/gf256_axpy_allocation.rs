@@ -1,13 +1,7 @@
-//! Allocation witness for the GF(2^8) cached-table axpy lane.
-//!
-//! The lane's whole claim is that the table is cached rather than built per
-//! call and that destinations are updated in place, so a call allocates
-//! nothing. Witnessing that from outside the crate takes a counting global
-//! allocator, a global allocator is a process-wide choice, and the counter is
-//! process-wide too, so this witness owns its own test binary.
-//!
-//! `unsafe` appears here for the [`GlobalAlloc`] implementation alone. This is
-//! a test binary; `gf2-core` keeps `#![deny(unsafe_code)]`.
+//! Allocation witness for the GF(2^8) cached-table axpy lane: a call allocates
+//! nothing. The counting global allocator and its counter are process-wide, so
+//! this witness owns its test binary; `unsafe` appears only in the
+//! [`GlobalAlloc`] implementation.
 
 #![cfg(feature = "test-support")]
 
@@ -23,10 +17,8 @@ use gf2_core::gf2m::{
 /// while [`ARMED`] is set.
 struct CountingAllocator;
 
-/// Whether allocations are currently being counted.
 static ARMED: AtomicBool = AtomicBool::new(false);
 
-/// Allocating calls observed since the counter was last reset.
 static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
 
 fn record() {
@@ -62,8 +54,6 @@ unsafe impl GlobalAlloc for CountingAllocator {
 #[global_allocator]
 static ALLOCATOR: CountingAllocator = CountingAllocator;
 
-/// Runs `body` with the counter armed and returns how many allocating calls it
-/// made.
 fn allocations_during(body: impl FnOnce()) -> usize {
     ALLOCATIONS.store(0, Ordering::Relaxed);
     ARMED.store(true, Ordering::Relaxed);

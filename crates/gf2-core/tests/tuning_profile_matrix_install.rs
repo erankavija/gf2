@@ -1,5 +1,4 @@
 //! Installed-profile route observation for the bit-matrix transpose selectors.
-//!
 //! The process installs one profile and observes both runtime-resolved values
 //! through the production `transpose_route` reporter. The reporter is also
 //! the selector called by `BitMatrix::transpose`.

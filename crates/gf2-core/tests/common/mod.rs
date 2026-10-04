@@ -1,40 +1,7 @@
-//! Shared helpers for tower-extension integration tests.
-//!
-//! This module is consumed by multiple integration-test binaries via the
-//! standard Rust `tests/common/mod.rs` pattern. The shared items are the
-//! canonical definitions — no integration test should re-declare a tower
-//! config or a schoolbook multiplier of its own; add new primitives here
-//! instead.
-//!
-//! # Contents
-//!
-//! * **Tower configurations** for the three nested chains exercised by the
-//!   `gfpn_*` integration tests (GF(65537²), GF(65537⁴), GF(7²), GF(7⁶),
-//!   GF(7¹²)) plus the four shallow configurations used by
-//!   `karatsuba_cross_verify.rs`.
-//! * **Naive schoolbook multipliers** for [`QuadraticExt`] (4 base muls) and
-//!   [`CubicExt`] (9 base muls). They use only the public accessors of the
-//!   tower types and the base field's operators, so a bug in the optimised
-//!   Karatsuba path cannot hide behind a shared subroutine.
-//! * **Flat `[u64; N]` → tower-element builders** for the nested chains, so
-//!   Sage-generated cross-verify vectors can be decoded with a single call.
-//!
-//! # Rust integration-test module pattern
-//!
-//! Each integration test binary that wants to pull these helpers in should
-//! declare:
-//!
-//! ```ignore
-//! mod common;
-//! use common::{Fp65537Ext2, /* ... */};
-//! ```
-//!
-//! The `tests/common/mod.rs` file is the idiomatic way to share code between
-//! integration tests (the alternative `#[path = "..."] mod common;` trick is
-//! avoided here for readability). Because every symbol in this module is used
-//! by at least one consumer, but not every consumer pulls every symbol, each
-//! item is tagged `#[allow(dead_code)]` so the unused-symbol lint does not
-//! fire per-binary.
+//! Shared tower configurations, schoolbook multipliers and flat-coefficient
+//! codecs for the `gfpn_*` and `karatsuba_cross_verify` integration tests. The
+//! multipliers use only public accessors and base-field operators, so they
+//! share no subroutine with the Karatsuba path under test.
 
 #![allow(dead_code)]
 #![deny(unsafe_code)]
@@ -42,15 +9,9 @@
 use gf2_core::gfp::Fp;
 use gf2_core::gfpn::{CubicExt, ExtConfig, QuadraticExt};
 
-// ---------------------------------------------------------------------------
-// Tower configurations: nested chains (GF(p^4), GF(p^6), GF(p^12))
-// ---------------------------------------------------------------------------
-
 /// GF(65537²) = `Fp<65537>[u]/(u² − 3)`.
 ///
-/// 65537 is a Fermat prime and 3 is a quadratic non-residue mod 65537
-/// (verified via Legendre symbol). Used both as the base for the GF(65537⁴)
-/// tower and as a standalone `QuadraticExt` target.
+/// 3 is a quadratic non-residue mod 65537.
 pub struct Fp65537Ext2;
 impl ExtConfig for Fp65537Ext2 {
     type BaseField = Fp<65537>;
@@ -60,9 +21,7 @@ pub type Fq2Large = QuadraticExt<Fp65537Ext2>;
 
 /// GF(65537⁴) = `Fq2Large[w]/(w² − u)`.
 ///
-/// `u` is a non-square in `Fq2Large` because the base non-residue 3 is not a
-/// square in `Fp<65537>` — this is the canonical GF(p⁴) construction via two
-/// quadratic extensions.
+/// `u` is a non-square in `Fq2Large`.
 pub struct Fp65537Ext4;
 impl ExtConfig for Fp65537Ext4 {
     type BaseField = Fq2Large;
@@ -70,7 +29,7 @@ impl ExtConfig for Fp65537Ext4 {
 }
 pub type Fq4Large = QuadraticExt<Fp65537Ext4>;
 
-/// GF(7²) = `Fp<7>[u]/(u² − 3)`. Base for the GF(7⁶) and GF(7¹²) towers.
+/// GF(7²) = `Fp<7>[u]/(u² − 3)`.
 pub struct Fp7Ext2;
 impl ExtConfig for Fp7Ext2 {
     type BaseField = Fp<7>;
@@ -80,8 +39,8 @@ pub type Fq2Small = QuadraticExt<Fp7Ext2>;
 
 /// GF(7⁶) = `Fq2Small[v]/(v³ − u)`.
 ///
-/// `u` is a cubic non-residue in GF(7²) — verified via SageMath
-/// (`(t^3 - u).is_irreducible() == True` over GF(7²)).
+/// `u` is a cubic non-residue in GF(7²), checked with
+/// `@/citation/SageMath2026`.
 pub struct Fp7Ext6;
 impl ExtConfig for Fp7Ext6 {
     type BaseField = Fq2Small;
@@ -91,9 +50,8 @@ pub type Fq6Small = CubicExt<Fp7Ext6>;
 
 /// GF(7¹²) = `Fq6Small[z]/(z² − (v + 1))`.
 ///
-/// `v + 1` is a quadratic non-residue in GF(7⁶) — verified via SageMath.
-/// This is the BLS12-381-shape tower (quad-over-cubic-over-quad), but with
-/// p = 7 for speed.
+/// `v + 1` is a quadratic non-residue in GF(7⁶), checked with
+/// `@/citation/SageMath2026`.
 pub struct Fp7Ext12;
 impl ExtConfig for Fp7Ext12 {
     type BaseField = Fq6Small;
@@ -107,22 +65,11 @@ impl ExtConfig for Fp7Ext12 {
 }
 pub type Fq12Small = QuadraticExt<Fp7Ext12>;
 
-// ---------------------------------------------------------------------------
-// Tower configurations: shallow (single-level) chains used by
-// `karatsuba_cross_verify.rs`.
-//
-// The β = 3 shallow quadratics over Fp<7> and Fp<65537> are **the same
-// mathematical fields** as `Fq2Small` / `Fq2Large` defined above — same base
-// field, same non-residue, default `mul_by_non_residue`. Those types serve
-// dual duty: as the base field for the nested towers AND as the subject of
-// the Karatsuba cross-check. No wrapper needed.
-// ---------------------------------------------------------------------------
-
 /// GF(7²) with β = 6 ≡ −1 (mod 7). Overridden `mul_by_non_residue` (negation).
 pub struct Fq2Fp7NegOneConfig;
 impl ExtConfig for Fq2Fp7NegOneConfig {
     type BaseField = Fp<7>;
-    const NON_RESIDUE: Fp<7> = Fp::<7>::new(6); // β = −1
+    const NON_RESIDUE: Fp<7> = Fp::<7>::new(6);
 
     #[inline]
     fn mul_by_non_residue(x: Fp<7>) -> Fp<7> {
@@ -160,29 +107,17 @@ impl ExtConfig for Fq3Fp31Beta11Config {
 }
 pub type Fq3Fp31Beta11 = CubicExt<Fq3Fp31Beta11Config>;
 
-/// GF(101³) with β = 2. Default `mul_by_non_residue`.
+/// `Fp<101>[x]/(x³ − 2)`. Default `mul_by_non_residue`.
 ///
-/// Note: gcd(3, 100) = 1, so every element of `Fp<101>` is a cube and x³ − 2
-/// is reducible. The Karatsuba-vs-naive cross-check nevertheless holds —
-/// both formulas compute the same polynomial product modulo x³ − β
-/// regardless of whether the ring is a field.
+/// gcd(3, 100) = 1, so every element of `Fp<101>` is a cube and x³ − 2 is
+/// reducible: the ring is not a field. Karatsuba and schoolbook still compute
+/// the same product modulo x³ − β.
 pub struct Fq3Fp101Beta2Config;
 impl ExtConfig for Fq3Fp101Beta2Config {
     type BaseField = Fp<101>;
     const NON_RESIDUE: Fp<101> = Fp::<101>::new(2);
 }
 pub type Fq3Fp101Beta2 = CubicExt<Fq3Fp101Beta2Config>;
-
-// ---------------------------------------------------------------------------
-// Naive schoolbook multipliers (SSOT for all integration tests).
-//
-// These implementations use ONLY public accessors (`c0`, `c1`, `c2`) and the
-// base field's own operators. They deliberately do NOT call the optimised
-// `Mul` impl or any of its helpers, so a Karatsuba bug cannot silently hide
-// behind a shared subroutine. Each integration test that needs to
-// cross-check Karatsuba against schoolbook imports these functions from here
-// instead of re-implementing them.
-// ---------------------------------------------------------------------------
 
 /// Schoolbook [`QuadraticExt`] multiplication using 4 base-field mults.
 ///
@@ -258,14 +193,6 @@ pub fn naive_cubic_mul<C: ExtConfig>(a: CubicExt<C>, b: CubicExt<C>) -> CubicExt
     CubicExt::new(c0, c1, c2)
 }
 
-// ---------------------------------------------------------------------------
-// Flat coefficient encoders/decoders for the nested chains.
-//
-// Coefficients are stored in the canonical "innermost varying fastest" order
-// used by the Sage generator, so cross-verify data and Rust construction
-// agree byte-for-byte.
-// ---------------------------------------------------------------------------
-
 /// Build an [`Fq4Large`] from `[c00, c01, c10, c11]` where the pairs are the
 /// two inner `Fq2Large` coordinates.
 pub fn fq4_from_flat(c: [u64; 4]) -> Fq4Large {
@@ -284,7 +211,8 @@ pub fn fq4_to_flat(e: Fq4Large) -> [u64; 4] {
     ]
 }
 
-/// Build an [`Fq6Small`] from six Fp-coefficients.
+/// Build an [`Fq6Small`] from six Fp-coefficients, innermost coordinate
+/// varying fastest.
 pub fn fq6_from_flat(c: [u64; 6]) -> Fq6Small {
     let c0 = Fq2Small::new(Fp::<7>::new(c[0]), Fp::<7>::new(c[1]));
     let c1 = Fq2Small::new(Fp::<7>::new(c[2]), Fp::<7>::new(c[3]));

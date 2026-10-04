@@ -1,36 +1,11 @@
-//! Drift-check between the Rust SSOT for the GF(2^32) Conway polynomial
-//! (`PrimitivePolynomialDatabase::standard(32)`) and the C++ header
-//! (`benchmarks/reference/gf2pow32_constants.h`).
-//!
-//! The C++ harnesses (`ntl_bench.cpp`, `ntl_gf2pow32_smoke.cpp`, and any
-//! future m=32 lane) all read the constant from that header. This test
-//! parses the header at test time and asserts the constant equals the
-//! Rust SSOT — so a drift in either direction fails CI before the
-//! mismatch can reach a benchmark or smoke run.
-//!
-//! As of jit:b13799ac R2, the C++ side no longer carries a scalar
-//! GF(2^32) reference multiplier (the smoke is now a direct
-//! gf2-core ↔ NTL byte-equality oracle via the ground-truth file
-//! emitted by `gf2pow32_smoke_emit_expected`), so this drift check
-//! covers the only remaining cross-language SSOT for m=32: the
-//! polynomial bits themselves.
-//!
-//! The Rust scalar reference `gf2pow32_matmul.rs::ref_gf2pow32_mul` is
-//! retained as a Rust-internal gf2-core ↔ scalar witness; it does not
-//! participate in this drift check (its SSOT is the in-file
-//! `CONWAY_LOW32` constant, derived from the same database value).
-//!
-//! Issue: jit:b13799ac (SSOT extraction follow-on after R2 review).
+//! Drift check between the GF(2^32) Conway polynomial (`@/citation/Lubeck2024`)
+//! in `PrimitivePolynomialDatabase::standard(32)` and the C++ header
+//! `benchmarks/reference/gf2pow32_constants.h`, parsed at test time.
 
 use gf2_core::primitive_polys::PrimitivePolynomialDatabase;
 
-/// Parse `constexpr uint64_t kGf2coreConwayM32 = 0x...ULL;` (or any C/C++
-/// integer-literal style) out of the header text and return its value.
-///
-/// Strict parser: looks for the line that defines `kGf2coreConwayM32`, then
-/// extracts the hex literal between `=` and `;`. Hex digit grouping with `'`
-/// (C++14 single-quote separators) and trailing `ULL` / `u64` suffixes are
-/// tolerated.
+/// Extracts the hex literal that defines `name` in the header text; `'` digit
+/// separators and trailing `U`/`L` suffixes are tolerated.
 fn parse_header_constant(header: &str, name: &str) -> u64 {
     let line = header
         .lines()
@@ -41,8 +16,6 @@ fn parse_header_constant(header: &str, name: &str) -> u64 {
         .nth(1)
         .unwrap_or_else(|| panic!("`{name}` line has no `=`: {line}"));
     let body = rhs.split(';').next().unwrap().trim();
-    // Strip C++ literal hygiene: leading `0x`, single-quote digit separators,
-    // and the unsigned/long-long suffix forms.
     let mut cleaned = body
         .trim()
         .trim_end_matches(['U', 'L', 'u', 'l'])
@@ -58,8 +31,6 @@ fn parse_header_constant(header: &str, name: &str) -> u64 {
 
 #[test]
 fn cpp_header_conway_m32_matches_rust_ssot() {
-    // Locate the header relative to CARGO_MANIFEST_DIR (the gf2-core crate
-    // root). The benchmarks/ directory sits two levels up from the crate.
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let header_path = std::path::Path::new(manifest_dir)
         .join("..")
@@ -88,8 +59,6 @@ fn cpp_header_conway_m32_matches_rust_ssot() {
 
 #[test]
 fn parse_header_constant_smoke() {
-    // Sanity-check the header parser against handwritten samples covering
-    // the literal-style variants the C++ source actually uses.
     let cases: &[(&str, &str, u64)] = &[
         (
             "constexpr uint64_t kFoo = 0x1'0000'8299ULL;",
