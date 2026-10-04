@@ -1,6 +1,7 @@
-//! Panelized GF(2^m) GEMM kernel using AVX2 + VPCLMULQDQ.
+//! Panelized GF(2^m) GEMM kernel using AVX2 + VPCLMULQDQ. Output rows are
+//! zeroed by the caller.
 //!
-//! Output rows are zeroed by the caller.
+//! # Safety
 //!
 //! All entry points carry `#[target_feature(enable = "avx2", ...)]`; the
 //! safe wrapper in `crate::gf2m_gemm` publishes the function pointer only

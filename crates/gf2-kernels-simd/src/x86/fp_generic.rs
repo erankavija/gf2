@@ -1,9 +1,8 @@
-//! AVX2 Montgomery batch kernels for generic `Fp<P>` storage words.
-//!
-//! AVX2 has no packed `u64 × u64 → u128` instruction, so the multiplier uses a
-//! 32×32 limb decomposition in four lanes. The Montgomery REDC step then
-//! reuses the same multiplier for `m·P`, keeping the whole vector loop in YMM
-//! registers and falling back to scalar code only for the tail.
+//! AVX2 Montgomery batch kernels for generic `Fp<P>` storage words. AVX2 has no
+//! packed `u64 × u64 → u128` instruction, so the multiplier uses a 32×32 limb
+//! decomposition in four lanes. The Montgomery REDC step then reuses the same
+//! multiplier for `m·P`, keeping the whole vector loop in YMM registers and
+//! falling back to scalar code only for the tail.
 
 #![allow(clippy::missing_safety_doc)]
 

@@ -1,5 +1,4 @@
-//! Generic SIMD framework for bipedal-like `(mag, sgn)` finite-field encodings.
-//!
+//! Generic SIMD framework for bipedal-like `(mag, sgn)` finite-field encodings:
 //! [`framework::BatchedBipedalLike`] over [`lanes::BipedalLogicalLanes`] serves
 //! F_3 through [`bipedal3::Config3`]. F_5 ([`packed5`], 3-plane bit-sliced) and
 //! F_7 ([`packed7`], 3-bit digits with a 2^16 LUT) use dedicated AVX2 batch

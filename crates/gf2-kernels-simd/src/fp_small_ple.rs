@@ -1,8 +1,7 @@
-//! AVX2 panelized PLE base-case kernel for small `Fp<P>` (`P <= 251`).
-//!
-//! Safe wrapper layer over `crate::x86::fp_small_ple`. The kernel decomposes
-//! an `m × win` column window of canonical-byte storage in place; row swaps
-//! touch the window only, and the caller propagates them outside it through
+//! AVX2 panelized PLE base-case kernel for small `Fp<P>` (`P <= 251`): the safe
+//! wrapper layer over `crate::x86::fp_small_ple`. The kernel decomposes an
+//! `m × win` column window of canonical-byte storage in place; row swaps touch
+//! the window only, and the caller propagates them outside it through
 //! `row_perm`.
 
 /// Structural scratch bound for the byte-lane PLE kernel, in columns.

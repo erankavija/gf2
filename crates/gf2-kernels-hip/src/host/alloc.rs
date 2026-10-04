@@ -1,9 +1,8 @@
-//! Typed RAII device and pinned-host buffers.
-//!
-//! [`DeviceBuffer<T>`] owns a `hipMalloc` allocation and [`PinnedHostBuffer<T>`]
-//! owns page-locked host memory (`hipHostMalloc`) for stream-ordered transfers.
-//! Both report out-of-memory as [`HipError::OutOfMemory`], carrying `device_id`
-//! and `bytes_requested`.
+//! Typed RAII device and pinned-host buffers: [`DeviceBuffer<T>`] owns a
+//! `hipMalloc` allocation and [`PinnedHostBuffer<T>`] owns page-locked host
+//! memory (`hipHostMalloc`) for stream-ordered transfers. Both report
+//! out-of-memory as [`HipError::OutOfMemory`], carrying `device_id` and
+//! `bytes_requested`.
 
 use std::ffi::c_void;
 use std::marker::PhantomData;

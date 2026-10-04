@@ -1,8 +1,7 @@
-//! SIMD batch kernels for medium primes `Fp<P>` with `P < 2^16`.
-//!
-//! Canonical residues occupy one 16-bit lane; the kernels accept any odd
-//! prime in `(251, 65535]`. [`detect`] returns safe function-pointer wrappers
-//! in [`MediumPrimeFns`], or `None` without AVX2.
+//! SIMD batch kernels for medium primes `Fp<P>` with `P < 2^16`. Canonical
+//! residues occupy one 16-bit lane; the kernels accept any odd prime in
+//! `(251, 65535]`. [`detect`] returns safe function-pointer wrappers in
+//! [`MediumPrimeFns`], or `None` without AVX2.
 
 /// Computes the Barrett magic constant `m = floor(2^32 / p)` that
 /// [`MediumPrimeBatchMulFn`] takes, for a medium prime `p ∈ (1, 2^16)`.

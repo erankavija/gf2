@@ -1,7 +1,6 @@
 //! Generic AVX2 batch entry points for the bipedal-like
-//! [`crate::bipedal::framework::BatchedBipedalLike`] framework.
-//!
-//! Each `run_*_batch::<C>` function is generic over a per-prime
+//! [`crate::bipedal::framework::BatchedBipedalLike`] framework. Each
+//! `run_*_batch::<C>` function is generic over a per-prime
 //! [`BipedalLikeConfig`] `C` whose two lane types are both `Avx2Lane`;
 //! [`run_permanent4`] keeps four F_3 matrices in those lanes for a whole
 //! Ryser/Gray walk. Every caller detects AVX2 at runtime before invoking a

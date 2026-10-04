@@ -1,9 +1,11 @@
-//! AVX2 batch multiply-reduce kernels for the Mersenne prime
-//! `M31 = 2^31 - 1`, on packed `u32` lanes (8 per 256-bit vector).
+//! AVX2 batch multiply-reduce kernels for the Mersenne prime `M31 = 2^31 - 1`,
+//! on packed `u32` lanes (8 per 256-bit vector). The reduction uses
+//! `2^31 ≡ 1 (mod M31)`: `a·b = hi · 2^31 + lo ≡ lo + hi`.
 //!
-//! The reduction uses `2^31 ≡ 1 (mod M31)`: `a·b = hi · 2^31 + lo ≡ lo + hi`.
-//! All public functions are `unsafe`: callers must ensure AVX2 is available
-//! at runtime; `crate::mersenne::detect` returns the safe dispatched table.
+//! # Safety
+//!
+//! All public functions are `unsafe`: callers must ensure AVX2 is available at
+//! runtime; `crate::mersenne::detect` returns the safe dispatched table.
 
 #![allow(clippy::missing_safety_doc)]
 

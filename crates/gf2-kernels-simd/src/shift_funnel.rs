@@ -1,8 +1,6 @@
-//! Residual bit-shift funnel kernels.
-//!
-//! The funnel a bit shift by a non-multiple of 64 needs. The bundle is
-//! detected on its own processor feature, so a host that has that feature
-//! without AVX2 still reaches the kernels.
+//! Residual bit-shift funnel kernels: the funnel a bit shift by a non-multiple
+//! of 64 needs. The bundle is detected on its own processor feature, so a host
+//! that has that feature without AVX2 still reaches the kernels.
 //!
 //! # The funnel contract
 //!
