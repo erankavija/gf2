@@ -1,26 +1,39 @@
 # Archive rerun results
 
-`jit archive container <epic> --execute --json` on main at `04f6fd190`, after
-the merges of the re-archive branches and after the tracker script of f29a9225
-added four references on 91429c1c. Each row is one run; the fields are those of
-the command's JSON result.
+`jit archive container <epic> --execute --json`, run on main at the commit of
+each row after the unit's branch is merged and its tracker script has run.
+Each row is one run; the fields are those of the command's JSON result. Every
+run exits 0.
 
-| Epic | Issue | Run | publications | reference_changes | deleted_sources | event_appended |
-|---|---|---|---|---|---|---|
-| babcf05e | 3759f995 | 1 | 0 | 0 | 0 | false |
-| f9717e7e | 3759f995 | 1 | 0 | 0 | 0 | false |
-| 97bf0879 | 83f9ce69 | 1 | 0 | 0 | 0 | false |
-| 026fc832 | f29a9225 | 1 | 4 adopted | 4 | 0 | true |
-| 026fc832 | f29a9225 | 2 | 0 | 0 | 0 | false |
-| b7157be6 | f902240f | 1 | 1 adopted | 0 | 0 | true |
-| b7157be6 | f902240f | 2 | 0 | 0 | 0 | false |
+| Epic | Issue | Main | Run | publications | reference_changes | deleted_sources | event_appended |
+|---|---|---|---|---|---|---|---|
+| babcf05e | 3759f995 | `04f6fd190` | 1 | 0 | 0 | 0 | false |
+| f9717e7e | 3759f995 | `04f6fd190` | 1 | 0 | 0 | 0 | false |
+| 97bf0879 | 83f9ce69 | `04f6fd190` | 1 | 0 | 0 | 0 | false |
+| 026fc832 | f29a9225 | `04f6fd190` | 1 | 4 adopted | 4 | 0 | true |
+| 026fc832 | f29a9225 | `04f6fd190` | 2 | 0 | 0 | 0 | false |
+| 026fc832 | f29a9225 | `e15dbdaef` | 3 | 1 adopted | 0 | 0 | true |
+| 026fc832 | f29a9225 | `e15dbdaef` | 4 | 0 | 0 | 0 | false |
+| b7157be6 | f902240f | `04f6fd190` | 1 | 1 adopted | 0 | 0 | true |
+| b7157be6 | f902240f | `04f6fd190` | 2 | 0 | 0 | 0 | false |
+| bb85c68a | 42037c91 | `e15dbdaef` | 1 | 2 adopted | 0 | 0 | true |
+| bb85c68a | 42037c91 | `e15dbdaef` | 2 | 0 | 0 | 0 | false |
+| 6efb756b | 42037c91 | `e15dbdaef` | 1 | 5 adopted | 0 | 0 | true |
+| 6efb756b | 42037c91 | `e15dbdaef` | 2 | 0 | 0 | 0 | false |
+| e095a100 | 1ca94ec2 | `e15dbdaef` | 1 | 1 adopted | 1 | 0 | true |
+| e095a100 | 1ca94ec2 | `e15dbdaef` | 2 | 0 | 0 | 0 | false |
+| 806eb14e | 1ca94ec2 | `e15dbdaef` | 1 | 0 | 0 | 0 | false |
+| 2928ccce | 1ca94ec2 | `e15dbdaef` | 1 | 0 | 0 | 0 | false |
+| d4851c3d | 1ca94ec2 | `e15dbdaef` | 1 | 5 adopted | 0 | 0 | true |
+| d4851c3d | 1ca94ec2 | `e15dbdaef` | 2 | 0 | 0 | 0 | false |
+| 6dc81018 | 616e1d7c | `e15dbdaef` | 1 | 122 adopted | 0 | 0 | true |
+| 6dc81018 | 616e1d7c | `e15dbdaef` | 2 | 0 | 0 | 0 | false |
 
-Run 1 of 026fc832 adopts the four BLAS route-B crate files that f29a9225 placed
-in the archive (`Cargo.toml`, `build.rs`, `.gitignore`,
-`src/bin/bench_blas_gf251.rs`) and records their references. Run 1 of b7157be6
-adopts `dev/archive/b7157be6-osd/active/plan.md`, whose link targets f902240f
-changed. An adopted publication moves no file. Every run exits 0.
+An adopted publication records the identity of a file that already sits at its
+archive destination; it moves no file. The adopting runs follow edits the units
+made inside the archives (link targets, self-path literals in moved scripts,
+the BLAS route-B crate files and its `lib.rs`) and deck assets the tracker
+scans. The last run of each epic publishes, relinks and deletes nothing.
 
-The table establishes that a further execution of each archive publishes,
-relinks and deletes nothing. It does not establish link validity; the unit
-records hold the link scans.
+The table does not establish link validity; the unit records hold the link
+scans.
