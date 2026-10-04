@@ -1,9 +1,7 @@
-//! Directory-handle-anchored I/O for one campaign root.
-//!
-//! Every mutable campaign path is resolved one component at a time beneath a
-//! held root directory descriptor. Directory components and final files are
-//! opened with `NOFOLLOW`, so a pathname replacement cannot redirect a writer
-//! after admission.
+//! Directory-handle-anchored I/O for one campaign root. Every mutable campaign
+//! path is resolved one component at a time beneath a held root directory
+//! descriptor. Directory components and final files are opened with `NOFOLLOW`,
+//! so a pathname replacement cannot redirect a writer after admission.
 
 use std::ffi::{OsStr, OsString};
 use std::fs::File;

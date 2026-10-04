@@ -1,9 +1,8 @@
-//! Independent importance trajectories for compressed permanental rank.
-//!
-//! Each trajectory opens one private canonical sampler stream, draws the next
-//! row uniformly from the current contraction nullspace, advances the shared
-//! [`CompressedRankState`], and accumulates the exact likelihood exponent.
-//! A trajectory can be restarted at any prefix boundary by replaying its same
+//! Independent importance trajectories for compressed permanental rank. Each
+//! trajectory opens one private canonical sampler stream, draws the next row
+//! uniformly from the current contraction nullspace, advances the shared
+//! [`CompressedRankState`], and accumulates the exact likelihood exponent. A
+//! trajectory can be restarted at any prefix boundary by replaying its same
 //! immutable address. Scheduling and worker counts never enter stream identity.
 
 use std::fmt;

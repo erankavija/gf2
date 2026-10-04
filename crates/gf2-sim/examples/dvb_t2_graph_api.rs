@@ -1,9 +1,8 @@
 //! Hand-wires the seven-stage DVB-T2 BICM chain (encode, interleave, map, AWGN,
 //! demap, deinterleave, decode) through the graph API (`Chain::new` / `add` /
 //! `connect` / `build`) and runs it at the r1/2 16-QAM waterfall point and seed
-//! of `examples/dvb_t2_typestate.rs`.
-//!
-//! Run with: `cargo run -p gf2-sim --example dvb_t2_graph_api --release`
+//! of `examples/dvb_t2_typestate.rs`. Run with
+//! `cargo run -p gf2-sim --example dvb_t2_graph_api --release`.
 
 use std::num::NonZeroUsize;
 

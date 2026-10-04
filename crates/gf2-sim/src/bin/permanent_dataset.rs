@@ -1,9 +1,10 @@
-//! Inspect, checksum, conform, and verify a published permanent-zero-fraction dataset.
-//!
-//! The dataset is described in
+//! Inspect, checksum, conform, and verify a published permanent-zero-fraction
+//! dataset, described in
 //! `dev/simulation_results/permanent-zero-fraction/README.md`. This binary
 //! never creates or mutates a dataset file: `checksums` prints to standard
 //! output.
+//!
+//! # Subcommands
 //!
 //! `revision` prints the repository-wide revision observed at command start as
 //! provenance context.
@@ -16,9 +17,11 @@
 //! `conform` checks the complete schema and all cross-document aggregates.
 //! `verify` re-checks a dataset against that file and its recorded source.
 //!
-//! Exit status: `0` for success or a verified dataset, `1` for a refusal, a
-//! failed dataset, or an error, `2` for a dataset whose provenance could not be
-//! decided, and `64` for a usage error.
+//! # Exit status
+//!
+//! `0` for success or a verified dataset, `1` for a refusal, a failed dataset,
+//! or an error, `2` for a dataset whose provenance could not be decided, and
+//! `64` for a usage error.
 
 use std::error::Error;
 use std::fs;

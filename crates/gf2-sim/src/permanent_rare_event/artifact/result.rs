@@ -1,9 +1,8 @@
-//! Exact reduction of published checkpoints into final result payloads.
-//!
-//! The reducers here are the producing half of the validators in the parent
-//! module: both sides call the same exact histogram, mean, variance, interval,
-//! and effective-sample-size routines, so a produced payload and its
-//! independent revalidation cannot drift apart.
+//! Exact reduction of published checkpoints into final result payloads. The
+//! reducers here are the producing half of the validators in the parent module:
+//! both sides call the same exact histogram, mean, variance, interval, and
+//! effective-sample-size routines, so a produced payload and its independent
+//! revalidation cannot drift apart.
 
 use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};

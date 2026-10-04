@@ -1,7 +1,6 @@
-//! Canonical parsing and manifest validation for accelerator launch costs.
-//!
-//! The production CSV is an execution input, not a campaign-manifest field.
-//! This module keeps its stable boundary in one place so callers cannot accept
+//! Canonical parsing and manifest validation for accelerator launch costs. The
+//! production CSV is an execution input, not a campaign-manifest field. This
+//! module keeps its stable boundary in one place so callers cannot accept
 //! different row sets or silently size one cell from another cell's timing.
 
 use std::collections::BTreeMap;

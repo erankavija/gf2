@@ -1,6 +1,5 @@
-//! Permanent-zero-fraction campaign orchestration contracts.
-//!
-//! Permanent mathematics belongs to `gf2-algebra`; this module owns campaign
+//! Permanent-zero-fraction campaign orchestration contracts. Permanent
+//! mathematics belongs to `gf2-algebra`; this module owns campaign
 //! orchestration and its durable records.
 
 pub mod acceptance;

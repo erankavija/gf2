@@ -1,16 +1,18 @@
 //! 5G NR LDPC BICM preset: a typestate fluent builder over the graph API.
-//!
 //! [`Pipeline::nr_5g`](crate::Pipeline::nr_5g) returns a
-//! `Builder<NeedsBaseGraph>`. The required setters are called in order,
-//! [`base_graph`](Builder::base_graph) → [`lifting_size`](Builder::lifting_size)
-//! → [`rate`](Builder::rate) → [`decoder`](Builder::decoder) →
-//! [`demap`](Builder::demap) → [`channel`](Builder::channel); each exists only
-//! on its predecessor state, and [`lifting_set`](Builder::lifting_set) only
-//! alongside `lifting_size`. A [`Builder<Ready>`] exposes the optional setters
-//! and [`build`](Builder::build), which composes the
-//! [`stages::nr_5g`](crate::stages::nr_5g) stages around an [`Awgn`] channel
-//! into a seven-stage [`Chain`]. The built pipeline carries no run plan; drive
-//! it with [`TopologyExecutor::run`](crate::TopologyExecutor::run).
+//! `Builder<NeedsBaseGraph>`. The built pipeline carries no run plan; drive it
+//! with [`TopologyExecutor::run`](crate::TopologyExecutor::run).
+//!
+//! # Setter order
+//!
+//! The required setters are called in order,
+//! [`base_graph`](Builder::base_graph) →
+//! [`lifting_size`](Builder::lifting_size) → [`rate`](Builder::rate) →
+//! [`decoder`](Builder::decoder) → [`demap`](Builder::demap) →
+//! [`channel`](Builder::channel); each exists only on its predecessor state,
+//! and [`lifting_set`](Builder::lifting_set) only alongside `lifting_size`. A
+//! [`Builder<Ready>`] exposes the optional setters and
+//! [`build`](Builder::build).
 //!
 //! # Code dimensions
 //!
