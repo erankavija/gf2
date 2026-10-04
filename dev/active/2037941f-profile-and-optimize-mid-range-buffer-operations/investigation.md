@@ -77,7 +77,7 @@ dispatch-hoist change without a materially different consumer contract.
   These are candidate consumers only after their actual row stride is fixed.
 * **BitSlice/zero-copy.** `BitSlice` and `BitSliceMut` are offset bit views
   over backing words, offering only bit accessors
-  [`crates/gf2-core/src/bitslice.rs:1-81`](../../../crates/gf2-core/src/bitslice.rs#L1-L81).
+  [`crates/gf2-core/src/bitslice.rs`](../../../crates/gf2-core/src/bitslice.rs).
   `from_bitslice` allocates and copies bit-by-bit
   [`crates/gf2-core/src/bitvec.rs:1094-1104`](../../../crates/gf2-core/src/bitvec.rs#L1094-L1104).
   The in-tree coding use is an ownership-taking message assertion, not a
